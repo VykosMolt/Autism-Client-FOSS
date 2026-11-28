@@ -43,45 +43,45 @@ public final class CommandSuggestions {
       return builder.buildFuture();
    }
 
-   public static <S> CompletableFuture<Suggestions> init_CompletableFuture_CommandContext_SuggestionsBuilder(
+   public static <S> CompletableFuture<Suggestions> suggestDelayState(
       CommandContext<S> ignored, SuggestionsBuilder builder
    ) {
       return suggest(builder, "on", "off", "toggle", "enable", "disable");
    }
 
-   public static <S> CompletableFuture<Suggestions> load(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestVclipBlocks(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "1", "5", "10", "50", "100", "-1", "-5", "-10", "-50", "-100");
    }
 
-   public static <S> CompletableFuture<Suggestions> read(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestVclipSegments(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "1", "5", "10", "20", "50");
    }
 
-   public static <S> CompletableFuture<Suggestions> write(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestMaxPackets(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "1", "5", "10", "20", "40", "100");
    }
 
-   public static <S> CompletableFuture<Suggestions> update(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestDamageAmount(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "1", "2", "4", "8", "20");
    }
 
-   public static <S> CompletableFuture<Suggestions> sync(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestCount(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "1", "16", "32", "64", "1000", "10000", "100000");
    }
 
-   public static <S> CompletableFuture<Suggestions> flush(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestBoolean(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "true", "false");
    }
 
-   public static <S> CompletableFuture<Suggestions> close(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestTimes(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "1", "5", "10", "50", "100", "1000");
    }
 
-   public static <S> CompletableFuture<Suggestions> open(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestDelayTicks(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "0", "5", "10", "20", "40", "100", "200");
    }
 
-   public static <S> CompletableFuture<Suggestions> poll(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestMinutes(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "15", "30", "45", "60", "90", "120");
    }
 
@@ -89,11 +89,11 @@ public final class CommandSuggestions {
       return suggest(builder, "5", "10", "20", "50");
    }
 
-   public static <S> CompletableFuture<Suggestions> pop(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestCoordinate(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "~");
    }
 
-   public static <S> CompletableFuture<Suggestions> tick(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestWaypointName(CommandContext<S> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining();
       String bare = (remaining.startsWith("\"") ? remaining.substring(1) : remaining).toLowerCase(Locale.ROOT);
       Minecraft mc = Minecraft.getInstance();
@@ -109,7 +109,7 @@ public final class CommandSuggestions {
       return builder.buildFuture();
    }
 
-   public static <S> CompletableFuture<Suggestions> run(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestCommand(CommandContext<S> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining();
       if (remaining.indexOf(32) >= 0) {
          return builder.buildFuture();
@@ -143,7 +143,7 @@ public final class CommandSuggestions {
 
       for (Block block : BuiltInRegistries.BLOCK) {
          if (isPlaceableBlock(block)) {
-            ids.add(RegistrySuggestions.init(BuiltInRegistries.BLOCK.getKey(block)));
+            ids.add(RegistrySuggestions.shortId(BuiltInRegistries.BLOCK.getKey(block)));
          }
       }
 
@@ -161,14 +161,14 @@ public final class CommandSuggestions {
       for (Block block : BuiltInRegistries.BLOCK) {
          BlockState state = block.defaultBlockState();
          if (!state.isAir() && !(block instanceof LiquidBlock) && block.asItem() != Items.AIR) {
-            ids.add(RegistrySuggestions.init(BuiltInRegistries.BLOCK.getKey(block)));
+            ids.add(RegistrySuggestions.shortId(BuiltInRegistries.BLOCK.getKey(block)));
          }
       }
 
       return load_List = List.copyOf(ids);
    }
 
-   public static List<String> read() {
+   public static List<String> entityIds() {
       List<String> cached = entityIdsCache;
       if (cached != null) {
          return cached;
@@ -178,14 +178,14 @@ public final class CommandSuggestions {
 
       for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
          if (type.getCategory() != MobCategory.MISC) {
-            ids.add(RegistrySuggestions.init(BuiltInRegistries.ENTITY_TYPE.getKey(type)));
+            ids.add(RegistrySuggestions.shortId(BuiltInRegistries.ENTITY_TYPE.getKey(type)));
          }
       }
 
       return entityIdsCache = List.copyOf(ids);
    }
 
-   public static <S> CompletableFuture<Suggestions> get(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestBlockId(CommandContext<S> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       for (String id : load()) {
@@ -197,19 +197,19 @@ public final class CommandSuggestions {
       return builder.buildFuture();
    }
 
-   public static <S> CompletableFuture<Suggestions> set(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestFakeGamemode(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "survival", "creative", "adventure", "spectator", "reset", "0", "1", "2", "3");
    }
 
-   public static <S> CompletableFuture<Suggestions> put(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestGamemode(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, "survival", "creative", "adventure", "spectator", "0", "1", "2", "3");
    }
 
-   public static <S> CompletableFuture<Suggestions> add(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestPrefix(CommandContext<S> ignored, SuggestionsBuilder builder) {
       return suggest(builder, ".", "%", "-", "_", "*", "#", "@", "&", "=");
    }
 
-   public static <S> CompletableFuture<Suggestions> clear(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestItemId(CommandContext<S> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
       String[][] cache = itemIdIndex;
       if (cache == null) {

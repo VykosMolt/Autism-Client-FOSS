@@ -15,7 +15,7 @@ public class CollapsibleSectionNode extends LayoutContainer {
 
    public CollapsibleSectionNode(String title) {
       this.title = title == null ? "" : title;
-      this.content.init(EdgeInsets.ZERO).init(2);
+      this.content.withPadding(EdgeInsets.ZERO).withGap(2);
       this.addChild(this.content);
    }
 
@@ -57,7 +57,7 @@ public class CollapsibleSectionNode extends LayoutContainer {
       return this.expandedState;
    }
 
-   public CollapsibleSectionNode init(int headerHeight) {
+   public CollapsibleSectionNode withHeaderHeight(int headerHeight) {
       int next = Math.max(12, headerHeight);
       if (this.headerHeight != next) {
          this.headerHeight = next;
@@ -67,7 +67,7 @@ public class CollapsibleSectionNode extends LayoutContainer {
       return this;
    }
 
-   public CollapsibleSectionNode load(int contentTopGap) {
+   public CollapsibleSectionNode withContentTopGap(int contentTopGap) {
       int next = Math.max(0, contentTopGap);
       if (this.contentTopGap != next) {
          this.contentTopGap = next;

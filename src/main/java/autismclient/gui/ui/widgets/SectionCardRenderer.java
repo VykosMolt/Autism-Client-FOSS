@@ -4,10 +4,10 @@ public final class SectionCardRenderer {
    private SectionCardRenderer() {
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title) {
+   public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       int headerHeight = Math.min(14, Math.max(1, bounds.sync() - 2));
-      init(context, bounds, colors.cardSurface);
+      drawPlain(context, bounds, colors.cardSurface);
       autismclient.gui.f.NetHelper header = autismclient.gui.f.NetHelper.init(
          bounds.read() + 1, bounds.write() + 1, Math.max(0, bounds.update() - 2), Math.max(0, headerHeight - 1)
       );
@@ -27,10 +27,10 @@ public final class SectionCardRenderer {
    }
 
    public static void drawCard(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds) {
-      init(context, bounds, context.init_TableIndex().colors().cardSurface);
+      drawPlain(context, bounds, context.init_TableIndex().colors().cardSurface);
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int fill) {
+   public static void drawPlain(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int fill) {
       autismclient.gui.f.PacketUtil.read(context.init_GuiGraphicsExtract(), bounds, 5, fill, context.init_TableIndex().colors().borderSubtle);
    }
 }

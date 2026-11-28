@@ -61,7 +61,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements PacketOrigi
          && (this.autism$packetOrigin == null || this.autism$packetOrigin.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.VANILLA)
          && !ModNamespaceCatalog.init_Z(this.name)) {
          Component replacement = Component.translatable(this.name);
-         PacketComponentOriginTracker.init(replacement, this.autism$packetOrigin);
+         PacketComponentOriginTracker.markComponentFromPacket(replacement, this.autism$packetOrigin);
          return replacement;
       }
 
@@ -70,7 +70,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements PacketOrigi
          if (component.getContents() instanceof TranslatableContents translation && translation.getArgs().length == 0 && component.getSiblings().isEmpty()) {
             if (this.autism$displaySource != component) {
                Component copy = Component.translatableWithFallback(translation.getKey(), translation.getFallback()).withStyle(component.getStyle());
-               PacketComponentOriginTracker.init(copy, this.autism$packetOrigin);
+               PacketComponentOriginTracker.markComponentFromPacket(copy, this.autism$packetOrigin);
                this.autism$displaySource = component;
                this.autism$displayCopy = copy;
             }
@@ -78,7 +78,7 @@ public abstract class AutismProtectorKeybindContentsMixin implements PacketOrigi
             return this.autism$displayCopy;
          }
 
-         PacketComponentOriginTracker.init(component, this.autism$packetOrigin);
+         PacketComponentOriginTracker.markComponentFromPacket(component, this.autism$packetOrigin);
       }
 
       return resolved;

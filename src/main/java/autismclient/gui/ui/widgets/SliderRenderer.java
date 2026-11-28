@@ -4,7 +4,7 @@ public final class SliderRenderer {
    private SliderRenderer() {
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, double ratio, boolean hovered) {
+   public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, double ratio, boolean hovered) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       ratio = Math.max(0.0, Math.min(1.0, ratio));
       int radius = 3;
@@ -38,7 +38,7 @@ public final class SliderRenderer {
       return max <= min ? 0.0 : Math.max(0.0, Math.min(1.0, (value - min) / (max - min)));
    }
 
-   public static double init(double mouseX, int x, int width, double min, double max, double step) {
+   public static double valueAt(double mouseX, int x, int width, double min, double max, double step) {
       double ratio = width <= 0 ? 0.0 : Math.max(0.0, Math.min(1.0, (mouseX - x) / width));
       double value = min + ratio * (max - min);
       double safeStep = Math.max(1.0E-4, step);

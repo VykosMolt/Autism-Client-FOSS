@@ -171,7 +171,7 @@ public final class OverlayActionButton {
                ? button.toggleState
                : (allowInferredToggle ? (toggleOn ? Boolean.TRUE : (toggleOff ? Boolean.FALSE : null)) : null);
             if (resolvedToggleState != null) {
-               AnimatedToggleButtonRenderer.init(
+               AnimatedToggleButtonRenderer.draw(
                   ui, bounds, label, resolvedToggleState, hovered && button.active, button.animationKey == null ? defaultAnimationKey(button) : button.animationKey
                );
             } else {

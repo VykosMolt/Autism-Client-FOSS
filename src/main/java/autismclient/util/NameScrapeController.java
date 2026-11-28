@@ -209,7 +209,7 @@ public final class NameScrapeController {
             ctx.init_PoolEntry().draw(graphics, title, x + pad, y + 6, colors.textPrimary);
             int cw = ctx.init_PoolEntry().measureWidth(count);
             ctx.init_PoolEntry().draw(graphics, count, x + width - pad - cw, y + 6, colors.textSecondary);
-            autismclient.gui.ui.widgets.ProgressBarRenderer.init(ctx, autismclient.gui.f.NetHelper.init(x + pad, y + 20, width - pad * 2, 8), progress());
+            autismclient.gui.ui.widgets.ProgressBarRenderer.draw(ctx, autismclient.gui.f.NetHelper.init(x + pad, y + 20, width - pad * 2, 8), progress());
             String status = statusText != null && !statusText.isBlank() ? statusText : "Starting...";
             ctx.init_PoolEntry().draw(graphics, ellipsize(ctx, status, width - pad * 2), x + pad, y + 33, colors.textSecondary);
          }

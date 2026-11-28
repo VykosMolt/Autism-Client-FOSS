@@ -5,7 +5,7 @@ import autismclient.gui.f.NetHelper;
 record CrosshairPreviewLayout(NetHelper listArea, NetHelper load) {
    static final int init_I = 140;
 
-   static CrosshairPreviewLayout init(NetHelper body) {
+   static CrosshairPreviewLayout of(NetHelper body) {
       if (body.update() >= 8 && body.sync() >= 30) {
          int gap = 6;
          if (body.update() >= 380) {

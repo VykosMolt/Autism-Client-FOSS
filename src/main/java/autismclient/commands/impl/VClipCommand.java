@@ -47,10 +47,10 @@ public class VClipCommand extends Command {
          LiteralArgumentBuilder.<AutismCommandSource>literal("custom")
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Double>argument("blocks", DoubleArgumentType.doubleArg())
-                  .suggests(autismclient.commands.CommandSuggestions::load)
+                  .suggests(autismclient.commands.CommandSuggestions::suggestVclipBlocks)
                   .then(
                      ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("segment", IntegerArgumentType.integer(1, 50))
-                           .suggests(autismclient.commands.CommandSuggestions::read)
+                           .suggests(autismclient.commands.CommandSuggestions::suggestVclipSegments)
                            .executes(ctx -> {
                               VClipAction.ClipOptions options = VClipAction.ClipOptions.init(DoubleArgumentType.getDouble(ctx, "blocks"));
                               options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
@@ -59,7 +59,7 @@ public class VClipCommand extends Command {
                            }))
                         .then(
                            ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("maxPackets", IntegerArgumentType.integer(1, 100))
-                                 .suggests(autismclient.commands.CommandSuggestions::write)
+                                 .suggests(autismclient.commands.CommandSuggestions::suggestMaxPackets)
                                  .executes(ctx -> {
                                     VClipAction.ClipOptions options = VClipAction.ClipOptions.init(DoubleArgumentType.getDouble(ctx, "blocks"));
                                     options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
@@ -69,7 +69,7 @@ public class VClipCommand extends Command {
                                  }))
                               .then(
                                  ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("updateLocal", BoolArgumentType.bool())
-                                       .suggests(autismclient.commands.CommandSuggestions::flush)
+                                       .suggests(autismclient.commands.CommandSuggestions::suggestBoolean)
                                        .executes(ctx -> {
                                           VClipAction.ClipOptions options = init(ctx);
                                           options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -78,7 +78,7 @@ public class VClipCommand extends Command {
                                        }))
                                     .then(
                                        ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("vehicle", BoolArgumentType.bool())
-                                             .suggests(autismclient.commands.CommandSuggestions::flush)
+                                             .suggests(autismclient.commands.CommandSuggestions::suggestBoolean)
                                              .executes(ctx -> {
                                                 VClipAction.ClipOptions options = init(ctx);
                                                 options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -88,7 +88,7 @@ public class VClipCommand extends Command {
                                              }))
                                           .then(
                                              RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("forceGround", BoolArgumentType.bool())
-                                                .suggests(autismclient.commands.CommandSuggestions::flush)
+                                                .suggests(autismclient.commands.CommandSuggestions::suggestBoolean)
                                                 .executes(ctx -> {
                                                    VClipAction.ClipOptions options = init(ctx);
                                                    options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -108,7 +108,7 @@ public class VClipCommand extends Command {
 
    private static RequiredArgumentBuilder<AutismCommandSource, Double> init(String name, VClipCommand.OptionsCustomizer customizer) {
       return (RequiredArgumentBuilder<AutismCommandSource, Double>)RequiredArgumentBuilder.<AutismCommandSource, Double>argument(name, DoubleArgumentType.doubleArg())
-         .suggests(autismclient.commands.CommandSuggestions::load)
+         .suggests(autismclient.commands.CommandSuggestions::suggestVclipBlocks)
          .executes(ctx -> {
             VClipAction.ClipOptions options = VClipAction.ClipOptions.init(DoubleArgumentType.getDouble(ctx, name));
             init(customizer.apply(options));

@@ -107,7 +107,7 @@ public final class StatusToastCardRenderer {
       }
 
       if (percent >= 0 && maxTextWidth > 0) {
-         ProgressBarRenderer.init(context, autismclient.gui.f.NetHelper.init(x + 5, bounds.load() - 4 - 4, maxTextWidth, 4), percent / 100.0);
+         ProgressBarRenderer.draw(context, autismclient.gui.f.NetHelper.init(x + 5, bounds.load() - 4 - 4, maxTextWidth, 4), percent / 100.0);
       }
    }
 }

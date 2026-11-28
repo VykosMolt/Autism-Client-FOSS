@@ -40,7 +40,7 @@ public final class ScrollbarMetricsHelper {
 
    public static void render(GuiGraphicsExtractor context, ScrollbarMetricsHelper.Metrics metrics, boolean hovered, boolean dragging) {
       if (metrics != null && metrics.isScrollable()) {
-         ScrollbarRenderer.init(
+         ScrollbarRenderer.draw(
             autismclient.gui.f.UiHelper.init(context, Minecraft.getInstance().font, -1, -1),
             new ScrollbarRenderer.ScrollbarBounds(
                autismclient.gui.f.NetHelper.init(metrics.trackX(), metrics.trackY(), metrics.trackWidth(), metrics.trackHeight()),

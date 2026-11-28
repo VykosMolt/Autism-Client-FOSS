@@ -928,8 +928,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       if (!this.rotationOwnedByOther()
          && !BedDefenderModule.init_Z_10()
          && !SurroundModule.init_Z_27()
-         && !CrystalAuraModule.init_Z_51()
-         && !AnchorAuraModule.init_Z_2()
+         && !CrystalAuraModule.isRecentlyActive()
+         && !AnchorAuraModule.isRecentlyActive()
          && !BlinkPacketManager.isHoldingActionsOnly()
          && ServerRotationTracker.getSnapshot().initialized()) {
          RotationMath.Rotation goal = target.rotation();
@@ -965,8 +965,8 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       if (!this.rotationOwnedByOther()
          && !BedDefenderModule.init_Z_10()
          && !SurroundModule.init_Z_27()
-         && !CrystalAuraModule.init_Z_51()
-         && !AnchorAuraModule.init_Z_2()
+         && !CrystalAuraModule.isRecentlyActive()
+         && !AnchorAuraModule.isRecentlyActive()
          && !BlinkPacketManager.isHoldingActionsOnly()
          && ServerRotationTracker.getSnapshot().initialized()) {
          RotationMath.Rotation goal = target.rotation();
@@ -1711,11 +1711,11 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          return null;
       }
 
-      if (CrystalAuraModule.init_Z_51()) {
+      if (CrystalAuraModule.isRecentlyActive()) {
          return null;
       }
 
-      if (AnchorAuraModule.init_Z_2()) {
+      if (AnchorAuraModule.isRecentlyActive()) {
          return null;
       }
 
@@ -2315,7 +2315,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private boolean init_Z_I_I_2(int slot, int selected) {
-      if (BedDefenderModule.init_Z_10() || SurroundModule.init_Z_27() || CrystalAuraModule.init_Z_51() || AnchorAuraModule.init_Z_2()) {
+      if (BedDefenderModule.init_Z_10() || SurroundModule.init_Z_27() || CrystalAuraModule.isRecentlyActive() || AnchorAuraModule.isRecentlyActive()) {
          return false;
       }
 

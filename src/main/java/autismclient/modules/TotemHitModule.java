@@ -118,7 +118,7 @@ public final class TotemHitModule extends Module {
             int tick = AutismSessionState.getInstance().getClientTick();
             int selected = MC.player.getInventory().getSelectedSlot();
             if (this.write != -2147483648 && selected != this.totemSlot) {
-               if (!CrystalAuraModule.init_Z_I_10(selected) && !AnchorAuraModule.init_Z_I(selected) && !KillAuraModule.load_Z_I_3(selected)) {
+               if (!CrystalAuraModule.hasBorrowedSlot(selected) && !AnchorAuraModule.hasSwitchedToSlot(selected) && !KillAuraModule.load_Z_I_3(selected)) {
                   this.init_V_24();
                }
             } else if (!this.init_Z

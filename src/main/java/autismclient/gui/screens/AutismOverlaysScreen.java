@@ -54,7 +54,7 @@ public class AutismOverlaysScreen extends Screen {
       return this;
    }
 
-   public boolean init(AutismOverlay overlay) {
+   public boolean isTiedTo(AutismOverlay overlay) {
       return overlay != null && this.tiedOverlay == overlay;
    }
 

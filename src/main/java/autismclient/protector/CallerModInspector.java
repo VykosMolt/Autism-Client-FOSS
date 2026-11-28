@@ -24,7 +24,7 @@ public final class CallerModInspector {
    private CallerModInspector() {
    }
 
-   public static LinkedHashSet<String> init() {
+   public static LinkedHashSet<String> callerMods() {
       LinkedHashSet<String> mods = new LinkedHashSet<>();
       StackTraceElement[] stack = Thread.currentThread().getStackTrace();
 
@@ -35,7 +35,7 @@ public final class CallerModInspector {
          }
 
          try {
-            String mod = init(Class.forName(className, false, CallerModInspector.class.getClassLoader()));
+            String mod = modIdOf(Class.forName(className, false, CallerModInspector.class.getClassLoader()));
             if ("fabricloader".equals(mod)) {
                break;
             }
@@ -94,7 +94,7 @@ public final class CallerModInspector {
       }
    }
 
-   public static String init(Class<?> type) {
+   public static String modIdOf(Class<?> type) {
       if (type != null && type.getProtectionDomain() != null && type.getProtectionDomain().getCodeSource() != null) {
          try {
             URI uri = type.getProtectionDomain().getCodeSource().getLocation().toURI();

@@ -165,7 +165,7 @@ public final class PackTranslationPolicyResolver {
       if (context != null) {
          return context.privacyMode();
       } else {
-         return ProtectorFeatureFlags.sync() ? ConnectionPrivacyRegistry.PrivacyMode.VANILLA : ConnectionPrivacyRegistry.PrivacyMode.MODDED;
+         return ProtectorFeatureFlags.spoofClientVanilla() ? ConnectionPrivacyRegistry.PrivacyMode.VANILLA : ConnectionPrivacyRegistry.PrivacyMode.MODDED;
       }
    }
 

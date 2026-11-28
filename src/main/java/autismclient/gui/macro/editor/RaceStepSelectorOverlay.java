@@ -75,7 +75,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.windowNode.setTitleTone(l.load);
       this.windowNode.setHeaderButtons(true, true);
       this.windowNode.setTitleInsets(8, pop_I_3());
-      this.windowNode.body().init(2).init(EdgeInsets.uniform(4));
+      this.windowNode.body().withGap(2).withPadding(EdgeInsets.uniform(4));
       this.searchInput.setPlaceholder("Search...").setFixedHeight(13).withGrowX(true).setOnChange(this::applyQuery);
       this.rebuildLayout();
    }
@@ -147,7 +147,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private void rebuildLayout() {
       this.windowNode.body().clearChildren();
       this.windowNode.body().addChild(this.searchInput);
-      this.listSpacer.init(this.init(this.filteredOptions.size()));
+      this.listSpacer.withHeight(this.init(this.filteredOptions.size()));
       this.windowNode.body().addChild(this.listSpacer);
       this.countLabel.init(this.filteredOptions.size() + " choices");
       this.windowNode.body().addChild(this.countLabel);
@@ -195,7 +195,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       if (this.visibility.shouldRender(this.visible) && MC != null && MC.font != null) {
          boolean closing = !this.visible;
          this.visibility
-            .init(
+            .render(
                context,
                NetHelper.init(this.add, this.clear, this.reset, Math.max(this.styleTheme.load(), this.start)),
                true,

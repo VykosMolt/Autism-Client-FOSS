@@ -176,11 +176,11 @@ public class RowLayout extends LayoutContainer {
                   int rightColor = right.resolveConnectedColor(ui);
                   float leftWeight = left.resolveConnectedWeight();
                   float rightWeight = right.resolveConnectedWeight();
-                  int seamColor = ConnectedButtonRenderer.init(leftColor, leftWeight, rightColor, rightWeight);
+                  int seamColor = ConnectedButtonRenderer.dominantColor(leftColor, leftWeight, rightColor, rightWeight);
                   int seamX = Math.round(right.x());
                   int seamY = Math.round(Math.max(left.y(), right.y()));
                   int seamBottom = Math.round(Math.min(left.y() + left.height(), right.y() + right.height()));
-                  ConnectedButtonRenderer.init(ui, seamX, seamY, Math.max(0, seamBottom - seamY), seamColor);
+                  ConnectedButtonRenderer.drawSeam(ui, seamX, seamY, Math.max(0, seamBottom - seamY), seamColor);
                }
 
                previous = child;

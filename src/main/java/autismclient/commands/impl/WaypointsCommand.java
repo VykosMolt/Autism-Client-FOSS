@@ -30,19 +30,19 @@ public final class WaypointsCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("del").executes(ctx -> this.usage()))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", StringArgumentType.greedyString())
-                  .suggests(autismclient.commands.CommandSuggestions::tick)
+                  .suggests(autismclient.commands.CommandSuggestions::suggestWaypointName)
                   .executes(ctx -> this.delete(StringArgumentType.getString(ctx, "name")))
             )
       );
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, Double>argument("x", DoubleArgumentType.doubleArg())
-            .suggests(autismclient.commands.CommandSuggestions::pop)
+            .suggests(autismclient.commands.CommandSuggestions::suggestCoordinate)
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Double>argument("y", DoubleArgumentType.doubleArg())
-                  .suggests(autismclient.commands.CommandSuggestions::pop)
+                  .suggests(autismclient.commands.CommandSuggestions::suggestCoordinate)
                   .then(
                      RequiredArgumentBuilder.<AutismCommandSource, Double>argument("z", DoubleArgumentType.doubleArg())
-                        .suggests(autismclient.commands.CommandSuggestions::pop)
+                        .suggests(autismclient.commands.CommandSuggestions::suggestCoordinate)
                         .executes(
                            ctx -> this.addAt(
                               DoubleArgumentType.getDouble(ctx, "x"), DoubleArgumentType.getDouble(ctx, "y"), DoubleArgumentType.getDouble(ctx, "z")

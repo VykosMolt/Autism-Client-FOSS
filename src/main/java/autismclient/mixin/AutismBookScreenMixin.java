@@ -52,7 +52,7 @@ public abstract class AutismBookScreenMixin extends Screen implements Desyncable
             double mouseY = cA.init_D_D(click.y());
 
             for (SimpleClickButton button : ContainerScreenToolbar.init(MC, this.autism$host.queueEditorOverlay())) {
-               if (button.init(mouseX, mouseY, Compat263.mouseEventGlfwButton(click))) {
+               if (button.mouseClicked(mouseX, mouseY, Compat263.mouseEventGlfwButton(click))) {
                   cir.setReturnValue(true);
                   return;
                }

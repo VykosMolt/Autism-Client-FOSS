@@ -426,7 +426,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
    }
 
-   public static boolean init_Z_2() {
+   public static boolean isRecentlyActive() {
       if (al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled()) {
          int age = AutismSessionState.getInstance().getClientTick() - aura.mayActTick;
          return age >= 0 && age <= 5;
@@ -435,11 +435,11 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
    }
 
-   public static boolean read_Z() {
+   public static boolean isEngagedThisTick() {
       return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() ? aura.engagedTick == AutismSessionState.getInstance().getClientTick() : false;
    }
 
-   public static boolean init_Z_I(int slot) {
+   public static boolean hasSwitchedToSlot(int slot) {
       return al.init_Module_Str("anchor-aura") instanceof AnchorAuraModule aura && aura.isEnabled() ? aura.switchBackSlot >= 0 && aura.switchedToSlot == slot : false;
    }
 
@@ -519,7 +519,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    }
 
    private static boolean higherPriorityActive() {
-      return BedDefenderModule.init_Z_10() || SurroundModule.init_Z_27() || CrystalAuraModule.flush() && CrystalAuraModule.init_Z_51();
+      return BedDefenderModule.init_Z_10() || SurroundModule.init_Z_27() || CrystalAuraModule.flush() && CrystalAuraModule.isRecentlyActive();
    }
 
    private boolean isFinishingStep(AnchorAuraModule.AnchorPlan plan) {
@@ -593,7 +593,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          this.refreshSimOptions();
          boolean higherRung = higherPriorityActive();
          boolean caPrime = CrystalAuraModule.flush();
-         boolean caCommitted = caPrime && CrystalAuraModule.sync_Z_11();
+         boolean caCommitted = caPrime && CrystalAuraModule.hasPlannedSupport();
          if (caPrime) {
             this.clearPlan();
          }
@@ -2263,7 +2263,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
    private boolean switchToSlot(int slot, boolean finishingWork) {
       if (!BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27()) {
-         if (finishingWork || !CrystalAuraModule.flush() || !CrystalAuraModule.init_Z_51() && !CrystalAuraModule.sync_Z_11()) {
+         if (finishingWork || !CrystalAuraModule.flush() || !CrystalAuraModule.isRecentlyActive() && !CrystalAuraModule.hasPlannedSupport()) {
             int tick = AutismSessionState.getInstance().getClientTick();
             if (tick == this.lastSlotSwitchTick) {
                return false;
@@ -2314,7 +2314,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       if (this.switchBackSlot >= 0 && MC.gui.screen() == null && MC.gui.overlay() == null) {
          if (this.switchedToSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.switchedToSlot) {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (!CrystalAuraModule.init_Z_I_10(selected) && !KillAuraModule.load_Z_I_3(selected)) {
+            if (!CrystalAuraModule.hasBorrowedSlot(selected) && !KillAuraModule.load_Z_I_3(selected)) {
                this.switchBackSlot = -1;
                this.switchedToSlot = -1;
                this.switchBackDelayTicks = 0;

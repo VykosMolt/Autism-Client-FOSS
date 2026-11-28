@@ -300,8 +300,8 @@ public class ThemeColorScreen extends Screen {
       if (maxScroll > 0) {
          rowW = innerW - 6 - 2;
          autismclient.gui.f.NetHelper track = autismclient.gui.f.NetHelper.init(x + innerW - 6, y, 6, this.listArea.sync());
-         this.scrollbar = autismclient.gui.ui.widgets.ScrollbarRenderer.init(track, rows.size() * rowH, visible * rowH, this.scrollRow * rowH);
-         autismclient.gui.ui.widgets.ScrollbarRenderer.init(ctx, this.scrollbar, this.scrollbar.init(mx, my), this.draggingScrollbar);
+         this.scrollbar = autismclient.gui.ui.widgets.ScrollbarRenderer.bounds(track, rows.size() * rowH, visible * rowH, this.scrollRow * rowH);
+         autismclient.gui.ui.widgets.ScrollbarRenderer.draw(ctx, this.scrollbar, this.scrollbar.trackContains(mx, my), this.draggingScrollbar);
       } else {
          this.scrollbar = null;
          this.draggingScrollbar = false;
@@ -498,7 +498,7 @@ public class ThemeColorScreen extends Screen {
          int fieldX = btn.init() + 2;
          autismclient.gui.f.NetHelper field = autismclient.gui.f.NetHelper.init(fieldX, y, Math.max(0, x + innerW - fieldX), ctrlH);
          if (field.update() >= 12) {
-            TextFieldRenderer.init(sample, field, "", "Search", false, 0);
+            TextFieldRenderer.draw(sample, field, "", "Search", false, 0);
          }
 
          y += ctrlH + 4;
@@ -682,8 +682,8 @@ public class ThemeColorScreen extends Screen {
          return true;
       }
 
-      if (this.scrollbar != null && this.scrollbar.init(mx, my)) {
-         this.scrollbarGrabOffset = this.scrollbar.load(mx, my)
+      if (this.scrollbar != null && this.scrollbar.trackContains(mx, my)) {
+         this.scrollbarGrabOffset = this.scrollbar.thumbContains(mx, my)
             ? my - this.scrollbar.load().write()
             : this.scrollbar.load().sync() / 2;
          this.draggingScrollbar = true;
@@ -735,7 +735,7 @@ public class ThemeColorScreen extends Screen {
    public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
       int mx = cA.init_I_D(x);
       int my = cA.init_I_D(y);
-      if (this.scrollbar != null && scrollY != 0.0 && (this.listArea.init_Z(mx, my) || this.scrollbar.init(mx, my))) {
+      if (this.scrollbar != null && scrollY != 0.0 && (this.listArea.init_Z(mx, my) || this.scrollbar.trackContains(mx, my))) {
          this.scrollRow = this.scrollRow - (int)Math.signum(scrollY);
          return true;
       } else {
@@ -1034,7 +1034,7 @@ public class ThemeColorScreen extends Screen {
          context.init_TableIndex().colors().accent = accent;
 
          try {
-            autismclient.gui.ui.widgets.SliderRenderer.init(context, b2, value / 255.0, b2.init_Z(context.read(), context.write()));
+            autismclient.gui.ui.widgets.SliderRenderer.draw(context, b2, value / 255.0, b2.init_Z(context.read(), context.write()));
          } finally {
             context.init_TableIndex().colors().accent = originalAccent;
          }

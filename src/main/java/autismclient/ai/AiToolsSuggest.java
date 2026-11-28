@@ -352,9 +352,9 @@ public final class AiToolsSuggest {
    }
 
    static List<String> sync() {
-      List<String> ids = new ArrayList<>(autismclient.commands.CommandSuggestions.read().size() + 1);
+      List<String> ids = new ArrayList<>(autismclient.commands.CommandSuggestions.entityIds().size() + 1);
       ids.add("hostiles");
-      ids.addAll(autismclient.commands.CommandSuggestions.read());
+      ids.addAll(autismclient.commands.CommandSuggestions.entityIds());
       return ids;
    }
 

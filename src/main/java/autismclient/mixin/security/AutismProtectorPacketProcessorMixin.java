@@ -19,10 +19,10 @@ public class AutismProtectorPacketProcessorMixin {
    )
    private <T extends PacketListener> void autism$wrapHandle(Packet<?> instance, T listener, Operation<Void> original) {
       if (!(instance instanceof ClientboundLevelParticlesPacket particles && ModdedParticleGuard.init(particles))) {
-         if (!PacketDecodeOriginStack.init(instance)) {
+         if (!PacketDecodeOriginStack.tracks(instance)) {
             original.call(instance, listener);
          } else {
-            PacketDecodeOriginStack.init(ConnectionPrivacyRegistry.getByListener(listener));
+            PacketDecodeOriginStack.push(ConnectionPrivacyRegistry.getByListener(listener));
 
             try {
                original.call(instance, listener);

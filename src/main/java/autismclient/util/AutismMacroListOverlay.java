@@ -124,7 +124,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       this.windowNode.setTitleTone(autismclient.gui.f.b.l.load);
       this.windowNode.setHeaderButtons(true, true);
       this.windowNode.setTitleInsets(this.add_I_11() + 2, this.add_I_11() + this.next_I_4() + this.prev_I_3() + this.valid_I_2() + 12);
-      this.windowNode.body().init(this.clear_I_5()).init(autismclient.gui.ui.layout.EdgeInsets.uniform(this.add_I_11()));
+      this.windowNode.body().withGap(this.clear_I_5()).withPadding(autismclient.gui.ui.layout.EdgeInsets.uniform(this.add_I_11()));
       this.searchInput.setPlaceholder("Search macros...").setFixedHeight(this.reset_I_4()).withGrowX(true).setOnChange(text -> {
          this.scroller.jumpTo(0, 0);
          this.layoutDirty = true;
@@ -175,7 +175,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                new autismclient.gui.ui.layout.LabelNode("No macros match the current filter.", autismclient.gui.f.b.l.write).setTrimToBounds(true)
             );
       } else {
-         this.listSpacer.init(this.listHeightFor(this.items.size()));
+         this.listSpacer.withHeight(this.listHeightFor(this.items.size()));
          this.windowNode.body().addChild(this.listSpacer);
       }
 
@@ -183,7 +183,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.windowNode.body().addChild(this.folderNameInput);
          String confirmLabel = this.renamingFolder == null ? "Create Folder" : "Rename";
          boolean grow = !this.buttonsFit(confirmLabel, "Cancel");
-         autismclient.gui.ui.layout.StretchRowLayout actions = new autismclient.gui.ui.layout.StretchRowLayout().init(this.start_I_10());
+         autismclient.gui.ui.layout.StretchRowLayout actions = new autismclient.gui.ui.layout.StretchRowLayout().withGap(this.start_I_10());
          actions.addChild(
             this.newButton(confirmLabel, autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS, this::confirmFolderDialog, grow)
          );
@@ -192,7 +192,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       } else if (this.pasteDialogOpen) {
          this.windowNode.body().addChild(this.pasteNameInput);
          boolean grow = !this.buttonsFit("Create", "Cancel");
-         autismclient.gui.ui.layout.StretchRowLayout actions = new autismclient.gui.ui.layout.StretchRowLayout().init(this.start_I_10());
+         autismclient.gui.ui.layout.StretchRowLayout actions = new autismclient.gui.ui.layout.StretchRowLayout().withGap(this.start_I_10());
          actions.addChild(this.newButton("Create", autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS, this::confirmPaste, grow));
          actions.addChild(this.newButton("Cancel", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::closePasteDialog, grow));
          this.windowNode.body().addChild(actions);
@@ -203,7 +203,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             );
       } else {
          boolean grow = !this.buttonsFit("Create New", "Paste", "Folder", "Move", "Copy");
-         autismclient.gui.ui.layout.StretchRowLayout actions = new autismclient.gui.ui.layout.StretchRowLayout().init(this.start_I_10());
+         autismclient.gui.ui.layout.StretchRowLayout actions = new autismclient.gui.ui.layout.StretchRowLayout().withGap(this.start_I_10());
          actions.addChild(
             this.newButton("Create New", autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS, this::openNewMacro, grow)
          );
@@ -536,7 +536,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.overlayWidth = this.resolveWindowWidth(this.run_I_13(), this.run_I_13());
          int autoList = this.listHeightFor(this.items.size());
          if (!this.items.isEmpty()) {
-            this.listSpacer.init(autoList);
+            this.listSpacer.withHeight(autoList);
          }
 
          this.overlayHeight = Math.round(this.windowNode.measureHeight(metrics, this.overlayWidth));
@@ -544,7 +544,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             this.chromeHeight = this.overlayHeight - autoList;
             if (this.hasCustomStoredSize()) {
                int want = this.resolveWindowHeight(this.overlayHeight, this.getResizeMinHeight());
-               this.listSpacer.init(Math.max(this.listHeightFor(3), want - this.chromeHeight));
+               this.listSpacer.withHeight(Math.max(this.listHeightFor(3), want - this.chromeHeight));
                this.overlayHeight = Math.round(this.windowNode.measureHeight(metrics, this.overlayWidth));
             }
          }

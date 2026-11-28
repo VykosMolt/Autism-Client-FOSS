@@ -18,7 +18,7 @@ public final class IconHeaderNode extends LayoutNode {
       this.nodeHeight = 14.0F;
    }
 
-   public IconHeaderNode init(int iconSize) {
+   public IconHeaderNode withIconSize(int iconSize) {
       this.iconSize = Math.max(1, iconSize);
       this.markLayoutDirty();
       return this;
@@ -47,7 +47,7 @@ public final class IconHeaderNode extends LayoutNode {
          int drawY = Math.round(this.nodeY);
          int drawH = Math.round(this.nodeHeight);
          if (this.connectedStyle) {
-            ConnectedButtonRenderer.init(
+            ConnectedButtonRenderer.drawIconButton(
                autismclient.gui.f.UiHelper.init(
                   context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
                ),

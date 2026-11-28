@@ -47,10 +47,10 @@ public class HClipCommand extends Command {
          LiteralArgumentBuilder.<AutismCommandSource>literal("custom")
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Double>argument("blocks", DoubleArgumentType.doubleArg())
-                  .suggests(autismclient.commands.CommandSuggestions::load)
+                  .suggests(autismclient.commands.CommandSuggestions::suggestVclipBlocks)
                   .then(
                      ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("segment", IntegerArgumentType.integer(1, 50))
-                           .suggests(autismclient.commands.CommandSuggestions::read)
+                           .suggests(autismclient.commands.CommandSuggestions::suggestVclipSegments)
                            .executes(
                               ctx -> {
                                  autismclient.util.macro.HClipAction.ClipOptions options = autismclient.util.macro.HClipAction.ClipOptions.init(
@@ -63,7 +63,7 @@ public class HClipCommand extends Command {
                            ))
                         .then(
                            ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("maxPackets", IntegerArgumentType.integer(1, 100))
-                                 .suggests(autismclient.commands.CommandSuggestions::write)
+                                 .suggests(autismclient.commands.CommandSuggestions::suggestMaxPackets)
                                  .executes(
                                     ctx -> {
                                        autismclient.util.macro.HClipAction.ClipOptions options = autismclient.util.macro.HClipAction.ClipOptions.init(
@@ -77,7 +77,7 @@ public class HClipCommand extends Command {
                                  ))
                               .then(
                                  ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("updateLocal", BoolArgumentType.bool())
-                                       .suggests(autismclient.commands.CommandSuggestions::flush)
+                                       .suggests(autismclient.commands.CommandSuggestions::suggestBoolean)
                                        .executes(ctx -> {
                                           autismclient.util.macro.HClipAction.ClipOptions options = init(ctx);
                                           options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -86,7 +86,7 @@ public class HClipCommand extends Command {
                                        }))
                                     .then(
                                        ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("vehicle", BoolArgumentType.bool())
-                                             .suggests(autismclient.commands.CommandSuggestions::flush)
+                                             .suggests(autismclient.commands.CommandSuggestions::suggestBoolean)
                                              .executes(ctx -> {
                                                 autismclient.util.macro.HClipAction.ClipOptions options = init(ctx);
                                                 options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -96,7 +96,7 @@ public class HClipCommand extends Command {
                                              }))
                                           .then(
                                              RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("forceGround", BoolArgumentType.bool())
-                                                .suggests(autismclient.commands.CommandSuggestions::flush)
+                                                .suggests(autismclient.commands.CommandSuggestions::suggestBoolean)
                                                 .executes(ctx -> {
                                                    autismclient.util.macro.HClipAction.ClipOptions options = init(ctx);
                                                    options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
@@ -116,7 +116,7 @@ public class HClipCommand extends Command {
 
    private static RequiredArgumentBuilder<AutismCommandSource, Double> init(String name, HClipCommand.Inner_DataUtil customizer) {
       return (RequiredArgumentBuilder<AutismCommandSource, Double>)RequiredArgumentBuilder.<AutismCommandSource, Double>argument(name, DoubleArgumentType.doubleArg())
-         .suggests(autismclient.commands.CommandSuggestions::load)
+         .suggests(autismclient.commands.CommandSuggestions::suggestVclipBlocks)
          .executes(
             ctx -> {
                autismclient.util.macro.HClipAction.ClipOptions options = autismclient.util.macro.HClipAction.ClipOptions.init(

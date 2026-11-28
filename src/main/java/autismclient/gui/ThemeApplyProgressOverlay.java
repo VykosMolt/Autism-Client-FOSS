@@ -157,7 +157,7 @@ public final class ThemeApplyProgressOverlay extends Overlay {
       int barX = px + pad * 2;
       int barW = Math.max(1, panelW - pad * 4);
       int barY = py + panelH - pad - barH;
-      ProgressBarRenderer.init(UiHelper.init(graphics, mc.font, mouseX, mouseY), NetHelper.init(barX, barY, barW, barH), this.progress);
+      ProgressBarRenderer.draw(UiHelper.init(graphics, mc.font, mouseX, mouseY), NetHelper.init(barX, barY, barW, barH), this.progress);
       boolean minElapsed = now - this.shownAt >= 300L;
       boolean timedOut = now - this.shownAt >= 10000L;
       if (finished && minElapsed && this.progress >= 1.0F || timedOut) {

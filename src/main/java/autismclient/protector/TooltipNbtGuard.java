@@ -34,7 +34,7 @@ public final class TooltipNbtGuard {
          int replaced = 0;
 
          for (int i = 0; i < lines.size(); i++) {
-            if (!ComponentSafetyValidator.init(lines.get(i))) {
+            if (!ComponentSafetyValidator.isSafe(lines.get(i))) {
                lines.set(i, Component.literal("[unsafe tooltip line removed]").withStyle(ChatFormatting.DARK_GRAY));
                replaced++;
             }
@@ -46,7 +46,7 @@ public final class TooltipNbtGuard {
       }
    }
 
-   public static int init(ItemStack stack, RegistryAccess access) {
+   public static int nbtBytes(ItemStack stack, RegistryAccess access) {
       if (stack != null && !stack.isEmpty() && access != null) {
          try {
             CompoundTag nbt = (CompoundTag)ItemStack.CODEC.encodeStart(access.createSerializationContext(NbtOps.INSTANCE), stack).getOrThrow();

@@ -50,7 +50,7 @@ public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDu
       boolean success = false;
 
       try {
-         ModNamespaceCatalog.load();
+         ModNamespaceCatalog.reset();
          ClientLanguage language = original.call(resourceManager, languageStack, defaultRightToLeft);
          ((TranslationSnapshotDuck)language).autism$setTranslationSnapshot(builder.build());
          success = true;
@@ -78,7 +78,7 @@ public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDu
       } else if (source instanceof PathPackResources) {
          original.call(stream, snapshotOutput);
       } else {
-         String modId = source instanceof ModNioPackResources modPack ? modPack.getFabricModMetadata().getId() : CallerModInspector.init(source.getClass());
+         String modId = source instanceof ModNioPackResources modPack ? modPack.getFabricModMetadata().getId() : CallerModInspector.modIdOf(source.getClass());
          if (modId == null) {
             original.call(stream, snapshotOutput);
          } else {

@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismProtectorYggdrasilMixin {
    @Inject(method = "newTelemetrySession", at = @At("HEAD"), cancellable = true)
    private void autism$disableTelemetrySession(Executor executor, CallbackInfoReturnable<TelemetrySession> info) {
-      if (ProtectorFeatureFlags.poll()) {
+      if (ProtectorFeatureFlags.disableTelemetry()) {
          info.setReturnValue(TelemetrySession.DISABLED);
       }
    }

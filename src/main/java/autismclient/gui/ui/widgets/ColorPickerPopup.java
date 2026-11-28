@@ -126,7 +126,7 @@ public final class ColorPickerPopup {
          this.renderChannelSlider(context, this.greenSlider(), "G", this.green(), -11149961);
          this.renderChannelSlider(context, this.blueSlider(), "B", this.blue(), -10053121);
          autismclient.gui.f.NetHelper hex = this.hexBounds();
-         TextFieldRenderer.init(context, hex, this.hexText, "RRGGBB", this.hexFocused, this.hexCursor, this.selectionStart(), this.selectionEnd());
+         TextFieldRenderer.draw(context, hex, this.hexText, "RRGGBB", this.hexFocused, this.hexCursor, this.selectionStart(), this.selectionEnd());
          context.init_PoolEntry()
             .drawFitted(
                context.init_GuiGraphicsExtract(), "#", hex.read() - 9, context.init_PoolEntry().centerTextY(hex), 8, context.init_TableIndex().colors().textSecondary
@@ -201,7 +201,7 @@ public final class ColorPickerPopup {
       }
    }
 
-   public boolean load(int mouseX, int mouseY, int button) {
+   public boolean mouseReleased(int mouseX, int mouseY, int button) {
       if (button == 0) {
          this.dragTarget = ColorPickerPopup.DragTarget.NONE;
       }
@@ -241,7 +241,7 @@ public final class ColorPickerPopup {
       return this.shown;
    }
 
-   public boolean read(int key, int scanCode, int modifiers) {
+   public boolean keyPressed(int key, int scanCode, int modifiers) {
       if (!this.shown) {
          return false;
       }

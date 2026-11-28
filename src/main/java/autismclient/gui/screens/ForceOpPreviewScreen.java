@@ -151,10 +151,10 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    private void drawFrame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, String title, int mx, int my) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, height);
       int headerH = this.headerHeight();
-      autismclient.gui.ui.widgets.DialogFrameRenderer.init(
+      autismclient.gui.ui.widgets.DialogFrameRenderer.draw(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
-      autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.init(bounds, headerH);
+      autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.headerBounds(bounds, headerH);
       this.hitRegions.add(new ForceOpPreviewScreen.HitRegion(ForceOpPreviewScreen.HitKind.CLOSE, close.read(), close.write(), close.update(), close.sync()));
    }
 

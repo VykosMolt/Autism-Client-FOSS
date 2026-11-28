@@ -10,7 +10,7 @@ public final class CrosshairPreviewRenderer {
    private CrosshairPreviewRenderer() {
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, CrosshairRenderState.Inner_DataUtil look) {
+   public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, CrosshairRenderState.Inner_DataUtil look) {
       if (bounds.update() > 8 && bounds.sync() > 8) {
          BufferHelper.init_V(context, bounds, "Preview");
          int top = BufferHelper.init_I(context, bounds, "Preview") + 2;

@@ -642,7 +642,7 @@ final class AiSettingsView {
          y += ctrl + 2;
          this.init_NetHelper = autismclient.gui.f.NetHelper.init(x, y, w, ctrl);
          if (kit.isVisibleInClip(this.init_NetHelper)) {
-            autismclient.gui.ui.widgets.SliderRenderer.init(kit.renderContext, this.init_NetHelper, opacity / 100.0, kit.isHovered(this.init_NetHelper));
+            autismclient.gui.ui.widgets.SliderRenderer.draw(kit.renderContext, this.init_NetHelper, opacity / 100.0, kit.isHovered(this.init_NetHelper));
             kit.addInteractiveRegion(this.init_NetHelper, () -> {
                this.update_Z = true;
                this.dragGhostSlider(this.host.contextMenuX());
@@ -721,7 +721,7 @@ final class AiSettingsView {
          autismclient.gui.f.NetHelper stopRow = autismclient.gui.f.NetHelper.init(x, y, w, ctrl);
          kit.drawCenteredRowText("Stop key", stopRow, x + 5, labelW - 5, kit.colors.textPrimary);
          autismclient.gui.f.NetHelper bind = autismclient.gui.f.NetHelper.init(x + labelW, y, Math.max(34, kit.measureButtonWidth("F10") + 10), ctrl);
-         autismclient.gui.ui.widgets.KeybindButtonRenderer.init(kit.renderContext, bind, this.init_I_AiSettings_J(live, now), this.capturingKey, kit.isHovered(bind));
+         autismclient.gui.ui.widgets.KeybindButtonRenderer.draw(kit.renderContext, bind, this.init_I_AiSettings_J(live, now), this.capturingKey, kit.isHovered(bind));
          kit.addInteractiveRegion(bind, () -> this.capturingKey = !this.capturingKey, null, this.capturingKey ? "Press a key, Esc cancels" : "Emergency stop key");
          y += ctrl + 2;
          if (!this.builtIn) {
@@ -799,7 +799,7 @@ final class AiSettingsView {
    }
 
    private void dragGhostSlider(double x) {
-      this.ghostLimit = (int)autismclient.gui.ui.widgets.SliderRenderer.init(x, this.init_NetHelper.read() + 3, this.init_NetHelper.update() - 6, 0.0, 100.0, 1.0);
+      this.ghostLimit = (int)autismclient.gui.ui.widgets.SliderRenderer.valueAt(x, this.init_NetHelper.read() + 3, this.init_NetHelper.update() - 6, 0.0, 100.0, 1.0);
       AiVisualization.setGhostLimit(this.ghostLimit);
    }
 

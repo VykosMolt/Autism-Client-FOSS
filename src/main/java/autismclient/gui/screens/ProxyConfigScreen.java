@@ -219,14 +219,14 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          int panelW = this.open();
          int panelTop = this.push();
          autismclient.gui.f.NetHelper panelBounds = autismclient.gui.f.NetHelper.init(panelX, panelTop, panelW, this.set() - panelTop);
-         autismclient.gui.ui.widgets.DialogFrameRenderer.init(
+         autismclient.gui.ui.widgets.DialogFrameRenderer.draw(
             autismclient.gui.f.UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY),
             panelBounds,
             this.read_I_5(),
             "Proxy Settings",
             panelBounds.init_Z(virtualMouseX, virtualMouseY)
          );
-         autismclient.gui.ui.widgets.SectionCardRenderer.init(
+         autismclient.gui.ui.widgets.SectionCardRenderer.drawPlain(
             autismclient.gui.f.UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY),
             autismclient.gui.f.NetHelper.init(panelX + 4, this.put(), Math.max(0, panelW - 8), Math.max(0, this.reset() + 4 - this.put())),
             -1206840035
@@ -280,7 +280,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
       MouseButtonEvent virtualEvent = toVirtual(event);
       if (Compat263.mouseEventGlfwButton(virtualEvent) == 0
-         && autismclient.gui.ui.widgets.DialogFrameRenderer.init(
+         && autismclient.gui.ui.widgets.DialogFrameRenderer.isOverHeader(
             autismclient.gui.f.NetHelper.init(this.close(), this.push(), this.open(), this.set() - this.push()),
             this.read_I_5(),
             (int)virtualEvent.x(),

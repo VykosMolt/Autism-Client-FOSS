@@ -96,7 +96,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.windowNode.setTitleTone(autismclient.gui.f.b.l.load);
       this.windowNode.setHeaderButtons(true, true);
       this.windowNode.setTitleInsets(this.run_I_20() + 2, this.run_I_20() + this.put() + this.add_I_15() + this.clear() + 12);
-      this.windowNode.body().init(this.get_I_18()).init(autismclient.gui.ui.layout.EdgeInsets.uniform(this.run_I_20()));
+      this.windowNode.body().withGap(this.get_I_18()).withPadding(autismclient.gui.ui.layout.EdgeInsets.uniform(this.run_I_20()));
       this.searchInput
          .setPlaceholder("Search packets...")
          .setFixedHeight(this.set_I_18())
@@ -109,7 +109,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.windowNode.body().clearChildren();
       this.windowNode.setTitle(this.multiSelectMode ? "Packet Selector [Toggle]" : "Packet Selector");
       this.windowNode.body().addChild(this.searchInput);
-      this.listSpacer.init(this.listHeightFor(this.filteredPackets.size()));
+      this.listSpacer.withHeight(this.listHeightFor(this.filteredPackets.size()));
       this.windowNode.body().addChild(this.listSpacer);
       this.countLabel.init(this.multiSelectMode ? this.filteredPackets.size() + " packets | Selected " + this.selectedPackets.size() : this.filteredPackets.size() + " packets");
       this.windowNode.body().addChild(this.countLabel);
@@ -274,7 +274,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       if (this.visibilityTransition.shouldRender(this.overlayVisible) && MC != null && MC.font != null) {
          boolean closing = !this.overlayVisible;
          this.visibilityTransition
-            .init(
+            .render(
                context,
                autismclient.gui.f.NetHelper.init(this.pop, this.tick, this.run, Math.max(this.theme.load(), this.get)),
                true,

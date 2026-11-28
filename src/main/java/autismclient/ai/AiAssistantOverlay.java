@@ -635,7 +635,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
                   || this.contextMenu.isOpen()
                   || this.chatView.init_Z()
             )
-         ? Minecraft.getInstance().gui.screen() instanceof autismclient.gui.screens.AutismOverlaysScreen host && host.init(this)
+         ? Minecraft.getInstance().gui.screen() instanceof autismclient.gui.screens.AutismOverlaysScreen host && host.isTiedTo(this)
          : false;
    }
 

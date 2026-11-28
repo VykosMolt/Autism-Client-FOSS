@@ -23,7 +23,7 @@ public final class ClickItemCommand extends Command {
          return 1;
       });
       RequiredArgumentBuilder<AutismCommandSource, String> item = (RequiredArgumentBuilder<AutismCommandSource, String>)RequiredArgumentBuilder.<AutismCommandSource, String>argument(
-            "item-name", autismclient.commands.arguments.ContainerItemNameArgumentType.init()
+            "item-name", autismclient.commands.arguments.ContainerItemNameArgumentType.itemName()
          )
          .executes(context -> init(context, SlotClickCommandHelper.ClickSpec.init("Left", ContainerInput.PICKUP, 0), 1));
       SlotClickCommandHelper.init(item, ClickItemCommand::init);
@@ -33,7 +33,7 @@ public final class ClickItemCommand extends Command {
    private static int init(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.ClickSpec spec, int times) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu != null) {
-         String requestedName = autismclient.commands.arguments.ContainerItemNameArgumentType.init(context, "item-name");
+         String requestedName = autismclient.commands.arguments.ContainerItemNameArgumentType.getItemName(context, "item-name");
          int handlerSlot = init(mc.player.containerMenu, requestedName);
          if (handlerSlot < 0) {
             AutismClientMessaging.sendPrefixed("§cNo visible item named §f" + requestedName + "§c exists in the current GUI.");

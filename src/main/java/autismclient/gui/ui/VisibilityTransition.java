@@ -69,7 +69,7 @@ public final class VisibilityTransition {
       return this.progress();
    }
 
-   public void init(GuiGraphicsExtractor graphics, NetHelper bounds, boolean zoom, Runnable draw) {
+   public void render(GuiGraphicsExtractor graphics, NetHelper bounds, boolean zoom, Runnable draw) {
       float value = this.progress();
       if (value >= 0.999F) {
          draw.run();

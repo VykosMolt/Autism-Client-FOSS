@@ -82,12 +82,12 @@ public abstract class AutismProtectorTranslatableContentsMixin implements Packet
          return "\u0000__autism_allow__";
       } else {
          ConnectionPrivacyRegistry.ConnectionSession origin = this.autism$packetOrigin;
-         if (origin != null && origin.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && !ProtectorFeatureFlags.close() && !PacketComponentOriginTracker.isDecoding()) {
+         if (origin != null && origin.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && !ProtectorFeatureFlags.translationProtection() && !PacketComponentOriginTracker.isDecoding()) {
             return "\u0000__autism_allow__";
          } else {
             return origin != null && !origin.isMultiConnection() && ConnectionPrivacyRegistry.isActive(origin) && origin.connection().isMemoryConnection()
                ? "\u0000__autism_allow__"
-               : TranslationSnapshot.init(language, translationKey, defaultValue, origin);
+               : TranslationSnapshot.translate(language, translationKey, defaultValue, origin);
          }
       }
    }

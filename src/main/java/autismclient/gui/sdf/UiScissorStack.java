@@ -25,7 +25,7 @@ public final class UiScissorStack {
       STACK.addLast(intersection != null ? intersection : ScreenRectangle.empty());
    }
 
-   public static void load(ScreenRectangle rectangle) {
+   public static void mirrorPush(ScreenRectangle rectangle) {
       STACK.addLast(rectangle != null ? rectangle : ScreenRectangle.empty());
    }
 

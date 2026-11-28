@@ -23,7 +23,7 @@ public class GamemodeCommand extends Command {
          AutismClientMessaging.sendPrefixed("§7Client-side only: " + autismclient.commands.CommandManager.getPrefix() + "fakegm");
          return 1;
       });
-      root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::put).executes(ctx -> {
+      root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::suggestGamemode).executes(ctx -> {
          String mode = StringArgumentType.getString(ctx, "mode").toLowerCase(Locale.ROOT);
          GameType resolved = FakeGamemodeManager.parseMode(mode);
          if (resolved != null) {

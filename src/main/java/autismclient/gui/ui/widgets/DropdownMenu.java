@@ -232,8 +232,8 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
             autismclient.gui.f.NetHelper track = autismclient.gui.f.NetHelper.init(
                this.popupBounds.init() - 6 - 1, this.popupBounds.write() + 4, 6, Math.max(1, this.popupBounds.sync() - 8)
             );
-            this.scrollbarBounds = ScrollbarRenderer.init(track, this.options.size() * rowHeight, this.visibleRows * rowHeight, this.scrollRow * rowHeight);
-            ScrollbarRenderer.init(
+            this.scrollbarBounds = ScrollbarRenderer.bounds(track, this.options.size() * rowHeight, this.visibleRows * rowHeight, this.scrollRow * rowHeight);
+            ScrollbarRenderer.draw(
                context, this.scrollbarBounds, this.scrollbarBounds.track().init_Z(context.read(), context.write()), this.draggingScrollbar
             );
          } else {

@@ -31,7 +31,7 @@ public abstract class VirtualScaledScreen extends Screen {
    }
 
    protected void drawCard(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int fill) {
-      autismclient.gui.ui.widgets.SectionCardRenderer.init(autismclient.gui.f.UiHelper.init(graphics, this.font, -10000, -10000), autismclient.gui.f.NetHelper.init(x, y, w, h), fill);
+      autismclient.gui.ui.widgets.SectionCardRenderer.drawPlain(autismclient.gui.f.UiHelper.init(graphics, this.font, -10000, -10000), autismclient.gui.f.NetHelper.init(x, y, w, h), fill);
    }
 
    protected void toast(String message, int accentColor) {

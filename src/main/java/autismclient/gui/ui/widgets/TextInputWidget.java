@@ -946,7 +946,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                }
 
                if (this.cursorIndex > 0) {
-                  int from = ctrl ? this.findPreviousWordBoundary(this.cursorIndex) : Utf16TextCursor.read(this.value, this.cursorIndex);
+                  int from = ctrl ? this.findPreviousWordBoundary(this.cursorIndex) : Utf16TextCursor.previous(this.value, this.cursorIndex);
                   this.replaceRange(from, this.cursorIndex, "");
                }
 
@@ -957,7 +957,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                }
 
                if (this.cursorIndex < this.value.length()) {
-                  int to = ctrl ? this.findNextWordBoundary(this.cursorIndex) : Utf16TextCursor.write(this.value, this.cursorIndex);
+                  int to = ctrl ? this.findNextWordBoundary(this.cursorIndex) : Utf16TextCursor.next(this.value, this.cursorIndex);
                   this.replaceRange(this.cursorIndex, to, "");
                }
 
@@ -1148,7 +1148,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
 
       if (this.horizontalScrollIndex == safeCursor && safeCursor > 0) {
-         this.horizontalScrollIndex = Utf16TextCursor.read(this.value, safeCursor);
+         this.horizontalScrollIndex = Utf16TextCursor.previous(this.value, safeCursor);
       }
    }
 
@@ -1299,7 +1299,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          || this.prefixCacheColor != color
          || this.prefixCacheRichMetrics != richMetrics
          || this.prefixWidths.length != this.value.length() + 1) {
-         autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(font);
+         autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.forFont(font);
          this.prefixCacheUsesMsdf = richMetrics == null && autismclient.gui.sdf.MsdfTextRenderer.canRender(face, this.value.replace("\n", ""));
          this.prefixWidths = Utf16TextCursor.init(
             this.value,
@@ -1576,11 +1576,11 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       int next = this.cursorIndex;
       if (delta < 0) {
          for (int i = 0; i < -delta; i++) {
-            next = Utf16TextCursor.read(this.value, next);
+            next = Utf16TextCursor.previous(this.value, next);
          }
       } else {
          for (int i = 0; i < delta; i++) {
-            next = Utf16TextCursor.write(this.value, next);
+            next = Utf16TextCursor.next(this.value, next);
          }
       }
 

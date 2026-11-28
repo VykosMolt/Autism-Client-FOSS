@@ -13,11 +13,11 @@ public final class ItemOrBlockIdArgumentType implements ArgumentType<String> {
    private ItemOrBlockIdArgumentType() {
    }
 
-   public static ItemOrBlockIdArgumentType init() {
+   public static ItemOrBlockIdArgumentType id() {
       return new ItemOrBlockIdArgumentType();
    }
 
-   public static String init(CommandContext<?> context, String name) {
+   public static String getId(CommandContext<?> context, String name) {
       return context.getArgument(name, String.class);
    }
 

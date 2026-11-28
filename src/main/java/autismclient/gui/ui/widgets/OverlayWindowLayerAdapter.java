@@ -26,7 +26,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
       this.zoomEnabled = zoom;
    }
 
-   public void load(boolean renderSuppressed) {
+   public void setRenderSuppressed(boolean renderSuppressed) {
       this.init_Z = renderSuppressed;
    }
 
@@ -38,7 +38,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
       this.visibility.snapTo(this.overlay.isVisible());
    }
 
-   public void read() {
+   public void restartVisibility() {
       this.visibility.restart();
    }
 
@@ -50,11 +50,11 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
       return this.visibility.shouldRender(this.overlay.isVisible());
    }
 
-   public void read(boolean hoverBlocked) {
+   public void setHoverBlocked(boolean hoverBlocked) {
       this.hoverBlocked = hoverBlocked;
    }
 
-   public void write(boolean inputSuppressed) {
+   public void setInputSuppressed(boolean inputSuppressed) {
       this.inputSuppressed = inputSuppressed;
    }
 
@@ -89,7 +89,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
             int scissorDepth = autismclient.gui.ui.UiClipStack.getInstance().depth();
 
             try {
-               this.visibility.init(graphics, b, this.zoomEnabled, () -> this.renderContent(context, block));
+               this.visibility.render(graphics, b, this.zoomEnabled, () -> this.renderContent(context, block));
             } catch (Throwable t) {
                long nowMs = System.currentTimeMillis();
                if (nowMs - init_J > 5000L) {
@@ -170,10 +170,10 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
 
    @Override
    public autismclient.gui.ui.UiInputResult onCharTyped(char chr) {
-      return this.init(chr, 0);
+      return this.typeChar(chr, 0);
    }
 
-   public autismclient.gui.ui.UiInputResult init(char chr, int modifiers) {
+   public autismclient.gui.ui.UiInputResult typeChar(char chr, int modifiers) {
       return toResult(this.overlay.charTyped(chr, modifiers));
    }
 

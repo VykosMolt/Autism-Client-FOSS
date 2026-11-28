@@ -66,11 +66,11 @@ public class MacroCommand extends Command {
                .executes(ctx -> init(autismclient.commands.arguments.MacroNameArgumentType.init(ctx, "name"), 1, 0)))
             .then(
                ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("times", IntegerArgumentType.integer(1, 100000))
-                     .suggests(autismclient.commands.CommandSuggestions::close)
+                     .suggests(autismclient.commands.CommandSuggestions::suggestTimes)
                      .executes(ctx -> init(autismclient.commands.arguments.MacroNameArgumentType.init(ctx, "name"), IntegerArgumentType.getInteger(ctx, "times"), 0)))
                   .then(
                      RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("delayTicks", IntegerArgumentType.integer(0, 72000))
-                        .suggests(autismclient.commands.CommandSuggestions::open)
+                        .suggests(autismclient.commands.CommandSuggestions::suggestDelayTicks)
                         .executes(
                            ctx -> init(
                               autismclient.commands.arguments.MacroNameArgumentType.init(ctx, "name"),

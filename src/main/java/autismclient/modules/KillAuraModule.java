@@ -1462,8 +1462,8 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          && !ScaffoldModule.update_Z_5()
          && !BedDefenderModule.init_Z_10()
          && !SurroundModule.init_Z_27()
-         && !CrystalAuraModule.init_Z_51()
-         && !AnchorAuraModule.init_Z_2()
+         && !CrystalAuraModule.isRecentlyActive()
+         && !AnchorAuraModule.isRecentlyActive()
          && !autoTrapOwnsRotation()
          && (AutismLiteVariant.enabled() || bedBudget || !KBDisplacementModule.init_Z_24())
          && (AutismLiteVariant.enabled() || bedBudget || !BedNukerModule.init_Z_23())
@@ -2544,7 +2544,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       if (this.switchBackEnabled() && this.switchBackSlot >= 0 && this.switchBackDelayTicks <= 0) {
          if (this.borrowedSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.borrowedSlot) {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (!CrystalAuraModule.init_Z_I_10(selected) && !AnchorAuraModule.init_Z_I(selected)) {
+            if (!CrystalAuraModule.hasBorrowedSlot(selected) && !AnchorAuraModule.hasSwitchedToSlot(selected)) {
                this.switchBackSlot = -1;
                this.borrowedSlot = -1;
                return false;
@@ -3099,7 +3099,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       if (this.switchBackEnabled() && this.switchBackSlot >= 0 && this.switchBackDelayTicks > 0) {
          if (this.borrowedSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.borrowedSlot) {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (!CrystalAuraModule.init_Z_I_10(selected) && !AnchorAuraModule.init_Z_I(selected)) {
+            if (!CrystalAuraModule.hasBorrowedSlot(selected) && !AnchorAuraModule.hasSwitchedToSlot(selected)) {
                this.switchBackSlot = -1;
                this.borrowedSlot = -1;
                this.switchBackDelayTicks = 0;
@@ -3110,9 +3110,9 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                && (!this.canInteract() || this.rotationMissesTarget(this.currentTarget))
                && !BlinkPacketManager.isHoldingActionsOnly()
                && (AutismLiteVariant.enabled() || !BedNukerModule.init_Z_23())
-               && !CrystalAuraModule.init_Z_51()
-               && !CrystalAuraModule.sync_Z_11()
-               && !AnchorAuraModule.init_Z_2()
+               && !CrystalAuraModule.isRecentlyActive()
+               && !CrystalAuraModule.hasPlannedSupport()
+               && !AnchorAuraModule.isRecentlyActive()
                && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.switchBackSlot, this.id())) {
                int tick = AutismSessionState.getInstance().getClientTick();
                if (tick != this.slotSwitchTick && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {

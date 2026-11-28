@@ -24,7 +24,7 @@ public final class SimpleClickButton {
       return this;
    }
 
-   public void init(GuiGraphicsExtractor graphics, Font font, int mouseX, int mouseY) {
+   public void render(GuiGraphicsExtractor graphics, Font font, int mouseX, int mouseY) {
       CachePool.init(
          autismclient.gui.f.UiHelper.init(graphics, font, mouseX, mouseY),
          this.bounds,
@@ -35,7 +35,7 @@ public final class SimpleClickButton {
       );
    }
 
-   public boolean init(double mouseX, double mouseY, int mouseButton) {
+   public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
       if (this.active && mouseButton == 0 && this.bounds.init_Z((int)mouseX, (int)mouseY)) {
          if (this.action != null) {
             this.action.run();

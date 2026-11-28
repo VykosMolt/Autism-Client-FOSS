@@ -21,11 +21,11 @@ public final class KeybindButtonRenderer {
       }
    }
 
-   public static int init(int keyCode) {
+   public static int normalizeKey(int keyCode) {
       return keyCode != 256 && keyCode != 259 && keyCode != 261 ? keyCode : -1;
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int bindCode, boolean capturing, boolean hovered) {
+   public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int bindCode, boolean capturing, boolean hovered) {
       CachePool.init(context, bounds, label(bindCode, capturing), capturing ? CachePool.Inner_DataUtil.read : CachePool.Inner_DataUtil.init, hovered, capturing);
    }
 }

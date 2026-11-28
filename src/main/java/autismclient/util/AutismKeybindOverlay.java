@@ -139,7 +139,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       this.settingsWindow.setHeaderButtons(true, true);
       this.settingsWindow.setTitleInsets(this.get_I_7() + 2, this.get_I_7() + this.add_I_7() * 2 + 8);
       this.settingsWindow.body().clearChildren();
-      this.settingsWindow.body().init(this.set_I_7()).init(autismclient.gui.ui.layout.EdgeInsets.uniform(this.get_I_7()));
+      this.settingsWindow.body().withGap(this.set_I_7()).withPadding(autismclient.gui.ui.layout.EdgeInsets.uniform(this.get_I_7()));
       this.settingsWindow
          .body()
          .addChild(
@@ -438,7 +438,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       } else if (this.layoutHost.keyPressed(keyCode, scanCode, modifiers)) {
          return true;
       } else if (this.windowVisible && this.listeningEntryIndex >= 0) {
-         this.clearDuplicateBinds(autismclient.gui.ui.widgets.KeybindButtonRenderer.init(keyCode));
+         this.clearDuplicateBinds(autismclient.gui.ui.widgets.KeybindButtonRenderer.normalizeKey(keyCode));
          return true;
       } else {
          return false;
@@ -1107,7 +1107,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             Math.round(this.toggleButton.width()),
             Math.round(this.toggleButton.height())
          );
-         ToggleSwitchRenderer.init(ui, pillBounds, on, pillBounds.init_Z(ui.read(), ui.write()), "keybind:" + this.tooltip);
+         ToggleSwitchRenderer.draw(ui, pillBounds, on, pillBounds.init_Z(ui.read(), ui.write()), "keybind:" + this.tooltip);
          if (this.labelNode.containsPoint(context.mouseX(), context.mouseY())) {
             AutismKeybindOverlay.this.hoveredTooltip = this.tooltip;
             AutismKeybindOverlay.this.tooltipX = context.mouseX() + AutismKeybindOverlay.this.tooltipOffsetX();
@@ -1215,7 +1215,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
                Math.round(this.nodeX), Math.round(this.nodeY), Math.round(this.nodeWidth), Math.round(this.nodeHeight)
             );
             boolean hovered = this.nodeEnabled && this.containsPoint(context.mouseX(), context.mouseY());
-            autismclient.gui.ui.widgets.KeybindButtonRenderer.init(
+            autismclient.gui.ui.widgets.KeybindButtonRenderer.draw(
                autismclient.gui.f.UiHelper.init(
                   context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())
                ),
@@ -1282,7 +1282,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             false
          );
          String value = CommandPrefixHelper.currentPrefix();
-         autismclient.gui.ui.widgets.WidgetRenderFacade.init(
+         autismclient.gui.ui.widgets.WidgetRenderFacade.dropdown(
             autismclient.gui.f.UiHelper.init(context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())),
             this.controlBounds,
             value,

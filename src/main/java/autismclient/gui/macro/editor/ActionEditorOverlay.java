@@ -6402,7 +6402,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (definition.has("required")) {
                for (JsonElement required : definition.getAsJsonArray("required")) {
                   if (name.equals(required.getAsString())) {
-                     return ToolsActionSchemaBuilder.init(name);
+                     return ToolsActionSchemaBuilder.humanize(name);
                   }
                }
             }
@@ -7408,7 +7408,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          } else {
             boolean toolsLabels = this.editingAction instanceof ToolsAction || key.startsWith("cond_tool");
-            List<String> displayOpts = toolsLabels ? opts.stream().map(value -> ToolsActionSchemaBuilder.init(key, value)).toList() : opts;
+            List<String> displayOpts = toolsLabels ? opts.stream().map(value -> ToolsActionSchemaBuilder.optionLabel(key, value)).toList() : opts;
             int ddW = this.dropdownWidth(displayOpts, valueW);
             autismclient.gui.ui.widgets.DropdownWidget dd = this.dropdownCache
                .computeIfAbsent(
@@ -7522,7 +7522,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       String filter = !editable && af != null ? af.getValue().toLowerCase() : "";
       String emptyHint = this.auditTargetsError(key);
-      List<Integer> filtered = autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+      List<Integer> filtered = autismclient.gui.macro.editor.capture.EditorListRowHelper.filterIndices(
          lst, this.filteredIndexCache.computeIfAbsent(key, ignored -> new ArrayList<>()), value -> filter.isEmpty() || value.toLowerCase().contains(filter)
       );
       String sectionLabel = filter.isEmpty() ? field.label() + " (" + lst.size() + ")" : field.label() + " (" + filtered.size() + "/" + lst.size() + ")";
@@ -7911,7 +7911,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       );
       autismclient.gui.f.b.k.init(ctx, this.font, headerLabel, font, UiColorPalette.textBody(), x, headerTextY, false);
       cy += headerH + 2;
-      List<String> filtered = autismclient.gui.macro.editor.capture.EditorListRowHelper.load(
+      List<String> filtered = autismclient.gui.macro.editor.capture.EditorListRowHelper.filter(
          blockIds(),
          this.filteredOptionCache.computeIfAbsent(key + "_catalog", ignored -> new ArrayList<>()),
          idx -> matchesFilter(filter, idx, registryDisplayName(idx), RegistryDisplayNameCache.blockName(idx))
@@ -8526,7 +8526,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             ToolsAction draft = new ToolsAction();
             draft.fromTag(this.actionTag);
             DynamicBindingManager.init(draft, this.actionTag);
-            this.fieldSchema = ToolsActionSchemaBuilder.init(draft);
+            this.fieldSchema = ToolsActionSchemaBuilder.build(draft);
             this.textFields.clear();
             this.toggleStates.clear();
             this.modeIndices.clear();
@@ -11923,7 +11923,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private List<String> filterCached(String cacheKey, List<String> source, String query, Function<String, String> labeler) {
       String filter = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
       List<String> target = this.filteredOptionCache.computeIfAbsent(cacheKey, ignored -> new ArrayList<>());
-      return autismclient.gui.macro.editor.capture.EditorListRowHelper.load(
+      return autismclient.gui.macro.editor.capture.EditorListRowHelper.filter(
          source, target, id -> id != null && matchesFilter(filter, id, registryDisplayName(id), labeler.apply(id))
       );
    }
@@ -11932,7 +11932,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (source != null && !source.isEmpty()) {
          String filter = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
          List<String> target = cacheKey == null ? new ArrayList<>() : this.filteredOptionCache.computeIfAbsent(cacheKey, ignored -> new ArrayList<>());
-         return autismclient.gui.macro.editor.capture.EditorListRowHelper.load(
+         return autismclient.gui.macro.editor.capture.EditorListRowHelper.filter(
             source, target, value -> value != null && (filter.isEmpty() || value.toLowerCase(Locale.ROOT).contains(filter))
          );
       } else {

@@ -591,7 +591,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   public static boolean init_Z_51() {
+   public static boolean isRecentlyActive() {
       if (al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled()) {
          int age = AutismSessionState.getInstance().getClientTick() - aura.lastActiveTick;
          return age >= 0 && age <= 5;
@@ -601,7 +601,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    public static boolean ownsActiveRotation() {
-      return init_Z_51() && "crystal-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
+      return isRecentlyActive() && "crystal-aura".equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
    }
 
    public static boolean init_Z_BlockPos_6(BlockPos cell) {
@@ -621,14 +621,14 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       }
    }
 
-   public static boolean init_Z_I_10(int slot) {
+   public static boolean hasBorrowedSlot(int slot) {
       if (autismclient.aggressivepvp.Versions.running(autismclient.aggressivepvp.Versions.crystal)) {
          return false;
       }
       return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled() ? aura.stop >= 0 && aura.borrowedSlot == slot : false;
    }
 
-   public static boolean sync_Z_11() {
+   public static boolean hasPlannedSupport() {
       return al.init_Module_Str("crystal-aura") instanceof CrystalAuraModule aura && aura.isEnabled() ? aura.plannedObsidianPos != null || aura.plannedSupportPos != null : false;
    }
 
@@ -920,7 +920,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
          this.init(enemy, destroy, place, obsidian);
          if (destroy != null || place != null || obsidian != null || defend != null) {
-            if (defend != null ? AnchorAuraModule.read_Z() : !this.pop() && AnchorAuraModule.init_Z_2()) {
+            if (defend != null ? AnchorAuraModule.isEngagedThisTick() : !this.pop() && AnchorAuraModule.isRecentlyActive()) {
                this.releaseClaims();
                return;
             }
@@ -1016,7 +1016,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private boolean init_Z_LivingEntity_4(LivingEntity enemy) {
       return !SurroundModule.init_Z_27()
          && !BedDefenderModule.init_Z_10()
-         && (this.pop() || !AnchorAuraModule.init_Z_2())
+         && (this.pop() || !AnchorAuraModule.isRecentlyActive())
          && this.aimSpeed.init("crystal-aura", 18, MC.player, enemy, this.serverRotation());
    }
 
@@ -2221,7 +2221,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
          && this.canUseCrystalSlot()
          && !SurroundModule.init_Z_27()
          && !BedDefenderModule.init_Z_10()
-         && !AnchorAuraModule.read_Z()
+         && !AnchorAuraModule.isEngagedThisTick()
          && !this.scoredCandidates.isEmpty()) {
          int tick = AutismSessionState.getInstance().getClientTick();
          if (this.chunk != tick) {
@@ -2749,7 +2749,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private boolean init_Z_I_Z_3(int slot, boolean defensive) {
-      if (!BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27() && (this.pop() || (defensive ? !AnchorAuraModule.read_Z() : !AnchorAuraModule.init_Z_2()))) {
+      if (!BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27() && (this.pop() || (defensive ? !AnchorAuraModule.isEngagedThisTick() : !AnchorAuraModule.isRecentlyActive()))) {
          int tick = AutismSessionState.getInstance().getClientTick();
          if (tick == this.valid) {
             return false;
@@ -2798,7 +2798,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       if (this.stop >= 0 && MC.gui.screen() == null && MC.gui.overlay() == null) {
          if (this.borrowedSlot >= 0 && MC.player.getInventory().getSelectedSlot() != this.borrowedSlot) {
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (!AnchorAuraModule.init_Z_I(selected) && !KillAuraModule.load_Z_I_3(selected)) {
+            if (!AnchorAuraModule.hasSwitchedToSlot(selected) && !KillAuraModule.load_Z_I_3(selected)) {
                this.stop = -1;
                this.borrowedSlot = -1;
                this.switchBackDelay = 0;

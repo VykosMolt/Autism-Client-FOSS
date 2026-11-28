@@ -291,7 +291,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                   String label = names[value.ordinal()];
                   int tabWidth = Math.min((tabs.update() - 9) / 4, ui.init_PoolEntry().measureWidth(label) + 12);
                   autismclient.gui.f.NetHelper at = autismclient.gui.f.NetHelper.init(tabX, tabs.write(), tabWidth, 13);
-                  autismclient.gui.ui.widgets.TabStripRenderer.init(ui, at, label, value == this.tab);
+                  autismclient.gui.ui.widgets.TabStripRenderer.drawTab(ui, at, label, value == this.tab);
                   this.init_List.add(new SchematicLibraryOverlay.ClickRegion(at, () -> this.init_V_SchematicLibraryOv(value)));
                   tabX = at.init() + 3;
                }
@@ -340,7 +340,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                   int pctX = this.windowRect.init() - 10 - 3 - pctWidth;
                   int barX = pctX - 3 - barWidth;
                   this.drawText(ui, statusText, x, progressY - 1, barX - x - 3, ui.init_TableIndex().colors().textSecondary);
-                  autismclient.gui.ui.widgets.ProgressBarRenderer.init(ui, autismclient.gui.f.NetHelper.init(barX, progressY + 2, barWidth, 4), progress / 100.0);
+                  autismclient.gui.ui.widgets.ProgressBarRenderer.draw(ui, autismclient.gui.f.NetHelper.init(barX, progressY + 2, barWidth, 4), progress / 100.0);
                   this.drawText(ui, pctText, pctX, progressY - 1, pctWidth, ui.init_TableIndex().colors().textPrimary);
                }
             } finally {

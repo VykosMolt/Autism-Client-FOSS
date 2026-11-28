@@ -137,7 +137,7 @@ public final class AiToolsScreen extends Screen {
          ctx.init_PoolEntry().drawFitted(graphics, reluctanceValue, x + w - reluctanceValueW, reluctanceTextY, reluctanceValueW, colors.textPrimary);
          y += labelH;
          this.timeoutSlider = autismclient.gui.f.NetHelper.init(x, y, w, 12);
-         autismclient.gui.ui.widgets.SliderRenderer.init(
+         autismclient.gui.ui.widgets.SliderRenderer.draw(
             ctx,
             this.timeoutSlider,
             autismclient.gui.ui.widgets.SliderRenderer.ratio(this.settings.digReluctance, 0.0, 60.0),
@@ -161,7 +161,7 @@ public final class AiToolsScreen extends Screen {
          ctx.init_PoolEntry().drawFitted(graphics, timeoutValue, x + w - valueW, timeoutTextY, valueW, colors.textPrimary);
          y += labelH;
          this.digReluctanceSlider = autismclient.gui.f.NetHelper.init(x, y, w, 12);
-         autismclient.gui.ui.widgets.SliderRenderer.init(
+         autismclient.gui.ui.widgets.SliderRenderer.draw(
             ctx,
             this.digReluctanceSlider,
             autismclient.gui.ui.widgets.SliderRenderer.ratio(this.settings.timeoutSeconds, 30.0, 1800.0),
@@ -334,13 +334,13 @@ public final class AiToolsScreen extends Screen {
    }
 
    private void setTimeoutFromMouse(int mx) {
-      this.settings.timeoutSeconds = (int)autismclient.gui.ui.widgets.SliderRenderer.init(
+      this.settings.timeoutSeconds = (int)autismclient.gui.ui.widgets.SliderRenderer.valueAt(
          mx, this.digReluctanceSlider.read(), this.digReluctanceSlider.update(), 30.0, 1800.0, 30.0
       );
    }
 
    private void setDigReluctanceFromMouse(int mx) {
-      this.settings.digReluctance = (int)autismclient.gui.ui.widgets.SliderRenderer.init(mx, this.timeoutSlider.read(), this.timeoutSlider.update(), 0.0, 60.0, 1.0);
+      this.settings.digReluctance = (int)autismclient.gui.ui.widgets.SliderRenderer.valueAt(mx, this.timeoutSlider.read(), this.timeoutSlider.update(), 0.0, 60.0, 1.0);
    }
 
    @Override

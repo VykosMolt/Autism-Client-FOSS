@@ -8,7 +8,7 @@ public final class ScrollbarRenderer {
    private ScrollbarRenderer() {
    }
 
-   public static ScrollbarRenderer.ScrollbarBounds init(autismclient.gui.f.NetHelper track, int contentHeight, int viewHeight, int scroll) {
+   public static ScrollbarRenderer.ScrollbarBounds bounds(autismclient.gui.f.NetHelper track, int contentHeight, int viewHeight, int scroll) {
       int max = Math.max(0, contentHeight - Math.max(0, viewHeight));
       if (max > 0 && track.sync() > 0) {
          int thumbH = Math.max(12, (int)Math.round(track.sync() * ((double)viewHeight / Math.max(viewHeight, contentHeight))));
@@ -21,10 +21,10 @@ public final class ScrollbarRenderer {
    }
 
    public static void draw(autismclient.gui.f.SyncManager context, ScrollbarRenderer.ScrollbarBounds metrics, boolean dragging) {
-      init(context, metrics, false, dragging);
+      draw(context, metrics, false, dragging);
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, ScrollbarRenderer.ScrollbarBounds metrics, boolean hovered, boolean dragging) {
+   public static void draw(autismclient.gui.f.SyncManager context, ScrollbarRenderer.ScrollbarBounds metrics, boolean hovered, boolean dragging) {
       if (metrics != null && metrics.maxScroll() > 0) {
          autismclient.gui.f.NetHelper track = metrics.track();
          int trackWidth = Math.min(3, track.update());
@@ -76,11 +76,11 @@ public final class ScrollbarRenderer {
    }
 
    public record ScrollbarBounds(autismclient.gui.f.NetHelper track, autismclient.gui.f.NetHelper load, int maxScroll) {
-      public boolean init(int x, int y) {
+      public boolean trackContains(int x, int y) {
          return this.track.init_Z(x, y);
       }
 
-      public boolean load(int x, int y) {
+      public boolean thumbContains(int x, int y) {
          return this.load.init_Z(x, y);
       }
    }

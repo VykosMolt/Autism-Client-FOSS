@@ -189,7 +189,7 @@ public class AutismMinecraftClientMixin {
       if (aD.read_Z()) {
          VirtualInputDispatcher.push();
       } else {
-         LateRegisterSynthesizer.init((Minecraft)(Object)this);
+         LateRegisterSynthesizer.tick((Minecraft)(Object)this);
          MovementModuleHooks.init_V();
          if (!AutismLiteVariant.enabled()) {
             KBDisplacementModule.onTickHead();

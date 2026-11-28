@@ -21,7 +21,7 @@ public abstract class AutismGuiScissorMirrorMixin {
       if (cA.init_Z()) {
          GuiGraphicsExtractor self = (GuiGraphicsExtractor)(Object)this;
          if (SubpixelScissorTracker.init_Z_GuiGraphicsExtract(self.scissorStack, self.pose(), x0, y0, x1, y1)) {
-            UiScissorStack.load(self.scissorStack.peek());
+            UiScissorStack.mirrorPush(self.scissorStack.peek());
             ci.cancel();
          }
       }
@@ -29,7 +29,7 @@ public abstract class AutismGuiScissorMirrorMixin {
 
    @Inject(method = "enableScissor", at = @At("TAIL"))
    private void autism$mirrorPush(int x0, int y0, int x1, int y1, CallbackInfo ci) {
-      UiScissorStack.load(((GuiGraphicsExtractor)(Object)this).scissorStack.peek());
+      UiScissorStack.mirrorPush(((GuiGraphicsExtractor)(Object)this).scissorStack.peek());
    }
 
    @Inject(method = "disableScissor", at = @At("HEAD"))

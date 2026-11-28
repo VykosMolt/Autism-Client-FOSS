@@ -4,10 +4,10 @@ public final class WidgetRenderFacade {
    private WidgetRenderFacade() {
    }
 
-   public static void init(
+   public static void textField(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String text, String placeholder, boolean focused, int cursor
    ) {
-      TextFieldRenderer.init(context, bounds, text, placeholder, focused, cursor);
+      TextFieldRenderer.draw(context, bounds, text, placeholder, focused, cursor);
    }
 
    public static void textField(
@@ -20,18 +20,18 @@ public final class WidgetRenderFacade {
       int selectionStart,
       int selectionEnd
    ) {
-      TextFieldRenderer.init(context, bounds, text, placeholder, focused, cursor, selectionStart, selectionEnd);
+      TextFieldRenderer.draw(context, bounds, text, placeholder, focused, cursor, selectionStart, selectionEnd);
    }
 
    public static void toggleSwitch(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered) {
-      ToggleSwitchRenderer.init(context, bounds, enabled, hovered);
+      ToggleSwitchRenderer.draw(context, bounds, enabled, hovered);
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered, String animationKey) {
-      ToggleSwitchRenderer.init(context, bounds, enabled, hovered, animationKey);
+   public static void toggleSwitch(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered, String animationKey) {
+      ToggleSwitchRenderer.draw(context, bounds, enabled, hovered, animationKey);
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open) {
+   public static void dropdown(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open) {
       DropdownMenu.renderTrigger(context, bounds, label, hovered, open);
    }
 

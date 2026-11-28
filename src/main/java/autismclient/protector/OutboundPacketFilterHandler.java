@@ -37,15 +37,15 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
             OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.init(this.connection, packet);
             switch (verdict.kind) {
                case PASS:
-                  ProtectorFeatureFlags.load(packet);
+                  ProtectorFeatureFlags.unmarkDirect(packet);
                   super.write(ctx, msg, promise);
                   break;
                case REPLACE:
-                  ProtectorFeatureFlags.load(packet);
+                  ProtectorFeatureFlags.unmarkDirect(packet);
                   super.write(ctx, verdict.replacement, promise);
                   break;
                case DROP:
-                  ProtectorFeatureFlags.load(packet);
+                  ProtectorFeatureFlags.unmarkDirect(packet);
                   promise.setSuccess();
             }
          }
@@ -71,7 +71,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
          }
 
          Packet<?> outbound = var10000;
-         ProtectorFeatureFlags.load(packet);
+         ProtectorFeatureFlags.unmarkDirect(packet);
          if (outbound == null) {
             return false;
          }
@@ -114,7 +114,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       }
 
       OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.init(connection, packet);
-      ProtectorFeatureFlags.load(packet);
+      ProtectorFeatureFlags.unmarkDirect(packet);
       switch (verdict.kind) {
          case PASS:
             boolean marked = false;

@@ -21,13 +21,13 @@ public final class ForegroundScreenSlot<T> {
       }
    }
 
-   public T load(T screen) {
+   public T swap(T screen) {
       T previous = this.foreground;
       this.foreground = screen;
       return previous;
    }
 
-   public T load() {
-      return this.load(null);
+   public T take() {
+      return this.swap(null);
    }
 }

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismProtectorPayloadTypeRegistryImplMixin {
    @Inject(method = "register", at = @At("RETURN"))
    private void autism$trackPayloadDefaultMod(Type<?> type, StreamCodec<?, ?> codec, CallbackInfoReturnable<TypeAndCodec<?, ?>> cir) {
-      for (String mod : CallerModInspector.init()) {
+      for (String mod : CallerModInspector.callerMods()) {
          ModNamespaceCatalog.read_V(mod);
          ModNamespaceCatalog.init(CallerModInspector.dependenciesOf(mod));
       }

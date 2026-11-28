@@ -104,10 +104,10 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
          );
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), -1728053248);
          autismclient.gui.f.NetHelper panel = autismclient.gui.f.NetHelper.init(x, y, w, h);
-         autismclient.gui.ui.widgets.DialogFrameRenderer.init(
+         autismclient.gui.ui.widgets.DialogFrameRenderer.draw(
             ui, panel, headerH, "Edit " + this.mode.init_Str, mx >= x && mx < x + w && my >= y && my < y + headerH
          );
-         this.headerRect = autismclient.gui.ui.widgets.DialogFrameRenderer.init(panel, headerH);
+         this.headerRect = autismclient.gui.ui.widgets.DialogFrameRenderer.headerBounds(panel, headerH);
          int tipY = y + headerH + 2;
          List<String> tipLines = ui.init_PoolEntry().wrapLines(this.mode.load_Str, Math.max(1, w - pad * 2));
          int tipLineCount = Math.min(2, tipLines.size());

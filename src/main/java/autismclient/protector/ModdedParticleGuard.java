@@ -18,7 +18,7 @@ public final class ModdedParticleGuard {
    private ModdedParticleGuard() {
    }
 
-   public static void init(boolean modded) {
+   public static void push(boolean modded) {
       int[] scope = init.get();
       int depth = scope[0] + 1;
       if (depth >= scope.length) {
@@ -30,7 +30,7 @@ public final class ModdedParticleGuard {
       scope[depth] = modded ? 1 : 0;
    }
 
-   public static void init() {
+   public static void pop() {
       int[] scope = init.get();
       int depth = scope[0];
       if (depth > 0) {

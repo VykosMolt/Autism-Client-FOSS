@@ -21,7 +21,7 @@ public final class VanillaTranslationKeyLoader {
    private VanillaTranslationKeyLoader() {
    }
 
-   public static boolean init(String key) {
+   public static boolean isVanillaKey(String key) {
       return key != null && !key.isEmpty() ? vanillaKeySet().contains(key) : false;
    }
 

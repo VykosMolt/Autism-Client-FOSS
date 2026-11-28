@@ -89,10 +89,10 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my);
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, sw, sh), -1728053248);
          autismclient.gui.f.NetHelper panel = autismclient.gui.f.NetHelper.init(x, y, w, h);
-         autismclient.gui.ui.widgets.DialogFrameRenderer.init(
+         autismclient.gui.ui.widgets.DialogFrameRenderer.draw(
             ui, panel, headerH, "Edit " + this.mode.init_Str, mx >= x && mx < x + w && my >= y && my < y + headerH
          );
-         this.init_NetHelper = autismclient.gui.ui.widgets.DialogFrameRenderer.init(panel, headerH);
+         this.init_NetHelper = autismclient.gui.ui.widgets.DialogFrameRenderer.headerBounds(panel, headerH);
          int footerRows = this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT ? 2 : 1;
          int footerHeight = pad * 2 + footerRows * ctrlH + (footerRows - 1) * 2;
          int footerTop = y + h - footerHeight;

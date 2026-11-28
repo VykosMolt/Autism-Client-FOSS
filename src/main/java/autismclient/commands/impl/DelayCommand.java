@@ -18,7 +18,7 @@ public class DelayCommand extends Command {
       root.executes(ctx -> toggleDelay((String)null));
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("state", StringArgumentType.word())
-            .suggests(autismclient.commands.CommandSuggestions::init_CompletableFuture_CommandContext_SuggestionsBuilder)
+            .suggests(autismclient.commands.CommandSuggestions::suggestDelayState)
             .executes(ctx -> toggleDelay(StringArgumentType.getString(ctx, "state")))
       );
    }

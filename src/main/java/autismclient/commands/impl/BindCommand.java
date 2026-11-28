@@ -21,18 +21,18 @@ public class BindCommand extends Command {
          return 1;
       });
       root.then(
-         LiteralArgumentBuilder.<AutismCommandSource>literal("clear").then(RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("key", autismclient.commands.arguments.KeyBindArgumentType.init()).executes(ctx -> {
-            int key = autismclient.commands.arguments.KeyBindArgumentType.init(ctx, "key");
+         LiteralArgumentBuilder.<AutismCommandSource>literal("clear").then(RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("key", autismclient.commands.arguments.KeyBindArgumentType.key()).executes(ctx -> {
+            int key = autismclient.commands.arguments.KeyBindArgumentType.getKey(ctx, "key");
             autismclient.modules.ModuleRuntimeManager.getInstance().removeCommandBind(key);
             AutismClientMessaging.sendPrefixed("§eCleared bind for §f" + autismclient.commands.arguments.KeyBindArgumentType.keyName(key));
             return 1;
          }))
       );
       root.then(
-         RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("key", autismclient.commands.arguments.KeyBindArgumentType.init())
+         RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("key", autismclient.commands.arguments.KeyBindArgumentType.key())
             .then(
-               RequiredArgumentBuilder.<AutismCommandSource, String>argument("command", StringArgumentType.greedyString()).suggests(autismclient.commands.CommandSuggestions::run).executes(ctx -> {
-                  int key = autismclient.commands.arguments.KeyBindArgumentType.init(ctx, "key");
+               RequiredArgumentBuilder.<AutismCommandSource, String>argument("command", StringArgumentType.greedyString()).suggests(autismclient.commands.CommandSuggestions::suggestCommand).executes(ctx -> {
+                  int key = autismclient.commands.arguments.KeyBindArgumentType.getKey(ctx, "key");
                   String cmd = StringArgumentType.getString(ctx, "command");
                   autismclient.modules.ModuleRuntimeManager.getInstance().setCommandBind(key, cmd);
                   AutismClientMessaging.sendPrefixed("§aBound §f" + autismclient.commands.arguments.KeyBindArgumentType.keyName(key) + "§a → §f" + cmd);

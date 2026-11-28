@@ -41,13 +41,13 @@ public final class Utf16TextCursor {
          : clamped;
    }
 
-   public static int read(String text, int index) {
+   public static int previous(String text, int index) {
       String value = text == null ? "" : text;
       int boundary = clampIndex(value, index);
       return boundary <= 0 ? 0 : value.offsetByCodePoints(boundary, -1);
    }
 
-   public static int write(String text, int index) {
+   public static int next(String text, int index) {
       String value = text == null ? "" : text;
       int boundary = load(value, index);
       return boundary >= value.length() ? value.length() : value.offsetByCodePoints(boundary, 1);

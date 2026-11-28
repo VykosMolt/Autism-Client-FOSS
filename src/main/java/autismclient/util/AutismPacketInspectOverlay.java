@@ -224,7 +224,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                int listHeight = Math.max(1, this.panelHeight - 14 - this.set_I_14() - this.state() - tabsHeight - progressHeight);
                int innerX = listX + this.add_I_12();
                int innerY = listY + this.add_I_12();
-               int innerWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.init(listWidth, this.add_I_12());
+               int innerWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.maxTextWidth(listWidth, this.add_I_12());
                int innerHeight = listHeight - this.add_I_12() * 2;
                int lineH = this.lineHeight();
                if (!OverlayManager.getInstance().isFocused(this) && !OverlayManager.getInstance().isTopmost(this)) {
@@ -381,7 +381,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       int maxWidth,
       List<AutismPacketInspectOverlay.InspectLine> target
    ) {
-      int safeContinuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, continuationOffset);
+      int safeContinuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.clampOffset(maxWidth, continuationOffset);
       if (prefixWidth >= maxWidth) {
          this.wrapText(prefix.stripTrailing(), 0, UiColorPalette.silver(), maxWidth, target);
          this.wrapText(value, safeContinuationOffset, valueColor, maxWidth, target);
@@ -390,7 +390,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
          for (boolean firstLine = true; !remaining.isEmpty(); firstLine = false) {
             int offset = firstLine ? prefixWidth : safeContinuationOffset;
-            int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.read(maxWidth, offset);
+            int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.availableWidth(maxWidth, offset);
             String current = remaining;
             int split = autismclient.gui.ui.TextWrapLayout.init(
                current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
@@ -409,11 +409,11 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          if (text.isEmpty()) {
             target.add(AutismPacketInspectOverlay.InspectLine.of("", offset, color));
          } else {
-            int safeOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, offset);
+            int safeOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.clampOffset(maxWidth, offset);
             String remaining = text;
 
             while (!remaining.isEmpty()) {
-               int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.read(maxWidth, safeOffset);
+               int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.availableWidth(maxWidth, safeOffset);
                String current = remaining;
                int split = autismclient.gui.ui.TextWrapLayout.init(
                   current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
@@ -462,7 +462,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          int barY = y + height - 8;
          int barWidth = Math.max(1, width - 8);
          int barHeight = 4;
-         autismclient.gui.ui.widgets.ProgressBarRenderer.init(
+         autismclient.gui.ui.widgets.ProgressBarRenderer.draw(
             autismclient.gui.f.UiHelper.init(context, this.font, -1, -1),
             autismclient.gui.f.NetHelper.init(barX, barY, barWidth, barHeight),
             view.progress()
@@ -710,19 +710,19 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       if (action != null) {
          switch (action) {
             case WAIT:
-               LoggedPacketActions.poll(this.entry);
+               LoggedPacketActions.addWaitCondition(this.entry);
                break;
             case SEND:
                this.sendPacket(this.entry);
                break;
             case QUEUE:
-               LoggedPacketActions.close(this.entry);
+               LoggedPacketActions.queue(this.entry);
                break;
             case EDIT_PAYLOAD:
-               LoggedPacketActions.push(this.entry);
+               LoggedPacketActions.editPayload(this.entry);
                break;
             case ADD_PAYLOAD:
-               LoggedPacketActions.pop(this.entry);
+               LoggedPacketActions.addPayloadAction(this.entry);
                break;
             case COPY_RAW:
                this.copyRawBytes();
@@ -884,7 +884,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    private void sendPacket(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry != null && entry.packet != null && "C2S".equalsIgnoreCase(entry.direction)) {
-         LoggedPacketActions.read(entry);
+         LoggedPacketActions.resend(entry);
       } else {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be sent.");
       }
@@ -959,7 +959,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    private AutismPacketInspectOverlay.PanelFit fitWidth(int panelWidthCandidate) {
       int listWidth = Math.max(32, panelWidthCandidate - this.contentPadding() * 2);
-      int contentWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.init(listWidth, this.add_I_12());
+      int contentWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.maxTextWidth(listWidth, this.add_I_12());
       List<AutismPacketInspectOverlay.InspectLine> measured = new ArrayList<>();
       if (this.report != null) {
          for (PacketInspectorEngine.ColoredLine line : this.report.lines()) {
@@ -1002,15 +1002,15 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          actions.add(AutismPacketInspectOverlay.PacketAction.EDIT_PAYLOAD);
       }
 
-      if (LoggedPacketActions.flush(this.entry)) {
+      if (LoggedPacketActions.canAddPayloadAction(this.entry)) {
          actions.add(AutismPacketInspectOverlay.PacketAction.ADD_PAYLOAD);
       }
 
-      if (LoggedPacketActions.write(this.entry)) {
+      if (LoggedPacketActions.canAddSendAction(this.entry)) {
          actions.add(AutismPacketInspectOverlay.PacketAction.SEND);
       }
 
-      if (LoggedPacketActions.update(this.entry)) {
+      if (LoggedPacketActions.canAddWaitCondition(this.entry)) {
          actions.add(AutismPacketInspectOverlay.PacketAction.WAIT);
       }
 

@@ -18,6 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismResolvedContentsMixin {
    @Inject(method = "resolve", at = @At("RETURN"))
    private void autism$propagateResolution(ResolutionContext context, int recursionDepth, CallbackInfoReturnable<MutableComponent> cir) {
-      PacketComponentOriginTracker.init((ComponentContents)(Object)this, cir.getReturnValue());
+      PacketComponentOriginTracker.propagateFromContents((ComponentContents)(Object)this, cir.getReturnValue());
    }
 }

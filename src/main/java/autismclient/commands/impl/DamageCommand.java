@@ -22,7 +22,7 @@ public class DamageCommand extends Command {
       });
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, Double>argument("amount", DoubleArgumentType.doubleArg(0.1, 1024.0))
-            .suggests(autismclient.commands.CommandSuggestions::update)
+            .suggests(autismclient.commands.CommandSuggestions::suggestDamageAmount)
             .executes(ctx -> {
                double amt = DoubleArgumentType.getDouble(ctx, "amount");
                ClientPacketListener conn = Minecraft.getInstance().getConnection();

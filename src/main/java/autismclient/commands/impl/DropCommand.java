@@ -38,12 +38,12 @@ public class DropCommand extends Command {
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("fullinventory").executes(ctx -> load()));
       root.then(
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("amount", IntegerArgumentType.integer(1))
-               .suggests(autismclient.commands.CommandSuggestions::sync)
+               .suggests(autismclient.commands.CommandSuggestions::suggestCount)
                .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "amount"))))
             .then(
-               RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.arguments.ItemOrBlockIdArgumentType.init())
+               RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.arguments.ItemOrBlockIdArgumentType.id())
                   .suggests(autismclient.commands.RegistrySuggestions::init)
-                  .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "amount"), autismclient.commands.arguments.ItemOrBlockIdArgumentType.init(ctx, "item")))
+                  .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "amount"), autismclient.commands.arguments.ItemOrBlockIdArgumentType.getId(ctx, "item")))
             )
       );
       root.then(
@@ -114,7 +114,7 @@ public class DropCommand extends Command {
          return 1;
       }
 
-      Item item = autismclient.commands.RegistrySuggestions.init(mc, spec);
+      Item item = autismclient.commands.RegistrySuggestions.resolveItem(mc, spec);
       if (item == null) {
          item = autismclient.commands.RegistrySuggestions.resolveItem(spec);
       }
@@ -228,7 +228,7 @@ public class DropCommand extends Command {
       Identifier id = init_Identifier(rawItemId);
       Item item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
       if (item == null) {
-         item = autismclient.commands.RegistrySuggestions.init(mc, rawItemId);
+         item = autismclient.commands.RegistrySuggestions.resolveItem(mc, rawItemId);
       }
 
       if (item == null) {

@@ -52,7 +52,7 @@ public final class SdfShapeRenderer {
       return SdfRenderPipelines.isAvailable() && atlas() != null;
    }
 
-   public static void init(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int color) {
+   public static void fillRoundRect(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int color) {
       float r = Math.min(radius, Math.min(w, h) * 0.5F);
       if (!(w <= 0.0F) && !(h <= 0.0F) && (color & 0xFF000000) != 0) {
          if (!(r < 0.75F) && isAvailable()) {
@@ -63,8 +63,8 @@ public final class SdfShapeRenderer {
       }
    }
 
-   public static void init(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int fill, int border) {
-      init(graphics, x, y, w, h, radius, fill);
+   public static void fillRoundRect(GuiGraphicsExtractor graphics, float x, float y, float w, float h, float radius, int fill, int border) {
+      fillRoundRect(graphics, x, y, w, h, radius, fill);
       if (!(w <= 0.0F) && !(h <= 0.0F) && border >>> 24 != 0) {
          float r = Math.min(radius, Math.min(w, h) * 0.5F);
          if (!(r < 0.75F) && isAvailable()) {
@@ -104,7 +104,7 @@ public final class SdfShapeRenderer {
                init(graphics, tile, x, y, w, h, r, topBorder, bottomBorder, true, false);
             }
          } else {
-            init(graphics, x, y, w, h, radius, bottomFill, bottomBorder);
+            fillRoundRect(graphics, x, y, w, h, radius, bottomFill, bottomBorder);
          }
       }
    }
@@ -116,7 +116,7 @@ public final class SdfShapeRenderer {
          for (int spread = 6; spread >= 1; spread--) {
             int layerAlpha = Math.round(alpha * (7 - spread) / 28.0F);
             if (layerAlpha != 0) {
-               init(graphics, x - spread, y + 2.0F - spread, w + spread * 2, h + spread * 2, radius + spread, layerAlpha << 24 | color & 16777215);
+               fillRoundRect(graphics, x - spread, y + 2.0F - spread, w + spread * 2, h + spread * 2, radius + spread, layerAlpha << 24 | color & 16777215);
             }
          }
       }
@@ -190,7 +190,7 @@ public final class SdfShapeRenderer {
             }
 
             if (equal) {
-               init(graphics, centerX - values.getFirst() / 2.0F, y, values.getFirst(), h, r, color);
+               fillRoundRect(graphics, centerX - values.getFirst() / 2.0F, y, values.getFirst(), h, r, color);
             } else if (r <= 0.0F) {
                init(graphics, centerX, y, values, heights, color);
             } else if (!read_Z && isAvailable()) {

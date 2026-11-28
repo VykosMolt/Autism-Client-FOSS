@@ -67,7 +67,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
                serializedBypass = false;
             }
 
-            autismclient.protector.ResourcePackSessionTracker.PackPolicy selectedPolicy = ResourcePackPushValidator.init(context.privacyMode(), sharedBypass, serializedBypass);
+            autismclient.protector.ResourcePackSessionTracker.PackPolicy selectedPolicy = ResourcePackPushValidator.selectPolicy(context.privacyMode(), sharedBypass, serializedBypass);
             ResourcePackPushValidator.Outcome verdict = ResourcePackPushValidator.init(packet, forceDeny, selectedPolicy != null);
             if (verdict.verdict() != ResourcePackPushValidator.OutcomeKind.PASS) {
                if (verdict.verdict() == ResourcePackPushValidator.OutcomeKind.INVALID_URL) {

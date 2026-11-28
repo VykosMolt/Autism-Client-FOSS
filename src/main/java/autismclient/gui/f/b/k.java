@@ -34,7 +34,7 @@ public final class k {
 
    public static int init(Font renderer, String value, Identifier fontId, int color) {
       String safe = value == null ? "" : value;
-      autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
+      autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.forFont(fontId);
       return autismclient.gui.sdf.MsdfTextRenderer.canRender(face, safe)
          ? autismclient.gui.sdf.MsdfTextRenderer.measureWidth(face, safe, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face))
          : renderer.width(safe);
@@ -42,7 +42,7 @@ public final class k {
 
    public static int init(Font renderer, String value, String fragment, Identifier fontId, int color) {
       String safe = fragment == null ? "" : fragment;
-      autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
+      autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.forFont(fontId);
       return autismclient.gui.sdf.MsdfTextRenderer.canRender(face, value == null ? "" : value)
          ? autismclient.gui.sdf.MsdfTextRenderer.measureWidth(face, safe, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face))
          : renderer.width(safe);
@@ -70,7 +70,7 @@ public final class k {
          return safeValue;
       }
 
-      autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
+      autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.forFont(fontId);
       String trimmed;
       if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, safeValue)) {
          trimmed = autismclient.gui.sdf.MsdfTextRenderer.trimToWidth(face, safeValue, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face), allowedWidth);
@@ -89,7 +89,7 @@ public final class k {
             return safeValue;
          }
 
-         autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
+         autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.forFont(fontId);
          if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, safeValue)) {
             return autismclient.gui.sdf.MsdfTextRenderer.ellipsize(face, safeValue, autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face), maxWidth);
          }
@@ -114,7 +114,7 @@ public final class k {
 
    public static void init(GuiGraphicsExtractor context, Font renderer, String value, Identifier fontId, int color, int x, int y, boolean shadow) {
       String safe = value == null ? "" : value;
-      autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.init(fontId);
+      autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.forFont(fontId);
       if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, safe)) {
          float size = autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face);
          autismclient.gui.sdf.MsdfTextRenderer.draw(context, face, safe, x, autismclient.gui.sdf.MsdfTextRenderer.alignToVanillaTop(face, y, size), size, color, shadow);

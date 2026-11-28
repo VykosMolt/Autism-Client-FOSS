@@ -12,7 +12,7 @@ public final class KeyValueLabelNode extends LayoutNode {
       this.nodeHeight = 11.0F;
    }
 
-   public KeyValueLabelNode init(String value) {
+   public KeyValueLabelNode setValue(String value) {
       String next = value == null ? "" : value;
       if (!this.value.equals(next)) {
          this.value = next;
@@ -22,12 +22,12 @@ public final class KeyValueLabelNode extends LayoutNode {
       return this;
    }
 
-   public KeyValueLabelNode init(int keyColor) {
+   public KeyValueLabelNode withKeyColor(int keyColor) {
       this.keyColor = keyColor;
       return this;
    }
 
-   public KeyValueLabelNode load(int valueColor) {
+   public KeyValueLabelNode withValueColor(int valueColor) {
       this.valueColor = valueColor;
       return this;
    }

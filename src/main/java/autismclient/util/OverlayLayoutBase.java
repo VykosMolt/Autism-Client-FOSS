@@ -85,7 +85,7 @@ public abstract class OverlayLayoutBase {
    protected void renderWindowFrame(autismclient.gui.f.SyncManager ui, OverlayBounds bounds, String title, boolean collapsed, boolean activeDrag) {
       boolean active = activeDrag || this.isWindowActive();
       int frameHeight = this.animateFrameHeight(bounds, collapsed);
-      autismclient.gui.ui.widgets.OverlayFrameHelper.init(
+      autismclient.gui.ui.widgets.OverlayFrameHelper.drawFrame(
          ui,
          autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, frameHeight),
          14,
@@ -100,17 +100,17 @@ public abstract class OverlayLayoutBase {
       int frameHeight = this.animateFrameHeight(bounds, collapsed);
       return frameHeight <= 15
          ? false
-         : autismclient.gui.ui.widgets.OverlayFrameHelper.init(context, autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, frameHeight), 14, false);
+         : autismclient.gui.ui.widgets.OverlayFrameHelper.beginClip(context, autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, frameHeight), 14, false);
    }
 
    protected void endBodyClip(GuiGraphicsExtractor context, boolean clipped) {
-      autismclient.gui.ui.widgets.OverlayFrameHelper.init(context, clipped);
+      autismclient.gui.ui.widgets.OverlayFrameHelper.endClip(context, clipped);
    }
 
    protected void renderInactiveDim(GuiGraphicsExtractor context, OverlayBounds bounds, boolean collapsed, boolean activeDrag) {
       int frameHeight = this.animateFrameHeight(bounds, collapsed);
       if (!activeDrag && !this.isWindowActive()) {
-         autismclient.gui.sdf.SdfShapeRenderer.init(
+         autismclient.gui.sdf.SdfShapeRenderer.fillRoundRect(
             context, bounds.x + 1, bounds.y + 1, Math.max(0, bounds.width - 2), Math.max(0, frameHeight - 2), 7.0F, 603979776
          );
       }

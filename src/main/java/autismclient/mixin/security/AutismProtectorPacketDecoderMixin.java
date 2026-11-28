@@ -33,13 +33,13 @@ public class AutismProtectorPacketDecoderMixin {
    ) {
       ConnectionPrivacyRegistry.ConnectionSession context = autism$connectionContext(channelContext);
       boolean modded = context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED;
-      PacketDecodeOriginStack.init(context);
-      ModdedParticleGuard.init(modded);
+      PacketDecodeOriginStack.push(context);
+      ModdedParticleGuard.push(modded);
 
       try {
          return autism$decodeCompatibly(instance, buffer, original, modded);
       } finally {
-         ModdedParticleGuard.init();
+         ModdedParticleGuard.pop();
          PacketDecodeOriginStack.init(false);
       }
    }

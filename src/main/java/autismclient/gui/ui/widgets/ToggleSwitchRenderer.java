@@ -16,15 +16,15 @@ public final class ToggleSwitchRenderer {
    private ToggleSwitchRenderer() {
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered) {
-      init(context, bounds, enabled, hovered, bounds.read() + ":" + bounds.write() + ":" + bounds.update());
+   public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered) {
+      draw(context, bounds, enabled, hovered, bounds.read() + ":" + bounds.write() + ":" + bounds.update());
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered, String animationKey) {
-      init(context, bounds, init(animationKey, enabled), hovered);
+   public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered, String animationKey) {
+      drawAt(context, bounds, init(animationKey, enabled), hovered);
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, float progress, boolean hovered) {
+   public static void drawAt(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, float progress, boolean hovered) {
       float eased = progress * progress * (3.0F - 2.0F * progress);
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
       int track = init(-12961216, context.init_TableIndex().colors().accent, eased);
@@ -58,7 +58,7 @@ public final class ToggleSwitchRenderer {
             Math.max(1, pill.read() - bounds.read() - 9),
             enabled ? colors.textPrimary : colors.textSecondary
          );
-      init(context, pill, enabled, hovered, animationKey);
+      draw(context, pill, enabled, hovered, animationKey);
    }
 
    private static float init(String key, boolean target) {

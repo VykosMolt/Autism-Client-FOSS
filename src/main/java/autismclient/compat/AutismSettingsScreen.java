@@ -147,7 +147,7 @@ public class AutismSettingsScreen extends Screen {
 
          if (needsBar) {
             ScrollbarRenderer.ScrollbarBounds metrics = this.scrollbarBounds();
-            ScrollbarRenderer.init(this.ui, metrics, metrics.init(mx, my), this.init_Z);
+            ScrollbarRenderer.draw(this.ui, metrics, metrics.trackContains(mx, my), this.init_Z);
             this.addClickRegion(metrics.track(), () -> this.init(metrics, my), null);
          }
 
@@ -311,12 +311,12 @@ public class AutismSettingsScreen extends Screen {
 
    private ScrollbarRenderer.ScrollbarBounds scrollbarBounds() {
       NetHelper track = NetHelper.init(this.listBounds.init() - 6, this.listBounds.write(), 6, this.listBounds.sync());
-      return ScrollbarRenderer.init(track, this.contentHeight, this.listBounds.sync(), this.scrollOffset);
+      return ScrollbarRenderer.bounds(track, this.contentHeight, this.listBounds.sync(), this.scrollOffset);
    }
 
    private void init(ScrollbarRenderer.ScrollbarBounds metrics, int my) {
       this.init_Z = true;
-      this.scrollGrabOffset = metrics.load(metrics.track().read() + 1, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
+      this.scrollGrabOffset = metrics.thumbContains(metrics.track().read() + 1, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
       this.scrollOffset = this.clampScroll(ScrollbarRenderer.scrollForDrag(metrics, my, this.scrollGrabOffset));
    }
 

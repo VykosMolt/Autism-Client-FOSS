@@ -22,7 +22,7 @@ public final class ComponentSafetyValidator {
    private ComponentSafetyValidator() {
    }
 
-   public static boolean init(Component component) {
+   public static boolean isSafe(Component component) {
       if (component == null) {
          return true;
       }
@@ -44,13 +44,13 @@ public final class ComponentSafetyValidator {
       }
    }
 
-   public static boolean init(NumberFormat format) {
+   public static boolean isSafeFormat(NumberFormat format) {
       if (format == null) {
          return true;
       }
 
       try {
-         return format instanceof FixedFormat fixed ? init(fixed.value()) : true;
+         return format instanceof FixedFormat fixed ? isSafe(fixed.value()) : true;
       } catch (Throwable t) {
          return false;
       }

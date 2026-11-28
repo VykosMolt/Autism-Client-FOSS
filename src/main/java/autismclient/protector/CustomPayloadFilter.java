@@ -35,7 +35,7 @@ public final class CustomPayloadFilter {
    }
 
    public static CustomPayloadFilter.Verdict init(Packet<?> packet) {
-      return init(null, packet, ProtectorFeatureFlags.sync());
+      return init(null, packet, ProtectorFeatureFlags.spoofClientVanilla());
    }
 
    static CustomPayloadFilter.Verdict init(Packet<?> packet, boolean vanillaMode) {
@@ -68,7 +68,7 @@ public final class CustomPayloadFilter {
             return load_IoWorker_DataUtil;
          }
 
-         if (!ProtectorFeatureFlags.flush()) {
+         if (!ProtectorFeatureFlags.filterChannels()) {
             init(connection, id);
             return init_IoWorker_DataUtil;
          }
@@ -123,7 +123,7 @@ public final class CustomPayloadFilter {
 
    private static CustomPayloadFilter.Verdict init(Connection connection, CustomPacketPayload payload) {
       if (payload instanceof RegistrationPayload registrationPayload) {
-         List<Identifier> kept = init(registrationPayload.channels(), ModNamespaceCatalog::init);
+         List<Identifier> kept = filter(registrationPayload.channels(), ModNamespaceCatalog::init);
          if (kept.size() == registrationPayload.channels().size()) {
             return init_IoWorker_DataUtil;
          } else {
@@ -180,7 +180,7 @@ public final class CustomPayloadFilter {
       }
    }
 
-   static List<Identifier> init(Collection<Identifier> channels, Predicate<Identifier> whitelist) {
+   static List<Identifier> filter(Collection<Identifier> channels, Predicate<Identifier> whitelist) {
       List<Identifier> kept = new ArrayList<>(channels.size());
 
       for (Identifier channel : channels) {

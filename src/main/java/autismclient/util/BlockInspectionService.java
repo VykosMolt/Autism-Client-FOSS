@@ -273,7 +273,7 @@ public final class BlockInspectionService {
                bi.write("NBT overlay unavailable.");
             } else {
                AutismItemNbtInspectOverlay overlay = AutismItemNbtInspectOverlay.getOrCreate(mc.font);
-               if (!(mc.gui.screen() instanceof autismclient.gui.screens.AutismOverlaysScreen host && host.init(overlay))) {
+               if (!(mc.gui.screen() instanceof autismclient.gui.screens.AutismOverlaysScreen host && host.isTiedTo(overlay))) {
                   mc.gui.setScreen(new autismclient.gui.screens.AutismOverlaysScreen(overlay));
                }
             }

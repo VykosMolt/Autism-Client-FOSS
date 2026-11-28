@@ -21,11 +21,11 @@ public class KeyBindArgumentType implements ArgumentType<Integer> {
    private static final Map<String, Integer> KEYS = new LinkedHashMap<>();
    private static final SimpleCommandExceptionType INVALID_KEY = new SimpleCommandExceptionType(Component.literal("Unknown key"));
 
-   public static KeyBindArgumentType init() {
+   public static KeyBindArgumentType key() {
       return new KeyBindArgumentType();
    }
 
-   public static int init(CommandContext<AutismCommandSource> ctx, String name) {
+   public static int getKey(CommandContext<AutismCommandSource> ctx, String name) {
       return ctx.getArgument(name, Integer.class);
    }
 

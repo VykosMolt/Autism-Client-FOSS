@@ -300,7 +300,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.windowNode.setTitleTone(autismclient.gui.f.b.l.load);
       this.windowNode.setHeaderButtons(true, true);
       this.windowNode.setTitleInsets(this.titleInsetLeft(), this.titleInsetRight());
-      this.windowNode.body().init(0).init(autismclient.gui.ui.layout.EdgeInsets.ZERO);
+      this.windowNode.body().withGap(0).withPadding(autismclient.gui.ui.layout.EdgeInsets.ZERO);
       this.windowNode.body().addChild(this.bodySpacer);
    }
 
@@ -4885,7 +4885,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.windowNode.setActive(active);
          this.windowNode.setHeaderHovered(headerHovered);
          int frameHeight = this.layoutWindowHeight();
-         this.bodySpacer.init(Math.max(0, frameHeight - this.styleTheme.load()));
+         this.bodySpacer.withHeight(Math.max(0, frameHeight - this.styleTheme.load()));
          this.windowNode.setBounds(this.editorX, this.editorY, this.editorWidth, frameHeight);
          this.layoutHost.render(context, mouseX, mouseY, delta);
          this.renderPinButton(context, mouseX, mouseY, this.load_cH());
@@ -5496,7 +5496,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    }
 
    private int layoutWindowHeight() {
-      this.bodySpacer.init(Math.max(0, this.editorHeight - this.styleTheme.load()));
+      this.bodySpacer.withHeight(Math.max(0, this.editorHeight - this.styleTheme.load()));
       this.windowNode.setExpanded(!this.collapsed);
       autismclient.gui.ui.layout.LayoutContext metrics = this.layoutHost.createMeasureContext();
       if (metrics == null) {

@@ -8,7 +8,7 @@ public final class RangeSliderRenderer {
    private RangeSliderRenderer() {
    }
 
-   public static void init(
+   public static void draw(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, double minRatio, double maxRatio, boolean hovered, int activeThumb
    ) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
@@ -78,7 +78,7 @@ public final class RangeSliderRenderer {
       }
    }
 
-   public static double init(double value, double min, double max) {
+   public static double ratio(double value, double min, double max) {
       return max <= min ? 0.0 : clamp01((value - min) / (max - min));
    }
 

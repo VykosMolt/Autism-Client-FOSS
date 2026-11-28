@@ -19,6 +19,6 @@ public class AutismComponentUtilsMixin {
    private static void autism$propagateResolution(
       ResolutionContext context, Component component, int recursionDepth, CallbackInfoReturnable<MutableComponent> cir
    ) {
-      PacketComponentOriginTracker.init(component, cir.getReturnValue());
+      PacketComponentOriginTracker.propagate(component, cir.getReturnValue());
    }
 }

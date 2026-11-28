@@ -16,7 +16,7 @@ public final class ToolsActionSchemaBuilder {
    private ToolsActionSchemaBuilder() {
    }
 
-   public static ActionFieldSchema init(ToolsAction action) {
+   public static ActionFieldSchema build(ToolsAction action) {
       ActionFieldSchema.Builder builder = ActionFieldSchema.builder().enumField("operation", "Action", "RUN", "WAIT", "STOP", "PAUSE", "RESUME");
       List<String> ids = new ArrayList<>(MacroToolBridge.listTools().stream().map(MacroToolBridge.ToolInfo::init).toList());
       if (!ids.contains(action.toolId)) {
@@ -63,7 +63,7 @@ public final class ToolsActionSchemaBuilder {
                   JsonObject property = entry.getValue().getAsJsonObject();
                   String type = property.has("type") && property.get("type").isJsonPrimitive() ? property.get("type").getAsString() : "string";
                   String key = "toolArg." + name;
-                  String label = init(name);
+                  String label = humanize(name);
                   boolean optional = !required.contains(name);
                   if (property.has("enum")) {
                      List<String> options = new ArrayList<>();
@@ -108,7 +108,7 @@ public final class ToolsActionSchemaBuilder {
       return builder.toggle("stopOnFailure", "Stop Macro on Failure").text("saveAs", "Save Result As").showWhen("advanced").build();
    }
 
-   public static String init(String value) {
+   public static String humanize(String value) {
       if (value != null && !value.isBlank()) {
          String words = value.replaceAll("([a-z])([A-Z])", "$1 $2").replace('_', ' ');
          return words.substring(0, 1).toUpperCase(Locale.ROOT) + words.substring(1);
@@ -117,7 +117,7 @@ public final class ToolsActionSchemaBuilder {
       }
    }
 
-   public static String init(String key, String value) {
+   public static String optionLabel(String key, String value) {
       if (!key.equals("toolId") && !key.equals("cond_toolFilter")) {
          if (key.equals("completion")) {
             return value.equals("WAIT") ? "When tool finishes" : "While tool runs";
@@ -148,7 +148,7 @@ public final class ToolsActionSchemaBuilder {
          } else if (key.equals("waypoint")) {
             return value.isBlank() ? "Choose waypoint..." : value;
          } else {
-            return init(value.toLowerCase(Locale.ROOT));
+            return humanize(value.toLowerCase(Locale.ROOT));
          }
       } else {
          return value.isBlank() ? "Any tool" : MacroToolBridge.toolLabel(value);

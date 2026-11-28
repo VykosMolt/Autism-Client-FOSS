@@ -222,7 +222,7 @@ public class OverlayManager {
    public void markClosing(AutismOverlay overlay) {
       autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter = overlay == null ? null : this.adapters.get(overlay);
       if (adapter != null) {
-         adapter.read();
+         adapter.restartVisibility();
       }
    }
 
@@ -770,7 +770,7 @@ public class OverlayManager {
             this.setActive(!this.visibleOverlaysScratch.isEmpty());
             if (this.visibleOverlaysScratch.isEmpty() && !anyOverlayAnimating) {
                for (autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter : this.adapters.values()) {
-                  adapter.load(true);
+                  adapter.setRenderSuppressed(true);
                }
             } else {
                int hoveredOverlayIndex = -1;
@@ -796,9 +796,9 @@ public class OverlayManager {
                   autismclient.gui.ui.widgets.OverlayWindowLayerAdapter adapter = this.getOrCreateAdapter(overlay);
                   boolean interactive = this.isVisibleOnScreen(overlay, screen);
                   boolean animating = !interactive && adapter.shouldRender() && !this.isHidden(overlay) && this.isAllowedOnScreen(overlay, screen);
-                  adapter.load(!interactive && !animating);
-                  adapter.write(!interactive);
-                  adapter.read(interactive && hoveredOverlayIndex > visibleIndex);
+                  adapter.setRenderSuppressed(!interactive && !animating);
+                  adapter.setInputSuppressed(!interactive);
+                  adapter.setHoverBlocked(interactive && hoveredOverlayIndex > visibleIndex);
                   if (interactive) {
                      visibleIndex++;
                   }
@@ -1216,14 +1216,14 @@ public class OverlayManager {
       } else {
          AutismOverlay focusedTextOverlay = this.findFocusedTextOverlay();
          if (focusedTextOverlay != null) {
-            this.getOrCreateAdapter(focusedTextOverlay).init(chr, modifiers);
+            this.getOrCreateAdapter(focusedTextOverlay).typeChar(chr, modifiers);
             this.updateFocusedTextCache(focusedTextOverlay);
             this.focusedOverlay = focusedTextOverlay;
             AutismSessionState.getInstance().setActiveOverlayId(focusedTextOverlay.getOverlayId());
             return true;
          } else {
             AutismOverlay keyboardTarget = this.findKeyboardTarget();
-            if (keyboardTarget != null && this.getOrCreateAdapter(keyboardTarget).init(chr, modifiers) == autismclient.gui.ui.UiInputResult.HANDLED) {
+            if (keyboardTarget != null && this.getOrCreateAdapter(keyboardTarget).typeChar(chr, modifiers) == autismclient.gui.ui.UiInputResult.HANDLED) {
                this.updateFocusedTextCache(keyboardTarget);
                return true;
             } else {
@@ -1335,7 +1335,7 @@ public class OverlayManager {
 
    private void syncLayerInputFlags() {
       for (AutismOverlay overlay : this.overlays) {
-         this.getOrCreateAdapter(overlay).write(!this.isVisibleNow(overlay));
+         this.getOrCreateAdapter(overlay).setInputSuppressed(!this.isVisibleNow(overlay));
       }
 
       this.rebuildLayerHost();

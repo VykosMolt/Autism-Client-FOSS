@@ -100,7 +100,7 @@ public final class PacketUtil {
 
    public static void load(GuiGraphicsExtractor graphics, NetHelper bounds, int radius, int color) {
       if (bounds.update() > 0 && bounds.sync() > 0) {
-         autismclient.gui.sdf.SdfShapeRenderer.init(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, color);
+         autismclient.gui.sdf.SdfShapeRenderer.fillRoundRect(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, color);
       }
    }
 
@@ -117,7 +117,7 @@ public final class PacketUtil {
    }
 
    public static void load(GuiGraphicsExtractor graphics, NetHelper bounds, int radius, int fill, int border) {
-      autismclient.gui.sdf.SdfShapeRenderer.init(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, fill, border);
+      autismclient.gui.sdf.SdfShapeRenderer.fillRoundRect(graphics, bounds.read(), bounds.write(), bounds.update(), bounds.sync(), radius, fill, border);
    }
 
    public static void init_V_SyncManager(SyncManager context, NetHelper bounds, int radius, int fill, int border) {

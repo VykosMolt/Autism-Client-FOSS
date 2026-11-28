@@ -20,6 +20,6 @@ public abstract class AutismProtectorChatSigningMixin {
       )
    )
    private MessageSignature autism$skipSigning(Encoder encoder, SignedMessageBody body, Operation<MessageSignature> original) {
-      return ProtectorFeatureFlags.run() ? null : original.call(encoder, body);
+      return ProtectorFeatureFlags.chatSigningOff() ? null : original.call(encoder, body);
    }
 }

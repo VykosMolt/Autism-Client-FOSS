@@ -17,7 +17,7 @@ public final class AnimatedToggleButtonRenderer {
    private AnimatedToggleButtonRenderer() {
    }
 
-   public static void init(
+   public static void draw(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean enabled, boolean hovered, String animationKey
    ) {
       long now = System.nanoTime();

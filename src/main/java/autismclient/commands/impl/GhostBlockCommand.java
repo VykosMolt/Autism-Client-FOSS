@@ -61,7 +61,7 @@ public class GhostBlockCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("creative").executes(ctx -> init((String)null)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("state", StringArgumentType.word())
-                  .suggests(autismclient.commands.CommandSuggestions::init_CompletableFuture_CommandContext_SuggestionsBuilder)
+                  .suggests(autismclient.commands.CommandSuggestions::suggestDelayState)
                   .executes(ctx -> init(StringArgumentType.getString(ctx, "state")))
             )
       );
@@ -77,9 +77,9 @@ public class GhostBlockCommand extends Command {
                return 1;
             }))
             .then(
-               RequiredArgumentBuilder.<AutismCommandSource, String>argument("block", autismclient.commands.arguments.ItemOrBlockIdArgumentType.init())
-                  .suggests(autismclient.commands.CommandSuggestions::get)
-                  .executes(ctx -> load(autismclient.commands.arguments.ItemOrBlockIdArgumentType.init(ctx, "block")))
+               RequiredArgumentBuilder.<AutismCommandSource, String>argument("block", autismclient.commands.arguments.ItemOrBlockIdArgumentType.id())
+                  .suggests(autismclient.commands.CommandSuggestions::suggestBlockId)
+                  .executes(ctx -> load(autismclient.commands.arguments.ItemOrBlockIdArgumentType.getId(ctx, "block")))
             )
       );
    }

@@ -28,18 +28,18 @@ public class GiveCommand extends Command {
          return 1;
       });
       root.then(
-         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.arguments.ItemOrBlockIdArgumentType.init())
-               .suggests(autismclient.commands.CommandSuggestions::clear)
-               .executes(ctx -> give(autismclient.commands.arguments.ItemOrBlockIdArgumentType.init(ctx, "item"), 1)))
+         ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.arguments.ItemOrBlockIdArgumentType.id())
+               .suggests(autismclient.commands.CommandSuggestions::suggestItemId)
+               .executes(ctx -> give(autismclient.commands.arguments.ItemOrBlockIdArgumentType.getId(ctx, "item"), 1)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("count", IntegerArgumentType.integer(1, 64))
-                  .suggests(autismclient.commands.CommandSuggestions::sync)
-                  .executes(ctx -> give(autismclient.commands.arguments.ItemOrBlockIdArgumentType.init(ctx, "item"), IntegerArgumentType.getInteger(ctx, "count")))
+                  .suggests(autismclient.commands.CommandSuggestions::suggestCount)
+                  .executes(ctx -> give(autismclient.commands.arguments.ItemOrBlockIdArgumentType.getId(ctx, "item"), IntegerArgumentType.getInteger(ctx, "count")))
             )
       );
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("item [count]", StringArgumentType.greedyString())
-            .suggests(autismclient.commands.CommandSuggestions::clear)
+            .suggests(autismclient.commands.CommandSuggestions::suggestItemId)
             .executes(ctx -> giveFromLine(StringArgumentType.getString(ctx, "item [count]")))
       );
    }

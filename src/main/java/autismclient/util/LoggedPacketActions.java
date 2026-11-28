@@ -16,7 +16,7 @@ public final class LoggedPacketActions {
       return isResendable(entry);
    }
 
-   public static boolean read(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   public static boolean resend(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (!isSendable(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be sent.");
          return false;
@@ -71,11 +71,11 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean write(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   public static boolean canAddSendAction(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return isResendable(entry);
    }
 
-   public static boolean update(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   public static boolean canAddWaitCondition(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return entry != null && entry.name != null && !entry.name.isBlank() && entry.direction != null && !entry.direction.isBlank();
    }
 
@@ -83,11 +83,11 @@ public final class LoggedPacketActions {
       return entry != null && entry.payloadPacket && "C2S".equalsIgnoreCase(entry.direction);
    }
 
-   public static boolean flush(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   public static boolean canAddPayloadAction(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return isPayloadC2S(entry);
    }
 
-   public static boolean close(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   public static boolean queue(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (!isResendable(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be queued.");
          return false;
@@ -98,8 +98,8 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean open(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      if (!write(entry)) {
+   public static boolean addSendAction(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+      if (!canAddSendAction(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be added as send actions.");
          return false;
       } else {
@@ -121,8 +121,8 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean poll(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      if (!update(entry)) {
+   public static boolean addWaitCondition(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+      if (!canAddWaitCondition(entry)) {
          AutismClientMessaging.sendPrefixed("§cCannot add this packet as a wait condition.");
          return false;
       } else {
@@ -147,7 +147,7 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean push(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   public static boolean editPayload(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (!isPayloadC2S(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly captured C2S custom payload packets can be edited.");
          return false;
@@ -164,8 +164,8 @@ public final class LoggedPacketActions {
       }
    }
 
-   public static boolean pop(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      if (!flush(entry)) {
+   public static boolean addPayloadAction(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+      if (!canAddPayloadAction(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly captured C2S custom payload packets can be added as payload actions.");
          return false;
       } else {

@@ -26,7 +26,7 @@ public class ToggleCommand extends Command {
                .executes(ctx -> init(autismclient.commands.arguments.ModuleArgumentType.init(ctx, "module"), ak.Inner_StreamUtil.init)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("state", StringArgumentType.word())
-                  .suggests(autismclient.commands.CommandSuggestions::init_CompletableFuture_CommandContext_SuggestionsBuilder)
+                  .suggests(autismclient.commands.CommandSuggestions::suggestDelayState)
                   .executes(
                      ctx -> {
                         String state = StringArgumentType.getString(ctx, "state").toLowerCase();

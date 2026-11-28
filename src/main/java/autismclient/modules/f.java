@@ -6244,7 +6244,7 @@ public final class f {
             && ItemStack.isSameItemSameComponents(this.init_ItemStack, stack)) {
             return this.init_I;
          } else if (MC != null && MC.player != null) {
-            int bytes = autismclient.protector.TooltipNbtGuard.init(stack, MC.player.registryAccess());
+            int bytes = autismclient.protector.TooltipNbtGuard.nbtBytes(stack, MC.player.registryAccess());
             this.init_ItemStack = stack.copy();
             this.init_I = bytes;
             return bytes;

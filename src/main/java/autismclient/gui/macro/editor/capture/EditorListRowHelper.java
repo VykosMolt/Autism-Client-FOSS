@@ -32,7 +32,7 @@ public final class EditorListRowHelper {
       );
    }
 
-   public static <T> List<Integer> init(List<T> values, List<Integer> target, Predicate<T> predicate) {
+   public static <T> List<Integer> filterIndices(List<T> values, List<Integer> target, Predicate<T> predicate) {
       target.clear();
       if (values != null && predicate != null) {
          for (int index = 0; index < values.size(); index++) {
@@ -47,7 +47,7 @@ public final class EditorListRowHelper {
       }
    }
 
-   public static <T> List<T> load(List<T> values, List<T> target, Predicate<T> predicate) {
+   public static <T> List<T> filter(List<T> values, List<T> target, Predicate<T> predicate) {
       target.clear();
       if (values != null && predicate != null) {
          for (T value : values) {

@@ -1662,22 +1662,22 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                AutismClientMessaging.sendPrefixed("Blocked + purged from logger: " + e.name);
                break;
             case "Queue":
-               LoggedPacketActions.close(e);
+               LoggedPacketActions.queue(e);
                break;
             case "Send":
-               LoggedPacketActions.read(e);
+               LoggedPacketActions.resend(e);
                break;
             case "+SEND":
-               LoggedPacketActions.open(e);
+               LoggedPacketActions.addSendAction(e);
                break;
             case "+WAIT":
-               LoggedPacketActions.poll(e);
+               LoggedPacketActions.addWaitCondition(e);
                break;
             case "Edit Payload":
-               LoggedPacketActions.push(e);
+               LoggedPacketActions.editPayload(e);
                break;
             case "+PAYLOAD":
-               LoggedPacketActions.pop(e);
+               LoggedPacketActions.addPayloadAction(e);
                break;
             case "+ Filter":
                AutismSessionState shared = AutismSessionState.getInstance();
@@ -1710,7 +1710,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                break;
             case "Replay":
                if (e.packet != null && e.direction.equals("C2S")) {
-                  LoggedPacketActions.read(e);
+                  LoggedPacketActions.resend(e);
                }
                break;
             case "Copy":

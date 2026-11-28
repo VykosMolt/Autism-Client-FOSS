@@ -86,7 +86,7 @@ public abstract class AutismScreenMixin {
 
                try {
                   for (SimpleClickButton button : ContainerScreenToolbar.init(MC, this.autism$queueEditorOverlay)) {
-                     button.init(context, textRenderer, virtualMouseX, virtualMouseY);
+                     button.render(context, textRenderer, virtualMouseX, virtualMouseY);
                   }
                } finally {
                   cA.load_V_GuiGraphicsExtract(context);

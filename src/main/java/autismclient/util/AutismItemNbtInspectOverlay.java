@@ -179,7 +179,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                   int listHeight = Math.max(1, footerY - listY - 4);
                   int lineH = this.lineHeight();
                   int textX = listX + this.textPadding();
-                  int maxTextWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.init(listWidth, this.textPadding());
+                  int maxTextWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.maxTextWidth(listWidth, this.textPadding());
                   this.rewrap(maxTextWidth);
                   if (this.listView == null
                      || this.listView.getX() != listX
@@ -496,7 +496,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       int maxWidth,
       List<AutismItemNbtInspectOverlay.WrappedLine> target
    ) {
-      int safeContinuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, continuationOffset);
+      int safeContinuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.clampOffset(maxWidth, continuationOffset);
       if (prefixWidth >= maxWidth) {
          this.wrapText(prefix.stripTrailing(), 0, UiColorPalette.silver(), maxWidth, target);
          this.wrapText(value, safeContinuationOffset, valueColor, maxWidth, target);
@@ -505,7 +505,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
          for (boolean firstLine = true; !remaining.isEmpty(); firstLine = false) {
             int offset = firstLine ? prefixWidth : safeContinuationOffset;
-            int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.read(maxWidth, offset);
+            int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.availableWidth(maxWidth, offset);
             String current = remaining;
             int split = autismclient.gui.ui.TextWrapLayout.init(
                current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
@@ -526,11 +526,11 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          if (text.isEmpty()) {
             target.add(AutismItemNbtInspectOverlay.WrappedLine.plain("", offset, color));
          } else {
-            int safeOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, offset);
+            int safeOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.clampOffset(maxWidth, offset);
             String remaining = text;
 
             while (!remaining.isEmpty()) {
-               int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.read(maxWidth, safeOffset);
+               int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.availableWidth(maxWidth, safeOffset);
                String current = remaining;
                int split = autismclient.gui.ui.TextWrapLayout.init(
                   current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
@@ -568,7 +568,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    private void wrapTokens(List<ItemNbtInspector.HighlightToken> source, int maxWidth, List<AutismItemNbtInspectOverlay.WrappedLine> target) {
       if (source != null && !source.isEmpty()) {
          int indent = this.tokensWidth(source);
-         int continuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, indent + this.continuationIndent());
+         int continuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.clampOffset(maxWidth, indent + this.continuationIndent());
          List<ItemNbtInspector.HighlightToken> current = new ArrayList<>();
          int currentWidth = 0;
          boolean continuation = false;

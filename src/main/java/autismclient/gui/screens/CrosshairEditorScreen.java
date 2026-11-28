@@ -364,7 +364,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          );
          autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
          autismclient.gui.f.NetHelper window = layout.window();
-         autismclient.gui.ui.widgets.DialogFrameRenderer.init(
+         autismclient.gui.ui.widgets.DialogFrameRenderer.draw(
             context,
             window,
             layout.header(),
@@ -410,7 +410,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
             .draw(
                graphics, "Opacity " + this.opacityPercent + "%", opacityBounds.read(), opacityBounds.write() - autismclient.gui.ui.UiDensityMetrics.scaledHeight(12) + 1, colors.textSecondary
             );
-         autismclient.gui.ui.widgets.SliderRenderer.init(
+         autismclient.gui.ui.widgets.SliderRenderer.draw(
             context,
             opacityBounds,
             autismclient.gui.ui.widgets.SliderRenderer.ratio(this.opacityPercent, 5.0, 100.0),
@@ -621,7 +621,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          return true;
       } else {
          CrosshairEditorScreen.EditorLayout layout = this.computeLayout();
-         if (button == 0 && autismclient.gui.ui.widgets.DialogFrameRenderer.init(layout.window(), layout.header(), mx, my)) {
+         if (button == 0 && autismclient.gui.ui.widgets.DialogFrameRenderer.isOverHeader(layout.window(), layout.header(), mx, my)) {
             this.saveAndClose();
             return true;
          }
@@ -692,7 +692,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
       if (this.colorPopup != null) {
-         this.colorPopup.load(mx, my, Compat263.mouseEventGlfwButton(event));
+         this.colorPopup.mouseReleased(mx, my, Compat263.mouseEventGlfwButton(event));
          if (!this.colorPopup.isOpen()) {
             this.colorPopup = null;
          }
@@ -729,7 +729,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    @Override
    public boolean keyPressed(KeyEvent event) {
       if (this.colorPopup != null) {
-         this.colorPopup.read(Compat263.keyEventGlfwKey(event), event.keycode(), Compat263.keyEventGlfwModifiers(event));
+         this.colorPopup.keyPressed(Compat263.keyEventGlfwKey(event), event.keycode(), Compat263.keyEventGlfwModifiers(event));
          if (!this.colorPopup.isOpen()) {
             this.colorPopup = null;
          }
@@ -827,7 +827,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private void init(int mouseX, autismclient.gui.f.NetHelper bounds) {
-      this.opacityPercent = (int)Math.round(autismclient.gui.ui.widgets.SliderRenderer.init(mouseX, bounds.read(), bounds.update(), 5.0, 100.0, 5.0));
+      this.opacityPercent = (int)Math.round(autismclient.gui.ui.widgets.SliderRenderer.valueAt(mouseX, bounds.read(), bounds.update(), 5.0, 100.0, 5.0));
    }
 
    private void openColorPicker() {

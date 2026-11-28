@@ -186,11 +186,11 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    }
 
    private void rebuildLayout() {
-      this.rootSurface.init(autismclient.gui.ui.layout.EdgeInsets.uniform(0)).setDrawBorder(false).setDrawFill(false);
+      this.rootSurface.withPadding(autismclient.gui.ui.layout.EdgeInsets.uniform(0)).setDrawBorder(false).setDrawFill(false);
       this.rootSurface.getContent().clearChildren();
-      this.rootSurface.getContent().init(autismclient.gui.ui.layout.EdgeInsets.ZERO).init(0);
-      this.mainSection = new autismclient.gui.ui.layout.CollapsibleSectionNode("Main Menu").init(this.sectionHeaderHeight()).load(this.valid()).setExpanded(true);
-      this.mainSection.getContent().init(new autismclient.gui.ui.layout.EdgeInsets(1, 0, 1, 1)).init(this.get_I_9());
+      this.rootSurface.getContent().withPadding(autismclient.gui.ui.layout.EdgeInsets.ZERO).withGap(0);
+      this.mainSection = new autismclient.gui.ui.layout.CollapsibleSectionNode("Main Menu").withHeaderHeight(this.sectionHeaderHeight()).withContentTopGap(this.valid()).setExpanded(true);
+      this.mainSection.getContent().withPadding(new autismclient.gui.ui.layout.EdgeInsets(1, 0, 1, 1)).withGap(this.get_I_9());
       this.rootSurface.getContent().addChild(this.mainSection);
       autismclient.gui.ui.layout.ButtonNode macrosButton = this.createButton(
          "Macros", autismclient.gui.f.a.DataUtil.sync, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
@@ -322,13 +322,13 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          int keyColor = LauncherQuickActions.keyColor();
          int[] valueColors = LauncherQuickActions.valueColors();
          this.init_JsonUtil = syncRow.addChild(
-            new autismclient.gui.ui.layout.KeyValueLabelNode("Rev: ", "--").init(keyColor).load(valueColors[0]).withGrowX(true)
+            new autismclient.gui.ui.layout.KeyValueLabelNode("Rev: ", "--").withKeyColor(keyColor).withValueColor(valueColors[0]).withGrowX(true)
          );
          this.load_JsonUtil = syncRow.addChild(
-            new autismclient.gui.ui.layout.KeyValueLabelNode("SyncID: ", "--").init(keyColor).load(valueColors[1]).withGrowX(true)
+            new autismclient.gui.ui.layout.KeyValueLabelNode("SyncID: ", "--").withKeyColor(keyColor).withValueColor(valueColors[1]).withGrowX(true)
          );
          this.read_JsonUtil = syncRow.addChild(
-            new autismclient.gui.ui.layout.KeyValueLabelNode("Slot: ", "--").init(keyColor).load(valueColors[2]).withGrowX(true)
+            new autismclient.gui.ui.layout.KeyValueLabelNode("Slot: ", "--").withKeyColor(keyColor).withValueColor(valueColors[2]).withGrowX(true)
          );
          this.mainSection.getContent().addChild(syncRow);
       } else {
@@ -380,7 +380,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
       this.mainSection
          .getContent()
-         .addChild(new autismclient.gui.ui.layout.IconHeaderNode(label, icon).init(this.headerIconSize()).setConnectedStyle(true));
+         .addChild(new autismclient.gui.ui.layout.IconHeaderNode(label, icon).withIconSize(this.headerIconSize()).setConnectedStyle(true));
    }
 
    private autismclient.gui.ui.layout.ButtonNode addButtonTo(autismclient.gui.ui.layout.ColumnLayout parent, String label, Identifier icon, Runnable action) {
@@ -984,15 +984,15 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    private void refreshSyncMetrics() {
       String[] metrics = LauncherQuickActions.containerMetrics();
       if (this.init_JsonUtil != null) {
-         this.init_JsonUtil.init(metrics[0]);
+         this.init_JsonUtil.setValue(metrics[0]);
       }
 
       if (this.load_JsonUtil != null) {
-         this.load_JsonUtil.init(metrics[1]);
+         this.load_JsonUtil.setValue(metrics[1]);
       }
 
       if (this.read_JsonUtil != null) {
-         this.read_JsonUtil.init(metrics[2]);
+         this.read_JsonUtil.setValue(metrics[2]);
       }
    }
 }

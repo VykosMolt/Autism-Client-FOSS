@@ -552,7 +552,7 @@ public final class ModulesMenuController {
       }
 
       if (this.macroPicker != null) {
-         this.macroPicker.init(context);
+         this.macroPicker.layout(context);
       }
 
       if (this.tooltipText != null && !this.tooltipText.isBlank() && !this.init_Z_I_I(mouseX, mouseY)) {
@@ -773,10 +773,10 @@ public final class ModulesMenuController {
             theme.colors().textSecondary
          );
       this.addHit(ModulesMenuController.HitType.MODULE, card, module, null, "", -1);
-      KeybindButtonRenderer.init(context, bindButton, module.keybind(), this.bindingModule == module, bindButton.init_Z(context.read(), context.write()));
+      KeybindButtonRenderer.draw(context, bindButton, module.keybind(), this.bindingModule == module, bindButton.init_Z(context.read(), context.write()));
       this.addHit(ModulesMenuController.HitType.MODULE_BIND, bindButton, module, null, "", -1);
       if (module.hasActivationToggle()) {
-         ToggleSwitchRenderer.init(context, pill, module.isEnabled(), pill.init_Z(context.read(), context.write()), "module-toggle:" + module.id());
+         ToggleSwitchRenderer.draw(context, pill, module.isEnabled(), pill.init_Z(context.read(), context.write()), "module-toggle:" + module.id());
          this.addHit(ModulesMenuController.HitType.TOGGLE_MODULE, pill, module, null, "", -1);
       }
 
@@ -883,7 +883,7 @@ public final class ModulesMenuController {
    private int init_I_SyncManager_3(SyncManager context, String label, Identifier icon, int x, int y, int w) {
       int labelH = UiDensityMetrics.scaledHeight(14);
       if (context != null) {
-         ConnectedButtonRenderer.init(context, NetHelper.init(x, y, w, labelH), label, icon);
+         ConnectedButtonRenderer.drawIconButton(context, NetHelper.init(x, y, w, labelH), label, icon);
       }
 
       return y + labelH;
@@ -897,12 +897,12 @@ public final class ModulesMenuController {
       this.addHit(ModulesMenuController.HitType.UTILITY, toggles[0], null, null, "send", -1);
       ConnectedButtonRenderer.init(context, toggles[1], "Delay", null, toggles[1].init_Z(context.read(), context.write()), delayT, ConnectedButtonRenderer.write);
       this.addHit(ModulesMenuController.HitType.UTILITY, toggles[1], null, null, "delay", -1);
-      ConnectedButtonRenderer.init(
+      ConnectedButtonRenderer.drawSeam(
          context,
          toggles[1].read(),
          y,
          this.settingsRowHeight,
-         ConnectedButtonRenderer.init(
+         ConnectedButtonRenderer.dominantColor(
             ConnectedButtonRenderer.init(context, sendT),
             ConnectedButtonRenderer.init_F_CachePool_DataUtil(autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, sendT),
             ConnectedButtonRenderer.init(context, delayT),
@@ -914,12 +914,12 @@ public final class ModulesMenuController {
    private void init_V_SyncManager(
       SyncManager context, int x, int y, autismclient.gui.f.b.CachePool.Inner_DataUtil left, autismclient.gui.f.b.CachePool.Inner_DataUtil right
    ) {
-      ConnectedButtonRenderer.init(
+      ConnectedButtonRenderer.drawSeam(
          context,
          x,
          y,
          this.settingsRowHeight,
-         ConnectedButtonRenderer.init(
+         ConnectedButtonRenderer.dominantColor(
             ConnectedButtonRenderer.init(context, left),
             ConnectedButtonRenderer.init_F_CachePool_DataUtil(left, false, 0.0F),
             ConnectedButtonRenderer.init(context, right),
@@ -1031,7 +1031,7 @@ public final class ModulesMenuController {
 
          return true;
       } else if (this.macroPicker != null) {
-         if (!this.macroPicker.init(mx, my, button, modifiers)) {
+         if (!this.macroPicker.mouseClicked(mx, my, button, modifiers)) {
             this.closeMacroPicker();
          }
 
@@ -1198,7 +1198,7 @@ public final class ModulesMenuController {
                      if ("search".equals(hit.id)) {
                         this.focusSearch(mx, extend);
                      } else if (this.textEdit != null && this.textEdit.owner == hit.setting) {
-                        this.textEdit.init(this.init_I_StreamUtil(this.textEdit, mx, hit.bounds), extend);
+                        this.textEdit.moveCursor(this.init_I_StreamUtil(this.textEdit, mx, hit.bounds), extend);
                         this.close_Z = true;
                      } else {
                         this.beginTextEdit(hit.module, hit.setting, mx, hit.bounds);
@@ -1239,7 +1239,7 @@ public final class ModulesMenuController {
                   case SCROLLBAR:
                      ScrollbarRenderer.ScrollbarBounds metrics = this.scrollbarFor(hit.id);
                      if (metrics != null && metrics.maxScroll() > 0) {
-                        this.scrollbarGrabOffset = metrics.load(mx, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
+                        this.scrollbarGrabOffset = metrics.thumbContains(mx, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
                         this.pop_Str = hit.id;
                         this.setScroll(hit.id, ScrollbarRenderer.scrollForDrag(metrics, my, this.scrollbarGrabOffset));
                      }
@@ -1283,7 +1283,7 @@ public final class ModulesMenuController {
       }
 
       if (this.colorPicker != null) {
-         this.colorPicker.load(mx, my, button);
+         this.colorPicker.mouseReleased(mx, my, button);
          if (!this.colorPicker.isOpen()) {
             this.colorPicker = null;
          }
@@ -1298,7 +1298,7 @@ public final class ModulesMenuController {
          return true;
       } else {
          if (this.macroPicker != null) {
-            this.macroPicker.load(mx, my, button);
+            this.macroPicker.mouseReleased(mx, my, button);
             return true;
          }
 
@@ -1354,12 +1354,12 @@ public final class ModulesMenuController {
          }
 
          if (this.macroPicker != null) {
-            this.macroPicker.init(mx, my, button, dx, dy);
+            this.macroPicker.mouseDragged(mx, my, button, dx, dy);
             return true;
          }
 
          if (this.open_Z && this.searchEdit != null) {
-            this.searchEdit.init(this.init_I_StreamUtil(this.searchEdit, mx, this.searchBounds), true);
+            this.searchEdit.moveCursor(this.init_I_StreamUtil(this.searchEdit, mx, this.searchBounds), true);
             return true;
          }
 
@@ -1479,21 +1479,21 @@ public final class ModulesMenuController {
       if (!this.sync_Z()) {
          long now = System.nanoTime();
          if (this.bindingModule != null) {
-            this.bindingModule.setKeybind(KeybindButtonRenderer.init(key));
+            this.bindingModule.setKeybind(KeybindButtonRenderer.normalizeKey(key));
             this.bindingModule = null;
             this.lastBindNanos = now;
             return true;
          }
 
          if (this.bindingOption != null) {
-            this.setValue(this.bindingOptionModule, this.bindingOption, Integer.toString(KeybindButtonRenderer.init(key)));
+            this.setValue(this.bindingOptionModule, this.bindingOption, Integer.toString(KeybindButtonRenderer.normalizeKey(key)));
             this.bindingOption = null;
             this.bindingOptionModule = null;
             this.lastBindNanos = now;
             return true;
          }
 
-         if (this.colorPicker != null && this.colorPicker.read(key, scanCode, modifiers)) {
+         if (this.colorPicker != null && this.colorPicker.keyPressed(key, scanCode, modifiers)) {
             return true;
          }
 
@@ -1501,7 +1501,7 @@ public final class ModulesMenuController {
             if (key == 256) {
                this.closeMacroPicker();
             } else {
-               this.macroPicker.read(key, scanCode, modifiers);
+               this.macroPicker.keyPressed(key, scanCode, modifiers);
             }
 
             return true;
@@ -1517,7 +1517,7 @@ public final class ModulesMenuController {
             } else {
                InlineTextEditState session = this.textEdit;
                boolean committed = key == 257 || key == 335;
-               if (session.init(key, modifiers) && committed) {
+               if (session.keyPressed(key, modifiers) && committed) {
                   this.endTextEdit(true);
                }
             }
@@ -1535,8 +1535,8 @@ public final class ModulesMenuController {
             } else if (key == 70 && (modifiers & 10) != 0) {
                this.focusSearch(-1);
                if (this.searchEdit != null) {
-                  this.searchEdit.init(0, false);
-                  this.searchEdit.init(this.searchEdit.text.length(), true);
+                  this.searchEdit.moveCursor(0, false);
+                  this.searchEdit.moveCursor(this.searchEdit.text.length(), true);
                }
 
                return true;
@@ -1549,13 +1549,13 @@ public final class ModulesMenuController {
             } else if (key == 256) {
                if (!this.searchEdit.text.isEmpty()) {
                   this.searchEdit.text = "";
-                  this.searchEdit.init(0, false);
+                  this.searchEdit.moveCursor(0, false);
                   this.applySearchQuery("");
                } else {
                   this.searchEdit = null;
                }
             } else if (key != 257 && key != 335) {
-               this.searchEdit.init(key, modifiers);
+               this.searchEdit.keyPressed(key, modifiers);
                this.applySearchQuery(this.searchEdit.text);
             } else {
                this.commitSearchEdit();
@@ -1598,7 +1598,7 @@ public final class ModulesMenuController {
       }
 
       if (this.macroPicker != null) {
-         this.macroPicker.init(chr);
+         this.macroPicker.charTyped(chr);
          return true;
       }
 
@@ -1671,7 +1671,7 @@ public final class ModulesMenuController {
       return null;
    }
 
-   void write(String text) {
+   void setTooltip(String text) {
       this.tooltipText = text;
    }
 
@@ -1688,7 +1688,7 @@ public final class ModulesMenuController {
       this.textEditBounds = bounds;
       this.textEdit = new InlineTextEditState(option, module.value(option.id()), value -> this.setValue(module, option, value));
       if (mx >= 0) {
-         this.textEdit.init(this.init_I_StreamUtil(this.textEdit, mx, bounds), false);
+         this.textEdit.moveCursor(this.init_I_StreamUtil(this.textEdit, mx, bounds), false);
       }
 
       this.close_Z = true;
@@ -1708,7 +1708,7 @@ public final class ModulesMenuController {
 
    private void moveTextCursor(int position, boolean extend) {
       if (this.textEdit != null) {
-         this.textEdit.init(position, extend);
+         this.textEdit.moveCursor(position, extend);
       }
    }
 
@@ -1809,7 +1809,7 @@ public final class ModulesMenuController {
          }
 
          if (mx >= 0) {
-            this.searchEdit.init(this.init_I_StreamUtil(this.searchEdit, mx, this.searchBounds), extend);
+            this.searchEdit.moveCursor(this.init_I_StreamUtil(this.searchEdit, mx, this.searchBounds), extend);
             this.open_Z = true;
          }
 
@@ -2038,15 +2038,15 @@ public final class ModulesMenuController {
       int[] metrics = load_Map.get(key);
       if (metrics != null && metrics[1] > 0) {
          NetHelper track = NetHelper.init(viewport.init() - 4, viewport.write() + 2, 3, viewport.sync() - 4);
-         ScrollbarRenderer.ScrollbarBounds m = ScrollbarRenderer.init(track, contentHeight, viewport.sync(), scroll);
+         ScrollbarRenderer.ScrollbarBounds m = ScrollbarRenderer.bounds(track, contentHeight, viewport.sync(), scroll);
          this.recordScrollbar(key, m);
-         boolean hovered = m.init(context.read(), context.write());
-         ScrollbarRenderer.init(context, m, hovered, key.equals(this.pop_Str));
+         boolean hovered = m.trackContains(context.read(), context.write());
+         ScrollbarRenderer.draw(context, m, hovered, key.equals(this.pop_Str));
          this.addHit(ModulesMenuController.HitType.SCROLLBAR, track, null, null, key, -1);
       }
    }
 
-   int init_I() {
+   int activeRangeHandle() {
       return this.activeRangeHandle;
    }
 
@@ -2344,7 +2344,7 @@ public final class ModulesMenuController {
 
       this.addHit(ModulesMenuController.HitType.MODULE, row, module, null, "", -1);
       if (showBind) {
-         KeybindButtonRenderer.init(context, bindButton, module.keybind(), this.bindingModule == module, bindButton.init_Z(context.read(), context.write()));
+         KeybindButtonRenderer.draw(context, bindButton, module.keybind(), this.bindingModule == module, bindButton.init_Z(context.read(), context.write()));
          this.addHit(ModulesMenuController.HitType.MODULE_BIND, bindButton, module, null, "", -1);
       }
 
@@ -2482,7 +2482,7 @@ public final class ModulesMenuController {
          searchFocused ? this.searchEdit.selectionStart() : -1,
          searchFocused ? this.searchEdit.selectionEnd() : -1,
          searchFocused
-            ? this.searchEdit.init(Math.max(1, this.searchBounds.update() - 8), fragment -> context.init_PoolEntry().measureFragmentWidth(shown, fragment))
+            ? this.searchEdit.updateScroll(Math.max(1, this.searchBounds.update() - 8), fragment -> context.init_PoolEntry().measureFragmentWidth(shown, fragment))
             : 0
       );
       this.addHit(ModulesMenuController.HitType.TEXT_FIELD, this.searchBounds, null, null, "search", -1);

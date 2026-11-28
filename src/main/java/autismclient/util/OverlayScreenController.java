@@ -168,7 +168,7 @@ public final class OverlayScreenController {
             switchingRetainedScreen = true;
 
             try {
-               Screen previous = FOREGROUND_SLOT.load(isRetainedForegroundScreen(requested) ? requested : null);
+               Screen previous = FOREGROUND_SLOT.swap(isRetainedForegroundScreen(requested) ? requested : null);
                autismclient.gui.ui.widgets.TextInputWidget.clearGlobalFocus();
                if (previous == actual) {
                   return false;
@@ -232,7 +232,7 @@ public final class OverlayScreenController {
    }
 
    public static void clearRetainedForeground() {
-      Screen old = FOREGROUND_SLOT.load();
+      Screen old = FOREGROUND_SLOT.take();
       Minecraft client = Minecraft.getInstance();
       if (old != null && (client == null || old != getActualScreen(client))) {
          old.removed();

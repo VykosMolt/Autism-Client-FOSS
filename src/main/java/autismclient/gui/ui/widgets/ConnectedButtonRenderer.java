@@ -112,10 +112,10 @@ public final class ConnectedButtonRenderer {
             );
       }
 
-      ToggleSwitchRenderer.init(context, pill, progress, hovered);
+      ToggleSwitchRenderer.drawAt(context, pill, progress, hovered);
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, Identifier icon) {
+   public static void drawIconButton(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, Identifier icon) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       autismclient.gui.f.PacketUtil.init(context.init_GuiGraphicsExtract(), bounds, -1441458403);
       autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_2(
@@ -228,11 +228,11 @@ public final class ConnectedButtonRenderer {
       return 0.0F;
    }
 
-   public static int init(int leftColor, float leftWeight, int rightColor, float rightWeight) {
+   public static int dominantColor(int leftColor, float leftWeight, int rightColor, float rightWeight) {
       return rightWeight > leftWeight ? rightColor : leftColor;
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, int x, int y, int height, int color) {
+   public static void drawSeam(autismclient.gui.f.SyncManager context, int x, int y, int height, int color) {
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), x, y, Math.max(0, height - 1), color);
    }
 

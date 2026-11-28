@@ -9,7 +9,7 @@ public class ColumnLayout extends LayoutContainer {
       this.init_I = 0;
    }
 
-   public ColumnLayout init(EdgeInsets padding) {
+   public ColumnLayout withPadding(EdgeInsets padding) {
       EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
       if (!this.padding.equals(next)) {
          this.padding = next;
@@ -19,7 +19,7 @@ public class ColumnLayout extends LayoutContainer {
       return this;
    }
 
-   public ColumnLayout init(int gap) {
+   public ColumnLayout withGap(int gap) {
       int next = Math.max(0, gap);
       if (this.init_I != next) {
          this.init_I = next;

@@ -87,7 +87,7 @@ public class MsdfEditBox extends EditBox {
       float previousWidth = 0.0F;
       int previous = 0;
 
-      for (int next = Utf16TextCursor.write(value, 0); next > previous; next = Utf16TextCursor.write(value, previous)) {
+      for (int next = Utf16TextCursor.next(value, 0); next > previous; next = Utf16TextCursor.next(value, previous)) {
          float nextWidth = this.init(value.substring(0, next));
          if (target < (previousWidth + nextWidth) / 2.0F) {
             return previous;

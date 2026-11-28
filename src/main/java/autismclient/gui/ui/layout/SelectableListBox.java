@@ -35,7 +35,7 @@ public final class SelectableListBox<T> {
       this.selectionHandler = selectionHandler;
    }
 
-   public void init(List<T> items) {
+   public void setItems(List<T> items) {
       this.init_List.clear();
       if (items != null) {
          this.init_List.addAll(items);
@@ -101,7 +101,7 @@ public final class SelectableListBox<T> {
       this.colorExtractor = colorExtractor;
    }
 
-   public void init(Function<T, String> extractor) {
+   public void addItem(Function<T, String> extractor) {
       this.write_Function = extractor;
    }
 
@@ -113,7 +113,7 @@ public final class SelectableListBox<T> {
       this.sync = disabledText;
    }
 
-   public void init(GuiGraphicsExtractor ctx, Font textRenderer, double mouseX, double mouseY) {
+   public void render(GuiGraphicsExtractor ctx, Font textRenderer, double mouseX, double mouseY) {
       this.init_EventBus.beginFrame(ctx, this.border, this.background);
 
       try {
@@ -267,11 +267,11 @@ public final class SelectableListBox<T> {
       return this.init_EventBus.getY();
    }
 
-   public int update() {
+   public int width() {
       return this.init_EventBus.getWidth();
    }
 
-   public int sync() {
+   public int height() {
       return this.init_EventBus.getHeight();
    }
 

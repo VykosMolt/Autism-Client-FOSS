@@ -85,7 +85,7 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
       try {
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(g, this.font, mx, my);
          autismclient.gui.f.NetHelper p = this.panelBounds();
-         autismclient.gui.ui.widgets.DialogFrameRenderer.init(ui, p, 17, this.getTitle().getString(), false);
+         autismclient.gui.ui.widgets.DialogFrameRenderer.draw(ui, p, 17, this.getTitle().getString(), false);
          int top = p.write() + 17 + 7;
 
          for (int i = 0; i < this.lines.size(); i++) {
@@ -121,7 +121,7 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
 
       MouseButtonEvent mouse = toVirtual(event);
       autismclient.gui.f.NetHelper p = this.panelBounds();
-      if (autismclient.gui.ui.widgets.DialogFrameRenderer.init(p, 17, (int)mouse.x(), (int)mouse.y())) {
+      if (autismclient.gui.ui.widgets.DialogFrameRenderer.isOverHeader(p, 17, (int)mouse.x(), (int)mouse.y())) {
          this.onClose();
          return true;
       }

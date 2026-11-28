@@ -12,7 +12,7 @@ public final class PacketDecodeOriginStack {
    private PacketDecodeOriginStack() {
    }
 
-   public static boolean init(Packet<?> packet) {
+   public static boolean tracks(Packet<?> packet) {
       return packet instanceof ClientboundCustomPayloadPacket
          || packet instanceof ClientboundBlockEntityDataPacket
          || packet instanceof ClientboundLevelChunkWithLightPacket;
@@ -22,7 +22,7 @@ public final class PacketDecodeOriginStack {
       return init.get().init_I != 0;
    }
 
-   public static void init(ConnectionPrivacyRegistry.ConnectionSession context) {
+   public static void push(ConnectionPrivacyRegistry.ConnectionSession context) {
       PacketDecodeOriginStack.OriginStack state = init.get();
       if (state.init_I == state.init_BufferHelper_StreaArr.length) {
          state.init_BufferHelper_StreaArr = Arrays.copyOf(state.init_BufferHelper_StreaArr, state.init_I * 2);
@@ -38,7 +38,7 @@ public final class PacketDecodeOriginStack {
 
    public static void init(boolean value) {
       if (value) {
-         init(current());
+         push(current());
       } else {
          PacketDecodeOriginStack.OriginStack state = init.get();
          if (state.init_I > 0) {

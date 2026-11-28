@@ -39,8 +39,8 @@ final class InlineTextEditState {
       return this.scrollX;
    }
 
-   int init(int availableWidth, ToIntFunction<String> widths) {
-      this.scrollX = TextFieldRenderer.init(this.text, this.cursor, availableWidth, widths, this.scrollX);
+   int updateScroll(int availableWidth, ToIntFunction<String> widths) {
+      this.scrollX = TextFieldRenderer.scrollFor(this.text, this.cursor, availableWidth, widths, this.scrollX);
       return this.scrollX;
    }
 
@@ -69,20 +69,20 @@ final class InlineTextEditState {
             break;
          }
 
-         i = Utf16TextCursor.write(this.text, i);
+         i = Utf16TextCursor.next(this.text, i);
       }
 
       return bestIndex;
    }
 
-   void init(int position, boolean extendSelection) {
+   void moveCursor(int position, boolean extendSelection) {
       this.cursor = Utf16TextCursor.clampIndex(this.text, position);
       if (!extendSelection) {
          this.anchor = this.cursor;
       }
    }
 
-   boolean init(int key, int modifiers) {
+   boolean keyPressed(int key, int modifiers) {
       boolean ctrl = (modifiers & 2) != 0;
       boolean shift = (modifiers & 1) != 0;
       if (ctrl) {
@@ -102,10 +102,10 @@ final class InlineTextEditState {
                this.deleteSelection();
                return true;
             case 262:
-               this.init(this.nextWordEnd(), shift);
+               this.moveCursor(this.nextWordEnd(), shift);
                return true;
             case 263:
-               this.init(this.previousWordStart(), shift);
+               this.moveCursor(this.previousWordStart(), shift);
                return true;
          }
       }
@@ -117,37 +117,37 @@ final class InlineTextEditState {
             return true;
          case 259:
             if (!this.deleteSelection() && this.cursor > 0) {
-               this.replaceRange(ctrl ? this.previousWordStart() : Utf16TextCursor.read(this.text, this.cursor), this.cursor, "");
+               this.replaceRange(ctrl ? this.previousWordStart() : Utf16TextCursor.previous(this.text, this.cursor), this.cursor, "");
             }
 
             return true;
          case 261:
             if (!this.deleteSelection() && this.cursor < this.text.length()) {
-               this.replaceRange(this.cursor, ctrl ? this.nextWordEnd() : Utf16TextCursor.write(this.text, this.cursor), "");
+               this.replaceRange(this.cursor, ctrl ? this.nextWordEnd() : Utf16TextCursor.next(this.text, this.cursor), "");
             }
 
             return true;
          case 262:
             if (this.hasSelection() && !shift) {
-               this.init(this.selectionEnd(), false);
+               this.moveCursor(this.selectionEnd(), false);
             } else {
-               this.init(Utf16TextCursor.write(this.text, this.cursor), shift);
+               this.moveCursor(Utf16TextCursor.next(this.text, this.cursor), shift);
             }
 
             return true;
          case 263:
             if (this.hasSelection() && !shift) {
-               this.init(this.selectionStart(), false);
+               this.moveCursor(this.selectionStart(), false);
             } else {
-               this.init(Utf16TextCursor.read(this.text, this.cursor), shift);
+               this.moveCursor(Utf16TextCursor.previous(this.text, this.cursor), shift);
             }
 
             return true;
          case 268:
-            this.init(0, shift);
+            this.moveCursor(0, shift);
             return true;
          case 269:
-            this.init(this.text.length(), shift);
+            this.moveCursor(this.text.length(), shift);
             return true;
          default:
             return false;

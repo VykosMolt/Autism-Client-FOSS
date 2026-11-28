@@ -26,11 +26,11 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
    private ContainerItemNameArgumentType() {
    }
 
-   public static ContainerItemNameArgumentType init() {
+   public static ContainerItemNameArgumentType itemName() {
       return new ContainerItemNameArgumentType();
    }
 
-   public static String init(CommandContext<AutismCommandSource> context, String name) {
+   public static String getItemName(CommandContext<AutismCommandSource> context, String name) {
       return context.getArgument(name, String.class);
    }
 

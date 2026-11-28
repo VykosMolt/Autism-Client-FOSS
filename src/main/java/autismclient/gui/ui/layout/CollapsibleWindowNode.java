@@ -30,7 +30,7 @@ public class CollapsibleWindowNode extends LayoutContainer {
 
    public CollapsibleWindowNode(String title) {
       this.title = title == null ? "" : title;
-      this.body.init(2).init(EdgeInsets.uniform(4));
+      this.body.withGap(2).withPadding(EdgeInsets.uniform(4));
       this.addChild(this.body);
    }
 

@@ -22,7 +22,7 @@ public class FakeGmCommand extends Command {
          AutismClientMessaging.sendPrefixed("§7Real change: " + autismclient.commands.CommandManager.getPrefix() + "gamemode");
          return 1;
       });
-      root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::set).executes(ctx -> {
+      root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::suggestFakeGamemode).executes(ctx -> {
          String mode = StringArgumentType.getString(ctx, "mode").toLowerCase(Locale.ROOT);
          FakeGamemodeManager.ApplyResult result;
          if (!"reset".equals(mode) && !"r".equals(mode)) {

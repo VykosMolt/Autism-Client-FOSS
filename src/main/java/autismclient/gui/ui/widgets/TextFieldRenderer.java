@@ -7,13 +7,13 @@ public final class TextFieldRenderer {
    private TextFieldRenderer() {
    }
 
-   public static void init(
+   public static void draw(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String text, String placeholder, boolean focused, int cursor
    ) {
-      init(context, bounds, text, placeholder, focused, cursor, -1, -1);
+      draw(context, bounds, text, placeholder, focused, cursor, -1, -1);
    }
 
-   public static void init(
+   public static void draw(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper bounds,
       String text,
@@ -77,10 +77,10 @@ public final class TextFieldRenderer {
    }
 
    public static int init(String text, int cursor, int availableWidth, ToIntFunction<String> widths) {
-      return init(text, cursor, availableWidth, widths, 0);
+      return scrollFor(text, cursor, availableWidth, widths, 0);
    }
 
-   public static int init(String text, int cursor, int availableWidth, ToIntFunction<String> widths, int previousScroll) {
+   public static int scrollFor(String text, int cursor, int availableWidth, ToIntFunction<String> widths, int previousScroll) {
       String value = text == null ? "" : text;
       int boundary = Utf16TextCursor.clampIndex(value, cursor);
       int width = Math.max(1, availableWidth);

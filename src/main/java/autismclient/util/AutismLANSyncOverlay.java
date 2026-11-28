@@ -1203,8 +1203,8 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          if (this.init_RenderState == null
             || this.init_RenderState.getX() != this.localListX
             || this.init_RenderState.getY() != this.localListY
-            || this.init_RenderState.update() != this.localListWidth
-            || this.init_RenderState.sync() != this.localListHeight) {
+            || this.init_RenderState.width() != this.localListWidth
+            || this.init_RenderState.height() != this.localListHeight) {
             this.init_RenderState = new autismclient.gui.ui.layout.SelectableListBox<>(
                this.localListX, this.localListY, this.localListWidth, this.localListHeight, this.rowPitch(), 3, macro -> macro.name, (macro, selected) -> {
                   if (selected) {
@@ -1212,14 +1212,14 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                   }
                }
             );
-            this.init_RenderState.init(macro -> {
+            this.init_RenderState.addItem(macro -> {
                int actionCount = macro.actions != null ? macro.actions.size() : 0;
                return "(" + actionCount + ")";
             });
             this.init_RenderState.select(-1);
          }
 
-         this.init_RenderState.init(localMacros);
+         this.init_RenderState.setItems(localMacros);
 
          for (int i = 0; i < localMacros.size(); i++) {
             if (localMacros.get(i).name.equals(this.selectedMacroName)) {
@@ -1228,7 +1228,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             }
          }
 
-         this.init_RenderState.init(ctx, this.textRenderer, mx, my);
+         this.init_RenderState.render(ctx, this.textRenderer, mx, my);
          cy += this.localListHeight;
       }
 

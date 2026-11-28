@@ -4,7 +4,7 @@ public final class ProgressBarRenderer {
    private ProgressBarRenderer() {
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, double progress) {
+   public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, double progress) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       progress = Math.max(0.0, Math.min(1.0, progress));
       int radius = bounds.sync() / 2;

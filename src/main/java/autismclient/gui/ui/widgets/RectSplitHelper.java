@@ -5,7 +5,7 @@ public final class RectSplitHelper {
    }
 
    public static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper row, int count, int index, int gap) {
-      return GridRowSplitter.init(row, count, index, gap);
+      return GridRowSplitter.cell(row, count, index, gap);
    }
 
    public static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds, int horizontal, int vertical) {

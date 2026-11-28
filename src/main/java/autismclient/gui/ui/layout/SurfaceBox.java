@@ -20,7 +20,7 @@ public class SurfaceBox extends LayoutContainer {
       return this;
    }
 
-   public SurfaceBox init(EdgeInsets padding) {
+   public SurfaceBox withPadding(EdgeInsets padding) {
       EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
       if (!this.init_IoWorker.equals(next)) {
          this.init_IoWorker = next;

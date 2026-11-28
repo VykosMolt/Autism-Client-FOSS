@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AutismProtectorKeyMappingRegistryImplMixin {
    @Inject(method = "registerKeyMapping", at = @At("RETURN"))
    private static void autism$trackModKeyMapping(KeyMapping keyMapping, CallbackInfoReturnable<KeyMapping> cir) {
-      LinkedHashSet<String> mods = CallerModInspector.init();
+      LinkedHashSet<String> mods = CallerModInspector.callerMods();
       if (!mods.isEmpty()) {
          ModNamespaceCatalog.read(keyMapping.getName(), mods.getLast());
       }

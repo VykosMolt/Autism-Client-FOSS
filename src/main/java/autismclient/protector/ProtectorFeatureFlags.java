@@ -32,34 +32,34 @@ public final class ProtectorFeatureFlags {
    }
 
    public static boolean init_Z() {
-      return load();
+      return hasFullExternalProtector();
    }
 
-   public static boolean load() {
+   public static boolean hasFullExternalProtector() {
       return init_Z;
    }
 
-   public static boolean read() {
+   public static boolean hasExternalProtector() {
       return init_Z || load_Z;
    }
 
-   public static boolean write() {
+   public static boolean hasOverlappingProtector() {
       return load_Z && !init_Z;
    }
 
-   public static boolean update() {
+   public static boolean protectorEnabled() {
       return init(1);
    }
 
-   public static boolean sync() {
+   public static boolean spoofClientVanilla() {
       return init(512);
    }
 
-   public static boolean flush() {
+   public static boolean filterChannels() {
       return init(4);
    }
 
-   public static boolean close() {
+   public static boolean translationProtection() {
       return init(8);
    }
 
@@ -67,7 +67,7 @@ public final class ProtectorFeatureFlags {
       return init(8);
    }
 
-   public static boolean poll() {
+   public static boolean disableTelemetry() {
       return init(16);
    }
 
@@ -83,7 +83,7 @@ public final class ProtectorFeatureFlags {
       return init(128);
    }
 
-   public static boolean run() {
+   public static boolean chatSigningOff() {
       return init(256);
    }
 
@@ -98,7 +98,7 @@ public final class ProtectorFeatureFlags {
          int sourceFlags = flagsOf(config);
          ProtectorFeatureFlags.FlagState current = cachedState;
          if (!current.init_Z || current.config != config || current.flags != sourceFlags) {
-            cachedState = new ProtectorFeatureFlags.FlagState(true, config, sourceFlags, init(sourceFlags, init_Z, read()));
+            cachedState = new ProtectorFeatureFlags.FlagState(true, config, sourceFlags, init(sourceFlags, init_Z, hasExternalProtector()));
          }
       }
    }
@@ -195,7 +195,7 @@ public final class ProtectorFeatureFlags {
       return packet == null ? false : init_Map.containsKey(packet);
    }
 
-   public static void load(Packet<?> packet) {
+   public static void unmarkDirect(Packet<?> packet) {
       if (packet != null) {
          init_Map.remove(packet);
       }

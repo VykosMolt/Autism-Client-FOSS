@@ -3,7 +3,7 @@ package autismclient.gui.ui.layout;
 public class VerticalSpacerNode extends LayoutNode {
    private float height = 48.0F;
 
-   public VerticalSpacerNode init(float preferredHeight) {
+   public VerticalSpacerNode withHeight(float preferredHeight) {
       float next = Math.max(0.0F, preferredHeight);
       if (Float.compare(this.height, next) != 0) {
          this.height = next;

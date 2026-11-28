@@ -40,7 +40,7 @@ public enum MsdfFontFace {
       return font == null && this != BODY ? BODY.atlas() : font;
    }
 
-   public static MsdfFontFace init(Identifier fontId) {
+   public static MsdfFontFace forFont(Identifier fontId) {
       if (autismclient.gui.f.a.DataUtil.read.equals(fontId)) {
          return TITLE;
       } else {

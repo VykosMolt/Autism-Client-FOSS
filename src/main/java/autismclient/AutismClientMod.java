@@ -122,13 +122,13 @@ public final class AutismClientMod implements ClientModInitializer {
       AutismClientAddon.FOLDER.mkdirs();
       runSafe("initialize", () -> ModuleRuntimeManager.getInstance().initialize());
       ModNamespaceCatalog.initialize();
-      if (!ProtectorFeatureFlags.read()) {
+      if (!ProtectorFeatureFlags.hasExternalProtector()) {
          VanillaTranslationKeyLoader.loadAsync();
       }
 
-      if (ProtectorFeatureFlags.load()) {
+      if (ProtectorFeatureFlags.hasFullExternalProtector()) {
          AutismClientAddon.LOG.info("[AutismProtector] External protection mod detected; deferring all anti-fingerprint mixins to it.");
-      } else if (ProtectorFeatureFlags.write()) {
+      } else if (ProtectorFeatureFlags.hasOverlappingProtector()) {
          AutismClientAddon.LOG
             .info("[AutismProtector] ExploitPreventer detected; deferring overlapping protections while keeping brand/channel hiding active.");
       } else {

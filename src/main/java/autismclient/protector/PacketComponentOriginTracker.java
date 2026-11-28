@@ -50,10 +50,10 @@ public final class PacketComponentOriginTracker {
 
    public static void tag(Component component) {
       ConnectionPrivacyRegistry.ConnectionSession origin = PacketDecodeOriginStack.current();
-      init(component, origin == null ? init_BufferHelper_Strea(component) : origin);
+      markComponentFromPacket(component, origin == null ? init_BufferHelper_Strea(component) : origin);
    }
 
-   public static void init(Component component, ConnectionPrivacyRegistry.ConnectionSession origin) {
+   public static void markComponentFromPacket(Component component, ConnectionPrivacyRegistry.ConnectionSession origin) {
       markTreeFromPacket(component, Collections.newSetFromMap(new IdentityHashMap<>()), origin);
    }
 
@@ -65,20 +65,20 @@ public final class PacketComponentOriginTracker {
       return treeFromPacket(contents, Collections.newSetFromMap(new IdentityHashMap<>()));
    }
 
-   public static void init(ComponentContents source, Component result) {
+   public static void propagateFromContents(ComponentContents source, Component result) {
       if (source != null && result != null) {
          if (isFromPacket(source)) {
-            init(result, init_BufferHelper_Strea(source));
+            markComponentFromPacket(result, init_BufferHelper_Strea(source));
          } else {
             init_Z((Object)result);
          }
       }
    }
 
-   public static void init(Component source, Component result) {
+   public static void propagate(Component source, Component result) {
       if (source != null && result != null) {
          if (init_Z(source)) {
-            init(result, init_BufferHelper_Strea(source));
+            markComponentFromPacket(result, init_BufferHelper_Strea(source));
          } else {
             init_Z((Object)result);
          }

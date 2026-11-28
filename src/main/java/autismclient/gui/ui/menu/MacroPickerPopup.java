@@ -42,7 +42,7 @@ final class MacroPickerPopup {
       this.refreshNames();
    }
 
-   void init(SyncManager context) {
+   void layout(SyncManager context) {
       this.textRenderer = context.init_PoolEntry();
       UiTheme theme = context.init_TableIndex();
       this.rowHeight = UiDensityMetrics.scaledHeight(12);
@@ -73,7 +73,7 @@ final class MacroPickerPopup {
          this.searchState.cursor,
          this.searchState.selectionStart(),
          this.searchState.selectionEnd(),
-         this.searchState.init(this.searchRect.update() - 8, fragment -> this.textRenderer.measureFragmentWidth(this.searchState.text, fragment))
+         this.searchState.updateScroll(this.searchRect.update() - 8, fragment -> this.textRenderer.measureFragmentWidth(this.searchState.text, fragment))
       );
       autismclient.gui.f.b.CachePool.init(
          context, this.clearRect, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, this.clearRect.init_Z(context.read(), context.write()), false
@@ -124,10 +124,10 @@ final class MacroPickerPopup {
    }
 
    boolean click(int mouseX, int mouseY, int button) {
-      return this.init(mouseX, mouseY, button, 0);
+      return this.mouseClicked(mouseX, mouseY, button, 0);
    }
 
-   boolean init(int mouseX, int mouseY, int button, int modifiers) {
+   boolean mouseClicked(int mouseX, int mouseY, int button, int modifiers) {
       if (!this.panelRect.init_Z(mouseX, mouseY)) {
          return false;
       }
@@ -137,7 +137,7 @@ final class MacroPickerPopup {
       }
 
       if (this.searchRect.init_Z(mouseX, mouseY)) {
-         this.searchState.init(this.cursorIndexAt(mouseX), (modifiers & 1) != 0);
+         this.searchState.moveCursor(this.cursorIndexAt(mouseX), (modifiers & 1) != 0);
          this.selectingText = true;
          return true;
       }
@@ -163,7 +163,7 @@ final class MacroPickerPopup {
       return true;
    }
 
-   boolean load(int mouseX, int mouseY, int button) {
+   boolean mouseReleased(int mouseX, int mouseY, int button) {
       if (button == 0) {
          this.selectingText = false;
       }
@@ -171,9 +171,9 @@ final class MacroPickerPopup {
       return true;
    }
 
-   boolean init(int mouseX, int mouseY, int button, double dx, double dy) {
+   boolean mouseDragged(int mouseX, int mouseY, int button, double dx, double dy) {
       if (button == 0 && this.selectingText) {
-         this.searchState.init(this.cursorIndexAt(mouseX), true);
+         this.searchState.moveCursor(this.cursorIndexAt(mouseX), true);
       }
 
       return true;
@@ -196,9 +196,9 @@ final class MacroPickerPopup {
       return true;
    }
 
-   boolean read(int key, int scanCode, int modifiers) {
+   boolean keyPressed(int key, int scanCode, int modifiers) {
       String before = this.searchState.text;
-      this.searchState.init(key, modifiers);
+      this.searchState.keyPressed(key, modifiers);
       if (!before.equals(this.searchState.text)) {
          this.refreshNames();
       }
@@ -206,7 +206,7 @@ final class MacroPickerPopup {
       return true;
    }
 
-   boolean init(char chr) {
+   boolean charTyped(char chr) {
       String before = this.searchState.text;
       this.searchState.typeChar(chr);
       if (!before.equals(this.searchState.text)) {

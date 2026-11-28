@@ -121,7 +121,7 @@ final class SlotClickCommandHelper {
 
    private static RequiredArgumentBuilder<AutismCommandSource, Integer> timesArgument(SlotClickCommandHelper.TimesExecutor executor) {
       return (RequiredArgumentBuilder<AutismCommandSource, Integer>)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("times", IntegerArgumentType.integer(1, 100000))
-         .suggests(autismclient.commands.CommandSuggestions::sync)
+         .suggests(autismclient.commands.CommandSuggestions::suggestCount)
          .executes(context -> executor.execute(context, IntegerArgumentType.getInteger(context, "times")));
    }
 

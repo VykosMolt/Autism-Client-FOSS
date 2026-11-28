@@ -265,7 +265,7 @@ public class HudElementSettingsScreen extends Screen {
       int sliderW = this.sliderWidth(w);
       int fieldX = x + sliderW + 4;
       double ratio = autismclient.gui.ui.widgets.SliderRenderer.ratio(value, row.min, row.max);
-      autismclient.gui.ui.widgets.SliderRenderer.init(
+      autismclient.gui.ui.widgets.SliderRenderer.draw(
          autismclient.gui.f.UiHelper.init(graphics, this.font, x, y), autismclient.gui.f.NetHelper.init(x, y, sliderW, h), ratio, editing
       );
       if (editing) {
@@ -301,7 +301,7 @@ public class HudElementSettingsScreen extends Screen {
 
    private void drawToggle(GuiGraphicsExtractor graphics, boolean checked, int x, int y, int boxH, String animationKey) {
       int pillY = y + (boxH - 10) / 2;
-      ToggleSwitchRenderer.init(autismclient.gui.f.UiHelper.init(graphics, this.font, x, pillY), autismclient.gui.f.NetHelper.init(x, pillY, 20, 10), checked, false, animationKey);
+      ToggleSwitchRenderer.draw(autismclient.gui.f.UiHelper.init(graphics, this.font, x, pillY), autismclient.gui.f.NetHelper.init(x, pillY, 20, 10), checked, false, animationKey);
    }
 
    private void drawButton(
@@ -479,7 +479,7 @@ public class HudElementSettingsScreen extends Screen {
       if (this.colorPicker != null) {
          int mx = cA.init_I_D(event.x());
          int my = cA.init_I_D(event.y());
-         this.colorPicker.load(mx, my, Compat263.mouseEventGlfwButton(event));
+         this.colorPicker.mouseReleased(mx, my, Compat263.mouseEventGlfwButton(event));
          if (!this.colorPicker.isOpen()) {
             this.closeColorPicker();
          }
@@ -508,7 +508,7 @@ public class HudElementSettingsScreen extends Screen {
          int valueW = this.valueWidth(this.rowsWidth(panel));
          this.setSliderValue(
             this.row,
-            autismclient.gui.ui.widgets.SliderRenderer.init(
+            autismclient.gui.ui.widgets.SliderRenderer.valueAt(
                mx, valueX, this.sliderWidth(valueW), this.row.min, this.row.max, this.row.read
             )
          );
@@ -569,7 +569,7 @@ public class HudElementSettingsScreen extends Screen {
    @Override
    public boolean keyPressed(KeyEvent input) {
       if (this.colorPicker != null) {
-         this.colorPicker.read(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input));
+         this.colorPicker.keyPressed(Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input));
          if (!this.colorPicker.isOpen()) {
             this.closeColorPicker();
          }
@@ -638,7 +638,7 @@ public class HudElementSettingsScreen extends Screen {
             return;
          }
 
-         double value = autismclient.gui.ui.widgets.SliderRenderer.init(mx, valueX, this.sliderWidth(valueW), row.min, row.max, row.read);
+         double value = autismclient.gui.ui.widgets.SliderRenderer.valueAt(mx, valueX, this.sliderWidth(valueW), row.min, row.max, row.read);
          this.setSliderValue(row, value);
          this.row = row;
          this.cancelTextEdit();
@@ -1100,7 +1100,7 @@ public class HudElementSettingsScreen extends Screen {
 
    private void drawWindow(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int headerHeight, String title, int mx, int my) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, height);
-      autismclient.gui.ui.widgets.DialogFrameRenderer.init(
+      autismclient.gui.ui.widgets.DialogFrameRenderer.draw(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my),
          bounds,
          headerHeight,
@@ -1110,7 +1110,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private boolean isOverDialogCloseButton(int mx, int my, int x, int y, int width, int height, int headerHeight) {
-      return autismclient.gui.ui.widgets.DialogFrameRenderer.init(autismclient.gui.f.NetHelper.init(x, y, width, height), headerHeight, mx, my);
+      return autismclient.gui.ui.widgets.DialogFrameRenderer.isOverHeader(autismclient.gui.f.NetHelper.init(x, y, width, height), headerHeight, mx, my);
    }
 
    private int bodyHeight() {

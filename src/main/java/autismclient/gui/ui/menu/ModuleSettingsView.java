@@ -120,7 +120,7 @@ final class ModuleSettingsView {
             listArea = NetHelper.init(listArea.read(), listArea.write() + hintH, listArea.update(), Math.max(0, listArea.sync() - hintH));
          }
 
-         CrosshairPreviewLayout preview = module instanceof CrosshairModule ? CrosshairPreviewLayout.init(listArea) : null;
+         CrosshairPreviewLayout preview = module instanceof CrosshairModule ? CrosshairPreviewLayout.of(listArea) : null;
          if (preview != null) {
             listArea = preview.listArea();
          }
@@ -159,7 +159,7 @@ final class ModuleSettingsView {
 
          this.drawScrollbar(context, listArea, contentHeight, scroll);
          if (preview != null && module instanceof CrosshairModule crosshair) {
-            CrosshairPreviewRenderer.init(context, preview.load(), crosshair.renderState(crosshair.art()));
+            CrosshairPreviewRenderer.draw(context, preview.load(), crosshair.renderState(crosshair.art()));
          }
       }
    }
@@ -192,7 +192,7 @@ final class ModuleSettingsView {
                   context.init_GuiGraphicsExtract(), "Enabled", x, context.init_PoolEntry().centerTextY(row), context.init_TableIndex().colors().textPrimary
                );
             NetHelper toggle = ModulesMenuController.togglePillBounds(row, row.init());
-            ToggleSwitchRenderer.init(context, toggle, module.isEnabled(), toggle.init_Z(context.read(), context.write()), "settings-toggle:" + module.id());
+            ToggleSwitchRenderer.draw(context, toggle, module.isEnabled(), toggle.init_Z(context.read(), context.write()), "settings-toggle:" + module.id());
             this.controller.addHit(ModulesMenuController.HitType.TOGGLE_MODULE, toggle, module, null, "", -1);
             y += rowH;
          }
@@ -258,10 +258,10 @@ final class ModuleSettingsView {
          context, reset, "Reset", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, reset.init_Z(context.read(), context.write()), false
       );
       this.controller.addHit(ModulesMenuController.HitType.RESET_MODULE, reset, module, null, "", -1);
-      KeybindButtonRenderer.init(context, bind, module.keybind(), this.controller.isListeningForBind(module), bind.init_Z(context.read(), context.write()));
+      KeybindButtonRenderer.draw(context, bind, module.keybind(), this.controller.isListeningForBind(module), bind.init_Z(context.read(), context.write()));
       this.controller.addHit(ModulesMenuController.HitType.BIND_MODULE, bind, module, null, "", -1);
       if (module.hasActivationToggle()) {
-         ToggleSwitchRenderer.init(context, pill, module.isEnabled(), pill.init_Z(context.read(), context.write()), "settings-toggle:" + module.id());
+         ToggleSwitchRenderer.draw(context, pill, module.isEnabled(), pill.init_Z(context.read(), context.write()), "settings-toggle:" + module.id());
       }
 
       this.controller.addHit(ModulesMenuController.HitType.TOGGLE_MODULE, pill, module, null, "", -1);
@@ -460,7 +460,7 @@ final class ModuleSettingsView {
       }
 
       if (hovered && !tip.isBlank()) {
-         this.controller.write(tip);
+         this.controller.setTooltip(tip);
       }
 
       if (option.displayMode() == DisplayMode.FILE_PICKER) {
@@ -475,7 +475,7 @@ final class ModuleSettingsView {
          switch (option.kind()) {
             case BOOLEAN:
                NetHelper toggle = ModulesMenuController.togglePillBounds(bounds, control.init());
-               ToggleSwitchRenderer.init(
+               ToggleSwitchRenderer.draw(
                   context,
                   toggle,
                   Boolean.parseBoolean(module.value(option.id())),
@@ -585,7 +585,7 @@ final class ModuleSettingsView {
          NetHelper slider = NetHelper.init(control.read(), control.write(), Math.max(40, control.update() - tail), control.sync());
          NetHelper value = NetHelper.init(control.init() - unitSpace - valueW, control.write(), valueW, control.sync());
          double ratio = (current - option.sliderMin()) / Math.max(1.0E-4, option.sliderMax() - option.sliderMin());
-         SliderRenderer.init(context, slider, ratio, slider.init_Z(context.read(), context.write()));
+         SliderRenderer.draw(context, slider, ratio, slider.init_Z(context.read(), context.write()));
          this.init(context, value, module, option, "");
          if (!unit.isEmpty()) {
             context.init_PoolEntry()
@@ -621,7 +621,7 @@ final class ModuleSettingsView {
          focused ? this.controller.textEdit.selectionStart() : -1,
          focused ? this.controller.textEdit.selectionEnd() : -1,
          focused
-            ? this.controller.textEdit.init(Math.max(1, bounds.update() - 8), fragment -> context.init_PoolEntry().measureFragmentWidth(shown, fragment))
+            ? this.controller.textEdit.updateScroll(Math.max(1, bounds.update() - 8), fragment -> context.init_PoolEntry().measureFragmentWidth(shown, fragment))
             : 0
       );
    }
@@ -635,8 +635,8 @@ final class ModuleSettingsView {
       NetHelper value = NetHelper.init(slider.init() + 4, control.write(), tailW - 4, control.sync());
       double lo = option.sliderMin();
       double hi = option.sliderMax();
-      RangeSliderRenderer.init(
-         context, slider, RangeSliderRenderer.init(range.min(), lo, hi), RangeSliderRenderer.init(range.max(), lo, hi), slider.init_Z(context.read(), context.write()), -1
+      RangeSliderRenderer.draw(
+         context, slider, RangeSliderRenderer.ratio(range.min(), lo, hi), RangeSliderRenderer.ratio(range.max(), lo, hi), slider.init_Z(context.read(), context.write()), -1
       );
       context.init_PoolEntry()
          .drawTrimmed(
@@ -722,7 +722,7 @@ final class ModuleSettingsView {
             empty ? theme.colors().textSecondary : theme.colors().textPrimary
          );
       if (bounds.init_Z(context.read(), context.write()) && summary != null && !summary.isBlank()) {
-         this.controller.write(summary);
+         this.controller.setTooltip(summary);
       }
    }
 
@@ -884,8 +884,8 @@ final class ModuleSettingsView {
       return RangeSliderRenderer.pickHandle(
          mx,
          hit.bounds(),
-         RangeSliderRenderer.init(range.min(), option.sliderMin(), option.sliderMax()),
-         RangeSliderRenderer.init(range.max(), option.sliderMin(), option.sliderMax())
+         RangeSliderRenderer.ratio(range.min(), option.sliderMin(), option.sliderMax()),
+         RangeSliderRenderer.ratio(range.max(), option.sliderMin(), option.sliderMax())
       );
    }
 
@@ -917,7 +917,7 @@ final class ModuleSettingsView {
       double value = option.sliderMin() + ratio * (option.sliderMax() - option.sliderMin());
       double step = Math.max(1.0E-4, option.step());
       value = option.sliderMin() + Math.round((value - option.sliderMin()) / step) * step;
-      int thumb = this.controller.init_I();
+      int thumb = this.controller.activeRangeHandle();
       double lo = thumb == 1 ? current.min() : value;
       double hi = thumb == 1 ? value : current.max();
       ValueRange next = new ValueRange(Math.min(lo, hi), Math.max(lo, hi));

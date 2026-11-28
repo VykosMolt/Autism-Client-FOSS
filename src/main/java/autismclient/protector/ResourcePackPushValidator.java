@@ -10,7 +10,7 @@ public final class ResourcePackPushValidator {
    private ResourcePackPushValidator() {
    }
 
-   public static ResourcePackSessionTracker.PackPolicy init(ConnectionPrivacyRegistry.PrivacyMode mode, boolean sharedBypass, boolean serializedBypass) {
+   public static ResourcePackSessionTracker.PackPolicy selectPolicy(ConnectionPrivacyRegistry.PrivacyMode mode, boolean sharedBypass, boolean serializedBypass) {
       return serializedBypass ? ResourcePackSessionTracker.PackPolicy.ISOLATED : ResourcePackSessionTracker.PackPolicy.FULL;
    }
 

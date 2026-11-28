@@ -21,7 +21,7 @@ public final class OverlayFrameHelper {
       return autismclient.gui.f.NetHelper.init(x, y, width, height);
    }
 
-   public static void init(
+   public static void drawFrame(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper bounds,
       int headerHeight,
@@ -33,7 +33,7 @@ public final class OverlayFrameHelper {
       WindowFrameRenderer.init(context, bounds, title, collapsed, true, true, headerHovered, active, 4, 4, headerHeight);
    }
 
-   public static boolean init(GuiGraphicsExtractor graphics, autismclient.gui.f.NetHelper bounds, int headerHeight, boolean collapsed) {
+   public static boolean beginClip(GuiGraphicsExtractor graphics, autismclient.gui.f.NetHelper bounds, int headerHeight, boolean collapsed) {
       if (!collapsed && bounds.sync() > headerHeight + 1) {
          autismclient.gui.ui.UiClipStack.getInstance()
             .push(
@@ -48,7 +48,7 @@ public final class OverlayFrameHelper {
       }
    }
 
-   public static void init(GuiGraphicsExtractor graphics, boolean clipped) {
+   public static void endClip(GuiGraphicsExtractor graphics, boolean clipped) {
       if (clipped) {
          autismclient.gui.ui.UiClipStack.getInstance().pop(graphics);
       }

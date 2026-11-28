@@ -64,12 +64,12 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   public static void init(Minecraft client) {
+   public static void tick(Minecraft client) {
       load_J++;
       ClientPacketListener listener = client == null ? null : client.getConnection();
       if (client != null && client.player != null && listener != null) {
          ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(listener);
-         if (context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && ProtectorFeatureFlags.update()) {
+         if (context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && ProtectorFeatureFlags.protectorEnabled()) {
             List<Identifier> channels = init(context.connection(), load_J);
             if (channels != null) {
                init(context, channels, listener, listener::send);
@@ -186,7 +186,7 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   static void load(Connection connection) {
+   static void forget(Connection connection) {
       if (connection != null) {
          synchronized (SESSIONS) {
             SESSIONS.remove(connection);
@@ -223,7 +223,7 @@ public final class LateRegisterSynthesizer {
          receivable = List.of();
       }
 
-      return CustomPayloadFilter.init(receivable, ModNamespaceCatalog::init);
+      return CustomPayloadFilter.filter(receivable, ModNamespaceCatalog::init);
    }
 
    static List<Identifier> init(boolean voicechatLoaded) {

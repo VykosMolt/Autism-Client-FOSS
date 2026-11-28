@@ -95,7 +95,7 @@ public class AutismProtectorConnectionTrackingMixin {
 
    private ConnectionPrivacyRegistry.ConnectionSession autism$context(SocketAddress peerAddress, boolean multiChannel) {
       Connection connection = (Connection)(Object)this;
-      ConnectionPrivacyRegistry.PrivacyMode mode = ProtectorFeatureFlags.sync() ? ConnectionPrivacyRegistry.PrivacyMode.VANILLA : ConnectionPrivacyRegistry.PrivacyMode.MODDED;
+      ConnectionPrivacyRegistry.PrivacyMode mode = ProtectorFeatureFlags.spoofClientVanilla() ? ConnectionPrivacyRegistry.PrivacyMode.VANILLA : ConnectionPrivacyRegistry.PrivacyMode.MODDED;
       this.autism$privacyContext = ConnectionPrivacyRegistry.register(connection, mode, false, peerAddress);
       return this.autism$privacyContext;
    }

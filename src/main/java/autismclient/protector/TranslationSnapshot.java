@@ -27,7 +27,7 @@ public final class TranslationSnapshot {
       return init(language, key, fallback, null, false);
    }
 
-   public static String init(Language language, String key, String fallback, ConnectionPrivacyRegistry.ConnectionSession origin) {
+   public static String translate(Language language, String key, String fallback, ConnectionPrivacyRegistry.ConnectionSession origin) {
       return init(language, key, fallback, origin, true);
    }
 
@@ -137,7 +137,7 @@ public final class TranslationSnapshot {
             return TranslationSnapshot.EntryOrigin.OTHER;
          }
 
-         String modId = source instanceof ModNioPackResources modPack ? modPack.getFabricModMetadata().getId() : CallerModInspector.init(source.getClass());
+         String modId = source instanceof ModNioPackResources modPack ? modPack.getFabricModMetadata().getId() : CallerModInspector.modIdOf(source.getClass());
          return modId == null ? TranslationSnapshot.EntryOrigin.OTHER : TranslationSnapshot.EntryOrigin.MOD;
       }
 

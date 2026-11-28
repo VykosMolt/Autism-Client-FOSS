@@ -17,14 +17,14 @@ public final class NameScrapeCommand extends Command {
       root.executes(ctx -> init(0, false));
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("count", IntegerArgumentType.integer(1))
-            .suggests(autismclient.commands.CommandSuggestions::sync)
+            .suggests(autismclient.commands.CommandSuggestions::suggestCount)
             .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "count"), false))
       );
       root.then(
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("deep").executes(ctx -> init(0, true)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("count", IntegerArgumentType.integer(1))
-                  .suggests(autismclient.commands.CommandSuggestions::sync)
+                  .suggests(autismclient.commands.CommandSuggestions::suggestCount)
                   .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "count"), true))
             )
       );

@@ -104,7 +104,7 @@ public final class AiCommand extends Command {
          ((LiteralArgumentBuilder)LiteralArgumentBuilder.<AutismCommandSource>literal("speedrun").executes(ctx -> this.speedrun(45)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("minutes", IntegerArgumentType.integer(1))
-                  .suggests(autismclient.commands.CommandSuggestions::poll)
+                  .suggests(autismclient.commands.CommandSuggestions::suggestMinutes)
                   .executes(ctx -> this.speedrun(IntegerArgumentType.getInteger(ctx, "minutes")))
             )
       );

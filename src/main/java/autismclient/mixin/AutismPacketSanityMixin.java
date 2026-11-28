@@ -104,15 +104,15 @@ public abstract class AutismPacketSanityMixin {
 
    @Inject(method = "handleAddObjective", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneObjective(ClientboundSetObjectivePacket packet, CallbackInfo ci) {
-      if (!ComponentSafetyValidator.init(packet.getDisplayName()) || packet.getNumberFormat().isPresent() && !ComponentSafetyValidator.init(packet.getNumberFormat().get())) {
+      if (!ComponentSafetyValidator.isSafe(packet.getDisplayName()) || packet.getNumberFormat().isPresent() && !ComponentSafetyValidator.isSafeFormat(packet.getNumberFormat().get())) {
          ci.cancel();
       }
    }
 
    @Inject(method = "handleSetScore", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneScore(ClientboundSetScorePacket packet, CallbackInfo ci) {
-      if (packet.display().isPresent() && !ComponentSafetyValidator.init(packet.display().get())
-         || packet.numberFormat().isPresent() && !ComponentSafetyValidator.init(packet.numberFormat().get())) {
+      if (packet.display().isPresent() && !ComponentSafetyValidator.isSafe(packet.display().get())
+         || packet.numberFormat().isPresent() && !ComponentSafetyValidator.isSafeFormat(packet.numberFormat().get())) {
          ci.cancel();
       }
    }
@@ -121,7 +121,7 @@ public abstract class AutismPacketSanityMixin {
    private void autism$saneTeam(ClientboundSetPlayerTeamPacket packet, CallbackInfo ci) {
       if (!packet.getParameters().isEmpty()) {
          Parameters parameters = packet.getParameters().get();
-         if (!ComponentSafetyValidator.init(parameters.displayName()) || !ComponentSafetyValidator.init(parameters.playerPrefix()) || !ComponentSafetyValidator.init(parameters.playerSuffix())) {
+         if (!ComponentSafetyValidator.isSafe(parameters.displayName()) || !ComponentSafetyValidator.isSafe(parameters.playerPrefix()) || !ComponentSafetyValidator.isSafe(parameters.playerSuffix())) {
             ci.cancel();
          }
       }

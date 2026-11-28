@@ -70,7 +70,7 @@ public final class ModNamespaceCatalog {
       read_V("fabric-data-attachment-api-v1");
    }
 
-   public static void load() {
+   public static void reset() {
       sync_Set.clear();
       serverTranslations.clear();
       load_Map.clear();
@@ -251,7 +251,7 @@ public final class ModNamespaceCatalog {
    }
 
    private static ModNamespaceCatalog.Decision decide(String key) {
-      if (!sync_Set.contains(key) && !VanillaTranslationKeyLoader.init(key)) {
+      if (!sync_Set.contains(key) && !VanillaTranslationKeyLoader.isVanillaKey(key)) {
          String serverValue = serverTranslations.get(key);
          if (serverValue != null) {
             return ModNamespaceCatalog.Decision.init(serverValue);

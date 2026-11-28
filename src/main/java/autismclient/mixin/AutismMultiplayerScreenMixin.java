@@ -259,7 +259,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
       ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
       boolean vanilla = module != null && module.isSpoofClientVanilla();
       boolean bypass = module != null && module.isPretendPackAccepted();
-      String label = autismclient.protector.ProtectorModeDescriptions.init(vanilla, bypass);
+      String label = autismclient.protector.ProtectorModeDescriptions.packsLabel(vanilla, bypass);
       return this.autism$fitLabel(width, label, bypass ? "Bypass" : "Normal", "Packs");
    }
 
@@ -343,9 +343,9 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
       boolean bypass = module != null && module.isPretendPackAccepted();
       String guidance = null;
       if (this.autism$spoofButton != null && this.autism$spoofButton.isMouseOver(mouseX, mouseY)) {
-         guidance = autismclient.protector.ProtectorModeDescriptions.init(vanilla);
+         guidance = autismclient.protector.ProtectorModeDescriptions.modeGuidance(vanilla);
       } else if (this.autism$packsButton != null && this.autism$packsButton.isMouseOver(mouseX, mouseY)) {
-         guidance = autismclient.protector.ProtectorModeDescriptions.load(vanilla, bypass);
+         guidance = autismclient.protector.ProtectorModeDescriptions.packsGuidance(vanilla, bypass);
       }
 
       if (guidance != null) {

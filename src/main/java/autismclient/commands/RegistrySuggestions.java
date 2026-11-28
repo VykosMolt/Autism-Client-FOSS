@@ -28,7 +28,7 @@ public final class RegistrySuggestions {
       return spec == null ? "" : spec.trim().toLowerCase(Locale.ROOT).replace('-', '_').replaceAll("\\s+", "_");
    }
 
-   public static String init(Identifier id) {
+   public static String shortId(Identifier id) {
       return id.getNamespace().equals("minecraft") ? id.getPath() : id.toString();
    }
 
@@ -100,7 +100,7 @@ public final class RegistrySuggestions {
       return id == null ? null : BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
    }
 
-   public static Item init(Minecraft mc, String spec) {
+   public static Item resolveItem(Minecraft mc, String spec) {
       if (mc != null && mc.player != null) {
          String clean = normalize(spec);
          if (clean.isEmpty()) {
@@ -151,7 +151,7 @@ public final class RegistrySuggestions {
          for (int slot = 0; slot < mc.player.getInventory().getContainerSize(); slot++) {
             ItemStack stack = mc.player.getInventory().getItem(slot);
             if (!stack.isEmpty()) {
-               ids.add(init(BuiltInRegistries.ITEM.getKey(stack.getItem())));
+               ids.add(shortId(BuiltInRegistries.ITEM.getKey(stack.getItem())));
             }
          }
 

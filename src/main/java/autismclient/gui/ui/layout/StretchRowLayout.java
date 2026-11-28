@@ -19,7 +19,7 @@ public class StretchRowLayout extends LayoutContainer {
       return this;
    }
 
-   public StretchRowLayout init(int gap) {
+   public StretchRowLayout withGap(int gap) {
       int next = Math.max(0, gap);
       if (this.init_I != next) {
          this.init_I = next;
