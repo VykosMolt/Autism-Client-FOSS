@@ -4,28 +4,28 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public final class WorldGenThreadScope {
-   private static final ThreadLocal<Integer> init = new ThreadLocal<>();
+   private static final ThreadLocal<Integer> DEPTH = new ThreadLocal<>();
 
    private WorldGenThreadScope() {
    }
 
-   public static boolean init() {
-      Integer depth = init.get();
+   public static boolean isActive() {
+      Integer depth = DEPTH.get();
       return depth != null && depth > 0;
    }
 
    public static <T> T init(Supplier<T> operation) {
       Objects.requireNonNull(operation, "operation");
-      Integer previous = init.get();
-      init.set(previous == null ? 1 : previous + 1);
+      Integer previous = DEPTH.get();
+      DEPTH.set(previous == null ? 1 : previous + 1);
 
       try {
          return operation.get();
       } finally {
          if (previous == null) {
-            init.remove();
+            DEPTH.remove();
          } else {
-            init.set(previous);
+            DEPTH.set(previous);
          }
       }
    }

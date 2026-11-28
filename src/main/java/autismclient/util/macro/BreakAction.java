@@ -26,7 +26,7 @@ public class BreakAction implements PacketOrderAware, AimTargetAction, MacroActi
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
    private transient List<MacroAction> init_List = null;
    private transient boolean init_Z = false;
-   private boolean load = true;
+   private boolean enabled = true;
    public boolean raycast = false;
 
    @Override
@@ -71,7 +71,7 @@ public class BreakAction implements PacketOrderAware, AimTargetAction, MacroActi
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
-      tag.putBoolean("enabled", this.load);
+      tag.putBoolean("enabled", this.enabled);
       PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
@@ -106,7 +106,7 @@ public class BreakAction implements PacketOrderAware, AimTargetAction, MacroActi
       this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       this.guiName = tag.getStringOr("guiName", "");
       if (tag.contains("enabled")) {
-         this.load = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);
@@ -189,11 +189,11 @@ public class BreakAction implements PacketOrderAware, AimTargetAction, MacroActi
 
    @Override
    public boolean isEnabled() {
-      return this.load;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.load = enabled;
+      this.enabled = enabled;
    }
 }

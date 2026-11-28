@@ -5,28 +5,28 @@ import autismclient.gui.f.b.k;
 import autismclient.gui.f.b.l;
 
 public class CollapsibleSectionNode extends LayoutContainer {
-   private final ColumnLayout init_PacketUtil = new ColumnLayout();
-   private String init_Str;
-   private boolean write_Z = true;
-   private int init_I = 14;
-   private int load_I = 2;
-   private final autismclient.gui.ui.EaseOutAnimator init_RingBuffer = new autismclient.gui.ui.EaseOutAnimator(1.0F, 180);
-   private float sync;
+   private final ColumnLayout content = new ColumnLayout();
+   private String title;
+   private boolean expandedState = true;
+   private int headerHeight = 14;
+   private int contentTopGap = 2;
+   private final autismclient.gui.ui.EaseOutAnimator expandAnimator = new autismclient.gui.ui.EaseOutAnimator(1.0F, 180);
+   private float contentHeight;
 
    public CollapsibleSectionNode(String title) {
-      this.init_Str = title == null ? "" : title;
-      this.init_PacketUtil.init(EdgeInsets.ZERO).init(2);
-      this.addChild(this.init_PacketUtil);
+      this.title = title == null ? "" : title;
+      this.content.init(EdgeInsets.ZERO).init(2);
+      this.addChild(this.content);
    }
 
    public ColumnLayout getContent() {
-      return this.init_PacketUtil;
+      return this.content;
    }
 
-   public CollapsibleSectionNode init(String title) {
+   public CollapsibleSectionNode withTitle(String title) {
       String next = title == null ? "" : title;
-      if (!this.init_Str.equals(next)) {
-         this.init_Str = next;
+      if (!this.title.equals(next)) {
+         this.title = next;
          this.markLayoutDirty();
       }
 
@@ -34,9 +34,9 @@ public class CollapsibleSectionNode extends LayoutContainer {
    }
 
    public CollapsibleSectionNode setExpanded(boolean expanded) {
-      if (this.write_Z != expanded) {
-         this.write_Z = expanded;
-         this.init_RingBuffer.animateTo(expanded ? 1.0F : 0.0F);
+      if (this.expandedState != expanded) {
+         this.expandedState = expanded;
+         this.expandAnimator.animateTo(expanded ? 1.0F : 0.0F);
          this.markLayoutDirty();
       }
 
@@ -44,23 +44,23 @@ public class CollapsibleSectionNode extends LayoutContainer {
    }
 
    public CollapsibleSectionNode snapExpanded(boolean expanded) {
-      if (this.write_Z != expanded) {
-         this.write_Z = expanded;
+      if (this.expandedState != expanded) {
+         this.expandedState = expanded;
          this.markLayoutDirty();
       }
 
-      this.init_RingBuffer.snapTo(expanded ? 1.0F : 0.0F);
+      this.expandAnimator.snapTo(expanded ? 1.0F : 0.0F);
       return this;
    }
 
    public boolean isExpanded() {
-      return this.write_Z;
+      return this.expandedState;
    }
 
    public CollapsibleSectionNode init(int headerHeight) {
       int next = Math.max(12, headerHeight);
-      if (this.init_I != next) {
-         this.init_I = next;
+      if (this.headerHeight != next) {
+         this.headerHeight = next;
          this.markLayoutDirty();
       }
 
@@ -69,8 +69,8 @@ public class CollapsibleSectionNode extends LayoutContainer {
 
    public CollapsibleSectionNode load(int contentTopGap) {
       int next = Math.max(0, contentTopGap);
-      if (this.load_I != next) {
-         this.load_I = next;
+      if (this.contentTopGap != next) {
+         this.contentTopGap = next;
          this.markLayoutDirty();
       }
 
@@ -80,36 +80,36 @@ public class CollapsibleSectionNode extends LayoutContainer {
    @Override
    public float measurePreferredWidth(LayoutContext context) {
       return Math.max(
-         k.init(context.font(), this.init_Str, context.theme().init_Identifier_l(l.load), context.theme().load(l.load))
+         k.init(context.font(), this.title, context.theme().init_Identifier_l(l.load), context.theme().load(l.load))
             + context.theme().load(18),
-         this.init_PacketUtil.measurePreferredWidth(context)
+         this.content.measurePreferredWidth(context)
       );
    }
 
    @Override
    public float measureHeight(LayoutContext context, float availableWidth) {
-      int scaledHeaderHeight = Math.max(context.theme().load(this.init_I), context.theme().init_I_l_I(l.load, 4));
-      if (!this.write_Z) {
+      int scaledHeaderHeight = Math.max(context.theme().load(this.headerHeight), context.theme().init_I_l_I(l.load, 4));
+      if (!this.expandedState) {
          return scaledHeaderHeight;
       }
 
-      int scaledContentTopGap = context.theme().load(this.load_I);
-      float bodyHeight = scaledContentTopGap + this.init_PacketUtil.measureHeight(context, availableWidth);
+      int scaledContentTopGap = context.theme().load(this.contentTopGap);
+      float bodyHeight = scaledContentTopGap + this.content.measureHeight(context, availableWidth);
       return scaledHeaderHeight + bodyHeight;
    }
 
    @Override
    protected void layoutChildren(LayoutContext context) {
-      int scaledHeaderHeight = Math.max(context.theme().load(this.init_I), context.theme().init_I_l_I(l.load, 4));
-      int scaledContentTopGap = context.theme().load(this.load_I);
-      if (this.write_Z) {
-         this.sync = Math.max(0.0F, this.nodeHeight - scaledHeaderHeight);
+      int scaledHeaderHeight = Math.max(context.theme().load(this.headerHeight), context.theme().init_I_l_I(l.load, 4));
+      int scaledContentTopGap = context.theme().load(this.contentTopGap);
+      if (this.expandedState) {
+         this.contentHeight = Math.max(0.0F, this.nodeHeight - scaledHeaderHeight);
       }
 
       float contentY = this.nodeY + scaledHeaderHeight + scaledContentTopGap;
-      float contentH = Math.max(0.0F, this.sync - scaledContentTopGap);
-      this.init_PacketUtil.setVisible(this.write_Z || this.init_RingBuffer.value() > 0.0F);
-      this.init_PacketUtil.setBounds(this.nodeX, contentY, this.nodeWidth, contentH);
+      float contentH = Math.max(0.0F, this.contentHeight - scaledContentTopGap);
+      this.content.setVisible(this.expandedState || this.expandAnimator.value() > 0.0F);
+      this.content.setBounds(this.nodeX, contentY, this.nodeWidth, contentH);
    }
 
    @Override
@@ -118,23 +118,23 @@ public class CollapsibleSectionNode extends LayoutContainer {
          int drawX = Math.round(this.nodeX);
          int drawY = Math.round(this.nodeY);
          int drawW = Math.round(this.nodeWidth);
-         int drawHeaderH = Math.max(context.theme().load(this.init_I), context.theme().init_I_l_I(l.load, 4));
+         int drawHeaderH = Math.max(context.theme().load(this.headerHeight), context.theme().init_I_l_I(l.load, 4));
          boolean hovered = context.mouseX() >= this.nodeX
             && context.mouseX() <= this.nodeX + this.nodeWidth
             && context.mouseY() >= this.nodeY
             && context.mouseY() <= this.nodeY + drawHeaderH;
-         if (this.write_Z) {
-            this.sync = Math.max(0.0F, this.nodeHeight - drawHeaderH);
+         if (this.expandedState) {
+            this.contentHeight = Math.max(0.0F, this.nodeHeight - drawHeaderH);
          }
 
-         float shown = this.init_RingBuffer.animateTo(this.write_Z ? 1.0F : 0.0F);
-         int drawH = drawHeaderH + Math.round(this.sync * shown);
-         this.init_PacketUtil.setVisible(this.write_Z || shown > 0.0F);
+         float shown = this.expandAnimator.animateTo(this.expandedState ? 1.0F : 0.0F);
+         int drawH = drawHeaderH + Math.round(this.contentHeight * shown);
+         this.content.setVisible(this.expandedState || shown > 0.0F);
          WindowFrameRenderer.init(
             autismclient.gui.f.UiHelper.init(context.graphics(), context.font(), Math.round(context.mouseX()), Math.round(context.mouseY())),
             autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH),
-            this.init_Str,
-            !this.write_Z,
+            this.title,
+            !this.expandedState,
             true,
             false,
             hovered,
@@ -143,11 +143,11 @@ public class CollapsibleSectionNode extends LayoutContainer {
             4,
             drawHeaderH
          );
-         this.init(context, drawHeaderH, drawY + drawH);
+         this.renderClipped(context, drawHeaderH, drawY + drawH);
       }
    }
 
-   private void init(LayoutContext context, int drawHeaderH, int clipBottom) {
+   private void renderClipped(LayoutContext context, int drawHeaderH, int clipBottom) {
       int clipTop = Math.round(this.nodeY + drawHeaderH);
       if (clipBottom > clipTop) {
          context.viewport().pushClip(context.graphics(), this.nodeX, this.nodeY + drawHeaderH, this.nodeX + this.nodeWidth, clipBottom);
@@ -162,12 +162,12 @@ public class CollapsibleSectionNode extends LayoutContainer {
 
    @Override
    public boolean mouseClicked(LayoutContext context, float mouseX, float mouseY, int button) {
-      int scaledHeaderHeight = Math.max(context.theme().load(this.init_I), context.theme().init_I_l_I(l.load, 4));
+      int scaledHeaderHeight = Math.max(context.theme().load(this.headerHeight), context.theme().init_I_l_I(l.load, 4));
       if (button == 0 && mouseX >= this.nodeX && mouseX <= this.nodeX + this.nodeWidth && mouseY >= this.nodeY && mouseY <= this.nodeY + scaledHeaderHeight) {
-         this.setExpanded(!this.write_Z);
+         this.setExpanded(!this.expandedState);
          return true;
       } else {
-         return this.write_Z && super.mouseClicked(context, mouseX, mouseY, button);
+         return this.expandedState && super.mouseClicked(context, mouseX, mouseY, button);
       }
    }
 }

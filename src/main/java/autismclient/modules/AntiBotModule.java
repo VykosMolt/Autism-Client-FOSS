@@ -50,10 +50,10 @@ public final class AntiBotModule extends Module {
    final BoolSetting close = this.add(this.customSetting(new BoolSetting("need-crit", "Need Crit", false)).description("Hidden until crit-hit"));
    final BoolSetting open = this.add(this.customSetting(new BoolSetting("odd-scale", "Odd Scale", false)).description("Scale is not normal"));
    final BoolSetting poll = this.add(this.customSetting(new BoolSetting("armor", "Armor", false)).description("Real players wear this"));
-   final ChoiceSetting armorHead = this.add(this.init("armor-head", "Helmet", ArmorFilterMatcher.HEAD_OPTIONS));
-   final ChoiceSetting armorChest = this.add(this.init("armor-chest", "Chestplate", ArmorFilterMatcher.CHEST_OPTIONS));
-   final ChoiceSetting armorLegs = this.add(this.init("armor-legs", "Leggings", ArmorFilterMatcher.BASE_OPTIONS));
-   final ChoiceSetting armorFeet = this.add(this.init("armor-feet", "Boots", ArmorFilterMatcher.BASE_OPTIONS));
+   final ChoiceSetting armorHead = this.add(this.armorChoice("armor-head", "Helmet", ArmorFilterMatcher.HEAD_OPTIONS));
+   final ChoiceSetting armorChest = this.add(this.armorChoice("armor-chest", "Chestplate", ArmorFilterMatcher.CHEST_OPTIONS));
+   final ChoiceSetting armorLegs = this.add(this.armorChoice("armor-legs", "Leggings", ArmorFilterMatcher.BASE_OPTIONS));
+   final ChoiceSetting armorFeet = this.add(this.armorChoice("armor-feet", "Boots", ArmorFilterMatcher.BASE_OPTIONS));
 
    public AntiBotModule() {
       super("antibot", "AntiBot", ae.write, "Ignores fake/bot players.");
@@ -63,7 +63,7 @@ public final class AntiBotModule extends Module {
       return setting.group("Custom").visibleWhen(this::isCustomMode);
    }
 
-   private ChoiceSetting init(String id, String title, List<String> rules) {
+   private ChoiceSetting armorChoice(String id, String title, List<String> rules) {
       return new ChoiceSetting(id, title, "Any", rules)
          .group("Custom")
          .description("Any = not checked")
@@ -75,12 +75,12 @@ public final class AntiBotModule extends Module {
       return "Custom".equals(this.mode.get());
    }
 
-   boolean load() {
+   boolean isAggressive() {
       return "Aggressive".equals(this.mode.get());
    }
 
    boolean isCheckEnabled(BoolSetting check) {
-      return this.isCustomMode() ? check.get() : this.load() && (check == this.floatingGround || check == this.noAttributes);
+      return this.isCustomMode() ? check.get() : this.isAggressive() && (check == this.floatingGround || check == this.noAttributes);
    }
 
    int minAgeTicks() {

@@ -47,16 +47,16 @@ final class AiHazardEscape {
          @Override
          public AiOperation.Result tick() {
             if (this.init_Z || mc.level != level || mc.player != player || mc.getConnection() != connection || mc.player == null || !mc.player.isAlive()) {
-               return this.init(AiOperation.Status.CANCELLED, "Hazard escape context changed");
+               return this.finish(AiOperation.Status.CANCELLED, "Hazard escape context changed");
             }
 
             if (System.nanoTime() >= this.deadlineNanos) {
-               return this.init(AiOperation.Status.TIMED_OUT, "Hazard escape deadline reached: " + this.init_Str);
+               return this.finish(AiOperation.Status.TIMED_OUT, "Hazard escape deadline reached: " + this.init_Str);
             }
 
             String next = AiHazardEscape.init(mc);
             if (next == null && !this.guard.isActive()) {
-               return this.init(AiOperation.Status.SUCCEEDED, "Immediate environmental danger cleared");
+               return this.finish(AiOperation.Status.SUCCEEDED, "Immediate environmental danger cleared");
             }
 
             if (next != null) {
@@ -72,11 +72,11 @@ final class AiHazardEscape {
 
                return result;
             } else {
-               return this.init(AiOperation.Status.FAILED, "No safe environmental escape available: " + this.init_Str);
+               return this.finish(AiOperation.Status.FAILED, "No safe environmental escape available: " + this.init_Str);
             }
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
+         AiOperation.Result finish(AiOperation.Status status, String message) {
             boolean pending = this.guard.requiresReconciliation();
             this.guard.cancel();
             return AiGuardLayer.wrapPendingTermination(

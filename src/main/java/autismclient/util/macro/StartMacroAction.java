@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 public class StartMacroAction implements MacroAction {
    public String macroName = "";
    public boolean restartIfRunning = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -30,7 +30,7 @@ public class StartMacroAction implements MacroAction {
       tag.putString("type", this.getType().name());
       tag.putString("macroName", this.macroName == null ? "" : this.macroName);
       tag.putBoolean("restartIfRunning", this.restartIfRunning);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -38,7 +38,7 @@ public class StartMacroAction implements MacroAction {
    public void fromTag(CompoundTag tag) {
       this.macroName = tag.getStringOr("macroName", "");
       this.restartIfRunning = tag.getBooleanOr("restartIfRunning", false);
-      this.init = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
    }
 
    @Override
@@ -58,11 +58,11 @@ public class StartMacroAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.init = enabled;
+      this.enabled = enabled;
    }
 }

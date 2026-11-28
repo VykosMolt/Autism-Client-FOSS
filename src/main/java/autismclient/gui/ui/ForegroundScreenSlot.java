@@ -1,29 +1,29 @@
 package autismclient.gui.ui;
 
 public final class ForegroundScreenSlot<T> {
-   private T init;
+   private T foreground;
 
    public T orElse(T background) {
-      return this.init == null ? background : this.init;
+      return this.foreground == null ? background : this.foreground;
    }
 
    public T get() {
-      return this.init;
+      return this.foreground;
    }
 
    public boolean isSet() {
-      return this.init != null;
+      return this.foreground != null;
    }
 
    public void setIfEmpty(T screen) {
-      if (this.init == null) {
-         this.init = screen;
+      if (this.foreground == null) {
+         this.foreground = screen;
       }
    }
 
    public T load(T screen) {
-      T previous = this.init;
-      this.init = screen;
+      T previous = this.foreground;
+      this.foreground = screen;
       return previous;
    }
 

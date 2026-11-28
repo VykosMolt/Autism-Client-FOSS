@@ -13,14 +13,14 @@ final class HeldItemFilter {
    static final String init_Str = "held-items-only";
    static final String load = "held-items";
    static final String read = "minecraft:wooden_sword|minecraft:stone_sword|minecraft:copper_sword|minecraft:iron_sword|minecraft:golden_sword|minecraft:diamond_sword|minecraft:netherite_sword";
-   private final BoolSetting init_BoolSetting;
-   private final RegistryListSetting init_RegistryListSettin;
-   private List<String> init_List;
-   private Set<String> init_Set = Set.of();
+   private final BoolSetting heldOnly;
+   private final RegistryListSetting itemList;
+   private List<String> cachedSource;
+   private Set<String> cachedIds = Set.of();
 
    HeldItemFilter(Module module) {
-      this.init_BoolSetting = module.add(new BoolSetting("held-items-only", "Held Items Only", false).description("Only with listed items"));
-      this.init_RegistryListSettin = module.add(
+      this.heldOnly = module.add(new BoolSetting("held-items-only", "Held Items Only", false).description("Only with listed items"));
+      this.itemList = module.add(
          RegistryListSetting.items(
                "held-items",
                "Held Items",
@@ -32,25 +32,25 @@ final class HeldItemFilter {
    }
 
    boolean isEnabled() {
-      return Boolean.TRUE.equals(this.init_BoolSetting.get());
+      return Boolean.TRUE.equals(this.heldOnly.get());
    }
 
    boolean accepts(ItemStack mainHand) {
       if (!this.isEnabled()) {
          return true;
       } else {
-         return mainHand != null && !mainHand.isEmpty() ? init(this.init_Set(), BuiltInRegistries.ITEM.getKey(mainHand.getItem()).toString()) : false;
+         return mainHand != null && !mainHand.isEmpty() ? containsId(this.allowedIds(), BuiltInRegistries.ITEM.getKey(mainHand.getItem()).toString()) : false;
       }
    }
 
-   private Set<String> init_Set() {
-      List<String> source = this.init_RegistryListSettin.get();
-      if (source != this.init_List) {
-         this.init_Set = normalizeIds(source);
-         this.init_List = source;
+   private Set<String> allowedIds() {
+      List<String> source = this.itemList.get();
+      if (source != this.cachedSource) {
+         this.cachedIds = normalizeIds(source);
+         this.cachedSource = source;
       }
 
-      return this.init_Set;
+      return this.cachedIds;
    }
 
    static Set<String> normalizeIds(List<String> entries) {
@@ -70,7 +70,7 @@ final class HeldItemFilter {
       }
    }
 
-   static boolean init(Set<String> ids, String itemId) {
+   static boolean containsId(Set<String> ids, String itemId) {
       String id = normalizeId(itemId);
       return id != null && ids.contains(id);
    }

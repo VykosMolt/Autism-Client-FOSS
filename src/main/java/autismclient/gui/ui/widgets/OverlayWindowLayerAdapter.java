@@ -12,9 +12,9 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    private final AutismOverlay overlay;
    private final autismclient.gui.ui.VisibilityTransition visibility;
    private boolean init_Z;
-   private boolean load;
-   private boolean read;
-   private boolean write = true;
+   private boolean hoverBlocked;
+   private boolean inputSuppressed;
+   private boolean zoomEnabled = true;
    private static long init_J;
 
    public OverlayWindowLayerAdapter(AutismOverlay overlay) {
@@ -23,7 +23,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    }
 
    public void setZoomEnabled(boolean zoom) {
-      this.write = zoom;
+      this.zoomEnabled = zoom;
    }
 
    public void load(boolean renderSuppressed) {
@@ -51,11 +51,11 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
    }
 
    public void read(boolean hoverBlocked) {
-      this.load = hoverBlocked;
+      this.hoverBlocked = hoverBlocked;
    }
 
    public void write(boolean inputSuppressed) {
-      this.read = inputSuppressed;
+      this.inputSuppressed = inputSuppressed;
    }
 
    @Override
@@ -74,7 +74,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
 
    @Override
    public autismclient.gui.f.NetHelper getInteractiveBounds() {
-      return !this.read && this.overlay.isVisible() ? this.getBounds() : null;
+      return !this.inputSuppressed && this.overlay.isVisible() ? this.getBounds() : null;
    }
 
    @Override
@@ -82,14 +82,14 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
       if (!this.init_Z) {
          boolean visible = this.overlay.isVisible();
          if (this.visibility.shouldRender(visible)) {
-            boolean block = !visible || this.load;
+            boolean block = !visible || this.hoverBlocked;
             long perfStart = bK.load_J();
             autismclient.gui.f.NetHelper b = this.getBounds();
             GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
             int scissorDepth = autismclient.gui.ui.UiClipStack.getInstance().depth();
 
             try {
-               this.visibility.init(graphics, b, this.write, () -> this.init(context, block));
+               this.visibility.init(graphics, b, this.zoomEnabled, () -> this.renderContent(context, block));
             } catch (Throwable t) {
                long nowMs = System.currentTimeMillis();
                if (nowMs - init_J > 5000L) {
@@ -107,7 +107,7 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
       }
    }
 
-   private void init(autismclient.gui.f.SyncManager context, boolean block) {
+   private void renderContent(autismclient.gui.f.SyncManager context, boolean block) {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
       int mouseX = block ? -10000 : context.read();
       int mouseY = block ? -10000 : context.write();

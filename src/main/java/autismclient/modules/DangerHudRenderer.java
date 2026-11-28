@@ -15,7 +15,7 @@ public final class DangerHudRenderer {
    private static final autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_StreamUtil init_TaskTimer_StreamUt = autismclient.gui.ui.widgets.WorldIndicatorBadge.init(0, 1, false);
    private static final Vector4f PROJECTED = new Vector4f();
    private static final float[] placedMarkerX = new float[6];
-   private static final float[] load = new float[6];
+   private static final float[] placedMarkerY = new float[6];
    private static final int[] placedEntityIds = new int[6];
 
    private DangerHudRenderer() {
@@ -35,7 +35,7 @@ public final class DangerHudRenderer {
             float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
             float scale = danger.warningScale();
             Arrays.fill(placedMarkerX, 0.0F / 0.0F);
-            Arrays.fill(load, 0.0F / 0.0F);
+            Arrays.fill(placedMarkerY, 0.0F / 0.0F);
             int drawn = 0;
 
             for (IncomingProjectileScanner.Inner_BufferHelper warning : danger.read_List_2()) {
@@ -83,8 +83,8 @@ public final class DangerHudRenderer {
                      }
 
                      for (int j = 0; j < i; j++) {
-                        if (Math.abs(markerX - placedMarkerX[j]) < 38.0F * scale && Math.abs(markerY - load[j]) < 22.0F * scale) {
-                           markerY = load[j] + 23.0F * scale;
+                        if (Math.abs(markerX - placedMarkerX[j]) < 38.0F * scale && Math.abs(markerY - placedMarkerY[j]) < 22.0F * scale) {
+                           markerY = placedMarkerY[j] + 23.0F * scale;
                            j = -1;
                         }
                      }
@@ -92,7 +92,7 @@ public final class DangerHudRenderer {
                      markerX = Mth.clamp(markerX, 19.0F * scale, Math.max(19.0F * scale, screenW - 19.0F * scale));
                      markerY = Mth.clamp(markerY, 11.0F * scale, Math.max(11.0F * scale, screenH - 11.0F * scale));
                      placedMarkerX[i] = markerX;
-                     load[i] = markerY;
+                     placedMarkerY[i] = markerY;
                      autismclient.gui.ui.widgets.WorldIndicatorBadge.init(
                         context,
                         new autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_DataUtil(markerX, markerY, angle),

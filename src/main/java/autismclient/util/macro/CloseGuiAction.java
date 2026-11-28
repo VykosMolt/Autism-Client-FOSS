@@ -12,7 +12,7 @@ public class CloseGuiAction implements MacroAction {
    public int targetSlot = -1;
    public boolean useItemFilter = false;
    public boolean sendPacket = true;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -28,7 +28,7 @@ public class CloseGuiAction implements MacroAction {
          }
 
          boolean matchItem = true;
-         MacroItemTarget target = this.init().resolveTemplates(mc);
+         MacroItemTarget target = this.resolveItemTarget().resolveTemplates(mc);
          if (!this.useItemFilter || target != null) {
             if (this.useItemFilter && (target.hasSlot() || target.hasItemFilter())) {
                matchItem = false;
@@ -71,14 +71,14 @@ public class CloseGuiAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "CLOSE_GUI");
       tag.putString("guiName", this.guiName);
-      MacroItemTarget target = this.init();
+      MacroItemTarget target = this.resolveItemTarget();
       if (target.hasSlot() || target.hasItemFilter()) {
          tag.put("itemName", target.toTag());
       }
 
       tag.putBoolean("useItemFilter", this.useItemFilter);
       tag.putBoolean("sendPacket", this.sendPacket);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -110,7 +110,7 @@ public class CloseGuiAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -127,15 +127,15 @@ public class CloseGuiAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
-   private MacroItemTarget init() {
+   private MacroItemTarget resolveItemTarget() {
       if (this.itemTarget == null || !this.itemTarget.hasSlot() && !this.itemTarget.hasItemFilter()) {
          if (this.targetSlot >= 0 && !this.itemName.isBlank()) {
             this.itemTarget = MacroItemTarget.parse("#" + this.targetSlot + "|" + this.itemName);

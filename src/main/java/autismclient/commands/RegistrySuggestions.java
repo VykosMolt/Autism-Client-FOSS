@@ -51,13 +51,13 @@ public final class RegistrySuggestions {
          int colon = clean.indexOf(58);
          String namespace = colon < 0 ? "minecraft" : clean.substring(0, colon);
          String path = colon < 0 ? clean : clean.substring(colon + 1);
-         Identifier exact = init(namespace, path);
+         Identifier exact = existingItemId(namespace, path);
          if (exact != null) {
             return exact;
          }
 
          for (String form : singularForms(path)) {
-            Identifier id = init(namespace, form);
+            Identifier id = existingItemId(namespace, form);
             if (id != null) {
                return id;
             }
@@ -145,7 +145,7 @@ public final class RegistrySuggestions {
       }
    }
 
-   public static List<String> init(Minecraft mc) {
+   public static List<String> inventoryItemIds(Minecraft mc) {
       TreeSet<String> ids = new TreeSet<>();
       if (mc != null && mc.player != null) {
          for (int slot = 0; slot < mc.player.getInventory().getContainerSize(); slot++) {
@@ -164,7 +164,7 @@ public final class RegistrySuggestions {
    public static <S> CompletableFuture<Suggestions> init(CommandContext<S> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (String id : init(Minecraft.getInstance())) {
+      for (String id : inventoryItemIds(Minecraft.getInstance())) {
          if (id.startsWith(remaining)) {
             builder.suggest(id);
          }
@@ -173,7 +173,7 @@ public final class RegistrySuggestions {
       return builder.buildFuture();
    }
 
-   private static Identifier init(String namespace, String path) {
+   private static Identifier existingItemId(String namespace, String path) {
       Identifier id = Identifier.tryParse(namespace + ":" + path);
       if (id == null) {
          return null;

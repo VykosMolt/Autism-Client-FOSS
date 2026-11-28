@@ -20,8 +20,8 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    private long releaseAtNanos = -9223372036854775808L;
    private static final long read_J = 50000000L;
    private long pressNanos = -9223372036854775808L;
-   private long update = -9223372036854775808L;
-   private long sync = -9223372036854775808L;
+   private long lastFireNanos = -9223372036854775808L;
+   private long activeGeneration = -9223372036854775808L;
    private int pendingClicks;
    private int consumedClicks;
    private boolean write_Z;
@@ -54,7 +54,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    }
 
    public void init_V() {
-      this.sync = generation;
+      this.activeGeneration = generation;
    }
 
    public void setOwnsKey(boolean owns) {
@@ -76,7 +76,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
          KeyMapping mapping = this.mapping();
          if (mapping != null && !mapping.isUnbound()) {
             KeyMappingControl.of(mapping).autism$simulatePress(true);
-            this.update = System.nanoTime();
+            this.lastFireNanos = System.nanoTime();
             this.load_Z = true;
             if (!this.useKey) {
                this.pendingClicks++;
@@ -93,7 +93,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
 
    @Override
    public long earliestClickNanos(long now) {
-      return Math.max(now, this.update);
+      return Math.max(now, this.lastFireNanos);
    }
 
    @Override
@@ -208,7 +208,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    public static void sync() {
       synchronized (OUTPUTS) {
          for (KeyClickOutput output : OUTPUTS) {
-            if (output.load_Z && (!canClick() || output.sync != generation)) {
+            if (output.load_Z && (!canClick() || output.activeGeneration != generation)) {
                output.release();
             }
          }

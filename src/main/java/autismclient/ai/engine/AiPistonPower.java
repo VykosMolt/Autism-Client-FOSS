@@ -5,13 +5,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.SignalGetter;
 
 public final class AiPistonPower {
-   private static final Direction[] init = Direction.values();
+   private static final Direction[] DIRECTIONS = Direction.values();
 
    private AiPistonPower() {
    }
 
    public static boolean init(SignalGetter world, BlockPos position, Direction facing) {
-      for (Direction direction : init) {
+      for (Direction direction : DIRECTIONS) {
          if (direction != facing && world.hasSignal(position.relative(direction), direction)) {
             return true;
          }
@@ -23,7 +23,7 @@ public final class AiPistonPower {
 
       BlockPos above = position.above();
 
-      for (Direction direction : init) {
+      for (Direction direction : DIRECTIONS) {
          if (direction != Direction.DOWN && world.hasSignal(above.relative(direction), direction)) {
             return true;
          }

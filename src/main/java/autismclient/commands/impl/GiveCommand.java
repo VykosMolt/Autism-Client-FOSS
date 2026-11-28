@@ -30,21 +30,21 @@ public class GiveCommand extends Command {
       root.then(
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.arguments.ItemOrBlockIdArgumentType.init())
                .suggests(autismclient.commands.CommandSuggestions::clear)
-               .executes(ctx -> init(autismclient.commands.arguments.ItemOrBlockIdArgumentType.init(ctx, "item"), 1)))
+               .executes(ctx -> give(autismclient.commands.arguments.ItemOrBlockIdArgumentType.init(ctx, "item"), 1)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("count", IntegerArgumentType.integer(1, 64))
                   .suggests(autismclient.commands.CommandSuggestions::sync)
-                  .executes(ctx -> init(autismclient.commands.arguments.ItemOrBlockIdArgumentType.init(ctx, "item"), IntegerArgumentType.getInteger(ctx, "count")))
+                  .executes(ctx -> give(autismclient.commands.arguments.ItemOrBlockIdArgumentType.init(ctx, "item"), IntegerArgumentType.getInteger(ctx, "count")))
             )
       );
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("item [count]", StringArgumentType.greedyString())
             .suggests(autismclient.commands.CommandSuggestions::clear)
-            .executes(ctx -> init(StringArgumentType.getString(ctx, "item [count]")))
+            .executes(ctx -> giveFromLine(StringArgumentType.getString(ctx, "item [count]")))
       );
    }
 
-   private static int init(String line) {
+   private static int giveFromLine(String line) {
       List<String> words = new ArrayList<>();
       int count = 1;
 
@@ -62,11 +62,11 @@ public class GiveCommand extends Command {
          AutismClientMessaging.sendPrefixed("§eUsage: " + autismclient.commands.CommandManager.getPrefix() + "give <item> [count]");
          return 1;
       } else {
-         return init(String.join("_", words), count);
+         return give(String.join("_", words), count);
       }
    }
 
-   private static int init(String itemId, int count) {
+   private static int give(String itemId, int count) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) {
          AutismClientMessaging.sendPrefixed("§cNot in a world.");

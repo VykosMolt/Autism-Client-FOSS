@@ -9,7 +9,7 @@ public class WaitForPositionDeltaAction implements CaptureOutputAction, MacroAct
    public boolean horizontalOnly = false;
    public boolean listenDuringPreviousAction = false;
    public String saveAs = "";
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -21,7 +21,7 @@ public class WaitForPositionDeltaAction implements CaptureOutputAction, MacroAct
       tag.putString("type", this.getType().name());
       tag.putDouble("distance", this.distance);
       tag.putBoolean("horizontalOnly", this.horizontalOnly);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
@@ -32,7 +32,7 @@ public class WaitForPositionDeltaAction implements CaptureOutputAction, MacroAct
       this.distance = Math.max(0.0, tag.getDoubleOr("distance", 5.0));
       this.horizontalOnly = tag.getBooleanOr("horizontalOnly", false);
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -56,12 +56,12 @@ public class WaitForPositionDeltaAction implements CaptureOutputAction, MacroAct
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override

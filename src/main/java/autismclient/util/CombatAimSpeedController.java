@@ -6,9 +6,9 @@ import net.minecraft.client.player.LocalPlayer;
 public final class CombatAimSpeedController {
    public static final String init_Str = "rotation-speed-multiplier";
    private static final int init_I = 2;
-   private final CombatAimEngine.Inner_CachePool init_q_CachePool = new CombatAimEngine.Inner_CachePool();
-   private Object init_Obj;
-   private int load;
+   private final CombatAimEngine.Inner_CachePool aimState = new CombatAimEngine.Inner_CachePool();
+   private Object trackedEnemy;
+   private int boostUntilTick;
 
    public static DoubleSetting speedSetting() {
       return new DoubleSetting("rotation-speed-multiplier", "Rotation Speed", 1.0, 0.5, 2.5, 0.1)
@@ -26,36 +26,36 @@ public final class CombatAimSpeedController {
    }
 
    public void reset() {
-      this.init_Obj = null;
-      this.init_q_CachePool.reset();
+      this.trackedEnemy = null;
+      this.aimState.reset();
    }
 
-   void init(Object enemy, int tick, int ticks) {
+   void boost(Object enemy, int tick, int ticks) {
       if (enemy != null) {
-         if (this.init_Obj != enemy) {
-            this.init_Obj = enemy;
-            this.load = tick;
-            this.init_q_CachePool.reset();
+         if (this.trackedEnemy != enemy) {
+            this.trackedEnemy = enemy;
+            this.boostUntilTick = tick;
+            this.aimState.reset();
          }
 
-         if (this.load - tick < ticks) {
-            this.load = tick + ticks;
+         if (this.boostUntilTick - tick < ticks) {
+            this.boostUntilTick = tick + ticks;
          }
       }
    }
 
-   boolean init(Object enemy, int tick) {
-      return enemy != null && this.init_Obj == enemy && this.load - tick >= 0;
+   boolean isBoosted(Object enemy, int tick) {
+      return enemy != null && this.trackedEnemy == enemy && this.boostUntilTick - tick >= 0;
    }
 
    public void init(Object from, Object to) {
-      if (from != null && this.init_Obj == from) {
-         this.init_Obj = to;
+      if (from != null && this.trackedEnemy == from) {
+         this.trackedEnemy = to;
       }
    }
 
    public void load(Object enemy, int tick, int latencyMs) {
-      this.init(enemy, tick, LatencyTickWindow.windowTicks(latencyMs) + 2);
+      this.boost(enemy, tick, LatencyTickWindow.windowTicks(latencyMs) + 2);
    }
 
    public void init(String owner, int priority, LocalPlayer player, Object enemy, double speed, RotationMath.Rotation goal, boolean pin) {
@@ -65,13 +65,13 @@ public final class CombatAimSpeedController {
 
       SilentRotationManager.requestRotation(owner, priority, goal);
       if (owner.equals(SilentRotationManager.getActiveOwnerId())) {
-         this.init(enemy, AutismSessionState.getInstance().getClientTick(), 2);
+         this.boost(enemy, AutismSessionState.getInstance().getClientTick(), 2);
          if (pin) {
-            this.init_q_CachePool.reset();
+            this.aimState.reset();
             SilentRotationManager.tickPinQuiet(owner, player, true);
          } else {
             double scale = 2.0 * clampMultiplier(speed);
-            SilentRotationManager.setCustomHandStepper(owner, (at, yaw, pitch) -> this.init_q_CachePool.stepToward(at, goal, yaw, pitch, scale));
+            SilentRotationManager.setCustomHandStepper(owner, (at, yaw, pitch) -> this.aimState.stepToward(at, goal, yaw, pitch, scale));
             float cap = turnCap(scale);
             SilentRotationManager.tick(owner, player, cap, cap);
          }
@@ -79,12 +79,12 @@ public final class CombatAimSpeedController {
    }
 
    public boolean init(String owner, int priority, LocalPlayer player, Object enemy, RotationMath.Rotation wire) {
-      if (wire != null && this.init(enemy, AutismSessionState.getInstance().getClientTick()) && owner.equals(SilentRotationManager.getActiveOwnerId()) && !SilentRotationManager.isReturningToPlayer()) {
+      if (wire != null && this.isBoosted(enemy, AutismSessionState.getInstance().getClientTick()) && owner.equals(SilentRotationManager.getActiveOwnerId()) && !SilentRotationManager.isReturningToPlayer()) {
          RotationMath.Rotation current = SilentRotationManager.getCurrentRotation();
          if (current == null || !SilentRotationManager.isVisibleAimActive() || player.getYRot() == current.yaw() && player.getXRot() == current.pitch()) {
             SilentRotationManager.requestRotation(owner, priority, current == null ? wire : current);
             SilentRotationManager.tickPinQuiet(owner, player, true);
-            this.init_q_CachePool.reset();
+            this.aimState.reset();
             return true;
          } else {
             return false;

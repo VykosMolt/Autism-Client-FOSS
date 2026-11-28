@@ -19,7 +19,7 @@ public final class BlastShieldPosFinder {
    public static List<BlockPos> init(AABB body, AABB nextBody, Vec3 source) {
       Vec3 middle = body.getCenter();
       Vec3 toward = source.subtract(middle);
-      if (init(source) && init(middle) && !(toward.lengthSqr() < 1.0E-8)) {
+      if (isFinite(source) && isFinite(middle) && !(toward.lengthSqr() < 1.0E-8)) {
          LinkedHashSet<BlockPos> found = new LinkedHashSet<>();
 
          for (double y : new double[]{body.minY + 0.25, middle.y, body.maxY - 0.15}) {
@@ -84,7 +84,7 @@ public final class BlastShieldPosFinder {
       }
    }
 
-   private static boolean init(Vec3 p) {
+   private static boolean isFinite(Vec3 p) {
       return Double.isFinite(p.x) && Double.isFinite(p.y) && Double.isFinite(p.z);
    }
 }

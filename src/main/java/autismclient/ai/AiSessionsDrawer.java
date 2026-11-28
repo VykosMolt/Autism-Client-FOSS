@@ -30,7 +30,7 @@ final class AiSessionsDrawer {
       this.service = service;
       this.view = view;
       this.host = host;
-      this.renameInput.setOnSubmit(text -> this.write());
+      this.renameInput.setOnSubmit(text -> this.commitRename());
    }
 
    void toggle() {
@@ -89,7 +89,7 @@ final class AiSessionsDrawer {
             autismclient.util.GuiIconAtlas.PLUS,
             "New chat",
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-            this::read
+            this::createSession
          );
          y += ctrl + 2;
          List<AiSessions.Inner_StreamUtil> sessions = this.view.sessions;
@@ -119,7 +119,7 @@ final class AiSessionsDrawer {
                   break;
                }
 
-               this.init(kit, rows.get(i), autismclient.gui.f.NetHelper.init(list.read(), ry, rowW, rowH), now);
+               this.renderRow(kit, rows.get(i), autismclient.gui.f.NetHelper.init(list.read(), ry, rowW, rowH), now);
             }
 
             kit.popClip();
@@ -128,7 +128,7 @@ final class AiSessionsDrawer {
       }
    }
 
-   private void init(AiUiKit kit, AiSessions.Inner_StreamUtil meta, autismclient.gui.f.NetHelper row, long now) {
+   private void renderRow(AiUiKit kit, AiSessions.Inner_StreamUtil meta, autismclient.gui.f.NetHelper row, long now) {
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       String id = meta.id();
       boolean active = id.equals(this.view.activeSessionId);
@@ -157,7 +157,7 @@ final class AiSessionsDrawer {
             right -= ageW + 4;
          } else {
             autismclient.gui.f.NetHelper trash = autismclient.gui.f.NetHelper.init(row.init() - icon - 1, row.write() + 1, icon, icon);
-            kit.drawIconButton(trash, autismclient.util.GuiIconAtlas.DELETE, false, armed, armed ? "Click again to delete" : "Delete chat", () -> this.load(id));
+            kit.drawIconButton(trash, autismclient.util.GuiIconAtlas.DELETE, false, armed, armed ? "Click again to delete" : "Delete chat", () -> this.confirmDelete(id));
             right = trash.read() - 3;
          }
 
@@ -193,7 +193,7 @@ final class AiSessionsDrawer {
       return this.filteredSessions = out;
    }
 
-   private void read() {
+   private void createSession() {
       this.service.createSession();
       this.load();
       this.view.invalidate();
@@ -209,7 +209,7 @@ final class AiSessionsDrawer {
       this.view.invalidate();
    }
 
-   private void load(String id) {
+   private void confirmDelete(String id) {
       if (!id.equals(this.load_Str)) {
          this.load_Str = id;
          this.load_J = System.currentTimeMillis();
@@ -254,7 +254,7 @@ final class AiSessionsDrawer {
       }
    }
 
-   private void write() {
+   private void commitRename() {
       String id = this.init_Str;
       String text = this.renameInput.getValue().trim();
       this.init_Str = null;

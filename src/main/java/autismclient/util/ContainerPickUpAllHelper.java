@@ -10,18 +10,18 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public final class ContainerPickUpAllHelper {
-   private static int init_I = -1;
-   private static int load = -1;
-   private static ItemStack init_ItemStack = ItemStack.EMPTY;
+   private static int trackedContainerId = -1;
+   private static int trackedSlot = -1;
+   private static ItemStack trackedCarried = ItemStack.EMPTY;
 
    private ContainerPickUpAllHelper() {
    }
 
-   public static boolean init(Minecraft mc) {
+   public static boolean pickUpAll(Minecraft mc) {
       return init(mc, null, 1);
    }
 
-   public static boolean init(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard) {
+   public static boolean pickUpAll(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard) {
       return init(mc, carriedGuard, 1);
    }
 
@@ -36,14 +36,14 @@ public final class ContainerPickUpAllHelper {
 
       int clickCount = Math.max(1, times);
       if (mc.isSameThread()) {
-         return load(mc, carriedGuard, clickCount);
+         return clickPickUpAll(mc, carriedGuard, clickCount);
       }
 
       CountDownLatch latch = new CountDownLatch(1);
       AtomicBoolean clicked = new AtomicBoolean(false);
       mc.execute(() -> {
          try {
-            clicked.set(load(mc, carriedGuard, clickCount));
+            clicked.set(clickPickUpAll(mc, carriedGuard, clickCount));
          } finally {
             latch.countDown();
          }
@@ -61,7 +61,7 @@ public final class ContainerPickUpAllHelper {
       return clicked.get();
    }
 
-   private static boolean load(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard, int times) {
+   private static boolean clickPickUpAll(Minecraft mc, autismclient.util.macro.MacroItemTarget carriedGuard, int times) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }
@@ -76,18 +76,18 @@ public final class ContainerPickUpAllHelper {
 
          for (int i = 0; i < times; i++) {
             ItemStack carried = handler.getCarried();
-            if (carried == null || carried.isEmpty() || !init(carriedGuard, carried)) {
+            if (carried == null || carried.isEmpty() || !carriedMatchesGuard(carriedGuard, carried)) {
                break;
             }
 
-            int triggerSlot = init(mc, handler, carried);
+            int triggerSlot = resolveTrackedSlot(mc, handler, carried);
             if (triggerSlot < 0) {
                break;
             }
 
             try {
                mc.gameMode.handleContainerInput(handler.containerId, triggerSlot, 0, ContainerInput.PICKUP_ALL, mc.player);
-               init(handler);
+               refreshTrackedCarried(handler);
                clickedAny = true;
             } catch (RuntimeException ignored) {
                break;
@@ -114,32 +114,32 @@ public final class ContainerPickUpAllHelper {
                && beforeSlot != null
                && !beforeSlot.isEmpty()
                && ItemStack.isSameItemSameComponents(beforeSlot, afterCarried)) {
-               init_I = handler.containerId;
-               load = slotId;
-               init_ItemStack = afterCarried.copy();
-            } else if (init_I == handler.containerId && load >= 0 && ItemStack.isSameItemSameComponents(init_ItemStack, afterCarried)) {
-               init_ItemStack = afterCarried.copy();
+               trackedContainerId = handler.containerId;
+               trackedSlot = slotId;
+               trackedCarried = afterCarried.copy();
+            } else if (trackedContainerId == handler.containerId && trackedSlot >= 0 && ItemStack.isSameItemSameComponents(trackedCarried, afterCarried)) {
+               trackedCarried = afterCarried.copy();
             } else {
-               init();
+               clearTracking();
             }
          } else {
-            init();
+            clearTracking();
          }
       }
    }
 
-   private static int init(Minecraft mc, AbstractContainerMenu handler, ItemStack carried) {
-      if (init_I != handler.containerId || load < 0 || load >= handler.slots.size()) {
+   private static int resolveTrackedSlot(Minecraft mc, AbstractContainerMenu handler, ItemStack carried) {
+      if (trackedContainerId != handler.containerId || trackedSlot < 0 || trackedSlot >= handler.slots.size()) {
          return -1;
-      } else if (!init_ItemStack.isEmpty() && ItemStack.isSameItemSameComponents(init_ItemStack, carried)) {
-         Slot slot = handler.slots.get(load);
-         return init(mc, slot, carried) ? load : -1;
+      } else if (!trackedCarried.isEmpty() && ItemStack.isSameItemSameComponents(trackedCarried, carried)) {
+         Slot slot = handler.slots.get(trackedSlot);
+         return slotExhausted(mc, slot, carried) ? trackedSlot : -1;
       } else {
          return -1;
       }
    }
 
-   private static boolean init(Minecraft mc, Slot slot, ItemStack carried) {
+   private static boolean slotExhausted(Minecraft mc, Slot slot, ItemStack carried) {
       if (mc != null && mc.player != null && slot != null && slot.isActive()) {
          return !slot.hasItem() ? true : !slot.mayPickup(mc.player) && !ItemStack.isSameItemSameComponents(slot.getItem(), carried);
       } else {
@@ -147,24 +147,24 @@ public final class ContainerPickUpAllHelper {
       }
    }
 
-   private static void init(AbstractContainerMenu handler) {
-      if (handler != null && init_I == handler.containerId) {
+   private static void refreshTrackedCarried(AbstractContainerMenu handler) {
+      if (handler != null && trackedContainerId == handler.containerId) {
          ItemStack carried = handler.getCarried();
          if (carried != null && !carried.isEmpty()) {
-            init_ItemStack = carried.copy();
+            trackedCarried = carried.copy();
          } else {
-            init();
+            clearTracking();
          }
       }
    }
 
-   private static void init() {
-      init_I = -1;
-      load = -1;
-      init_ItemStack = ItemStack.EMPTY;
+   private static void clearTracking() {
+      trackedContainerId = -1;
+      trackedSlot = -1;
+      trackedCarried = ItemStack.EMPTY;
    }
 
-   private static boolean init(autismclient.util.macro.MacroItemTarget target, ItemStack carried) {
+   private static boolean carriedMatchesGuard(autismclient.util.macro.MacroItemTarget target, ItemStack carried) {
       if (target != null && target.hasItemFilter()) {
          autismclient.util.macro.MacroItemTarget identityOnly = target.copy();
          identityOnly.slot = -1;

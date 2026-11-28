@@ -24,10 +24,10 @@ import net.minecraft.client.Minecraft;
 
 public final class SystemClipboardHelper {
    private static final long init_J = 3000L;
-   private static final Map<String, Boolean> init_Map = new ConcurrentHashMap<>();
-   private static volatile boolean init_Z;
-   private static volatile String init_Str;
-   private static volatile boolean load;
+   private static final Map<String, Boolean> toolAvailability = new ConcurrentHashMap<>();
+   private static volatile boolean fallbackLogged;
+   private static volatile String cachedText;
+   private static volatile boolean awtUnavailable;
    private static final AtomicInteger auditPendingWrites = new AtomicInteger();
    private static final ExecutorService auditWriter = Executors.newSingleThreadExecutor(r -> {
       Thread t = new Thread(r, "autism-clipboard-write");
@@ -40,7 +40,7 @@ public final class SystemClipboardHelper {
 
    public static String getText() {
       if (auditPendingWrites.get() > 0) {
-         return init_Str;
+         return cachedText;
       }
 
       Minecraft mc = Minecraft.getInstance();
@@ -48,7 +48,7 @@ public final class SystemClipboardHelper {
       if (mc != null && mc.isSameThread()) {
          // On the render thread wait at most 500 ms for the tools, then fall back to GLFW.
          FutureTask<String> task = new FutureTask<>(SystemClipboardHelper::auditReadExternal);
-         init(task);
+         startDaemon(task);
          try {
             external = task.get(500L, TimeUnit.MILLISECONDS);
          } catch (Exception e) {
@@ -62,13 +62,13 @@ public final class SystemClipboardHelper {
       if (external != null && !external.isEmpty()) {
          return external;
       } else {
-         String glfw = read();
+         String glfw = readGlfw();
          if (!glfw.isEmpty()) {
             return glfw;
          } else {
-            String local = init_Str;
+            String local = cachedText;
             if (local != null) {
-               read_V("read");
+               logFallbackOnce("read");
                return local;
             } else {
                return "";
@@ -78,34 +78,34 @@ public final class SystemClipboardHelper {
    }
 
    private static String auditReadExternal() {
-      for (String[] command : init_StrArr2()) {
-         if (init_Z(command[0])) {
-            String out = init(command);
+      for (String[] command : readCommands()) {
+         if (hasTool(command[0])) {
+            String out = runReadCommand(command);
             if (out != null && !out.isEmpty()) {
                return out;
             }
          }
       }
 
-      return load_Str();
+      return readAwt();
    }
 
    public static void setText(String text) {
       String value = text == null ? "" : text;
-      init_Str = value;
+      cachedText = value;
       auditPendingWrites.incrementAndGet();
       // The tools can take seconds; writes run in order on one worker so copying never blocks the render thread.
       auditWriter.execute(() -> {
          try {
-            for (String[] command : load_StrArr2()) {
-               if (init_Z(command[0]) && init(command, value)) {
+            for (String[] command : writeCommands()) {
+               if (hasTool(command[0]) && runWriteCommand(command, value)) {
                   return;
                }
             }
 
-            if (!read_Z(value)) {
-               read_V("write");
-               load_V(value);
+            if (!writeAwt(value)) {
+               logFallbackOnce("write");
+               writeGlfw(value);
             }
          } finally {
             auditPendingWrites.decrementAndGet();
@@ -113,19 +113,19 @@ public final class SystemClipboardHelper {
       });
    }
 
-   private static String[][] init_StrArr2() {
-      return init_Z()
+   private static String[][] readCommands() {
+      return isWayland()
          ? new String[][]{{"wl-paste", "--no-newline"}, {"xclip", "-selection", "clipboard", "-o"}, {"xsel", "--clipboard", "--output"}}
          : new String[][]{{"xclip", "-selection", "clipboard", "-o"}, {"xsel", "--clipboard", "--output"}, {"wl-paste", "--no-newline"}};
    }
 
-   private static String[][] load_StrArr2() {
-      return init_Z()
+   private static String[][] writeCommands() {
+      return isWayland()
          ? new String[][]{{"wl-copy"}, {"xclip", "-selection", "clipboard", "-i"}, {"xsel", "--clipboard", "--input"}}
          : new String[][]{{"xclip", "-selection", "clipboard", "-i"}, {"xsel", "--clipboard", "--input"}, {"wl-copy"}};
    }
 
-   private static boolean init_Z() {
+   private static boolean isWayland() {
       String sessionType = System.getenv("XDG_SESSION_TYPE");
       if (sessionType != null && sessionType.toLowerCase(Locale.ROOT).contains("wayland")) {
          return true;
@@ -135,11 +135,11 @@ public final class SystemClipboardHelper {
       return waylandDisplay != null && !waylandDisplay.isBlank();
    }
 
-   private static boolean init_Z(String tool) {
-      return init_Map.computeIfAbsent(tool, SystemClipboardHelper::load_Z);
+   private static boolean hasTool(String tool) {
+      return toolAvailability.computeIfAbsent(tool, SystemClipboardHelper::probeTool);
    }
 
-   private static boolean load_Z(String tool) {
+   private static boolean probeTool(String tool) {
       Process process = null;
 
       try {
@@ -159,7 +159,7 @@ public final class SystemClipboardHelper {
       }
    }
 
-   private static boolean init(String[] command, String text) {
+   private static boolean runWriteCommand(String[] command, String text) {
       Process process = null;
 
       try {
@@ -184,7 +184,7 @@ public final class SystemClipboardHelper {
       }
    }
 
-   private static String init(String[] command) {
+   private static String runReadCommand(String[] command) {
       Process process = null;
 
       try {
@@ -213,20 +213,20 @@ public final class SystemClipboardHelper {
       }
    }
 
-   private static String load_Str() {
-      if (load_Z()) {
+   private static String readAwt() {
+      if (isAwtUnavailable()) {
          return null;
       }
 
       FutureTask<String> task = new FutureTask<>(
          () -> Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor) instanceof String s ? s : null
       );
-      init(task);
+      startDaemon(task);
 
       try {
          return task.get(3000L, TimeUnit.MILLISECONDS);
       } catch (TimeoutException e) {
-         load = true;
+         awtUnavailable = true;
          task.cancel(true);
          return null;
       } catch (InterruptedException e) {
@@ -237,8 +237,8 @@ public final class SystemClipboardHelper {
       }
    }
 
-   private static boolean read_Z(String text) {
-      if (load_Z()) {
+   private static boolean writeAwt(String text) {
+      if (isAwtUnavailable()) {
          return false;
       }
 
@@ -246,12 +246,12 @@ public final class SystemClipboardHelper {
          Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), null);
          return true;
       });
-      init(task);
+      startDaemon(task);
 
       try {
          return Boolean.TRUE.equals(task.get(3000L, TimeUnit.MILLISECONDS));
       } catch (TimeoutException e) {
-         load = true;
+         awtUnavailable = true;
          task.cancel(true);
          return false;
       } catch (InterruptedException e) {
@@ -262,29 +262,29 @@ public final class SystemClipboardHelper {
       }
    }
 
-   private static boolean load_Z() {
-      if (load) {
+   private static boolean isAwtUnavailable() {
+      if (awtUnavailable) {
          return true;
       }
 
       try {
          if (GraphicsEnvironment.isHeadless()) {
-            load = true;
+            awtUnavailable = true;
          }
       } catch (Throwable t) {
-         load = true;
+         awtUnavailable = true;
       }
 
-      return load;
+      return awtUnavailable;
    }
 
-   private static void init(FutureTask<?> task) {
+   private static void startDaemon(FutureTask<?> task) {
       Thread thread = new Thread(task, "autism-clipboard-awt");
       thread.setDaemon(true);
       thread.start();
    }
 
-   private static String read() {
+   private static String readGlfw() {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.getWindow() != null) {
          long window = mc.getWindow().handle();
@@ -293,11 +293,11 @@ public final class SystemClipboardHelper {
          }
 
          if (mc.isSameThread()) {
-            return init(window);
+            return glfwRead(window);
          }
 
          CompletableFuture<String> future = new CompletableFuture<>();
-         mc.execute(() -> future.complete(init(window)));
+         mc.execute(() -> future.complete(glfwRead(window)));
 
          try {
             return future.get(2L, TimeUnit.SECONDS);
@@ -309,21 +309,21 @@ public final class SystemClipboardHelper {
       }
    }
 
-   private static void load_V(String text) {
+   private static void writeGlfw(String text) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.getWindow() != null) {
          long window = mc.getWindow().handle();
          if (window != 0L) {
             if (mc.isSameThread()) {
-               init(window, text);
+               glfwWrite(window, text);
             } else {
-               mc.execute(() -> init(window, text));
+               mc.execute(() -> glfwWrite(window, text));
             }
          }
       }
    }
 
-   private static String init(long window) {
+   private static String glfwRead(long window) {
       try {
          String value = CompatGLFW.glfwGetClipboardString(window);
          return value != null ? value : "";
@@ -332,16 +332,16 @@ public final class SystemClipboardHelper {
       }
    }
 
-   private static void init(long window, String text) {
+   private static void glfwWrite(long window, String text) {
       try {
          CompatGLFW.glfwSetClipboardString(window, text);
       } catch (Throwable var4) {
       }
    }
 
-   private static void read_V(String operation) {
-      if (!init_Z) {
-         init_Z = true;
+   private static void logFallbackOnce(String operation) {
+      if (!fallbackLogged) {
+         fallbackLogged = true;
          AutismClientAddon.LOG.info("[Autism] Clipboard {}: no native tool (wl-copy/xclip/xsel) or AWT path worked; using GLFW/in-client fallback", operation);
       }
    }

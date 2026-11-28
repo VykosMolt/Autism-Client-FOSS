@@ -8,7 +8,7 @@ public class SendChatAction implements MacroAction, GuiWaitAware {
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = true;
    public String guiName = "";
-   private boolean init = true;
+   private boolean enabled = true;
 
    public SendChatAction() {
    }
@@ -25,7 +25,7 @@ public class SendChatAction implements MacroAction, GuiWaitAware {
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -42,7 +42,7 @@ public class SendChatAction implements MacroAction, GuiWaitAware {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -109,11 +109,11 @@ public class SendChatAction implements MacroAction, GuiWaitAware {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 }

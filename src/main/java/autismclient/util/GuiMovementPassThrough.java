@@ -46,13 +46,13 @@ public final class GuiMovementPassThrough {
             return false;
          } else if (MINECRAFT != null && MINECRAFT.options != null) {
             boolean handled = false;
-            handled |= init(MINECRAFT.options.keyUp, input, pressed);
-            handled |= init(MINECRAFT.options.keyDown, input, pressed);
-            handled |= init(MINECRAFT.options.keyLeft, input, pressed);
-            handled |= init(MINECRAFT.options.keyRight, input, pressed);
-            handled |= init(MINECRAFT.options.keyJump, input, pressed);
-            handled |= init(MINECRAFT.options.keyShift, input, pressed);
-            return handled | init(MINECRAFT.options.keySprint, input, pressed);
+            handled |= passKey(MINECRAFT.options.keyUp, input, pressed);
+            handled |= passKey(MINECRAFT.options.keyDown, input, pressed);
+            handled |= passKey(MINECRAFT.options.keyLeft, input, pressed);
+            handled |= passKey(MINECRAFT.options.keyRight, input, pressed);
+            handled |= passKey(MINECRAFT.options.keyJump, input, pressed);
+            handled |= passKey(MINECRAFT.options.keyShift, input, pressed);
+            return handled | passKey(MINECRAFT.options.keySprint, input, pressed);
          } else {
             releaseAll();
             return false;
@@ -62,25 +62,25 @@ public final class GuiMovementPassThrough {
 
    public static void tick() {
       if (load_Z()) {
-         init(MINECRAFT.options.keyUp);
-         init(MINECRAFT.options.keyDown);
-         init(MINECRAFT.options.keyLeft);
-         init(MINECRAFT.options.keyRight);
-         init(MINECRAFT.options.keyJump);
-         init(MINECRAFT.options.keyShift);
-         init(MINECRAFT.options.keySprint);
+         syncKey(MINECRAFT.options.keyUp);
+         syncKey(MINECRAFT.options.keyDown);
+         syncKey(MINECRAFT.options.keyLeft);
+         syncKey(MINECRAFT.options.keyRight);
+         syncKey(MINECRAFT.options.keyJump);
+         syncKey(MINECRAFT.options.keyShift);
+         syncKey(MINECRAFT.options.keySprint);
       }
    }
 
    public static void releaseAll() {
       if (MINECRAFT != null && MINECRAFT.options != null) {
-         load(MINECRAFT.options.keyUp);
-         load(MINECRAFT.options.keyDown);
-         load(MINECRAFT.options.keyLeft);
-         load(MINECRAFT.options.keyRight);
-         load(MINECRAFT.options.keyJump);
-         load(MINECRAFT.options.keyShift);
-         load(MINECRAFT.options.keySprint);
+         release(MINECRAFT.options.keyUp);
+         release(MINECRAFT.options.keyDown);
+         release(MINECRAFT.options.keyLeft);
+         release(MINECRAFT.options.keyRight);
+         release(MINECRAFT.options.keyJump);
+         release(MINECRAFT.options.keyShift);
+         release(MINECRAFT.options.keySprint);
       }
    }
 
@@ -95,18 +95,18 @@ public final class GuiMovementPassThrough {
             || MINECRAFT.gui.screen() != null && !isPassThroughScreen()) {
             releaseAll();
          } else {
-            init(MINECRAFT.options.keyUp);
-            init(MINECRAFT.options.keyDown);
-            init(MINECRAFT.options.keyLeft);
-            init(MINECRAFT.options.keyRight);
-            init(MINECRAFT.options.keyJump);
-            init(MINECRAFT.options.keyShift);
-            init(MINECRAFT.options.keySprint);
+            syncKey(MINECRAFT.options.keyUp);
+            syncKey(MINECRAFT.options.keyDown);
+            syncKey(MINECRAFT.options.keyLeft);
+            syncKey(MINECRAFT.options.keyRight);
+            syncKey(MINECRAFT.options.keyJump);
+            syncKey(MINECRAFT.options.keyShift);
+            syncKey(MINECRAFT.options.keySprint);
          }
       }
    }
 
-   private static boolean init(KeyMapping binding, KeyEvent input, boolean pressed) {
+   private static boolean passKey(KeyMapping binding, KeyEvent input, boolean pressed) {
       if (binding == null || !binding.matches(input)) {
          return false;
       }
@@ -125,7 +125,7 @@ public final class GuiMovementPassThrough {
       return true;
    }
 
-   private static void init(KeyMapping binding) {
+   private static void syncKey(KeyMapping binding) {
       if (binding != null && !autismclient.modules.FreecamController.shouldSuppressKey(binding)) {
          boolean physical = KeyMappingControl.of(binding).autism$isActuallyDown();
          boolean pressed = physical || binding == MINECRAFT.options.keyShift && autismclient.modules.al.tick_Z();
@@ -138,7 +138,7 @@ public final class GuiMovementPassThrough {
       }
    }
 
-   private static void load(KeyMapping binding) {
+   private static void release(KeyMapping binding) {
       if (binding != null && heldKeys.remove(binding)) {
          binding.setDown(false);
       }

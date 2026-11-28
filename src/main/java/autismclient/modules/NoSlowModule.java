@@ -22,7 +22,7 @@ public final class NoSlowModule extends Module {
       this.add(new BoolSetting("berry-bush", "Berry Bush", false).group("Blocks").build());
    }
 
-   private static NoSlowModule init(Entity entity) {
+   private static NoSlowModule activeFor(Entity entity) {
       return entity != null
             && entity == MC.player
             && !entity.isPassenger()
@@ -34,7 +34,7 @@ public final class NoSlowModule extends Module {
    }
 
    public static boolean init(LocalPlayer player) {
-      NoSlowModule module = init((Entity)player);
+      NoSlowModule module = activeFor((Entity)player);
       if (module != null && player.isUsingItem()) {
          ItemStack stack = player.getUseItem();
          if (!stack.is(Items.BOW) && !stack.is(Items.CROSSBOW) && !stack.is(Items.TRIDENT)) {
@@ -61,12 +61,12 @@ public final class NoSlowModule extends Module {
    }
 
    public static boolean load(LocalPlayer player) {
-      NoSlowModule module = init((Entity)player);
+      NoSlowModule module = activeFor((Entity)player);
       return module != null && (player.isCrouching() && module.bool("sneak") || player.isVisuallyCrawling() && module.bool("crawl"));
    }
 
    public static boolean init(Entity entity, Block block) {
-      NoSlowModule module = init(entity);
+      NoSlowModule module = activeFor(entity);
       return module != null
          && (
             block == Blocks.HONEY_BLOCK && module.bool("honey")

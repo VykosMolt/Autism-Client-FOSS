@@ -8,11 +8,11 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
 
 public final class BoatFlyModule extends Module {
-   private static BoatFlyModule init;
+   private static BoatFlyModule instance;
 
    public BoatFlyModule() {
       super("boat-fly", "BoatFly", ae.load_ae, "Lets ridden vehicles fly.");
-      init = this;
+      instance = this;
       this.add(new BoolSetting("change-forward-speed", "Change Forward Speed", false).description("Use custom forward speed.").build());
       this.add(
          new DoubleSetting("forward-speed", "Forward Speed", 1.0, 0.05, 5.0, 0.05)
@@ -24,12 +24,12 @@ public final class BoatFlyModule extends Module {
    }
 
    static Vec3 init(Entity vehicle, MoverType type, Vec3 movement) {
-      BoatFlyModule module = init;
+      BoatFlyModule module = instance;
       if (module == null || !module.isEnabled() || aD.read_Z()) {
          return movement;
       }
 
-      if (type == MoverType.SELF && init(vehicle)) {
+      if (type == MoverType.SELF && isPlayerVehicle(vehicle)) {
          double motionX = movement.x;
          double motionY = 0.0;
          double motionZ = movement.z;
@@ -52,7 +52,7 @@ public final class BoatFlyModule extends Module {
       }
    }
 
-   private static boolean init(Entity vehicle) {
+   private static boolean isPlayerVehicle(Entity vehicle) {
       return MC.player != null && vehicle != null && MC.player.getVehicle() == vehicle;
    }
 }

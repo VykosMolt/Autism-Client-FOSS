@@ -32,12 +32,12 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public final class PearlGhostRenderer {
-   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(786432);
-   private static final Vector3f init_Vector3f = new Vector3f();
-   private static final AvatarRenderState init_AvatarRenderState = new AvatarRenderState();
-   private static PlayerModel init_PlayerModel;
-   private static PlayerModel load;
-   private static Object init_Obj;
+   private static final AutismBufferSource.Inner_DataUtil BUFFERS = new AutismBufferSource.Inner_DataUtil(786432);
+   private static final Vector3f NORMAL = new Vector3f();
+   private static final AvatarRenderState AVATAR_STATE = new AvatarRenderState();
+   private static PlayerModel wideModel;
+   private static PlayerModel slimModel;
+   private static Object modelSet;
    private static RenderPipeline init_RenderPipeline;
    private static RenderPipeline load_RenderPipeline;
    private static RenderPipeline read;
@@ -57,7 +57,7 @@ public final class PearlGhostRenderer {
             DangerModule danger = DangerModule.instance();
             Vec3 camera = WorldProjectionHelper.init();
             float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-            AutismBufferSource buffers = init_c_DataUtil.init();
+            AutismBufferSource buffers = BUFFERS.init();
             VertexConsumer lines = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (IncomingProjectileScanner.Inner_BufferHelper warning : danger.read_List_2()) {
@@ -80,7 +80,7 @@ public final class PearlGhostRenderer {
                         }
 
                         if (!warning.init_Z() || (i & 1) == 1) {
-                           init_V_PoseStack(pose, lines, previous, next, camera, color & 16777215 | (warning.init_Z() ? -1610612736 : -671088640), 1.5F);
+                           drawLine(pose, lines, previous, next, camera, color & 16777215 | (warning.init_Z() ? -1610612736 : -671088640), 1.5F);
                         }
 
                         previous = next;
@@ -91,7 +91,7 @@ public final class PearlGhostRenderer {
                      Vec3 at = warning.kind() == IncomingProjectileScanner.Inner_StreamUtil.PEARL
                         ? warning.init_A_DataUtil().load()
                         : warning.init_A_DataUtil().init_Vec3();
-                     init(pose, lines, at.add(0.0, 0.025, 0.0), warning.kind() == IncomingProjectileScanner.Inner_StreamUtil.PEARL ? 0.48 : 0.24, camera, color);
+                     drawCircle(pose, lines, at.add(0.0, 0.025, 0.0), warning.kind() == IncomingProjectileScanner.Inner_StreamUtil.PEARL ? 0.48 : 0.24, camera, color);
                   }
                }
             }
@@ -158,10 +158,10 @@ public final class PearlGhostRenderer {
    static void init(
       Minecraft mc, PoseStack pose, AutismBufferSource buffers, AbstractClientPlayer owner, Vec3 teleport, Vec3 camera, float partial, int tint, double opacity, int pass
    ) {
-      if (init_Obj != mc.getEntityModels()) {
-         init_Obj = mc.getEntityModels();
-         init_PlayerModel = new PlayerModel(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER), false);
-         load = new PlayerModel(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER_SLIM), true);
+      if (modelSet != mc.getEntityModels()) {
+         modelSet = mc.getEntityModels();
+         wideModel = new PlayerModel(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER), false);
+         slimModel = new PlayerModel(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER_SLIM), true);
       }
 
       RenderPipeline pipeline = pass == 1 ? load_RenderPipeline : (pass == 2 ? read : init_RenderPipeline);
@@ -192,11 +192,11 @@ public final class PearlGhostRenderer {
       }
 
       PlayerSkin skin = owner.getSkin();
-      PlayerModel model = skin.model().name().equalsIgnoreCase("slim") ? load : init_PlayerModel;
-      init_AvatarRenderState.ageInTicks = owner.tickCount + partial;
-      init_AvatarRenderState.mainArm = owner.getMainArm();
-      init_AvatarRenderState.skin = skin;
-      model.setupAnim(init_AvatarRenderState);
+      PlayerModel model = skin.model().name().equalsIgnoreCase("slim") ? slimModel : wideModel;
+      AVATAR_STATE.ageInTicks = owner.tickCount + partial;
+      AVATAR_STATE.mainArm = owner.getMainArm();
+      AVATAR_STATE.skin = skin;
+      model.setupAnim(AVATAR_STATE);
       model.hat.visible = model.jacket.visible = model.leftPants.visible = model.rightPants.visible = false;
       model.leftSleeve.visible = model.rightSleeve.visible = false;
       Vec3 at = teleport.subtract(camera);
@@ -220,28 +220,28 @@ public final class PearlGhostRenderer {
       }
    }
 
-   private static void init(PoseStack pose, VertexConsumer lines, Vec3 at, double radius, Vec3 camera, int color) {
+   private static void drawCircle(PoseStack pose, VertexConsumer lines, Vec3 at, double radius, Vec3 camera, int color) {
       for (int i = 0; i < 48; i++) {
          double a = i * 3.141592653589793 / 24.0;
          double b = (i + 1) * 3.141592653589793 / 24.0;
-         init_V_PoseStack(
+         drawLine(
             pose, lines, at.add(Math.cos(a) * radius, 0.0, Math.sin(a) * radius), at.add(Math.cos(b) * radius, 0.0, Math.sin(b) * radius), camera, color, 2.0F
          );
       }
    }
 
-   private static void init_V_PoseStack(PoseStack stack, VertexConsumer buffer, Vec3 from, Vec3 to, Vec3 camera, int color, float width) {
+   private static void drawLine(PoseStack stack, VertexConsumer buffer, Vec3 from, Vec3 to, Vec3 camera, int color, float width) {
       Vec3 delta = to.subtract(from);
       if (!(delta.lengthSqr() < 1.0E-10)) {
-         init_Vector3f.set((float)delta.x, (float)delta.y, (float)delta.z).normalize();
+         NORMAL.set((float)delta.x, (float)delta.y, (float)delta.z).normalize();
          Pose pose = stack.last();
          buffer.addVertex(pose, (float)(from.x - camera.x), (float)(from.y - camera.y), (float)(from.z - camera.z))
             .setColor(color)
-            .setNormal(pose, init_Vector3f)
+            .setNormal(pose, NORMAL)
             .setLineWidth(width);
          buffer.addVertex(pose, (float)(to.x - camera.x), (float)(to.y - camera.y), (float)(to.z - camera.z))
             .setColor(color)
-            .setNormal(pose, init_Vector3f)
+            .setNormal(pose, NORMAL)
             .setLineWidth(width);
       }
    }

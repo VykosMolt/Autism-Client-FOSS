@@ -30,7 +30,7 @@ public class WaitForHealthAction implements CaptureOutputAction, MacroAction {
       tag.putString("type", this.getType().name());
       tag.putFloat("healthThreshold", this.healthThreshold);
       tag.putBoolean("below", this.below);
-      tag.putString("comparison", this.init());
+      tag.putString("comparison", this.comparisonLabel());
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
@@ -59,7 +59,7 @@ public class WaitForHealthAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Wait HP: " + this.init() + " " + this.read();
+      return "Wait HP: " + this.comparisonLabel() + " " + this.thresholdText();
    }
 
    @Override
@@ -67,16 +67,16 @@ public class WaitForHealthAction implements CaptureOutputAction, MacroAction {
       return "HP";
    }
 
-   public String init() {
+   public String comparisonLabel() {
       return this.below ? "Drops Below" : "Rises Above";
    }
 
-   public String read() {
+   public String thresholdText() {
       return String.format(Locale.ROOT, "%.1f", this.healthThreshold);
    }
 
    public String write() {
-      return this.below ? "Waiting for health to drop below " + this.read() : "Waiting for health to rise above " + this.read();
+      return this.below ? "Waiting for health to drop below " + this.thresholdText() : "Waiting for health to rise above " + this.thresholdText();
    }
 
    @Override

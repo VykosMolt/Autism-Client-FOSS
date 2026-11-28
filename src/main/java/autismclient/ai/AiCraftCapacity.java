@@ -59,61 +59,61 @@ final class AiCraftCapacity {
       final AiOperation.Result rejection, final AiOperation tidy, final Supplier<AiOperation> retry, final IntSupplier freeSlots
    ) {
       return new AiOperation() {
-         AiOperation init_AiOperation = tidy;
-         AiOperation.Result init_AiOperation_Result;
-         AiOperation.Result load_AiOperation_Result;
-         AiOperation.Result read_AiOperation_Result;
-         boolean init_Z;
-         boolean load_Z;
-         boolean read_Z;
+         AiOperation activeOp = tidy;
+         AiOperation.Result lastResult;
+         AiOperation.Result cleanupResult;
+         AiOperation.Result finalResult;
+         boolean retried;
+         boolean cancelled;
+         boolean reconcileAfterEmergency;
 
          @Override
          public AiOperation.Result tick() {
-            if (this.read_AiOperation_Result != null) {
-               return this.read_AiOperation_Result;
+            if (this.finalResult != null) {
+               return this.finalResult;
             }
 
-            if (this.load_Z) {
-               return this.init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Craft capacity recovery cancelled", "{}", List.of()));
+            if (this.cancelled) {
+               return this.finishWithReceipt(new AiOperation.Result(AiOperation.Status.CANCELLED, "Craft capacity recovery cancelled", "{}", List.of()));
             }
 
-            boolean before = this.init_AiOperation.requiresReconciliationAfterEmergency();
-            this.init_AiOperation_Result = this.init_AiOperation.tick();
-            if (!this.init_AiOperation_Result.terminal()) {
-               return this.init_AiOperation_Result;
+            boolean before = this.activeOp.requiresReconciliationAfterEmergency();
+            this.lastResult = this.activeOp.tick();
+            if (!this.lastResult.terminal()) {
+               return this.lastResult;
             }
 
-            JsonObject evidence = AiRunResources.parseEvidenceJson(this.init_AiOperation_Result.dataJson());
-            this.read_Z = this.read_Z
+            JsonObject evidence = AiRunResources.parseEvidenceJson(this.lastResult.dataJson());
+            this.reconcileAfterEmergency = this.reconcileAfterEmergency
                | (
-                  this.init_AiOperation.requiresReconciliationAfterEmergency()
-                     || this.init_AiOperation_Result.status() != AiOperation.Status.SUCCEEDED && before
+                  this.activeOp.requiresReconciliationAfterEmergency()
+                     || this.lastResult.status() != AiOperation.Status.SUCCEEDED && before
                      || AiJson.getBoolean(evidence, "reobserveBeforeResuming", false)
                      || AiJson.getBoolean(evidence, "interruptedActionNeedsReconciliation", false)
                );
-            this.init_AiOperation_Result = AiGuardLayer.wrapPendingTermination(this.read_Z, this.init_AiOperation_Result);
-            this.init_AiOperation.cancel();
-            if (this.init_Z) {
-               return this.init(this.init_AiOperation_Result);
+            this.lastResult = AiGuardLayer.wrapPendingTermination(this.reconcileAfterEmergency, this.lastResult);
+            this.activeOp.cancel();
+            if (this.retried) {
+               return this.finishWithReceipt(this.lastResult);
             }
 
-            this.load_AiOperation_Result = this.init_AiOperation_Result;
-            if (this.init_AiOperation_Result.status() != AiOperation.Status.SUCCEEDED) {
-               return this.init(this.init_AiOperation_Result);
+            this.cleanupResult = this.lastResult;
+            if (this.lastResult.status() != AiOperation.Status.SUCCEEDED) {
+               return this.finishWithReceipt(this.lastResult);
             }
 
             if (freeSlots.getAsInt() < 2) {
-               return this.init(AiOperation.Result.failed(AiFailure.INVENTORY_FULL, "Acknowledged cleanup left insufficient room for the craft", "{}"));
+               return this.finishWithReceipt(AiOperation.Result.failed(AiFailure.INVENTORY_FULL, "Acknowledged cleanup left insufficient room for the craft", "{}"));
             }
 
-            this.init_Z = true;
-            this.init_AiOperation = retry.get();
-            this.init_AiOperation_Result = null;
+            this.retried = true;
+            this.activeOp = retry.get();
+            this.lastResult = null;
             return new AiOperation.Result(AiOperation.Status.RUNNING, "Inventory room confirmed; retrying the craft once", "{}", List.of());
          }
 
-         AiOperation.Result init(AiOperation.Result actual) {
-            AiOperation.Result receipt = this.load_Z && this.init_AiOperation_Result != null ? this.init_AiOperation_Result : actual;
+         AiOperation.Result finishWithReceipt(AiOperation.Result actual) {
+            AiOperation.Result receipt = this.cancelled && this.lastResult != null ? this.lastResult : actual;
             JsonObject data = AiJson.objectOf(
                "capacityFailure",
                AiRunResources.parseEvidenceJson(rejection.dataJson()),
@@ -122,46 +122,46 @@ final class AiCraftCapacity {
                "capacityFailureCode",
                rejection.failure().name(),
                "capacityRetryStarted",
-               this.init_Z
+               this.retried
             );
-            if (this.load_AiOperation_Result != null) {
-               data.add("capacityCleanup", AiRunResources.parseEvidenceJson(this.load_AiOperation_Result.dataJson()));
+            if (this.cleanupResult != null) {
+               data.add("capacityCleanup", AiRunResources.parseEvidenceJson(this.cleanupResult.dataJson()));
             }
 
-            if (this.read_Z && this.init_AiOperation_Result != null) {
-               data.add("pendingCapacityChild", AiRunResources.parseEvidenceJson(this.init_AiOperation_Result.dataJson()));
+            if (this.reconcileAfterEmergency && this.lastResult != null) {
+               data.add("pendingCapacityChild", AiRunResources.parseEvidenceJson(this.lastResult.dataJson()));
             }
 
             AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
                actual.status(), actual.message(), data, this.requiresReconciliationAfterEmergency(), receipt
             );
-            this.read_AiOperation_Result = new AiOperation.Result(
+            this.finalResult = new AiOperation.Result(
                result.status(),
                result.message(),
                result.dataJson(),
                receipt.evidence(),
-               this.load_Z && this.init_AiOperation_Result != null ? receipt.failure() : actual.failure()
+               this.cancelled && this.lastResult != null ? receipt.failure() : actual.failure()
             );
             this.cancel();
-            return this.read_AiOperation_Result;
+            return this.finalResult;
          }
 
          @Override
          public boolean canInterruptNow() {
-            return !this.read_Z && this.init_AiOperation.canInterruptNow();
+            return !this.reconcileAfterEmergency && this.activeOp.canInterruptNow();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.read_Z || this.init_AiOperation.requiresReconciliationAfterEmergency();
+            return this.reconcileAfterEmergency || this.activeOp.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
-            if (!this.load_Z) {
-               this.read_Z = this.read_Z | this.init_AiOperation.requiresReconciliationAfterEmergency();
-               this.load_Z = true;
-               this.init_AiOperation.cancel();
+            if (!this.cancelled) {
+               this.reconcileAfterEmergency = this.reconcileAfterEmergency | this.activeOp.requiresReconciliationAfterEmergency();
+               this.cancelled = true;
+               this.activeOp.cancel();
             }
          }
       };

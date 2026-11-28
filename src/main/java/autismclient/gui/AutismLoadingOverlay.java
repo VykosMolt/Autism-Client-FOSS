@@ -23,10 +23,10 @@ import net.minecraft.util.Util;
 import org.joml.Vector4f;
 
 public class AutismLoadingOverlay extends LoadingOverlay {
-   private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/loading_logo.png");
+   private static final Identifier LOGO_TEXTURE = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/loading_logo.png");
    private static final int init_I = 2106;
    private static final int load_I = 1297;
-   private static final int read_I = UiColorPalette.solidBlack();
+   private static final int BACKGROUND = UiColorPalette.solidBlack();
    private static final int write_I = 236;
    private static final int update = 32;
    private static final int sync = 39;
@@ -36,9 +36,9 @@ public class AutismLoadingOverlay extends LoadingOverlay {
    private final ReloadInstance reload;
    private final Consumer<Optional<Throwable>> onFinish;
    private final boolean fadeIn;
-   private float init_F;
-   private long read_J = -1L;
-   private long write_J = -1L;
+   private float smoothedProgress;
+   private long logoFadeOutStart = -1L;
+   private long logoFadeInStart = -1L;
 
    public static LoadingOverlay create(
       Minecraft minecraft, ReloadInstance reload, Consumer<Optional<Throwable>> onFinish, boolean fadeIn
@@ -56,12 +56,12 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       this.fadeIn = fadeIn;
    }
 
-   private boolean init() {
+   private boolean yieldToVanilla() {
       if (!aD.init_Z()) {
          return false;
       }
 
-      if (this.read_J == -1L) {
+      if (this.logoFadeOutStart == -1L) {
          this.minecraft.gui.setOverlay(new LoadingOverlay(this.minecraft, this.reload, this.onFinish, false));
       } else {
          this.minecraft.gui.setOverlay(null);
@@ -72,52 +72,52 @@ public class AutismLoadingOverlay extends LoadingOverlay {
 
    @Override
    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-      if (!this.init()) {
+      if (!this.yieldToVanilla()) {
          int width = graphics.guiWidth();
          int height = graphics.guiHeight();
          long now = Util.getMillis();
-         if (this.fadeIn && this.write_J == -1L) {
-            this.write_J = now;
+         if (this.fadeIn && this.logoFadeInStart == -1L) {
+            this.logoFadeInStart = now;
          }
 
-         float fadeOutAnim = this.read_J > -1L ? (float)(now - this.read_J) / 1000.0F : -1.0F;
-         float fadeInAnim = this.write_J > -1L ? (float)(now - this.write_J) / 500.0F : -1.0F;
+         float fadeOutAnim = this.logoFadeOutStart > -1L ? (float)(now - this.logoFadeOutStart) / 1000.0F : -1.0F;
+         float fadeInAnim = this.logoFadeInStart > -1L ? (float)(now - this.logoFadeInStart) / 500.0F : -1.0F;
          float logoAlpha;
          if (fadeOutAnim >= 1.0F) {
             if (this.minecraft.gui.screen() != null) {
-               this.init_V_GuiGraphicsExtract(graphics, 0, 0, a);
+               this.renderScreenBehind(graphics, 0, 0, a);
             } else {
                this.minecraft.gui.hud.extractDeferredSubtitles();
             }
 
             int alpha = Mth.ceil((1.0F - Mth.clamp(fadeOutAnim - 1.0F, 0.0F, 1.0F)) * 255.0F);
             graphics.nextStratum();
-            PacketUtil.init(graphics, NetHelper.init(0, 0, width, height), init(read_I, alpha));
+            PacketUtil.init(graphics, NetHelper.init(0, 0, width, height), withAlpha(BACKGROUND, alpha));
             logoAlpha = 1.0F - Mth.clamp(fadeOutAnim - 1.0F, 0.0F, 1.0F);
          } else if (!this.fadeIn) {
-            this.minecraft.gameRenderer.gameRenderState().guiRenderState.clearColorOverride = init(read_I);
+            this.minecraft.gameRenderer.gameRenderState().guiRenderState.clearColorOverride = colorVector(BACKGROUND);
             logoAlpha = 1.0F;
          } else {
             if (this.minecraft.gui.screen() != null && fadeInAnim < 1.0F) {
-               this.init_V_GuiGraphicsExtract(graphics, mouseX, mouseY, a);
+               this.renderScreenBehind(graphics, mouseX, mouseY, a);
             } else {
                this.minecraft.gui.hud.extractDeferredSubtitles();
             }
 
             int alpha = Mth.ceil(Mth.clamp(fadeInAnim, 0.15, 1.0) * 255.0);
             graphics.nextStratum();
-            PacketUtil.init(graphics, NetHelper.init(0, 0, width, height), init(read_I, alpha));
+            PacketUtil.init(graphics, NetHelper.init(0, 0, width, height), withAlpha(BACKGROUND, alpha));
             logoAlpha = Mth.clamp(fadeInAnim, 0.0F, 1.0F);
          }
 
          if (logoAlpha > 0.0F) {
-            this.load(graphics, width, height, logoAlpha);
+            this.drawLogo(graphics, width, height, logoAlpha);
          }
 
          float actualProgress = this.reload.getActualProgress();
-         this.init_F = Mth.clamp(this.init_F * 0.95F + actualProgress * 0.050000012F, 0.0F, 1.0F);
+         this.smoothedProgress = Mth.clamp(this.smoothedProgress * 0.95F + actualProgress * 0.050000012F, 0.0F, 1.0F);
          if (fadeOutAnim < 1.0F) {
-            this.read(graphics, width, height, fadeOutAnim);
+            this.drawProgressBar(graphics, width, height, fadeOutAnim);
          }
 
          if (fadeOutAnim >= 2.0F) {
@@ -126,7 +126,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       }
    }
 
-   private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+   private void renderScreenBehind(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
       Screen screen = this.minecraft.gui.screen();
       if (screen != null) {
          try {
@@ -136,7 +136,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       }
    }
 
-   private void load(GuiGraphicsExtractor graphics, int width, int height, float alpha) {
+   private void drawLogo(GuiGraphicsExtractor graphics, int width, int height, float alpha) {
       int centerX = width / 2;
       int centerY = height / 2;
       double maxW = width * 0.85;
@@ -148,11 +148,11 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       int y = centerY - drawH / 2;
       int color = ARGB.white(alpha);
       graphics.blit(
-         RenderPipelines.GUI_TEXTURED, ThemeTextureRecolorer.init(init_Identifier, ThemePaletteManager.ColorRole.ACCENT), x, y, 0.0F, 0.0F, drawW, drawH, 2106, 1297, 2106, 1297, color
+         RenderPipelines.GUI_TEXTURED, ThemeTextureRecolorer.init(LOGO_TEXTURE, ThemePaletteManager.ColorRole.ACCENT), x, y, 0.0F, 0.0F, drawW, drawH, 2106, 1297, 2106, 1297, color
       );
    }
 
-   private void read(GuiGraphicsExtractor graphics, int width, int height, float fadeOutAnim) {
+   private void drawProgressBar(GuiGraphicsExtractor graphics, int width, int height, float fadeOutAnim) {
       float barFade = 1.0F - Mth.clamp(fadeOutAnim, 0.0F, 1.0F);
       double maxW = width * 0.85;
       double maxH = height * 0.85;
@@ -166,7 +166,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       int y0 = barY - 5;
       int x1 = centerX + drawW / 2;
       int y1 = barY + 5;
-      int barWidth = Mth.ceil((x1 - x0 - 2) * this.init_F);
+      int barWidth = Mth.ceil((x1 - x0 - 2) * this.smoothedProgress);
       int alpha = Math.round(barFade * 255.0F);
       int barColor = ThemePaletteManager.recolor(ARGB.color(alpha, 236, 32, 39), ThemePaletteManager.ColorRole.ACCENT);
       if (barWidth > 0) {
@@ -176,17 +176,17 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       PacketUtil.load(graphics, NetHelper.init(x0, y0, x1 - x0, y1 - y0), barColor);
    }
 
-   private static int init(int color, int alpha) {
+   private static int withAlpha(int color, int alpha) {
       return color & 16777215 | alpha << 24;
    }
 
-   private static Vector4f init(int color) {
+   private static Vector4f colorVector(int color) {
       return new Vector4f((color >>> 16 & 0xFF) / 255.0F, (color >>> 8 & 0xFF) / 255.0F, (color & 0xFF) / 255.0F, (color >>> 24 & 0xFF) / 255.0F);
    }
 
    @Override
    public void tick() {
-      if (!this.init() && this.read_J == -1L && this.reload.isDone() && this.load()) {
+      if (!this.yieldToVanilla() && this.logoFadeOutStart == -1L && this.reload.isDone() && this.fadeInDone()) {
          try {
             this.reload.checkExceptions();
             this.onFinish.accept(Optional.empty());
@@ -194,7 +194,7 @@ public class AutismLoadingOverlay extends LoadingOverlay {
             this.onFinish.accept(Optional.of(t));
          }
 
-         this.read_J = Util.getMillis();
+         this.logoFadeOutStart = Util.getMillis();
          if (this.minecraft.gui.screen() != null) {
             Window window = this.minecraft.getWindow();
             this.minecraft.gui.screen().init(window.getGuiScaledWidth(), window.getGuiScaledHeight());
@@ -202,8 +202,8 @@ public class AutismLoadingOverlay extends LoadingOverlay {
       }
    }
 
-   private boolean load() {
-      return !this.fadeIn || this.write_J > -1L && Util.getMillis() - this.write_J >= 1000L;
+   private boolean fadeInDone() {
+      return !this.fadeIn || this.logoFadeInStart > -1L && Util.getMillis() - this.logoFadeInStart >= 1000L;
    }
 
    @Override

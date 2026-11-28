@@ -31,8 +31,8 @@ public final class EspChunkWorker {
    static final EspChunkWorker flush = new EspChunkWorker();
    private static final long init_J = 100L;
    private static final int init_I = 4096;
-   private static volatile Object init_Obj;
-   private static final AtomicInteger init_AtomicInteger = new AtomicInteger();
+   private static volatile Object cacheLevel;
+   private static final AtomicInteger cacheRevision = new AtomicInteger();
    private static final AtomicInteger ESP_WORKER_IDS = new AtomicInteger();
    private static final ExecutorService ESP_POOL = Executors.newFixedThreadPool(
       Math.max(2, Math.min(4, Runtime.getRuntime().availableProcessors() / 2)), r -> {
@@ -42,7 +42,7 @@ public final class EspChunkWorker {
          return t;
       }
    );
-   private final ConcurrentHashMap<Long, EspChunkWorker.ChunkResult> init_ConcurrentHashMap = new ConcurrentHashMap<>();
+   private final ConcurrentHashMap<Long, EspChunkWorker.ChunkResult> results = new ConcurrentHashMap<>();
    private final Set<Long> inFlight = ConcurrentHashMap.newKeySet();
 
    static void submitEspWork(Runnable task) {
@@ -52,7 +52,7 @@ public final class EspChunkWorker {
    }
 
    public static int revision() {
-      return init_AtomicInteger.get();
+      return cacheRevision.get();
    }
 
    private EspChunkWorker() {
@@ -60,30 +60,30 @@ public final class EspChunkWorker {
 
    List<EspChunkWorker.EspBox> initAsync(LevelChunk chunk, long gameTime, String stamp, EspChunkWorker.ChunkScanner scanner) {
       long key = chunk.getPos().pack();
-      EspChunkWorker.ChunkResult cached = this.init_ConcurrentHashMap.get(key);
-      if (cached != null && cached.init_Str.equals(stamp) && gameTime - cached.init_J < 100L) {
-         return cached.init_List;
+      EspChunkWorker.ChunkResult cached = this.results.get(key);
+      if (cached != null && cached.stamp.equals(stamp) && gameTime - cached.gameTime < 100L) {
+         return cached.boxes;
       }
 
-      Object expectedLevel = init_Obj;
+      Object expectedLevel = cacheLevel;
       if (this.inFlight.add(key)) {
          ESP_POOL.execute(() -> {
             try {
-               if (init_Obj != expectedLevel) {
+               if (cacheLevel != expectedLevel) {
                   return;
                }
 
-               if (this.init_ConcurrentHashMap.size() >= 4096) {
-                  this.init_V_ChunkPos(chunk.getPos());
+               if (this.results.size() >= 4096) {
+                  this.trimAround(chunk.getPos());
                }
 
                List<EspChunkWorker.EspBox> entries = new ArrayList<>();
                scanner.scan(chunk, entries);
-               if (init_Obj == expectedLevel) {
+               if (cacheLevel == expectedLevel) {
                   List<EspChunkWorker.EspBox> frozen = List.copyOf(entries);
-                  EspChunkWorker.ChunkResult prev = this.init_ConcurrentHashMap.put(key, new EspChunkWorker.ChunkResult(stamp, gameTime, frozen));
-                  if (prev == null || !prev.init_List.equals(frozen)) {
-                     init_AtomicInteger.incrementAndGet();
+                  EspChunkWorker.ChunkResult prev = this.results.put(key, new EspChunkWorker.ChunkResult(stamp, gameTime, frozen));
+                  if (prev == null || !prev.boxes.equals(frozen)) {
+                     cacheRevision.incrementAndGet();
                   }
 
                   return;
@@ -96,101 +96,101 @@ public final class EspChunkWorker {
          });
       }
 
-      return cached != null && cached.init_Str.equals(stamp) ? cached.init_List : List.of();
+      return cached != null && cached.stamp.equals(stamp) ? cached.boxes : List.of();
    }
 
    List<EspChunkWorker.EspBox> init(LevelChunk chunk, long gameTime, String stamp, EspChunkWorker.ChunkScanner scanner) {
       long key = chunk.getPos().pack();
-      EspChunkWorker.ChunkResult cached = this.init_ConcurrentHashMap.get(key);
-      if (cached != null && cached.init_Str.equals(stamp) && gameTime - cached.init_J < 100L) {
-         return cached.init_List;
+      EspChunkWorker.ChunkResult cached = this.results.get(key);
+      if (cached != null && cached.stamp.equals(stamp) && gameTime - cached.gameTime < 100L) {
+         return cached.boxes;
       }
 
-      if (this.init_ConcurrentHashMap.size() >= 4096) {
-         this.init_V_ChunkPos(chunk.getPos());
+      if (this.results.size() >= 4096) {
+         this.trimAround(chunk.getPos());
       }
 
       List<EspChunkWorker.EspBox> entries = new ArrayList<>();
       scanner.scan(chunk, entries);
       List<EspChunkWorker.EspBox> frozen = List.copyOf(entries);
-      this.init_ConcurrentHashMap.put(key, new EspChunkWorker.ChunkResult(stamp, gameTime, frozen));
-      if (cached == null || !cached.init_List.equals(frozen)) {
-         init_AtomicInteger.incrementAndGet();
+      this.results.put(key, new EspChunkWorker.ChunkResult(stamp, gameTime, frozen));
+      if (cached == null || !cached.boxes.equals(frozen)) {
+         cacheRevision.incrementAndGet();
       }
 
       return frozen;
    }
 
-   private void init_V_ChunkPos(ChunkPos center) {
+   private void trimAround(ChunkPos center) {
       int target = 3072;
 
-      for (int keep = 24; keep >= 4 && this.init_ConcurrentHashMap.size() > target; keep -= 4) {
+      for (int keep = 24; keep >= 4 && this.results.size() > target; keep -= 4) {
          int radius = keep;
-         this.init_ConcurrentHashMap
+         this.results
             .keySet()
             .removeIf(key -> Math.max(Math.abs(ChunkPos.getX(key) - center.x()), Math.abs(ChunkPos.getZ(key) - center.z())) > radius);
       }
 
-      if (this.init_ConcurrentHashMap.size() >= 4096) {
-         this.init_ConcurrentHashMap.clear();
+      if (this.results.size() >= 4096) {
+         this.results.clear();
       }
    }
 
    static void setLevel(Object level) {
-      if (init_Obj != level) {
-         init_Obj = level;
-         load();
+      if (cacheLevel != level) {
+         cacheLevel = level;
+         clearAll();
       }
    }
 
    static void reset() {
       read.inFlight.clear();
-      if (!read.init_ConcurrentHashMap.isEmpty()) {
-         read.init_ConcurrentHashMap.clear();
-         init_AtomicInteger.incrementAndGet();
+      if (!read.results.isEmpty()) {
+         read.results.clear();
+         cacheRevision.incrementAndGet();
       }
    }
 
-   static void load() {
-      INSTANCE.init_ConcurrentHashMap.clear();
+   static void clearAll() {
+      INSTANCE.results.clear();
       INSTANCE.inFlight.clear();
-      load.init_ConcurrentHashMap.clear();
+      load.results.clear();
       load.inFlight.clear();
-      read.init_ConcurrentHashMap.clear();
+      read.results.clear();
       read.inFlight.clear();
-      write.init_ConcurrentHashMap.clear();
+      write.results.clear();
       write.inFlight.clear();
-      update.init_ConcurrentHashMap.clear();
+      update.results.clear();
       update.inFlight.clear();
-      sync.init_ConcurrentHashMap.clear();
+      sync.results.clear();
       sync.inFlight.clear();
-      flush.init_ConcurrentHashMap.clear();
+      flush.results.clear();
       flush.inFlight.clear();
-      init_AtomicInteger.incrementAndGet();
+      cacheRevision.incrementAndGet();
    }
 
-   private static void init(int chunkX, int chunkZ) {
+   private static void invalidateChunk(int chunkX, int chunkZ) {
       long key = ChunkPos.pack(chunkX, chunkZ);
-      boolean had = INSTANCE.init_ConcurrentHashMap.remove(key) != null;
-      had |= load.init_ConcurrentHashMap.remove(key) != null;
-      had |= read.init_ConcurrentHashMap.remove(key) != null;
-      had |= write.init_ConcurrentHashMap.remove(key) != null;
-      had |= update.init_ConcurrentHashMap.remove(key) != null;
-      had |= sync.init_ConcurrentHashMap.remove(key) != null;
-      had |= flush.init_ConcurrentHashMap.remove(key) != null;
+      boolean had = INSTANCE.results.remove(key) != null;
+      had |= load.results.remove(key) != null;
+      had |= read.results.remove(key) != null;
+      had |= write.results.remove(key) != null;
+      had |= update.results.remove(key) != null;
+      had |= sync.results.remove(key) != null;
+      had |= flush.results.remove(key) != null;
       if (had) {
-         init_AtomicInteger.incrementAndGet();
+         cacheRevision.incrementAndGet();
       }
    }
 
    private static boolean hasAnyCachedChunks() {
-      return !INSTANCE.init_ConcurrentHashMap.isEmpty()
-         || !load.init_ConcurrentHashMap.isEmpty()
-         || !read.init_ConcurrentHashMap.isEmpty()
-         || !write.init_ConcurrentHashMap.isEmpty()
-         || !update.init_ConcurrentHashMap.isEmpty()
-         || !sync.init_ConcurrentHashMap.isEmpty()
-         || !flush.init_ConcurrentHashMap.isEmpty();
+      return !INSTANCE.results.isEmpty()
+         || !load.results.isEmpty()
+         || !read.results.isEmpty()
+         || !write.results.isEmpty()
+         || !update.results.isEmpty()
+         || !sync.results.isEmpty()
+         || !flush.results.isEmpty();
    }
 
    public static void init_V_BlockPos(BlockPos pos) {
@@ -199,29 +199,29 @@ public final class EspChunkWorker {
          int z = pos.getZ();
          int cx = x >> 4;
          int cz = z >> 4;
-         init(cx, cz);
+         invalidateChunk(cx, cz);
          int lx = x & 15;
          int lz = z & 15;
          if (lx == 0) {
-            init(cx - 1, cz);
+            invalidateChunk(cx - 1, cz);
          } else if (lx == 15) {
-            init(cx + 1, cz);
+            invalidateChunk(cx + 1, cz);
          }
 
          if (lz == 0) {
-            init(cx, cz - 1);
+            invalidateChunk(cx, cz - 1);
          } else if (lz == 15) {
-            init(cx, cz + 1);
+            invalidateChunk(cx, cz + 1);
          }
       }
    }
 
    public static void onPacket(Packet<?> packet) {
       if (packet instanceof ClientboundLevelChunkWithLightPacket chunkPacket) {
-         init(chunkPacket.x(), chunkPacket.z());
-         init_AtomicInteger.incrementAndGet();
+         invalidateChunk(chunkPacket.x(), chunkPacket.z());
+         cacheRevision.incrementAndGet();
       } else if (packet instanceof ClientboundRespawnPacket || packet instanceof ClientboundLoginPacket) {
-         load();
+         clearAll();
       } else if (hasAnyCachedChunks()) {
          if (packet instanceof ClientboundBlockUpdatePacket update) {
             init_V_BlockPos(update.getPos());
@@ -236,7 +236,7 @@ public final class EspChunkWorker {
          } else if (packet instanceof ClientboundBlockEntityDataPacket beData) {
             init_V_BlockPos(beData.getPos());
          } else if (packet instanceof ClientboundForgetLevelChunkPacket forget) {
-            init(forget.pos().x(), forget.pos().z());
+            invalidateChunk(forget.pos().x(), forget.pos().z());
          }
       }
    }
@@ -244,7 +244,7 @@ public final class EspChunkWorker {
    record EspBox(AABB box, Vec3 tracer, int color) {
    }
 
-   private record ChunkResult(String init_Str, long init_J, List<EspChunkWorker.EspBox> init_List) {
+   private record ChunkResult(String stamp, long gameTime, List<EspChunkWorker.EspBox> boxes) {
    }
 
    interface ChunkScanner {

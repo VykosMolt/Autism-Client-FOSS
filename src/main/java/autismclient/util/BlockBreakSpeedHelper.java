@@ -49,14 +49,14 @@ public final class BlockBreakSpeedHelper {
    }
 
    private static int efficiencyLevel(Minecraft mc, ItemStack stack) {
-      return init(mc, stack, Enchantments.EFFICIENCY);
+      return enchantLevel(mc, stack, Enchantments.EFFICIENCY);
    }
 
    public static boolean hasSilkTouch(Minecraft mc, ItemStack stack) {
-      return stack != null && !stack.isEmpty() ? init(mc, stack, Enchantments.SILK_TOUCH) > 0 : false;
+      return stack != null && !stack.isEmpty() ? enchantLevel(mc, stack, Enchantments.SILK_TOUCH) > 0 : false;
    }
 
-   private static int init(Minecraft mc, ItemStack stack, ResourceKey<Enchantment> key) {
+   private static int enchantLevel(Minecraft mc, ItemStack stack, ResourceKey<Enchantment> key) {
       try {
          if (mc != null && mc.level != null) {
             Reference<Enchantment> holder = mc.level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(key);
@@ -69,7 +69,7 @@ public final class BlockBreakSpeedHelper {
       }
    }
 
-   public static float init(Minecraft mc, BlockState state) {
+   public static float mainHandSpeed(Minecraft mc, BlockState state) {
       return mc != null && mc.player != null ? init(mc, mc.player.getMainHandItem(), state) : 0.0F;
    }
 
@@ -88,7 +88,7 @@ public final class BlockBreakSpeedHelper {
             if (!stack.isEmpty() && (ignoreDurability || !stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() > 2)) {
                float speed = init(mc, stack, state);
                if (!(speed <= 1.0F) && (!requireSilkTouch || hasSilkTouch(mc, stack))) {
-                  boolean better = speed > bestSpeed || speed == bestSpeed && best >= 0 && init(slot, selected) < init(best, selected);
+                  boolean better = speed > bestSpeed || speed == bestSpeed && best >= 0 && slotCost(slot, selected) < slotCost(best, selected);
                   if (better) {
                      bestSpeed = speed;
                      best = slot;
@@ -103,7 +103,7 @@ public final class BlockBreakSpeedHelper {
       }
    }
 
-   private static int init(int slot, int selected) {
+   private static int slotCost(int slot, int selected) {
       return slot < 9 ? Math.abs(slot - selected) : 100 + slot;
    }
 

@@ -5,39 +5,39 @@ import java.util.function.Consumer;
 
 final class GuardedInputTicket {
    final String owner;
-   private final BooleanSupplier init_BooleanSupplier;
-   private final Consumer<Boolean> init_Consumer;
-   private boolean init_Z;
-   private boolean load;
+   private final BooleanSupplier guard;
+   private final Consumer<Boolean> receipt;
+   private boolean dispatched;
+   private boolean resolved;
 
    GuardedInputTicket(String owner, BooleanSupplier guard, Consumer<Boolean> receipt) {
       this.owner = owner;
-      this.init_BooleanSupplier = guard;
-      this.init_Consumer = receipt;
+      this.guard = guard;
+      this.receipt = receipt;
    }
 
    boolean isValid() {
-      return !this.load && this.init_BooleanSupplier.getAsBoolean();
+      return !this.resolved && this.guard.getAsBoolean();
    }
 
    void markSent() {
-      if (!this.load) {
-         this.init_Z = true;
+      if (!this.resolved) {
+         this.dispatched = true;
       }
    }
 
    void load() {
-      this.init(this.init_Z);
+      this.resolve(this.dispatched);
    }
 
    void read() {
-      this.init(false);
+      this.resolve(false);
    }
 
-   private void init(boolean sent) {
-      if (!this.load) {
-         this.load = true;
-         this.init_Consumer.accept(sent);
+   private void resolve(boolean sent) {
+      if (!this.resolved) {
+         this.resolved = true;
+         this.receipt.accept(sent);
       }
    }
 }

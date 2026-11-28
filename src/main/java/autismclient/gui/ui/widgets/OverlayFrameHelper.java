@@ -9,7 +9,7 @@ public final class OverlayFrameHelper {
    private OverlayFrameHelper() {
    }
 
-   public static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper wanted, int minWidth, int minHeight) {
+   public static autismclient.gui.f.NetHelper clampToScreen(autismclient.gui.f.NetHelper wanted, int minWidth, int minHeight) {
       int screenWidth = Math.max(1, cA.init_I());
       int screenHeight = Math.max(1, cA.load_I());
       int availableWidth = Math.max(1, screenWidth - 8);

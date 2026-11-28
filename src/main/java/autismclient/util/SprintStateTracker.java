@@ -6,51 +6,51 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 
 public final class SprintStateTracker {
-   private static volatile boolean init_Z;
-   private static volatile boolean load;
-   private static volatile boolean read;
-   private static volatile long init_J = -9223372036854775808L;
-   private static volatile boolean write;
-   private static final ArrayDeque<int[]> init_ArrayDeque = new ArrayDeque<>();
-   private static volatile boolean update;
-   private static volatile boolean sync;
-   private static volatile boolean flush;
-   private static volatile boolean close;
-   private static volatile float init_F;
-   private static volatile int init_I;
+   private static volatile boolean localSprinting;
+   private static volatile boolean predictedServerSprinting;
+   private static volatile boolean previousSprinting;
+   private static volatile long lastChangeNanos = -9223372036854775808L;
+   private static volatile boolean serverSprinting;
+   private static final ArrayDeque<int[]> pendingSprintFlags = new ArrayDeque<>();
+   private static volatile boolean attackLocalSprinting;
+   private static volatile boolean attackServerSprinting;
+   private static volatile boolean attackStartSprinting;
+   private static volatile boolean attackResetSprint;
+   private static volatile float attackStrength;
+   private static volatile int sprintResetCount;
 
    private SprintStateTracker() {
    }
 
    public static void update(boolean sprinting) {
-      init_Z = sprinting;
-      write = sprinting;
-      if (sprinting != read) {
-         load = sprinting;
-         init_J = System.nanoTime();
+      localSprinting = sprinting;
+      serverSprinting = sprinting;
+      if (sprinting != previousSprinting) {
+         predictedServerSprinting = sprinting;
+         lastChangeNanos = System.nanoTime();
       }
 
-      read = sprinting;
+      previousSprinting = sprinting;
    }
 
    public static void load(boolean sprinting) {
       long roundTrip = (Math.max(0, autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs()) + 100L) * 1000000L;
-      if (System.nanoTime() - init_J > roundTrip) {
-         load = sprinting;
+      if (System.nanoTime() - lastChangeNanos > roundTrip) {
+         predictedServerSprinting = sprinting;
       }
 
-      synchronized (init_ArrayDeque) {
-         if (init_ArrayDeque.size() >= 32) {
-            init_ArrayDeque.removeFirst();
+      synchronized (pendingSprintFlags) {
+         if (pendingSprintFlags.size() >= 32) {
+            pendingSprintFlags.removeFirst();
          }
 
-         init_ArrayDeque.addLast(new int[]{sprinting ? 1 : 0, -2147483648});
+         pendingSprintFlags.addLast(new int[]{sprinting ? 1 : 0, -2147483648});
       }
    }
 
    public static void init(int id) {
-      synchronized (init_ArrayDeque) {
-         for (int[] flag : init_ArrayDeque) {
+      synchronized (pendingSprintFlags) {
+         for (int[] flag : pendingSprintFlags) {
             if (flag[1] == -2147483648) {
                flag[1] = id;
             }
@@ -59,13 +59,13 @@ public final class SprintStateTracker {
    }
 
    public static void load(int id) {
-      synchronized (init_ArrayDeque) {
-         Iterator<int[]> it = init_ArrayDeque.iterator();
+      synchronized (pendingSprintFlags) {
+         Iterator<int[]> it = pendingSprintFlags.iterator();
 
          while (it.hasNext()) {
             int[] flag = it.next();
             if (flag[1] == id) {
-               write = flag[0] == 1;
+               serverSprinting = flag[0] == 1;
                it.remove();
             }
          }
@@ -73,63 +73,63 @@ public final class SprintStateTracker {
    }
 
    public static boolean isServerSprinting() {
-      return write;
+      return serverSprinting;
    }
 
    public static boolean load() {
-      return load;
+      return predictedServerSprinting;
    }
 
    public static boolean effectiveSprinting(boolean clientSprinting) {
-      return clientSprinting != read ? clientSprinting : load;
+      return clientSprinting != previousSprinting ? clientSprinting : predictedServerSprinting;
    }
 
    public static boolean read() {
-      return write != init_Z;
+      return serverSprinting != localSprinting;
    }
 
    public static void init(Player attacker) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && attacker == mc.player) {
-         update = init_Z;
-         sync = write;
-         flush = attacker.isSprinting();
-         init_F = attacker.getAttackStrengthScale(0.5F);
-         close = false;
+         attackLocalSprinting = localSprinting;
+         attackServerSprinting = serverSprinting;
+         attackStartSprinting = attacker.isSprinting();
+         attackStrength = attacker.getAttackStrengthScale(0.5F);
+         attackResetSprint = false;
       }
    }
 
    public static void load(Player attacker) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && attacker == mc.player) {
-         close = flush && !attacker.isSprinting();
-         if (close) {
-            init_I++;
+         attackResetSprint = attackStartSprinting && !attacker.isSprinting();
+         if (attackResetSprint) {
+            sprintResetCount++;
          }
       }
    }
 
-   public static boolean write() {
-      return update;
+   public static boolean wasLocalSprintingOnAttack() {
+      return attackLocalSprinting;
    }
 
-   public static boolean update() {
-      return sync;
+   public static boolean wasServerSprintingOnAttack() {
+      return attackServerSprinting;
    }
 
    public static boolean sync() {
-      return flush;
+      return attackStartSprinting;
    }
 
-   public static float init_F() {
-      return init_F;
+   public static float lastAttackStrength() {
+      return attackStrength;
    }
 
-   public static boolean flush() {
-      return close;
+   public static boolean didAttackResetSprint() {
+      return attackResetSprint;
    }
 
-   public static int init_I() {
-      return init_I;
+   public static int sprintResets() {
+      return sprintResetCount;
    }
 }

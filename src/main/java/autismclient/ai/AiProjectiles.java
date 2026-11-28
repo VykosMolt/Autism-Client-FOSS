@@ -43,10 +43,10 @@ final class AiProjectiles {
    static final double pop = 1.2;
    static final double tick = 2.5;
    static final int init_I = 1;
-   private static List<AiProjectiles.IncomingProjectile> init_List = List.of();
-   private static LocalPlayer init_LocalPlayer;
-   private static Object init_Obj;
-   private static int load_I = -2;
+   private static List<AiProjectiles.IncomingProjectile> cachedIncoming = List.of();
+   private static LocalPlayer cachedPlayer;
+   private static Object cachedLevel;
+   private static int cachedTick = -2;
 
    private AiProjectiles() {
    }
@@ -80,8 +80,8 @@ final class AiProjectiles {
       try {
          if (mc.player != null && mc.level != null) {
             int now = autismclient.util.AutismSessionState.getInstance().getClientTick();
-            if (init_LocalPlayer == mc.player && init_Obj == mc.level && now - load_I < 1) {
-               return init_List;
+            if (cachedPlayer == mc.player && cachedLevel == mc.level && now - cachedTick < 1) {
+               return cachedIncoming;
             }
 
             Vec3 eye = mc.player.getEyePosition();
@@ -115,10 +115,10 @@ final class AiProjectiles {
             }
 
             List<AiProjectiles.IncomingProjectile> result = List.copyOf(out);
-            init_List = result;
-            init_LocalPlayer = mc.player;
-            init_Obj = mc.level;
-            load_I = now;
+            cachedIncoming = result;
+            cachedPlayer = mc.player;
+            cachedLevel = mc.level;
+            cachedTick = now;
             return result;
          } else {
             return List.of();
@@ -136,7 +136,7 @@ final class AiProjectiles {
       Vec3 displacement = destination.getCenter().subtract(mc.player.getBoundingBox().getCenter());
       double best = 1.7976931348623157E308;
       int bestTick = 0;
-      double hazardRadius = load(projectile);
+      double hazardRadius = hazardRadius(projectile);
 
       for (int tick = 1; tick <= 60; tick++) {
          boolean water = mc.level.getFluidState(BlockPos.containing(position)).is(FluidTags.WATER);
@@ -154,7 +154,7 @@ final class AiProjectiles {
          AABB body = mc.player.getBoundingBox().move(bodyOffset).inflate(0.3 + Math.min(0.8, tick * 0.015));
          BlockHitResult terrain = mc.level.clip(new ClipContext(position, next, Block.COLLIDER, Fluid.NONE, projectile));
          Vec3 endpoint = terrain.getType() == Type.BLOCK ? terrain.getLocation() : next;
-         double clearance = init(body, position, endpoint);
+         double clearance = segmentBoxDistance(body, position, endpoint);
          if (clearance < best) {
             best = clearance;
             bestTick = tick;
@@ -186,7 +186,7 @@ final class AiProjectiles {
       return new AiProjectiles.ApproachMetrics(best, bestTick / 20.0);
    }
 
-   private static double init(AABB box, Vec3 start, Vec3 end) {
+   private static double segmentBoxDistance(AABB box, Vec3 start, Vec3 end) {
       if (!box.contains(start) && !box.clip(start, end).isPresent()) {
          Vec3 delta = end.subtract(start);
          double lo = 0.0;
@@ -208,7 +208,7 @@ final class AiProjectiles {
       }
    }
 
-   static double load(Entity projectile) {
+   static double hazardRadius(Entity projectile) {
       String id = BuiltInRegistries.ENTITY_TYPE.getKey(projectile.getType()).getPath();
       double var10000;
       switch (id) {
@@ -239,10 +239,10 @@ final class AiProjectiles {
    }
 
    static AiProjectiles.ApproachMetrics approachMetrics(Vec3 pos, Vec3 vel, double gravity, Vec3 target, double maxSeconds) {
-      return init(pos, vel, gravity, 0.0, target, maxSeconds);
+      return simulateApproach(pos, vel, gravity, 0.0, target, maxSeconds);
    }
 
-   static AiProjectiles.ApproachMetrics init(Vec3 pos, Vec3 vel, double gravity, double accel, Vec3 target, double maxSeconds) {
+   static AiProjectiles.ApproachMetrics simulateApproach(Vec3 pos, Vec3 vel, double gravity, double accel, Vec3 target, double maxSeconds) {
       int ticks = (int)Math.min(100.0, Math.ceil(Math.max(0.0, maxSeconds) * 20.0));
       double drag = gravity > 0.0 ? 0.99 : 1.0;
       double x = pos.x;
@@ -251,7 +251,7 @@ final class AiProjectiles {
       double vx = vel.x;
       double vy = vel.y;
       double vz = vel.z;
-      double best = Math.sqrt(init(x - target.x) + init(y - target.y) + init(z - target.z)) - 0.8999999999999999;
+      double best = Math.sqrt(square(x - target.x) + square(y - target.y) + square(z - target.z)) - 0.8999999999999999;
       double last = best;
       int bestTick = 0;
       boolean approachingAtHorizon = false;
@@ -269,7 +269,7 @@ final class AiProjectiles {
             y += vy;
             z += vz;
             double previous = last;
-            last = Math.sqrt(init(x - target.x) + init(y - target.y) + init(z - target.z)) - 0.8999999999999999;
+            last = Math.sqrt(square(x - target.x) + square(y - target.y) + square(z - target.z)) - 0.8999999999999999;
             if (last < best) {
                best = last;
                bestTick = tick;
@@ -287,7 +287,7 @@ final class AiProjectiles {
             vz *= drag;
             vy -= gravity;
             double var36 = last;
-            last = Math.sqrt(init(x - target.x) + init(y - target.y) + init(z - target.z)) - 0.8999999999999999;
+            last = Math.sqrt(square(x - target.x) + square(y - target.y) + square(z - target.z)) - 0.8999999999999999;
             if (last < best) {
                best = last;
                bestTick = tick;
@@ -310,7 +310,7 @@ final class AiProjectiles {
       return t.secondsToClosest() >= 0.0 && t.secondsToClosest() <= 2.5 && t.closestApproach() <= 1.2;
    }
 
-   static boolean init(List<AiProjectiles.IncomingProjectile> scan) {
+   static boolean noImminentThreat(List<AiProjectiles.IncomingProjectile> scan) {
       for (AiProjectiles.IncomingProjectile t : scan) {
          if (init(t)) {
             return false;
@@ -327,14 +327,14 @@ final class AiProjectiles {
          double length = Math.hypot(ax, az);
          return length < 0.001 ? new Vec3(1.0, 0.0, 0.0) : new Vec3(ax / length, 0.0, az / length);
       } else {
-         return init(projVel, init_I(projPos, projVel, gravity, playerEye, secondsAvailable));
+         return sidestepDirection(projVel, dodgeSide(projPos, projVel, gravity, playerEye, secondsAvailable));
       }
    }
 
-   static int init_I(Vec3 projPos, Vec3 projVel, double gravity, Vec3 playerEye, double secondsAvailable) {
+   static int dodgeSide(Vec3 projPos, Vec3 projVel, double gravity, Vec3 playerEye, double secondsAvailable) {
       double shift = Math.min(2.0, 5.6 * Math.max(0.0, secondsAvailable));
-      AiProjectiles.ApproachMetrics left = approachMetrics(projPos, projVel, gravity, playerEye.add(init(projVel, 1).scale(shift)), 2.5);
-      AiProjectiles.ApproachMetrics right = approachMetrics(projPos, projVel, gravity, playerEye.add(init(projVel, -1).scale(shift)), 2.5);
+      AiProjectiles.ApproachMetrics left = approachMetrics(projPos, projVel, gravity, playerEye.add(sidestepDirection(projVel, 1).scale(shift)), 2.5);
+      AiProjectiles.ApproachMetrics right = approachMetrics(projPos, projVel, gravity, playerEye.add(sidestepDirection(projVel, -1).scale(shift)), 2.5);
       double l = left == null ? 1.7976931348623157E308 : left.closestApproach();
       double r = right == null ? 1.7976931348623157E308 : right.closestApproach();
       if (l != r) {
@@ -343,15 +343,15 @@ final class AiProjectiles {
 
       double denom = projVel.lengthSqr();
       double t = denom < 1.0E-12 ? 0.0 : Math.max(0.0, playerEye.subtract(projPos).dot(projVel) / denom);
-      return init(projVel, 1).dot(playerEye.subtract(projPos.add(projVel.scale(t)))) >= 0.0 ? 1 : -1;
+      return sidestepDirection(projVel, 1).dot(playerEye.subtract(projPos.add(projVel.scale(t)))) >= 0.0 ? 1 : -1;
    }
 
-   static Vec3 init(Vec3 projVel, int side) {
+   static Vec3 sidestepDirection(Vec3 projVel, int side) {
       double length = Math.hypot(projVel.x, projVel.z);
       return length < 1.0E-9 ? Vec3.ZERO : new Vec3(projVel.z * side / length, 0.0, -projVel.x * side / length);
    }
 
-   private static double init(double v) {
+   private static double square(double v) {
       return v * v;
    }
 

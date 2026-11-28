@@ -12,7 +12,7 @@ final class AiModuleScope implements AiOperation {
    private final List<AutoCloseable> controls = new ArrayList<>();
    private AiOperation operation;
    private boolean closed;
-   private boolean load;
+   private boolean cancelled;
 
    static AiOperation wrap(Supplier<AiOperation> factory) {
       return load(() -> new AiDeferredOperation(factory));
@@ -78,14 +78,14 @@ final class AiModuleScope implements AiOperation {
       try {
          AiOperation.Result result = this.operation.tick();
          if (result.terminal()) {
-            this.load();
+            this.cancelOnce();
             this.closeAll(null);
          }
 
          return result;
       } catch (Throwable error) {
          try {
-            this.load();
+            this.cancelOnce();
          } catch (Throwable cleanup) {
             if (cleanup != error) {
                error.addSuppressed(cleanup);
@@ -117,7 +117,7 @@ final class AiModuleScope implements AiOperation {
          Throwable failed = null;
 
          try {
-            this.load();
+            this.cancelOnce();
          } catch (Throwable error) {
             failed = error;
             throw error;
@@ -131,9 +131,9 @@ final class AiModuleScope implements AiOperation {
       }
    }
 
-   private void load() {
-      if (!this.load) {
-         this.load = true;
+   private void cancelOnce() {
+      if (!this.cancelled) {
+         this.cancelled = true;
          this.operation.cancel();
       }
    }

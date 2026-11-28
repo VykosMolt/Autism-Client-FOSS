@@ -22,11 +22,11 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class CommandSuggestions {
-   private static volatile List<String> init_List;
+   private static volatile List<String> blockIdsCache;
    private static volatile List<String> load_List;
-   private static volatile List<String> read;
-   private static volatile String[][] init_StrArr2;
-   private static volatile String[][] load_StrArr2;
+   private static volatile List<String> entityIdsCache;
+   private static volatile String[][] itemIdIndex;
+   private static volatile String[][] blockIdIndex;
 
    private CommandSuggestions() {
    }
@@ -134,7 +134,7 @@ public final class CommandSuggestions {
    }
 
    public static List<String> blockIds() {
-      List<String> cached = init_List;
+      List<String> cached = blockIdsCache;
       if (cached != null) {
          return cached;
       }
@@ -147,7 +147,7 @@ public final class CommandSuggestions {
          }
       }
 
-      return init_List = List.copyOf(ids);
+      return blockIdsCache = List.copyOf(ids);
    }
 
    public static List<String> load() {
@@ -169,7 +169,7 @@ public final class CommandSuggestions {
    }
 
    public static List<String> read() {
-      List<String> cached = read;
+      List<String> cached = entityIdsCache;
       if (cached != null) {
          return cached;
       }
@@ -182,7 +182,7 @@ public final class CommandSuggestions {
          }
       }
 
-      return read = List.copyOf(ids);
+      return entityIdsCache = List.copyOf(ids);
    }
 
    public static <S> CompletableFuture<Suggestions> get(CommandContext<S> ignored, SuggestionsBuilder builder) {
@@ -211,9 +211,9 @@ public final class CommandSuggestions {
 
    public static <S> CompletableFuture<Suggestions> clear(CommandContext<S> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
-      String[][] cache = init_StrArr2;
+      String[][] cache = itemIdIndex;
       if (cache == null) {
-         cache = init_StrArr2 = init_StrArr2_Set(BuiltInRegistries.ITEM.keySet());
+         cache = itemIdIndex = buildIdIndex(BuiltInRegistries.ITEM.keySet());
       }
 
       for (String[] entry : cache) {
@@ -225,11 +225,11 @@ public final class CommandSuggestions {
       return builder.buildFuture();
    }
 
-   public static <S> CompletableFuture<Suggestions> reset(CommandContext<S> ignored, SuggestionsBuilder builder) {
+   public static <S> CompletableFuture<Suggestions> suggestBlocks(CommandContext<S> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
-      String[][] cache = load_StrArr2;
+      String[][] cache = blockIdIndex;
       if (cache == null) {
-         cache = load_StrArr2 = init_StrArr2_Set(BuiltInRegistries.BLOCK.keySet());
+         cache = blockIdIndex = buildIdIndex(BuiltInRegistries.BLOCK.keySet());
       }
 
       for (String[] entry : cache) {
@@ -241,7 +241,7 @@ public final class CommandSuggestions {
       return builder.buildFuture();
    }
 
-   private static String[][] init_StrArr2_Set(Set<Identifier> ids) {
+   private static String[][] buildIdIndex(Set<Identifier> ids) {
       List<String[]> entries = new ArrayList<>(ids.size() * 2);
 
       for (Identifier id : ids) {

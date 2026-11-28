@@ -13,7 +13,7 @@ import net.minecraft.nbt.TagParser;
 import net.minecraft.world.item.ItemStack;
 
 public final class ItemSnbtCodec {
-   private static final Minecraft init = Minecraft.getInstance();
+   private static final Minecraft CLIENT = Minecraft.getInstance();
 
    private ItemSnbtCodec() {
    }
@@ -29,9 +29,9 @@ public final class ItemSnbtCodec {
    }
 
    public static String load(ItemStack stack) {
-      if (stack != null && !stack.isEmpty() && init.player != null) {
+      if (stack != null && !stack.isEmpty() && CLIENT.player != null) {
          try {
-            Tag tag = ItemStack.CODEC.encodeStart(init.player.registryAccess().createSerializationContext(NbtOps.INSTANCE), stack).getOrThrow();
+            Tag tag = ItemStack.CODEC.encodeStart(CLIENT.player.registryAccess().createSerializationContext(NbtOps.INSTANCE), stack).getOrThrow();
             return init(tag);
          } catch (Throwable t) {
             return "{error:\"" + escape(t.getClass().getSimpleName()) + "\"}";
@@ -42,10 +42,10 @@ public final class ItemSnbtCodec {
    }
 
    public static ItemStack parseStack(String snbt) {
-      if (snbt != null && !snbt.isBlank() && init.player != null) {
+      if (snbt != null && !snbt.isBlank() && CLIENT.player != null) {
          try {
             CompoundTag tag = TagParser.parseCompoundFully(snbt.trim());
-            return ItemStack.CODEC.parse(init.player.registryAccess().createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
+            return ItemStack.CODEC.parse(CLIENT.player.registryAccess().createSerializationContext(NbtOps.INSTANCE), tag).getOrThrow();
          } catch (Throwable ignored) {
             return ItemStack.EMPTY;
          }
@@ -59,16 +59,16 @@ public final class ItemSnbtCodec {
    }
 
    public static String write(ItemStack stack) {
-      if (stack != null && !stack.isEmpty() && init.player != null) {
+      if (stack != null && !stack.isEmpty() && CLIENT.player != null) {
          try {
             Tag encoded = DataComponentPatch.CODEC
-               .encodeStart(init.player.registryAccess().createSerializationContext(NbtOps.INSTANCE), stack.getComponentsPatch())
+               .encodeStart(CLIENT.player.registryAccess().createSerializationContext(NbtOps.INSTANCE), stack.getComponentsPatch())
                .getOrThrow();
             if (encoded instanceof CompoundTag compound && !compound.isEmpty()) {
                List<String> parts = new ArrayList<>();
 
                for (Entry<String, Tag> entry : compound.entrySet()) {
-                  String key = load(entry.getKey());
+                  String key = normalizeComponentKey(entry.getKey());
                   Tag value = entry.getValue();
                   if (!key.isBlank() && value != null) {
                      if (key.charAt(0) == '!') {
@@ -99,7 +99,7 @@ public final class ItemSnbtCodec {
       return text == null ? "" : text.replace("\\", "\\\\").replace("\"", "\\\"");
    }
 
-   private static String load(String raw) {
+   private static String normalizeComponentKey(String raw) {
       if (raw != null && !raw.isBlank()) {
          String key = raw.trim();
          boolean removed = key.startsWith("!");

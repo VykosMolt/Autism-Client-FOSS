@@ -6,11 +6,11 @@ public final class EaseOutAnimator {
    public static final int init_I = 150;
    public static final int load_I = 180;
    private static final long slowmo = parseSlowmo(System.getenv("AUTISM_UI_SLOWMO"));
-   private final long load_J;
+   private final long durationNanos;
    private final LongSupplier clock;
-   private float init_F;
+   private float startValue;
    private float initial;
-   private long read;
+   private long startNanos;
 
    public EaseOutAnimator(float initial, int durationMillis) {
       this(initial, durationMillis, System::nanoTime);
@@ -22,8 +22,8 @@ public final class EaseOutAnimator {
 
    EaseOutAnimator(float initial, int durationMillis, LongSupplier clock, long slowmo) {
       this.clock = clock;
-      this.init_F = this.initial = initial;
-      this.load_J = Math.max(1, Math.min(200, durationMillis)) * 1000000L * Math.max(1L, slowmo);
+      this.startValue = this.initial = initial;
+      this.durationNanos = Math.max(1, Math.min(200, durationMillis)) * 1000000L * Math.max(1L, slowmo);
    }
 
    static long parseSlowmo(String raw) {
@@ -41,9 +41,9 @@ public final class EaseOutAnimator {
    public float animateTo(float nextTarget) {
       long now = this.clock.getAsLong();
       if (Float.compare(nextTarget, this.initial) != 0) {
-         this.init_F = this.valueAt(now);
+         this.startValue = this.valueAt(now);
          this.initial = nextTarget;
-         this.read = now;
+         this.startNanos = now;
       }
 
       return this.valueAt(now);
@@ -58,19 +58,19 @@ public final class EaseOutAnimator {
    }
 
    public void snapTo(float value) {
-      this.init_F = this.initial = value;
-      this.read = 0L;
+      this.startValue = this.initial = value;
+      this.startNanos = 0L;
    }
 
    public boolean isAnimating() {
-      return this.init_F != this.initial && this.clock.getAsLong() - this.read < this.load_J;
+      return this.startValue != this.initial && this.clock.getAsLong() - this.startNanos < this.durationNanos;
    }
 
    private float valueAt(long now) {
-      if (this.init_F != this.initial && now - this.read < this.load_J) {
-         float progress = Math.max(0.0F, (float)(now - this.read) / (float)this.load_J);
+      if (this.startValue != this.initial && now - this.startNanos < this.durationNanos) {
+         float progress = Math.max(0.0F, (float)(now - this.startNanos) / (float)this.durationNanos);
          float remaining = 1.0F - progress;
-         return this.init_F + (this.initial - this.init_F) * (1.0F - remaining * remaining * remaining);
+         return this.startValue + (this.initial - this.startValue) * (1.0F - remaining * remaining * remaining);
       } else {
          return this.initial;
       }

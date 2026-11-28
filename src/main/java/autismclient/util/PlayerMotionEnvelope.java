@@ -6,7 +6,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class PlayerMotionEnvelope {
-   private static final AABB init = new AABB(-1.0 / 0.0, -1.0 / 0.0, -1.0 / 0.0, 1.0 / 0.0, 1.0 / 0.0, 1.0 / 0.0);
+   private static final AABB INFINITE = new AABB(-1.0 / 0.0, -1.0 / 0.0, -1.0 / 0.0, 1.0 / 0.0, 1.0 / 0.0, 1.0 / 0.0);
 
    private PlayerMotionEnvelope() {
    }
@@ -29,12 +29,12 @@ public final class PlayerMotionEnvelope {
          acceleration = Math.max(acceleration, speed);
       }
 
-      return init(player.getBoundingBox(), player.getDeltaMovement(), acceleration);
+      return expand(player.getBoundingBox(), player.getDeltaMovement(), acceleration);
    }
 
-   public static AABB init(AABB body, Vec3 motion, double acceleration) {
+   public static AABB expand(AABB body, Vec3 motion, double acceleration) {
       return Double.isFinite(acceleration) && !(acceleration < 0.0) && Double.isFinite(motion.x) && Double.isFinite(motion.y) && Double.isFinite(motion.z)
          ? body.move(motion).inflate(acceleration, 0.0, acceleration)
-         : init;
+         : INFINITE;
    }
 }

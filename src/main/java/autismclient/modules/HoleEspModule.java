@@ -36,8 +36,8 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
    private int maxHoles = 512;
    private int bedrockColor = -15089316;
    private int defaultColor = -575461;
-   private int flush = -13255988;
-   private int close = -536805;
+   private int oneByTwoColor = -13255988;
+   private int twoByTwoColor = -536805;
    private boolean scannerRegistered;
 
    public HoleEspModule() {
@@ -62,32 +62,32 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
    }
 
    public static void register() {
-      update();
+      ensureRenderHook();
    }
 
    @Override
    public void onEnable() {
       this.settingsRevision = -1;
-      update();
+      ensureRenderHook();
       this.registerScanner();
    }
 
    @Override
    public void onDisable() {
       this.settingsRevision = -1;
-      this.read();
+      this.unregisterScanner();
    }
 
    @Override
    public void onGameLeft() {
       this.settingsRevision = -1;
-      this.read();
+      this.unregisterScanner();
    }
 
    @Override
    public void tick() {
       this.registerScanner();
-      this.write();
+      this.refreshSettings();
       autismclient.util.PvpHoleScanner.load();
    }
 
@@ -98,13 +98,13 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
 
    @Override
    public int init_I_32() {
-      this.write();
+      this.refreshSettings();
       return this.horizontalDistance;
    }
 
    @Override
    public int load_I_17() {
-      this.write();
+      this.refreshSettings();
       return this.verticalDistance;
    }
 
@@ -115,14 +115,14 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       }
    }
 
-   private void read() {
+   private void unregisterScanner() {
       if (this.scannerRegistered) {
          this.scannerRegistered = false;
          autismclient.util.PvpHoleScanner.load(this);
       }
    }
 
-   private void write() {
+   private void refreshSettings() {
       int revision = al.init_I();
       if (revision != this.settingsRevision) {
          this.settingsRevision = revision;
@@ -136,8 +136,8 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
          this.maxHoles = this.integer("max-holes");
          this.bedrockColor = am.init_I_Module(this, "color-1x1-bedrock", -15089316);
          this.defaultColor = am.init_I_Module(this, "color-1x1", -575461);
-         this.flush = am.init_I_Module(this, "color-1x2", -13255988);
-         this.close = am.init_I_Module(this, "color-2x2", -536805);
+         this.oneByTwoColor = am.init_I_Module(this, "color-1x2", -13255988);
+         this.twoByTwoColor = am.init_I_Module(this, "color-2x2", -536805);
       }
    }
 
@@ -150,7 +150,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       }
    }
 
-   private static synchronized void update() {
+   private static synchronized void ensureRenderHook() {
       if (!init_Z) {
          init_Z = true;
          LevelRenderEvents.COLLECT_SUBMITS
@@ -174,7 +174,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
                         return;
                      }
 
-                     module.write();
+                     module.refreshSettings();
                      if (!module.fill && !module.outline) {
                         return;
                      }
@@ -191,7 +191,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
                            .submitCustomGeometry(
                               context.poseStack(),
                               autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(),
-                              (pose, buffer) -> module.init(pose, buffer, holes, camera, player)
+                              (pose, buffer) -> module.drawHoles(pose, buffer, holes, camera, player)
                            );
                      }
 
@@ -210,7 +210,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       }
    }
 
-   private void init(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
+   private void drawHoles(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
       long perf = bK.load_J();
       int drawn = 0;
 
@@ -222,17 +222,17 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
          double fade = this.fadeFactor(hole.pos(), player);
          if (!(fade <= 0.0)) {
             drawn++;
-            int color = scaleAlpha(this.init(hole.type()), 0.19607843137254902 * fade);
+            int color = scaleAlpha(this.colorFor(hole.type()), 0.19607843137254902 * fade);
             if (color != 0) {
                AABB box = hole.box().move(-camera.x, -camera.y, -camera.z);
                if (this.load_Z) {
                   double floorY = box.minY + 0.002;
-                  init(pose, buffer, box.minX, box.maxX, box.minZ, box.maxZ, floorY, color);
+                  drawFlatQuad(pose, buffer, box.minX, box.maxX, box.minZ, box.maxZ, floorY, color);
                   if (this.glowHeight > 0.0) {
-                     this.init(pose, buffer, box, floorY, color);
+                     this.drawGlowWalls(pose, buffer, box, floorY, color);
                   }
                } else {
-                  load(pose, buffer, box.inflate(0.002), color);
+                  drawBoxFaces(pose, buffer, box.inflate(0.002), color);
                }
             }
          }
@@ -253,13 +253,13 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
          double fade = this.fadeFactor(hole.pos(), player);
          if (!(fade <= 0.0)) {
             drawn++;
-            int color = scaleAlpha(this.init(hole.type()), 0.39215686274509803 * fade);
+            int color = scaleAlpha(this.colorFor(hole.type()), 0.39215686274509803 * fade);
             if (color != 0) {
                AABB box = hole.box().move(-camera.x, -camera.y, -camera.z);
                if (this.load_Z) {
                   drawOutlineAt(pose, buffer, box, box.minY + 0.002, color);
                } else {
-                  init(pose, buffer, box.inflate(0.002), color);
+                  drawBoxEdges(pose, buffer, box.inflate(0.002), color);
                }
             }
          }
@@ -268,7 +268,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       bK.init("frame.holeEspOutline", perf);
    }
 
-   private int init(autismclient.util.PvpHoleScanner.Inner_StreamUtil type) {
+   private int colorFor(autismclient.util.PvpHoleScanner.Inner_StreamUtil type) {
       int var10000;
       switch (type) {
          case ONE_BY_ONE_BEDROCK:
@@ -278,10 +278,10 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
             var10000 = this.defaultColor;
             break;
          case ONE_BY_TWO:
-            var10000 = this.flush;
+            var10000 = this.oneByTwoColor;
             break;
          case TWO_BY_TWO:
-            var10000 = this.close;
+            var10000 = this.twoByTwoColor;
             break;
          default:
             throw new MatchException(null, null);
@@ -313,23 +313,23 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       return alpha <= 0 ? 0 : Math.min(255, alpha) << 24 | argb & 16777215;
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, double minX, double maxX, double minZ, double maxZ, double y, int color) {
-      init(pose, buffer, minX, y, minZ, maxX, y, minZ, maxX, y, maxZ, minX, y, maxZ, color);
-      init(pose, buffer, minX, y, maxZ, maxX, y, maxZ, maxX, y, minZ, minX, y, minZ, color);
+   private static void drawFlatQuad(Pose pose, VertexConsumer buffer, double minX, double maxX, double minZ, double maxZ, double y, int color) {
+      drawQuad(pose, buffer, minX, y, minZ, maxX, y, minZ, maxX, y, maxZ, minX, y, maxZ, color);
+      drawQuad(pose, buffer, minX, y, maxZ, maxX, y, maxZ, maxX, y, minZ, minX, y, minZ, color);
    }
 
-   private void init(Pose pose, VertexConsumer buffer, AABB box, double baseY, int color) {
+   private void drawGlowWalls(Pose pose, VertexConsumer buffer, AABB box, double baseY, int color) {
       int top = color & 16777215;
       double topY = baseY + this.glowHeight;
-      init(pose, buffer, box.minX, box.minZ, box.maxX, box.minZ, baseY, topY, color, top);
-      init(pose, buffer, box.maxX, box.minZ, box.maxX, box.maxZ, baseY, topY, color, top);
-      init(pose, buffer, box.maxX, box.maxZ, box.minX, box.maxZ, baseY, topY, color, top);
-      init(pose, buffer, box.minX, box.maxZ, box.minX, box.minZ, baseY, topY, color, top);
+      drawGradientWall(pose, buffer, box.minX, box.minZ, box.maxX, box.minZ, baseY, topY, color, top);
+      drawGradientWall(pose, buffer, box.maxX, box.minZ, box.maxX, box.maxZ, baseY, topY, color, top);
+      drawGradientWall(pose, buffer, box.maxX, box.maxZ, box.minX, box.maxZ, baseY, topY, color, top);
+      drawGradientWall(pose, buffer, box.minX, box.maxZ, box.minX, box.minZ, baseY, topY, color, top);
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, double x1, double z1, double x2, double z2, double bottomY, double topY, int bottom, int top) {
-      init(pose, buffer, x1, bottomY, z1, bottom, x2, bottomY, z2, bottom, x2, topY, z2, top, x1, topY, z1, top);
-      init(pose, buffer, x1, topY, z1, top, x2, topY, z2, top, x2, bottomY, z2, bottom, x1, bottomY, z1, bottom);
+   private static void drawGradientWall(Pose pose, VertexConsumer buffer, double x1, double z1, double x2, double z2, double bottomY, double topY, int bottom, int top) {
+      drawGradientQuad(pose, buffer, x1, bottomY, z1, bottom, x2, bottomY, z2, bottom, x2, topY, z2, top, x1, topY, z1, top);
+      drawGradientQuad(pose, buffer, x1, topY, z1, top, x2, topY, z2, top, x2, bottomY, z2, bottom, x1, bottomY, z1, bottom);
    }
 
    private static void drawOutlineAt(Pose pose, VertexConsumer buffer, AABB box, double y, int color) {
@@ -339,7 +339,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       WorldLineRenderer.init(pose, buffer, box.minX, y, box.maxZ, box.minX, y, box.minZ, color, 1.5F);
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, AABB box, int color) {
+   private static void drawBoxEdges(Pose pose, VertexConsumer buffer, AABB box, int color) {
       double x1 = box.minX;
       double y1 = box.minY;
       double z1 = box.minZ;
@@ -360,16 +360,16 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       WorldLineRenderer.init(pose, buffer, x1, y1, z2, x1, y2, z2, color, 1.5F);
    }
 
-   private static void load(Pose pose, VertexConsumer buffer, AABB box, int color) {
-      init(pose, buffer, box.minX, box.minY, box.minZ, box.maxX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ, box.minX, box.minY, box.maxZ, color);
-      init(pose, buffer, box.minX, box.maxY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.maxX, box.maxY, box.minZ, box.minX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.minX, box.minY, box.maxZ, box.maxX, box.minY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.minX, box.maxY, box.maxZ, color);
-      init(pose, buffer, box.maxX, box.minY, box.minZ, box.minX, box.minY, box.minZ, box.minX, box.maxY, box.minZ, box.maxX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.minX, box.minY, box.minZ, box.minX, box.minY, box.maxZ, box.minX, box.maxY, box.maxZ, box.minX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.maxX, box.minY, box.maxZ, box.maxX, box.minY, box.minZ, box.maxX, box.maxY, box.minZ, box.maxX, box.maxY, box.maxZ, color);
+   private static void drawBoxFaces(Pose pose, VertexConsumer buffer, AABB box, int color) {
+      drawQuad(pose, buffer, box.minX, box.minY, box.minZ, box.maxX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ, box.minX, box.minY, box.maxZ, color);
+      drawQuad(pose, buffer, box.minX, box.maxY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.maxX, box.maxY, box.minZ, box.minX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.minX, box.minY, box.maxZ, box.maxX, box.minY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.minX, box.maxY, box.maxZ, color);
+      drawQuad(pose, buffer, box.maxX, box.minY, box.minZ, box.minX, box.minY, box.minZ, box.minX, box.maxY, box.minZ, box.maxX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.minX, box.minY, box.minZ, box.minX, box.minY, box.maxZ, box.minX, box.maxY, box.maxZ, box.minX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.maxX, box.minY, box.maxZ, box.maxX, box.minY, box.minZ, box.maxX, box.maxY, box.minZ, box.maxX, box.maxY, box.maxZ, color);
    }
 
-   private static void init(
+   private static void drawQuad(
       Pose pose,
       VertexConsumer buffer,
       double x1,
@@ -386,10 +386,10 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       double z4,
       int color
    ) {
-      init(pose, buffer, x1, y1, z1, color, x2, y2, z2, color, x3, y3, z3, color, x4, y4, z4, color);
+      drawGradientQuad(pose, buffer, x1, y1, z1, color, x2, y2, z2, color, x3, y3, z3, color, x4, y4, z4, color);
    }
 
-   private static void init(
+   private static void drawGradientQuad(
       Pose pose,
       VertexConsumer buffer,
       double x1,

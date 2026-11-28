@@ -25,20 +25,20 @@ public final class CopyPosCommand extends Command {
          ctx -> {
             Minecraft mc = Minecraft.getInstance();
             if (FreecamController.isActive()) {
-               String coordinates = init(FreecamController.getInterpolatedFeetPos(1.0F));
+               String coordinates = formatPos(FreecamController.getInterpolatedFeetPos(1.0F));
                if (mc != null && mc.keyboardHandler != null) {
                   mc.keyboardHandler.setClipboard(coordinates);
                }
 
-               AutismClientMessaging.sendPrefixed("§aPosition copied (freecam): ", init(coordinates));
+               AutismClientMessaging.sendPrefixed("§aPosition copied (freecam): ", copyable(coordinates));
                return 1;
             } else {
                Player controlled = mc == null ? null : mc.player;
                if (mc != null && controlled != null && mc.keyboardHandler != null) {
                   Entity positionOwner = controlled.getVehicle() != null ? controlled.getVehicle() : controlled;
-                  String coordinates = init(positionOwner.position());
+                  String coordinates = formatPos(positionOwner.position());
                   mc.keyboardHandler.setClipboard(coordinates);
-                  AutismClientMessaging.sendPrefixed("§aPosition copied: ", init(coordinates));
+                  AutismClientMessaging.sendPrefixed("§aPosition copied: ", copyable(coordinates));
                   return 1;
                } else {
                   AutismClientMessaging.sendPrefixed("§cNo controlled position available.");
@@ -49,7 +49,7 @@ public final class CopyPosCommand extends Command {
       );
    }
 
-   static Component init(String coordinates) {
+   static Component copyable(String coordinates) {
       return Component.literal(coordinates)
          .withStyle(
             style -> style.withColor(UiColorPalette.textBody())
@@ -59,15 +59,15 @@ public final class CopyPosCommand extends Command {
          );
    }
 
-   static String init(Vec3 position) {
-      return position == null ? "0 0 0" : init(position.x) + " " + load(position.y) + " " + init(position.z);
+   static String formatPos(Vec3 position) {
+      return position == null ? "0 0 0" : floorCoord(position.x) + " " + ceilCoord(position.y) + " " + floorCoord(position.z);
    }
 
-   private static int init(double value) {
+   private static int floorCoord(double value) {
       return Double.isFinite(value) ? (int)Math.floor(value) : 0;
    }
 
-   private static int load(double value) {
+   private static int ceilCoord(double value) {
       return Double.isFinite(value) ? (int)Math.ceil(value - 1.0E-7) : 0;
    }
 }

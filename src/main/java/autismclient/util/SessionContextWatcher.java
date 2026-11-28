@@ -1,20 +1,20 @@
 package autismclient.util;
 
 public final class SessionContextWatcher {
-   private Object init;
-   private Object load;
-   private Object read;
+   private Object lastWorld;
+   private Object lastPlayer;
+   private Object lastConnection;
 
    public void init(Object world, Object player, Object connection, Runnable reset) {
-      if (this.init != world || this.load != player || this.read != connection) {
+      if (this.lastWorld != world || this.lastPlayer != player || this.lastConnection != connection) {
          reset.run();
-         this.init = world;
-         this.load = player;
-         this.read = connection;
+         this.lastWorld = world;
+         this.lastPlayer = player;
+         this.lastConnection = connection;
       }
    }
 
    public void init() {
-      this.init = this.load = this.read = null;
+      this.lastWorld = this.lastPlayer = this.lastConnection = null;
    }
 }

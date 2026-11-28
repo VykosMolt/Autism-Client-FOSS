@@ -6,9 +6,9 @@ import net.minecraft.client.CameraType;
 import net.minecraft.util.Mth;
 
 public final class FreeLookModule extends Module {
-   private float init_F;
-   private float load;
-   private CameraType init_CameraType;
+   private float cameraYaw;
+   private float cameraPitch;
+   private CameraType previousCameraType;
 
    public FreeLookModule() {
       super("free-look", "FreeLook", ae.update, "Look around without rotating the player.");
@@ -24,23 +24,23 @@ public final class FreeLookModule extends Module {
    @Override
    public void onEnable() {
       if (MC.player != null) {
-         this.init_F = MC.player.getYRot();
-         this.load = MC.player.getXRot();
+         this.cameraYaw = MC.player.getYRot();
+         this.cameraPitch = MC.player.getXRot();
       }
 
       if (MC.options != null) {
-         this.init_CameraType = MC.options.getCameraType();
-         MC.options.setCameraType(this.init_CameraType());
+         this.previousCameraType = MC.options.getCameraType();
+         MC.options.setCameraType(this.freeLookCameraType());
       }
    }
 
    @Override
    public void onDisable() {
-      if (MC.options != null && this.init_CameraType != null) {
-         MC.options.setCameraType(this.init_CameraType);
+      if (MC.options != null && this.previousCameraType != null) {
+         MC.options.setCameraType(this.previousCameraType);
       }
 
-      this.init_CameraType = null;
+      this.previousCameraType = null;
    }
 
    @Override
@@ -52,46 +52,46 @@ public final class FreeLookModule extends Module {
 
    @Override
    public void preMovementTick() {
-      if (MC.options != null && MC.options.getCameraType() != this.init_CameraType()) {
-         MC.options.setCameraType(this.init_CameraType());
+      if (MC.options != null && MC.options.getCameraType() != this.freeLookCameraType()) {
+         MC.options.setCameraType(this.freeLookCameraType());
       }
    }
 
-   private CameraType init_CameraType() {
-      return this.load_Z_4() ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK;
+   private CameraType freeLookCameraType() {
+      return this.isFrontView() ? CameraType.THIRD_PERSON_FRONT : CameraType.THIRD_PERSON_BACK;
    }
 
-   private boolean load_Z_4() {
+   private boolean isFrontView() {
       return "Front".equals(this.choice("perspective"));
    }
 
-   private static FreeLookModule load_I_3() {
+   private static FreeLookModule activeInstance() {
       return al.init_Module_Str("free-look") instanceof FreeLookModule freeLook && freeLook.isEnabled() ? freeLook : null;
    }
 
    public static FreeLookModule active() {
-      return MC != null && MC.player != null ? load_I_3() : null;
+      return MC != null && MC.player != null ? activeInstance() : null;
    }
 
    public boolean init_Z_8() {
-      return this.load_Z_4();
+      return this.isFrontView();
    }
 
    public float init_F_3() {
-      return this.init_F;
+      return this.cameraYaw;
    }
 
    public float load_F() {
-      return this.load;
+      return this.cameraPitch;
    }
 
    public static boolean init(double deltaX, double deltaY) {
-      FreeLookModule freeLook = load_I_3();
+      FreeLookModule freeLook = activeInstance();
       if (freeLook != null && MC.player != null) {
-         freeLook.init_F += (float)(deltaX * 0.15);
-         freeLook.load += (float)(deltaY * 0.15);
+         freeLook.cameraYaw += (float)(deltaX * 0.15);
+         freeLook.cameraPitch += (float)(deltaY * 0.15);
          if (!freeLook.bool("no-pitch-limit")) {
-            freeLook.load = Mth.clamp(freeLook.load, -90.0F, 90.0F);
+            freeLook.cameraPitch = Mth.clamp(freeLook.cameraPitch, -90.0F, 90.0F);
          }
 
          return true;

@@ -7,12 +7,12 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
 public final class LegacyCombatDetector {
-   private static Object init_Obj;
-   private static boolean init_Z;
-   private static boolean load_Z;
-   private static Method init_Method;
-   private static Method load_Method;
-   private static Object load_Obj;
+   private static Object lastLevel;
+   private static boolean checked;
+   private static boolean reflectionFailed;
+   private static Method targetVersionMethod;
+   private static Method olderThanOrEqualMethod;
+   private static Object v1_8;
 
    private LegacyCombatDetector() {
    }
@@ -26,49 +26,49 @@ public final class LegacyCombatDetector {
          return true;
       }
 
-      if (load()) {
+      if (isViaLegacyTarget()) {
          return true;
       }
 
-      if (player.level() != init_Obj) {
-         init_Obj = player.level();
-         init_Z = false;
+      if (player.level() != lastLevel) {
+         lastLevel = player.level();
+         checked = false;
       }
 
-      if (!init_Z) {
+      if (!checked) {
          float delay = player.getCurrentItemAttackStrengthDelay();
          int ticker = ((AutismLivingEntityAccessor)player).autism$getAttackStrengthTicker();
          float vanilla = Mth.clamp((ticker + 0.5F) / delay, 0.0F, 1.0F);
          if (vanilla < 0.9F && player.getAttackStrengthScale(0.5F) >= 0.999F) {
-            init_Z = true;
+            checked = true;
          }
       }
 
-      return init_Z;
+      return checked;
    }
 
    public static boolean init() {
-      return load();
+      return isViaLegacyTarget();
    }
 
-   private static boolean load() {
-      if (load_Z) {
+   private static boolean isViaLegacyTarget() {
+      if (reflectionFailed) {
          return false;
       }
 
       try {
-         if (init_Method == null) {
+         if (targetVersionMethod == null) {
             Class<?> translator = Class.forName("com.viaversion.viafabricplus.protocoltranslator.ProtocolTranslator");
             Class<?> versions = Class.forName("com.viaversion.viaversion.api.protocol.version.ProtocolVersion");
-            load_Obj = versions.getField("v1_8").get(null);
-            load_Method = versions.getMethod("olderThanOrEqualTo", versions);
-            init_Method = translator.getMethod("getTargetVersion");
+            v1_8 = versions.getField("v1_8").get(null);
+            olderThanOrEqualMethod = versions.getMethod("olderThanOrEqualTo", versions);
+            targetVersionMethod = translator.getMethod("getTargetVersion");
          }
 
-         Object version = init_Method.invoke(null);
-         return version != null && (Boolean)load_Method.invoke(version, load_Obj);
+         Object version = targetVersionMethod.invoke(null);
+         return version != null && (Boolean)olderThanOrEqualMethod.invoke(version, v1_8);
       } catch (ReflectiveOperationException | RuntimeException | LinkageError absent) {
-         load_Z = true;
+         reflectionFailed = true;
          return false;
       }
    }

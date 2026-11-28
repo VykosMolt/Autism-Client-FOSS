@@ -11,26 +11,26 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 final class SchematicSelection extends AiPlacementSession {
-   private final Object init_Obj;
+   private final Object level;
    BlockPos cornerA;
    BlockPos load;
    BlockPos read;
-   private double init_D = 2.0;
+   private double distance = 2.0;
 
    void adjustDistance(double scroll) {
       if (Double.isFinite(scroll)) {
-         this.init_D = Math.clamp(this.init_D + scroll * Math.max(0.5, this.init_D * 0.15), 0.5, 250.0);
+         this.distance = Math.clamp(this.distance + scroll * Math.max(0.5, this.distance * 0.15), 0.5, 250.0);
       }
 
       this.moveToAim(true);
    }
 
    String distanceText() {
-      return String.format(Locale.ROOT, "%.1f blocks", this.init_D);
+      return String.format(Locale.ROOT, "%.1f blocks", this.distance);
    }
 
    SchematicSelection(Minecraft mc) {
-      this.init_Obj = mc.level;
+      this.level = mc.level;
    }
 
    void pickCorner(boolean left) {
@@ -56,7 +56,7 @@ final class SchematicSelection extends AiPlacementSession {
    @Override
    boolean isActive() {
       Minecraft mc = Minecraft.getInstance();
-      return this.init_Obj != null && mc.level == this.init_Obj && mc.player != null;
+      return this.level != null && mc.level == this.level && mc.player != null;
    }
 
    @Override
@@ -67,11 +67,11 @@ final class SchematicSelection extends AiPlacementSession {
       } else {
          Vec3 eye = eyePosition(mc);
          Vec3 direction = lookDirection(mc);
-         BlockHitResult hit = mc.level.clip(new ClipContext(eye, eye.add(direction.scale(this.init_D)), Block.OUTLINE, Fluid.NONE, mc.player));
+         BlockHitResult hit = mc.level.clip(new ClipContext(eye, eye.add(direction.scale(this.distance)), Block.OUTLINE, Fluid.NONE, mc.player));
          if (hit.getType() == Type.BLOCK) {
             this.read = hit.getBlockPos().immutable();
          } else {
-            this.read = BlockPos.containing(eye.add(direction.scale(this.init_D)));
+            this.read = BlockPos.containing(eye.add(direction.scale(this.distance)));
          }
       }
    }
@@ -86,7 +86,7 @@ final class SchematicSelection extends AiPlacementSession {
          : mc.player.getViewVector(1.0F);
    }
 
-   static BlockPos init(Vec3 eye, Vec3 direction) {
+   static BlockPos defaultTarget(Vec3 eye, Vec3 direction) {
       return BlockPos.containing(eye.add(direction.scale(2.0)));
    }
 

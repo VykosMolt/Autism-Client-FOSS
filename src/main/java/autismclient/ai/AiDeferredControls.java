@@ -51,7 +51,7 @@ final class AiDeferredControls implements AiOperation {
          }
 
          if (result.status() != AiOperation.Status.SUCCEEDED) {
-            return this.init(result, result.message(), AiJson.parseObject(result.dataJson()));
+            return this.finishWith(result, result.message(), AiJson.parseObject(result.dataJson()));
          }
 
          this.constructionResult = result;
@@ -60,11 +60,11 @@ final class AiDeferredControls implements AiOperation {
 
       this.showVisual.accept(this);
       if (this.clock.getAsLong() > this.deadline) {
-         return this.init(AiOperation.Status.TIMED_OUT, "Structure verified; control activation deadline reached", this.init());
+         return this.finish(AiOperation.Status.TIMED_OUT, "Structure verified; control activation deadline reached", this.deferredData());
       }
 
       if (this.controlIndex == this.controls.size()) {
-         return this.init(AiOperation.Status.SUCCEEDED, "Blueprint complete; captured switch positions restored", this.init());
+         return this.finish(AiOperation.Status.SUCCEEDED, "Blueprint complete; captured switch positions restored", this.deferredData());
       }
 
       if (this.activeControl == null) {
@@ -74,23 +74,23 @@ final class AiDeferredControls implements AiOperation {
       AiOperation.Result result = this.activeControl.tick();
       if (!result.terminal()) {
          return AiGameOperations.result(
-            AiOperation.Status.RUNNING, "Restoring switch " + (this.controlIndex + 1) + "/" + this.controls.size() + ": " + result.message(), this.init()
+            AiOperation.Status.RUNNING, "Restoring switch " + (this.controlIndex + 1) + "/" + this.controls.size() + ": " + result.message(), this.deferredData()
          );
       } else {
          this.activeControl.cancel();
          this.activeControl = null;
          if (result.status() != AiOperation.Status.SUCCEEDED) {
-            JsonObject data = this.init();
+            JsonObject data = this.deferredData();
             data.add("controlResult", AiJson.parseObject(result.dataJson()));
-            return this.init(result, "Structure verified; switch activation stopped: " + result.message(), data);
+            return this.finishWith(result, "Structure verified; switch activation stopped: " + result.message(), data);
          } else {
             this.controlIndex++;
-            return AiGameOperations.result(AiOperation.Status.RUNNING, "Switch position verified", this.init());
+            return AiGameOperations.result(AiOperation.Status.RUNNING, "Switch position verified", this.deferredData());
          }
       }
    }
 
-   private JsonObject init() {
+   private JsonObject deferredData() {
       JsonObject data = this.constructionResult == null ? new JsonObject() : AiJson.parseObject(this.constructionResult.dataJson());
       data.addProperty("constructionVerifiedBeforeActivation", this.constructionResult != null);
       data.addProperty("activatedControls", this.controlIndex);
@@ -98,11 +98,11 @@ final class AiDeferredControls implements AiOperation {
       return data;
    }
 
-   private AiOperation.Result init(AiOperation.Status status, String message, JsonObject data) {
-      return this.init(AiGameOperations.result(status, message, data), message, data);
+   private AiOperation.Result finish(AiOperation.Status status, String message, JsonObject data) {
+      return this.finishWith(AiGameOperations.result(status, message, data), message, data);
    }
 
-   private AiOperation.Result init(AiOperation.Result result, String message, JsonObject data) {
+   private AiOperation.Result finishWith(AiOperation.Result result, String message, JsonObject data) {
       this.finalResult = new AiOperation.Result(result.status(), message, AiJson.GSON.toJson(data), result.evidence(), result.failure());
       this.construction.cancel();
       if (this.activeControl != null) {
@@ -131,7 +131,7 @@ final class AiDeferredControls implements AiOperation {
    @Override
    public void cancel() {
       if (this.finalResult == null) {
-         this.init(AiOperation.Status.CANCELLED, "Build or switch activation cancelled", this.init());
+         this.finish(AiOperation.Status.CANCELLED, "Build or switch activation cancelled", this.deferredData());
       }
    }
 }

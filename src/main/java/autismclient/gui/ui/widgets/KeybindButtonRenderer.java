@@ -8,12 +8,12 @@ public final class KeybindButtonRenderer {
    private KeybindButtonRenderer() {
    }
 
-   public static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper row, int rightInset, int verticalInset) {
+   public static autismclient.gui.f.NetHelper buttonRect(autismclient.gui.f.NetHelper row, int rightInset, int verticalInset) {
       int height = Math.max(1, row.sync() - verticalInset * 2);
       return autismclient.gui.f.NetHelper.init(row.init() - 34 - rightInset, row.write() + verticalInset, 34, height);
    }
 
-   public static String init(int bindCode, boolean capturing) {
+   public static String label(int bindCode, boolean capturing) {
       if (capturing) {
          return "Key";
       } else {
@@ -26,6 +26,6 @@ public final class KeybindButtonRenderer {
    }
 
    public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int bindCode, boolean capturing, boolean hovered) {
-      CachePool.init(context, bounds, init(bindCode, capturing), capturing ? CachePool.Inner_DataUtil.read : CachePool.Inner_DataUtil.init, hovered, capturing);
+      CachePool.init(context, bounds, label(bindCode, capturing), capturing ? CachePool.Inner_DataUtil.read : CachePool.Inner_DataUtil.init, hovered, capturing);
    }
 }

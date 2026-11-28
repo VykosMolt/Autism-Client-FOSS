@@ -3,7 +3,7 @@ package autismclient.util.leafdupe;
 public final class LeafDupeRateLimiter {
    public static final int init_I = 9;
    private long init_J;
-   private int load;
+   private int sentCount;
 
    public int remaining(int windowMs, long now) {
       if (windowMs <= 0) {
@@ -11,10 +11,10 @@ public final class LeafDupeRateLimiter {
       }
 
       if (now < this.init_J || now - this.init_J >= windowMs) {
-         this.load = 0;
+         this.sentCount = 0;
       }
 
-      return Math.max(0, 9 - this.load);
+      return Math.max(0, 9 - this.sentCount);
    }
 
    public void recordUse(int windowMs, long now) {
@@ -23,12 +23,12 @@ public final class LeafDupeRateLimiter {
             this.init_J = now;
          }
 
-         this.load++;
+         this.sentCount++;
       }
    }
 
    public void init() {
       this.init_J = 0L;
-      this.load = 0;
+      this.sentCount = 0;
    }
 }

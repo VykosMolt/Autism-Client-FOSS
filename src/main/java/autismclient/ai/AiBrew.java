@@ -58,7 +58,7 @@ final class AiBrew {
          }
 
          final String inputSpec = AiJson.getString(args, "input", "water_bottle");
-         final String inputType = init(inputSpec);
+         final String inputType = resolvePotionType(inputSpec);
          final int count = Math.max(1, Math.min(3, AiJson.getInt(args, "count", 3)));
          final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 300)));
          final String ingredientId = BuiltInRegistries.ITEM.getKey(ingredient.items().iterator().next()).toString();
@@ -75,7 +75,7 @@ final class AiBrew {
             int write_I;
             int brewed;
             int sync_I;
-            int flush;
+            int collectWaitTicks;
             long revision = -1L;
             long containerRevision = -1L;
             boolean init_Z;
@@ -84,24 +84,24 @@ final class AiBrew {
             boolean write_Z;
             boolean update_Z;
             boolean sync_Z;
-            int close = -1;
+            int lastContainerId = -1;
             String[] bottleKeys = new String[3];
 
             @Override
             public AiOperation.Result tick() {
                if (!this.cancelled && this.mc.player != null && this.mc.level != null) {
                   if (System.nanoTime() > this.deadlineNanos) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Brewing deadline reached");
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Brewing deadline reached");
                   } else if (this.mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-                     return this.init(AiFailure.LOW_HEALTH, AiGuard.formatLowHealthAbort("brewing", this.mc.player.getHealth(), this.mc.player.getMaxHealth()));
+                     return this.fail(AiFailure.LOW_HEALTH, AiGuard.formatLowHealthAbort("brewing", this.mc.player.getHealth(), this.mc.player.getMaxHealth()));
                   } else if (!(this.mc.player.containerMenu instanceof BrewingStandMenu menu)) {
                      AiOperation.Result open = this.load_AiOperation_Result_4();
-                     return open != null ? open : this.init("Opening the brewing stand");
+                     return open != null ? open : this.running("Opening the brewing stand");
                   } else {
-                     if (this.close != menu.containerId) {
+                     if (this.lastContainerId != menu.containerId) {
                         for (int slot = 0; slot <= 4; slot++) {
                            if (!menu.getSlot(slot).getItem().isEmpty()) {
-                              return this.init(
+                              return this.fail(
                                  AiFailure.IMPOSSIBLE_STATE,
                                  "The brewing stand is in use: slot "
                                     + slot
@@ -112,7 +112,7 @@ final class AiBrew {
                            }
                         }
 
-                        this.close = menu.containerId;
+                        this.lastContainerId = menu.containerId;
                      }
 
                      AiOperation.Result missing = this.init_AiOperation_Result_5();
@@ -124,12 +124,12 @@ final class AiBrew {
                         if (!menu.getSlot(4).getItem().isEmpty()) {
                            this.read_Z = true;
                            this.sync_I = 0;
-                           return this.init("Fuel loaded");
-                        } else if (this.init(menu, Items.BLAZE_POWDER)) {
+                           return this.running("Fuel loaded");
+                        } else if (this.quickMoveItem(menu, Items.BLAZE_POWDER)) {
                            this.sync_I = 0;
-                           return this.init("Loading blaze powder fuel");
+                           return this.running("Loading blaze powder fuel");
                         } else {
-                           return this.init("minecraft:blaze_powder", 1, "Loading blaze powder fuel");
+                           return this.noteMoveAttempt("minecraft:blaze_powder", 1, "Loading blaze powder fuel");
                         }
                      } else if (this.write_Z) {
                         if (!this.update_Z) {
@@ -138,12 +138,12 @@ final class AiBrew {
                               this.sync_I = 0;
                               this.revision = AiServerEvidence.containerRevision(menu.containerId);
                               this.write_I = 0;
-                              return this.init("Brewing (400 ticks)");
-                           } else if (this.init(menu, ingredient.items().iterator().next())) {
+                              return this.running("Brewing (400 ticks)");
+                           } else if (this.quickMoveItem(menu, ingredient.items().iterator().next())) {
                               this.sync_I = 0;
-                              return this.init("Loading the ingredient");
+                              return this.running("Loading the ingredient");
                            } else {
-                              return this.init(ingredientId, 1, "Loading the ingredient");
+                              return this.noteMoveAttempt(ingredientId, 1, "Loading the ingredient");
                            }
                         } else if (!this.sync_Z) {
                            long revision = AiServerEvidence.containerRevision(menu.containerId);
@@ -151,7 +151,7 @@ final class AiBrew {
                               this.revision = revision;
                               this.write_I = 0;
                            } else if (++this.write_I > 120) {
-                              return this.init(
+                              return this.fail(
                                  AiFailure.IMPOSSIBLE_STATE,
                                  "Nothing brewable: " + ingredientId + " does not apply to the input bottles",
                                  AiJson.objectOf("reason", "no_progress")
@@ -162,32 +162,32 @@ final class AiBrew {
                               this.containerRevision = AiServerEvidence.containerRevision(menu.containerId);
                               this.recordBrewed(menu);
                               this.sync_Z = true;
-                              this.flush = 0;
-                              return this.init("Collecting the finished potions");
+                              this.collectWaitTicks = 0;
+                              return this.running("Collecting the finished potions");
                            } else {
-                              return this.init("Brewing (400 ticks)");
+                              return this.running("Brewing (400 ticks)");
                            }
                         } else {
                            boolean emptied = true;
 
                            for (int slot = 0; slot <= 2; slot++) {
                               ItemStack bottle = menu.getSlot(slot).getItem();
-                              if (!bottle.isEmpty() && !AiBrew.init(bottle).equals(this.bottleKeys[slot])) {
+                              if (!bottle.isEmpty() && !AiBrew.potionId(bottle).equals(this.bottleKeys[slot])) {
                                  emptied = false;
                               }
                            }
 
                            if (AiServerEvidence.containerRevision(menu.containerId) > this.containerRevision && emptied) {
-                              return this.init(AiOperation.Status.SUCCEEDED, "Brewed " + this.brewed + " potion(s)");
+                              return this.finish(AiOperation.Status.SUCCEEDED, "Brewed " + this.brewed + " potion(s)");
                            } else {
-                              return ++this.flush > 40
-                                 ? this.init(
+                              return ++this.collectWaitTicks > 40
+                                 ? this.finish(
                                     AiOperation.Status.UNCERTAIN,
                                     emptied
                                        ? "The potion collection was not confirmed by the server; reobserve before repeating"
                                        : "The potions are still in the stand (inventory full?); take them before repeating"
                                  )
-                                 : this.init("Waiting for the server to confirm the collection");
+                                 : this.running("Waiting for the server to confirm the collection");
                            }
                         }
                      } else {
@@ -203,21 +203,21 @@ final class AiBrew {
                            this.write_Z = true;
 
                            for (int slot = 0; slot <= 2; slot++) {
-                              this.bottleKeys[slot] = AiBrew.init(menu.getSlot(slot).getItem());
+                              this.bottleKeys[slot] = AiBrew.potionId(menu.getSlot(slot).getItem());
                            }
-                        } else if (!this.load(menu)) {
-                           return this.init(
+                        } else if (!this.hasInputPotion(menu)) {
+                           return this.finish(
                               AiOperation.Status.FAILED,
                               "No " + inputSpec + " bottles left to load",
                               AiJson.objectOf("missing", AiJson.objectOf("minecraft:potion", count - inserted))
                            );
                         }
 
-                        return this.init("Loading input bottles");
+                        return this.running("Loading input bottles");
                      }
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Brewing cancelled; committed stand contents stay");
+                  return this.finish(AiOperation.Status.CANCELLED, "Brewing cancelled; committed stand contents stay");
                }
             }
 
@@ -228,7 +228,7 @@ final class AiBrew {
 
                for (int slot = 0; slot <= 2; slot++) {
                   ItemStack bottle = menu.getSlot(slot).getItem();
-                  if (!bottle.isEmpty() && !AiBrew.init(bottle).equals(this.bottleKeys[slot])) {
+                  if (!bottle.isEmpty() && !AiBrew.potionId(bottle).equals(this.bottleKeys[slot])) {
                      return true;
                   }
                }
@@ -239,7 +239,7 @@ final class AiBrew {
             void recordBrewed(BrewingStandMenu menu) {
                for (int slot = 0; slot <= 2; slot++) {
                   ItemStack bottle = menu.getSlot(slot).getItem();
-                  if (!bottle.isEmpty() && !AiBrew.init(bottle).equals(this.bottleKeys[slot])) {
+                  if (!bottle.isEmpty() && !AiBrew.potionId(bottle).equals(this.bottleKeys[slot])) {
                      this.brewedNames.add(bottle.getHoverName().getString());
                      this.brewed++;
                      AiContainerTransactions.sendPredictedClick(menu.containerId, slot, 0, ContainerInput.QUICK_MOVE);
@@ -247,13 +247,13 @@ final class AiBrew {
                }
             }
 
-            AiOperation.Result init(String itemId, int amount, String stage) {
+            AiOperation.Result noteMoveAttempt(String itemId, int amount, String stage) {
                if (++this.sync_I > 20) {
                   JsonObject missing = new JsonObject();
                   missing.addProperty(itemId, amount);
-                  return this.init(AiFailure.MISSING_MATERIALS, "Could not move " + itemId + " into the stand", AiJson.objectOf("missing", missing));
+                  return this.fail(AiFailure.MISSING_MATERIALS, "Could not move " + itemId + " into the stand", AiJson.objectOf("missing", missing));
                } else {
-                  return this.init(stage);
+                  return this.running(stage);
                }
             }
 
@@ -280,7 +280,7 @@ final class AiBrew {
                      }
                   }
 
-                  return missing.size() > 0 ? this.init(AiFailure.MISSING_MATERIALS, "Missing brewing materials", AiJson.objectOf("missing", missing)) : null;
+                  return missing.size() > 0 ? this.fail(AiFailure.MISSING_MATERIALS, "Missing brewing materials", AiJson.objectOf("missing", missing)) : null;
                } else {
                   return null;
                }
@@ -311,7 +311,7 @@ final class AiBrew {
 
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = this.mc.player.getInventory().getItem(slot);
-                  if (!stack.isEmpty() && stack.is(Items.POTION) && (inputType.isEmpty() || AiBrew.init(stack).equals(inputType))) {
+                  if (!stack.isEmpty() && stack.is(Items.POTION) && (inputType.isEmpty() || AiBrew.potionId(stack).equals(inputType))) {
                      found++;
                   }
                }
@@ -319,11 +319,11 @@ final class AiBrew {
                return found;
             }
 
-            boolean load(BrewingStandMenu menu) {
+            boolean hasInputPotion(BrewingStandMenu menu) {
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = this.mc.player.getInventory().getItem(slot);
-                  if (!stack.isEmpty() && stack.is(Items.POTION) && (inputType.isEmpty() || AiBrew.init(stack).equals(inputType))) {
-                     AiContainerTransactions.sendPredictedClick(menu.containerId, this.init(slot), 0, ContainerInput.QUICK_MOVE);
+                  if (!stack.isEmpty() && stack.is(Items.POTION) && (inputType.isEmpty() || AiBrew.potionId(stack).equals(inputType))) {
+                     AiContainerTransactions.sendPredictedClick(menu.containerId, this.menuSlotFor(slot), 0, ContainerInput.QUICK_MOVE);
                      return true;
                   }
                }
@@ -331,13 +331,13 @@ final class AiBrew {
                return false;
             }
 
-            boolean init(BrewingStandMenu menu, Item item) {
+            boolean quickMoveItem(BrewingStandMenu menu, Item item) {
                String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
 
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = this.mc.player.getInventory().getItem(slot);
                   if (!stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals(itemId)) {
-                     AiContainerTransactions.sendPredictedClick(menu.containerId, this.init(slot), 0, ContainerInput.QUICK_MOVE);
+                     AiContainerTransactions.sendPredictedClick(menu.containerId, this.menuSlotFor(slot), 0, ContainerInput.QUICK_MOVE);
                      return true;
                   }
                }
@@ -345,7 +345,7 @@ final class AiBrew {
                return false;
             }
 
-            int init(int inventorySlot) {
+            int menuSlotFor(int inventorySlot) {
                return inventorySlot < 9 ? inventorySlot + 32 : inventorySlot - 9 + 5;
             }
 
@@ -356,7 +356,7 @@ final class AiBrew {
                }
 
                if (this.brewingStand == null && this.standSearchCooldown < 40 && !this.init_Z) {
-                  return this.init("Looking for a brewing stand");
+                  return this.running("Looking for a brewing stand");
                }
 
                if (this.brewingStand == null) {
@@ -364,12 +364,12 @@ final class AiBrew {
                      if (AiGameState.countInventoryItem("minecraft:brewing_stand") <= 0) {
                         JsonObject missing = new JsonObject();
                         missing.addProperty("minecraft:brewing_stand", 1);
-                        return this.init(AiFailure.MISSING_STATION, "No brewing stand in reach or in the bag", AiJson.objectOf("missing", missing));
+                        return this.fail(AiFailure.MISSING_STATION, "No brewing stand in reach or in the bag", AiJson.objectOf("missing", missing));
                      }
 
                      BlockPos spot = AiCraft.findPlacementSpot();
                      if (spot == null) {
-                        return this.init(AiOperation.Status.FAILED, "No free supported spot next to the player for a brewing stand");
+                        return this.finish(AiOperation.Status.FAILED, "No free supported spot next to the player for a brewing stand");
                      }
 
                      this.placer
@@ -382,34 +382,34 @@ final class AiBrew {
                   if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                      this.brewingStand = this.placer.targetPos();
                      this.init_Z = false;
-                     return this.init("Brewing stand placed");
+                     return this.running("Brewing stand placed");
                   }
 
                   if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.placeTicks <= 100) {
-                     return this.init("Placing a brewing stand");
+                     return this.running("Placing a brewing stand");
                   }
 
                   this.init_Z = false;
-                  return this.init(AiOperation.Status.FAILED, "Could not place a brewing stand: " + this.placer.failureReason());
+                  return this.finish(AiOperation.Status.FAILED, "Could not place a brewing stand: " + this.placer.failureReason());
                } else {
                   double reach = Math.max(4.5, this.mc.player.blockInteractionRange());
                   if (this.mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(this.brewingStand)) > reach * reach) {
-                     return this.init(AiOperation.Status.FAILED, "The brewing stand fell out of reach");
+                     return this.finish(AiOperation.Status.FAILED, "The brewing stand fell out of reach");
                   }
 
                   this.aim.aimAt(Vec3.atCenterOf(this.brewingStand));
                   this.aim.tick();
                   if (++this.init_I > 80) {
-                     return this.init(AiOperation.Status.FAILED, "Could not open the brewing stand");
+                     return this.finish(AiOperation.Status.FAILED, "Could not open the brewing stand");
                   }
 
                   if (!autismclient.ai.engine.AiAim.isLookingAtBlock(this.brewingStand)) {
-                     return this.init("Turning toward the brewing stand");
+                     return this.running("Turning toward the brewing stand");
                   }
 
                   BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (hit == null) {
-                     return this.init("Turning toward the brewing stand");
+                     return this.running("Turning toward the brewing stand");
                   }
 
                   this.mc.gameMode.useItemOn(this.mc.player, InteractionHand.MAIN_HAND, hit);
@@ -457,19 +457,19 @@ final class AiBrew {
                );
             }
 
-            AiOperation.Result init(String message) {
+            AiOperation.Result running(String message) {
                return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.resultData().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               return this.init(status, message, null);
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               return this.finish(status, message, null);
             }
 
-            AiOperation.Result init(AiFailure code, String message) {
-               return this.init(code, message, null);
+            AiOperation.Result fail(AiFailure code, String message) {
+               return this.fail(code, message, null);
             }
 
-            AiOperation.Result init(AiFailure code, String message, JsonObject extra) {
+            AiOperation.Result fail(AiFailure code, String message, JsonObject extra) {
                JsonObject data = this.resultData();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
@@ -481,7 +481,7 @@ final class AiBrew {
                return AiOperation.Result.failed(code, message, data.toString());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
+            AiOperation.Result finish(AiOperation.Status status, String message, JsonObject extra) {
                JsonObject data = this.resultData();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
@@ -507,7 +507,7 @@ final class AiBrew {
       }
    }
 
-   static String init(String spec) {
+   static String resolvePotionType(String spec) {
       String clean = spec == null ? "" : spec.trim().toLowerCase(Locale.ROOT);
       if (clean.isEmpty() || clean.equals("water_bottle")) {
          return "minecraft:water";
@@ -524,7 +524,7 @@ final class AiBrew {
       }
    }
 
-   static String init(ItemStack stack) {
+   static String potionId(ItemStack stack) {
       if (stack != null && !stack.isEmpty()) {
          PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
          if (contents == null) {

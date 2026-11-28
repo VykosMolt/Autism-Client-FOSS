@@ -25,7 +25,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    public int interactCustomMs = 0;
    public String guiName = "";
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
-   private boolean init = true;
+   private boolean enabled = true;
    public boolean raycast = false;
 
    @Override
@@ -36,12 +36,12 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
          && this.blockPos != null
          && !mc.level.isOutsideBuildHeight(this.blockPos)
          && autismclient.util.InteractionTargetRef.isInReach(mc, this.blockPos)) {
-         BlockHitResult hit = init(mc, this.blockPos, this.manualDirection, this.direction);
+         BlockHitResult hit = findPlaceHit(mc, this.blockPos, this.manualDirection, this.direction);
          if (hit != null) {
             int originalSlot = mc.player.getInventory().getSelectedSlot();
             MacroItemTarget target = this.resolveItemTarget().resolveTemplates(mc);
             if (target != null) {
-               init(mc, target);
+               selectTarget(mc, target);
                boolean sneaking = this.sneak;
                if (sneaking) {
                   autismclient.util.SneakPacketController.init(mc, this.sneakMode);
@@ -63,7 +63,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       }
    }
 
-   static BlockHitResult init(Minecraft mc, BlockPos targetPos, boolean manualDirection, Direction manualFace) {
+   static BlockHitResult findPlaceHit(Minecraft mc, BlockPos targetPos, boolean manualDirection, Direction manualFace) {
       if (mc != null && mc.level != null && targetPos != null) {
          if (mc.level.isOutsideBuildHeight(targetPos)) {
             return null;
@@ -95,10 +95,10 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    private BlockHitResult targetHit(Minecraft mc) {
-      return init(mc, this.blockPos, this.manualDirection, this.direction);
+      return findPlaceHit(mc, this.blockPos, this.manualDirection, this.direction);
    }
 
-   private static void init(Minecraft mc, MacroItemTarget target) {
+   private static void selectTarget(Minecraft mc, MacroItemTarget target) {
       if (target != null && (target.hasSlot() || target.hasItemFilter())) {
          if (target.hasItemFilter()) {
             autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, target, mc.player.getInventory().getSelectedSlot());
@@ -168,12 +168,12 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override
@@ -233,7 +233,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       tag.putString("interactTiming", this.interactTiming.name());
       tag.putInt("interactCustomMs", this.interactCustomMs);
       tag.putString("guiName", this.guiName);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
@@ -267,7 +267,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
       this.interactTiming = InteractTimingMode.init(tag.getStringOr("interactTiming", "AFTER"), InteractTimingMode.AFTER);
       this.interactCustomMs = Math.max(-5000, Math.min(5000, tag.getIntOr("interactCustomMs", 0)));
       this.guiName = tag.getStringOr("guiName", "");
-      this.init = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 

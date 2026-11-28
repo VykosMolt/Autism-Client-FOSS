@@ -13,7 +13,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
    public int fuzzyPercent = 100;
    public boolean serverMessageOnly = false;
    public int timeoutMs = 0;
-   private boolean init = true;
+   private boolean enabled = true;
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
    public String waitGuiName = "";
@@ -42,7 +42,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
       tag.putInt("fuzzyPercent", this.fuzzyPercent);
       tag.putBoolean("serverMessageOnly", false);
       tag.putInt("timeoutMs", this.timeoutMs);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("waitGuiName", this.waitGuiName);
@@ -86,7 +86,7 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
@@ -126,12 +126,12 @@ public class WaitForChatAction implements MacroAction, GuiWaitAware {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override

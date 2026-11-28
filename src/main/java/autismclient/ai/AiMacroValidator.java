@@ -38,7 +38,7 @@ public final class AiMacroValidator {
 
                for (JsonElement value : actions) {
                   JsonObject action = value.getAsJsonObject();
-                  init(action, catalog, 0);
+                  validateAction(action, catalog, 0);
                   if (AiJson.getString(action, "type", "").equals("LABEL")) {
                      String label = AiJson.getString(action, "name", AiJson.getString(action, "label", ""));
                      if (!label.isEmpty() && !labels.add(label.trim().toLowerCase(Locale.ROOT))) {
@@ -90,7 +90,7 @@ public final class AiMacroValidator {
                      if (!key.equals("_dynamicBindings")
                         && !bound.contains(key)
                         && !derived.contains(key)
-                        && (!serialized.has(key) || !init(supplied.get(key), serialized.get(key)))) {
+                        && (!serialized.has(key) || !matchesSerialized(supplied.get(key), serialized.get(key)))) {
                         throw new IllegalArgumentException(
                            type
                               + " field "
@@ -117,14 +117,14 @@ public final class AiMacroValidator {
       }
    }
 
-   private static boolean init(JsonElement supplied, JsonElement serialized) {
+   private static boolean matchesSerialized(JsonElement supplied, JsonElement serialized) {
       if (supplied.isJsonNull()) {
          return serialized.isJsonNull();
       }
 
       if (supplied.isJsonObject() && serialized.isJsonObject()) {
          for (Entry<String, JsonElement> e : supplied.getAsJsonObject().entrySet()) {
-            if (!serialized.getAsJsonObject().has(e.getKey()) || !init(e.getValue(), serialized.getAsJsonObject().get(e.getKey()))) {
+            if (!serialized.getAsJsonObject().has(e.getKey()) || !matchesSerialized(e.getValue(), serialized.getAsJsonObject().get(e.getKey()))) {
                return false;
             }
          }
@@ -138,7 +138,7 @@ public final class AiMacroValidator {
          }
 
          for (int i = 0; i < a.size(); i++) {
-            if (!init(a.get(i), b.get(i))) {
+            if (!matchesSerialized(a.get(i), b.get(i))) {
                return false;
             }
          }
@@ -165,7 +165,7 @@ public final class AiMacroValidator {
             }
 
             if (s.isBoolean() && r.isNumber()) {
-               return init(r) != null && init(r) == 1 == s.getAsBoolean();
+               return zeroOrOne(r) != null && zeroOrOne(r) == 1 == s.getAsBoolean();
             }
 
             if (s.isNumber() && r.isBoolean()) {
@@ -177,7 +177,7 @@ public final class AiMacroValidator {
       }
    }
 
-   private static Integer init(JsonPrimitive value) {
+   private static Integer zeroOrOne(JsonPrimitive value) {
       try {
          int n = value.getAsBigDecimal().intValueExact();
          return n != 0 && n != 1 ? null : n;
@@ -186,7 +186,7 @@ public final class AiMacroValidator {
       }
    }
 
-   private static void init(JsonObject input, AiCatalog.Snapshot catalog, int depth) {
+   private static void validateAction(JsonObject input, AiCatalog.Snapshot catalog, int depth) {
       if (depth > 16) {
          throw new IllegalArgumentException("Macro nesting exceeds 16");
       }
@@ -300,16 +300,16 @@ public final class AiMacroValidator {
          }
 
          if (input.has("condition") && input.get("condition").isJsonObject()) {
-            init(input.getAsJsonObject("condition"), 0);
+            validateCondition(input.getAsJsonObject("condition"), 0);
          }
 
-         init((JsonElement)input, catalog, depth);
+         validateNested((JsonElement)input, catalog, depth);
       } else {
          throw new IllegalArgumentException("No executable action contract for " + id);
       }
    }
 
-   static void init(JsonObject node, int depth) {
+   static void validateCondition(JsonObject node, int depth) {
       if (depth > 16) {
          throw new IllegalArgumentException("Condition nesting exceeds 16");
       }
@@ -327,7 +327,7 @@ public final class AiMacroValidator {
          }
 
          for (JsonElement child : node.getAsJsonArray("children")) {
-            init(child.getAsJsonObject(), depth + 1);
+            validateCondition(child.getAsJsonObject(), depth + 1);
          }
       } else {
          MacroCondition.Inner_CachePool.valueOf(AiJson.getString(node, "kind", "ALWAYS"));
@@ -339,14 +339,14 @@ public final class AiMacroValidator {
       }
    }
 
-   private static void init(JsonElement value, AiCatalog.Snapshot catalog, int depth) {
+   private static void validateNested(JsonElement value, AiCatalog.Snapshot catalog, int depth) {
       if (depth > 24) {
          throw new IllegalArgumentException("Macro structure too deep");
       }
 
       if (value.isJsonArray()) {
          for (JsonElement child : value.getAsJsonArray()) {
-            init(child, catalog, depth + 1);
+            validateNested(child, catalog, depth + 1);
          }
       } else if (value.isJsonObject()) {
          for (Entry<String, JsonElement> e : value.getAsJsonObject().entrySet()) {
@@ -354,9 +354,9 @@ public final class AiMacroValidator {
             if (child.isJsonObject()
                && child.getAsJsonObject().has("type")
                && catalog.get("macro:" + AiJson.getString(child.getAsJsonObject(), "type", "")) != null) {
-               init(child.getAsJsonObject(), catalog, depth + 1);
+               validateAction(child.getAsJsonObject(), catalog, depth + 1);
             } else if (child.isJsonArray() || child.isJsonObject()) {
-               init(child, catalog, depth + 1);
+               validateNested(child, catalog, depth + 1);
             }
          }
       }

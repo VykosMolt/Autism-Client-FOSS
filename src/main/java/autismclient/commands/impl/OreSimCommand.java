@@ -25,12 +25,12 @@ public class OreSimCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         init();
+         printStatus();
          return 1;
       });
    }
 
-   private static void init() {
+   private static void printStatus() {
       Module xray = al.init_Module_Str("xray");
       if (xray == null) {
          AutismClientMessaging.sendPrefixed("§cXray module not registered.");

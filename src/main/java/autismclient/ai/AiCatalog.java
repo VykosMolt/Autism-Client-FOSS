@@ -68,9 +68,9 @@ public final class AiCatalog {
                      "default",
                      m.settingsShareable() ? s.defaultValue() : "[private]",
                      "min",
-                     init(s.min()),
+                     finiteOrNull(s.min()),
                      "max",
-                     init(s.max()),
+                     finiteOrNull(s.max()),
                      "choices",
                      s.choices(),
                      "availability",
@@ -114,7 +114,7 @@ public final class AiCatalog {
                   ? AiCapabilityDescriptor.Classification.CONFIGURE
                   : AiCapabilityDescriptor.Classification.DISCOVER_ONLY
             );
-            init(entries, d, "{}");
+            addEntry(entries, d, "{}");
          }
 
          for (MacroActionType type : MacroActionType.values()) {
@@ -125,7 +125,7 @@ public final class AiCatalog {
                throw new IllegalStateException("Built-in macro type has no catalog adapter: " + type.name());
             }
 
-            init(entries, type.name(), action, autismclient.gui.macro.editor.ActionFieldRegistry.init(type), "autism", "");
+            addActionEntry(entries, type.name(), action, autismclient.gui.macro.editor.ActionFieldRegistry.init(type), "autism", "");
          }
 
          for (MacroActionEntry entry : MacroActionRegistry.entries()) {
@@ -136,7 +136,7 @@ public final class AiCatalog {
                   if (addonAction == null) {
                      AutismClientAddon.LOG.warn("[AI] Addon macro action '{}' produced no instance; skipping its catalog entry", entry.typeId());
                   } else {
-                     init(
+                     addActionEntry(
                         entries,
                         entry.typeId(),
                         addonAction,
@@ -152,11 +152,11 @@ public final class AiCatalog {
          }
 
          for (Command command : autismclient.commands.CommandManager.getCommands()) {
-            init(entries, init(command, autismclient.commands.CommandManager.getPrimaryName(command), autismclient.commands.CommandManager.getUsageForms(command)), "{}");
+            addEntry(entries, commandDescriptor(command, autismclient.commands.CommandManager.getPrimaryName(command), autismclient.commands.CommandManager.getUsageForms(command)), "{}");
          }
 
          for (String id : CustomMenuAdapterRegistry.ids()) {
-            init(
+            addEntry(
                entries,
                init(
                   "menu:" + id,
@@ -178,11 +178,11 @@ public final class AiCatalog {
          }
 
          for (AiCapabilityDescriptor d : AiTools.capabilities()) {
-            init(entries, d, "{}");
+            addEntry(entries, d, "{}");
          }
 
          for (AiCapabilities.Entry e : AiCapabilities.entries()) {
-            init(entries, e.descriptor(), "{}");
+            addEntry(entries, e.descriptor(), "{}");
          }
 
          Set<String> ids = new HashSet<>();
@@ -201,11 +201,11 @@ public final class AiCatalog {
       }
    }
 
-   private static Double init(double d) {
+   private static Double finiteOrNull(double d) {
       return Double.isFinite(d) ? d : null;
    }
 
-   static AiCapabilityDescriptor init(Command command, String name, List<String> forms) {
+   static AiCapabilityDescriptor commandDescriptor(Command command, String name, List<String> forms) {
       List<String> shown = forms.size() > 40 ? forms.subList(0, 40) : forms;
       String syntax = String.join(" | ", shown) + (shown.size() < forms.size() ? " | ... " + (forms.size() - shown.size()) + " more" : "");
       String description = command.description().isBlank() ? "Runs the " + name + " client command." : command.description().trim();
@@ -252,7 +252,7 @@ public final class AiCatalog {
       );
    }
 
-   static void init(List<AiCatalog.Entry> entries, String id, MacroAction action, ActionFieldSchema schema, String owner, String tip) {
+   static void addActionEntry(List<AiCatalog.Entry> entries, String id, MacroAction action, ActionFieldSchema schema, String owner, String tip) {
       String defaults = NbtOps.INSTANCE.convertTo(JsonOps.INSTANCE, autismclient.util.AutismMacro.serializeAction(action)).toString();
       String fields = AiJson.objectOf(
             "fields",
@@ -322,7 +322,7 @@ public final class AiCatalog {
          );
       }
 
-      init(entries, descriptor, defaults, AiSourceKnowledge.load(action.getClass()) + AiSourceKnowledge.load(autismclient.util.AutismMacro.class) + AiSourceKnowledge.load(AiMacroValidator.class));
+      addEntryWith(entries, descriptor, defaults, AiSourceKnowledge.load(action.getClass()) + AiSourceKnowledge.load(autismclient.util.AutismMacro.class) + AiSourceKnowledge.load(AiMacroValidator.class));
    }
 
    static AiCapabilityDescriptor init(
@@ -345,7 +345,7 @@ public final class AiCatalog {
       );
    }
 
-   private static void init(List<AiCatalog.Entry> entries, AiCapabilityDescriptor d, String defaults) {
+   private static void addEntry(List<AiCatalog.Entry> entries, AiCapabilityDescriptor d, String defaults) {
       String dependency = "";
       if (d.id().startsWith("module:")) {
          Module module = autismclient.modules.al.init_Module_Str(d.id().substring(7));
@@ -427,10 +427,10 @@ public final class AiCatalog {
             + AiSourceKnowledge.load(autismclient.ai.engine.AiMine.class);
       }
 
-      init(entries, d, defaults, dependency);
+      addEntryWith(entries, d, defaults, dependency);
    }
 
-   private static void init(List<AiCatalog.Entry> entries, AiCapabilityDescriptor d, String defaults, String dependency) {
+   private static void addEntryWith(List<AiCatalog.Entry> entries, AiCapabilityDescriptor d, String defaults, String dependency) {
       entries.add(new AiCatalog.Entry(d, AiJson.sha256Hex(AiJson.GSON.toJson(d) + defaults + dependency), defaults));
    }
 

@@ -14,37 +14,37 @@ import java.util.Map.Entry;
 import net.minecraft.client.Minecraft;
 
 public final class VanillaTranslationKeyLoader {
-   private static final boolean init_Z = Boolean.getBoolean("autism.protector.debug");
-   private static final Object init_Obj = new Object();
-   private static volatile Set<String> init_Set;
+   private static final boolean DEBUG = Boolean.getBoolean("autism.protector.debug");
+   private static final Object LOCK = new Object();
+   private static volatile Set<String> vanillaKeys;
 
    private VanillaTranslationKeyLoader() {
    }
 
    public static boolean init(String key) {
-      return key != null && !key.isEmpty() ? init_Set().contains(key) : false;
+      return key != null && !key.isEmpty() ? vanillaKeySet().contains(key) : false;
    }
 
-   public static boolean init_Z() {
-      return init_Set != null;
+   public static boolean isLoaded() {
+      return vanillaKeys != null;
    }
 
-   private static Set<String> init_Set() {
-      Set<String> current = init_Set;
+   private static Set<String> vanillaKeySet() {
+      Set<String> current = vanillaKeys;
       if (current != null) {
          return current;
       }
 
-      synchronized (init_Obj) {
-         if (init_Set == null) {
-            init_Set = load();
+      synchronized (LOCK) {
+         if (vanillaKeys == null) {
+            vanillaKeys = loadKeys();
          }
 
-         return init_Set;
+         return vanillaKeys;
       }
    }
 
-   private static Set<String> load() {
+   private static Set<String> loadKeys() {
       try (InputStream in = Minecraft.class.getResourceAsStream("/assets/minecraft/lang/en_us.json")) {
          if (in == null) {
             AutismClientAddon.LOG.warn("[AutismProtector] vanilla en_us.json not on classpath; falling back to blocklist only.");
@@ -61,7 +61,7 @@ public final class VanillaTranslationKeyLoader {
             }
          }
 
-         if (init_Z) {
+         if (DEBUG) {
             AutismClientAddon.LOG.debug("[AutismProtector] Loaded {} vanilla translation keys.", out.size());
          }
 
@@ -73,7 +73,7 @@ public final class VanillaTranslationKeyLoader {
    }
 
    public static void loadAsync() {
-      Thread t = new Thread(VanillaTranslationKeyLoader::init_Set, "AutismProtector-Vanilla-Keys");
+      Thread t = new Thread(VanillaTranslationKeyLoader::vanillaKeySet, "AutismProtector-Vanilla-Keys");
       t.setDaemon(true);
       t.start();
    }

@@ -13,25 +13,25 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class PatternCaptureMatcher {
-   private static final Pattern init_Pattern = Pattern.compile("\\{([A-Za-z_][A-Za-z0-9_-]{0,63})}");
-   private static final Pattern load_Pattern = Pattern.compile("\\(\\?<([A-Za-z_][A-Za-z0-9_]{0,63})>");
-   private static final Pattern read = Pattern.compile("\\s+");
+   private static final Pattern TOKEN_PATTERN = Pattern.compile("\\{([A-Za-z_][A-Za-z0-9_-]{0,63})}");
+   private static final Pattern NAMED_GROUP_PATTERN = Pattern.compile("\\(\\?<([A-Za-z_][A-Za-z0-9_]{0,63})>");
+   private static final Pattern WHITESPACE = Pattern.compile("\\s+");
    private static final char init_C = '\ue000';
    private static final char load_C = '\ue001';
-   private static final ConcurrentHashMap<String, Pattern> init_ConcurrentHashMap = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<String, Pattern> patternCache = new ConcurrentHashMap<>();
 
    public static Pattern compileCached(String regex) {
-      Pattern cached = init_ConcurrentHashMap.get(regex);
+      Pattern cached = patternCache.get(regex);
       if (cached != null) {
          return cached;
       }
 
-      if (init_ConcurrentHashMap.size() > 256) {
-         init_ConcurrentHashMap.clear();
+      if (patternCache.size() > 256) {
+         patternCache.clear();
       }
 
       Pattern fresh = Pattern.compile(regex);
-      init_ConcurrentHashMap.put(regex, fresh);
+      patternCache.put(regex, fresh);
       return fresh;
    }
 
@@ -50,10 +50,10 @@ public final class PatternCaptureMatcher {
             var10000 = Optional.empty();
             break;
          case CAPTURE:
-            var10000 = init(pattern, candidate);
+            var10000 = matchTemplate(pattern, candidate);
             break;
          case REGEX:
-            var10000 = load(pattern, candidate);
+            var10000 = matchRegex(pattern, candidate);
             break;
          default:
             throw new MatchException(null, null);
@@ -63,10 +63,10 @@ public final class PatternCaptureMatcher {
    }
 
    public static Set<String> init(PatternCaptureMatcher.MatchMode mode, String pattern) {
-      Pattern parser = mode == PatternCaptureMatcher.MatchMode.REGEX ? load_Pattern : init_Pattern;
+      Pattern parser = mode == PatternCaptureMatcher.MatchMode.REGEX ? NAMED_GROUP_PATTERN : TOKEN_PATTERN;
       String source = pattern == null ? "" : pattern;
       if (mode != PatternCaptureMatcher.MatchMode.REGEX) {
-         source = init_Str(source);
+         source = escapeBraces(source);
       }
 
       Matcher matcher = parser.matcher(source);
@@ -79,14 +79,14 @@ public final class PatternCaptureMatcher {
       return names;
    }
 
-   private static Optional<PatternCaptureMatcher.CaptureResult> init(String sourcePattern, String sourceCandidate) {
-      String capturePattern = init_Str(sourcePattern == null ? "" : sourcePattern.trim());
-      String candidate = load(sourceCandidate);
+   private static Optional<PatternCaptureMatcher.CaptureResult> matchTemplate(String sourcePattern, String sourceCandidate) {
+      String capturePattern = escapeBraces(sourcePattern == null ? "" : sourcePattern.trim());
+      String candidate = normalizeWhitespace(sourceCandidate);
       if (capturePattern.isEmpty()) {
          return Optional.of(new PatternCaptureMatcher.CaptureResult(candidate, Map.of()));
       }
 
-      Matcher tokenMatcher = init_Pattern.matcher(capturePattern);
+      Matcher tokenMatcher = TOKEN_PATTERN.matcher(capturePattern);
       StringBuilder regex = new StringBuilder("(?iu)");
       List<String> names = new ArrayList<>();
 
@@ -96,7 +96,7 @@ public final class PatternCaptureMatcher {
             return Optional.empty();
          }
 
-         init(regex, capturePattern.substring(cursor, tokenMatcher.start()));
+         appendLiteral(regex, capturePattern.substring(cursor, tokenMatcher.start()));
          String name = tokenMatcher.group(1).toLowerCase(Locale.ROOT);
          if (names.contains(name)) {
             return Optional.empty();
@@ -111,7 +111,7 @@ public final class PatternCaptureMatcher {
          return Optional.empty();
       }
 
-      init(regex, capturePattern.substring(cursor));
+      appendLiteral(regex, capturePattern.substring(cursor));
 
       try {
          Matcher matcher = compileCached(regex.toString()).matcher(candidate);
@@ -137,7 +137,7 @@ public final class PatternCaptureMatcher {
       }
    }
 
-   private static Optional<PatternCaptureMatcher.CaptureResult> load(String sourcePattern, String sourceCandidate) {
+   private static Optional<PatternCaptureMatcher.CaptureResult> matchRegex(String sourcePattern, String sourceCandidate) {
       String regex = sourcePattern == null ? "" : sourcePattern;
       if (regex.isBlank()) {
          return Optional.of(new PatternCaptureMatcher.CaptureResult(sourceCandidate, Map.of()));
@@ -166,7 +166,7 @@ public final class PatternCaptureMatcher {
       }
    }
 
-   private static void init(StringBuilder regex, String literal) {
+   private static void appendLiteral(StringBuilder regex, String literal) {
       if (literal != null && !literal.isEmpty()) {
          literal = literal.replace('\ue000', '{').replace('\ue001', '}');
          String[] pieces = literal.trim().split("\\s+");
@@ -190,12 +190,12 @@ public final class PatternCaptureMatcher {
       }
    }
 
-   private static String init_Str(String value) {
+   private static String escapeBraces(String value) {
       return value != null && !value.isEmpty() ? value.replace("{{", String.valueOf('\ue000')).replace("}}", String.valueOf('\ue001')) : "";
    }
 
-   private static String load(String value) {
-      return value == null ? "" : read.matcher(value.replace('\n', ' ').replace('\r', ' ')).replaceAll(" ").trim();
+   private static String normalizeWhitespace(String value) {
+      return value == null ? "" : WHITESPACE.matcher(value.replace('\n', ' ').replace('\r', ' ')).replaceAll(" ").trim();
    }
 
    public enum MatchMode {
@@ -204,9 +204,9 @@ public final class PatternCaptureMatcher {
       REGEX;
    }
 
-   public record CaptureResult(String init_Str, Map<String, MacroVarValue> variables) {
+   public record CaptureResult(String matchedText, Map<String, MacroVarValue> variables) {
       public CaptureResult {
-         init_Str = init_Str == null ? "" : init_Str;
+         matchedText = matchedText == null ? "" : matchedText;
          variables = variables == null ? Map.of() : Map.copyOf(variables);
       }
    }

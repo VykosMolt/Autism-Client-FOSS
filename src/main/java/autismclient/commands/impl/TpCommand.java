@@ -22,9 +22,9 @@ public final class TpCommand extends Command {
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
          if (AutismLiteVariant.enabled()) {
-            init_V("TP is unavailable in Lite.");
+            reply("TP is unavailable in Lite.");
          } else {
-            init_V(PkgCls_a.init_Str_Str(""));
+            reply(PkgCls_a.init_Str_Str(""));
          }
 
          return 1;
@@ -53,16 +53,16 @@ public final class TpCommand extends Command {
          return suggestions.buildFuture();
       }).executes(ctx -> {
          if (AutismLiteVariant.enabled()) {
-            init_V("TP is unavailable in Lite.");
+            reply("TP is unavailable in Lite.");
          } else {
-            init_V(PkgCls_a.init_Str_Str(init_Str(StringArgumentType.getString(ctx, "arguments"))));
+            reply(PkgCls_a.init_Str_Str(resolveWaypointArgs(StringArgumentType.getString(ctx, "arguments"))));
          }
 
          return 1;
       }));
    }
 
-   private static String init_Str(String args) {
+   private static String resolveWaypointArgs(String args) {
       String trimmed = args == null ? "" : args.trim();
       if (trimmed.isEmpty()) {
          return args;
@@ -75,20 +75,20 @@ public final class TpCommand extends Command {
 
       String scope = AuditWaypointScope.current(mc);
       if (trimmed.length() >= 2 && trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
-         return init(AutismWaypoints.getInstance().find(scope, trimmed.substring(1, trimmed.length() - 1)), args);
+         return waypointCoords(AutismWaypoints.getInstance().find(scope, trimmed.substring(1, trimmed.length() - 1)), args);
       }
 
       String lower = trimmed.toLowerCase(Locale.ROOT);
-      return !lower.equals("stop") && !lower.equals("status") && !lower.equals("reset") && !lower.startsWith("config") && !init_Z(trimmed)
-         ? init(AutismWaypoints.getInstance().find(scope, trimmed), args)
+      return !lower.equals("stop") && !lower.equals("status") && !lower.equals("reset") && !lower.startsWith("config") && !isCoordinateTriple(trimmed)
+         ? waypointCoords(AutismWaypoints.getInstance().find(scope, trimmed), args)
          : args;
    }
 
-   private static String init(AutismWaypoints.Waypoint wp, String fallback) {
+   private static String waypointCoords(AutismWaypoints.Waypoint wp, String fallback) {
       return wp == null ? fallback : wp.x() + " " + wp.y() + " " + wp.z();
    }
 
-   private static boolean init_Z(String value) {
+   private static boolean isCoordinateTriple(String value) {
       String[] parts = value.split("\\s+");
       if (parts.length < 3) {
          return false;
@@ -107,7 +107,7 @@ public final class TpCommand extends Command {
       return true;
    }
 
-   private static void init_V(String result) {
+   private static void reply(String result) {
       String text = result != null && !result.isBlank()
          ? result
          : "Usage: " + autismclient.commands.CommandManager.getPrefix() + "tp <x> <y> <z> [maxPackets] [pauseMs]";

@@ -6,71 +6,71 @@ import autismclient.gui.f.NetHelper;
 
 public final class VisibilityTransition {
    private static final float init_F = 0.8F;
-   private final EaseOutAnimator init_RingBuffer;
+   private final EaseOutAnimator animator;
    private boolean init_Z;
 
    public VisibilityTransition(boolean visible) {
-      this.init_RingBuffer = new EaseOutAnimator(visible ? 1.0F : 0.0F, 150);
+      this.animator = new EaseOutAnimator(visible ? 1.0F : 0.0F, 150);
    }
 
    VisibilityTransition(boolean visible, LongSupplier clock) {
-      this.init_RingBuffer = new EaseOutAnimator(visible ? 1.0F : 0.0F, 150, clock);
+      this.animator = new EaseOutAnimator(visible ? 1.0F : 0.0F, 150, clock);
    }
 
    public void animateTo(boolean visible) {
       if (this.init_Z) {
          this.init_Z = false;
          if (visible) {
-            this.init_RingBuffer.snapTo(0.0F);
+            this.animator.snapTo(0.0F);
          }
       }
 
-      this.init_RingBuffer.animateTo(visible ? 1.0F : 0.0F);
+      this.animator.animateTo(visible ? 1.0F : 0.0F);
    }
 
    public void snapTo(boolean visible) {
       if (this.init_Z) {
          this.init_Z = false;
          if (visible) {
-            this.init_RingBuffer.snapTo(0.0F);
-            this.init_RingBuffer.animateTo(1.0F);
+            this.animator.snapTo(0.0F);
+            this.animator.animateTo(1.0F);
             return;
          }
       }
 
-      this.init_RingBuffer.snapTo(visible ? 1.0F : 0.0F);
+      this.animator.snapTo(visible ? 1.0F : 0.0F);
    }
 
    public void restart() {
       this.init_Z = true;
    }
 
-   public float init_F() {
-      return this.init_RingBuffer.value();
+   public float progress() {
+      return this.animator.value();
    }
 
    public boolean isFadingOut(boolean visible) {
-      return !visible && this.init_RingBuffer.value() > 0.001F;
+      return !visible && this.animator.value() > 0.001F;
    }
 
    public boolean shouldRender(boolean visible) {
       return visible || this.isFadingOut(visible);
    }
 
-   public boolean init_Z() {
-      return this.init_RingBuffer.isAnimating();
+   public boolean isAnimating() {
+      return this.animator.isAnimating();
    }
 
-   public float load() {
-      return 0.8F + 0.19999999F * this.init_F();
+   public float scale() {
+      return 0.8F + 0.19999999F * this.progress();
    }
 
-   public float read() {
-      return this.init_F();
+   public float opacity() {
+      return this.progress();
    }
 
    public void init(GuiGraphicsExtractor graphics, NetHelper bounds, boolean zoom, Runnable draw) {
-      float value = this.init_F();
+      float value = this.progress();
       if (value >= 0.999F) {
          draw.run();
       } else {

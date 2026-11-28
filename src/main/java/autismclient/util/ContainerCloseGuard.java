@@ -13,48 +13,48 @@ import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
 
 public final class ContainerCloseGuard {
    private static final long init_J = 60000L;
-   private static final Map<Integer, AtomicInteger> init_Map = new ConcurrentHashMap<>();
-   private static final Map<Integer, ServerboundContainerClosePacket> load = new ConcurrentHashMap<>();
-   private static final Map<Integer, Long> read = new ConcurrentHashMap<>();
-   private static volatile Consumer<ContainerClickSnapshot.Inner_StreamUtil> init_Consumer = null;
+   private static final Map<Integer, AtomicInteger> holdCounts = new ConcurrentHashMap<>();
+   private static final Map<Integer, ServerboundContainerClosePacket> deferredCloses = new ConcurrentHashMap<>();
+   private static final Map<Integer, Long> lastTouched = new ConcurrentHashMap<>();
+   private static volatile Consumer<ContainerClickSnapshot.Inner_StreamUtil> snapshotConsumer = null;
 
    private ContainerCloseGuard() {
    }
 
    public static void holdOpen(int containerId) {
       if (containerId >= 0) {
-         init_Map.computeIfAbsent(containerId, id -> new AtomicInteger(0)).incrementAndGet();
-         read.put(containerId, System.currentTimeMillis());
+         holdCounts.computeIfAbsent(containerId, id -> new AtomicInteger(0)).incrementAndGet();
+         lastTouched.put(containerId, System.currentTimeMillis());
       }
    }
 
    public static boolean isHeldOpen(int containerId) {
-      AtomicInteger counter = init_Map.get(containerId);
+      AtomicInteger counter = holdCounts.get(containerId);
       return counter != null && counter.get() > 0;
    }
 
    public static void init(int containerId, ServerboundContainerClosePacket pkt) {
       if (pkt != null) {
-         load.put(containerId, pkt);
-         read.put(containerId, System.currentTimeMillis());
+         deferredCloses.put(containerId, pkt);
+         lastTouched.put(containerId, System.currentTimeMillis());
       }
    }
 
    public static void init(int containerId, ClientPacketListener conn) {
-      AtomicInteger counter = init_Map.get(containerId);
+      AtomicInteger counter = holdCounts.get(containerId);
       if (counter == null) {
-         load(containerId, conn);
+         flushDeferredClose(containerId, conn);
       } else if (counter.decrementAndGet() <= 0) {
-         init_Map.remove(containerId);
-         load(containerId, conn);
-         read.remove(containerId);
+         holdCounts.remove(containerId);
+         flushDeferredClose(containerId, conn);
+         lastTouched.remove(containerId);
       } else {
-         read.put(containerId, System.currentTimeMillis());
+         lastTouched.put(containerId, System.currentTimeMillis());
       }
    }
 
-   private static void load(int containerId, ClientPacketListener conn) {
-      ServerboundContainerClosePacket pending = load.remove(containerId);
+   private static void flushDeferredClose(int containerId, ClientPacketListener conn) {
+      ServerboundContainerClosePacket pending = deferredCloses.remove(containerId);
       if (!autismclient.modules.aD.read_Z() && pending != null && conn != null) {
          try {
             conn.send(pending);
@@ -64,41 +64,41 @@ public final class ContainerCloseGuard {
    }
 
    public static void clear() {
-      init_Map.clear();
-      load.clear();
-      read.clear();
+      holdCounts.clear();
+      deferredCloses.clear();
+      lastTouched.clear();
    }
 
    public static void init(ClientPacketListener conn) {
-      init_Map.clear();
-      read.clear();
+      holdCounts.clear();
+      lastTouched.clear();
       if (conn != null && !autismclient.modules.aD.read_Z()) {
-         for (Entry<Integer, ServerboundContainerClosePacket> entry : load.entrySet()) {
+         for (Entry<Integer, ServerboundContainerClosePacket> entry : deferredCloses.entrySet()) {
             try {
                conn.send(entry.getValue());
             } catch (Throwable var4) {
             }
          }
 
-         load.clear();
+         deferredCloses.clear();
       } else {
-         load.clear();
+         deferredCloses.clear();
       }
    }
 
    public static void load(int newContainerId) {
-      if (init_Map.remove(newContainerId) != null) {
-         load.remove(newContainerId);
-         read.remove(newContainerId);
+      if (holdCounts.remove(newContainerId) != null) {
+         deferredCloses.remove(newContainerId);
+         lastTouched.remove(newContainerId);
       }
    }
 
    public static void expireStale() {
-      if (!read.isEmpty()) {
+      if (!lastTouched.isEmpty()) {
          long now = System.currentTimeMillis();
          List<Integer> expired = new ArrayList<>();
 
-         for (Entry<Integer, Long> e : read.entrySet()) {
+         for (Entry<Integer, Long> e : lastTouched.entrySet()) {
             if (now - e.getValue() >= 60000L) {
                expired.add(e.getKey());
             }
@@ -114,30 +114,30 @@ public final class ContainerCloseGuard {
             }
 
             for (Integer id : expired) {
-               init_Map.remove(id);
-               read.remove(id);
-               load(id, conn);
+               holdCounts.remove(id);
+               lastTouched.remove(id);
+               flushDeferredClose(id, conn);
             }
          }
       }
    }
 
    public static boolean hasHolds() {
-      return !read.isEmpty();
+      return !lastTouched.isEmpty();
    }
 
    public static void init(Consumer<ContainerClickSnapshot.Inner_StreamUtil> consumer) {
-      init_Consumer = consumer;
+      snapshotConsumer = consumer;
    }
 
    public static boolean isCapturing() {
-      return init_Consumer != null;
+      return snapshotConsumer != null;
    }
 
-   public static boolean init(ContainerClickSnapshot.Inner_StreamUtil target) {
-      Consumer<ContainerClickSnapshot.Inner_StreamUtil> consumer = init_Consumer;
+   public static boolean offerSnapshot(ContainerClickSnapshot.Inner_StreamUtil target) {
+      Consumer<ContainerClickSnapshot.Inner_StreamUtil> consumer = snapshotConsumer;
       if (consumer != null && target != null) {
-         init_Consumer = null;
+         snapshotConsumer = null;
 
          try {
             consumer.accept(target);
@@ -151,6 +151,6 @@ public final class ContainerCloseGuard {
    }
 
    public static void read() {
-      init_Consumer = null;
+      snapshotConsumer = null;
    }
 }

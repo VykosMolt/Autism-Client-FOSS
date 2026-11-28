@@ -12,18 +12,18 @@ public final class LoggedPacketActions {
       return entry != null && "C2S".equalsIgnoreCase(entry.direction) && entry.packet != null;
    }
 
-   public static boolean load(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   public static boolean isSendable(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       return init(entry);
    }
 
    public static boolean read(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      if (!load(entry)) {
+      if (!isSendable(entry)) {
          AutismClientMessaging.sendPrefixed("§cOnly C2S packets can be sent.");
          return false;
       }
 
       if (entry.packet instanceof ServerboundCustomPayloadPacket) {
-         return tick(entry);
+         return resendCustomPayload(entry);
       }
 
       Packet<?> regenerated = PacketRegenerator.init(entry.packet);
@@ -42,7 +42,7 @@ public final class LoggedPacketActions {
       }
    }
 
-   private static boolean tick(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   private static boolean resendCustomPayload(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       AutismPayloadSupport.PayloadEntry snapshot = AutismPayloadSupport.resolveEntryPayload(entry);
       if (snapshot != null && snapshot.channel() != null && !snapshot.channel().isBlank()) {
          byte[] rawBytes = snapshot.rawBytes();
@@ -189,11 +189,11 @@ public final class LoggedPacketActions {
    }
 
    public static boolean init_Z() {
-      return load() != null;
+      return findMacroEditor() != null;
    }
 
    private static AutismMacroEditorOverlay init_AutismMacroEditorO() {
-      AutismMacroEditorOverlay macroEditor = load();
+      AutismMacroEditorOverlay macroEditor = findMacroEditor();
       if (macroEditor != null) {
          OverlayManager.getInstance().bringToFront(macroEditor);
          return macroEditor;
@@ -210,7 +210,7 @@ public final class LoggedPacketActions {
       return macroEditor;
    }
 
-   private static AutismMacroEditorOverlay load() {
+   private static AutismMacroEditorOverlay findMacroEditor() {
       for (AutismOverlay overlay : OverlayManager.getInstance().getOverlays()) {
          if (overlay instanceof AutismMacroEditorOverlay macroEditor && macroEditor.isVisible()) {
             return macroEditor;

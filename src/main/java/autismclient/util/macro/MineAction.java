@@ -19,7 +19,7 @@ public class MineAction implements PacketOrderAware, MacroAction {
    public boolean stopAfterTime = false;
    public int timeoutSeconds = 60;
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public MacroActionType getType() {
@@ -52,12 +52,12 @@ public class MineAction implements PacketOrderAware, MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override
@@ -78,7 +78,7 @@ public class MineAction implements PacketOrderAware, MacroAction {
       tag.putInt("minedCountTarget", this.minedCountTarget);
       tag.putBoolean("stopAfterTime", this.stopAfterTime);
       tag.putInt("timeoutSeconds", this.timeoutSeconds);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
@@ -103,7 +103,7 @@ public class MineAction implements PacketOrderAware, MacroAction {
       this.stopAfterTime = tag.getBooleanOr("stopAfterTime", false);
       this.timeoutSeconds = tag.getIntOr("timeoutSeconds", 60);
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);

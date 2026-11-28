@@ -7,16 +7,16 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class MacroVariableStore {
-   private final ConcurrentHashMap<String, MacroVarValue> init = new ConcurrentHashMap<>();
+   private final ConcurrentHashMap<String, MacroVarValue> vars = new ConcurrentHashMap<>();
 
    public void clear() {
-      this.init.clear();
+      this.vars.clear();
    }
 
    public void init(String name, MacroVarValue value) {
       String key = load(name);
       if (!key.isEmpty() && value != null) {
-         this.init.put(key, value);
+         this.vars.put(key, value);
       }
    }
 
@@ -33,7 +33,7 @@ public final class MacroVariableStore {
       } else {
          int dot = key.indexOf(46);
          String root = dot < 0 ? key : key.substring(0, dot);
-         MacroVarValue value = this.init.get(root);
+         MacroVarValue value = this.vars.get(root);
          if (value == null) {
             return Optional.empty();
          } else {
@@ -45,11 +45,11 @@ public final class MacroVariableStore {
    public void remove(String name) {
       String key = init_Str_Str(name);
       int dot = key.indexOf(46);
-      this.init.remove(dot < 0 ? key : key.substring(0, dot));
+      this.vars.remove(dot < 0 ? key : key.substring(0, dot));
    }
 
    public Map<String, MacroVarValue> snapshot() {
-      return Map.copyOf(new LinkedHashMap<>(this.init));
+      return Map.copyOf(new LinkedHashMap<>(this.vars));
    }
 
    public static String init_Str_Str(String name) {

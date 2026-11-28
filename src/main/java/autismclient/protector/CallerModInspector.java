@@ -99,7 +99,7 @@ public final class CallerModInspector {
          try {
             URI uri = type.getProtectionDomain().getCodeSource().getLocation().toURI();
             Path path = Path.of(uri);
-            String modId = init(path);
+            String modId = modIdAt(path);
             return init_Str(modId);
          } catch (Throwable ignored) {
             return null;
@@ -109,7 +109,7 @@ public final class CallerModInspector {
       }
    }
 
-   public static String init(Path path) {
+   public static String modIdAt(Path path) {
       if (path == null) {
          return null;
       }
@@ -122,7 +122,7 @@ public final class CallerModInspector {
                path.resolve("../../resources/main/fabric.mod.json").normalize(),
                path.resolve("../../../resources/main/fabric.mod.json").normalize()
             }) {
-               String modId = load(candidate);
+               String modId = readModId(candidate);
                if (modId != null) {
                   return modId;
                }
@@ -150,7 +150,7 @@ public final class CallerModInspector {
       }
    }
 
-   private static String load(Path path) {
+   private static String readModId(Path path) {
       if (path != null && Files.isRegularFile(path)) {
          try (InputStreamReader reader = new InputStreamReader(Files.newInputStream(path), StandardCharsets.UTF_8)) {
             JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();

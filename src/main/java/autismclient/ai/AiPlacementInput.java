@@ -5,7 +5,7 @@ import java.util.Set;
 
 final class AiPlacementInput {
    private boolean init_Z;
-   private final Set<Integer> init_Set = new HashSet<>();
+   private final Set<Integer> pressedKeys = new HashSet<>();
 
    void init_V() {
       this.init_Z = true;
@@ -20,23 +20,23 @@ final class AiPlacementInput {
    }
 
    boolean load_Z() {
-      return this.init_Z || !this.init_Set.isEmpty();
+      return this.init_Z || !this.pressedKeys.isEmpty();
    }
 
    boolean init(int key) {
-      return this.init_Set.contains(key);
+      return this.pressedKeys.contains(key);
    }
 
    Set<Integer> heldKeys() {
-      return Set.copyOf(this.init_Set);
+      return Set.copyOf(this.pressedKeys);
    }
 
    boolean init(int key, boolean down) {
-      boolean owned = this.init_Z || this.init_Set.contains(key);
+      boolean owned = this.init_Z || this.pressedKeys.contains(key);
       if (down && this.init_Z) {
-         this.init_Set.add(key);
+         this.pressedKeys.add(key);
       } else if (!down) {
-         this.init_Set.remove(key);
+         this.pressedKeys.remove(key);
       }
 
       return owned;

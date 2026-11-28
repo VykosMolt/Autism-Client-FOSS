@@ -9,14 +9,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.core.BlockPos;
 
 public final class AiGridRevisions {
-   private static final Map<Long, AtomicInteger> init_Map = new ConcurrentHashMap<>();
+   private static final Map<Long, AtomicInteger> chunkRevisions = new ConcurrentHashMap<>();
    static final int init_I = 8192;
-   private static final AtomicInteger init_AtomicInteger = new AtomicInteger();
-   private static volatile int load;
-   private static final AtomicLong init_AtomicLong = new AtomicLong();
+   private static final AtomicInteger stampCounter = new AtomicInteger();
+   private static volatile int fallbackRevision;
+   private static final AtomicLong changeCount = new AtomicLong();
 
    public static long globalRevision() {
-      return init_AtomicLong.get();
+      return changeCount.get();
    }
 
    private AiGridRevisions() {
@@ -27,36 +27,36 @@ public final class AiGridRevisions {
    }
 
    public static void bumpChunk(int cx, int cz) {
-      init_Map.computeIfAbsent(HashCommon.mix(chunkKey(cx, cz)), k -> new AtomicInteger()).set(init_AtomicInteger.incrementAndGet());
-      init_AtomicLong.incrementAndGet();
-      if (init_Map.size() > 8192) {
-         load();
+      chunkRevisions.computeIfAbsent(HashCommon.mix(chunkKey(cx, cz)), k -> new AtomicInteger()).set(stampCounter.incrementAndGet());
+      changeCount.incrementAndGet();
+      if (chunkRevisions.size() > 8192) {
+         pruneOldest();
       }
    }
 
    public static int init(long chunkKey) {
-      AtomicInteger revision = init_Map.get(HashCommon.mix(chunkKey));
-      return revision == null ? load : revision.get();
+      AtomicInteger revision = chunkRevisions.get(HashCommon.mix(chunkKey));
+      return revision == null ? fallbackRevision : revision.get();
    }
 
    public static long chunkKey(int cx, int cz) {
       return (long)cx << 32 | cz & 4294967295L;
    }
 
-   private static void load() {
-      int[] stamps = init_Map.values().stream().mapToInt(AtomicInteger::get).toArray();
+   private static void pruneOldest() {
+      int[] stamps = chunkRevisions.values().stream().mapToInt(AtomicInteger::get).toArray();
       Arrays.sort(stamps);
       int cutoff = stamps[stamps.length / 2];
-      init_Map.values().removeIf(revision -> revision.get() <= cutoff);
+      chunkRevisions.values().removeIf(revision -> revision.get() <= cutoff);
    }
 
-   static int init_I() {
-      return init_Map.size();
+   static int trackedChunks() {
+      return chunkRevisions.size();
    }
 
    public static void resetAll() {
-      load = init_AtomicInteger.incrementAndGet();
-      init_Map.clear();
-      init_AtomicLong.incrementAndGet();
+      fallbackRevision = stampCounter.incrementAndGet();
+      chunkRevisions.clear();
+      changeCount.incrementAndGet();
    }
 }

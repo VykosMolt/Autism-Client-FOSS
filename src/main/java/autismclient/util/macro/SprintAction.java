@@ -5,7 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 
 public class SprintAction implements PacketOrderAware, MacroAction {
    public boolean sprint = true;
-   private boolean init = true;
+   private boolean enabled = true;
    public boolean persistent = false;
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
 
@@ -33,7 +33,7 @@ public class SprintAction implements PacketOrderAware, MacroAction {
       tag.putString("type", this.getType().name());
       tag.putBoolean("sprint", this.sprint);
       tag.putBoolean("persistent", this.persistent);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
@@ -49,7 +49,7 @@ public class SprintAction implements PacketOrderAware, MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);
@@ -77,11 +77,11 @@ public class SprintAction implements PacketOrderAware, MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 }

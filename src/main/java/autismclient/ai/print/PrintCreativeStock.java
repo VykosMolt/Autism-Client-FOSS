@@ -7,14 +7,14 @@ import java.util.function.Predicate;
 import net.minecraft.world.item.ItemStack;
 
 final class PrintCreativeStock {
-   private final Map<Integer, ItemStack> init = new HashMap<>();
+   private final Map<Integer, ItemStack> stockedSlots = new HashMap<>();
 
-   int init(IntFunction<ItemStack> inventory) {
+   int stockedSlot(IntFunction<ItemStack> inventory) {
       return this.init(inventory, stack -> false);
    }
 
    int init(IntFunction<ItemStack> inventory, Predicate<ItemStack> reserved) {
-      this.init.entrySet().removeIf(e -> !ItemStack.matches(e.getValue(), inventory.apply(e.getKey())));
+      this.stockedSlots.entrySet().removeIf(e -> !ItemStack.matches(e.getValue(), inventory.apply(e.getKey())));
 
       for (int i = 0; i < 36; i++) {
          if (inventory.apply(i).isEmpty()) {
@@ -22,20 +22,20 @@ final class PrintCreativeStock {
          }
       }
 
-      return this.init.keySet().stream().filter(slot -> slot >= 0 && slot < 36 && !reserved.test(this.init.get(slot))).min(Integer::compare).orElse(-1);
+      return this.stockedSlots.keySet().stream().filter(slot -> slot >= 0 && slot < 36 && !reserved.test(this.stockedSlots.get(slot))).min(Integer::compare).orElse(-1);
    }
 
-   int load(IntFunction<ItemStack> inventory, Predicate<ItemStack> reserved) {
+   int stockedSlotOrOffhand(IntFunction<ItemStack> inventory, Predicate<ItemStack> reserved) {
       int main = this.init(inventory, reserved);
       return main >= 0 ? main : (inventory.apply(40).isEmpty() ? 40 : -1);
    }
 
    int load(IntFunction<ItemStack> inventory) {
-      int main = this.init(inventory);
+      int main = this.stockedSlot(inventory);
       if (main >= 0 && main < 9) {
          return main;
       } else {
-         int owned = this.init.keySet().stream().filter(index -> index >= 0 && index < 9).min(Integer::compare).orElse(-1);
+         int owned = this.stockedSlots.keySet().stream().filter(index -> index >= 0 && index < 9).min(Integer::compare).orElse(-1);
          if (owned >= 0) {
             return owned;
          } else {
@@ -46,21 +46,21 @@ final class PrintCreativeStock {
 
    void init(int slot, ItemStack stack) {
       if (stack.isEmpty()) {
-         this.init.remove(slot);
+         this.stockedSlots.remove(slot);
       } else {
-         this.init.put(slot, stack.copy());
+         this.stockedSlots.put(slot, stack.copy());
       }
    }
 
    void init(int a, int b) {
-      ItemStack first = this.init.remove(a);
-      ItemStack second = this.init.remove(b);
+      ItemStack first = this.stockedSlots.remove(a);
+      ItemStack second = this.stockedSlots.remove(b);
       if (first != null) {
-         this.init.put(b, first);
+         this.stockedSlots.put(b, first);
       }
 
       if (second != null) {
-         this.init.put(a, second);
+         this.stockedSlots.put(a, second);
       }
    }
 }

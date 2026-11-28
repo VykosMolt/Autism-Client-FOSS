@@ -10,36 +10,36 @@ import org.joml.Matrix4f;
 import org.joml.Vector4f;
 
 public final class TrajectoryOffscreenIndicator {
-   private static final Matrix4f init_Matrix4f = new Matrix4f();
-   private static final Vector4f init_Vector4f = new Vector4f();
-   private static final float[] init_FArr = new float[3];
-   private static final float[] load = new float[3];
-   private static int init_I;
+   private static final Matrix4f PROJECTION = new Matrix4f();
+   private static final Vector4f clipPos = new Vector4f();
+   private static final float[] drawnX = new float[3];
+   private static final float[] drawnY = new float[3];
+   private static int drawnCount;
 
    private TrajectoryOffscreenIndicator() {
    }
 
-   public static int init_I() {
-      return init_I;
+   public static int drawnCount() {
+      return drawnCount;
    }
 
    static void reset() {
-      init_I = 0;
+      drawnCount = 0;
    }
 
    public static void init(GuiGraphicsExtractor graphics) {
-      init_I = 0;
+      drawnCount = 0;
       Minecraft mc = Minecraft.getInstance();
       Module module = al.init_Module_Str("trajectories");
-      if (module instanceof TrajectoriesModule trajectories && module.isEnabled() && mc.player != null && mc.gui.screen() == null && !aD.init_Z() && WorldProjectionHelper.init(init_Matrix4f)) {
+      if (module instanceof TrajectoriesModule trajectories && module.isEnabled() && mc.player != null && mc.gui.screen() == null && !aD.init_Z() && WorldProjectionHelper.init(PROJECTION)) {
          Vec3 camera = WorldProjectionHelper.init();
          ThrownPearlTracker.Inner_DataUtil remembered = TrajectoryStateCache.rememberedPearl();
          if (remembered != null) {
-            init(graphics, mc, remembered.position(), camera, -8329771);
+            drawIndicator(graphics, mc, remembered.position(), camera, -8329771);
          }
 
          for (TrajectoriesModule.Inner_CachePool path : trajectories.paths()) {
-            if (init_I >= 3) {
+            if (drawnCount >= 3) {
                break;
             }
 
@@ -47,24 +47,24 @@ public final class TrajectoryOffscreenIndicator {
                Vec3 at = path.load_Vec3() != null ? path.load_Vec3() : path.hit().getLocation();
                if (remembered == null || !(remembered.position().distanceToSqr(at) < 1.0)) {
                   int color = path.hit().getType() == Type.ENTITY ? -44976 : path.color();
-                  init(graphics, mc, at, camera, color);
+                  drawIndicator(graphics, mc, at, camera, color);
                }
             }
          }
       }
    }
 
-   private static void init(GuiGraphicsExtractor graphics, Minecraft mc, Vec3 at, Vec3 camera, int color) {
-      init_Vector4f.set((float)(at.x - camera.x), (float)(at.y - camera.y), (float)(at.z - camera.z), 1.0F);
-      init_Matrix4f.transform(init_Vector4f);
-      if (Float.isFinite(init_Vector4f.x) && Float.isFinite(init_Vector4f.y) && Float.isFinite(init_Vector4f.w)) {
-         float dx = init_Vector4f.x / Math.max(0.001F, Math.abs(init_Vector4f.w));
-         float dy = -init_Vector4f.y / Math.max(0.001F, Math.abs(init_Vector4f.w));
-         if (!(init_Vector4f.w > 0.0F) || !(Math.abs(dx) < 0.9F) || !(Math.abs(dy) < 0.88F)) {
+   private static void drawIndicator(GuiGraphicsExtractor graphics, Minecraft mc, Vec3 at, Vec3 camera, int color) {
+      clipPos.set((float)(at.x - camera.x), (float)(at.y - camera.y), (float)(at.z - camera.z), 1.0F);
+      PROJECTION.transform(clipPos);
+      if (Float.isFinite(clipPos.x) && Float.isFinite(clipPos.y) && Float.isFinite(clipPos.w)) {
+         float dx = clipPos.x / Math.max(0.001F, Math.abs(clipPos.w));
+         float dy = -clipPos.y / Math.max(0.001F, Math.abs(clipPos.w));
+         if (!(clipPos.w > 0.0F) || !(Math.abs(dx) < 0.9F) || !(Math.abs(dy) < 0.88F)) {
             int width = cA.init_I();
             int height = cA.load_I();
             if (width >= 64 && height >= 64) {
-               if (init_Vector4f.w <= 0.0F) {
+               if (clipPos.w <= 0.0F) {
                   float yaw = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.yRot;
                   float bearing = Mth.wrapDegrees((float)(Math.toDegrees(Math.atan2(at.z - camera.z, at.x - camera.x)) - 90.0) - yaw) * 0.017453292F;
                   dx = Mth.sin(bearing);
@@ -76,14 +76,14 @@ public final class TrajectoryOffscreenIndicator {
                   float x = width * 0.5F + dx / scale;
                   float y = height * 0.5F + dy / scale;
 
-                  for (int i = 0; i < init_I; i++) {
-                     if (Math.abs(x - init_FArr[i]) < 19.0F && Math.abs(y - load[i]) < 19.0F) {
+                  for (int i = 0; i < drawnCount; i++) {
+                     if (Math.abs(x - drawnX[i]) < 19.0F && Math.abs(y - drawnY[i]) < 19.0F) {
                         return;
                      }
                   }
 
-                  init_FArr[init_I] = x;
-                  load[init_I++] = y;
+                  drawnX[drawnCount] = x;
+                  drawnY[drawnCount++] = y;
                   autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract(graphics, x, y, 9.0F, -586147549);
                   graphics.pose().pushMatrix();
 

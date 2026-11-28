@@ -39,7 +39,7 @@ public final class AiTerrainDump {
                } else if (p.equals(mark)) {
                   out.append('X');
                } else {
-                  out.append(init(level.getBlockState(p), legend));
+                  out.append(glyph(level.getBlockState(p), legend));
                }
             }
          }
@@ -52,7 +52,7 @@ public final class AiTerrainDump {
       return out.toString();
    }
 
-   private static char init(BlockState state, Map<String, Character> legend) {
+   private static char glyph(BlockState state, Map<String, Character> legend) {
       if (state.isAir()) {
          return '.';
       } else {

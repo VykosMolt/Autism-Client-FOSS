@@ -13,7 +13,7 @@ public class SwapSlotsAction implements MacroAction {
    public boolean fromUseItemName = false;
    public boolean toUseItemName = false;
    public boolean useHandlerSlots = true;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -21,7 +21,7 @@ public class SwapSlotsAction implements MacroAction {
          int resolvedFrom = this.fromSlot;
          int resolvedTo = this.toSlot;
          if (this.fromUseItemName) {
-            MacroItemTarget target = this.init().resolveTemplates(mc);
+            MacroItemTarget target = this.resolveFromTarget().resolveTemplates(mc);
             if (target == null) {
                return;
             }
@@ -37,7 +37,7 @@ public class SwapSlotsAction implements MacroAction {
          }
 
          if (this.toUseItemName) {
-            MacroItemTarget target = this.load().resolveTemplates(mc);
+            MacroItemTarget target = this.resolveToTarget().resolveTemplates(mc);
             if (target == null) {
                return;
             }
@@ -71,8 +71,8 @@ public class SwapSlotsAction implements MacroAction {
       tag.putString("type", "SWAP_SLOTS");
       tag.putInt("fromSlot", this.fromSlot);
       tag.putInt("toSlot", this.toSlot);
-      MacroItemTarget fromTarget = this.init();
-      MacroItemTarget toTarget = this.load();
+      MacroItemTarget fromTarget = this.resolveFromTarget();
+      MacroItemTarget toTarget = this.resolveToTarget();
       if (fromTarget.hasSlot() || fromTarget.hasItemFilter()) {
          tag.put("fromItemName", fromTarget.toTag());
       }
@@ -83,7 +83,7 @@ public class SwapSlotsAction implements MacroAction {
 
       tag.putBoolean("fromUseItemName", this.fromUseItemName);
       tag.putBoolean("toUseItemName", this.toUseItemName);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -103,14 +103,14 @@ public class SwapSlotsAction implements MacroAction {
       this.toUseItemName = tag.contains("toUseItemName") ? tag.getBooleanOr("toUseItemName", false) : !this.toItemName.isEmpty();
       this.useHandlerSlots = true;
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
    @Override
    public String getDisplayName() {
-      String from = this.fromUseItemName ? "\"" + this.init().formatSummary() + "\"" : String.valueOf(this.fromSlot);
-      String to = this.toUseItemName ? "\"" + this.load().formatSummary() + "\"" : String.valueOf(this.toSlot);
+      String from = this.fromUseItemName ? "\"" + this.resolveFromTarget().formatSummary() + "\"" : String.valueOf(this.fromSlot);
+      String to = this.toUseItemName ? "\"" + this.resolveToTarget().formatSummary() + "\"" : String.valueOf(this.toSlot);
       return "Swap " + from + " <-> " + to;
    }
 
@@ -121,15 +121,15 @@ public class SwapSlotsAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
-   private MacroItemTarget init() {
+   private MacroItemTarget resolveFromTarget() {
       if (this.fromItemTarget != null && (this.fromItemTarget.hasSlot() || this.fromItemTarget.hasItemFilter())) {
          return this.fromItemTarget;
       }
@@ -138,7 +138,7 @@ public class SwapSlotsAction implements MacroAction {
       return this.fromItemTarget;
    }
 
-   private MacroItemTarget load() {
+   private MacroItemTarget resolveToTarget() {
       if (this.toItemTarget != null && (this.toItemTarget.hasSlot() || this.toItemTarget.hasItemFilter())) {
          return this.toItemTarget;
       }

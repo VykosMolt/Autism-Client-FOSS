@@ -15,15 +15,15 @@ public class DelayCommand extends Command {
 
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
-      root.executes(ctx -> init((String)null));
+      root.executes(ctx -> toggleDelay((String)null));
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("state", StringArgumentType.word())
             .suggests(autismclient.commands.CommandSuggestions::init_CompletableFuture_CommandContext_SuggestionsBuilder)
-            .executes(ctx -> init(StringArgumentType.getString(ctx, "state")))
+            .executes(ctx -> toggleDelay(StringArgumentType.getString(ctx, "state")))
       );
    }
 
-   private static int init(String state) {
+   private static int toggleDelay(String state) {
       boolean current = AutismSessionState.getInstance().isDelayPacketsEnabled();
       if (state != null) {
          String lower = state.toLowerCase();

@@ -17,12 +17,12 @@ import net.minecraft.world.level.block.Block;
 
 final class AiClipboard {
    private static final int init_I = 32;
-   private static final Map<String, List<AiBuilder.CellSpec>> init_Map = new LinkedHashMap<>();
+   private static final Map<String, List<AiBuilder.CellSpec>> cache = new LinkedHashMap<>();
 
    private AiClipboard() {
    }
 
-   static Path init() {
+   static Path defaultDirectory() {
       return AutismClientAddon.FOLDER.toPath().resolve("ai").resolve("clipboard");
    }
 
@@ -38,37 +38,37 @@ final class AiClipboard {
    }
 
    static synchronized void init(String name, List<AiBuilder.CellSpec> cells) {
-      init(name, cells, init());
+      saveClip(name, cells, defaultDirectory());
    }
 
-   static synchronized void init(String name, List<AiBuilder.CellSpec> cells, Path directory) {
-      init_Map.remove(name);
-      init_Map.put(name, cells);
+   static synchronized void saveClip(String name, List<AiBuilder.CellSpec> cells, Path directory) {
+      cache.remove(name);
+      cache.put(name, cells);
 
-      while (init_Map.size() > 32) {
-         init_Map.remove(init_Map.keySet().iterator().next());
+      while (cache.size() > 32) {
+         cache.remove(cache.keySet().iterator().next());
       }
 
       try {
-         AiJson.writeAtomicJson(directory.resolve(name + ".json"), init(cells));
+         AiJson.writeAtomicJson(directory.resolve(name + ".json"), toJson(cells));
       } catch (IOException e) {
          throw new IllegalStateException("Could not persist clipboard \"" + name + "\": " + e.getMessage(), e);
       }
    }
 
    static synchronized List<AiBuilder.CellSpec> load(String name) {
-      return init(name, init());
+      return loadClip(name, defaultDirectory());
    }
 
-   static synchronized List<AiBuilder.CellSpec> init(String name, Path directory) {
-      List<AiBuilder.CellSpec> cells = init_Map.get(name);
+   static synchronized List<AiBuilder.CellSpec> loadClip(String name, Path directory) {
+      List<AiBuilder.CellSpec> cells = cache.get(name);
       if (cells != null) {
          return cells;
       }
 
       Path file = directory.resolve(name + ".json");
       if (!Files.isRegularFile(file)) {
-         throw new IllegalArgumentException("No clipboard named \"" + name + "\"; game:copy first (stored: " + init(directory) + ")");
+         throw new IllegalArgumentException("No clipboard named \"" + name + "\"; game:copy first (stored: " + listClips(directory) + ")");
       }
 
       try {
@@ -76,19 +76,19 @@ final class AiClipboard {
             throw new IllegalArgumentException("Clipboard \"" + name + "\" exceeds the supported size");
          }
 
-         cells = init(AiJson.parseObject(Files.readString(file)));
+         cells = fromJson(AiJson.parseObject(Files.readString(file)));
       } catch (IllegalArgumentException e) {
          throw e;
       } catch (Exception e) {
          throw new IllegalArgumentException("Clipboard \"" + name + "\" could not be read: " + e.getMessage());
       }
 
-      init_Map.put(name, cells);
+      cache.put(name, cells);
       return cells;
    }
 
-   static synchronized String init(Path directory) {
-      List<String> names = new ArrayList<>(init_Map.keySet());
+   static synchronized String listClips(Path directory) {
+      List<String> names = new ArrayList<>(cache.keySet());
       if (Files.isDirectory(directory)) {
          try (Stream<Path> stream = Files.list(directory)) {
             stream.filter(p -> p.getFileName().toString().endsWith(".json"))
@@ -103,7 +103,7 @@ final class AiClipboard {
       return names.isEmpty() ? "(none)" : String.join(", ", names);
    }
 
-   static JsonObject init(List<AiBuilder.CellSpec> cells) {
+   static JsonObject toJson(List<AiBuilder.CellSpec> cells) {
       JsonArray array = new JsonArray();
 
       for (AiBuilder.CellSpec cell : cells) {
@@ -120,7 +120,7 @@ final class AiClipboard {
       return AiJson.objectOf("version", 1, "cells", array);
    }
 
-   static List<AiBuilder.CellSpec> init(JsonObject root) {
+   static List<AiBuilder.CellSpec> fromJson(JsonObject root) {
       if (AiJson.getInt(root, "version", 0) != 1) {
          throw new IllegalArgumentException("Unsupported clipboard version");
       }

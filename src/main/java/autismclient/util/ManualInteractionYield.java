@@ -31,29 +31,29 @@ public final class ManualInteractionYield {
    private static final int write = 2;
    static final int init_I = 8;
    private static final long init_J = 1500000000L;
-   private static int update = -2147483648;
-   private static int sync;
+   private static int lastTick = -2147483648;
+   private static int graceTicks;
    private static boolean yielding;
-   private static int flush;
-   private static int close;
-   private static int open;
+   private static int yieldTicks;
+   private static int pendingAttackClicks;
+   private static int pendingUseClicks;
    private static BlockPos cameraBlock;
-   private static int poll;
+   private static int attackHeldTicks;
 
    private ManualInteractionYield() {
    }
 
    public static boolean init() {
-      load(Minecraft.getInstance());
+      refresh(Minecraft.getInstance());
       return yielding;
    }
 
    public static boolean load() {
-      load(Minecraft.getInstance());
-      return yielding && read() && flush < 25;
+      refresh(Minecraft.getInstance());
+      return yielding && isRotationReturning() && yieldTicks < 25;
    }
 
-   private static boolean read() {
+   private static boolean isRotationReturning() {
       return SilentMovementCoordinator.activeRotation() != null && SilentRotationManager.isReturningToPlayer();
    }
 
@@ -63,30 +63,30 @@ public final class ManualInteractionYield {
          KeyMapping use = mc.options.keyUse;
          boolean auraUse = !AutismLiteVariant.enabled() && CombatInteractionController.sync();
          if (auraUse) {
-            open = 0;
+            pendingUseClicks = 0;
          }
 
          if (load()) {
-            flush++;
-            close = Math.min(2, close + init(attack));
+            yieldTicks++;
+            pendingAttackClicks = Math.min(2, pendingAttackClicks + takeClicks(attack));
             if (!auraUse) {
-               open = Math.min(2, open + init(use));
+               pendingUseClicks = Math.min(2, pendingUseClicks + takeClicks(use));
             }
          } else {
-            if (!yielding || !read()) {
-               flush = 0;
+            if (!yielding || !isRotationReturning()) {
+               yieldTicks = 0;
             }
 
-            if (close > 0) {
-               init(attack, close);
+            if (pendingAttackClicks > 0) {
+               restoreClicks(attack, pendingAttackClicks);
             }
 
-            if (open > 0) {
-               init(use, open);
+            if (pendingUseClicks > 0) {
+               restoreClicks(use, pendingUseClicks);
             }
 
-            close = 0;
-            open = 0;
+            pendingAttackClicks = 0;
+            pendingUseClicks = 0;
          }
       }
    }
@@ -107,11 +107,11 @@ public final class ManualInteractionYield {
       }
    }
 
-   private static void load(Minecraft mc) {
+   private static void refresh(Minecraft mc) {
       if (mc != null) {
          int tick = AutismSessionState.getInstance().getClientTick();
-         if (tick != update) {
-            update = tick;
+         if (tick != lastTick) {
+            lastTick = tick;
             if (mc.player != null && mc.level != null && mc.options != null && !autismclient.modules.FreecamController.isActive()) {
                boolean destroying = mc.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor && accessor.autism$isDestroying();
                if (!AutismLiteVariant.enabled() && autismclient.modules.BedNukerModule.read_Z_10()) {
@@ -123,46 +123,46 @@ public final class ManualInteractionYield {
                BlockHitResult camera = !attackDown && !useDown ? null : crosshairBlock(mc);
                if (attackDown && camera != null) {
                   if (camera.getBlockPos().equals(cameraBlock)) {
-                     poll++;
+                     attackHeldTicks++;
                   } else {
                      cameraBlock = camera.getBlockPos().immutable();
-                     poll = 1;
+                     attackHeldTicks = 1;
                   }
                } else {
                   cameraBlock = null;
-                  poll = 0;
+                  attackHeldTicks = 0;
                }
 
                boolean fighting = RecentCombatTracker.init(1500000000L);
-               boolean mining = fighting ? attackDown && camera != null && init(true, poll, write()) : destroying || attackDown && camera != null;
+               boolean mining = fighting ? attackDown && camera != null && isDeliberateMining(true, attackHeldTicks, isAutoClickerEnabled()) : destroying || attackDown && camera != null;
                boolean auraUse = !AutismLiteVariant.enabled() && CombatInteractionController.sync();
-               boolean direct = mining || useDown && !auraUse && camera != null && init(mc, camera);
-               sync = init(sync, direct);
-               yielding = direct || sync > 0;
+               boolean direct = mining || useDown && !auraUse && camera != null && isUseInteraction(mc, camera);
+               graceTicks = nextGrace(graceTicks, direct);
+               yielding = direct || graceTicks > 0;
                if (!yielding) {
-                  flush = 0;
+                  yieldTicks = 0;
                }
             } else {
-               sync = 0;
+               graceTicks = 0;
                yielding = false;
-               flush = 0;
+               yieldTicks = 0;
                cameraBlock = null;
-               poll = 0;
+               attackHeldTicks = 0;
             }
          }
       }
    }
 
-   static boolean init(boolean fighting, int heldTicks, boolean autoClicker) {
+   static boolean isDeliberateMining(boolean fighting, int heldTicks, boolean autoClicker) {
       return !fighting ? true : !autoClicker && heldTicks >= 8;
    }
 
-   private static boolean write() {
+   private static boolean isAutoClickerEnabled() {
       Module module = autismclient.modules.al.init_Module_Str("auto-clicker");
       return module != null && module.isEnabled();
    }
 
-   static int init(int grace, boolean direct) {
+   static int nextGrace(int grace, boolean direct) {
       return direct ? 8 : Math.max(0, grace - 1);
    }
 
@@ -189,9 +189,9 @@ public final class ManualInteractionYield {
       }
    }
 
-   private static boolean init(Minecraft mc, BlockHitResult hit) {
+   private static boolean isUseInteraction(Minecraft mc, BlockHitResult hit) {
       LocalPlayer player = mc.player;
-      if (!init(player.getMainHandItem()) && !init(player.getOffhandItem())) {
+      if (!isPlaceableItem(player.getMainHandItem()) && !isPlaceableItem(player.getOffhandItem())) {
          BlockPos pos = hit.getBlockPos();
          BlockState state = mc.level.getBlockState(pos);
          return state.getMenuProvider(mc.level, pos) != null
@@ -206,18 +206,18 @@ public final class ManualInteractionYield {
       }
    }
 
-   private static boolean init(ItemStack stack) {
+   private static boolean isPlaceableItem(ItemStack stack) {
       return stack.getItem() instanceof BlockItem || stack.getItem() instanceof BucketItem || stack.getItem() instanceof FlintAndSteelItem;
    }
 
-   private static int init(KeyMapping key) {
+   private static int takeClicks(KeyMapping key) {
       AutismKeyMappingAccessor accessor = (AutismKeyMappingAccessor)key;
       int clicks = accessor.autism$clickCount();
       accessor.autism$setClickCount(0);
       return clicks;
    }
 
-   private static void init(KeyMapping key, int clicks) {
+   private static void restoreClicks(KeyMapping key, int clicks) {
       AutismKeyMappingAccessor accessor = (AutismKeyMappingAccessor)key;
       accessor.autism$setClickCount(accessor.autism$clickCount() + clicks);
    }

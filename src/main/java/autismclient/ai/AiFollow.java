@@ -44,7 +44,7 @@ final class AiFollow {
             AiOperation leg;
             BlockPos legGoal;
             int settledTicks;
-            int load;
+            int legTicks;
             boolean cancelled;
 
             {
@@ -56,7 +56,7 @@ final class AiFollow {
             public AiOperation.Result tick() {
                if (!this.cancelled && this.mc.player != null && this.mc.level != null) {
                   if (System.nanoTime() > deadline) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Follow deadline reached at " + this.currentDistance() + " blocks from the target");
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Follow deadline reached at " + this.currentDistance() + " blocks from the target");
                   }
 
                   if (this.followed != null
@@ -68,7 +68,7 @@ final class AiFollow {
                   if (this.followed == null) {
                      this.followed = this.findTarget();
                      if (this.followed == null) {
-                        return this.init(
+                        return this.fail(
                            AiOperation.Status.FAILED,
                            AiFailure.TARGET_GONE,
                            this.lastSeen != null
@@ -84,28 +84,28 @@ final class AiFollow {
                   if (this.mc.player.distanceTo(this.followed) <= distance) {
                      this.stopLeg();
                      return timeout == null && ++this.settledTicks >= 60
-                        ? this.init(AiOperation.Status.SUCCEEDED, "Settled within follow distance of " + this.targetLabel())
-                        : this.init("Holding follow distance of " + this.targetLabel());
+                        ? this.finish(AiOperation.Status.SUCCEEDED, "Settled within follow distance of " + this.targetLabel())
+                        : this.running("Holding follow distance of " + this.targetLabel());
                   }
 
                   this.settledTicks = 0;
-                  if (this.leg == null || this.legGoal.distSqr(this.followed.blockPosition()) >= 9.0 || ++this.load > 80) {
+                  if (this.leg == null || this.legGoal.distSqr(this.followed.blockPosition()) >= 9.0 || ++this.legTicks > 80) {
                      this.stopLeg();
                      this.legGoal = this.followed.blockPosition();
-                     this.load = 0;
+                     this.legTicks = 0;
                      this.leg = AiGoto.travelToCompat(this.legGoal, distance, false, false, false, this.legSeconds());
                   }
 
                   AiOperation.Result r = this.leg.tick();
                   if (!r.terminal()) {
-                     return this.init("Following " + this.targetLabel());
+                     return this.running("Following " + this.targetLabel());
                   }
 
                   AiOperation.Status status = r.status();
                   this.stopLeg();
-                  return status != AiOperation.Status.SUCCEEDED ? this.init(status, r.message()) : this.init("Closing on " + this.targetLabel());
+                  return status != AiOperation.Status.SUCCEEDED ? this.finish(status, r.message()) : this.running("Closing on " + this.targetLabel());
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Follow cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Follow cancelled");
                }
             }
 
@@ -180,17 +180,17 @@ final class AiFollow {
                return out;
             }
 
-            AiOperation.Result init(String message) {
+            AiOperation.Result running(String message) {
                return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                JsonObject data = this.progressJson();
                this.cancel();
                return new AiOperation.Result(status, message, data.toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, AiFailure code, String message) {
+            AiOperation.Result fail(AiOperation.Status status, AiFailure code, String message) {
                JsonObject data = this.progressJson();
                this.cancel();
                return AiOperation.Result.failed(code, message, data.toString());

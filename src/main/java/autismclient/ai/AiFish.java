@@ -17,7 +17,7 @@ final class AiFish {
    private static final int init_I = 1200;
    private static final int load = 3;
    private static final int read = 1;
-   private static final List<String> init_List = List.of(
+   private static final List<String> CATCH_IDS = List.of(
       "minecraft:cod",
       "minecraft:salmon",
       "minecraft:tropical_fish",
@@ -57,31 +57,31 @@ final class AiFish {
          int count = Math.max(1, Math.min(2304, AiJson.getInt(args, "count", 1)));
          boolean additional = AiJson.getBoolean(args, "additional", false);
          final int timeoutSeconds = Math.max(30, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
-         final int held = wanted == null ? init_I() : AiItems.countInInventory(wanted);
+         final int held = wanted == null ? countCatch() : AiItems.countInInventory(wanted);
          final int goal = additional ? held + count : count;
          return new AiOperation() {
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final boolean init_Z = module.isEnabled();
-            final int init_I = mc.player.getInventory().getSelectedSlot();
-            final Map<String, Integer> init_Map = AiFish.init_Map();
-            int load_I;
-            int read_I = held;
-            boolean load_Z;
-            boolean read_Z;
-            autismclient.modules.ScopedToggleOverride.Inner_StreamUtil init_aP_StreamUtil;
+            final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final boolean moduleWasEnabled = module.isEnabled();
+            final int originalSlot = mc.player.getInventory().getSelectedSlot();
+            final Map<String, Integer> initialCounts = AiFish.catchCounts();
+            int idleTicks;
+            int bestCount = held;
+            boolean started;
+            boolean cancelled;
+            autismclient.modules.ScopedToggleOverride.Inner_StreamUtil moduleOverride;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.read_Z && mc.player != null && mc.level != null) {
-                  if (System.nanoTime() > this.init_J) {
-                     return this.init(
+               if (!this.cancelled && mc.player != null && mc.level != null) {
+                  if (System.nanoTime() > this.deadline) {
+                     return this.finish(
                         this.currentCount() > held ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
                         "Fishing deadline reached with " + this.currentCount() + "/" + goal
                      );
                   }
 
                   if (this.currentCount() >= goal) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Fishing target reached (" + this.currentCount() + "/" + goal + ")");
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Fishing target reached (" + this.currentCount() + "/" + goal + ")");
                   }
 
                   ItemStack rod = mc.player.getMainHandItem();
@@ -89,55 +89,55 @@ final class AiFish {
                      if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:fishing_rod")) < 0) {
                         JsonObject missing = new JsonObject();
                         missing.addProperty("minecraft:fishing_rod", 1);
-                        return this.init(AiOperation.Status.FAILED, "No fishing rod in inventory", AiJson.objectOf("missing", missing));
+                        return this.finish(AiOperation.Status.FAILED, "No fishing rod in inventory", AiJson.objectOf("missing", missing));
                      } else {
-                        return this.init("Holding the fishing rod");
+                        return this.running("Holding the fishing rod");
                      }
                   } else {
                      if (rod.isDamageableItem() && rod.getMaxDamage() - rod.getDamageValue() <= 3) {
-                        return this.init(
+                        return this.finish(
                            AiOperation.Status.FAILED,
                            "Rod is about to break (" + (rod.getMaxDamage() - rod.getDamageValue()) + " uses left); stopped before losing it"
                         );
                      }
 
                      if (AiItems.countFreeSlots() < 1) {
-                        return this.init(AiOperation.Status.FAILED, "Inventory is full; further catches would be lost");
+                        return this.finish(AiOperation.Status.FAILED, "Inventory is full; further catches would be lost");
                      }
 
-                     if (!this.load_Z) {
-                        this.load_Z = true;
-                        if (!this.init_Z) {
-                           this.init_aP_StreamUtil = AiModuleScope.init(module, true);
+                     if (!this.started) {
+                        this.started = true;
+                        if (!this.moduleWasEnabled) {
+                           this.moduleOverride = AiModuleScope.init(module, true);
                         }
 
-                        return this.init("Casting");
+                        return this.running("Casting");
                      } else {
                         if (!module.isEnabled()) {
-                           return this.init(AiOperation.Status.CANCELLED, "AutoFish was disabled while the operation ran");
+                           return this.finish(AiOperation.Status.CANCELLED, "AutoFish was disabled while the operation ran");
                         }
 
                         int now = this.currentCount();
-                        if (now > this.read_I) {
-                           this.read_I = now;
-                           this.load_I = 0;
-                        } else if (++this.load_I > 1200) {
-                           return this.init(AiOperation.Status.FAILED, "Nothing caught for 60s; check that the bobber is in open water");
+                        if (now > this.bestCount) {
+                           this.bestCount = now;
+                           this.idleTicks = 0;
+                        } else if (++this.idleTicks > 1200) {
+                           return this.finish(AiOperation.Status.FAILED, "Nothing caught for 60s; check that the bobber is in open water");
                         }
 
-                        return this.init("Fishing (" + now + "/" + goal + ")");
+                        return this.running("Fishing (" + now + "/" + goal + ")");
                      }
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Fishing cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Fishing cancelled");
                }
             }
 
             int currentCount() {
-               return wanted == null ? AiFish.init_I() : AiItems.countInInventory(wanted);
+               return wanted == null ? AiFish.countCatch() : AiItems.countInInventory(wanted);
             }
 
-            JsonObject init_JsonObject_12() {
+            JsonObject progressJson() {
                JsonObject out = AiJson.objectOf(
                   "item", spec.isBlank() ? "any catch" : spec, "goal", goal, "have", this.currentCount(), "startedWith", held, "freeSlots", AiItems.countFreeSlots()
                );
@@ -147,8 +147,8 @@ final class AiFish {
                }
 
                JsonArray caught = new JsonArray();
-               AiFish.init_Map().forEach((item, amount) -> {
-                  int delta = amount - this.init_Map.getOrDefault(item, 0);
+               AiFish.catchCounts().forEach((item, amount) -> {
+                  int delta = amount - this.initialCounts.getOrDefault(item, 0);
                   if (delta > 0) {
                      caught.add(AiJson.objectOf("item", item, "count", delta));
                   }
@@ -157,16 +157,16 @@ final class AiFish {
                return out;
             }
 
-            AiOperation.Result init(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_12().toString(), List.of());
+            AiOperation.Result running(String message) {
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               return this.init(status, message, null);
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               return this.finish(status, message, null);
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
-               JsonObject data = this.init_JsonObject_12();
+            AiOperation.Result finish(AiOperation.Status status, String message, JsonObject extra) {
+               JsonObject data = this.progressJson();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
                      data.add(entry.getKey(), entry.getValue());
@@ -179,15 +179,15 @@ final class AiFish {
 
             @Override
             public void cancel() {
-               if (!this.read_Z) {
-                  this.read_Z = true;
-                  if (this.init_aP_StreamUtil != null) {
-                     this.init_aP_StreamUtil.close();
-                     this.init_aP_StreamUtil = null;
+               if (!this.cancelled) {
+                  this.cancelled = true;
+                  if (this.moduleOverride != null) {
+                     this.moduleOverride.close();
+                     this.moduleOverride = null;
                   }
 
-                  if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.init_I) {
-                     autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.init_I);
+                  if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.originalSlot) {
+                     autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.originalSlot);
                   }
                }
             }
@@ -197,20 +197,20 @@ final class AiFish {
       }
    }
 
-   private static int init_I() {
+   private static int countCatch() {
       int total = 0;
 
-      for (String id : init_List) {
+      for (String id : CATCH_IDS) {
          total += AiGameState.countInventoryItem(id);
       }
 
       return total;
    }
 
-   private static Map<String, Integer> init_Map() {
+   private static Map<String, Integer> catchCounts() {
       Map<String, Integer> counts = new LinkedHashMap<>();
 
-      for (String id : init_List) {
+      for (String id : CATCH_IDS) {
          int amount = AiGameState.countInventoryItem(id);
          if (amount > 0) {
             counts.put(id, amount);

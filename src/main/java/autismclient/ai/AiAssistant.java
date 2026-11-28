@@ -13,7 +13,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
    private static final Minecraft MC = Minecraft.getInstance();
    private static final AiAssistant INSTANCE = new AiAssistant();
    private boolean init_Z;
-   private boolean load;
+   private boolean keyWasDown;
    private long init_J;
    private AiAssistantOverlay overlay;
 
@@ -47,7 +47,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
                }
 
                AiContainerTransactions.tickActiveSwap();
-               assistant.tick();
+               assistant.pollKeybind();
             } catch (Throwable error) {
                long now = System.currentTimeMillis();
                if (now - assistant.init_J >= 5000L) {
@@ -56,7 +56,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
                }
             }
          });
-         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> assistant.run());
+         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> assistant.onDisconnect());
       }
    }
 
@@ -100,7 +100,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       }
    }
 
-   public void init(String view) {
+   public void openView(String view) {
       this.openOverlay();
       this.overlay.load(view);
    }
@@ -110,7 +110,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       this.overlay.sync_V();
    }
 
-   public void init(String action, String query) {
+   public void openAction(String action, String query) {
       this.openOverlay();
       this.overlay.openAction(action, query);
    }
@@ -171,11 +171,11 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       }
    }
 
-   private void tick() {
+   private void pollKeybind() {
       int bind = AutismConfig.getGlobal().keybindAiAssistant;
       boolean pressed = bind != -1 && autismclient.util.ValueSink.init(MC, bind);
-      boolean openFromKey = pressed && !this.load;
-      this.load = pressed;
+      boolean openFromKey = pressed && !this.keyWasDown;
+      this.keyWasDown = pressed;
       if (!autismclient.modules.aD.init_Z() && autismclient.e.RefQueue.init()) {
          AiWorldMemory.init(MC);
          if (openFromKey && autismclient.util.at.init()) {
@@ -188,7 +188,7 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
       }
    }
 
-   private void run() {
+   private void onDisconnect() {
       if (AiService.getExistingInstance() != null) {
          AiService.getExistingInstance().onWorldDisconnect();
       }

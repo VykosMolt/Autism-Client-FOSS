@@ -26,7 +26,7 @@ public class WaitForCooldownAction implements MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
-      MacroItemTarget target = this.init();
+      MacroItemTarget target = this.resolveItemTarget();
       if (target.hasSlot() || target.hasItemFilter()) {
          tag.put("itemName", target.toTag());
       }
@@ -56,7 +56,7 @@ public class WaitForCooldownAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      MacroItemTarget target = this.init();
+      MacroItemTarget target = this.resolveItemTarget();
       String base = !target.hasSlot() && !target.hasItemFilter() ? (this.checkMainInteractionHand ? "Main Hand" : "Off Hand") : target.formatSummary();
       if (base.length() > 10) {
          base = base.substring(0, 8) + "..";
@@ -70,7 +70,7 @@ public class WaitForCooldownAction implements MacroAction {
       return "CD";
    }
 
-   private MacroItemTarget init() {
+   private MacroItemTarget resolveItemTarget() {
       if (this.itemTarget != null && (this.itemTarget.hasSlot() || this.itemTarget.hasItemFilter())) {
          return this.itemTarget;
       }

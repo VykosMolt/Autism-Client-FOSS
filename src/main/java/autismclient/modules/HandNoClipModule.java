@@ -25,12 +25,12 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class HandNoClipModule extends Module {
-   private final RegistryListSetting init;
+   private final RegistryListSetting ignoredBlocks;
 
    public HandNoClipModule() {
       super("hand-no-clip", "HandNoClip", ae.read, "Ignore selected blocks when aiming a manual interaction.");
       this.add(new ChoiceSetting("ignore", "Ignore", "Specified", "Specified", "All").build());
-      this.init = this.add(
+      this.ignoredBlocks = this.add(
          RegistryListSetting.blocks("blocks", "Blocks", "minecraft:cobweb").visibleWhen(() -> "Specified".equals(this.choice("ignore"))).build()
       );
       this.add(new BoolSetting("place", "Place", true).build());
@@ -51,7 +51,7 @@ public final class HandNoClipModule extends Module {
          && module.bool(attack ? "break" : "place")) {
          LocalPlayer player = mc.player;
          final boolean all = "All".equals(module.choice("ignore"));
-         final List<String> ignored = module.init.get();
+         final List<String> ignored = module.ignoredBlocks.get();
          Vec3 eye = player.getEyePosition();
          Vec3 direction = player.getViewVector(1.0F);
          double blockRange = player.blockInteractionRange();

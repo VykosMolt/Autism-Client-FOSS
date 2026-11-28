@@ -16,12 +16,12 @@ public final class ProgressBarRenderer {
             context.init_GuiGraphicsExtract(),
             autismclient.gui.f.NetHelper.init(bounds.read() + 1, bounds.write() + 1, fillW, Math.max(0, bounds.sync() - 2)),
             Math.max(1, radius - 1),
-            init(colors.accent, colors.success, progress)
+            lerpColor(colors.accent, colors.success, progress)
          );
       }
    }
 
-   private static int init(int a, int b, double t) {
+   private static int lerpColor(int a, int b, double t) {
       t = Math.max(0.0, Math.min(1.0, t));
       int aa = a >>> 24 & 0xFF;
       int ar = a >>> 16 & 0xFF;

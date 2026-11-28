@@ -33,10 +33,10 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.Vec3;
 
 final class AiSurvival {
-   private static final Set<Item> load = Set.of(Items.ROTTEN_FLESH, Items.PUFFERFISH, Items.SPIDER_EYE, Items.POISONOUS_POTATO, Items.CHICKEN);
-   private static final Set<Item> read = Set.of(Items.SUSPICIOUS_STEW, Items.CHORUS_FRUIT);
-   private static final Set<Item> write = Set.of(Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE);
-   static final Set<String> init = Set.of(
+   private static final Set<Item> HARMFUL_FOODS = Set.of(Items.ROTTEN_FLESH, Items.PUFFERFISH, Items.SPIDER_EYE, Items.POISONOUS_POTATO, Items.CHICKEN);
+   private static final Set<Item> NEVER_EAT = Set.of(Items.SUSPICIOUS_STEW, Items.CHORUS_FRUIT);
+   private static final Set<Item> PRECIOUS_FOODS = Set.of(Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE);
+   static final Set<String> IGNORED_FOOD_IDS = Set.of(
       "minecraft:beef", "minecraft:porkchop", "minecraft:chicken", "minecraft:mutton", "minecraft:rabbit", "minecraft:cod", "minecraft:salmon"
    );
 
@@ -47,7 +47,7 @@ final class AiSurvival {
       return distance <= 6.0 && (swelling || ignited);
    }
 
-   static boolean init(int unchangedUseTicks, int consumeTicks) {
+   static boolean isUseStalled(int unchangedUseTicks, int consumeTicks) {
       return unchangedUseTicks > Math.max(1L, consumeTicks) + 40L;
    }
 
@@ -116,12 +116,12 @@ final class AiSurvival {
             int lastFood = -1;
             int originalSlot = -1;
             int foodSlot = -1;
-            int update;
-            int sync;
+            int swapWaitTicks;
+            int startWaitTicks;
             boolean closedContainer;
-            int flush;
-            int close;
-            int open;
+            int useTicks;
+            int useRestarts;
+            int releaseWaitTicks;
             boolean swapPending;
             boolean cancelled;
             boolean releasePending;
@@ -140,16 +140,16 @@ final class AiSurvival {
                      }
 
                      if (food >= target) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Food level target reached");
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Food level target reached");
                      }
 
                      if (food != this.lastFood) {
                         this.lastFood = food;
-                        this.sync = this.flush = 0;
+                        this.startWaitTicks = this.useTicks = 0;
                      }
 
                      if (System.nanoTime() > deadline) {
-                        return this.init(
+                        return this.finish(
                            this.requiresReconciliationAfterEmergency() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
                            "Food target not reached before deadline"
                         );
@@ -159,63 +159,63 @@ final class AiSurvival {
                         if (this.mc.player.containerMenu.getCarried().isEmpty() && !this.closedContainer) {
                            this.closedContainer = true;
                            this.mc.player.closeContainer();
-                           return this.init("Closing the container to eat");
+                           return this.running("Closing the container to eat");
                         } else {
-                           return this.init(AiOperation.Status.FAILED, "Close the open container before eating");
+                           return this.finish(AiOperation.Status.FAILED, "Close the open container before eating");
                         }
                      } else {
                         if (this.mc.gui.screen() != null) {
-                           return this.init(AiOperation.Status.FAILED, "Close the open screen before eating");
+                           return this.finish(AiOperation.Status.FAILED, "Close the open screen before eating");
                         }
 
                         if (!this.mc.player.containerMenu.getCarried().isEmpty()) {
-                           return this.init(AiOperation.Status.FAILED, "Clear the cursor stack before eating");
+                           return this.finish(AiOperation.Status.FAILED, "Clear the cursor stack before eating");
                         }
 
                         if (this.releasePending) {
                            this.mc.options.keyUse.setDown(false);
                            if (!this.mc.player.isUsingItem()) {
                               this.releasePending = false;
-                              this.open = this.flush = 0;
-                              return this.init("Stalled food use released; rechecking nutrition before restarting");
+                              this.releaseWaitTicks = this.useTicks = 0;
+                              return this.running("Stalled food use released; rechecking nutrition before restarting");
                            }
 
-                           if (++this.open > 40) {
-                              return this.init(AiOperation.Status.UNCERTAIN, "Food use release not confirmed; reobserve nutrition and item use before retrying");
+                           if (++this.releaseWaitTicks > 40) {
+                              return this.finish(AiOperation.Status.UNCERTAIN, "Food use release not confirmed; reobserve nutrition and item use before retrying");
                            }
 
                            this.mc.gameMode.releaseUsingItem(this.mc.player);
-                           return this.init("Waiting for stalled food use to stop before retrying");
+                           return this.running("Waiting for stalled food use to stop before retrying");
                         } else if (this.mc.player.isUsingItem()) {
-                           if (!AiSurvival.init(this.mc.player.getUseItem())) {
-                              return this.init(AiOperation.Status.FAILED, "Another item use is already active; finish or stop it before eating");
+                           if (!AiSurvival.isEdible(this.mc.player.getUseItem())) {
+                              return this.finish(AiOperation.Status.FAILED, "Another item use is already active; finish or stop it before eating");
                            }
 
-                           if (!AiSurvival.init(++this.flush, this.mc.player.getUseItem().getUseDuration(this.mc.player))) {
-                              this.sync = 0;
+                           if (!AiSurvival.isUseStalled(++this.useTicks, this.mc.player.getUseItem().getUseDuration(this.mc.player))) {
+                              this.startWaitTicks = 0;
                               this.mc.options.keyUse.setDown(true);
-                              return this.init("Eating (" + food + "/" + target + ")");
+                              return this.running("Eating (" + food + "/" + target + ")");
                            }
 
-                           if (this.close >= 1) {
-                              return this.init(AiOperation.Status.UNCERTAIN, "Food use repeated without observed nutrition; reobserve before retrying");
+                           if (this.useRestarts >= 1) {
+                              return this.finish(AiOperation.Status.UNCERTAIN, "Food use repeated without observed nutrition; reobserve before retrying");
                            }
 
-                           this.close++;
+                           this.useRestarts++;
                            this.releasePending = true;
                            this.mc.options.keyUse.setDown(false);
                            this.mc.gameMode.releaseUsingItem(this.mc.player);
-                           return this.init("Releasing stalled food use before one bounded retry");
+                           return this.running("Releasing stalled food use before one bounded retry");
                         } else if (!this.swapPending) {
                            int slot = AiSurvival.init(inventory);
                            if (slot < 0) {
-                              return this.init(AiOperation.Status.FAILED, "No food in inventory");
+                              return this.finish(AiOperation.Status.FAILED, "No food in inventory");
                            }
 
                            if (!Inventory.isHotbarSlot(slot)) {
                               AiContainerTransactions.sendPredictedClick(this.mc.player.containerMenu.containerId, slot, inventory.getSelectedSlot(), ContainerInput.SWAP);
                               this.swapPending = true;
-                              return this.init("Moving food to the hotbar");
+                              return this.running("Moving food to the hotbar");
                            }
 
                            if (inventory.getSelectedSlot() != slot) {
@@ -230,40 +230,40 @@ final class AiSurvival {
                            this.aim.setTargetRotation(new autismclient.util.RotationMath.Rotation(this.mc.player.getYRot(), -89.5F));
                            this.aim.tick();
                            this.mc.options.keyUse.setDown(true);
-                           return ++this.sync > 100
-                              ? this.init(AiOperation.Status.FAILED, "Eating did not start; the item use may have been rejected")
-                              : this.init("Starting to eat (" + food + "/" + target + ")");
-                        } else if (AiSurvival.init(inventory.getItem(inventory.getSelectedSlot()))) {
+                           return ++this.startWaitTicks > 100
+                              ? this.finish(AiOperation.Status.FAILED, "Eating did not start; the item use may have been rejected")
+                              : this.running("Starting to eat (" + food + "/" + target + ")");
+                        } else if (AiSurvival.isEdible(inventory.getItem(inventory.getSelectedSlot()))) {
                            this.swapPending = false;
-                           this.update = 0;
-                           return this.init("Food moved to the hotbar");
+                           this.swapWaitTicks = 0;
+                           return this.running("Food moved to the hotbar");
                         } else {
-                           return ++this.update > 60
-                              ? this.init(
+                           return ++this.swapWaitTicks > 60
+                              ? this.finish(
                                  AiOperation.Status.UNCERTAIN, "Hotbar swap dispatched without an observed inventory change; reobserve before retrying"
                               )
-                              : this.init("Moving food to the hotbar");
+                              : this.running("Moving food to the hotbar");
                         }
                      }
                   } else {
-                     return this.init(
+                     return this.finish(
                         this.requiresReconciliationAfterEmergency() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.CANCELLED,
                         "Eating world, player or connection changed; reobserve inventory"
                      );
                   }
                } else {
-                  return this.init(
+                  return this.finish(
                      this.requiresReconciliationAfterEmergency() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.CANCELLED,
                      "Eating cancelled; reobserve pending changes before retrying"
                   );
                }
             }
 
-            AiOperation.Result init(String message) {
-               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.init());
+            AiOperation.Result running(String message) {
+               return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
             }
 
-            JsonObject init() {
+            JsonObject progressJson() {
                return AiJson.objectOf(
                   "foodBefore",
                   this.foodBefore,
@@ -272,15 +272,15 @@ final class AiSurvival {
                   "target",
                   target,
                   "useRestarts",
-                  this.close,
+                  this.useRestarts,
                   "pendingFoodUseRelease",
                   this.releasePending
                );
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                this.cancel();
-               return AiGameOperations.result(status, message, this.init());
+               return AiGameOperations.result(status, message, this.progressJson());
             }
 
             @Override
@@ -303,7 +303,7 @@ final class AiSurvival {
                   }
 
                   if (this.mc.player == this.startPlayer && this.mc.level == this.startLevel) {
-                     if (this.mc.player.isUsingItem() && AiSurvival.init(this.mc.player.getUseItem()) && this.mc.gameMode != null) {
+                     if (this.mc.player.isUsingItem() && AiSurvival.isEdible(this.mc.player.getUseItem()) && this.mc.gameMode != null) {
                         this.mc.gameMode.releaseUsingItem(this.mc.player);
                      }
 
@@ -349,7 +349,7 @@ final class AiSurvival {
                   List<Vec3> escapeThreats = close.stream().map(Entity::position).toList();
                   boolean safeHandoff = this.leg == null || this.leg.canInterruptNow();
                   if (close.isEmpty() && safeHandoff) {
-                     return this.init(
+                     return this.finish(
                         AiOperation.Status.SUCCEEDED,
                         this.candidates == null && this.leg == null
                            ? "No threats observed"
@@ -358,7 +358,7 @@ final class AiSurvival {
                   }
 
                   if (System.nanoTime() > deadline && safeHandoff) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Escape deadline reached with threats still observed");
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Escape deadline reached with threats still observed");
                   }
 
                   Creeper immediateBlast = safeHandoff ? AiCombat.mostDangerousCreeper(this.mc) : null;
@@ -410,7 +410,7 @@ final class AiSurvival {
                                  .info("[AI] flee: shielding an igniting creeper at {} blocks", creeper.distanceTo(this.mc.player));
                               this.leg = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
                               AiOperation.Result shield = this.leg.tick();
-                              return shield.terminal() ? this.init(shield.status(), shield.message()) : shield;
+                              return shield.terminal() ? this.finish(shield.status(), shield.message()) : shield;
                            }
                         }
                      }
@@ -424,11 +424,11 @@ final class AiSurvival {
 
                         this.leg = null;
                         if (this.shielding) {
-                           return this.init(result.status(), result.message());
+                           return this.finish(result.status(), result.message());
                         }
 
                         if (++this.legs >= 6 && this.mc.player.position().distanceTo(this.origin) < 6.0) {
-                           return this.init(AiOperation.Status.FAILED, "Boxed in: " + this.legs + " legs and still within six blocks of the start");
+                           return this.finish(AiOperation.Status.FAILED, "Boxed in: " + this.legs + " legs and still within six blocks of the start");
                         }
 
                         if (result.status() == AiOperation.Status.SUCCEEDED) {
@@ -439,7 +439,7 @@ final class AiSurvival {
                      }
 
                      if (close.isEmpty()) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Escaped and landed clear of the threats");
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Escaped and landed clear of the threats");
                      }
 
                      if (this.candidates == null) {
@@ -532,9 +532,9 @@ final class AiSurvival {
                            this.shielding = true;
                            this.leg = AiCover.init(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
                            AiOperation.Result first = this.leg.tick();
-                           return first.terminal() ? this.init(first.status(), first.message()) : first;
+                           return first.terminal() ? this.finish(first.status(), first.message()) : first;
                         } else {
-                           return this.init(
+                           return this.finish(
                               AiOperation.Status.FAILED, "No safe escape direction; every bearing ends at lava, a drop, submersion or unloaded terrain"
                            );
                         }
@@ -558,21 +558,21 @@ final class AiSurvival {
                         }
 
                         this.pendingResult = first;
-                        return AiGameOperations.result(AiOperation.Status.RUNNING, "Re-evaluating escape direction", this.init());
+                        return AiGameOperations.result(AiOperation.Status.RUNNING, "Re-evaluating escape direction", this.progressJson());
                      }
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Flee cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Flee cancelled");
                }
             }
 
-            JsonObject init() {
+            JsonObject progressJson() {
                return AiJson.objectOf("radius", radius, "distance", distance);
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                this.cancel();
-               return AiGameOperations.result(status, message, this.init());
+               return AiGameOperations.result(status, message, this.progressJson());
             }
 
             @Override
@@ -599,7 +599,7 @@ final class AiSurvival {
       }
    }
 
-   static boolean init(ItemStack stack) {
+   static boolean isEdible(ItemStack stack) {
       return !stack.isEmpty() && stack.has(DataComponents.FOOD) && stack.has(DataComponents.CONSUMABLE);
    }
 
@@ -614,7 +614,7 @@ final class AiSurvival {
 
          for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
-            if (!stack.isEmpty() && stack.has(DataComponents.FOOD) && !init.contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
+            if (!stack.isEmpty() && stack.has(DataComponents.FOOD) && !IGNORED_FOOD_IDS.contains(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
                return true;
             }
          }
@@ -633,9 +633,9 @@ final class AiSurvival {
 
             for (int i = region == 0 ? 0 : 9; i < (region == 0 ? 9 : 36); i++) {
                ItemStack stack = inventory.getItem(i);
-               if (init(stack) && !read.contains(stack.getItem())) {
-                  boolean precious = write.contains(stack.getItem());
-                  boolean harmful = load.contains(stack.getItem());
+               if (isEdible(stack) && !NEVER_EAT.contains(stack.getItem())) {
+                  boolean precious = PRECIOUS_FOODS.contains(stack.getItem());
+                  boolean harmful = HARMFUL_FOODS.contains(stack.getItem());
                   if ((tier != 0 || !precious && !harmful) && (tier != 1 || precious) && (tier != 2 || harmful)) {
                      FoodProperties food = stack.get(DataComponents.FOOD);
                      double score = food.nutrition() + food.saturation();

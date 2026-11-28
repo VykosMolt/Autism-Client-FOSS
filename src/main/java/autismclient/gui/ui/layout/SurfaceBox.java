@@ -5,7 +5,7 @@ public class SurfaceBox extends LayoutContainer {
    private boolean write_Z = true;
    private EdgeInsets init_IoWorker = EdgeInsets.uniform(4);
    private boolean update_Z = true;
-   private boolean sync = true;
+   private boolean fillEnabled = true;
 
    public SurfaceBox() {
       this.addChild(this.content);
@@ -36,7 +36,7 @@ public class SurfaceBox extends LayoutContainer {
    }
 
    public SurfaceBox setDrawFill(boolean drawFill) {
-      this.sync = drawFill;
+      this.fillEnabled = drawFill;
       return this;
    }
 
@@ -75,9 +75,9 @@ public class SurfaceBox extends LayoutContainer {
          int fill = this.write_Z ? drawContext.theme().poll() : drawContext.theme().push();
          int border = this.write_Z ? drawContext.theme().get() : drawContext.theme().set();
          autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(drawX, drawY, drawW, drawH);
-         if (this.sync && this.update_Z) {
+         if (this.fillEnabled && this.update_Z) {
             autismclient.gui.f.PacketUtil.read(drawContext.graphics(), bounds, 5, drawContext.applyAlpha(fill), drawContext.applyAlpha(border));
-         } else if (this.sync) {
+         } else if (this.fillEnabled) {
             autismclient.gui.f.PacketUtil.load(drawContext.graphics(), bounds, 5, drawContext.applyAlpha(fill));
          } else if (this.update_Z) {
             autismclient.gui.f.PacketUtil.load(drawContext.graphics(), bounds, 5, 0, drawContext.applyAlpha(border));

@@ -29,11 +29,11 @@ public class XCarryCommand extends Command {
       });
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("slot", autismclient.commands.arguments.XCarrySlotArgumentType.init())
-            .executes(ctx -> init(autismclient.commands.arguments.XCarrySlotArgumentType.init(ctx, "slot")))
+            .executes(ctx -> carry(autismclient.commands.arguments.XCarrySlotArgumentType.init(ctx, "slot")))
       );
    }
 
-   private static int init(int targetSlot) {
+   private static int carry(int targetSlot) {
 
       Minecraft mc = Minecraft.getInstance();
       LocalPlayer p = mc.player;
@@ -65,7 +65,7 @@ public class XCarryCommand extends Command {
 
             String itemName = heldStack.getHoverName().getString();
             String slotName = autismclient.commands.arguments.XCarrySlotArgumentType.slotName(targetSlot);
-            LinkedHashSet<Integer> forcedSlots = init(shared);
+            LinkedHashSet<Integer> forcedSlots = forcedSlots(shared);
             boolean forcedCursor = shared.isXCarryForced() && shared.isXCarryCarryCursor();
             if (targetSlot == -2147483648) {
                shared.setXCarrySlotMask(forcedSlots, true);
@@ -110,7 +110,7 @@ public class XCarryCommand extends Command {
       }
    }
 
-   private static LinkedHashSet<Integer> init(AutismSessionState shared) {
+   private static LinkedHashSet<Integer> forcedSlots(AutismSessionState shared) {
       LinkedHashSet<Integer> slots = new LinkedHashSet<>();
       if (shared != null && shared.isXCarryForced()) {
          Set<Integer> existing = shared.getXCarrySlotMask();

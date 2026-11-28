@@ -6,29 +6,29 @@ import net.minecraft.client.player.LocalPlayer;
 
 public final class BlockAttackGraceWindow {
    static final int init_I = 2;
-   private static WeakReference<LocalPlayer> init_WeakReference = new WeakReference<>(null);
-   private static int load = -2147483648;
+   private static WeakReference<LocalPlayer> notedPlayer = new WeakReference<>(null);
+   private static int notedTick = -2147483648;
 
    private BlockAttackGraceWindow() {
    }
 
    public static void init(LocalPlayer player) {
       if (player != null) {
-         init_WeakReference = new WeakReference<>(player);
-         load = player.tickCount;
+         notedPlayer = new WeakReference<>(player);
+         notedTick = player.tickCount;
       }
    }
 
    public static void init() {
-      init_WeakReference = new WeakReference<>(null);
-      load = -2147483648;
+      notedPlayer = new WeakReference<>(null);
+      notedTick = -2147483648;
    }
 
    public static boolean init(Minecraft mc) {
-      return mc != null && mc.player != null && init_WeakReference.get() == mc.player ? init(mc.player.tickCount, load) : false;
+      return mc != null && mc.player != null && notedPlayer.get() == mc.player ? withinGrace(mc.player.tickCount, notedTick) : false;
    }
 
-   static boolean init(int tick, int noted) {
+   static boolean withinGrace(int tick, int noted) {
       if (noted == -2147483648) {
          return false;
       }

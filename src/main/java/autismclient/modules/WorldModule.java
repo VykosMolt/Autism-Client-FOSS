@@ -10,7 +10,7 @@ import autismclient.util.BlockSelectionOutlineRenderer;
 
 public final class WorldModule extends Module {
    private boolean darken;
-   private String init_Str = "";
+   private String lastMode = "";
    private int darkness = -2147483648;
    private int tint = -2147483648;
    private String blocks = "";
@@ -116,7 +116,7 @@ public final class WorldModule extends Module {
    @Override
    public void onEnable() {
       am.init_V();
-      this.init();
+      this.updateBlockHighlight();
    }
 
    @Override
@@ -132,10 +132,10 @@ public final class WorldModule extends Module {
       int darkness = this.integer("darkness");
       int tint = am.init_I_Module(this, "tint-color", -16777216);
       String blocks = this.value("blocks");
-      boolean switched = darken != this.darken || !mode.equals(this.init_Str) || !blocks.equals(this.blocks);
+      boolean switched = darken != this.darken || !mode.equals(this.lastMode) || !blocks.equals(this.blocks);
       if (switched || darkness != this.darkness || tint != this.tint) {
          this.darken = darken;
-         this.init_Str = mode;
+         this.lastMode = mode;
          this.darkness = darkness;
          this.tint = tint;
          this.blocks = blocks;
@@ -146,10 +146,10 @@ public final class WorldModule extends Module {
          }
       }
 
-      this.init();
+      this.updateBlockHighlight();
    }
 
-   private void init() {
+   private void updateBlockHighlight() {
       boolean active = this.isEnabled() && this.bool("block-highlight");
       int color = am.init_I_Module(this, "highlight-color", -1);
       float width = (float)this.decimal("highlight-width");
@@ -163,7 +163,7 @@ public final class WorldModule extends Module {
    @Override
    protected void onOptionValueChanged(String settingId) {
       if (this.isEnabled()) {
-         this.init();
+         this.updateBlockHighlight();
       }
    }
 

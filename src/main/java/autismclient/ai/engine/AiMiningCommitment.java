@@ -13,17 +13,17 @@ import net.minecraft.core.BlockPos;
 
 public final class AiMiningCommitment {
    static final int init_I = 256;
-   private final Set<Long> init_Set = new LinkedHashSet<>();
-   private final Set<Long> load = new LinkedHashSet<>();
+   private final Set<Long> commitment = new LinkedHashSet<>();
+   private final Set<Long> pendingCells = new LinkedHashSet<>();
    private BlockPos anchor;
-   private long init_J = -1L;
+   private long emptySince = -1L;
 
    public void init(BlockPos seed, Collection<BlockPos> observed, Predicate<BlockPos> allowed) {
       this.clear();
       this.anchor = seed.immutable();
-      this.init_Set.add(seed.asLong());
+      this.commitment.add(seed.asLong());
       if (observed.contains(seed) && allowed.test(seed)) {
-         this.load.add(seed.asLong());
+         this.pendingCells.add(seed.asLong());
       }
 
       this.init(observed, allowed);
@@ -34,7 +34,7 @@ public final class AiMiningCommitment {
          Map<Long, BlockPos> pending = new HashMap<>();
 
          for (BlockPos cell : observed) {
-            if (!this.init_Set.contains(cell.asLong()) && allowed.test(cell)) {
+            if (!this.commitment.contains(cell.asLong()) && allowed.test(cell)) {
                pending.putIfAbsent(cell.asLong(), cell.immutable());
             }
          }
@@ -42,18 +42,18 @@ public final class AiMiningCommitment {
          ArrayDeque<BlockPos> frontier = new ArrayDeque<>();
 
          for (BlockPos cell : pending.values()) {
-            if (this.init(cell)) {
+            if (this.touchesCommitment(cell)) {
                frontier.add(cell);
             }
          }
 
-         while (!frontier.isEmpty() && this.init_Set.size() < 256) {
+         while (!frontier.isEmpty() && this.commitment.size() < 256) {
             BlockPos cell = frontier.poll();
             long key = cell.asLong();
-            if (!this.init_Set.contains(key)) {
+            if (!this.commitment.contains(key)) {
                pending.remove(key);
-               this.init_Set.add(key);
-               this.load.add(key);
+               this.commitment.add(key);
+               this.pendingCells.add(key);
 
                for (int dx = -1; dx <= 1; dx++) {
                   for (int dy = -1; dy <= 1; dy++) {
@@ -72,11 +72,11 @@ public final class AiMiningCommitment {
       }
    }
 
-   private boolean init(BlockPos cell) {
+   private boolean touchesCommitment(BlockPos cell) {
       for (int dx = -1; dx <= 1; dx++) {
          for (int dy = -1; dy <= 1; dy++) {
             for (int dz = -1; dz <= 1; dz++) {
-               if ((dx | dy | dz) != 0 && this.init_Set.contains(BlockPos.asLong(cell.getX() + dx, cell.getY() + dy, cell.getZ() + dz))) {
+               if ((dx | dy | dz) != 0 && this.commitment.contains(BlockPos.asLong(cell.getX() + dx, cell.getY() + dy, cell.getZ() + dz))) {
                   return true;
                }
             }
@@ -87,11 +87,11 @@ public final class AiMiningCommitment {
    }
 
    public void init(Set<Long> present) {
-      this.load.removeIf(cell -> !present.contains(cell));
+      this.pendingCells.removeIf(cell -> !present.contains(cell));
    }
 
    public void init(Set<Long> present, Predicate<BlockPos> gone) {
-      this.load.removeIf(cell -> !present.contains(cell) && gone.test(BlockPos.of(cell)));
+      this.pendingCells.removeIf(cell -> !present.contains(cell) && gone.test(BlockPos.of(cell)));
    }
 
    public boolean init(long now, boolean scanSettled, long grace) {
@@ -99,22 +99,22 @@ public final class AiMiningCommitment {
          return true;
       }
 
-      if (this.load.isEmpty() && scanSettled) {
-         if (this.init_J < 0L) {
-            this.init_J = now;
+      if (this.pendingCells.isEmpty() && scanSettled) {
+         if (this.emptySince < 0L) {
+            this.emptySince = now;
          }
 
-         return now - this.init_J >= grace;
+         return now - this.emptySince >= grace;
       } else {
-         this.init_J = -1L;
+         this.emptySince = -1L;
          return false;
       }
    }
 
    public List<BlockPos> remainingCells() {
-      List<BlockPos> out = new ArrayList<>(this.load.size());
+      List<BlockPos> out = new ArrayList<>(this.pendingCells.size());
 
-      for (long cell : this.load) {
+      for (long cell : this.pendingCells) {
          out.add(BlockPos.of(cell));
       }
 
@@ -130,29 +130,29 @@ public final class AiMiningCommitment {
    }
 
    public int remainingCount() {
-      return this.load.size();
+      return this.pendingCells.size();
    }
 
    public boolean init(long cell) {
-      return this.load.contains(cell);
+      return this.pendingCells.contains(cell);
    }
 
    public boolean load(long cell) {
-      return this.init_Set.contains(cell);
+      return this.commitment.contains(cell);
    }
 
    public BlockPos getAnchor() {
       return this.anchor;
    }
 
-   public int load_I() {
-      return this.init_Set.size();
+   public int committedCount() {
+      return this.commitment.size();
    }
 
    public void clear() {
-      this.init_Set.clear();
-      this.load.clear();
+      this.commitment.clear();
+      this.pendingCells.clear();
       this.anchor = null;
-      this.init_J = -1L;
+      this.emptySince = -1L;
    }
 }

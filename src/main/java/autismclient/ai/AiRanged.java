@@ -52,177 +52,177 @@ final class AiRanged {
          AiService service = AiService.getExistingInstance();
          final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          return new AiOperation() {
-            final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final int init_I = mc.player.getInventory().getSelectedSlot();
-            Entity init_Entity;
-            autismclient.util.RotationMath.Rotation init_ce_DataUtil;
-            int load_I;
-            int read;
-            int write;
-            int update;
-            boolean init_Z;
-            boolean load_Z;
+            final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            final int originalSlot = mc.player.getInventory().getSelectedSlot();
+            Entity target;
+            autismclient.util.RotationMath.Rotation solvedArc;
+            int shotsFired;
+            int unsolvedTicks;
+            int drawTicks;
+            int kills;
+            boolean drawing;
+            boolean cancelled;
 
             {
-               this.init_DataUtil.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
-               this.init_DataUtil.setSilent(silentAim);
+               this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
+               this.aim.setSilent(silentAim);
             }
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.load_Z && mc.player != null && mc.level != null) {
-                  if (System.nanoTime() > this.init_J) {
-                     return this.init(
-                        this.load_I > 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
-                        "Shooting deadline reached after " + this.load_I + " shot(s)"
+               if (!this.cancelled && mc.player != null && mc.level != null) {
+                  if (System.nanoTime() > this.deadline) {
+                     return this.finish(
+                        this.shotsFired > 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
+                        "Shooting deadline reached after " + this.shotsFired + " shot(s)"
                      );
                   }
 
-                  if (this.load_I >= shots) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Fired " + this.load_I + " shot(s), " + this.update + " target(s) down");
+                  if (this.shotsFired >= shots) {
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Fired " + this.shotsFired + " shot(s), " + this.kills + " target(s) down");
                   }
 
-                  if (this.init_Entity != null && this.init_Entity instanceof LivingEntity living && living.isDeadOrDying()) {
-                     this.update++;
-                     this.init_Entity = null;
-                     this.init_ce_DataUtil = null;
-                     this.init_V_21();
-                     return this.init("Target down (" + this.update + ")");
+                  if (this.target != null && this.target instanceof LivingEntity living && living.isDeadOrDying()) {
+                     this.kills++;
+                     this.target = null;
+                     this.solvedArc = null;
+                     this.releaseUse();
+                     return this.running("Target down (" + this.kills + ")");
                   }
 
-                  if (this.init_Entity == null
-                     || this.init_Entity instanceof LivingEntity
+                  if (this.target == null
+                     || this.target instanceof LivingEntity
                      || explicitId < 0
-                     || this.init_Entity.isAlive() && !this.init_Entity.isRemoved()) {
-                     if (this.init_Entity == null || this.init_Entity.isAlive() && !this.init_Entity.isRemoved()) {
-                        if (this.init_Entity == null) {
-                           this.init_Entity = this.init_Entity_4();
-                           this.init_ce_DataUtil = null;
-                           this.read = 0;
-                           if (this.init_Entity == null) {
-                              return this.init(
-                                 this.load_I > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
-                                 this.load_I > 0
-                                    ? "No targets left after " + this.load_I + " shot(s)"
+                     || this.target.isAlive() && !this.target.isRemoved()) {
+                     if (this.target == null || this.target.isAlive() && !this.target.isRemoved()) {
+                        if (this.target == null) {
+                           this.target = this.findTarget();
+                           this.solvedArc = null;
+                           this.unsolvedTicks = 0;
+                           if (this.target == null) {
+                              return this.finish(
+                                 this.shotsFired > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
+                                 this.shotsFired > 0
+                                    ? "No targets left after " + this.shotsFired + " shot(s)"
                                     : "No matching live target within " + (int)radius + " blocks"
                               );
                            }
                         }
 
-                        AiOperation.Result weapon = this.init_AiOperation_Result_22();
+                        AiOperation.Result weapon = this.ensureWeapon();
                         if (weapon != null) {
                            return weapon;
                         }
 
-                        autismclient.util.RotationMath.Rotation arc = this.init_ce_DataUtil(this.init_Entity);
+                        autismclient.util.RotationMath.Rotation arc = this.solveArc(this.target);
                         if (arc != null) {
-                           this.init_ce_DataUtil = arc;
-                           this.read = 0;
+                           this.solvedArc = arc;
+                           this.unsolvedTicks = 0;
                            ItemStack held = mc.player.getMainHandItem();
                            if (held.is(Items.BOW)) {
-                              return this.init(arc);
+                              return this.tickBow(arc);
                            } else {
-                              return held.is(Items.CROSSBOW) ? this.load(arc) : this.read(arc);
+                              return held.is(Items.CROSSBOW) ? this.tickCrossbow(arc) : this.tickThrow(arc);
                            }
-                        } else if (++this.read > 60) {
-                           Entity dropped = this.init_Entity;
-                           this.init_Entity = null;
-                           this.init_V_21();
-                           return this.init("No arc reaches " + BuiltInRegistries.ENTITY_TYPE.getKey(dropped.getType()).getPath() + "; picking another");
+                        } else if (++this.unsolvedTicks > 60) {
+                           Entity dropped = this.target;
+                           this.target = null;
+                           this.releaseUse();
+                           return this.running("No arc reaches " + BuiltInRegistries.ENTITY_TYPE.getKey(dropped.getType()).getPath() + "; picking another");
                         } else {
-                           return this.init("Solving the arc");
+                           return this.running("Solving the arc");
                         }
                      } else {
-                        this.init_Entity = null;
-                        this.init_ce_DataUtil = null;
-                        this.init_V_21();
-                        return this.init("Target despawned or unloaded (not a kill); picking another");
+                        this.target = null;
+                        this.solvedArc = null;
+                        this.releaseUse();
+                        return this.running("Target despawned or unloaded (not a kill); picking another");
                      }
                   } else {
-                     this.update++;
-                     this.init_Entity = null;
-                     this.init_ce_DataUtil = null;
-                     this.init_V_21();
-                     return this.init("Target destroyed (" + this.update + ")");
+                     this.kills++;
+                     this.target = null;
+                     this.solvedArc = null;
+                     this.releaseUse();
+                     return this.running("Target destroyed (" + this.kills + ")");
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Shooting cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Shooting cancelled");
                }
             }
 
-            AiOperation.Result init(autismclient.util.RotationMath.Rotation arc) {
-               this.init_DataUtil.setTargetRotation(arc);
-               this.init_DataUtil.tick();
-               if (!this.init_Z) {
-                  this.init_Z = true;
-                  this.write = 0;
+            AiOperation.Result tickBow(autismclient.util.RotationMath.Rotation arc) {
+               this.aim.setTargetRotation(arc);
+               this.aim.tick();
+               if (!this.drawing) {
+                  this.drawing = true;
+                  this.drawTicks = 0;
                   mc.options.keyUse.setDown(true);
-                  return this.init("Drawing the bow");
+                  return this.running("Drawing the bow");
                }
 
-               this.write++;
-               if (this.write < 20 || !mc.player.isUsingItem() || mc.player.getTicksUsingItem() < 20) {
-                  return this.init("Drawing (" + Math.min(this.write, mc.player.getTicksUsingItem()) + "/20)");
+               this.drawTicks++;
+               if (this.drawTicks < 20 || !mc.player.isUsingItem() || mc.player.getTicksUsingItem() < 20) {
+                  return this.running("Drawing (" + Math.min(this.drawTicks, mc.player.getTicksUsingItem()) + "/20)");
                }
 
-               if (!this.init_DataUtil.isSettled()) {
-                  return this.init("Holding at full pull while the aim settles");
+               if (!this.aim.isSettled()) {
+                  return this.running("Holding at full pull while the aim settles");
                }
 
                mc.options.keyUse.setDown(false);
-               this.init_Z = false;
-               this.load_I++;
-               return this.init("Released shot " + this.load_I + "/" + shots);
+               this.drawing = false;
+               this.shotsFired++;
+               return this.running("Released shot " + this.shotsFired + "/" + shots);
             }
 
-            AiOperation.Result load(autismclient.util.RotationMath.Rotation arc) {
-               this.init_DataUtil.setTargetRotation(arc);
-               this.init_DataUtil.tick();
+            AiOperation.Result tickCrossbow(autismclient.util.RotationMath.Rotation arc) {
+               this.aim.setTargetRotation(arc);
+               this.aim.tick();
                ItemStack held = mc.player.getMainHandItem();
                boolean loaded = held.get(DataComponents.CHARGED_PROJECTILES) != null && !held.get(DataComponents.CHARGED_PROJECTILES).isEmpty();
                if (!loaded) {
                   mc.options.keyUse.setDown(true);
-                  this.init_Z = true;
-                  return this.init("Charging the crossbow");
+                  this.drawing = true;
+                  return this.running("Charging the crossbow");
                }
 
-               if (this.init_Z) {
+               if (this.drawing) {
                   mc.options.keyUse.setDown(false);
-                  this.init_Z = false;
-                  return this.init("Crossbow loaded");
+                  this.drawing = false;
+                  return this.running("Crossbow loaded");
                }
 
-               if (!this.init_DataUtil.isSettled()) {
-                  return this.init("Aiming the loaded crossbow");
+               if (!this.aim.isSettled()) {
+                  return this.running("Aiming the loaded crossbow");
                }
 
                mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-               this.load_I++;
-               return this.init("Fired shot " + this.load_I + "/" + shots);
+               this.shotsFired++;
+               return this.running("Fired shot " + this.shotsFired + "/" + shots);
             }
 
-            AiOperation.Result read(autismclient.util.RotationMath.Rotation arc) {
-               this.init_DataUtil.setTargetRotation(arc);
-               this.init_DataUtil.tick();
-               if (!this.init_DataUtil.isSettled()) {
-                  return this.init("Aiming the throw");
+            AiOperation.Result tickThrow(autismclient.util.RotationMath.Rotation arc) {
+               this.aim.setTargetRotation(arc);
+               this.aim.tick();
+               if (!this.aim.isSettled()) {
+                  return this.running("Aiming the throw");
                }
 
                mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
-               this.load_I++;
-               return this.init("Thrown " + this.load_I + "/" + shots);
+               this.shotsFired++;
+               return this.running("Thrown " + this.shotsFired + "/" + shots);
             }
 
-            AiOperation.Result init_AiOperation_Result_22() {
+            AiOperation.Result ensureWeapon() {
                ItemStack held = mc.player.getMainHandItem();
-               if (AiRanged.init(held)) {
+               if (AiRanged.isRangedWeapon(held)) {
                   if ((held.is(Items.BOW) || held.is(Items.CROSSBOW)) && AiGameState.countInventoryItem("minecraft:arrow") <= 0) {
                      JsonObject missing = new JsonObject();
                      missing.addProperty("minecraft:arrow", 1);
                      String weapon = held.is(Items.BOW) ? "bow" : "crossbow";
-                     return this.init(AiOperation.Status.FAILED, "Holding a " + weapon + " with no arrows", AiJson.objectOf("missing", missing));
+                     return this.finish(AiOperation.Status.FAILED, "Holding a " + weapon + " with no arrows", AiJson.objectOf("missing", missing));
                   } else {
                      return null;
                   }
@@ -231,18 +231,18 @@ final class AiRanged {
                      if (AiGameState.countInventoryItem(candidate) > 0
                         && (!candidate.equals("minecraft:bow") && !candidate.equals("minecraft:crossbow") || AiGameState.countInventoryItem("minecraft:arrow") > 0)
                         && AiItems.equipHotbar(AiItems.resolveItem(candidate)) >= 0) {
-                        return this.init("Holding " + candidate);
+                        return this.running("Holding " + candidate);
                      }
                   }
 
                   JsonObject missing = new JsonObject();
                   missing.addProperty("minecraft:bow", 1);
                   missing.addProperty("minecraft:arrow", 8);
-                  return this.init(AiOperation.Status.FAILED, "No ranged weapon in inventory", AiJson.objectOf("missing", missing));
+                  return this.finish(AiOperation.Status.FAILED, "No ranged weapon in inventory", AiJson.objectOf("missing", missing));
                }
             }
 
-            autismclient.util.RotationMath.Rotation init_ce_DataUtil(Entity at) {
+            autismclient.util.RotationMath.Rotation solveArc(Entity at) {
                ItemStack held = mc.player.getMainHandItem();
                List<autismclient.modules.ProjectileBallistics.Inner_BufferHelper> possible = autismclient.modules.ProjectileBallistics.init(mc.player, held, true, false);
                if (possible.isEmpty()) {
@@ -251,7 +251,7 @@ final class AiRanged {
 
                autismclient.modules.ProjectileBallistics.Inner_DataUtil info = possible.get(0).info();
                Vec3 point = autismclient.ai.engine.AiAim.defaultEntityAimPoint(at);
-               Vec3 motion = this.init_Vec3(at);
+               Vec3 motion = this.motionOf(at);
                if (motion.lengthSqr() >= 0.0025000000000000005) {
                   double flight = point.distanceTo(mc.player.getEyePosition()) / 2.9;
                   point = point.add(motion.scale(flight));
@@ -262,7 +262,7 @@ final class AiRanged {
                float best = 0.0F / 0.0F;
 
                for (float pitch = 45.0F; pitch >= -60.0F; pitch -= 2.0F) {
-                  if (this.init(info, yaw, pitch, at, inherited)) {
+                  if (this.wouldHit(info, yaw, pitch, at, inherited)) {
                      best = pitch;
                      break;
                   }
@@ -273,7 +273,7 @@ final class AiRanged {
                }
 
                for (float pitch = best + 2.0F; pitch >= best - 2.0F; pitch -= 0.15F) {
-                  if (this.init(info, yaw, pitch, at, inherited)) {
+                  if (this.wouldHit(info, yaw, pitch, at, inherited)) {
                      return new autismclient.util.RotationMath.Rotation(yaw, pitch);
                   }
                }
@@ -281,12 +281,12 @@ final class AiRanged {
                return new autismclient.util.RotationMath.Rotation(yaw, best);
             }
 
-            boolean init(autismclient.modules.ProjectileBallistics.Inner_DataUtil info, float yaw, float pitch, Entity at, Vec3 inherited) {
+            boolean wouldHit(autismclient.modules.ProjectileBallistics.Inner_DataUtil info, float yaw, float pitch, Entity at, Vec3 inherited) {
                autismclient.modules.ProjectileBallistics.Inner_CachePool result = autismclient.modules.ProjectileBallistics.init(mc.level, mc.player, info, yaw, pitch, 120, inherited);
                HitResult hit = result.hit();
-               Vec3 motion = this.init_Vec3(at);
+               Vec3 motion = this.motionOf(at);
                if (motion.lengthSqr() < 0.0025000000000000005) {
-                  return hit instanceof EntityHitResult entityHit && (entityHit.getEntity() == at || this.init(entityHit.getEntity(), at));
+                  return hit instanceof EntityHitResult entityHit && (entityHit.getEntity() == at || this.isPartOf(entityHit.getEntity(), at));
                }
 
                List<AABB> boxes = new ArrayList<>();
@@ -317,15 +317,15 @@ final class AiRanged {
                return false;
             }
 
-            boolean init(Entity hit, Entity at) {
+            boolean isPartOf(Entity hit, Entity at) {
                return hit instanceof EnderDragonPart part && part.parentMob == at;
             }
 
-            Vec3 init_Vec3(Entity at) {
+            Vec3 motionOf(Entity at) {
                return new Vec3(at.getX() - at.xo, at.getY() - at.yo, at.getZ() - at.zo);
             }
 
-            Entity init_Entity_4() {
+            Entity findTarget() {
                if (explicitId >= 0) {
                   Entity explicit = mc.level.getEntity(explicitId);
                   return explicit != null && explicit.isAlive() ? explicit : null;
@@ -350,16 +350,16 @@ final class AiRanged {
                return best;
             }
 
-            void init_V_21() {
+            void releaseUse() {
                if (mc.options != null) {
                   mc.options.keyUse.setDown(false);
                }
 
-               this.init_Z = false;
+               this.drawing = false;
             }
 
-            JsonObject init_JsonObject_38() {
-               JsonObject out = AiJson.objectOf("target", spec, "fired", this.load_I, "requested", shots, "killed", this.update);
+            JsonObject progressJson() {
+               JsonObject out = AiJson.objectOf("target", spec, "fired", this.shotsFired, "requested", shots, "killed", this.kills);
                ItemStack held = mc.player == null ? ItemStack.EMPTY : mc.player.getMainHandItem();
                if (!held.isEmpty()) {
                   out.addProperty("weapon", BuiltInRegistries.ITEM.getKey(held.getItem()).toString());
@@ -368,37 +368,37 @@ final class AiRanged {
                   }
                }
 
-               if (this.init_Entity != null) {
+               if (this.target != null) {
                   out.add(
                      "engaging",
                      AiJson.objectOf(
                         "entityId",
-                        this.init_Entity.getId(),
+                        this.target.getId(),
                         "type",
-                        BuiltInRegistries.ENTITY_TYPE.getKey(this.init_Entity.getType()).toString(),
+                        BuiltInRegistries.ENTITY_TYPE.getKey(this.target.getType()).toString(),
                         "distance",
-                        Math.round(mc.player.distanceTo(this.init_Entity) * 10.0F) / 10.0
+                        Math.round(mc.player.distanceTo(this.target) * 10.0F) / 10.0
                      )
                   );
                }
 
-               if (this.init_ce_DataUtil != null) {
-                  out.add("arc", AiJson.objectOf("yaw", this.init_ce_DataUtil.yaw(), "pitch", this.init_ce_DataUtil.pitch()));
+               if (this.solvedArc != null) {
+                  out.add("arc", AiJson.objectOf("yaw", this.solvedArc.yaw(), "pitch", this.solvedArc.pitch()));
                }
 
                return out;
             }
 
-            AiOperation.Result init(String message) {
-               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_38().toString(), List.of());
+            AiOperation.Result running(String message) {
+               return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               return this.init(status, message, null);
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               return this.finish(status, message, null);
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
-               JsonObject data = this.init_JsonObject_38();
+            AiOperation.Result finish(AiOperation.Status status, String message, JsonObject extra) {
+               JsonObject data = this.progressJson();
                if (extra != null) {
                   for (Entry<String, JsonElement> entry : extra.entrySet()) {
                      data.add(entry.getKey(), entry.getValue());
@@ -411,12 +411,12 @@ final class AiRanged {
 
             @Override
             public void cancel() {
-               if (!this.load_Z) {
-                  this.load_Z = true;
-                  this.init_V_21();
-                  this.init_DataUtil.clear();
-                  if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.init_I) {
-                     autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.init_I);
+               if (!this.cancelled) {
+                  this.cancelled = true;
+                  this.releaseUse();
+                  this.aim.clear();
+                  if (mc.player != null && mc.player.getInventory().getSelectedSlot() != this.originalSlot) {
+                     autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.originalSlot);
                   }
                }
             }
@@ -426,7 +426,7 @@ final class AiRanged {
       }
    }
 
-   static boolean init(ItemStack stack) {
+   static boolean isRangedWeapon(ItemStack stack) {
       return stack.is(Items.BOW)
          || stack.is(Items.CROSSBOW)
          || stack.is(Items.TRIDENT)

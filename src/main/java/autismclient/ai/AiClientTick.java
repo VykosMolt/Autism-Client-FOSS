@@ -8,26 +8,26 @@ import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 
 public final class AiClientTick {
-   private static final AiTickQueue init = new AiTickQueue();
+   private static final AiTickQueue QUEUE = new AiTickQueue();
    private static final Map<String, Long> auditLastFailureLog = new HashMap<>();
 
    private AiClientTick() {
    }
 
    public static boolean init() {
-      return init.init();
+      return QUEUE.init();
    }
 
    static void execute(Runnable action) {
-      init.execute(action);
+      QUEUE.execute(action);
    }
 
    static <T> CompletableFuture<T> supply(Supplier<T> action) {
-      return init.supply(action);
+      return QUEUE.supply(action);
    }
 
    public static void tick(Minecraft client) {
-      init.init(() -> {
+      QUEUE.init(() -> {
          try {
             AiMacroTools.tick(client);
             AiDirectOps.init(client);

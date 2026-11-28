@@ -14,7 +14,7 @@ public final class PrintContainerAccess {
    private PrintContainerAccess() {
    }
 
-   public static AABB init(BlockState state, BlockPos at) {
+   public static AABB shulkerLidBox(BlockState state, BlockPos at) {
       return Shulker.getProgressDeltaAabb(1.0F, state.getValue(ShulkerBoxBlock.FACING), 0.0F, 0.5F, Vec3.atBottomCenterOf(at)).deflate(1.0E-6);
    }
 
@@ -23,7 +23,7 @@ public final class PrintContainerAccess {
          return true;
       }
 
-      AABB lid = init(state, at);
+      AABB lid = shulkerLidBox(state, at);
       return (body == null || !lid.intersects(body)) && view.isBoxClear(lid);
    }
 
@@ -33,7 +33,7 @@ public final class PrintContainerAccess {
          return true;
       } else {
          return level.getBlockEntity(at) instanceof ShulkerBoxBlockEntity box
-            ? box.getAnimationStatus() != AnimationStatus.CLOSED || level.noCollision(init(state, at))
+            ? box.getAnimationStatus() != AnimationStatus.CLOSED || level.noCollision(shulkerLidBox(state, at))
             : false;
       }
    }

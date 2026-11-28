@@ -37,7 +37,7 @@ public final class AiLanSync {
    private AiLanSync() {
    }
 
-   static void init(String action, JsonObject args) {
+   static void runAction(String action, JsonObject args) {
       if (action == null || action.isBlank()) {
          throw new IllegalArgumentException("action is required; one of: " + String.join(", ", init_List));
       }
@@ -48,10 +48,10 @@ public final class AiLanSync {
 
       switch (action) {
          case "joinSession":
-            init(args, "sessionId");
+            requireString(args, "sessionId");
             break;
          case "executeMacroSynchronized":
-            init(args, "macro");
+            requireString(args, "macro");
             break;
          case "executeMacrosSynchronized":
             if (!args.has("assignments") || !args.get("assignments").isJsonObject() || args.getAsJsonObject("assignments").size() == 0) {
@@ -65,36 +65,36 @@ public final class AiLanSync {
             }
             break;
          case "shareMacro":
-            init(args, "name");
+            requireString(args, "name");
             break;
          case "sharePreset":
-            init(args, "name");
+            requireString(args, "name");
             break;
          case "importMacro":
-            init(args, "peer");
-            init(args, "name");
+            requireString(args, "peer");
+            requireString(args, "name");
             break;
          case "setDelayOffset":
-            init(args, "peer");
+            requireString(args, "peer");
             if (!args.has("offsetMs")) {
                throw new IllegalArgumentException("offsetMs is required for setDelayOffset");
             }
             break;
          case "setExecutionMethod":
-            String method = init(args, "method").toUpperCase(Locale.ROOT);
+            String method = requireString(args, "method").toUpperCase(Locale.ROOT);
             if (!method.equals("INSTANT") && !method.equals("TICK")) {
                throw new IllegalArgumentException("method must be INSTANT or TICK");
             }
             break;
          case "sendChat":
-            String text = init(args, "text");
+            String text = requireString(args, "text");
             if (text.length() > 256) {
                throw new IllegalArgumentException("text must be at most 256 characters");
             }
       }
    }
 
-   private static String init(JsonObject args, String key) {
+   private static String requireString(JsonObject args, String key) {
       String value = AiJson.getString(args, key, "");
       if (value.isBlank()) {
          throw new IllegalArgumentException(key + " is required for this LAN action");
@@ -163,7 +163,7 @@ public final class AiLanSync {
 
    public static JsonObject load(JsonObject args) {
       String action = AiJson.getString(args, "action", "");
-      init(action, args);
+      runAction(action, args);
       autismclient.util.LanSyncManager lan = autismclient.util.LanSyncManager.getInstance();
       switch (action) {
          case "start":
@@ -175,7 +175,7 @@ public final class AiLanSync {
                throw new IllegalArgumentException("LAN Sync is already running");
             }
 
-            init(true);
+            setLanSyncEnabled(true);
             lan.startService();
             break;
          case "stop":
@@ -183,16 +183,16 @@ public final class AiLanSync {
                throw new IllegalArgumentException("LAN Sync is not running");
             }
 
-            init(false);
+            setLanSyncEnabled(false);
             lan.stopService();
             break;
          case "createSession":
-            init(lan);
+            requireRunning(lan);
             lan.createSession();
             break;
          case "joinSession":
-            init(lan);
-            String sessionId = init(args, "sessionId");
+            requireRunning(lan);
+            String sessionId = requireString(args, "sessionId");
             if (sessionId.equals(lan.getSessionId())) {
                throw new IllegalArgumentException("Already in session " + sessionId);
             }
@@ -212,7 +212,7 @@ public final class AiLanSync {
             lan.leaveSession();
             break;
          case "startSearching":
-            init(lan);
+            requireRunning(lan);
             if (lan.isInSession()) {
                throw new IllegalArgumentException("Already in a session; leave it before searching");
             }
@@ -227,8 +227,8 @@ public final class AiLanSync {
             lan.cancelSessionSearch();
             break;
          case "executeMacroSynchronized":
-            load(lan);
-            String macro = init(args, "macro");
+            requireSession(lan);
+            String macro = requireString(args, "macro");
             if (autismclient.util.MacroLibraryManager.getInstance().findByName(macro) == null) {
                throw new IllegalArgumentException("Unknown macro '" + macro + "'; inspect client:macros for saved names");
             }
@@ -236,14 +236,14 @@ public final class AiLanSync {
             lan.triggerMacroSync(macro);
             break;
          case "executeMacrosSynchronized":
-            load(lan);
+            requireSession(lan);
             Map<String, String> assignments = new LinkedHashMap<>();
 
             for (Entry<String, JsonElement> entry : args.getAsJsonObject("assignments").entrySet()) {
                assignments.put(entry.getKey(), entry.getValue().getAsString().trim());
             }
 
-            init(lan, assignments);
+            assignMacros(lan, assignments);
             lan.triggerPerUserMacroSync(assignments);
             break;
          case "broadcastStopAll":
@@ -258,7 +258,7 @@ public final class AiLanSync {
                throw new IllegalArgumentException("Not in a LAN Sync session");
             }
 
-            String name = init(args, "name");
+            String name = requireString(args, "name");
             if (autismclient.util.MacroLibraryManager.getInstance().findByName(name) == null) {
                throw new IllegalArgumentException("Unknown macro '" + name + "'; inspect client:macros for saved names");
             }
@@ -272,34 +272,34 @@ public final class AiLanSync {
                throw new IllegalArgumentException("Not in a LAN Sync session");
             }
 
-            String peer = init(args, "peer");
-            String macroName = init(args, "name");
+            String peer = requireString(args, "peer");
+            String macroName = requireString(args, "name");
             if (!lan.getConnectedClients().containsKey(peer)) {
                throw new IllegalArgumentException("Unknown peer '" + peer + "'; check clients in the LAN status");
             }
 
-            if (!init(lan, peer, macroName)) {
+            if (!peerHasMacro(lan, peer, macroName)) {
                throw new IllegalArgumentException("Peer '" + peer + "' has not shared a macro named '" + macroName + "'");
             }
 
             lan.importPeerMacro(peer, macroName);
             break;
          case "sendChat":
-            load(lan);
-            if (!lan.sendSyncedChat(init(args, "text"))) {
+            requireSession(lan);
+            if (!lan.sendSyncedChat(requireString(args, "text"))) {
                throw new IllegalStateException("LAN chat was rejected by LAN Sync");
             }
             break;
          case "sharePreset":
-            init(lan);
-            lan.sharePresetWithPeers(init(args, "name"));
+            requireRunning(lan);
+            lan.sharePresetWithPeers(requireString(args, "name"));
             break;
          case "setDelayOffset":
-            init(lan);
-            lan.setClientOffsetMs(init(args, "peer"), Math.max(0, AiJson.getInt(args, "offsetMs", 0)));
+            requireRunning(lan);
+            lan.setClientOffsetMs(requireString(args, "peer"), Math.max(0, AiJson.getInt(args, "offsetMs", 0)));
             break;
          case "setExecutionMethod":
-            lan.setExecutionMethod(autismclient.util.LanSyncManager.Inner_StreamUtil.valueOf(init(args, "method").toUpperCase(Locale.ROOT)));
+            lan.setExecutionMethod(autismclient.util.LanSyncManager.Inner_StreamUtil.valueOf(requireString(args, "method").toUpperCase(Locale.ROOT)));
             break;
          default:
             throw new IllegalArgumentException("Unknown LAN action '" + action + "'");
@@ -311,19 +311,19 @@ public final class AiLanSync {
       return out;
    }
 
-   private static void init(boolean enabled) {
+   private static void setLanSyncEnabled(boolean enabled) {
       AutismConfig config = AutismConfig.getGlobal();
       config.lanSyncEnabled = enabled;
       config.save();
    }
 
-   private static void init(autismclient.util.LanSyncManager lan) {
+   private static void requireRunning(autismclient.util.LanSyncManager lan) {
       if (!lan.isRunning()) {
          throw new IllegalArgumentException("LAN Sync is not running; use action start first");
       }
    }
 
-   private static void load(autismclient.util.LanSyncManager lan) {
+   private static void requireSession(autismclient.util.LanSyncManager lan) {
       if (!lan.isInSession()) {
          throw new IllegalArgumentException("Not in a LAN Sync session; createSession or joinSession first");
       }
@@ -339,7 +339,7 @@ public final class AiLanSync {
       }
    }
 
-   private static void init(autismclient.util.LanSyncManager lan, Map<String, String> assignments) {
+   private static void assignMacros(autismclient.util.LanSyncManager lan, Map<String, String> assignments) {
       Map<String, autismclient.util.LanSyncManager.Inner_DataUtil> clients = lan.getConnectedClients();
       StringBuilder problems = new StringBuilder();
 
@@ -348,7 +348,7 @@ public final class AiLanSync {
          String macro = entry.getValue();
          if (!clients.containsKey(peer)) {
             problems.append(problems.length() == 0 ? "" : "; ").append("unknown peer '").append(peer).append("'");
-         } else if (autismclient.util.MacroLibraryManager.getInstance().findByName(macro) == null && !init(lan, peer, macro)) {
+         } else if (autismclient.util.MacroLibraryManager.getInstance().findByName(macro) == null && !peerHasMacro(lan, peer, macro)) {
             problems.append(problems.length() == 0 ? "" : "; ")
                .append("macro '")
                .append(macro)
@@ -363,7 +363,7 @@ public final class AiLanSync {
       }
    }
 
-   private static boolean init(autismclient.util.LanSyncManager lan, String peer, String macro) {
+   private static boolean peerHasMacro(autismclient.util.LanSyncManager lan, String peer, String macro) {
       String key = MacroNameNormalizer.init(macro);
 
       for (String remote : lan.getPeerMacroNames(peer)) {

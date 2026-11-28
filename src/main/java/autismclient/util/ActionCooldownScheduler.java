@@ -5,20 +5,20 @@ import java.util.Map;
 import java.util.Random;
 
 public final class ActionCooldownScheduler {
-   private final Map<String, Long> init_Map = new HashMap<>();
-   private int init_I = -2147483648;
+   private final Map<String, Long> nextAllowed = new HashMap<>();
+   private int lastTick = -2147483648;
 
    public boolean isReady(String kind, int tick, long nowNanos) {
-      if (tick == this.init_I) {
+      if (tick == this.lastTick) {
          return false;
       }
 
-      Long next = this.init_Map.get(kind);
+      Long next = this.nextAllowed.get(kind);
       return next == null || nowNanos >= next;
    }
 
    public boolean init(int tick) {
-      return tick == this.init_I;
+      return tick == this.lastTick;
    }
 
    public boolean isReadyOrOtherCooling(String primary, String other, int tick, long nowNanos) {
@@ -26,13 +26,13 @@ public final class ActionCooldownScheduler {
    }
 
    public void schedule(String kind, int tick, long nowNanos, long delayNanos) {
-      this.init_I = tick;
-      this.init_Map.put(kind, nowNanos + Math.max(0L, delayNanos));
+      this.lastTick = tick;
+      this.nextAllowed.put(kind, nowNanos + Math.max(0L, delayNanos));
    }
 
    public void init() {
-      this.init_Map.clear();
-      this.init_I = -2147483648;
+      this.nextAllowed.clear();
+      this.lastTick = -2147483648;
    }
 
    public static long jitteredDelayNanos(int baseMs, int jitterMs, Random random) {

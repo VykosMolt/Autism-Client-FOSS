@@ -12,7 +12,7 @@ public class WaitPosAction implements CaptureOutputAction, MacroAction {
    public float yaw = 0.0F;
    public float pitch = 0.0F;
    public float rotLeeway = 5.0F;
-   private boolean init = true;
+   private boolean enabled = true;
    public boolean listenDuringPreviousAction = false;
    public String saveAs = "";
 
@@ -42,7 +42,7 @@ public class WaitPosAction implements CaptureOutputAction, MacroAction {
       tag.putFloat("yaw", this.yaw);
       tag.putFloat("pitch", this.pitch);
       tag.putFloat("rotLeeway", this.rotLeeway);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
@@ -83,7 +83,7 @@ public class WaitPosAction implements CaptureOutputAction, MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -109,12 +109,12 @@ public class WaitPosAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override

@@ -18,35 +18,35 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public final class GoldenLeverModule extends Module {
    public static final int init_I = -11702;
-   private static volatile boolean init_Z;
+   private static volatile boolean enabledCache;
 
    public GoldenLeverModule() {
       super("golden-lever", "GoldenLever", ae.write, "Renames and recolors vanilla levers.");
-      init_Z = this.isEnabledRaw();
+      enabledCache = this.isEnabledRaw();
    }
 
    @Override
    public void onEnable() {
-      init_Z = true;
+      enabledCache = true;
       am.init_V();
    }
 
    @Override
    public void onDisable() {
-      init_Z = false;
+      enabledCache = false;
       am.init_V();
    }
 
    public static boolean isActive() {
-      return read();
+      return tintActive();
    }
 
    public static boolean init(ItemStack stack) {
-      return read() && stack != null && stack.is(Items.LEVER);
+      return tintActive() && stack != null && stack.is(Items.LEVER);
    }
 
    public static boolean init(BlockState state) {
-      return read() && state != null && state.is(Blocks.LEVER);
+      return tintActive() && state != null && state.is(Blocks.LEVER);
    }
 
    public static Component label() {
@@ -60,17 +60,17 @@ public final class GoldenLeverModule extends Module {
          int count = Math.min(accessor.autism$getActiveLayerCount(), layers.length);
 
          for (int i = 0; i < count; i++) {
-            init(layers[i]);
+            tintLayer(layers[i]);
          }
       }
    }
 
-   private static void init(LayerRenderState layer) {
+   private static void tintLayer(LayerRenderState layer) {
       if (layer != null) {
          List<BakedQuad> quads = Compat263.prepareQuadList(layer);
 
          for (int i = 0; i < quads.size(); i++) {
-            quads.set(i, init(quads.get(i)));
+            quads.set(i, tintQuad(quads.get(i)));
          }
 
          IntList tints = layer.tintLayers();
@@ -79,7 +79,7 @@ public final class GoldenLeverModule extends Module {
       }
    }
 
-   private static BakedQuad init(BakedQuad quad) {
+   private static BakedQuad tintQuad(BakedQuad quad) {
       MaterialInfo materialInfo = quad.materialInfo();
       if (materialInfo.tintIndex() == 0) {
          return quad;
@@ -102,7 +102,7 @@ public final class GoldenLeverModule extends Module {
       );
    }
 
-   private static boolean read() {
-      return !AutismLiteVariant.enabled() && !autismclient.e.ListPool.init() ? false : init_Z;
+   private static boolean tintActive() {
+      return !AutismLiteVariant.enabled() && !autismclient.e.ListPool.init() ? false : enabledCache;
    }
 }

@@ -10,19 +10,19 @@ import java.util.zip.Inflater;
 public final class CrosshairPixelArt {
    public static final int[] SIZES = new int[]{8, 16, 32, 64};
    private static final String init_Str = "1";
-   private final int init_I;
-   private final int[] load_IArr;
-   private final int load_I;
+   private final int size;
+   private final int[] pixels;
+   private final int hash;
 
    public CrosshairPixelArt(int size, int[] pixels) {
-      this.init_I = isValidSize(size) ? size : 16;
-      int[] copy = new int[this.init_I * this.init_I];
+      this.size = isValidSize(size) ? size : 16;
+      int[] copy = new int[this.size * this.size];
       if (pixels != null) {
          System.arraycopy(pixels, 0, copy, 0, Math.min(pixels.length, copy.length));
       }
 
-      this.load_IArr = copy;
-      this.load_I = 31 * this.init_I + Arrays.hashCode(copy);
+      this.pixels = copy;
+      this.hash = 31 * this.size + Arrays.hashCode(copy);
    }
 
    public static boolean isValidSize(int size) {
@@ -35,24 +35,24 @@ public final class CrosshairPixelArt {
       return false;
    }
 
-   public static CrosshairPixelArt init_m(int size) {
+   public static CrosshairPixelArt blank(int size) {
       return new CrosshairPixelArt(size, null);
    }
 
    public int size() {
-      return this.init_I;
+      return this.size;
    }
 
    public int init(int x, int y) {
-      return x >= 0 && y >= 0 && x < this.init_I && y < this.init_I ? this.load_IArr[y * this.init_I + x] : 0;
+      return x >= 0 && y >= 0 && x < this.size && y < this.size ? this.pixels[y * this.size + x] : 0;
    }
 
    public int[] pixels() {
-      return (int[])this.load_IArr.clone();
+      return (int[])this.pixels.clone();
    }
 
-   public boolean init_Z() {
-      for (int p : this.load_IArr) {
+   public boolean isEmpty() {
+      for (int p : this.pixels) {
          if (p >>> 24 != 0) {
             return false;
          }
@@ -62,15 +62,15 @@ public final class CrosshairPixelArt {
    }
 
    public CrosshairPixelArt load(int newSize) {
-      if (isValidSize(newSize) && newSize != this.init_I) {
+      if (isValidSize(newSize) && newSize != this.size) {
          int[] out = new int[newSize * newSize];
 
          for (int y = 0; y < newSize; y++) {
-            int sy = (int)((y + 0.5) * this.init_I / newSize);
+            int sy = (int)((y + 0.5) * this.size / newSize);
 
             for (int x = 0; x < newSize; x++) {
-               int sx = (int)((x + 0.5) * this.init_I / newSize);
-               out[y * newSize + x] = this.load_IArr[sy * this.init_I + sx];
+               int sx = (int)((x + 0.5) * this.size / newSize);
+               out[y * newSize + x] = this.pixels[sy * this.size + sx];
             }
          }
 
@@ -81,10 +81,10 @@ public final class CrosshairPixelArt {
    }
 
    public String encode() {
-      byte[] raw = new byte[this.load_IArr.length * 4];
+      byte[] raw = new byte[this.pixels.length * 4];
 
-      for (int i = 0; i < this.load_IArr.length; i++) {
-         int p = this.load_IArr[i];
+      for (int i = 0; i < this.pixels.length; i++) {
+         int p = this.pixels[i];
          raw[i * 4] = (byte)(p >>> 24);
          raw[i * 4 + 1] = (byte)(p >>> 16);
          raw[i * 4 + 2] = (byte)(p >>> 8);
@@ -103,7 +103,7 @@ public final class CrosshairPixelArt {
             out.write(buffer, 0, deflater.deflate(buffer));
          }
 
-         return "1:" + this.init_I + ":" + Base64.getEncoder().encodeToString(out.toByteArray());
+         return "1:" + this.size + ":" + Base64.getEncoder().encodeToString(out.toByteArray());
       } finally {
          deflater.end();
       }
@@ -173,11 +173,11 @@ public final class CrosshairPixelArt {
 
    @Override
    public boolean equals(Object other) {
-      return this == other || other instanceof CrosshairPixelArt art && art.init_I == this.init_I && art.load_I == this.load_I && Arrays.equals(art.load_IArr, this.load_IArr);
+      return this == other || other instanceof CrosshairPixelArt art && art.size == this.size && art.hash == this.hash && Arrays.equals(art.pixels, this.pixels);
    }
 
    @Override
    public int hashCode() {
-      return this.load_I;
+      return this.hash;
    }
 }

@@ -3,22 +3,22 @@ package autismclient.util.villager;
 import java.lang.ref.WeakReference;
 
 public final class BlockChangeAckTracker {
-   private static WeakReference<Object> init_WeakReference = new WeakReference<>(null);
-   private static int init_I = -1;
+   private static WeakReference<Object> trackedLevel = new WeakReference<>(null);
+   private static int highestAck = -1;
 
    private BlockChangeAckTracker() {
    }
 
    public static void acknowledge(Object level, int value) {
-      if (init_WeakReference.get() != level) {
-         init_WeakReference = new WeakReference<>(level);
-         init_I = value;
+      if (trackedLevel.get() != level) {
+         trackedLevel = new WeakReference<>(level);
+         highestAck = value;
       } else {
-         init_I = Math.max(init_I, value);
+         highestAck = Math.max(highestAck, value);
       }
    }
 
    public static boolean isAcknowledged(Object level, int value) {
-      return value >= 0 && init_WeakReference.get() == level && init_I >= value;
+      return value >= 0 && trackedLevel.get() == level && highestAck >= value;
    }
 }

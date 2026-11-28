@@ -8,8 +8,8 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class AirJumpModule extends Module {
-   private boolean init_Z = true;
-   private static volatile long init_J;
+   private boolean doubleJumpReady = true;
+   private static volatile long lastJumpPressMillis;
 
    public AirJumpModule() {
       super("air-jump", "AirJump", ae.load_ae, "Jump in mid air.");
@@ -19,16 +19,16 @@ public final class AirJumpModule extends Module {
    @Override
    public void preMovementTick() {
       if (MC.player != null && MC.player.onGround()) {
-         this.init_Z = true;
+         this.doubleJumpReady = true;
       }
    }
 
-   private boolean read() {
-      return "JumpFreely".equals(this.choice("mode")) || "DoubleJump".equals(this.choice("mode")) && this.init_Z;
+   private boolean allowsJump() {
+      return "JumpFreely".equals(this.choice("mode")) || "DoubleJump".equals(this.choice("mode")) && this.doubleJumpReady;
    }
 
    public static boolean canAirJump() {
-      return al.init_Module_Str("air-jump") instanceof AirJumpModule airJump && airJump.isEnabled() && airJump.read();
+      return al.init_Module_Str("air-jump") instanceof AirJumpModule airJump && airJump.isEnabled() && airJump.allowsJump();
    }
 
    public static void init(LivingEntity entity) {
@@ -37,9 +37,9 @@ public final class AirJumpModule extends Module {
          && entity == MC.player
          && al.init_Module_Str("air-jump") instanceof AirJumpModule airJump
          && airJump.isEnabled()
-         && airJump.init_Z
+         && airJump.doubleJumpReady
          && !MC.player.onGround()) {
-         airJump.init_Z = false;
+         airJump.doubleJumpReady = false;
       }
    }
 
@@ -49,7 +49,7 @@ public final class AirJumpModule extends Module {
                && airJump.isEnabled()
                && "GhostBlock".equals(airJump.choice("mode"))
                && pos.getY() < MC.player.blockPosition().getY()
-               && load()
+               && jumpRecentlyPressed()
             ? Shapes.block()
             : original;
       } else {
@@ -57,21 +57,21 @@ public final class AirJumpModule extends Module {
       }
    }
 
-   public static boolean load() {
+   public static boolean jumpRecentlyPressed() {
       if (MC != null && MC.options != null) {
          long now = System.currentTimeMillis();
          if (MC.options.keyJump.isDown()) {
-            init_J = now;
+            lastJumpPressMillis = now;
             return true;
          } else {
-            return now - init_J <= init_J();
+            return now - lastJumpPressMillis <= jumpGraceMillis();
          }
       } else {
          return false;
       }
    }
 
-   private static long init_J() {
+   private static long jumpGraceMillis() {
       if (MC.player == null) {
          return 300L;
       } else {

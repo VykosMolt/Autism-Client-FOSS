@@ -11,7 +11,7 @@ final class TrajectoryStateCache {
    private static final FireballBlastPredictor BLAST_PREDICTOR = new FireballBlastPredictor();
    private static final ThrownPearlTracker PEARL_TRACKER = new ThrownPearlTracker();
    private static List<TrajectoriesModule.Inner_CachePool> init_List = List.of();
-   private static List<FireballBlastPredictor.Inner_DataUtil> load = List.of();
+   private static List<FireballBlastPredictor.Inner_DataUtil> blastPredictions = List.of();
    private static Level init_Level;
    private static Object init_Obj;
    private static final Map<Vec3, Integer> init_Map = new HashMap<>();
@@ -22,7 +22,7 @@ final class TrajectoryStateCache {
    }
 
    static void init(Minecraft mc, List<TrajectoriesModule.Inner_CachePool> paths) {
-      if (init(mc)) {
+      if (ensureContext(mc)) {
          init_List = paths;
          Vec3 explosion = null;
 
@@ -32,7 +32,7 @@ final class TrajectoryStateCache {
             }
          }
 
-         load = BLAST_PREDICTOR.predictAt(init_Level, explosion);
+         blastPredictions = BLAST_PREDICTOR.predictAt(init_Level, explosion);
          Module module = al.init_Module_Str("trajectories");
          double threshold = module == null ? 50.0 : module.integer("pearl-warning-damage");
          if (init_I != mc.player.tickCount || init_D != threshold) {
@@ -47,12 +47,12 @@ final class TrajectoryStateCache {
 
          ThrownPearlTracker.Inner_DataUtil remembered = PEARL_TRACKER.remembered();
          if (remembered != null) {
-            init(mc, remembered.position(), threshold);
+            evaluateLanding(mc, remembered.position(), threshold);
          }
 
          for (TrajectoriesModule.Inner_CachePool path : paths) {
             if (path.load_Vec3() != null) {
-               init(mc, path.load_Vec3(), threshold);
+               evaluateLanding(mc, path.load_Vec3(), threshold);
             }
          }
 
@@ -63,14 +63,14 @@ final class TrajectoryStateCache {
    }
 
    static List<FireballBlastPredictor.Inner_DataUtil> init(List<TrajectoriesModule.Inner_CachePool> paths) {
-      return init_List == paths ? load : List.of();
+      return init_List == paths ? blastPredictions : List.of();
    }
 
    static int init(Vec3 destination) {
       return init_Map.getOrDefault(destination, -12971);
    }
 
-   private static void init(Minecraft mc, Vec3 destination, double threshold) {
+   private static void evaluateLanding(Minecraft mc, Vec3 destination, double threshold) {
       init_Map.computeIfAbsent(destination, at -> PearlLandingEvaluator.init(mc, at, threshold));
    }
 
@@ -84,12 +84,12 @@ final class TrajectoryStateCache {
    }
 
    static void init(Minecraft mc, boolean enabled) {
-      if (init(mc)) {
+      if (ensureContext(mc)) {
          PEARL_TRACKER.tick(mc, enabled);
       }
    }
 
-   private static boolean init(Minecraft mc) {
+   private static boolean ensureContext(Minecraft mc) {
       if (mc != null && mc.level != null && mc.player != null && mc.player.isAlive() && !mc.player.isSpectator()) {
          if (mc.level != init_Level || mc.player != init_Obj) {
             reset();
@@ -108,7 +108,7 @@ final class TrajectoryStateCache {
       BLAST_PREDICTOR.reset();
       PEARL_TRACKER.reset();
       init_List = List.of();
-      load = List.of();
+      blastPredictions = List.of();
       init_Level = null;
       init_Obj = null;
       init_Map.clear();

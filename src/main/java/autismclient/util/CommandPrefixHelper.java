@@ -5,10 +5,10 @@ import java.util.List;
 
 public final class CommandPrefixHelper {
    public static final List<String> ALLOWED_PREFIXES = List.of(".", "%", "-", "_", "*", "#", "@", "&", "=");
-   private static volatile String write;
-   private static volatile String update;
-   private static volatile int init_I = -2147483648;
-   private static volatile List<String> load_List = List.of();
+   private static volatile String storedCache;
+   private static volatile String prefixCache;
+   private static volatile int namesRevision = -2147483648;
+   private static volatile List<String> cachedNames = List.of();
 
    private CommandPrefixHelper() {
    }
@@ -17,15 +17,15 @@ public final class CommandPrefixHelper {
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
       String stored = module == null ? AutismConfig.getGlobal().commandPrefix : module.getCommandPrefix();
       String safeStored = stored == null ? "" : stored;
-      String cachedStored = write;
-      String cachedPrefix = update;
+      String cachedStored = storedCache;
+      String cachedPrefix = prefixCache;
       if (safeStored.equals(cachedStored) && cachedPrefix != null) {
          return cachedPrefix;
       }
 
       String normalized = normalizePrefix(safeStored);
-      write = safeStored;
-      update = normalized;
+      storedCache = safeStored;
+      prefixCache = normalized;
       return normalized;
    }
 
@@ -38,21 +38,21 @@ public final class CommandPrefixHelper {
       return ALLOWED_PREFIXES.contains(selected) ? selected : defaultPrefix();
    }
 
-   public static boolean init_Z(String prefix) {
+   public static boolean isAllowedPrefix(String prefix) {
       String selected = prefix == null ? "" : prefix.trim();
       return ALLOWED_PREFIXES.contains(selected);
    }
 
    public static List<String> moduleNames() {
       int revision = autismclient.modules.al.init_I();
-      List<String> names = load_List;
-      if (init_I != revision) {
+      List<String> names = cachedNames;
+      if (namesRevision != revision) {
          List<String> rebuilt = new ArrayList<>(autismclient.modules.al.init_List());
          rebuilt.removeIf(name -> name == null || name.isBlank());
          rebuilt.sort(String::compareToIgnoreCase);
          names = List.copyOf(rebuilt);
-         load_List = names;
-         init_I = revision;
+         cachedNames = names;
+         namesRevision = revision;
       }
 
       return new ArrayList<>(names);

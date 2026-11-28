@@ -14,7 +14,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 final class WorldProjectionHelper {
-   private static final Vector3f init = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
+   private static final Vector3f ROTATION_AXIS = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
 
    private WorldProjectionHelper() {
    }
@@ -48,9 +48,9 @@ final class WorldProjectionHelper {
             float skew = 5.0F / (spin * spin + 5.0F) - spin * 0.04F;
             skew *= skew;
             float angle = 0.0F;
-            dest.rotate(angle, init);
+            dest.rotate(angle, ROTATION_AXIS);
             dest.scale(1.0F / skew, 1.0F, 1.0F);
-            dest.rotate(-angle, init);
+            dest.rotate(-angle, ROTATION_AXIS);
          }
 
          dest.mul(camera.viewRotationMatrix);

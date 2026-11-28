@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class SaveGuiAction implements MacroAction {
-   private boolean init = true;
+   private boolean enabled = true;
    public boolean closeAfter = false;
    public boolean sendPacket = true;
 
@@ -24,7 +24,7 @@ public class SaveGuiAction implements MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "SAVE_GUI");
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       tag.putBoolean("closeAfter", this.closeAfter);
       tag.putBoolean("sendPacket", this.sendPacket);
       return tag;
@@ -33,7 +33,7 @@ public class SaveGuiAction implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       if (tag.contains("closeAfter")) {
@@ -61,11 +61,11 @@ public class SaveGuiAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 }

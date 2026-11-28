@@ -33,8 +33,8 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
    private EditBox passwordField;
    private boolean masked = true;
    private String statusText = "";
-   private int update = GuiColorPalette.close;
-   private int sync = 124;
+   private int statusColor = GuiColorPalette.close;
+   private int statusY = 124;
 
    public LoginPasswordScreen(Screen parent, Map<String, String> values, Consumer<Map<String, String>> onSave) {
       super(Component.literal("Login Password"));
@@ -79,26 +79,26 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
       int genW = this.buttonWidth("Generate Random");
       int clearW = this.buttonWidth("Clear");
       if (genW + gap + clearW <= innerW) {
-         this.init(innerX, y, genW, "Generate Random", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, b -> this.generatePassword());
-         this.init(innerX + genW + gap, y, clearW, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.clearPassword());
+         this.addButton(innerX, y, genW, "Generate Random", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, b -> this.generatePassword());
+         this.addButton(innerX + genW + gap, y, clearW, "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.clearPassword());
       } else {
          int half = Math.max(1, (innerW - gap) / 2);
-         this.init(innerX, y, half, "Generate Random", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, b -> this.generatePassword());
-         this.init(innerX + half + gap, y, Math.max(1, innerW - half - gap), "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.clearPassword());
+         this.addButton(innerX, y, half, "Generate Random", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, b -> this.generatePassword());
+         this.addButton(innerX + half + gap, y, Math.max(1, innerW - half - gap), "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.clearPassword());
       }
 
       y += step;
-      this.sync = y + (l.h() < 110 ? 2 : 4);
+      this.statusY = y + (l.h() < 110 ? 2 : 4);
       int saveW = this.buttonWidth("Save");
       int backW = this.buttonWidth("Back");
       int footerRight = l.x() + l.w();
       if (saveW + gap + backW <= l.w()) {
-         this.init(footerRight - backW - gap - saveW, l.footerY(), saveW, "Save", autismclient.gui.f.b.CachePool.Inner_DataUtil.write, b -> this.close());
-         this.init(footerRight - backW, l.footerY(), backW, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.onClose());
+         this.addButton(footerRight - backW - gap - saveW, l.footerY(), saveW, "Save", autismclient.gui.f.b.CachePool.Inner_DataUtil.write, b -> this.savePassword());
+         this.addButton(footerRight - backW, l.footerY(), backW, "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.onClose());
       } else {
          int half = Math.max(1, (l.w() - gap) / 2);
-         this.init(l.x(), l.footerY(), half, "Save", autismclient.gui.f.b.CachePool.Inner_DataUtil.write, b -> this.close());
-         this.init(l.x() + half + gap, l.footerY(), Math.max(1, l.w() - half - gap), "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.onClose());
+         this.addButton(l.x(), l.footerY(), half, "Save", autismclient.gui.f.b.CachePool.Inner_DataUtil.write, b -> this.savePassword());
+         this.addButton(l.x() + half + gap, l.footerY(), Math.max(1, l.w() - half - gap), "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, b -> this.onClose());
       }
    }
 
@@ -143,7 +143,7 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
          this.passwordField.setValue("");
       }
 
-      this.load("Password cleared. Press Save to apply.", GuiColorPalette.open);
+      this.setStatus("Password cleared. Press Save to apply.", GuiColorPalette.open);
    }
 
    private void generatePassword() {
@@ -153,7 +153,7 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
          this.passwordField.setValue(generated);
       }
 
-      this.load("Generated a random password (9-16 chars). Press Save to keep it.", GuiColorPalette.open);
+      this.setStatus("Generated a random password (9-16 chars). Press Save to keep it.", GuiColorPalette.open);
    }
 
    private static String randomPassword() {
@@ -172,10 +172,10 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
       return "Password used to fill {secret.password} in Join Macros and custom login screens. Leave blank and press Save to clear.";
    }
 
-   private void close() {
+   private void savePassword() {
       String password = this.passwordField == null ? "" : this.passwordField.getValue();
       if (password != null && password.length() > 16) {
-         this.load("Password must be at most 16 characters.", GuiColorPalette.poll);
+         this.setStatus("Password must be at most 16 characters.", GuiColorPalette.poll);
          return;
       }
 
@@ -192,22 +192,22 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
       }
    }
 
-   private void load(String text, int color) {
+   private void setStatus(String text, int color) {
       this.statusText = text == null ? "" : text;
-      this.update = color;
+      this.statusColor = color;
    }
 
    private int buttonWidth(String label) {
       return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, STYLE_THEME.init_Identifier_l(l.read), 0));
    }
 
-   private void init(int x, int y, int w, int h, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, OnPress press) {
+   private void addButton(int x, int y, int w, int h, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, OnPress press) {
       int width = w <= 0 ? this.buttonWidth(label) : Math.max(1, w);
       this.addRenderableWidget(new StyledButton(x, y, width, h, Component.literal(label), tone, press));
    }
 
-   private void init(int x, int y, int w, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, OnPress press) {
-      this.init(x, y, w, this.read_I_16(), label, tone, press);
+   private void addButton(int x, int y, int w, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, OnPress press) {
+      this.addButton(x, y, w, this.read_I_16(), label, tone, press);
    }
 
    @Override
@@ -247,14 +247,14 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
             border
          );
          int titleY = this.centeredTextY(l.y() + 6, this.write_I_14());
-         this.init(graphics, "Login Password", l.x() + 6, titleY, textColor);
+         this.drawText(graphics, "Login Password", l.x() + 6, titleY, textColor);
          int textX = l.x() + 6;
          int textW = Math.max(1, l.w() - 12);
          int maxTextY = l.bottom() - (l.h() < 110 ? 3 : 6);
          List<FormattedCharSequence> statusLines = this.statusText.isBlank() ? List.of() : this.font.split(FormattedText.of(this.statusText), textW);
          int statusReserve = statusLines.isEmpty() ? 0 : statusLines.size() * 10 + 4;
          int helpLimitY = maxTextY - statusReserve;
-         int hy = this.sync;
+         int hy = this.statusY;
 
          for (FormattedCharSequence line : this.font.split(FormattedText.of(this.helpText()), textW)) {
             if (hy + 9 > helpLimitY) {
@@ -266,14 +266,14 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
          }
 
          if (!statusLines.isEmpty()) {
-            int sy = Math.max(this.sync, maxTextY - statusLines.size() * 10);
+            int sy = Math.max(this.statusY, maxTextY - statusLines.size() * 10);
 
             for (FormattedCharSequence line : statusLines) {
                if (sy + 9 > maxTextY) {
                   break;
                }
 
-               graphics.text(this.font, line, textX, sy, this.update, false);
+               graphics.text(this.font, line, textX, sy, this.statusColor, false);
                sy += 10;
             }
          }
@@ -288,7 +288,7 @@ public final class LoginPasswordScreen extends VirtualScaledScreen {
       return UiLayoutMath.centerTextY(boxY, boxH, STYLE_THEME.init_I_l(l.read), STYLE_THEME.flush());
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color) {
+   private void drawText(GuiGraphicsExtractor graphics, String text, int x, int y, int color) {
       Identifier fontId = STYLE_THEME.init_Identifier_l(autismclient.gui.f.b.l.read);
       k.init(graphics, this.font, text, fontId, color, x, y, false);
    }

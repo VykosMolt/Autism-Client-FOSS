@@ -8,29 +8,29 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 
 final class AiNavigationSelection extends AiPlacementSession {
-   private final Minecraft init_Minecraft = Minecraft.getInstance();
-   private final Object init_Obj = this.init_Minecraft.level;
-   private final boolean init_Z;
+   private final Minecraft client = Minecraft.getInstance();
+   private final Object boundLevel = this.client.level;
+   private final boolean parkour;
    private final AiToolCallParser.Inner_CachePool options;
-   private final autismclient.ai.engine.AiStandingTarget.Inner_DataUtil init_j_DataUtil = new autismclient.ai.engine.AiStandingTarget.Inner_DataUtil();
+   private final autismclient.ai.engine.AiStandingTarget.Inner_DataUtil standingResolver = new autismclient.ai.engine.AiStandingTarget.Inner_DataUtil();
    private final List<autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil> checkpoints = new ArrayList<>();
-   private autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil;
+   private autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil standingTarget;
 
    AiNavigationSelection(boolean parkour, boolean assumeNoFallDamage) {
       this(parkour, new AiToolCallParser.Inner_CachePool(assumeNoFallDamage, -1));
    }
 
    AiNavigationSelection(boolean parkour, AiToolCallParser.Inner_CachePool options) {
-      this.init_Z = parkour;
+      this.parkour = parkour;
       this.options = options == null ? new AiToolCallParser.Inner_CachePool(false, -1) : options;
    }
 
    autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil getTarget() {
-      return this.init_j_StreamUtil;
+      return this.standingTarget;
    }
 
    boolean isParkour() {
-      return this.init_Z;
+      return this.parkour;
    }
 
    List<autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil> checkpoints() {
@@ -41,8 +41,8 @@ final class AiNavigationSelection extends AiPlacementSession {
       if (this.updateAndCheck()) {
          if (this.checkpoints.size() >= 31) {
             autismclient.util.bi.read("Checkpoint limit reached. Right-click to set the finish.");
-         } else if (this.checkpoints.isEmpty() || !this.checkpoints.getLast().stance().equals(this.init_j_StreamUtil.stance())) {
-            this.checkpoints.add(this.init_j_StreamUtil);
+         } else if (this.checkpoints.isEmpty() || !this.checkpoints.getLast().stance().equals(this.standingTarget.stance())) {
+            this.checkpoints.add(this.standingTarget);
          }
       }
    }
@@ -55,7 +55,7 @@ final class AiNavigationSelection extends AiPlacementSession {
 
    JsonObject buildArgs(BlockPos feet) {
       JsonObject args = AiJson.objectOf("x", feet.getX(), "y", feet.getY(), "z", feet.getZ(), "radius", 0.6);
-      if (this.init_Z) {
+      if (this.parkour) {
          args = AiToolCallParser.init_JsonObject_JsonObject_ParkourOptions(args, this.options);
          args.addProperty("allowInventory", false);
          JsonArray arr = new JsonArray();
@@ -79,7 +79,7 @@ final class AiNavigationSelection extends AiPlacementSession {
 
    void write() {
       try {
-         AiDirectOps.run("game:goto", this.buildArgs(this.init_j_StreamUtil.stance()));
+         AiDirectOps.run("game:goto", this.buildArgs(this.standingTarget.stance()));
       } catch (IllegalArgumentException | IllegalStateException e) {
          autismclient.util.bi.write(e.getMessage());
       }
@@ -87,17 +87,17 @@ final class AiNavigationSelection extends AiPlacementSession {
 
    @Override
    boolean isReadyToConfirm() {
-      return this.init_j_StreamUtil != null && this.init_j_StreamUtil.valid();
+      return this.standingTarget != null && this.standingTarget.valid();
    }
 
    @Override
    boolean isActive() {
-      return this.init_Minecraft.level != null && this.init_Minecraft.level == this.init_Obj && this.init_Minecraft.player != null;
+      return this.client.level != null && this.client.level == this.boundLevel && this.client.player != null;
    }
 
    @Override
    BlockPos getOrigin() {
-      return this.isReadyToConfirm() ? this.init_j_StreamUtil.stance() : BlockPos.ZERO;
+      return this.isReadyToConfirm() ? this.standingTarget.stance() : BlockPos.ZERO;
    }
 
    @Override
@@ -112,15 +112,15 @@ final class AiNavigationSelection extends AiPlacementSession {
 
    @Override
    void moveToAim(boolean surface) {
-      this.load(false);
+      this.resolveTarget(false);
    }
 
-   void update() {
+   void refresh() {
       this.updateAndCheck();
    }
 
    boolean updateAndCheck() {
-      this.load(true);
+      this.resolveTarget(true);
       if (!this.isReadyToConfirm()) {
          autismclient.util.bi.write("Aim at a safe standing surface");
       }
@@ -128,10 +128,10 @@ final class AiNavigationSelection extends AiPlacementSession {
       return this.isReadyToConfirm();
    }
 
-   private void load(boolean fresh) {
+   private void resolveTarget(boolean fresh) {
       if (this.isActive()) {
-         this.init_j_StreamUtil = this.init_j_DataUtil
-            .init(this.init_Minecraft, SchematicSelection.eyePosition(this.init_Minecraft), SchematicSelection.lookDirection(this.init_Minecraft), 250.0, false, fresh);
+         this.standingTarget = this.standingResolver
+            .init(this.client, SchematicSelection.eyePosition(this.client), SchematicSelection.lookDirection(this.client), 250.0, false, fresh);
       }
    }
 

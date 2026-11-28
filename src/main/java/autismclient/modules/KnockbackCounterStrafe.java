@@ -23,7 +23,7 @@ final class KnockbackCounterStrafe {
       boolean jump = this.jump && canJump;
       this.jump = false;
       if (this.ticksLeft <= 0) {
-         return init(own, jump);
+         return withJump(own, jump);
       } else {
          this.ticksLeft--;
          double away = motion.x * this.direction.x + motion.z * this.direction.z;
@@ -34,12 +34,12 @@ final class KnockbackCounterStrafe {
             return new Input(forward > 0.25, forward < -0.25, side > 0.25, side < -0.25, own.jump() || jump, own.shift(), false);
          } else {
             this.ticksLeft = 0;
-            return init(own, jump);
+            return withJump(own, jump);
          }
       }
    }
 
-   private static Input init(Input input, boolean jump) {
+   private static Input withJump(Input input, boolean jump) {
       return jump ? new Input(input.forward(), input.backward(), input.left(), input.right(), true, input.shift(), input.sprint()) : input;
    }
 

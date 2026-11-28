@@ -16,7 +16,7 @@ public class HelpCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         init();
+         listCommands();
          return 1;
       });
       root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("command", StringArgumentType.word()).suggests((ctx, builder) -> {
@@ -53,7 +53,7 @@ public class HelpCommand extends Command {
       }));
    }
 
-   private static void init() {
+   private static void listCommands() {
       String prefix = autismclient.commands.CommandManager.getPrefix();
 
       for (Command c : autismclient.commands.CommandManager.getCommands()) {

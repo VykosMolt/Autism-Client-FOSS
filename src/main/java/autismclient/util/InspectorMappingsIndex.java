@@ -12,11 +12,11 @@ import java.util.Map;
 
 public final class InspectorMappingsIndex {
    private static final String RESOURCE_PATH = "/autism-inspector-mappings.tsv";
-   private static final Map<String, String> init_Map = new HashMap<>();
-   private static final Map<String, String> load = new HashMap<>();
-   private static final Map<String, String> read = new HashMap<>();
-   private static final Map<String, String> write = new HashMap<>();
-   private static volatile boolean init_Z;
+   private static final Map<String, String> classAliases = new HashMap<>();
+   private static final Map<String, String> simpleAliases = new HashMap<>();
+   private static final Map<String, String> methodAliases = new HashMap<>();
+   private static final Map<String, String> fieldAliases = new HashMap<>();
+   private static volatile boolean loaded;
 
    private InspectorMappingsIndex() {
    }
@@ -27,8 +27,8 @@ public final class InspectorMappingsIndex {
 
    public static String aliasForClass(String className) {
       if (className != null && !className.isBlank()) {
-         init();
-         return init_Map.get(className.replace('/', '.'));
+         ensureLoaded();
+         return classAliases.get(className.replace('/', '.'));
       } else {
          return null;
       }
@@ -36,8 +36,8 @@ public final class InspectorMappingsIndex {
 
    public static String load(String simpleName) {
       if (simpleName != null && !simpleName.isBlank()) {
-         init();
-         String alias = load.get(simpleName);
+         ensureLoaded();
+         String alias = simpleAliases.get(simpleName);
          return alias != null && !alias.isBlank() ? alias : null;
       } else {
          return null;
@@ -49,8 +49,8 @@ public final class InspectorMappingsIndex {
          return null;
       }
 
-      init();
-      return read.get(init(method.getDeclaringClass().getName(), method.getName(), load(method)));
+      ensureLoaded();
+      return methodAliases.get(memberKey(method.getDeclaringClass().getName(), method.getName(), methodDescriptor(method)));
    }
 
    public static String init(Field field) {
@@ -58,22 +58,22 @@ public final class InspectorMappingsIndex {
          return null;
       }
 
-      init();
-      return write.get(init(field.getDeclaringClass().getName(), field.getName(), load(field.getType())));
+      ensureLoaded();
+      return fieldAliases.get(memberKey(field.getDeclaringClass().getName(), field.getName(), typeDescriptor(field.getType())));
    }
 
-   private static void init() {
-      if (!init_Z) {
+   private static void ensureLoaded() {
+      if (!loaded) {
          synchronized (InspectorMappingsIndex.class) {
-            if (!init_Z) {
-               load();
-               init_Z = true;
+            if (!loaded) {
+               loadMappings();
+               loaded = true;
             }
          }
       }
    }
 
-   private static void load() {
+   private static void loadMappings() {
       try {
          label66: {
             try (InputStream stream = InspectorMappingsIndex.class.getResourceAsStream("/autism-inspector-mappings.tsv")) {
@@ -81,7 +81,7 @@ public final class InspectorMappingsIndex {
                   String line;
                   try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
                      while ((line = reader.readLine()) != null) {
-                        init_V(line);
+                        parseLine(line);
                      }
                      break label66;
                   }
@@ -94,7 +94,7 @@ public final class InspectorMappingsIndex {
       }
    }
 
-   private static void init_V(String line) {
+   private static void parseLine(String line) {
       if (line != null) {
          String trimmed = line.trim();
          if (!trimmed.isEmpty() && !trimmed.startsWith("#")) {
@@ -108,57 +108,57 @@ public final class InspectorMappingsIndex {
                         return;
                      }
 
-                     init_Map.put(owner, alias);
+                     classAliases.put(owner, alias);
                      String simpleOwner = owner.substring(owner.lastIndexOf(46) + 1);
-                     init(simpleOwner, alias);
+                     putSimpleAlias(simpleOwner, alias);
                      break;
                   case "M":
                      if (parts.length < 5) {
                         return;
                      }
 
-                     read.put(init(parts[1], parts[2], parts[3]), parts[4]);
+                     methodAliases.put(memberKey(parts[1], parts[2], parts[3]), parts[4]);
                      break;
                   case "F":
                      if (parts.length < 5) {
                         return;
                      }
 
-                     write.put(init(parts[1], parts[2], parts[3]), parts[4]);
+                     fieldAliases.put(memberKey(parts[1], parts[2], parts[3]), parts[4]);
                }
             }
          }
       }
    }
 
-   private static void init(String simpleOwner, String alias) {
+   private static void putSimpleAlias(String simpleOwner, String alias) {
       if (simpleOwner != null && !simpleOwner.isBlank() && alias != null && !alias.isBlank()) {
-         String existing = load.get(simpleOwner);
+         String existing = simpleAliases.get(simpleOwner);
          if (existing == null) {
-            load.put(simpleOwner, alias);
+            simpleAliases.put(simpleOwner, alias);
          } else if (!existing.equals(alias)) {
-            load.put(simpleOwner, "");
+            simpleAliases.put(simpleOwner, "");
          }
       }
    }
 
-   private static String init(String owner, String name, String descriptor) {
+   private static String memberKey(String owner, String name, String descriptor) {
       return owner + "#" + name + "#" + descriptor;
    }
 
-   private static String load(Method method) {
+   private static String methodDescriptor(Method method) {
       StringBuilder builder = new StringBuilder();
       builder.append('(');
 
       for (Class<?> parameterType : method.getParameterTypes()) {
-         builder.append(load(parameterType));
+         builder.append(typeDescriptor(parameterType));
       }
 
-      builder.append(')').append(load(method.getReturnType()));
+      builder.append(')').append(typeDescriptor(method.getReturnType()));
       return builder.toString();
    }
 
-   private static String load(Class<?> type) {
+   private static String typeDescriptor(Class<?> type) {
       if (type.isPrimitive()) {
          if (type == void.class) {
             return "V";

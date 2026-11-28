@@ -12,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
 public final class InteractionGoal implements AiPathfinder.PathGoal {
    private final BlockPos target;
    private final double init_D;
-   private final double load;
+   private final double standEyeHeight;
    private final AiPathfinder.GridView init_ClassCache_StateCa;
    private final Direction init_Direction;
    private final boolean init_Z;
@@ -30,7 +30,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
       if (Double.isFinite(reach) && !(reach <= 0.0) && Double.isFinite(eyeHeight)) {
          this.target = target.immutable();
          this.init_D = reach;
-         this.load = eyeHeight;
+         this.standEyeHeight = eyeHeight;
          this.init_ClassCache_StateCa = grid;
          this.init_Set = rejected;
          this.init_Direction = requiredFace;
@@ -41,7 +41,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
    }
 
    public InteractionGoal forSnapshotGrids() {
-      return new InteractionGoal(this.target, this.init_D, this.load, this.init_ClassCache_StateCa, this.init_Set, this.init_Direction, true);
+      return new InteractionGoal(this.target, this.init_D, this.standEyeHeight, this.init_ClassCache_StateCa, this.init_Set, this.init_Direction, true);
    }
 
    public boolean breaksTarget() {
@@ -75,7 +75,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
 
    @Override
    public AiPathfinder.PathGoal init(AiPathfinder.GridView grid) {
-      return new InteractionGoal(this.target, this.init_D, this.load, grid, this.init_Set, this.init_Direction, this.init_Z);
+      return new InteractionGoal(this.target, this.init_D, this.standEyeHeight, grid, this.init_Set, this.init_Direction, this.init_Z);
    }
 
    @Override
@@ -87,13 +87,13 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
    public boolean outsideSearchBox(BlockPos from, int horizontal, int vertical) {
       return Math.abs(from.getX() - this.target.getX()) > horizontal + this.init_D
          || Math.abs(from.getZ() - this.target.getZ()) > horizontal + this.init_D
-         || Math.abs(from.getY() - this.target.getY()) > vertical + this.init_D + this.load;
+         || Math.abs(from.getY() - this.target.getY()) > vertical + this.init_D + this.standEyeHeight;
    }
 
    @Override
    public double heuristic(int x, int y, int z) {
       double horizontal = Math.hypot(x - this.target.getX(), z - this.target.getZ());
-      double vertical = Math.abs(y + this.load - this.target.getY() - 0.5);
+      double vertical = Math.abs(y + this.standEyeHeight - this.target.getY() - 0.5);
       return Math.max(0.0, Math.max(horizontal * 2.9000000000000004, vertical) - this.init_D * 2.9000000000000004) + 0.5 * horizontal;
    }
 
@@ -120,7 +120,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
       double cy = this.target.getY() + 0.5;
       double cz = this.target.getZ() + 0.5;
       double ex = cx - x - 0.5;
-      double ey = cy - y - this.load;
+      double ey = cy - y - this.standEyeHeight;
       double ez = cz - z - 0.5;
       if (ex * ex + ey * ey + ez * ez > (this.init_D + 0.5) * (this.init_D + 0.5)) {
          return false;
@@ -139,12 +139,12 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
          Vec3 centre = box.getCenter().add(this.target.getX(), this.target.getY(), this.target.getZ());
          if (this.init_Direction != null) {
             for (Vec3 point : AiBlockInteraction.sampleFacePoints(box, this.target, this.init_Direction)) {
-               if (init(planned, this.target, x, y, z, this.load, point.x, point.y, point.z, this.init_D, this.init_Direction, null)) {
+               if (init(planned, this.target, x, y, z, this.standEyeHeight, point.x, point.y, point.z, this.init_D, this.init_Direction, null)) {
                   return true;
                }
             }
          } else {
-            if (load(planned, this.target, x, y, z, this.load, centre.x, centre.y, centre.z, this.init_D)) {
+            if (load(planned, this.target, x, y, z, this.standEyeHeight, centre.x, centre.y, centre.z, this.init_D)) {
                return true;
             }
 
@@ -154,14 +154,14 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
                   face.getStepY() * (box.maxY - box.minY) * 0.49,
                   face.getStepZ() * (box.maxZ - box.minZ) * 0.49
                );
-               if (load(planned, this.target, x, y, z, this.load, point.x, point.y, point.z, this.init_D)) {
+               if (load(planned, this.target, x, y, z, this.standEyeHeight, point.x, point.y, point.z, this.init_D)) {
                   return true;
                }
             }
 
             for (Direction face : Direction.values()) {
                for (Vec3 point : AiBlockInteraction.sampleFacePoints(box, this.target, face)) {
-                  if (load(planned, this.target, x, y, z, this.load, point.x, point.y, point.z, this.init_D)) {
+                  if (load(planned, this.target, x, y, z, this.standEyeHeight, point.x, point.y, point.z, this.init_D)) {
                      return true;
                   }
                }
@@ -172,7 +172,7 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
       return false;
    }
 
-   static boolean init(
+   static boolean canReachFrom(
       AiPathfinder.GridView grid, BlockPos target, int x, int y, int z, double eyeHeight, double targetX, double targetY, double targetZ, double reach
    ) {
       double dx = targetX - x - 0.5;

@@ -27,7 +27,7 @@ public final class ToolsAction implements MacroAction {
    public boolean advanced;
    public boolean stopOnFailure = true;
    public String saveAs = "";
-   private boolean init = true;
+   private boolean enabled = true;
 
    public boolean init() {
       MacroToolBridge.Inner_TaskQueue tool = MacroToolBridge.findTool(this.toolId);
@@ -67,9 +67,9 @@ public final class ToolsAction implements MacroAction {
       return "game:goto".equals(this.toolId) || "game:navigate".equals(this.toolId);
    }
 
-   public JsonObject init_JsonObject_Minecraft(Minecraft mc) {
-      JsonObject args = init_JsonObject_Str(this.argumentsJson);
-      init_V_JsonElement_Minecraft(args, mc);
+   public JsonObject buildArgs(Minecraft mc) {
+      JsonObject args = parseArgs(this.argumentsJson);
+      resolveTemplates(args, mc);
       if (this.init()) {
          if (this.load()) {
             for (String key : new String[]{"x", "y", "z", "dx", "dy", "dz", "waypoint"}) {
@@ -117,7 +117,7 @@ public final class ToolsAction implements MacroAction {
       return args;
    }
 
-   private static void init_V_JsonElement_Minecraft(JsonElement element, Minecraft mc) {
+   private static void resolveTemplates(JsonElement element, Minecraft mc) {
       if (element instanceof JsonObject object) {
          for (Entry<String, JsonElement> entry : object.entrySet()) {
             JsonElement value = entry.getValue();
@@ -129,7 +129,7 @@ public final class ToolsAction implements MacroAction {
 
                entry.setValue(new JsonPrimitive(resolved.value()));
             } else {
-               init_V_JsonElement_Minecraft(value, mc);
+               resolveTemplates(value, mc);
             }
          }
       } else if (element instanceof JsonArray array) {
@@ -143,7 +143,7 @@ public final class ToolsAction implements MacroAction {
 
                array.set(index, new JsonPrimitive(resolved.value()));
             } else {
-               init_V_JsonElement_Minecraft(value, mc);
+               resolveTemplates(value, mc);
             }
          }
       }
@@ -153,7 +153,7 @@ public final class ToolsAction implements MacroAction {
       if (!"RUN".equals(this.operation)) {
          return MacroToolBridge.load(owner, this.scope, "");
       } else if (this.toolId != null && !this.toolId.isBlank()) {
-         return MacroToolBridge.startTool(owner, this.toolId, this.init_JsonObject_Minecraft(mc).toString());
+         return MacroToolBridge.startTool(owner, this.toolId, this.buildArgs(mc).toString());
       } else {
          throw new IllegalArgumentException("Choose a tool");
       }
@@ -168,7 +168,7 @@ public final class ToolsAction implements MacroAction {
       }
    }
 
-   private static JsonObject init_JsonObject_Str(String json) {
+   private static JsonObject parseArgs(String json) {
       JsonElement parsed = JsonParser.parseString(json != null && !json.isBlank() ? json : "{}");
       if (!parsed.isJsonObject()) {
          throw new IllegalArgumentException("Tool arguments must be an object");
@@ -222,7 +222,7 @@ public final class ToolsAction implements MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "TOOLS");
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       tag.putString("operation", this.operation);
       tag.putString("toolId", this.toolId);
       tag.putString("completion", this.completion);
@@ -237,7 +237,7 @@ public final class ToolsAction implements MacroAction {
       tag.putString("saveAs", this.saveAs);
       tag.putString("argumentsJson", this.argumentsJson);
 
-      for (Entry<String, JsonElement> entry : init_JsonObject_Str(this.argumentsJson).entrySet()) {
+      for (Entry<String, JsonElement> entry : parseArgs(this.argumentsJson).entrySet()) {
          String key = "toolArg." + entry.getKey();
          JsonElement value = entry.getValue();
          if (value.isJsonPrimitive()) {
@@ -276,8 +276,8 @@ public final class ToolsAction implements MacroAction {
       this.advanced = tag.getBooleanOr("advanced", false);
       this.stopOnFailure = tag.getBooleanOr("stopOnFailure", true);
       this.saveAs = tag.getStringOr("saveAs", "");
-      this.init = tag.getBooleanOr("enabled", true);
-      JsonObject args = init_JsonObject_Str(tag.getStringOr("argumentsJson", "{}"));
+      this.enabled = tag.getBooleanOr("enabled", true);
+      JsonObject args = parseArgs(tag.getStringOr("argumentsJson", "{}"));
       MacroToolBridge.Inner_TaskQueue definition = MacroToolBridge.findTool(this.toolId);
       JsonObject schema = definition == null ? new JsonObject() : JsonParser.parseString(definition.read()).getAsJsonObject();
       JsonObject properties = schema.has("properties") ? schema.getAsJsonObject("properties") : new JsonObject();
@@ -338,11 +338,11 @@ public final class ToolsAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean value) {
-      this.init = value;
+      this.enabled = value;
    }
 }

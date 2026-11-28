@@ -3,7 +3,7 @@ package autismclient.util;
 import autismclient.AutismClientAddon;
 
 final class AutismConfigPersistence {
-   private static final String init = "config:" + AutismConfig.configFile().getAbsolutePath();
+   private static final String SCHEDULE_KEY = "config:" + AutismConfig.configFile().getAbsolutePath();
 
    private AutismConfigPersistence() {
    }
@@ -21,12 +21,12 @@ final class AutismConfigPersistence {
          return;
       }
 
-      read(snapshot);
+      scheduleWrite(snapshot);
       AutismConfig.onPersistenceSnapshot(snapshot);
    }
 
-   static void read(AutismConfig snapshot) {
-      DebouncedPersistenceScheduler.init(init, () -> {
+   static void scheduleWrite(AutismConfig snapshot) {
+      DebouncedPersistenceScheduler.init(SCHEDULE_KEY, () -> {
          try {
             AutismConfig.writeToDisk(AutismConfig.toJson(snapshot));
          } catch (Throwable t) {

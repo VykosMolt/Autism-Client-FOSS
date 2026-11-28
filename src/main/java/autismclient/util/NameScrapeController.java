@@ -22,7 +22,7 @@ public final class NameScrapeController {
    private static volatile int targetLimit;
    private static volatile boolean hasLimit;
    private static volatile boolean deepScan;
-   private static volatile int sync;
+   private static volatile int onlineCount;
    private static volatile String statusText = "";
    private static volatile ClientPacketListener activeConnection;
    private static final CommandTabNameProber.Inner_DataUtil init_be_DataUtil = new CommandTabNameProber.Inner_DataUtil() {
@@ -90,14 +90,14 @@ public final class NameScrapeController {
          statusText = "Starting...";
          hasLimit = requestedLimit > 0;
          targetLimit = hasLimit ? Math.min(requestedLimit, 120000) : 120000;
-         sync = init(mc);
+         onlineCount = serverOnlineCount(mc);
          ClientPacketListener connection = mc.getConnection();
          activeConnection = connection;
          String self = mc.player.getName().getString();
          LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
          namesFound = names.size();
          List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.discoverVectors(connection);
-         BackgroundTaskExecutor.submit("namescrape", () -> init(names, connection, self, vectors));
+         BackgroundTaskExecutor.submit("namescrape", () -> runProbe(names, connection, self, vectors));
       }
    }
 
@@ -130,7 +130,7 @@ public final class NameScrapeController {
       }
    }
 
-   private static void init(LinkedHashMap<String, String> names, ClientPacketListener connection, String self, List<CommandTabNameProber.Inner_StreamUtil> vectors) {
+   private static void runProbe(LinkedHashMap<String, String> names, ClientPacketListener connection, String self, List<CommandTabNameProber.Inner_StreamUtil> vectors) {
       try {
          CommandTabNameProber.init(connection, names, self, vectors, init_be_DataUtil);
          List<String> result = new ArrayList<>(names.values());
@@ -138,9 +138,9 @@ public final class NameScrapeController {
             result = new ArrayList<>(result.subList(0, targetLimit));
          }
 
-         init(result);
+         deliverResult(result);
       } catch (Throwable t) {
-         init("Namescrape failed.", "", 0);
+         finishScrape("Namescrape failed.", "", 0);
       }
    }
 
@@ -153,14 +153,14 @@ public final class NameScrapeController {
       }
    }
 
-   private static void init(List<String> result) {
+   private static void deliverResult(List<String> result) {
       String joined = String.join("\n", result);
       int bytes = joined.getBytes(StandardCharsets.UTF_8).length;
       String kb = String.format(Locale.ROOT, "%.1f", bytes / 1024.0);
       if (result.isEmpty()) {
-         init("Namescrape: no names found.", "", 0);
+         finishScrape("Namescrape: no names found.", "", 0);
       } else {
-         init(
+         finishScrape(
             (read_Z ? "Namescrape stopped: " : "Namescrape: ") + String.format(Locale.US, "%,d", result.size()) + " names (" + kb + " KB) copied.",
             joined,
             result.size()
@@ -168,7 +168,7 @@ public final class NameScrapeController {
       }
    }
 
-   private static void init(String message, String clipboard, int count) {
+   private static void finishScrape(String message, String clipboard, int count) {
       Minecraft mc = Minecraft.getInstance();
       Runnable done = () -> {
          scraping = false;
@@ -211,13 +211,13 @@ public final class NameScrapeController {
             ctx.init_PoolEntry().draw(graphics, count, x + width - pad - cw, y + 6, colors.textSecondary);
             autismclient.gui.ui.widgets.ProgressBarRenderer.init(ctx, autismclient.gui.f.NetHelper.init(x + pad, y + 20, width - pad * 2, 8), progress());
             String status = statusText != null && !statusText.isBlank() ? statusText : "Starting...";
-            ctx.init_PoolEntry().draw(graphics, init(ctx, status, width - pad * 2), x + pad, y + 33, colors.textSecondary);
+            ctx.init_PoolEntry().draw(graphics, ellipsize(ctx, status, width - pad * 2), x + pad, y + 33, colors.textSecondary);
          }
       }
    }
 
    private static int target() {
-      return hasLimit ? targetLimit : sync;
+      return hasLimit ? targetLimit : onlineCount;
    }
 
    private static double progress() {
@@ -225,7 +225,7 @@ public final class NameScrapeController {
       return target > 0 ? Math.min(1.0, (double)namesFound / target) : namesFound / (namesFound + 1500.0);
    }
 
-   private static int init(Minecraft mc) {
+   private static int serverOnlineCount(Minecraft mc) {
       try {
          ServerData data = mc.getCurrentServer();
          if (data != null && data.players != null) {
@@ -241,7 +241,7 @@ public final class NameScrapeController {
       return String.format(Locale.US, "%,d", n);
    }
 
-   private static String init(autismclient.gui.f.SyncManager ctx, String text, int maxWidth) {
+   private static String ellipsize(autismclient.gui.f.SyncManager ctx, String text, int maxWidth) {
       if (ctx.init_PoolEntry().measureWidth(text) <= maxWidth) {
          return text;
       }

@@ -14,56 +14,56 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class AiEditLedger {
    static final long init_J = 120000000000L;
    static final long load_J = 20000000000L;
-   private static final Map<Long, Long> init_Map = new HashMap<>();
-   private static final Map<Long, Long> load_Map = new HashMap<>();
-   private static final Set<Long> init_Set = new HashSet<>();
-   private static final Set<Long> load_Set = new HashSet<>();
-   private static final Set<Long> read = new HashSet<>();
-   private static int init_I;
+   private static final Map<Long, Long> placeTimes = new HashMap<>();
+   private static final Map<Long, Long> breakTimes = new HashMap<>();
+   private static final Set<Long> brokenLogCells = new HashSet<>();
+   private static final Set<Long> cappedCells = new HashSet<>();
+   private static final Set<Long> expectedTeardown = new HashSet<>();
+   private static int wasteCount;
 
    private AiEditLedger() {
    }
 
    public static synchronized void forgetBreak(BlockPos cell) {
-      load_Map.remove(cell.asLong());
+      breakTimes.remove(cell.asLong());
    }
 
-   public static synchronized void load_V(BlockPos cell) {
-      read.add(cell.asLong());
+   public static synchronized void expectTeardown(BlockPos cell) {
+      expectedTeardown.add(cell.asLong());
    }
 
    public static synchronized void read_V(BlockPos cell) {
-      load_Set.add(cell.asLong());
-      load_Map.remove(cell.asLong());
+      cappedCells.add(cell.asLong());
+      breakTimes.remove(cell.asLong());
    }
 
    public static synchronized void recordPlacement(BlockPos cell) {
       long now = System.nanoTime();
-      Long brokeAt = load_Map.remove(cell.asLong());
-      if (brokeAt != null && now - brokeAt < 20000000000L && !init_Set.contains(cell.asLong())) {
-         init("placed a block back into " + cell.toShortString() + ", broken " + (now - brokeAt) / 1000000000L + " s ago");
+      Long brokeAt = breakTimes.remove(cell.asLong());
+      if (brokeAt != null && now - brokeAt < 20000000000L && !brokenLogCells.contains(cell.asLong())) {
+         recordWaste("placed a block back into " + cell.toShortString() + ", broken " + (now - brokeAt) / 1000000000L + " s ago");
       }
 
-      init_Map.put(cell.asLong(), now);
-      init(now);
+      placeTimes.put(cell.asLong(), now);
+      prune(now);
    }
 
    public static synchronized void init(BlockPos cell, BlockState was) {
       boolean ownedSupport = AiScaffold.recordedBlock(cell) != null;
-      boolean teardownExpected = read.remove(cell.asLong());
+      boolean teardownExpected = expectedTeardown.remove(cell.asLong());
       AiScaffold.forget(cell);
       long now = System.nanoTime();
-      Long placedAt = init_Map.remove(cell.asLong());
+      Long placedAt = placeTimes.remove(cell.asLong());
       boolean station = was != null && (was.hasBlockEntity() || was.is(Blocks.CRAFTING_TABLE));
-      boolean capped = load_Set.remove(cell.asLong());
+      boolean capped = cappedCells.remove(cell.asLong());
       if (was != null && was.is(BlockTags.LOGS)) {
-         init_Set.add(cell.asLong());
+         brokenLogCells.add(cell.asLong());
       } else {
-         init_Set.remove(cell.asLong());
+         brokenLogCells.remove(cell.asLong());
       }
 
       if (placedAt != null && now - placedAt < 120000000000L && !station && !capped && !teardownExpected && !ownedSupport) {
-         init(
+         recordWaste(
             "broke its own block at "
                + cell.toShortString()
                + " ("
@@ -84,40 +84,40 @@ public final class AiEditLedger {
          AutismClientAddon.LOG.info("[AI] broke {} at {} by {}", was.getBlock().getName().getString(), cell.toShortString(), caller);
       }
 
-      load_Map.put(cell.asLong(), now);
-      init(now);
+      breakTimes.put(cell.asLong(), now);
+      prune(now);
    }
 
    public static synchronized boolean wasRecentlyPlaced(BlockPos cell) {
-      Long at = init_Map.get(cell.asLong());
+      Long at = placeTimes.get(cell.asLong());
       return at != null && System.nanoTime() - at < 120000000000L;
    }
 
    public static synchronized boolean load_Z(BlockPos cell) {
-      Long at = init_Map.get(cell.asLong());
-      return at != null && System.nanoTime() - at < 120000000000L && !load_Set.contains(cell.asLong());
+      Long at = placeTimes.get(cell.asLong());
+      return at != null && System.nanoTime() - at < 120000000000L && !cappedCells.contains(cell.asLong());
    }
 
    public static synchronized boolean wasRecentlyBroken(BlockPos cell) {
-      if (init_Set.contains(cell.asLong())) {
+      if (brokenLogCells.contains(cell.asLong())) {
          return false;
       }
 
-      Long at = load_Map.get(cell.asLong());
+      Long at = breakTimes.get(cell.asLong());
       return at != null && System.nanoTime() - at < 20000000000L;
    }
 
    public static synchronized boolean hasBreakRecord(BlockPos cell) {
-      return load_Map.containsKey(cell.asLong());
+      return breakTimes.containsKey(cell.asLong());
    }
 
    public static synchronized boolean update(BlockPos cell) {
-      if (load_Map.containsKey(cell.asLong())) {
+      if (breakTimes.containsKey(cell.asLong())) {
          return true;
       }
 
       for (Direction side : Direction.values()) {
-         if (load_Map.containsKey(cell.relative(side).asLong())) {
+         if (breakTimes.containsKey(cell.relative(side).asLong())) {
             return true;
          }
       }
@@ -125,27 +125,27 @@ public final class AiEditLedger {
       return false;
    }
 
-   public static synchronized void init_V() {
-      init_Map.clear();
-      load_Map.clear();
-      init_Set.clear();
-      load_Set.clear();
+   public static synchronized void reset() {
+      placeTimes.clear();
+      breakTimes.clear();
+      brokenLogCells.clear();
+      cappedCells.clear();
    }
 
-   public static synchronized int init_I() {
-      return init_I;
+   public static synchronized int wasteCount() {
+      return wasteCount;
    }
 
-   private static void init(String what) {
-      init_I++;
+   private static void recordWaste(String what) {
+      wasteCount++;
       AutismClientAddon.LOG.info("[AI] WASTE: {}", what);
    }
 
-   private static void init(long now) {
-      if (init_Map.size() + load_Map.size() >= 4096) {
-         init_Map.values().removeIf(t -> now - t > 120000000000L);
-         load_Map.values().removeIf(t -> now - t > 120000000000L);
-         init_Set.removeIf(cell -> !load_Map.containsKey(cell));
+   private static void prune(long now) {
+      if (placeTimes.size() + breakTimes.size() >= 4096) {
+         placeTimes.values().removeIf(t -> now - t > 120000000000L);
+         breakTimes.values().removeIf(t -> now - t > 120000000000L);
+         brokenLogCells.removeIf(cell -> !breakTimes.containsKey(cell));
       }
    }
 }

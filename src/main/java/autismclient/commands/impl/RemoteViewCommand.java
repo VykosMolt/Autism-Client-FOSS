@@ -25,7 +25,7 @@ public final class RemoteViewCommand extends Command {
 
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
-      root.executes(ctx -> init());
+      root.executes(ctx -> viewCrosshairTarget());
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("stop").executes(ctx -> {
          if (!RemoteViewController.isActive()) {
             AutismClientMessaging.sendPrefixed("§7Remote view is not active.");
@@ -38,12 +38,12 @@ public final class RemoteViewCommand extends Command {
       }));
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("player", StringArgumentType.greedyString())
-            .suggests(RemoteViewCommand::init)
-            .executes(ctx -> init(StringArgumentType.getString(ctx, "player")))
+            .suggests(RemoteViewCommand::suggestPlayers)
+            .executes(ctx -> viewPlayer(StringArgumentType.getString(ctx, "player")))
       );
    }
 
-   private static int init() {
+   private static int viewCrosshairTarget() {
       Minecraft mc = Minecraft.getInstance();
       Entity entity = mc == null ? null : mc.crosshairPickEntity;
       if (!(entity instanceof Player) && mc != null && mc.hitResult instanceof EntityHitResult hit) {
@@ -51,7 +51,7 @@ public final class RemoteViewCommand extends Command {
       }
 
       if (entity instanceof Player player) {
-         init(RemoteViewController.startViewing(player));
+         report(RemoteViewController.startViewing(player));
          return 1;
       } else {
          AutismClientMessaging.sendPrefixed("§cLook at a loaded player first.");
@@ -59,18 +59,18 @@ public final class RemoteViewCommand extends Command {
       }
    }
 
-   private static int init(String requested) {
-      Player player = init(Minecraft.getInstance(), requested);
+   private static int viewPlayer(String requested) {
+      Player player = findPlayer(Minecraft.getInstance(), requested);
       if (player == null) {
          AutismClientMessaging.sendPrefixed("§cPlayer is not loaded: §f" + requested.trim());
          return 1;
       } else {
-         init(RemoteViewController.startViewing(player));
+         report(RemoteViewController.startViewing(player));
          return 1;
       }
    }
 
-   static Player init(Minecraft mc, String requested) {
+   static Player findPlayer(Minecraft mc, String requested) {
       if (mc != null && mc.level != null && requested != null) {
          String wanted = requested.trim();
          if (wanted.isEmpty()) {
@@ -93,11 +93,11 @@ public final class RemoteViewCommand extends Command {
       }
    }
 
-   private static void init(RemoteViewController.Inner_DataUtil result) {
+   private static void report(RemoteViewController.Inner_DataUtil result) {
       AutismClientMessaging.sendPrefixed((result.success() ? "§a" : "§c") + result.message());
    }
 
-   private static CompletableFuture<Suggestions> init(CommandContext<AutismCommandSource> ignored, SuggestionsBuilder builder) {
+   private static CompletableFuture<Suggestions> suggestPlayers(CommandContext<AutismCommandSource> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
       for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(Minecraft.getInstance())) {

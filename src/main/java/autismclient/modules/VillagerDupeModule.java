@@ -5,14 +5,14 @@ import autismclient.api.module.ChoiceSetting;
 import autismclient.api.module.IntSetting;
 
 public final class VillagerDupeModule extends Module {
-   private int init_I = -1;
-   private int load_I;
-   private autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore init_DataUtil_ConfigSto;
-   private autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore load_DataUtil_ConfigSto;
+   private int originalSlot = -1;
+   private int dupedCount;
+   private autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore status;
+   private autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore lastToastStatus;
 
    public VillagerDupeModule() {
       super("villager-dupe", "VillagerDupe", ae.sync, "Shears trade items off villagers.");
-      this.init_DataUtil_ConfigSto = autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.WAITING;
+      this.status = autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.WAITING;
       this.add(new ChoiceSetting("filter", "Items", "All", "All", "Saddles", "Horse Armor", "Carpets").description("Items to dupe").build());
       this.add(new BoolSetting("refresh", "Refresh", true).description("Re-raise items faster").build());
       this.add(new IntSetting("interval", "Interval", 1, 1, 20, 1).description("Ticks between bursts").build());
@@ -25,63 +25,63 @@ public final class VillagerDupeModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init_V_32();
+      this.resetState();
       autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore ready = autismclient.util.villagerdupe.VillagerDupeDriver.getInstance()
-         .checkReady(MC, this.init_DataUtil_CachePool());
+         .checkReady(MC, this.driverConfig());
       if (ready != null) {
-         this.init(ready);
+         this.setStatus(ready);
       }
    }
 
    @Override
    public void onDisable() {
       autismclient.util.villagerdupe.VillagerDupeDriver.getInstance().restoreSelectedSlot(MC);
-      if (this.bool("restore-slot") && this.init_I >= 0 && MC.player != null && MC.level != null && !aD.read_Z()) {
-         MC.player.getInventory().setSelectedSlot(this.init_I);
+      if (this.bool("restore-slot") && this.originalSlot >= 0 && MC.player != null && MC.level != null && !aD.read_Z()) {
+         MC.player.getInventory().setSelectedSlot(this.originalSlot);
       }
 
-      this.init_V_32();
+      this.resetState();
    }
 
    @Override
    public void onGameLeft() {
-      this.init_V_32();
+      this.resetState();
    }
 
    @Override
    public void preMovementTick() {
       if (MC.player != null && MC.level != null) {
-         if (this.init_I < 0) {
-            this.init_I = MC.player.getInventory().getSelectedSlot();
+         if (this.originalSlot < 0) {
+            this.originalSlot = MC.player.getInventory().getSelectedSlot();
          }
 
          autismclient.util.villagerdupe.VillagerDupeDriver.BufferHelper result = autismclient.util.villagerdupe.VillagerDupeDriver.getInstance()
-            .step(MC, this.init_DataUtil_CachePool());
-         this.load_I = this.load_I + result.count();
-         this.init(result.status());
+            .step(MC, this.driverConfig());
+         this.dupedCount = this.dupedCount + result.count();
+         this.setStatus(result.status());
       }
    }
 
    @Override
    public String info() {
-      if (!this.init_DataUtil_ConfigSto.init_Z()
-         && this.init_DataUtil_ConfigSto != autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.SNEAKING
-         && this.init_DataUtil_ConfigSto != autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.SPECTATOR
-         && this.init_DataUtil_ConfigSto != autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.OFFHAND_TAKEN) {
-         return this.load_I > 0 ? Integer.toString(this.load_I) : "";
+      if (!this.status.init_Z()
+         && this.status != autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.SNEAKING
+         && this.status != autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.SPECTATOR
+         && this.status != autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.OFFHAND_TAKEN) {
+         return this.dupedCount > 0 ? Integer.toString(this.dupedCount) : "";
       } else {
-         return this.init_DataUtil_ConfigSto.label();
+         return this.status.label();
       }
    }
 
-   private void init(autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore next) {
-      this.init_DataUtil_ConfigSto = next;
+   private void setStatus(autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore next) {
+      this.status = next;
       if (next.load_Z()) {
-         this.load_DataUtil_ConfigSto = null;
+         this.lastToastStatus = null;
       } else {
          boolean toast = next.init_Z() || next == autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.SNEAKING;
-         if (toast && next != this.load_DataUtil_ConfigSto) {
-            this.load_DataUtil_ConfigSto = next;
+         if (toast && next != this.lastToastStatus) {
+            this.lastToastStatus = next;
             if (next.init_Z()) {
                autismclient.util.bi.write(next.detail());
             } else {
@@ -91,14 +91,14 @@ public final class VillagerDupeModule extends Module {
       }
    }
 
-   private void init_V_32() {
-      this.init_I = -1;
-      this.load_I = 0;
-      this.init_DataUtil_ConfigSto = autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.WAITING;
-      this.load_DataUtil_ConfigSto = null;
+   private void resetState() {
+      this.originalSlot = -1;
+      this.dupedCount = 0;
+      this.status = autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore.WAITING;
+      this.lastToastStatus = null;
    }
 
-   private autismclient.util.villagerdupe.VillagerDupeDriver.CachePool init_DataUtil_CachePool() {
+   private autismclient.util.villagerdupe.VillagerDupeDriver.CachePool driverConfig() {
       return new autismclient.util.villagerdupe.VillagerDupeDriver.CachePool(
          autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(this.choice("filter")),
          this.bool("traders"),

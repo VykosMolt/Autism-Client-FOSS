@@ -26,7 +26,7 @@ public final class LagWatchdogReporter {
    private static long lastReportMs;
    private static boolean load_Z;
    private static Map<String, long[]> perfSnapshot;
-   private static int sync;
+   private static int lastFps;
    private static long lastPollMs;
 
    private LagWatchdogReporter() {
@@ -37,14 +37,14 @@ public final class LagWatchdogReporter {
          bK.init_V();
          if (load_Z && !bK.init_Z()) {
             load_Z = false;
-            read(client);
+            logReport(client);
          }
 
          if (++tickCounter % 20 != 0) {
             return;
          }
 
-         load(client);
+         sample(client);
       } catch (Throwable t) {
          long now = System.currentTimeMillis();
          if (now - lastPollMs >= 5000L) {
@@ -62,7 +62,7 @@ public final class LagWatchdogReporter {
       perfSnapshot = null;
    }
 
-   private static void load(Minecraft client) {
+   private static void sample(Minecraft client) {
       if (client == null || client.level == null) {
          init();
       } else if (client.getWindow() == null || !client.getWindow().isFocused()) {
@@ -75,7 +75,7 @@ public final class LagWatchdogReporter {
          if (fps > 0 && auditLow(fps, client.gui.screen() != null, now)) {
             if (!load_Z && now - lastReportMs >= REPORT_INTERVAL_MS) {
                lastReportMs = now;
-               sync = fps;
+               lastFps = fps;
                if (!bK.read_Z()) {
                   AutismClientAddon.LOG
                      .warn("[AutismLagReport] sustained low fps detected (fps={} baseline={})", fps, String.format(Locale.ROOT, "%.1f", baselineFps));
@@ -122,18 +122,18 @@ public final class LagWatchdogReporter {
       return false;
    }
 
-   private static void read(Minecraft client) {
+   private static void logReport(Minecraft client) {
       StringBuilder sb = new StringBuilder(1024);
       sb.append("===== lag census — paste this whole block when reporting =====");
       long heapUsedMb = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() >> 20;
       long heapMaxMb = Runtime.getRuntime().maxMemory() >> 20;
       long lowForMs = lowFpsSince == 0L ? 0L : System.currentTimeMillis() - lowFpsSince;
-      init(
+      appendLine(
          sb,
          "fps="
             + (client == null ? -1 : client.getFps())
             + " atTrigger="
-            + sync
+            + lastFps
             + " baseline="
             + String.format(Locale.ROOT, "%.1f", baselineFps)
             + " lowForMs="
@@ -143,7 +143,7 @@ public final class LagWatchdogReporter {
             + "/"
             + heapMaxMb
       );
-      init(
+      appendField(
          sb,
          "state",
          () -> {
@@ -163,18 +163,18 @@ public final class LagWatchdogReporter {
                + autismclient.modules.aD.init_Z();
          }
       );
-      init(sb, "overlays", () -> OverlayManager.getInstance().debugSummary());
-      init(sb, "packetLogger", () -> {
+      appendField(sb, "overlays", () -> OverlayManager.getInstance().debugSummary());
+      appendField(sb, "packetLogger", () -> {
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
          AutismPacketLoggerOverlay logger = module == null ? null : module.getPacketLoggerOverlay();
          return logger == null ? "not created" : logger.debugSummary();
       });
-      init(sb, "macro", () -> MacroExecutor.formatDebugSummary() + " pendingConditions=" + MacroWaitRegistry.pendingCount());
-      init(sb, "antiVanish", autismclient.modules.AntiVanishModule::debugSummary);
-      init(sb, "hud", () -> {
+      appendField(sb, "macro", () -> MacroExecutor.formatDebugSummary() + " pendingConditions=" + MacroWaitRegistry.pendingCount());
+      appendField(sb, "antiVanish", autismclient.modules.AntiVanishModule::debugSummary);
+      appendField(sb, "hud", () -> {
          return "enabledElements=" + AutismHudManager.enabledCount() + " activeModules=" + autismclient.modules.al.load_List().size() + " toasts=" + bi.init_I();
       });
-      init(
+      appendField(
          sb,
          "frame sections (10s window, window-total desc, avg/max* ms, n)",
          () -> {
@@ -212,16 +212,16 @@ public final class LagWatchdogReporter {
             return sections.length() == 0 ? "(no samples)" : sections.toString();
          }
       );
-      init(sb, "===== end lag census =====");
+      appendLine(sb, "===== end lag census =====");
       perfSnapshot = null;
       AutismClientAddon.LOG.warn("[AutismLagReport] {}", sb);
    }
 
-   private static void init(StringBuilder sb, String text) {
+   private static void appendLine(StringBuilder sb, String text) {
       sb.append("\n[AutismLagReport] ").append(text);
    }
 
-   private static void init(StringBuilder sb, String label, Supplier<String> value) {
+   private static void appendField(StringBuilder sb, String label, Supplier<String> value) {
       String text;
       try {
          text = value.get();
@@ -229,6 +229,6 @@ public final class LagWatchdogReporter {
          text = "n/a (" + t.getClass().getSimpleName() + ")";
       }
 
-      init(sb, label + ": " + text);
+      appendLine(sb, label + ": " + text);
    }
 }

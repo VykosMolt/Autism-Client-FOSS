@@ -6,46 +6,46 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 final class AiDeferredOperation implements AiOperation {
-   private Supplier<AiOperation> init_Supplier;
-   private AiOperation init_AiOperation;
-   private boolean init_Z;
+   private Supplier<AiOperation> pendingFactory;
+   private AiOperation delegate;
+   private boolean cancelled;
 
    AiDeferredOperation(Supplier<AiOperation> factory) {
-      this.init_Supplier = Objects.requireNonNull(factory);
+      this.pendingFactory = Objects.requireNonNull(factory);
    }
 
    @Override
    public AiOperation.Result tick() {
-      if (this.init_Z) {
+      if (this.cancelled) {
          return new AiOperation.Result(AiOperation.Status.CANCELLED, "Operation cancelled before dispatch", "{}", List.of());
       }
 
-      if (this.init_AiOperation == null) {
-         Supplier<AiOperation> create = this.init_Supplier;
-         this.init_Supplier = null;
-         this.init_AiOperation = Objects.requireNonNull(create.get());
+      if (this.delegate == null) {
+         Supplier<AiOperation> create = this.pendingFactory;
+         this.pendingFactory = null;
+         this.delegate = Objects.requireNonNull(create.get());
       }
 
-      return this.init_AiOperation.tick();
+      return this.delegate.tick();
    }
 
    @Override
    public boolean canInterruptNow() {
-      return this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
+      return this.delegate == null || this.delegate.canInterruptNow();
    }
 
    @Override
    public boolean requiresReconciliationAfterEmergency() {
-      return this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+      return this.delegate != null && this.delegate.requiresReconciliationAfterEmergency();
    }
 
    @Override
    public void cancel() {
-      if (!this.init_Z) {
-         this.init_Z = true;
-         this.init_Supplier = null;
-         if (this.init_AiOperation != null) {
-            this.init_AiOperation.cancel();
+      if (!this.cancelled) {
+         this.cancelled = true;
+         this.pendingFactory = null;
+         if (this.delegate != null) {
+            this.delegate.cancel();
          }
       }
    }

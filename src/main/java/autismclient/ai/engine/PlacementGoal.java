@@ -42,12 +42,12 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    private final AiPathfinder.GridView grid;
    private final AABB workVolume;
    private final Set<Long> rejected;
-   private final AiPathfinder.PathGoal init_ClassCache_JsonUti;
+   private final AiPathfinder.PathGoal interactionGoal;
    private final Set<Long> protectedCells;
    private final PlacementGoal.PlaceConstraint constraint;
-   private Set<Long> read;
-   private Map<Long, PlacementGoal.ClickGeometry> init_Map;
-   private boolean init_Z = true;
+   private Set<Long> allowedStances;
+   private Map<Long, PlacementGoal.ClickGeometry> clickGeometry;
+   private boolean allowsEdits = true;
    private final List<PlacementGoal> alternatives;
 
    public PlacementGoal(BlockPos target, Item item, double reach, double eyeHeight) {
@@ -88,7 +88,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       this.grid = grid;
       this.rejected = rejected;
       this.workVolume = workVolume;
-      this.init_ClassCache_JsonUti = new InteractionGoal(target, reach, eyeHeight);
+      this.interactionGoal = new InteractionGoal(target, reach, eyeHeight);
    }
 
    @Override
@@ -111,13 +111,13 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
          this.constraint,
          List.copyOf(bound)
       );
-      result.read = this.read;
-      result.init_Map = this.init_Map;
-      result.init_Z = this.init_Z;
+      result.allowedStances = this.allowedStances;
+      result.clickGeometry = this.clickGeometry;
+      result.allowsEdits = this.allowsEdits;
       return result;
    }
 
-   PlacementGoal init(Set<Long> stances) {
+   PlacementGoal withStances(Set<Long> stances) {
       PlacementGoal result = new PlacementGoal(
          this.targetBlock,
          this.item,
@@ -130,9 +130,9 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
          this.constraint,
          this.alternatives
       );
-      result.read = Set.copyOf(stances);
-      result.init_Map = this.init_Map;
-      result.init_Z = this.init_Z;
+      result.allowedStances = Set.copyOf(stances);
+      result.clickGeometry = this.clickGeometry;
+      result.allowsEdits = this.allowsEdits;
       return result;
    }
 
@@ -141,8 +141,8 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
          throw new IllegalStateException();
       }
 
-      PlacementGoal result = this.init(placements.keySet());
-      result.init_Map = Map.copyOf(placements);
+      PlacementGoal result = this.withStances(placements.keySet());
+      result.clickGeometry = Map.copyOf(placements);
       return result;
    }
 
@@ -163,13 +163,13 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
          this.constraint,
          this.alternatives
       );
-      result.read = this.read;
-      result.init_Map = this.init_Map;
-      result.init_Z = false;
+      result.allowedStances = this.allowedStances;
+      result.clickGeometry = this.clickGeometry;
+      result.allowsEdits = false;
       return result;
    }
 
-   public static PlacementGoal init(List<PlacementGoal.PlacementRequest> targets, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells) {
+   public static PlacementGoal ofTargets(List<PlacementGoal.PlacementRequest> targets, double reach, double eyeHeight, AABB workVolume, Set<Long> protectedCells) {
       return init(targets, reach, eyeHeight, workVolume, protectedCells, Set.of());
    }
 
@@ -219,7 +219,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
    @Override
    public boolean load(BlockPos cell) {
-      if (!this.init_Z) {
+      if (!this.allowsEdits) {
          return false;
       } else {
          return this.protectedCells != null
@@ -248,7 +248,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
    @Override
    public boolean read(BlockPos cell) {
-      if (!this.init_Z) {
+      if (!this.allowsEdits) {
          return false;
       }
 
@@ -269,10 +269,10 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
    @Override
    public double heuristic(int x, int y, int z) {
-      if (this.read != null) {
+      if (this.allowedStances != null) {
          double best = 1.7976931348623157E308;
 
-         for (long stance : this.read) {
+         for (long stance : this.allowedStances) {
             if (!this.rejected.contains(stance)) {
                best = Math.min(best, AiPathfinder.MoveCosts.estimateDirectionalHeuristicCompat(BlockPos.getX(stance) - x, BlockPos.getY(stance) - y, BlockPos.getZ(stance) - z));
             }
@@ -280,19 +280,19 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
          return best == 1.7976931348623157E308 ? 0.0 : best;
       } else {
-         double best = this.init_D_I(x, y, z);
+         double best = this.ownHeuristic(x, y, z);
 
          for (PlacementGoal alternative : this.alternatives) {
-            best = Math.min(best, alternative.init_D_I(x, y, z));
+            best = Math.min(best, alternative.ownHeuristic(x, y, z));
          }
 
          return best;
       }
    }
 
-   private double init_D_I(int x, int y, int z) {
+   private double ownHeuristic(int x, int y, int z) {
       double rise = Math.max(0.0, this.targetBlock.getY() - y - this.eyeHeight - this.reach - 1.0);
-      return Math.max(this.init_ClassCache_JsonUti.heuristic(x, y, z), rise * 5.5)
+      return Math.max(this.interactionGoal.heuristic(x, y, z), rise * 5.5)
          + (y > this.targetBlock.getY() ? (y - this.targetBlock.getY()) * 0.5 : 0.0);
    }
 
@@ -303,12 +303,12 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
    @Override
    public boolean outsideSearchBox(BlockPos origin, int horizontal, int vertical) {
-      if (!this.init_ClassCache_JsonUti.outsideSearchBox(origin, horizontal, vertical)) {
+      if (!this.interactionGoal.outsideSearchBox(origin, horizontal, vertical)) {
          return false;
       }
 
       for (PlacementGoal alternative : this.alternatives) {
-         if (!alternative.init_ClassCache_JsonUti.outsideSearchBox(origin, horizontal, vertical)) {
+         if (!alternative.interactionGoal.outsideSearchBox(origin, horizontal, vertical)) {
             return false;
          }
       }
@@ -324,9 +324,9 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    @Override
    public boolean isInGoalWithGrid(int x, int y, int z, AiPathfinder.GridView grid) {
       long feet = BlockPos.asLong(x, y, z);
-      if (grid != null && !this.rejected.contains(feet) && (this.read == null || this.read.contains(feet))) {
-         if (this.init_Map != null) {
-            PlacementGoal.ClickGeometry proof = this.init_Map.get(feet);
+      if (grid != null && !this.rejected.contains(feet) && (this.allowedStances == null || this.allowedStances.contains(feet))) {
+         if (this.clickGeometry != null) {
+            PlacementGoal.ClickGeometry proof = this.clickGeometry.get(feet);
             AiPathfinder.CellInfo floor = grid.probeCell(x, y - 1, z);
             if (proof != null && floor != null && floor.loaded()) {
                double offset = floor.passable() ? 0.0 : floor.top16() / 16.0 - 1.0;
@@ -340,12 +340,12 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                return false;
             }
          } else {
-            if (this.load(x, y, z, grid)) {
+            if (this.isStanceCandidate(x, y, z, grid)) {
                return true;
             }
 
             for (PlacementGoal alternative : this.alternatives) {
-               if (alternative.load(x, y, z, grid)) {
+               if (alternative.isStanceCandidate(x, y, z, grid)) {
                   return true;
                }
             }
@@ -357,7 +357,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       }
    }
 
-   private boolean load(int x, int y, int z, AiPathfinder.GridView grid) {
+   private boolean isStanceCandidate(int x, int y, int z, AiPathfinder.GridView grid) {
       if (!(Math.abs(x - this.targetBlock.getX()) > this.reach + 1.5) && !(Math.abs(z - this.targetBlock.getZ()) > this.reach + 1.5)) {
          AiPathfinder.CellInfo floor = grid.probeCell(x, y - 1, z);
          double actualEyeHeight = floor != null && !floor.passable() ? this.eyeHeight - 1.0 + floor.top16() / 16.0 : this.eyeHeight;
@@ -488,7 +488,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    public boolean init(Minecraft mc) {
-      if (mc.player == null || !this.rejected.contains(AiStance.init(mc).asLong()) && (this.read == null || this.read.contains(AiStance.init(mc).asLong()))) {
+      if (mc.player == null || !this.rejected.contains(AiStance.init(mc).asLong()) && (this.allowedStances == null || this.allowedStances.contains(AiStance.init(mc).asLong()))) {
          if (this.load(mc)) {
             return true;
          }
@@ -523,7 +523,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
                      mc.player,
                      new ItemStack(this.item),
                      hit.hit(),
-                     init(mc, this.targetBlock, this.item, this.constraint, mc.player.position(), false)
+                     eyePosition(mc, this.targetBlock, this.item, this.constraint, mc.player.position(), false)
                   )
                );
             if (state == null) {
@@ -546,12 +546,12 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    public static BlockPlacementPlanner.PlacementPlan init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, int rays) {
-      return init(
+      return planPlacement(
          mc,
          target,
          item,
          constraint,
-         init(mc, target, item, constraint, mc.player.position(), false),
+         eyePosition(mc, target, item, constraint, mc.player.position(), false),
          mc.player.getBoundingBox(),
          mc.player.blockInteractionRange(),
          rays
@@ -569,7 +569,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
       return canPlace(mc, target, item, constraint) ? Math.min(standing, mc.player.getEyeHeight(Pose.CROUCHING)) : standing;
    }
 
-   private static Vec3 init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 feet, boolean future) {
+   private static Vec3 eyePosition(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 feet, boolean future) {
       return feet.add(0.0, init(mc, target, item, constraint, future), 0.0);
    }
 
@@ -579,10 +579,10 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
    public static BlockPlacementPlanner.PlacementPlan init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 feet, int rays) {
       AABB body = new AABB(feet.x - 0.3, feet.y, feet.z - 0.3, feet.x + 0.3, feet.y + 1.8, feet.z + 0.3);
-      return init(mc, target, item, constraint, init(mc, target, item, constraint, feet, true), body, mc.player.blockInteractionRange() - 0.25, rays);
+      return planPlacement(mc, target, item, constraint, eyePosition(mc, target, item, constraint, feet, true), body, mc.player.blockInteractionRange() - 0.25, rays);
    }
 
-   private static BlockPlacementPlanner.PlacementPlan init(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 eye, AABB body, double reach, int rays) {
+   private static BlockPlacementPlanner.PlacementPlan planPlacement(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint, Vec3 eye, AABB body, double reach, int rays) {
       if (constraint != null && constraint.placedShape() != null) {
          for (AABB box : AiShapes.boxes(constraint.placedShape())) {
             if (box.move(target.getX(), target.getY(), target.getZ()).intersects(body)) {

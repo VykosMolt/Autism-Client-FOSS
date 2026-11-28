@@ -10,7 +10,7 @@ public final class WidgetRenderFacade {
       TextFieldRenderer.init(context, bounds, text, placeholder, focused, cursor);
    }
 
-   public static void init(
+   public static void textField(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper bounds,
       String text,
@@ -23,7 +23,7 @@ public final class WidgetRenderFacade {
       TextFieldRenderer.init(context, bounds, text, placeholder, focused, cursor, selectionStart, selectionEnd);
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered) {
+   public static void toggleSwitch(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered) {
       ToggleSwitchRenderer.init(context, bounds, enabled, hovered);
    }
 
@@ -35,7 +35,7 @@ public final class WidgetRenderFacade {
       DropdownMenu.renderTrigger(context, bounds, label, hovered, open);
    }
 
-   public static void load(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open) {
+   public static void dropdownTrigger(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean hovered, boolean open) {
       DropdownMenu.renderCenteredTrigger(context, bounds, label, hovered, open);
    }
 }

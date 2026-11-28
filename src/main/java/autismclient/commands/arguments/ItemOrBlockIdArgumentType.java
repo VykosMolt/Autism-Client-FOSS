@@ -8,7 +8,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.network.chat.Component;
 
 public final class ItemOrBlockIdArgumentType implements ArgumentType<String> {
-   private static final SimpleCommandExceptionType init = new SimpleCommandExceptionType(Component.literal("Expected an item or block id"));
+   private static final SimpleCommandExceptionType INVALID = new SimpleCommandExceptionType(Component.literal("Expected an item or block id"));
 
    private ItemOrBlockIdArgumentType() {
    }
@@ -21,23 +21,23 @@ public final class ItemOrBlockIdArgumentType implements ArgumentType<String> {
       return context.getArgument(name, String.class);
    }
 
-   static boolean init_Z_C(char c) {
+   static boolean isIdChar(char c) {
       return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_' || c == '-' || c == '.' || c == '+' || c == ':' || c == '/';
    }
 
    public String parse(StringReader reader) throws CommandSyntaxException {
-      return this.init_Str_StringReader(reader);
+      return this.readId(reader);
    }
 
-   public String init_Str_StringReader(StringReader reader) throws CommandSyntaxException {
+   public String readId(StringReader reader) throws CommandSyntaxException {
       int start = reader.getCursor();
 
-      while (reader.canRead() && init_Z_C(reader.peek())) {
+      while (reader.canRead() && isIdChar(reader.peek())) {
          reader.skip();
       }
 
       if (reader.getCursor() == start) {
-         throw init.createWithContext(reader);
+         throw INVALID.createWithContext(reader);
       } else {
          return reader.getString().substring(start, reader.getCursor());
       }

@@ -17,7 +17,7 @@ final class AiSchemas {
    }
 
    static JsonObject init(JsonObject schema, JsonObject value, boolean dropUnknown, List<String> ignored) {
-      JsonElement out = init(schema, value.deepCopy(), "", dropUnknown, ignored, 0);
+      JsonElement out = coerce(schema, value.deepCopy(), "", dropUnknown, ignored, 0);
       return out.isJsonObject() ? out.getAsJsonObject() : value;
    }
 
@@ -59,7 +59,7 @@ final class AiSchemas {
       return false;
    }
 
-   private static JsonElement init(JsonObject schema, JsonElement value, String path, boolean dropUnknown, List<String> ignored, int depth) {
+   private static JsonElement coerce(JsonObject schema, JsonElement value, String path, boolean dropUnknown, List<String> ignored, int depth) {
       if (depth <= 24 && value != null) {
          if (schema.has("anyOf") && schema.get("anyOf").isJsonArray()) {
             JsonArray alternatives = schema.getAsJsonArray("anyOf");
@@ -75,9 +75,9 @@ final class AiSchemas {
                      continue;
                   }
                   List<String> altIgnored = new ArrayList<>();
-                  JsonElement candidate = init(alt, value.deepCopy(), path, dropUnknown, altIgnored, depth + 1);
+                  JsonElement candidate = coerce(alt, value.deepCopy(), path, dropUnknown, altIgnored, depth + 1);
                   try {
-                     init(alt, candidate, checkPath, depth + 1);
+                     validate(alt, candidate, checkPath, depth + 1);
                      ignored.addAll(altIgnored);
                      return candidate;
                   } catch (IllegalArgumentException ignoredErr) {
@@ -134,7 +134,7 @@ final class AiSchemas {
                      JsonArray fixed = new JsonArray();
 
                      for (JsonElement item : array) {
-                        fixed.add(init(schema.getAsJsonObject("items"), item, path + "[]", dropUnknown, ignored, depth + 1));
+                        fixed.add(coerce(schema.getAsJsonObject("items"), item, path + "[]", dropUnknown, ignored, depth + 1));
                      }
 
                      return fixed;
@@ -168,7 +168,7 @@ final class AiSchemas {
                   if (object.get(key).isJsonNull() && !required.contains(key) && !nullable) {
                      object.remove(key);
                   } else if (property != null) {
-                     object.add(key, init(property, object.get(key), path + "." + key, dropUnknown, ignored, depth + 1));
+                     object.add(key, coerce(property, object.get(key), path + "." + key, dropUnknown, ignored, depth + 1));
                   } else if (closed && dropUnknown) {
                      object.remove(key);
                      ignored.add((path + "." + key).substring(1));
@@ -185,15 +185,15 @@ final class AiSchemas {
    }
 
    static void init(JsonObject schema, JsonElement value) {
-      init(schema, value, "arguments", 0);
+      validate(schema, value, "arguments", 0);
    }
 
-   private static String init(JsonElement value) {
+   private static String preview(JsonElement value) {
       String text = String.valueOf(value);
       return text.length() <= 60 ? text : text.substring(0, 57) + "...";
    }
 
-   private static void init(JsonObject schema, JsonElement value, String path, int depth) {
+   private static void validate(JsonObject schema, JsonElement value, String path, int depth) {
       if (depth > 24) {
          throw new IllegalArgumentException(path + ": structure too deep");
       }
@@ -208,13 +208,13 @@ final class AiSchemas {
                continue;
             }
             try {
-               init(alternative.getAsJsonObject(), value, path, depth + 1);
+               validate(alternative.getAsJsonObject(), value, path, depth + 1);
                return;
             } catch (IllegalArgumentException var10) {
             }
          }
 
-         throw new IllegalArgumentException(path + ": value does not match any supported shape: " + init(value));
+         throw new IllegalArgumentException(path + ": value does not match any supported shape: " + preview(value));
       } else {
          String type = AiJson.getString(schema, "type", "");
          boolean var10000;
@@ -250,11 +250,11 @@ final class AiSchemas {
 
          boolean valid = var10000;
          if (!valid) {
-            throw new IllegalArgumentException(path + ": expected " + type + ", got " + init(value));
+            throw new IllegalArgumentException(path + ": expected " + type + ", got " + preview(value));
          }
 
          if (schema.has("enum") && !schema.getAsJsonArray("enum").contains(value)) {
-            throw new IllegalArgumentException(path + ": " + init(value) + " is not one of " + schema.getAsJsonArray("enum"));
+            throw new IllegalArgumentException(path + ": " + preview(value) + " is not one of " + schema.getAsJsonArray("enum"));
          }
 
          if (value.isJsonObject()) {
@@ -270,7 +270,7 @@ final class AiSchemas {
 
             for (Entry<String, JsonElement> entry : object.entrySet()) {
                if (properties.has(entry.getKey())) {
-                  init(properties.getAsJsonObject(entry.getKey()), entry.getValue(), path + "." + entry.getKey(), depth + 1);
+                  validate(properties.getAsJsonObject(entry.getKey()), entry.getValue(), path + "." + entry.getKey(), depth + 1);
                } else {
                   if (schema.has("additionalProperties")
                      && schema.get("additionalProperties").isJsonPrimitive()
@@ -281,7 +281,7 @@ final class AiSchemas {
                   }
 
                   if (schema.has("additionalProperties") && schema.get("additionalProperties").isJsonObject()) {
-                     init(schema.getAsJsonObject("additionalProperties"), entry.getValue(), path + "." + entry.getKey(), depth + 1);
+                     validate(schema.getAsJsonObject("additionalProperties"), entry.getValue(), path + "." + entry.getKey(), depth + 1);
                   }
                }
             }
@@ -299,7 +299,7 @@ final class AiSchemas {
 
             if (schema.has("items")) {
                for (JsonElement item : array) {
-                  init(schema.getAsJsonObject("items"), item, path + "[]", depth + 1);
+                  validate(schema.getAsJsonObject("items"), item, path + "[]", depth + 1);
                }
             }
          }

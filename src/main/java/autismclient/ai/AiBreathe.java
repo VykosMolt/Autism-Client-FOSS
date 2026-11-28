@@ -69,23 +69,23 @@ public final class AiBreathe {
                if (!this.init_Z && player != null && mc.level != null) {
                   boolean headOut = !player.isUnderWater();
                   if (headOut && player.getAirSupply() >= player.getMaxAirSupply() * 0.9) {
-                     return this.init(AiOperation.Status.SUCCEEDED, "Breathing again (air " + player.getAirSupply() + "/" + player.getMaxAirSupply() + ")");
+                     return this.finish(AiOperation.Status.SUCCEEDED, "Breathing again (air " + player.getAirSupply() + "/" + player.getMaxAirSupply() + ")");
                   }
 
                   if (System.nanoTime() > this.deadlineNanos) {
-                     return this.init(AiOperation.Status.FAILED, "Could not reach air in time (air " + player.getAirSupply() + ")");
+                     return this.finish(AiOperation.Status.FAILED, "Could not reach air in time (air " + player.getAirSupply() + ")");
                   }
 
                   mc.options.keyJump.setDown(true);
                   mc.options.keyShift.setDown(false);
                   if (headOut) {
                      mc.options.keyUp.setDown(false);
-                     return this.init("Treading water while the air refills (" + player.getAirSupply() + ")");
+                     return this.running("Treading water while the air refills (" + player.getAirSupply() + ")");
                   }
 
                   if (--this.init_I <= 0) {
                      this.init_List = new ArrayList<>();
-                     this.init_BlockPos = AiBreathe.init(mc, player.blockPosition(), this.init_List);
+                     this.init_BlockPos = AiBreathe.findAir(mc, player.blockPosition(), this.init_List);
                      this.init_I = 10;
                   }
 
@@ -107,11 +107,11 @@ public final class AiBreathe {
                      }
 
                      autismclient.ai.engine.AiBlockDigger.continueBreakingBlockCompat(mc, roof, Direction.DOWN);
-                     return this.init("Breaking the roof at " + roof.toShortString() + " (air " + player.getAirSupply() + ")");
+                     return this.running("Breaking the roof at " + roof.toShortString() + " (air " + player.getAirSupply() + ")");
                   } else {
                      if (this.init_BlockPos == null) {
                         mc.options.keyUp.setDown(false);
-                        return this.init("No air found nearby; swimming up");
+                        return this.running("No air found nearby; swimming up");
                      }
 
                      BlockPos step = this.init_BlockPos;
@@ -133,23 +133,23 @@ public final class AiBreathe {
                      double flat = Math.hypot(target.x - player.getX(), target.z - player.getZ());
                      boolean boxBlocked = !mc.level.noCollision(player, player.getBoundingBox().move(0.0, 0.6, 0.0));
                      mc.options.keyUp.setDown(flat > 0.4 || boxBlocked && flat > 0.08);
-                     return this.init("Swimming to air at " + this.init_BlockPos.toShortString() + " (air " + player.getAirSupply() + ")");
+                     return this.running("Swimming to air at " + this.init_BlockPos.toShortString() + " (air " + player.getAirSupply() + ")");
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Cancelled");
                }
             }
 
-            AiOperation.Result init(String message) {
+            AiOperation.Result running(String message) {
                return AiGameOperations.result(AiOperation.Status.RUNNING, message, new JsonObject());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               this.init();
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               this.releaseKeys();
                return AiGameOperations.result(status, message, AiJson.objectOf("air", mc.player == null ? 0 : mc.player.getAirSupply()));
             }
 
-            void init() {
+            void releaseKeys() {
                mc.options.keyJump.setDown(false);
                mc.options.keyUp.setDown(false);
                this.aim.clear();
@@ -158,7 +158,7 @@ public final class AiBreathe {
             @Override
             public void cancel() {
                this.init_Z = true;
-               this.init();
+               this.releaseKeys();
             }
          };
       } else {
@@ -184,10 +184,10 @@ public final class AiBreathe {
    }
 
    static BlockPos findAirPocket(Minecraft mc, BlockPos feet) {
-      return init(mc, feet, new ArrayList<>());
+      return findAir(mc, feet, new ArrayList<>());
    }
 
-   static BlockPos init(Minecraft mc, BlockPos feet, List<BlockPos> path) {
+   static BlockPos findAir(Minecraft mc, BlockPos feet, List<BlockPos> path) {
       ClientLevel level = mc.level;
 
       for (int dy = 1; dy <= 24; dy++) {

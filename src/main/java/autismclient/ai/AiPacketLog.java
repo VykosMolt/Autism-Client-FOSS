@@ -40,7 +40,7 @@ public final class AiPacketLog {
    private static final int flush = 4096;
    private static final int close = 64;
    private static final int open = 100000;
-   private static final Class<?>[] init_ClassArr = new Class[]{
+   private static final Class<?>[] packetTypeHolders = new Class[]{
       HandshakePacketTypes.class,
       StatusPacketTypes.class,
       LoginPacketTypes.class,
@@ -50,7 +50,7 @@ public final class AiPacketLog {
       PingPacketTypes.class,
       GamePacketTypes.class
    };
-   private static volatile Map<Class<?>, PacketType<?>> init_Map;
+   private static volatile Map<Class<?>, PacketType<?>> packetTypeCache;
 
    private AiPacketLog() {
    }
@@ -79,16 +79,16 @@ public final class AiPacketLog {
       }
 
       if (args.has("filters") && args.get("filters").isJsonObject()) {
-         init(overlay, args.getAsJsonObject("filters"));
+         applyFilters(overlay, args.getAsJsonObject("filters"));
       }
 
       return overlay.stateJson();
    }
 
-   private static void init(AutismPacketLoggerOverlay overlay, JsonObject filters) {
+   private static void applyFilters(AutismPacketLoggerOverlay overlay, JsonObject filters) {
       String search = filters.has("search") ? AiJson.getString(filters, "search", "") : null;
-      String direction = filters.has("direction") ? init(AiJson.getString(filters, "direction", "")) : null;
-      String category = filters.has("category") ? load(AiJson.getString(filters, "category", "")) : null;
+      String direction = filters.has("direction") ? normalizeDirection(AiJson.getString(filters, "direction", "")) : null;
+      String category = filters.has("category") ? normalizeCategory(AiJson.getString(filters, "category", "")) : null;
       if (search != null || direction != null || category != null) {
          overlay.applyFilters(search, direction, category);
       }
@@ -124,10 +124,10 @@ public final class AiPacketLog {
          throw new IllegalStateException("Packet logger overlay is unavailable");
       }
 
-      String category = args.has("category") ? load(AiJson.getString(args, "category", "ALL")) : "ALL";
+      String category = args.has("category") ? normalizeCategory(AiJson.getString(args, "category", "ALL")) : "ALL";
       boolean detail = AiJson.getBoolean(args, "detail", false);
-      int limit = init(AiJson.getInt(args, "limit", 20), detail ? 10 : 50);
-      int offset = init(AiJson.getInt(args, "offset", 0));
+      int limit = clampLimit(AiJson.getInt(args, "limit", 20), detail ? 10 : 50);
+      int offset = clampOffset(AiJson.getInt(args, "offset", 0));
       String query = AiJson.getString(args, "query", "").toLowerCase(Locale.ROOT);
       List<AutismPacketLoggerOverlay.LoggedPacketEntry> buffered = overlay.queryEntries(category, 0, -1);
       List<AutismPacketLoggerOverlay.LoggedPacketEntry> matched = new ArrayList<>();
@@ -144,7 +144,7 @@ public final class AiPacketLog {
       boolean truncated = false;
 
       for (int i = offset; i < end; i++) {
-         JsonObject described = init(matched.get(i), i, detail);
+         JsonObject described = entryJson(matched.get(i), i, detail);
          int cost = described.toString().length() + 1;
          if (entries.size() > 0 && cost > budget) {
             truncated = true;
@@ -177,7 +177,7 @@ public final class AiPacketLog {
       );
    }
 
-   private static JsonObject init(AutismPacketLoggerOverlay.LoggedPacketEntry entry, int index, boolean detail) {
+   private static JsonObject entryJson(AutismPacketLoggerOverlay.LoggedPacketEntry entry, int index, boolean detail) {
       JsonObject out = AiJson.objectOf(
          "index",
          index,
@@ -214,13 +214,13 @@ public final class AiPacketLog {
       }
 
       if (detail) {
-         init(out, entry);
+         appendPacketDetail(out, entry);
       }
 
       return out;
    }
 
-   private static void init(JsonObject out, AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   private static void appendPacketDetail(JsonObject out, AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry.packetClass != null) {
          autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(entry.packetClass);
          if (schema != null) {
@@ -262,7 +262,7 @@ public final class AiPacketLog {
          for (autismclient.util.PacketFieldSnapshot field : view.fields()) {
             decoded.add(
                AiJson.objectOf(
-                  "name", field.name(), "value", init(field.write(), 220), "readable", field.readable(), "editableCandidate", field.editableCandidate()
+                  "name", field.name(), "value", truncate(field.write(), 220), "readable", field.readable(), "editableCandidate", field.editableCandidate()
                )
             );
             if (decoded.toString().length() > 2048) {
@@ -291,15 +291,15 @@ public final class AiPacketLog {
       }
 
       if (entry.packetClass != null) {
-         out.addProperty("inspector", init(PacketInspectorEngine.inspect(entry).load(), 4096));
+         out.addProperty("inspector", truncate(PacketInspectorEngine.inspect(entry).load(), 4096));
       }
    }
 
    public static JsonObject read(JsonObject args) {
       String query = AiJson.getString(args, "query", "").toLowerCase(Locale.ROOT);
-      String direction = args.has("direction") ? init(AiJson.getString(args, "direction", "Both")) : "Both";
-      int offset = init(AiJson.getInt(args, "offset", 0));
-      int limit = init(AiJson.getInt(args, "limit", 10), 30);
+      String direction = args.has("direction") ? normalizeDirection(AiJson.getString(args, "direction", "Both")) : "Both";
+      int offset = clampOffset(AiJson.getInt(args, "offset", 0));
+      int limit = clampLimit(AiJson.getInt(args, "limit", 10), 30);
       Collection<Class<? extends Packet<?>>> source = "C2S".equals(direction)
          ? autismclient.util.PacketTypeRegistry.getC2sPackets()
          : ("S2C".equals(direction) ? autismclient.util.PacketTypeRegistry.getS2cPackets() : autismclient.util.PacketTypeRegistry.ALL_PACKETS);
@@ -312,11 +312,11 @@ public final class AiPacketLog {
 
       for (int i = offset; i < end; i++) {
          Class<? extends Packet<?>> packetClass = matched.get(i);
-         String flow = init(packetClass);
+         String flow = directionOf(packetClass);
          autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(packetClass);
          JsonObject entry = AiJson.objectOf("name", autismclient.util.PacketTypeRegistry.getPacketName(packetClass), "schema", schema);
          entry.addProperty("direction", flow);
-         entry.addProperty("numericPacketId", init(packetClass, "BOTH".equals(flow) ? "C2S" : flow));
+         entry.addProperty("numericPacketId", packetIdFor(packetClass, "BOTH".equals(flow) ? "C2S" : flow));
          if (schema != null) {
             JsonArray editable = new JsonArray();
 
@@ -335,14 +335,14 @@ public final class AiPacketLog {
       return AiJson.objectOf("packets", packets, "matched", matched.size(), "offset", offset, "limit", limit, "direction", direction);
    }
 
-   static String init(Class<? extends Packet<?>> packetClass) {
+   static String directionOf(Class<? extends Packet<?>> packetClass) {
       boolean c2s = autismclient.util.PacketTypeRegistry.getC2sPackets().contains(packetClass);
       boolean s2c = autismclient.util.PacketTypeRegistry.getS2cPackets().contains(packetClass);
       return c2s && s2c ? "BOTH" : (c2s ? "C2S" : (s2c ? "S2C" : "ANY"));
    }
 
-   static int init(Class<?> packetClass, String direction) {
-      return init(init().get(packetClass), direction);
+   static int packetIdFor(Class<?> packetClass, String direction) {
+      return init(packetTypesByClass().get(packetClass), direction);
    }
 
    static int init(PacketType<?> type, String direction) {
@@ -362,21 +362,21 @@ public final class AiPacketLog {
       }
    }
 
-   private static Map<Class<?>, PacketType<?>> init() {
-      Map<Class<?>, PacketType<?>> current = init_Map;
+   private static Map<Class<?>, PacketType<?>> packetTypesByClass() {
+      Map<Class<?>, PacketType<?>> current = packetTypeCache;
       if (current != null) {
          return current;
       }
 
       synchronized (AiPacketLog.class) {
-         current = init_Map;
+         current = packetTypeCache;
          if (current != null) {
             return current;
          }
 
          Map<Class<?>, PacketType<?>> built = new HashMap<>();
 
-         for (Class<?> holder : init_ClassArr) {
+         for (Class<?> holder : packetTypeHolders) {
             for (Field field : holder.getDeclaredFields()) {
                int modifiers = field.getModifiers();
                if (Modifier.isStatic(modifiers)
@@ -396,12 +396,12 @@ public final class AiPacketLog {
             }
          }
 
-         init_Map = Map.copyOf(built);
-         return init_Map;
+         packetTypeCache = Map.copyOf(built);
+         return packetTypeCache;
       }
    }
 
-   static String init(String raw) {
+   static String normalizeDirection(String raw) {
       if (raw == null) {
          return null;
       }
@@ -431,7 +431,7 @@ public final class AiPacketLog {
       return var10000;
    }
 
-   static String load(String raw) {
+   static String normalizeCategory(String raw) {
       if (raw == null) {
          return null;
       }
@@ -461,15 +461,15 @@ public final class AiPacketLog {
       return var10000;
    }
 
-   static int init(int requested, int max) {
+   static int clampLimit(int requested, int max) {
       return Math.max(1, Math.min(requested, max));
    }
 
-   static int init(int offset) {
+   static int clampOffset(int offset) {
       return Math.max(0, offset);
    }
 
-   private static String init(String value, int max) {
+   private static String truncate(String value, int max) {
       if (value == null) {
          return "";
       } else {

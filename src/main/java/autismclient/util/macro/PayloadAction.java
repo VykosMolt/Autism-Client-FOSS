@@ -27,11 +27,11 @@ public class PayloadAction implements MacroAction {
    public int payloadPacketId = -1;
    public String payloadProvenance = "userEdited";
    public boolean payloadScriptEnabled = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
-      if (!autismclient.modules.aD.read_Z() && this.init) {
+      if (!autismclient.modules.aD.read_Z() && this.enabled) {
          if (mc != null && mc.getConnection() != null) {
             try {
                MacroTemplateResolver.ResolveResult channelResolution = MacroVariableContext.resolveTemplate(this.channel, mc);
@@ -118,7 +118,7 @@ public class PayloadAction implements MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       tag.putString("channel", this.channel == null ? "" : this.channel);
       tag.putString("payloadData", this.payloadData == null ? "" : this.payloadData);
       tag.putString("payloadJson", this.payloadJson == null ? "" : this.payloadJson);
@@ -141,7 +141,7 @@ public class PayloadAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.init = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
       this.channel = tag.getStringOr("channel", "minecraft:brand");
       this.payloadData = tag.getStringOr("payloadData", "");
       this.payloadJson = tag.getStringOr("payloadJson", "");
@@ -182,12 +182,12 @@ public class PayloadAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.init = enabled;
+      this.enabled = enabled;
    }
 
    @Override

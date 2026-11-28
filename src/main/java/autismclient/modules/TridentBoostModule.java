@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 public final class TridentBoostModule extends Module {
-   private final Map<Player, Long> init = new IdentityHashMap<>();
+   private final Map<Player, Long> lastBoost = new IdentityHashMap<>();
 
    public TridentBoostModule() {
       super("trident-boost", "TridentBoost", ae.load_ae, "Use a Riptide trident outside water or rain.");
@@ -20,8 +20,8 @@ public final class TridentBoostModule extends Module {
    public static boolean init_Z(Player player) {
       TridentBoostModule module = activeFor(player);
       if (module != null && !player.isPassenger()) {
-         synchronized (module.init) {
-            Long last = module.init.get(player);
+         synchronized (module.lastBoost) {
+            Long last = module.lastBoost.get(player);
             return last == null || System.nanoTime() - last >= module.decimal("cooldown") * 1.0E9;
          }
       } else {
@@ -32,8 +32,8 @@ public final class TridentBoostModule extends Module {
    public static void init_V(Player player) {
       TridentBoostModule module = activeFor(player);
       if (module != null) {
-         synchronized (module.init) {
-            module.init.put(player, System.nanoTime());
+         synchronized (module.lastBoost) {
+            module.lastBoost.put(player, System.nanoTime());
          }
       }
    }
@@ -56,17 +56,17 @@ public final class TridentBoostModule extends Module {
 
    @Override
    public void onDisable() {
-      this.init();
+      this.clearBoosts();
    }
 
    @Override
    public void onGameLeft() {
-      this.init();
+      this.clearBoosts();
    }
 
-   private void init() {
-      synchronized (this.init) {
-         this.init.clear();
+   private void clearBoosts() {
+      synchronized (this.lastBoost) {
+         this.lastBoost.clear();
       }
    }
 }

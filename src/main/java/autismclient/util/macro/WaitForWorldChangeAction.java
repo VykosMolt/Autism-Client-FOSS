@@ -7,7 +7,7 @@ public class WaitForWorldChangeAction implements CaptureOutputAction, MacroActio
    public String targetDimension = "";
    public boolean listenDuringPreviousAction = false;
    public String saveAs = "";
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -18,7 +18,7 @@ public class WaitForWorldChangeAction implements CaptureOutputAction, MacroActio
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
       tag.putString("targetDimension", this.targetDimension == null ? "" : this.targetDimension);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
@@ -28,7 +28,7 @@ public class WaitForWorldChangeAction implements CaptureOutputAction, MacroActio
    public void fromTag(CompoundTag tag) {
       this.targetDimension = tag.getStringOr("targetDimension", "");
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -52,12 +52,12 @@ public class WaitForWorldChangeAction implements CaptureOutputAction, MacroActio
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override

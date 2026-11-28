@@ -15,17 +15,17 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
 public final class SafeWalkModule extends Module {
-   private static final Minecraft init_Minecraft = Minecraft.getInstance();
+   private static final Minecraft CLIENT = Minecraft.getInstance();
    private static final double load_D = 0.55;
    private static final double read = 0.05;
    static final double init_D = 0.15;
    private static final int init_I = 3;
-   private final Random init_Random = new Random();
-   private long init_J;
-   private boolean init_Z;
-   private int load_I;
+   private final Random random = new Random();
+   private long holdUntil;
+   private boolean holding;
+   private int clearTicks;
 
-   static double init_D_D_2(double configured) {
+   static double clampEdgeDistance(double configured) {
       return Math.max(0.15, configured);
    }
 
@@ -38,18 +38,18 @@ public final class SafeWalkModule extends Module {
 
    @Override
    public void onDisable() {
-      this.init_Z = false;
-      this.init_J = 0L;
-      this.load_I = 0;
+      this.holding = false;
+      this.holdUntil = 0L;
+      this.clearTicks = 0;
    }
 
    public static Input init(ClientInput source, Input original) {
-      if (original != null && init_Minecraft != null && init_Minecraft.player != null && init_Minecraft.player.input == source) {
+      if (original != null && CLIENT != null && CLIENT.player != null && CLIENT.player.input == source) {
          if (al.init_Module_Str("safe-walk") instanceof SafeWalkModule safeWalk) {
             if (!safeWalk.isEnabled()) {
-               safeWalk.init_Z = false;
+               safeWalk.holding = false;
                return original;
-            } else if (!safeWalk.init_Z_25()) {
+            } else if (!safeWalk.shouldHold()) {
                return original;
             } else {
                return original.shift()
@@ -64,72 +64,72 @@ public final class SafeWalkModule extends Module {
       }
    }
 
-   private boolean init_Z_25() {
-      if (read()) {
-         this.init_Z = false;
+   private boolean shouldHold() {
+      if (isScaffoldEnabled()) {
+         this.holding = false;
          return false;
       }
 
-      boolean atEdge = this.load();
+      boolean atEdge = this.isNearEdge();
       long now = System.currentTimeMillis();
-      this.load_I = atEdge ? 0 : this.load_I + 1;
-      if (this.init_Z && now < this.init_J) {
+      this.clearTicks = atEdge ? 0 : this.clearTicks + 1;
+      if (this.holding && now < this.holdUntil) {
          return true;
       }
 
       if (atEdge) {
-         this.init_Z = true;
-         this.init_J = now + this.init_J_6();
+         this.holding = true;
+         this.holdUntil = now + this.rollHoldMillis();
          return true;
       }
 
-      if (init(this.init_Z, this.load_I, 3)) {
+      if (keepHolding(this.holding, this.clearTicks, 3)) {
          return true;
       }
 
-      this.init_Z = false;
+      this.holding = false;
       return false;
    }
 
-   static boolean init(boolean holding, int clearTicks, int releaseTicks) {
+   static boolean keepHolding(boolean holding, int clearTicks, int releaseTicks) {
       return holding && clearTicks < releaseTicks;
    }
 
-   private long init_J_6() {
+   private long rollHoldMillis() {
       ValueRange band = ValueRange.parse(this.value("hold-time"), new ValueRange(100, 200));
-      return Math.round(band.random(this.init_Random));
+      return Math.round(band.random(this.random));
    }
 
-   private boolean load() {
-      LocalPlayer player = init_Minecraft.player;
-      if (player == null || init_Minecraft.level == null) {
+   private boolean isNearEdge() {
+      LocalPlayer player = CLIENT.player;
+      if (player == null || CLIENT.level == null) {
          return false;
       } else if (player.onGround() && !player.isPassenger() && !player.getAbilities().flying) {
-         return player.getXRot() < this.integer("look-down") ? false : this.init_Z_D_2(init_D_D_2(this.decimal("edge-distance")));
+         return player.getXRot() < this.integer("look-down") ? false : this.edgeAhead(clampEdgeDistance(this.decimal("edge-distance")));
       } else {
          return false;
       }
    }
 
-   private boolean init_Z_D_2(double distance) {
-      LocalPlayer player = init_Minecraft.player;
+   private boolean edgeAhead(double distance) {
+      LocalPlayer player = CLIENT.player;
       Vec3 velocity = player.getDeltaMovement();
       Vec3 direction = velocity.horizontalDistanceSqr() > 1.0E-6
          ? new Vec3(velocity.x, 0.0, velocity.z).normalize()
          : Vec3.directionFromRotation(0.0F, player.getYRot());
       Vec3 probe = player.position().add(direction.scale(distance));
       BlockPos underProbe = BlockPos.containing(probe).below();
-      if (!init_Minecraft.level.isOutsideBuildHeight(underProbe)
-         && ScaffoldModule.init_Z_BlockState_3(init_Minecraft.level.getBlockState(underProbe), init_Minecraft.level, underProbe, CollisionContext.of(player))) {
+      if (!CLIENT.level.isOutsideBuildHeight(underProbe)
+         && ScaffoldModule.init_Z_BlockState_3(CLIENT.level.getBlockState(underProbe), CLIENT.level, underProbe, CollisionContext.of(player))) {
          return false;
       }
 
       double half = Math.max(0.05, player.getBbWidth() / 2.0 - 0.05);
       AABB below = new AABB(probe.x - half, probe.y - 0.55, probe.z - half, probe.x + half, probe.y, probe.z + half);
-      return init_Minecraft.level.noCollision(player, below);
+      return CLIENT.level.noCollision(player, below);
    }
 
-   private static boolean read() {
+   private static boolean isScaffoldEnabled() {
       Module scaffold = al.init_Module_Str("scaffold");
       return scaffold != null && scaffold.isEnabled();
    }

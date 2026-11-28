@@ -23,7 +23,7 @@ public final class AiChatOps {
             AiOperation var10000;
             switch (action.action()) {
                case "RUN_COMMAND":
-                  var10000 = init(action.value());
+                  var10000 = runCommand(action.value());
                   break;
                case "SUGGEST_COMMAND":
                   var10000 = AiGameOperations.immediate(
@@ -40,7 +40,7 @@ public final class AiChatOps {
                   );
                   break;
                case "COPY_TO_CLIPBOARD":
-                  var10000 = load(action.value());
+                  var10000 = copyToClipboard(action.value());
                   break;
                default:
                   throw new IllegalArgumentException("Unsupported chat click action '" + action.action() + "'");
@@ -65,7 +65,7 @@ public final class AiChatOps {
       }
    }
 
-   private static AiOperation init(String raw) {
+   private static AiOperation runCommand(String raw) {
       final String command = raw.startsWith("/") ? raw.substring(1) : raw;
       if (command.isBlank()) {
          throw new IllegalArgumentException("Chat click action carries an empty command");
@@ -73,29 +73,29 @@ public final class AiChatOps {
          throw new IllegalArgumentException("Chat click requires a connected server session");
       } else {
          return new AiOperation() {
-            final Minecraft init_Minecraft = Minecraft.getInstance();
+            final Minecraft client = Minecraft.getInstance();
             final long baseline = AiChatLedger.revision();
-            final long load_J = System.nanoTime() + 5000000000L;
-            final int init_I = this.init_Minecraft.player != null ? this.init_Minecraft.player.containerMenu.containerId : -1;
-            final Screen init_Screen = this.init_Minecraft.gui.screen();
-            boolean init_Z;
-            boolean load_Z;
+            final long deadline = System.nanoTime() + 5000000000L;
+            final int initialContainerId = this.client.player != null ? this.client.player.containerMenu.containerId : -1;
+            final Screen initialScreen = this.client.gui.screen();
+            boolean sent;
+            boolean cancelled;
 
             @Override
             public AiOperation.Result tick() {
-               if (this.load_Z || this.init_Minecraft.getConnection() == null) {
+               if (this.cancelled || this.client.getConnection() == null) {
                   return AiGameOperations.result(AiOperation.Status.CANCELLED, "Chat click cancelled", new JsonObject());
-               } else if (!this.init_Z) {
-                  this.init_Minecraft.getConnection().sendCommand(command);
-                  this.init_Z = true;
+               } else if (!this.sent) {
+                  this.client.getConnection().sendCommand(command);
+                  this.sent = true;
                   return AiGameOperations.result(
                      AiOperation.Status.RUNNING, "Chat button command sent; observing for a response", AiJson.objectOf("command", command)
                   );
                } else {
-                  boolean menuChanged = this.init_Minecraft.player != null && this.init_Minecraft.player.containerMenu.containerId != this.init_I;
-                  boolean screenChanged = this.init_Minecraft.gui.screen() != this.init_Screen;
+                  boolean menuChanged = this.client.player != null && this.client.player.containerMenu.containerId != this.initialContainerId;
+                  boolean screenChanged = this.client.gui.screen() != this.initialScreen;
                   if (AiChatLedger.revision() <= this.baseline && !menuChanged && !screenChanged) {
-                     return System.nanoTime() > this.load_J
+                     return System.nanoTime() > this.deadline
                         ? AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
                            "Chat button command sent; no response observed",
@@ -109,7 +109,7 @@ public final class AiChatOps {
                         AiOperation.Status.SUCCEEDED,
                         "Chat button command observed a response",
                         AiJson.objectOf(
-                           "command", command, "responses", AiChatOps.init(this.baseline), "menuChanged", menuChanged, "screenChanged", screenChanged
+                           "command", command, "responses", AiChatOps.chatSince(this.baseline), "menuChanged", menuChanged, "screenChanged", screenChanged
                         )
                      );
                   }
@@ -118,13 +118,13 @@ public final class AiChatOps {
 
             @Override
             public void cancel() {
-               this.load_Z = true;
+               this.cancelled = true;
             }
          };
       }
    }
 
-   private static AiOperation load(String value) {
+   private static AiOperation copyToClipboard(String value) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.keyboardHandler == null) {
          return AiGameOperations.immediate(AiOperation.Status.FAILED, "Client clipboard unavailable", new JsonObject());
@@ -134,7 +134,7 @@ public final class AiChatOps {
       return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Copied chat click text to the client clipboard", AiJson.objectOf("copied", value));
    }
 
-   private static JsonArray init(long baseline) {
+   private static JsonArray chatSince(long baseline) {
       JsonArray out = new JsonArray();
 
       for (AiChatLedger.ChatEntry entry : AiChatLedger.recent(4)) {

@@ -9,10 +9,10 @@ import autismclient.api.module.StringSetting;
 import java.util.Locale;
 
 public final class CrosshairModule extends Module {
-   private final ColorSetting init_ColorSetting;
-   private final ColorSetting load;
-   private final ColorSetting read;
-   private final ColorSetting write;
+   private final ColorSetting colorSetting;
+   private final ColorSetting outlineColor;
+   private final ColorSetting enemyColor;
+   private final ColorSetting mobColor;
    private String raw;
    private CrosshairPixelArt drawn;
 
@@ -52,7 +52,7 @@ public final class CrosshairModule extends Module {
             .build()
       );
       this.add(new BoolSetting("invert", "Invert", false).description("Negative, like vanilla's.").group("Look").build());
-      this.init_ColorSetting = this.add(
+      this.colorSetting = this.add(
          new ColorSetting("color", "Color", -1)
             .description("Crosshair color.")
             .group("Look")
@@ -61,17 +61,17 @@ public final class CrosshairModule extends Module {
       );
       this.add(new DoubleSetting("opacity", "Opacity", 100.0, 10.0, 100.0, 5.0).unit("%").group("Look").build());
       this.add(new BoolSetting("outline", "Outline", true).description("Border around the shape.").group("Look").build());
-      this.load = this.add(new ColorSetting("outline-color", "Outline Color", -16777216).group("Look").visibleWhen(() -> this.bool("outline")).build());
+      this.outlineColor = this.add(new ColorSetting("outline-color", "Outline Color", -16777216).group("Look").visibleWhen(() -> this.bool("outline")).build());
       this.add(new DoubleSetting("outline-width", "Outline Width", 0.5, 0.5, 3.0, 0.5).group("Look").visibleWhen(() -> this.bool("outline")).build());
       this.add(new BoolSetting("target-colors", "Target Colors", true).description("Red enemies, green mobs.").group("Targets").build());
-      this.read = this.add(
+      this.enemyColor = this.add(
          new ColorSetting("enemy-color", "Enemy Color", -50373)
             .description("Hostiles and players.")
             .group("Targets")
             .visibleWhen(() -> this.bool("target-colors"))
             .build()
       );
-      this.write = this.add(
+      this.mobColor = this.add(
          new ColorSetting("mob-color", "Mob Color", -12845206)
             .description("Other mobs in reach.")
             .group("Targets")
@@ -167,14 +167,14 @@ public final class CrosshairModule extends Module {
          this.thickness(),
          this.gap(),
          this.bool("invert"),
-         this.init_ColorSetting.get(),
+         this.colorSetting.get(),
          (float)(this.decimal("opacity") / 100.0),
          this.bool("outline"),
-         this.load.get(),
+         this.outlineColor.get(),
          this.decimal("outline-width"),
          this.bool("target-colors"),
-         this.read.get(),
-         this.write.get(),
+         this.enemyColor.get(),
+         this.mobColor.get(),
          this.bool("far-enemies"),
          this.decimal("far-range"),
          drawing

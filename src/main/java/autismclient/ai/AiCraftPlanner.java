@@ -22,17 +22,17 @@ public final class AiCraftPlanner {
       int held = Math.max(0, graph.held(itemId));
       if (quantity > 0 && held < quantity) {
          AiCraftPlanner.StockLedger state = new AiCraftPlanner.StockLedger(graph);
-         state.init_Map.put(itemId, held);
+         state.stock.put(itemId, held);
          List<AiCraftPlanner.CraftStep> steps = new ArrayList<>();
          Map<String, Integer> missing = new LinkedHashMap<>();
-         state.init(itemId, quantity, steps, missing, new HashSet<>(), 0);
-         return new AiCraftPlanner.CraftPlan(init_List(steps), missing, held, quantity);
+         state.fulfill(itemId, quantity, steps, missing, new HashSet<>(), 0);
+         return new AiCraftPlanner.CraftPlan(mergeSteps(steps), missing, held, quantity);
       } else {
          return new AiCraftPlanner.CraftPlan(List.of(), Map.of(), held, quantity);
       }
    }
 
-   static List<AiCraftPlanner.CraftStep> init_List(List<AiCraftPlanner.CraftStep> steps) {
+   static List<AiCraftPlanner.CraftStep> mergeSteps(List<AiCraftPlanner.CraftStep> steps) {
       List<AiCraftPlanner.CraftStep> out = new ArrayList<>();
 
       for (AiCraftPlanner.CraftStep step : steps) {
@@ -45,7 +45,7 @@ public final class AiCraftPlanner {
                break;
             }
 
-            if (init(step.recipe(), earlier.recipe().output())) {
+            if (usesInput(step.recipe(), earlier.recipe().output())) {
                break;
             }
          }
@@ -60,7 +60,7 @@ public final class AiCraftPlanner {
       return out;
    }
 
-   private static boolean init(AiCraftPlanner.RecipeSpec recipe, String itemId) {
+   private static boolean usesInput(AiCraftPlanner.RecipeSpec recipe, String itemId) {
       for (List<String> slot : recipe.inputs()) {
          if (slot.contains(itemId)) {
             return true;
@@ -70,17 +70,17 @@ public final class AiCraftPlanner {
       return false;
    }
 
-   private static int init_I(List<AiCraftPlanner.CraftStep> steps) {
+   private static int planCost(List<AiCraftPlanner.CraftStep> steps) {
       int cost = 0;
 
-      for (AiCraftPlanner.CraftStep step : init_List(steps)) {
+      for (AiCraftPlanner.CraftStep step : mergeSteps(steps)) {
          cost += 10 + step.crafts() + (step.recipe().stonecutting() ? 20 : 0);
       }
 
       return cost;
    }
 
-   private static Map<List<String>, Integer> init(AiCraftPlanner.RecipeSpec recipe) {
+   private static Map<List<String>, Integer> groupInputs(AiCraftPlanner.RecipeSpec recipe) {
       Map<List<String>, Integer> grouped = new LinkedHashMap<>();
 
       for (List<String> slot : recipe.inputs()) {
@@ -90,9 +90,9 @@ public final class AiCraftPlanner {
       return grouped;
    }
 
-   private static List<AiCraftPlanner.RecipeSpec> load(List<AiCraftPlanner.RecipeSpec> recipes) {
+   private static List<AiCraftPlanner.RecipeSpec> sortRecipes(List<AiCraftPlanner.RecipeSpec> recipes) {
       List<AiCraftPlanner.RecipeSpec> copy = new ArrayList<>(recipes);
-      copy.sort(Comparator.<AiCraftPlanner.RecipeSpec>comparingInt(recipe -> init(recipe).size()).thenComparingInt(recipe -> recipe.inputs().size()));
+      copy.sort(Comparator.<AiCraftPlanner.RecipeSpec>comparingInt(recipe -> groupInputs(recipe).size()).thenComparingInt(recipe -> recipe.inputs().size()));
       return copy;
    }
 
@@ -137,33 +137,33 @@ public final class AiCraftPlanner {
    }
 
    private static final class StockLedger {
-      private final AiCraftPlanner.RecipeGraph init_g_StreamUtil;
-      private final Map<String, Integer> init_Map = new HashMap<>();
+      private final AiCraftPlanner.RecipeGraph graph;
+      private final Map<String, Integer> stock = new HashMap<>();
 
       StockLedger(AiCraftPlanner.RecipeGraph graph) {
-         this.init_g_StreamUtil = graph;
+         this.graph = graph;
       }
 
-      int init_I(String itemId) {
-         return this.init_Map.computeIfAbsent(itemId, id -> Math.max(0, this.init_g_StreamUtil.held(id)));
+      int available(String itemId) {
+         return this.stock.computeIfAbsent(itemId, id -> Math.max(0, this.graph.held(id)));
       }
 
-      void init(String itemId, int amount) {
-         this.init_Map.put(itemId, this.init_I(itemId) - amount);
+      void consume(String itemId, int amount) {
+         this.stock.put(itemId, this.available(itemId) - amount);
       }
 
-      void load(String itemId, int amount) {
-         this.init_Map.put(itemId, this.init_I(itemId) + amount);
+      void deposit(String itemId, int amount) {
+         this.stock.put(itemId, this.available(itemId) + amount);
       }
 
-      int init(String itemId, int need, List<AiCraftPlanner.CraftStep> steps, Map<String, Integer> missing, Set<String> active, int depth) {
+      int fulfill(String itemId, int need, List<AiCraftPlanner.CraftStep> steps, Map<String, Integer> missing, Set<String> active, int depth) {
          if (need <= 0) {
             return 0;
          }
 
-         int fromStock = Math.min(need, this.init_I(itemId));
+         int fromStock = Math.min(need, this.available(itemId));
          if (fromStock > 0) {
-            this.init(itemId, fromStock);
+            this.consume(itemId, fromStock);
             need -= fromStock;
          }
 
@@ -176,26 +176,26 @@ public final class AiCraftPlanner {
             AiCraftPlanner.PlanBranch complete = null;
 
             try {
-               for (AiCraftPlanner.RecipeSpec recipe : AiCraftPlanner.load(this.init_g_StreamUtil.recipesFor(itemId))) {
+               for (AiCraftPlanner.RecipeSpec recipe : AiCraftPlanner.sortRecipes(this.graph.recipesFor(itemId))) {
                   int perCraft = Math.max(1, recipe.outputCount());
                   int crafts = (need + perCraft - 1) / perCraft;
                   List<AiCraftPlanner.CraftStep> attemptSteps = new ArrayList<>();
                   Map<String, Integer> attemptMissing = new LinkedHashMap<>();
-                  Map<String, Integer> snapshot = new HashMap<>(this.init_Map);
-                  int shortfall = this.init(recipe, crafts, attemptSteps, attemptMissing, active, depth);
+                  Map<String, Integer> snapshot = new HashMap<>(this.stock);
+                  int shortfall = this.fulfillInputs(recipe, crafts, attemptSteps, attemptMissing, active, depth);
                   if (shortfall == 0) {
                      attemptSteps.add(new AiCraftPlanner.CraftStep(recipe, crafts));
-                     this.load(itemId, crafts * perCraft - need);
-                     AiCraftPlanner.PlanBranch candidate = new AiCraftPlanner.PlanBranch(0, attemptSteps, Map.of(), new HashMap<>(this.init_Map));
-                     if (complete == null || AiCraftPlanner.init_I(candidate.steps()) < AiCraftPlanner.init_I(complete.steps())) {
+                     this.deposit(itemId, crafts * perCraft - need);
+                     AiCraftPlanner.PlanBranch candidate = new AiCraftPlanner.PlanBranch(0, attemptSteps, Map.of(), new HashMap<>(this.stock));
+                     if (complete == null || AiCraftPlanner.planCost(candidate.steps()) < AiCraftPlanner.planCost(complete.steps())) {
                         complete = candidate;
                      }
 
-                     this.init_Map.clear();
-                     this.init_Map.putAll(snapshot);
+                     this.stock.clear();
+                     this.stock.putAll(snapshot);
                   } else {
-                     boolean cutOfAMinedItem = recipe.stonecutting() && this.init_g_StreamUtil.load_I(itemId) == 0;
-                     if (this.init_g_StreamUtil.init_Z(itemId)) {
+                     boolean cutOfAMinedItem = recipe.stonecutting() && this.graph.load_I(itemId) == 0;
+                     if (this.graph.init_Z(itemId)) {
                         cutOfAMinedItem = true;
                      }
 
@@ -205,13 +205,13 @@ public final class AiCraftPlanner {
                         && (
                            best == null
                               || shortfall < best.shortfall()
-                              || shortfall == best.shortfall() && this.init(attemptMissing) < this.init(best.missing())
+                              || shortfall == best.shortfall() && this.missingCost(attemptMissing) < this.missingCost(best.missing())
                         )) {
-                        best = new AiCraftPlanner.PlanBranch(shortfall, attemptSteps, attemptMissing, new HashMap<>(this.init_Map));
+                        best = new AiCraftPlanner.PlanBranch(shortfall, attemptSteps, attemptMissing, new HashMap<>(this.stock));
                      }
 
-                     this.init_Map.clear();
-                     this.init_Map.putAll(snapshot);
+                     this.stock.clear();
+                     this.stock.putAll(snapshot);
                   }
                }
             } finally {
@@ -219,13 +219,13 @@ public final class AiCraftPlanner {
             }
 
             if (complete != null) {
-               this.init_Map.clear();
-               this.init_Map.putAll(complete.stock());
+               this.stock.clear();
+               this.stock.putAll(complete.stock());
                steps.addAll(complete.steps());
                return 0;
             } else if (best != null && !best.missing().isEmpty()) {
-               this.init_Map.clear();
-               this.init_Map.putAll(best.stock());
+               this.stock.clear();
+               this.stock.putAll(best.stock());
                steps.addAll(best.steps());
                best.missing().forEach((id, amount) -> missing.merge(id, amount, Integer::sum));
                return need;
@@ -239,19 +239,19 @@ public final class AiCraftPlanner {
          }
       }
 
-      private double init(Map<String, Integer> missing) {
+      private double missingCost(Map<String, Integer> missing) {
          double cost = 0.0;
 
          for (Entry<String, Integer> entry : missing.entrySet()) {
-            cost += entry.getValue().intValue() * this.init_g_StreamUtil.init_D(entry.getKey());
+            cost += entry.getValue().intValue() * this.graph.init_D(entry.getKey());
          }
 
          return cost;
       }
 
-      private int init(AiCraftPlanner.RecipeSpec recipe, int crafts, List<AiCraftPlanner.CraftStep> steps, Map<String, Integer> missing, Set<String> active, int depth) {
+      private int fulfillInputs(AiCraftPlanner.RecipeSpec recipe, int crafts, List<AiCraftPlanner.CraftStep> steps, Map<String, Integer> missing, Set<String> active, int depth) {
          int shortfall = 0;
-         Iterator var8 = AiCraftPlanner.init(recipe).entrySet().iterator();
+         Iterator var8 = AiCraftPlanner.groupInputs(recipe).entrySet().iterator();
 
          while (true) {
             Entry<List<String>, Integer> requirement;
@@ -270,22 +270,22 @@ public final class AiCraftPlanner {
                }
 
                List<String> byStock = new ArrayList<>(requirement.getKey());
-               byStock.sort((a, b) -> Integer.compare(this.init_I(b), this.init_I(a)));
-               String topped = this.init_I(byStock.get(0)) > 0 ? byStock.get(0) : null;
+               byStock.sort((a, b) -> Integer.compare(this.available(b), this.available(a)));
+               String topped = this.available(byStock.get(0)) > 0 ? byStock.get(0) : null;
 
                for (String option : byStock) {
-                  int take = Math.min(needed, this.init_I(option));
+                  int take = Math.min(needed, this.available(option));
                   if (take <= 0) {
                      break;
                   }
 
-                  this.init(option, take);
+                  this.consume(option, take);
                   needed -= take;
                }
 
                if (needed > 0) {
                   for (String option : requirement.getKey()) {
-                     if (this.init_Z(option)) {
+                     if (this.canCraftFromStock(option)) {
                         choice = option;
                         break;
                      }
@@ -299,24 +299,24 @@ public final class AiCraftPlanner {
             }
 
             if (choice == null) {
-               choice = this.init(requirement.getKey(), needed);
+               choice = this.pickInputOption(requirement.getKey(), needed);
             }
 
             if (choice == null) {
                shortfall += needed;
                missing.merge(requirement.getKey().get(0), needed, Integer::sum);
             } else {
-               shortfall += this.init(choice, needed, steps, missing, active, depth + 1);
+               shortfall += this.fulfill(choice, needed, steps, missing, active, depth + 1);
             }
          }
       }
 
-      private String init(List<String> accepted, int needed) {
+      private String pickInputOption(List<String> accepted, int needed) {
          String best = null;
          int bestStock = -1;
 
          for (String option : accepted) {
-            int have = this.init_I(option);
+            int have = this.available(option);
             if (have > bestStock) {
                bestStock = have;
                best = option;
@@ -330,13 +330,13 @@ public final class AiCraftPlanner {
          int bestRank = 2147483647;
 
          for (String option : accepted) {
-            bestRank = Math.min(bestRank, this.init_g_StreamUtil.load_I(option));
+            bestRank = Math.min(bestRank, this.graph.load_I(option));
          }
 
          List<String> tied = new ArrayList<>();
 
          for (String option : accepted) {
-            if (this.init_g_StreamUtil.load_I(option) == bestRank) {
+            if (this.graph.load_I(option) == bestRank) {
                tied.add(option);
             }
          }
@@ -345,17 +345,17 @@ public final class AiCraftPlanner {
             int tiedStock = 0;
 
             for (String option : tied) {
-               tiedStock = Math.max(tiedStock, this.init_I(option));
+               tiedStock = Math.max(tiedStock, this.available(option));
             }
 
             if (tiedStock == 0) {
                for (String option : tied) {
-                  if (this.init_Z(option)) {
+                  if (this.canCraftFromStock(option)) {
                      return option;
                   }
                }
 
-               String family = this.init_g_StreamUtil.init(new HashSet<>(tied));
+               String family = this.graph.init(new HashSet<>(tied));
                if (family != null) {
                   return family;
                }
@@ -371,8 +371,8 @@ public final class AiCraftPlanner {
          double pickCost = 1.7976931348623157E308;
 
          for (String option : tied) {
-            int have = this.init_I(option);
-            double cost = this.init_g_StreamUtil.init_D(option);
+            int have = this.available(option);
+            double cost = this.graph.init_D(option);
             if (have > pickStock || have == pickStock && cost < pickCost) {
                pickStock = have;
                pickCost = cost;
@@ -383,15 +383,15 @@ public final class AiCraftPlanner {
          return pick != null ? pick : best;
       }
 
-      private boolean init_Z(String itemId) {
-         for (AiCraftPlanner.RecipeSpec recipe : this.init_g_StreamUtil.recipesFor(itemId)) {
+      private boolean canCraftFromStock(String itemId) {
+         for (AiCraftPlanner.RecipeSpec recipe : this.graph.recipesFor(itemId)) {
             boolean covered = !recipe.inputs().isEmpty();
 
             for (List<String> slot : recipe.inputs()) {
                boolean slotCovered = false;
 
                for (String option : slot) {
-                  if (this.init_I(option) > 0) {
+                  if (this.available(option) > 0) {
                      slotCovered = true;
                      break;
                   }

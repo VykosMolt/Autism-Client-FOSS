@@ -9,27 +9,27 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 
 public final class RegistryDisplayNameCache {
-   private static final Map<String, String> init = new ConcurrentHashMap<>();
-   private static final Map<String, String> load = new ConcurrentHashMap<>();
-   private static final Map<String, String> read = new ConcurrentHashMap<>();
-   private static final Map<String, String> write = new ConcurrentHashMap<>();
+   private static final Map<String, String> itemNames = new ConcurrentHashMap<>();
+   private static final Map<String, String> blockNames = new ConcurrentHashMap<>();
+   private static final Map<String, String> entityNames = new ConcurrentHashMap<>();
+   private static final Map<String, String> genericNames = new ConcurrentHashMap<>();
 
    private RegistryDisplayNameCache() {
    }
 
    public static String init(String rawId) {
-      String key = poll(rawId);
-      return init.computeIfAbsent(key, id -> init(id, BuiltInRegistries.ITEM, item -> item.getName(item.getDefaultInstance()).getString()));
+      String key = normalizeKey(rawId);
+      return itemNames.computeIfAbsent(key, id -> lookupName(id, BuiltInRegistries.ITEM, item -> item.getName(item.getDefaultInstance()).getString()));
    }
 
    public static String load(String rawId) {
-      String key = poll(rawId);
-      return load.computeIfAbsent(key, id -> init(id, BuiltInRegistries.BLOCK, block -> block.getName().getString()));
+      String key = normalizeKey(rawId);
+      return blockNames.computeIfAbsent(key, id -> lookupName(id, BuiltInRegistries.BLOCK, block -> block.getName().getString()));
    }
 
    public static String read(String rawId) {
-      String key = poll(rawId);
-      return read.computeIfAbsent(key, id -> init(id, BuiltInRegistries.ENTITY_TYPE, entity -> entity.getDescription().getString()));
+      String key = normalizeKey(rawId);
+      return entityNames.computeIfAbsent(key, id -> lookupName(id, BuiltInRegistries.ENTITY_TYPE, entity -> entity.getDescription().getString()));
    }
 
    public static String write(String rawId) {
@@ -37,12 +37,12 @@ public final class RegistryDisplayNameCache {
    }
 
    public static String update(String rawId) {
-      String key = poll(rawId);
-      return write.computeIfAbsent(key, RegistryDisplayNameCache::flush);
+      String key = normalizeKey(rawId);
+      return genericNames.computeIfAbsent(key, RegistryDisplayNameCache::fallbackName);
    }
 
    public static String sync(String rawId) {
-      String key = poll(rawId);
+      String key = normalizeKey(rawId);
       if (key.isEmpty()) {
          return "";
       }
@@ -53,17 +53,17 @@ public final class RegistryDisplayNameCache {
 
    public static boolean init(String text, String rawId) {
       String trimmed = text == null ? "" : text.trim();
-      String key = poll(rawId);
+      String key = normalizeKey(rawId);
       return trimmed.isEmpty() ? true : trimmed.equalsIgnoreCase(key) || trimmed.equalsIgnoreCase(sync(key)) || trimmed.equalsIgnoreCase(update(key));
    }
 
-   private static <T> String init(String rawId, Registry<T> registry, Function<T, String> nameProvider) {
+   private static <T> String lookupName(String rawId, Registry<T> registry, Function<T, String> nameProvider) {
       if (rawId.isEmpty()) {
          return "";
       }
 
       Identifier parsed = Identifier.tryParse(rawId);
-      String fallback = flush(rawId);
+      String fallback = fallbackName(rawId);
 
       try {
          if (parsed != null && registry.containsKey(parsed)) {
@@ -82,26 +82,26 @@ public final class RegistryDisplayNameCache {
       }
    }
 
-   private static String flush(String rawId) {
+   private static String fallbackName(String rawId) {
       if (rawId.isEmpty()) {
          return "";
       }
 
       Identifier parsed = Identifier.tryParse(rawId);
       if (parsed == null) {
-         return close(rawId);
+         return humanize(rawId);
       }
 
-      String pathLabel = close(parsed.getPath());
+      String pathLabel = humanize(parsed.getPath());
       if ("minecraft".equals(parsed.getNamespace())) {
          return pathLabel;
       }
 
-      String namespaceLabel = close(parsed.getNamespace());
+      String namespaceLabel = humanize(parsed.getNamespace());
       return namespaceLabel.isEmpty() ? pathLabel : namespaceLabel + ": " + pathLabel;
    }
 
-   private static String close(String raw) {
+   private static String humanize(String raw) {
       if (raw != null && !raw.isBlank()) {
          String cleaned = raw.trim().replaceAll("[:_/.-]+", " ").replaceAll("\\s+", " ");
          if (cleaned.isEmpty()) {
@@ -116,7 +116,7 @@ public final class RegistryDisplayNameCache {
                   out.append(' ');
                }
 
-               out.append(open(part));
+               out.append(capitalize(part));
             }
          }
 
@@ -126,7 +126,7 @@ public final class RegistryDisplayNameCache {
       }
    }
 
-   private static String open(String token) {
+   private static String capitalize(String token) {
       if (token.isEmpty()) {
          return token;
       } else {
@@ -136,7 +136,7 @@ public final class RegistryDisplayNameCache {
       }
    }
 
-   private static String poll(String rawId) {
+   private static String normalizeKey(String rawId) {
       return rawId == null ? "" : rawId.trim();
    }
 }

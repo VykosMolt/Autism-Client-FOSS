@@ -68,7 +68,7 @@ public final class ViewmodelModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init();
+      this.pushState();
    }
 
    @Override
@@ -78,7 +78,7 @@ public final class ViewmodelModule extends Module {
 
    @Override
    public void tick() {
-      this.init();
+      this.pushState();
    }
 
    @Override
@@ -89,11 +89,11 @@ public final class ViewmodelModule extends Module {
    @Override
    protected void onOptionValueChanged(String settingId) {
       if (this.isEnabled()) {
-         this.init();
+         this.pushState();
       }
    }
 
-   private void init() {
+   private void pushState() {
       ViewmodelState.mainHand = this.bool("main-hand");
       ViewmodelState.mainHandScale = (float)this.decimal("main-hand-scale");
       ViewmodelState.mainHandX = (float)this.decimal("main-hand-x");

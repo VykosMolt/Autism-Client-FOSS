@@ -8,7 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 public class RestoreGuiAction implements MacroAction, GuiWaitAware {
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = true;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -65,7 +65,7 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
       tag.putString("type", "RESTORE_GUI");
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -74,7 +74,7 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
       this.waitForGuiBefore = GuiWaitAware.readWaitForGuiBefore(tag, false);
       this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, true);
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -90,11 +90,11 @@ public class RestoreGuiAction implements MacroAction, GuiWaitAware {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 }

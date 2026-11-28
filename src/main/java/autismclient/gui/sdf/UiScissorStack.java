@@ -6,41 +6,41 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 
 public final class UiScissorStack {
-   private static final Deque<ScreenRectangle> init = new ArrayDeque<>();
+   private static final Deque<ScreenRectangle> STACK = new ArrayDeque<>();
 
    private UiScissorStack() {
    }
 
-   public static void init(ScreenRectangle rectangle) {
-      init(rectangle, null);
+   public static void push(ScreenRectangle rectangle) {
+      push(rectangle, null);
    }
 
-   static void init(ScreenRectangle rectangle, ScreenRectangle rootWhenStackEmpty) {
-      ScreenRectangle parent = init.peekLast();
+   static void push(ScreenRectangle rectangle, ScreenRectangle rootWhenStackEmpty) {
+      ScreenRectangle parent = STACK.peekLast();
       if (parent == null) {
          parent = rootWhenStackEmpty != null ? rootWhenStackEmpty : fullScreen();
       }
 
       ScreenRectangle intersection = rectangle.intersection(parent);
-      init.addLast(intersection != null ? intersection : ScreenRectangle.empty());
+      STACK.addLast(intersection != null ? intersection : ScreenRectangle.empty());
    }
 
    public static void load(ScreenRectangle rectangle) {
-      init.addLast(rectangle != null ? rectangle : ScreenRectangle.empty());
+      STACK.addLast(rectangle != null ? rectangle : ScreenRectangle.empty());
    }
 
    public static void pop() {
-      if (!init.isEmpty()) {
-         init.removeLast();
+      if (!STACK.isEmpty()) {
+         STACK.removeLast();
       }
    }
 
    public static ScreenRectangle peek() {
-      return init.peekLast();
+      return STACK.peekLast();
    }
 
    public static void clear() {
-      init.clear();
+      STACK.clear();
    }
 
    private static ScreenRectangle fullScreen() {

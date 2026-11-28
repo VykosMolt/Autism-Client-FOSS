@@ -27,11 +27,11 @@ public final class ChangeSlotCommand extends Command {
                   builder, "1", "2", "3", "4", "5", "6", "7", "8", "9"
                )
             )
-            .executes(context -> init(IntegerArgumentType.getInteger(context, "hotbar-slot")))
+            .executes(context -> selectSlot(IntegerArgumentType.getInteger(context, "hotbar-slot")))
       );
    }
 
-   private static int init(int oneBasedSlot) {
+   private static int selectSlot(int oneBasedSlot) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.getConnection() != null) {
          InventorySlotHelper.selectHotbarSlot(mc, oneBasedSlot - 1);

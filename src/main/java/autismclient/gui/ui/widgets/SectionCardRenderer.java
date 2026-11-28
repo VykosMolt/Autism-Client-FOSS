@@ -26,7 +26,7 @@ public final class SectionCardRenderer {
          );
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds) {
+   public static void drawCard(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds) {
       init(context, bounds, context.init_TableIndex().colors().cardSurface);
    }
 

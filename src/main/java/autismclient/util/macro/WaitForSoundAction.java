@@ -22,7 +22,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
    public transient volatile double matchedX;
    public transient volatile double matchedY;
    public transient volatile double matchedZ;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public MacroActionType getType() {
@@ -51,12 +51,12 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override
@@ -105,7 +105,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
       tag.putString("waitGuiName", this.waitGuiName);
       tag.putBoolean("checkDistance", this.checkDistance);
       tag.putDouble("maxDistance", this.maxDistance);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
       return tag;
@@ -129,7 +129,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
       this.checkDistance = tag.getBooleanOr("checkDistance", false);
       this.maxDistance = tag.getDoubleOr("maxDistance", 16.0);
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);

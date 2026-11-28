@@ -14,9 +14,9 @@ public final class KillAuraHitMarkerRenderer {
    private static final long init_J = 500L;
    private static final int init_I = 16726843;
    private static final int load_I = 1509899067;
-   private static volatile AABB init_AABB;
-   private static volatile long load_J;
-   private static Module init_Module;
+   private static volatile AABB lastHitBox;
+   private static volatile long lastHitMillis;
+   private static Module cachedKillAura;
 
    private KillAuraHitMarkerRenderer() {
    }
@@ -26,14 +26,14 @@ public final class KillAuraHitMarkerRenderer {
          .register(
             context -> {
                if (!autismclient.modules.aD.init_Z()) {
-                  Module module = init_Module();
+                  Module module = killAuraModule();
                   if (module != null && module.isEnabled() && Boolean.parseBoolean(module.value("hit-marker"))) {
                      Minecraft mc = Minecraft.getInstance();
                      if (mc != null && mc.level != null && mc.player != null && !mc.gui.hud.isHidden()) {
                         Vec3 camera = context.levelState().cameraRenderState.pos;
                         PoseStack poseStack = context.poseStack();
                         float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
-                        LivingEntity target = init(module);
+                        LivingEntity target = auraTarget(module);
                         long now = System.currentTimeMillis();
                         float wave = 0.5F + 0.5F * (float)Math.sin(now * 0.001 * 3.141592653589793 * 2.0 * 1.2);
                         AABB targetBox = null;
@@ -52,7 +52,7 @@ public final class KillAuraHitMarkerRenderer {
                               .submitCustomGeometry(
                                  poseStack,
                                  autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(),
-                                 (pose, buffer) -> load(pose, buffer, fillBox, targetFillColor)
+                                 (pose, buffer) -> drawBoxFaces(pose, buffer, fillBox, targetFillColor)
                               );
                            int bracketColor = 208 + (int)(47.0F * wave) << 24 | 16726843;
                            AABB bracketBox = targetBox;
@@ -60,17 +60,17 @@ public final class KillAuraHitMarkerRenderer {
                               .submitCustomGeometry(
                                  poseStack,
                                  autismclient.render.AutismRenderTypes.storageEspLinesSeeThrough(),
-                                 (pose, buffer) -> init(pose, buffer, bracketBox, bracketColor)
+                                 (pose, buffer) -> drawBrackets(pose, buffer, bracketBox, bracketColor)
                               );
                         }
 
-                        AABB marker = init_AABB;
-                        if (marker != null && now - load_J < 500L) {
+                        AABB marker = lastHitBox;
+                        if (marker != null && now - lastHitMillis < 500L) {
                            context.submitNodeCollector()
                               .submitCustomGeometry(
                                  poseStack,
                                  autismclient.render.AutismRenderTypes.storageEspFillSeeThrough(),
-                                 (pose, buffer) -> load(pose, buffer, marker.move(-camera.x, -camera.y, -camera.z), 1509899067)
+                                 (pose, buffer) -> drawBoxFaces(pose, buffer, marker.move(-camera.x, -camera.y, -camera.z), 1509899067)
                               );
                         }
                      }
@@ -82,29 +82,29 @@ public final class KillAuraHitMarkerRenderer {
 
    public static void init(AABB box) {
       if (box != null) {
-         init_AABB = box;
-         load_J = System.currentTimeMillis();
+         lastHitBox = box;
+         lastHitMillis = System.currentTimeMillis();
       }
    }
 
    public static void load() {
-      init_AABB = null;
+      lastHitBox = null;
    }
 
-   private static Module init_Module() {
-      Module module = init_Module;
+   private static Module killAuraModule() {
+      Module module = cachedKillAura;
       if (module == null) {
-         module = init_Module = autismclient.modules.al.init_Module_Str("kill-aura");
+         module = cachedKillAura = autismclient.modules.al.init_Module_Str("kill-aura");
       }
 
       return module;
    }
 
-   private static LivingEntity init(Module module) {
+   private static LivingEntity auraTarget(Module module) {
       return module instanceof autismclient.modules.KillAuraModule aura ? aura.getTarget() : null;
    }
 
-   private static void init(Pose pose, VertexConsumer buffer, AABB box, int color) {
+   private static void drawBrackets(Pose pose, VertexConsumer buffer, AABB box, int color) {
       double bracket = Math.min(0.35, Math.min(box.getXsize(), Math.min(box.getYsize(), box.getZsize())) * 0.3);
       if (!(bracket <= 0.0)) {
          for (int corner = 0; corner < 8; corner++) {
@@ -121,16 +121,16 @@ public final class KillAuraHitMarkerRenderer {
       }
    }
 
-   private static void load(Pose pose, VertexConsumer buffer, AABB box, int color) {
-      init(pose, buffer, box.minX, box.minY, box.minZ, box.maxX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ, box.minX, box.minY, box.maxZ, color);
-      init(pose, buffer, box.minX, box.maxY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.maxX, box.maxY, box.minZ, box.minX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.minX, box.minY, box.maxZ, box.maxX, box.minY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.minX, box.maxY, box.maxZ, color);
-      init(pose, buffer, box.maxX, box.minY, box.minZ, box.minX, box.minY, box.minZ, box.minX, box.maxY, box.minZ, box.maxX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.minX, box.minY, box.minZ, box.minX, box.minY, box.maxZ, box.minX, box.maxY, box.maxZ, box.minX, box.maxY, box.minZ, color);
-      init(pose, buffer, box.maxX, box.minY, box.maxZ, box.maxX, box.minY, box.minZ, box.maxX, box.maxY, box.minZ, box.maxX, box.maxY, box.maxZ, color);
+   private static void drawBoxFaces(Pose pose, VertexConsumer buffer, AABB box, int color) {
+      drawQuad(pose, buffer, box.minX, box.minY, box.minZ, box.maxX, box.minY, box.minZ, box.maxX, box.minY, box.maxZ, box.minX, box.minY, box.maxZ, color);
+      drawQuad(pose, buffer, box.minX, box.maxY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.maxX, box.maxY, box.minZ, box.minX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.minX, box.minY, box.maxZ, box.maxX, box.minY, box.maxZ, box.maxX, box.maxY, box.maxZ, box.minX, box.maxY, box.maxZ, color);
+      drawQuad(pose, buffer, box.maxX, box.minY, box.minZ, box.minX, box.minY, box.minZ, box.minX, box.maxY, box.minZ, box.maxX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.minX, box.minY, box.minZ, box.minX, box.minY, box.maxZ, box.minX, box.maxY, box.maxZ, box.minX, box.maxY, box.minZ, color);
+      drawQuad(pose, buffer, box.maxX, box.minY, box.maxZ, box.maxX, box.minY, box.minZ, box.maxX, box.maxY, box.minZ, box.maxX, box.maxY, box.maxZ, color);
    }
 
-   private static void init(
+   private static void drawQuad(
       Pose pose,
       VertexConsumer buffer,
       double x1,
