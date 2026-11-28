@@ -67,15 +67,15 @@ final class AiWorldReaders {
                      "row",
                      line.row(),
                      "objective",
-                     truncate(line.load(), 128),
+                     truncate(line.objective(), 128),
                      "objectiveTitle",
-                     truncate(line.read(), 256),
+                     truncate(line.title(), 256),
                      "name",
-                     truncate(line.update(), 256),
+                     truncate(line.name(), 256),
                      "score",
-                     truncate(line.sync(), 64),
+                     truncate(line.score(), 64),
                      "text",
-                     truncate(line.flush(), 512)
+                     truncate(line.text(), 512)
                   )
                );
             }

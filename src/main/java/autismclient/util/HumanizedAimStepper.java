@@ -100,8 +100,8 @@ public final class HumanizedAimStepper {
       double errYaw = goalYaw - this.aimYaw;
       double errPitch = goalPitchDeg - this.aimPitch;
       if (move) {
-         this.aimYaw = this.aimYaw + this.hand.poll() * this.goalVelocityYaw;
-         this.aimPitch = this.aimPitch + this.hand.poll() * this.goalVelocityPitch;
+         this.aimYaw = this.aimYaw + this.hand.pursuitGain() * this.goalVelocityYaw;
+         this.aimPitch = this.aimPitch + this.hand.pursuitGain() * this.goalVelocityPitch;
          if (this.stroking) {
             this.advanceStroke();
          } else if (this.pauseTicks > 0) {
@@ -164,7 +164,7 @@ public final class HumanizedAimStepper {
       double distance = Math.hypot(errYaw, errPitch);
       double gain = this.handBack
          ? 0.96 + 0.040000000000000036 * this.random.nextDouble()
-         : clamp(this.hand.read() + this.hand.write() * this.clampedGaussian(), 0.8, 1.06);
+         : clamp(this.hand.firstPhaseWeight() + this.hand.firstPhaseJitter() * this.clampedGaussian(), 0.8, 1.06);
       double ny = -errPitch / distance;
       double np = errYaw / distance;
       double lateral = this.hand.update() * distance * this.clampedGaussian();
@@ -223,8 +223,8 @@ public final class HumanizedAimStepper {
       double innovation = Math.sqrt(0.8775000000000001);
       this.tremorYaw = 0.35 * this.tremorYaw + this.hand.tick() * innovation * this.clampedGaussian();
       this.tremorPitch = 0.35 * this.tremorPitch + this.hand.tick() * innovation * this.clampedGaussian();
-      this.driftYaw = this.driftYaw + (-this.hand.get() * this.driftYaw + this.hand.run() * this.clampedGaussian());
-      this.driftPitch = this.driftPitch + (-this.hand.get() * this.driftPitch + this.hand.run() * this.clampedGaussian());
+      this.driftYaw = this.driftYaw + (-this.hand.driftDecay() * this.driftYaw + this.hand.driftNoise() * this.clampedGaussian());
+      this.driftPitch = this.driftPitch + (-this.hand.driftDecay() * this.driftPitch + this.hand.driftNoise() * this.clampedGaussian());
    }
 
    private double clampedGaussian() {

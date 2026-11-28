@@ -119,19 +119,19 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          this.ensureSearchField(x + 4, this.bodyTop(), panelW - 8, this.searchFieldHeight());
          this.searchField.render(graphics, mx, my, delta);
          RegistrySelectorScreen.PaneLayout pane = this.availablePane();
-         this.renderPane(graphics, pane, pane.init(), "Available", true, mx, my);
-         this.renderPane(graphics, pane, pane.load(), "Selected", false, mx, my);
+         this.renderPane(graphics, pane, pane.leftX(), "Available", true, mx, my);
+         this.renderPane(graphics, pane, pane.rightX(), "Selected", false, mx, my);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
    }
 
    private void renderPane(GuiGraphicsExtractor graphics, RegistrySelectorScreen.PaneLayout pane, int x, String title, boolean available, int mx, int my) {
-      int y = pane.read();
-      int w = pane.write();
-      int listTop = pane.sync();
-      int listH = pane.flush();
-      this.fillRoundedRect(graphics, x, y, w, pane.update(), 5, -1442248437, STYLE_THEME.set());
+      int y = pane.y();
+      int w = pane.width();
+      int listTop = pane.listTop();
+      int listH = pane.listHeight();
+      this.fillRoundedRect(graphics, x, y, w, pane.height(), 5, -1442248437, STYLE_THEME.set());
       this.drawTrimmedText(graphics, title, x + 4, this.centeredTextY(y + 2, this.paneTitleHeight()), -791321, w - 8);
       autismclient.gui.ui.UiClipStack.getInstance().push(graphics, autismclient.gui.f.NetHelper.init(x + 1, listTop, Math.max(0, w - 2), Math.max(0, listH)));
 
@@ -1003,7 +1003,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(boolean available) {
       RegistrySelectorScreen.PaneLayout pane = this.availablePane();
-      return this.scrollbarMetricsAt(available, available ? pane.init() : pane.load(), pane.sync(), pane.write(), pane.flush());
+      return this.scrollbarMetricsAt(available, available ? pane.leftX() : pane.rightX(), pane.listTop(), pane.width(), pane.listHeight());
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetricsAt(boolean available, int paneX, int listTop, int paneW, int listH) {
@@ -1051,12 +1051,12 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private boolean isOverAvailablePane(int mx, int my) {
       RegistrySelectorScreen.PaneLayout pane = this.availablePane();
-      return mx >= pane.init() && mx < pane.init() + pane.write() && my >= pane.sync() && my < pane.sync() + pane.flush();
+      return mx >= pane.leftX() && mx < pane.leftX() + pane.width() && my >= pane.listTop() && my < pane.listTop() + pane.listHeight();
    }
 
    private boolean isOverSelectedPane(int mx, int my) {
       RegistrySelectorScreen.PaneLayout pane = this.availablePane();
-      return mx >= pane.load() && mx < pane.load() + pane.write() && my >= pane.sync() && my < pane.sync() + pane.flush();
+      return mx >= pane.rightX() && mx < pane.rightX() + pane.width() && my >= pane.listTop() && my < pane.listTop() + pane.listHeight();
    }
 
    private RegistrySelectorScreen.PaneLayout availablePane() {
@@ -1158,7 +1158,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       autismclient.gui.f.b.k.init(graphics, this.font, display, STYLE_THEME.init_Identifier_l(l.read), color, drawX, drawY, false);
    }
 
-   private record PaneLayout(int init, int load, int read, int write, int update, int sync, int flush) {
+   private record PaneLayout(int leftX, int rightX, int y, int width, int height, int listTop, int listHeight) {
    }
 
    private enum RowAction {
@@ -1194,9 +1194,9 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private record HitRegion(RegistrySelectorScreen.RowAction action, int x, int load, int read, int write, String value) {
+   private record HitRegion(RegistrySelectorScreen.RowAction action, int x, int y, int width, int height, String value) {
       boolean contains(int mx, int my) {
-         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.width && my >= this.y && my < this.y + this.height;
       }
    }
 }

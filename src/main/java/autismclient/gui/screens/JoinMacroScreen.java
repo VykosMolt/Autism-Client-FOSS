@@ -362,9 +362,9 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             graphics,
             this.font,
             button.x,
-            button.load,
-            button.read,
-            button.write,
+            button.y,
+            button.width,
+            button.height,
             button.label,
             button.tone,
             button.enabled,
@@ -791,16 +791,16 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
    private record ScreenButton(
       int x,
-      int load,
-      int read,
-      int write,
+      int y,
+      int width,
+      int height,
       String label,
       autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone tone,
       boolean enabled,
       Runnable action
    ) {
       boolean contains(double mx, double my) {
-         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.width && my >= this.y && my < this.y + this.height;
       }
    }
 

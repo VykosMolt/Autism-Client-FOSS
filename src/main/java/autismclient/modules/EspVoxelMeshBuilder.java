@@ -174,12 +174,12 @@ final class EspVoxelMeshBuilder {
 
    private static void buildEdges(List<EspVoxelMeshBuilder.VisibleFace> input, List<EspVoxelMeshBuilder.MeshEdge> output) {
       input.sort((left, right) -> {
-         int compared = Integer.compare(left.update(), right.update());
+         int compared = Integer.compare(left.color(), right.color());
          if (compared != 0) {
             return compared;
          }
 
-         compared = Integer.compare(left.init(), right.init());
+         compared = Integer.compare(left.axis(), right.axis());
          if (compared != 0) {
             return compared;
          }
@@ -200,7 +200,7 @@ final class EspVoxelMeshBuilder {
 
          while (index < input.size()) {
             EspVoxelMeshBuilder.VisibleFace next = input.get(index);
-            if (next.update() != first.update() || next.init() != first.init() || crossA(next) != crossA(first) || crossB(next) != crossB(first) || alongAxis(next) != end) {
+            if (next.color() != first.color() || next.axis() != first.axis() || crossA(next) != crossA(first) || crossB(next) != crossB(first) || alongAxis(next) != end) {
                break;
             }
 
@@ -213,24 +213,24 @@ final class EspVoxelMeshBuilder {
    }
 
    private static int alongAxis(EspVoxelMeshBuilder.VisibleFace edge) {
-      return edge.init() == 0 ? edge.load() : (edge.init() == 1 ? edge.read() : edge.write());
+      return edge.axis() == 0 ? edge.x() : (edge.axis() == 1 ? edge.y() : edge.z());
    }
 
    private static int crossA(EspVoxelMeshBuilder.VisibleFace edge) {
-      return edge.init() == 0 ? edge.read() : edge.load();
+      return edge.axis() == 0 ? edge.y() : edge.x();
    }
 
    private static int crossB(EspVoxelMeshBuilder.VisibleFace edge) {
-      return edge.init() == 2 ? edge.read() : edge.write();
+      return edge.axis() == 2 ? edge.y() : edge.z();
    }
 
    private static void emitEdge(List<EspVoxelMeshBuilder.MeshEdge> output, EspVoxelMeshBuilder.VisibleFace edge, int end) {
-      if (edge.init() == 0) {
-         output.add(new EspVoxelMeshBuilder.MeshEdge(edge.load(), edge.read(), edge.write(), end, edge.read(), edge.write(), edge.update()));
-      } else if (edge.init() == 1) {
-         output.add(new EspVoxelMeshBuilder.MeshEdge(edge.load(), edge.read(), edge.write(), edge.load(), end, edge.write(), edge.update()));
+      if (edge.axis() == 0) {
+         output.add(new EspVoxelMeshBuilder.MeshEdge(edge.x(), edge.y(), edge.z(), end, edge.y(), edge.z(), edge.color()));
+      } else if (edge.axis() == 1) {
+         output.add(new EspVoxelMeshBuilder.MeshEdge(edge.x(), edge.y(), edge.z(), edge.x(), end, edge.z(), edge.color()));
       } else {
-         output.add(new EspVoxelMeshBuilder.MeshEdge(edge.load(), edge.read(), edge.write(), edge.load(), edge.read(), end, edge.update()));
+         output.add(new EspVoxelMeshBuilder.MeshEdge(edge.x(), edge.y(), edge.z(), edge.x(), edge.y(), end, edge.color()));
       }
    }
 
@@ -404,26 +404,26 @@ final class EspVoxelMeshBuilder {
       }
    }
 
-   private record VisibleFace(int init, int load, int read, int write, int update) {
+   private record VisibleFace(int axis, int x, int y, int z, int color) {
    }
 
-   record VoxelMesh(List<EspVoxelMeshBuilder.MeshQuad> faces, List<EspVoxelMeshBuilder.MeshEdge> load) {
+   record VoxelMesh(List<EspVoxelMeshBuilder.MeshQuad> faces, List<EspVoxelMeshBuilder.MeshEdge> edges) {
       private static final EspVoxelMeshBuilder.VoxelMesh EMPTY = new EspVoxelMeshBuilder.VoxelMesh(List.of(), List.of());
    }
 
    record MeshQuad(
       double init_D,
-      double load,
-      double read,
-      double write,
-      double update,
-      double sync,
-      double flush,
-      double close,
-      double open,
-      double poll,
-      double push,
-      double pop,
+      double y1,
+      double z1,
+      double x2,
+      double y2,
+      double z2,
+      double x3,
+      double y3,
+      double z3,
+      double x4,
+      double y4,
+      double z4,
       int color
    ) {
    }
@@ -431,6 +431,6 @@ final class EspVoxelMeshBuilder {
    record ColoredBox(AABB box, int color) {
    }
 
-   record MeshEdge(double init_D, double load, double read, double write, double update, double sync, int color) {
+   record MeshEdge(double init_D, double y1, double z1, double x2, double y2, double z2, int color) {
    }
 }

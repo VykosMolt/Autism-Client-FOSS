@@ -228,7 +228,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    private static boolean lineMatchesObjective(CaptureValueAction.SidebarLine line, String objective) {
-      return line != null && (objective == null || objective.isBlank() || objective.equals(line.load()));
+      return line != null && (objective == null || objective.isBlank() || objective.equals(line.objective()));
    }
 
    public static List<CaptureValueAction.SidebarLine> sidebarLines(Minecraft mc) {
@@ -654,13 +654,13 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
 
       Map<String, MacroVarValue> props = new LinkedHashMap<>();
-      props.put("line", MacroVarValue.ofText(line.flush()));
-      props.put("name", MacroVarValue.ofText(line.update()));
-      props.put("score", MacroVarValue.ofText(line.sync()));
+      props.put("line", MacroVarValue.ofText(line.text()));
+      props.put("name", MacroVarValue.ofText(line.name()));
+      props.put("score", MacroVarValue.ofText(line.score()));
       props.put("row", MacroVarValue.ofNumber(BigDecimal.valueOf(line.row() + 1L)));
-      props.put("title", MacroVarValue.ofText(line.read()));
-      props.put("objective", MacroVarValue.ofText(line.load()));
-      return new CaptureValueAction.CapturedValue(line.flush(), MacroVarValue.of(MacroVarValue.ValueType.TEXT, line.flush(), props));
+      props.put("title", MacroVarValue.ofText(line.title()));
+      props.put("objective", MacroVarValue.ofText(line.objective()));
+      return new CaptureValueAction.CapturedValue(line.text(), MacroVarValue.of(MacroVarValue.ValueType.TEXT, line.text(), props));
    }
 
    private CaptureValueAction.CapturedValue captureFromContainer(Minecraft mc, boolean playerOnly) {
@@ -944,14 +944,14 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    private record CapturedValue(String text, MacroVarValue value) {
    }
 
-   public record SidebarLine(String key, int row, String load, String read, String write, String update, String sync, String flush) {
+   public record SidebarLine(String key, int row, String objective, String title, String owner, String name, String score, String text) {
    }
 
-   public record CaptureResult(boolean success, String text, Map<String, MacroVarValue> variables, String load) {
+   public record CaptureResult(boolean success, String text, Map<String, MacroVarValue> variables, String status) {
       public CaptureResult {
          text = text == null ? "" : text;
          variables = variables == null ? Map.of() : Map.copyOf(variables);
-         load = load == null ? "" : load;
+         status = status == null ? "" : status;
       }
 
       public static CaptureValueAction.CaptureResult failure(String message) {

@@ -98,7 +98,7 @@ public final class IncomingProjectileScanner {
 
       IncomingProjectileScanner.BallisticParams physics = kind == IncomingProjectileScanner.ProjectileKind.FIREBALL
          ? new IncomingProjectileScanner.BallisticParams(0.0, 0.949999988079071, 0.800000011920929, 0.1, true)
-         : new IncomingProjectileScanner.BallisticParams(info.init_D(), info.write(), info.update(), 0.0, kind != IncomingProjectileScanner.ProjectileKind.ARROW);
+         : new IncomingProjectileScanner.BallisticParams(info.init_D(), info.airDrag(), info.waterDrag(), 0.0, kind != IncomingProjectileScanner.ProjectileKind.ARROW);
       return tracePath(
          traceWorld(level, owner, owner, 0, kind == IncomingProjectileScanner.ProjectileKind.FIREBALL ? 1.0 : 0.25),
          new Vec3(owner.getX(), owner.getEyeY() - 0.1, owner.getZ()),
@@ -176,7 +176,7 @@ public final class IncomingProjectileScanner {
             if (physics.init_Z()) {
                velocity = applyDrag(velocity, physics, water);
             } else if (water) {
-               velocity = velocity.scale(physics.read());
+               velocity = velocity.scale(physics.waterDrag());
             }
 
             Vec3 next = position.add(velocity);
@@ -195,9 +195,9 @@ public final class IncomingProjectileScanner {
             position = next;
             if (!physics.init_Z()) {
                velocity = new Vec3(
-                  velocity.x * (water ? 1.0 : physics.load()),
-                  velocity.y * (water ? 1.0 : physics.load()) - physics.init_D(),
-                  velocity.z * (water ? 1.0 : physics.load())
+                  velocity.x * (water ? 1.0 : physics.drag()),
+                  velocity.y * (water ? 1.0 : physics.drag()) - physics.init_D(),
+                  velocity.z * (water ? 1.0 : physics.drag())
                );
             }
          }
@@ -209,11 +209,11 @@ public final class IncomingProjectileScanner {
    }
 
    static Vec3 applyDrag(Vec3 velocity, IncomingProjectileScanner.BallisticParams physics, boolean water) {
-      if (physics.write() != 0.0) {
-         velocity = velocity.add(velocity.normalize().scale(physics.write()));
+      if (physics.acceleration() != 0.0) {
+         velocity = velocity.add(velocity.normalize().scale(physics.acceleration()));
       }
 
-      return velocity.add(0.0, -physics.init_D(), 0.0).scale(water ? physics.read() : physics.load());
+      return velocity.add(0.0, -physics.init_D(), 0.0).scale(water ? physics.waterDrag() : physics.drag());
    }
 
    static boolean threatens(IncomingProjectileScanner.ProjectilePath flight, IncomingProjectileScanner.ProjectileKind kind, Vec3 player, double radius) {
@@ -268,7 +268,7 @@ public final class IncomingProjectileScanner {
       }
    }
 
-   record BallisticParams(double init_D, double load, double read, double write, boolean init_Z) {
+   record BallisticParams(double init_D, double drag, double waterDrag, double acceleration, boolean init_Z) {
    }
 
    interface TraceWorld {

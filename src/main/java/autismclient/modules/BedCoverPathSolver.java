@@ -632,7 +632,7 @@ final class BedCoverPathSolver {
       }
    }
 
-   record GridNode(int kind, double breakCost, int load) {
+   record GridNode(int kind, double breakCost, int toolIndex) {
    }
 
    private record BreakRoute(BitSet removed, LinkedHashSet<BlockPos> breakBlocks, List<BlockPos> route) {

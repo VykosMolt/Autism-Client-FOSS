@@ -35,7 +35,7 @@ public final class ToolsAction implements MacroAction {
          return false;
       }
 
-      JsonObject schema = JsonParser.parseString(tool.read()).getAsJsonObject();
+      JsonObject schema = JsonParser.parseString(tool.inputSchema()).getAsJsonObject();
       JsonObject properties = schema.getAsJsonObject("properties");
       if (properties == null) {
          return false;
@@ -188,7 +188,7 @@ public final class ToolsAction implements MacroAction {
             return false;
          }
 
-         JsonObject properties = JsonParser.parseString(definition.read()).getAsJsonObject().getAsJsonObject("properties");
+         JsonObject properties = JsonParser.parseString(definition.inputSchema()).getAsJsonObject().getAsJsonObject("properties");
          String name = key.substring("toolArg.".length());
          if (properties != null && properties.has(name)) {
             JsonObject property = properties.getAsJsonObject(name);
@@ -279,7 +279,7 @@ public final class ToolsAction implements MacroAction {
       this.enabled = tag.getBooleanOr("enabled", true);
       JsonObject args = parseArgs(tag.getStringOr("argumentsJson", "{}"));
       MacroToolBridge.ToolInfo definition = MacroToolBridge.findTool(this.toolId);
-      JsonObject schema = definition == null ? new JsonObject() : JsonParser.parseString(definition.read()).getAsJsonObject();
+      JsonObject schema = definition == null ? new JsonObject() : JsonParser.parseString(definition.inputSchema()).getAsJsonObject();
       JsonObject properties = schema.has("properties") ? schema.getAsJsonObject("properties") : new JsonObject();
 
       for (String key : tag.keySet()) {

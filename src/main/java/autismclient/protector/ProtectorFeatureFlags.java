@@ -104,7 +104,7 @@ public final class ProtectorFeatureFlags {
    }
 
    private static boolean isSet(int flag) {
-      return (currentState().load & flag) != 0;
+      return (currentState().activeFlags & flag) != 0;
    }
 
    private static ProtectorFeatureFlags.FlagState currentState() {
@@ -217,6 +217,6 @@ public final class ProtectorFeatureFlags {
       init_Map = Collections.synchronizedMap(new IdentityHashMap<>());
    }
 
-   private record FlagState(boolean init_Z, AutismConfig config, int flags, int load) {
+   private record FlagState(boolean init_Z, AutismConfig config, int flags, int activeFlags) {
    }
 }

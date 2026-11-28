@@ -198,7 +198,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
 
    private static void publishSnapshot(AiMacroTools.ToolRequest request) {
       autismclient.util.macro.MacroToolBridge.JobSnapshot result = request.load.snapshot();
-      request.job.publish(result.state(), result.message(), result.load());
+      request.job.publish(result.state(), result.message(), result.data());
    }
 
    public static void tick(Minecraft mc) {
@@ -230,7 +230,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
                   if (error != null) {
                      request.job.publish(autismclient.util.macro.MacroToolBridge.JobState.FAILED, "Tool completion failed", "{}");
                   } else {
-                     request.job.publish(outcome.state(), outcome.message(), outcome.load());
+                     request.job.publish(outcome.state(), outcome.message(), outcome.data());
                   }
                });
                publishSnapshot(request);

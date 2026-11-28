@@ -509,7 +509,7 @@ public class HudElementSettingsScreen extends Screen {
          this.setSliderValue(
             this.row,
             autismclient.gui.ui.widgets.SliderRenderer.valueAt(
-               mx, valueX, this.sliderWidth(valueW), this.row.min, this.row.max, this.row.read
+               mx, valueX, this.sliderWidth(valueW), this.row.min, this.row.max, this.row.step
             )
          );
          return true;
@@ -638,7 +638,7 @@ public class HudElementSettingsScreen extends Screen {
             return;
          }
 
-         double value = autismclient.gui.ui.widgets.SliderRenderer.valueAt(mx, valueX, this.sliderWidth(valueW), row.min, row.max, row.read);
+         double value = autismclient.gui.ui.widgets.SliderRenderer.valueAt(mx, valueX, this.sliderWidth(valueW), row.min, row.max, row.step);
          this.setSliderValue(row, value);
          this.row = row;
          this.cancelTextEdit();
@@ -688,7 +688,7 @@ public class HudElementSettingsScreen extends Screen {
 
    private void setSliderValue(HudElementSettingsScreen.SettingRow row, double value) {
       double clamped = Math.max(row.min, Math.min(row.max, value));
-      AutismHudManager.setSetting(this.id, row.key, this.formatSliderValue(clamped, row.read));
+      AutismHudManager.setSetting(this.id, row.key, this.formatSliderValue(clamped, row.step));
    }
 
    private void commitTextEdit() {
@@ -1240,7 +1240,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private String sliderValueText(HudElementSettingsScreen.SettingRow row, double value) {
-      return "gif-fps".equals(row.key) && value <= 0.0 ? "Original" : this.formatSliderValue(value, row.read);
+      return "gif-fps".equals(row.key) && value <= 0.0 ? "Original" : this.formatSliderValue(value, row.step);
    }
 
    private boolean isRowVisible(int y, int h, int top, int bottom) {
@@ -1287,7 +1287,7 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private record SettingRow(
-      String key, String label, HudElementSettingsScreen.RowType type, double min, double max, double read, List<String> choices
+      String key, String label, HudElementSettingsScreen.RowType type, double min, double max, double step, List<String> choices
    ) {
       static HudElementSettingsScreen.SettingRow sectionRow(String label) {
          return new HudElementSettingsScreen.SettingRow("", label, HudElementSettingsScreen.RowType.SECTION, 0.0, 0.0, 1.0, List.of());

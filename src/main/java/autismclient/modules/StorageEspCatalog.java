@@ -117,7 +117,7 @@ public final class StorageEspCatalog {
       if (module != null && level != null && player != null && (boxEmit != null || traceEmit != null)) {
          StorageEspCatalog.TargetSelection selection = parseSelection(module.value("storage-list"));
          List<StorageEspCatalog.StorageTarget> blockTargets = selection.blockTargets();
-         List<StorageEspCatalog.StorageTarget> entityTargets = selection.load();
+         List<StorageEspCatalog.StorageTarget> entityTargets = selection.entityTargets();
          if (!blockTargets.isEmpty() || !entityTargets.isEmpty()) {
             StorageEspCatalog.StorageColors colors = readColors(module);
             int chunkRadius = am.init_I();
@@ -246,43 +246,43 @@ public final class StorageEspCatalog {
 
    private static int blockEntityColor(StorageEspCatalog.StorageColors colors, BlockEntity be) {
       if (be instanceof TrappedChestBlockEntity) {
-         return colors.init();
+         return colors.trappedChest();
       } else if (be instanceof ChestBlockEntity) {
-         return colors.load();
+         return colors.chest();
       } else if (be instanceof EnderChestBlockEntity) {
-         return colors.read();
+         return colors.enderChest();
       } else if (be instanceof BarrelBlockEntity) {
-         return colors.write();
+         return colors.barrel();
       } else if (be instanceof ShulkerBoxBlockEntity) {
-         return colors.update();
+         return colors.shulker();
       } else if (be instanceof HopperBlockEntity) {
-         return colors.sync();
+         return colors.hopper();
       } else if (be instanceof DispenserBlockEntity) {
-         return colors.flush();
+         return colors.dispenser();
       } else if (be instanceof AbstractFurnaceBlockEntity) {
-         return colors.close();
+         return colors.furnace();
       } else if (be instanceof BrewingStandBlockEntity) {
-         return colors.close();
+         return colors.furnace();
       } else if (be instanceof CrafterBlockEntity) {
-         return colors.open();
+         return colors.crafter();
       } else if (be instanceof DecoratedPotBlockEntity) {
-         return colors.open();
+         return colors.crafter();
       } else if (be instanceof ChiseledBookShelfBlockEntity) {
-         return colors.open();
+         return colors.crafter();
       } else {
-         return be instanceof CampfireBlockEntity ? colors.open() : colors.poll();
+         return be instanceof CampfireBlockEntity ? colors.crafter() : colors.other();
       }
    }
 
    private static int entityColor(StorageEspCatalog.StorageColors colors, Entity entity) {
       if (entity instanceof MinecartChest) {
-         return colors.load();
+         return colors.chest();
       } else if (entity instanceof AbstractChestBoat) {
-         return colors.load();
+         return colors.chest();
       } else if (entity instanceof MinecartHopper) {
-         return colors.sync();
+         return colors.hopper();
       } else {
-         return entity instanceof MinecartFurnace ? colors.close() : colors.poll();
+         return entity instanceof MinecartFurnace ? colors.furnace() : colors.other();
       }
    }
 
@@ -430,7 +430,7 @@ public final class StorageEspCatalog {
       }
    }
 
-   private record TargetSelection(String safe, List<StorageEspCatalog.StorageTarget> blockTargets, List<StorageEspCatalog.StorageTarget> load) {
+   private record TargetSelection(String safe, List<StorageEspCatalog.StorageTarget> blockTargets, List<StorageEspCatalog.StorageTarget> entityTargets) {
    }
 
    @FunctionalInterface
@@ -438,6 +438,6 @@ public final class StorageEspCatalog {
       void accept(AABB var1, int var2, boolean var3);
    }
 
-   private record StorageColors(int init, int load, int read, int write, int update, int sync, int flush, int close, int open, int poll) {
+   private record StorageColors(int trappedChest, int chest, int enderChest, int barrel, int shulker, int hopper, int dispenser, int furnace, int crafter, int other) {
    }
 }

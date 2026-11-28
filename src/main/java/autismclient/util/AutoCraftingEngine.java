@@ -699,7 +699,7 @@ public final class AutoCraftingEngine {
       for (int i = 0; i < phase.clicks().size(); i++) {
          CraftingClickPlanner.SlotClick click = phase.clicks().get(i);
          if (click.slot() == layout.resultSlot()) {
-            menu.getSlot(layout.resultSlot()).set(phase.write().get(i).copy());
+            menu.getSlot(layout.resultSlot()).set(phase.resultSnapshots().get(i).copy());
          }
 
          ClientPacketListener connection = mc.getConnection();
@@ -1509,7 +1509,7 @@ public final class AutoCraftingEngine {
             recipe.inputs(),
             recipe.result().getItem(),
             Math.max(1, recipe.result().getCount()),
-            recipe.load(),
+            recipe.recipeKind(),
             recipe.cookTimeTicks()
          );
          plans.add(plan);

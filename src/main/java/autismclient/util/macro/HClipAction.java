@@ -617,7 +617,7 @@ public class HClipAction implements MacroAction {
       }
    }
 
-   private record PlanCacheKey(int levelId, long startX, long startY, long startZ, long targetX, long update, long sync, int radius, int verticalRange, int routeCap) {
+   private record PlanCacheKey(int levelId, long startX, long startY, long startZ, long targetX, long targetY, long targetZ, int radius, int verticalRange, int routeCap) {
       static HClipAction.PlanCacheKey of(LocalPlayer player, Vec3 start, Vec3 target, int radius, int verticalRange, int routeCap) {
          int levelId = player.level() == null ? 0 : System.identityHashCode(player.level());
          return new HClipAction.PlanCacheKey(

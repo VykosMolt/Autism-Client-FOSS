@@ -373,7 +373,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       }
 
       KBDisplacementModule.TargetTrack track = this.targetTracks.get(target.getId());
-      Vec3 motion = track == null ? Vec3.ZERO : track.load();
+      Vec3 motion = track == null ? Vec3.ZERO : track.motion();
       this.clientServerOffset = Vec3.ZERO;
       if (motion.lengthSqr() < 1.0E-8) {
          return new KBDisplacementModule.DisplacementResult(body, grounded, 0, Vec3.ZERO);
@@ -459,7 +459,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                if (old == null) {
                   this.targetTracks.put(other.getId(), new KBDisplacementModule.TargetTrack(latest, tick, Vec3.ZERO));
                } else if (latest.equals(old.latest())) {
-                  if (tick - old.tick() > 3 && old.load().lengthSqr() > 0.0) {
+                  if (tick - old.tick() > 3 && old.motion().lengthSqr() > 0.0) {
                      this.targetTracks.put(other.getId(), new KBDisplacementModule.TargetTrack(old.latest(), old.tick(), Vec3.ZERO));
                   }
                } else {
@@ -905,7 +905,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       return recent == 0 ? "" : (recent == 1 ? "1 redirect" : recent + " redirects");
    }
 
-   private record TargetTrack(Vec3 latest, int tick, Vec3 load) {
+   private record TargetTrack(Vec3 latest, int tick, Vec3 motion) {
    }
 
    private static final class TerrainSampler implements KnockbackThrowPlanner.ThrowWorld {

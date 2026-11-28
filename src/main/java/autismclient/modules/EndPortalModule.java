@@ -225,7 +225,7 @@ public final class EndPortalModule extends Module {
          if (eye instanceof EyeOfEnder && eye.isAlive() && eye.getUUID().equals(tracked.uuid) && age >= 0 && age <= 60) {
             StrongholdTriangulator.ThrowSample ray = tracked.tracker.sample(eye.position(), age);
             if (ray != null) {
-               boolean added = this.memory.triangulator.addThrow(ray.init(), ray.load().scale(8.0));
+               boolean added = this.memory.triangulator.addThrow(ray.origin(), ray.direction().scale(8.0));
                if (added) {
                   StrongholdRingEstimator.RingEstimate prediction = this.memory.triangulator.ringEstimate();
                   autismclient.util.bi.read(

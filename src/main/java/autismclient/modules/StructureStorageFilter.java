@@ -133,6 +133,6 @@ public final class StructureStorageFilter {
       return state != null && markers.contains(state.getBlock());
    }
 
-   public record StructureFilter(String id, String load, Set<Block> init_Set) {
+   public record StructureFilter(String id, String label, Set<Block> init_Set) {
    }
 }

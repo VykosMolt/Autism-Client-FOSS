@@ -945,12 +945,12 @@ public final class ModulesMenuController {
    }
 
    private void renderActionButton(SyncManager context, ModulesMenuController.ActionButton action, NetHelper cell, ConnectedButtonRenderer.ConnectedEdges edges) {
-      ConnectedButtonRenderer.render(context, cell, action.load(), null, action.style(), cell.init_Z(context.read(), context.write()), edges);
+      ConnectedButtonRenderer.render(context, cell, action.label(), null, action.style(), cell.init_Z(context.read(), context.write()), edges);
       this.addHit(ModulesMenuController.HitType.UTILITY, cell, null, null, action.id(), -1);
    }
 
    private static String entryLabel(ModulesMenuController.ToolEntry entry) {
-      return entry.load();
+      return entry.label();
    }
 
    private static autismclient.gui.f.b.CachePool.Inner_DataUtil entryTone(ModulesMenuController.ToolEntry entry) {
@@ -969,7 +969,7 @@ public final class ModulesMenuController {
       }
 
       for (ModulesMenuController.ToolEntry entry : iconCells) {
-         pair = Math.max(pair, buttonWidth(context, entry.load(), true));
+         pair = Math.max(pair, buttonWidth(context, entry.label(), true));
       }
 
       if (inWorld) {
@@ -978,7 +978,7 @@ public final class ModulesMenuController {
          }
 
          for (ModulesMenuController.ActionButton cell : ACTION_BUTTONS) {
-            pair = Math.max(pair, buttonWidth(context, cell.load(), false));
+            pair = Math.max(pair, buttonWidth(context, cell.label(), false));
          }
       }
 
@@ -1055,7 +1055,7 @@ public final class ModulesMenuController {
 
          for (int i = this.hits.size() - 1; i >= 0; i--) {
             ModulesMenuController.HitRegion hit = this.hits.get(i);
-            if (hit.bounds.init_Z(mx, my) && (hit.load == null || hit.load.init_Z(mx, my))) {
+            if (hit.bounds.init_Z(mx, my) && (hit.clip == null || hit.clip.init_Z(mx, my))) {
                if (button != 0
                   && hit.type != ModulesMenuController.HitType.MODULE
                   && hit.type != ModulesMenuController.HitType.WINDOW_HEADER) {
@@ -1239,7 +1239,7 @@ public final class ModulesMenuController {
                   case SCROLLBAR:
                      ScrollbarRenderer.ScrollbarBounds metrics = this.scrollbarFor(hit.id);
                      if (metrics != null && metrics.maxScroll() > 0) {
-                        this.scrollbarGrabOffset = metrics.thumbContains(mx, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
+                        this.scrollbarGrabOffset = metrics.thumbContains(mx, my) ? my - metrics.thumb().write() : metrics.thumb().sync() / 2;
                         this.draggedScrollbarId = hit.id;
                         this.setScroll(hit.id, ScrollbarRenderer.scrollForDrag(metrics, my, this.scrollbarGrabOffset));
                      }
@@ -1634,7 +1634,7 @@ public final class ModulesMenuController {
    private ModulesMenuController.HitRegion hitAt(int mx, int my) {
       for (int i = this.hits.size() - 1; i >= 0; i--) {
          ModulesMenuController.HitRegion hit = this.hits.get(i);
-         if (hit.bounds.init_Z(mx, my) && (hit.load == null || hit.load.init_Z(mx, my))) {
+         if (hit.bounds.init_Z(mx, my) && (hit.clip == null || hit.clip.init_Z(mx, my))) {
             return hit;
          }
       }
@@ -2940,10 +2940,10 @@ public final class ModulesMenuController {
       CLASSIC_RESIZE;
    }
 
-   private record ToolEntry(String id, String load, Identifier icon) {
+   private record ToolEntry(String id, String label, Identifier icon) {
    }
 
-   private record ActionButton(String id, String load, autismclient.gui.f.b.CachePool.Inner_DataUtil style) {
+   private record ActionButton(String id, String label, autismclient.gui.f.b.CachePool.Inner_DataUtil style) {
    }
 
    record HitRegion(
@@ -2953,7 +2953,7 @@ public final class ModulesMenuController {
       Setting<?, ?> setting,
       String id,
       int index,
-      NetHelper load
+      NetHelper clip
    ) {
    }
 }

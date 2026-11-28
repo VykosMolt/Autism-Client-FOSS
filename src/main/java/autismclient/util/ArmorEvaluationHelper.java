@@ -155,7 +155,7 @@ public final class ArmorEvaluationHelper {
    private static double init_D_TaskTimer_DataUtil_Map(ArmorEvaluationHelper.ArmorCandidate candidate, Map<EquipmentSlot, ArmorEvaluationHelper.ArmorScore> kit) {
       ArmorEvaluationHelper.ArmorScore param = kit.getOrDefault(candidate.slot(), ArmorEvaluationHelper.ArmorScore.EMPTY);
       double defense = param.defense + armorValue(candidate.stack(), candidate.slot());
-      double toughness = param.load + load(candidate.stack(), candidate.slot());
+      double toughness = param.toughness + load(candidate.stack(), candidate.slot());
       return damageReduction(6.0, defense, toughness) * (1.0 - protectionScore(candidate.stack()));
    }
 
@@ -278,7 +278,7 @@ public final class ArmorEvaluationHelper {
       ItemStack equipped(EquipmentSlot var1);
    }
 
-   private record ArmorScore(double defense, double load) {
+   private record ArmorScore(double defense, double toughness) {
       private static final ArmorEvaluationHelper.ArmorScore EMPTY = new ArmorEvaluationHelper.ArmorScore(0.0, 0.0);
    }
 

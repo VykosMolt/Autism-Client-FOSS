@@ -316,7 +316,7 @@ public class AutismSettingsScreen extends Screen {
 
    private void init(ScrollbarRenderer.ScrollbarBounds metrics, int my) {
       this.init_Z = true;
-      this.scrollGrabOffset = metrics.thumbContains(metrics.track().read() + 1, my) ? my - metrics.load().write() : metrics.load().sync() / 2;
+      this.scrollGrabOffset = metrics.thumbContains(metrics.track().read() + 1, my) ? my - metrics.thumb().write() : metrics.thumb().sync() / 2;
       this.scrollOffset = this.clampScroll(ScrollbarRenderer.scrollForDrag(metrics, my, this.scrollGrabOffset));
    }
 
@@ -378,7 +378,7 @@ public class AutismSettingsScreen extends Screen {
       for (int i = this.clickRegions.size() - 1; i >= 0; i--) {
          AutismSettingsScreen.ClickRegion hit = this.clickRegions.get(i);
          if (hit.bounds().init_Z(mx, my)) {
-            Runnable action = right ? hit.load() : hit.onLeft();
+            Runnable action = right ? hit.onRight() : hit.onLeft();
             if (action != null) {
                action.run();
             }
@@ -471,7 +471,7 @@ public class AutismSettingsScreen extends Screen {
    private record KeybindEntry(String label, IntSupplier getter, IntConsumer setter) {
    }
 
-   private record ClickRegion(NetHelper bounds, Runnable onLeft, Runnable load) {
+   private record ClickRegion(NetHelper bounds, Runnable onLeft, Runnable onRight) {
    }
 
    private interface BoolGetter {

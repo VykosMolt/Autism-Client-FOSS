@@ -27,7 +27,7 @@ final class FaceVisibilitySolver {
    }
 
    private static List<FaceVisibilitySolver.Point2> convexHull(List<FaceVisibilitySolver.Point2> points) {
-      points.sort(Comparator.comparingDouble(FaceVisibilitySolver.Point2::init).thenComparingDouble(FaceVisibilitySolver.Point2::load));
+      points.sort(Comparator.comparingDouble(FaceVisibilitySolver.Point2::u).thenComparingDouble(FaceVisibilitySolver.Point2::v));
       ArrayList<FaceVisibilitySolver.Point2> out = new ArrayList<>();
 
       for (FaceVisibilitySolver.Point2 p : points) {
@@ -58,7 +58,7 @@ final class FaceVisibilitySolver {
    }
 
    private static double cross(FaceVisibilitySolver.Point2 a, FaceVisibilitySolver.Point2 b, FaceVisibilitySolver.Point2 c) {
-      return (b.init - a.init) * (c.load - a.load) - (b.load - a.load) * (c.init - a.init);
+      return (b.u - a.u) * (c.v - a.v) - (b.v - a.v) * (c.u - a.u);
    }
 
    private static double coord(Vec3 point, Axis axis) {
@@ -88,10 +88,10 @@ final class FaceVisibilitySolver {
       return new Vec3(xyz[0], xyz[1], xyz[2]);
    }
 
-   private record Point2(double init, double load) {
+   private record Point2(double u, double v) {
    }
 
-   private record Edge(FaceVisibilitySolver.Point2 init, FaceVisibilitySolver.Point2 load) {
+   private record Edge(FaceVisibilitySolver.Point2 start, FaceVisibilitySolver.Point2 end) {
    }
 
    static final class FaceProjection {
@@ -155,10 +155,10 @@ final class FaceVisibilitySolver {
                   List<FaceVisibilitySolver.Point2> hull = FaceVisibilitySolver.convexHull(projected);
                   if (hull.size() >= 3) {
                      java.awt.geom.Path2D.Double path = new java.awt.geom.Path2D.Double();
-                     path.moveTo(hull.getFirst().init, hull.getFirst().load);
+                     path.moveTo(hull.getFirst().u, hull.getFirst().v);
 
                      for (int i = 1; i < hull.size(); i++) {
-                        path.lineTo(hull.get(i).init, hull.get(i).load);
+                        path.lineTo(hull.get(i).u, hull.get(i).v);
                      }
 
                      path.closePath();
@@ -195,11 +195,11 @@ final class FaceVisibilitySolver {
             int kind = it.currentSegment(c);
             if (kind == 0) {
                first = last = new FaceVisibilitySolver.Point2(c[0], c[1]);
-               levels.add(last.load);
+               levels.add(last.v);
             } else if (kind == 1) {
                FaceVisibilitySolver.Point2 next = new FaceVisibilitySolver.Point2(c[0], c[1]);
                edges.add(new FaceVisibilitySolver.Edge(last, next));
-               levels.add(next.load);
+               levels.add(next.v);
                last = next;
             } else if (kind == 4 && last != null) {
                edges.add(new FaceVisibilitySolver.Edge(last, first));
@@ -219,8 +219,8 @@ final class FaceVisibilitySolver {
                TreeSet<Double> xs = new TreeSet<>();
 
                for (FaceVisibilitySolver.Edge edge : edges) {
-                  if (!(y <= Math.min(edge.init.load, edge.load.load)) && !(y >= Math.max(edge.init.load, edge.load.load))) {
-                     xs.add(edge.init.init + (edge.load.init - edge.init.init) * (y - edge.init.load) / (edge.load.load - edge.init.load));
+                  if (!(y <= Math.min(edge.start.v, edge.end.v)) && !(y >= Math.max(edge.start.v, edge.end.v))) {
+                     xs.add(edge.start.u + (edge.end.u - edge.start.u) * (y - edge.start.v) / (edge.end.v - edge.start.v));
                   }
                }
 

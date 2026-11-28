@@ -55,7 +55,7 @@ public final class BlockInspectionService {
             }
          }
 
-         if (System.nanoTime() - pending.load() >= 1500000000L) {
+         if (System.nanoTime() - pending.requestedAtNanos() >= 1500000000L) {
             pendingInspection = null;
             openViewer(mc, pending.init_CompoundTag(), List.of(), "Contents were not provided.");
          }
@@ -141,7 +141,7 @@ public final class BlockInspectionService {
       root.putString("source", source == null ? "client" : source);
       root.putString("dimension", snapshot.dimension());
       root.putIntArray("position", new int[]{snapshot.pos().getX(), snapshot.pos().getY(), snapshot.pos().getZ()});
-      root.putString("block_state", snapshot.load());
+      root.putString("block_state", snapshot.blockState());
       root.put("state", snapshot.state().copy());
       if (blockEntity != null) {
          root.put("block_entity", blockEntity.copy());
@@ -325,17 +325,17 @@ public final class BlockInspectionService {
       }
    }
 
-   private record PendingInspection(CompoundTag init_CompoundTag, boolean init_Z, long init_J, int containerId, long load) {
+   private record PendingInspection(CompoundTag init_CompoundTag, boolean init_Z, long init_J, int containerId, long requestedAtNanos) {
       private PendingInspection {
          init_CompoundTag = init_CompoundTag == null ? new CompoundTag() : init_CompoundTag.copy();
       }
    }
 
-   record BlockSnapshot(String dimension, BlockPos pos, String load, CompoundTag state) {
+   record BlockSnapshot(String dimension, BlockPos pos, String blockState, CompoundTag state) {
       BlockSnapshot {
          dimension = dimension == null ? "" : dimension;
          pos = pos == null ? BlockPos.ZERO : pos.immutable();
-         load = load == null ? "minecraft:air" : load;
+         blockState = blockState == null ? "minecraft:air" : blockState;
          state = state == null ? new CompoundTag() : state.copy();
       }
    }

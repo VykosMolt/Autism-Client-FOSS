@@ -306,7 +306,7 @@ public final class GifTextureManager {
    }
 
    private static void runDecodeJob(GifTextureManager.DecodeJob job) {
-      long waitMs = job.read() + 150L - System.currentTimeMillis();
+      long waitMs = job.queuedAtMs() + 150L - System.currentTimeMillis();
       if (waitMs > 0L) {
          LockSupport.parkNanos(waitMs * 1000000L);
       }
@@ -358,8 +358,8 @@ public final class GifTextureManager {
          entry.fileMtime = payload.init_J();
          entry.fileSize = payload.load_J();
          entry.nextCheckMs = System.currentTimeMillis() + 1000L;
-         if (entry.path != null && payload.sourceWidth() > 0 && payload.read() > 0) {
-            imageDims.put(entry.path.toString(), new int[]{payload.sourceWidth(), payload.read()});
+         if (entry.path != null && payload.sourceWidth() > 0 && payload.sourceHeight() > 0) {
+            imageDims.put(entry.path.toString(), new int[]{payload.sourceWidth(), payload.sourceHeight()});
          }
 
          releaseFallback(entry);
@@ -430,7 +430,7 @@ public final class GifTextureManager {
          GifTextureManager.ArgbFrames transformed = var10000;
          int[][] argbFrames = transformed.argbFrames();
          int width = transformed.width();
-         int height = transformed.load();
+         int height = transformed.height();
          boolean mipmap = entry.surface == GifTextureManager.TextureSurface.HUD;
          NativeImage[][] chains = new NativeImage[argbFrames.length][];
 
@@ -447,7 +447,7 @@ public final class GifTextureManager {
          }
 
          return new GifTextureManager.DecodedGif(
-            attrs.lastModifiedTime().toMillis(), attrs.size(), chains, decoded.delays(), decoded.read(), decoded.width(), decoded.load(), null
+            attrs.lastModifiedTime().toMillis(), attrs.size(), chains, decoded.delays(), decoded.averageDelayMs(), decoded.width(), decoded.height(), null
          );
       } catch (CancellationException e) {
          return null;
@@ -500,11 +500,11 @@ public final class GifTextureManager {
          BufferedImage canvas = new BufferedImage(width, height, 2);
          Graphics2D graphics = canvas.createGraphics();
          applyQualityHints(graphics);
-         BufferedImage frame = toBufferedImage(decoded.frames()[i], decoded.width(), decoded.load());
-         drawRegion(graphics, frame, decoded.width(), decoded.load(), CAPE_FRONT_UV, sx, sy, keepAspect);
-         drawRegion(graphics, frame, decoded.width(), decoded.load(), CAPE_BACK_UV, sx, sy, keepAspect);
+         BufferedImage frame = toBufferedImage(decoded.frames()[i], decoded.width(), decoded.height());
+         drawRegion(graphics, frame, decoded.width(), decoded.height(), CAPE_FRONT_UV, sx, sy, keepAspect);
+         drawRegion(graphics, frame, decoded.width(), decoded.height(), CAPE_BACK_UV, sx, sy, keepAspect);
          int w = decoded.width();
-         int hh = decoded.load();
+         int hh = decoded.height();
          drawRegion(graphics, frame, CAPE_LEFT_UV, sx, sy, 0, 0, 1, hh);
          drawRegion(graphics, frame, CAPE_RIGHT_UV, sx, sy, w - 1, 0, w, hh);
          drawRegion(graphics, frame, CAPE_TOP_UV, sx, sy, 0, hh - 1, w, hh);
@@ -518,11 +518,11 @@ public final class GifTextureManager {
 
    private static GifTextureManager.ArgbFrames applyQuality(GifImageDecoder.DecodedImage decoded, double quality, BooleanSupplier stale) {
       if (quality >= 0.999) {
-         return new GifTextureManager.ArgbFrames(decoded.width(), decoded.load(), decoded.frames());
+         return new GifTextureManager.ArgbFrames(decoded.width(), decoded.height(), decoded.frames());
       }
 
       int width = Math.max(1, (int)Math.round(decoded.width() * quality));
-      int height = Math.max(1, (int)Math.round(decoded.load() * quality));
+      int height = Math.max(1, (int)Math.round(decoded.height() * quality));
       int[][] out = new int[decoded.frames().length][];
 
       for (int i = 0; i < out.length; i++) {
@@ -530,7 +530,7 @@ public final class GifTextureManager {
          BufferedImage canvas = new BufferedImage(width, height, 2);
          Graphics2D graphics = canvas.createGraphics();
          applyQualityHints(graphics);
-         graphics.drawImage(toBufferedImage(decoded.frames()[i], decoded.width(), decoded.load()), 0, 0, width, height, null);
+         graphics.drawImage(toBufferedImage(decoded.frames()[i], decoded.width(), decoded.height()), 0, 0, width, height, null);
          graphics.dispose();
          out[i] = canvas.getRGB(0, 0, width, height, null, 0, width);
       }
@@ -541,7 +541,7 @@ public final class GifTextureManager {
    private static GifTextureManager.ArgbFrames buildShieldFrames(GifImageDecoder.DecodedImage decoded, boolean keepAspect, double quality, BooleanSupplier stale) {
       int frames = decoded.frames().length;
       double faceScale = 6.4;
-      int target = (int)Math.round(Math.max(decoded.width(), decoded.load()) * quality * faceScale);
+      int target = (int)Math.round(Math.max(decoded.width(), decoded.height()) * quality * faceScale);
       int size = Math.max(64, Math.min(3072, target));
 
       while (size > 64 && (long)size * size * frames > 64000000L) {
@@ -552,7 +552,7 @@ public final class GifTextureManager {
 
       for (int i = 0; i < frames; i++) {
          checkCancelled(stale);
-         out[i] = scaleFrame(decoded.frames()[i], decoded.width(), decoded.load(), keepAspect, size);
+         out[i] = scaleFrame(decoded.frames()[i], decoded.width(), decoded.height(), keepAspect, size);
       }
 
       return new GifTextureManager.ArgbFrames(size, size, out);
@@ -755,7 +755,7 @@ public final class GifTextureManager {
    }
 
    private record DecodedGif(
-      long init_J, long load_J, NativeImage[][] mipChains, int[] delaysMs, int averageDelayMs, int sourceWidth, int read, String error
+      long init_J, long load_J, NativeImage[][] mipChains, int[] delaysMs, int averageDelayMs, int sourceWidth, int sourceHeight, String error
    ) {
       static GifTextureManager.DecodedGif failure(String reason, BasicFileAttributes attrs) {
          long mtime = attrs == null ? -1L : attrs.lastModifiedTime().toMillis();
@@ -771,9 +771,9 @@ public final class GifTextureManager {
    private record ResolvedPath(Path path, String error) {
    }
 
-   private record DecodeJob(GifTextureManager.GifEntry entry, long generation, long load, long read) {
+   private record DecodeJob(GifTextureManager.GifEntry entry, long generation, long epoch, long queuedAtMs) {
       boolean isStale() {
-         return this.generation != this.entry.generation || this.load != GifTextureManager.epoch;
+         return this.generation != this.entry.generation || this.epoch != GifTextureManager.epoch;
       }
    }
 
@@ -911,7 +911,7 @@ public final class GifTextureManager {
       }
    }
 
-   private record ArgbFrames(int width, int load, int[][] argbFrames) {
+   private record ArgbFrames(int width, int height, int[][] argbFrames) {
    }
 
    private enum TextureSurface {

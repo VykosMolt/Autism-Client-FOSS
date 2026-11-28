@@ -43,7 +43,7 @@ final class AutoFishStateMachine {
       this.recastDelay = recastDelay;
       this.observeHook(observedHook);
       if (this.pendingAction != null) {
-         if (this.tick - this.pendingAction.load() > 4L) {
+         if (this.tick - this.pendingAction.queuedTick() > 4L) {
             this.init(this.pendingAction, false, observedHook);
          }
 
@@ -151,7 +151,7 @@ final class AutoFishStateMachine {
    }
 
    boolean init_Z_BitSetUtil_CachePo_I(AutoFishStateMachine.PendingAction use, int observed) {
-      if (this.pendingAction == null || !this.pendingAction.equals(use) || this.tick - use.load() > 4L) {
+      if (this.pendingAction == null || !this.pendingAction.equals(use) || this.tick - use.queuedTick() > 4L) {
          return false;
       } else if (use.action() == AutoFishStateMachine.RodAction.CAST) {
          return observed == -1;
@@ -271,7 +271,7 @@ final class AutoFishStateMachine {
       this.catchCompleted = false;
    }
 
-   record PendingAction(long init_J, AutoFishStateMachine.RodAction action, int init_I, long load) {
+   record PendingAction(long init_J, AutoFishStateMachine.RodAction action, int init_I, long queuedTick) {
    }
 
    enum RodAction {

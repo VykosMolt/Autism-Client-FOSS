@@ -193,7 +193,7 @@ final class CrosshairVectorPipeline {
       );
    }
 
-   private record StyleKey(int init_I, float stroke, float gap, float outline, float write, int fill, int read_I, float update) {
+   private record StyleKey(int init_I, float stroke, float gap, float outline, float unit, int fill, int read_I, float update) {
    }
 
    private static final class ParameterTexture extends AbstractTexture {
@@ -204,7 +204,7 @@ final class CrosshairVectorPipeline {
             data.putFloat(key.stroke()).putFloat(key.gap()).putFloat(key.outline()).putFloat(key.init_I());
             putColor(data, key.fill(), key.update());
             putColor(data, key.read_I(), key.update());
-            data.putFloat(key.write()).putFloat(0.0F).putFloat(0.0F).putFloat(0.0F);
+            data.putFloat(key.unit()).putFloat(0.0F).putFloat(0.0F).putFloat(0.0F);
             data.flip();
             this.texture = RenderSystem.getDevice().createTexture("crosshair vector parameters", 15, GpuFormat.RGBA32_FLOAT, 4, 1, 1, 1);
             this.textureView = RenderSystem.getDevice().createTextureView(this.texture);

@@ -3038,7 +3038,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                AutismServerInfoOverlay.MatchConfidence confidence = this.confidenceForFingerprint(fingerprint);
                changed |= this.mergePluginEntry(
                   entries,
-                  fingerprint.load(),
+                  fingerprint.key(),
                   fingerprint.plugin(),
                   List.of(),
                   fingerprint.channels(),
@@ -3057,7 +3057,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private AutismServerInfoOverlay.MatchConfidence confidenceForFingerprint(PluginSignatureCatalog.PluginFingerprint fingerprint) {
-      String basis = fingerprint == null ? "" : fingerprint.read();
+      String basis = fingerprint == null ? "" : fingerprint.bestSource();
       return "embedded".equalsIgnoreCase(basis) ? AutismServerInfoOverlay.MatchConfidence.STRONG : AutismServerInfoOverlay.MatchConfidence.EXACT;
    }
 
@@ -3077,7 +3077,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             if (key != null && key.startsWith("feature") && entry != null && this.entryMatchesKeywords(entry, keywords)) {
                changed |= this.mergePluginEntry(
                   entries,
-                  fingerprint.load(),
+                  fingerprint.key(),
                   fingerprint.plugin(),
                   entry.commands,
                   fingerprint.channels(),
@@ -3107,7 +3107,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private Set<String> fingerprintKeywords(PluginSignatureCatalog.PluginFingerprint fingerprint) {
       LinkedHashSet<String> keywords = new LinkedHashSet<>();
       this.addFeatureKeywords(keywords, fingerprint.plugin());
-      this.addFeatureKeywords(keywords, fingerprint.load());
+      this.addFeatureKeywords(keywords, fingerprint.key());
       if (fingerprint.channels() != null) {
          for (String channel : fingerprint.channels()) {
             this.addFeatureKeywords(keywords, channel);
@@ -4035,7 +4035,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                try {
                   AutismServerInfoOverlay.CommandHistoryEntry command = this.findRecentCommand(System.currentTimeMillis());
                   if (command != null) {
-                     this.observeLiveCommand(command.load, AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI, title);
+                     this.observeLiveCommand(command.fullCommand, AutismServerInfoOverlay.EvidenceSource.COMMAND_GUI, title);
                      return;
                   }
 
@@ -7222,7 +7222,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private record CommandHistoryEntry(String root, String load, long timestampMs) {
+   private record CommandHistoryEntry(String root, String fullCommand, long timestampMs) {
    }
 
    private enum ProbeKind {

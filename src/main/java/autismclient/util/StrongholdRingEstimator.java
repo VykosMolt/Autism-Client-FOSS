@@ -24,12 +24,12 @@ public final class StrongholdRingEstimator {
       if (observations != null && !observations.isEmpty() && observations.size() <= 8) {
          StrongholdTriangulator.ThrowSample ray = observations.getLast();
          if (ray != null
-            && StrongholdTriangulator.isValidPoint(ray.init())
-            && StrongholdTriangulator.isValidPoint(ray.load())
-            && !(ray.init().horizontalDistance() > 40000.0)
-            && !(ray.load().horizontalDistance() < 0.99)) {
-            Vec3 origin = ray.init();
-            Vec3 direction = new Vec3(ray.load().x, 0.0, ray.load().z).normalize();
+            && StrongholdTriangulator.isValidPoint(ray.origin())
+            && StrongholdTriangulator.isValidPoint(ray.direction())
+            && !(ray.origin().horizontalDistance() > 40000.0)
+            && !(ray.direction().horizontalDistance() < 0.99)) {
+            Vec3 origin = ray.origin();
+            Vec3 direction = new Vec3(ray.direction().x, 0.0, ray.direction().z).normalize();
             boolean alongX = Math.abs(direction.x) >= Math.abs(direction.z);
             double primary = alongX ? direction.x : direction.z;
             double secondary = alongX ? direction.z : direction.x;
@@ -77,11 +77,11 @@ public final class StrongholdRingEstimator {
                                  boolean consistent = true;
 
                                  for (StrongholdTriangulator.ThrowSample observation : observations) {
-                                    if (observation != null && StrongholdTriangulator.isValidPoint(observation.init()) && StrongholdTriangulator.isValidPoint(observation.load())) {
-                                       double ox = x - observation.init().x;
-                                       double oz = z - observation.init().z;
-                                       double ahead = ox * observation.load().x + oz * observation.load().z;
-                                       double angularError = Math.atan2(ox * observation.load().z - oz * observation.load().x, ahead) / 2.5E-5;
+                                    if (observation != null && StrongholdTriangulator.isValidPoint(observation.origin()) && StrongholdTriangulator.isValidPoint(observation.direction())) {
+                                       double ox = x - observation.origin().x;
+                                       double oz = z - observation.origin().z;
+                                       double ahead = ox * observation.direction().x + oz * observation.direction().z;
+                                       double angularError = Math.atan2(ox * observation.direction().z - oz * observation.direction().x, ahead) / 2.5E-5;
                                        if (!(ahead <= 12.0) && !(Math.abs(angularError) > 4.0)) {
                                           likelihood -= 0.5 * angularError * angularError;
                                           continue;
@@ -225,6 +225,6 @@ public final class StrongholdRingEstimator {
    public record RankedCandidate(Vec3 init_Vec3, double init_D) {
    }
 
-   public record RingEstimate(Vec3 center, double uncertainty, double load, int init_I, List<StrongholdRingEstimator.RankedCandidate> init_List) {
+   public record RingEstimate(Vec3 center, double uncertainty, double confidence, int init_I, List<StrongholdRingEstimator.RankedCandidate> init_List) {
    }
 }

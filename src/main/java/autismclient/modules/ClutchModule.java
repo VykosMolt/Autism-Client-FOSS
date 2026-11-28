@@ -2212,7 +2212,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             .withMaxPitch(89.5)
             .withSneaking(sneaking)
             .withAutoSneak(false)
-            .withMarginCap(!route.plan().load() && route.load().isEmpty() ? 1.0 / 0.0 : 0.02)
+            .withMarginCap(!route.plan().load() && route.eyePositions().isEmpty() ? 1.0 / 0.0 : 0.02)
             .withRayBudget(budget)
       );
       if (candidate == null) {
@@ -2223,7 +2223,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                .withMaxPitch(89.5)
                .withSneaking(sneaking)
                .withAutoSneak(false)
-               .withMarginCap(!route.plan().load() && route.load().isEmpty() ? 1.0 / 0.0 : 0.02)
+               .withMarginCap(!route.plan().load() && route.eyePositions().isEmpty() ? 1.0 / 0.0 : 0.02)
                .withRayBudget(budget)
          );
       }
@@ -2992,7 +2992,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       this.placeHitTick = -2147483648;
    }
 
-   private record CatchRoute(ClutchBlockPlanner.ClutchPlan plan, List<AABB> bodies, double eyeHeight, boolean tower, List<Vec3> load) {
+   private record CatchRoute(ClutchBlockPlanner.ClutchPlan plan, List<AABB> bodies, double eyeHeight, boolean tower, List<Vec3> eyePositions) {
       CatchRoute(ClutchBlockPlanner.ClutchPlan plan, List<AABB> bodies, double eyeHeight) {
          this(plan, bodies, eyeHeight, false, List.of());
       }
@@ -3002,7 +3002,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
       }
 
       Vec3 eyeAt(int tick) {
-         return this.load.isEmpty() ? eyeFromBodies(this.bodies, this.eyeHeight, tick) : this.load.get(Mth.clamp(tick, 0, this.load.size() - 1));
+         return this.eyePositions.isEmpty() ? eyeFromBodies(this.bodies, this.eyeHeight, tick) : this.eyePositions.get(Mth.clamp(tick, 0, this.eyePositions.size() - 1));
       }
 
       RotationMath.Rotation aimAt(ClutchBlockPlanner.PlacementLink link, int tick) {

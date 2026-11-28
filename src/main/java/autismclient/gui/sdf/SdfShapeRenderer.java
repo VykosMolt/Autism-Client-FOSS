@@ -209,7 +209,7 @@ public final class SdfShapeRenderer {
                   NativeImage pixels = null;
 
                   try {
-                     pixels = init(new SteppedRowContour(key.init_List, key.load, r));
+                     pixels = init(new SteppedRowContour(key.init_List, key.sizes, r));
                      shape = new SdfShapeRenderer.ShapeAtlas(pixels);
                   } catch (Throwable error) {
                      if (pixels != null) {
@@ -532,7 +532,7 @@ public final class SdfShapeRenderer {
       return outside + inside - r;
    }
 
-   private record ShapeKey(List<Float> init_List, List<Float> load, float init_F) {
+   private record ShapeKey(List<Float> init_List, List<Float> sizes, float init_F) {
    }
 
    private static final class ShapeAtlas extends AbstractTexture {

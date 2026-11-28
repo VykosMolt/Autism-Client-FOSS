@@ -119,7 +119,7 @@ final class TerrainDropGrid {
    boolean bodyFits(TerrainDropGrid.Column column) {
       return column.state != 0
          && (column.solidMask & this.occupancyMask(this.refY + 0.6, this.refY + this.bodyHeight)) == 0L
-         && (column.load & this.occupancyMask(this.refY, this.refY + this.bodyHeight)) == 0L;
+         && (column.caughtMask & this.occupancyMask(this.refY, this.refY + this.bodyHeight)) == 0L;
    }
 
    boolean isDropColumn(TerrainDropGrid.Column column) {
@@ -190,9 +190,9 @@ final class TerrainDropGrid {
 
          double friction = ground ? block * 0.91 : 0.91;
          if (countering && steer.opposes(vx, vz)) {
-            double accel = ground ? steer.read() * (0.21600002 / (block * block * block)) : steer.write();
+            double accel = ground ? steer.groundStrength() * (0.21600002 / (block * block * block)) : steer.airAccel();
             vx += steer.init_D() * accel;
-            vz += steer.load() * accel;
+            vz += steer.dirZ() * accel;
          }
 
          double wantY = Math.abs(vy) < 1.0E-8 ? -0.01 : vy;
@@ -349,7 +349,7 @@ final class TerrainDropGrid {
                return this.unknownResult(tick, x, z);
             }
 
-            if (column.state == 3 || (column.load & this.occupancyMask(-1.0E9, y)) != 0L) {
+            if (column.state == 3 || (column.caughtMask & this.occupancyMask(-1.0E9, y)) != 0L) {
                caught = true;
             }
 
@@ -444,7 +444,7 @@ final class TerrainDropGrid {
    private long footprintCatches(double x, double z, double hw, double hd) {
       long[] catches = new long[]{0L};
       return this.visitFootprint(x, z, hw, hd, c -> {
-         catches[0] |= c.load;
+         catches[0] |= c.caughtMask;
          return true;
       }) ? catches[0] : -9223372036854775808L;
    }
@@ -587,7 +587,7 @@ final class TerrainDropGrid {
       double read_D,
       boolean init_Z,
       int load_I,
-      double write,
+      double crossSpeed,
       boolean load_Z,
       boolean read_Z
    ) {
@@ -602,7 +602,7 @@ final class TerrainDropGrid {
       boolean visit(TerrainDropGrid.Column var1);
    }
 
-   record Column(long solidMask, long load, double init_D, byte state, float init_F) {
+   record Column(long solidMask, long caughtMask, double init_D, byte state, float init_F) {
       static final TerrainDropGrid.Column EMPTY_COLUMN = new TerrainDropGrid.Column(-1L, -1L, -1.0 / 0.0, (byte)0, 0.6F);
    }
 }

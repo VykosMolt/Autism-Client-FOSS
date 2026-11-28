@@ -362,7 +362,7 @@ public final class f {
          this.add(new ColorSetting("other-color", "Other", -7566196).group("Colors").description("Fallback."));
 
          for (StructureStorageFilter.StructureFilter structure : StructureStorageFilter.STRUCTURES) {
-            this.add(new BoolSetting(structure.id(), structure.load(), false).group("Ignore Structures"));
+            this.add(new BoolSetting(structure.id(), structure.label(), false).group("Ignore Structures"));
          }
       }
    }
@@ -1428,7 +1428,7 @@ public final class f {
             if (step.done()) {
                this.init_V_Z_9(false);
             } else {
-               autismclient.util.MouseMovementRouter.submitCounts(autismclient.util.MouseMovementRouter.MovementSource.AUTO_FISH, step.yawCounts(), step.load());
+               autismclient.util.MouseMovementRouter.submitCounts(autismclient.util.MouseMovementRouter.MovementSource.AUTO_FISH, step.yawCounts(), step.pitchCounts());
             }
          }
       }
@@ -8400,7 +8400,7 @@ public final class f {
 
          for (FrameEspCatalog.FrameTarget target : FrameEspCatalog.TARGETS) {
             String id = target.id();
-            this.add(new ColorSetting("color-" + id, target.load(), target.defaultColor()).group("Colors").visibleWhen(() -> FrameEspCatalog.isSelected(this, id)));
+            this.add(new ColorSetting("color-" + id, target.label(), target.defaultColor()).group("Colors").visibleWhen(() -> FrameEspCatalog.isSelected(this, id)));
          }
 
          this.add(

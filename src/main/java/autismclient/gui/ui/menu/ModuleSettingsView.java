@@ -159,7 +159,7 @@ final class ModuleSettingsView {
 
          this.drawScrollbar(context, listArea, contentHeight, scroll);
          if (preview != null && module instanceof CrosshairModule crosshair) {
-            CrosshairPreviewRenderer.draw(context, preview.load(), crosshair.renderState(crosshair.art()));
+            CrosshairPreviewRenderer.draw(context, preview.previewArea(), crosshair.renderState(crosshair.art()));
          }
       }
    }

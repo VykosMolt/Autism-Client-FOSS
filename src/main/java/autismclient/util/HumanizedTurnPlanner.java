@@ -45,7 +45,7 @@ public final class HumanizedTurnPlanner {
          this.durationTicks = Math.max(this.durationTicks, 2.7 * distance / 24.0);
          this.firstPhaseEnd = 0.8 + 0.06 * this.random.nextDouble();
          this.finishPhaseStart = this.firstPhaseEnd - 0.12 - 0.05 * this.random.nextDouble();
-         this.firstPhaseWeight = clamp(this.hand.read() + this.hand.write() * 0.35 * this.gaussianJitter(), 0.9, 0.98);
+         this.firstPhaseWeight = clamp(this.hand.firstPhaseWeight() + this.hand.firstPhaseJitter() * 0.35 * this.gaussianJitter(), 0.9, 0.98);
          this.firstPhaseExponent = clamp(this.hand.close() + 0.025 * this.gaussianJitter(), 0.78, 1.0);
          this.timeWobble = 0.07 * this.gaussianJitter();
          this.pitchArcOffset = clamp((this.hand.sync() + this.hand.flush() * this.gaussianJitter()) * distance * 0.35, -0.28, 0.28);
@@ -136,6 +136,6 @@ public final class HumanizedTurnPlanner {
       return angle;
    }
 
-   public record TurnStep(long yawCounts, long load, boolean done) {
+   public record TurnStep(long yawCounts, long pitchCounts, boolean done) {
    }
 }

@@ -284,7 +284,7 @@ public final class BacktrackModule extends Module {
                      && module.isEnabled()
                      && CLIENT.level == arm.level()
                      && CLIENT.player == arm.player()
-                     && module.epoch == arm.load()
+                     && module.epoch == arm.epoch()
                      && CLIENT.getConnection() == arm.connection()
                      && arm.connection().getConnection() == connection
                      && at - arm.armedAt() <= 500000000L
@@ -1011,7 +1011,7 @@ public final class BacktrackModule extends Module {
       ClientPacketListener connection,
       LivingEntity victim,
       long armedAt,
-      long load
+      long epoch
    ) {
    }
 
@@ -1021,11 +1021,11 @@ public final class BacktrackModule extends Module {
       long heldPackets,
       long releasedPackets,
       long discardedPackets,
-      long write,
-      long update,
+      long fullReleases,
+      long hits,
       double maxHeldMillis,
       Vec3 serverPosition,
-      long sync,
+      long epoch,
       String status,
       int pingMillis,
       boolean showingTrail,

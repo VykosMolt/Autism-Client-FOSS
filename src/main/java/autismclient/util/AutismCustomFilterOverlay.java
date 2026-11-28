@@ -824,9 +824,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       return mouseX >= field.x() && mouseX <= field.x() + field.width() && mouseY >= field.y() && mouseY <= field.y() + field.height();
    }
 
-   private record ActionButton(int init_I, int load, int read, int write, Runnable action, boolean enabled) {
+   private record ActionButton(int init_I, int y, int width, int height, Runnable action, boolean enabled) {
       boolean contains(double mouseX, double mouseY) {
-         return mouseX >= this.init_I && mouseX < this.init_I + this.read && mouseY >= this.load && mouseY < this.load + this.write;
+         return mouseX >= this.init_I && mouseX < this.init_I + this.width && mouseY >= this.y && mouseY < this.y + this.height;
       }
    }
 

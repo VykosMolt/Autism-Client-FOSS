@@ -127,7 +127,7 @@ public final class MacroToolBridge {
       final Map<Long, MacroToolBridge.ToolJob> jobs = new ConcurrentHashMap<>();
    }
 
-   public record JobSnapshot(MacroToolBridge.JobState state, String message, String load) {
+   public record JobSnapshot(MacroToolBridge.JobState state, String message, String data) {
       public boolean isSucceeded() {
          return this.state == MacroToolBridge.JobState.SUCCEEDED;
       }
@@ -244,6 +244,6 @@ public final class MacroToolBridge {
       }
    }
 
-   public record ToolInfo(String init, String load, String read) {
+   public record ToolInfo(String init, String load, String inputSchema) {
    }
 }

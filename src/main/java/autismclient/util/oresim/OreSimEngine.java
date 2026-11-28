@@ -433,14 +433,14 @@ public final class OreSimEngine {
    }
 
    private static void generateTile(OreSimEngine.ChunkTile tile, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
-      long tileKey = ChunkPos.pack(tile.minChunkX(), tile.load());
+      long tileKey = ChunkPos.pack(tile.minChunkX(), tile.minChunkZ());
       inFlightTiles.add(tileKey);
       generating = true;
       LongOpenHashSet alreadyComplete = new LongOpenHashSet(16);
 
       for (int dx = 0; dx < 4; dx++) {
          for (int dz = 0; dz < 4; dz++) {
-            long key = ChunkPos.pack(tile.minChunkX() + dx, tile.load() + dz);
+            long key = ChunkPos.pack(tile.minChunkX() + dx, tile.minChunkZ() + dz);
             if (chunkOres.containsKey(key) || pendingChunkOres.containsKey(key)) {
                alreadyComplete.add(key);
             }
@@ -453,14 +453,14 @@ public final class OreSimEngine {
                failIfCurrent(token, "Minecraft block tags changed before region generation");
             } else {
                int regionMinX = tile.minChunkX() - 2;
-               int regionMinZ = tile.load() - 2;
+               int regionMinZ = tile.minChunkZ() - 2;
                Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).generateRegion(regionMinX, regionMinZ, 8, () -> token != generation);
                Map<Long, OreSimEngine.ChunkOres> completed = new HashMap<>(16);
 
                for (int dxx = 0; dxx < 4; dxx++) {
                   for (int dzx = 0; dzx < 4; dzx++) {
                      int chunkX = tile.minChunkX() + dxx;
-                     int chunkZ = tile.load() + dzx;
+                     int chunkZ = tile.minChunkZ() + dzx;
                      long chunkKey = ChunkPos.pack(chunkX, chunkZ);
                      if (!alreadyComplete.contains(chunkKey)) {
                         ChunkAccess chunk = generated.get(chunkKey);
@@ -506,7 +506,7 @@ public final class OreSimEngine {
             }
          } catch (CancellationException var36) {
          } catch (Throwable error) {
-            fail(token, "Minecraft 26.3 region generation failed at tile " + tile.minChunkX() + ", " + tile.load(), error);
+            fail(token, "Minecraft 26.3 region generation failed at tile " + tile.minChunkX() + ", " + tile.minChunkZ(), error);
          } finally {
             synchronized (LOCK) {
                if (token == generation) {
@@ -683,7 +683,7 @@ public final class OreSimEngine {
    }
 
    private static boolean tileOrderedBefore(int x, int z, OreSimEngine.ChunkTile other) {
-      return x < other.minChunkX() || x == other.minChunkX() && z < other.load();
+      return x < other.minChunkX() || x == other.minChunkX() && z < other.minChunkZ();
    }
 
    private static void promoteReadyPending() {
@@ -934,9 +934,9 @@ public final class OreSimEngine {
    private record WorldKey(long seed, ResourceKey<Level> dimension) {
    }
 
-   private record ChunkTile(int minChunkX, int load, double distance) {
+   private record ChunkTile(int minChunkX, int minChunkZ, double distance) {
       long packedPos() {
-         return ChunkPos.pack(this.minChunkX, this.load);
+         return ChunkPos.pack(this.minChunkX, this.minChunkZ);
       }
    }
 }

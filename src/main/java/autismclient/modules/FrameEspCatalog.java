@@ -156,26 +156,26 @@ public final class FrameEspCatalog {
    static int init(FrameEspCatalog.CatalogSnapshot snapshot, ItemFrame frame) {
       ItemStack stack = frame.getItem();
       if (stack.isEmpty()) {
-         return snapshot.close() ? snapshot.load_I() : 0;
+         return snapshot.emptyFrames() ? snapshot.load_I() : 0;
       } else {
          Integer color = snapshot.colors().get(stack.getItem());
          if (color != null) {
             return color;
          } else {
-            return snapshot.flush() ? snapshot.load_I() : 0;
+            return snapshot.otherFrames() ? snapshot.load_I() : 0;
          }
       }
    }
 
    public static boolean init_Z() {
       FrameEspCatalog.CatalogSnapshot current = snapshot();
-      return current.load_Z() && current.read();
+      return current.load_Z() && current.shader();
    }
 
    public static int outlineColor(Entity entity) {
       if (entity instanceof ItemFrame frame) {
          FrameEspCatalog.CatalogSnapshot current = snapshot();
-         if (!current.load_Z() || !current.read()) {
+         if (!current.load_Z() || !current.shader()) {
             return 0;
          }
 
@@ -195,7 +195,7 @@ public final class FrameEspCatalog {
    }
 
    static boolean init(FrameEspCatalog.CatalogSnapshot current) {
-      return current.load_Z() && (current.write() || current.update() || current.sync());
+      return current.load_Z() && (current.box() || current.fill() || current.tracers());
    }
 
    static void init(FrameEspCatalog.CatalogSnapshot current, ClientLevel level, Player player, BiConsumer<AABB, Integer> boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
@@ -259,12 +259,12 @@ public final class FrameEspCatalog {
       int revision,
       boolean hidden,
       boolean load_Z,
-      boolean read,
-      boolean write,
-      boolean update,
-      boolean sync,
-      boolean flush,
-      boolean close,
+      boolean shader,
+      boolean box,
+      boolean fill,
+      boolean tracers,
+      boolean otherFrames,
+      boolean emptyFrames,
       int load_I,
       Map<Item, Integer> colors
    ) {
@@ -273,6 +273,6 @@ public final class FrameEspCatalog {
       }
    }
 
-   public record FrameTarget(String id, String load, int defaultColor) {
+   public record FrameTarget(String id, String label, int defaultColor) {
    }
 }

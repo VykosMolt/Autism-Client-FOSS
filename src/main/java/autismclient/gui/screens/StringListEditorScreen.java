@@ -352,13 +352,13 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                   this.commitEntry();
                   break;
                case EDIT_ENTRY:
-                  this.beginEdit(hit.update);
+                  this.beginEdit(hit.index);
                   break;
                case REMOVE:
-                  this.removeEntry(hit.update);
+                  this.removeEntry(hit.index);
                   break;
                case SUGGESTION:
-                  this.applySuggestion(hit.update);
+                  this.applySuggestion(hit.index);
                   break;
                case CLEAR:
                   this.storeValue("");
@@ -374,14 +374,14 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                   break;
                case TOGGLE_PLAYER:
                   List<StringListEditorScreen.RankRow> rowsx = this.rankRows();
-                  if (hit.update >= 0 && hit.update < rowsx.size()) {
-                     this.toggleName(rowsx.get(hit.update).name());
+                  if (hit.index >= 0 && hit.index < rowsx.size()) {
+                     this.toggleName(rowsx.get(hit.index).name());
                   }
                   break;
                case TOGGLE_RANK:
                   List<StringListEditorScreen.RankRow> rows = this.rankRows();
-                  if (hit.update >= 0 && hit.update < rows.size()) {
-                     this.toggleRankMembers(rows.get(hit.update).rank());
+                  if (hit.index >= 0 && hit.index < rows.size()) {
+                     this.toggleRankMembers(rows.get(hit.index).rank());
                   }
                   break;
                case IMPORT:
@@ -1187,9 +1187,9 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    private record RankRow(String rank, String name, int picked, int total) {
    }
 
-   private record HitBox(StringListEditorScreen.HitKind kind, int x, int load, int read, int write, int update) {
+   private record HitBox(StringListEditorScreen.HitKind kind, int x, int y, int width, int height, int index) {
       boolean contains(int mx, int my) {
-         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.width && my >= this.y && my < this.y + this.height;
       }
    }
 }

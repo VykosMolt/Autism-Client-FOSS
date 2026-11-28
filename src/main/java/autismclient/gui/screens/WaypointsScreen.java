@@ -829,9 +829,9 @@ public class WaypointsScreen extends VirtualScaledScreen {
       autismclient.gui.f.b.k.init(graphics, this.font, display, THEME.init_Identifier_l(l.read), color, x, y, false);
    }
 
-   private record HitRegion(WaypointsScreen.HitKind type, int x, int load, int read, int write, String value) {
+   private record HitRegion(WaypointsScreen.HitKind type, int x, int y, int width, int height, String value) {
       boolean contains(int mx, int my) {
-         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.width && my >= this.y && my < this.y + this.height;
       }
    }
 

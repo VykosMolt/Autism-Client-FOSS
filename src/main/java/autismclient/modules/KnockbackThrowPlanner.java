@@ -37,7 +37,7 @@ final class KnockbackThrowPlanner {
          double side = Math.hypot(px, pz);
          return side < 0.02
             ? null
-            : new KnockbackThrowPlanner.CounterSteer(-px / side, -pz / side, Math.min(1.0, hypotheses.counterStrength()) * 0.98, hypotheses.counter().write(), true);
+            : new KnockbackThrowPlanner.CounterSteer(-px / side, -pz / side, Math.min(1.0, hypotheses.counterStrength()) * 0.98, hypotheses.counter().airAccel(), true);
       } else {
          return null;
       }
@@ -92,8 +92,8 @@ final class KnockbackThrowPlanner {
       lastStatus = input != null && Double.isFinite(input.extra) && input.extra <= 0.0 ? "no-extra-push" : "invalid";
       if (isValidInput(input) && world != null && settings != null && Float.isFinite(yaw)) {
          double maximumTurn = settings.maximumTurn();
-         double minimum = settings.load();
-         double radius = settings.read();
+         double minimum = settings.minimum();
+         double radius = settings.radius();
          boolean voidOnly = settings.voidOnly();
          if (Double.isFinite(maximumTurn)
             && Double.isFinite(minimum)
@@ -378,8 +378,8 @@ final class KnockbackThrowPlanner {
             double friction = ground ? block * 0.91 : 0.91;
             if (Double.isFinite(friction) && !(friction <= 0.0) && !(friction > 1.0)) {
                if (countering && steer.opposes(motion.x, motion.z)) {
-                  double accel = ground ? steer.read() * (0.21600002 / (block * block * block)) : steer.write();
-                  motion = motion.add(steer.init_D() * accel, 0.0, steer.load() * accel);
+                  double accel = ground ? steer.groundStrength() * (0.21600002 / (block * block * block)) : steer.airAccel();
+                  motion = motion.add(steer.init_D() * accel, 0.0, steer.dirZ() * accel);
                }
 
                Vec3 wanted = Math.abs(motion.y) < 1.0E-8 ? new Vec3(motion.x, -0.01, motion.z) : motion;
@@ -519,7 +519,7 @@ final class KnockbackThrowPlanner {
       static final KnockbackThrowPlanner.CounterHypotheses NO_HYPOTHESES = new KnockbackThrowPlanner.CounterHypotheses(KnockbackThrowPlanner.CounterSteer.NONE, new Vec3[0]);
 
       CounterHypotheses(KnockbackThrowPlanner.CounterSteer counter, Vec3[] velocities) {
-         this(counter, velocities, counter != null && counter != KnockbackThrowPlanner.CounterSteer.NONE ? counter.read() / 0.98 : 0.0);
+         this(counter, velocities, counter != null && counter != KnockbackThrowPlanner.CounterSteer.NONE ? counter.groundStrength() / 0.98 : 0.0);
       }
    }
 
@@ -560,13 +560,13 @@ final class KnockbackThrowPlanner {
       }
    }
 
-   record PlanSettings(double maximumTurn, double load, boolean voidOnly, int side, double read) {
+   record PlanSettings(double maximumTurn, double minimum, boolean voidOnly, int side, double radius) {
    }
 
    private record ThrowCandidate(float yaw, double init_D, TerrainDropGrid.FlightResult landing) {
    }
 
-   record CounterSteer(double init_D, double load, double read, double write, boolean active) {
+   record CounterSteer(double init_D, double dirZ, double groundStrength, double airAccel, boolean active) {
       static final KnockbackThrowPlanner.CounterSteer NONE = new KnockbackThrowPlanner.CounterSteer(0.0, 0.0, 0.0, 0.0);
 
       CounterSteer(double x, double z, double speed, double air) {
@@ -574,7 +574,7 @@ final class KnockbackThrowPlanner {
       }
 
       boolean opposes(double vx, double vz) {
-         return !this.active || vx * this.init_D + vz * this.load < 0.0;
+         return !this.active || vx * this.init_D + vz * this.dirZ < 0.0;
       }
 
       static KnockbackThrowPlanner.CounterSteer forYaw(float yaw, double speed, double air) {

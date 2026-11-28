@@ -272,7 +272,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
 
          int textMaxWidth = Math.max(1, this.controlX(panelX, panelW, row.controlWidth()) - 4 - (x + 6));
          this.drawText(graphics, row.label(), x + 6, this.centerTextY(y, line), GuiColorPalette.flush, false, textMaxWidth);
-         this.drawText(graphics, row.read(), x + 6, this.centerTextY(y + line, line), GuiColorPalette.close, false, textMaxWidth);
+         this.drawText(graphics, row.hint(), x + 6, this.centerTextY(y + line, line), GuiColorPalette.close, false, textMaxWidth);
       }
    }
 
@@ -380,7 +380,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       int control = 0;
 
       for (ProxyConfigScreen.SettingRow row : this.rows) {
-         text = Math.max(text, Math.max(this.textWidth(row.label()), this.textWidth(row.read())));
+         text = Math.max(text, Math.max(this.textWidth(row.label()), this.textWidth(row.hint())));
          control = Math.max(control, row.controlWidth());
       }
 
@@ -494,6 +494,6 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       void accept(boolean var1);
    }
 
-   private record SettingRow(String label, String value, String read, int y, boolean toggle, boolean enabled, int controlWidth) {
+   private record SettingRow(String label, String value, String hint, int y, boolean toggle, boolean enabled, int controlWidth) {
    }
 }

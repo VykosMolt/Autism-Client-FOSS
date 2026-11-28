@@ -975,7 +975,7 @@ public final class TpRoutePlanner {
             return candidate;
          }
 
-         boolean clear = check.init();
+         boolean clear = check.clear();
          if (clear != previousClear) {
             Vec3 boundary = refineBoundary(probe, x, z, previousY, previousClear, y, clear);
             if (boundary != null) {
@@ -1315,7 +1315,7 @@ public final class TpRoutePlanner {
       BLOCKED;
    }
 
-   private record CellCheck(boolean init, boolean load) {
+   private record CellCheck(boolean clear, boolean load) {
    }
 
    public interface RouteView {

@@ -678,7 +678,7 @@ final class RecipeCatalogLoader {
       }
    }
 
-   record CookingEntry(String recipeKey, List<Item> inputs, ItemStack result, String load, float init_F, int cookTimeTicks) {
+   record CookingEntry(String recipeKey, List<Item> inputs, ItemStack result, String recipeKind, float init_F, int cookTimeTicks) {
       CookingEntry {
          inputs = List.copyOf(inputs);
          result = result.copy();

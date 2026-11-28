@@ -264,8 +264,8 @@ public final class PluginSignatureCatalog {
       for (PluginSignatureCatalog.ChannelStats stats : state.channelStats()) {
          if (stats.seenS2C()) {
             PluginSignatureCatalog.PluginIdentity identity = identify(stats.channel);
-            if (identity != null && !identity.init().isBlank() && !identity.load().isBlank()) {
-               PluginSignatureCatalog.PluginAccumulator acc = byPlugin.computeIfAbsent(identity.load(), unused -> new PluginSignatureCatalog.PluginAccumulator(identity.init(), identity.load()));
+            if (identity != null && !identity.name().isBlank() && !identity.namespace().isBlank()) {
+               PluginSignatureCatalog.PluginAccumulator acc = byPlugin.computeIfAbsent(identity.namespace(), unused -> new PluginSignatureCatalog.PluginAccumulator(identity.name(), identity.namespace()));
                acc.add(stats);
             }
          }
@@ -541,14 +541,14 @@ public final class PluginSignatureCatalog {
       return sb.toString();
    }
 
-   private record PluginIdentity(String init, String load) {
+   private record PluginIdentity(String name, String namespace) {
       PluginIdentity {
-         init = init == null ? "" : init.trim();
-         load = PluginSignatureCatalog.canonicalName(load != null && !load.isBlank() ? load : init);
+         name = name == null ? "" : name.trim();
+         namespace = PluginSignatureCatalog.canonicalName(namespace != null && !namespace.isBlank() ? namespace : name);
       }
    }
 
-   public record PluginFingerprint(String plugin, String load, List<String> channels, int score, String read) {
+   public record PluginFingerprint(String plugin, String key, List<String> channels, int score, String bestSource) {
    }
 
    private static final class ServerChannelState {

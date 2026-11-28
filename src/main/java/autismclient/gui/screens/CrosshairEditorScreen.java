@@ -405,7 +405,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
             }
          }
 
-         autismclient.gui.f.NetHelper opacityBounds = layout.read();
+         autismclient.gui.f.NetHelper opacityBounds = layout.opacityBounds();
          context.init_PoolEntry()
             .draw(
                graphics, "Opacity " + this.opacityPercent + "%", opacityBounds.read(), opacityBounds.write() - autismclient.gui.ui.UiDensityMetrics.scaledHeight(12) + 1, colors.textSecondary
@@ -418,14 +418,14 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
          );
          String status = this.hoverCellX >= 0 ? this.option.read_Str + "   " + this.hoverCellX + ", " + this.hoverCellY : this.option.read_Str;
          context.init_PoolEntry()
-            .drawFitted(graphics, status, layout.update().read(), context.init_PoolEntry().centerTextY(layout.update()), layout.update().update(), colors.textSecondary);
-         if (layout.write() != null) {
-            this.init(context, layout.write());
+            .drawFitted(graphics, status, layout.status().read(), context.init_PoolEntry().centerTextY(layout.status()), layout.status().update(), colors.textSecondary);
+         if (layout.preview() != null) {
+            this.init(context, layout.preview());
          }
 
-         if (hovered != null && hovered.load() != null && this.strokeButton < 0) {
+         if (hovered != null && hovered.tooltip() != null && this.strokeButton < 0) {
             graphics.nextStratum();
-            TooltipRenderer.render(context, hovered.load(), mx, my);
+            TooltipRenderer.render(context, hovered.tooltip(), mx, my);
          }
 
          if (this.colorPopup != null) {
@@ -632,9 +632,9 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
                return true;
             }
 
-            if (layout.read().load(0, -3, 0, -3).init_Z(mx, my)) {
+            if (layout.opacityBounds().load(0, -3, 0, -3).init_Z(mx, my)) {
                this.draggingOpacitySlider = true;
-               this.init(mx, layout.read());
+               this.init(mx, layout.opacityBounds());
                return true;
             }
 
@@ -673,7 +673,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
       CrosshairEditorScreen.EditorLayout layout = this.computeLayout();
       if (this.draggingOpacitySlider) {
-         this.init(mx, layout.read());
+         this.init(mx, layout.opacityBounds());
          return true;
       }
 
@@ -1212,9 +1212,9 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       int header,
       autismclient.gui.f.NetHelper canvas,
       int cellSize,
-      autismclient.gui.f.NetHelper read,
-      autismclient.gui.f.NetHelper write,
-      autismclient.gui.f.NetHelper update
+      autismclient.gui.f.NetHelper opacityBounds,
+      autismclient.gui.f.NetHelper preview,
+      autismclient.gui.f.NetHelper status
    ) {
    }
 
@@ -1251,7 +1251,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       boolean selected,
       autismclient.gui.f.b.CachePool.Inner_DataUtil tone,
       int argb,
-      String load,
+      String tooltip,
       Runnable action
    ) {
    }

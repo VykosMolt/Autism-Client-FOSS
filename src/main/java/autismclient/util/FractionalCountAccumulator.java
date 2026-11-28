@@ -48,6 +48,6 @@ public final class FractionalCountAccumulator {
       }
    }
 
-   public record WholeCounts(long init, long load) {
+   public record WholeCounts(long x, long y) {
    }
 }

@@ -80,11 +80,11 @@ public final class SilentMiningCoordinator {
       SilentMiningCoordinator.PendingStop stop = pendingStop;
       pendingStop = null;
       Minecraft mc = Minecraft.getInstance();
-      if (stop != null && mc.player == stop.player && mc.level == stop.load && mc.gameMode == stop.read) {
+      if (stop != null && mc.player == stop.player && mc.level == stop.level && mc.gameMode == stop.gameMode) {
          init(stop.pos);
       }
    }
 
-   private record PendingStop(Object player, Object load, Object read, BlockPos pos) {
+   private record PendingStop(Object player, Object level, Object gameMode, BlockPos pos) {
    }
 }

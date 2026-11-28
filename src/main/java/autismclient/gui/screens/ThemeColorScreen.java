@@ -223,7 +223,7 @@ public class ThemeColorScreen extends Screen {
          int rightW = Math.max(1, contentW - leftW - gap);
          int leftH = Math.min(contentH, this.leftColumnHeight());
          ThemeColorScreen.PreviewLayout preview = this.layoutFor(rightW, contentH);
-         int rightH = preview.write();
+         int rightH = preview.previewHeight();
          if (Math.abs(leftH - rightH) <= 8) {
             leftH = rightH = Math.max(leftH, rightH);
          }
@@ -435,7 +435,7 @@ public class ThemeColorScreen extends Screen {
       if (this.panoramaTexture != null) {
          this.panoramaTexture.applyPalette(this.draftPalette);
          int bw = innerW;
-         int bh = layout.read();
+         int bh = layout.bannerHeight();
          if (bh > 0) {
             int regionH = Math.max(1, Math.min(this.panoramaTexture.height(), Math.round(this.panoramaTexture.height() * ((float)bh / bw))));
             float vOff = Math.max(0.0F, (this.panoramaTexture.height() - regionH) / 2.0F);
@@ -522,7 +522,7 @@ public class ThemeColorScreen extends Screen {
 
       if (this.logoTexture != null && layout.showLogo()) {
          int logoW = layout.logoWidth();
-         int logoH = layout.load();
+         int logoH = layout.logoHeight();
          int ly = area.load() - 4 - logoH;
          if (ly >= y + 2) {
             this.logoTexture.applyPalette(this.draftPalette);
@@ -684,8 +684,8 @@ public class ThemeColorScreen extends Screen {
 
       if (this.scrollbar != null && this.scrollbar.trackContains(mx, my)) {
          this.scrollbarGrabOffset = this.scrollbar.thumbContains(mx, my)
-            ? my - this.scrollbar.load().write()
-            : this.scrollbar.load().sync() / 2;
+            ? my - this.scrollbar.thumb().write()
+            : this.scrollbar.thumb().sync() / 2;
          this.draggingScrollbar = true;
          this.dragScrollbar(my);
          return true;
@@ -862,7 +862,7 @@ public class ThemeColorScreen extends Screen {
       to.hover = from.hover;
    }
 
-   private record PreviewLayout(int logoWidth, int load, boolean showLogo, int read, int write) {
+   private record PreviewLayout(int logoWidth, int logoHeight, boolean showLogo, int bannerHeight, int previewHeight) {
    }
 
    private static final class ColorPicker {

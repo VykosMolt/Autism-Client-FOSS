@@ -46,7 +46,7 @@ public final class PlayerQuitEventTracker {
          }
 
          for (AntiVanishRosterTracker.RosterProfile p : live.values()) {
-            if (p.load()
+            if (p.tracked()
                && p.name().matches("[A-Za-z0-9_]{1,16}")
                && !duplicates.contains(lower(p.name()))
                && !duplicateIds.contains(p.uuid())) {

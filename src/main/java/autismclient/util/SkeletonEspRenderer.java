@@ -75,7 +75,7 @@ public final class SkeletonEspRenderer {
          Pose pose = matrices.last();
 
          for (SkeletonEspRenderer.Bone bone : bones) {
-            drawBone(pose, buffer, bone.start, bone.load, bone.color, bone.width);
+            drawBone(pose, buffer, bone.start, bone.end, bone.color, bone.width);
          }
 
          bufferSource.drawAll();
@@ -250,6 +250,6 @@ public final class SkeletonEspRenderer {
       return autismclient.modules.am.init_I_D_D(Math.sqrt(dx * dx + dy * dy + dz * dz), 48.0);
    }
 
-   private record Bone(Vec3 start, Vec3 load, int color, float width) {
+   private record Bone(Vec3 start, Vec3 end, int color, float width) {
    }
 }

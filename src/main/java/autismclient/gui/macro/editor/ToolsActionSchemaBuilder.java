@@ -46,7 +46,7 @@ public final class ToolsActionSchemaBuilder {
       builder.toggle("advanced", "More Options").showWhenEnum("operation", "RUN");
       MacroToolBridge.ToolInfo tool = MacroToolBridge.findTool(action.toolId);
       if (tool != null) {
-         JsonObject schema = JsonParser.parseString(tool.read()).getAsJsonObject();
+         JsonObject schema = JsonParser.parseString(tool.inputSchema()).getAsJsonObject();
          Set<String> required = new HashSet<>();
          if (schema.has("required")) {
             for (JsonElement key : schema.getAsJsonArray("required")) {

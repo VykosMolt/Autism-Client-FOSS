@@ -345,7 +345,7 @@ public final class PacketInspectorEngine {
             appendLines(builder, normalAnalysis.wireLines());
          }
 
-         boolean semanticComplete = normalAnalysis.init_Z() ? normalAnalysis.write() : summary.load();
+         boolean semanticComplete = normalAnalysis.init_Z() ? normalAnalysis.write() : summary.complete();
          if (!semanticComplete) {
             builder.blankLine();
             builder.section("Details", UiColorPalette.blue());
@@ -770,7 +770,7 @@ public final class PacketInspectorEngine {
 
       if (broadKnown.init_Z()) {
          wrote = true;
-         complete = complete && broadKnown.load();
+         complete = complete && broadKnown.complete();
       }
 
       AutismPayloadSupport.PayloadEntry payloadSnapshot = entry == null ? null : AutismPayloadSupport.resolveEntryPayload(entry);
@@ -860,8 +860,8 @@ public final class PacketInspectorEngine {
       PacketInspectorEngine.PayloadDecodeResult knownChannel = decodeKnownChannel(snapshot, raw, builder);
       decodedAnything |= knownChannel.init_Z();
       decodedStrongly |= knownChannel.load_Z();
-      textualPayload |= knownChannel.read();
-      completeKnownSchema |= knownChannel.write();
+      textualPayload |= knownChannel.textual();
+      completeKnownSchema |= knownChannel.completeSchema();
       if (knownChannel.init_Z()) {
          bestInterpretation = interpretationFor(snapshot.channel(), completeKnownSchema);
       }
@@ -871,8 +871,8 @@ public final class PacketInspectorEngine {
          decompressed = decodeCompressed(snapshot, raw, builder);
          decodedAnything |= decompressed.init_Z();
          decodedStrongly |= decompressed.load_Z();
-         textualPayload |= decompressed.read();
-         completeKnownSchema |= decompressed.write();
+         textualPayload |= decompressed.textual();
+         completeKnownSchema |= decompressed.completeSchema();
          if (decompressed.init_Z()) {
             bestInterpretation = "Compressed payload with nested decoded content";
          }
@@ -983,7 +983,7 @@ public final class PacketInspectorEngine {
          PacketInspectorEngine.PayloadDecodeResult byteBufScan = scanByteBufStrings(raw, builder);
          decodedAnything |= byteBufScan.init_Z();
          decodedStrongly |= byteBufScan.load_Z();
-         textualPayload |= byteBufScan.read();
+         textualPayload |= byteBufScan.textual();
          if (byteBufScan.init_Z() && bestInterpretation.isBlank()) {
             bestInterpretation = "Minecraft ByteBuf-style payload with embedded string fields";
          }
@@ -1024,8 +1024,8 @@ public final class PacketInspectorEngine {
          PacketInspectorEngine.PayloadDecodeResult deep = decodeDeep(raw, builder);
          decodedAnything |= deep.init_Z();
          decodedStrongly |= deep.load_Z();
-         textualPayload |= deep.read();
-         completeKnownSchema |= deep.write();
+         textualPayload |= deep.textual();
+         completeKnownSchema |= deep.completeSchema();
          if (deep.init_Z() && bestInterpretation.isBlank()) {
             bestInterpretation = deep.load_Z() ? "Nested or encoded payload container" : "Payload with recoverable embedded clues";
          }
@@ -1266,7 +1266,7 @@ public final class PacketInspectorEngine {
             builder.line("Decoded As: " + kind.label() + " compressed payload", UiColorPalette.successText());
             builder.line("Uncompressed Size: " + decoded.length + " bytes", UiColorPalette.textBright());
             PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("Uncompressed Payload", snapshot == null ? "" : snapshot.channel(), decoded, builder);
-            return nested.init_Z() ? new PacketInspectorEngine.PayloadDecodeResult(true, true, nested.read(), nested.write()) : new PacketInspectorEngine.PayloadDecodeResult(true, true, false, false);
+            return nested.init_Z() ? new PacketInspectorEngine.PayloadDecodeResult(true, true, nested.textual(), nested.completeSchema()) : new PacketInspectorEngine.PayloadDecodeResult(true, true, false, false);
          } else {
             builder.line("Compression Decode: " + kind.label() + " header found, but decompression failed.", UiColorPalette.warningYellow());
             return new PacketInspectorEngine.PayloadDecodeResult(true, false, false, false);
@@ -1364,7 +1364,7 @@ public final class PacketInspectorEngine {
          builder.line("Minecraft ByteBuf String Fields: " + fields.size(), UiColorPalette.textBright());
 
          for (PacketInspectorEngine.WireFieldSlice field : fields) {
-            builder.line("  @" + field.init_I() + " len=" + field.load() + ": " + quote(sanitize(field.init_Str())), UiColorPalette.textBody());
+            builder.line("  @" + field.init_I() + " len=" + field.length() + ": " + quote(sanitize(field.init_Str())), UiColorPalette.textBody());
          }
 
          return new PacketInspectorEngine.PayloadDecodeResult(true, false, true, false);
@@ -1381,7 +1381,7 @@ public final class PacketInspectorEngine {
          PacketInspectorEngine.PayloadDecodeResult nbt = decodeNbt(raw, builder, "Payload NBT");
          anything |= nbt.init_Z();
          strong |= nbt.load_Z();
-         textual |= nbt.read();
+         textual |= nbt.textual();
          String text = new String(raw, StandardCharsets.UTF_8);
          if (appendIdentifiers(text, builder)) {
             anything = true;
@@ -1391,11 +1391,11 @@ public final class PacketInspectorEngine {
          PacketInspectorEngine.PayloadDecodeResult embedded = decodeEmbeddedBase64(text, builder);
          anything |= embedded.init_Z();
          strong |= embedded.load_Z();
-         textual |= embedded.read();
+         textual |= embedded.textual();
          PacketInspectorEngine.PayloadDecodeResult lengthPrefixed = scanLengthPrefixed(raw, builder);
          anything |= lengthPrefixed.init_Z();
          strong |= lengthPrefixed.load_Z();
-         textual |= lengthPrefixed.read();
+         textual |= lengthPrefixed.textual();
          PacketInspectorEngine.PayloadDecodeResult rawUuid = decodeRawUuid(raw, builder);
          anything |= rawUuid.init_Z();
          return new PacketInspectorEngine.PayloadDecodeResult(anything, strong, textual, false);
@@ -1508,7 +1508,7 @@ public final class PacketInspectorEngine {
                   PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("  Base64 decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
-                  textual |= nested.read() || outcome.read();
+                  textual |= nested.textual() || outcome.textual();
                   shown++;
                }
             }
@@ -1527,7 +1527,7 @@ public final class PacketInspectorEngine {
                   PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("  Hex decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
-                  textual |= nested.read() || outcome.read();
+                  textual |= nested.textual() || outcome.textual();
                   shown++;
                }
             }
@@ -1562,7 +1562,7 @@ public final class PacketInspectorEngine {
                         PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("  Candidate Payload", "", slice, builder);
                         anything = true;
                         strong |= nested.load_Z() || outcome.load_Z();
-                        textual |= nested.read() || outcome.read();
+                        textual |= nested.textual() || outcome.textual();
                         shown++;
                      }
                   }
@@ -1581,7 +1581,7 @@ public final class PacketInspectorEngine {
                      PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("  Candidate Payload", "", slice, builder);
                      anything = true;
                      strong |= nested.load_Z() || outcome.load_Z();
-                     textual |= nested.read() || outcome.read();
+                     textual |= nested.textual() || outcome.textual();
                      shown++;
                   }
                }
@@ -3359,8 +3359,8 @@ public final class PacketInspectorEngine {
          Object message = firstGetterValue(profilelessChatMessagePacket, "message", "getMessage");
          Object chatType = firstGetterValue(profilelessChatMessagePacket, "chatType", "getChatType");
          PacketInspectorEngine.DecodeCheckPair chatSummary = appendChatSummary(message, chatType, null, null, null, "Incoming Chat Message", builder);
-         if (chatSummary.init()) {
-            return new PacketInspectorEngine.PacketSummaryFlags(true, chatSummary.load());
+         if (chatSummary.wrote()) {
+            return new PacketInspectorEngine.PacketSummaryFlags(true, chatSummary.informative());
          }
       }
 
@@ -3406,8 +3406,8 @@ public final class PacketInspectorEngine {
          PacketInspectorEngine.DecodeCheckPair chatSummary = appendChatSummary(
             message, serializedParameters, sender instanceof UUID uuid ? uuid : null, timestamp, filterMask, "Incoming Signed Chat Message", builder
          );
-         if (chatSummary.init()) {
-            return new PacketInspectorEngine.PacketSummaryFlags(true, chatSummary.load());
+         if (chatSummary.wrote()) {
+            return new PacketInspectorEngine.PacketSummaryFlags(true, chatSummary.informative());
          }
       }
 
@@ -5090,7 +5090,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private record PayloadDecodeResult(boolean init_Z, boolean load_Z, boolean read, boolean write) {
+   private record PayloadDecodeResult(boolean init_Z, boolean load_Z, boolean textual, boolean completeSchema) {
       private static final PacketInspectorEngine.PayloadDecodeResult NONE = new PacketInspectorEngine.PayloadDecodeResult(false, false, false, false);
       private static final PacketInspectorEngine.PayloadDecodeResult FULL_DECODE = new PacketInspectorEngine.PayloadDecodeResult(true, true, true, true);
    }
@@ -5159,13 +5159,13 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private record WireFieldSlice(int init_I, int load, String init_Str) {
+   private record WireFieldSlice(int init_I, int length, String init_Str) {
    }
 
    private record PropertyEntry(String label, Object value, PacketInspectorEngine.PropertySource source) {
    }
 
-   private record PacketSummaryFlags(boolean init_Z, boolean load) {
+   private record PacketSummaryFlags(boolean init_Z, boolean complete) {
       private static final PacketInspectorEngine.PacketSummaryFlags NONE = new PacketInspectorEngine.PacketSummaryFlags(false, false);
    }
 
@@ -5207,10 +5207,10 @@ public final class PacketInspectorEngine {
    private record ParsedMessagePair(String sender, String message) {
    }
 
-   private record DecodeCheckPair(boolean init, boolean load) {
+   private record DecodeCheckPair(boolean wrote, boolean informative) {
    }
 
-   public record PayloadAnalysis(boolean complete, boolean load, double progress, String status, List<PacketInspectorEngine.ColoredLine> lines) {
+   public record PayloadAnalysis(boolean complete, boolean failed, double progress, String status, List<PacketInspectorEngine.ColoredLine> lines) {
       public PayloadAnalysis {
          progress = Math.max(0.0, Math.min(1.0, progress));
          status = status == null ? "" : status;

@@ -270,9 +270,9 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.panelHeight(), 6);
    }
 
-   private record HitRegion(ForceOpPreviewScreen.HitKind kind, int x, int load, int read, int write) {
+   private record HitRegion(ForceOpPreviewScreen.HitKind kind, int x, int y, int width, int height) {
       boolean contains(int mx, int my) {
-         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.width && my >= this.y && my < this.y + this.height;
       }
    }
 

@@ -10,21 +10,21 @@ import java.util.Random;
 public record HumanHandProfile(
    double fittsIntercept,
    double fittsSlope,
-   double read,
-   double write,
+   double firstPhaseWeight,
+   double firstPhaseJitter,
    double update,
    double sync,
    double flush,
    double close,
    double open,
-   double poll,
+   double pursuitGain,
    double push,
    double pop,
    int init_I,
    int load_I,
    double tick,
-   double run,
-   double get,
+   double driftNoise,
+   double driftDecay,
    double set
 ) {
    private static final String SEED_FILE = "hand.seed";
@@ -75,21 +75,21 @@ public record HumanHandProfile(
       return new HumanHandProfile(
          this.fittsIntercept * tempo,
          this.fittsSlope * tempo,
-         this.read,
-         this.write,
+         this.firstPhaseWeight,
+         this.firstPhaseJitter,
          this.update,
          this.sync,
          this.flush,
          this.close,
          this.open,
-         this.poll,
+         this.pursuitGain,
          this.push,
          this.pop,
          this.init_I,
          this.load_I,
          this.tick * (1.0 + 0.05 * init_D_Random(session)),
-         this.run,
-         this.get,
+         this.driftNoise,
+         this.driftDecay,
          this.set
       );
    }

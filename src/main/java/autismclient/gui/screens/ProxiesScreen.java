@@ -752,7 +752,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       String status = this.statusLabel(proxy);
       int ty = this.centeredTextY(y, h);
       int nameX = row.toggleButton.getX() + row.toggleButton.getWidth() + 4;
-      int metaRight = row.load.getX() - 4;
+      int metaRight = row.checkButton.getX() - 4;
       int statusW = Math.min(this.textWidth("Unchecked"), Math.max(20, (metaRight - nameX) / 4));
       int statusX = metaRight - statusW;
       int regionW = Math.min(70, Math.max(20, (metaRight - nameX) / 4));
@@ -769,8 +769,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
       this.init_V_GuiGraphicsExtract(graphics, region, regionX, ty, proxy.init_I(), false, regionW);
       this.init_V_GuiGraphicsExtract(graphics, status, statusX, ty, proxy.init_bW_CachePool.init_I(), false, statusW);
       autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.toggleButton, mouseX, mouseY);
-      autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.load, mouseX, mouseY);
-      autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.read, mouseX, mouseY);
+      autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.checkButton, mouseX, mouseY);
+      autismclient.gui.ui.widgets.OverlayActionButton.render(graphics, this.font, row.deleteButton, mouseX, mouseY);
    }
 
    @Override
@@ -849,7 +849,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
          return false;
       }
 
-      if (!this.isOver(row.toggleButton, x, y) && !this.isOver(row.load, x, y) && !this.isOver(row.read, x, y)) {
+      if (!this.isOver(row.toggleButton, x, y) && !this.isOver(row.checkButton, x, y) && !this.isOver(row.deleteButton, x, y)) {
          if (x >= this.rowLeft() && x < this.rowRight() && y >= row.y && y < row.y + this.rowHeight()) {
             this.startEditing(row.proxy);
             return true;
@@ -858,8 +858,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
          }
       } else {
          autismclient.gui.ui.widgets.OverlayActionButton.handleClick(row.toggleButton, x, y, button);
-         autismclient.gui.ui.widgets.OverlayActionButton.handleClick(row.load, x, y, button);
-         autismclient.gui.ui.widgets.OverlayActionButton.handleClick(row.read, x, y, button);
+         autismclient.gui.ui.widgets.OverlayActionButton.handleClick(row.checkButton, x, y, button);
+         autismclient.gui.ui.widgets.OverlayActionButton.handleClick(row.deleteButton, x, y, button);
          return true;
       }
    }
@@ -1411,8 +1411,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int y,
       boolean activeSection,
       autismclient.gui.ui.widgets.OverlayActionButton toggleButton,
-      autismclient.gui.ui.widgets.OverlayActionButton load,
-      autismclient.gui.ui.widgets.OverlayActionButton read
+      autismclient.gui.ui.widgets.OverlayActionButton checkButton,
+      autismclient.gui.ui.widgets.OverlayActionButton deleteButton
    ) {
    }
 }

@@ -29,7 +29,7 @@ public final class StickyPlacementSelector {
       this.stickyKey = null;
    }
 
-   private record StickyKey(BlockPos init_BlockPos, BlockPos load, Direction init_Direction, AABB init_AABB) {
+   private record StickyKey(BlockPos init_BlockPos, BlockPos supportPos, Direction init_Direction, AABB init_AABB) {
       static StickyPlacementSelector.StickyKey of(BlockPlacementPlanner.SupportCandidate option) {
          return new StickyPlacementSelector.StickyKey(option.targetCell().immutable(), option.supportPos().immutable(), option.face(), option.faceRect());
       }

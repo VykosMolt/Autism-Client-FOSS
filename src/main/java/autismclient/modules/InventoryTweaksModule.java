@@ -655,7 +655,7 @@ public final class InventoryTweaksModule extends Module {
    private record TransferClick(int slotId, boolean drop) {
    }
 
-   private record SortAction(int init, int load) {
+   private record SortAction(int fromSlot, int toSlot) {
    }
 
    private final class TransferTask {
@@ -763,7 +763,7 @@ public final class InventoryTweaksModule extends Module {
          }
 
          InventoryTweaksModule.SortAction action = this.actions.get(this.nextAction++);
-         autismclient.util.InventorySlotHelper.swapScreenSlots(InventoryTweaksModule.CLIENT, action.init(), action.load());
+         autismclient.util.InventorySlotHelper.swapScreenSlots(InventoryTweaksModule.CLIENT, action.fromSlot(), action.toSlot());
          this.waitTicks = this.delayTicks;
          return this.nextAction < this.actions.size() || this.waitTicks > 0;
       }

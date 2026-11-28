@@ -317,7 +317,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
                   autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant = var10000;
                   autismclient.gui.ui.widgets.ButtonDrawHelper.init(
-                     context, this.font, button.x(), button.load(), button.read(), this.reset(), button.label(), variant, true, mouseX, mouseY
+                     context, this.font, button.x(), button.y(), button.width(), this.reset(), button.label(), variant, true, mouseX, mouseY
                   );
                }
             } finally {
@@ -434,7 +434,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             );
          }
 
-         int valueX = x + line.read();
+         int valueX = x + line.prefixWidth();
          autismclient.gui.f.b.k.init(
             context, this.font, line.value(), this.theme.init_Identifier_l(autismclient.gui.f.b.l.read), line.valueColor(), valueX, y, false
          );
@@ -453,7 +453,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             this.font,
             label,
             this.theme.init_Identifier_l(autismclient.gui.f.b.l.write),
-            view.load() ? UiColorPalette.errorText() : UiColorPalette.textBody(),
+            view.failed() ? UiColorPalette.errorText() : UiColorPalette.textBody(),
             x + 4,
             y + 2,
             false
@@ -527,9 +527,9 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          if (button == 0) {
             for (AutismPacketInspectOverlay.FooterButton footerButton : this.footerButtons(footerY)) {
                if (mouseX >= footerButton.x()
-                  && mouseX < footerButton.x() + footerButton.read()
-                  && mouseY >= footerButton.load()
-                  && mouseY < footerButton.load() + this.reset()) {
+                  && mouseX < footerButton.x() + footerButton.width()
+                  && mouseY >= footerButton.y()
+                  && mouseY < footerButton.y() + this.reset()) {
                   this.runAction(footerButton.action());
                   return true;
                }
@@ -903,7 +903,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       int maxHeight = Math.max(this.minPanelHeight(), Math.min(this.next(), screenHeight - 12));
       int desiredWidth = this.bestPanelWidth(minWidth, maxWidth);
       AutismPacketInspectOverlay.PanelFit fit = this.fitWidth(desiredWidth);
-      int desiredVisibleLines = Math.max(3, Math.min(fit.load(), this.prev()));
+      int desiredVisibleLines = Math.max(3, Math.min(fit.lineCount(), this.prev()));
       int desiredListHeight = Math.max(this.task(), desiredVisibleLines * lineHeight + this.listInnerPadding() * 2 + 2);
       int desiredHeight = 14 + this.size() + this.value() + this.progressHeight() + desiredListHeight + this.footerHeight() + this.buffer();
       desiredHeight = Math.min(maxHeight, Math.max(this.minPanelHeight(), desiredHeight));
@@ -952,8 +952,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    private long layoutScore(int panelWidthCandidate, int rawLineCount) {
       AutismPacketInspectOverlay.PanelFit fit = this.fitWidth(panelWidthCandidate);
-      int extraLines = Math.max(0, fit.load() - rawLineCount);
-      int wastedPixels = Math.max(0, fit.init() - fit.read());
+      int extraLines = Math.max(0, fit.lineCount() - rawLineCount);
+      int wastedPixels = Math.max(0, fit.contentWidth() - fit.longestLineWidth());
       return panelWidthCandidate / 6L + extraLines * 52L + wastedPixels * 4L;
    }
 
@@ -1169,13 +1169,13 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       return 3 * this.lineHeight() + this.listInnerPadding() * 2 + 2;
    }
 
-   private record InspectLine(String label, int labelColor, String value, int valueColor, int read) {
+   private record InspectLine(String label, int labelColor, String value, int valueColor, int prefixWidth) {
       static AutismPacketInspectOverlay.InspectLine of(String text, int offset, int color) {
          return new AutismPacketInspectOverlay.InspectLine(null, color, text, color, offset);
       }
 
       int width(Font textRenderer) {
-         int width = this.read
+         int width = this.prefixWidth
             + autismclient.gui.f.b.k.init(
                textRenderer, this.value, new autismclient.gui.f.b.CharEncoder().init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.softWhite()
             );
@@ -1192,13 +1192,13 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private record FooterButton(AutismPacketInspectOverlay.PacketAction action, int x, int load, int read) {
+   private record FooterButton(AutismPacketInspectOverlay.PacketAction action, int x, int y, int width) {
       private String label() {
          return this.action.init_Str;
       }
    }
 
-   private record PanelFit(int init, int load, int read) {
+   private record PanelFit(int contentWidth, int lineCount, int longestLineWidth) {
    }
 
    private enum PacketAction {

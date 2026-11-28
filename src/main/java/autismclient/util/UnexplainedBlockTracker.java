@@ -24,13 +24,13 @@ public final class UnexplainedBlockTracker {
 
    public void onChange(BlockPos pos, String after) {
       UnexplainedBlockTracker.BlockChange old = this.changes.get(pos.asLong());
-      if (old != null && !old.load.equals(after)) {
+      if (old != null && !old.newBlockId.equals(after)) {
          this.changes.remove(pos.asLong());
       }
 
       for (UnexplainedBlockTracker.ChangeStreak streak : this.streaks) {
          UnexplainedBlockTracker.BlockChange settled = streak.changes.get(pos.asLong());
-         if (settled != null && !settled.load.equals(after)) {
+         if (settled != null && !settled.newBlockId.equals(after)) {
             streak.changes.remove(pos.asLong());
             streak.reading = null;
          }
@@ -38,7 +38,7 @@ public final class UnexplainedBlockTracker {
    }
 
    public void onChange(UnexplainedBlockTracker.BlockChange change) {
-      if (change != null && change.pos != null && !change.init_Str.equals(change.load)) {
+      if (change != null && change.pos != null && !change.init_Str.equals(change.newBlockId)) {
          long chunk = chunkKey(change.pos);
          Deque<UnexplainedBlockTracker.BlockChange> burst = this.bursts.computeIfAbsent(chunk, k -> new ArrayDeque<>());
          burst.addLast(change);
@@ -99,7 +99,7 @@ public final class UnexplainedBlockTracker {
             if (now - c.time <= 3000L
                && this.suppressedUntil.getOrDefault(chunkKey(c.pos), 0L) <= now
                && !this.isExplained(c.pos, now)
-               && unchanged.test(c.pos, c.load)
+               && unchanged.test(c.pos, c.newBlockId)
                && !worldCause.test(c.pos)) {
                UnexplainedBlockTracker.ChangeStreak streak = this.streaks
                   .stream()
@@ -149,9 +149,9 @@ public final class UnexplainedBlockTracker {
       return (long)(p.getX() >> 4) << 32 ^ p.getZ() >> 4 & 4294967295L;
    }
 
-   public record ActivityReading(BlockPos pos, int init_I, int load, long until) {
+   public record ActivityReading(BlockPos pos, int init_I, int breaks, long until) {
       public String label() {
-         return this.init_I > 0 && this.load > 0 ? "Unexplained block changes" : (this.init_I > 0 ? "Unexplained placements" : "Unexplained breaks");
+         return this.init_I > 0 && this.breaks > 0 ? "Unexplained block changes" : (this.init_I > 0 ? "Unexplained placements" : "Unexplained breaks");
       }
    }
 
@@ -195,6 +195,6 @@ public final class UnexplainedBlockTracker {
    private record Explanation(BlockPos pos, double radius, long until) {
    }
 
-   public record BlockChange(BlockPos pos, String init_Str, String load, UnexplainedBlockTracker.ChangeKind init_DataUtil_CachePool, long time) {
+   public record BlockChange(BlockPos pos, String init_Str, String newBlockId, UnexplainedBlockTracker.ChangeKind init_DataUtil_CachePool, long time) {
    }
 }

@@ -138,6 +138,6 @@ public final class EditorListRowHelper {
       ListRowRenderer.drawSymbolButtonSquare(graphics, bounds.read(), bounds.write(), bounds.update(), symbol, hovered, danger);
    }
 
-   public record RowLayout(NetHelper init, NetHelper load, NetHelper read, NetHelper write) {
+   public record RowLayout(NetHelper init, NetHelper slotBounds, NetHelper addBounds, NetHelper captureBounds) {
    }
 }

@@ -328,7 +328,7 @@ public final class GifImageDecoder {
       }
    }
 
-   public record DecodedImage(int width, int load, int[][] frames, int[] delays, int read) {
+   public record DecodedImage(int width, int height, int[][] frames, int[] delays, int averageDelayMs) {
    }
 
    private static final class FrameInfo {

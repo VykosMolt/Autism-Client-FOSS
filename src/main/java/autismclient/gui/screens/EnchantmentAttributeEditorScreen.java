@@ -198,7 +198,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
          ui.init_PoolEntry()
             .drawFitted(
                ui.init_GuiGraphicsExtract(),
-               entry.load,
+               entry.name,
                bounds.read() + pad,
                ui.init_PoolEntry().centerTextY(bounds),
                bounds.update() - pad * 2,
@@ -349,7 +349,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
             }
          }
 
-         rows.sort(Comparator.comparing(EnchantmentAttributeEditorScreen.AvailableRow::load, String.CASE_INSENSITIVE_ORDER).thenComparing(EnchantmentAttributeEditorScreen.AvailableRow::init));
+         rows.sort(Comparator.comparing(EnchantmentAttributeEditorScreen.AvailableRow::name, String.CASE_INSENSITIVE_ORDER).thenComparing(EnchantmentAttributeEditorScreen.AvailableRow::id));
          this.availableRows = List.copyOf(rows);
          this.availableScroll = 0;
       }
@@ -435,7 +435,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
          }
 
          for (EnchantmentAttributeEditorScreen.RowHit hit : this.entryHits) {
-            if (Compat263.mouseEventGlfwButton(event) == 0 && hit.load.init_Z(mx, my)) {
+            if (Compat263.mouseEventGlfwButton(event) == 0 && hit.removeBounds.init_Z(mx, my)) {
                this.entries.remove(hit.index);
                if (this.selectedEntry == hit.index) {
                   this.selectedEntry = -1;
@@ -454,7 +454,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
 
          for (EnchantmentAttributeEditorScreen.RowHit hit : this.availableHits) {
             if (Compat263.mouseEventGlfwButton(event) == 0 && hit.bounds.init_Z(mx, my)) {
-               this.entries.add(this.entryFor(this.availableRows.get(hit.index).init));
+               this.entries.add(this.entryFor(this.availableRows.get(hit.index).id));
                this.selectedEntry = this.entries.size() - 1;
                this.selectEntry(this.selectedEntry);
                return true;
@@ -848,7 +848,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       return Math.max(min, Math.min(value, max));
    }
 
-   private record RowHit(autismclient.gui.f.NetHelper bounds, int index, autismclient.gui.f.NetHelper load) {
+   private record RowHit(autismclient.gui.f.NetHelper bounds, int index, autismclient.gui.f.NetHelper removeBounds) {
       private RowHit(autismclient.gui.f.NetHelper bounds, int index) {
          this(bounds, index, EnchantmentAttributeEditorScreen.emptyRect());
       }
@@ -867,6 +867,6 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       }
    }
 
-   private record AvailableRow(String init, String load) {
+   private record AvailableRow(String id, String name) {
    }
 }

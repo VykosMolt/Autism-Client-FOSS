@@ -20,9 +20,9 @@ final class QueuedAttackBuffer {
 
    boolean enqueue(Runnable swing) {
       QueuedAttackBuffer.QueuedAttack last = this.pending.peekLast();
-      if (last != null && last.read == null) {
+      if (last != null && last.swing == null) {
          this.pending.removeLast();
-         this.pending.addLast(new QueuedAttackBuffer.QueuedAttack(last.target, last.action, last.load, swing));
+         this.pending.addLast(new QueuedAttackBuffer.QueuedAttack(last.target, last.action, last.receipt, swing));
          return true;
       } else {
          return false;
@@ -50,9 +50,9 @@ final class QueuedAttackBuffer {
          if (valid.test(hit.target)) {
             hit.action.run();
             sent.accept(hit.target);
-            hit.load.run();
-            if (hit.read != null) {
-               hit.read.run();
+            hit.receipt.run();
+            if (hit.swing != null) {
+               hit.swing.run();
             }
 
             count++;
@@ -70,7 +70,7 @@ final class QueuedAttackBuffer {
       return owner == null || owner.isBlank() || "kill-aura".equals(owner) || "kb-displacement".equals(owner);
    }
 
-   private record QueuedAttack(Object target, Runnable action, Runnable load, Runnable read) {
+   private record QueuedAttack(Object target, Runnable action, Runnable receipt, Runnable swing) {
    }
 
    static final class HoldWindow {

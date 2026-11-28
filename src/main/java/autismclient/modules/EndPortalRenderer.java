@@ -112,15 +112,15 @@ public final class EndPortalRenderer {
    }
 
    private static void init(PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.BeamColumn column, int color) {
-      init(matrices, fill, column, column.read(), column.write(), color, 10, 28, 88);
+      init(matrices, fill, column, column.minY(), column.maxY(), color, 10, 28, 88);
    }
 
    private static void init(
       PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.BeamColumn column, double minY, double maxY, int color, int outer, int middle, int core
    ) {
-      WorldLineRenderer.box(matrices.last(), fill, column.box(column.sync(), minY, maxY), EndPortalDisplayHelper.withOpacity(color, outer));
-      WorldLineRenderer.box(matrices.last(), fill, column.box(column.sync() * 0.5, minY, maxY), EndPortalDisplayHelper.withOpacity(color, middle));
-      WorldLineRenderer.box(matrices.last(), fill, column.box(column.update(), minY, maxY), EndPortalDisplayHelper.withOpacity(color, core));
+      WorldLineRenderer.box(matrices.last(), fill, column.box(column.outerWidth(), minY, maxY), EndPortalDisplayHelper.withOpacity(color, outer));
+      WorldLineRenderer.box(matrices.last(), fill, column.box(column.outerWidth() * 0.5, minY, maxY), EndPortalDisplayHelper.withOpacity(color, middle));
+      WorldLineRenderer.box(matrices.last(), fill, column.box(column.coreWidth(), minY, maxY), EndPortalDisplayHelper.withOpacity(color, core));
    }
 
    private static AABB frameBox(BlockPos p) {
@@ -155,7 +155,7 @@ public final class EndPortalRenderer {
          SCRATCH_VECTOR.set((float)(target.x - camera.x), (float)(y - camera.y), (float)(target.z - camera.z), 1.0F);
          PROJECTION.transform(SCRATCH_VECTOR);
          float yaw = MINECRAFT.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.yRot;
-         float ring = 76.0F + (Math.max(size.init(), size.load()) / 2.0F + 24.0F) * scale;
+         float ring = 76.0F + (Math.max(size.width(), size.height()) / 2.0F + 24.0F) * scale;
          placement = autismclient.gui.ui.widgets.WorldIndicatorBadge.place(
             SCRATCH_VECTOR.x, SCRATCH_VECTOR.y, SCRATCH_VECTOR.w, StrongholdTriangulator.relativeYaw(camera, target, yaw), ui.init_I(), ui.load_I(), size, scale, ring
          );

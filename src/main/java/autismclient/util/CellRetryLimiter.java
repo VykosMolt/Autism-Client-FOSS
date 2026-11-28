@@ -10,7 +10,7 @@ public final class CellRetryLimiter<T> {
    public boolean init(long cell, T state, int tick, int limit) {
       CellRetryLimiter.RetryEntry<T> old = this.entries.get(cell);
       int elapsed = old == null ? 0 : tick - old.tick();
-      int count = old != null && Objects.equals(old.state(), state) && elapsed >= 0 && elapsed <= 20 ? old.load() + (elapsed == 0 ? 0 : 1) : 1;
+      int count = old != null && Objects.equals(old.state(), state) && elapsed >= 0 && elapsed <= 20 ? old.count() + (elapsed == 0 ? 0 : 1) : 1;
       if (count > Math.max(1, limit)) {
          this.entries.remove(cell);
          return false;
@@ -28,6 +28,6 @@ public final class CellRetryLimiter<T> {
       this.entries.clear();
    }
 
-   private record RetryEntry<T>(T state, int tick, int load) {
+   private record RetryEntry<T>(T state, int tick, int count) {
    }
 }

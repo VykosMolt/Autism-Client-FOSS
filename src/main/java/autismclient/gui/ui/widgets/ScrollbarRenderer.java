@@ -35,7 +35,7 @@ public final class ScrollbarRenderer {
             (trackWidth + 1) / 2,
             context.init_TableIndex().colors().divider
          );
-         autismclient.gui.f.NetHelper thumb = metrics.load();
+         autismclient.gui.f.NetHelper thumb = metrics.thumb();
          float activeT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(track), hovered || dragging);
          int restWidth = Math.max(2, thumb.update() - 2);
          int width = Math.round(restWidth + (thumb.update() - restWidth) * activeT);
@@ -51,7 +51,7 @@ public final class ScrollbarRenderer {
 
    public static int scrollForDrag(ScrollbarRenderer.ScrollbarBounds metrics, int mouseY, int grabOffset) {
       if (metrics != null && metrics.maxScroll() > 0) {
-         int available = Math.max(1, metrics.track().sync() - metrics.load().sync());
+         int available = Math.max(1, metrics.track().sync() - metrics.thumb().sync());
          int y = Math.max(0, Math.min(available, mouseY - grabOffset - metrics.track().write()));
          return (int)Math.round(metrics.maxScroll() * ((double)y / available));
       } else {
@@ -75,13 +75,13 @@ public final class ScrollbarRenderer {
       return a << 24 | r << 16 | g << 8 | b;
    }
 
-   public record ScrollbarBounds(autismclient.gui.f.NetHelper track, autismclient.gui.f.NetHelper load, int maxScroll) {
+   public record ScrollbarBounds(autismclient.gui.f.NetHelper track, autismclient.gui.f.NetHelper thumb, int maxScroll) {
       public boolean trackContains(int x, int y) {
          return this.track.init_Z(x, y);
       }
 
       public boolean thumbContains(int x, int y) {
-         return this.load.init_Z(x, y);
+         return this.thumb.init_Z(x, y);
       }
    }
 }

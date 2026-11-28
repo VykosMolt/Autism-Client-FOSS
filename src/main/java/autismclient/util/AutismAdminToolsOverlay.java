@@ -794,20 +794,20 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y + yOffset, w, controlHeight());
             int countInRow = Math.min(columns, actions.length - rowIndex * columns);
             autismclient.gui.f.NetHelper cell = autismclient.gui.ui.widgets.CellSplitHelper.cell(row, countInRow, colIndex, gap);
-            autismclient.gui.f.b.CachePool.Inner_DataUtil tone = !action.init.toLowerCase(Locale.ROOT).contains("run") && !action.init.equals("Start")
+            autismclient.gui.f.b.CachePool.Inner_DataUtil tone = !action.label.toLowerCase(Locale.ROOT).contains("run") && !action.label.equals("Start")
                ? (
-                  !action.init.equals("Stop") && !action.init.equals("Clear")
+                  !action.label.equals("Stop") && !action.label.equals("Clear")
                      ? autismclient.gui.f.b.CachePool.Inner_DataUtil.init
                      : autismclient.gui.f.b.CachePool.Inner_DataUtil.update
                )
                : autismclient.gui.f.b.CachePool.Inner_DataUtil.read;
-            autismclient.gui.f.b.CachePool.init(context, cell, action.init, tone, cell.init_Z(mouseX, mouseY), false);
+            autismclient.gui.f.b.CachePool.init(context, cell, action.label, tone, cell.init_Z(mouseX, mouseY), false);
             this.addHitRegion(
                new AutismAdminToolsOverlay.HitRegion(
                   AutismAdminToolsOverlay.HitKind.ACTION,
                   cell,
-                  action.load == null ? null : this.findSetting(module, action.load),
-                  action.read
+                  action.optionId == null ? null : this.findSetting(module, action.optionId),
+                  action.command
                )
             );
          }
@@ -831,7 +831,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
          long labelTotal = 0L;
 
          for (int i = 0; i < n; i++) {
-            int label = context.init_PoolEntry().measureWidth(actions[i].init);
+            int label = context.init_PoolEntry().measureWidth(actions[i].label);
             labelTotal += label;
             want[i] = Math.max(1, label + pad);
             total += want[i];
@@ -848,7 +848,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                int leftover = (int)(bounds.update() - total);
                w = want[i] + leftover / n;
             } else {
-               w = (int)Math.max(1L, (long)usable * context.init_PoolEntry().measureWidth(actions[i].init) / Math.max(1L, labelTotal));
+               w = (int)Math.max(1L, (long)usable * context.init_PoolEntry().measureWidth(actions[i].label) / Math.max(1L, labelTotal));
             }
 
             this.drawActionButton(context, module, autismclient.gui.f.NetHelper.init(x, bounds.write(), w, controlHeight()), actions[i], mouseX, mouseY);
@@ -894,14 +894,14 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    ) {
       if (action != null) {
          autismclient.gui.f.b.CachePool.init(
-            context, bounds, action.init, autismclient.gui.f.b.CachePool.Inner_DataUtil.init, bounds.init_Z(mouseX, mouseY), false
+            context, bounds, action.label, autismclient.gui.f.b.CachePool.Inner_DataUtil.init, bounds.init_Z(mouseX, mouseY), false
          );
          this.addHitRegion(
             new AutismAdminToolsOverlay.HitRegion(
                AutismAdminToolsOverlay.HitKind.ACTION,
                bounds,
-               action.load == null ? null : this.findSetting(module, action.load),
-               action.read
+               action.optionId == null ? null : this.findSetting(module, action.optionId),
+               action.command
             )
          );
       }
@@ -1231,7 +1231,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                   case SCROLLBAR:
                      autismclient.gui.ui.widgets.ScrollbarRenderer.ScrollbarBounds metrics = this.scrollbarBounds();
                      if (metrics != null && metrics.maxScroll() > 0) {
-                        this.scrollbarGrabOffset = metrics.load().init_Z((int)mouseX, (int)mouseY) ? (int)mouseY - metrics.load().write() : metrics.load().sync() / 2;
+                        this.scrollbarGrabOffset = metrics.thumb().init_Z((int)mouseX, (int)mouseY) ? (int)mouseY - metrics.thumb().write() : metrics.thumb().sync() / 2;
                         this.draggingScrollbar = true;
                         this.scrollOffset = autismclient.gui.ui.widgets.ScrollbarRenderer.scrollForDrag(metrics, (int)mouseY, this.scrollbarGrabOffset);
                      }
@@ -1998,7 +1998,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
    ) {
    }
 
-   private record ActionButton(String init, String load, String read) {
+   private record ActionButton(String label, String optionId, String command) {
    }
 
    private static final class TextEditState {

@@ -474,9 +474,9 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   public record PatternImpact(boolean init_Z, boolean load, int channelCount, List<String> channels) {
+   public record PatternImpact(boolean init_Z, boolean singleChannel, int channelCount, List<String> channels) {
       public String label() {
-         return this.load ? "1ch" : this.channelCount + "ch";
+         return this.singleChannel ? "1ch" : this.channelCount + "ch";
       }
    }
 
@@ -510,9 +510,9 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   public record PatternProjection(int init, int load, int read, int write) {
+   public record PatternProjection(int init, int load, int exactAdded, int overflow) {
       public boolean init_Z() {
-         return this.write > 0;
+         return this.overflow > 0;
       }
 
       public int init_I() {

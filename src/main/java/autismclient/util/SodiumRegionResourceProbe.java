@@ -112,12 +112,12 @@ public final class SodiumRegionResourceProbe {
          try {
             SodiumRegionResourceProbe.TranslucencyHandle passAccess = init_ClassValue.get(pass.getClass());
             SodiumRegionResourceProbe.IteratorHandle listsAccess = load_ClassValue.get(lists.getClass());
-            if (passAccess.init() == null || listsAccess.init() == null) {
+            if (passAccess.handle() == null || listsAccess.handle() == null) {
                return load_Z();
             }
 
-            boolean translucent = (boolean)passAccess.init().invoke((Object)pass);
-            if (!((Object)listsAccess.init().invoke((Object)lists, (boolean)translucent) instanceof Iterator<?> iterator)) {
+            boolean translucent = (boolean)passAccess.handle().invoke((Object)pass);
+            if (!((Object)listsAccess.handle().invoke((Object)lists, (boolean)translucent) instanceof Iterator<?> iterator)) {
                return false;
             }
 
@@ -125,27 +125,27 @@ public final class SodiumRegionResourceProbe {
                Object renderList = iterator.next();
                if (renderList != null) {
                   SodiumRegionResourceProbe.RenderListHandles renderAccess = read_ClassValue.get(renderList.getClass());
-                  if (renderAccess.init() == null || renderAccess.load() == null) {
+                  if (renderAccess.getRegion() == null || renderAccess.sectionsWithGeometryIterator() == null) {
                      return load_Z();
                   }
 
-                  Object region = (Object)renderAccess.init().invoke((Object)renderList);
+                  Object region = (Object)renderAccess.getRegion().invoke((Object)renderList);
                   if (region != null) {
                      SodiumRegionResourceProbe.RegionStorageHandles regionAccess = REGION_HANDLES.get(region.getClass());
-                     if (regionAccess.init() == null || regionAccess.load() == null || regionAccess.read() == null) {
+                     if (regionAccess.getStorage() == null || regionAccess.getCachedBatch() == null || regionAccess.getResources() == null) {
                         return load_Z();
                      }
 
-                     if ((Object)regionAccess.init().invoke((Object)region, (Object)pass) != null) {
-                        Object batch = (Object)regionAccess.load().invoke((Object)region, (Object)pass);
+                     if ((Object)regionAccess.getStorage().invoke((Object)region, (Object)pass) != null) {
+                        Object batch = (Object)regionAccess.getCachedBatch().invoke((Object)region, (Object)pass);
                         SodiumRegionResourceProbe.EmptyCheckHandle batchAccess = batch == null ? null : EMPTY_CHECK_HANDLES.get(batch.getClass());
-                        if (batchAccess != null && batchAccess.init() == null) {
+                        if (batchAccess != null && batchAccess.handle() == null) {
                            return load_Z();
                         }
 
-                        boolean cachedDraws = batchAccess != null && !(boolean)batchAccess.init().invoke((Object)batch);
-                        boolean listedGeometry = (Object)renderAccess.load().invoke((Object)renderList, (boolean)translucent) != null;
-                        if ((cachedDraws || listedGeometry) && (Object)regionAccess.read().invoke((Object)region) == null) {
+                        boolean cachedDraws = batchAccess != null && !(boolean)batchAccess.handle().invoke((Object)batch);
+                        boolean listedGeometry = (Object)renderAccess.sectionsWithGeometryIterator().invoke((Object)renderList, (boolean)translucent) != null;
+                        if ((cachedDraws || listedGeometry) && (Object)regionAccess.getResources().invoke((Object)region) == null) {
                            read_I = Math.max(read_I, 600);
                            return true;
                         }
@@ -182,18 +182,18 @@ public final class SodiumRegionResourceProbe {
       return null;
    }
 
-   private record RegionStorageHandles(MethodHandle init, MethodHandle load, MethodHandle read) {
+   private record RegionStorageHandles(MethodHandle getStorage, MethodHandle getCachedBatch, MethodHandle getResources) {
    }
 
-   private record TranslucencyHandle(MethodHandle init) {
+   private record TranslucencyHandle(MethodHandle handle) {
    }
 
-   private record RenderListHandles(MethodHandle init, MethodHandle load) {
+   private record RenderListHandles(MethodHandle getRegion, MethodHandle sectionsWithGeometryIterator) {
    }
 
-   private record EmptyCheckHandle(MethodHandle init) {
+   private record EmptyCheckHandle(MethodHandle handle) {
    }
 
-   private record IteratorHandle(MethodHandle init) {
+   private record IteratorHandle(MethodHandle handle) {
    }
 }

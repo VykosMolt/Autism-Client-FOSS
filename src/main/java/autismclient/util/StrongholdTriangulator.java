@@ -102,7 +102,7 @@ public final class StrongholdTriangulator {
             previous = null;
          }
 
-         if (!this.samples.isEmpty() && horizontalDistance(origin, this.samples.getLast().init) < 8.0) {
+         if (!this.samples.isEmpty() && horizontalDistance(origin, this.samples.getLast().origin) < 8.0) {
             this.samples.removeLast();
          }
 
@@ -153,13 +153,13 @@ public final class StrongholdTriangulator {
          for (int j = i + 1; j < rays.size(); j++) {
             StrongholdTriangulator.ThrowSample a = rays.get(i);
             StrongholdTriangulator.ThrowSample b = rays.get(j);
-            double cross = cross2d(a.load, b.load);
-            if (!(horizontalDistance(a.init, b.init) < 32.0) && !(Math.abs(cross) < 0.04)) {
-               Vec3 separation = b.init.subtract(a.init);
-               double t = cross2d(separation, b.load) / cross;
-               double u = cross2d(separation, a.load) / cross;
+            double cross = cross2d(a.direction, b.direction);
+            if (!(horizontalDistance(a.origin, b.origin) < 32.0) && !(Math.abs(cross) < 0.04)) {
+               Vec3 separation = b.origin.subtract(a.origin);
+               double t = cross2d(separation, b.direction) / cross;
+               double u = cross2d(separation, a.direction) / cross;
                if (!(t < 0.0) && !(u < 0.0) && !(t > 25000.0) && !(u > 25000.0)) {
-                  Vec3 point = a.init.add(a.load.scale(t));
+                  Vec3 point = a.origin.add(a.direction.scale(t));
                   double uncertainty = Math.max(16.0, (t + u) * 0.003 / Math.abs(cross));
                   if (!(uncertainty > 512.0)) {
                      boolean consistent = true;
@@ -184,8 +184,8 @@ public final class StrongholdTriangulator {
    }
 
    private static boolean init_Z_Vec3_cS_BufferHelper(Vec3 point, StrongholdTriangulator.ThrowSample ray) {
-      Vec3 delta = point.subtract(ray.init);
-      return delta.dot(ray.load) >= -8.0 && Math.abs(cross2d(delta, ray.load)) <= Math.max(8.0, delta.horizontalDistance() * 0.008);
+      Vec3 delta = point.subtract(ray.origin);
+      return delta.dot(ray.direction) >= -8.0 && Math.abs(cross2d(delta, ray.direction)) <= Math.max(8.0, delta.horizontalDistance() * 0.008);
    }
 
    public Vec3 destinationFor(Vec3 player) {
@@ -199,8 +199,8 @@ public final class StrongholdTriangulator {
          return null;
       }
 
-      double ahead = Math.max(0.0, player.subtract(ray.init).dot(ray.load)) + 128.0;
-      return new Vec3(ray.init.x + ray.load.x * ahead, player.y, ray.init.z + ray.load.z * ahead);
+      double ahead = Math.max(0.0, player.subtract(ray.origin).dot(ray.direction)) + 128.0;
+      return new Vec3(ray.origin.x + ray.direction.x * ahead, player.y, ray.origin.z + ray.direction.z * ahead);
    }
 
    public static double relativeYaw(Vec3 camera, Vec3 target, float yaw) {
@@ -266,7 +266,7 @@ public final class StrongholdTriangulator {
       return p != null && Double.isFinite(p.x) && Double.isFinite(p.y) && Double.isFinite(p.z) && Math.abs(p.x) <= 3.0E7 && Math.abs(p.z) <= 3.0E7;
    }
 
-   public record ThrowSample(Vec3 init, Vec3 load) {
+   public record ThrowSample(Vec3 origin, Vec3 direction) {
    }
 
    public record PortalFrame(BlockPos pos, Direction facing) {

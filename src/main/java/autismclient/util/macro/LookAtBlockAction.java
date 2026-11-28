@@ -83,8 +83,8 @@ public class LookAtBlockAction implements MacroAction {
       if (mc != null && mc.player != null) {
          LookAtBlockAction.LookTarget target = this.resolveTarget(mc);
          if (target != null && !this.smooth) {
-            mc.player.setYRot(target.init());
-            mc.player.setXRot(target.load());
+            mc.player.setYRot(target.yaw());
+            mc.player.setXRot(target.pitch());
          }
       }
    }
@@ -340,7 +340,7 @@ public class LookAtBlockAction implements MacroAction {
       return new LookAtBlockAction.LookTarget(yaw, pitch);
    }
 
-   public record LookTarget(float init, float load) {
+   public record LookTarget(float yaw, float pitch) {
    }
 
    public enum TargetMode {

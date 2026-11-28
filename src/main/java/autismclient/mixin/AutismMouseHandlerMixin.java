@@ -196,14 +196,14 @@ public abstract class AutismMouseHandlerMixin {
       MouseMovementRouter.MouseDelta delta = MouseMovementRouter.consumeDelta();
       if (MouseMovementRouter.hasActiveSource()) {
          this.accumulatedDX = delta.deltaX();
-         this.accumulatedDY = delta.load();
+         this.accumulatedDY = delta.y();
       } else if (!delta.isZero()) {
          if (this.minecraft.player != null && FreeLookModule.active() != null) {
             this.autism$simulatedDX = this.autism$simulatedDX + delta.deltaX();
-            this.autism$simulatedDY = this.autism$simulatedDY + delta.load();
+            this.autism$simulatedDY = this.autism$simulatedDY + delta.y();
          } else {
             this.accumulatedDX = this.accumulatedDX + autism$additiveAssist(this.accumulatedDX, delta.deltaX());
-            this.accumulatedDY = this.accumulatedDY + autism$additiveAssist(this.accumulatedDY, delta.load());
+            this.accumulatedDY = this.accumulatedDY + autism$additiveAssist(this.accumulatedDY, delta.y());
          }
       }
    }

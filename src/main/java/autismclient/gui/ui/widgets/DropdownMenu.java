@@ -258,9 +258,9 @@ public final class DropdownMenu implements autismclient.gui.ui.UiLayerComponent 
       } else if (this.open) {
          if (this.popupBounds.init_Z(mouseX, mouseY)) {
             if (this.scrollbarBounds != null && this.scrollbarBounds.track().init_Z(mouseX, mouseY)) {
-               this.dragAnchorOffsetY = this.scrollbarBounds.load().init_Z(mouseX, mouseY)
-                  ? mouseY - this.scrollbarBounds.load().write()
-                  : this.scrollbarBounds.load().sync() / 2;
+               this.dragAnchorOffsetY = this.scrollbarBounds.thumb().init_Z(mouseX, mouseY)
+                  ? mouseY - this.scrollbarBounds.thumb().write()
+                  : this.scrollbarBounds.thumb().sync() / 2;
                this.draggingScrollbar = true;
                this.updateScrollFromMouseY(mouseY);
                return autismclient.gui.ui.UiInputResult.HANDLED;

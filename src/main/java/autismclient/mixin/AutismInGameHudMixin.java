@@ -137,7 +137,7 @@ public abstract class AutismInGameHudMixin {
                      int y = 0;
                      HudBannerSpec captureBanner = captureActive ? this.captureBannerSpec(shared, context) : null;
                      HudBannerSpec payloadStudyBanner = payloadStudyActive
-                        ? this.payloadStudyBannerSpec(context, captureBanner == null ? 0 : captureBanner.write())
+                        ? this.payloadStudyBannerSpec(context, captureBanner == null ? 0 : captureBanner.height())
                         : null;
                      ArrayList<AutismHudManager.HudElementBounds> hudOccluders = new ArrayList<>(3);
                      if (!AutismLiteVariant.enabled() && aiPlan) {
@@ -153,7 +153,7 @@ public abstract class AutismInGameHudMixin {
                      if (captureBanner != null) {
                         hudOccluders.add(
                            new AutismHudManager.HudElementBounds(
-                              "capture_banner", captureBanner.x(), captureBanner.y(), captureBanner.width(), captureBanner.write()
+                              "capture_banner", captureBanner.x(), captureBanner.y(), captureBanner.width(), captureBanner.height()
                            )
                         );
                      }
@@ -165,7 +165,7 @@ public abstract class AutismInGameHudMixin {
                               payloadStudyBanner.x(),
                               payloadStudyBanner.y(),
                               payloadStudyBanner.width(),
-                              payloadStudyBanner.write()
+                              payloadStudyBanner.height()
                            )
                         );
                      } else if (captureActive) {
@@ -197,7 +197,7 @@ public abstract class AutismInGameHudMixin {
                      if (captureBanner != null) {
                         StatusToastCardRenderer.init(
                            UiHelper.init(context, MC.font, 0, 0),
-                           NetHelper.init(captureBanner.x(), captureBanner.y(), captureBanner.width(), captureBanner.write()),
+                           NetHelper.init(captureBanner.x(), captureBanner.y(), captureBanner.width(), captureBanner.height()),
                            captureBanner.init_Str(),
                            captureBanner.load_Str(),
                            captureBanner.read_Str()
@@ -207,7 +207,7 @@ public abstract class AutismInGameHudMixin {
                      if (payloadStudyBanner != null) {
                         StatusToastCardRenderer.init(
                            UiHelper.init(context, MC.font, 0, 0),
-                           NetHelper.init(payloadStudyBanner.x(), payloadStudyBanner.y(), payloadStudyBanner.width(), payloadStudyBanner.write()),
+                           NetHelper.init(payloadStudyBanner.x(), payloadStudyBanner.y(), payloadStudyBanner.width(), payloadStudyBanner.height()),
                            payloadStudyBanner.init_Str(),
                            payloadStudyBanner.load_Str(),
                            payloadStudyBanner.read_Str()

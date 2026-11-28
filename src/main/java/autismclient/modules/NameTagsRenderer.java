@@ -314,7 +314,7 @@ public final class NameTagsRenderer {
          Map<List<Object>, List<NameTagsRenderer.TagText>> previous = new HashMap<>();
          if (revision == lastRevision && fontEpoch == lastFontEpoch && lastVanillaFont == vanillaFont && accent == lastAccent) {
             for (NameTagsRenderer.ClusterCache old : clusterCache) {
-               previous.put(old.read, old.load);
+               previous.put(old.content, old.lines);
             }
          }
 
@@ -351,7 +351,7 @@ public final class NameTagsRenderer {
                      for (int dx = -1; dx <= 1; dx++) {
                         for (int dy = -1; dy <= 1; dy++) {
                            for (int dz = -1; dz <= 1; dz++) {
-                              List<Integer> candidates = cells.get(new NameTagsRenderer.GridCell(center.init + dx, center.load + dy, center.read + dz));
+                              List<Integer> candidates = cells.get(new NameTagsRenderer.GridCell(center.x + dx, center.y + dy, center.z + dz));
                               if (candidates != null) {
                                  for (int j : candidates) {
                                     if (j > i && !visited[j] && base.distanceToSqr(itemEntities.get(j)) <= r2) {
@@ -424,7 +424,7 @@ public final class NameTagsRenderer {
          double z = 0.0;
          int count = 0;
 
-         for (ItemEntity item : group.init) {
+         for (ItemEntity item : group.items) {
             if (!item.isRemoved()) {
                x += Mth.lerp(tickDelta, item.xOld, item.getX());
                y += Mth.lerp(tickDelta, item.yOld, item.getY());
@@ -440,7 +440,7 @@ public final class NameTagsRenderer {
             float[] screen = project(x, y, z, projection);
             if (screen != null) {
                double dist = Math.sqrt(distanceSq(camPos, x, y, z));
-               drawLines(context, screen[0], screen[1], group.load, -1, scaleFor(baseScale, distanceScale, dist));
+               drawLines(context, screen[0], screen[1], group.lines, -1, scaleFor(baseScale, distanceScale, dist));
             }
          }
       }
@@ -696,7 +696,7 @@ public final class NameTagsRenderer {
          float ndcY = v.y / v.w;
          if (!Float.isNaN(ndcX) && !Float.isNaN(ndcY) && !Float.isInfinite(ndcX) && !Float.isInfinite(ndcY)) {
             float sx = (ndcX * 0.5F + 0.5F) * p.init_I();
-            float sy = (0.5F - ndcY * 0.5F) * p.load();
+            float sy = (0.5F - ndcY * 0.5F) * p.screenHeight();
             return new float[]{sx, sy};
          } else {
             return null;
@@ -711,10 +711,10 @@ public final class NameTagsRenderer {
       return dx * dx + dy * dy + dz * dz;
    }
 
-   private record ClusterCache(List<ItemEntity> init, List<NameTagsRenderer.TagText> load, List<Object> read) {
+   private record ClusterCache(List<ItemEntity> items, List<NameTagsRenderer.TagText> lines, List<Object> content) {
    }
 
-   private record GridCell(int init, int load, int read) {
+   private record GridCell(int x, int y, int z) {
       static NameTagsRenderer.GridCell cellOf(ItemEntity item, double radius) {
          return new NameTagsRenderer.GridCell(Mth.floor(item.getX() / radius), Mth.floor(item.getY() / radius), Mth.floor(item.getZ() / radius));
       }
@@ -961,6 +961,6 @@ public final class NameTagsRenderer {
       }
    }
 
-   private record Projection(Vec3 camPos, Matrix4f projection, int init_I, int load) {
+   private record Projection(Vec3 camPos, Matrix4f projection, int init_I, int screenHeight) {
    }
 }

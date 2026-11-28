@@ -388,18 +388,18 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (tick - source.read() >= 200) {
+      if (tick - source.placedTick() >= 200) {
          this.lastPlacement = null;
          return null;
       }
 
-      if (!this.isTargetOnFire(source.targetId()) && MC.level.getEntity(source.targetId()) != null && tick - source.read() < 30) {
+      if (!this.isTargetOnFire(source.targetId()) && MC.level.getEntity(source.targetId()) != null && tick - source.placedTick() < 30) {
          return null;
       }
 
       ItemStack stack = source.hand() == InteractionHand.OFF_HAND
          ? MC.player.getOffhandItem()
-         : MC.player.getInventory().getItem(source.load());
+         : MC.player.getInventory().getItem(source.slot());
       if (!stack.is(Items.BUCKET)) {
          this.lastPlacement = null;
          return null;
@@ -409,7 +409,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          if (autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id()) || autismclient.util.ClientInteractionOverride.isMainHandUseableItem()) {
             return null;
          }
-      } else if (autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(source.load(), this.id())) {
+      } else if (autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(source.slot(), this.id())) {
          return null;
       }
 
@@ -421,7 +421,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       RotationMath.Rotation rotation = RotationMath.lookAt(Vec3.atCenterOf(cell), eye);
       return Math.abs(rotation.pitch()) > autismclient.util.BlockPlacementPlanner.defaultMaxPitchDegrees()
          ? null
-         : new AutoTrapModule.Inner_BufferHelper(false, source.targetId(), new AABB(cell), source.load(), source.hand(), rotation, true);
+         : new AutoTrapModule.Inner_BufferHelper(false, source.targetId(), new AABB(cell), source.slot(), source.hand(), rotation, true);
    }
 
    private static boolean isLavaSource(BlockState state) {
@@ -743,7 +743,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
             AutoTrapModule.Inner_StreamUtil last = history.peekLast();
             if (isStationary(history)) {
                this.missStreaks.remove(target.getId());
-               return last.load();
+               return last.currentPos();
             }
 
             int leadTicks = leadTicks(history);
@@ -758,7 +758,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
             }
 
             if (positions.size() < 5) {
-               return locked ? last.load() : this.fallbackAfterMisses(target, last, leadTicks);
+               return locked ? last.currentPos() : this.fallbackAfterMisses(target, last, leadTicks);
             }
 
             Vec3 average = Vec3.ZERO;
@@ -799,7 +799,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return false;
       }
 
-      double perTickSqr = history.peekFirst().load().distanceToSqr(history.peekLast().load()) / (elapsed * elapsed);
+      double perTickSqr = history.peekFirst().currentPos().distanceToSqr(history.peekLast().currentPos()) / (elapsed * elapsed);
       return perTickSqr < 0.001;
    }
 
@@ -810,7 +810,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       double displacementZ = 0.0;
 
       for (AutoTrapModule.Inner_StreamUtil entry : history) {
-         Vec3 current = entry.load();
+         Vec3 current = entry.currentPos();
          if (previous != null) {
             double dx = current.x - previous.x;
             double dz = current.z - previous.z;
@@ -1264,13 +1264,13 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    ) {
    }
 
-   private record Inner_CachePool(BlockPos placed, int targetId, int load, InteractionHand hand, int read) {
+   private record Inner_CachePool(BlockPos placed, int targetId, int slot, InteractionHand hand, int placedTick) {
    }
 
    private record Inner_ConfigStore(int slot, InteractionHand hand, ItemStack offhand) {
    }
 
-   private record Inner_StreamUtil(Vec3 landing, int landingTick, Vec3 load, boolean stationary, Vec3[] leadPath) {
+   private record Inner_StreamUtil(Vec3 landing, int landingTick, Vec3 currentPos, boolean stationary, Vec3[] leadPath) {
       Vec3 leadPositionAt(int ticks) {
          int index = ticks < 1 ? 0 : (ticks > this.leadPath.length ? this.leadPath.length - 1 : ticks - 1);
          return this.leadPath[index];

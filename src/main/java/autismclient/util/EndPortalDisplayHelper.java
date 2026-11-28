@@ -58,9 +58,9 @@ public final class EndPortalDisplayHelper {
       }
    }
 
-   public record BeamColumn(double init, double load, double read, double write, double update, double sync) {
+   public record BeamColumn(double x, double z, double minY, double maxY, double coreWidth, double outerWidth) {
       public AABB box(double halfWidth, double bottom, double top) {
-         return new AABB(this.init - halfWidth, bottom, this.load - halfWidth, this.init + halfWidth, top, this.load + halfWidth);
+         return new AABB(this.x - halfWidth, bottom, this.z - halfWidth, this.x + halfWidth, top, this.z + halfWidth);
       }
    }
 }

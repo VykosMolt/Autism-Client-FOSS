@@ -105,7 +105,7 @@ public final class MouseMovementRouter {
       if (exclusive != null) {
          load(exclusive);
          FractionalCountAccumulator.WholeCounts counts = init_dh_DataUtil_ba_StreamUtil_D(exclusive, elapsedSeconds);
-         return new MouseMovementRouter.MouseDelta(counts.init(), counts.load());
+         return new MouseMovementRouter.MouseDelta(counts.x(), counts.y());
       }
 
       long x = 0L;
@@ -115,17 +115,17 @@ public final class MouseMovementRouter {
          if (entry.getKey() != MouseMovementRouter.MovementSource.AIM_ASSIST && entry.getKey() != MouseMovementRouter.MovementSource.SCAFFOLD_TELLY) {
             FractionalCountAccumulator accumulator = entry.getValue();
             FractionalCountAccumulator.WholeCounts counts = accumulator.takeWhole();
-            x += counts.init();
-            y += counts.load();
+            x += counts.x();
+            y += counts.y();
          }
       }
 
       FractionalCountAccumulator.WholeCounts aim = SMOOTHER.drain(elapsedSeconds);
-      x += aim.init();
-      y += aim.load();
+      x += aim.x();
+      y += aim.y();
       FractionalCountAccumulator.WholeCounts telly = accumulatorFor(MouseMovementRouter.MovementSource.SCAFFOLD_TELLY).takeWhole();
-      x += telly.init();
-      y += telly.load();
+      x += telly.x();
+      y += telly.y();
       return new MouseMovementRouter.MouseDelta(x, y);
    }
 
@@ -238,9 +238,9 @@ public final class MouseMovementRouter {
       }
    }
 
-   public record MouseDelta(double init, double load) {
+   public record MouseDelta(double init, double y) {
       public boolean isZero() {
-         return Math.abs(this.init) < 1.0E-7 && Math.abs(this.load) < 1.0E-7;
+         return Math.abs(this.init) < 1.0E-7 && Math.abs(this.y) < 1.0E-7;
       }
 
       public double deltaX() {

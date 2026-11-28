@@ -108,7 +108,7 @@ public final class CombatAimEngine {
    public CombatAimEngine(HumanHandProfile hand, Random random) {
       this.handProfile = hand;
       this.random = random;
-      this.basePursuitGain = clamp(hand.poll() - 0.02, 0.76, 0.92);
+      this.basePursuitGain = clamp(hand.pursuitGain() - 0.02, 0.76, 0.92);
       this.deadzoneMultiplier = 0.8 + 0.35 * extractTraitFraction(hand.push());
       this.pursuitGain = this.basePursuitGain;
    }

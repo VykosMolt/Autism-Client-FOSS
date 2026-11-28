@@ -139,9 +139,9 @@ public final class PickItemScreen extends VirtualScaledScreen {
       int textX = x + 2 + 16 + 4;
       int textMax = Math.max(1, w - (textX - x) - 4);
       int textY = this.centeredTextY(y, rowH - 1);
-      this.drawText(graphics, entry.load, textX, textY, selected ? -50373 : -791321, textMax);
-      if (!entry.id.equals(entry.load)) {
-         int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, entry.load, THEME.init_Identifier_l(l.read), 0));
+      this.drawText(graphics, entry.label, textX, textY, selected ? -50373 : -791321, textMax);
+      if (!entry.id.equals(entry.label)) {
+         int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, entry.label, THEME.init_Identifier_l(l.read), 0));
          int idX = textX + labelW + 4;
          int idMax = textX + textMax - idX;
          if (idMax >= 16) {
@@ -308,7 +308,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
       List<PickItemScreen.ItemEntry> out = new ArrayList<>();
 
       for (PickItemScreen.ItemEntry entry : this.allItems) {
-         if (entry.id.contains(needle) || entry.read.contains(needle)) {
+         if (entry.id.contains(needle) || entry.searchKey.contains(needle)) {
             out.add(entry);
          }
       }
@@ -329,7 +329,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
             }
          }
       });
-      out.sort(Comparator.comparing(PickItemScreen.ItemEntry::read).thenComparing(entry -> entry.id));
+      out.sort(Comparator.comparing(PickItemScreen.ItemEntry::searchKey).thenComparing(entry -> entry.id));
       return List.copyOf(out);
    }
 
@@ -414,15 +414,15 @@ public final class PickItemScreen extends VirtualScaledScreen {
       ITEM;
    }
 
-   private record ItemEntry(String id, String load, String read, ItemStack stack) {
+   private record ItemEntry(String id, String label, String searchKey, ItemStack stack) {
       private ItemEntry(String id, String label, ItemStack icon) {
          this(id, label != null && !label.isBlank() ? label : id, (label == null ? id : label).toLowerCase(Locale.ROOT), icon == null ? ItemStack.EMPTY : icon);
       }
    }
 
-   private record RowHit(PickItemScreen.HitKind kind, int x, int load, int read, int write, String id) {
+   private record RowHit(PickItemScreen.HitKind kind, int x, int y, int width, int height, String id) {
       boolean contains(int mx, int my) {
-         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.width && my >= this.y && my < this.y + this.height;
       }
    }
 }

@@ -6398,7 +6398,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          String name = field.key().substring("toolArg.".length());
          autismclient.util.macro.MacroToolBridge.ToolInfo tool = autismclient.util.macro.MacroToolBridge.findTool(this.enumValue("toolId"));
          if (tool != null) {
-            JsonObject definition = JsonParser.parseString(tool.read()).getAsJsonObject();
+            JsonObject definition = JsonParser.parseString(tool.inputSchema()).getAsJsonObject();
             if (definition.has("required")) {
                for (JsonElement required : definition.getAsJsonArray("required")) {
                   if (name.equals(required.getAsString())) {
@@ -7534,7 +7534,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.macro.editor.capture.EditorListRowHelper.RowLayout toolbar = autismclient.gui.macro.editor.capture.EditorListRowHelper.layout(
          autismclient.gui.f.NetHelper.init(x, addY, w, 13), hasSlotField, hasCapture
       );
-      int slotW = toolbar.load() == null ? 0 : toolbar.load().update();
+      int slotW = toolbar.slotBounds() == null ? 0 : toolbar.slotBounds().update();
       ThemedTextInputBox slotField = hasSlotField ? this.textFields.get(key + "_slot") : null;
       if (hasSlotField && slotField == null) {
          slotField = this.newTextField(slotW);
@@ -7551,9 +7551,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (hasSlotField && slotField != null) {
-         slotField.setX(toolbar.load().read());
-         slotField.setY(toolbar.load().write());
-         slotField.setWidth(toolbar.load().update());
+         slotField.setX(toolbar.slotBounds().read());
+         slotField.setY(toolbar.slotBounds().write());
+         slotField.setWidth(toolbar.slotBounds().update());
          slotField.render(ctx, mx, my, delta);
       }
 
@@ -7575,7 +7575,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox fSlotField = slotField;
       if (af != null) {
          this.renderActionButton(
-            ctx, toolbar.read().read(), toolbar.read().write(), toolbar.read().update(), btnH, "+Add", OverlayActionButton.ButtonTone.SUCCESS, true, mx, my, () -> {
+            ctx, toolbar.addBounds().read(), toolbar.addBounds().write(), toolbar.addBounds().update(), btnH, "+Add", OverlayActionButton.ButtonTone.SUCCESS, true, mx, my, () -> {
                String nameText = af.getValue().strip();
                String slotText = hasSlotField && fSlotField != null ? fSlotField.getValue().strip() : "";
                String entry = itemSlotEntry(nameText, slotText);
@@ -7598,7 +7598,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          FieldDef fField = field;
          List<String> fLst = lst;
          this.renderCaptureButton(
-            ctx, toolbar.write().read(), toolbar.write().write(), toolbar.write().update(), btnH, field.captureMode(), capturing, true, mx, my, () -> {
+            ctx, toolbar.captureBounds().read(), toolbar.captureBounds().write(), toolbar.captureBounds().update(), btnH, field.captureMode(), capturing, true, mx, my, () -> {
                if (isItemSlot) {
                   this.startCapture(fKey);
                } else {
@@ -11661,9 +11661,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                List<String> targetMembers = members;
                this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, w, rowH, () -> this.toggleGroup(selected, targetMembers)));
             } else {
-               boolean sel = this.containsIgnoreCase(selected, row.load());
+               boolean sel = this.containsIgnoreCase(selected, row.name());
                boolean hovered = mx >= x && mx < x + w && my >= iy && my < iy + rowH;
-               String label = autismclient.gui.f.b.k.init(this.font, "  " + row.load(), w - 6, font, UiColorPalette.textBody());
+               String label = autismclient.gui.f.b.k.init(this.font, "  " + row.name(), w - 6, font, UiColorPalette.textBody());
                autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
                   ctx,
                   this.font,
@@ -11674,7 +11674,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   sel ? ListRowRenderer.RowTone.READY : ListRowRenderer.RowTone.NORMAL,
                   false
                );
-               String name = row.load();
+               String name = row.name();
                this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, w, rowH, () -> this.togglePlayer(selected, name)));
             }
          }
@@ -12591,7 +12591,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.util.macro.CaptureValueAction.CaptureResult preview = exampleCapture && !draft.exampleText.isBlank()
          ? draft.previewExample()
          : draft.preview(MC);
-      String previewText = preview.success() ? preview.textOf(primaryName) : preview.load();
+      String previewText = preview.success() ? preview.textOf(primaryName) : preview.status();
       if (preview.success() && previewText.isBlank()) {
          previewText = preview.text();
       }
@@ -12666,7 +12666,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private int renderSidebarLines(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       List<autismclient.util.macro.CaptureValueAction.SidebarLine> lines = autismclient.util.macro.CaptureValueAction.sidebarLines(MC);
       Identifier font = this.styleTheme.init_Identifier_l(l.read);
-      String title = !lines.isEmpty() && !lines.get(0).read().isBlank() ? "Scoreboard - " + lines.get(0).read() : "Scoreboard";
+      String title = !lines.isEmpty() && !lines.get(0).title().isBlank() ? "Scoreboard - " + lines.get(0).title() : "Scoreboard";
       autismclient.gui.f.b.k.init(ctx, this.font, autismclient.gui.f.b.k.init(this.font, title, w, font, -1), font, UiColorPalette.textBody(), x, y + 2, false);
       y += 13;
       int listH = lines.isEmpty() ? 24 : Math.min(5, lines.size()) * 22;
@@ -12697,7 +12697,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.gui.f.b.k.init(
                ctx,
                this.font,
-               autismclient.gui.f.b.k.init(this.font, line.flush(), Math.max(20, itemW - 10), font, -1),
+               autismclient.gui.f.b.k.init(this.font, line.text(), Math.max(20, itemW - 10), font, -1),
                font,
                UiColorPalette.textBright(),
                x + 6,
@@ -12797,7 +12797,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ThemedTextInputBox objectiveField = this.textFields.get("scoreboardObjective");
          ThemedTextInputBox exampleField = this.textFields.get("exampleText");
          ThemedTextInputBox selectedField = this.textFields.get("selectedText");
-         String suggested = autismclient.util.macro.CaptureValueAction.extractNumber(line.flush());
+         String suggested = autismclient.util.macro.CaptureValueAction.extractNumber(line.text());
          this.suppressFieldListeners = true;
          if (rowField != null) {
             rowField.setValue(line.key());
@@ -12808,11 +12808,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          if (objectiveField != null) {
-            objectiveField.setValue(line.load());
+            objectiveField.setValue(line.objective());
          }
 
          if (exampleField != null) {
-            exampleField.setValue(line.flush());
+            exampleField.setValue(line.text());
          }
 
          if (selectedField != null) {
@@ -16254,7 +16254,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private record PayloadSnapshot(long revision, PayloadFieldCodec.PayloadTemplate template, PayloadFieldCodec.EncodeResult built) {
    }
 
-   private record PlayerRow(boolean header, String prefix, String load, List<String> members) {
+   private record PlayerRow(boolean header, String prefix, String name, List<String> members) {
       static ActionEditorOverlay.PlayerRow groupRow(String prefix, List<String> members) {
          return new ActionEditorOverlay.PlayerRow(true, prefix, null, members);
       }
@@ -16311,11 +16311,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private record PayloadEditorState(String channel, byte[] init_BArr, boolean commandRecognized, int commandValue, ActionEditorOverlay.PayloadTemplate template, String load) {
+   private record PayloadEditorState(String channel, byte[] init_BArr, boolean commandRecognized, int commandValue, ActionEditorOverlay.PayloadTemplate template, String contentText) {
       private PayloadEditorState {
          init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
          template = template == null ? ActionEditorOverlay.PayloadTemplate.BINARY_REPLAY : template;
-         load = load == null ? "" : load;
+         contentText = contentText == null ? "" : contentText;
       }
 
       public byte[] init_BArr() {
@@ -16334,9 +16334,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private record PendingPayloadEdit(ActionEditorOverlay.PayloadView view, String text) {
    }
 
-   private record ScrollbarRegion(int x, int load, int read, int write, IntConsumer onDrag) {
+   private record ScrollbarRegion(int x, int y, int width, int height, IntConsumer onDrag) {
       boolean containsPoint(int mx, int my) {
-         return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
+         return mx >= this.x && mx < this.x + this.width && my >= this.y && my < this.y + this.height;
       }
    }
 

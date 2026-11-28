@@ -20,7 +20,7 @@ public final class FarmActionScheduler {
 
             for (FarmActionScheduler.ActionOption<T> second : options) {
                if (first != second && !first.target().equals(second.target())) {
-                  next = Math.min(next, init(first.yaw(), first.load(), nextSlot, second));
+                  next = Math.min(next, init(first.yaw(), first.pitch(), nextSlot, second));
                }
             }
 
@@ -52,7 +52,7 @@ public final class FarmActionScheduler {
 
    private static double init(float yaw, float pitch, int selected, FarmActionScheduler.ActionOption<?> next) {
       double yawDelta = Math.abs(Math.IEEEremainder(next.yaw() - yaw, 360.0));
-      double turn = Math.hypot(yawDelta, next.load() - pitch) / 20.0;
+      double turn = Math.hypot(yawDelta, next.pitch() - pitch) / 20.0;
       double change = next.slot() >= 0 && next.slot() != selected ? 2.0 : 0.0;
       double use = next.kind() == FarmActionScheduler.ActionKind.HARVEST ? 1.0 : 4.0;
       return turn + change + use;
@@ -66,6 +66,6 @@ public final class FarmActionScheduler {
       TILL;
    }
 
-   public record ActionOption<T>(T target, FarmActionScheduler.ActionKind kind, float yaw, float load, int slot, boolean urgent) {
+   public record ActionOption<T>(T target, FarmActionScheduler.ActionKind kind, float yaw, float pitch, int slot, boolean urgent) {
    }
 }

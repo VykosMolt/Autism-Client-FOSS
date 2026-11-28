@@ -719,7 +719,7 @@ public final class AntiVanishModule extends Module {
          return "ALERT";
       }
 
-      String reason = entry.load() == null ? "" : entry.load();
+      String reason = entry.reason() == null ? "" : entry.reason();
       String lower = reason.toLowerCase(Locale.ROOT);
       int idx = lower.indexOf("rank detection:");
       if (idx >= 0) {
@@ -806,7 +806,7 @@ public final class AntiVanishModule extends Module {
       if (entry == null) {
          return "";
       } else {
-         String reason = entry.load() == null ? "" : entry.load().trim();
+         String reason = entry.reason() == null ? "" : entry.reason().trim();
          String lower = reason.toLowerCase(Locale.ROOT);
          if ("CRITICAL".equalsIgnoreCase(entry.severity())) {
             return "WATCH";
@@ -860,6 +860,6 @@ public final class AntiVanishModule extends Module {
    private record Detection(String playerName, String message, int init_I, long expiresAt, boolean unresolved, boolean possibleVanish) {
    }
 
-   public record HudRow(String severity, String load, int init_I) {
+   public record HudRow(String severity, String reason, int init_I) {
    }
 }

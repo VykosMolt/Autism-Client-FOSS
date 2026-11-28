@@ -64,7 +64,7 @@ public final class AntiVanishRosterTracker {
                   UUID client = byName.get(name);
                   return duplicates.contains(name)
                      || client != null && !client.equals(entry.getKey())
-                     || px != null && (px.listed || !px.load || !px.name.equals(entry.getValue().name));
+                     || px != null && (px.listed || !px.tracked || !px.name.equals(entry.getValue().name));
                }
             );
          int departures = 0;
@@ -77,7 +77,7 @@ public final class AntiVanishRosterTracker {
          }
 
          for (AntiVanishRosterTracker.RosterProfile p : live.values()) {
-            if (p.load && !duplicates.contains(normalizeName(p.name)) && p.name.matches("[A-Za-z0-9_]{1,16}")) {
+            if (p.tracked && !duplicates.contains(normalizeName(p.name)) && p.name.matches("[A-Za-z0-9_]{1,16}")) {
                AntiVanishRosterTracker.RosterMember m = this.members.get(p.uuid);
                if (m == null || !m.name.equals(p.name)) {
                   m = new AntiVanishRosterTracker.RosterMember(p.uuid, p.name);
@@ -124,16 +124,16 @@ public final class AntiVanishRosterTracker {
          Set<UUID> seen = new HashSet<>();
 
          for (AntiVanishRosterTracker.RosterProfile p : profiles) {
-            if (p.uuid != null && p.name != null && p.load && !p.listed && p.name.matches("[A-Za-z0-9_]{1,16}")) {
+            if (p.uuid != null && p.name != null && p.tracked && !p.listed && p.name.matches("[A-Za-z0-9_]{1,16}")) {
                AntiVanishRosterTracker.RosterProfile client = this.update_Map.get(p.uuid);
-               if (client == null || !client.listed && client.load && client.name.equals(p.name)) {
+               if (client == null || !client.listed && client.tracked && client.name.equals(p.name)) {
                   UUID other = this.sync_Map.get(normalizeName(p.name));
                   if (other == null || other.equals(p.uuid)) {
                      if (!seen.add(p.uuid)) {
                         this.pendingRequests.remove(p.uuid);
                      } else {
                         AntiVanishRosterTracker.PendingRequest fact = this.pendingRequests.get(p.uuid);
-                        if (fact == null || !fact.name.equals(p.name) || now - fact.load > 20000L) {
+                        if (fact == null || !fact.name.equals(p.name) || now - fact.observedAt > 20000L) {
                            this.pendingRequests.put(p.uuid, new AntiVanishRosterTracker.PendingRequest(p.name, requestedAt, now, 1));
                         } else if (requestedAt - fact.requestedAt >= 1500L) {
                            this.pendingRequests.put(p.uuid, new AntiVanishRosterTracker.PendingRequest(p.name, requestedAt, now, Math.min(2, fact.init_I + 1)));
@@ -169,7 +169,7 @@ public final class AntiVanishRosterTracker {
    }
 
    public void init(AntiVanishRosterTracker.ActorInfo actor, String action, long now) {
-      if (actor != null && actor.init_Z && !actor.load && action != null && !action.isBlank()) {
+      if (actor != null && actor.init_Z && !actor.npc && action != null && !action.isBlank()) {
          AntiVanishRosterTracker.RosterMember m = this.members.get(actor.id);
          if (m != null && m.name.equals(actor.name) && m.isRecentlyGone(now)) {
             m.expireStale(now);
@@ -214,7 +214,7 @@ public final class AntiVanishRosterTracker {
 
    public List<AntiVanishRosterTracker.VanishAlert> collectAlerts(long now) {
       List<AntiVanishRosterTracker.VanishAlert> out = new ArrayList<>();
-      this.pendingRequests.entrySet().removeIf(entry -> now - entry.getValue().load > 20000L);
+      this.pendingRequests.entrySet().removeIf(entry -> now - entry.getValue().observedAt > 20000L);
 
       for (Entry<UUID, AntiVanishRosterTracker.PendingRequest> entry : this.pendingRequests.entrySet()) {
          AntiVanishRosterTracker.PendingRequest fact = entry.getValue();
@@ -250,7 +250,7 @@ public final class AntiVanishRosterTracker {
 
    public boolean init(UUID id, long now) {
       AntiVanishRosterTracker.PendingRequest fact = this.pendingRequests.get(id);
-      if (fact != null && fact.init_I >= 2 && now - fact.load <= 20000L) {
+      if (fact != null && fact.init_I >= 2 && now - fact.observedAt <= 20000L) {
          return true;
       }
 
@@ -330,7 +330,7 @@ public final class AntiVanishRosterTracker {
       return true;
    }
 
-   private record PendingRequest(String name, long requestedAt, long load, int init_I) {
+   private record PendingRequest(String name, long requestedAt, long observedAt, int init_I) {
    }
 
    private static final class RosterMember {
@@ -402,10 +402,10 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public record RosterProfile(UUID uuid, String name, boolean listed, boolean load) {
+   public record RosterProfile(UUID uuid, String name, boolean listed, boolean tracked) {
    }
 
-   public record ActorInfo(UUID id, String name, boolean init_Z, boolean load) {
+   public record ActorInfo(UUID id, String name, boolean init_Z, boolean npc) {
    }
 
    public record VanishAlert(UUID uuid, String name, String evidence, boolean uuidOnly) {

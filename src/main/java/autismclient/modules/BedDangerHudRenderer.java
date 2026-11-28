@@ -38,7 +38,7 @@ public final class BedDangerHudRenderer {
 
    public static int[] size(Font font) {
       BedDangerHudRenderer.HudLayout layout = init_u_DataUtil(font);
-      return new int[]{Math.max(1, (int)Math.ceil(layout.init_I * layout.init_F)), Math.max(1, (int)Math.ceil(layout.load * layout.init_F))};
+      return new int[]{Math.max(1, (int)Math.ceil(layout.init_I * layout.init_F)), Math.max(1, (int)Math.ceil(layout.height * layout.init_F))};
    }
 
    public static void renderHud(GuiGraphicsExtractor graphics, Font font, int x, int y, boolean editor) {
@@ -50,7 +50,7 @@ public final class BedDangerHudRenderer {
          try {
             graphics.pose().translate(x, y);
             graphics.pose().scale(layout.init_F, layout.init_F);
-            autismclient.gui.f.b.BufferHelper.init_V(context, autismclient.gui.f.NetHelper.init(0, 0, layout.init_I, layout.load), "Bed Danger");
+            autismclient.gui.f.b.BufferHelper.init_V(context, autismclient.gui.f.NetHelper.init(0, 0, layout.init_I, layout.height), "Bed Danger");
             int rowY = 24;
 
             for (Component line : layout.init_List) {
@@ -71,6 +71,6 @@ public final class BedDangerHudRenderer {
       }
    }
 
-   private record HudLayout(List<Component> init_List, int init_I, int load, float init_F) {
+   private record HudLayout(List<Component> init_List, int init_I, int height, float init_F) {
    }
 }

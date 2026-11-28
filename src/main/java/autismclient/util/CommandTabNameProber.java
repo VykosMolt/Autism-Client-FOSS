@@ -344,7 +344,7 @@ public final class CommandTabNameProber {
             }
          }
 
-         String status = "Sweeping " + vector.load() + " — " + formatCount(names.size()) + " names (depth " + depth + ")";
+         String status = "Sweeping " + vector.path() + " — " + formatCount(names.size()) + " names (depth " + depth + ")";
          List<List<String>> replies = requestSuggestions(connection, texts, control, queries, names, self, status, 1500L, 2, gap, conc, stall, stallLimit);
          int levelCap = 0;
 
@@ -647,6 +647,6 @@ public final class CommandTabNameProber {
       }
    }
 
-   public record ProbeVector(String prefix, int priority, String load) {
+   public record ProbeVector(String prefix, int priority, String path) {
    }
 }

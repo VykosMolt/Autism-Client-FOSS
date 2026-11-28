@@ -52,8 +52,8 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
       Minecraft mc = Minecraft.getInstance();
 
       for (ContainerItemNameArgumentType.ItemCandidate candidate : containerItems(mc)) {
-         if (candidate.load().startsWith(remaining)) {
-            builder.suggest(StringArgumentType.escapeIfRequired(candidate.init()));
+         if (candidate.lowerName().startsWith(remaining)) {
+            builder.suggest(StringArgumentType.escapeIfRequired(candidate.name()));
          }
       }
 
@@ -117,6 +117,6 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
       }
    }
 
-   private record ItemCandidate(String init, String load) {
+   private record ItemCandidate(String name, String lowerName) {
    }
 }

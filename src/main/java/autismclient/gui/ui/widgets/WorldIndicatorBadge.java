@@ -29,8 +29,8 @@ public final class WorldIndicatorBadge {
          && Float.isFinite(scale)
          && !(scale <= 0.0F)
          && Float.isFinite(ring)) {
-         float halfW = size.init * scale / 2.0F;
-         float halfH = size.load * scale / 2.0F;
+         float halfW = size.width * scale / 2.0F;
+         float halfH = size.height * scale / 2.0F;
          if (!(halfW + 4.0F > screenW / 2.0F) && !(halfH + 4.0F > screenH / 2.0F)) {
             float nx = clipX / Math.max(0.001F, Math.abs(clipW));
             float ny = -clipY / Math.max(0.001F, Math.abs(clipW));
@@ -63,10 +63,10 @@ public final class WorldIndicatorBadge {
          return autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
       }
 
-      int x = (int)Math.floor(placement.init - size.init * scale / 2.0F);
-      int y = (int)Math.floor(placement.load - size.load * scale / 2.0F);
-      int right = (int)Math.ceil(placement.init + size.init * scale / 2.0F);
-      int bottom = (int)Math.ceil(placement.load + size.load * scale / 2.0F);
+      int x = (int)Math.floor(placement.x - size.width * scale / 2.0F);
+      int y = (int)Math.floor(placement.y - size.height * scale / 2.0F);
+      int right = (int)Math.ceil(placement.x + size.width * scale / 2.0F);
+      int bottom = (int)Math.ceil(placement.y + size.height * scale / 2.0F);
       return autismclient.gui.f.NetHelper.init(x, y, right - x, bottom - y);
    }
 
@@ -85,12 +85,12 @@ public final class WorldIndicatorBadge {
          graphics.pose().pushMatrix();
 
          try {
-            graphics.pose().translate(placement.init, placement.load);
+            graphics.pose().translate(placement.x, placement.y);
             graphics.pose().scale(scale, scale);
-            graphics.pose().translate(-size.init / 2.0F, -size.load / 2.0F);
+            graphics.pose().translate(-size.width / 2.0F, -size.height / 2.0F);
             autismclient.gui.f.PacketUtil.read(
                graphics,
-               autismclient.gui.f.NetHelper.init(0, 0, size.init, size.load),
+               autismclient.gui.f.NetHelper.init(0, 0, size.width, size.height),
                3,
                ui.init_TableIndex().colors().windowSurface,
                color & 16777215 | -1879048192
@@ -99,8 +99,8 @@ public final class WorldIndicatorBadge {
                graphics.pose().pushMatrix();
 
                try {
-                  graphics.pose().translate(8.0F, size.load / 2.0F);
-                  graphics.pose().rotate(placement.read);
+                  graphics.pose().translate(8.0F, size.height / 2.0F);
+                  graphics.pose().rotate(placement.angle);
                   autismclient.gui.f.PacketUtil.write(graphics, autismclient.gui.f.NetHelper.init(-4, -5, 8, 10), color);
                } finally {
                   graphics.pose().popMatrix();
@@ -111,7 +111,7 @@ public final class WorldIndicatorBadge {
             graphics.pose().pushMatrix();
 
             try {
-               graphics.pose().translate(0.0F, (size.load - 16) / 2.0F);
+               graphics.pose().translate(0.0F, (size.height - 16) / 2.0F);
                graphics.item(icon, iconX, 0);
             } finally {
                graphics.pose().popMatrix();
@@ -119,9 +119,9 @@ public final class WorldIndicatorBadge {
 
             if (caption != null && !caption.isBlank()) {
                int textX = iconX + 20;
-               int textWidth = Math.max(0, size.init - textX - 3);
+               int textWidth = Math.max(0, size.width - textX - 3);
                ui.init_PoolEntry()
-                  .drawEllipsizedInBounds(graphics, caption, autismclient.gui.f.NetHelper.init(textX, 0, textWidth, size.load), ui.init_TableIndex().colors().textPrimary);
+                  .drawEllipsizedInBounds(graphics, caption, autismclient.gui.f.NetHelper.init(textX, 0, textWidth, size.height), ui.init_TableIndex().colors().textPrimary);
             }
          } finally {
             graphics.pose().popMatrix();
@@ -129,9 +129,9 @@ public final class WorldIndicatorBadge {
       }
    }
 
-   public record BadgePlacement(float init, float load, float read) {
+   public record BadgePlacement(float x, float y, float angle) {
    }
 
-   public record BadgeSize(int init, int load) {
+   public record BadgeSize(int width, int height) {
    }
 }

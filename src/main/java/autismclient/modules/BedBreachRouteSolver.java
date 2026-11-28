@@ -133,11 +133,11 @@ final class BedBreachRouteSolver {
       }
    }
 
-   record RouteSet(List<BedBreachRouteSolver.BreachRoute> init) {
+   record RouteSet(List<BedBreachRouteSolver.BreachRoute> routes) {
       BedBreachRouteSolver.BreachRoute bestRoute(BlockPos mining, float progress, Vec3 preferred) {
          BedBreachRouteSolver.BreachRoute best = null;
 
-         for (BedBreachRouteSolver.BreachRoute original : this.init) {
+         for (BedBreachRouteSolver.BreachRoute original : this.routes) {
             double ticks = original.ticks;
             List<BedBreachRouteSolver.BreachCell> blocks = original.cells;
             if (mining != null && progress > 0.0F) {

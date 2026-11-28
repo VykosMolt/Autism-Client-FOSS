@@ -154,7 +154,7 @@ public final class CrosshairRenderer {
 
    private static void blitCell(GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairRenderer.TextureEntry entry, int cell, int x, int y, int color) {
       int size = entry.width();
-      graphics.blit(pipeline, entry.texture(), x, y, cell * (size + 2) + 1, 1.0F, size, size, size, size, entry.load(), entry.read(), color);
+      graphics.blit(pipeline, entry.texture(), x, y, cell * (size + 2) + 1, 1.0F, size, size, size, size, entry.textureWidth(), entry.textureHeight(), color);
    }
 
    private static int withOpacity(int argb, float opacity) {
@@ -329,7 +329,7 @@ public final class CrosshairRenderer {
       }
    }
 
-   private record TextureEntry(CrosshairRenderer.TextureKey key, Identifier texture, int width, int load, int read) {
+   private record TextureEntry(CrosshairRenderer.TextureKey key, Identifier texture, int width, int textureWidth, int textureHeight) {
    }
 
    private record TextureKey(

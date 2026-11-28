@@ -78,7 +78,7 @@ public final class BacktrackTrailHistory {
             }
 
             drawn = this.frame.drawn();
-            received = this.frame.load();
+            received = this.frame.received();
             position = this.frame.position();
             long elapsed = Math.max(0L, Math.min(250000000L, now - this.load));
             this.load = now;
@@ -181,7 +181,7 @@ public final class BacktrackTrailHistory {
       return Double.isFinite(p.x) && Double.isFinite(p.y) && Double.isFinite(p.z);
    }
 
-   private record TrailFrame(AABB drawn, AABB load, Vec3 position) {
+   private record TrailFrame(AABB drawn, AABB received, Vec3 position) {
    }
 
    private record TrailPoint(Vec3 position, long time) {

@@ -485,7 +485,7 @@ final class VanishActivityDetector {
       for (VanishActivityDetector.Hazard h : this.hazards) {
          if (h.expiresAt > at
             && h.pos.distSqr(pos) <= (h.read ? 0 : 12)
-            && (h.read ? isDispensedBlock(focus.state) : explainedByFluid(focus.state, focus.change, h.init_Z, h.load))) {
+            && (h.read ? isDispensedBlock(focus.state) : explainedByFluid(focus.state, focus.change, h.init_Z, h.heat))) {
             return true;
          }
       }
@@ -540,6 +540,6 @@ final class VanishActivityDetector {
    private record ActorZone(BlockPos pos, int kind, double radius, long expiresAt) {
    }
 
-   private record Hazard(BlockPos pos, boolean init_Z, boolean load, boolean read, long expiresAt) {
+   private record Hazard(BlockPos pos, boolean init_Z, boolean heat, boolean read, long expiresAt) {
    }
 }

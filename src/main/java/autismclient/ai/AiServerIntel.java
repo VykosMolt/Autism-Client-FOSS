@@ -483,13 +483,13 @@ public final class AiServerIntel {
                      "plugin",
                      nullToEmpty(fingerprint.plugin()),
                      "key",
-                     nullToEmpty(fingerprint.load()),
+                     nullToEmpty(fingerprint.key()),
                      "channels",
                      capped(fingerprint.channels(), 8),
                      "score",
                      fingerprint.score(),
                      "basis",
-                     nullToEmpty(fingerprint.read())
+                     nullToEmpty(fingerprint.bestSource())
                   )
                );
             }

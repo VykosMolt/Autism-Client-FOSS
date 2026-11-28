@@ -383,9 +383,9 @@ public final class ar {
                         boolean spawnerFill = spawnerEnabled && data;
                         boolean spawnerWire = spawnerEnabled;
                         boolean spawnerTrace = spawnerEnabled && value;
-                        boolean frameFill = frameEnabled && frameEsp.update();
-                        boolean frameWire = frameEnabled && frameEsp.write();
-                        boolean frameTrace = frameEnabled && frameEsp.sync();
+                        boolean frameFill = frameEnabled && frameEsp.fill();
+                        boolean frameWire = frameEnabled && frameEsp.box();
+                        boolean frameTrace = frameEnabled && frameEsp.tracers();
                         boolean xrayFill = xrayBoxes && cache;
                         boolean xrayWire = xrayBoxes;
                         boolean airFill = airGuide && airPlace.fill();
@@ -1394,7 +1394,7 @@ public final class ar {
             level,
             player,
             (box, color) -> boxes.add(new ar.Inner_StreamUtil(box, color, false)),
-            settings.sync() ? (target, color) -> traces.add(new ar.Inner_BufferHelper(target, color)) : null
+            settings.tracers() ? (target, color) -> traces.add(new ar.Inner_BufferHelper(target, color)) : null
          );
          ar.Inner_CachePool next = ar.Inner_CachePool.init(scanKey, revision, chunkX, chunkZ, boxes, traces, false, cached, level.getGameTime());
          update_ar_CachePool = next;
@@ -2011,17 +2011,17 @@ public final class ar {
                   pose,
                   buffer,
                   face.init_D() - camera.x,
-                  face.load() - camera.y,
-                  face.read() - camera.z,
-                  face.write() - camera.x,
-                  face.update() - camera.y,
-                  face.sync() - camera.z,
-                  face.flush() - camera.x,
-                  face.close() - camera.y,
-                  face.open() - camera.z,
-                  face.poll() - camera.x,
-                  face.push() - camera.y,
-                  face.pop() - camera.z,
+                  face.y1() - camera.y,
+                  face.z1() - camera.z,
+                  face.x2() - camera.x,
+                  face.y2() - camera.y,
+                  face.z2() - camera.z,
+                  face.x3() - camera.x,
+                  face.y3() - camera.y,
+                  face.z3() - camera.z,
+                  face.x4() - camera.x,
+                  face.y4() - camera.y,
+                  face.z4() - camera.z,
                   ar.init_I_I_F(face.color(), opacity)
                );
             }
@@ -2039,16 +2039,16 @@ public final class ar {
                ar.init(pose, buffer, target.init_AABB().move(-camera.x, -camera.y, -camera.z), target.init_I(), width);
             }
          } else {
-            for (EspVoxelMeshBuilder.MeshEdge edge : geometry.load()) {
+            for (EspVoxelMeshBuilder.MeshEdge edge : geometry.edges()) {
                ar.load(
                   pose,
                   buffer,
                   edge.init_D() - camera.x,
-                  edge.load() - camera.y,
-                  edge.read() - camera.z,
-                  edge.write() - camera.x,
-                  edge.update() - camera.y,
-                  edge.sync() - camera.z,
+                  edge.y1() - camera.y,
+                  edge.z1() - camera.z,
+                  edge.x2() - camera.x,
+                  edge.y2() - camera.y,
+                  edge.z2() - camera.z,
                   edge.color(),
                   width
                );

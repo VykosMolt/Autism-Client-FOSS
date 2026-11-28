@@ -230,7 +230,7 @@ public final class ProjectileBallistics {
    }
 
    static Vec3 applyDrag(Vec3 velocity, ProjectileBallistics.ProjectileInfo info, boolean water) {
-      double drag = water ? info.update() : info.write();
+      double drag = water ? info.waterDrag() : info.airDrag();
       if (info.kind() == ProjectileBallistics.ProjectileKind.FIREBALL) {
          return velocity.add(velocity.normalize().scale(0.1)).scale(drag);
       } else {
@@ -268,7 +268,7 @@ public final class ProjectileBallistics {
             Vec3 collisionVelocity = velocity;
             if (info.kind() == ProjectileBallistics.ProjectileKind.ARROW) {
                if (water) {
-                  velocity = velocity.scale(info.update());
+                  velocity = velocity.scale(info.waterDrag());
                }
             } else if (info.kind() == ProjectileBallistics.ProjectileKind.FISHING) {
                velocity = velocity.add(0.0, -info.init_D(), 0.0);
@@ -292,12 +292,12 @@ public final class ProjectileBallistics {
             pos = next;
             if (info.kind() == ProjectileBallistics.ProjectileKind.ARROW) {
                if (!world.isWater(pos)) {
-                  velocity = velocity.scale(info.write());
+                  velocity = velocity.scale(info.airDrag());
                }
 
                velocity = velocity.add(0.0, -info.init_D(), 0.0);
             } else if (info.kind() == ProjectileBallistics.ProjectileKind.FISHING) {
-               velocity = velocity.scale(info.write());
+               velocity = velocity.scale(info.airDrag());
             }
          }
 
@@ -372,8 +372,8 @@ public final class ProjectileBallistics {
       double init_D,
       double load_D,
       double read_D,
-      double write,
-      double update,
+      double airDrag,
+      double waterDrag,
       float init_F,
       boolean init_Z,
       boolean load_Z,
@@ -407,7 +407,7 @@ public final class ProjectileBallistics {
 
       ProjectileBallistics.ProjectileInfo withVelocity(double velocity) {
          return new ProjectileBallistics.ProjectileInfo(
-            this.init_D, this.load_D, velocity, this.write, this.update, this.init_F, this.init_Z, this.load_Z, this.read_Z, this.kind
+            this.init_D, this.load_D, velocity, this.airDrag, this.waterDrag, this.init_F, this.init_Z, this.load_Z, this.read_Z, this.kind
          );
       }
    }

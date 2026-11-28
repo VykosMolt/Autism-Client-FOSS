@@ -3205,10 +3205,10 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int bodyTop = this.windowY + 14;
          ctx.fill(this.windowX + 4, bodyTop + 2, this.windowX + this.windowWidth - 4, this.windowY + this.windowHeight - 5, -872086265);
          AutismPacketLoggerOverlay.PayloadChannelListenerOverlay.ColumnMetrics bounds = this.columnMetrics();
-         int x = bounds.init;
-         int y = bounds.load;
-         int w = bounds.read;
-         int h = bounds.write;
+         int x = bounds.x;
+         int y = bounds.y;
+         int w = bounds.width;
+         int h = bounds.height;
          autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_3(
             ctx,
             autismclient.gui.f.NetHelper.init(x, y, w, h),
@@ -3222,7 +3222,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.drawFittedText(ctx, "Passive logging and decoding still work while locked.", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), x, w, y + 60);
          int cancelW = this.warningCancelWidth();
          int acceptW = this.warningAcceptWidth();
-         int buttonY = bounds.update;
+         int buttonY = bounds.buttonY;
          int buttonsW = cancelW + 6 + acceptW;
          int cancelX = x + (w - buttonsW) / 2;
          int acceptX = cancelX + cancelW + 6;
@@ -3270,9 +3270,9 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          int cancelW = this.warningCancelWidth();
          int acceptW = this.warningAcceptWidth();
          int buttonsW = cancelW + 6 + acceptW;
-         int cancelX = bounds.init + (bounds.read - buttonsW) / 2;
+         int cancelX = bounds.x + (bounds.width - buttonsW) / 2;
          int acceptX = cancelX + cancelW + 6;
-         int buttonY = bounds.update;
+         int buttonY = bounds.buttonY;
          if (my >= buttonY && my < buttonY + AutismPacketLoggerOverlay.this.controlHeight() && mx >= cancelX && mx < cancelX + cancelW) {
             this.lockNoticeVisible = false;
             return true;
@@ -5439,7 +5439,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          this.patternField.setFocused(false);
       }
 
-      private record ColumnMetrics(int init, int load, int read, int write, int update) {
+      private record ColumnMetrics(int x, int y, int width, int height, int buttonY) {
       }
    }
 }

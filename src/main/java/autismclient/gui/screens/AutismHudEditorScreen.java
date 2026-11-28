@@ -235,36 +235,36 @@ public class AutismHudEditorScreen extends Screen {
       AutismHudEditorScreen.PickerLayout p = this.pickerLayout();
       autismclient.gui.ui.widgets.WindowFrameRenderer.init(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my),
-         autismclient.gui.f.NetHelper.init(p.init, p.load, p.read, p.write),
+         autismclient.gui.f.NetHelper.init(p.x, p.y, p.width, p.height),
          "Add Element",
          false,
          false,
          false,
-         this.inside(mx, my, p.init, p.load, p.read, p.sync),
+         this.inside(mx, my, p.x, p.y, p.width, p.titleHeight),
          true,
          4,
          4,
-         p.sync
+         p.titleHeight
       );
       int underline = ThemePaletteManager.recolor(1728002875, ThemePaletteManager.ColorRole.ACCENT);
 
       for (int col = 0; col < CATEGORY_ELEMENTS.length; col++) {
-         int colX = p.init + p.poll + col * (p.update + p.open);
-         int headerY = p.load + p.sync;
-         this.drawTrimmedText(graphics, CATEGORY_TITLES[col], colX + 2, this.centeredTextY(headerY, p.flush - 2), accentColor(), p.update - 4);
-         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(colX, headerY + p.flush - 2, p.update, 1), underline);
-         int cy = headerY + p.flush;
+         int colX = p.x + p.padding + col * (p.columnWidth + p.gap);
+         int headerY = p.y + p.titleHeight;
+         this.drawTrimmedText(graphics, CATEGORY_TITLES[col], colX + 2, this.centeredTextY(headerY, p.categoryHeight - 2), accentColor(), p.columnWidth - 4);
+         autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(colX, headerY + p.categoryHeight - 2, p.columnWidth, 1), underline);
+         int cy = headerY + p.categoryHeight;
 
          for (String id : CATEGORY_ELEMENTS[col]) {
-            boolean over = this.inside(mx, my, colX, cy, p.update, p.close - 2);
+            boolean over = this.inside(mx, my, colX, cy, p.columnWidth, p.rowHeight - 2);
             boolean enabled = AutismHudManager.getState(id).enabled;
-            autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, colX, cy, p.update, p.close - 2, over ? 1714756383 : 856888344);
+            autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, colX, cy, p.columnWidth, p.rowHeight - 2, over ? 1714756383 : 856888344);
             if (enabled) {
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(graphics, colX + 1, cy + 1, 3, p.close - 4, -10682470);
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.drawAccentBar(graphics, colX + 1, cy + 1, 3, p.rowHeight - 4, -10682470);
             }
 
-            this.drawTrimmedText(graphics, AutismHudManager.displayName(id), colX + 7, this.centeredTextY(cy, p.close - 2), enabled ? -791321 : textColor(), p.update - 9);
-            cy += p.close;
+            this.drawTrimmedText(graphics, AutismHudManager.displayName(id), colX + 7, this.centeredTextY(cy, p.rowHeight - 2), enabled ? -791321 : textColor(), p.columnWidth - 9);
+            cy += p.rowHeight;
          }
       }
    }
@@ -410,12 +410,12 @@ public class AutismHudEditorScreen extends Screen {
       AutismHudEditorScreen.SnapResult snappedY = this.bestSnap(id, y, bounds.sync(), sh, false);
       if (snappedX.snapped()) {
          outX = snappedX.candidatePosition();
-         this.guideX = snappedX.load();
+         this.guideX = snappedX.guide();
       }
 
       if (snappedY.snapped()) {
          outY = snappedY.candidatePosition();
-         this.guideY = snappedY.load();
+         this.guideY = snappedY.guide();
       }
 
       outX = this.clamp(outX, 0, maxX);
@@ -453,7 +453,7 @@ public class AutismHudEditorScreen extends Screen {
       if (distance > 6) {
          return current;
       } else {
-         return current.snapped() && distance >= current.read() ? current : new AutismHudEditorScreen.SnapResult(candidatePosition, guide, distance, true);
+         return current.snapped() && distance >= current.distance() ? current : new AutismHudEditorScreen.SnapResult(candidatePosition, guide, distance, true);
       }
    }
 
@@ -465,15 +465,15 @@ public class AutismHudEditorScreen extends Screen {
       AutismHudEditorScreen.PickerLayout p = this.pickerLayout();
 
       for (int col = 0; col < CATEGORY_ELEMENTS.length; col++) {
-         int colX = p.init + p.poll + col * (p.update + p.open);
-         int cy = p.load + p.sync + p.flush;
+         int colX = p.x + p.padding + col * (p.columnWidth + p.gap);
+         int cy = p.y + p.titleHeight + p.categoryHeight;
 
          for (String id : CATEGORY_ELEMENTS[col]) {
-            if (this.inside(mx, my, colX, cy, p.update, p.close - 2)) {
+            if (this.inside(mx, my, colX, cy, p.columnWidth, p.rowHeight - 2)) {
                return id;
             }
 
-            cy += p.close;
+            cy += p.rowHeight;
          }
       }
 
@@ -605,10 +605,10 @@ public class AutismHudEditorScreen extends Screen {
       k.init(graphics, this.font, trimmed, THEME.init_Identifier_l(l.read), color, x, y, false);
    }
 
-   private record PickerLayout(int init, int load, int read, int write, int update, int sync, int flush, int close, int open, int poll) {
+   private record PickerLayout(int x, int y, int width, int height, int columnWidth, int titleHeight, int categoryHeight, int rowHeight, int gap, int padding) {
    }
 
-   private record SnapResult(int candidatePosition, int load, int read, boolean snapped) {
+   private record SnapResult(int candidatePosition, int guide, int distance, boolean snapped) {
       static AutismHudEditorScreen.SnapResult none() {
          return new AutismHudEditorScreen.SnapResult(0, 0, 2147483647, false);
       }

@@ -1437,16 +1437,16 @@ public final class AutismHudManager {
          List<AutismHudManager.LayoutRect> blockers = needsBlockers ? outlineBlockers(font, id, rect) : null;
          if (background) {
             if ("compass".equals(id)) {
-               fillWithAlpha(context, rect.read(), rect.write(), rect.width(), rect.height(), alpha, style.close());
+               fillWithAlpha(context, rect.read(), rect.write(), rect.width(), rect.height(), alpha, style.backgroundColor());
             } else {
-               init_V_GuiGraphicsExtract_3(context, font, id, rect, withAlpha(style.close(), alpha), blockers);
+               init_V_GuiGraphicsExtract_3(context, font, id, rect, withAlpha(style.backgroundColor(), alpha), blockers);
             }
          } else if (editor) {
             autismclient.gui.f.b.k.init(context, rect.read(), rect.write(), rect.right(), rect.bottom(), editorBackdropColor(selected));
          }
 
          if (style.outline() && !flatGrid || editor || selected || hovered) {
-            int border = selected ? colorSetting(id, "accent-color", -50373) : (editor ? colorSetting(id, "outline-color", -1426113733) : style.open());
+            int border = selected ? colorSetting(id, "accent-color", -50373) : (editor ? colorSetting(id, "outline-color", -1426113733) : style.outlineColor());
             int outlineColor = withAlpha(border, alpha);
             if (!editor && !selected && !hovered) {
                drawOutline(context, rect, blockers, outlineColor, style.outlineWidth());
@@ -1492,9 +1492,9 @@ public final class AutismHudManager {
       boolean background = style.background();
       boolean drawOutline = style.outline() || editor || selected || hovered;
       boolean shadow = style.shadow();
-      int backgroundColor = withAlpha(style.close(), alpha);
+      int backgroundColor = withAlpha(style.backgroundColor(), alpha);
       int editorColor = editorBackdropColor(selected);
-      int border = selected ? colorSetting(id, "accent-color", -50373) : (editor ? colorSetting(id, "outline-color", -1426113733) : style.open());
+      int border = selected ? colorSetting(id, "accent-color", -50373) : (editor ? colorSetting(id, "outline-color", -1426113733) : style.outlineColor());
       int outlineColor = withAlpha(border, alpha);
       int outlineWidth = style.outlineWidth();
       int verticalPad = style.verticalPadding();
@@ -1584,7 +1584,7 @@ public final class AutismHudManager {
       AutismHudManager.ElementStyle style = cached.style();
       int pad = style.padding();
       int y = renderY + style.verticalPadding();
-      int lineH = style.update();
+      int lineH = style.lineHeight();
       String alignment = style.alignment();
       boolean shadow = style.shadow();
       int maxW = Math.max(1, unscaledW - pad * 2);
@@ -1690,11 +1690,11 @@ public final class AutismHudManager {
       int w = cols * 18;
       int h = rows * 18;
       if (style.background()) {
-         autismclient.gui.f.b.k.init(context, x, y, x + w, y + h, withAlpha(style.close(), alpha));
+         autismclient.gui.f.b.k.init(context, x, y, x + w, y + h, withAlpha(style.backgroundColor(), alpha));
       }
 
       if (style.outline()) {
-         int line = withAlpha(style.open(), alpha);
+         int line = withAlpha(style.outlineColor(), alpha);
 
          for (int i = 0; i <= cols; i++) {
             int lx = i == cols ? x + w - 1 : x + i * 18;
@@ -1724,7 +1724,7 @@ public final class AutismHudManager {
    ) {
       int stripH = Math.max(16, height);
       int centerX = x + width / 2;
-      autismclient.gui.f.b.k.init(context, centerX, y + 2, centerX + 1, y + stripH - 2, withAlpha(style.poll(), alpha * 0.88F));
+      autismclient.gui.f.b.k.init(context, centerX, y + 2, centerX + 1, y + stripH - 2, withAlpha(style.accentColor(), alpha * 0.88F));
       String[] labels = COMPASS_LABELS;
       int reloadGen = autismclient.gui.f.b.k.init_I();
       if (compassFont != font || compassReloadGen != reloadGen) {
@@ -1752,7 +1752,7 @@ public final class AutismHudManager {
             presence = presence * presence * (3.0 - 2.0 * presence);
             int tx = centerX + (int)Math.round(delta / visibleDegrees * (width / 2.0 - 8.0));
             double face = Math.max(0.0, 1.0 - distance / 24.0);
-            int baseColor = lerpColor(style.push(), style.poll(), face);
+            int baseColor = lerpColor(style.labelColor(), style.accentColor(), face);
             int textColor = withAlpha(baseColor, alpha * (0.18F + (float)presence * 0.82F));
             int tw = COMPASS_LABEL_WIDTHS[i];
             int halo = withAlpha(ThemePaletteManager.recolor(942148882, ThemePaletteManager.ColorRole.BACKDROP), alpha * (float)face);
@@ -3872,9 +3872,9 @@ public final class AutismHudManager {
       List<AutismHudManager.LayoutRect> rects = new ArrayList<>();
       AutismHudManager.ScaledElementBox layout = cached.layout();
       AutismHudManager.ElementStyle style = cached.style();
-      int rowH = style.sync();
-      int gap = style.write();
-      int stairSnap = style.flush();
+      int rowH = style.rowHeight();
+      int gap = style.lineGap();
+      int stairSnap = style.stairSnap();
       int pad = style.padding();
       int groupWidth = -1;
 
@@ -4133,7 +4133,7 @@ public final class AutismHudManager {
    }
 
    private record LayoutSignature(
-      boolean enabled, String anchor, int x, int load, int read, long nowBucket, int write, int update, int sync, int flush, int close, int open, int poll
+      boolean enabled, String anchor, int x, int y, int settingsHash, long nowBucket, int screenWidth, int screenHeight, int playerId, int activeRevision, int moduleRevision, int fontId, int paletteGeneration
    ) {
    }
 
@@ -4219,15 +4219,15 @@ public final class AutismHudManager {
       int outlineWidth,
       int padding,
       int verticalPadding,
-      int write,
-      int update,
-      int sync,
-      int flush,
+      int lineGap,
+      int lineHeight,
+      int rowHeight,
+      int stairSnap,
       String alignment,
-      int close,
-      int open,
-      int poll,
-      int push
+      int backgroundColor,
+      int outlineColor,
+      int accentColor,
+      int labelColor
    ) {
    }
 

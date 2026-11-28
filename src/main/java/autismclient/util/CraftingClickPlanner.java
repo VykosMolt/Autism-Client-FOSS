@@ -178,7 +178,7 @@ final class CraftingClickPlanner {
       List<ItemStack> keys = new ArrayList<>();
       List<Integer> avail = new ArrayList<>();
 
-      for (int slot = sim.layout.write(); slot < sim.layout.update(); slot++) {
+      for (int slot = sim.layout.inventoryStart(); slot < sim.layout.inventoryEnd(); slot++) {
          ItemStack stack = sim.slots[slot];
          if (isUsableIngredient(stack)) {
             int index = indexOfKey(keys, stack);
@@ -392,15 +392,15 @@ final class CraftingClickPlanner {
    private static List<Integer> sourceSlots(CraftingClickPlanner.ClickSimulator sim, ItemStack key, int total, int selectedHotbar) {
       List<Integer> sources = new ArrayList<>();
 
-      for (int slot = sim.layout.write(); slot < sim.layout.update(); slot++) {
+      for (int slot = sim.layout.inventoryStart(); slot < sim.layout.inventoryEnd(); slot++) {
          ItemStack stack = sim.slots[slot];
          if (isUsableIngredient(stack) && ItemStack.isSameItemSameComponents(stack, key)) {
             sources.add(slot);
          }
       }
 
-      int selectedSlot = selectedHotbar < 0 ? -1 : sim.layout.sync() + selectedHotbar;
-      Comparator<Integer> tier = Comparator.comparingInt(slotx -> slotx == selectedSlot ? 2 : (slotx >= sim.layout.sync() ? 1 : 0));
+      int selectedSlot = selectedHotbar < 0 ? -1 : sim.layout.hotbarStart() + selectedHotbar;
+      Comparator<Integer> tier = Comparator.comparingInt(slotx -> slotx == selectedSlot ? 2 : (slotx >= sim.layout.hotbarStart() ? 1 : 0));
       Integer cover = null;
 
       for (int slot : sources) {
@@ -510,7 +510,7 @@ final class CraftingClickPlanner {
    record PhaseResult(CraftingClickPlanner.ClickPhase phase, String error) {
    }
 
-   record GridLayout(int resultSlot, int load, int read, int[] inputSlots, int write, int update, int sync) {
+   record GridLayout(int resultSlot, int load, int gridRows, int[] inputSlots, int inventoryStart, int inventoryEnd, int hotbarStart) {
       static CraftingClickPlanner.GridLayout craftingTable() {
          return new CraftingClickPlanner.GridLayout(0, 3, 3, new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 46, 37);
       }
@@ -529,7 +529,7 @@ final class CraftingClickPlanner {
    }
 
    record ClickPhase(
-      List<CraftingClickPlanner.SlotClick> clicks, int init_I, List<ItemStack[]> predictedSlots, List<ItemStack> read, List<ItemStack> write, int load_I
+      List<CraftingClickPlanner.SlotClick> clicks, int init_I, List<ItemStack[]> predictedSlots, List<ItemStack> read, List<ItemStack> resultSnapshots, int load_I
    ) {
       ItemStack[] finalSlots() {
          return this.predictedSlots.get(this.predictedSlots.size() - 1);
@@ -566,7 +566,7 @@ final class CraftingClickPlanner {
       }
    }
 
-   record RecipeSpec(String id, ItemStack result, int width, int load, boolean shaped, List<Ingredient> ingredients) {
+   record RecipeSpec(String id, ItemStack result, int width, int height, boolean shaped, List<Ingredient> ingredients) {
       static CraftingClickPlanner.RecipeSpec fromRecipe(RecipeCatalogLoader.CraftingEntry recipe) {
          return new CraftingClickPlanner.RecipeSpec(
             recipe.recipeKey, recipe.result, recipe.width, recipe.height, recipe.shaped, recipe.shaped ? recipe.gridIngredients : recipe.requirements
@@ -574,13 +574,13 @@ final class CraftingClickPlanner {
       }
 
       boolean fits(CraftingClickPlanner.GridLayout layout) {
-         return !this.shaped ? this.ingredients.size() <= layout.inputSlots().length : this.width <= layout.gridWidth() && this.load <= layout.read();
+         return !this.shaped ? this.ingredients.size() <= layout.inputSlots().length : this.width <= layout.gridWidth() && this.height <= layout.gridRows();
       }
 
       Ingredient[] placeIngredients(CraftingClickPlanner.GridLayout layout) {
          Ingredient[] cells = new Ingredient[layout.inputSlots().length];
          if (this.shaped) {
-            for (int row = 0; row < this.load; row++) {
+            for (int row = 0; row < this.height; row++) {
                for (int col = 0; col < this.width; col++) {
                   int index = row * this.width + col;
                   if (index < this.ingredients.size()) {
@@ -723,14 +723,14 @@ final class CraftingClickPlanner {
          while (!this.carried.isEmpty() && guard++ < 64) {
             int target = -1;
 
-            for (int slot = this.layout.write(); slot < this.layout.update() && target < 0; slot++) {
+            for (int slot = this.layout.inventoryStart(); slot < this.layout.inventoryEnd() && target < 0; slot++) {
                ItemStack stack = this.slots[slot];
                if (!stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, this.carried) && stack.getCount() < stack.getMaxStackSize()) {
                   target = slot;
                }
             }
 
-            for (int slot = this.layout.write(); slot < this.layout.update() && target < 0; slot++) {
+            for (int slot = this.layout.inventoryStart(); slot < this.layout.inventoryEnd() && target < 0; slot++) {
                if (this.slots[slot].isEmpty()) {
                   target = slot;
                }
@@ -865,7 +865,7 @@ final class CraftingClickPlanner {
                return;
             }
 
-            this.moveItemStackTo(stack, this.layout.write(), this.layout.update(), false);
+            this.moveItemStackTo(stack, this.layout.inventoryStart(), this.layout.inventoryEnd(), false);
             if (stack.isEmpty()) {
                this.slots[slot] = ItemStack.EMPTY;
             }
@@ -887,7 +887,7 @@ final class CraftingClickPlanner {
 
             ItemStack clicked = result.copy();
             ItemStack moving = result.copy();
-            if (!this.moveItemStackTo(moving, this.layout.write(), this.layout.update(), true)) {
+            if (!this.moveItemStackTo(moving, this.layout.inventoryStart(), this.layout.inventoryEnd(), true)) {
                return;
             }
 

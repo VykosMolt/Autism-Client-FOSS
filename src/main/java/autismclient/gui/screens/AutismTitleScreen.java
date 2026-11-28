@@ -528,10 +528,10 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
                + 7;
 
             for (AutismTitleScreen.ModuleRow row : this.moduleRows) {
-               if (row.load() < 0) {
+               if (row.total() < 0) {
                   modulesContentW = Math.max(modulesContentW, 12 + k.init(this.font, row.label(), autismclient.gui.f.a.DataUtil.init, 0));
                } else {
-                  String count = row.active() + "/" + row.load();
+                  String count = row.active() + "/" + row.total();
                   modulesContentW = Math.max(
                      modulesContentW,
                      6
@@ -807,10 +807,10 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
          int rowY = bigY + 15 + 3;
 
          for (AutismTitleScreen.ModuleRow row : this.moduleRows) {
-            if (row.load() < 0) {
+            if (row.total() < 0) {
                k.init(graphics, this.font, row.label(), autismclient.gui.f.a.DataUtil.init, muted, x + 6, rowY + 2, false);
             } else {
-               String count = row.active() + "/" + row.load();
+               String count = row.active() + "/" + row.total();
                int countColor = row.active() > 0 ? accent : muted;
                int countW = k.init(this.font, count, autismclient.gui.f.a.DataUtil.init, countColor);
                String name = this.ellipsize(row.label(), this.modulesW - countW - 20, autismclient.gui.f.a.DataUtil.init, body);
@@ -931,7 +931,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
    private record StatusRow(String label, Supplier<String> value) {
    }
 
-   private record ModuleRow(String label, int active, int load) {
+   private record ModuleRow(String label, int active, int total) {
    }
 
    private final class TitleButton {

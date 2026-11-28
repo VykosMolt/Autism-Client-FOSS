@@ -162,8 +162,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                         context,
                         this.font,
                         tab.init_I(),
-                        tab.load(),
-                        tab.read(),
+                        tab.y(),
+                        tab.width(),
                         this.tabHeight(),
                         tab.label(),
                         "Raw".equals(tab.label()) == this.rawTab,
@@ -221,8 +221,8 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                         context,
                         this.font,
                         button.init_I(),
-                        button.load(),
-                        button.read(),
+                        button.y(),
+                        button.width(),
                         this.tabHeight(),
                         button.label(),
                         button.active() ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
@@ -851,9 +851,9 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       return 12;
    }
 
-   private record TabButton(String label, int init_I, int load, int read, boolean active) {
+   private record TabButton(String label, int init_I, int y, int width, boolean active) {
       boolean contains(double mouseX, double mouseY, int height) {
-         return mouseX >= this.init_I && mouseX < this.init_I + this.read && mouseY >= this.load && mouseY < this.load + height;
+         return mouseX >= this.init_I && mouseX < this.init_I + this.width && mouseY >= this.y && mouseY < this.y + height;
       }
    }
 

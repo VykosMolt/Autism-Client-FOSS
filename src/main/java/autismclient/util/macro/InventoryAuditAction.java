@@ -1580,7 +1580,7 @@ public class InventoryAuditAction implements MacroAction {
    private record TransferAttempt(int slotCount, Map<String, Integer> items) {
    }
 
-   private record ContainerState(boolean open, int containerId, int load, int read, int write) {
+   private record ContainerState(boolean open, int containerId, int slotCount, int filledSlots, int totalItems) {
    }
 
    private record SlotEntry(int visibleSlot, String label, ItemStack stack) {

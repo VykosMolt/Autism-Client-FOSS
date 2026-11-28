@@ -141,13 +141,13 @@ public final class ViaFabricPlusBridge {
          }
 
          if (address.length >= 1 && address.length <= 255) {
-            byte[] username = proxy.load().getBytes(StandardCharsets.UTF_8);
-            byte[] password = proxy.read().getBytes(StandardCharsets.UTF_8);
+            byte[] username = proxy.username().getBytes(StandardCharsets.UTF_8);
+            byte[] password = proxy.password().getBytes(StandardCharsets.UTF_8);
             Socket socket = null;
             boolean connected = false;
 
             try {
-               if (username.length <= 255 && password.length <= 255 && proxy.load().indexOf(0) < 0) {
+               if (username.length <= 255 && password.length <= 255 && proxy.username().indexOf(0) < 0) {
                   socket = openSocket();
                   socket.setSoTimeout(3000);
                   socket.connect(new InetSocketAddress(proxy.host(), proxy.port()), 3000);
@@ -289,7 +289,7 @@ public final class ViaFabricPlusBridge {
       void close();
    }
 
-   private record ProxyRoute(ProxyProtocolType type, String host, int port, String load, String read) {
+   private record ProxyRoute(ProxyProtocolType type, String host, int port, String username, String password) {
       private static ViaFabricPlusBridge.ProxyRoute of(bW proxy) throws IOException {
          if (proxy == null) {
             return null;

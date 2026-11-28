@@ -875,11 +875,11 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
                if (obsidian == null && place == null && this.plannedObsidianPos == null && this.plannedSupportPos == null) {
                   place = this.planPlace(enemy, budget);
                   boolean builderSuppressed = false;
-                  if (this.bool("place") && this.bool("obsidian") && this.canUseCrystalSlot() && (place == null || place.load() < 8.0)) {
+                  if (this.bool("place") && this.bool("obsidian") && this.canUseCrystalSlot() && (place == null || place.damage() < 8.0)) {
                      if (this.useBuilderSupport(enemy)) {
                         builderSuppressed = true;
                      } else if (!this.hasPendingBreakNearby()) {
-                        obsidian = this.planBuilder(enemy, budget, place == null ? -1.0 : place.load());
+                        obsidian = this.planBuilder(enemy, budget, place == null ? -1.0 : place.damage());
                         if (obsidian != null) {
                            place = null;
                            this.setBuilderPlan(enemy, obsidian);
@@ -1083,7 +1083,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       } else {
          this.idleAreaTicks = 0;
          BlockPos support = place.support();
-         boolean strong = place.load() >= this.decimal("min-target-damage") + 2.0;
+         boolean strong = place.damage() >= this.decimal("min-target-damage") + 2.0;
          boolean sameArea = this.lastPlacedSupport != null
             && Math.abs(support.getX() - this.lastPlacedSupport.getX()) <= 1
             && Math.abs(support.getY() - this.lastPlacedSupport.getY()) <= 1
@@ -1607,10 +1607,10 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             autismclient.util.ExplosionDamageCalculator.DamagePair rank = this.rankDamage(enemy, candidate.source(), blastTarget);
             if (!this.meetsDamageThresholds(enemy, rank)) {
                if (this.bool("defend") && this.scoredCandidates.size() < 4 && rank.load() >= floor && rank.selfDamage() > this.decimal("max-self-damage")) {
-                  this.scoredCandidates.add(new CrystalAuraModule.ScoredCell(candidate.support(), rank, candidate.load()));
+                  this.scoredCandidates.add(new CrystalAuraModule.ScoredCell(candidate.support(), rank, candidate.distanceSq()));
                }
             } else if (this.isSafeForFriends(candidate.source())) {
-               accepted.add(new CrystalAuraModule.ScoredCell(candidate.support(), rank, candidate.load()));
+               accepted.add(new CrystalAuraModule.ScoredCell(candidate.support(), rank, candidate.distanceSq()));
                bestDamage = Math.max(bestDamage, rank.load());
             }
          }
@@ -1915,7 +1915,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
             enemy, candidate.source(), 6.0F, this.simOptions.withPlacedObsidian(candidate.support()), blastTarget
          );
          if (this.meetsDamageThresholds(enemy, rank) && this.isSafeForFriends(candidate.source())) {
-            accepted.add(new CrystalAuraModule.ScoredCell(candidate.support(), rank, candidate.load()));
+            accepted.add(new CrystalAuraModule.ScoredCell(candidate.support(), rank, candidate.distanceSq()));
             bestDamage = Math.max(bestDamage, rank.load());
          }
       }
@@ -2941,7 +2941,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private record BreakAction(EndCrystal crystal, RotationMath.Rotation goal, double range) {
    }
 
-   private record PlacementCandidate(BlockPos support, Vec3 source, double bound, double load) {
+   private record PlacementCandidate(BlockPos support, Vec3 source, double bound, double distanceSq) {
    }
 
    private record SupportOption(
@@ -2955,7 +2955,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       double range,
       autismclient.util.BlockPlacementPlanner.PlacementPlan placement,
       autismclient.util.BlockPlacementPlanner.Query request,
-      double load
+      double damage
    ) {
    }
 

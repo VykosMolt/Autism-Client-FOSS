@@ -1035,9 +1035,9 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       AnchorAuraModule.AnchorPlan plan = this.planForEnemy(enemy, tick, range, budget);
       if (plan != null
          && (plan.step() == AnchorAuraModule.AnchorStep.PLACE || plan.step() == AnchorAuraModule.AnchorStep.SUPPORT)) {
-         this.plannedAnchor = plan.step() == AnchorAuraModule.AnchorStep.SUPPORT ? plan.read() : plan.cell();
+         this.plannedAnchor = plan.step() == AnchorAuraModule.AnchorStep.SUPPORT ? plan.anchorCell() : plan.cell();
          this.plannedSupport = plan.step() == AnchorAuraModule.AnchorStep.SUPPORT ? plan.cell() : null;
-         this.plannedShield = plan.load();
+         this.plannedShield = plan.shield();
          this.plannedShieldObsidian = plan.shieldObsidian();
          this.plannedSlot = plan.slot();
          this.plannedTarget = enemy;
@@ -1467,13 +1467,13 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       this.markStep(plan.step());
       if (plan.step() == AnchorAuraModule.AnchorStep.SUPPORT) {
-         this.adoptAnchor(plan.read(), plan.cell(), tick);
+         this.adoptAnchor(plan.anchorCell(), plan.cell(), tick);
          this.supportAttempts++;
       }
 
       if (plan.step() == AnchorAuraModule.AnchorStep.PLACE) {
          if (this.activeAnchor == null || !this.activeAnchor.equals(plan.cell())) {
-            this.adoptAnchor(plan.cell(), tick, plan.load(), plan.shieldObsidian());
+            this.adoptAnchor(plan.cell(), tick, plan.shield(), plan.shieldObsidian());
          }
 
          this.placeAttempts++;
@@ -1526,14 +1526,14 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             var10000 = !anchor
                && isObsidian(MC.player.getMainHandItem())
                && this.canPlaceBlockAt(Blocks.OBSIDIAN.defaultBlockState(), plan.cell(), this.motionEnvelope())
-               && this.canPlaceAnchorAt(plan.read(), this.motionEnvelope())
-               && this.planStillWorthIt(this.currentTarget, plan.read(), plan.cell(), null);
+               && this.canPlaceAnchorAt(plan.anchorCell(), this.motionEnvelope())
+               && this.planStillWorthIt(this.currentTarget, plan.anchorCell(), plan.cell(), null);
             break;
          case PLACE:
             var10000 = !anchor
                && isRespawnAnchor(MC.player.getMainHandItem())
                && this.canPlaceBlockAt(Blocks.RESPAWN_ANCHOR.defaultBlockState(), plan.cell(), this.motionEnvelope())
-               && this.planStillWorthIt(this.currentTarget, plan.cell(), null, plan.load());
+               && this.planStillWorthIt(this.currentTarget, plan.cell(), null, plan.shield());
             break;
          case SHIELD:
             var10000 = state.canBeReplaced()
@@ -1748,7 +1748,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             enemy, candidate.center(), this.simOptionsFor(candidate.cell()), lead
          );
          if (this.rankAcceptable(rank)) {
-            accepted.add(new AnchorAuraModule.ScoredCell(candidate.cell(), rank, candidate.load()));
+            accepted.add(new AnchorAuraModule.ScoredCell(candidate.cell(), rank, candidate.distanceSq()));
             bestValue = Math.max(bestValue, tradeValue(rank, efficient));
          }
       }
@@ -1840,7 +1840,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
          for (int i = 0; i < limit; i++) {
             AnchorAuraModule.AnchorSupportPair pair = accepted.get(i);
-            AnchorAuraModule.AnchorPlan plan = this.planSupport(pair.cell(), pair.load(), range, budget);
+            AnchorAuraModule.AnchorPlan plan = this.planSupport(pair.cell(), pair.support(), range, budget);
             if (plan != null) {
                return plan;
             }
@@ -2485,9 +2485,9 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       int slot,
       autismclient.util.BlockPlacementPlanner.PlacementPlan placement,
       double range,
-      BlockPos load,
+      BlockPos shield,
       boolean shieldObsidian,
-      BlockPos read
+      BlockPos anchorCell
    ) {
    }
 
@@ -2499,24 +2499,24 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       DETONATE;
    }
 
-   private record AnchorHitValidator(BlockPos init) implements autismclient.util.BlockPlacementPlanner.HitValidator {
+   private record AnchorHitValidator(BlockPos anchor) implements autismclient.util.BlockPlacementPlanner.HitValidator {
       @Override
       public boolean lands(BlockHitResult hit, BlockPos cell) {
-         return hit != null && this.init.equals(hit.getBlockPos());
+         return hit != null && this.anchor.equals(hit.getBlockPos());
       }
 
       @Override
       public boolean accepts(BlockState state, BlockPos pos, boolean sneaking) {
-         return this.init.equals(pos) && state.getBlock() instanceof RespawnAnchorBlock;
+         return this.anchor.equals(pos) && state.getBlock() instanceof RespawnAnchorBlock;
       }
    }
 
    private record SupportAim(autismclient.util.BlockPlacementPlanner.SupportCandidate support, autismclient.util.BlockPlacementPlanner.AimSample aim) {
    }
 
-   private record AnchorCandidate(BlockPos cell, Vec3 center, double damageBound, double load) {
+   private record AnchorCandidate(BlockPos cell, Vec3 center, double damageBound, double distanceSq) {
    }
 
-   private record AnchorSupportPair(BlockPos cell, BlockPos load, autismclient.util.ExplosionDamageCalculator.DamagePair rank, double distanceSq) {
+   private record AnchorSupportPair(BlockPos cell, BlockPos support, autismclient.util.ExplosionDamageCalculator.DamagePair rank, double distanceSq) {
    }
 }
