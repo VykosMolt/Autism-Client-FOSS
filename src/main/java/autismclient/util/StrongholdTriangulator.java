@@ -278,7 +278,7 @@ public final class StrongholdTriangulator {
    public static final class ThrowTracker {
       private final Vec3 origin;
       private Vec3 last;
-      private Vec3 read_Vec3;
+      private Vec3 lastDirection;
       private double sumX;
       private double sumZ;
       private double sumXX;
@@ -306,9 +306,9 @@ public final class StrongholdTriangulator {
             if (!(length > 16.0) && !(length + 0.2 < this.last.subtract(this.origin).horizontalDistance())) {
                if (length >= 0.5) {
                   Vec3 direction = new Vec3(travel.x / length, 0.0, travel.z / length);
-                  if (this.read_Vec3 == null) {
-                     this.read_Vec3 = direction;
-                  } else if (this.read_Vec3.dot(direction) < 0.9998) {
+                  if (this.lastDirection == null) {
+                     this.lastDirection = direction;
+                  } else if (this.lastDirection.dot(direction) < 0.9998) {
                      this.init_Z = true;
                      return null;
                   }

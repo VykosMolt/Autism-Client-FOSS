@@ -54,7 +54,7 @@ public final class IncomingProjectileScanner {
       }
    }
 
-   static IncomingProjectileScanner.BallisticParams init(Projectile projectile, IncomingProjectileScanner.ProjectileKind kind) {
+   static IncomingProjectileScanner.BallisticParams ballisticsFor(Projectile projectile, IncomingProjectileScanner.ProjectileKind kind) {
       boolean gravity = !projectile.isNoGravity();
       IncomingProjectileScanner.BallisticParams var10000;
       switch (kind) {
@@ -72,11 +72,11 @@ public final class IncomingProjectileScanner {
    }
 
    static IncomingProjectileScanner.ProjectilePath traceProjectile(Level level, Projectile projectile, IncomingProjectileScanner.ProjectileKind kind) {
-      return init_A_DataUtil_A_ConfigStore(
-         init_A_ConfigStore_Level(level, projectile, projectile.getOwner(), projectile.tickCount, projectile.getBbWidth()),
+      return tracePath(
+         traceWorld(level, projectile, projectile.getOwner(), projectile.tickCount, projectile.getBbWidth()),
          projectile.position(),
          projectile.getDeltaMovement(),
-         init(projectile, kind),
+         ballisticsFor(projectile, kind),
          120
       );
    }
@@ -99,8 +99,8 @@ public final class IncomingProjectileScanner {
       IncomingProjectileScanner.BallisticParams physics = kind == IncomingProjectileScanner.ProjectileKind.FIREBALL
          ? new IncomingProjectileScanner.BallisticParams(0.0, 0.949999988079071, 0.800000011920929, 0.1, true)
          : new IncomingProjectileScanner.BallisticParams(info.init_D(), info.write(), info.update(), 0.0, kind != IncomingProjectileScanner.ProjectileKind.ARROW);
-      return init_A_DataUtil_A_ConfigStore(
-         init_A_ConfigStore_Level(level, owner, owner, 0, kind == IncomingProjectileScanner.ProjectileKind.FIREBALL ? 1.0 : 0.25),
+      return tracePath(
+         traceWorld(level, owner, owner, 0, kind == IncomingProjectileScanner.ProjectileKind.FIREBALL ? 1.0 : 0.25),
          new Vec3(owner.getX(), owner.getEyeY() - 0.1, owner.getZ()),
          velocity,
          physics,
@@ -108,7 +108,7 @@ public final class IncomingProjectileScanner {
       );
    }
 
-   private static IncomingProjectileScanner.TraceWorld init_A_ConfigStore_Level(final Level level, final Entity source, final Entity owner, final int age, final double width) {
+   private static IncomingProjectileScanner.TraceWorld traceWorld(final Level level, final Entity source, final Entity owner, final int age, final double width) {
       final MutableBlockPos cursor = new MutableBlockPos();
       final Set<Entity> pierced = new HashSet<>();
       final int pierce = source instanceof AbstractArrow arrow ? arrow.getPierceLevel() : 0;
@@ -166,7 +166,7 @@ public final class IncomingProjectileScanner {
       };
    }
 
-   static IncomingProjectileScanner.ProjectilePath init_A_DataUtil_A_ConfigStore(IncomingProjectileScanner.TraceWorld world, Vec3 position, Vec3 velocity, IncomingProjectileScanner.BallisticParams physics, int maxTicks) {
+   static IncomingProjectileScanner.ProjectilePath tracePath(IncomingProjectileScanner.TraceWorld world, Vec3 position, Vec3 velocity, IncomingProjectileScanner.BallisticParams physics, int maxTicks) {
       if (isFinite(position) && isFinite(velocity)) {
          List<Vec3> points = new ArrayList<>(Math.min(maxTicks + 1, 121));
          points.add(position);
@@ -174,7 +174,7 @@ public final class IncomingProjectileScanner {
          for (int tick = 0; tick < Math.min(120, maxTicks) && world.inBounds(position); tick++) {
             boolean water = world.isFluid(position);
             if (physics.init_Z()) {
-               velocity = init(velocity, physics, water);
+               velocity = applyDrag(velocity, physics, water);
             } else if (water) {
                velocity = velocity.scale(physics.read());
             }
@@ -208,7 +208,7 @@ public final class IncomingProjectileScanner {
       }
    }
 
-   static Vec3 init(Vec3 velocity, IncomingProjectileScanner.BallisticParams physics, boolean water) {
+   static Vec3 applyDrag(Vec3 velocity, IncomingProjectileScanner.BallisticParams physics, boolean water) {
       if (physics.write() != 0.0) {
          velocity = velocity.add(velocity.normalize().scale(physics.write()));
       }
@@ -246,13 +246,13 @@ public final class IncomingProjectileScanner {
    static boolean isPearlThreat(IncomingProjectileScanner.ProjectileWarning warning) {
       return warning != null
          && warning.kind() == IncomingProjectileScanner.ProjectileKind.PEARL
-         && init(warning.init_A_DataUtil())
+         && hasImpact(warning.init_A_DataUtil())
          && warning.shooter() != null
          && warning.shooter().isAlive()
          && !warning.entity().isRemoved();
    }
 
-   static boolean init(IncomingProjectileScanner.ProjectilePath flight) {
+   static boolean hasImpact(IncomingProjectileScanner.ProjectilePath flight) {
       return flight != null && flight.init_Vec3() != null && flight.load() != null && isFinite(flight.load());
    }
 

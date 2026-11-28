@@ -41,14 +41,14 @@ final class AiCellMaterials {
             ArrayList<AiCellMaterials.MaterialRequirement> out = new ArrayList<>();
             String id = cell.block();
             if (id.equals("minecraft:grass_block")) {
-               init(out, AiCellMaterials.CellAction.PLACE, Items.DIRT, 1, AiCellMaterials.MaterialUse.CONSUME);
+               require(out, AiCellMaterials.CellAction.PLACE, Items.DIRT, 1, AiCellMaterials.MaterialUse.CONSUME);
                return List.copyOf(out);
             }
 
             if (!id.equals("minecraft:farmland") && !id.equals("minecraft:dirt_path")) {
                if (AiBuilder.fluidOfCell(cell) != null) {
                   if (!AiBuilder.isFlowingFluidCell(cell)) {
-                     init(
+                     require(
                         out,
                         AiCellMaterials.CellAction.POUR,
                         id.equals("minecraft:lava") ? Items.LAVA_BUCKET : Items.WATER_BUCKET,
@@ -63,7 +63,7 @@ final class AiCellMaterials {
                   int wanted = Integer.parseInt(cell.properties().get("level"));
                   int current = present ? live.getValue(ComposterBlock.LEVEL) : 0;
                   if (!present || current > wanted && current < 8) {
-                     init(out, AiCellMaterials.CellAction.PLACE, Items.COMPOSTER, 1, AiCellMaterials.MaterialUse.CONSUME);
+                     require(out, AiCellMaterials.CellAction.PLACE, Items.COMPOSTER, 1, AiCellMaterials.MaterialUse.CONSUME);
                   }
 
                   if (current > wanted) {
@@ -71,21 +71,21 @@ final class AiCellMaterials {
                   }
 
                   int feeds = Math.max(0, (wanted == 8 ? 7 : wanted) - current);
-                  init(out, AiCellMaterials.CellAction.COMPOST, Items.PUMPKIN_PIE, feeds, AiCellMaterials.MaterialUse.CONSUME);
+                  require(out, AiCellMaterials.CellAction.COMPOST, Items.PUMPKIN_PIE, feeds, AiCellMaterials.MaterialUse.CONSUME);
                   return List.copyOf(out);
                } else {
                   if (AiSchematicActions.isFilledCauldron(cell)) {
-                     init(cell, live, out);
+                     addCauldronRequirements(cell, live, out);
                      return List.copyOf(out);
                   }
 
                   if (id.startsWith("minecraft:potted_")) {
                      if (live == null || !live.is(Blocks.FLOWER_POT)) {
-                        init(out, AiCellMaterials.CellAction.PLACE, Items.FLOWER_POT, 1, AiCellMaterials.MaterialUse.CONSUME);
+                        require(out, AiCellMaterials.CellAction.PLACE, Items.FLOWER_POT, 1, AiCellMaterials.MaterialUse.CONSUME);
                      }
 
                      Item plant = AiSchematicActions.pottedItem(AiBuilder.toBlockState(cell).getBlock());
-                     init(out, AiCellMaterials.CellAction.PLANT, plant, 1, AiCellMaterials.MaterialUse.CONSUME);
+                     require(out, AiCellMaterials.CellAction.PLANT, plant, 1, AiCellMaterials.MaterialUse.CONSUME);
                      return List.copyOf(out);
                   } else {
                      Block block = BuiltInRegistries.BLOCK.getValue(Identifier.parse(id));
@@ -114,7 +114,7 @@ final class AiCellMaterials {
                         }
 
                         replacing = !partial;
-                        init(out, item, partial, remaining);
+                        addRemaining(out, item, partial, remaining);
                      } else if (countProperty != null) {
                         int wanted = Math.max(1, Integer.parseInt(cell.properties().get(countProperty)));
                         int current = 0;
@@ -127,39 +127,39 @@ final class AiCellMaterials {
                            }
                         }
 
-                        init(out, item, same, Math.max(0, wanted - current));
+                        addRemaining(out, item, same, Math.max(0, wanted - current));
                      } else if (AiBuilder.isDoubleSlabCell(cell)) {
                         int remaining = !same ? 2 : (live.getValue(SlabBlock.TYPE) == SlabType.DOUBLE ? 0 : 1);
-                        init(out, item, same, remaining);
+                        addRemaining(out, item, same, remaining);
                      } else {
-                        replacing = !same || !existingDoubleSlab && init(cell, live, block);
+                        replacing = !same || !existingDoubleSlab && needsReplaceForState(cell, live, block);
                         if (replacing) {
-                           init(out, AiCellMaterials.CellAction.PLACE, item, 1, AiCellMaterials.MaterialUse.CONSUME);
+                           require(out, AiCellMaterials.CellAction.PLACE, item, 1, AiCellMaterials.MaterialUse.CONSUME);
                         }
                      }
 
                      if (!(block instanceof MultifaceBlock)) {
-                        init(cell, live, block, same && !replacing, out);
+                        addPostInteractTools(cell, live, block, same && !replacing, out);
                      }
 
-                     load(cell, live, block, same && !replacing, out);
+                     addWaterlogRequirement(cell, live, block, same && !replacing, out);
                      if (block instanceof CopperBulbBlock
                         && "true".equals(cell.properties().get("lit"))
                         && !"true".equals(cell.properties().get("powered"))
                         && (!same || !live.getValue(CopperBulbBlock.LIT))) {
-                        init(out, AiCellMaterials.CellAction.INTERACT, Items.REDSTONE_BLOCK, 1, AiCellMaterials.MaterialUse.REUSE);
+                        require(out, AiCellMaterials.CellAction.INTERACT, Items.REDSTONE_BLOCK, 1, AiCellMaterials.MaterialUse.REUSE);
                      }
 
                      return List.copyOf(out);
                   }
                }
             } else {
-               if (!init(id, live)) {
-                  init(out, AiCellMaterials.CellAction.PLACE, Items.DIRT, 1, AiCellMaterials.MaterialUse.CONSUME);
+               if (!isDirtLike(id, live)) {
+                  require(out, AiCellMaterials.CellAction.PLACE, Items.DIRT, 1, AiCellMaterials.MaterialUse.CONSUME);
                }
 
                boolean farmland = id.equals("minecraft:farmland");
-               init(
+               requireOne(
                   out,
                   AiCellMaterials.CellAction.CONVERT,
                   farmland ? "hoe" : "shovel",
@@ -167,7 +167,7 @@ final class AiCellMaterials {
                   AiCellMaterials.MaterialUse.REUSE
                );
                if (waterAbove) {
-                  init(out, AiCellMaterials.CellAction.DRAIN, Items.BUCKET, 1, AiCellMaterials.MaterialUse.REUSE);
+                  require(out, AiCellMaterials.CellAction.DRAIN, Items.BUCKET, 1, AiCellMaterials.MaterialUse.REUSE);
                }
 
                return List.copyOf(out);
@@ -198,7 +198,7 @@ final class AiCellMaterials {
                out.addAll(requirements(cell, live, world.getFluidState(target.above()).is(FluidTags.WATER)));
                BlockPos foundation = AiSchematicActions.foundationFor(cell, target, world, sourceCells);
                if (foundation != null && foundations.add(foundation)) {
-                  init(out, AiCellMaterials.CellAction.PLACE, Items.DIRT, 1, AiCellMaterials.MaterialUse.CONSUME);
+                  require(out, AiCellMaterials.CellAction.PLACE, Items.DIRT, 1, AiCellMaterials.MaterialUse.CONSUME);
                }
             }
          }
@@ -236,10 +236,10 @@ final class AiCellMaterials {
       return out;
    }
 
-   private static void init(AiBuilder.CellSpec cell, BlockState live, List<AiCellMaterials.MaterialRequirement> out) {
+   private static void addCauldronRequirements(AiBuilder.CellSpec cell, BlockState live, List<AiCellMaterials.MaterialRequirement> out) {
       boolean present = live != null && live.getBlock() instanceof AbstractCauldronBlock;
       if (!present) {
-         init(out, AiCellMaterials.CellAction.PLACE, Items.CAULDRON, 1, AiCellMaterials.MaterialUse.CONSUME);
+         require(out, AiCellMaterials.CellAction.PLACE, Items.CAULDRON, 1, AiCellMaterials.MaterialUse.CONSUME);
       }
 
       Block wantedBlock = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cell.block()));
@@ -248,32 +248,32 @@ final class AiCellMaterials {
       int wanted = !water && !powderSnow ? 3 : Integer.parseInt(cell.properties().getOrDefault("level", "3"));
       boolean wrongContents = present && !live.is(Blocks.CAULDRON) && live.getBlock() != wantedBlock;
       if (wrongContents) {
-         init(out, AiCellMaterials.CellAction.DRAIN, Items.BUCKET, 1, AiCellMaterials.MaterialUse.REUSE);
+         require(out, AiCellMaterials.CellAction.DRAIN, Items.BUCKET, 1, AiCellMaterials.MaterialUse.REUSE);
       }
 
       boolean partialFill = AiSchematicActions.isPartialFill(cell, live);
       boolean fill = !present || live.is(Blocks.CAULDRON) || wrongContents || partialFill;
       if (fill) {
-         init(out, AiCellMaterials.CellAction.FILL, AiSchematicActions.cauldronFillItem(cell), 1, AiCellMaterials.MaterialUse.CONSUME);
+         require(out, AiCellMaterials.CellAction.FILL, AiSchematicActions.cauldronFillItem(cell), 1, AiCellMaterials.MaterialUse.CONSUME);
       }
 
       if (!water) {
          if (powderSnow && !partialFill && present && live.getBlock() == wantedBlock && live.getValue(LayeredCauldronBlock.LEVEL) != wanted) {
-            init(out, AiCellMaterials.CellAction.CONVERT, Items.CAULDRON, 1, AiCellMaterials.MaterialUse.REUSE);
+            require(out, AiCellMaterials.CellAction.CONVERT, Items.CAULDRON, 1, AiCellMaterials.MaterialUse.REUSE);
          }
       } else if (present && live.getBlock() == wantedBlock) {
          int current = live.getValue(LayeredCauldronBlock.LEVEL);
          if (current > wanted) {
-            init(out, AiCellMaterials.CellAction.DRAIN, Items.GLASS_BOTTLE, current - wanted, AiCellMaterials.MaterialUse.CONSUME);
+            require(out, AiCellMaterials.CellAction.DRAIN, Items.GLASS_BOTTLE, current - wanted, AiCellMaterials.MaterialUse.CONSUME);
          } else if (current < wanted) {
-            init(out, AiCellMaterials.CellAction.DRAIN, Items.GLASS_BOTTLE, 3 - wanted, AiCellMaterials.MaterialUse.CONSUME);
+            require(out, AiCellMaterials.CellAction.DRAIN, Items.GLASS_BOTTLE, 3 - wanted, AiCellMaterials.MaterialUse.CONSUME);
          }
       } else if (fill) {
-         init(out, AiCellMaterials.CellAction.DRAIN, Items.GLASS_BOTTLE, Math.max(0, 3 - wanted), AiCellMaterials.MaterialUse.CONSUME);
+         require(out, AiCellMaterials.CellAction.DRAIN, Items.GLASS_BOTTLE, Math.max(0, 3 - wanted), AiCellMaterials.MaterialUse.CONSUME);
       }
    }
 
-   private static boolean init(AiBuilder.CellSpec cell, BlockState live, Block block) {
+   private static boolean needsReplaceForState(AiBuilder.CellSpec cell, BlockState live, Block block) {
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          String key = entry.getKey();
          if (!key.equals("waterlogged") && !AiBuilder.isAutoComputedProperty(block, key)) {
@@ -290,7 +290,7 @@ final class AiCellMaterials {
       return false;
    }
 
-   private static void init(AiBuilder.CellSpec cell, BlockState live, Block block, boolean same, List<AiCellMaterials.MaterialRequirement> out) {
+   private static void addPostInteractTools(AiBuilder.CellSpec cell, BlockState live, Block block, boolean same, List<AiCellMaterials.MaterialRequirement> out) {
       for (Entry<String, String> entry : cell.properties().entrySet()) {
          Item needed = AiBuilder.postInteractToolItem(block, entry.getKey());
          if (needed != null) {
@@ -302,15 +302,15 @@ final class AiCellMaterials {
                if (!AiBuilder.propertyValuesMatch(block, entry.getKey(), actual, requested)) {
                   if (needed == Items.GLOWSTONE) {
                      int remaining = Math.max(0, Integer.parseInt(requested) - Integer.parseInt(actual));
-                     init(out, AiCellMaterials.CellAction.INTERACT, needed, remaining, AiCellMaterials.MaterialUse.CONSUME);
+                     require(out, AiCellMaterials.CellAction.INTERACT, needed, remaining, AiCellMaterials.MaterialUse.CONSUME);
                   } else if (needed == Items.ENDER_EYE) {
                      if (Boolean.parseBoolean(requested) && !Boolean.parseBoolean(actual)) {
-                        init(out, AiCellMaterials.CellAction.INTERACT, needed, 1, AiCellMaterials.MaterialUse.CONSUME);
+                        require(out, AiCellMaterials.CellAction.INTERACT, needed, 1, AiCellMaterials.MaterialUse.CONSUME);
                      }
                   } else if (needed == Items.DIAMOND_SHOVEL) {
-                     init(out, AiCellMaterials.CellAction.INTERACT, "shovel", needed, AiCellMaterials.MaterialUse.REUSE);
+                     requireOne(out, AiCellMaterials.CellAction.INTERACT, "shovel", needed, AiCellMaterials.MaterialUse.REUSE);
                   } else {
-                     init(
+                     require(
                         out,
                         AiCellMaterials.CellAction.INTERACT,
                         needed,
@@ -324,12 +324,12 @@ final class AiCellMaterials {
       }
    }
 
-   private static void load(AiBuilder.CellSpec cell, BlockState live, Block block, boolean same, List<AiCellMaterials.MaterialRequirement> out) {
+   private static void addWaterlogRequirement(AiBuilder.CellSpec cell, BlockState live, Block block, boolean same, List<AiCellMaterials.MaterialRequirement> out) {
       if (cell.properties().containsKey("waterlogged") && block.defaultBlockState().hasProperty(BlockStateProperties.WATERLOGGED)) {
          boolean wanted = Boolean.parseBoolean(cell.properties().get("waterlogged"));
          boolean current = (same ? live : block.defaultBlockState()).getValue(BlockStateProperties.WATERLOGGED);
          if (wanted != current) {
-            init(
+            require(
                out,
                wanted ? AiCellMaterials.CellAction.POUR : AiCellMaterials.CellAction.DRAIN,
                wanted ? Items.WATER_BUCKET : Items.BUCKET,
@@ -340,7 +340,7 @@ final class AiCellMaterials {
       }
    }
 
-   private static boolean init(String id, BlockState live) {
+   private static boolean isDirtLike(String id, BlockState live) {
       return live == null
          ? false
          : live.is(Blocks.DIRT)
@@ -351,33 +351,33 @@ final class AiCellMaterials {
             || id.equals("minecraft:dirt_path") && (live.is(Blocks.MYCELIUM) || live.is(Blocks.PODZOL));
    }
 
-   private static void init(List<AiCellMaterials.MaterialRequirement> out, Item item, boolean existing, int remaining) {
+   private static void addRemaining(List<AiCellMaterials.MaterialRequirement> out, Item item, boolean existing, int remaining) {
       if (remaining != 0) {
          if (existing) {
-            init(out, AiCellMaterials.CellAction.ADD, item, remaining, AiCellMaterials.MaterialUse.CONSUME);
+            require(out, AiCellMaterials.CellAction.ADD, item, remaining, AiCellMaterials.MaterialUse.CONSUME);
          } else {
-            init(out, AiCellMaterials.CellAction.PLACE, item, 1, AiCellMaterials.MaterialUse.CONSUME);
-            init(out, AiCellMaterials.CellAction.ADD, item, remaining - 1, AiCellMaterials.MaterialUse.CONSUME);
+            require(out, AiCellMaterials.CellAction.PLACE, item, 1, AiCellMaterials.MaterialUse.CONSUME);
+            require(out, AiCellMaterials.CellAction.ADD, item, remaining - 1, AiCellMaterials.MaterialUse.CONSUME);
          }
       }
    }
 
-   private static void init(List<AiCellMaterials.MaterialRequirement> out, AiCellMaterials.CellAction action, Item item, int count, AiCellMaterials.MaterialUse use) {
+   private static void require(List<AiCellMaterials.MaterialRequirement> out, AiCellMaterials.CellAction action, Item item, int count, AiCellMaterials.MaterialUse use) {
       if (item != Items.AIR && count != 0) {
-         init(out, action, BuiltInRegistries.ITEM.getKey(item).toString(), item, count, use);
+         requireSpec(out, action, BuiltInRegistries.ITEM.getKey(item).toString(), item, count, use);
       }
    }
 
-   private static void init(
+   private static void requireSpec(
       List<AiCellMaterials.MaterialRequirement> out, AiCellMaterials.CellAction action, String itemSpec, Item item, int count, AiCellMaterials.MaterialUse use
    ) {
       out.add(new AiCellMaterials.MaterialRequirement(action, itemSpec, item, count, use));
    }
 
-   private static void init(
+   private static void requireOne(
       List<AiCellMaterials.MaterialRequirement> out, AiCellMaterials.CellAction action, String itemSpec, Item item, AiCellMaterials.MaterialUse use
    ) {
-      init(out, action, itemSpec, item, 1, use);
+      requireSpec(out, action, itemSpec, item, 1, use);
    }
 
    enum MaterialUse {

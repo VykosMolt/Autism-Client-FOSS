@@ -40,7 +40,7 @@ final class SchematicDocument {
    final int sizeZ;
    final long volume;
    private final Long2ObjectOpenHashMap<SchematicDocument.Region[]> regionsBySection = new Long2ObjectOpenHashMap<>();
-   private volatile long write_J = -1L;
+   private volatile long cachedBlockCount = -1L;
 
    static int bitsForPaletteSize(int size) {
       return Math.max(2, 32 - Integer.numberOfLeadingZeros(Math.max(1, size - 1)));
@@ -148,18 +148,18 @@ final class SchematicDocument {
       return null;
    }
 
-   BlockState init_BlockState_I(int x, int y, int z) {
+   BlockState blockAt(int x, int y, int z) {
       SchematicDocument.Region r = this.regionAt(x, y, z);
       return r == null ? Blocks.AIR.defaultBlockState() : r.stateAt(x, y, z);
    }
 
-   boolean init_Z_I(int x, int y, int z) {
+   boolean unusedHasRegionAt(int x, int y, int z) {
       return this.regionAt(x, y, z) != null;
    }
 
    long countBlocks(IntConsumer progress) {
-      if (this.write_J >= 0L) {
-         return this.write_J;
+      if (this.cachedBlockCount >= 0L) {
+         return this.cachedBlockCount;
       }
 
       long count = 0L;
@@ -184,7 +184,7 @@ final class SchematicDocument {
          }
       }
 
-      this.write_J = count;
+      this.cachedBlockCount = count;
       progress.accept(100);
       return count;
    }
@@ -219,12 +219,12 @@ final class SchematicDocument {
                   minY = Math.min(minY, at.getY());
                   minZ = Math.min(minZ, at.getZ());
                   if (!s.isSolidRender()
-                     || !this.init_BlockState_I(x - 1, y, z).isSolidRender()
-                     || !this.init_BlockState_I(x + 1, y, z).isSolidRender()
-                     || !this.init_BlockState_I(x, y - 1, z).isSolidRender()
-                     || !this.init_BlockState_I(x, y + 1, z).isSolidRender()
-                     || !this.init_BlockState_I(x, y, z - 1).isSolidRender()
-                     || !this.init_BlockState_I(x, y, z + 1).isSolidRender()) {
+                     || !this.blockAt(x - 1, y, z).isSolidRender()
+                     || !this.blockAt(x + 1, y, z).isSolidRender()
+                     || !this.blockAt(x, y - 1, z).isSolidRender()
+                     || !this.blockAt(x, y + 1, z).isSolidRender()
+                     || !this.blockAt(x, y, z - 1).isSolidRender()
+                     || !this.blockAt(x, y, z + 1).isSolidRender()) {
                      if (cells.size() >= 2097152) {
                         throw new IllegalArgumentException("Too many exposed blocks for a hologram; single-player Paste is still available");
                      }
@@ -239,14 +239,14 @@ final class SchematicDocument {
          }
       }
 
-      this.write_J = count;
+      this.cachedBlockCount = count;
       progress.accept(100);
       return new SchematicDocument.Preview(List.copyOf(cells), count == 0L ? BlockPos.ZERO : new BlockPos(minX, minY, minZ), count);
    }
 
    boolean isSolidAt(BlockPos at, int rotation, String mirror) {
-      BlockPos source = this.load(at.getX(), at.getY(), at.getZ(), rotation, mirror);
-      return this.init_BlockState_I(source.getX(), source.getY(), source.getZ()).isSolidRender();
+      BlockPos source = this.sourcePosFor(at.getX(), at.getY(), at.getZ(), rotation, mirror);
+      return this.blockAt(source.getX(), source.getY(), source.getZ()).isSolidRender();
    }
 
    int rotatedSizeX(int rotation, String mirror) {
@@ -282,7 +282,7 @@ final class SchematicDocument {
       return var10000;
    }
 
-   BlockPos load(int x, int y, int z, int rotation, String mirror) {
+   BlockPos sourcePosFor(int x, int y, int z, int rotation, String mirror) {
       int sx;
       int sz;
       switch (Math.floorMod(rotation, 360)) {
@@ -454,11 +454,11 @@ final class SchematicDocument {
                      BlockPos at = new BlockPos(
                         Math.addExact(x, be.getIntOr("x", 0)), Math.addExact(y, be.getIntOr("y", 0)), Math.addExact(z, be.getIntOr("z", 0))
                      );
-                     bes.add(new SchematicDocument.BlockEntityData(at, init_CompoundTag_CompoundTag(be, dataVersion, References.BLOCK_ENTITY)));
+                     bes.add(new SchematicDocument.BlockEntityData(at, updateTag(be, dataVersion, References.BLOCK_ENTITY)));
                   }
                }
 
-               init(r.getListOrEmpty("Entities"), px, py, pz, dataVersion, entities);
+               readEntities(r.getListOrEmpty("Entities"), px, py, pz, dataVersion, entities);
             }
          }
 
@@ -551,13 +551,13 @@ final class SchematicDocument {
                            be.putString("id", id);
                         }
 
-                        bes.add(new SchematicDocument.BlockEntityData(new BlockPos(p[0], p[1], p[2]), init_CompoundTag_CompoundTag(be, dataVersion, References.BLOCK_ENTITY)));
+                        bes.add(new SchematicDocument.BlockEntityData(new BlockPos(p[0], p[1], p[2]), updateTag(be, dataVersion, References.BLOCK_ENTITY)));
                      }
                   }
                }
 
                ArrayList<SchematicDocument.EntityData> entities = new ArrayList<>();
-               init(body.getListOrEmpty("Entities"), 0.0, 0.0, 0.0, dataVersion, entities);
+               readEntities(body.getListOrEmpty("Entities"), 0.0, 0.0, 0.0, dataVersion, entities);
                return new SchematicDocument(List.of(new SchematicDocument.Region(0, 0, 0, w, h, l, palette.toArray(BlockState[]::new), packed, null)), bes, entities);
             } else {
                throw new IllegalArgumentException("Invalid Sponge palette size");
@@ -570,7 +570,7 @@ final class SchematicDocument {
       }
    }
 
-   private static CompoundTag init_CompoundTag_CompoundTag(CompoundTag data, int from, TypeReference type) {
+   private static CompoundTag updateTag(CompoundTag data, int from, TypeReference type) {
       int current = SharedConstants.getCurrentVersion().dataVersion().version();
       if (from > 0 && from < current) {
          Dynamic<Tag> dynamic = new Dynamic<>(NbtOps.INSTANCE, data.copy());
@@ -580,7 +580,7 @@ final class SchematicDocument {
       }
    }
 
-   static void init(ListTag entries, double ox, double oy, double oz, int dataVersion, List<SchematicDocument.EntityData> out) {
+   static void readEntities(ListTag entries, double ox, double oy, double oz, int dataVersion, List<SchematicDocument.EntityData> out) {
       for (Tag tag : entries) {
          if (tag instanceof CompoundTag outer) {
             CompoundTag entity = outer.getCompound("Data").orElse(outer).copy();
@@ -601,7 +601,7 @@ final class SchematicDocument {
                   }
 
                   entity.put("Pos", pos.copy());
-                  out.add(new SchematicDocument.EntityData(ox + x, oy + y, oz + z, init_CompoundTag_CompoundTag(entity, dataVersion, References.ENTITY_TREE)));
+                  out.add(new SchematicDocument.EntityData(ox + x, oy + y, oz + z, updateTag(entity, dataVersion, References.ENTITY_TREE)));
                   if (out.size() > 16384) {
                      throw new IllegalArgumentException("Too many saved entities");
                   }

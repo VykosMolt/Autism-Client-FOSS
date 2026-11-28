@@ -16,13 +16,13 @@ public final class AutoFishMacroPresets {
       AutismMacro var10000;
       switch (preset == null ? AutoFishMacroPresets.Preset.CUSTOM : preset) {
          case FREE_SLOTS:
-            var10000 = init("AutoFish - Free Slots Stop", freeSlotsWait());
+            var10000 = ensurePreset("AutoFish - Free Slots Stop", freeSlotsWait());
             break;
          case DURABILITY:
-            var10000 = init("AutoFish - Durability Stop", durabilityWait());
+            var10000 = ensurePreset("AutoFish - Durability Stop", durabilityWait());
             break;
          case CUSTOM:
-            var10000 = init("AutoFish - Custom Stop", freeSlotsWait());
+            var10000 = ensurePreset("AutoFish - Custom Stop", freeSlotsWait());
             break;
          default:
             throw new MatchException(null, null);
@@ -38,7 +38,7 @@ public final class AutoFishMacroPresets {
    public static boolean isStopPreset(String name) {
       return name == null
          ? false
-         : init(name, "AutoFish - Free Slots Stop") || init(name, "AutoFish - Durability Stop") || init(name, "AutoFish - Custom Stop");
+         : matchesPresetName(name, "AutoFish - Free Slots Stop") || matchesPresetName(name, "AutoFish - Durability Stop") || matchesPresetName(name, "AutoFish - Custom Stop");
    }
 
    public static boolean isStopMacro(AutismMacro macro) {
@@ -48,12 +48,12 @@ public final class AutoFishMacroPresets {
    public static AutoFishMacroPresets.Preset presetFor(String name) {
       if (name == null) {
          return null;
-      } else if (init(name, "AutoFish - Free Slots Stop")) {
+      } else if (matchesPresetName(name, "AutoFish - Free Slots Stop")) {
          return AutoFishMacroPresets.Preset.FREE_SLOTS;
-      } else if (init(name, "AutoFish - Durability Stop")) {
+      } else if (matchesPresetName(name, "AutoFish - Durability Stop")) {
          return AutoFishMacroPresets.Preset.DURABILITY;
       } else {
-         return init(name, "AutoFish - Custom Stop") ? AutoFishMacroPresets.Preset.CUSTOM : null;
+         return matchesPresetName(name, "AutoFish - Custom Stop") ? AutoFishMacroPresets.Preset.CUSTOM : null;
       }
    }
 
@@ -65,7 +65,7 @@ public final class AutoFishMacroPresets {
       return action instanceof autismclient.util.macro.ak toggle && load(toggle);
    }
 
-   private static AutismMacro init(String preferredName, MacroAction firstCondition) {
+   private static AutismMacro ensurePreset(String preferredName, MacroAction firstCondition) {
       MacroLibraryManager manager = MacroLibraryManager.getInstance();
       AutismMacro existing = manager.findByName(preferredName);
       if (existing != null) {
@@ -147,7 +147,7 @@ public final class AutoFishMacroPresets {
       }
    }
 
-   private static boolean init(String name, String base) {
+   private static boolean matchesPresetName(String name, String base) {
       if (name != null && base != null) {
          String trimmed = name.trim();
          return trimmed.equalsIgnoreCase(base) || trimmed.toLowerCase(Locale.ROOT).startsWith(base.toLowerCase(Locale.ROOT) + " (");

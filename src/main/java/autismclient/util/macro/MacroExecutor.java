@@ -3135,7 +3135,7 @@ public class MacroExecutor {
    private static boolean checkDurabilityOnce(Minecraft mc, WaitDurabilityAction action) {
       if (action != null && action.useNext) {
          MacroExecutor.CaptureSessionState session = startDurabilitySession(mc, action);
-         if (session == null || session.read) {
+         if (session == null || session.completed) {
             return action.isSatisfied(mc);
          }
 
@@ -3166,7 +3166,7 @@ public class MacroExecutor {
             sessionRef.set(session);
          }
 
-         if (session == null || session.read) {
+         if (session == null || session.completed) {
             return action.isSatisfied(mc);
          }
 
@@ -3241,7 +3241,7 @@ public class MacroExecutor {
          }
 
          if (session.lockedItemId.isBlank() && !session.slotLocked) {
-            session.read = true;
+            session.completed = true;
          }
 
          return session;
@@ -3262,7 +3262,7 @@ public class MacroExecutor {
             session.slot = 40;
             session.lockedItemId = registryIdOf(offhand);
          } else {
-            session.read = true;
+            session.completed = true;
          }
       }
    }
@@ -3290,7 +3290,7 @@ public class MacroExecutor {
             session.slot = slot;
             session.lockedItemId = registryIdOf(stackInVisibleSlot(mc, slot));
          } else {
-            session.read = true;
+            session.completed = true;
          }
       } else {
          lockHeldItem(mc, action, session);
@@ -6390,7 +6390,7 @@ public class MacroExecutor {
                      }
                   );
                   if (!placed) {
-                     load_V_Minecraft_I(mc, move.sourceSlot);
+                     putBackCarried(mc, move.sourceSlot);
                      break;
                   }
 
@@ -6583,7 +6583,7 @@ public class MacroExecutor {
                   || move.source() != first.source()
                   || move.amount() <= 0
                   || move.amount() > remainingSource
-                  || !init_Z_InventoryMenu_5(handler, source, move)) {
+                  || !slotMoveFits(handler, source, move)) {
                   break;
                }
 
@@ -6609,14 +6609,14 @@ public class MacroExecutor {
             return false;
          }
 
-         MacroExecutor.TransferPlan expected = init_MacroExecutor_Ring_Minecraft(mc, group, snapshot, delayTicks, delayAfterPickup, delayBeforeReturn);
+         MacroExecutor.TransferPlan expected = expectedTransfer(mc, group, snapshot, delayTicks, delayAfterPickup, delayBeforeReturn);
          return expected.valid;
       } else {
          return false;
       }
    }
 
-   private static MacroExecutor.TransferPlan init_MacroExecutor_Ring_Minecraft(
+   private static MacroExecutor.TransferPlan expectedTransfer(
       Minecraft mc,
       List<XCarryAction.SlotMove> group,
       MacroExecutor.TransferPlan snapshot,
@@ -6628,7 +6628,7 @@ public class MacroExecutor {
          XCarryAction.SlotMove first = group.get(0);
          if (!Boolean.TRUE.equals(callOnClientThread(mc, () -> {
             InventoryMenu handler = mc.player == null ? null : mc.player.inventoryMenu;
-            return handler != null && handler.getCarried().isEmpty() && init_Z_InventoryMenu_2(handler, group, snapshot);
+            return handler != null && handler.getCarried().isEmpty() && matchesSnapshot(handler, group, snapshot);
          }, Boolean.FALSE))) {
             return MacroExecutor.TransferPlan.invalid();
          }
@@ -6705,7 +6705,7 @@ public class MacroExecutor {
                   }
 
                   firstResidual = false;
-                  if (!init_Z_Minecraft(mc, targetSlotId, count, delayTicks)) {
+                  if (!dropCarriedInto(mc, targetSlotId, count, delayTicks)) {
                      return MacroExecutor.TransferPlan.invalid();
                   }
                }
@@ -6734,7 +6734,7 @@ public class MacroExecutor {
                int remainingFirst = firstButton == 0 ? 0 : Math.max(0, firstMove.amount() - 1);
                if (remainingFirst > 0) {
                   waitXCarryTicks(delayTicks);
-                  if (!init_Z_Minecraft(mc, firstMove.target(), remainingFirst, delayTicks)) {
+                  if (!dropCarriedInto(mc, firstMove.target(), remainingFirst, delayTicks)) {
                      return MacroExecutor.TransferPlan.invalid();
                   }
                }
@@ -6744,7 +6744,7 @@ public class MacroExecutor {
 
             for (int i = nextMoveIndex; i < group.size(); i++) {
                XCarryAction.SlotMove move = group.get(i);
-               if (move != null && move.amount() > 0 && !init_Z_Minecraft(mc, move.target(), move.amount(), delayTicks)) {
+               if (move != null && move.amount() > 0 && !dropCarriedInto(mc, move.target(), move.amount(), delayTicks)) {
                   return MacroExecutor.TransferPlan.invalid();
                }
             }
@@ -6779,7 +6779,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_Minecraft(Minecraft mc, int targetSlotId, int count, int delayTicks) {
+   private static boolean dropCarriedInto(Minecraft mc, int targetSlotId, int count, int delayTicks) {
       if (mc != null && count > 0) {
          int remaining = count;
 
@@ -6835,7 +6835,7 @@ public class MacroExecutor {
                      return MacroExecutor.TransferPlan.invalid();
                   }
 
-                  if (!init_Z_InventoryMenu_5(handler, source, move)) {
+                  if (!slotMoveFits(handler, source, move)) {
                      return MacroExecutor.TransferPlan.invalid();
                   }
 
@@ -6862,7 +6862,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_InventoryMenu_5(InventoryMenu handler, ItemStack source, XCarryAction.SlotMove move) {
+   private static boolean slotMoveFits(InventoryMenu handler, ItemStack source, XCarryAction.SlotMove move) {
       if (handler != null && source != null && !source.isEmpty() && move != null && move.amount() > 0) {
          if (move.target() < 0 || move.target() >= handler.slots.size()) {
             return false;
@@ -6899,7 +6899,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_InventoryMenu_2(InventoryMenu handler, List<XCarryAction.SlotMove> group, MacroExecutor.TransferPlan snapshot) {
+   private static boolean matchesSnapshot(InventoryMenu handler, List<XCarryAction.SlotMove> group, MacroExecutor.TransferPlan snapshot) {
       if (handler != null && group != null && snapshot != null && snapshot.valid) {
          XCarryAction.SlotMove first = group.isEmpty() ? null : group.get(0);
          if (first != null && first.source() >= 0 && first.source() < handler.slots.size()) {
@@ -6910,7 +6910,7 @@ public class MacroExecutor {
                      int current = menuSlotCount(handler, move.target());
                      Integer expectedStart = snapshot.startTargetCounts.get(move.target());
                      if (expectedStart != null && current == expectedStart) {
-                        if (!init_Z_InventoryMenu_5(handler, source, move)) {
+                        if (!slotMoveFits(handler, source, move)) {
                            return false;
                         }
                         continue;
@@ -7247,7 +7247,7 @@ public class MacroExecutor {
       }
    }
 
-   private static boolean init_Z_Minecraft(Minecraft mc, int preferredSlotId, ItemStack expected, int delayTicks, boolean delayBeforeReturn) {
+   private static boolean unusedReturnCarried(Minecraft mc, int preferredSlotId, ItemStack expected, int delayTicks, boolean delayBeforeReturn) {
       if (mc != null && mc.player != null && expected != null && !expected.isEmpty()) {
          if (callOnClientThread(mc, () -> mc.player != null && mc.player.inventoryMenu.getCarried().isEmpty(), Boolean.FALSE)) {
             return true;
@@ -7343,12 +7343,12 @@ public class MacroExecutor {
             clickSlot(mc, returnSlot, 0, ContainerInput.PICKUP);
             waitTicksFor(mc, 3, () -> mc.player != null && mc.player.inventoryMenu.getCarried().isEmpty());
          } else {
-            load_V_Minecraft_I(mc, sourceSlotId);
+            putBackCarried(mc, sourceSlotId);
          }
       }
    }
 
-   private static void load_V_Minecraft_I(Minecraft mc, int sourceSlotId) {
+   private static void putBackCarried(Minecraft mc, int sourceSlotId) {
       runOnClientThread(mc, () -> {
          if (mc.player != null && mc.gameMode != null) {
             InventoryMenu handler = mc.player.inventoryMenu;
@@ -7439,13 +7439,13 @@ public class MacroExecutor {
                                  LockSupport.parkNanos(ns);
                               }
 
-                              init_V_Minecraft_5(mc, target, direction, action.h_());
+                              sendBreakPackets(mc, target, direction, action.h_());
                            } else if (t == InteractTimingMode.AFTER_PLUS) {
-                              init_V_Minecraft_5(mc, target, direction, action.h_());
+                              sendBreakPackets(mc, target, direction, action.h_());
                               awaitNextTick();
                               runOnClientThread(mc, () -> useItemOnBlock(mc, target, direction), action.h_());
                            } else {
-                              init_V_Minecraft_5(mc, target, direction, action.h_());
+                              sendBreakPackets(mc, target, direction, action.h_());
                               if (ns > 0L) {
                                  LockSupport.parkNanos(ns);
                               }
@@ -7453,7 +7453,7 @@ public class MacroExecutor {
                               runOnClientThread(mc, () -> useItemOnBlock(mc, target, direction), action.h_());
                            }
                         } else {
-                           init_V_Minecraft_5(mc, target, direction, action.h_());
+                           sendBreakPackets(mc, target, direction, action.h_());
                         }
                      }
                   }
@@ -7526,7 +7526,7 @@ public class MacroExecutor {
       }, false, action.h_());
    }
 
-   private static void init_V_Minecraft_5(Minecraft mc, BlockPos pos, Direction direction, boolean tickAligned) {
+   private static void sendBreakPackets(Minecraft mc, BlockPos pos, Direction direction, boolean tickAligned) {
       runOnClientThread(mc, () -> {
          if (mc.player != null && mc.level != null && mc.gameMode != null && mc.getConnection() != null) {
             BlockPos blockPos = pos.immutable();
@@ -11107,7 +11107,7 @@ public class MacroExecutor {
       private int originalHotbarSlot = 0;
       private boolean slotLocked = false;
       private boolean itemSeen = false;
-      private boolean read = false;
+      private boolean completed = false;
       private MacroItemTarget itemTarget = new MacroItemTarget();
    }
 

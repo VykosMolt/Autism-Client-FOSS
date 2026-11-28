@@ -188,7 +188,7 @@ public final class AiBlockMine {
       return target.distSqr(feet) <= (double)radius * radius;
    }
 
-   static boolean init(boolean checked, int heldGoal, int remaining, boolean ordinaryLog, boolean supported, boolean interruptible, boolean pending) {
+   static boolean shouldPrepareAxe(boolean checked, int heldGoal, int remaining, boolean ordinaryLog, boolean supported, boolean interruptible, boolean pending) {
       return !checked && heldGoal > 0 && remaining >= 8 && ordinaryLog && supported && interruptible && !pending;
    }
 
@@ -196,7 +196,7 @@ public final class AiBlockMine {
       return available < needed && dropDistance > 8.0 && dropDistance > workDistance + 8.0;
    }
 
-   static BlockPos init(List<BlockPos> reachable, List<BlockPos> known, int needed) {
+   static BlockPos trunkBaseFor(List<BlockPos> reachable, List<BlockPos> known, int needed) {
       if (needed <= 0) {
          return null;
       }
@@ -220,7 +220,7 @@ public final class AiBlockMine {
       return base;
    }
 
-   static boolean init(BlockPos feet, BlockPos target, boolean trunk) {
+   static boolean isReachableFromStance(BlockPos feet, BlockPos target, boolean trunk) {
       int dx = Math.abs(target.getX() - feet.getX());
       int dz = Math.abs(target.getZ() - feet.getZ());
       int dy = target.getY() - feet.getY();
@@ -264,7 +264,7 @@ public final class AiBlockMine {
       return chain.isEmpty() ? null : chain.get(0);
    }
 
-   static double init(BlockPos feet, BlockPos target) {
+   static double baseTravelCost(BlockPos feet, BlockPos target) {
       int dy = target.getY() - feet.getY();
       double across = Math.abs(target.getX() - feet.getX()) + Math.abs(target.getZ() - feet.getZ());
       double deepAcross = target.getY() < 0 ? 2.0 : 1.0;
@@ -279,7 +279,7 @@ public final class AiBlockMine {
       return across * 0.3 + Math.abs(surfaceThere - feet.getY()) * 0.5 + down + deep;
    }
 
-   static boolean init(BlockPos feet, BlockPos target, IntBinaryOperator heightAt) {
+   static boolean hasSurfaceRoute(BlockPos feet, BlockPos target, IntBinaryOperator heightAt) {
       int dx = target.getX() - feet.getX();
       int dz = target.getZ() - feet.getZ();
       int steps = Math.max(Math.abs(dx), Math.abs(dz));
@@ -303,11 +303,11 @@ public final class AiBlockMine {
    }
 
    public static double travelCost(Level level, BlockPos feet, BlockPos target) {
-      double cost = init(feet, target);
+      double cost = baseTravelCost(feet, target);
       int here = level.getHeight(Types.MOTION_BLOCKING, feet.getX(), feet.getZ());
       if (feet.getY() >= here - 1) {
          int there = level.getHeight(Types.MOTION_BLOCKING, target.getX(), target.getZ());
-         if (there > target.getY() && init(feet, target, (x, z) -> level.getHeight(Types.MOTION_BLOCKING, x, z))) {
+         if (there > target.getY() && hasSurfaceRoute(feet, target, (x, z) -> level.getHeight(Types.MOTION_BLOCKING, x, z))) {
             cost = Math.min(cost, surfaceRouteCost(feet, target, there));
          }
       }
@@ -667,13 +667,13 @@ public final class AiBlockMine {
                         BlockPos feet = p.blockPosition();
 
                         for (BlockPos g : this.goalBlocks()) {
-                           if (g.distSqr(feet) <= 64.0 && AiBlockMine.init(mc, g) && (target == null || g.distSqr(feet) < target.distSqr(feet))) {
+                           if (g.distSqr(feet) <= 64.0 && AiBlockMine.isUnderwaterTarget(mc, g) && (target == null || g.distSqr(feet) < target.distSqr(feet))) {
                               target = g;
                            }
                         }
                      }
 
-                     if (target != null && AiBlockMine.init(mc, target)) {
+                     if (target != null && AiBlockMine.isUnderwaterTarget(mc, target)) {
                         this.diveStrikeCounted = true;
                         AiBlockMine.recordStrike(target);
                         AutismClientAddon.LOG
@@ -739,7 +739,7 @@ public final class AiBlockMine {
 
                   for (BlockPos t : this.knownTargets) {
                      if (!this.blacklistedCells.contains(t.asLong())) {
-                        if (AiBlockMine.init(feet, t, false) && t.distSqr(feet) <= 16.0) {
+                        if (AiBlockMine.isReachableFromStance(feet, t, false) && t.distSqr(feet) <= 16.0) {
                            return this.finish(AiOperation.Status.SUCCEEDED, "Beside the " + label + " at " + t.toShortString());
                         }
 
@@ -1091,7 +1091,7 @@ public final class AiBlockMine {
 
                               if (!AutismLiteVariant.enabled()
                                  && inReach != null
-                                 && AiBlockMine.init(
+                                 && AiBlockMine.shouldPrepareAxe(
                                     this.toolPrepared,
                                     held,
                                     held - this.heldWanted() - this.nearbyDropCount - this.pendingDropDeadlines.size(),
@@ -1461,20 +1461,20 @@ public final class AiBlockMine {
                                  goal.reachAbove = 5;
 
                                  for (BlockPos t : goalCells) {
-                                    this.collectTrunkStances(t, goal.update);
+                                    this.collectTrunkStances(t, goal.trunkStances);
                                  }
                               }
 
                               for (BlockPos t : goalCells) {
                                  if (!wet.contains(t.asLong())) {
                                     for (long cell : this.standCells(t, treeMode && this.treeLogs.contains(t.asLong()), goal.reachAbove)) {
-                                       goal.update.add(cell);
+                                       goal.trunkStances.add(cell);
                                     }
                                  }
                               }
 
                               if (approach) {
-                                 goal.write = this.knownTargetCells();
+                                 goal.knownTargets = this.knownTargetCells();
                               }
 
                               if (!this.lastGoalCells.equals(goal.dryTargetCells)) {
@@ -1497,7 +1497,7 @@ public final class AiBlockMine {
                                  Vec3 eye = mc.player.getEyePosition();
 
                                  for (BlockPos block : goalCells) {
-                                    if (AiBlockMine.init(mc.player.blockPosition(), block, treeMode && this.treeLogs.contains(block.asLong()))
+                                    if (AiBlockMine.isReachableFromStance(mc.player.blockPosition(), block, treeMode && this.treeLogs.contains(block.asLong()))
                                        && (AiBlockInteraction.findReachableHit(mc, block) != null || this.softBlockerToward(eye, block, mc.player.blockInteractionRange()) != null)
                                        )
                                      {
@@ -1951,7 +1951,7 @@ public final class AiBlockMine {
                            BlockPos n = cell.offset(dx, dy, dz);
                            if (this.isTargetBlock(n) && !this.treeLogs.contains(n.asLong())) {
                               for (BlockPos log : AiBlockMine.floodConnected(this::isTargetBlock, n, 64)) {
-                                 if (!this.blacklistedCells.contains(log.asLong()) && !this.open(log)) {
+                                 if (!this.blacklistedCells.contains(log.asLong()) && !this.isUnreachableHighLog(log)) {
                                     this.treeLogs.add(log.asLong());
                                  }
                               }
@@ -2050,8 +2050,8 @@ public final class AiBlockMine {
                out.removeIf(gx -> gx.equals(feet) || gx.equals(feet.above()) || gx.equals(feet.above(2)));
                if (!dropsOnly) {
                   out = AiBlockMine.breathingOften()
-                     ? new ArrayList<>(out.stream().filter(gx -> !AiBlockMine.init(mc, gx)).toList())
-                     : AiBlockMine.pruneCostlyWetTargets(out, feet, gx -> AiBlockMine.init(mc, gx), this::diveCost);
+                     ? new ArrayList<>(out.stream().filter(gx -> !AiBlockMine.isUnderwaterTarget(mc, gx)).toList())
+                     : AiBlockMine.pruneCostlyWetTargets(out, feet, gx -> AiBlockMine.isUnderwaterTarget(mc, gx), this::diveCost);
                }
 
                if (oreJob && this.treeLogs.isEmpty() && this.veinCommitment.isIdle()) {
@@ -2111,7 +2111,7 @@ public final class AiBlockMine {
                   this.diveCostTick = this.tickCount;
                }
 
-               return this.diveCostCache.computeIfAbsent(target.asLong(), key -> AiBlockMine.init(mc, target, true));
+               return this.diveCostCache.computeIfAbsent(target.asLong(), key -> AiBlockMine.waterDiveCost(mc, target, true));
             }
 
             boolean opensToCave(BlockPos cell) {
@@ -2195,7 +2195,7 @@ public final class AiBlockMine {
                BlockPos feet = mc.player.blockPosition();
 
                for (BlockPos t : this.knownTargets) {
-                  if (!this.blacklistedCells.contains(t.asLong()) && this.isTargetBlock(t) && AiBlockMine.init(feet, t, true) && AiBlockInteraction.findReachableHit(mc, t) != null) {
+                  if (!this.blacklistedCells.contains(t.asLong()) && this.isTargetBlock(t) && AiBlockMine.isReachableFromStance(feet, t, true) && AiBlockInteraction.findReachableHit(mc, t) != null) {
                      return true;
                   }
                }
@@ -2371,7 +2371,7 @@ public final class AiBlockMine {
                   BlockPos feet = mc.player.blockPosition();
 
                   for (BlockPos block : this.goalBlocks()) {
-                     if (AiBlockMine.init(feet, block, treeMode && this.treeLogs.contains(block.asLong())) && AiBlockInteraction.findReachableHit(mc, block) != null) {
+                     if (AiBlockMine.isReachableFromStance(feet, block, treeMode && this.treeLogs.contains(block.asLong())) && AiBlockInteraction.findReachableHit(mc, block) != null) {
                         return true;
                      }
                   }
@@ -2517,7 +2517,7 @@ public final class AiBlockMine {
                      && !this.blacklistedCells.contains(led.asLong())
                      && this.isTargetBlock(led)
                      && this.isEligibleTarget(led)
-                     && AiBlockMine.init(mc.player.blockPosition(), led, treeMode && this.treeLogs.contains(led.asLong()))) {
+                     && AiBlockMine.isReachableFromStance(mc.player.blockPosition(), led, treeMode && this.treeLogs.contains(led.asLong()))) {
                      return MiningCost.bestToolSlot(mc, mc.level.getBlockState(led), true, (state, tool) -> AiItems.canDropWantedItem(mc, state, tool, wantedDrops)) < 0
                         ? null
                         : next.direction();
@@ -2608,7 +2608,7 @@ public final class AiBlockMine {
                BlockPos nearest = null;
 
                for (BlockPos b : blocks) {
-                  if (AiBlockMine.init(end, b, trees)) {
+                  if (AiBlockMine.isReachableFromStance(end, b, trees)) {
                      beside.add(b);
                      if (nearest == null || b.distSqr(end.above()) < nearest.distSqr(end.above())) {
                         nearest = b;
@@ -2671,7 +2671,7 @@ public final class AiBlockMine {
                      && this.isTargetBlock(nearby)
                      && (!this.veinCommitment.isActive() || this.veinCommitment.isPending(nearby.asLong()))
                      && (!treeMode || this.treeLogs.isEmpty() || this.treeLogs.contains(nearby.asLong()))
-                     && AiBlockMine.init(feet, nearby, treeMode && this.treeLogs.contains(nearby.asLong()))) {
+                     && AiBlockMine.isReachableFromStance(feet, nearby, treeMode && this.treeLogs.contains(nearby.asLong()))) {
                      candidates.add(nearby);
                   }
                }
@@ -2695,8 +2695,8 @@ public final class AiBlockMine {
 
                for (BlockPos t : candidates) {
                   if (!routeCells.contains(t)
-                     && (end == null || end.equals(feet) || !AiBlockMine.init(end, t, treeMode && this.treeLogs.contains(t.asLong())))
-                     && AiBlockMine.init(feet, t, treeMode && this.treeLogs.contains(t.asLong()))) {
+                     && (end == null || end.equals(feet) || !AiBlockMine.isReachableFromStance(end, t, treeMode && this.treeLogs.contains(t.asLong())))
+                     && AiBlockMine.isReachableFromStance(feet, t, treeMode && this.treeLogs.contains(t.asLong()))) {
                      if (moving) {
                         float yaw = RotationMath.lookAt(Vec3.atCenterOf(t), eye).yaw();
                         if (Math.abs(Mth.wrapDegrees(yaw - facing.yaw())) > 70.0F) {
@@ -2729,7 +2729,7 @@ public final class AiBlockMine {
                }
 
                if (!direct.isEmpty()) {
-                  BlockPos base = treeMode && held > 0 ? AiBlockMine.init(direct, candidates, held - this.heldWanted()) : null;
+                  BlockPos base = treeMode && held > 0 ? AiBlockMine.trunkBaseFor(direct, candidates, held - this.heldWanted()) : null;
                   if (base != null) {
                      this.digLine = null;
                      this.digLines.clear();
@@ -2805,7 +2805,7 @@ public final class AiBlockMine {
                int n = 0;
 
                for (BlockPos t : this.goalBlocks()) {
-                  if (AiBlockMine.init(feet, t, treeMode && this.treeLogs.contains(t.asLong()))) {
+                  if (AiBlockMine.isReachableFromStance(feet, t, treeMode && this.treeLogs.contains(t.asLong()))) {
                      if (n++ >= 4) {
                         break;
                      }
@@ -3064,11 +3064,11 @@ public final class AiBlockMine {
                   return false;
                }
 
-               if (treeMode && this.open(pos) && !this.hasScaffoldBlock()) {
+               if (treeMode && this.isUnreachableHighLog(pos) && !this.hasScaffoldBlock()) {
                   return false;
                }
 
-               if (treeMode && this.close(pos)) {
+               if (treeMode && this.isCoveredLog(pos)) {
                   return false;
                }
 
@@ -3078,7 +3078,7 @@ public final class AiBlockMine {
                      return false;
                   }
 
-                  if (AiBlockMine.strikeCount(pos) >= 2 && AiBlockMine.init(mc, pos)) {
+                  if (AiBlockMine.strikeCount(pos) >= 2 && AiBlockMine.isUnderwaterTarget(mc, pos)) {
                      return false;
                   }
 
@@ -3213,7 +3213,7 @@ public final class AiBlockMine {
                }
             }
 
-            boolean close(BlockPos log) {
+            boolean isCoveredLog(BlockPos log) {
                int top = mc.level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, log.getX(), log.getZ());
                int y = log.getY() + 1;
 
@@ -3230,7 +3230,7 @@ public final class AiBlockMine {
                return false;
             }
 
-            boolean open(BlockPos log) {
+            boolean isUnreachableHighLog(BlockPos log) {
                boolean high = true;
 
                for (int d = 1; d <= 12; d++) {
@@ -3282,7 +3282,7 @@ public final class AiBlockMine {
                   for (int dz = -2; dz <= 2; dz++) {
                      for (int dy = 5; dy <= 8; dy++) {
                         BlockPos p = feet.offset(dx, dy, dz);
-                        if (this.isTargetBlock(p) && !this.blacklistedCells.contains(p.asLong()) && this.open(p) && !this.close(p)) {
+                        if (this.isTargetBlock(p) && !this.blacklistedCells.contains(p.asLong()) && this.isUnreachableHighLog(p) && !this.isCoveredLog(p)) {
                            int ground = 0;
 
                            while (ground < 12 && !mc.level.getBlockState(p.below(ground + 1)).isSolidRender()) {
@@ -3542,7 +3542,7 @@ public final class AiBlockMine {
       }
    }
 
-   static double init(Minecraft mc, BlockPos pos, boolean requireDrops) {
+   static double waterDiveCost(Minecraft mc, BlockPos pos, boolean requireDrops) {
       int depth = 0;
       int buried = 0;
 
@@ -3598,7 +3598,7 @@ public final class AiBlockMine {
       }
    }
 
-   static boolean init(Minecraft mc, BlockPos pos) {
+   static boolean isUnderwaterTarget(Minecraft mc, BlockPos pos) {
       if (mc.player != null && mc.level != null) {
          if (!mc.player.hasEffect(MobEffects.WATER_BREATHING) && !mc.player.hasEffect(MobEffects.CONDUIT_POWER)) {
             if (!isWater(mc, pos.above())) {
@@ -3822,9 +3822,9 @@ public final class AiBlockMine {
       final List<Vec3> targetItems;
       final List<BlockPos> wetTargets;
       final Set<Long> excludedStances = new HashSet<>();
-      Set<Long> write = Set.of();
+      Set<Long> knownTargets = Set.of();
       int reachAbove = 2;
-      final Set<Long> update = new HashSet<>();
+      final Set<Long> trunkStances = new HashSet<>();
 
       GatherGoal(List<BlockPos> blocks, List<Vec3> items) {
          this(blocks, items, Set.of());
@@ -3867,7 +3867,7 @@ public final class AiBlockMine {
             BlockPos feet = new BlockPos(x, y, z);
 
             for (BlockPos t : this.wetTargets) {
-               if (AiBlockMine.init(feet, t, false) && t.getY() - y <= 3) {
+               if (AiBlockMine.isReachableFromStance(feet, t, false) && t.getY() - y <= 3) {
                   return true;
                }
             }
@@ -3875,7 +3875,7 @@ public final class AiBlockMine {
 
          if (!this.dryTargetCells.contains(BlockPos.asLong(x, y, z)) && !this.dryTargetCells.contains(BlockPos.asLong(x, y + 1, z))) {
             long over = BlockPos.asLong(x, y + 2, z);
-            return this.dryTargetCells.contains(over) && !this.noShaftCells.contains(over) ? true : this.update.contains(BlockPos.asLong(x, y, z));
+            return this.dryTargetCells.contains(over) && !this.noShaftCells.contains(over) ? true : this.trunkStances.contains(BlockPos.asLong(x, y, z));
          } else {
             return true;
          }
@@ -3923,12 +3923,12 @@ public final class AiBlockMine {
       @Override
       public boolean wantsBroken(BlockPos cell) {
          long key = cell.asLong();
-         return this.dryTargetCells.contains(key) && !this.write.contains(key) && !this.noShaftCells.contains(key);
+         return this.dryTargetCells.contains(key) && !this.knownTargets.contains(key) && !this.noShaftCells.contains(key);
       }
 
       @Override
       public boolean mayBreak(BlockPos cell) {
-         return !this.write.contains(cell.asLong());
+         return !this.knownTargets.contains(cell.asLong());
       }
 
       boolean sameGoal(AiBlockMine.GatherGoal other) {

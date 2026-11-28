@@ -37,7 +37,7 @@ final class QueuedAttackBuffer {
       return this.pending.size();
    }
 
-   int init_I_Predicate(Predicate<Object> valid) {
+   int unusedDispatchValid(Predicate<Object> valid) {
       return this.dispatch(valid, target -> {});
    }
 

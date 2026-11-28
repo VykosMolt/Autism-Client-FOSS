@@ -22,8 +22,8 @@ public final class AutismProfileManager {
    private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private final File profilesDir = new File(AutismClientAddon.FOLDER, "profiles");
    private final List<AutismProfile> profiles = new ArrayList<>();
-   private String load_Str = "";
-   private volatile boolean init_Z = false;
+   private String activeId = "";
+   private volatile boolean unsavedChanges = false;
    private volatile long revision = 0L;
    private boolean switchInProgress = false;
    private static final long load_J = 750L;
@@ -38,7 +38,7 @@ public final class AutismProfileManager {
       this.dedupeNames();
       this.restoreActive();
       AutismConfig.afterSave = this::onConfigSaved;
-      AutismConfig.afterPersistenceSnapshot = this::init_V_AutismConfig;
+      AutismConfig.afterPersistenceSnapshot = this::onConfigSnapshot;
    }
 
    public static synchronized AutismProfileManager getInstance() {
@@ -52,7 +52,7 @@ public final class AutismProfileManager {
    static void init_V() {
       AutismProfileManager current = INSTANCE;
       if (current != null) {
-         current.read();
+         current.flushPendingSnapshot();
       }
    }
 
@@ -79,11 +79,11 @@ public final class AutismProfileManager {
    }
 
    public synchronized String activeId() {
-      return this.load_Str;
+      return this.activeId;
    }
 
    public synchronized boolean hasUnsavedChanges() {
-      return this.init_Z;
+      return this.unsavedChanges;
    }
 
    public long currentRevision() {
@@ -91,7 +91,7 @@ public final class AutismProfileManager {
    }
 
    public synchronized AutismProfile active() {
-      return this.byId(this.load_Str);
+      return this.byId(this.activeId);
    }
 
    public synchronized AutismProfile byId(String id) {
@@ -131,7 +131,7 @@ public final class AutismProfileManager {
       return false;
    }
 
-   public synchronized AutismProfile load_AutismProfile(String name) {
+   public synchronized AutismProfile createFresh(String name) {
       return this.create(name, true, false, true);
    }
 
@@ -140,7 +140,7 @@ public final class AutismProfileManager {
          return null;
       }
 
-      AutismProfile p = new AutismProfile(this.load_Str(name), name != null && !name.isBlank() ? name.strip() : "Profile");
+      AutismProfile p = new AutismProfile(this.uniqueId(name), name != null && !name.isBlank() ? name.strip() : "Profile");
       p.autoSave = autoSave;
       p.ownMacroLibrary = ownMacroLibrary;
       p.ownThemeColor = ownThemeColor;
@@ -151,34 +151,34 @@ public final class AutismProfileManager {
       }
 
       this.profiles.add(p);
-      this.init_V_AutismProfile_AutismConfig(p, p.snapshot);
+      this.persistWith(p, p.snapshot);
       this.revision++;
       return p;
    }
 
    public synchronized AutismProfile duplicate(AutismProfile src, String name) {
       if (src == null) {
-         return this.load_AutismProfile(name);
+         return this.createFresh(name);
       }
 
       if (this.isNameTaken(name, null)) {
          return null;
       }
 
-      AutismProfile p = new AutismProfile(this.load_Str(name), name != null && !name.isBlank() ? name.strip() : src.displayName + " copy");
+      AutismProfile p = new AutismProfile(this.uniqueId(name), name != null && !name.isBlank() ? name.strip() : src.displayName + " copy");
       p.autoSave = src.autoSave;
       p.ownMacroLibrary = src.ownMacroLibrary;
       p.ownThemeColor = src.ownThemeColor;
       p.serverPatterns = new ArrayList<>(src.serverPatterns);
       p.createdAt = p.updatedAt = System.currentTimeMillis();
-      if (src.autoSave && this.load_Str.equals(src.id)) {
+      if (src.autoSave && this.activeId.equals(src.id)) {
          this.onConfigSaved();
-         this.read();
+         this.flushPendingSnapshot();
       }
 
       p.snapshot = src.snapshot.deepCopy();
       this.profiles.add(p);
-      this.sync(p);
+      this.persist(p);
       if (src.ownMacroLibrary) {
          try {
             File from = this.macrosFileFor(src);
@@ -205,14 +205,14 @@ public final class AutismProfileManager {
 
       p.displayName = name.strip();
       p.updatedAt = System.currentTimeMillis();
-      this.sync(p);
+      this.persist(p);
       this.revision++;
       return true;
    }
 
    public synchronized boolean delete(AutismProfile p) {
       if (p != null && !"default".equals(p.id) && this.profiles.size() > 1) {
-         boolean wasActive = p.id.equals(this.load_Str);
+         boolean wasActive = p.id.equals(this.activeId);
          this.profiles.remove(p);
          this.deleteProfile(p);
          if (wasActive) {
@@ -245,12 +245,12 @@ public final class AutismProfileManager {
       if (p != null && p.autoSave != autoSave) {
          p.autoSave = autoSave;
          p.updatedAt = System.currentTimeMillis();
-         if (autoSave && p.id.equals(this.load_Str)) {
+         if (autoSave && p.id.equals(this.activeId)) {
             p.snapshot = this.captureConfigSnapshot();
-            this.init_Z = false;
+            this.unsavedChanges = false;
          }
 
-         this.init_V_AutismProfile_AutismConfig(p, autoSave && p.id.equals(this.load_Str) ? p.snapshot : null);
+         this.persistWith(p, autoSave && p.id.equals(this.activeId) ? p.snapshot : null);
          this.revision++;
       }
    }
@@ -263,8 +263,8 @@ public final class AutismProfileManager {
             this.saveMacros(p);
          }
 
-         this.sync(p);
-         if (p.id.equals(this.load_Str)) {
+         this.persist(p);
+         if (p.id.equals(this.activeId)) {
             if (own) {
                MacroLibraryManager.getInstance().switchLibraryFile(this.macrosFileFor(p), false, true);
             } else {
@@ -280,7 +280,7 @@ public final class AutismProfileManager {
       if (p != null && p.ownThemeColor != own) {
          p.ownThemeColor = own;
          p.updatedAt = System.currentTimeMillis();
-         this.sync(p);
+         this.persist(p);
          this.revision++;
       }
    }
@@ -301,7 +301,7 @@ public final class AutismProfileManager {
 
          p.serverPatterns = clean;
          p.updatedAt = System.currentTimeMillis();
-         this.sync(p);
+         this.persist(p);
          this.revision++;
       }
    }
@@ -310,9 +310,9 @@ public final class AutismProfileManager {
       if (p != null) {
          p.snapshot = this.captureConfigSnapshot();
          p.updatedAt = System.currentTimeMillis();
-         this.init_V_AutismProfile_AutismConfig(p, p.snapshot);
-         if (p.id.equals(this.load_Str)) {
-            this.init_Z = false;
+         this.persistWith(p, p.snapshot);
+         if (p.id.equals(this.activeId)) {
+            this.unsavedChanges = false;
          }
 
          this.revision++;
@@ -322,7 +322,7 @@ public final class AutismProfileManager {
    public synchronized void switchTo(AutismProfile p) {
       if (p != null) {
          AutismConfig.enqueuePendingSaveNow();
-         this.read();
+         this.flushPendingSnapshot();
          this.switchInProgress = true;
 
          try {
@@ -337,8 +337,8 @@ public final class AutismProfileManager {
 
             autismclient.modules.ModuleRuntimeManager.getInstance().applyConfig(next);
             this.switchMacroLibrary(p);
-            this.load_Str = p.id;
-            this.init_Z = false;
+            this.activeId = p.id;
+            this.unsavedChanges = false;
             this.revision++;
          } finally {
             this.switchInProgress = false;
@@ -349,20 +349,20 @@ public final class AutismProfileManager {
    }
 
    public synchronized void switchToAsync(AutismProfile p) {
-      if (p != null && !this.configDirty && !p.id.equals(this.load_Str)) {
+      if (p != null && !this.configDirty && !p.id.equals(this.activeId)) {
          this.configDirty = true;
          Runnable applyJob = autismclient.gui.ThemeApplyProgressOverlay.beginStep("Switching Profile", "Applying profile…");
-         autismclient.gui.ThemeApplyProgressOverlay.onFinish(() -> this.init_V_AutismProfile_Runnable(p, applyJob));
+         autismclient.gui.ThemeApplyProgressOverlay.onFinish(() -> this.continueProfileSwitch(p, applyJob));
       }
    }
 
-   private synchronized void init_V_AutismProfile_Runnable(AutismProfile p, Runnable applyJob) {
+   private synchronized void continueProfileSwitch(AutismProfile p, Runnable applyJob) {
       Runnable macroJob = autismclient.gui.ThemeApplyProgressOverlay.beginStep("Switching Profile", "Loading macros…");
       boolean macroKicked = false;
 
       try {
          AutismConfig.enqueuePendingSaveNow();
-         this.read();
+         this.flushPendingSnapshot();
          this.switchInProgress = true;
          AutismConfig next = p.snapshot.deepCopy();
          next.activeProfileId = p.id;
@@ -374,8 +374,8 @@ public final class AutismProfileManager {
          }
 
          autismclient.modules.ModuleRuntimeManager.getInstance().applyConfig(next);
-         this.load_Str = p.id;
-         this.init_Z = false;
+         this.activeId = p.id;
+         this.unsavedChanges = false;
          this.revision++;
          AutismClientMessaging.sendPrefixed("§aLoaded profile: " + p.displayName);
          AutismProfile fp = p;
@@ -383,7 +383,7 @@ public final class AutismProfileManager {
          BackgroundTaskExecutor.submit("profile-macros", () -> {
             // Same monitor as profile delete, so a delete cannot land between the check and the switch.
             synchronized (this) {
-               if (this.load_Str.equals(fp.id) && this.profiles.contains(fp)) {
+               if (this.activeId.equals(fp.id) && this.profiles.contains(fp)) {
                   try {
                      this.switchMacroLibrary(fp);
                   } catch (Throwable tx) {
@@ -412,9 +412,9 @@ public final class AutismProfileManager {
    public synchronized void onConnect(ServerAddress addr, ServerData data) {
       String address = data != null && data.ip != null && !data.ip.isBlank() ? data.ip : (addr != null ? addr.getHost() + ":" + addr.getPort() : "");
       AutismProfile match = this.profileForServer(address);
-      if (match != null && !match.id.equals(this.load_Str)) {
+      if (match != null && !match.id.equals(this.activeId)) {
          AutismProfile current = this.active();
-         if (current != null && !current.autoSave && this.init_Z) {
+         if (current != null && !current.autoSave && this.unsavedChanges) {
             this.saveSnapshot(current);
          }
 
@@ -518,14 +518,14 @@ public final class AutismProfileManager {
                this.snapshotDueAt = System.currentTimeMillis() + 750L;
                this.snapshotPending = true;
             } else {
-               this.init_Z = true;
+               this.unsavedChanges = true;
                this.revision++;
             }
          }
       }
    }
 
-   private synchronized void init_V_AutismConfig(AutismConfig snapshot) {
+   private synchronized void onConfigSnapshot(AutismConfig snapshot) {
       if (!this.switchInProgress && snapshot != null && this.snapshotPending) {
          AutismProfile a = this.active();
          if (a != null && a.autoSave) {
@@ -538,23 +538,23 @@ public final class AutismProfileManager {
       if (this.snapshotPending) {
          synchronized (this) {
             if (this.snapshotPending && System.currentTimeMillis() >= this.snapshotDueAt) {
-               this.update();
+               this.saveSnapshotToActive();
             }
          }
       }
    }
 
-   public synchronized void read() {
+   public synchronized void flushPendingSnapshot() {
       if (this.snapshotPending && this.pendingSnapshot == null) {
          AutismConfigPersistence.init();
       }
 
       if (this.snapshotPending) {
-         this.update();
+         this.saveSnapshotToActive();
       }
    }
 
-   private void update() {
+   private void saveSnapshotToActive() {
       this.snapshotPending = false;
       AutismProfile a = this.active();
       if (a != null && a.autoSave) {
@@ -566,8 +566,8 @@ public final class AutismProfileManager {
 
          a.snapshot = snap;
          a.updatedAt = System.currentTimeMillis();
-         this.init_V_AutismProfile_AutismConfig(a, snap);
-         this.init_Z = false;
+         this.persistWith(a, snap);
+         this.unsavedChanges = false;
       }
    }
 
@@ -665,11 +665,11 @@ public final class AutismProfileManager {
       }
    }
 
-   private void sync(AutismProfile p) {
-      this.init_V_AutismProfile_AutismConfig(p, null);
+   private void persist(AutismProfile p) {
+      this.persistWith(p, null);
    }
 
-   private void init_V_AutismProfile_AutismConfig(AutismProfile p, AutismConfig detachedSnapshot) {
+   private void persistWith(AutismProfile p, AutismConfig detachedSnapshot) {
       if (p != null) {
          AutismProfile snapshot = copyWithConfig(p, detachedSnapshot);
          DebouncedPersistenceScheduler.schedule(this.profileSourceKey(snapshot.id), () -> this.writeProfile(snapshot));
@@ -755,8 +755,8 @@ public final class AutismProfileManager {
          def.createdAt = def.updatedAt = System.currentTimeMillis();
          def.snapshot = this.captureConfigSnapshot();
          this.profiles.add(def);
-         this.load_Str = def.id;
-         this.sync(def);
+         this.activeId = def.id;
+         this.persist(def);
       } else if (this.byId("default") == null) {
          AutismConfig stock = new AutismConfig();
          stock.applyRuntimeDefaults();
@@ -765,7 +765,7 @@ public final class AutismProfileManager {
          def.createdAt = def.updatedAt = System.currentTimeMillis();
          def.snapshot = stock.snapshotForProfile();
          this.profiles.add(def);
-         this.sync(def);
+         this.persist(def);
       }
    }
 
@@ -793,7 +793,7 @@ public final class AutismProfileManager {
 
                p.displayName = candidate;
                p.updatedAt = System.currentTimeMillis();
-               this.sync(p);
+               this.persist(p);
             }
          }
       }
@@ -802,10 +802,10 @@ public final class AutismProfileManager {
    private void restoreActive() {
       String want = AutismConfig.getGlobal().activeProfileId;
       if (want != null && !want.isBlank() && this.hasProfile(want)) {
-         this.load_Str = want;
-      } else if (this.load_Str == null || this.load_Str.isBlank() || !this.hasProfile(this.load_Str)) {
-         this.load_Str = this.profiles.isEmpty() ? "" : this.profiles.get(0).id;
-         AutismConfig.getGlobal().activeProfileId = this.load_Str;
+         this.activeId = want;
+      } else if (this.activeId == null || this.activeId.isBlank() || !this.hasProfile(this.activeId)) {
+         this.activeId = this.profiles.isEmpty() ? "" : this.profiles.get(0).id;
+         AutismConfig.getGlobal().activeProfileId = this.activeId;
       }
 
       AutismProfile a = this.active();
@@ -814,14 +814,14 @@ public final class AutismProfileManager {
             String live = this.GSON.toJson(this.captureConfigSnapshot());
             String saved = this.GSON.toJson(a.snapshot);
             if (!live.equals(saved)) {
-               this.init_Z = true;
+               this.unsavedChanges = true;
             }
          } catch (Throwable var5) {
          }
       }
    }
 
-   private String load_Str(String name) {
+   private String uniqueId(String name) {
       String var10000 = AutismProfile.sanitizeId(name);
       String base = var10000.substring(0, Math.min(var10000.length(), 200)).replaceFirst("-+$", "");
       String candidate = base;

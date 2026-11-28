@@ -18,7 +18,7 @@ public final class UnexplainedBlockTracker {
    public static final long ALERT_DURATION_MS = 8000L;
    private final Map<Long, UnexplainedBlockTracker.BlockChange> changes = new LinkedHashMap<>();
    private final Map<Long, Deque<UnexplainedBlockTracker.BlockChange>> bursts = new HashMap<>();
-   private final Map<Long, Long> read_Map = new HashMap<>();
+   private final Map<Long, Long> suppressedUntil = new HashMap<>();
    private final List<UnexplainedBlockTracker.Explanation> explanations = new ArrayList<>();
    private final List<UnexplainedBlockTracker.ChangeStreak> streaks = new ArrayList<>();
 
@@ -32,7 +32,7 @@ public final class UnexplainedBlockTracker {
          UnexplainedBlockTracker.BlockChange settled = streak.changes.get(pos.asLong());
          if (settled != null && !settled.load.equals(after)) {
             streak.changes.remove(pos.asLong());
-            streak.init_DataUtil_BufferHel = null;
+            streak.reading = null;
          }
       }
    }
@@ -49,7 +49,7 @@ public final class UnexplainedBlockTracker {
 
          if (burst.stream().map(c -> c.pos.asLong()).distinct().count() > 8L) {
             this.suppress(change.pos, change.time + 3500L);
-         } else if (this.read_Map.getOrDefault(chunk, 0L) <= change.time && !this.isExplained(change.pos, change.time)) {
+         } else if (this.suppressedUntil.getOrDefault(chunk, 0L) <= change.time && !this.isExplained(change.pos, change.time)) {
             if (this.changes.size() >= 1024) {
                this.changes.remove(this.changes.keySet().iterator().next());
             }
@@ -61,7 +61,7 @@ public final class UnexplainedBlockTracker {
 
    public void suppress(BlockPos pos, long until) {
       long chunk = chunkKey(pos);
-      this.read_Map.merge(chunk, until, Math::max);
+      this.suppressedUntil.merge(chunk, until, Math::max);
       this.changes.values().removeIf(c -> chunkKey(c.pos) == chunk);
       this.streaks.removeIf(s -> chunkKey(s.origin) == chunk);
    }
@@ -84,7 +84,7 @@ public final class UnexplainedBlockTracker {
 
    public void init(long now, BiPredicate<BlockPos, String> unchanged, Predicate<BlockPos> worldCause) {
       this.explanations.removeIf(cx -> cx.until <= now);
-      this.read_Map.values().removeIf(until -> until <= now);
+      this.suppressedUntil.values().removeIf(until -> until <= now);
       this.bursts.values().removeIf(q -> {
          while (!q.isEmpty() && now - q.peekFirst().time > 150L) {
             q.removeFirst();
@@ -97,13 +97,13 @@ public final class UnexplainedBlockTracker {
          if (now - c.time >= 750L) {
             this.changes.remove(c.pos.asLong());
             if (now - c.time <= 3000L
-               && this.read_Map.getOrDefault(chunkKey(c.pos), 0L) <= now
+               && this.suppressedUntil.getOrDefault(chunkKey(c.pos), 0L) <= now
                && !this.isExplained(c.pos, now)
                && unchanged.test(c.pos, c.load)
                && !worldCause.test(c.pos)) {
                UnexplainedBlockTracker.ChangeStreak streak = this.streaks
                   .stream()
-                  .filter(s -> s.origin.distSqr(c.pos) <= 64.0 && now - s.init_J <= 6000L)
+                  .filter(s -> s.origin.distSqr(c.pos) <= 64.0 && now - s.lastAt <= 6000L)
                   .findFirst()
                   .orElse(null);
                if (streak == null) {
@@ -120,13 +120,13 @@ public final class UnexplainedBlockTracker {
          }
       }
 
-      this.streaks.removeIf(s -> now - s.init_J > 14000L);
+      this.streaks.removeIf(s -> now - s.lastAt > 14000L);
    }
 
    public List<UnexplainedBlockTracker.ActivityReading> activeReadings(long now) {
       return this.streaks
          .stream()
-         .map(s -> s.init_DataUtil_BufferHel)
+         .map(s -> s.reading)
          .filter(r -> r != null && r.until > now)
          .sorted(Comparator.comparingLong(UnexplainedBlockTracker.ActivityReading::until).reversed())
          .limit(2L)
@@ -136,7 +136,7 @@ public final class UnexplainedBlockTracker {
    public void clear() {
       this.changes.clear();
       this.bursts.clear();
-      this.read_Map.clear();
+      this.suppressedUntil.clear();
       this.explanations.clear();
       this.streaks.clear();
    }
@@ -163,8 +163,8 @@ public final class UnexplainedBlockTracker {
    private static final class ChangeStreak {
       final BlockPos origin;
       final Map<Long, UnexplainedBlockTracker.BlockChange> changes = new LinkedHashMap<>();
-      long init_J = -1L;
-      UnexplainedBlockTracker.ActivityReading init_DataUtil_BufferHel;
+      long lastAt = -1L;
+      UnexplainedBlockTracker.ActivityReading reading;
 
       ChangeStreak(BlockPos anchor) {
          this.origin = anchor;
@@ -172,8 +172,8 @@ public final class UnexplainedBlockTracker {
 
       void recordChange(UnexplainedBlockTracker.BlockChange c) {
          this.changes.values().removeIf(old -> c.time - old.time > 6000L);
-         if (this.init_J < 0L || c.time - this.init_J >= 140L) {
-            this.init_J = c.time;
+         if (this.lastAt < 0L || c.time - this.lastAt >= 140L) {
+            this.lastAt = c.time;
             this.changes.put(c.pos.asLong(), c);
             if (this.changes.size() > 32) {
                this.changes.remove(this.changes.keySet().iterator().next());
@@ -183,7 +183,7 @@ public final class UnexplainedBlockTracker {
                long first = this.changes.values().stream().mapToLong(UnexplainedBlockTracker.BlockChange::time).min().orElse(c.time);
                if (c.time - first >= 450L) {
                   int placements = (int)this.changes.values().stream().filter(e -> e.init_DataUtil_CachePool == UnexplainedBlockTracker.ChangeKind.PLACE).count();
-                  this.init_DataUtil_BufferHel = new UnexplainedBlockTracker.ActivityReading(
+                  this.reading = new UnexplainedBlockTracker.ActivityReading(
                      c.pos, placements, this.changes.size() - placements, c.time + 8000L
                   );
                }

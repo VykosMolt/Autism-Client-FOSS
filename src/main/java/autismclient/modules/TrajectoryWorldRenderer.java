@@ -126,7 +126,7 @@ public final class TrajectoryWorldRenderer {
             );
 
             for (TrajectoriesModule.Inner_CachePool path : paths) {
-               init_V_PoseStack_Pose(pose, lines, path, camera, forward, near, opacity);
+               renderPath(pose, lines, path, camera, forward, near, opacity);
             }
 
             VertexConsumer markers = buffers.buffer(
@@ -259,7 +259,7 @@ public final class TrajectoryWorldRenderer {
       Vec3 tangent = Math.abs(normal.y) > 0.9 ? new Vec3(1.0, 0.0, 0.0) : normal.cross(new Vec3(0.0, 1.0, 0.0)).normalize();
       Vec3 bitangent = normal.cross(tangent).normalize();
       double extent = radius / 0.86;
-      init_V_PoseStack_Pose_3(pose, buffer, center.subtract(camera), tangent.scale(extent), bitangent.scale(extent), color, style);
+      quad(pose, buffer, center.subtract(camera), tangent.scale(extent), bitangent.scale(extent), color, style);
    }
 
    private static int hitColor(TrajectoriesModule.Inner_CachePool path) {
@@ -283,7 +283,7 @@ public final class TrajectoryWorldRenderer {
       return index < ease ? path.points().get(index).add(path.init_Vec3().scale(1.0 - (double)index / ease)) : path.points().get(index);
    }
 
-   private static void init_V_PoseStack_Pose(Pose pose, VertexConsumer buffer, TrajectoriesModule.Inner_CachePool path, Vec3 camera, Vec3 forward, double near, double opacity) {
+   private static void renderPath(Pose pose, VertexConsumer buffer, TrajectoriesModule.Inner_CachePool path, Vec3 camera, Vec3 forward, double near, double opacity) {
       if (path.points().size() >= 2) {
          Vec3 previous = easedPoint(path, 0).subtract(camera);
          int count = path.points().size() - 1;
@@ -292,13 +292,13 @@ public final class TrajectoryWorldRenderer {
             Vec3 next = easedPoint(path, i).subtract(camera);
             double fade = path.hit() == null ? Math.min(1.0, (count + 1 - i) / 12.0) : 1.0;
             fade *= opacity * (path.load_Z() ? 1.0 : 0.86);
-            init_V_PoseStack_Pose(pose, buffer, previous, next, forward, near, hitColor(path), fade, (double)i / count, path.load_Z());
+            renderSegment(pose, buffer, previous, next, forward, near, hitColor(path), fade, (double)i / count, path.load_Z());
             previous = next;
          }
       }
    }
 
-   private static void init_V_PoseStack_Pose(
+   private static void renderSegment(
       Pose pose, VertexConsumer buffer, Vec3 a, Vec3 b, Vec3 forward, double near, int tint, double fade, double progress, boolean primary
    ) {
       double da = a.dot(forward);
@@ -317,14 +317,14 @@ public final class TrajectoryWorldRenderer {
             float width = primary ? 2.35F : 1.95F;
             double fadeA = Math.clamp((a.dot(forward) - near) / 0.45, 0.0, 1.0);
             double fadeB = Math.clamp((b.dot(forward) - near) / 0.45, 0.0, 1.0);
-            init_V_PoseStack_Pose_2(pose, buffer, a, b, normal, tint, 28.0 * fade, fadeA, fadeB, width + 3.5F);
-            init_V_PoseStack_Pose_2(pose, buffer, a, b, normal, -16182498, 115.0 * fade, fadeA, fadeB, width + 1.6F);
-            init_V_PoseStack_Pose_2(pose, buffer, a, b, normal, tint, (200.0 + progress * 40.0) * fade, fadeA, fadeB, width);
+            ribbonLayer(pose, buffer, a, b, normal, tint, 28.0 * fade, fadeA, fadeB, width + 3.5F);
+            ribbonLayer(pose, buffer, a, b, normal, -16182498, 115.0 * fade, fadeA, fadeB, width + 1.6F);
+            ribbonLayer(pose, buffer, a, b, normal, tint, (200.0 + progress * 40.0) * fade, fadeA, fadeB, width);
          }
       }
    }
 
-   private static void init_V_PoseStack_Pose_2(
+   private static void ribbonLayer(
       Pose pose, VertexConsumer buffer, Vec3 a, Vec3 b, Vector3f normal, int tint, double opacity, double fadeA, double fadeB, float width
    ) {
       buffer.addVertex(pose, (float)a.x, (float)a.y, (float)a.z).setColor(withAlpha(tint, (int)(opacity * fadeA))).setNormal(pose, normal).setLineWidth(width);
@@ -335,15 +335,15 @@ public final class TrajectoryWorldRenderer {
       return color & 16777215 | Math.clamp(alpha, 0, 255) << 24;
    }
 
-   private static void init_V_PoseStack_Pose_3(Pose pose, VertexConsumer buffer, Vec3 at, Vec3 right, Vec3 up, int color, int style) {
+   private static void quad(Pose pose, VertexConsumer buffer, Vec3 at, Vec3 right, Vec3 up, int color, int style) {
       markerCount++;
-      init_V_PoseStack_Pose_2(pose, buffer, at.subtract(right).subtract(up), 0.0F, 0.0F, color, style);
-      init_V_PoseStack_Pose_2(pose, buffer, at.add(right).subtract(up), 1.0F, 0.0F, color, style);
-      init_V_PoseStack_Pose_2(pose, buffer, at.add(right).add(up), 1.0F, 1.0F, color, style);
-      init_V_PoseStack_Pose_2(pose, buffer, at.subtract(right).add(up), 0.0F, 1.0F, color, style);
+      vertex(pose, buffer, at.subtract(right).subtract(up), 0.0F, 0.0F, color, style);
+      vertex(pose, buffer, at.add(right).subtract(up), 1.0F, 0.0F, color, style);
+      vertex(pose, buffer, at.add(right).add(up), 1.0F, 1.0F, color, style);
+      vertex(pose, buffer, at.subtract(right).add(up), 0.0F, 1.0F, color, style);
    }
 
-   private static void init_V_PoseStack_Pose_2(Pose pose, VertexConsumer buffer, Vec3 at, float u, float v, int color, int style) {
+   private static void vertex(Pose pose, VertexConsumer buffer, Vec3 at, float u, float v, int color, int style) {
       buffer.addVertex(pose, (float)at.x, (float)at.y, (float)at.z).setUv(u + style * 2, v).setColor(color);
    }
 }

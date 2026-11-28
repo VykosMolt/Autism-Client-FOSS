@@ -159,7 +159,7 @@ public final class ModNamespaceCatalog {
          }
 
          String var10000;
-         switch (decision.init_I()) {
+         switch (decision.kind()) {
             case 1:
                var10000 = defaultValue;
                break;
@@ -199,7 +199,7 @@ public final class ModNamespaceCatalog {
       return translationFor(key, key) != null ? true : isBlockedKey(key);
    }
 
-   public static boolean write(String key) {
+   public static boolean hasLocalModSegment(String key) {
       if (key != null && !key.isEmpty() && !localModIds.isEmpty()) {
          Boolean cached = modSegmentCache.get(key);
          if (cached != null) {
@@ -245,7 +245,7 @@ public final class ModNamespaceCatalog {
       return !"minecraft".equals(lower) && !"c".equals(lower) ? fabricNamespaces.contains(lower) : true;
    }
 
-   private static boolean update(String modId) {
+   private static boolean isForeignMod(String modId) {
       String normalized = normalizeModId(modId);
       return normalized != null && foreignModIds.contains(normalized);
    }
@@ -254,20 +254,20 @@ public final class ModNamespaceCatalog {
       if (!serverKnownKeys.contains(key) && !VanillaTranslationKeyLoader.isVanillaKey(key)) {
          String serverValue = serverTranslations.get(key);
          if (serverValue != null) {
-            return ModNamespaceCatalog.Decision.init(serverValue);
+            return ModNamespaceCatalog.Decision.serverValue(serverValue);
          }
 
          Set<String> owners = keyOwners.get(key);
          if (owners != null && !owners.isEmpty()) {
             for (String owner : owners) {
-               if (update(owner)) {
+               if (isForeignMod(owner)) {
                   return ModNamespaceCatalog.Decision.PASS;
                }
             }
 
             return ModNamespaceCatalog.Decision.BLOCK;
          } else {
-            return write(key) ? ModNamespaceCatalog.Decision.BLOCK : ModNamespaceCatalog.Decision.PASS;
+            return hasLocalModSegment(key) ? ModNamespaceCatalog.Decision.BLOCK : ModNamespaceCatalog.Decision.PASS;
          }
       } else {
          return ModNamespaceCatalog.Decision.PASS;
@@ -282,14 +282,14 @@ public final class ModNamespaceCatalog {
       Set<String> owners = blockKeyOwners.get(key);
       if (owners != null && !owners.isEmpty()) {
          for (String owner : owners) {
-            if (update(owner)) {
+            if (isForeignMod(owner)) {
                return false;
             }
          }
 
          return true;
       } else {
-         return write(key);
+         return hasLocalModSegment(key);
       }
    }
 
@@ -322,11 +322,11 @@ public final class ModNamespaceCatalog {
       static final ModNamespaceCatalog.Decision PASS = new ModNamespaceCatalog.Decision(0, null);
       static final ModNamespaceCatalog.Decision BLOCK = new ModNamespaceCatalog.Decision(1, null);
 
-      static ModNamespaceCatalog.Decision init(String value) {
+      static ModNamespaceCatalog.Decision serverValue(String value) {
          return new ModNamespaceCatalog.Decision(2, value);
       }
 
-      public int init_I() {
+      public int kind() {
          return this.write;
       }
    }

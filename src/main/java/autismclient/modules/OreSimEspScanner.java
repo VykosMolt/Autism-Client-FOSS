@@ -45,10 +45,10 @@ public final class OreSimEspScanner {
    private static final int VISIBILITY_CACHE_PERIOD = 25;
    private static int predictionScanCounter;
    private static int visibilityCacheTicks;
-   private static boolean init_Z;
+   private static boolean seedParsed;
    private static Long lastSeed;
    private static long nextRescanAt;
-   private static final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
+   private static final LongOpenHashSet visibilityChecked = new LongOpenHashSet();
    private static final long[] positionBuffer = new long[8192];
    private static final int[] stateBuffer = new int[8192];
    private static final double[] heapDistances = new double[8192];
@@ -61,9 +61,9 @@ public final class OreSimEspScanner {
    private static boolean oreSimMode;
    private static boolean espStyle;
    private static int colorRevision = -2147483648;
-   private static final Object2IntOpenHashMap<Block> init_Object2IntOpenHash = new Object2IntOpenHashMap<>();
+   private static final Object2IntOpenHashMap<Block> blockMaskCache = new Object2IntOpenHashMap<>();
    private static volatile autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil seedParse = autismclient.util.oresim.OreSimSeedParser.parse(null);
-   private static final long read_J = TimeUnit.MINUTES.toNanos(2L);
+   private static final long PAUSE_RESET_NANOS = TimeUnit.MINUTES.toNanos(2L);
    private static OreSimEspScanner.BlockSelection tableSelection;
    private static boolean[] stateTable = new boolean[0];
    private static volatile int lastMatched;
@@ -167,7 +167,7 @@ public final class OreSimEspScanner {
       return new OreSimEspScanner.BlockSelection(safe, Set.copyOf(blocks), List.copyOf(nonOre), mask);
    }
 
-   static int init_I(Module xray) {
+   static int selectionMask(Module xray) {
       return selection(xray).init_I();
    }
 
@@ -201,10 +201,10 @@ public final class OreSimEspScanner {
       int revision = al.init_I();
       if (revision != colorRevision) {
          colorRevision = revision;
-         init_Object2IntOpenHash.clear();
+         blockMaskCache.clear();
       }
 
-      int cached = init_Object2IntOpenHash.getOrDefault(block, -2147483648);
+      int cached = blockMaskCache.getOrDefault(block, -2147483648);
       if (cached != -2147483648) {
          return cached;
       }
@@ -212,7 +212,7 @@ public final class OreSimEspScanner {
       Identifier id = BuiltInRegistries.BLOCK.getKey(block);
       autismclient.util.oresim.OreBlockCatalog.OreKind family = id == null ? null : autismclient.util.oresim.OreBlockCatalog.kindOf(id.toString());
       int color = family != null ? colorFor(xray, family) : (id == null ? -3355444 : am.init_I_Module(xray, "block-color-" + id, -3355444));
-      init_Object2IntOpenHash.put(block, color);
+      blockMaskCache.put(block, color);
       return color;
    }
 
@@ -236,7 +236,7 @@ public final class OreSimEspScanner {
    }
 
    public static int read_I(Module xray) {
-      return init_I(xray);
+      return selectionMask(xray);
    }
 
    static int radius(Module xray) {
@@ -248,10 +248,10 @@ public final class OreSimEspScanner {
       if (isOreSimMode(xray) && xray != null && xray.isEnabled() && level != null && player != null) {
          autismclient.util.oresim.OreSimEngine.resume();
          Long parsedSeed = seedFor(xray);
-         int mask = init_I(xray);
+         int mask = selectionMask(xray);
          long now = System.nanoTime();
-         if (!init_Z || !Objects.equals(parsedSeed, lastSeed)) {
-            init_Z = true;
+         if (!seedParsed || !Objects.equals(parsedSeed, lastSeed)) {
+            seedParsed = true;
             lastSeed = parsedSeed;
             nextRescanAt = now + 400000000L;
             autismclient.util.oresim.OreSimEngine.reset();
@@ -270,8 +270,8 @@ public final class OreSimEspScanner {
    }
 
    public static void init_V() {
-      if (autismclient.util.oresim.OreSimEngine.pausedLongerThan(read_J)) {
-         init_Z = false;
+      if (autismclient.util.oresim.OreSimEngine.pausedLongerThan(PAUSE_RESET_NANOS)) {
+         seedParsed = false;
          lastSeed = null;
          nextRescanAt = 0L;
       }
@@ -306,7 +306,7 @@ public final class OreSimEspScanner {
                      boolean open = actual.isAir() || touchesAir(level, cursor);
                      if (!open) {
                         return false;
-                     } else if (!init_LongOpenHashSet.add(packed)) {
+                     } else if (!visibilityChecked.add(packed)) {
                         return false;
                      } else {
                         return rays[0] >= 96 ? false : isVisible(level, player, eyes, cursor.immutable(), actual.isAir(), rays);
@@ -315,9 +315,9 @@ public final class OreSimEspScanner {
                }
             }
          });
-         if (++visibilityCacheTicks >= 25 || init_LongOpenHashSet.size() > 4096) {
+         if (++visibilityCacheTicks >= 25 || visibilityChecked.size() > 4096) {
             visibilityCacheTicks = 0;
-            init_LongOpenHashSet.clear();
+            visibilityChecked.clear();
          }
       }
    }
@@ -698,7 +698,7 @@ public final class OreSimEspScanner {
             return "invalid seed";
          } else if (parsedSeed == null) {
             return "no seed";
-         } else if (init_I(xray) == 0) {
+         } else if (selectionMask(xray) == 0) {
             return "no ores";
          } else if (autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.EngineStatus.UNSUPPORTED_DIMENSION) {
             return "unsupported dimension";

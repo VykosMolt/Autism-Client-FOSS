@@ -135,7 +135,7 @@ public final class PacketCommandBuilder {
       }
 
       if (!args.containsKey("help") && !args.containsKey("?")) {
-         PacketCommandBuilder.BuildResult rawCodec = init_bm_StreamUtil_Class_Map(packetClass, args);
+         PacketCommandBuilder.BuildResult rawCodec = buildViaCodec(packetClass, args);
          if (rawCodec != null) {
             return rawCodec;
          }
@@ -146,7 +146,7 @@ public final class PacketCommandBuilder {
          }
 
          if (args.isEmpty()) {
-            Packet<?> noArg = init_Packet_Class(packetClass);
+            Packet<?> noArg = instantiateNoArg(packetClass);
             return noArg != null
                ? PacketCommandBuilder.BuildResult.built(noArg, "no-arg")
                : PacketCommandBuilder.BuildResult.error("Packet needs arguments. " + usage(packetClass));
@@ -175,7 +175,7 @@ public final class PacketCommandBuilder {
       List<String> fields = new ArrayList<>();
       if (schema != null) {
          for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
-            fields.add(field.name() + "=" + init_Str_Str_Str(field.load(), field.read()) + " (" + typeHint(field.load(), field.read()) + ")");
+            fields.add(field.name() + "=" + placeholderValue(field.load(), field.read()) + " (" + typeHint(field.load(), field.read()) + ")");
          }
       }
 
@@ -194,7 +194,7 @@ public final class PacketCommandBuilder {
          out.append(String.join(", ", fields));
       }
 
-      List<String> examples = read_List(packetClass);
+      List<String> examples = examplesFor(packetClass);
       if (!examples.isEmpty()) {
          out.append("\nExamples: ");
          out.append(String.join(" | ", examples));
@@ -229,12 +229,12 @@ public final class PacketCommandBuilder {
 
          return tokenBuilder.buildFuture();
       } else {
-         Set<String> used = init_Set_Str_I(remaining, tokenStart);
+         Set<String> used = usedArgNames(remaining, tokenStart);
          String currentLower = current.toLowerCase(Locale.ROOT);
 
-         for (String field : init_List_Class(packetClass)) {
+         for (String field : argFieldsFor(packetClass)) {
             if (!used.contains(normalizeArgKey(field))) {
-               String suggestion = field + "=" + init_Str_Class_Str(packetClass, field);
+               String suggestion = field + "=" + defaultValueFor(packetClass, field);
                if (suggestion.toLowerCase(Locale.ROOT).startsWith(currentLower) || field.toLowerCase(Locale.ROOT).startsWith(currentLower)) {
                   tokenBuilder.suggest(suggestion);
                }
@@ -255,7 +255,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static Packet<?> init_Packet_Class(Class<? extends Packet<?>> packetClass) {
+   private static Packet<?> instantiateNoArg(Class<? extends Packet<?>> packetClass) {
       for (Constructor<?> constructor : packetClass.getDeclaredConstructors()) {
          if (constructor.getParameterCount() == 0) {
             try {
@@ -269,7 +269,7 @@ public final class PacketCommandBuilder {
       return null;
    }
 
-   private static PacketCommandBuilder.BuildResult init_bm_StreamUtil_Class_Map(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
+   private static PacketCommandBuilder.BuildResult buildViaCodec(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
       String bodyHex = firstArg(args, RAW_BODY_ARG_NAMES.toArray(new String[0]));
       String fullPacketHex = firstArg(args, FULL_PACKET_ARGS.toArray(new String[0]));
       String bodyBase64 = firstArg(args, BASE64_ARGS.toArray(new String[0]));
@@ -410,7 +410,7 @@ public final class PacketCommandBuilder {
                   rejectUnknownArgs(args, "transactionId", "id", "payload");
                   int id = requireInt(args, "transactionId", "id");
                   String payload = firstArg(args, "payload");
-                  if (payload != null && !init_Z_Str(payload)) {
+                  if (payload != null && !isEmptyValue(payload)) {
                      return normalizeArgKey(payload).equals("discarded")
                         ? PacketCommandBuilder.BuildResult.built(new ServerboundCustomQueryAnswerPacket(id, DiscardedQueryAnswerPayload.INSTANCE), "typed constructor")
                         : PacketCommandBuilder.BuildResult.error("Login custom query answers support payload=empty/null/discarded only from .send.");
@@ -468,11 +468,11 @@ public final class PacketCommandBuilder {
                         "carried"
                      );
                      int containerId = intArgOr(args, PacketCommandBuilder::containerId, "containerId", "id");
-                     int stateId = intArgOr(args, PacketCommandBuilder::read_I, "stateId");
+                     int stateId = intArgOr(args, PacketCommandBuilder::containerStateId, "stateId");
                      short slot = (short)requireInt(args, "slotNum", "slot");
                      byte button = (byte)intArg(args, 0, "buttonNum", "button");
                      ContainerInput input = requireEnum(ContainerInput.class, args, "containerInput", "input", "click");
-                     Int2ObjectMap<HashedStack> changed = init_Int2ObjectMap_Str(firstArg(args, "changedSlots", "changed"));
+                     Int2ObjectMap<HashedStack> changed = parseHashedStacks(firstArg(args, "changedSlots", "changed"));
                      HashedStack carried = parseHashedStack(firstArg(args, "carriedItem", "carried"));
                      return PacketCommandBuilder.BuildResult.built(
                         new ServerboundContainerClickPacket(containerId, stateId, slot, button, input, changed, carried), "typed constructor"
@@ -564,7 +564,7 @@ public final class PacketCommandBuilder {
 
                      if (packetClass == ServerboundSetGameRulePacket.class) {
                         rejectUnknownArgs(args, "entries", "rules", "rule", "value");
-                        return PacketCommandBuilder.BuildResult.built(new ServerboundSetGameRulePacket(init_List_Map(args)), "typed constructor");
+                        return PacketCommandBuilder.BuildResult.built(new ServerboundSetGameRulePacket(parseGameRuleEntries(args)), "typed constructor");
                      }
 
                      if (packetClass == ServerboundSeenAdvancementsPacket.class) {
@@ -900,7 +900,7 @@ public final class PacketCommandBuilder {
       return start;
    }
 
-   private static Set<String> init_Set_Str_I(String text, int tokenStart) {
+   private static Set<String> usedArgNames(String text, int tokenStart) {
       Set<String> out = new HashSet<>();
       String prefix = tokenStart <= 0 ? "" : text.substring(0, tokenStart);
 
@@ -912,8 +912,8 @@ public final class PacketCommandBuilder {
       return out;
    }
 
-   private static List<String> init_List_Class(Class<? extends Packet<?>> packetClass) {
-      List<String> fields = load_List(packetClass);
+   private static List<String> argFieldsFor(Class<? extends Packet<?>> packetClass) {
+      List<String> fields = knownArgFields(packetClass);
       if (!fields.isEmpty()) {
          return withRawArgs(fields);
       }
@@ -940,7 +940,7 @@ public final class PacketCommandBuilder {
       return out;
    }
 
-   private static List<String> load_List(Class<? extends Packet<?>> packetClass) {
+   private static List<String> knownArgFields(Class<? extends Packet<?>> packetClass) {
       String name = packetClass.getName();
       if (packetClass == ServerboundUseItemOnPacket.class) {
          return List.of("hand", "pos", "direction", "sequence", "hit", "inside");
@@ -1099,7 +1099,7 @@ public final class PacketCommandBuilder {
             for (PacketSchemaRegistry.Inner_DataUtil schemaField : schema.fields()) {
                if (normalizeArgKey(schemaField.name()).equals(field)) {
                   try {
-                     Class<?> cls = Class.forName(load_Str(schemaField.load()));
+                     Class<?> cls = Class.forName(qualifiedTypeName(schemaField.load()));
                      return (Class<? extends Enum<?>>)(cls.isEnum() ? cls : null);
                   } catch (Throwable ignored) {
                      return null;
@@ -1116,7 +1116,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static String load_Str(String javaType) {
+   private static String qualifiedTypeName(String javaType) {
       if (javaType == null) {
          return "";
       }
@@ -1191,7 +1191,7 @@ public final class PacketCommandBuilder {
       return var10000;
    }
 
-   private static String init_Str_Class_Str(Class<? extends Packet<?>> packetClass, String field) {
+   private static String defaultValueFor(Class<? extends Packet<?>> packetClass, String field) {
       List<String> values = valueSuggestions(packetClass, field);
       return !values.isEmpty() ? quoteIfSpaced(values.get(0)) : "0";
    }
@@ -1204,7 +1204,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static List<String> read_List(Class<? extends Packet<?>> packetClass) {
+   private static List<String> examplesFor(Class<? extends Packet<?>> packetClass) {
       String prefix = ".send " + packetName(packetClass) + " ";
       String name = packetClass.getName();
       if (packetClass == ServerboundUseItemPacket.class) {
@@ -1307,7 +1307,7 @@ public final class PacketCommandBuilder {
       } else if (targetType == Map.class) {
          return parseEmptyMap(fieldName, value);
       } else if (targetType == Int2ObjectMap.class) {
-         return init_Int2ObjectMap_Str(value);
+         return parseHashedStacks(value);
       } else if (targetType == HashedStack.class) {
          return parseHashedStack(value);
       } else if (targetType == ItemStack.class) {
@@ -1343,7 +1343,7 @@ public final class PacketCommandBuilder {
          }
 
          if (normalized.equals("stateid")) {
-            return read_I();
+            return containerStateId();
          }
 
          if (normalized.equals("slot") || normalized.equals("slotid") || normalized.equals("slotnum")) {
@@ -1608,7 +1608,7 @@ public final class PacketCommandBuilder {
 
    private static byte[] parseBytes(String value) {
       String trimmed = value == null ? "" : value.trim();
-      if (trimmed.isEmpty() || init_Z_Str(trimmed)) {
+      if (trimmed.isEmpty() || isEmptyValue(trimmed)) {
          return new byte[0];
       } else if (trimmed.regionMatches(true, 0, "base64:", 0, 7)) {
          return Base64.getDecoder().decode(trimmed.substring(7).trim());
@@ -1642,7 +1642,7 @@ public final class PacketCommandBuilder {
    }
 
    private static Object init_Obj_Str(String fieldName, String value, Type genericType) {
-      if (value != null && !init_Z_Str(value)) {
+      if (value != null && !isEmptyValue(value)) {
          if (firstTypeArgument(genericType) instanceof Class<?> innerClass) {
             return Optional.of(parseValue(fieldName, value, innerClass, innerClass));
          } else {
@@ -1655,7 +1655,7 @@ public final class PacketCommandBuilder {
 
    private static Object parseListValue(String fieldName, String value, Type genericType) {
       if (!(firstTypeArgument(genericType) instanceof Class<?> innerClass)) {
-         if (init_Z_Str(value)) {
+         if (isEmptyValue(value)) {
             return List.of();
          } else {
             throw new IllegalArgumentException("List argument '" + fieldName + "' needs a supported element type.");
@@ -1673,7 +1673,7 @@ public final class PacketCommandBuilder {
    }
 
    private static Set<?> parseEmptySet(String fieldName, String value) {
-      if (init_Z_Str(value)) {
+      if (isEmptyValue(value)) {
          return Set.of();
       } else {
          throw new IllegalArgumentException("Set argument '" + fieldName + "' only supports empty/null from .send.");
@@ -1681,7 +1681,7 @@ public final class PacketCommandBuilder {
    }
 
    private static Map<?, ?> parseEmptyMap(String fieldName, String value) {
-      if (init_Z_Str(value)) {
+      if (isEmptyValue(value)) {
          return Map.of();
       } else {
          throw new IllegalArgumentException("Map argument '" + fieldName + "' only supports empty/null from .send.");
@@ -1694,9 +1694,9 @@ public final class PacketCommandBuilder {
          : Object.class;
    }
 
-   private static Int2ObjectMap<HashedStack> init_Int2ObjectMap_Str(String value) {
+   private static Int2ObjectMap<HashedStack> parseHashedStacks(String value) {
       Int2ObjectOpenHashMap<HashedStack> out = new Int2ObjectOpenHashMap<>();
-      if (value != null && !init_Z_Str(value)) {
+      if (value != null && !isEmptyValue(value)) {
          for (String entry : splitList(value, "\\|", 128)) {
             if (!entry.isBlank()) {
                int eq = entry.indexOf(61);
@@ -1717,7 +1717,7 @@ public final class PacketCommandBuilder {
    }
 
    private static HashedStack parseHashedStack(String value) {
-      if (value != null && !init_Z_Str(value)) {
+      if (value != null && !isEmptyValue(value)) {
          throw new IllegalArgumentException("HashedStack from .send currently supports only empty/null. Capture/resend for real hashed item data.");
       } else {
          return HashedStack.EMPTY;
@@ -1725,7 +1725,7 @@ public final class PacketCommandBuilder {
    }
 
    private static ItemStack parseItemStack(String value) {
-      if (value != null && !init_Z_Str(value)) {
+      if (value != null && !isEmptyValue(value)) {
          String normalized = normalizeArgKey(value);
          if (MC.player != null) {
             if ("held".equals(normalized) || "mainhand".equals(normalized)) {
@@ -1748,7 +1748,7 @@ public final class PacketCommandBuilder {
    }
 
    private static Input parseInput(String value) {
-      if (value != null && !init_Z_Str(value)) {
+      if (value != null && !isEmptyValue(value)) {
          boolean forward = false;
          boolean backward = false;
          boolean left = false;
@@ -1823,10 +1823,10 @@ public final class PacketCommandBuilder {
    }
 
    private static Optional<String> optionalString(String value) {
-      return value != null && !init_Z_Str(value) ? Optional.of(value) : Optional.empty();
+      return value != null && !isEmptyValue(value) ? Optional.of(value) : Optional.empty();
    }
 
-   private static List<Entry> init_List_Map(Map<String, String> args) {
+   private static List<Entry> parseGameRuleEntries(Map<String, String> args) {
       String packed = firstArg(args, "entries", "rules");
       if (packed == null) {
          String rule = firstArg(args, "rule");
@@ -1885,7 +1885,7 @@ public final class PacketCommandBuilder {
    }
 
    private static List<String> splitList(String value, String delimiterRegex, int max) {
-      if (value != null && !init_Z_Str(value)) {
+      if (value != null && !isEmptyValue(value)) {
          String[] parts = value.split(delimiterRegex, -1);
          if (parts.length > max) {
             throw new IllegalArgumentException("Too many list values; max " + max + ".");
@@ -1903,7 +1903,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static boolean init_Z_Str(String value) {
+   private static boolean isEmptyValue(String value) {
       if (value == null) {
          return true;
       }
@@ -1952,7 +1952,7 @@ public final class PacketCommandBuilder {
    }
 
    private static ArgumentSignatures parseArgumentSignatures(String value) {
-      if (value != null && !init_Z_Str(value)) {
+      if (value != null && !isEmptyValue(value)) {
          throw new IllegalArgumentException("ArgumentSignatures supports only empty/null from .send.");
       } else {
          return ArgumentSignatures.EMPTY;
@@ -1960,7 +1960,7 @@ public final class PacketCommandBuilder {
    }
 
    private static Update parseLastSeenUpdate(String value) {
-      if (value != null && !init_Z_Str(value)) {
+      if (value != null && !isEmptyValue(value)) {
          String[] parts = value.split("[,;]");
          if (parts.length == 1) {
             return new Update(decodeInt("lastSeenOffset", parts[0].trim()), new BitSet(20), (byte)0);
@@ -1973,7 +1973,7 @@ public final class PacketCommandBuilder {
    }
 
    private static MessageSignature parseMessageSignature(String value) {
-      if (value != null && !init_Z_Str(value)) {
+      if (value != null && !isEmptyValue(value)) {
          byte[] bytes = parseBytes(value);
          if (bytes.length != 256) {
             throw new IllegalArgumentException("MessageSignature must be exactly 256 bytes.");
@@ -2213,7 +2213,7 @@ public final class PacketCommandBuilder {
       return value == null ? "" : value.trim().replace("-", "").replace("_", "").replace(".", "").toLowerCase(Locale.ROOT);
    }
 
-   private static String init_Str_Str_Str(String javaType, String kind) {
+   private static String placeholderValue(String javaType, String kind) {
       String lower = (javaType == null ? "" : javaType).toLowerCase(Locale.ROOT);
       if ("boolean".equals(kind)) {
          return "true";
@@ -2305,7 +2305,7 @@ public final class PacketCommandBuilder {
       }
    }
 
-   private static int read_I() {
+   private static int containerStateId() {
       return MC != null && MC.player != null && MC.player.containerMenu != null
          ? MC.player.containerMenu.getStateId()
          : 0;

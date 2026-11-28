@@ -11,7 +11,7 @@ import java.util.Map;
 
 final class AiProcedures {
    private final AiService service;
-   private final Map<String, JsonObject> init_Map = new LinkedHashMap<>();
+   private final Map<String, JsonObject> recordedProcedures = new LinkedHashMap<>();
 
    AiProcedures(AiService service) {
       this.service = service;
@@ -25,7 +25,7 @@ final class AiProcedures {
             args.addProperty("expectedMacroFingerprint", AiJson.getString(result.getAsJsonObject("data"), "macroFingerprint", ""));
          }
 
-         this.init_Map
+         this.recordedProcedures
             .put(
                proof,
                AiJson.objectOf(
@@ -44,8 +44,8 @@ final class AiProcedures {
                )
             );
 
-         while (this.init_Map.size() > 512) {
-            this.init_Map.remove(this.init_Map.keySet().iterator().next());
+         while (this.recordedProcedures.size() > 512) {
+            this.recordedProcedures.remove(this.recordedProcedures.keySet().iterator().next());
          }
       }
    }
@@ -59,7 +59,7 @@ final class AiProcedures {
             String first = "";
 
             for (JsonElement id : ids) {
-               JsonObject step = this.init_Map.get(id.getAsString());
+               JsonObject step = this.recordedProcedures.get(id.getAsString());
                if (step == null || !AiJson.getString(step, "scope", "").equals(this.service.getDimensionId())) {
                   throw new IllegalArgumentException("Procedure step lacks a recorded successful operation in this world");
                }
@@ -101,7 +101,7 @@ final class AiProcedures {
    }
 
    JsonObject describe(String id) {
-      AiMemoryStore.Memory record = this.init_AiMemoryStore_Memo_Str(id);
+      AiMemoryStore.Memory record = this.procedureMemory(id);
       JsonObject payload = AiJson.parseObject(record.payload());
       JsonArray reasons = new JsonArray();
 
@@ -128,7 +128,7 @@ final class AiProcedures {
    }
 
    JsonObject run(String id, long generation, AiTools tools) throws Exception {
-      AiMemoryStore.Memory record = this.init_AiMemoryStore_Memo_Str(id);
+      AiMemoryStore.Memory record = this.procedureMemory(id);
       JsonObject payload = AiJson.parseObject(record.payload());
       if (AiJson.getInt(payload, "version", 0) == 1 && AiJson.getString(payload, "kind", "").equals("verified-operations")) {
          for (JsonElement step : payload.getAsJsonArray("steps")) {
@@ -144,11 +144,11 @@ final class AiProcedures {
             .resolve(AiJson.sha256Hex(this.service.currentTaskId() + this.service.getDimensionId() + id) + ".json");
          JsonArray steps = payload.getAsJsonArray("steps");
          String fingerprint = AiJson.sha256Hex(record.payload());
-         AiProcedures.ResumePoint resume = init_bw_DataUtil_Path(checkpoint, fingerprint, steps.size());
+         AiProcedures.ResumePoint resume = readResumePoint(checkpoint, fingerprint, steps.size());
 
          for (int index = resume.nextStep(); index < steps.size(); index++) {
             JsonElement raw = steps.get(index);
-            AiJson.writeAtomicJson(checkpoint, init_JsonObject_Str(fingerprint, index, true));
+            AiJson.writeAtomicJson(checkpoint, checkpointJson(fingerprint, index, true));
             AiMemoryStore.prune(checkpoint.getParent(), 64);
             this.service.checkGeneration(generation);
             JsonObject step = raw.getAsJsonObject();
@@ -160,7 +160,7 @@ final class AiProcedures {
             );
             results.add(result);
             if (!AiJson.getString(result, "status", "").equals("SUCCEEDED")) {
-               AiJson.writeAtomicJson(checkpoint, init_JsonObject_Str(fingerprint, index, false));
+               AiJson.writeAtomicJson(checkpoint, checkpointJson(fingerprint, index, false));
                return AiJson.objectOf(
                   "status",
                   "UNCERTAIN",
@@ -178,7 +178,7 @@ final class AiProcedures {
                );
             }
 
-            AiJson.writeAtomicJson(checkpoint, init_JsonObject_Str(fingerprint, index + 1, false));
+            AiJson.writeAtomicJson(checkpoint, checkpointJson(fingerprint, index + 1, false));
          }
 
          deleteQuietly(checkpoint);
@@ -195,7 +195,7 @@ final class AiProcedures {
       }
    }
 
-   static AiProcedures.ResumePoint init_bw_DataUtil_Path(Path checkpoint, String fingerprint, int stepCount) throws IOException {
+   static AiProcedures.ResumePoint readResumePoint(Path checkpoint, String fingerprint, int stepCount) throws IOException {
       if (!Files.exists(checkpoint)) {
          return new AiProcedures.ResumePoint(0, "");
       }
@@ -223,7 +223,7 @@ final class AiProcedures {
       }
    }
 
-   private static JsonObject init_JsonObject_Str(String fingerprint, int nextStep, boolean inFlight) {
+   private static JsonObject checkpointJson(String fingerprint, int nextStep, boolean inFlight) {
       return AiJson.objectOf("version", 1, "procedureFingerprint", fingerprint, "nextStep", nextStep, "inFlight", inFlight);
    }
 
@@ -234,7 +234,7 @@ final class AiProcedures {
       }
    }
 
-   private AiMemoryStore.Memory init_AiMemoryStore_Memo_Str(String id) {
+   private AiMemoryStore.Memory procedureMemory(String id) {
       return this.service
          .getMemoryStore()
          .memories()

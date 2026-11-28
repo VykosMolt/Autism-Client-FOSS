@@ -50,14 +50,14 @@ public final class PacketComponentOriginTracker {
 
    public static void tag(Component component) {
       ConnectionPrivacyRegistry.ConnectionSession origin = PacketDecodeOriginStack.current();
-      markComponentFromPacket(component, origin == null ? init_BufferHelper_Strea(component) : origin);
+      markComponentFromPacket(component, origin == null ? originOf(component) : origin);
    }
 
    public static void markComponentFromPacket(Component component, ConnectionPrivacyRegistry.ConnectionSession origin) {
       markTreeFromPacket(component, Collections.newSetFromMap(new IdentityHashMap<>()), origin);
    }
 
-   public static boolean init_Z(Component component) {
+   public static boolean isPacketComponent(Component component) {
       return treeFromPacket(component, Collections.newSetFromMap(new IdentityHashMap<>()));
    }
 
@@ -68,7 +68,7 @@ public final class PacketComponentOriginTracker {
    public static void propagateFromContents(ComponentContents source, Component result) {
       if (source != null && result != null) {
          if (isFromPacket(source)) {
-            markComponentFromPacket(result, init_BufferHelper_Strea(source));
+            markComponentFromPacket(result, originOf(source));
          } else {
             init_Z((Object)result);
          }
@@ -77,8 +77,8 @@ public final class PacketComponentOriginTracker {
 
    public static void propagate(Component source, Component result) {
       if (source != null && result != null) {
-         if (init_Z(source)) {
-            markComponentFromPacket(result, init_BufferHelper_Strea(source));
+         if (isPacketComponent(source)) {
+            markComponentFromPacket(result, originOf(source));
          } else {
             init_Z((Object)result);
          }
@@ -86,7 +86,7 @@ public final class PacketComponentOriginTracker {
    }
 
    private static boolean init_Z(Object root) {
-      ConnectionPrivacyRegistry.ConnectionSession origin = init_BufferHelper_Strea(root);
+      ConnectionPrivacyRegistry.ConnectionSession origin = originOf(root);
       Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
       ArrayDeque<Object> pending = new ArrayDeque<>();
       if (root != null) {
@@ -149,7 +149,7 @@ public final class PacketComponentOriginTracker {
       }
    }
 
-   private static ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea(Object root) {
+   private static ConnectionPrivacyRegistry.ConnectionSession originOf(Object root) {
       Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<>());
       ArrayDeque<Object> pending = new ArrayDeque<>();
       if (root != null) {

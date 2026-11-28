@@ -26,12 +26,12 @@ final class FaceVisibilitySolver {
       return new FaceVisibilitySolver.FaceProjection(eye, face, side, hard);
    }
 
-   private static List<FaceVisibilitySolver.Point2> init(List<FaceVisibilitySolver.Point2> points) {
+   private static List<FaceVisibilitySolver.Point2> convexHull(List<FaceVisibilitySolver.Point2> points) {
       points.sort(Comparator.comparingDouble(FaceVisibilitySolver.Point2::init).thenComparingDouble(FaceVisibilitySolver.Point2::load));
       ArrayList<FaceVisibilitySolver.Point2> out = new ArrayList<>();
 
       for (FaceVisibilitySolver.Point2 p : points) {
-         while (out.size() > 1 && init(out.get(out.size() - 2), out.getLast(), p) <= 0.0) {
+         while (out.size() > 1 && cross(out.get(out.size() - 2), out.getLast(), p) <= 0.0) {
             out.removeLast();
          }
 
@@ -43,7 +43,7 @@ final class FaceVisibilitySolver {
       for (int i = points.size() - 2; i >= 0; i--) {
          FaceVisibilitySolver.Point2 p = points.get(i);
 
-         while (out.size() > lower && init(out.get(out.size() - 2), out.getLast(), p) <= 0.0) {
+         while (out.size() > lower && cross(out.get(out.size() - 2), out.getLast(), p) <= 0.0) {
             out.removeLast();
          }
 
@@ -57,7 +57,7 @@ final class FaceVisibilitySolver {
       return out;
    }
 
-   private static double init(FaceVisibilitySolver.Point2 a, FaceVisibilitySolver.Point2 b, FaceVisibilitySolver.Point2 c) {
+   private static double cross(FaceVisibilitySolver.Point2 a, FaceVisibilitySolver.Point2 b, FaceVisibilitySolver.Point2 c) {
       return (b.init - a.init) * (c.load - a.load) - (b.load - a.load) * (c.init - a.init);
    }
 
@@ -80,7 +80,7 @@ final class FaceVisibilitySolver {
       return var10000;
    }
 
-   private static Vec3 init(Axis n, Axis u, Axis v, double plane, double a, double b) {
+   private static Vec3 fromAxes(Axis n, Axis u, Axis v, double plane, double a, double b) {
       double[] xyz = new double[3];
       xyz[n.ordinal()] = plane;
       xyz[u.ordinal()] = a;
@@ -126,10 +126,10 @@ final class FaceVisibilitySolver {
          this.visibleArea = !(this.depth < 1.0E-7) && !(this.facingSign * side.getAxisDirection().getStep() > 0.0) && !(width < 1.0E-7) && !(height < 1.0E-7)
             ? new Area(new java.awt.geom.Rectangle2D.Double(inset, inset, width - 2.0 * inset, height - 2.0 * inset))
             : new Area();
-         this.init(this.visibleArea, hard);
+         this.subtractBlockers(this.visibleArea, hard);
       }
 
-      private void init(Area open, List<AABB> blockers) {
+      private void subtractBlockers(Area open, List<AABB> blockers) {
          if (!open.isEmpty()) {
             for (AABB box : blockers) {
                double a = (box.min(this.normalAxis) - FaceVisibilitySolver.coord(this.eye, this.normalAxis)) * this.facingSign;
@@ -152,7 +152,7 @@ final class FaceVisibilitySolver {
                      }
                   }
 
-                  List<FaceVisibilitySolver.Point2> hull = FaceVisibilitySolver.init(projected);
+                  List<FaceVisibilitySolver.Point2> hull = FaceVisibilitySolver.convexHull(projected);
                   if (hull.size() >= 3) {
                      java.awt.geom.Path2D.Double path = new java.awt.geom.Path2D.Double();
                      path.moveTo(hull.getFirst().init, hull.getFirst().load);
@@ -180,7 +180,7 @@ final class FaceVisibilitySolver {
          }
 
          Area open = new Area(this.visibleArea);
-         this.init(open, blockers);
+         this.subtractBlockers(open, blockers);
          if (open.isEmpty()) {
             return List.of();
          }
@@ -233,7 +233,7 @@ final class FaceVisibilitySolver {
                      double x = (left + right) / 2.0;
                      if (open.contains(x, y)) {
                         points.add(
-                           FaceVisibilitySolver.init(
+                           FaceVisibilitySolver.fromAxes(
                               this.normalAxis,
                               this.uAxis,
                               this.vAxis,
@@ -246,7 +246,7 @@ final class FaceVisibilitySolver {
                         double closeY = Math.clamp(wantedV, low + (high - low) * 0.2, high - (high - low) * 0.2);
                         if (open.contains(closeX, closeY)) {
                            points.add(
-                              FaceVisibilitySolver.init(
+                              FaceVisibilitySolver.fromAxes(
                                  this.normalAxis,
                                  this.uAxis,
                                  this.vAxis,

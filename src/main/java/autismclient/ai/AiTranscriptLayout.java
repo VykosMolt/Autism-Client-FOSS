@@ -120,7 +120,7 @@ final class AiTranscriptLayout {
       return y >= block.top() ? block : null;
    }
 
-   static AiTranscriptLayout.LineKind init_cC_CachePool_Str(String role) {
+   static AiTranscriptLayout.LineKind lineKindFor(String role) {
       AiTranscriptLayout.LineKind var10000;
       switch (role == null ? "" : role) {
          case "user":
@@ -148,12 +148,12 @@ final class AiTranscriptLayout {
       return var10000;
    }
 
-   static String init_Str_Str(String text) {
+   static String toolName(String text) {
       int colon = text.indexOf(": ");
       return truncate(colon > 0 ? text.substring(0, colon).trim() : text.replace('\n', ' ').trim(), 80);
    }
 
-   static String load_Str_Str(String text) {
+   static String toolSummary(String text) {
       int colon = text.indexOf(": ");
       String summary = colon > 0 ? text.substring(colon + 2, Math.min(text.length(), colon + 2 + 400)) : "";
       return truncate(summary.replace('\n', ' ').trim(), 300);
@@ -185,7 +185,7 @@ final class AiTranscriptLayout {
       AiTranscriptLayout.LineKind previous = null;
 
       for (AiService.TranscriptEntry message : messages) {
-         AiTranscriptLayout.LineKind kind = init_cC_CachePool_Str(message.role());
+         AiTranscriptLayout.LineKind kind = lineKindFor(message.role());
          if (previous != null) {
             y += sameGroup(previous, kind) ? m.groupGap() : m.blockGap();
          }
@@ -208,7 +208,7 @@ final class AiTranscriptLayout {
             case ASSISTANT:
                boolean started = false;
 
-               for (AiTranscriptLayout.WrappedRow row : init_List_cC_StateCache(wrap, message.text(), width, epoch, m.line(), measure)) {
+               for (AiTranscriptLayout.WrappedRow row : rowsCached(wrap, message.text(), width, epoch, m.line(), measure)) {
                   boolean first = (row.flags() & 1) != 0;
                   boolean last = (row.flags() & 2) != 0;
                   if (first && started) {
@@ -249,7 +249,7 @@ final class AiTranscriptLayout {
                expanded = pin != null ? pin : tools - toolIndex < 3;
                nextLines.add(
                   new AiTranscriptLayout.LayoutLine(
-                     message, AiTranscriptLayout.LineKind.TOOL, init_Str_Str(message.text()), load_Str_Str(message.text()), 0, y, m.tool(), expanded
+                     message, AiTranscriptLayout.LineKind.TOOL, toolName(message.text()), toolSummary(message.text()), 0, y, m.tool(), expanded
                   )
                );
                y += m.tool();
@@ -309,25 +309,25 @@ final class AiTranscriptLayout {
 
    private static List<String> wrapCached(AiTranscriptLayout.WrapCache wrap, String text, int width, int epoch, AiTranscriptLayout.TextMeasurer measure) {
       if (wrap.width != width || wrap.epoch != epoch) {
-         wrap.init_List = wrapPlain(text, width, measure);
+         wrap.plainLines = wrapPlain(text, width, measure);
          wrap.width = width;
          wrap.epoch = epoch;
       }
 
-      return wrap.init_List;
+      return wrap.plainLines;
    }
 
-   private static List<AiTranscriptLayout.WrappedRow> init_List_cC_StateCache(
+   private static List<AiTranscriptLayout.WrappedRow> rowsCached(
       AiTranscriptLayout.WrapCache wrap, String text, int width, int epoch, int line, AiTranscriptLayout.TextMeasurer measure
    ) {
       if (wrap.rowsWidth != width || wrap.rowsEpoch != epoch || wrap.rowsLineHeight != line) {
-         wrap.read_List = layoutRows(text, width, line, measure);
+         wrap.rows = layoutRows(text, width, line, measure);
          wrap.rowsWidth = width;
          wrap.rowsEpoch = epoch;
          wrap.rowsLineHeight = line;
       }
 
-      return wrap.read_List;
+      return wrap.rows;
    }
 
    static List<AiTranscriptLayout.WrappedRow> layoutRows(String text, int width, int line, AiTranscriptLayout.TextMeasurer measure) {
@@ -384,12 +384,12 @@ final class AiTranscriptLayout {
             int first = out.size();
 
             for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil w : autismclient.gui.ui.TextWrapLayout.wrap(
-               safe, Math.max(1, width - indent), (s, e) -> init_I(safe, styles, s, e, measure)
+               safe, Math.max(1, width - indent), (s, e) -> styledWidth(safe, styles, s, e, measure)
             )) {
                String rowText = safe.substring(w.init(), w.read());
                out.add(
                   new AiTranscriptLayout.WrappedRow(
-                     rowText, init_List(safe, styles, w.init(), w.read(), measure), deco, out.size() == first ? block.marker() : "", indent, 0, height
+                     rowText, styledSpans(safe, styles, w.init(), w.read(), measure), deco, out.size() == first ? block.marker() : "", indent, 0, height
                   )
                );
             }
@@ -416,7 +416,7 @@ final class AiTranscriptLayout {
       return new AiTranscriptLayout.WrappedRow(row.text(), row.spans(), row.deco(), row.marker(), row.indent(), row.flags() | flag, row.height());
    }
 
-   static int init_I(String text, byte[] styles, int start, int end, AiTranscriptLayout.TextMeasurer measure) {
+   static int styledWidth(String text, byte[] styles, int start, int end, AiTranscriptLayout.TextMeasurer measure) {
       int total = 0;
 
       for (int[] run : styleRuns(styles, start, end)) {
@@ -426,7 +426,7 @@ final class AiTranscriptLayout {
       return total;
    }
 
-   static List<AiTranscriptLayout.StyledSpan> init_List(String text, byte[] styles, int start, int end, AiTranscriptLayout.TextMeasurer measure) {
+   static List<AiTranscriptLayout.StyledSpan> styledSpans(String text, byte[] styles, int start, int end, AiTranscriptLayout.TextMeasurer measure) {
       List<AiTranscriptLayout.StyledSpan> out = new ArrayList<>();
 
       for (int[] run : styleRuns(styles, start, end)) {
@@ -451,13 +451,13 @@ final class AiTranscriptLayout {
    }
 
    private static List<String> wrapExpandedCached(AiTranscriptLayout.WrapCache wrap, String text, int width, int epoch, AiTranscriptLayout.TextMeasurer measure) {
-      if (wrap.read_I != width || wrap.plainEpoch != epoch) {
-         wrap.load_List = wrapPlain(text, width, measure);
-         wrap.read_I = width;
+      if (wrap.expandedWidth != width || wrap.plainEpoch != epoch) {
+         wrap.expandedLines = wrapPlain(text, width, measure);
+         wrap.expandedWidth = width;
          wrap.plainEpoch = epoch;
       }
 
-      return wrap.load_List;
+      return wrap.expandedLines;
    }
 
    static List<String> wrapPlain(String text, int width, AiTranscriptLayout.TextMeasurer measure) {
@@ -532,14 +532,14 @@ final class AiTranscriptLayout {
    private static final class WrapCache {
       int width = -1;
       int epoch;
-      List<String> init_List = List.of();
-      int read_I = -1;
+      List<String> plainLines = List.of();
+      int expandedWidth = -1;
       int plainEpoch;
-      List<String> load_List = List.of();
+      List<String> expandedLines = List.of();
       int rowsWidth = -1;
       int rowsEpoch;
       int rowsLineHeight;
-      List<AiTranscriptLayout.WrappedRow> read_List = List.of();
+      List<AiTranscriptLayout.WrappedRow> rows = List.of();
    }
 
    enum RowDecoration {

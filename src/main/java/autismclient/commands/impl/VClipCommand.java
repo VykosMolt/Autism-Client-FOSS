@@ -26,23 +26,23 @@ public class VClipCommand extends Command {
          AutismClientMessaging.sendPrefixed("§7Examples: §f" + prefix + "vclip top §7or §f" + prefix + "vclip custom -25 10 20 true true");
          return 1;
       });
-      root.then(init("blocks", options -> options));
+      root.then(blocksArgument("blocks", options -> options));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("top").executes(ctx -> {
          VClipAction.ClipOptions options = VClipAction.ClipOptions.blocks(0.0);
          options.mode = VClipAction.ClipMode.TOP;
-         init(options);
+         clip(options);
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("bottom").executes(ctx -> {
          VClipAction.ClipOptions options = VClipAction.ClipOptions.blocks(0.0);
          options.mode = VClipAction.ClipMode.BOTTOM;
-         init(options);
+         clip(options);
          return 1;
       }));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("default").then(init("blocks", options -> options)));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("paper").then(init("blocks", options -> options)));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("single").then(init("blocks", VClipAction.ClipOptions::single)));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("normal").then(init("blocks", VClipAction.ClipOptions::single)));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("default").then(blocksArgument("blocks", options -> options)));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("paper").then(blocksArgument("blocks", options -> options)));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("single").then(blocksArgument("blocks", VClipAction.ClipOptions::single)));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("normal").then(blocksArgument("blocks", VClipAction.ClipOptions::single)));
       root.then(
          LiteralArgumentBuilder.<AutismCommandSource>literal("custom")
             .then(
@@ -54,7 +54,7 @@ public class VClipCommand extends Command {
                            .executes(ctx -> {
                               VClipAction.ClipOptions options = VClipAction.ClipOptions.blocks(DoubleArgumentType.getDouble(ctx, "blocks"));
                               options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
-                              init(options);
+                              clip(options);
                               return 1;
                            }))
                         .then(
@@ -64,37 +64,37 @@ public class VClipCommand extends Command {
                                     VClipAction.ClipOptions options = VClipAction.ClipOptions.blocks(DoubleArgumentType.getDouble(ctx, "blocks"));
                                     options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
                                     options.maxPackets = IntegerArgumentType.getInteger(ctx, "maxPackets");
-                                    init(options);
+                                    clip(options);
                                     return 1;
                                  }))
                               .then(
                                  ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("updateLocal", BoolArgumentType.bool())
                                        .suggests(autismclient.commands.CommandSuggestions::suggestBoolean)
                                        .executes(ctx -> {
-                                          VClipAction.ClipOptions options = init(ctx);
+                                          VClipAction.ClipOptions options = clipOptions(ctx);
                                           options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
-                                          init(options);
+                                          clip(options);
                                           return 1;
                                        }))
                                     .then(
                                        ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("vehicle", BoolArgumentType.bool())
                                              .suggests(autismclient.commands.CommandSuggestions::suggestBoolean)
                                              .executes(ctx -> {
-                                                VClipAction.ClipOptions options = init(ctx);
+                                                VClipAction.ClipOptions options = clipOptions(ctx);
                                                 options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                                 options.vehicle = BoolArgumentType.getBool(ctx, "vehicle");
-                                                init(options);
+                                                clip(options);
                                                 return 1;
                                              }))
                                           .then(
                                              RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("forceGround", BoolArgumentType.bool())
                                                 .suggests(autismclient.commands.CommandSuggestions::suggestBoolean)
                                                 .executes(ctx -> {
-                                                   VClipAction.ClipOptions options = init(ctx);
+                                                   VClipAction.ClipOptions options = clipOptions(ctx);
                                                    options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                                    options.vehicle = BoolArgumentType.getBool(ctx, "vehicle");
                                                    options.forceGround = BoolArgumentType.getBool(ctx, "forceGround");
-                                                   init(options);
+                                                   clip(options);
                                                    return 1;
                                                 })
                                           )
@@ -106,17 +106,17 @@ public class VClipCommand extends Command {
       );
    }
 
-   private static RequiredArgumentBuilder<AutismCommandSource, Double> init(String name, VClipCommand.OptionsCustomizer customizer) {
+   private static RequiredArgumentBuilder<AutismCommandSource, Double> blocksArgument(String name, VClipCommand.OptionsCustomizer customizer) {
       return (RequiredArgumentBuilder<AutismCommandSource, Double>)RequiredArgumentBuilder.<AutismCommandSource, Double>argument(name, DoubleArgumentType.doubleArg())
          .suggests(autismclient.commands.CommandSuggestions::suggestVclipBlocks)
          .executes(ctx -> {
             VClipAction.ClipOptions options = VClipAction.ClipOptions.blocks(DoubleArgumentType.getDouble(ctx, name));
-            init(customizer.apply(options));
+            clip(customizer.apply(options));
             return 1;
          });
    }
 
-   private static VClipAction.ClipOptions init(CommandContext<AutismCommandSource> ctx) {
+   private static VClipAction.ClipOptions clipOptions(CommandContext<AutismCommandSource> ctx) {
       VClipAction.ClipOptions options = VClipAction.ClipOptions.blocks(DoubleArgumentType.getDouble(ctx, "blocks"));
       options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
       options.maxPackets = IntegerArgumentType.getInteger(ctx, "maxPackets");
@@ -124,10 +124,10 @@ public class VClipCommand extends Command {
    }
 
    public static void init(double blocks) {
-      init(VClipAction.ClipOptions.blocks(blocks));
+      clip(VClipAction.ClipOptions.blocks(blocks));
    }
 
-   private static void init(VClipAction.ClipOptions options) {
+   private static void clip(VClipAction.ClipOptions options) {
       options.update = true;
       VClipAction.clip(Minecraft.getInstance(), options);
    }

@@ -96,7 +96,7 @@ public final class CrosshairModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init_V_50();
+      this.applyRenderState();
    }
 
    @Override
@@ -106,7 +106,7 @@ public final class CrosshairModule extends Module {
 
    @Override
    public void tick() {
-      this.init_V_50();
+      this.applyRenderState();
    }
 
    @Override
@@ -117,7 +117,7 @@ public final class CrosshairModule extends Module {
    @Override
    protected void onOptionValueChanged(String settingId) {
       if (this.isEnabled()) {
-         this.init_V_50();
+         this.applyRenderState();
       }
    }
 
@@ -181,7 +181,7 @@ public final class CrosshairModule extends Module {
       );
    }
 
-   private void init_V_50() {
+   private void applyRenderState() {
       CrosshairRenderState.setState(this.renderState(this.art()));
    }
 

@@ -219,7 +219,7 @@ public final class AiToolsSuggest {
                );
             break;
          case "fill":
-            var10000 = position < 6 ? List.of("~") : (position == 6 ? flush() : (position == 7 ? List.of("hollow", "solid") : List.of()));
+            var10000 = position < 6 ? List.of("~") : (position == 6 ? commandSuggestions() : (position == 7 ? List.of("hollow", "solid") : List.of()));
             break;
          case "dig":
             var10000 = position == 0 ? List.of("tunnel") : (position == 1 ? CARDINALS : (position == 2 ? List.of("8", "16", "32", "64") : List.of()));
@@ -358,7 +358,7 @@ public final class AiToolsSuggest {
       return ids;
    }
 
-   static List<String> flush() {
+   static List<String> commandSuggestions() {
       return autismclient.commands.CommandSuggestions.load();
    }
 

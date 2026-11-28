@@ -71,15 +71,15 @@ public final class GridWalkNavigator {
    private static int nodeZ;
    private static final HashMap<Long, Integer> gScore = new HashMap<>();
    private static final HashMap<Long, Long> cameFrom = new HashMap<>();
-   private static final HashSet<Long> init_HashSet = new HashSet<>();
+   private static final HashSet<Long> jumpNodes = new HashSet<>();
    private static final HashSet<Long> closed = new HashSet<>();
    private static final PriorityQueue<GridWalkNavigator.OpenEntry> openQueue = new PriorityQueue<>();
    private static final ArrayList<Long> pathKeys = new ArrayList<>();
-   private static final ArrayList<GridWalkNavigator.PathNode> read_ArrayList = new ArrayList<>();
+   private static final ArrayList<GridWalkNavigator.PathNode> smoothedPath = new ArrayList<>();
    private static final HashSet<Long> goalKeys = new HashSet<>();
    private static final HashMap<Long, Boolean> standableCache = new HashMap<>();
    private static boolean cacheEnabled;
-   private static final HashMap<BlockPos, Double> write_HashMap = new HashMap<>();
+   private static final HashMap<BlockPos, Double> pathCostCache = new HashMap<>();
    private static int costCacheTick = -2147483648;
    private static final MutableBlockPos scratchPos = new MutableBlockPos();
    private static int targetX;
@@ -87,17 +87,17 @@ public final class GridWalkNavigator {
    private static int targetZ;
    private static int searchOriginX;
    private static int searchOriginZ;
-   private static BlockPos load_BlockPos;
+   private static BlockPos plannedTarget;
    private static int planTick;
-   private static double poll_D;
-   private static double push_D;
+   private static double lastProgressX;
+   private static double lastProgressZ;
    private static int stuckTicks;
    private static int jumpStreak;
    private static int heldKeyMask;
-   private static boolean load_Z;
-   private static final HashMap<BlockPos, Integer> update_HashMap = new HashMap<>();
-   private static final HashMap<BlockPos, Integer> sync_HashMap = new HashMap<>();
-   private static final HashMap<BlockPos, Integer> flush_HashMap = new HashMap<>();
+   private static boolean directApproach;
+   private static final HashMap<BlockPos, Integer> blockedSince = new HashMap<>();
+   private static final HashMap<BlockPos, Integer> blockedForTicks = new HashMap<>();
+   private static final HashMap<BlockPos, Integer> targetFailures = new HashMap<>();
 
    private GridWalkNavigator() {
    }
@@ -110,7 +110,7 @@ public final class GridWalkNavigator {
       if (target != null && mc != null && mc.level != null && mc.player != null) {
          double dx = target.getX() + 0.5 - mc.player.getX();
          double dz = target.getZ() + 0.5 - mc.player.getZ();
-         return dx * dx + dz * dz <= 1.44 && init_Z_Vec3_BlockPos(mc.player.getEyePosition(), target);
+         return dx * dx + dz * dz <= 1.44 && canReachFrom(mc.player.getEyePosition(), target);
       } else {
          return false;
       }
@@ -121,23 +121,23 @@ public final class GridWalkNavigator {
          int now = AutismSessionState.getInstance().getClientTick();
          if (costCacheTick != now) {
             costCacheTick = now;
-            write_HashMap.clear();
+            pathCostCache.clear();
          }
 
-         Double cached = write_HashMap.get(target);
+         Double cached = pathCostCache.get(target);
          if (cached != null) {
             return cached;
          }
 
          double cost = load(target) ? 0.0 : estimatePathCost(mc.player.getX(), mc.player.getY(), mc.player.getZ(), target, false, 1200);
-         write_HashMap.put(target.immutable(), cost);
+         pathCostCache.put(target.immutable(), cost);
          return cost;
       } else {
          return 1.0 / 0.0;
       }
    }
 
-   private static boolean init_Z_Vec3_BlockPos(Vec3 eye, BlockPos target) {
+   private static boolean canReachFrom(Vec3 eye, BlockPos target) {
       Vec3 aim = Vec3.atCenterOf(target);
       double reach = mc.player.blockInteractionRange();
       if (eye.distanceToSqr(aim) > reach * reach) {
@@ -150,9 +150,9 @@ public final class GridWalkNavigator {
 
    public static void reset() {
       stop();
-      update_HashMap.clear();
-      sync_HashMap.clear();
-      flush_HashMap.clear();
+      blockedSince.clear();
+      blockedForTicks.clear();
+      targetFailures.clear();
    }
 
    public static void stop() {
@@ -160,22 +160,22 @@ public final class GridWalkNavigator {
       path.clear();
       pathIndex = 0;
       currentTarget = null;
-      load_BlockPos = null;
+      plannedTarget = null;
       planTick = 0;
       stuckTicks = 0;
       jumpStreak = 0;
       gScore.clear();
       cameFrom.clear();
-      init_HashSet.clear();
+      jumpNodes.clear();
       closed.clear();
       openQueue.clear();
       pathKeys.clear();
-      read_ArrayList.clear();
+      smoothedPath.clear();
       goalKeys.clear();
       standableCache.clear();
-      write_HashMap.clear();
+      pathCostCache.clear();
       costCacheTick = -2147483648;
-      load_Z = false;
+      directApproach = false;
    }
 
    public static boolean read(BlockPos target) {
@@ -210,8 +210,8 @@ public final class GridWalkNavigator {
             if (pathIndex >= path.size() && heldKeyMask == 0) {
                stuckTicks = 0;
                jumpStreak = 0;
-               poll_D = px;
-               push_D = pz;
+               lastProgressX = px;
+               lastProgressZ = pz;
             }
          } else {
             releaseKeys();
@@ -219,32 +219,32 @@ public final class GridWalkNavigator {
             currentTarget = target.immutable();
             stuckTicks = 0;
             jumpStreak = 0;
-            poll_D = px;
-            push_D = pz;
+            lastProgressX = px;
+            lastProgressZ = pz;
          }
       }
 
       if (load(currentTarget)) {
-         flush_HashMap.remove(currentTarget);
+         targetFailures.remove(currentTarget);
          stuckTicks = 0;
          jumpStreak = 0;
-         poll_D = px;
-         push_D = pz;
+         lastProgressX = px;
+         lastProgressZ = pz;
          releaseKeys();
          clearPath();
          return false;
       }
 
       int feetY = Mth.floor(py);
-      init_V_D(px, py, pz, feetY);
+      advancePathIndex(px, py, pz, feetY);
       boolean followGoal = pathIndex >= path.size()
          && !path.isEmpty()
-         && init_Z()
-         && init_Z_D(px, py, pz, currentTarget.getX() + 0.5, currentTarget.getZ() + 0.5);
+         && plannedNearbyTarget()
+         && straightWalkable(px, py, pz, currentTarget.getX() + 0.5, currentTarget.getZ() + 0.5);
       boolean needPlan = pathIndex >= path.size() && !followGoal;
       if (pathIndex < path.size()) {
          GridWalkNavigator.PathNode node = path.get(pathIndex);
-         double segX = node.init_I - nodeX;
+         double segX = node.x - nodeX;
          double segZ = node.z - nodeZ;
          double fromX = nodeX + 0.5;
          double fromZ = nodeZ + 0.5;
@@ -262,17 +262,17 @@ public final class GridWalkNavigator {
             && player.onGround()
             && !isFireOrPowderSnow(Mth.floor(px), feetY, Mth.floor(pz))
             && !isFireOrPowderSnow(Mth.floor(px), feetY + 1, Mth.floor(pz))
-            && PathfindingGeometryHelper.canStep(floorHeight(nodeX, nodeY, nodeZ), floorHeight(node.init_I, node.y, node.z), 0.6)) {
-            double nx = node.init_I + 0.5 - px;
+            && PathfindingGeometryHelper.canStep(floorHeight(nodeX, nodeY, nodeZ), floorHeight(node.x, node.y, node.z), 0.6)) {
+            double nx = node.x + 0.5 - px;
             double nz = node.z + 0.5 - pz;
             double fraction = Math.min(1.0, 0.8 / Math.max(0.001, Math.hypot(nx, nz)));
             needPlan = !straightLineWalkable(px, py, pz, px + nx * fraction, pz + nz * fraction, false);
          }
       }
 
-      if (needPlan && init_Z_BlockPos_I(currentTarget, now)) {
+      if (needPlan && mayReplan(currentTarget, now)) {
          markPlanned(currentTarget, now);
-         if (!init_Z_D(px, py, pz)) {
+         if (!replanPath(px, py, pz)) {
             recordTargetFailure();
             releaseKeys();
             clearPath();
@@ -280,15 +280,15 @@ public final class GridWalkNavigator {
          }
 
          pathIndex = 0;
-         init_V_D(px, py, pz, feetY);
+         advancePathIndex(px, py, pz, feetY);
       } else if (needPlan) {
          releaseKeys();
          if (!autismclient.modules.AutoTotemModule.read_Z_3() && !autismclient.modules.AutoArmorModule.load_Z_9()) {
-            double movedX = px - poll_D;
-            double movedZ = pz - push_D;
+            double movedX = px - lastProgressX;
+            double movedZ = pz - lastProgressZ;
             if (movedX * movedX + movedZ * movedZ >= 0.09) {
-               poll_D = px;
-               push_D = pz;
+               lastProgressX = px;
+               lastProgressZ = pz;
                stuckTicks = 0;
             } else if (++stuckTicks >= 15) {
                recordTargetFailure();
@@ -300,15 +300,15 @@ public final class GridWalkNavigator {
             return true;
          }
 
-         poll_D = px;
-         push_D = pz;
+         lastProgressX = px;
+         lastProgressZ = pz;
          stuckTicks = 0;
          return true;
       }
 
       if (pathIndex >= path.size() && !followGoal) {
          releaseKeys();
-         load_Z = false;
+         directApproach = false;
          if (!path.isEmpty()) {
             clearPath();
          }
@@ -321,17 +321,17 @@ public final class GridWalkNavigator {
          boolean nodeJump;
          if (pathIndex < path.size()) {
             GridWalkNavigator.PathNode node = path.get(pathIndex);
-            nodeX = node.init_I;
+            nodeX = node.x;
             nodeY = node.y;
             nodeZ = node.z;
             nodeJump = node.jump;
-            load_Z = false;
+            directApproach = false;
          } else {
             nodeX = currentTarget.getX();
             nodeY = currentTarget.getY();
             nodeZ = currentTarget.getZ();
             nodeJump = false;
-            load_Z = true;
+            directApproach = true;
          }
 
          double dx = nodeX + 0.5 - px;
@@ -352,8 +352,8 @@ public final class GridWalkNavigator {
          }
 
          boolean jump = headroom && nodeJump && distSq <= jumpRangeSq;
-         if (!jump && headroom && !load_Z && stuckTicks >= 5) {
-            jump = !init_Z_D_2(px, feetY, pz) && !isFarmland(nodeX, nodeY - 1, nodeZ);
+         if (!jump && headroom && !directApproach && stuckTicks >= 5) {
+            jump = !onFarmland(px, feetY, pz) && !isFarmland(nodeX, nodeY - 1, nodeZ);
          }
 
          if (jump && !FarmlandTrampleGuard.init(mc.level, Mth.floor(px), standCellY, Mth.floor(pz), nodeX, nodeY, nodeZ, true, 0.0)) {
@@ -369,15 +369,15 @@ public final class GridWalkNavigator {
          applyKeyMask(mask | (jump ? 16 : 0) | sprint);
          jumpStreak = jump ? jumpStreak + 1 : 0;
          if (!autismclient.modules.AutoTotemModule.read_Z_3() && !autismclient.modules.AutoArmorModule.load_Z_9()) {
-            double movedX = px - poll_D;
-            double movedZ = pz - push_D;
+            double movedX = px - lastProgressX;
+            double movedZ = pz - lastProgressZ;
             if (movedX * movedX + movedZ * movedZ >= 0.09) {
-               poll_D = px;
-               push_D = pz;
+               lastProgressX = px;
+               lastProgressZ = pz;
                stuckTicks = 0;
             } else {
                stuckTicks++;
-               if (stuckTicks >= 8 && jumpStreak >= 8 && init_Z_D(px, py, pz, standCellY, dx, dz, distSq)) {
+               if (stuckTicks >= 8 && jumpStreak >= 8 && wallAhead(px, py, pz, standCellY, dx, dz, distSq)) {
                   recordTargetFailure();
                   releaseKeys();
                   clearPath();
@@ -394,8 +394,8 @@ public final class GridWalkNavigator {
 
             return true;
          } else {
-            poll_D = px;
-            push_D = pz;
+            lastProgressX = px;
+            lastProgressZ = pz;
             stuckTicks = 0;
             return true;
          }
@@ -407,17 +407,17 @@ public final class GridWalkNavigator {
          return null;
       } else if (pathIndex < path.size()) {
          GridWalkNavigator.PathNode node = path.get(pathIndex);
-         return new BlockPos(node.init_I, node.y, node.z);
+         return new BlockPos(node.x, node.y, node.z);
       } else {
-         return load_Z ? currentTarget : null;
+         return directApproach ? currentTarget : null;
       }
    }
 
    public static void init_V_BlockPos_I(BlockPos target, int ticks) {
       if (target != null && ticks > 0) {
          BlockPos key = target.immutable();
-         update_HashMap.put(key, AutismSessionState.getInstance().getClientTick());
-         sync_HashMap.put(key, ticks);
+         blockedSince.put(key, AutismSessionState.getInstance().getClientTick());
+         blockedForTicks.put(key, ticks);
       }
    }
 
@@ -426,23 +426,23 @@ public final class GridWalkNavigator {
          return false;
       }
 
-      Integer stamp = update_HashMap.get(target);
+      Integer stamp = blockedSince.get(target);
       if (stamp == null) {
          return false;
       }
 
       int age = AutismSessionState.getInstance().getClientTick() - stamp;
-      if (age >= 0 && age <= sync_HashMap.getOrDefault(target, 0)) {
+      if (age >= 0 && age <= blockedForTicks.getOrDefault(target, 0)) {
          return true;
       }
 
-      update_HashMap.remove(target);
-      sync_HashMap.remove(target);
+      blockedSince.remove(target);
+      blockedForTicks.remove(target);
       return false;
    }
 
    private static void recordTargetFailure() {
-      int fails = flush_HashMap.merge(currentTarget, 1, Integer::sum);
+      int fails = targetFailures.merge(currentTarget, 1, Integer::sum);
       int ticks = Math.min(100 << Math.min(fails - 1, 2), 400);
       init_V_BlockPos_I(currentTarget, ticks);
    }
@@ -520,16 +520,16 @@ public final class GridWalkNavigator {
    private static void clearPath() {
       path.clear();
       pathIndex = 0;
-      load_Z = false;
+      directApproach = false;
    }
 
-   private static void init_V_D(double px, double py, double pz, int feetY) {
-      while (pathIndex < path.size() && (pathIndex != path.size() - 1 || init_Z())) {
+   private static void advancePathIndex(double px, double py, double pz, int feetY) {
+      while (pathIndex < path.size() && (pathIndex != path.size() - 1 || plannedNearbyTarget())) {
          GridWalkNavigator.PathNode node = path.get(pathIndex);
-         double dx = node.init_I + 0.5 - px;
+         double dx = node.x + 0.5 - px;
          double dz = node.z + 0.5 - pz;
-         if (dx * dx + dz * dz < 0.25 && Math.abs(feetY - node.y) <= 1 && (!node.jump || init_Z_bA_StreamUtil_D(node, py))) {
-            nodeX = node.init_I;
+         if (dx * dx + dz * dz < 0.25 && Math.abs(feetY - node.y) <= 1 && (!node.jump || reachedLedgeTop(node, py))) {
+            nodeX = node.x;
             nodeY = node.y;
             nodeZ = node.z;
             pathIndex++;
@@ -539,12 +539,12 @@ public final class GridWalkNavigator {
       }
    }
 
-   private static boolean init_Z_bA_StreamUtil_D(GridWalkNavigator.PathNode node, double py) {
-      double ledgeTop = floorHeight(node.init_I, node.y, node.z);
+   private static boolean reachedLedgeTop(GridWalkNavigator.PathNode node, double py) {
+      double ledgeTop = floorHeight(node.x, node.y, node.z);
       return py >= ledgeTop - 0.0625;
    }
 
-   private static boolean init_Z_D(double px, double py, double pz, int standCellY, double dx, double dz, double distSq) {
+   private static boolean wallAhead(double px, double py, double pz, int standCellY, double dx, double dz, double distSq) {
       if (distSq < 1.0E-6) {
          return false;
       }
@@ -552,38 +552,38 @@ public final class GridWalkNavigator {
       double len = Math.sqrt(distSq);
       int aheadX = Mth.floor(px + dx / len * 0.9);
       int aheadZ = Mth.floor(pz + dz / len * 0.9);
-      double rise = standCellY + init_D_I(aheadX, standCellY, aheadZ) - py;
-      return rise > 1.25 ? true : rise > 0.6 && init_D_I(aheadX, standCellY + 1, aheadZ) > 0.0;
+      double rise = standCellY + collisionTop(aheadX, standCellY, aheadZ) - py;
+      return rise > 1.25 ? true : rise > 0.6 && collisionTop(aheadX, standCellY + 1, aheadZ) > 0.0;
    }
 
    private static boolean isNearPlannedTarget(BlockPos target) {
-      if (load_BlockPos == null) {
+      if (plannedTarget == null) {
          return false;
       }
 
-      if (target.getY() != load_BlockPos.getY()) {
+      if (target.getY() != plannedTarget.getY()) {
          return false;
       }
 
-      int dx = target.getX() - load_BlockPos.getX();
-      int dz = target.getZ() - load_BlockPos.getZ();
+      int dx = target.getX() - plannedTarget.getX();
+      int dz = target.getZ() - plannedTarget.getZ();
       return dx * dx + dz * dz <= 9;
    }
 
-   private static boolean init_Z() {
-      return load_BlockPos != null && !load_BlockPos.equals(currentTarget) && isNearPlannedTarget(currentTarget);
+   private static boolean plannedNearbyTarget() {
+      return plannedTarget != null && !plannedTarget.equals(currentTarget) && isNearPlannedTarget(currentTarget);
    }
 
-   private static boolean init_Z_BlockPos_I(BlockPos target, int now) {
-      return load_BlockPos != null && load_BlockPos.equals(target) ? now - planTick >= 10 : true;
+   private static boolean mayReplan(BlockPos target, int now) {
+      return plannedTarget != null && plannedTarget.equals(target) ? now - planTick >= 10 : true;
    }
 
    private static void markPlanned(BlockPos target, int now) {
-      load_BlockPos = target;
+      plannedTarget = target;
       planTick = now;
    }
 
-   private static boolean init_Z_D(double px, double py, double pz) {
+   private static boolean replanPath(double px, double py, double pz) {
       clearPath();
       return Double.isFinite(estimatePathCost(px, py, pz, currentTarget, true, 6000));
    }
@@ -591,11 +591,11 @@ public final class GridWalkNavigator {
    private static double estimatePathCost(double px, double py, double pz, BlockPos target, boolean materialize, int expansionLimit) {
       gScore.clear();
       cameFrom.clear();
-      init_HashSet.clear();
+      jumpNodes.clear();
       closed.clear();
       openQueue.clear();
       pathKeys.clear();
-      read_ArrayList.clear();
+      smoothedPath.clear();
       goalKeys.clear();
       standableCache.clear();
       cacheEnabled = true;
@@ -620,10 +620,10 @@ public final class GridWalkNavigator {
       targetX = target.getX();
       targetZ = target.getZ();
       targetY = target.getY();
-      init_V_I_2(targetX, targetZ, target);
+      addReachableGoalsAt(targetX, targetZ, target);
 
       for (int d = 0; d < 4; d++) {
-         init_V_I_2(targetX + DX[d], targetZ + DZ[d], target);
+         addReachableGoalsAt(targetX + DX[d], targetZ + DZ[d], target);
       }
 
       if (goalKeys.isEmpty()) {
@@ -667,11 +667,11 @@ public final class GridWalkNavigator {
       return 1.0 / 0.0;
    }
 
-   private static void init_V_I_2(int x, int z, BlockPos target) {
+   private static void addReachableGoalsAt(int x, int z, BlockPos target) {
       double eyeHeight = mc.player.getEyeY() - mc.player.getY();
 
       for (int y = target.getY() + 1; y >= target.getY() - 3; y--) {
-         if (isStandable(x, y, z) && init_Z_Vec3_BlockPos(new Vec3(x + 0.5, floorHeight(x, y, z) + eyeHeight, z + 0.5), target)) {
+         if (isStandable(x, y, z) && canReachFrom(new Vec3(x + 0.5, floorHeight(x, y, z) + eyeHeight, z + 0.5), target)) {
             goalKeys.add(BlockPos.asLong(x, y, z));
          }
       }
@@ -697,7 +697,7 @@ public final class GridWalkNavigator {
                relaxNeighbor(currentKey, gCurrent, nx, cy + 1, nz, (hop ? 14 : 10) + (hop && isFarmland(nx, cy, nz) ? 26 : 0), hop);
             }
 
-            for (int ny = cy; ny >= cy - 3 && init_Z_I(nx, ny, nz) && isPassable(nx, ny + 1, nz) && !isFireOrPowderSnow(nx, ny, nz) && !isFireOrPowderSnow(nx, ny + 1, nz); ny--) {
+            for (int ny = cy; ny >= cy - 3 && isWalkThroughCell(nx, ny, nz) && isPassable(nx, ny + 1, nz) && !isFireOrPowderSnow(nx, ny, nz) && !isFireOrPowderSnow(nx, ny + 1, nz); ny--) {
                if (isStandableSurface(nx, ny, nz)) {
                   double toFloor = floorHeight(nx, ny, nz);
                   double floorRise = toFloor - fromFloor;
@@ -745,9 +745,9 @@ public final class GridWalkNavigator {
             gScore.put(key, g);
             cameFrom.put(key, fromKey);
             if (jump) {
-               init_HashSet.add(key);
+               jumpNodes.add(key);
             } else {
-               init_HashSet.remove(key);
+               jumpNodes.remove(key);
             }
 
             openQueue.add(new GridWalkNavigator.OpenEntry(key, g + heuristic(nx, ny, nz)));
@@ -789,15 +789,15 @@ public final class GridWalkNavigator {
 
       for (int i = pathKeys.size() - 1; i >= 0; i--) {
          long nodeKey = pathKeys.get(i);
-         path.add(new GridWalkNavigator.PathNode(BlockPos.getX(nodeKey), BlockPos.getY(nodeKey), BlockPos.getZ(nodeKey), init_HashSet.contains(nodeKey)));
+         path.add(new GridWalkNavigator.PathNode(BlockPos.getX(nodeKey), BlockPos.getY(nodeKey), BlockPos.getZ(nodeKey), jumpNodes.contains(nodeKey)));
       }
 
-      init_V_I(startX, startY, startZ);
+      smoothPath(startX, startY, startZ);
    }
 
-   private static void init_V_I(int startX, int startY, int startZ) {
+   private static void smoothPath(int startX, int startY, int startZ) {
       if (path.size() >= 3) {
-         read_ArrayList.clear();
+         smoothedPath.clear();
          int anchorX = startX;
          int anchorY = startY;
          int anchorZ = startZ;
@@ -809,31 +809,31 @@ public final class GridWalkNavigator {
 
             for (int j = limit; j > i; j--) {
                GridWalkNavigator.PathNode candidate = path.get(j);
-               if (!candidate.jump && candidate.y == anchorY && init_Z_I(anchorX, anchorY, anchorZ, candidate.init_I, candidate.z)) {
+               if (!candidate.jump && candidate.y == anchorY && straightWalkableCells(anchorX, anchorY, anchorZ, candidate.x, candidate.z)) {
                   far = j;
                   break;
                }
             }
 
             GridWalkNavigator.PathNode next = path.get(far);
-            read_ArrayList.add(next);
-            anchorX = next.init_I;
+            smoothedPath.add(next);
+            anchorX = next.x;
             anchorY = next.y;
             anchorZ = next.z;
             i = far + 1;
          }
 
          path.clear();
-         path.addAll(read_ArrayList);
-         read_ArrayList.clear();
+         path.addAll(smoothedPath);
+         smoothedPath.clear();
       }
    }
 
-   private static boolean init_Z_I(int ax, int ay, int az, int bx, int bz) {
-      return init_Z_D(ax + 0.5, floorHeight(ax, ay, az), az + 0.5, bx + 0.5, bz + 0.5);
+   private static boolean straightWalkableCells(int ax, int ay, int az, int bx, int bz) {
+      return straightWalkable(ax + 0.5, floorHeight(ax, ay, az), az + 0.5, bx + 0.5, bz + 0.5);
    }
 
-   private static boolean init_Z_D(double ax, double floorY, double az, double bx, double bz) {
+   private static boolean straightWalkable(double ax, double floorY, double az, double bx, double bz) {
       return straightLineWalkable(ax, floorY, az, bx, bz, true);
    }
 
@@ -851,7 +851,7 @@ public final class GridWalkNavigator {
          double z = az + dz * t;
          int cx = Mth.floor(x);
          int cz = Mth.floor(z);
-         int cellY = init_I_I(cx, Mth.floor(lastFloor), cz, lastFloor);
+         int cellY = standYNear(cx, Mth.floor(lastFloor), cz, lastFloor);
          if (cellY == -2147483648 || avoidHazards && isContactHazard(cx, cellY, cz)) {
             return false;
          }
@@ -873,7 +873,7 @@ public final class GridWalkNavigator {
       return true;
    }
 
-   private static int init_I_I(int x, int feetY, int z, double fromFloor) {
+   private static int standYNear(int x, int feetY, int z, double fromFloor) {
       for (int y = feetY + 1; y >= feetY - 1; y--) {
          if (isStandable(x, y, z) && PathfindingGeometryHelper.canStep(fromFloor, floorHeight(x, y, z), 0.6)) {
             return y;
@@ -902,7 +902,7 @@ public final class GridWalkNavigator {
       return true;
    }
 
-   private static boolean init_Z_I(int x, int y, int z) {
+   private static boolean isWalkThroughCell(int x, int y, int z) {
       BlockState state = mc.level.getBlockState(scratchPos.set(x, y, z));
       if (!state.getFluidState().isEmpty()) {
          return false;
@@ -946,7 +946,7 @@ public final class GridWalkNavigator {
       boolean result = y >= mc.level.getMinY()
          && y < mc.level.getMaxY()
          && mc.level.hasChunkAt(scratchPos.set(x, y, z))
-         && init_Z_I(x, y, z)
+         && isWalkThroughCell(x, y, z)
          && isPassable(x, y + 1, z)
          && isStandableSurface(x, y, z)
          && !isFireOrPowderSnow(x, y, z)
@@ -977,7 +977,7 @@ public final class GridWalkNavigator {
       return mc.level.getBlockState(scratchPos.set(x, y, z)).is(Blocks.FARMLAND);
    }
 
-   private static boolean init_Z_D_2(double px, int feetY, double pz) {
+   private static boolean onFarmland(double px, int feetY, double pz) {
       int x = Mth.floor(px);
       int z = Mth.floor(pz);
       return isFarmland(x, feetY - 1, z) || isFarmland(x, feetY, z);
@@ -993,7 +993,7 @@ public final class GridWalkNavigator {
       return !shape.isEmpty() && shape.min(Axis.Y) <= 1.0E-4 && shape.max(Axis.Y) <= 0.6;
    }
 
-   private static double init_D_I(int x, int y, int z) {
+   private static double collisionTop(int x, int y, int z) {
       VoxelShape shape = mc.level
          .getBlockState(scratchPos.set(x, y, z))
          .getCollisionShape(mc.level, scratchPos);
@@ -1007,7 +1007,7 @@ public final class GridWalkNavigator {
       }
 
       VoxelShape shape = state.getCollisionShape(mc.level, scratchPos);
-      return !shape.isEmpty() && shape.min(Axis.Y) <= 1.0E-4 && shape.max(Axis.Y) <= 0.6 ? y + shape.max(Axis.Y) : y - 1 + init_D_I(x, y - 1, z);
+      return !shape.isEmpty() && shape.min(Axis.Y) <= 1.0E-4 && shape.max(Axis.Y) <= 0.6 ? y + shape.max(Axis.Y) : y - 1 + collisionTop(x, y - 1, z);
    }
 
    private static boolean hasSafeLandingBelow(int x, int y, int z) {
@@ -1021,7 +1021,7 @@ public final class GridWalkNavigator {
             return false;
          }
 
-         if (init_Z_I(x, gy, z) && isStandableSurface(x, gy, z)) {
+         if (isWalkThroughCell(x, gy, z) && isStandableSurface(x, gy, z)) {
             return true;
          }
 
@@ -1041,7 +1041,7 @@ public final class GridWalkNavigator {
       }
 
       for (int y = feetY + 1; y >= feetY - 3; y--) {
-         if (init_Z_I(x, y, z) && isPassable(x, y + 1, z) && isStandableSurface(x, y, z)) {
+         if (isWalkThroughCell(x, y, z) && isPassable(x, y + 1, z) && isStandableSurface(x, y, z)) {
             return y;
          }
       }
@@ -1085,13 +1085,13 @@ public final class GridWalkNavigator {
    }
 
    private static final class PathNode {
-      final int init_I;
+      final int x;
       final int y;
       final int z;
       final boolean jump;
 
       PathNode(int x, int y, int z, boolean jump) {
-         this.init_I = x;
+         this.x = x;
          this.y = y;
          this.z = z;
          this.jump = jump;

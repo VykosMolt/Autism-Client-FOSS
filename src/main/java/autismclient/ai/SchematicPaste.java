@@ -45,7 +45,7 @@ import net.minecraft.world.level.storage.TagValueInput;
 
 final class SchematicPaste {
    private static volatile SchematicPaste active;
-   private static boolean read_Z;
+   private static boolean tickHookRegistered;
    private final IntegratedServer server;
    private final ServerLevel level;
    private final SchematicDocument document;
@@ -60,10 +60,10 @@ final class SchematicPaste {
    private BitSet[][] occupiedMasks;
    private long total;
    private final Map<BlockState, BlockState> transformedStates = new IdentityHashMap<>();
-   private final Map<Long, BitSet> load_Map = new HashMap<>();
+   private final Map<Long, BitSet> resumeMasks = new HashMap<>();
    private final boolean resumed;
-   private final MutableBlockPos init_BlockPos_MutableBl = new MutableBlockPos();
-   private final MutableBlockPos load_BlockPos_MutableBl = new MutableBlockPos();
+   private final MutableBlockPos sourceCursor = new MutableBlockPos();
+   private final MutableBlockPos worldCursor = new MutableBlockPos();
    private int phase;
    private int column;
    private int range;
@@ -71,12 +71,12 @@ final class SchematicPaste {
    private int blockEntityIndex;
    private int entityIndex;
    private long done;
-   private ChunkPos init_ChunkPos;
-   private CompletableFuture<?> init_CompletableFuture;
+   private ChunkPos pendingChunkPos;
+   private CompletableFuture<?> pendingChunkLoad;
    private int stallCheckTick;
-   private long read_J;
+   private long cachedChunkKey;
    private LevelChunk cachedChunk;
-   volatile boolean init_Z;
+   volatile boolean cancelled;
    volatile boolean finished;
    volatile SchematicPaste.PasteProgress progress;
 
@@ -175,8 +175,8 @@ final class SchematicPaste {
          }
 
          SchematicPaste job = new SchematicPaste(server, level, document, origin, rotation, mirror, includeAir, includeEntities, checkpoint);
-         if (!read_Z) {
-            read_Z = true;
+         if (!tickHookRegistered) {
+            tickHookRegistered = true;
             ServerTickEvents.END_SERVER_TICK.register(s -> {
                SchematicPaste current = active;
                if (current != null && current.server == s) {
@@ -199,11 +199,11 @@ final class SchematicPaste {
    }
 
    void init() {
-      this.init_Z = true;
+      this.cancelled = true;
    }
 
    private void runSlice() {
-      if (!this.init_Z && !this.progress.complete && !this.server.isPublished()) {
+      if (!this.cancelled && !this.progress.complete && !this.server.isPublished()) {
          long deadline = System.nanoTime() + Math.clamp(37000000L - this.server.getAverageTickTimeNanos(), 4000000L, 14000000L);
          this.cachedChunk = null;
 
@@ -216,7 +216,7 @@ final class SchematicPaste {
                this.applyPrepared(this.init_Future.get());
             }
 
-            for (int n = 0; n < 32768 && ((n & 31) != 0 || System.nanoTime() < deadline) && !this.init_Z; n++) {
+            for (int n = 0; n < 32768 && ((n & 31) != 0 || System.nanoTime() < deadline) && !this.cancelled; n++) {
                if (this.phase == 0 || this.phase == 3) {
                   if (this.column >= this.columns.size()) {
                      this.phase = this.phase == 0 ? 1 : 4;
@@ -227,7 +227,7 @@ final class SchematicPaste {
                      int rangeSize = (range.max - range.min + 1) * 256;
                      long maskKey = (long)this.column << 32 | this.range;
                      if (this.cell < rangeSize) {
-                        BitSet mask = this.phase == 3 && !this.resumed ? this.load_Map.get(maskKey) : this.occupiedMasks[this.column][this.range];
+                        BitSet mask = this.phase == 3 && !this.resumed ? this.resumeMasks.get(maskKey) : this.occupiedMasks[this.column][this.range];
                         int next = mask == null ? -1 : mask.nextSetBit(this.cell);
                         if (next < 0) {
                            next = rangeSize;
@@ -239,7 +239,7 @@ final class SchematicPaste {
 
                      if (this.cell >= rangeSize) {
                         if (this.phase == 3) {
-                           this.load_Map.remove(maskKey);
+                           this.resumeMasks.remove(maskKey);
                         }
 
                         this.cell = 0;
@@ -258,32 +258,32 @@ final class SchematicPaste {
                         int z = (column.z << 4) + (index % 256 >> 4);
                         int tx = x - this.origin.getX();
                         int tz = z - this.origin.getZ();
-                        this.init_V_I(tx, y - this.origin.getY(), tz);
+                        this.setSourceCursor(tx, y - this.origin.getY(), tz);
                         SchematicDocument.Region region = this.document
-                           .regionAt(this.init_BlockPos_MutableBl.getX(), this.init_BlockPos_MutableBl.getY(), this.init_BlockPos_MutableBl.getZ());
+                           .regionAt(this.sourceCursor.getX(), this.sourceCursor.getY(), this.sourceCursor.getZ());
                         if (region != null) {
                            BlockState saved = region.stateAt(
-                              this.init_BlockPos_MutableBl.getX(), this.init_BlockPos_MutableBl.getY(), this.init_BlockPos_MutableBl.getZ()
+                              this.sourceCursor.getX(), this.sourceCursor.getY(), this.sourceCursor.getZ()
                            );
                            if (this.includeAir || !saved.isAir()) {
-                              this.load_BlockPos_MutableBl.set(x, y, z);
+                              this.worldCursor.set(x, y, z);
                               if (this.phase == 0) {
                                  BlockState state = this.transformedStates.computeIfAbsent(saved, s -> SchematicDocument.transformState(s, this.rotation, this.mirror));
-                                 if (this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl) != state) {
-                                    boolean written = this.level.setBlock(this.load_BlockPos_MutableBl, state, 818);
-                                    if (!written && this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl) != state) {
-                                       throw new IllegalStateException("Could not paste at " + this.load_BlockPos_MutableBl.toShortString());
+                                 if (this.cachedChunk.getBlockState(this.worldCursor) != state) {
+                                    boolean written = this.level.setBlock(this.worldCursor, state, 818);
+                                    if (!written && this.cachedChunk.getBlockState(this.worldCursor) != state) {
+                                       throw new IllegalStateException("Could not paste at " + this.worldCursor.toShortString());
                                     }
 
                                     if (!this.resumed) {
-                                       this.load_Map.computeIfAbsent(maskKey, key -> new BitSet()).set(index);
+                                       this.resumeMasks.computeIfAbsent(maskKey, key -> new BitSet()).set(index);
                                     }
                                  }
                               } else {
-                                 BlockState live = this.cachedChunk.getBlockState(this.load_BlockPos_MutableBl);
-                                 this.level.updateNeighborsAt(this.load_BlockPos_MutableBl, live.getBlock());
+                                 BlockState live = this.cachedChunk.getBlockState(this.worldCursor);
+                                 this.level.updateNeighborsAt(this.worldCursor, live.getBlock());
                                  if (!live.getFluidState().isEmpty()) {
-                                    this.level.scheduleTick(this.load_BlockPos_MutableBl, live.getFluidState().getType(), 1);
+                                    this.level.scheduleTick(this.worldCursor, live.getFluidState().getType(), 1);
                                  }
                               }
                            }
@@ -413,7 +413,7 @@ final class SchematicPaste {
 
    private boolean loadChunk(int x, int z) {
       long key = ChunkPos.pack(x, z);
-      if (this.cachedChunk != null && this.read_J == key) {
+      if (this.cachedChunk != null && this.cachedChunkKey == key) {
          return true;
       }
 
@@ -422,14 +422,14 @@ final class SchematicPaste {
       source.addTicketWithRadius(TicketType.UNKNOWN, pos, 0);
       this.cachedChunk = source.getChunkNow(x, z);
       if (this.cachedChunk != null) {
-         this.read_J = key;
-         this.init_ChunkPos = null;
+         this.cachedChunkKey = key;
+         this.pendingChunkPos = null;
          return true;
       }
 
-      if (!pos.equals(this.init_ChunkPos)) {
-         this.init_ChunkPos = pos;
-         this.init_CompletableFuture = CompletableFuture.<CompletableFuture<ChunkResult<ChunkAccess>>>supplyAsync(
+      if (!pos.equals(this.pendingChunkPos)) {
+         this.pendingChunkPos = pos;
+         this.pendingChunkLoad = CompletableFuture.<CompletableFuture<ChunkResult<ChunkAccess>>>supplyAsync(
                () -> source.getChunkFuture(x, z, ChunkStatus.FULL, true), SchematicLibrary.EXECUTOR
             )
             .thenCompose(future -> (CompletionStage<ChunkResult<ChunkAccess>>)future);
@@ -440,14 +440,14 @@ final class SchematicPaste {
          throw new IllegalStateException("Target chunk is still unavailable; paste can be resumed");
       }
 
-      if (this.init_CompletableFuture.isCompletedExceptionally()) {
-         this.init_CompletableFuture.join();
+      if (this.pendingChunkLoad.isCompletedExceptionally()) {
+         this.pendingChunkLoad.join();
       }
 
       return false;
    }
 
-   private void init_V_I(int x, int y, int z) {
+   private void setSourceCursor(int x, int y, int z) {
       int sx;
       int sz;
       switch (this.rotation) {
@@ -474,7 +474,7 @@ final class SchematicPaste {
          sz = this.document.sizeZ - 1 - sz;
       }
 
-      this.init_BlockPos_MutableBl.set(sx, y, sz);
+      this.sourceCursor.set(sx, y, sz);
    }
 
    private double[] transformPoint(double x, double y, double z) {

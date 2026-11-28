@@ -150,8 +150,8 @@ final class VanishActivityDetector {
             this.tracker.explain(pos, 1.5, at + 3000L);
          }
 
-         this.load(pos, before, at);
-         this.load(pos, after, at);
+         this.noteHazard(pos, before, at);
+         this.noteHazard(pos, after, at);
          autismclient.util.UnexplainedBlockTracker.ChangeKind kind = classifyChange(before, after);
          if (kind != null) {
             if (this.pendingChanges.size() >= 256) {
@@ -249,7 +249,7 @@ final class VanishActivityDetector {
             || action.getAction() == Action.STOP_DESTROY_BLOCK
             || action.getAction() == Action.ABORT_DESTROY_BLOCK) {
             this.suppressCell(action.getPos(), at);
-            this.init(action.getPos(), MINECRAFT.level.getBlockState(action.getPos()).getBlock(), at);
+            this.suppressMultiblockNeighbours(action.getPos(), MINECRAFT.level.getBlockState(action.getPos()).getBlock(), at);
          }
       } else if (packet instanceof ServerboundUseItemOnPacket use) {
          BlockPos clicked = use.hitResult().getBlockPos();
@@ -257,8 +257,8 @@ final class VanishActivityDetector {
          this.suppressCell(clicked, at);
          this.suppressCell(adjacent, at);
          if (MINECRAFT.player.getItemInHand(use.hand()).getItem() instanceof BlockItem item) {
-            this.init(clicked, item.getBlock(), at);
-            this.init(adjacent, item.getBlock(), at);
+            this.suppressMultiblockNeighbours(clicked, item.getBlock(), at);
+            this.suppressMultiblockNeighbours(adjacent, item.getBlock(), at);
          }
       } else if (packet instanceof ServerboundChatCommandPacket command) {
          String text = command.command().replace("minecraft:", "");
@@ -268,7 +268,7 @@ final class VanishActivityDetector {
       }
    }
 
-   private void init(BlockPos p, Block block, long at) {
+   private void suppressMultiblockNeighbours(BlockPos p, Block block, long at) {
       if (block instanceof DoorBlock) {
          this.suppressCell(p.above(), at);
          this.suppressCell(p.below(), at);
@@ -345,7 +345,7 @@ final class VanishActivityDetector {
 
       for (Entry<Long, VanishActivityDetector.PendingChange> entry : this.pendingChanges.entrySet()) {
          BlockPos pos = BlockPos.of(entry.getKey());
-         if (this.load(pos, at) || this.read(pos, at)) {
+         if (this.explainedByActor(pos, at) || this.explainedByHazard(pos, at)) {
             this.tracker.explain(pos, 0.0, at + 1000L);
          }
       }
@@ -363,11 +363,11 @@ final class VanishActivityDetector {
          return true;
       }
 
-      if (this.load(pos, at)) {
+      if (this.explainedByActor(pos, at)) {
          return true;
       }
 
-      if (this.read(pos, at)) {
+      if (this.explainedByHazard(pos, at)) {
          return true;
       }
 
@@ -375,9 +375,9 @@ final class VanishActivityDetector {
       // Only the fluid/heat test can match beyond distSqr 4; skip the outer cells when no fluid/heat state can explain this block.
       int r = focus != null
             && (
-               init(focus.state, focus.change, true, true)
-                  || init(focus.state, focus.change, true, false)
-                  || init(focus.state, focus.change, false, true)
+               explainedByFluid(focus.state, focus.change, true, true)
+                  || explainedByFluid(focus.state, focus.change, true, false)
+                  || explainedByFluid(focus.state, focus.change, false, true)
             )
          ? 3
          : 2;
@@ -401,7 +401,7 @@ final class VanishActivityDetector {
                   }
 
                   if (focus != null
-                     && init(
+                     && explainedByFluid(
                         focus.state,
                         focus.change,
                         !state.getFluidState().isEmpty(),
@@ -411,7 +411,7 @@ final class VanishActivityDetector {
                   }
 
                   if (focus != null
-                     && load(focus.state)
+                     && isDispensedBlock(focus.state)
                      && state.getBlock() instanceof DispenserBlock
                      && state.hasProperty(BlockStateProperties.TRIGGERED)
                      && state.getValue(BlockStateProperties.TRIGGERED)
@@ -426,7 +426,7 @@ final class VanishActivityDetector {
       return false;
    }
 
-   private boolean load(BlockPos pos, long at) {
+   private boolean explainedByActor(BlockPos pos, long at) {
       VanishActivityDetector.PendingChange focus = this.pendingChanges.get(pos.asLong());
 
       for (VanishActivityDetector.ActorZone actor : this.actors) {
@@ -460,7 +460,7 @@ final class VanishActivityDetector {
          || b == Blocks.PUMPKIN;
    }
 
-   private void load(BlockPos pos, BlockState state, long at) {
+   private void noteHazard(BlockPos pos, BlockState state, long at) {
       boolean fluid = !state.getFluidState().isEmpty();
       boolean heat = state.getBlock() instanceof BaseFireBlock || state.getFluidState().is(FluidTags.LAVA);
       if (fluid || heat) {
@@ -476,7 +476,7 @@ final class VanishActivityDetector {
       this.hazards.addLast(hazard);
    }
 
-   private boolean read(BlockPos pos, long at) {
+   private boolean explainedByHazard(BlockPos pos, long at) {
       VanishActivityDetector.PendingChange focus = this.pendingChanges.get(pos.asLong());
       if (focus == null) {
          return false;
@@ -485,7 +485,7 @@ final class VanishActivityDetector {
       for (VanishActivityDetector.Hazard h : this.hazards) {
          if (h.expiresAt > at
             && h.pos.distSqr(pos) <= (h.read ? 0 : 12)
-            && (h.read ? load(focus.state) : init(focus.state, focus.change, h.init_Z, h.load))) {
+            && (h.read ? isDispensedBlock(focus.state) : explainedByFluid(focus.state, focus.change, h.init_Z, h.load))) {
             return true;
          }
       }
@@ -493,11 +493,11 @@ final class VanishActivityDetector {
       return false;
    }
 
-   static boolean load(BlockState state) {
+   static boolean isDispensedBlock(BlockState state) {
       return state.getBlock() instanceof CarvedPumpkinBlock || state.getBlock() instanceof ShulkerBoxBlock || state.getBlock() instanceof TntBlock;
    }
 
-   static boolean init(BlockState state, autismclient.util.UnexplainedBlockTracker.ChangeKind kind, boolean fluid, boolean heat) {
+   static boolean explainedByFluid(BlockState state, autismclient.util.UnexplainedBlockTracker.ChangeKind kind, boolean fluid, boolean heat) {
       if (kind == autismclient.util.UnexplainedBlockTracker.ChangeKind.BREAK) {
          return heat && state.ignitedByLava();
       }

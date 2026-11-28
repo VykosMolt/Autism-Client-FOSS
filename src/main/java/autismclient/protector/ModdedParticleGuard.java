@@ -60,7 +60,7 @@ public final class ModdedParticleGuard {
             } else if (input.registryAccess().lookupOrThrow(Registries.PARTICLE_TYPE).byId(id) != null) {
                throw failure;
             } else {
-               return ModdedParticleGuard.PlaceholderParticle.init_ByteReader_DataUti;
+               return ModdedParticleGuard.PlaceholderParticle.INSTANCE;
             }
          } else {
             throw failure;
@@ -69,7 +69,7 @@ public final class ModdedParticleGuard {
    }
 
    public static boolean init(ClientboundLevelParticlesPacket packet) {
-      return packet != null && packet.particle() == ModdedParticleGuard.PlaceholderParticle.init_ByteReader_DataUti;
+      return packet != null && packet.particle() == ModdedParticleGuard.PlaceholderParticle.INSTANCE;
    }
 
    public static boolean init(ParticleProvider<?> provider, ConnectionPrivacyRegistry.ConnectionSession context) {
@@ -84,22 +84,22 @@ public final class ModdedParticleGuard {
    }
 
    private static final class PlaceholderParticle implements ParticleOptions {
-      private static final ModdedParticleGuard.PlaceholderParticle init_ByteReader_DataUti = new ModdedParticleGuard.PlaceholderParticle();
-      private static final ParticleType<ModdedParticleGuard.PlaceholderParticle> init_ParticleType = new ParticleType<ModdedParticleGuard.PlaceholderParticle>(false) {
+      private static final ModdedParticleGuard.PlaceholderParticle INSTANCE = new ModdedParticleGuard.PlaceholderParticle();
+      private static final ParticleType<ModdedParticleGuard.PlaceholderParticle> TYPE = new ParticleType<ModdedParticleGuard.PlaceholderParticle>(false) {
          @Override
          public MapCodec<ModdedParticleGuard.PlaceholderParticle> codec() {
-            return MapCodec.unit(ModdedParticleGuard.PlaceholderParticle.init_ByteReader_DataUti);
+            return MapCodec.unit(ModdedParticleGuard.PlaceholderParticle.INSTANCE);
          }
 
          @Override
          public StreamCodec<? super RegistryFriendlyByteBuf, ModdedParticleGuard.PlaceholderParticle> streamCodec() {
-            return StreamCodec.unit(ModdedParticleGuard.PlaceholderParticle.init_ByteReader_DataUti);
+            return StreamCodec.unit(ModdedParticleGuard.PlaceholderParticle.INSTANCE);
          }
       };
 
       @Override
       public ParticleType<?> getType() {
-         return init_ParticleType;
+         return TYPE;
       }
    }
 }

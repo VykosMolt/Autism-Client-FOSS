@@ -12,9 +12,9 @@ import net.minecraft.client.Minecraft;
 public final class AiAssistant implements autismclient.util.SilentMovementCoordinator.Participant {
    private static final Minecraft MC = Minecraft.getInstance();
    private static final AiAssistant INSTANCE = new AiAssistant();
-   private boolean init_Z;
+   private boolean initialized;
    private boolean keyWasDown;
-   private long init_J;
+   private long lastLifecycleWarnAt;
    private AiAssistantOverlay overlay;
 
    public static AiAssistant getInstance() {
@@ -26,8 +26,8 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    public static void initialize() {
       AiAssistant assistant = getInstance();
-      if (!assistant.init_Z) {
-         assistant.init_Z = true;
+      if (!assistant.initialized) {
+         assistant.initialized = true;
          AiVisualization.initialize();
          AiSchematicPlacement.ensureTickHandler();
          AutismConfig config = AutismConfig.getGlobal();
@@ -50,8 +50,8 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
                assistant.pollKeybind();
             } catch (Throwable error) {
                long now = System.currentTimeMillis();
-               if (now - assistant.init_J >= 5000L) {
-                  assistant.init_J = now;
+               if (now - assistant.lastLifecycleWarnAt >= 5000L) {
+                  assistant.lastLifecycleWarnAt = now;
                   AutismClientAddon.LOG.warn("[AI] utility lifecycle tick failed", error);
                }
             }

@@ -19,16 +19,16 @@ import net.minecraft.world.phys.HitResult;
 
 public final class TotemHitModule extends Module {
    public static final String init_Str = "totem-hit";
-   private LivingEntity init_LivingEntity;
-   private Object init_Obj;
-   private int init_I = -1;
+   private LivingEntity target;
+   private Object targetLevel;
+   private int originalSlot = -1;
    private int totemSlot = -1;
    private int swapTick;
-   private int write;
+   private int switchTick;
    private int returnAtTick;
-   private long init_J;
-   private boolean init_Z;
-   private ItemStack init_ItemStack = ItemStack.EMPTY;
+   private long swordReadyAt;
+   private boolean swordHitDone;
+   private ItemStack swordSnapshot = ItemStack.EMPTY;
 
    public TotemHitModule() {
       super("totem-hit", "TotemHit", ae.init_ae, "Borrow a knockback sword for an attack made with a totem.");
@@ -45,11 +45,11 @@ public final class TotemHitModule extends Module {
 
    @Override
    public boolean shouldCancelAttack(HitResult hit) {
-      if (this.init_LivingEntity != null && !this.init_Z) {
+      if (this.target != null && !this.swordHitDone) {
          return true;
       }
 
-      if (this.init_Z_29()
+      if (this.canAct()
          && MC.player.getMainHandItem().is(Items.TOTEM_OF_UNDYING)
          && hit instanceof EntityHitResult entityHit
          && entityHit.getEntity() instanceof LivingEntity enemy
@@ -76,21 +76,21 @@ public final class TotemHitModule extends Module {
             return false;
          }
 
-         this.init_LivingEntity = enemy;
-         this.init_Obj = MC.level;
+         this.target = enemy;
+         this.targetLevel = MC.level;
          this.totemSlot = best;
-         this.init_ItemStack = MC.player.getInventory().getItem(best).copy();
-         this.init_I = MC.player.getInventory().getSelectedSlot();
+         this.swordSnapshot = MC.player.getInventory().getItem(best).copy();
+         this.originalSlot = MC.player.getInventory().getSelectedSlot();
          this.swapTick = AutismSessionState.getInstance().getClientTick();
-         this.write = -2147483648;
-         this.init_Z = false;
+         this.switchTick = -2147483648;
+         this.swordHitDone = false;
          return true;
       } else {
          return false;
       }
    }
 
-   private boolean init_Z_29() {
+   private boolean canAct() {
       return MC.player != null
          && MC.level != null
          && MC.gameMode != null
@@ -113,62 +113,62 @@ public final class TotemHitModule extends Module {
 
    @Override
    public void preMovementTick() {
-      if (!AutismLiteVariant.enabled() && this.init_LivingEntity != null) {
-         if (MC.player != null && MC.level == this.init_Obj) {
+      if (!AutismLiteVariant.enabled() && this.target != null) {
+         if (MC.player != null && MC.level == this.targetLevel) {
             int tick = AutismSessionState.getInstance().getClientTick();
             int selected = MC.player.getInventory().getSelectedSlot();
-            if (this.write != -2147483648 && selected != this.totemSlot) {
+            if (this.switchTick != -2147483648 && selected != this.totemSlot) {
                if (!CrystalAuraModule.hasBorrowedSlot(selected) && !AnchorAuraModule.hasSwitchedToSlot(selected) && !KillAuraModule.load_Z_I_3(selected)) {
-                  this.init_V_24();
+                  this.reset();
                }
-            } else if (!this.init_Z
+            } else if (!this.swordHitDone
                && tick - this.swapTick <= 8
                && this.isEnabled()
-               && this.init_LivingEntity.isAlive()
-               && ItemStack.isSameItemSameComponents(this.init_ItemStack, MC.player.getInventory().getItem(this.totemSlot))) {
-               if (this.init_Z_29()) {
-                  if (this.write == -2147483648) {
-                     if (selected != this.init_I || !MC.player.getMainHandItem().is(Items.TOTEM_OF_UNDYING)) {
-                        this.init_V_24();
-                     } else if (autismclient.util.InventorySlotArbiter.claimSlot("totem-hit", this.init_I)
+               && this.target.isAlive()
+               && ItemStack.isSameItemSameComponents(this.swordSnapshot, MC.player.getInventory().getItem(this.totemSlot))) {
+               if (this.canAct()) {
+                  if (this.switchTick == -2147483648) {
+                     if (selected != this.originalSlot || !MC.player.getMainHandItem().is(Items.TOTEM_OF_UNDYING)) {
+                        this.reset();
+                     } else if (autismclient.util.InventorySlotArbiter.claimSlot("totem-hit", this.originalSlot)
                         && autismclient.util.InventorySlotArbiter.claimSlot("totem-hit", this.totemSlot)
                         && this.selectSlot(this.totemSlot)) {
-                        this.write = tick;
-                        this.init_J = System.nanoTime() + this.integer("switch-delay") * 1000000L;
+                        this.switchTick = tick;
+                        this.swordReadyAt = System.nanoTime() + this.integer("switch-delay") * 1000000L;
                      }
-                  } else if (tick != this.write
-                     && System.nanoTime() >= this.init_J
+                  } else if (tick != this.switchTick
+                     && System.nanoTime() >= this.swordReadyAt
                      && autismclient.util.WeaponDamageCalculator.init() instanceof EntityHitResult hit
-                     && hit.getEntity() == this.init_LivingEntity) {
+                     && hit.getEntity() == this.target) {
                      if (!autismclient.util.QueuedCombatAction.queueAttack(
                         "totem-hit",
                         hit,
-                        () -> this.init_Z_29()
-                           && this.init_LivingEntity.isAlive()
+                        () -> this.canAct()
+                           && this.target.isAlive()
                            && MC.player.getMainHandItem().is(ItemTags.SWORDS)
-                           && !TeamsModule.init(this.init_LivingEntity, "killaura")
+                           && !TeamsModule.init(this.target, "killaura")
                            && autismclient.util.WeaponDamageCalculator.init() instanceof EntityHitResult current
-                           && current.getEntity() == this.init_LivingEntity,
+                           && current.getEntity() == this.target,
                         () -> {
-                           this.init_Z = true;
+                           this.swordHitDone = true;
                            this.returnAtTick = AutismSessionState.getInstance().getClientTick() + 1 + (this.integer("return-delay") + 49) / 50;
                         }
                      )) {
                         // Not queued: stop cancelling clicks and return to the totem next tick.
-                        this.init_Z = true;
+                        this.swordHitDone = true;
                         this.returnAtTick = tick;
                      }
                   }
                }
-            } else if (!this.init_Z || tick - this.returnAtTick >= 0) {
-               if (this.write == -2147483648 || selected == this.init_I) {
-                  this.init_V_24();
-               } else if (this.init_Z_29() && this.selectSlot(this.init_I)) {
-                  this.init_V_24();
+            } else if (!this.swordHitDone || tick - this.returnAtTick >= 0) {
+               if (this.switchTick == -2147483648 || selected == this.originalSlot) {
+                  this.reset();
+               } else if (this.canAct() && this.selectSlot(this.originalSlot)) {
+                  this.reset();
                }
             }
          } else {
-            this.init_V_24();
+            this.reset();
          }
       }
    }
@@ -187,13 +187,13 @@ public final class TotemHitModule extends Module {
       }
    }
 
-   private void init_V_24() {
+   private void reset() {
       autismclient.util.QueuedCombatAction.init("totem-hit");
-      this.init_LivingEntity = null;
-      this.init_Obj = null;
-      this.init_I = this.totemSlot = -1;
-      this.init_Z = false;
-      this.init_ItemStack = ItemStack.EMPTY;
+      this.target = null;
+      this.targetLevel = null;
+      this.originalSlot = this.totemSlot = -1;
+      this.swordHitDone = false;
+      this.swordSnapshot = ItemStack.EMPTY;
       autismclient.util.InventorySlotArbiter.releaseAllClaims("totem-hit");
    }
 
@@ -204,7 +204,7 @@ public final class TotemHitModule extends Module {
 
    @Override
    public boolean hasDisabledTickWork() {
-      return this.init_LivingEntity != null;
+      return this.target != null;
    }
 
    @Override
@@ -221,6 +221,6 @@ public final class TotemHitModule extends Module {
 
    @Override
    public void onGameLeft() {
-      this.init_V_24();
+      this.reset();
    }
 }

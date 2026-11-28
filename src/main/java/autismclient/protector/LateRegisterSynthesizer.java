@@ -27,12 +27,12 @@ public final class LateRegisterSynthesizer {
    private static final String init_Str = "fabric-menu-api-v1";
    private static final String load_Str = "open_screen";
    private static final String read = "voicechat";
-   private static final String[] init_StrArr = new String[]{
+   private static final String[] VOICECHAT_PATHS = new String[]{
       "secret", "state", "states", "remove_state", "add_group", "remove_group", "joined_group", "add_category", "remove_category"
    };
    private static final int init_I = 1024;
    private static final Map<Connection, LateRegisterSynthesizer.SessionState> SESSIONS = new IdentityHashMap<>();
-   private static long load_J;
+   private static long tickCounter;
 
    private LateRegisterSynthesizer() {
    }
@@ -42,7 +42,7 @@ public final class LateRegisterSynthesizer {
       if (session != null) {
          synchronized (SESSIONS) {
             if (ConnectionPrivacyRegistry.isActive(session.privacySession)) {
-               session.init_Z = true;
+               session.registerSeen = true;
             }
          }
       }
@@ -55,8 +55,8 @@ public final class LateRegisterSynthesizer {
       }
 
       synchronized (SESSIONS) {
-         if (ConnectionPrivacyRegistry.isActive(session.privacySession) && !session.write) {
-            session.write = true;
+         if (ConnectionPrivacyRegistry.isActive(session.privacySession) && !session.warnedOnce) {
+            session.warnedOnce = true;
             return true;
          } else {
             return false;
@@ -65,24 +65,24 @@ public final class LateRegisterSynthesizer {
    }
 
    public static void tick(Minecraft client) {
-      load_J++;
+      tickCounter++;
       ClientPacketListener listener = client == null ? null : client.getConnection();
       if (client != null && client.player != null && listener != null) {
          ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(listener);
          if (context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED && ProtectorFeatureFlags.protectorEnabled()) {
-            List<Identifier> channels = init(context.connection(), load_J);
+            List<Identifier> channels = channelsToSynthesize(context.connection(), tickCounter);
             if (channels != null) {
-               init(context, channels, listener, listener::send);
+               sendSyntheticRegister(context, channels, listener, listener::send);
             }
          } else {
-            load();
+            pruneSessions();
          }
       } else {
-         load();
+         pruneSessions();
       }
    }
 
-   static void init(ConnectionPrivacyRegistry.ConnectionSession context, List<Identifier> channels, PacketListener listener, Consumer<ServerboundCustomPayloadPacket> sender) {
+   static void sendSyntheticRegister(ConnectionPrivacyRegistry.ConnectionSession context, List<Identifier> channels, PacketListener listener, Consumer<ServerboundCustomPayloadPacket> sender) {
       boolean completed = false;
 
       try {
@@ -104,11 +104,11 @@ public final class LateRegisterSynthesizer {
          LOGGER.warn("[AutismProtector] Late register send failed: {}", t.getMessage());
          return;
       } finally {
-         init_V(context.connection(), completed);
+         finishSynthesis(context.connection(), completed);
       }
    }
 
-   static List<Identifier> init(Connection connection, long tick) {
+   static List<Identifier> channelsToSynthesize(Connection connection, long tick) {
       LateRegisterSynthesizer.SessionState session = sessionFor(connection, true);
       if (session == null) {
          return null;
@@ -119,21 +119,21 @@ public final class LateRegisterSynthesizer {
             return null;
          }
 
-         if (session.init_J < 0L) {
-            session.init_J = tick;
+         if (session.playStartTick < 0L) {
+            session.playStartTick = tick;
          }
 
-         if (!init(true, session.init_Z, session.read, session.load, tick - session.init_J)) {
+         if (!shouldSynthesize(true, session.registerSeen, session.synthesized, session.synthesisInFlight, tick - session.playStartTick)) {
             return null;
          }
 
-         session.load = true;
+         session.synthesisInFlight = true;
       }
 
       try {
-         return init_List();
+         return receivableChannels();
       } catch (Throwable t) {
-         init_V(connection, false);
+         finishSynthesis(connection, false);
          if (DEBUG) {
             LOGGER.debug("[AutismProtector] Late register preparation failed: {}", t.getMessage());
          }
@@ -142,13 +142,13 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   static void init_V(Connection connection, boolean success) {
+   static void finishSynthesis(Connection connection, boolean success) {
       LateRegisterSynthesizer.SessionState session = sessionFor(connection, false);
       if (session != null) {
          synchronized (SESSIONS) {
-            if (ConnectionPrivacyRegistry.isActive(session.privacySession) && session.load) {
-               session.load = false;
-               session.read |= success;
+            if (ConnectionPrivacyRegistry.isActive(session.privacySession) && session.synthesisInFlight) {
+               session.synthesisInFlight = false;
+               session.synthesized |= success;
             }
          }
       }
@@ -194,7 +194,7 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   private static void load() {
+   private static void pruneSessions() {
       synchronized (SESSIONS) {
          SESSIONS.entrySet().removeIf(entry -> !ConnectionPrivacyRegistry.isActive(entry.getValue().privacySession));
       }
@@ -203,11 +203,11 @@ public final class LateRegisterSynthesizer {
    static void reset() {
       synchronized (SESSIONS) {
          SESSIONS.clear();
-         load_J = 0L;
+         tickCounter = 0L;
       }
    }
 
-   static List<Identifier> init_List() {
+   static List<Identifier> receivableChannels() {
       Collection<Identifier> receivable;
       try {
          receivable = ClientPlayNetworking.getGlobalReceivers();
@@ -216,7 +216,7 @@ public final class LateRegisterSynthesizer {
             LOGGER.debug("[AutismProtector] getGlobalReceivers unavailable, using stock fallback: {}", t.getMessage());
          }
 
-         receivable = init(isVoiceChatLoaded());
+         receivable = fallbackChannels(isVoiceChatLoaded());
       }
 
       if (receivable == null) {
@@ -226,11 +226,11 @@ public final class LateRegisterSynthesizer {
       return CustomPayloadFilter.filter(receivable, ModNamespaceCatalog::init);
    }
 
-   static List<Identifier> init(boolean voicechatLoaded) {
+   static List<Identifier> fallbackChannels(boolean voicechatLoaded) {
       Set<Identifier> channels = new LinkedHashSet<>();
       channels.add(Identifier.fromNamespaceAndPath("fabric-menu-api-v1", "open_screen"));
       if (voicechatLoaded) {
-         for (String path : init_StrArr) {
+         for (String path : VOICECHAT_PATHS) {
             channels.add(Identifier.fromNamespaceAndPath("voicechat", path));
          }
       }
@@ -246,22 +246,22 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   static boolean init(boolean moddedModeActive, boolean registerSeen, boolean alreadySynthesized, boolean synthesisInFlight, long ticksSincePlayStart) {
+   static boolean shouldSynthesize(boolean moddedModeActive, boolean registerSeen, boolean alreadySynthesized, boolean synthesisInFlight, long ticksSincePlayStart) {
       return moddedModeActive && !registerSeen && !alreadySynthesized && !synthesisInFlight && ticksSincePlayStart >= 5L;
    }
 
-   static long init_J() {
+   static long unusedDelayTicks() {
       return 5L;
    }
 
    private static final class SessionState {
       private final ConnectionPrivacyRegistry.ConnectionSession privacySession;
       private final PacketListener listener;
-      private long init_J = -1L;
-      private boolean init_Z;
-      private boolean load;
-      private boolean read;
-      private boolean write;
+      private long playStartTick = -1L;
+      private boolean registerSeen;
+      private boolean synthesisInFlight;
+      private boolean synthesized;
+      private boolean warnedOnce;
 
       private SessionState(ConnectionPrivacyRegistry.ConnectionSession context) {
          this.privacySession = context;

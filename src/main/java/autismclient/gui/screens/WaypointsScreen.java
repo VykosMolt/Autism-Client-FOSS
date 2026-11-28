@@ -42,9 +42,9 @@ public class WaypointsScreen extends VirtualScaledScreen {
    private static final int[] PRESET_COLORS = new int[]{-50373, -24806, -5829, -13248397, -12855297, -11895553, -4957185, -37177, -1, -7566196};
    private final Screen parent;
    private final String scope;
-   private final List<WaypointsScreen.HitRegion> init_List = new ArrayList<>();
+   private final List<WaypointsScreen.HitRegion> hitRegions = new ArrayList<>();
    private final Map<String, ThemedTextInputBox> renameInputs = new LinkedHashMap<>();
-   private final List<String> load_List = new ArrayList<>();
+   private final List<String> waypointNames = new ArrayList<>();
    private ThemedTextInputBox nameInput;
    private ThemedTextInputBox hexInput;
    private int listScroll;
@@ -85,9 +85,9 @@ public class WaypointsScreen extends VirtualScaledScreen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         this.init_List.clear();
+         this.hitRegions.clear();
          this.colorPanel = null;
-         this.load_List.clear();
+         this.waypointNames.clear();
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -872086265);
          int x = this.panelX();
          int y = this.panelY();
@@ -161,7 +161,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
             rows.size(),
             (i, rowY) -> {
                AutismWaypoints.Waypoint waypoint = rows.get(i);
-               this.load_List.add(waypoint.name());
+               this.waypointNames.add(waypoint.name());
                boolean over = mx >= x && mx < x + w && my >= rowY && my < rowY + rowH;
                autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, rowY, w, rowH, over ? -1441000940 : -1441722092);
                int swatchX = x + 3;
@@ -188,9 +188,9 @@ public class WaypointsScreen extends VirtualScaledScreen {
                int coordsX = nameX + 120 + 8;
                this.drawTrimmed(graphics, waypoint.x() + " " + waypoint.y() + " " + waypoint.z(), coordsX, this.centeredTextY(rowY, rowH), labelTextColor(), delX - 4 - coordsX);
                autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(graphics, delX, delY, del, del, over);
-               this.init_List.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.ROW, x, rowY, w, rowH, waypoint.name()));
-               this.init_List.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.SWATCH, swatchX, swatchY, 18, 10, waypoint.name()));
-               this.init_List.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.REMOVE, delX, delY, del, del, waypoint.name()));
+               this.hitRegions.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.ROW, x, rowY, w, rowH, waypoint.name()));
+               this.hitRegions.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.SWATCH, swatchX, swatchY, 18, 10, waypoint.name()));
+               this.hitRegions.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.REMOVE, delX, delY, del, del, waypoint.name()));
             }
          );
       }
@@ -215,7 +215,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
          autismclient.gui.f.PacketUtil.load(
             graphics, autismclient.gui.f.NetHelper.init(px, swatchY, 18, 10), !over && PRESET_COLORS[i] != current ? THEME.set() : -1
          );
-         this.init_List.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.PRESET, px, swatchY, 18, 10, Integer.toHexString(i)));
+         this.hitRegions.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.PRESET, px, swatchY, 18, 10, Integer.toHexString(i)));
       }
 
       int ctl = this.controlHeight();
@@ -247,7 +247,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       int my
    ) {
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
-      this.init_List.add(new WaypointsScreen.HitRegion(type, x, y, w, h, value));
+      this.hitRegions.add(new WaypointsScreen.HitRegion(type, x, y, w, h, value));
    }
 
    private void init_V_GuiGraphicsExtract_7(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int mx, int my) {
@@ -257,7 +257,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, "Waypoints", mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.headerBounds(bounds, headerH);
-      this.init_List.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
+      this.hitRegions.add(new WaypointsScreen.HitRegion(WaypointsScreen.HitKind.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
    @Override
@@ -292,7 +292,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
          return true;
       }
 
-      for (String name : this.load_List) {
+      for (String name : this.waypointNames) {
          ThemedTextInputBox rowField = this.renameInputs.get(name);
          if (rowField != null && rowField.mouseClicked(mx, my, Compat263.mouseEventGlfwButton(event))) {
             this.beginRename(name);
@@ -300,8 +300,8 @@ public class WaypointsScreen extends VirtualScaledScreen {
          }
       }
 
-      for (int i = this.init_List.size() - 1; i >= 0; i--) {
-         WaypointsScreen.HitRegion hit = this.init_List.get(i);
+      for (int i = this.hitRegions.size() - 1; i >= 0; i--) {
+         WaypointsScreen.HitRegion hit = this.hitRegions.get(i);
          if (hit.contains(mx, my)
             && (
                hit.type != WaypointsScreen.HitKind.REMOVE
@@ -320,7 +320,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
                   this.applyPresetColor(hit.value);
                   break;
                case REMOVE:
-                  this.init_V_Str_10(hit.value);
+                  this.deleteWaypoint(hit.value);
                   break;
                case ROW:
                   this.copyCoordinates(hit.value);
@@ -469,7 +469,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init_V_Str_10(String name) {
+   private void deleteWaypoint(String name) {
       AutismWaypoints.getInstance().remove(this.scope, name);
       if (name != null && name.equals(this.colorEditName)) {
          this.closeColorEditor();

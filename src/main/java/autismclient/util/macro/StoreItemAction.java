@@ -54,13 +54,13 @@ public class StoreItemAction implements MacroAction {
          return true;
       }
 
-      List<MacroItemTarget> targets = this.load_List_Minecraft(Minecraft.getInstance());
+      List<MacroItemTarget> targets = this.runtimeTargets(Minecraft.getInstance());
       if (targets.isEmpty()) {
          return false;
       }
 
       for (MacroItemTarget target : targets) {
-         if (this.init_Z_ItemStack_2(stack, visibleSlot, target)) {
+         if (this.matchesTarget(stack, visibleSlot, target)) {
             return true;
          }
       }
@@ -98,7 +98,7 @@ public class StoreItemAction implements MacroAction {
       }
    }
 
-   private boolean init_Z_ItemStack_2(ItemStack stack, int visibleSlot, MacroItemTarget target) {
+   private boolean matchesTarget(ItemStack stack, int visibleSlot, MacroItemTarget target) {
       return target == null || !target.hasSlot() && !target.hasItemFilter() ? false : target.matches(stack, visibleSlot);
    }
 
@@ -117,7 +117,7 @@ public class StoreItemAction implements MacroAction {
       tag.putBoolean("allItems", this.allItems);
       tag.putBoolean("closeSendPkt", this.closeSendPkt);
       tag.putInt("delayTicks", this.delayTicks);
-      tag.put("targetItems", MacroItemTarget.toListTag(this.init_List_11()));
+      tag.put("targetItems", MacroItemTarget.toListTag(this.resolvedTargets()));
       tag.putBoolean("enabled", this.enabled);
       return tag;
    }
@@ -159,7 +159,7 @@ public class StoreItemAction implements MacroAction {
          this.itemTargets.addAll(MacroItemTarget.fromListTag(list));
       }
 
-      this.init_V_13();
+      this.syncTargetItems();
       if (tag.contains("enabled")) {
          this.enabled = tag.getBooleanOr("enabled", true);
       }
@@ -172,7 +172,7 @@ public class StoreItemAction implements MacroAction {
          return modeStr + " All" + (this.persistent ? " [Inf]" : "");
       }
 
-      List<MacroItemTarget> targets = this.init_List_11();
+      List<MacroItemTarget> targets = this.resolvedTargets();
       if (targets.isEmpty()) {
          return modeStr + " (nothing)";
       }
@@ -260,7 +260,7 @@ public class StoreItemAction implements MacroAction {
       }
    }
 
-   private static String read(String entry) {
+   private static String unusedEntryAfterSeparator(String entry) {
       if (entry != null && !entry.isBlank()) {
          int separator = entry.indexOf(124);
          return separator >= 0 && separator + 1 < entry.length() ? entry.substring(separator + 1).trim() : "";
@@ -284,7 +284,7 @@ public class StoreItemAction implements MacroAction {
       this.enabled = e;
    }
 
-   private List<MacroItemTarget> init_List_11() {
+   private List<MacroItemTarget> resolvedTargets() {
       if (!this.itemTargets.isEmpty()) {
          return this.itemTargets;
       }
@@ -299,10 +299,10 @@ public class StoreItemAction implements MacroAction {
       return this.itemTargets;
    }
 
-   private List<MacroItemTarget> load_List_Minecraft(Minecraft mc) {
+   private List<MacroItemTarget> runtimeTargets(Minecraft mc) {
       List<MacroItemTarget> runtime = new ArrayList<>();
 
-      for (MacroItemTarget target : this.init_List_11()) {
+      for (MacroItemTarget target : this.resolvedTargets()) {
          if (target != null) {
             MacroItemTarget resolved = target.resolveTemplates(mc);
             if (resolved != null && (resolved.hasSlot() || resolved.hasItemFilter())) {
@@ -314,7 +314,7 @@ public class StoreItemAction implements MacroAction {
       return runtime;
    }
 
-   private void init_V_13() {
+   private void syncTargetItems() {
       this.targetItems.clear();
 
       for (MacroItemTarget target : this.itemTargets) {

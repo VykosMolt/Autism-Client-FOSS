@@ -84,7 +84,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    private static final Set<Item> FIRE_ITEMS = Set.of(Items.LAVA_BUCKET, Items.FLINT_AND_STEEL);
    private static final Set<Block> FIRE_BLOCKS = Set.of(Blocks.LAVA, Blocks.FIRE);
    private final Map<Integer, ArrayDeque<AutoTrapModule.Inner_StreamUtil>> motionHistory = new LinkedHashMap<>();
-   private final Map<Integer, Integer> load_Map = new LinkedHashMap<>();
+   private final Map<Integer, Integer> missStreaks = new LinkedHashMap<>();
    private final Random random = new Random();
    private volatile AutoTrapModule.Inner_BufferHelper planned;
    private int plannedStaleTicks;
@@ -95,7 +95,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    private int auraHoldTicks;
    private int delayTicks;
    private int lastPlaceTick = -2147483648;
-   private long read_J = -9223372036854775808L;
+   private long lastPlacedAtNanos = -9223372036854775808L;
    private int placeJitterMs;
    private int switchBackSlot = -1;
    private int requestedSlot = -1;
@@ -153,7 +153,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       this.switchBackDelay = 0;
       this.lastSwitchTick = -2147483648;
       this.motionHistory.clear();
-      this.load_Map.clear();
+      this.missStreaks.clear();
    }
 
    @Override
@@ -187,10 +187,10 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    @Override
    public void preMovementTick() {
       if (MC != null && MC.player != null && MC.level != null && MC.gameMode != null) {
-         this.update_V_5();
-         this.read_V_6();
+         this.tickSwitchBack();
+         this.updateMotionHistory();
          if (!this.canAct()) {
-            this.load_V_10();
+            this.resetPlan();
          } else {
             if (this.igniteTargetId >= 0 && ++this.igniteWaitTicks > 10) {
                this.igniteTargetId = -1;
@@ -201,8 +201,8 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
                this.delayTicks--;
                this.planned = null;
                this.plannedStaleTicks = 0;
-               this.init_V_ce_DataUtil(null);
-               this.write_V_6();
+               this.requestRotationGoal(null);
+               this.scheduleSwitchBack();
             } else {
                AutoTrapModule.Inner_BufferHelper plan = this.planned;
                boolean holdingForAura = plan != null && this.holdForAura();
@@ -223,7 +223,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
                      }
 
                      this.requestRotation(placed, true);
-                     this.write_V_6();
+                     this.scheduleSwitchBack();
                      return;
                   }
                }
@@ -232,15 +232,15 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
                if (planned != null) {
                   this.planned = planned;
                   this.plannedStaleTicks = 0;
-               } else if (this.planned != null && (this.init_Z_PathHelper_BufferH(this.planned) || ++this.plannedStaleTicks >= 10)) {
+               } else if (this.planned != null && (this.isPlanDone(this.planned) || ++this.plannedStaleTicks >= 10)) {
                   this.planned = null;
                   this.lockedTargetId = -1;
                   this.plannedStaleTicks = 0;
                }
 
                AutoTrapModule.Inner_BufferHelper live = this.planned;
-               this.init_V_ce_DataUtil(!holdingForAura && live != null ? live.rotation() : null);
-               this.write_V_6();
+               this.requestRotationGoal(!holdingForAura && live != null ? live.rotation() : null);
+               this.scheduleSwitchBack();
             }
          }
       } else {
@@ -264,13 +264,13 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private void load_V_10() {
+   private void resetPlan() {
       this.planned = null;
       this.plannedStaleTicks = 0;
       this.auraHoldTicks = 0;
       this.lockedTargetId = -1;
       this.igniteTargetId = -1;
-      this.write_V_6();
+      this.scheduleSwitchBack();
       if (this.ownsRotation()) {
          autismclient.util.SilentRotationManager.releaseOwner(this.id());
          if (MC != null && MC.player != null) {
@@ -283,7 +283,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return this.id().equals(autismclient.util.SilentRotationManager.getActiveOwnerId());
    }
 
-   private void init_V_ce_DataUtil(RotationMath.Rotation goal) {
+   private void requestRotationGoal(RotationMath.Rotation goal) {
       this.requestRotation(goal, false);
    }
 
@@ -428,11 +428,11 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return state.is(Blocks.LAVA) && state.getFluidState().isSource();
    }
 
-   private boolean init_Z_PathHelper_BufferH(AutoTrapModule.Inner_BufferHelper plan) {
+   private boolean isPlanDone(AutoTrapModule.Inner_BufferHelper plan) {
       if (plan.load_Z()) {
          return this.lastPlacement == null;
       } else if (MC.level.getEntity(plan.targetId()) instanceof LivingEntity living && living.isAlive()) {
-         boolean webDone = !this.bool("web") || this.findSlot(WEB_ITEMS) == null || this.init_Z_AABB(living.getBoundingBox());
+         boolean webDone = !this.bool("web") || this.findSlot(WEB_ITEMS) == null || this.boxHasWeb(living.getBoundingBox());
          boolean igniteDone = !this.bool("ignite") || this.findSlot(FIRE_ITEMS) == null || living.isOnFire();
          return webDone && igniteDone;
       } else {
@@ -440,7 +440,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private boolean init_Z_AABB(AABB box) {
+   private boolean boxHasWeb(AABB box) {
       BlockPos min = BlockPos.containing(box.minX, box.minY, box.minZ);
       BlockPos max = BlockPos.containing(box.maxX, box.maxY, box.maxZ);
 
@@ -466,7 +466,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
       for (LivingEntity target : enemies) {
          if (web || !target.isOnFire()) {
-            Vec3 trapPos = this.init_Vec3_LivingEntity_Z(target, target.getId() == this.lockedTargetId);
+            Vec3 trapPos = this.predictTrapPos(target, target.getId() == this.lockedTargetId);
             if (trapPos != null) {
                trapPos = this.groundBelow(trapPos);
                BlockPos origin = BlockPos.containing(trapPos);
@@ -644,7 +644,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return RotationMath.vectorAngleDegrees(RotationMath.ofPlayer(MC.player), toCenter);
    }
 
-   private void read_V_6() {
+   private void updateMotionHistory() {
       if (!this.bool("predict")) {
          this.motionHistory.clear();
       } else {
@@ -664,7 +664,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          }
 
          this.motionHistory.keySet().retainAll(seen);
-         this.load_Map.keySet().retainAll(seen);
+         this.missStreaks.keySet().retainAll(seen);
       }
    }
 
@@ -736,17 +736,17 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return shapes;
    }
 
-   private Vec3 init_Vec3_LivingEntity_Z(LivingEntity target, boolean locked) {
+   private Vec3 predictTrapPos(LivingEntity target, boolean locked) {
       if (target instanceof Player && this.bool("predict")) {
          ArrayDeque<AutoTrapModule.Inner_StreamUtil> history = this.motionHistory.get(target.getId());
          if (history != null && !history.isEmpty()) {
             AutoTrapModule.Inner_StreamUtil last = history.peekLast();
             if (isStationary(history)) {
-               this.load_Map.remove(target.getId());
+               this.missStreaks.remove(target.getId());
                return last.load();
             }
 
-            int leadTicks = init_I_ArrayDeque(history);
+            int leadTicks = leadTicks(history);
             boolean longFall = last.landing() != null && last.landingTick() > 4;
             List<Vec3> positions = new ArrayList<>();
 
@@ -776,7 +776,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
             double spread = Math.sqrt(squared / positions.size());
             if (spread < 1.5) {
-               this.load_Map.remove(target.getId());
+               this.missStreaks.remove(target.getId());
                return positions.get(positions.size() - 1);
             } else {
                return this.fallbackAfterMisses(target, last, leadTicks);
@@ -803,7 +803,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return perTickSqr < 0.001;
    }
 
-   private static int init_I_ArrayDeque(ArrayDeque<AutoTrapModule.Inner_StreamUtil> history) {
+   private static int leadTicks(ArrayDeque<AutoTrapModule.Inner_StreamUtil> history) {
       Vec3 previous = null;
       double walked = 0.0;
       double displacementX = 0.0;
@@ -831,8 +831,8 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private Vec3 fallbackAfterMisses(LivingEntity target, AutoTrapModule.Inner_StreamUtil last, int leadTicks) {
-      int misses = this.load_Map.getOrDefault(target.getId(), 0) + 1;
-      this.load_Map.put(target.getId(), misses);
+      int misses = this.missStreaks.getOrDefault(target.getId(), 0) + 1;
+      this.missStreaks.put(target.getId(), misses);
       if (misses < 10) {
          return null;
       } else if (last == null) {
@@ -936,7 +936,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(
-         new autismclient.util.BlockPlacementPlanner.Query(cell, eye, reach, this.init_U_NetHelper_ItemStack_InteractionHand(material, hand))
+         new autismclient.util.BlockPlacementPlanner.Query(cell, eye, reach, this.hitValidatorFor(material, hand))
             .withFromRotation(RotationMath.ofPlayer(MC.player))
             .withMaxPitch(autismclient.util.BlockPlacementPlanner.defaultMaxPitchDegrees())
             .withSneaking(MC.player.isSecondaryUseActive())
@@ -946,17 +946,17 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return candidate == null ? null : candidate.aim().goalRotation();
    }
 
-   private autismclient.util.BlockPlacementPlanner.HitValidator init_U_NetHelper_ItemStack_InteractionHand(ItemStack material, InteractionHand hand) {
+   private autismclient.util.BlockPlacementPlanner.HitValidator hitValidatorFor(ItemStack material, InteractionHand hand) {
       return material.getItem() instanceof BlockItem
          ? autismclient.util.BlockPlacementPlanner.blockItemValidator(material, MC.player, hand)
          : (hit, target) -> hit.getBlockPos().relative(hit.getDirection()).equals(target);
    }
 
-   private ItemStack init_ItemStack_PathHelper_BufferH(AutoTrapModule.Inner_BufferHelper plan) {
+   private ItemStack planStack(AutoTrapModule.Inner_BufferHelper plan) {
       return plan.hand() == InteractionHand.OFF_HAND ? MC.player.getOffhandItem() : MC.player.getInventory().getItem(plan.slot());
    }
 
-   private BlockPos init_BlockPos_BlockHitResult_ItemStack(BlockHitResult ray, ItemStack stack) {
+   private BlockPos placedPosFor(BlockHitResult ray, ItemStack stack) {
       return stack.getItem() instanceof BlockItem
          ? new BlockPlaceContext(MC.player, InteractionHand.MAIN_HAND, stack, ray).getClickedPos()
          : ray.getBlockPos().relative(ray.getDirection());
@@ -1026,7 +1026,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
 
       double reach = this.reach();
       BlockHitResult ray = ScaffoldModule.raycast(MC.player.getEyePosition(), wireRotation, reach, MC.level, MC.player);
-      if (!this.init_Z_PathHelper_BufferH_BlockHitResult(plan, ray)) {
+      if (!this.placementFitsPlan(plan, ray)) {
          return null;
       }
 
@@ -1044,11 +1044,11 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       ItemStack stack = MC.player.getItemInHand(plan.hand());
-      if (!this.init_Set_Z(plan.web()).contains(stack.getItem())) {
+      if (!this.trapItemsFor(plan.web()).contains(stack.getItem())) {
          return null;
       }
 
-      BlockPos placed = this.init_BlockPos_BlockHitResult_ItemStack(ray, stack);
+      BlockPos placed = this.placedPosFor(ray, stack);
       if (plan.web() && !MC.level.getBlockState(placed).getFluidState().isEmpty()) {
          return null;
       }
@@ -1066,7 +1066,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       this.lastPlaceTick = tick;
-      this.read_J = System.nanoTime();
+      this.lastPlacedAtNanos = System.nanoTime();
       this.placeJitterMs = this.random.nextInt(26);
       if (!this.queuePlacement(plan, ray, stack)) {
          return null;
@@ -1114,7 +1114,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       }
 
       this.lastPlaceTick = tick;
-      this.read_J = System.nanoTime();
+      this.lastPlacedAtNanos = System.nanoTime();
       this.placeJitterMs = this.random.nextInt(26);
       return !this.queuePlacement(plan, ray, stack) ? null : wireRotation;
    }
@@ -1127,12 +1127,12 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return result instanceof BlockHitResult hit && result.getType() == Type.BLOCK ? hit : null;
    }
 
-   private boolean init_Z_PathHelper_BufferH_BlockHitResult(AutoTrapModule.Inner_BufferHelper plan, BlockHitResult ray) {
+   private boolean placementFitsPlan(AutoTrapModule.Inner_BufferHelper plan, BlockHitResult ray) {
       if (ray == null) {
          return false;
       }
 
-      BlockPos placed = this.init_BlockPos_BlockHitResult_ItemStack(ray, this.init_ItemStack_PathHelper_BufferH(plan));
+      BlockPos placed = this.placedPosFor(ray, this.planStack(plan));
       if (!new AABB(placed).intersects(plan.targetBox())) {
          return false;
       }
@@ -1145,7 +1145,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return plan.web() && !state.getFluidState().isEmpty() ? false : state.canBeReplaced() && !this.trapBlocksFor(plan.web()).contains(state.getBlock());
    }
 
-   private Set<Item> init_Set_Z(boolean web) {
+   private Set<Item> trapItemsFor(boolean web) {
       return web ? WEB_ITEMS : FIRE_ITEMS;
    }
 
@@ -1154,11 +1154,11 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
    }
 
    private boolean placeCooldownElapsed() {
-      if (this.read_J == -9223372036854775808L) {
+      if (this.lastPlacedAtNanos == -9223372036854775808L) {
          return true;
       }
 
-      long elapsedMs = (System.nanoTime() - this.read_J) / 1000000L;
+      long elapsedMs = (System.nanoTime() - this.lastPlacedAtNanos) / 1000000L;
       return elapsedMs >= 100L + this.placeJitterMs - 3L;
    }
 
@@ -1182,7 +1182,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
          return true;
       }
 
-      if (!this.init_Z_I_I(plan.slot(), selected)) {
+      if (!this.canSwitchSlot(plan.slot(), selected)) {
          return false;
       }
 
@@ -1190,7 +1190,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return false;
    }
 
-   private boolean init_Z_I_I(int slot, int selected) {
+   private boolean canSwitchSlot(int slot, int selected) {
       if (!BedDefenderModule.init_Z_10() && !SurroundModule.init_Z_27() && !CrystalAuraModule.isRecentlyActive() && !AnchorAuraModule.isRecentlyActive()) {
          int tick = AutismSessionState.getInstance().getClientTick();
          if (tick == this.lastSwitchTick) {
@@ -1230,13 +1230,13 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
       return Math.abs(RotationMath.angleDelta(first.yaw(), second.yaw())) <= 0.05F && Math.abs(first.pitch() - second.pitch()) <= 0.05F;
    }
 
-   private void write_V_6() {
+   private void scheduleSwitchBack() {
       if (this.switchBackSlot >= 0 && this.planned == null && this.switchBackDelay <= 0) {
          this.switchBackDelay = 2;
       }
    }
 
-   private void update_V_5() {
+   private void tickSwitchBack() {
       if (this.switchBackSlot >= 0) {
          if (!this.bool("switch-back")) {
             this.switchBackSlot = -1;
@@ -1248,7 +1248,7 @@ public final class AutoTrapModule extends Module implements SilentMovementCoordi
                this.requestedSlot = -1;
                this.switchBackDelay = 0;
             } else if (this.switchBackDelay > 0 && --this.switchBackDelay <= 0) {
-               if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.switchBackSlot, this.id()) && this.init_Z_I_I(this.switchBackSlot, MC.player.getInventory().getSelectedSlot())) {
+               if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(this.switchBackSlot, this.id()) && this.canSwitchSlot(this.switchBackSlot, MC.player.getInventory().getSelectedSlot())) {
                   this.switchBackSlot = -1;
                   this.requestedSlot = -1;
                } else {

@@ -15,7 +15,7 @@ import net.minecraft.client.Minecraft;
 public final class AiLanSync {
    static final int init_I = 256;
    static final int MAX_REMOTE_MACROS = 100;
-   static final List<String> init_List = List.of(
+   static final List<String> ACTIONS = List.of(
       "start",
       "stop",
       "createSession",
@@ -39,11 +39,11 @@ public final class AiLanSync {
 
    static void runAction(String action, JsonObject args) {
       if (action == null || action.isBlank()) {
-         throw new IllegalArgumentException("action is required; one of: " + String.join(", ", init_List));
+         throw new IllegalArgumentException("action is required; one of: " + String.join(", ", ACTIONS));
       }
 
-      if (!init_List.contains(action)) {
-         throw new IllegalArgumentException("Unknown LAN action '" + action + "'; valid actions: " + String.join(", ", init_List));
+      if (!ACTIONS.contains(action)) {
+         throw new IllegalArgumentException("Unknown LAN action '" + action + "'; valid actions: " + String.join(", ", ACTIONS));
       }
 
       switch (action) {

@@ -51,28 +51,28 @@ final class AiActionMenu {
       .setInputFilter(s -> s.chars().allMatch(Character::isDigit));
    private final AiUiKit.ScrollPane listScroll = new AiUiKit.ScrollPane(false);
    private final SearchFilterList<AiActionMenu.TargetOption> searchList = new SearchFilterList<>(AiActionMenu.TargetOption::search);
-   private final Map<AiActionMenu.MenuAction, AiActionMenu.OptionBuild> init_Map = new EnumMap<>(AiActionMenu.MenuAction.class);
+   private final Map<AiActionMenu.MenuAction, AiActionMenu.OptionBuild> optionBuilds = new EnumMap<>(AiActionMenu.MenuAction.class);
    private AiActionMenu.MenuAction selectedAction;
    private List<AiActionMenu.MenuAction> cachedLevelEntries;
    private Object cachedLevel;
    private List<AiActionMenu.TargetOption> lastSearchBase;
    private List<AiActionMenu.TargetOption> filtered;
    private List<AiActionMenu.TargetOption> filteredRows;
-   private String init_Str;
+   private String lastFilterQuery;
    private String rowsQuery;
    private AiActionMenu.MenuAction rowsAction;
    private int selectedIndex;
    private int visibleRowCount;
-   private boolean init_Z;
+   private boolean attachmentLoading;
    private static Map<EntityType<?>, ItemStack> spawnEggIcons;
    private AiActionMenu.MenuStep step;
    private AiActionMenu.TargetOption selectedTarget;
-   private final Map<String, AiActionMenu.TargetOption> read_Map;
-   private final Map<String, autismclient.gui.ui.widgets.TextInputWidget> write_Map;
+   private final Map<String, AiActionMenu.TargetOption> selectedTargets;
+   private final Map<String, autismclient.gui.ui.widgets.TextInputWidget> targetCountFields;
    private List<String> typedTargetTypes;
-   private Object load_Obj;
+   private Object selectionLevel;
    private boolean extraItems;
-   private boolean read_Z;
+   private boolean showSelectedOnly;
    private String issue;
    private AiSchematicPlacement schematicPlacement;
    private AiFarmPlacement farmPlacement;
@@ -86,12 +86,12 @@ final class AiActionMenu {
    AiActionMenu(AiService service, AiViewState view, AiAssistantOverlay host, Runnable onRun) {
       this.selectedAction = AiActionMenu.MenuAction.GET;
       this.filteredRows = List.of();
-      this.init_Str = "";
+      this.lastFilterQuery = "";
       this.rowsQuery = "";
       this.visibleRowCount = 3;
       this.step = AiActionMenu.MenuStep.HOME;
-      this.read_Map = new LinkedHashMap<>();
-      this.write_Map = new LinkedHashMap<>();
+      this.selectedTargets = new LinkedHashMap<>();
+      this.targetCountFields = new LinkedHashMap<>();
       this.typedTargetTypes = List.of();
       this.issue = "";
       this.farmSubstrate = "farmland";
@@ -101,13 +101,13 @@ final class AiActionMenu {
       this.view = view;
       this.host = host;
       this.onRun = onRun;
-      this.searchInput.setOnSubmit(text -> this.sync_V());
-      this.countInput.setOnSubmit(text -> this.sync_V());
+      this.searchInput.setOnSubmit(text -> this.advanceStep());
+      this.countInput.setOnSubmit(text -> this.advanceStep());
    }
 
    List<autismclient.gui.ui.widgets.TextInputWidget> inputs() {
       ArrayList<autismclient.gui.ui.widgets.TextInputWidget> fields = new ArrayList<>(List.of(this.searchInput, this.countInput));
-      fields.addAll(this.write_Map.values());
+      fields.addAll(this.targetCountFields.values());
       return fields;
    }
 
@@ -144,7 +144,7 @@ final class AiActionMenu {
          this.countInput.setFocused(false);
       }
 
-      this.write_Map.values().forEach(field -> field.setFocused(false));
+      this.targetCountFields.values().forEach(field -> field.setFocused(false));
    }
 
    autismclient.gui.ui.widgets.TextInputWidget inputForChar(char c) {
@@ -184,21 +184,21 @@ final class AiActionMenu {
       return this.step == AiActionMenu.MenuStep.OPTIONS && this.selectedAction.init_Z
          ? Math.max(
             target,
-            this.load_I()
+            this.baseHeight()
                + (
                   this.selectedAction == AiActionMenu.MenuAction.MINE
-                     ? Math.min(this.read_I(), AiUiKit.rowHeight() * 3 + AiUiKit.toolbarHeight() * 6 + 14)
-                     : this.read_I()
+                     ? Math.min(this.optionsHeight(), AiUiKit.rowHeight() * 3 + AiUiKit.toolbarHeight() * 6 + 14)
+                     : this.optionsHeight()
                )
          )
          : target;
    }
 
-   private int load_I() {
+   private int baseHeight() {
       return AiUiKit.rowHeight() * 3 + AiUiKit.toolbarHeight() + 8;
    }
 
-   private int read_I() {
+   private int optionsHeight() {
       if (this.selectedAction == AiActionMenu.MenuAction.FARM && this.farmBuild) {
          return AiUiKit.rowHeight() * 4 + AiUiKit.toolbarHeight() * 2 + 12;
       } else {
@@ -211,7 +211,7 @@ final class AiActionMenu {
                      + 6
                      + (
                         this.selectedAction == AiActionMenu.MenuAction.MINE
-                           ? AiUiKit.rowHeight() + 2 + this.read_Map.size() * (AiUiKit.toolbarHeight() + 2)
+                           ? AiUiKit.rowHeight() + 2 + this.selectedTargets.size() * (AiUiKit.toolbarHeight() + 2)
                            : 0
                      )
                   : AiUiKit.rowHeight() * 2 + 2
@@ -231,14 +231,14 @@ final class AiActionMenu {
             var10000 = 0;
             break;
          case OPTIONS:
-            var10000 = this.load_I() + this.read_I();
+            var10000 = this.baseHeight() + this.optionsHeight();
             break;
          case REVIEW:
-            var10000 = this.load_I()
+            var10000 = this.baseHeight()
                + line
                   * (
                      this.selectedAction == AiActionMenu.MenuAction.MINE
-                        ? this.read_Map.size() + 3
+                        ? this.selectedTargets.size() + 3
                         : (this.farmPlacement != null ? 7 : (this.schematicPlacement == null ? 4 : 8 + this.schematicPlacement.missingMaterialLines().size()))
                   )
                + 8;
@@ -260,12 +260,12 @@ final class AiActionMenu {
 
          for (int i = 0; i < rows.size(); i++) {
             String key = this.mineKeyOf(rows.get(i));
-            if (this.typedTargetTypes.contains(key) && !this.read_Map.containsKey(key)) {
+            if (this.typedTargetTypes.contains(key) && !this.selectedTargets.containsKey(key)) {
                this.selectRow(i);
             }
          }
 
-         if (this.read_Map.keySet().containsAll(this.typedTargetTypes)) {
+         if (this.selectedTargets.keySet().containsAll(this.typedTargetTypes)) {
             this.typedTargetTypes = List.of();
          }
       }
@@ -275,12 +275,12 @@ final class AiActionMenu {
             this.restoredStep = null;
          } else if (this.step == AiActionMenu.MenuStep.TARGET) {
             if (this.selectedRow(this.filteredActionRows()) != null) {
-               this.sync_V();
+               this.advanceStep();
             }
          } else if (this.step == AiActionMenu.MenuStep.OPTIONS
             && (this.schematicPlacement == null || this.schematicPlacement.isReadyToConfirm())
             && (this.farmPlacement == null || this.farmPlacement.isComplete())) {
-            this.sync_V();
+            this.advanceStep();
          }
       }
 
@@ -292,7 +292,7 @@ final class AiActionMenu {
          this.issue = this.farmPlacement.getStatus();
       }
 
-      if (this.load_Obj != null && this.load_Obj != Minecraft.getInstance().level) {
+      if (this.selectionLevel != null && this.selectionLevel != Minecraft.getInstance().level) {
          this.resetToActions();
          this.issue = "World changed. Choose the action again.";
       }
@@ -324,16 +324,16 @@ final class AiActionMenu {
       kit.pushClip(body);
       switch (this.step) {
          case HOME:
-            this.init_V_cE_NetHelper(kit, body);
+            this.renderActionGrid(kit, body);
             break;
          case TARGET:
-            int importW = this.selectedAction == AiActionMenu.MenuAction.BUILD ? kit.measureButtonWidth(this.init_Z ? "Loading..." : "Import") + 2 : 0;
+            int importW = this.selectedAction == AiActionMenu.MenuAction.BUILD ? kit.measureButtonWidth(this.attachmentLoading ? "Loading..." : "Import") + 2 : 0;
             this.searchInput.setPlaceholder(this.selectedAction.read_Str);
             kit.drawTextInput(this.searchInput, autismclient.gui.f.NetHelper.init(body.read(), body.write(), body.update() - importW, h));
             if (importW > 0) {
                kit.drawButton(
                   autismclient.gui.f.NetHelper.init(body.init() - importW + 2, body.write(), importW - 2, h),
-                  this.init_Z ? "Loading..." : "Import",
+                  this.attachmentLoading ? "Loading..." : "Import",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
                   this::pickAttachment
                );
@@ -342,19 +342,19 @@ final class AiActionMenu {
             int listTop = body.write() + h + 2;
             if (this.selectedAction == AiActionMenu.MenuAction.MINE) {
                int clearW = kit.measureButtonWidth("Clear");
-               int selectedW = kit.measureButtonWidth(this.read_Z ? "Show all" : "Selected");
+               int selectedW = kit.measureButtonWidth(this.showSelectedOnly ? "Show all" : "Selected");
                autismclient.gui.f.NetHelper summary = autismclient.gui.f.NetHelper.init(
                   body.read(), listTop, Math.max(0, body.update() - clearW - selectedW - 4), h
                );
-               String text = this.read_Map.isEmpty() ? "Click blocks to select them" : this.read_Map.size() + " selected: " + this.read_Str();
+               String text = this.selectedTargets.isEmpty() ? "Click blocks to select them" : this.selectedTargets.size() + " selected: " + this.targetLabel();
                kit.drawCenteredRowText(text, summary, summary.read(), summary.update(), kit.colors.textSecondary);
                kit.addTooltipRegion(summary, text);
                kit.drawButton(
                   autismclient.gui.f.NetHelper.init(body.init() - clearW - selectedW - 2, listTop, selectedW, h),
-                  this.read_Z ? "Show all" : "Selected",
+                  this.showSelectedOnly ? "Show all" : "Selected",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
                   () -> {
-                     this.read_Z = !this.read_Z;
+                     this.showSelectedOnly = !this.showSelectedOnly;
                      this.listScroll.scrollToTop();
                   }
                );
@@ -363,25 +363,25 @@ final class AiActionMenu {
                   "Clear",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
                   () -> {
-                     this.read_Map.clear();
-                     this.write_Map.clear();
+                     this.selectedTargets.clear();
+                     this.targetCountFields.clear();
                      this.issue = "";
                   }
                );
                listTop += h + 2;
             }
 
-            List<AiActionMenu.TargetOption> rows = this.selectedAction == AiActionMenu.MenuAction.MINE && this.read_Z
-               ? List.copyOf(this.read_Map.values())
+            List<AiActionMenu.TargetOption> rows = this.selectedAction == AiActionMenu.MenuAction.MINE && this.showSelectedOnly
+               ? List.copyOf(this.selectedTargets.values())
                : this.filteredActionRows();
             this.visibleRowCount = Math.max(1, (body.load() - listTop) / AiUiKit.inputHeight());
-            this.init_V_cE_2(kit, autismclient.gui.f.NetHelper.init(body.read(), listTop, body.update(), Math.max(0, body.load() - listTop)), rows);
+            this.renderTargetList(kit, autismclient.gui.f.NetHelper.init(body.read(), listTop, body.update(), Math.max(0, body.load() - listTop)), rows);
             break;
          case OPTIONS:
             this.renderStepContent(kit, body);
             break;
          case REVIEW:
-            this.read(kit, body);
+            this.renderReview(kit, body);
       }
 
       kit.popClip();
@@ -423,13 +423,13 @@ final class AiActionMenu {
                   this.step != AiActionMenu.MenuStep.TARGET
                      || (
                         this.selectedAction == AiActionMenu.MenuAction.MINE
-                           ? !this.read_Map.isEmpty()
+                           ? !this.selectedTargets.isEmpty()
                            : this.selectedRow(this.filteredRows) != null
                      )
                )
                && (this.schematicPlacement == null || this.schematicPlacement.isReadyToConfirm() && !this.schematicPlacement.isSearching())
                && (this.farmPlacement == null || this.farmPlacement.isComplete()),
-            this.step == AiActionMenu.MenuStep.REVIEW ? this::pollReview : this::sync_V
+            this.step == AiActionMenu.MenuStep.REVIEW ? this::pollReview : this::advanceStep
          );
       }
    }
@@ -472,7 +472,7 @@ final class AiActionMenu {
       }
    }
 
-   private void init_V_cE_NetHelper(AiUiKit kit, autismclient.gui.f.NetHelper area) {
+   private void renderActionGrid(AiUiKit kit, autismclient.gui.f.NetHelper area) {
       List<AiActionMenu.MenuAction> actions = this.levelEntries();
       int columns = area.update() >= 440 ? 3 : 2;
       int rowH = AiUiKit.toolbarHeight() + AiUiKit.lineHeight() + 2 + 4;
@@ -511,14 +511,14 @@ final class AiActionMenu {
    private void renderStepContent(AiUiKit kit, autismclient.gui.f.NetHelper area) {
       int h = AiUiKit.toolbarHeight();
       int line = AiUiKit.rowHeight();
-      int contentH = this.read_I();
+      int contentH = this.optionsHeight();
       this.optionsScroll.layout(area, contentH);
       kit.registerScrollPane(this.optionsScroll);
       int w = area.update() - (this.optionsScroll.maxScroll() > 0 ? 7 : 0);
       int x = area.read();
       int y = area.write() - this.optionsScroll.offset;
       kit.drawCenteredRowText(
-         this.selectedTarget == null ? this.selectedAction.write_Str : this.read_Str(),
+         this.selectedTarget == null ? this.selectedAction.write_Str : this.targetLabel(),
          autismclient.gui.f.NetHelper.init(x, y, w, line),
          x,
          w,
@@ -526,7 +526,7 @@ final class AiActionMenu {
       );
       y += line + 2;
       if (this.selectedAction == AiActionMenu.MenuAction.FARM && this.farmBuild) {
-         kit.drawCenteredRowText("Crop: " + this.read_Str(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textPrimary);
+         kit.drawCenteredRowText("Crop: " + this.targetLabel(), autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textPrimary);
          int var23 = y + line + 2;
          kit.drawToggleSwitch(
             autismclient.gui.f.NetHelper.init(x, var23, w, h),
@@ -648,7 +648,7 @@ final class AiActionMenu {
          kit.drawCenteredRowText(
             (this.selectedAction == AiActionMenu.MenuAction.MINE ? "Default per block" : "Amount")
                + " (1 to "
-               + this.write_I()
+               + this.maxCount()
                + ")",
             autismclient.gui.f.NetHelper.init(x, y, w, line),
             x,
@@ -656,7 +656,7 @@ final class AiActionMenu {
             kit.colors.textSecondary
          );
          y += line;
-         this.countInput.setPlaceholder(this.selectedTarget == null ? "Auto" : this.write_Str());
+         this.countInput.setPlaceholder(this.selectedTarget == null ? "Auto" : this.defaultCountText());
          kit.drawTextInput(this.countInput, autismclient.gui.f.NetHelper.init(x, y, w, h));
          y += h + 2;
          String[] values = new String[]{"Auto", "1", "16", "64"};
@@ -677,7 +677,7 @@ final class AiActionMenu {
             kit.drawCenteredRowText(
                "Always collect the requested amount in addition to inventory.", autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textSecondary
             );
-         } else if (this.read_Z()) {
+         } else if (this.isItemAction()) {
             kit.drawToggleSwitch(
                autismclient.gui.f.NetHelper.init(x, y, w, h),
                this.selectedAction == AiActionMenu.MenuAction.CRAFT ? "Craft extra items" : "Smelt extra items",
@@ -706,9 +706,9 @@ final class AiActionMenu {
          y += line + 2;
          int fieldW = Math.min(88, w / 3);
 
-         for (Entry<String, AiActionMenu.TargetOption> entry : this.read_Map.entrySet()) {
-            autismclient.gui.ui.widgets.TextInputWidget field = this.init_BitSetUtil_Str(entry.getKey());
-            field.setPlaceholder(this.countInput.getValue().isBlank() ? this.write_Str() : this.countInput.getValue());
+         for (Entry<String, AiActionMenu.TargetOption> entry : this.selectedTargets.entrySet()) {
+            autismclient.gui.ui.widgets.TextInputWidget field = this.countFieldFor(entry.getKey());
+            field.setPlaceholder(this.countInput.getValue().isBlank() ? this.defaultCountText() : this.countInput.getValue());
             kit.drawCenteredRowText(entry.getValue().label(), autismclient.gui.f.NetHelper.init(x, y, w - fieldW - 2, h), x, w - fieldW - 2, kit.colors.textPrimary);
             kit.drawTextInput(field, autismclient.gui.f.NetHelper.init(x + w - fieldW, y, fieldW, h));
             y += h + 2;
@@ -718,7 +718,7 @@ final class AiActionMenu {
       kit.drawScrollbar(this.optionsScroll);
    }
 
-   private void read(AiUiKit kit, autismclient.gui.f.NetHelper area) {
+   private void renderReview(AiUiKit kit, autismclient.gui.f.NetHelper area) {
       int line = AiUiKit.rowHeight();
       int y = area.write();
       int x = area.read();
@@ -752,14 +752,14 @@ final class AiActionMenu {
          };
       } else {
          String quantity = this.selectedAction.init_Z
-            ? "Amount: " + (this.countInput.getValue().isBlank() ? this.write_Str() + " (automatic)" : this.countInput.getValue())
+            ? "Amount: " + (this.countInput.getValue().isBlank() ? this.defaultCountText() + " (automatic)" : this.countInput.getValue())
             : this.selectedAction.write_Str;
          lines = new String[]{
-            this.selectedAction.init_Str + (this.selectedTarget == null ? "" : ": " + this.read_Str()),
+            this.selectedAction.init_Str + (this.selectedTarget == null ? "" : ": " + this.targetLabel()),
             quantity,
             this.selectedAction == AiActionMenu.MenuAction.MINE
                ? "Per block type; nearest unfinished target first"
-               : (this.read_Z() ? (this.write_Z() ? "Quantity adds to the inventory" : "Quantity is the inventory target") : ""),
+               : (this.isItemAction() ? (this.addsToInventory() ? "Quantity adds to the inventory" : "Quantity is the inventory target") : ""),
             this.view.isWorking() ? "Starting replaces the current local task." : "Ready to start."
          };
       }
@@ -770,7 +770,7 @@ final class AiActionMenu {
 
          try {
             JsonObject quotas = this.buildRequest().arguments().getAsJsonObject("counts");
-            this.read_Map.forEach((key, row) -> extended.add(row.label() + ": " + AiJson.getInt(quotas, key, 1)));
+            this.selectedTargets.forEach((key, row) -> extended.add(row.label() + ": " + AiJson.getInt(quotas, key, 1)));
          } catch (RuntimeException e) {
             extended.add(e.getMessage());
          }
@@ -808,33 +808,33 @@ final class AiActionMenu {
       return p.getX() + " " + p.getY() + " " + p.getZ();
    }
 
-   private boolean read_Z() {
+   private boolean isItemAction() {
       return this.selectedAction == AiActionMenu.MenuAction.GET
          || this.selectedAction == AiActionMenu.MenuAction.CRAFT
          || this.selectedAction == AiActionMenu.MenuAction.SMELT;
    }
 
-   private String read_Str() {
+   private String targetLabel() {
       return this.selectedAction == AiActionMenu.MenuAction.MINE
-         ? this.read_Map.values().stream().map(AiActionMenu.TargetOption::label).collect(Collectors.joining(", "))
+         ? this.selectedTargets.values().stream().map(AiActionMenu.TargetOption::label).collect(Collectors.joining(", "))
          : this.selectedTarget.label();
    }
 
-   private String write_Str() {
-      return this.selectedAction == AiActionMenu.MenuAction.MINE && this.read_Map.size() > 1
+   private String defaultCountText() {
+      return this.selectedAction == AiActionMenu.MenuAction.MINE && this.selectedTargets.size() > 1
          ? "16"
          : this.selectedTarget.fallback();
    }
 
-   private autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_Str(String key) {
-      return this.write_Map
+   private autismclient.gui.ui.widgets.TextInputWidget countFieldFor(String key) {
+      return this.targetCountFields
          .computeIfAbsent(
             key,
             k -> {
                autismclient.gui.ui.widgets.TextInputWidget field = new autismclient.gui.ui.widgets.TextInputWidget()
                   .setMaxLength(3)
                   .setInputFilter(s -> s.chars().allMatch(Character::isDigit));
-               field.setOnSubmit(text -> this.sync_V());
+               field.setOnSubmit(text -> this.advanceStep());
                return field;
             }
          );
@@ -844,13 +844,13 @@ final class AiActionMenu {
       return row.mineKey();
    }
 
-   private List<AiActionMenu.TargetOption> load_List() {
-      return this.selectedAction == AiActionMenu.MenuAction.MINE && this.read_Z
-         ? List.copyOf(this.read_Map.values())
+   private List<AiActionMenu.TargetOption> visibleRows() {
+      return this.selectedAction == AiActionMenu.MenuAction.MINE && this.showSelectedOnly
+         ? List.copyOf(this.selectedTargets.values())
          : this.filteredActionRows();
    }
 
-   private int write_I() {
+   private int maxCount() {
       return this.selectedAction == AiActionMenu.MenuAction.MINE
          ? 640
          : (
@@ -861,7 +861,7 @@ final class AiActionMenu {
          );
    }
 
-   private void init_V_cE_2(AiUiKit kit, autismclient.gui.f.NetHelper frame, List<AiActionMenu.TargetOption> rows) {
+   private void renderTargetList(AiUiKit kit, autismclient.gui.f.NetHelper frame, List<AiActionMenu.TargetOption> rows) {
       if (frame.sync() >= 8) {
          autismclient.gui.ui.widgets.ListRowRenderer.drawListFrame(
             kit.graphics, frame.read(), frame.write(), frame.update(), frame.sync(), this.searchInput.isFocused()
@@ -895,7 +895,7 @@ final class AiActionMenu {
                   b.sync(),
                   kit.isHovered(b),
                   this.selectedAction == AiActionMenu.MenuAction.MINE
-                     ? this.read_Map.containsKey(this.mineKeyOf(row))
+                     ? this.selectedTargets.containsKey(this.mineKeyOf(row))
                      : i == this.selectedIndex,
                   kit.colors.textPrimary,
                   false
@@ -913,7 +913,7 @@ final class AiActionMenu {
    private String statusMessage() {
       if (!isInWorld()) {
          return "Join a world first";
-      } else if (this.init_Map.get(this.selectedAction) == null || this.init_Map.get(this.selectedAction).visible() == null) {
+      } else if (this.optionBuilds.get(this.selectedAction) == null || this.optionBuilds.get(this.selectedAction).visible() == null) {
          return "Loading...";
       } else if (this.searchQueryText().isEmpty() && this.selectedAction == AiActionMenu.MenuAction.GOTO) {
          return "Type x y z";
@@ -931,19 +931,19 @@ final class AiActionMenu {
                   return false;
                }
 
-               this.sync_V();
+               this.advanceStep();
                break;
             case 264:
-               this.init_V_I(1);
+               this.moveSelection(1);
                break;
             case 265:
-               this.init_V_I(-1);
+               this.moveSelection(-1);
                break;
             case 266:
-               this.init_V_I(-this.visibleRowCount);
+               this.moveSelection(-this.visibleRowCount);
                break;
             case 267:
-               this.init_V_I(this.visibleRowCount);
+               this.moveSelection(this.visibleRowCount);
                break;
             default:
                return false;
@@ -969,9 +969,9 @@ final class AiActionMenu {
       return true;
    }
 
-   private void init_V_I(int delta) {
+   private void moveSelection(int delta) {
       if (this.selectedAction.isDirect()) {
-         List<AiActionMenu.TargetOption> rows = this.load_List();
+         List<AiActionMenu.TargetOption> rows = this.visibleRows();
          if (!rows.isEmpty()) {
             this.selectedIndex = Math.max(0, Math.min(rows.size() - 1, this.selectedIndex + delta));
             int rowH = AiUiKit.inputHeight();
@@ -991,7 +991,7 @@ final class AiActionMenu {
    private void selectRow(int index) {
       this.selectedIndex = index;
       if (this.selectedAction == AiActionMenu.MenuAction.MINE) {
-         List<AiActionMenu.TargetOption> rows = this.load_List();
+         List<AiActionMenu.TargetOption> rows = this.visibleRows();
          if (index < 0 || index >= rows.size()) {
             return;
          }
@@ -999,15 +999,15 @@ final class AiActionMenu {
          AiActionMenu.TargetOption row = rows.get(index);
          String key = this.mineKeyOf(row);
          if (!key.isEmpty()) {
-            if (this.read_Map.remove(key) == null) {
-               this.read_Map.put(key, row);
-               this.init_BitSetUtil_Str(key);
+            if (this.selectedTargets.remove(key) == null) {
+               this.selectedTargets.put(key, row);
+               this.countFieldFor(key);
             } else {
-               this.write_Map.remove(key);
+               this.targetCountFields.remove(key);
             }
          }
 
-         this.load_Obj = this.read_Map.isEmpty() ? null : Minecraft.getInstance().level;
+         this.selectionLevel = this.selectedTargets.isEmpty() ? null : Minecraft.getInstance().level;
          this.issue = "";
       }
 
@@ -1026,12 +1026,12 @@ final class AiActionMenu {
       this.schematicPlacement = null;
       this.farmPlacement = null;
       this.selectedTarget = null;
-      this.load_Obj = null;
+      this.selectionLevel = null;
       this.issue = "";
       this.extraItems = false;
-      this.read_Map.clear();
-      this.write_Map.clear();
-      this.read_Z = false;
+      this.selectedTargets.clear();
+      this.targetCountFields.clear();
+      this.showSelectedOnly = false;
       this.typedTargetTypes = List.of();
       if (next != this.selectedAction) {
          this.selectedAction = next;
@@ -1052,21 +1052,21 @@ final class AiActionMenu {
       }
    }
 
-   private void sync_V() {
+   private void advanceStep() {
       this.issue = "";
       if (!isInWorld()) {
          this.issue = "Join a world first";
       } else {
          if (this.step == AiActionMenu.MenuStep.TARGET) {
             this.selectedTarget = this.selectedAction == AiActionMenu.MenuAction.MINE
-               ? this.read_Map.values().stream().findFirst().orElse(null)
+               ? this.selectedTargets.values().stream().findFirst().orElse(null)
                : this.selectedRow(this.filteredActionRows());
             if (this.selectedTarget == null) {
                this.issue = "Choose a target first";
                return;
             }
 
-            this.load_Obj = Minecraft.getInstance().level;
+            this.selectionLevel = Minecraft.getInstance().level;
             if (this.selectedAction == AiActionMenu.MenuAction.FARM) {
                AiIntents.IntentStep farmStep = this.planStep(
                   this.selectedTarget.request().apply(null), this.selectedAction.load_Str
@@ -1205,19 +1205,19 @@ final class AiActionMenu {
       this.farmPlacement = null;
       this.step = AiActionMenu.MenuStep.HOME;
       this.selectedTarget = null;
-      this.load_Obj = null;
+      this.selectionLevel = null;
       this.issue = "";
       this.blur();
-      this.read_Map.clear();
-      this.write_Map.clear();
-      this.read_Z = false;
+      this.selectedTargets.clear();
+      this.targetCountFields.clear();
+      this.showSelectedOnly = false;
       this.typedTargetTypes = List.of();
    }
 
    private AiIntents.IntentStep buildRequest() {
-      Integer amount = this.selectedAction.init_Z ? AiLocalRequest.parseCount(this.countInput.getValue(), this.write_I()) : null;
+      Integer amount = this.selectedAction.init_Z ? AiLocalRequest.parseCount(this.countInput.getValue(), this.maxCount()) : null;
       if (this.selectedAction == AiActionMenu.MenuAction.MINE) {
-         List<JsonObject> targets = this.read_Map
+         List<JsonObject> targets = this.selectedTargets
             .values()
             .stream()
             .map(row -> this.planStep(row.request().apply(null), this.selectedAction.load_Str))
@@ -1228,7 +1228,7 @@ final class AiActionMenu {
 
                JsonObject argsx = stepx.arguments().deepCopy();
                String key = AiJson.getString(argsx, "block", "");
-               Integer custom = AiLocalRequest.parseCount(this.init_BitSetUtil_Str(key).getValue(), 640);
+               Integer custom = AiLocalRequest.parseCount(this.countFieldFor(key).getValue(), 640);
                if (custom != null) {
                   argsx.addProperty("mineAmount", custom);
                }
@@ -1265,8 +1265,8 @@ final class AiActionMenu {
          }
       }
 
-      if (this.read_Z()) {
-         args.addProperty("additional", this.write_Z());
+      if (this.isItemAction()) {
+         args.addProperty("additional", this.addsToInventory());
       }
 
       return new AiIntents.IntentStep(text, this.selectedAction.load_Str, args, step.describe());
@@ -1274,7 +1274,7 @@ final class AiActionMenu {
 
    private void pollReview() {
       if (this.step == AiActionMenu.MenuStep.REVIEW && isInWorld()) {
-         if (this.load_Obj != null && this.load_Obj != Minecraft.getInstance().level) {
+         if (this.selectionLevel != null && this.selectionLevel != Minecraft.getInstance().level) {
             this.resetToActions();
             this.issue = "World changed. Choose the action again.";
          } else {
@@ -1288,9 +1288,9 @@ final class AiActionMenu {
                }
 
                AiIntents.IntentStep step = this.buildRequest();
-               if (this.read_Z() && this.write_Z()) {
+               if (this.isItemAction() && this.addsToInventory()) {
                   JsonObject args = AiLocalRequest.clampCount(
-                     step.arguments(), AiItems.countInInventory(AiItems.resolveItem(AiJson.getString(step.arguments(), "item", ""))), this.write_I()
+                     step.arguments(), AiItems.countInInventory(AiItems.resolveItem(AiJson.getString(step.arguments(), "item", ""))), this.maxCount()
                   );
                   step = new AiIntents.IntentStep(step.clause() + " more", step.capability(), args, step.describe());
                }
@@ -1355,7 +1355,7 @@ final class AiActionMenu {
       return this.farmPlacement != null ? this.farmPlacement.statusJson() : (this.schematicPlacement == null ? new JsonObject() : this.schematicPlacement.statusJson());
    }
 
-   private boolean write_Z() {
+   private boolean addsToInventory() {
       return this.selectedAction == AiActionMenu.MenuAction.GET || this.extraItems;
    }
 
@@ -1365,8 +1365,8 @@ final class AiActionMenu {
    }
 
    private void pickAttachment() {
-      if (!this.init_Z) {
-         this.init_Z = true;
+      if (!this.attachmentLoading) {
+         this.attachmentLoading = true;
          CompletableFuture.<AiAttachments.Inner_DataUtil>supplyAsync(() -> {
             try {
                String path = AiAttachments.pickFile();
@@ -1375,12 +1375,12 @@ final class AiActionMenu {
                throw new CompletionException(e);
             }
          }).whenComplete((file, error) -> Minecraft.getInstance().execute(() -> {
-            this.init_Z = false;
+            this.attachmentLoading = false;
             if (error != null) {
                Throwable cause = error.getCause() == null ? error : error.getCause();
                autismclient.util.bi.write("Import failed: " + cause.getMessage());
             } else if (file != null) {
-               this.init_Map.remove(AiActionMenu.MenuAction.BUILD);
+               this.optionBuilds.remove(AiActionMenu.MenuAction.BUILD);
                if (this.selectedAction == AiActionMenu.MenuAction.BUILD) {
                   this.searchInput.setValue(file.name());
                   this.host.focusInput(this.searchInput);
@@ -1417,7 +1417,7 @@ final class AiActionMenu {
       String q = this.searchQueryText();
       this.searchList.setQuery(q);
       List<AiActionMenu.TargetOption> filtered = this.searchList.filtered();
-      if (filtered != this.filtered || !q.equals(this.init_Str)) {
+      if (filtered != this.filtered || !q.equals(this.lastFilterQuery)) {
          List<AiActionMenu.TargetOption> out = new ArrayList<>(filtered);
          if (!q.isEmpty()) {
             out.sort(Comparator.comparingInt(row -> matchRank(row.label().toLowerCase(Locale.ROOT), q)));
@@ -1432,7 +1432,7 @@ final class AiActionMenu {
 
          this.filteredRows = List.copyOf(out);
          this.filtered = filtered;
-         this.init_Str = q;
+         this.lastFilterQuery = q;
       }
 
       if (!q.equals(this.rowsQuery) || this.selectedAction != this.rowsAction) {
@@ -1466,7 +1466,7 @@ final class AiActionMenu {
 
    private List<AiActionMenu.TargetOption> entriesFor(AiActionMenu.MenuAction a) {
       Minecraft mc = Minecraft.getInstance();
-      AiActionMenu.OptionBuild v = this.init_Map.get(a);
+      AiActionMenu.OptionBuild v = this.optionBuilds.get(a);
       long now = System.currentTimeMillis();
       Object world = mc.getConnection();
       if (v == null || v.world != world || isStale(a, v, now)) {
@@ -1476,7 +1476,7 @@ final class AiActionMenu {
             || a == AiActionMenu.MenuAction.SMELT;
          boolean missing = recipes && (a == AiActionMenu.MenuAction.SMELT ? AiToolsSuggest.smeltableIds() : AiToolsSuggest.craftableIds()).isEmpty();
          v = new AiActionMenu.OptionBuild(world, now, this.candidatesFor(a), previous, missing);
-         this.init_Map.put(a, v);
+         this.optionBuilds.put(a, v);
       }
 
       if (v.finished == null) {

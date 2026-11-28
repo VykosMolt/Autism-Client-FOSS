@@ -23,7 +23,7 @@ public final class AutismHttp {
    public static JsonObject getJsonWithBearer(String url, String bearerToken) {
       HttpURLConnection connection = null;
       try {
-         connection = load(url, 15000);
+         connection = openConnection(url, 15000);
          connection.setRequestMethod("GET");
          if (bearerToken != null && !bearerToken.isBlank()) {
             connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
@@ -106,18 +106,18 @@ public final class AutismHttp {
    }
 
    public static AutismHttp.JsonResponse postResponse(String url, String body) {
-      return init(url, body, 15000, Map.of());
+      return postWithHeaders(url, body, 15000, Map.of());
    }
 
    public static AutismHttp.JsonResponse init(String url, String body, int timeoutMs) {
-      return init(url, body, timeoutMs, Map.of());
+      return postWithHeaders(url, body, timeoutMs, Map.of());
    }
 
    public static AutismHttp.JsonResponse load(String url, String body, Map<String, String> headers) {
-      return init(url, body, 15000, headers);
+      return postWithHeaders(url, body, 15000, headers);
    }
 
-   public static AutismHttp.JsonResponse init(String url, String body, int timeoutMs, Map<String, String> headers) {
+   public static AutismHttp.JsonResponse postWithHeaders(String url, String body, int timeoutMs, Map<String, String> headers) {
       HttpURLConnection connection = null;
       try {
          connection = open(url, timeoutMs);
@@ -220,7 +220,7 @@ public final class AutismHttp {
       return connection;
    }
 
-   private static HttpURLConnection load(String url, int timeoutMs) throws IOException {
+   private static HttpURLConnection openConnection(String url, int timeoutMs) throws IOException {
       HttpURLConnection connection = (HttpURLConnection)URI.create(url).toURL().openConnection(MinecraftProxySelector.currentProxy());
       applyTimeouts(connection, timeoutMs);
       return connection;

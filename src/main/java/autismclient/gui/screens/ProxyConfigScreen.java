@@ -236,7 +236,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          int buttonMouseX = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseX : -2147483648;
          int buttonMouseY = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseY : -2147483648;
          if (this.isCompactLayout()) {
-            this.drawText(graphics, "Window too small.", this.init_I_I_5(panelX), this.centerTextY(this.listTop(), 12), GuiColorPalette.close, false, Math.max(0, panelW - 16));
+            this.drawText(graphics, "Window too small.", this.contentX(panelX), this.centerTextY(this.listTop(), 12), GuiColorPalette.close, false, Math.max(0, panelW - 16));
             return;
          }
 
@@ -259,7 +259,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
 
    private void renderRow(GuiGraphicsExtractor graphics, ProxyConfigScreen.SettingRow row, int panelX, int panelW) {
       if (this.isRowVisible(row.y())) {
-         int x = this.init_I_I_5(panelX);
+         int x = this.contentX(panelX);
          int y = row.y();
          int w = this.rowWidth(panelW);
          int h = this.rowHeight();
@@ -347,7 +347,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       return this.rowHeight() + 2;
    }
 
-   private int init_I_I_5(int panelX) {
+   private int contentX(int panelX) {
       return panelX + 8;
    }
 
@@ -356,7 +356,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private int controlX(int panelX, int panelW, int controlW) {
-      return this.init_I_I_5(panelX) + this.rowWidth(panelW) - 4 - controlW;
+      return this.contentX(panelX) + this.rowWidth(panelW) - 4 - controlW;
    }
 
    private int controlY(int rowY) {

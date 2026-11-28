@@ -27,9 +27,9 @@ final class TerrainDropGrid {
    final int halfSpan;
    final int span;
    private final TerrainDropGrid.Column[] columns;
-   private byte[] init_BArr;
-   private byte[] load_BArr;
-   private int[] init_IArr;
+   private byte[] columnStates;
+   private byte[] reachableCache;
+   private int[] anchorColumns;
    private int queuedColumns;
    int columnFetches;
 
@@ -103,7 +103,7 @@ final class TerrainDropGrid {
       return upper & -1L << from;
    }
 
-   double init_D_V_StreamUtil_D(TerrainDropGrid.Column column, double y) {
+   double topBelow(TerrainDropGrid.Column column, double y) {
       int limit = (int)Math.floor((y - this.baseY) * 8.0 + 1.0E-6);
       if (limit > 0) {
          long tops = column.solidMask & ~(column.solidMask >>> 1);
@@ -116,21 +116,21 @@ final class TerrainDropGrid {
       return column.init_D <= y + 1.0E-6 ? column.init_D : -1.0 / 0.0;
    }
 
-   boolean init(TerrainDropGrid.Column column) {
+   boolean bodyFits(TerrainDropGrid.Column column) {
       return column.state != 0
          && (column.solidMask & this.occupancyMask(this.refY + 0.6, this.refY + this.bodyHeight)) == 0L
          && (column.load & this.occupancyMask(this.refY, this.refY + this.bodyHeight)) == 0L;
    }
 
-   boolean load(TerrainDropGrid.Column column) {
-      if (!this.init(column)) {
+   boolean isDropColumn(TerrainDropGrid.Column column) {
+      if (!this.bodyFits(column)) {
          return false;
       } else if (column.state == 2) {
          return true;
       } else {
          return column.state == 4
             ? !this.voidOnly
-            : !this.voidOnly && column.state == 1 && this.init_D_V_StreamUtil_D(column, this.refY + 0.6) <= this.refY - this.minDrop + 1.0E-6;
+            : !this.voidOnly && column.state == 1 && this.topBelow(column, this.refY + 0.6) <= this.refY - this.minDrop + 1.0E-6;
       }
    }
 
@@ -140,21 +140,21 @@ final class TerrainDropGrid {
       return Math.hypot(dx, dz);
    }
 
-   private byte init_B_I_I(int x, int z) {
+   private byte columnState(int x, int z) {
       int index = this.columnIndex(x, z);
       if (index < 0) {
          return 3;
       }
 
-      if (this.init_BArr == null) {
-         this.init_BArr = new byte[this.columns.length];
+      if (this.columnStates == null) {
+         this.columnStates = new byte[this.columns.length];
       }
 
-      byte state = this.init_BArr[index];
+      byte state = this.columnStates[index];
       if (state == 0) {
          TerrainDropGrid.Column column = this.columnAt(x, z);
-         state = (byte)(!this.load(column) ? 3 : (this.distanceToCell(x, z) <= this.radius + 1.0E-6 ? 1 : 2));
-         this.init_BArr[index] = state;
+         state = (byte)(!this.isDropColumn(column) ? 3 : (this.distanceToCell(x, z) <= this.radius + 1.0E-6 ? 1 : 2));
+         this.columnStates[index] = state;
       }
 
       return state;
@@ -183,9 +183,9 @@ final class TerrainDropGrid {
       boolean countering = steer != KnockbackThrowPlanner.CounterSteer.NONE;
 
       for (int tick = 1; tick <= 48; tick++) {
-         double block = this.init_D_D(x, z, hw, hd);
+         double block = this.slipperinessAt(x, z, hw, hd);
          if (Double.isNaN(block)) {
-            return this.init_V_CachePool_I(tick, x, z);
+            return this.unknownResult(tick, x, z);
          }
 
          double friction = ground ? block * 0.91 : 0.91;
@@ -199,9 +199,9 @@ final class TerrainDropGrid {
          double before = y;
          boolean landed = false;
          if (wantY < 0.0) {
-            double top = this.init(x, z, hw, hd, y);
+            double top = this.footprintTopBelow(x, z, hw, hd, y);
             if (Double.isNaN(top)) {
-               return this.init_V_CachePool_I(tick, x, z);
+               return this.unknownResult(tick, x, z);
             }
 
             double next = y + wantY;
@@ -212,9 +212,9 @@ final class TerrainDropGrid {
 
             y = next;
          } else {
-            long above = this.init_J_D(x, z, hw, hd);
+            long above = this.footprintWalls(x, z, hw, hd);
             if (above == -9223372036854775808L) {
-               return this.init_V_CachePool_I(tick, x, z);
+               return this.unknownResult(tick, x, z);
             }
 
             long hit = above & this.occupancyMask(y + h, y + h + wantY);
@@ -235,9 +235,9 @@ final class TerrainDropGrid {
             boolean alongX = pass == 0 != zFirst;
             double d = alongX ? vx : vz;
             if (!(Math.abs(d) < 1.0E-9)) {
-               double moved = this.init(alongX, d, x, z, hw, hd, bodyBand);
+               double moved = this.sweepAxis(alongX, d, x, z, hw, hd, bodyBand);
                if (Double.isNaN(moved)) {
-                  return this.init_V_CachePool_I(tick, x, z);
+                  return this.unknownResult(tick, x, z);
                }
 
                if (moved == -1.0 / 0.0) {
@@ -262,34 +262,34 @@ final class TerrainDropGrid {
          }
 
          if (stepping) {
-            double raised = this.init(x, z, hw, hd, stepFrom + 0.6);
+            double raised = this.footprintTopBelow(x, z, hw, hd, stepFrom + 0.6);
             if (!Double.isNaN(raised) && raised > y + 1.0E-7) {
                y = raised;
             }
          }
 
-         long walls = this.init_J_D(x, z, hw, hd);
+         long walls = this.footprintWalls(x, z, hw, hd);
          if (walls == -9223372036854775808L) {
-            return this.init_V_CachePool_I(tick, x, z);
+            return this.unknownResult(tick, x, z);
          }
 
          grazed |= (walls & obstacle) != 0L;
-         long caught = this.load(x, z, hw, hd);
+         long caught = this.footprintCatches(x, z, hw, hd);
          if (caught == -9223372036854775808L) {
-            return this.init_V_CachePool_I(tick, x, z);
+            return this.unknownResult(tick, x, z);
          }
 
          if ((caught & this.occupancyMask(y, y + h)) != 0L) {
             return new TerrainDropGrid.FlightResult(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
          }
 
-         if (crossTick < 0 && !landed && this.init_Z_D(x, z, hw, hd)) {
+         if (crossTick < 0 && !landed && this.footprintReachesDrop(x, z, hw, hd)) {
             crossTick = tick;
             crossSpeed = Math.hypot(vx, vz);
          }
 
          if (!landed && wantY < 0.0 && y < this.refY - 0.5) {
-            TerrainDropGrid.FlightResult settled = this.init(x, z, hw, hd, vx, vz, y, tick, crossTick, crossSpeed, blocked, grazed);
+            TerrainDropGrid.FlightResult settled = this.settle(x, z, hw, hd, vx, vz, y, tick, crossTick, crossSpeed, blocked, grazed);
             if (settled != null) {
                return settled;
             }
@@ -305,25 +305,25 @@ final class TerrainDropGrid {
          }
 
          if (ground && Math.hypot(vx, vz) < 0.015) {
-            return this.init(x, z, y, tick, crossTick, crossSpeed, blocked, grazed);
+            return this.resultAt(x, z, y, tick, crossTick, crossSpeed, blocked, grazed);
          }
       }
 
-      return this.init(x, z, y, 48, crossTick, crossSpeed, blocked, grazed);
+      return this.resultAt(x, z, y, 48, crossTick, crossSpeed, blocked, grazed);
    }
 
-   private TerrainDropGrid.FlightResult init_V_CachePool_I(int tick, double x, double z) {
+   private TerrainDropGrid.FlightResult unknownResult(int tick, double x, double z) {
       return new TerrainDropGrid.FlightResult(KnockbackThrowPlanner.LandingOutcome.UNKNOWN, 0.0, tick, x, z, false, -1, 0.0, false, false);
    }
 
-   private TerrainDropGrid.FlightResult init(double x, double z, double y, int tick, int crossTick, double crossSpeed, boolean blocked, boolean grazed) {
+   private TerrainDropGrid.FlightResult resultAt(double x, double z, double y, int tick, int crossTick, double crossSpeed, boolean blocked, boolean grazed) {
       double drop = Math.max(0.0, this.refY - y);
       KnockbackThrowPlanner.LandingOutcome kind = drop > 1.0E-6 ? KnockbackThrowPlanner.LandingOutcome.DROP : KnockbackThrowPlanner.LandingOutcome.SAFE;
       boolean edge = crossTick >= 0 && kind == KnockbackThrowPlanner.LandingOutcome.DROP && !this.voidOnly && drop + 1.0E-6 >= this.minDrop;
       return new TerrainDropGrid.FlightResult(kind, drop, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed);
    }
 
-   private TerrainDropGrid.FlightResult init(
+   private TerrainDropGrid.FlightResult settle(
       double x, double z, double hw, double hd, double vx, double vz, double y, int tick, int crossTick, double crossSpeed, boolean blocked, boolean grazed
    ) {
       double speed = Math.hypot(vx, vz);
@@ -346,7 +346,7 @@ final class TerrainDropGrid {
             }
 
             if (column.state == 0) {
-               return this.init_V_CachePool_I(tick, x, z);
+               return this.unknownResult(tick, x, z);
             }
 
             if (column.state == 3 || (column.load & this.occupancyMask(-1.0E9, y)) != 0L) {
@@ -354,7 +354,7 @@ final class TerrainDropGrid {
             }
 
             lava |= column.state == 4;
-            top = Math.max(top, this.init_D_V_StreamUtil_D(column, y));
+            top = Math.max(top, this.topBelow(column, y));
          }
       }
 
@@ -375,7 +375,7 @@ final class TerrainDropGrid {
          : null;
    }
 
-   private double init(boolean alongX, double d, double x, double z, double hw, double hd, long bodyBand) {
+   private double sweepAxis(boolean alongX, double d, double x, double z, double hw, double hd, long bodyBand) {
       double lead = alongX ? (d > 0.0 ? x + hw : x - hw) : (d > 0.0 ? z + hd : z - hd);
       double crossMin = alongX ? z - hd : x - hw;
       double crossMax = alongX ? z + hd : x + hw;
@@ -407,7 +407,7 @@ final class TerrainDropGrid {
       return d;
    }
 
-   private boolean init(double x, double z, double hw, double hd, TerrainDropGrid.ColumnVisitor visitor) {
+   private boolean visitFootprint(double x, double z, double hw, double hd, TerrainDropGrid.ColumnVisitor visitor) {
       int x0 = (int)Math.floor(x - hw + 0.001);
       int x1 = (int)Math.floor(x + hw - 0.001);
       int z0 = (int)Math.floor(z - hd + 0.001);
@@ -425,36 +425,36 @@ final class TerrainDropGrid {
       return true;
    }
 
-   private double init(double x, double z, double hw, double hd, double y) {
+   private double footprintTopBelow(double x, double z, double hw, double hd, double y) {
       double[] top = new double[]{-1.0 / 0.0};
-      return this.init(x, z, hw, hd, c -> {
-         top[0] = Math.max(top[0], this.init_D_V_StreamUtil_D(c, y));
+      return this.visitFootprint(x, z, hw, hd, c -> {
+         top[0] = Math.max(top[0], this.topBelow(c, y));
          return true;
       }) ? top[0] : 0.0 / 0.0;
    }
 
-   private long init_J_D(double x, double z, double hw, double hd) {
+   private long footprintWalls(double x, double z, double hw, double hd) {
       long[] walls = new long[]{0L};
-      return this.init(x, z, hw, hd, c -> {
+      return this.visitFootprint(x, z, hw, hd, c -> {
          walls[0] |= c.solidMask;
          return true;
       }) ? walls[0] : -9223372036854775808L;
    }
 
-   private long load(double x, double z, double hw, double hd) {
+   private long footprintCatches(double x, double z, double hw, double hd) {
       long[] catches = new long[]{0L};
-      return this.init(x, z, hw, hd, c -> {
+      return this.visitFootprint(x, z, hw, hd, c -> {
          catches[0] |= c.load;
          return true;
       }) ? catches[0] : -9223372036854775808L;
    }
 
-   private double init_D_D(double x, double z, double hw, double hd) {
+   private double slipperinessAt(double x, double z, double hw, double hd) {
       TerrainDropGrid.Column column = this.columnAt((int)Math.floor(x), (int)Math.floor(z));
       return column != null && column.state != 0 ? column.init_F : 0.0 / 0.0;
    }
 
-   private boolean init_Z_D(double x, double z, double hw, double hd) {
+   private boolean footprintReachesDrop(double x, double z, double hw, double hd) {
       int x0 = (int)Math.floor(x - hw + 0.001);
       int x1 = (int)Math.floor(x + hw - 0.001);
       int z0 = (int)Math.floor(z - hd + 0.001);
@@ -462,7 +462,7 @@ final class TerrainDropGrid {
 
       for (int cx = x0; cx <= x1; cx++) {
          for (int cz = z0; cz <= z1; cz++) {
-            if (this.init_B_I_I(cx, cz) == 3) {
+            if (this.columnState(cx, cz) == 3) {
                return false;
             }
          }
@@ -470,7 +470,7 @@ final class TerrainDropGrid {
 
       for (int cx = x0; cx <= x1; cx++) {
          for (int cz = z0; cz <= z1; cz++) {
-            if (this.init_Z_I_I(cx, cz)) {
+            if (this.isReachableDrop(cx, cz)) {
                return true;
             }
          }
@@ -479,8 +479,8 @@ final class TerrainDropGrid {
       return false;
    }
 
-   boolean init_Z_I_I(int x, int z) {
-      byte state = this.init_B_I_I(x, z);
+   boolean isReachableDrop(int x, int z) {
+      byte state = this.columnState(x, z);
       if (state == 1) {
          return true;
       }
@@ -490,42 +490,42 @@ final class TerrainDropGrid {
       }
 
       int index = this.columnIndex(x, z);
-      if (this.load_BArr == null) {
-         this.load_BArr = new byte[this.columns.length];
+      if (this.reachableCache == null) {
+         this.reachableCache = new byte[this.columns.length];
       }
 
-      if (this.load_BArr[index] != 0) {
-         return this.load_BArr[index] == 1;
+      if (this.reachableCache[index] != 0) {
+         return this.reachableCache[index] == 1;
       }
 
-      if (this.init_IArr == null) {
-         this.init_IArr = new int[this.columns.length];
+      if (this.anchorColumns == null) {
+         this.anchorColumns = new int[this.columns.length];
          int r = (int)Math.ceil(this.radius) + 1;
 
          for (int cx = this.originX - r; cx <= this.originX + r; cx++) {
             for (int cz = this.originZ - r; cz <= this.originZ + r; cz++) {
-               if (this.distanceToCell(cx, cz) <= this.radius + 1.0E-6 && this.init_B_I_I(cx, cz) == 1) {
-                  this.init_IArr[this.queuedColumns++] = this.columnIndex(cx, cz);
+               if (this.distanceToCell(cx, cz) <= this.radius + 1.0E-6 && this.columnState(cx, cz) == 1) {
+                  this.anchorColumns[this.queuedColumns++] = this.columnIndex(cx, cz);
                }
             }
          }
       }
 
       for (int i = 0; i < this.queuedColumns; i++) {
-         int anchor = this.init_IArr[i];
+         int anchor = this.anchorColumns[i];
          int ax = anchor / this.span - this.halfSpan + this.originX;
          int az = anchor % this.span - this.halfSpan + this.originZ;
-         if (this.init_Z_I(x, z, ax, az)) {
-            this.load_BArr[index] = 1;
+         if (this.clearLineBetween(x, z, ax, az)) {
+            this.reachableCache[index] = 1;
             return true;
          }
       }
 
-      this.load_BArr[index] = 2;
+      this.reachableCache[index] = 2;
       return false;
    }
 
-   private boolean init_Z_I(int x, int z, int endX, int endZ) {
+   private boolean clearLineBetween(int x, int z, int endX, int endZ) {
       int dx = Math.abs(endX - x);
       int dz = Math.abs(endZ - z);
       int sx = Integer.compare(endX, x);
@@ -537,7 +537,7 @@ final class TerrainDropGrid {
          int nextX = (2 * crossedX + 1) * dz;
          int nextZ = (2 * crossedZ + 1) * dx;
          if (nextX == nextZ) {
-            if (this.init_B_I_I(x + sx, z) == 3 || this.init_B_I_I(x, z + sz) == 3) {
+            if (this.columnState(x + sx, z) == 3 || this.columnState(x, z + sz) == 3) {
                return false;
             }
 
@@ -553,7 +553,7 @@ final class TerrainDropGrid {
             crossedZ++;
          }
 
-         if (this.init_B_I_I(x, z) == 3) {
+         if (this.columnState(x, z) == 3) {
             return false;
          }
       }
@@ -569,7 +569,7 @@ final class TerrainDropGrid {
             for (int z = this.originZ - ring; z <= this.originZ + ring; z++) {
                if (Math.max(Math.abs(x - this.originX), Math.abs(z - this.originZ)) == ring
                   && !(this.distanceToCell(x, z) > this.radius + 1.0E-6)
-                  && this.init_B_I_I(x, z) == 1) {
+                  && this.columnState(x, z) == 1) {
                   return true;
                }
             }

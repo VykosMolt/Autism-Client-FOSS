@@ -16,7 +16,7 @@ final class AiCombatDeaths {
    private final Set<UUID> counted = new HashSet<>();
    private final Set<UUID> confirmed = new HashSet<>();
    private final Map<UUID, LivingEntity> tracked = new HashMap<>();
-   private final JsonArray init_JsonArray = new JsonArray();
+   private final JsonArray confirmedDeaths = new JsonArray();
 
    void track(UUID identity) {
       if (!this.confirmed.contains(identity)) {
@@ -55,7 +55,7 @@ final class AiCombatDeaths {
          Entry<UUID, LivingEntity> entry = iterator.next();
          LivingEntity entity = entry.getValue();
          if (this.confirmDeath(entry.getKey(), entity.isDeadOrDying(), !entity.isRemoved() && mc.level.getEntity(entity.getId()) == entity)) {
-            this.init_JsonArray.add(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
+            this.confirmedDeaths.add(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
          }
 
          if (!this.counted.contains(entry.getKey())) {
@@ -69,6 +69,6 @@ final class AiCombatDeaths {
    }
 
    JsonArray killedTypes() {
-      return this.init_JsonArray.deepCopy();
+      return this.confirmedDeaths.deepCopy();
    }
 }

@@ -202,8 +202,8 @@ final class CrosshairVectorPipeline {
 
          try {
             data.putFloat(key.stroke()).putFloat(key.gap()).putFloat(key.outline()).putFloat(key.init_I());
-            init(data, key.fill(), key.update());
-            init(data, key.read_I(), key.update());
+            putColor(data, key.fill(), key.update());
+            putColor(data, key.read_I(), key.update());
             data.putFloat(key.write()).putFloat(0.0F).putFloat(0.0F).putFloat(0.0F);
             data.flip();
             this.texture = RenderSystem.getDevice().createTexture("crosshair vector parameters", 15, GpuFormat.RGBA32_FLOAT, 4, 1, 1, 1);
@@ -222,7 +222,7 @@ final class CrosshairVectorPipeline {
          }
       }
 
-      private static void init(ByteBuffer data, int color, float opacity) {
+      private static void putColor(ByteBuffer data, int color, float opacity) {
          data.putFloat((color >>> 16 & 0xFF) / 255.0F)
             .putFloat((color >>> 8 & 0xFF) / 255.0F)
             .putFloat((color & 0xFF) / 255.0F)

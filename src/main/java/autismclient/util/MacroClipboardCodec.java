@@ -55,7 +55,7 @@ public class MacroClipboardCodec {
    private static List<AutismMacro> clipboardMacros = List.of();
    private static boolean clipboardIsCut;
    private static final long init_J = 8388608L;
-   private static volatile Set<String> init_Set;
+   private static volatile Set<String> packetClassNames;
 
    public static void copyQueue(List<AutismSessionState.DelayedPacket> queue) {
       try {
@@ -81,7 +81,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static boolean init_Z(AutismMacro macro) {
+   public static boolean copyMacro(AutismMacro macro) {
       if (macro == null) {
          return false;
       }
@@ -118,7 +118,7 @@ public class MacroClipboardCodec {
          }
 
          if (live.size() == 1) {
-            if (!init_Z(live.get(0))) {
+            if (!copyMacro(live.get(0))) {
                return false;
             }
          } else {
@@ -190,7 +190,7 @@ public class MacroClipboardCodec {
          clipboardIsCut = false;
          return new MacroClipboardCodec.PastedMacros(out, true);
       } else {
-         List<AutismMacro> list = init_List();
+         List<AutismMacro> list = readClipboardMacros();
          if (!list.isEmpty()) {
             return new MacroClipboardCodec.PastedMacros(list, false);
          }
@@ -305,7 +305,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static List<AutismMacro> init_List() {
+   public static List<AutismMacro> readClipboardMacros() {
       List<AutismMacro> macros = new ArrayList<>();
       CompoundTag rootTag = readClipboardTag();
       if (rootTag == null) {
@@ -621,7 +621,7 @@ public class MacroClipboardCodec {
 
          String className = tag.getStringOr("class", "");
          Class<?> packetClass = null;
-         if (init_Z(className)) {
+         if (isKnownPacketClass(className)) {
             try {
                packetClass = Class.forName(className);
             } catch (ClassNotFoundException var5) {
@@ -1110,9 +1110,9 @@ public class MacroClipboardCodec {
       return NbtAccounter.create(8388608L);
    }
 
-   private static boolean init_Z(String className) {
+   private static boolean isKnownPacketClass(String className) {
       if (className != null && !className.isBlank()) {
-         Set<String> set = init_Set;
+         Set<String> set = packetClassNames;
          if (set == null) {
             Set<String> built = new HashSet<>();
 
@@ -1128,7 +1128,7 @@ public class MacroClipboardCodec {
             }
 
             set = built;
-            init_Set = built;
+            packetClassNames = built;
          }
 
          return set.contains(className);

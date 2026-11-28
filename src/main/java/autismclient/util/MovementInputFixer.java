@@ -96,16 +96,16 @@ public final class MovementInputFixer {
 
       this.pressed = pressed;
       float wanted = (float)Mth.wrapDegrees(pressed - ((double)cameraYaw - silentYaw));
-      int next = init_I_I_F(this.currentBand, Math.abs(wanted));
+      int next = nextBand(this.currentBand, Math.abs(wanted));
       if (next != this.currentBand) {
          this.currentBand = next;
          this.lateralDrift = 0.0F;
       }
 
       int[] keys = this.currentBand > 0 ? FORWARD_KEYS : (this.currentBand < 0 ? BACKWARD_KEYS : (wanted >= 0.0F ? POSITIVE_SIDE_KEYS : NEGATIVE_SIDE_KEYS));
-      int chosen = this.init_Z_IArr_F(keys, wanted) ? this.chosen : this.bestKey(keys, wanted);
+      int chosen = this.keepChosenKey(keys, wanted) ? this.chosen : this.bestKey(keys, wanted);
       if (footing != null) {
-         chosen = init(chosen, wanted, pressed, cameraYaw, silentYaw, footing);
+         chosen = stabilizeChoice(chosen, wanted, pressed, cameraYaw, silentYaw, footing);
       }
 
       this.chosenStreak = chosen == this.chosen ? this.chosenStreak + 1 : 1;
@@ -114,12 +114,12 @@ public final class MovementInputFixer {
       return inputForKey(chosen, input);
    }
 
-   static float init_F_F_I(float silentYaw, int k) {
+   static float keyYaw(float silentYaw, int k) {
       return silentYaw - k * 45.0F;
    }
 
-   private static int init(int chosen, float wanted, float pressed, float cameraYaw, float silentYaw, MovementInputFixer.FootingModel footing) {
-      int chosenTicks = footing.ticks(init_F_F_I(silentYaw, chosen));
+   private static int stabilizeChoice(int chosen, float wanted, float pressed, float cameraYaw, float silentYaw, MovementInputFixer.FootingModel footing) {
+      int chosenTicks = footing.ticks(keyYaw(silentYaw, chosen));
       if (chosenTicks >= 3) {
          return chosen;
       }
@@ -136,7 +136,7 @@ public final class MovementInputFixer {
          if (k != chosen) {
             float offset = Math.abs(angleError(wanted, k));
             if (!(offset > 90.001F)) {
-               int ticks = footing.ticks(init_F_F_I(silentYaw, k));
+               int ticks = footing.ticks(keyYaw(silentYaw, k));
                boolean forward = k == 7 || k == 0 || k == 1;
                boolean bestForward = best == 7 || best == 0 || best == 1;
                if (ticks > bestTicks
@@ -152,7 +152,7 @@ public final class MovementInputFixer {
       return best;
    }
 
-   static int init_I_I_F(int band, float off) {
+   static int nextBand(int band, float off) {
       if (band == -2147483648) {
          return off < 67.5F ? 1 : (off > 112.5F ? -1 : 0);
       } else if (band > 0) {
@@ -164,7 +164,7 @@ public final class MovementInputFixer {
       }
    }
 
-   private boolean init_Z_IArr_F(int[] keys, float wanted) {
+   private boolean keepChosenKey(int[] keys, float wanted) {
       if (this.chosen >= 0 && containsKey(keys, this.chosen)) {
          if (Math.abs(angleError(wanted, this.chosen)) > 45.001F) {
             return false;

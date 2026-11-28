@@ -61,10 +61,10 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
                var10000 = stackInSlot(mc, this.slot).isEmpty() != this.baselineEmpty;
                break;
             case INVENTORY_FULL:
-               var10000 = load(mc);
+               var10000 = isInventoryFull(mc);
                break;
             case INVENTORY_EMPTY:
-               var10000 = read(mc);
+               var10000 = isInventoryEmpty(mc);
                break;
             case CURSOR_MATCHES:
                var10000 = target.matchScore(mc.player.containerMenu.getCarried(), -1) >= 0;
@@ -130,7 +130,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
       }
    }
 
-   private static boolean load(Minecraft mc) {
+   private static boolean isInventoryFull(Minecraft mc) {
       for (int i = 0; i < 36; i++) {
          if (mc.player.getInventory().getItem(i).isEmpty()) {
             return false;
@@ -140,7 +140,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
       return true;
    }
 
-   private static boolean read(Minecraft mc) {
+   private static boolean isInventoryEmpty(Minecraft mc) {
       for (int i = 0; i < 36; i++) {
          if (!mc.player.getInventory().getItem(i).isEmpty()) {
             return false;

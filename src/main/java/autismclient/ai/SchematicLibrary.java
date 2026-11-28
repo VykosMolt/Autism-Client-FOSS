@@ -185,7 +185,7 @@ final class SchematicLibrary {
 
       try {
          Files.writeString(temporary, this.gson.toJson(root), StandardCharsets.UTF_8);
-         init_V_Path_Path(temporary, this.libraryFile);
+         moveFile(temporary, this.libraryFile);
       } finally {
          Files.deleteIfExists(temporary);
       }
@@ -425,7 +425,7 @@ final class SchematicLibrary {
       return o.has(key) ? o.get(key).getAsLong() : fallback;
    }
 
-   static void init_V_Path_Path(Path source, Path target) throws IOException {
+   static void moveFile(Path source, Path target) throws IOException {
       try {
          Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
       } catch (AtomicMoveNotSupportedException e) {

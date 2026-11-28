@@ -15,14 +15,14 @@ public final class DisplayItemStackFactory {
    }
 
    public static ItemStack displayStack(Item item) {
-      return item != null && item != Items.AIR ? new ItemStack(init_Holder(item)) : ItemStack.EMPTY;
+      return item != null && item != Items.AIR ? new ItemStack(displayHolder(item)) : ItemStack.EMPTY;
    }
 
    public static ItemStack forBlock(Block block) {
       return block == null ? ItemStack.EMPTY : displayStack(block.asItem());
    }
 
-   private static Holder<Item> init_Holder(Item item) {
+   private static Holder<Item> displayHolder(Item item) {
       Identifier model = item.builtInRegistryHolder().key().identifier();
       DataComponentMap components = DataComponentMap.builder()
          .addAll(DataComponents.COMMON_ITEM_COMPONENTS)

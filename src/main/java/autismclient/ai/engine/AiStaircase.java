@@ -160,7 +160,7 @@ public final class AiStaircase {
       return 0;
    }
 
-   public static List<BlockPos> load(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked, Predicate<BlockPos> noFloor) {
+   public static List<BlockPos> flatSteps(BlockPos start, BlockPos target, int maxSteps, Predicate<BlockPos> blocked, Predicate<BlockPos> noFloor) {
       List<BlockPos> out = new ArrayList<>();
       BlockPos at = start;
 
@@ -211,7 +211,7 @@ public final class AiStaircase {
       }
 
       for (BlockPos heading : headings) {
-         List<BlockPos> level = load(start, heading, Math.min(8, maxSteps - 1), blocked, noFloor);
+         List<BlockPos> level = flatSteps(start, heading, Math.min(8, maxSteps - 1), blocked, noFloor);
          Set<Long> floors = new HashSet<>();
          floors.add(start.below().asLong());
 
@@ -229,7 +229,7 @@ public final class AiStaircase {
          }
       }
 
-      return load(start, target, Math.min(8, maxSteps), blocked, noFloor);
+      return flatSteps(start, target, Math.min(8, maxSteps), blocked, noFloor);
    }
 
    private static boolean isClearStand(BlockPos feet, Set<Long> floors, Predicate<BlockPos> blocked) {
@@ -414,14 +414,14 @@ public final class AiStaircase {
    }
 
    public static BlockPos findNearestBlock(Level level, BlockPos from, int radius, Predicate<BlockState> matches) {
-      return init_BlockPos_Level_2(level, from, radius, matches, p -> p.distSqr(from));
+      return nearestMatching(level, from, radius, matches, p -> p.distSqr(from));
    }
 
    public static BlockPos init_BlockPos_Level(Level level, BlockPos from, int radius, int minDrop, Predicate<BlockState> matches) {
-      return init_BlockPos_Level(level, from, radius, minDrop, matches, p -> true);
+      return findDropBlock(level, from, radius, minDrop, matches, p -> true);
    }
 
-   public static BlockPos init_BlockPos_Level(Level level, BlockPos from, int radius, int minDrop, Predicate<BlockState> matches, Predicate<BlockPos> usable) {
+   public static BlockPos findDropBlock(Level level, BlockPos from, int radius, int minDrop, Predicate<BlockState> matches, Predicate<BlockPos> usable) {
       return findBestBlock(level, from, radius, matches, p -> {
          int drop = from.getY() - p.getY();
          return drop < minDrop ? 1.7976931348623157E308 : Math.max(Math.abs(p.getX() - from.getX()) + Math.abs(p.getZ() - from.getZ()), drop) + drop * 0.01;
@@ -456,7 +456,7 @@ public final class AiStaircase {
          radius,
          matches,
          p -> from.getY() - p.getY() < minDrop ? 1.7976931348623157E308 : AiBlockMine.travelCost(level, from, p),
-         p -> usable.test(p) && init_Z_BlockPos(p, batch, usableOre)
+         p -> usable.test(p) && hasEnoughUsable(p, batch, usableOre)
       );
       if (complete == null) {
          return first;
@@ -472,15 +472,15 @@ public final class AiStaircase {
          radius,
          matches,
          p -> AiBlockMine.travelCost(level, first, p),
-         p -> usable.test(p) && outsideFirstBox(first, p) && init_Z_BlockPos(p, missing, cell -> outsideFirstBox(first, cell) && usableOre.test(cell))
+         p -> usable.test(p) && outsideFirstBox(first, p) && hasEnoughUsable(p, missing, cell -> outsideFirstBox(first, cell) && usableOre.test(cell))
       );
       return remainder != null
-            && !init_Z_D(AiBlockMine.travelCost(level, from, complete), AiBlockMine.travelCost(level, from, first), AiBlockMine.travelCost(level, first, remainder))
+            && !completeIsCheaper(AiBlockMine.travelCost(level, from, complete), AiBlockMine.travelCost(level, from, first), AiBlockMine.travelCost(level, first, remainder))
          ? first
          : complete;
    }
 
-   static boolean init_Z_D(double completeCost, double firstCost, double remainderCost) {
+   static boolean completeIsCheaper(double completeCost, double firstCost, double remainderCost) {
       return completeCost <= firstCost + remainderCost;
    }
 
@@ -497,7 +497,7 @@ public final class AiStaircase {
       return Math.abs(cell.getX() - first.getX()) > 2 || Math.abs(cell.getY() - first.getY()) > 2 || Math.abs(cell.getZ() - first.getZ()) > 2;
    }
 
-   static boolean init_Z_BlockPos(BlockPos target, int batch, Predicate<BlockPos> usableOre) {
+   static boolean hasEnoughUsable(BlockPos target, int batch, Predicate<BlockPos> usableOre) {
       return batch <= 0 || countUsableOre(target, batch, usableOre) >= batch;
    }
 
@@ -522,7 +522,7 @@ public final class AiStaircase {
       return count;
    }
 
-   private static BlockPos init_BlockPos_Level_2(Level level, BlockPos from, int radius, Predicate<BlockState> matches, ToDoubleFunction<BlockPos> score) {
+   private static BlockPos nearestMatching(Level level, BlockPos from, int radius, Predicate<BlockState> matches, ToDoubleFunction<BlockPos> score) {
       return findBestBlock(level, from, radius, matches, score, p -> true);
    }
 

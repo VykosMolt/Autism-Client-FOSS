@@ -29,7 +29,7 @@ public final class AiSessions {
    static final int read = 1000000;
    private final Path sessionsDir;
    private final Map<String, AiSessions.SessionMeta> metaById = new LinkedHashMap<>();
-   private final Set<String> init_Set = new HashSet<>();
+   private final Set<String> emptySessionIds = new HashSet<>();
 
    public static boolean isEmptySession(AiSessions.SessionData d) {
       return d.objective.isBlank() && d.queue.isEmpty() && d.messages.stream().noneMatch(m -> "user".equals(m.role()));
@@ -45,13 +45,13 @@ public final class AiSessions {
 
    public synchronized void reloadIndex() throws IOException {
       this.metaById.clear();
-      this.init_Set.clear();
+      this.emptySessionIds.clear();
       if (Files.isDirectory(this.sessionsDir)) {
          try (Stream<Path> entries = Files.list(this.sessionsDir)) {
             for (Path file : entries.filter(p -> p.getFileName().toString().endsWith(".json")).sorted().toList()) {
                try {
                   AiSessions.SessionData d = fromJson(AiJson.parseObject(Files.readString(file)));
-                  this.load(d);
+                  this.indexSession(d);
                } catch (Exception var6) {
                }
             }
@@ -59,21 +59,21 @@ public final class AiSessions {
       }
    }
 
-   private void load(AiSessions.SessionData d) {
+   private void indexSession(AiSessions.SessionData d) {
       this.metaById.put(d.id, metaOf(d));
       if (isEmptySession(d)) {
-         this.init_Set.add(d.id);
+         this.emptySessionIds.add(d.id);
       } else {
-         this.init_Set.remove(d.id);
+         this.emptySessionIds.remove(d.id);
       }
    }
 
    public synchronized boolean contains(String id) {
-      return this.init_Set.contains(id);
+      return this.emptySessionIds.contains(id);
    }
 
    public synchronized List<String> purgeDeleted() throws IOException {
-      List<String> removed = new ArrayList<>(this.init_Set);
+      List<String> removed = new ArrayList<>(this.emptySessionIds);
 
       for (String id : removed) {
          this.delete(id);
@@ -104,12 +104,12 @@ public final class AiSessions {
 
    public synchronized void save(AiSessions.SessionData d) throws IOException {
       AiJson.writeAtomicJson(this.sessionFile(d.id), toJson(d));
-      this.load(d);
+      this.indexSession(d);
    }
 
    public synchronized void delete(String id) throws IOException {
       this.metaById.remove(id);
-      this.init_Set.remove(id);
+      this.emptySessionIds.remove(id);
       Files.deleteIfExists(this.sessionFile(id));
       Files.deleteIfExists(this.transcriptFile(id));
       Files.deleteIfExists(this.rotatedTranscriptPath(id));

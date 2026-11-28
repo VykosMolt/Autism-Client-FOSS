@@ -3,7 +3,7 @@ package autismclient.util.clicker;
 public final class ClickProfile {
    public static final double init_D = 0.5;
    public final ClickTechnique technique;
-   public final double load_D;
+   public final double cpsLow;
    public final double cpsHigh;
    public final long minIntervalNanos;
    public final long maxIntervalNanos;
@@ -26,7 +26,7 @@ public final class ClickProfile {
       double ceiling = Math.min(this.technique.load_D, 30.0);
       if (this.technique == ClickTechnique.RAGE) {
          double cps = clamp(finiteOr(b.cpsHigh, this.technique.write_D), 1.0, ceiling);
-         this.load_D = cps;
+         this.cpsLow = cps;
          this.cpsHigh = cps;
       } else {
          double lo = finiteOr(b.cpsLow, 0.0 / 0.0);
@@ -49,29 +49,29 @@ public final class ClickProfile {
             lo = Math.max(1.0, hi - 0.5);
          }
 
-         this.load_D = lo;
+         this.cpsLow = lo;
          this.cpsHigh = hi;
       }
 
       this.minIntervalNanos = ClickTimingMath.intervalNanos(ClickTimingMath.effectiveUpperCps(this.technique, this.cpsHigh));
-      this.maxIntervalNanos = Math.max(this.minIntervalNanos, ClickTimingMath.intervalNanos(this.load_D));
+      this.maxIntervalNanos = Math.max(this.minIntervalNanos, ClickTimingMath.intervalNanos(this.cpsLow));
       double holdLo = clamp(finiteOr(b.holdLowMs, 40.0), 1.0, 1000.0);
       double holdHi = clamp(finiteOr(b.holdHighMs, 90.0), 1.0, 1000.0);
       this.holdLowMs = Math.min(holdLo, holdHi);
       this.holdHighMs = Math.max(holdLo, holdHi);
-      this.sync = clamp(finiteOr(b.update, 1.0), 0.0, 2.0);
-      this.flush = clamp(finiteOr(b.sync, 0.5), 0.0, 1.0);
-      this.close = clamp(finiteOr(b.flush, 1.0), 0.0, 3.0);
-      this.open = clamp(finiteOr(b.close, 1.0), 0.25, 4.0);
-      int sLo = Math.max(1, Math.min(32, b.init_I));
-      int sHi = Math.max(1, Math.min(32, b.load_I));
+      this.sync = clamp(finiteOr(b.variationShare, 1.0), 0.0, 2.0);
+      this.flush = clamp(finiteOr(b.fatigueShare, 0.5), 0.0, 1.0);
+      this.close = clamp(finiteOr(b.wobbleScale, 1.0), 0.0, 3.0);
+      this.open = clamp(finiteOr(b.fingerSyncScale, 1.0), 0.25, 4.0);
+      int sLo = Math.max(1, Math.min(32, b.burstMin));
+      int sHi = Math.max(1, Math.min(32, b.burstMax));
       this.init_I = Math.min(sLo, sHi);
       this.load_I = Math.max(sLo, sHi);
-      double rLo = clamp(finiteOr(b.open, 100.0), 0.0, 2000.0);
-      double rHi = clamp(finiteOr(b.poll, 220.0), 0.0, 2000.0);
+      double rLo = clamp(finiteOr(b.resetPauseLowMs, 100.0), 0.0, 2000.0);
+      double rHi = clamp(finiteOr(b.resetPauseHighMs, 220.0), 0.0, 2000.0);
       this.poll = Math.min(rLo, rHi);
       this.push = Math.max(rLo, rHi);
-      this.pop = clamp(finiteOr(b.push, 10.0), 1.0, 100.0);
+      this.pop = clamp(finiteOr(b.pulseMs, 10.0), 1.0, 100.0);
       this.freeSpin = b.freeSpin;
       this.freeSpinDecayPerSecond = clamp(finiteOr(b.freeSpinDecayPerSecond, 1.0), 0.1, 20.0);
    }
@@ -98,15 +98,15 @@ public final class ClickProfile {
       private double cpsHigh;
       private double holdLowMs;
       private double holdHighMs;
-      private double update = 1.0;
-      private double sync = 0.5;
-      private double flush = 1.0;
-      private double close = 1.0;
-      private int init_I;
-      private int load_I;
-      private double open;
-      private double poll;
-      private double push = 10.0;
+      private double variationShare = 1.0;
+      private double fatigueShare = 0.5;
+      private double wobbleScale = 1.0;
+      private double fingerSyncScale = 1.0;
+      private int burstMin;
+      private int burstMax;
+      private double resetPauseLowMs;
+      private double resetPauseHighMs;
+      private double pulseMs = 10.0;
       private boolean freeSpin;
       private double freeSpinDecayPerSecond = 1.0;
 
@@ -147,39 +147,39 @@ public final class ClickProfile {
       }
 
       public ClickProfile.ProfileBuilder variation(double share) {
-         this.update = share;
+         this.variationShare = share;
          return this;
       }
 
       public ClickProfile.ProfileBuilder fatigue(double share) {
-         this.sync = share;
+         this.fatigueShare = share;
          return this;
       }
 
       public ClickProfile.ProfileBuilder wobble(double scale) {
-         this.flush = scale;
+         this.wobbleScale = scale;
          return this;
       }
 
       public ClickProfile.ProfileBuilder fingerSync(double scale) {
-         this.close = scale;
+         this.fingerSyncScale = scale;
          return this;
       }
 
       public ClickProfile.ProfileBuilder burstCount(int min, int max) {
-         this.init_I = min;
-         this.load_I = max;
+         this.burstMin = min;
+         this.burstMax = max;
          return this;
       }
 
       public ClickProfile.ProfileBuilder resetPause(double lowMs, double highMs) {
-         this.open = lowMs;
-         this.poll = highMs;
+         this.resetPauseLowMs = lowMs;
+         this.resetPauseHighMs = highMs;
          return this;
       }
 
       public ClickProfile.ProfileBuilder pulse(double ms) {
-         this.push = ms;
+         this.pulseMs = ms;
          return this;
       }
 

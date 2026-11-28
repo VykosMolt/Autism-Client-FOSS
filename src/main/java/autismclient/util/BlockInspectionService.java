@@ -25,19 +25,19 @@ import net.minecraft.world.phys.HitResult.Type;
 public final class BlockInspectionService {
    static final String FORMAT_ID = "autism:block_data/v1";
    private static final long PENDING_TIMEOUT_NANOS = 1500000000L;
-   private static boolean init_Z;
+   private static boolean inspecting;
    private static BlockInspectionService.PendingInspection pendingInspection;
 
    private BlockInspectionService() {
    }
 
    public static boolean isBusy() {
-      return init_Z || pendingInspection != null;
+      return inspecting || pendingInspection != null;
    }
 
    public static void tick(Minecraft mc) {
       if (mc == null || mc.options == null || !mc.options.keyUse.isDown() || !inspectKeysDown(mc)) {
-         init_Z = false;
+         inspecting = false;
       }
 
       BlockInspectionService.PendingInspection pending = pendingInspection;
@@ -71,11 +71,11 @@ public final class BlockInspectionService {
          return false;
       }
 
-      if (init_Z) {
+      if (inspecting) {
          return true;
       }
 
-      init_Z = true;
+      inspecting = true;
       if (mc.level == null) {
          bi.write("Block data unavailable.");
          return true;

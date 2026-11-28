@@ -96,7 +96,7 @@ public final class StrongholdRingEstimator {
                                  }
 
                                  if (consistent) {
-                                    double weight = Math.log(prior) + likelihood + init(distances, distance, ring);
+                                    double weight = Math.log(prior) + likelihood + otherRingsLogLikelihood(distances, distance, ring);
                                     candidates.add(new StrongholdRingEstimator.WeightedCandidate(new Vec3(x, 0.0, z), weight));
                                     maxLog = Math.max(maxLog, weight);
                                     if (candidates.size() > 8192) {
@@ -194,7 +194,7 @@ public final class StrongholdRingEstimator {
       return samples;
    }
 
-   private static double init(double[][] samples, double distance, int candidateRing) {
+   private static double otherRingsLogLikelihood(double[][] samples, double distance, int candidateRing) {
       double log = 0.0;
 
       for (int ring = 0; ring < RING_STRONGHOLDS.length; ring++) {

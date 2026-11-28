@@ -43,8 +43,8 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
    public AutismCustomFilterOverlay(Font textRenderer) {
       this.font = textRenderer;
-      this.panelWidth = this.pop_I_5();
-      this.panelHeight = this.tick_I_3();
+      this.panelWidth = this.defaultPanelWidth();
+      this.panelHeight = this.defaultPanelHeight();
       this.c2sSearch = this.createSearchInput("Search C2S packets...");
       this.s2cSearch = this.createSearchInput("Search S2C packets...");
       this.packetSelector = new AutismPacketSelectorOverlay(textRenderer);
@@ -78,12 +78,12 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
    @Override
    public int getMinWidth() {
-      return this.pop_I_5();
+      return this.defaultPanelWidth();
    }
 
    @Override
    public int getMinHeight() {
-      return this.push_I_5() + this.listHeightForRows(1) * 2;
+      return this.chromeHeight() + this.listHeightForRows(1) * 2;
    }
 
    @Override
@@ -176,7 +176,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
          int wantC2s = this.listHeightForRows(this.clampVisibleRows(module.getCustomC2sPacketsCopy().size()));
          int wantS2c = this.listHeightForRows(this.clampVisibleRows(module.getCustomS2cPacketsCopy().size()));
-         this.panelHeight = this.push_I_5() + wantC2s + wantS2c;
+         this.panelHeight = this.chromeHeight() + wantC2s + wantS2c;
          OverlayBounds clamped = this.clampToScreen(this, new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight, this.boundsVisible, this.boundsCollapsed));
          this.panelX = clamped.x;
          this.panelY = clamped.y;
@@ -189,9 +189,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
             this.renderInactiveDim(context, bounds, this.boundsCollapsed, this.draggingWindow);
          } else {
             try {
-               int x = this.panelX + this.run_I_3();
-               int y = this.panelY + 14 + this.get_I_3();
-               int width = this.panelWidth - this.run_I_3() * 2;
+               int x = this.panelX + this.horizontalPadding();
+               int y = this.panelY + 14 + this.topPadding();
+               int width = this.panelWidth - this.horizontalPadding() * 2;
                y = this.renderButtonWithTooltip(
                   context,
                   mouseX,
@@ -217,11 +217,11 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                   counts,
                   ThemedTextHelper.TextTone.MUTED,
                   x + width - countsW,
-                  UiLayoutMath.centerTextY(presetsY, this.set_I_3(), this.theme.init_I_l(autismclient.gui.f.b.l.write), this.theme.flush()),
+                  UiLayoutMath.centerTextY(presetsY, this.controlHeight(), this.theme.init_I_l(autismclient.gui.f.b.l.write), this.theme.flush()),
                   false
                );
-               y += this.add_I_3() - this.searchGap();
-               int[] lists = this.splitWidths(wantC2s, wantS2c, this.panelHeight - this.push_I_5());
+               y += this.sectionGap() - this.searchGap();
+               int[] lists = this.splitWidths(wantC2s, wantS2c, this.panelHeight - this.chromeHeight());
                y = this.renderPacketList(context, mouseX, mouseY, delta, x, y, width, lists[0], true, module, this.c2sSearch, this.c2sList);
                this.renderPacketList(context, mouseX, mouseY, delta, x, y, width, lists[1], false, module, this.s2cSearch, this.s2cList);
             } finally {
@@ -287,7 +287,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY,
          true
       );
-      y += Math.max(this.searchHeight(), this.set_I_3()) + this.searchGap();
+      y += Math.max(this.searchHeight(), this.controlHeight()) + this.searchGap();
       autismclient.gui.ui.widgets.ScrollListLayout.ListLayout baseLayout = this.listLayout(x, y, width, listHeight, filteredPackets.size(), 0);
       int visualScroll = listState.scroll.tickAndClamp(delta, baseLayout.maxScroll());
       autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.listLayout(x, y, width, listHeight, filteredPackets.size(), visualScroll);
@@ -341,9 +341,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          : (
             listLayout.maxScroll() > 0
                ? "Scroll: "
-                  + Math.min(filteredPackets.size(), Math.round((float)listState.scroll.getOffset() / this.start_I_3()) + 1)
+                  + Math.min(filteredPackets.size(), Math.round((float)listState.scroll.getOffset() / this.rowStride()) + 1)
                   + "/"
-                  + Math.max(1, Math.round((float)listLayout.maxScroll() / this.start_I_3()) + 1)
+                  + Math.max(1, Math.round((float)listLayout.maxScroll() / this.rowStride()) + 1)
                : "Click a row to remove"
          );
       if (!footer.isEmpty()) {
@@ -359,7 +359,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          );
       }
 
-      return y + listHeight + this.add_I_3();
+      return y + listHeight + this.sectionGap();
    }
 
    private int buttonWidthFor(String label) {
@@ -373,13 +373,13 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    private int listHeightForRows(int rows) {
-      return rows * this.start_I_3() + 4;
+      return rows * this.rowStride() + 4;
    }
 
-   private int push_I_5() {
-      int top = 14 + this.get_I_3() + this.set_I_3() + this.searchGap() + this.set_I_3() + this.searchGap() + this.add_I_3() - this.searchGap();
-      int section = this.sectionHeaderHeight() + Math.max(this.searchHeight(), this.set_I_3()) + this.searchGap() + this.add_I_3();
-      return top + section * 2 - this.add_I_3() + this.run_I_3();
+   private int chromeHeight() {
+      int top = 14 + this.topPadding() + this.controlHeight() + this.searchGap() + this.controlHeight() + this.searchGap() + this.sectionGap() - this.searchGap();
+      int section = this.sectionHeaderHeight() + Math.max(this.searchHeight(), this.controlHeight()) + this.searchGap() + this.sectionGap();
+      return top + section * 2 - this.sectionGap() + this.horizontalPadding();
    }
 
    private int[] splitWidths(int wantA, int wantB, int available) {
@@ -485,23 +485,23 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          x,
          y,
          w,
-         this.set_I_3(),
+         this.controlHeight(),
          label,
          enabled ? variant : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST,
          enabled,
          mouseX,
          mouseY
       );
-      this.actionButtons.add(new AutismCustomFilterOverlay.ActionButton(x, y, w, this.set_I_3(), action, enabled));
-      return y + this.set_I_3() + this.searchGap();
+      this.actionButtons.add(new AutismCustomFilterOverlay.ActionButton(x, y, w, this.controlHeight(), action, enabled));
+      return y + this.controlHeight() + this.searchGap();
    }
 
    private int renderButtonWithTooltip(
       GuiGraphicsExtractor context, int mouseX, int mouseY, int x, int y, int width, String label, Runnable action, boolean enabled, String animationKey
    ) {
-      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, width, this.set_I_3(), label, enabled, animationKey, mouseX, mouseY);
-      this.actionButtons.add(new AutismCustomFilterOverlay.ActionButton(x, y, width, this.set_I_3(), action, true));
-      return y + this.set_I_3() + this.searchGap();
+      autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, width, this.controlHeight(), label, enabled, animationKey, mouseX, mouseY);
+      this.actionButtons.add(new AutismCustomFilterOverlay.ActionButton(x, y, width, this.controlHeight(), action, true));
+      return y + this.controlHeight() + this.searchGap();
    }
 
    @Override
@@ -532,11 +532,11 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          }
 
          if (button == 0) {
-            if (this.init_Z_AutismCustomFilter(this.c2sList, 1, mouseX, mouseY)) {
+            if (this.beginScrollbarDrag(this.c2sList, 1, mouseX, mouseY)) {
                return true;
             }
 
-            if (this.init_Z_AutismCustomFilter(this.s2cList, 2, mouseX, mouseY)) {
+            if (this.beginScrollbarDrag(this.s2cList, 2, mouseX, mouseY)) {
                return true;
             }
          }
@@ -620,10 +620,10 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          .mouseDragged(this.inputLayoutContext(mouseX, mouseY), (float)mouseX, (float)mouseY, button, (float)deltaX, (float)deltaY)) {
          return true;
       } else if (this.scrollbarDragList == 1) {
-         this.c2sList.scroll.dragToMouseYStepped(this.c2sList.scrollbarMetrics, mouseY, this.scrollbarGrabOffset, this.start_I_3());
+         this.c2sList.scroll.dragToMouseYStepped(this.c2sList.scrollbarMetrics, mouseY, this.scrollbarGrabOffset, this.rowStride());
          return true;
       } else if (this.scrollbarDragList == 2) {
-         this.s2cList.scroll.dragToMouseYStepped(this.s2cList.scrollbarMetrics, mouseY, this.scrollbarGrabOffset, this.start_I_3());
+         this.s2cList.scroll.dragToMouseYStepped(this.s2cList.scrollbarMetrics, mouseY, this.scrollbarGrabOffset, this.rowStride());
          return true;
       } else if (this.draggingWindow && button == 0) {
          OverlayBounds nextBounds = this.clampToScreen(
@@ -643,7 +643,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          return this.packetSelector.mouseScrolled(mouseX, mouseY, amount);
       } else if (this.c2sList.contains(mouseX, mouseY)) {
          int maxScroll = this.listLayout(
-               this.c2sList.init_I,
+               this.c2sList.x,
                this.c2sList.y,
                this.c2sList.width,
                this.c2sList.height,
@@ -651,11 +651,11 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                0
             )
             .maxScroll();
-         this.c2sList.scroll.scrollByWheel(amount, this.start_I_3(), maxScroll);
+         this.c2sList.scroll.scrollByWheel(amount, this.rowStride(), maxScroll);
          return true;
       } else if (this.s2cList.contains(mouseX, mouseY)) {
          int maxScroll = this.listLayout(
-               this.s2cList.init_I,
+               this.s2cList.x,
                this.s2cList.y,
                this.s2cList.width,
                this.s2cList.height,
@@ -663,7 +663,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                0
             )
             .maxScroll();
-         this.s2cList.scroll.scrollByWheel(amount, this.start_I_3(), maxScroll);
+         this.s2cList.scroll.scrollByWheel(amount, this.rowStride(), maxScroll);
          return true;
       } else {
          return false;
@@ -671,10 +671,10 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    private autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout(int x, int y, int width, int listHeight, int rowCount, int scrollOffset) {
-      return autismclient.gui.ui.widgets.ScrollListLayout.compute(x, y, width, listHeight, rowCount, this.rowHeight(), this.start_I_3(), scrollOffset, this.scrollbarWidth(), this.scrollbarGutter());
+      return autismclient.gui.ui.widgets.ScrollListLayout.compute(x, y, width, listHeight, rowCount, this.rowHeight(), this.rowStride(), scrollOffset, this.scrollbarWidth(), this.scrollbarGutter());
    }
 
-   private boolean init_Z_AutismCustomFilter(AutismCustomFilterOverlay.PacketList listState, int dragId, double mouseX, double mouseY) {
+   private boolean beginScrollbarDrag(AutismCustomFilterOverlay.PacketList listState, int dragId, double mouseX, double mouseY) {
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = listState.scrollbarMetrics;
       if (metrics == null || !metrics.isScrollable()) {
          return false;
@@ -686,7 +686,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
       this.scrollbarDragList = dragId;
       this.scrollbarGrabOffset = Math.max(0, (int)mouseY - metrics.thumbY());
-      listState.scroll.dragToMouseYStepped(metrics, mouseY, this.scrollbarGrabOffset, this.start_I_3());
+      listState.scroll.dragToMouseYStepped(metrics, mouseY, this.scrollbarGrabOffset, this.rowStride());
       return true;
    }
 
@@ -751,23 +751,23 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private int pop_I_5() {
+   private int defaultPanelWidth() {
       return 220;
    }
 
-   private int tick_I_3() {
-      return this.push_I_5() + this.listHeightForRows(3) * 2;
+   private int defaultPanelHeight() {
+      return this.chromeHeight() + this.listHeightForRows(3) * 2;
    }
 
-   private int run_I_3() {
+   private int horizontalPadding() {
       return 4;
    }
 
-   private int get_I_3() {
+   private int topPadding() {
       return 4;
    }
 
-   private int set_I_3() {
+   private int controlHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
@@ -775,7 +775,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       return 2;
    }
 
-   private int add_I_3() {
+   private int sectionGap() {
       return 4;
    }
 
@@ -787,7 +787,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   private int start_I_3() {
+   private int rowStride() {
       return this.rowHeight() + 1;
    }
 
@@ -831,7 +831,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    private static final class PacketList {
-      private int init_I;
+      private int x;
       private int y;
       private int width;
       private int height;
@@ -843,7 +843,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       private String cachedQuery = "";
 
       private void setBounds(int x, int y, int width, int height, autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics) {
-         this.init_I = x;
+         this.x = x;
          this.y = y;
          this.width = width;
          this.height = height;
@@ -851,7 +851,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       }
 
       private boolean contains(double mouseX, double mouseY) {
-         return mouseX >= this.init_I && mouseX <= this.init_I + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
+         return mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
       }
    }
 }

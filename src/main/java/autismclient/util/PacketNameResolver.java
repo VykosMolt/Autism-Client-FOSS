@@ -30,21 +30,21 @@ public class PacketNameResolver {
 
       String name = registryName(packetClass);
       if (name != null) {
-         return init_Str_Class_Str(packetClass, stripPacketSuffix(name));
+         return cacheDisplayName(packetClass, stripPacketSuffix(name));
       }
 
       String typeName = packetTypeName(packet);
       if (typeName != null) {
-         return init_Str_Class_Str(packetClass, stripPacketSuffix(typeName));
+         return cacheDisplayName(packetClass, stripPacketSuffix(typeName));
       }
 
       String inspected = inspectSlotPacket(packet, packetClass.getSimpleName());
       if (inspected != null) {
-         return init_Str_Class_Str(packetClass, inspected);
+         return cacheDisplayName(packetClass, inspected);
       }
 
       String readable = readableName(packetClass);
-      return init_Str_Class_Str(packetClass, readable != null ? readable : "Unknown Packet");
+      return cacheDisplayName(packetClass, readable != null ? readable : "Unknown Packet");
    }
 
    public static String directionalName(Packet<?> packet, String direction) {
@@ -60,26 +60,26 @@ public class PacketNameResolver {
       String cacheKey = cacheKey(packetClass, direction);
       String cached = nameCache.get(cacheKey);
       if (cached != null) {
-         return init_Str_ConcurrentMap(classCache, packetClass, cached);
+         return cacheClassName(classCache, packetClass, cached);
       }
 
       String name = registryNameFor(packetClass, direction);
       if (name != null) {
-         return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, stripPacketSuffix(name)));
+         return cacheClassName(classCache, packetClass, cacheKeyName(cacheKey, stripPacketSuffix(name)));
       }
 
       String typeName = packetTypeNameFor(packet, direction);
       if (typeName != null) {
-         return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, stripPacketSuffix(typeName)));
+         return cacheClassName(classCache, packetClass, cacheKeyName(cacheKey, stripPacketSuffix(typeName)));
       }
 
       String inspected = inspectSlotPacket(packet, packetClass.getSimpleName());
       if (inspected != null) {
-         return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, inspected));
+         return cacheClassName(classCache, packetClass, cacheKeyName(cacheKey, inspected));
       }
 
       String readable = readableName(packetClass);
-      return init_Str_ConcurrentMap(classCache, packetClass, init_Str_Str_Str(cacheKey, readable != null ? readable : "Unknown Packet"));
+      return cacheClassName(classCache, packetClass, cacheKeyName(cacheKey, readable != null ? readable : "Unknown Packet"));
    }
 
    private static ConcurrentMap<Class<?>, String> cacheFor(String direction) {
@@ -90,7 +90,7 @@ public class PacketNameResolver {
       }
    }
 
-   private static String init_Str_ConcurrentMap(ConcurrentMap<Class<?>, String> classCache, Class<?> packetClass, String value) {
+   private static String cacheClassName(ConcurrentMap<Class<?>, String> classCache, Class<?> packetClass, String value) {
       if (classCache != null && value != null) {
          classCache.putIfAbsent(packetClass, value);
       }
@@ -106,14 +106,14 @@ public class PacketNameResolver {
 
       String name = registryName(packetClass);
       if (name != null) {
-         return init_Str_Class_Str(packetClass, stripPacketSuffix(name));
+         return cacheDisplayName(packetClass, stripPacketSuffix(name));
       }
 
       String readable = readableName(packetClass);
-      return init_Str_Class_Str(packetClass, readable != null ? readable : "Unknown Packet");
+      return cacheDisplayName(packetClass, readable != null ? readable : "Unknown Packet");
    }
 
-   private static String init_Str_Class_Str(Class<?> packetClass, String value) {
+   private static String cacheDisplayName(Class<?> packetClass, String value) {
       String safe = value == null ? "Unknown Packet" : value;
       if (packetClass != null) {
          NAME_CACHE.putIfAbsent(packetClass, safe);
@@ -122,7 +122,7 @@ public class PacketNameResolver {
       return safe;
    }
 
-   private static String init_Str_Str_Str(String key, String value) {
+   private static String cacheKeyName(String key, String value) {
       String safe = value == null ? "Unknown Packet" : value;
       if (key != null) {
          nameCache.putIfAbsent(key, safe);
@@ -233,7 +233,7 @@ public class PacketNameResolver {
 
          for (Class<? extends Packet<?>> registeredClass : PacketTypeRegistry.ALL_PACKETS) {
             String registeredName = PacketTypeRegistry.getPacketName(registeredClass);
-            if (registeredName != null && init_Z_Str(normalizedText, registeredName, registeredClass)) {
+            if (registeredName != null && matchesRegistered(normalizedText, registeredName, registeredClass)) {
                return registeredName;
             }
          }
@@ -258,7 +258,7 @@ public class PacketNameResolver {
 
          for (Class<? extends Packet<?>> registeredClass : registeredClasses(direction)) {
             String registeredName = PacketTypeRegistry.getPacketName(registeredClass);
-            if (registeredName != null && init_Z_Str(normalizedText, registeredName, registeredClass)) {
+            if (registeredName != null && matchesRegistered(normalizedText, registeredName, registeredClass)) {
                return registeredName;
             }
          }
@@ -287,7 +287,7 @@ public class PacketNameResolver {
       }
    }
 
-   private static boolean init_Z_Str(String normalizedText, String registeredName, Class<? extends Packet<?>> registeredClass) {
+   private static boolean matchesRegistered(String normalizedText, String registeredName, Class<? extends Packet<?>> registeredClass) {
       String normalizedRegistered = normalizeCached(registeredName);
       if (normalizedRegistered.equals(normalizedText)) {
          return true;
@@ -353,13 +353,13 @@ public class PacketNameResolver {
          int lastDot = rawName.lastIndexOf(46);
          String shortName = lastDot >= 0 ? rawName.substring(lastDot + 1) : rawName;
          shortName = shortName.replace('$', '.');
-         return init_Z_Str(shortName) ? null : stripPacketSuffix(shortName);
+         return isAnonymousClassName(shortName) ? null : stripPacketSuffix(shortName);
       } else {
          return null;
       }
    }
 
-   private static boolean init_Z_Str(String name) {
+   private static boolean isAnonymousClassName(String name) {
       String normalized = normalizeCached(name);
       return normalized.startsWith("class") && normalized.length() > 5;
    }

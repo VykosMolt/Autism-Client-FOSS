@@ -17,7 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 
 public final class AiServerIntel {
-   static final long init_J = 5184000000L;
+   static final long FRESH_SCAN_MS = 5184000000L;
    static final int init_I = 40;
    static final int load = 120;
    static final int read = 24;
@@ -56,11 +56,11 @@ public final class AiServerIntel {
                new AiServerIntel.PluginReport(
                   display,
                   autismclient.util.PluginSignatureCatalog.canonicalName(display),
-                  load_Str(init_Str(confidence, display)),
-                  load_Str(init_Str(evidence, display)),
-                  init_List(init_List(commands, display), maxCommands),
-                  init_List(init_List(channels, display), 24),
-                  init_List(init_List(guis, display), 24)
+                  normalizeTag(valueFor(confidence, display)),
+                  normalizeTag(valueFor(evidence, display)),
+                  capped(listFor(commands, display), maxCommands),
+                  capped(listFor(channels, display), 24),
+                  capped(listFor(guis, display), 24)
                )
             );
          }
@@ -70,9 +70,9 @@ public final class AiServerIntel {
       return out;
    }
 
-   static boolean init_Z(String evidence) {
+   static boolean isWeakEvidence(String evidence) {
       boolean var10000;
-      switch (load_Str(evidence)) {
+      switch (normalizeTag(evidence)) {
          case "USER_AUTOCOMPLETE":
          case "SCANNER_AUTOCOMPLETE":
          case "FEATURE":
@@ -87,9 +87,9 @@ public final class AiServerIntel {
       return var10000;
    }
 
-   static boolean load_Z(String confidence) {
+   static boolean isConfident(String confidence) {
       boolean var10000;
-      switch (load_Str(confidence)) {
+      switch (normalizeTag(confidence)) {
          case "EXACT":
          case "STRONG":
             var10000 = true;
@@ -101,11 +101,11 @@ public final class AiServerIntel {
       return var10000;
    }
 
-   static List<AiServerIntel.PluginReport> init(List<AiServerIntel.PluginReport> plugins) {
+   static List<AiServerIntel.PluginReport> unusedRadarPlugins(List<AiServerIntel.PluginReport> plugins) {
       List<AiServerIntel.PluginReport> out = new ArrayList<>();
       if (plugins != null) {
          for (AiServerIntel.PluginReport plugin : plugins) {
-            if (plugin != null && !plugin.displayName().isBlank() && load_Z(plugin.confidence()) && !init_Z(plugin.evidence())) {
+            if (plugin != null && !plugin.displayName().isBlank() && isConfident(plugin.confidence()) && !isWeakEvidence(plugin.evidence())) {
                out.add(plugin);
             }
          }
@@ -115,7 +115,7 @@ public final class AiServerIntel {
       return out;
    }
 
-   static String init_Str(String stored) {
+   static String unusedConfidenceLabel(String stored) {
       String var10000;
       switch (stored == null ? "" : stored.trim().toUpperCase(Locale.ROOT)) {
          case "EXACT":
@@ -134,7 +134,7 @@ public final class AiServerIntel {
       return var10000;
    }
 
-   static JsonObject init_JsonObject(List<AiServerIntel.PluginReport> plugins, int charBudget) {
+   static JsonObject boundedPluginsJson(List<AiServerIntel.PluginReport> plugins, int charBudget) {
       JsonArray entries = new JsonArray();
       int included = 0;
       if (plugins != null) {
@@ -170,7 +170,7 @@ public final class AiServerIntel {
 
       entry.addProperty("confidence", plugin.confidence());
       entry.addProperty("evidence", plugin.evidence());
-      entry.addProperty("radarEligible", load_Z(plugin.confidence()) && !init_Z(plugin.evidence()));
+      entry.addProperty("radarEligible", isConfident(plugin.confidence()) && !isWeakEvidence(plugin.evidence()));
       if (!plugin.commands().isEmpty()) {
          entry.add("commands", AiJson.GSON.toJsonTree(plugin.commands()));
       }
@@ -186,12 +186,12 @@ public final class AiServerIntel {
       return entry;
    }
 
-   private static String load_Str(String value) {
+   private static String normalizeTag(String value) {
       String clean = value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
       return clean.isBlank() ? "UNKNOWN" : clean;
    }
 
-   private static List<String> init_List(Map<String, List<String>> map, String plugin) {
+   private static List<String> listFor(Map<String, List<String>> map, String plugin) {
       if (map != null && !map.isEmpty() && plugin != null && !plugin.isBlank()) {
          List<String> direct = map.get(plugin);
          if (direct != null) {
@@ -212,7 +212,7 @@ public final class AiServerIntel {
       }
    }
 
-   private static String init_Str(Map<String, String> map, String plugin) {
+   private static String valueFor(Map<String, String> map, String plugin) {
       if (map != null && !map.isEmpty() && plugin != null && !plugin.isBlank()) {
          String direct = map.get(plugin);
          if (direct != null) {
@@ -233,7 +233,7 @@ public final class AiServerIntel {
       }
    }
 
-   private static List<String> init_List(List<String> values, int maxItems) {
+   private static List<String> capped(List<String> values, int maxItems) {
       List<String> out = new ArrayList<>();
       if (values == null) {
          return out;
@@ -450,17 +450,17 @@ public final class AiServerIntel {
       );
       List<AiServerIntel.PluginReport> plugins = buildReports(entry.plugins, entry.commands, entry.evidence, entry.channels, entry.guis, entry.confidence, 40);
       out.addProperty("pluginCount", plugins.size());
-      JsonObject bounded = init_JsonObject(plugins, 36000);
+      JsonObject bounded = boundedPluginsJson(plugins, 36000);
 
       for (Entry<String, JsonElement> field : bounded.entrySet()) {
          out.add(field.getKey(), field.getValue());
       }
 
-      init(out, address, brand);
+      addFingerprints(out, address, brand);
       return out;
    }
 
-   private static void init(JsonObject out, String address, String brand) {
+   private static void addFingerprints(JsonObject out, String address, String brand) {
       if (!address.isBlank()) {
          List<autismclient.util.PluginSignatureCatalog.PluginFingerprint> fingerprints;
          try {
@@ -485,7 +485,7 @@ public final class AiServerIntel {
                      "key",
                      nullToEmpty(fingerprint.load()),
                      "channels",
-                     init_List(fingerprint.channels(), 8),
+                     capped(fingerprint.channels(), 8),
                      "score",
                      fingerprint.score(),
                      "basis",

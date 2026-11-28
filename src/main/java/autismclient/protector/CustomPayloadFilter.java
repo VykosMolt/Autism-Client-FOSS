@@ -16,8 +16,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.resources.Identifier;
 
 public final class CustomPayloadFilter {
-   private static final CustomPayloadFilter.Verdict init_IoWorker_DataUtil = new CustomPayloadFilter.Verdict(CustomPayloadFilter.Verdict.VerdictKind.PASS, null);
-   private static final CustomPayloadFilter.Verdict load_IoWorker_DataUtil = new CustomPayloadFilter.Verdict(CustomPayloadFilter.Verdict.VerdictKind.DROP, null);
+   private static final CustomPayloadFilter.Verdict PASS_VERDICT = new CustomPayloadFilter.Verdict(CustomPayloadFilter.Verdict.VerdictKind.PASS, null);
+   private static final CustomPayloadFilter.Verdict DROP_VERDICT = new CustomPayloadFilter.Verdict(CustomPayloadFilter.Verdict.VerdictKind.DROP, null);
    private static final String init_Str = "minecraft";
    private static final String load_Str = "register";
    private static final String read = "unregister";
@@ -27,24 +27,24 @@ public final class CustomPayloadFilter {
    }
 
    public static CustomPayloadFilter.Verdict init() {
-      return init_IoWorker_DataUtil;
+      return PASS_VERDICT;
    }
 
    public static CustomPayloadFilter.Verdict load() {
-      return load_IoWorker_DataUtil;
+      return DROP_VERDICT;
    }
 
    public static CustomPayloadFilter.Verdict init(Packet<?> packet) {
       return verdict(null, packet, ProtectorFeatureFlags.spoofClientVanilla());
    }
 
-   static CustomPayloadFilter.Verdict init(Packet<?> packet, boolean vanillaMode) {
+   static CustomPayloadFilter.Verdict unusedVerdictFor(Packet<?> packet, boolean vanillaMode) {
       return verdict(null, packet, vanillaMode);
    }
 
    static CustomPayloadFilter.Verdict verdict(Connection connection, Packet<?> packet, boolean vanillaMode) {
       if (packet == null) {
-         return init_IoWorker_DataUtil;
+         return PASS_VERDICT;
       }
 
       if (packet instanceof ServerboundCustomPayloadPacket customPayload) {
@@ -52,46 +52,46 @@ public final class CustomPayloadFilter {
          try {
             payload = customPayload.payload();
          } catch (Throwable t) {
-            return vanillaMode ? load_IoWorker_DataUtil : init_IoWorker_DataUtil;
+            return vanillaMode ? DROP_VERDICT : PASS_VERDICT;
          }
 
          if (payload == null) {
-            return vanillaMode ? load_IoWorker_DataUtil : init_IoWorker_DataUtil;
+            return vanillaMode ? DROP_VERDICT : PASS_VERDICT;
          }
 
          if (payload instanceof BrandPayload) {
-            return init_IoWorker_DataUtil;
+            return PASS_VERDICT;
          }
 
          Identifier id = payloadId(payload);
          if (vanillaMode) {
-            return load_IoWorker_DataUtil;
+            return DROP_VERDICT;
          }
 
          if (!ProtectorFeatureFlags.filterChannels()) {
-            init(connection, id);
-            return init_IoWorker_DataUtil;
+            noteRegisterChannel(connection, id);
+            return PASS_VERDICT;
          }
 
          if (ProtectorFeatureFlags.isDirect(packet)) {
-            init(connection, id);
-            return init_IoWorker_DataUtil;
+            noteRegisterChannel(connection, id);
+            return PASS_VERDICT;
          }
 
          if (id == null) {
-            return init_IoWorker_DataUtil;
+            return PASS_VERDICT;
          }
 
          String namespace = id.getNamespace();
          String path = id.getPath();
          if (!"minecraft".equals(namespace) || !"register".equals(path) && !"unregister".equals(path)) {
             if ("minecraft".equals(namespace) && "mco".equals(path)) {
-               return load_IoWorker_DataUtil;
+               return DROP_VERDICT;
             } else {
-               return ModNamespaceCatalog.init(id) ? init_IoWorker_DataUtil : load_IoWorker_DataUtil;
+               return ModNamespaceCatalog.init(id) ? PASS_VERDICT : DROP_VERDICT;
             }
          } else {
-            CustomPayloadFilter.Verdict verdict = init(connection, payload);
+            CustomPayloadFilter.Verdict verdict = inspectPayload(connection, payload);
             if ("register".equals(path) && verdict.kind != CustomPayloadFilter.Verdict.VerdictKind.DROP) {
                LateRegisterSynthesizer.init_V(connection);
             }
@@ -99,11 +99,11 @@ public final class CustomPayloadFilter {
             return verdict;
          }
       } else {
-         return init_IoWorker_DataUtil;
+         return PASS_VERDICT;
       }
    }
 
-   private static void init(Connection connection, Identifier id) {
+   private static void noteRegisterChannel(Connection connection, Identifier id) {
       if (id != null && "minecraft".equals(id.getNamespace()) && "register".equals(id.getPath())) {
          LateRegisterSynthesizer.init_V(connection);
       }
@@ -121,14 +121,14 @@ public final class CustomPayloadFilter {
       return null;
    }
 
-   private static CustomPayloadFilter.Verdict init(Connection connection, CustomPacketPayload payload) {
+   private static CustomPayloadFilter.Verdict inspectPayload(Connection connection, CustomPacketPayload payload) {
       if (payload instanceof RegistrationPayload registrationPayload) {
          List<Identifier> kept = filter(registrationPayload.channels(), ModNamespaceCatalog::init);
          if (kept.size() == registrationPayload.channels().size()) {
-            return init_IoWorker_DataUtil;
+            return PASS_VERDICT;
          } else {
             return kept.isEmpty()
-               ? load_IoWorker_DataUtil
+               ? DROP_VERDICT
                : new CustomPayloadFilter.Verdict(
                   CustomPayloadFilter.Verdict.VerdictKind.REPLACE, new ServerboundCustomPayloadPacket(new RegistrationPayload(registrationPayload.type(), kept))
                );
@@ -136,18 +136,18 @@ public final class CustomPayloadFilter {
       } else {
          List<Identifier> channels = registeredChannels(payload);
          if (channels == null) {
-            init(connection, "uninspectable " + payload.getClass().getName() + " on " + payloadId(payload));
-            return init_IoWorker_DataUtil;
+            warnOnce(connection, "uninspectable " + payload.getClass().getName() + " on " + payloadId(payload));
+            return PASS_VERDICT;
          }
 
          for (Identifier channel : channels) {
             if (!ModNamespaceCatalog.init(channel)) {
-               init(connection, "dropping non-whitelisted register channel " + channel);
-               return load_IoWorker_DataUtil;
+               warnOnce(connection, "dropping non-whitelisted register channel " + channel);
+               return DROP_VERDICT;
             }
          }
 
-         return init_IoWorker_DataUtil;
+         return PASS_VERDICT;
       }
    }
 
@@ -174,7 +174,7 @@ public final class CustomPayloadFilter {
       }
    }
 
-   private static void init(Connection connection, String detail) {
+   private static void warnOnce(Connection connection, String detail) {
       if (LateRegisterSynthesizer.init_Z(connection)) {
          AutismClientAddon.LOG.warn("[AutismProtector] Register fallback engaged ({}); passing by whitelist verdict only.", detail);
       }

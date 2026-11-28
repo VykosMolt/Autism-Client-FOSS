@@ -19,10 +19,10 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    private autismclient.gui.ui.layout.ScrollableListView listView;
    private List<AutismItemNbtInspectOverlay.WrappedLine> wrappedLines = Collections.emptyList();
    private boolean layoutDirty = true;
-   private boolean update_Z;
+   private boolean layoutRaw;
    private int layoutWidth;
-   private boolean sync_Z;
-   private boolean flush_Z;
+   private boolean rawTab;
+   private boolean dragging;
    private double dragOffsetX;
    private double dragOffsetY;
 
@@ -94,7 +94,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          OverlayManager manager = OverlayManager.getInstance();
          manager.register(this);
          this.inspection = inspection;
-         this.sync_Z = false;
+         this.rawTab = false;
          this.windowVisible = true;
          this.windowCollapsed = false;
          this.listView = null;
@@ -139,7 +139,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    public void hideWindow() {
       this.windowVisible = false;
-      this.flush_Z = false;
+      this.dragging = false;
       this.listView = null;
    }
 
@@ -148,10 +148,10 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       if (this.windowVisible || this.isClosing()) {
          OverlayBounds bounds = this.getBounds();
          String title = this.inspection == null ? "NBT Inspector" : this.inspection.init_Str();
-         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.windowCollapsed, this.flush_Z);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.windowCollapsed, this.dragging);
          boolean clipped = this.beginBodyClip(context, bounds, this.windowCollapsed);
          if (!clipped) {
-            this.renderInactiveDim(context, bounds, this.windowCollapsed, this.flush_Z);
+            this.renderInactiveDim(context, bounds, this.windowCollapsed, this.dragging);
          } else {
             try {
                if (this.inspection != null) {
@@ -166,7 +166,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                         tab.read(),
                         this.tabHeight(),
                         tab.label(),
-                        "Raw".equals(tab.label()) == this.sync_Z,
+                        "Raw".equals(tab.label()) == this.rawTab,
                         mouseX,
                         mouseY
                      );
@@ -245,7 +245,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
                );
             } finally {
                this.endBodyClip(context, clipped);
-               this.renderInactiveDim(context, bounds, this.windowCollapsed, this.flush_Z);
+               this.renderInactiveDim(context, bounds, this.windowCollapsed, this.dragging);
             }
 
             return;
@@ -265,7 +265,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             this.hideWindow();
             return true;
          } else {
-            this.flush_Z = true;
+            this.dragging = true;
             this.dragOffsetX = mouseX - this.windowX;
             this.dragOffsetY = mouseY - this.windowY;
             return true;
@@ -280,7 +280,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
             for (AutismItemNbtInspectOverlay.TabButton tab : this.tabs(tabY)) {
                if (tab.contains(mouseX, mouseY, this.tabHeight())) {
-                  this.sync_Z = "Raw".equals(tab.label());
+                  this.rawTab = "Raw".equals(tab.label());
                   this.layoutDirty = true;
                   if (this.listView != null) {
                      this.listView.setScrollOffset(0);
@@ -310,15 +310,15 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-      if (button == 0 && this.flush_Z) {
-         this.flush_Z = false;
+      if (button == 0 && this.dragging) {
+         this.dragging = false;
          this.saveBounds();
          return true;
       } else if (button == 0 && this.listView != null) {
          this.listView.mouseReleased();
          return true;
       } else {
-         this.flush_Z = false;
+         this.dragging = false;
          return false;
       }
    }
@@ -329,7 +329,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          this.listView.mouseDragged(mouseX, mouseY);
       }
 
-      if (this.windowVisible && button == 0 && this.flush_Z) {
+      if (this.windowVisible && button == 0 && this.dragging) {
          this.setBounds(new OverlayBounds((int)Math.round(mouseX - this.dragOffsetX), (int)Math.round(mouseY - this.dragOffsetY), this.windowWidth, this.windowHeight, this.windowVisible, this.windowCollapsed));
          return true;
       } else {
@@ -400,7 +400,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
    public void setCollapsed(boolean collapsed) {
       if (this.windowCollapsed != collapsed) {
          this.windowCollapsed = collapsed;
-         this.flush_Z = false;
+         this.dragging = false;
          if (collapsed) {
             this.clearFocusAndDismissMenu();
          }
@@ -433,16 +433,16 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       if (this.inspection == null) {
          return List.of();
       } else {
-         return this.sync_Z ? this.inspection.rawLines() : this.inspection.lines();
+         return this.rawTab ? this.inspection.rawLines() : this.inspection.lines();
       }
    }
 
    private void rewrap(int maxWidth) {
-      if (this.layoutDirty || this.update_Z != this.sync_Z || this.layoutWidth != maxWidth) {
+      if (this.layoutDirty || this.layoutRaw != this.rawTab || this.layoutWidth != maxWidth) {
          if (this.inspection == null) {
             this.wrappedLines = Collections.emptyList();
             this.layoutDirty = false;
-            this.update_Z = this.sync_Z;
+            this.layoutRaw = this.rawTab;
             this.layoutWidth = maxWidth;
          } else {
             List<AutismItemNbtInspectOverlay.WrappedLine> wrapped = new ArrayList<>();
@@ -453,7 +453,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
 
             this.wrappedLines = wrapped;
             this.layoutDirty = false;
-            this.update_Z = this.sync_Z;
+            this.layoutRaw = this.rawTab;
             this.layoutWidth = maxWidth;
          }
       }
@@ -746,7 +746,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
       return this.windowY + this.windowHeight - this.footerHeight();
    }
 
-   private boolean poll_Z_6() {
+   private boolean hasInspection() {
       return !AutismLiteVariant.enabled()
          && this.inspection != null
          && this.inspection.stack() != null
@@ -764,7 +764,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
          + this.footerButtonWidth("Copy Raw")
          + this.footerButtonWidth("Copy Nice")
          + this.buttonGap();
-      if (this.poll_Z_6()) {
+      if (this.hasInspection()) {
          need += this.footerButtonWidth("Fill Editor") + this.buttonGap();
       }
 

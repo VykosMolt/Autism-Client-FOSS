@@ -10,7 +10,7 @@ final class TargetHurtWindowTracker {
    private static final int UNSET = -2147483648;
    private static final int RING_SIZE = 8;
    private final Map<Integer, TargetHurtWindowTracker.HurtWindow> windows = new HashMap<>();
-   private final int[] init_IArr = new int[8];
+   private final int[] ringSamples = new int[8];
    private int ringCount;
    private int ringIndex;
 
@@ -19,7 +19,7 @@ final class TargetHurtWindowTracker {
          return Math.max(0, Math.min(40, fallback));
       }
 
-      int[] sorted = Arrays.copyOf(this.init_IArr, this.ringCount);
+      int[] sorted = Arrays.copyOf(this.ringSamples, this.ringCount);
       Arrays.sort(sorted);
       return sorted[this.ringCount / 2];
    }
@@ -91,7 +91,7 @@ final class TargetHurtWindowTracker {
    }
 
    private void recordInterval(int ticks) {
-      this.init_IArr[this.ringIndex] = Math.max(0, Math.min(40, ticks));
+      this.ringSamples[this.ringIndex] = Math.max(0, Math.min(40, ticks));
       this.ringIndex = (this.ringIndex + 1) % 8;
       this.ringCount = Math.min(8, this.ringCount + 1);
    }

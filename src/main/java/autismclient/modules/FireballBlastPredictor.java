@@ -38,7 +38,7 @@ public final class FireballBlastPredictor {
       if (level != null && center != null) {
          long tick = level.getGameTime();
          boolean same = this.level == level && this.savedBlast != null && this.savedBlast.center.equals(center);
-         if (!same || tick != this.tick && !init(this.savedBlast, level, center)) {
+         if (!same || tick != this.tick && !savedBlastStillValid(this.savedBlast, level, center)) {
             this.savedBlast = computeBlast(level, center);
          }
 
@@ -62,7 +62,7 @@ public final class FireballBlastPredictor {
          while (true) {
             if (!var6.hasNext()) {
                this.savedById.keySet().retainAll(live);
-               return init(combined);
+               return toDestroyedBlocks(combined);
             }
 
             IncomingProjectileScanner.ProjectileWarning warning = (IncomingProjectileScanner.ProjectileWarning)var6.next();
@@ -74,7 +74,7 @@ public final class FireballBlastPredictor {
                live.add(id);
                Vec3 center = warning.init_A_DataUtil().init_Vec3();
                saved = this.savedById.get(id);
-               if (init(saved, level, center)) {
+               if (savedBlastStillValid(saved, level, center)) {
                   break;
                }
 
@@ -93,7 +93,7 @@ public final class FireballBlastPredictor {
       }
    }
 
-   private static boolean init(FireballBlastPredictor.SavedBlast saved, Level level, Vec3 center) {
+   private static boolean savedBlastStillValid(FireballBlastPredictor.SavedBlast saved, Level level, Vec3 center) {
       return saved != null
          && saved.center.equals(center)
          && saved.positions.stream().noneMatch(pos -> isLoadedPos(level, pos))
@@ -106,7 +106,7 @@ public final class FireballBlastPredictor {
    private static FireballBlastPredictor.SavedBlast computeBlast(Level level, Vec3 center) {
       Map<BlockPos, BlockState> states = new HashMap<>();
       HashSet<BlockPos> unavailable = new HashSet<>();
-      List<FireballBlastPredictor.DestroyedBlock> blocks = init(pos -> {
+      List<FireballBlastPredictor.DestroyedBlock> blocks = simulateBlast(pos -> {
          if (!isLoadedPos(level, pos)) {
             unavailable.add(pos);
             return null;
@@ -125,7 +125,7 @@ public final class FireballBlastPredictor {
       return level.isInWorldBounds(pos) && level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4);
    }
 
-   static List<FireballBlastPredictor.DestroyedBlock> init(FireballBlastPredictor.BlastWorld world, Vec3 center, float power) {
+   static List<FireballBlastPredictor.DestroyedBlock> simulateBlast(FireballBlastPredictor.BlastWorld world, Vec3 center, float power) {
       if (center != null
          && Double.isFinite(center.x)
          && Double.isFinite(center.y)
@@ -177,13 +177,13 @@ public final class FireballBlastPredictor {
             }
          }
 
-         return init(risks);
+         return toDestroyedBlocks(risks);
       } else {
          return List.of();
       }
    }
 
-   private static List<FireballBlastPredictor.DestroyedBlock> init(Map<BlockPos, Double> risks) {
+   private static List<FireballBlastPredictor.DestroyedBlock> toDestroyedBlocks(Map<BlockPos, Double> risks) {
       List<FireballBlastPredictor.DestroyedBlock> blocks = new ArrayList<>(risks.size());
       risks.forEach((pos, risk) -> blocks.add(new FireballBlastPredictor.DestroyedBlock(pos, risk)));
       blocks.sort(Comparator.comparingLong(block -> block.pos.asLong()));

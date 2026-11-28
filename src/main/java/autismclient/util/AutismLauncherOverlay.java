@@ -50,9 +50,9 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
    private autismclient.gui.ui.layout.ButtonNode delayButton;
    private autismclient.gui.ui.widgets.TextInputWidget chatInput;
    private static final String write_Str = "Type message or /command...";
-   private autismclient.gui.ui.layout.KeyValueLabelNode init_JsonUtil;
-   private autismclient.gui.ui.layout.KeyValueLabelNode load_JsonUtil;
-   private autismclient.gui.ui.layout.KeyValueLabelNode read_JsonUtil;
+   private autismclient.gui.ui.layout.KeyValueLabelNode revisionLabel;
+   private autismclient.gui.ui.layout.KeyValueLabelNode syncIdLabel;
+   private autismclient.gui.ui.layout.KeyValueLabelNode slotLabel;
    private autismclient.gui.ui.layout.CollapsibleSectionNode mainSection;
    private int panelX = 0;
    private int panelY = 0;
@@ -189,8 +189,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       this.rootSurface.withPadding(autismclient.gui.ui.layout.EdgeInsets.uniform(0)).setDrawBorder(false).setDrawFill(false);
       this.rootSurface.getContent().clearChildren();
       this.rootSurface.getContent().withPadding(autismclient.gui.ui.layout.EdgeInsets.ZERO).withGap(0);
-      this.mainSection = new autismclient.gui.ui.layout.CollapsibleSectionNode("Main Menu").withHeaderHeight(this.sectionHeaderHeight()).withContentTopGap(this.valid()).setExpanded(true);
-      this.mainSection.getContent().withPadding(new autismclient.gui.ui.layout.EdgeInsets(1, 0, 1, 1)).withGap(this.get_I_9());
+      this.mainSection = new autismclient.gui.ui.layout.CollapsibleSectionNode("Main Menu").withHeaderHeight(this.sectionHeaderHeight()).withContentTopGap(this.sectionContentTopGap()).setExpanded(true);
+      this.mainSection.getContent().withPadding(new autismclient.gui.ui.layout.EdgeInsets(1, 0, 1, 1)).withGap(this.contentGap());
       this.rootSurface.getContent().addChild(this.mainSection);
       autismclient.gui.ui.layout.ButtonNode macrosButton = this.createButton(
          "Macros", autismclient.gui.f.a.DataUtil.sync, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
@@ -202,7 +202,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
                OverlayManager.getInstance().bringToFront(macroEditorOverlay);
             } else if (this.macroListOverlay != null) {
-               this.init_V_cX(this.macroListOverlay);
+               this.toggleOverlay(this.macroListOverlay);
             }
          }
       );
@@ -212,7 +212,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             macrosButton,
             this.createButton("Fabricator", autismclient.gui.f.a.DataUtil.flush, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
                if (this.fabricatorOverlay != null) {
-                  this.init_V_cX(this.fabricatorOverlay);
+                  this.toggleOverlay(this.fabricatorOverlay);
                }
             })
          );
@@ -224,12 +224,12 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          this.mainSection.getContent(),
          this.createButton("LAN Sync", autismclient.gui.f.a.DataUtil.update, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             if (this.lanSyncOverlay != null) {
-               this.init_V_cX(this.lanSyncOverlay);
+               this.toggleOverlay(this.lanSyncOverlay);
             }
          }),
          this.createButton("Queue", autismclient.gui.f.a.DataUtil.poll, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             if (this.queueEditorOverlay != null) {
-               this.init_V_cX(this.queueEditorOverlay);
+               this.toggleOverlay(this.queueEditorOverlay);
             }
          })
       );
@@ -237,11 +237,11 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          this.mainSection.getContent(),
          this.createButton("Logger", autismclient.gui.f.a.DataUtil.open, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             AutismPacketLoggerOverlay overlay = this.packetLogger();
-            this.init_V_cX(overlay);
+            this.toggleOverlay(overlay);
          }),
          this.createButton("Packets", autismclient.gui.f.a.DataUtil.close, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             if (this.customFilterOverlay != null) {
-               this.init_V_cX(this.customFilterOverlay);
+               this.toggleOverlay(this.customFilterOverlay);
             }
          })
       );
@@ -249,11 +249,11 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          this.mainSection.getContent(),
          this.createButton("Server Info", autismclient.gui.f.a.DataUtil.push, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             AutismServerInfoOverlay overlay = this.serverInfo();
-            this.init_V_cX(overlay);
+            this.toggleOverlay(overlay);
          }),
          this.createButton("Settings", autismclient.gui.f.a.DataUtil.write, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, () -> {
             if (this.keybindOverlay != null) {
-               this.init_V_cX(this.keybindOverlay);
+               this.toggleOverlay(this.keybindOverlay);
             }
          })
       );
@@ -273,31 +273,31 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          );
       }
 
-      this.init_V_Str_Identifier("PACKET", autismclient.gui.f.a.DataUtil.tick);
-      this.sendButton = this.createButton("Send", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::update_V_9).setConnectedToggle(true);
-      this.delayButton = this.createButton("Delay", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::sync_V_8).setConnectedToggle(true);
+      this.addSectionLabel("PACKET", autismclient.gui.f.a.DataUtil.tick);
+      this.sendButton = this.createButton("Send", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::toggleSendPackets).setConnectedToggle(true);
+      this.delayButton = this.createButton("Delay", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::toggleDelayPackets).setConnectedToggle(true);
       this.addButtonPair(this.mainSection.getContent(), this.sendButton, this.delayButton);
       this.addButtonPair(
          this.mainSection.getContent(),
-         this.createButton("Flush", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::flush_V_8),
-         this.createButton("Clear", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::close_V_7)
+         this.createButton("Flush", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::flushQueue),
+         this.createButton("Clear", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::clearQueue)
       );
       if (this.includeScreenSection) {
-         this.init_V_Str_Identifier("SCREEN", autismclient.gui.f.a.DataUtil.run);
+         this.addSectionLabel("SCREEN", autismclient.gui.f.a.DataUtil.run);
          this.addButtonPair(
             this.mainSection.getContent(),
             this.createButton("Close", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this.closeAction != null ? this.closeAction : LauncherQuickActions::update),
-            this.createButton("De-sync", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.desyncAction != null ? this.desyncAction : this::open_V_6)
+            this.createButton("De-sync", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.desyncAction != null ? this.desyncAction : this::desync)
          );
          this.addButtonPair(
             this.mainSection.getContent(),
-            this.createButton("Save", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::poll_V_4),
-            this.createButton("Load", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::set_V_4)
+            this.createButton("Save", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::saveGui),
+            this.createButton("Load", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, this::restoreGui)
          );
          this.addButtonPair(
             this.mainSection.getContent(),
             this.createButton("Title", null, autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, LauncherQuickActions::copyScreenTitle),
-            this.createButton("Disc+Send", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::put_V_3)
+            this.createButton("Disc+Send", null, autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this::disconnectAndSend)
          );
       }
 
@@ -321,21 +321,21 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          syncRow.setGrowX(true);
          int keyColor = LauncherQuickActions.keyColor();
          int[] valueColors = LauncherQuickActions.valueColors();
-         this.init_JsonUtil = syncRow.addChild(
+         this.revisionLabel = syncRow.addChild(
             new autismclient.gui.ui.layout.KeyValueLabelNode("Rev: ", "--").withKeyColor(keyColor).withValueColor(valueColors[0]).withGrowX(true)
          );
-         this.load_JsonUtil = syncRow.addChild(
+         this.syncIdLabel = syncRow.addChild(
             new autismclient.gui.ui.layout.KeyValueLabelNode("SyncID: ", "--").withKeyColor(keyColor).withValueColor(valueColors[1]).withGrowX(true)
          );
-         this.read_JsonUtil = syncRow.addChild(
+         this.slotLabel = syncRow.addChild(
             new autismclient.gui.ui.layout.KeyValueLabelNode("Slot: ", "--").withKeyColor(keyColor).withValueColor(valueColors[2]).withGrowX(true)
          );
          this.mainSection.getContent().addChild(syncRow);
       } else {
          this.chatInput = null;
-         this.init_JsonUtil = null;
-         this.load_JsonUtil = null;
-         this.read_JsonUtil = null;
+         this.revisionLabel = null;
+         this.syncIdLabel = null;
+         this.slotLabel = null;
       }
 
       if (!this.includeChatSection && !this.mainSection.getContent().getChildren().isEmpty()) {
@@ -356,7 +356,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_cX(AutismOverlay overlay) {
+   private void toggleOverlay(AutismOverlay overlay) {
       if (overlay != null) {
          OverlayManager manager = OverlayManager.getInstance();
          boolean wasRegistered = manager.getOverlays().contains(overlay);
@@ -373,9 +373,9 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Str_Identifier(String label, Identifier icon) {
+   private void addSectionLabel(String label, Identifier icon) {
       if (!this.mainSection.getContent().getChildren().isEmpty()) {
-         this.mainSection.getContent().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, this.run_I_11()));
+         this.mainSection.getContent().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, this.sectionLabelSpacing()));
       }
 
       this.mainSection
@@ -391,7 +391,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
    private void addButtonPair(autismclient.gui.ui.layout.ColumnLayout parent, autismclient.gui.ui.layout.ButtonNode left, autismclient.gui.ui.layout.ButtonNode right) {
       autismclient.gui.ui.layout.RowLayout row = new autismclient.gui.ui.layout.RowLayout()
-         .gap(this.get_I_9())
+         .gap(this.contentGap())
          .padding(autismclient.gui.ui.layout.EdgeInsets.ZERO)
          .setUnderlineOnHover(false);
       left.withGrowX(true);
@@ -407,15 +407,15 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          .withGrowX(false)
          .setConnectedStyle(true)
          .setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.write)
-         .setFixedHeight(this.set_I_9())
-         .setHorizontalPadding(this.put_I_3())
+         .setFixedHeight(this.buttonRowHeight())
+         .setHorizontalPadding(this.buttonHorizontalPadding())
          .setMinWidth(this.iconButtonWidth(label, icon))
          .setTextYOffset(0);
       if (icon != null) {
          button.setLeadingIcon(icon)
             .setTextAlign(autismclient.gui.ui.layout.ButtonNode.TextAlign.START)
-            .setIconSize(this.add_I_9())
-            .setIconGap(this.clear_I_3());
+            .setIconSize(this.buttonIconSize())
+            .setIconGap(this.buttonIconGap());
       }
 
       return button;
@@ -428,7 +428,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
    @Override
    public int getMinWidth() {
-      return this.push_I_13();
+      return this.contentWidth();
    }
 
    @Override
@@ -521,7 +521,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
          this.refreshSyncMetrics();
          this.refreshChatPlaceholder();
-         this.panelWidth = this.push_I_13();
+         this.panelWidth = this.contentWidth();
          autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
          float uiMouseX = viewport.toUiX(mouseX);
          float uiMouseY = viewport.toUiY(mouseY);
@@ -550,7 +550,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
          float uiMouseX = viewport.toUiX(mouseX);
          float uiMouseY = viewport.toUiY(mouseY);
-         if (button == 0 && this.init_Z_F_F_3(uiMouseX, uiMouseY) && this.mainSection != null) {
+         if (button == 0 && this.isOverPanel(uiMouseX, uiMouseY) && this.mainSection != null) {
             this.headerPressed = true;
             this.dragMoved = false;
             this.dragOffsetX = uiMouseX - this.panelX;
@@ -618,7 +618,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
 
       if (keyCode == 258 && this.chatInput != null && this.chatInput.isFocused() && this.chatInput.getValue().isEmpty()) {
-         String last = this.load_Str_6();
+         String last = this.lastSentMessage();
          if (last != null && !last.isBlank()) {
             this.chatInput.setValue(last);
             this.chatInput.moveCursorToEnd();
@@ -671,7 +671,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
 
       autismclient.gui.ui.layout.LayoutViewport viewport = this.layoutHost.createViewport();
-      return this.init_Z_F_F_3(viewport.toUiX(mouseX), viewport.toUiY(mouseY));
+      return this.isOverPanel(viewport.toUiX(mouseX), viewport.toUiY(mouseY));
    }
 
    @Override
@@ -709,7 +709,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       this.layoutHost.clearFocus();
    }
 
-   private boolean init_Z_F_F_3(float uiMouseX, float uiMouseY) {
+   private boolean isOverPanel(float uiMouseX, float uiMouseY) {
       return this.mainSection != null
          && uiMouseX >= this.panelX
          && uiMouseX < this.panelX + this.panelWidth
@@ -733,7 +733,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       return new OverlayBounds(x, y, width, height, bounds.visible, bounds.collapsed);
    }
 
-   private int push_I_13() {
+   private int contentWidth() {
       if (MC.font == null) {
          return this.minPanelWidth();
       }
@@ -748,7 +748,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          return this.cachedContentWidth;
       }
 
-      int computed = this.pop_I_13();
+      int computed = this.computeContentWidth();
       this.cachedFont = MC.font;
       this.cachedWidthGeneration = reloadGen;
       this.cachedIncludeFabricator = this.includeFabricatorButton;
@@ -758,7 +758,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       return computed;
    }
 
-   private int pop_I_13() {
+   private int computeContentWidth() {
       int pairWidth = this.minButtonWidth();
       pairWidth = Math.max(pairWidth, this.iconButtonWidth("Macros", autismclient.gui.f.a.DataUtil.sync));
       if (this.includeFabricatorButton) {
@@ -793,15 +793,15 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             this.styleTheme.load(autismclient.gui.f.b.l.load)
          )
          + this.headerIconSize()
-         + this.clear_I_3()
+         + this.buttonIconGap()
          + this.headerTrailingPad();
       int subLabelWidth = this.labelWidth("PACKET");
       if (this.includeScreenSection) {
          subLabelWidth = Math.max(subLabelWidth, this.labelWidth("SCREEN"));
       }
 
-      int contentWidth = Math.max(headerWidth, Math.max(subLabelWidth, Math.max(pairWidth * 2 + this.get_I_9(), chatWidth)));
-      return Math.max(this.minPanelWidth(), contentWidth + this.tick_I_11() * 2 + this.panelExtraWidth());
+      int contentWidth = Math.max(headerWidth, Math.max(subLabelWidth, Math.max(pairWidth * 2 + this.contentGap(), chatWidth)));
+      return Math.max(this.minPanelWidth(), contentWidth + this.contentHorizontalPadding() * 2 + this.panelExtraWidth());
    }
 
    private int iconButtonWidth(String label, Identifier icon) {
@@ -815,10 +815,10 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read),
             this.styleTheme.load(autismclient.gui.f.b.l.read)
          )
-         + this.put_I_3() * 2
+         + this.buttonHorizontalPadding() * 2
          + this.textPad();
       if (icon != null) {
-         width += this.add_I_9() + this.clear_I_3();
+         width += this.buttonIconSize() + this.buttonIconGap();
       }
 
       return width;
@@ -832,7 +832,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
             this.styleTheme.load(autismclient.gui.f.b.l.load)
          )
          + this.headerIconSize()
-         + this.clear_I_3()
+         + this.buttonIconGap()
          + this.textPad();
    }
 
@@ -847,31 +847,31 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          + this.textPad();
    }
 
-   private int tick_I_11() {
+   private int contentHorizontalPadding() {
       return 0;
    }
 
-   private int run_I_11() {
+   private int sectionLabelSpacing() {
       return 0;
    }
 
-   private int get_I_9() {
+   private int contentGap() {
       return 0;
    }
 
-   private int set_I_9() {
+   private int buttonRowHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   private int put_I_3() {
+   private int buttonHorizontalPadding() {
       return 5;
    }
 
-   private int add_I_9() {
+   private int buttonIconSize() {
       return 10;
    }
 
-   private int clear_I_3() {
+   private int buttonIconGap() {
       return 3;
    }
 
@@ -895,7 +895,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   private int valid() {
+   private int sectionContentTopGap() {
       return 0;
    }
 
@@ -927,35 +927,35 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       return 2;
    }
 
-   private void update_V_9() {
+   private void toggleSendPackets() {
       LauncherQuickActions.toggleSendPackets();
    }
 
-   private void sync_V_8() {
+   private void toggleDelayPackets() {
       LauncherQuickActions.toggleDelayPackets();
    }
 
-   private void flush_V_8() {
+   private void flushQueue() {
       LauncherQuickActions.flushQueue();
    }
 
-   private void close_V_7() {
+   private void clearQueue() {
       LauncherQuickActions.clearQueue();
    }
 
-   private void open_V_6() {
+   private void desync() {
       LauncherQuickActions.desync();
    }
 
-   private void poll_V_4() {
+   private void saveGui() {
       LauncherQuickActions.flush();
    }
 
-   private void set_V_4() {
+   private void restoreGui() {
       LauncherQuickActions.restoreGui();
    }
 
-   private void put_V_3() {
+   private void disconnectAndSend() {
       LauncherQuickActions.poll();
    }
 
@@ -977,22 +977,22 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String load_Str_6() {
+   private String lastSentMessage() {
       return LauncherQuickActions.lastSentMessage();
    }
 
    private void refreshSyncMetrics() {
       String[] metrics = LauncherQuickActions.containerMetrics();
-      if (this.init_JsonUtil != null) {
-         this.init_JsonUtil.setValue(metrics[0]);
+      if (this.revisionLabel != null) {
+         this.revisionLabel.setValue(metrics[0]);
       }
 
-      if (this.load_JsonUtil != null) {
-         this.load_JsonUtil.setValue(metrics[1]);
+      if (this.syncIdLabel != null) {
+         this.syncIdLabel.setValue(metrics[1]);
       }
 
-      if (this.read_JsonUtil != null) {
-         this.read_JsonUtil.setValue(metrics[2]);
+      if (this.slotLabel != null) {
+         this.slotLabel.setValue(metrics[2]);
       }
    }
 }

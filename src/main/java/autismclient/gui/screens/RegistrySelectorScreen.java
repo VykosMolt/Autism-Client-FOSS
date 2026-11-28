@@ -46,7 +46,7 @@ import net.minecraft.world.level.block.Blocks;
 
 public class RegistrySelectorScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder STYLE_THEME = new autismclient.gui.f.b.CharEncoder();
-   private static final int init_I = 460;
+   private static final int MAX_PANEL_WIDTH = 460;
    private static final int load_I = 4;
    private static final int read_I = 16;
    private static final Identifier EMPTY_SPAWN_EGG_TEXTURE = Identifier.fromNamespaceAndPath("autismclient", "textures/gui/autism/empty_spawn_egg.png");
@@ -109,30 +109,30 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          int x = this.panelX();
          int y = this.panelY();
          int panelW = this.panelWidth();
-         int panelH = this.get();
-         this.init(graphics, x, y, panelW, panelH, this.titleText(), mx, my);
+         int panelH = this.panelHeight();
+         this.renderPanelFrame(graphics, x, y, panelW, panelH, this.titleText(), mx, my);
          if (panelW < 260 || panelH < 100) {
-            this.load(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.headerHeight(), 12), textColor(), Math.max(0, panelW - 8));
+            this.drawTrimmedText(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.headerHeight(), 12), textColor(), Math.max(0, panelW - 8));
             return;
          }
 
-         this.ensureSearchField(x + 4, this.bodyTop(), panelW - 8, this.flush());
+         this.ensureSearchField(x + 4, this.bodyTop(), panelW - 8, this.searchFieldHeight());
          this.searchField.render(graphics, mx, my, delta);
          RegistrySelectorScreen.PaneLayout pane = this.availablePane();
-         this.init(graphics, pane, pane.init(), "Available", true, mx, my);
-         this.init(graphics, pane, pane.load(), "Selected", false, mx, my);
+         this.renderPane(graphics, pane, pane.init(), "Available", true, mx, my);
+         this.renderPane(graphics, pane, pane.load(), "Selected", false, mx, my);
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, RegistrySelectorScreen.PaneLayout pane, int x, String title, boolean available, int mx, int my) {
+   private void renderPane(GuiGraphicsExtractor graphics, RegistrySelectorScreen.PaneLayout pane, int x, String title, boolean available, int mx, int my) {
       int y = pane.read();
       int w = pane.write();
       int listTop = pane.sync();
       int listH = pane.flush();
-      this.init(graphics, x, y, w, pane.update(), 5, -1442248437, STYLE_THEME.set());
-      this.load(graphics, title, x + 4, this.centeredTextY(y + 2, this.open()), -791321, w - 8);
+      this.fillRoundedRect(graphics, x, y, w, pane.update(), 5, -1442248437, STYLE_THEME.set());
+      this.drawTrimmedText(graphics, title, x + 4, this.centeredTextY(y + 2, this.paneTitleHeight()), -791321, w - 8);
       autismclient.gui.ui.UiClipStack.getInstance().push(graphics, autismclient.gui.f.NetHelper.init(x + 1, listTop, Math.max(0, w - 2), Math.max(0, listH)));
 
       try {
@@ -155,13 +155,13 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       this.availableScroll = this.clamp(this.availableScroll, 0, maxScroll);
       int rowY = y - this.availableScroll;
       int rowH = this.rowHeight();
-      int groupH = this.push();
+      int groupH = this.groupHeaderHeight();
       String lastGroup = "";
 
       for (RegistrySelectorScreen.RegistryEntry entry : rows) {
          if (isGroupedKind(this.setting) && !entry.read.equals(lastGroup)) {
             if (rowY + groupH > y && rowY < y + h) {
-               this.init(graphics, entry.read, x, rowY, w, groupH);
+               this.renderGroupHeader(graphics, entry.read, x, rowY, w, groupH);
             }
 
             rowY += groupH;
@@ -169,7 +169,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          }
 
          if (rowY + rowH > y && rowY < y + h) {
-            this.init(graphics, entry, x, rowY, w, RegistrySelectorScreen.RowAction.ADD, entry.init_Str, mx, my, false);
+            this.renderEntryRow(graphics, entry, x, rowY, w, RegistrySelectorScreen.RowAction.ADD, entry.init_Str, mx, my, false);
          }
 
          rowY += rowH;
@@ -182,7 +182,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       this.selectedScroll = this.clamp(this.selectedScroll, 0, maxScroll);
       int rowH = this.rowHeight();
       if (rows.isEmpty()) {
-         this.load(graphics, "Nothing selected.", x + 4, this.centeredTextY(y, rowH), textColor(), w - 8);
+         this.drawTrimmedText(graphics, "Nothing selected.", x + 4, this.centeredTextY(y, rowH), textColor(), w - 8);
       } else {
          int first = this.clamp(this.selectedScroll / rowH, 0, Math.max(0, rows.size() - 1));
          int last = this.clamp((this.selectedScroll + h - 1) / rowH, 0, rows.size() - 1);
@@ -191,18 +191,18 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
             RegistrySelectorScreen.SelectedRow row = rows.get(i);
             int rowY = y - this.selectedScroll + i * rowH;
             if (rowY + rowH > y && rowY < y + h) {
-               this.init(graphics, row.entry(), x, rowY, w, RegistrySelectorScreen.RowAction.REMOVE, row.id, mx, my, row.init_Z);
+               this.renderEntryRow(graphics, row.entry(), x, rowY, w, RegistrySelectorScreen.RowAction.REMOVE, row.id, mx, my, row.init_Z);
             }
          }
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, String label, int x, int y, int w, int groupH) {
+   private void renderGroupHeader(GuiGraphicsExtractor graphics, String label, int x, int y, int w, int groupH) {
       autismclient.gui.ui.widgets.PanelSurfaceHelper.drawSectionHeader(graphics, x, y, w, groupH - 1);
-      this.load(graphics, label, x + 4, this.centeredTextY(y, groupH - 1), textColor(), w - 8);
+      this.drawTrimmedText(graphics, label, x + 4, this.centeredTextY(y, groupH - 1), textColor(), w - 8);
    }
 
-   private void init(
+   private void renderEntryRow(
       GuiGraphicsExtractor graphics,
       RegistrySelectorScreen.RegistryEntry entry,
       int x,
@@ -221,7 +221,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, y, w, rowH - 1, over ? -1441000940 : -1441722092);
       int textX = x + 4;
       if (entry != null && !invalid) {
-         this.init(graphics, entry, x + 2, y + Math.max(0, (rowH - 1 - 16) / 2));
+         this.renderEntryIcon(graphics, entry, x + 2, y + Math.max(0, (rowH - 1 - 16) / 2));
          textX = x + 2 + 16 + 4;
       }
 
@@ -230,13 +230,13 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int actionY = y + (rowH - 1 - actionW) / 2;
       int textMax = actionX - 4 - textX;
       int textY = this.centeredTextY(y, rowH - 1);
-      this.load(graphics, label, textX, textY, invalid ? ThemePaletteManager.recolor(-50373, ThemePaletteManager.ColorRole.DANGER) : -791321, textMax);
+      this.drawTrimmedText(graphics, label, textX, textY, invalid ? ThemePaletteManager.recolor(-50373, ThemePaletteManager.ColorRole.DANGER) : -791321, textMax);
       if (!id.equals(label)) {
          int labelW = Math.min(textMax, autismclient.gui.f.b.k.init(this.font, label, STYLE_THEME.init_Identifier_l(l.read), 0));
          int idX = textX + labelW + 4;
          int idMax = textX + textMax - idX;
          if (idMax >= 16) {
-            this.load(graphics, id, idX, textY, textColor(), idMax);
+            this.drawTrimmedText(graphics, id, idX, textY, textColor(), idMax);
          }
       }
 
@@ -249,7 +249,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       this.hitRegions.add(new RegistrySelectorScreen.HitRegion(type, x, y, w, rowH, value));
    }
 
-   private void init(GuiGraphicsExtractor graphics, RegistrySelectorScreen.RegistryEntry entry, int x, int y) {
+   private void renderEntryIcon(GuiGraphicsExtractor graphics, RegistrySelectorScreen.RegistryEntry entry, int x, int y) {
       if (entry.init_Z()) {
          graphics.blit(EMPTY_SPAWN_EGG_TEXTURE, x, y, x + 16, y + 16, 0.0F, 1.0F, 0.0F, 1.0F);
       } else {
@@ -260,7 +260,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, int x, int y, int width, int height, String title, int mx, int my) {
+   private void renderPanelFrame(GuiGraphicsExtractor graphics, int x, int y, int width, int height, String title, int mx, int my) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, height);
       int headerH = this.headerHeight();
       autismclient.gui.ui.widgets.DialogFrameRenderer.draw(
@@ -302,13 +302,13 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          RegistrySelectorScreen.HitRegion hit = this.hitRegions.get(i);
          if (hit.contains(mx, my)
             && (hit.action != RegistrySelectorScreen.RowAction.ADD || this.isOverAvailablePane(mx, my))
-            && (hit.action != RegistrySelectorScreen.RowAction.REMOVE || this.load(mx, my))) {
+            && (hit.action != RegistrySelectorScreen.RowAction.REMOVE || this.isOverSelectedPane(mx, my))) {
             switch (hit.action) {
                case ADD:
-                  this.init_V_Str_6(hit.value);
+                  this.addSelectedId(hit.value);
                   break;
                case REMOVE:
-                  this.load_V_2(hit.value);
+                  this.removeSelectedId(hit.value);
                   break;
                case CLOSE:
                   this.onClose();
@@ -355,7 +355,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       if (this.isOverAvailablePane(mx, my)) {
          this.availableScroll += amount;
       } else {
-         if (!this.load(mx, my)) {
+         if (!this.isOverSelectedPane(mx, my)) {
             return true;
          }
 
@@ -411,19 +411,19 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init_V_Str_6(String id) {
+   private void addSelectedId(String id) {
       List<String> tokens = PipeDelimitedListUtil.split(this.module.value(this.setting.id()));
       LinkedHashSet<String> valid = this.validIds(tokens);
-      List<String> invalid = this.init_List_List_2(tokens);
+      List<String> invalid = this.invalidIds(tokens);
       valid.add(id);
       this.storeIds(valid, invalid);
       this.clampScrolls();
    }
 
-   private void load_V_2(String id) {
+   private void removeSelectedId(String id) {
       List<String> tokens = PipeDelimitedListUtil.split(this.module.value(this.setting.id()));
       LinkedHashSet<String> valid = this.validIds(tokens);
-      List<String> invalid = this.init_List_List_2(tokens);
+      List<String> invalid = this.invalidIds(tokens);
       String normalized = RegistryIdValidator.normalize(id);
       valid.remove(normalized);
       invalid.removeIf(token -> token.equals(id) || RegistryIdValidator.normalize(token).equals(normalized));
@@ -460,7 +460,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return out;
    }
 
-   private List<String> init_List_List_2(List<String> tokens) {
+   private List<String> invalidIds(List<String> tokens) {
       if (!this.hasBlockFilter()) {
          return RegistryIdValidator.invalidIds(this.setting.kind(), tokens);
       }
@@ -508,7 +508,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
             selectedRows.add(new RegistrySelectorScreen.SelectedRow(id, entry == null ? this.plainEntry(id) : entry, false));
          }
 
-         for (String invalid : this.init_List_List_2(tokens)) {
+         for (String invalid : this.invalidIds(tokens)) {
             selectedRows.add(new RegistrySelectorScreen.SelectedRow(invalid, this.labeledEntry("Invalid: " + invalid, invalid), true));
          }
 
@@ -521,7 +521,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          }
 
          if (!needle.isEmpty()) {
-            available.sort(Comparator.comparingInt(entryx -> init_I_NodeWalker_DataUti_Str(entryx, needle)));
+            available.sort(Comparator.comparingInt(entryx -> matchRank(entryx, needle)));
          }
 
          this.cachedRawValue = rawValue;
@@ -536,7 +536,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return this.entriesById.get(id);
    }
 
-   private static int init_I_NodeWalker_DataUti_Str(RegistrySelectorScreen.RegistryEntry entry, String needle) {
+   private static int matchRank(RegistrySelectorScreen.RegistryEntry entry, String needle) {
       String path = entry.load();
       int colon = path.indexOf(58);
       if (colon >= 0 && colon + 1 < path.length()) {
@@ -640,7 +640,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                            new RegistrySelectorScreen.RegistryEntry(
                               this.lowerId(soundId),
                               this.displayName(soundId),
-                              this.load(soundId),
+                              this.soundGroup(soundId),
                               this.soundIcon(soundId, this.spawnEggsByType()),
                               false
                            )
@@ -679,37 +679,37 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       String path = soundId.getPath().toLowerCase(Locale.ROOT);
       String normalized = path.replace('.', '_');
       String[] parts = normalized.split("_+");
-      ItemStack known = this.init_ItemStack_Str(normalized);
+      ItemStack known = this.knownSoundIcon(normalized);
       if (!known.isEmpty()) {
          return known;
       }
 
       if (path.startsWith("entity.")) {
-         ItemStack entity = this.init_ItemStack_StrArr_Map(parts, spawnEggs);
+         ItemStack entity = this.entityIconFor(parts, spawnEggs);
          if (!entity.isEmpty()) {
             return entity;
          }
       }
 
       if (path.startsWith("block.")) {
-         ItemStack block = this.init_ItemStack_StrArr(parts);
+         ItemStack block = this.blockIconFor(parts);
          if (!block.isEmpty()) {
             return block;
          }
       }
 
       if (path.startsWith("item.")) {
-         ItemStack item = this.load(parts);
+         ItemStack item = this.itemIconFor(parts);
          if (!item.isEmpty()) {
             return item;
          }
       }
 
-      ItemStack registry = this.load(parts, spawnEggs);
+      ItemStack registry = this.registryIconFor(parts, spawnEggs);
       return registry.isEmpty() ? DisplayItemStackFactory.displayStack(Items.NOTE_BLOCK) : registry;
    }
 
-   private ItemStack init_ItemStack_Str(String normalizedPath) {
+   private ItemStack knownSoundIcon(String normalizedPath) {
       if (normalizedPath.contains("fishing_bobber")) {
          return DisplayItemStackFactory.displayStack(Items.FISHING_ROD);
       } else if (normalizedPath.contains("lava")) {
@@ -743,8 +743,8 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private ItemStack init_ItemStack_StrArr_Map(String[] parts, Map<EntityType<?>, ItemStack> spawnEggs) {
-      for (String candidate : this.init_List_StrArr_I(parts, 1)) {
+   private ItemStack entityIconFor(String[] parts, Map<EntityType<?>, ItemStack> spawnEggs) {
+      for (String candidate : this.candidateNames(parts, 1)) {
          EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(Identifier.withDefaultNamespace(candidate)).orElse(null);
          if (type != null) {
             ItemStack icon = spawnEggs.getOrDefault(type, ItemStack.EMPTY);
@@ -769,9 +769,9 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private ItemStack init_ItemStack_StrArr(String[] parts) {
-      for (String candidate : this.init_List_StrArr_I(parts, 1)) {
-         ItemStack icon = this.read(candidate);
+   private ItemStack blockIconFor(String[] parts) {
+      for (String candidate : this.candidateNames(parts, 1)) {
+         ItemStack icon = this.blockIcon(candidate);
          if (!icon.isEmpty()) {
             return icon;
          }
@@ -780,8 +780,8 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return ItemStack.EMPTY;
    }
 
-   private ItemStack load(String[] parts) {
-      for (String candidate : this.init_List_StrArr_I(parts, 1)) {
+   private ItemStack itemIconFor(String[] parts) {
+      for (String candidate : this.candidateNames(parts, 1)) {
          ItemStack icon = this.itemIcon(candidate);
          if (!icon.isEmpty()) {
             return icon;
@@ -791,8 +791,8 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return ItemStack.EMPTY;
    }
 
-   private ItemStack load(String[] parts, Map<EntityType<?>, ItemStack> spawnEggs) {
-      for (String candidate : this.init_List_StrArr_I(parts, 0)) {
+   private ItemStack registryIconFor(String[] parts, Map<EntityType<?>, ItemStack> spawnEggs) {
+      for (String candidate : this.candidateNames(parts, 0)) {
          EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(Identifier.withDefaultNamespace(candidate)).orElse(null);
          if (type != null) {
             ItemStack icon = spawnEggs.getOrDefault(type, ItemStack.EMPTY);
@@ -806,7 +806,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
             return item;
          }
 
-         ItemStack block = this.read(candidate);
+         ItemStack block = this.blockIcon(candidate);
          if (!block.isEmpty()) {
             return block;
          }
@@ -815,13 +815,13 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return ItemStack.EMPTY;
    }
 
-   private List<String> init_List_StrArr_I(String[] parts, int start) {
+   private List<String> candidateNames(String[] parts, int start) {
       List<String> out = new ArrayList<>();
 
       for (int len = Math.min(4, parts.length - start); len >= 1; len--) {
          for (int i = start; i + len <= parts.length; i++) {
-            String candidate = this.init(parts, i, len);
-            if (!candidate.isBlank() && !this.init_Z_Str_2(candidate)) {
+            String candidate = this.joinParts(parts, i, len);
+            if (!candidate.isBlank() && !this.isSoundWord(candidate)) {
                out.add(candidate);
             }
          }
@@ -830,7 +830,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return out;
    }
 
-   private String init(String[] parts, int start, int len) {
+   private String joinParts(String[] parts, int start, int len) {
       StringBuilder builder = new StringBuilder();
 
       for (int i = 0; i < len; i++) {
@@ -847,7 +847,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return builder.toString();
    }
 
-   private boolean init_Z_Str_2(String candidate) {
+   private boolean isSoundWord(String candidate) {
       boolean var10000;
       switch (candidate) {
          case "ambient":
@@ -913,7 +913,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return item == Items.AIR ? ItemStack.EMPTY : DisplayItemStackFactory.displayStack(item);
    }
 
-   private ItemStack read(String path) {
+   private ItemStack blockIcon(String path) {
       Block block = BuiltInRegistries.BLOCK.getOptional(Identifier.withDefaultNamespace(path)).orElse(Blocks.AIR);
       return block != Blocks.AIR && block.asItem() != Items.AIR ? DisplayItemStackFactory.forBlock(block) : ItemStack.EMPTY;
    }
@@ -974,7 +974,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return out.isEmpty() ? id.toString() : out.toString();
    }
 
-   private String load(Identifier id) {
+   private String soundGroup(Identifier id) {
       if (id == null) {
          return "";
       } else {
@@ -1014,7 +1014,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private int contentHeight(List<RegistrySelectorScreen.RegistryEntry> rows) {
       int rowH = this.rowHeight();
-      int groupH = this.push();
+      int groupH = this.groupHeaderHeight();
       int height = 0;
       String lastGroup = "";
 
@@ -1036,7 +1036,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private int listContentHeight() {
-      int key = this.rowHeight() * 1000 + this.push();
+      int key = this.rowHeight() * 1000 + this.groupHeaderHeight();
       if (key != this.contentHeightKey) {
          this.contentHeightKey = key;
          this.cachedContentHeight = this.contentHeight(this.entries);
@@ -1054,7 +1054,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return mx >= pane.init() && mx < pane.init() + pane.write() && my >= pane.sync() && my < pane.sync() + pane.flush();
    }
 
-   private boolean load(int mx, int my) {
+   private boolean isOverSelectedPane(int mx, int my) {
       RegistrySelectorScreen.PaneLayout pane = this.availablePane();
       return mx >= pane.load() && mx < pane.load() + pane.write() && my >= pane.sync() && my < pane.sync() + pane.flush();
    }
@@ -1062,13 +1062,13 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    private RegistrySelectorScreen.PaneLayout availablePane() {
       int panelX = this.panelX();
       int panelY = this.panelY();
-      int paneY = this.bodyTop() + this.flush() + 2;
-      int paneH = panelY + this.get() - paneY - 4;
+      int paneY = this.bodyTop() + this.searchFieldHeight() + 2;
+      int paneH = panelY + this.panelHeight() - paneY - 4;
       int paneW = (this.panelWidth() - 8 - 4) / 2;
       int leftX = panelX + 4;
       int rightX = leftX + paneW + 4;
-      int listTop = paneY + 2 + this.open();
-      int listH = paneH - 4 - this.open();
+      int listTop = paneY + 2 + this.paneTitleHeight();
+      int listH = paneH - 4 - this.paneTitleHeight();
       return new RegistrySelectorScreen.PaneLayout(leftX, rightX, paneY, paneW, paneH, listTop, listH);
    }
 
@@ -1076,7 +1076,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   private int flush() {
+   private int searchFieldHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
@@ -1084,7 +1084,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return this.panelY() + this.headerHeight() + 4;
    }
 
-   private int open() {
+   private int paneTitleHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
@@ -1092,7 +1092,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(18);
    }
 
-   private int push() {
+   private int groupHeaderHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
@@ -1119,18 +1119,18 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private int panelY() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.get(), 6);
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.panelHeight(), 6);
    }
 
    private int panelWidth() {
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, 460);
    }
 
-   private int get() {
+   private int panelHeight() {
       int minList = 4 * this.rowHeight();
       int maxList = Math.max(minList, (int)(this.virtualHeight() * 0.65F));
       int list = this.clamp(this.listContentHeight(), minList, maxList);
-      int chrome = this.headerHeight() + 4 + this.flush() + 2 + 4 + this.open() + 4;
+      int chrome = this.headerHeight() + 4 + this.searchFieldHeight() + 2 + 4 + this.paneTitleHeight() + 4;
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, chrome + list);
    }
 
@@ -1138,18 +1138,18 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return Math.max(min, Math.min(max, value));
    }
 
-   private void init(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int radius, int fill, int border) {
+   private void fillRoundedRect(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int radius, int fill, int border) {
       autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), radius, fill, border);
    }
 
-   private void load(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {
+   private void drawTrimmedText(GuiGraphicsExtractor graphics, String text, int x, int y, int color, int maxWidth) {
       String display = autismclient.gui.f.b.k.init(
          this.font, text == null ? "" : text, Math.max(0, maxWidth), STYLE_THEME.init_Identifier_l(l.read), color
       );
       autismclient.gui.f.b.k.init(graphics, this.font, display, STYLE_THEME.init_Identifier_l(l.read), color, x, y, false);
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int w, int h, int color) {
+   private void unusedDrawCenteredText(GuiGraphicsExtractor graphics, String text, int x, int y, int w, int h, int color) {
       String display = autismclient.gui.f.b.k.init(this.font, text == null ? "" : text, Math.max(0, w - 4), STYLE_THEME.init_Identifier_l(l.read), color);
       int tw = autismclient.gui.f.b.k.init(this.font, display, STYLE_THEME.init_Identifier_l(l.read), color);
       int th = STYLE_THEME.init_I_l(l.read);

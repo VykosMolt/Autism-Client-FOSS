@@ -55,15 +55,15 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    private int scrollOffset = 0;
    private int maxScroll = 0;
    private int visualScroll = 0;
-   private boolean close_Z = false;
+   private boolean draggingScrollbar = false;
    private int scrollbarGrabOffset = 0;
    private final autismclient.gui.ui.widgets.ScrollOffsetController scroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
-   private autismclient.gui.ui.layout.SelectableListBox<AutismMacro> init_RenderState = null;
+   private autismclient.gui.ui.layout.SelectableListBox<AutismMacro> localMacroList = null;
    private int localListX = 0;
    private int localListY = 0;
    private int localListWidth = 0;
    private int localListHeight = 0;
-   private autismclient.gui.ui.layout.ScrollableListView init_EventBus = null;
+   private autismclient.gui.ui.layout.ScrollableListView peerList = null;
    private int peerListX = 0;
    private int peerListY = 0;
    private int peerListWidth = 0;
@@ -75,7 +75,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    private final Map<String, String> macroAssignments = new LinkedHashMap<>();
    private String expandedExecutePeer = null;
    private String selectedPeer = null;
-   private final List<AutismLANSyncOverlay.ClickButton> init_List = new ArrayList<>();
+   private final List<AutismLANSyncOverlay.ClickButton> clickButtons = new ArrayList<>();
    private ThemedTextInputBox inputBox;
 
    public AutismLANSyncOverlay(Font textRenderer) {
@@ -112,7 +112,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
    @Override
    public OverlayBounds getBounds() {
-      return new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.push_I_12(), this.visible, this.collapsed);
+      return new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.computePanelHeight(), this.visible, this.collapsed);
    }
 
    @Override
@@ -203,7 +203,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      int h = this.collapsed ? 14 : this.push_I_12();
+      int h = this.collapsed ? 14 : this.computePanelHeight();
       return mouseX >= this.panelX && mouseX <= this.panelX + this.panelWidth && mouseY >= this.panelY && mouseY <= this.panelY + h;
    }
 
@@ -217,22 +217,22 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       return mouseX >= this.panelX && mouseX <= this.panelX + this.panelWidth && mouseY >= this.panelY && mouseY <= this.panelY + 14 && !this.isOverHeaderControl(mouseX, mouseY, bounds);
    }
 
-   private int push_I_12() {
+   private int computePanelHeight() {
       LanSyncManager sync = LanSyncManager.getInstance();
       if (!sync.isRunning()) {
          return 18 + this.lineHeight * 2 + 4;
       }
 
       if (!sync.isInSession()) {
-         return sync.isSearching() ? 14 + this.set_I_8() + this.buttonHeight + 4 : 14 + this.get_I_8() + this.buttonHeight + 4;
+         return sync.isSearching() ? 14 + this.searchingStatusHeight() + this.buttonHeight + 4 : 14 + this.idleStatusHeight() + this.buttonHeight + 4;
       }
 
-      int contentH = this.init_I_aE(sync);
+      int contentH = this.tabContentHeight(sync);
       int total = 14 + this.tabHeight + 2 + contentH + 4 + this.chatInputAreaHeight;
       return Math.max(this.minPanelHeight(), Math.min(total, 500));
    }
 
-   private int init_I_aE(LanSyncManager sync) {
+   private int tabContentHeight(LanSyncManager sync) {
       switch (this.activeTab) {
          case 0:
             int h = 4 + this.lineHeight * 3;
@@ -325,11 +325,11 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       this.panelWidth = this.defaultWidth;
    }
 
-   private void update_V_8() {
+   private void clampScroll() {
       this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.maxScroll));
    }
 
-   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics init_PoolEntry_DataUtil_I_I(int contentY, int contentHeight) {
+   private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(int contentY, int contentHeight) {
       int totalContentHeight = this.maxScroll + contentHeight;
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(
          totalContentHeight,
@@ -350,7 +350,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       return this.panelY + 14 + this.tabHeight + 2;
    }
 
-   private int init_I_I_5(int panelHeight) {
+   private int tabViewportHeight(int panelHeight) {
       int chatTopY = this.panelY + panelHeight - this.chatInputAreaHeight;
       return Math.max(40, chatTopY - 4 - this.tabContentY());
    }
@@ -384,38 +384,38 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private void clearListBox() {
-      this.init_RenderState = null;
+      this.localMacroList = null;
       this.localListX = 0;
       this.localListY = 0;
       this.localListWidth = 0;
       this.localListHeight = 0;
    }
 
-   private boolean poll_Z_7() {
-      return this.init_RenderState != null && this.localListWidth > 0 && this.localListHeight > 0;
+   private boolean hasLocalList() {
+      return this.localMacroList != null && this.localListWidth > 0 && this.localListHeight > 0;
    }
 
-   private boolean write_Z_D_D(double mouseX, double mouseY) {
-      return this.poll_Z_7() && mouseX >= this.localListX && mouseX < this.localListX + this.localListWidth && mouseY >= this.localListY && mouseY < this.localListY + this.localListHeight;
+   private boolean unusedIsOverLocalList(double mouseX, double mouseY) {
+      return this.hasLocalList() && mouseX >= this.localListX && mouseX < this.localListX + this.localListWidth && mouseY >= this.localListY && mouseY < this.localListY + this.localListHeight;
    }
 
    private void clearListView() {
-      this.init_EventBus = null;
+      this.peerList = null;
       this.peerListX = 0;
       this.peerListY = 0;
       this.peerListWidth = 0;
       this.peerListHeight = 0;
    }
 
-   private boolean push_Z_6() {
-      return this.init_EventBus != null && this.peerListWidth > 0 && this.peerListHeight > 0;
+   private boolean hasPeerList() {
+      return this.peerList != null && this.peerListWidth > 0 && this.peerListHeight > 0;
    }
 
-   private boolean update_Z_D_D(double mouseX, double mouseY) {
-      return this.push_Z_6() && mouseX >= this.peerListX && mouseX < this.peerListX + this.peerListWidth && mouseY >= this.peerListY && mouseY < this.peerListY + this.peerListHeight;
+   private boolean unusedIsOverPeerList(double mouseX, double mouseY) {
+      return this.hasPeerList() && mouseX >= this.peerListX && mouseX < this.peerListX + this.peerListWidth && mouseY >= this.peerListY && mouseY < this.peerListY + this.peerListHeight;
    }
 
-   private void init_V_aE(LanSyncManager sync) {
+   private void syncMacroAssignments(LanSyncManager sync) {
       Set<String> connectedPeers = sync.getConnectedClients().keySet();
 
       for (String peer : connectedPeers) {
@@ -433,21 +433,21 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private int peerListContentHeight(LanSyncManager sync) {
-      this.init_V_aE(sync);
+      this.syncMacroAssignments(sync);
       int contentHeight = 0;
 
       for (Entry<String, String> entry : new ArrayList<>(this.macroAssignments.entrySet())) {
          String peer = entry.getKey();
          contentHeight += this.rowPitch();
          if (peer.equals(this.expandedExecutePeer)) {
-            contentHeight += this.init_I_aE_Str(sync, peer) + 4;
+            contentHeight += this.peerSectionHeight(sync, peer) + 4;
          }
       }
 
       return Math.max(this.rowPitch(), contentHeight);
    }
 
-   private int init_I_aE_Str(LanSyncManager sync, String peer) {
+   private int peerSectionHeight(LanSyncManager sync, String peer) {
       int contentHeight = 0;
       List<AutismMacro> myMacroList = MacroLibraryManager.getInstance().getMacros();
       Set<String> myMacroKeys = new LinkedHashSet<>();
@@ -567,9 +567,9 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             }
          }
 
-         this.init_List.clear();
+         this.clickButtons.clear();
          this.computeLayout();
-         int panelHeight = this.push_I_12();
+         int panelHeight = this.computePanelHeight();
          OverlayBounds bounds = new OverlayBounds(this.panelX, this.panelY, this.panelWidth, panelHeight, this.visible, this.collapsed);
          this.renderWindowFrame(ctx, mouseX, mouseY, bounds, "LAN Sync", this.collapsed, this.dragging);
          boolean clipBody = this.beginBodyClip(ctx, bounds, this.collapsed);
@@ -577,7 +577,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             this.renderInactiveDim(ctx, bounds, this.collapsed, this.dragging);
          } else {
             try {
-               this.init_V_I_5(panelHeight);
+               this.layoutInputBox(panelHeight);
                int contentY = this.panelY + 14;
                int chatTopY = this.panelY + panelHeight - this.chatInputAreaHeight;
                if (!sync.isRunning()) {
@@ -589,7 +589,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                } else {
                   this.drawTabs(ctx, mouseX, mouseY, contentY);
                   int tabContentY = this.tabContentY();
-                  int actualTabContentH = this.init_I_I_5(panelHeight);
+                  int actualTabContentH = this.tabViewportHeight(panelHeight);
                   this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.maxScroll));
                   this.scroll.setOffset(this.scrollOffset, this.maxScroll);
                   this.visualScroll = this.scroll.tickAndClamp(delta, this.maxScroll);
@@ -597,7 +597,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                   autismclient.gui.ui.UiClipStack.getInstance().push(ctx, autismclient.gui.f.NetHelper.init(this.panelX, tabContentY, this.panelWidth, actualTabContentH));
                   switch (this.activeTab) {
                      case 0:
-                        this.init_V_GuiGraphicsExtract_3(ctx, mouseX, mouseY, tabContentY, actualTabContentH);
+                        this.renderSessionTab(ctx, mouseX, mouseY, tabContentY, actualTabContentH);
                         break;
                      case 1:
                         this.drawPeersTab(ctx, mouseX, mouseY, tabContentY, actualTabContentH);
@@ -610,12 +610,12 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                   }
 
                   autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_I_I(tabContentY, actualTabContentH);
-                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, scrollbarMetrics, scrollbarMetrics.containsTrack(mouseX, mouseY), this.close_Z);
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics(tabContentY, actualTabContentH);
+                  autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(ctx, scrollbarMetrics, scrollbarMetrics.containsTrack(mouseX, mouseY), this.draggingScrollbar);
                }
 
                if (sync.isRunning() && sync.isInSession()) {
-                  this.init_V_GuiGraphicsExtract_3(ctx, mouseX, mouseY);
+                  this.renderInputLabel(ctx, mouseX, mouseY);
                }
             } finally {
                this.endBodyClip(ctx, clipBody);
@@ -631,11 +631,11 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       this.drawText(ctx, "LAN Sync is currently stopped", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, y + 4 + this.lineHeight);
    }
 
-   private int get_I_8() {
+   private int idleStatusHeight() {
       return 4 + this.lineHeight * 2 + 4;
    }
 
-   private int set_I_8() {
+   private int searchingStatusHeight() {
       return 4 + this.lineHeight + 4;
    }
 
@@ -643,7 +643,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       int lx = this.panelX + this.contentPadding;
       this.drawText(ctx, "Quick Start", autismclient.gui.f.b.l.load, THEME.load(autismclient.gui.f.b.l.read), lx, y + 4);
       this.drawText(ctx, "Host creates, others search & join", autismclient.gui.f.b.l.write, UiColorPalette.textBody(), lx, y + 4 + this.lineHeight);
-      int btnY = y + this.get_I_8();
+      int btnY = y + this.idleStatusHeight();
       int createW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
          autismclient.gui.f.b.k.init(this.textRenderer, "Create", THEME.init_Identifier_l(autismclient.gui.f.b.l.read), 0)
       );
@@ -655,9 +655,9 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       int createX = this.panelX + this.contentPadding + Math.max(0, (this.panelWidth - this.contentPadding * 2 - totalW) / 2);
       int searchX = createX + createW + gap;
       this.drawButton(ctx, createX, btnY, createW, this.buttonHeight, "Create", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mx, my);
-      this.init_List.add(new AutismLANSyncOverlay.ClickButton(createX, btnY, createW, this.buttonHeight, () -> LanSyncManager.getInstance().createSession()));
+      this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(createX, btnY, createW, this.buttonHeight, () -> LanSyncManager.getInstance().createSession()));
       this.drawButton(ctx, searchX, btnY, searchW, this.buttonHeight, "Search", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mx, my);
-      this.init_List.add(new AutismLANSyncOverlay.ClickButton(searchX, btnY, searchW, this.buttonHeight, () -> LanSyncManager.getInstance().startSessionSearch()));
+      this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(searchX, btnY, searchW, this.buttonHeight, () -> LanSyncManager.getInstance().startSessionSearch()));
    }
 
    private void drawSearching(GuiGraphicsExtractor ctx, int mx, int my, int y) {
@@ -665,7 +665,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       String text = "Searching... " + secondsLeft + "s";
       int tw = autismclient.gui.f.b.k.init(this.textRenderer, text, THEME.init_Identifier_l(autismclient.gui.f.b.l.load), -22016);
       this.drawText(ctx, text, autismclient.gui.f.b.l.load, -22016, this.panelX + (this.panelWidth - tw) / 2, y + 4);
-      int btnY = y + this.set_I_8();
+      int btnY = y + this.searchingStatusHeight();
       int cancelW = Math.min(
          this.panelWidth - this.contentPadding * 2,
          autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
@@ -674,10 +674,10 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       );
       int cancelX = this.panelX + (this.panelWidth - cancelW) / 2;
       this.drawButton(ctx, cancelX, btnY, cancelW, this.buttonHeight, "Cancel Search", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mx, my);
-      this.init_List.add(new AutismLANSyncOverlay.ClickButton(cancelX, btnY, cancelW, this.buttonHeight, () -> LanSyncManager.getInstance().cancelSessionSearch()));
+      this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(cancelX, btnY, cancelW, this.buttonHeight, () -> LanSyncManager.getInstance().cancelSessionSearch()));
    }
 
-   private void init_V_I_5(int panelHeight) {
+   private void layoutInputBox(int panelHeight) {
       if (this.inputBox == null) {
          this.inputBox = new ThemedTextInputBox(MC, this.textRenderer, this.panelX + this.contentPadding, this.panelY, this.panelWidth - this.contentPadding * 2, this.inputHeight, true);
          this.inputBox.setHistoryNavigationEnabled(true);
@@ -703,7 +703,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, int mouseX, int mouseY) {
+   private void renderInputLabel(GuiGraphicsExtractor ctx, int mouseX, int mouseY) {
       if (this.inputBox != null) {
          int labelY = this.inputBox.getY() - this.inputLabelHeight;
          ThemedTextHelper.drawTone(ctx, this.textRenderer, "Sync Send", ThemedTextHelper.TextTone.MUTED, this.inputBox.getX(), labelY, false);
@@ -718,7 +718,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          int tx = this.panelX + i * tabW;
          autismclient.gui.ui.widgets.ButtonDrawHelper.init(ctx, this.textRenderer, tx, y, tabW, this.tabHeight, TAB_NAMES[i], i == this.activeTab, mx, my);
          int tabIdx = i;
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(tx, y, tabW, this.tabHeight, () -> {
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(tx, y, tabW, this.tabHeight, () -> {
             this.activeTab = tabIdx;
             this.scrollOffset = 0;
             this.scroll.jumpTo(0, 0);
@@ -729,7 +729,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, int mx, int my, int y, int h) {
+   private void renderSessionTab(GuiGraphicsExtractor ctx, int mx, int my, int y, int h) {
       LanSyncManager sync = LanSyncManager.getInstance();
       int lx = this.panelX + this.contentPadding;
       int cy = y + 4;
@@ -806,7 +806,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          mx,
          my
       );
-      this.init_List
+      this.clickButtons
          .add(new AutismLANSyncOverlay.ClickButton(this.panelX + this.contentPadding, btnY, this.panelWidth - this.contentPadding * 2, this.buttonHeight, () -> LanSyncManager.getInstance().leaveSession()));
    }
 
@@ -851,7 +851,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (canChangeMethod) {
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx, cy, methodW, this.buttonHeight, () -> sync.setExecutionMethod(LanSyncManager.ExecutionMethod.INSTANT)));
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx, cy, methodW, this.buttonHeight, () -> sync.setExecutionMethod(LanSyncManager.ExecutionMethod.INSTANT)));
       }
 
       int tickX = lx + methodW + 2;
@@ -869,7 +869,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (canChangeMethod) {
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(tickX, cy, tickW, this.buttonHeight, () -> sync.setExecutionMethod(LanSyncManager.ExecutionMethod.TICK)));
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(tickX, cy, tickW, this.buttonHeight, () -> sync.setExecutionMethod(LanSyncManager.ExecutionMethod.TICK)));
       }
 
       cy += this.buttonHeight + 2;
@@ -945,7 +945,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
 
          String peerName = client.username;
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx - 2, cy, rowWidth, this.rowHeight, () -> {
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx - 2, cy, rowWidth, this.rowHeight, () -> {
             this.selectedPeer = peerName.equals(this.selectedPeer) ? null : peerName;
             this.saveState();
          }));
@@ -974,7 +974,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                true,
                false
             );
-            this.init_List.add(new AutismLANSyncOverlay.ClickButton(ctrlX, dy, btnS, btnS, () -> {
+            this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(ctrlX, dy, btnS, btnS, () -> {
                int cur = sync.getClientOffsetMs(peerName);
                sync.setClientOffsetMs(peerName, Math.max(0, cur - 1));
             }));
@@ -993,7 +993,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                true,
                false
             );
-            this.init_List.add(new AutismLANSyncOverlay.ClickButton(ctrlX, dy, btnS, btnS, () -> {
+            this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(ctrlX, dy, btnS, btnS, () -> {
                int cur = sync.getClientOffsetMs(peerName);
                sync.setClientOffsetMs(peerName, cur + 1);
             }));
@@ -1004,13 +1004,13 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                )
             );
             this.drawButton(ctx, ctrlX, dy, resetW, btnS, "Reset", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true, mx, my);
-            this.init_List.add(new AutismLANSyncOverlay.ClickButton(ctrlX, dy, resetW, btnS, () -> sync.setClientOffsetMs(peerName, 0)));
+            this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(ctrlX, dy, resetW, btnS, () -> sync.setClientOffsetMs(peerName, 0)));
             cy += detailH + 2;
          }
       }
 
       this.maxScroll = 0;
-      this.update_V_8();
+      this.clampScroll();
    }
 
    private void drawQueueTab(GuiGraphicsExtractor ctx, int mx, int my, int y, int h) {
@@ -1038,7 +1038,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (syncIdle) {
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx, cy, methodW, this.buttonHeight, () -> sync.setExecutionMethod(LanSyncManager.ExecutionMethod.INSTANT)));
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx, cy, methodW, this.buttonHeight, () -> sync.setExecutionMethod(LanSyncManager.ExecutionMethod.INSTANT)));
       }
 
       int tickX = lx + methodW + 2;
@@ -1056,7 +1056,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (syncIdle) {
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(tickX, cy, tickW, this.buttonHeight, () -> sync.setExecutionMethod(LanSyncManager.ExecutionMethod.TICK)));
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(tickX, cy, tickW, this.buttonHeight, () -> sync.setExecutionMethod(LanSyncManager.ExecutionMethod.TICK)));
       }
 
       cy += this.buttonHeight + 2;
@@ -1079,13 +1079,13 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (syncIdle && !this.configurationOnly) {
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> sync.triggerDelayPacketsSync(!AutismSessionState.getInstance().isDelayPacketsEnabled())));
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> sync.triggerDelayPacketsSync(!AutismSessionState.getInstance().isDelayPacketsEnabled())));
       }
 
       cy += this.buttonHeight + 2;
       this.drawButton(ctx, lx, cy, btnW, this.buttonHeight, "Share Queue", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, !this.configurationOnly, mx, my);
       if (!this.configurationOnly) {
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> {
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> {
             try {
                String queueData = MacroClipboardCodec.encodeQueue(AutismSessionState.getInstance().getDelayedPackets());
                sync.broadcastQueueData(queueData);
@@ -1110,7 +1110,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          my
       );
       if (syncIdle && !this.configurationOnly) {
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> sync.triggerQueueFlushSync()));
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> sync.triggerQueueFlushSync()));
       }
 
       this.maxScroll = 0;
@@ -1123,7 +1123,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       int btnW = this.panelWidth - this.contentPadding * 2;
       String modeLabel = this.perUserMode ? "Mode: Per-User" : "Mode: Shared Macro";
       this.drawButton(ctx, lx, cy, btnW, this.buttonHeight, modeLabel, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY, true, mx, my);
-      this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> {
+      this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> {
          this.perUserMode = !this.perUserMode;
          this.expandedExecutePeer = null;
          this.scrollOffset = 0;
@@ -1153,7 +1153,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       boolean anyRunning = MacroExecutor.hasVisibleActiveRun();
       if (anyRunning && !this.configurationOnly) {
          this.drawButton(ctx, lx, cy, btnW, this.buttonHeight, "Sync Stop All", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER, true, mx, my);
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> sync.stopAllMacrosOnLan()));
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx, cy, btnW, this.buttonHeight, () -> sync.stopAllMacrosOnLan()));
          cy += this.buttonHeight + 4;
       }
 
@@ -1184,7 +1184,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
 
       this.maxScroll = 0;
-      this.update_V_8();
+      this.clampScroll();
    }
 
    private int drawLocalMacros(GuiGraphicsExtractor ctx, int mx, int my, int cy, int lx, int btnW, LanSyncManager sync) {
@@ -1200,35 +1200,35 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          this.localListY = cy;
          this.localListWidth = this.innerWidth() + 4;
          this.localListHeight = this.macroListViewHeight(localMacros.size());
-         if (this.init_RenderState == null
-            || this.init_RenderState.getX() != this.localListX
-            || this.init_RenderState.getY() != this.localListY
-            || this.init_RenderState.width() != this.localListWidth
-            || this.init_RenderState.height() != this.localListHeight) {
-            this.init_RenderState = new autismclient.gui.ui.layout.SelectableListBox<>(
+         if (this.localMacroList == null
+            || this.localMacroList.getX() != this.localListX
+            || this.localMacroList.getY() != this.localListY
+            || this.localMacroList.width() != this.localListWidth
+            || this.localMacroList.height() != this.localListHeight) {
+            this.localMacroList = new autismclient.gui.ui.layout.SelectableListBox<>(
                this.localListX, this.localListY, this.localListWidth, this.localListHeight, this.rowPitch(), 3, macro -> macro.name, (macro, selected) -> {
                   if (selected) {
                      this.selectedMacroName = macro.name;
                   }
                }
             );
-            this.init_RenderState.addItem(macro -> {
+            this.localMacroList.addItem(macro -> {
                int actionCount = macro.actions != null ? macro.actions.size() : 0;
                return "(" + actionCount + ")";
             });
-            this.init_RenderState.select(-1);
+            this.localMacroList.select(-1);
          }
 
-         this.init_RenderState.setItems(localMacros);
+         this.localMacroList.setItems(localMacros);
 
          for (int i = 0; i < localMacros.size(); i++) {
             if (localMacros.get(i).name.equals(this.selectedMacroName)) {
-               this.init_RenderState.select(i);
+               this.localMacroList.select(i);
                break;
             }
          }
 
-         this.init_RenderState.render(ctx, this.textRenderer, mx, my);
+         this.localMacroList.render(ctx, this.textRenderer, mx, my);
          cy += this.localListHeight;
       }
 
@@ -1269,7 +1269,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       boolean executeEnabled = !this.configurationOnly && this.selectedMacroName != null && syncStatus.allPeersPresent();
       if (shareEnabled) {
          this.drawButton(ctx, lx, cy, shareW, this.buttonHeight, "Send To Peers", autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS, true, mx, my);
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx, cy, shareW, this.buttonHeight, () -> {
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx, cy, shareW, this.buttonHeight, () -> {
             if (this.selectedMacroName != null) {
                sync.shareMacroWithPeers(this.selectedMacroName);
             }
@@ -1291,7 +1291,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
       if (executeEnabled) {
          this.drawButton(ctx, executeX, cy, executeW, this.buttonHeight, executeLabel, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY, true, mx, my);
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(executeX, cy, executeW, this.buttonHeight, () -> {
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(executeX, cy, executeW, this.buttonHeight, () -> {
             if (this.selectedMacroName != null) {
                sync.triggerMacroSync(this.selectedMacroName);
             }
@@ -1304,26 +1304,26 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    }
 
    private int drawPeerMacros(GuiGraphicsExtractor ctx, int mx, int my, int cy, int lx, int btnW, LanSyncManager sync) {
-      this.init_V_aE(sync);
+      this.syncMacroAssignments(sync);
       int rowW = this.innerWidth() + 4;
       this.peerListX = lx - 2;
       this.peerListY = cy;
       this.peerListWidth = rowW;
       int perUserListContentHeight = this.peerListContentHeight(sync);
       this.peerListHeight = this.clampedListHeight(perUserListContentHeight);
-      if (this.init_EventBus == null
-         || this.init_EventBus.getX() != this.peerListX
-         || this.init_EventBus.getY() != this.peerListY
-         || this.init_EventBus.getWidth() != this.peerListWidth
-         || this.init_EventBus.getHeight() != this.peerListHeight) {
-         this.init_EventBus = new autismclient.gui.ui.layout.ScrollableListView(this.peerListX, this.peerListY, this.peerListWidth, this.peerListHeight, this.rowPitch(), 3);
+      if (this.peerList == null
+         || this.peerList.getX() != this.peerListX
+         || this.peerList.getY() != this.peerListY
+         || this.peerList.getWidth() != this.peerListWidth
+         || this.peerList.getHeight() != this.peerListHeight) {
+         this.peerList = new autismclient.gui.ui.layout.ScrollableListView(this.peerListX, this.peerListY, this.peerListWidth, this.peerListHeight, this.rowPitch(), 3);
       }
 
-      this.init_EventBus.setContentHeight(perUserListContentHeight);
-      int drawScroll = this.init_EventBus.getScrollOffset();
+      this.peerList.setContentHeight(perUserListContentHeight);
+      int drawScroll = this.peerList.getScrollOffset();
       int clipTop = this.peerListY + 1;
       int clipBottom = this.peerListY + this.peerListHeight - 1;
-      int rowPitch = this.init_EventBus.getRowHeight();
+      int rowPitch = this.peerList.getRowHeight();
       autismclient.gui.f.PacketUtil.init(
          ctx, autismclient.gui.f.NetHelper.init(this.peerListX, this.peerListY, this.peerListWidth, this.peerListHeight), THEME.reset(), THEME.set()
       );
@@ -1384,7 +1384,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
             String peerKey = peer;
             if (rowVisible) {
-               this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx - 2, cy, rowW, rowPitch, () -> {
+               this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx - 2, cy, rowW, rowPitch, () -> {
                   this.expandedExecutePeer = peerKey.equals(this.expandedExecutePeer) ? null : peerKey;
                   this.saveState();
                }));
@@ -1499,9 +1499,9 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.UiClipStack.getInstance().pop(ctx);
       }
 
-      this.init_EventBus.renderScrollbar(ctx, mx, my);
+      this.peerList.renderScrollbar(ctx, mx, my);
       cy = this.peerListY + this.peerListHeight;
-      AutismLANSyncOverlay.AssignmentStatus var51 = this.init_AutismLANSyncOverl_aE(sync);
+      AutismLANSyncOverlay.AssignmentStatus var51 = this.assignmentStatus(sync);
       LinkedHashSet<String> var521 = this.shareableMacros(var51);
       cy += 4;
       if (!var51.missingAssignments.isEmpty()) {
@@ -1522,7 +1522,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       if (!var521.isEmpty()) {
          String sendLabel = var521.size() > 1 ? "Send Missing (" + var521.size() + ")" : "Send Missing";
          this.drawButton(ctx, lx, cy, shareW, this.buttonHeight, sendLabel, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS, true, mx, my);
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(lx, cy, shareW, this.buttonHeight, () -> {
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(lx, cy, shareW, this.buttonHeight, () -> {
             for (String macroName : var521) {
                sync.shareMacroWithPeers(macroName);
             }
@@ -1542,7 +1542,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
       if (var51.isFullyAssigned() && !this.configurationOnly) {
          this.drawButton(ctx, executeX, cy, executeW, this.buttonHeight, puLabel, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY, true, mx, my);
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(executeX, cy, executeW, this.buttonHeight, () -> {
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(executeX, cy, executeW, this.buttonHeight, () -> {
             if (!var51.assignments.isEmpty()) {
                sync.triggerPerUserMacroSync(var51.assignments);
             }
@@ -1598,7 +1598,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismLANSyncOverlay.AssignmentStatus init_AutismLANSyncOverl_aE(LanSyncManager sync) {
+   private AutismLANSyncOverlay.AssignmentStatus assignmentStatus(LanSyncManager sync) {
       Map<String, String> assignments = new LinkedHashMap<>();
       Set<String> connectedPeers = new LinkedHashSet<>(sync.getConnectedClients().keySet());
 
@@ -1725,7 +1725,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
       String mName = macroName;
       if (rowVisible) {
-         this.init_List.add(new AutismLANSyncOverlay.ClickButton(detailLx - 2, cy, assignW, rowPitch, () -> {
+         this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(detailLx - 2, cy, assignW, rowPitch, () -> {
             this.macroAssignments.put(peerKey, mName.equals(this.macroAssignments.get(peerKey)) ? "" : mName);
             sync.broadcastMacroAssignments(this.macroAssignments);
          }));
@@ -1750,7 +1750,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
 
          if (rowVisible) {
-            this.init_List.add(new AutismLANSyncOverlay.ClickButton(importX, cy, importW - 4, rowPitch, () -> {
+            this.clickButtons.add(new AutismLANSyncOverlay.ClickButton(importX, cy, importW - 4, rowPitch, () -> {
                Map<String, Map<String, AutismMacro>> allRemote = sync.getPeerMacros();
                Map<String, AutismMacro> peerMacros = allRemote.get(peerKey);
                AutismMacro sourceMacro = peerMacros != null ? peerMacros.get(MacroNameNormalizer.normalize(mName)) : null;
@@ -1803,7 +1803,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       }
 
       if (button == 0 && mouseX >= this.panelX && mouseX <= this.panelX + this.panelWidth && mouseY >= this.panelY && mouseY <= this.panelY + 14) {
-         OverlayBounds bounds = new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.collapsed ? 14 : this.push_I_12(), this.visible, this.collapsed);
+         OverlayBounds bounds = new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.collapsed ? 14 : this.computePanelHeight(), this.visible, this.collapsed);
          if (this.isOverHeaderCloseButton(mouseX, mouseY, bounds)) {
             this.setVisible(false);
             return true;
@@ -1832,12 +1832,12 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
 
          if (button == 0 && this.isSessionActive(sync)) {
-            int panelHeight = this.push_I_12();
+            int panelHeight = this.computePanelHeight();
             int tabContentY = this.tabContentY();
-            int tabContentH = this.init_I_I_5(panelHeight);
-            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_I_I(tabContentY, tabContentH);
+            int tabContentH = this.tabViewportHeight(panelHeight);
+            autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics(tabContentY, tabContentH);
             if (scrollbarMetrics.isScrollable() && scrollbarMetrics.containsTrack(mouseX, mouseY)) {
-               this.close_Z = true;
+               this.draggingScrollbar = true;
                this.scrollbarGrabOffset = Math.max(0, (int)Math.round(mouseY) - scrollbarMetrics.thumbY());
                this.scrollOffset = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)Math.round(mouseY), this.scrollbarGrabOffset);
                this.scroll.jumpTo(this.scrollOffset, scrollbarMetrics.maxScroll());
@@ -1849,11 +1849,11 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          if (button == 0
             && this.activeTab == 2
             && !this.perUserMode
-            && this.poll_Z_7()
-            && this.init_RenderState.containsPoint(mouseX, mouseY)
-            && this.init_RenderState.mouseClicked(mouseX, mouseY, button)) {
-            if (!this.init_RenderState.isDraggingScrollbar()) {
-               AutismMacro selected = this.init_RenderState.selected();
+            && this.hasLocalList()
+            && this.localMacroList.containsPoint(mouseX, mouseY)
+            && this.localMacroList.mouseClicked(mouseX, mouseY, button)) {
+            if (!this.localMacroList.isDraggingScrollbar()) {
+               AutismMacro selected = this.localMacroList.selected();
                if (selected != null) {
                   this.selectedMacroName = selected.name;
                   this.saveState();
@@ -1865,14 +1865,14 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             if (button == 0
                && this.activeTab == 2
                && this.perUserMode
-               && this.push_Z_6()
-               && this.init_EventBus.containsPoint(mouseX, mouseY)
-               && this.init_EventBus.mouseClicked(mouseX, mouseY, button)) {
+               && this.hasPeerList()
+               && this.peerList.containsPoint(mouseX, mouseY)
+               && this.peerList.mouseClicked(mouseX, mouseY, button)) {
                return true;
             }
 
             if (button == 0) {
-               for (AutismLANSyncOverlay.ClickButton region : this.init_List) {
+               for (AutismLANSyncOverlay.ClickButton region : this.clickButtons) {
                   if (region.contains(mouseX, mouseY)) {
                      region.action.run();
                      return true;
@@ -1888,19 +1888,19 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    @Override
    public boolean mouseReleased(double mouseX, double mouseY, int button) {
       if (button == 0) {
-         if (this.poll_Z_7()) {
-            this.init_RenderState.mouseReleased();
+         if (this.hasLocalList()) {
+            this.localMacroList.mouseReleased();
          }
 
-         if (this.push_Z_6()) {
-            this.init_EventBus.mouseReleased();
+         if (this.hasPeerList()) {
+            this.peerList.mouseReleased();
          }
 
-         if (this.close_Z) {
+         if (this.draggingScrollbar) {
             this.saveState();
          }
 
-         this.close_Z = false;
+         this.draggingScrollbar = false;
          if (this.dragging) {
             this.saveState();
          }
@@ -1913,19 +1913,19 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-      if (this.close_Z) {
-         int panelHeight = this.push_I_12();
+      if (this.draggingScrollbar) {
+         int panelHeight = this.computePanelHeight();
          int tabContentY = this.tabContentY();
-         int tabContentH = this.init_I_I_5(panelHeight);
-         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.init_PoolEntry_DataUtil_I_I(tabContentY, tabContentH);
+         int tabContentH = this.tabViewportHeight(panelHeight);
+         autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = this.scrollbarMetrics(tabContentY, tabContentH);
          this.scrollOffset = autismclient.gui.ui.widgets.ScrollbarMetricsHelper.scrollOffsetForMouseY(scrollbarMetrics, (int)Math.round(mouseY), this.scrollbarGrabOffset);
          this.scroll.jumpTo(this.scrollOffset, scrollbarMetrics.maxScroll());
          return true;
-      } else if (this.poll_Z_7() && this.init_RenderState.isDraggingScrollbar()) {
-         this.init_RenderState.mouseDragged(mouseX, mouseY);
+      } else if (this.hasLocalList() && this.localMacroList.isDraggingScrollbar()) {
+         this.localMacroList.mouseDragged(mouseX, mouseY);
          return true;
-      } else if (this.push_Z_6() && this.init_EventBus.isDraggingScrollbar()) {
-         this.init_EventBus.mouseDragged(mouseX, mouseY);
+      } else if (this.hasPeerList() && this.peerList.isDraggingScrollbar()) {
+         this.peerList.mouseDragged(mouseX, mouseY);
          return true;
       } else if (this.dragging) {
          OverlayBounds nextBounds = this.clampToScreen(
@@ -1960,12 +1960,12 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      if (this.activeTab == 2 && !this.perUserMode && this.poll_Z_7()) {
-         return this.init_RenderState.mouseScrolled(mouseX, mouseY, amount);
+      if (this.activeTab == 2 && !this.perUserMode && this.hasLocalList()) {
+         return this.localMacroList.mouseScrolled(mouseX, mouseY, amount);
       }
 
-      if (this.activeTab == 2 && this.perUserMode && this.push_Z_6()) {
-         return this.init_EventBus.mouseScrolled(mouseX, mouseY, amount);
+      if (this.activeTab == 2 && this.perUserMode && this.hasPeerList()) {
+         return this.peerList.mouseScrolled(mouseX, mouseY, amount);
       }
 
       this.scrollOffset = Math.max(0, Math.min(this.maxScroll, this.scrollOffset - (int)(amount * this.rowHeight)));

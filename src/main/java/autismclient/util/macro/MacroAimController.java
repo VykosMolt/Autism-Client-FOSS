@@ -18,7 +18,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class MacroAimController {
    private static volatile RotationMath.Rotation init_ce_DataUtil;
-   private static final double[] init_DArr = new double[]{0.5, 0.35, 0.65, 0.2, 0.8};
+   private static final double[] AIM_OFFSETS = new double[]{0.5, 0.35, 0.65, 0.2, 0.8};
    private static final double init_D = 0.12;
 
    private MacroAimController() {
@@ -111,11 +111,11 @@ public final class MacroAimController {
          inner = box;
       }
 
-      List<Vec3> points = new ArrayList<>(init_DArr.length * init_DArr.length * init_DArr.length);
+      List<Vec3> points = new ArrayList<>(AIM_OFFSETS.length * AIM_OFFSETS.length * AIM_OFFSETS.length);
 
-      for (double y : init_DArr) {
-         for (double x : init_DArr) {
-            for (double z : init_DArr) {
+      for (double y : AIM_OFFSETS) {
+         for (double x : AIM_OFFSETS) {
+            for (double z : AIM_OFFSETS) {
                points.add(new Vec3(inner.minX + inner.getXsize() * x, inner.minY + inner.getYsize() * y, inner.minZ + inner.getZsize() * z));
             }
          }

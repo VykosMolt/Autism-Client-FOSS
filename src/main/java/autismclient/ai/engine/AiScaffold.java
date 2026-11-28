@@ -34,20 +34,20 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public final class AiScaffold {
    static final int init_I = 4096;
-   private static final LinkedHashMap<Long, Block> init_LinkedHashMap = new LinkedHashMap<Long, Block>(256, 0.75F, true) {
+   private static final LinkedHashMap<Long, Block> placedBlocks = new LinkedHashMap<Long, Block>(256, 0.75F, true) {
       @Override
       protected boolean removeEldestEntry(Entry<Long, Block> eldest) {
          return this.size() > 4096;
       }
    };
-   private static final Set<AiScaffold.JobScope> init_Set = Collections.newSetFromMap(new IdentityHashMap<>());
-   private static final Map<Path, LinkedHashMap<Long, Block>> init_Map = new LinkedHashMap<>();
-   private static final Map<Path, CompletableFuture<Void>> load_Map = new LinkedHashMap<>();
+   private static final Set<AiScaffold.JobScope> openScopes = Collections.newSetFromMap(new IdentityHashMap<>());
+   private static final Map<Path, LinkedHashMap<Long, Block>> journalRecords = new LinkedHashMap<>();
+   private static final Map<Path, CompletableFuture<Void>> pendingSaves = new LinkedHashMap<>();
    private static final Map<Path, Map<Long, Block>> recordedBlocks = new LinkedHashMap<>();
-   private static final ExecutorService init_ExecutorService = Executors.newSingleThreadExecutor(
+   private static final ExecutorService SAVE_EXECUTOR = Executors.newSingleThreadExecutor(
       Thread.ofPlatform().daemon(true).name("AI scaffold journal").factory()
    );
-   private static final LinkedHashMap<Long, AiScaffold.ScaffoldRecord> load_LinkedHashMap = new LinkedHashMap<>();
+   private static final LinkedHashMap<Long, AiScaffold.ScaffoldRecord> forgottenRecords = new LinkedHashMap<>();
 
    public static AiScaffold.JobScope openJobScope() {
       return new AiScaffold.JobScope();
@@ -59,7 +59,7 @@ public final class AiScaffold {
       for (BlockPos pos : existing) {
          Block block = recordedBlock(pos);
          if (block != null) {
-            scope.init_LinkedHashMap.put(pos.asLong(), block);
+            scope.ownedBlocks.put(pos.asLong(), block);
          }
       }
 
@@ -68,10 +68,10 @@ public final class AiScaffold {
 
    public static AiScaffold.JobScope openScope(Path journal, Collection<BlockPos> existing) {
       Path key = journal.toAbsolutePath().normalize();
-      LinkedHashMap<Long, Block> records = init_Map.get(key);
+      LinkedHashMap<Long, Block> records = journalRecords.get(key);
       if (records == null) {
          records = new LinkedHashMap<>();
-         CompletableFuture<Void> pending = load_Map.get(key);
+         CompletableFuture<Void> pending = pendingSaves.get(key);
          if (pending == null || pending.isDone() && !pending.isCompletedExceptionally()) {
             if (Files.isRegularFile(key)) {
                try {
@@ -96,16 +96,16 @@ public final class AiScaffold {
             records.putAll(recordedBlocks.getOrDefault(key, Map.of()));
          }
 
-         if (init_Map.size() >= 64) {
-            for (Path cached : init_Map.keySet()) {
+         if (journalRecords.size() >= 64) {
+            for (Path cached : journalRecords.keySet()) {
                if (!auditInUse(cached)) {
-                  init_Map.remove(cached);
+                  journalRecords.remove(cached);
                   break;
                }
             }
          }
 
-         init_Map.put(key, records);
+         journalRecords.put(key, records);
       }
 
       for (BlockPos pos : existing) {
@@ -122,8 +122,8 @@ public final class AiScaffold {
    }
 
    private static boolean auditInUse(Path journal) {
-      for (AiScaffold.JobScope scope : init_Set) {
-         if (journal.equals(scope.init_Path)) {
+      for (AiScaffold.JobScope scope : openScopes) {
+         if (journal.equals(scope.journal)) {
             return true;
          }
       }
@@ -132,31 +132,31 @@ public final class AiScaffold {
    }
 
    public static void recordPlaced(BlockPos cell, Block block) {
-      init_LinkedHashMap.put(cell.asLong(), block);
+      placedBlocks.put(cell.asLong(), block);
 
-      for (AiScaffold.JobScope scope : init_Set) {
-         if (scope.init_LinkedHashMap.put(cell.asLong(), block) != block) {
-            scope.init_J++;
+      for (AiScaffold.JobScope scope : openScopes) {
+         if (scope.ownedBlocks.put(cell.asLong(), block) != block) {
+            scope.revision++;
          }
       }
    }
 
    public static void forget(BlockPos cell) {
-      Block was = init_LinkedHashMap.remove(cell.asLong());
+      Block was = placedBlocks.remove(cell.asLong());
       if (was != null) {
          ArrayList<AiScaffold.JobScope> holders = new ArrayList<>();
 
-         for (AiScaffold.JobScope scope : init_Set) {
-            if (scope.init_LinkedHashMap.containsKey(cell.asLong())) {
+         for (AiScaffold.JobScope scope : openScopes) {
+            if (scope.ownedBlocks.containsKey(cell.asLong())) {
                holders.add(scope);
             }
          }
 
-         if (load_LinkedHashMap.size() > 512) {
-            load_LinkedHashMap.remove(load_LinkedHashMap.keySet().iterator().next());
+         if (forgottenRecords.size() > 512) {
+            forgottenRecords.remove(forgottenRecords.keySet().iterator().next());
          }
 
-         load_LinkedHashMap.put(cell.asLong(), new AiScaffold.ScaffoldRecord(was, holders, System.nanoTime()));
+         forgottenRecords.put(cell.asLong(), new AiScaffold.ScaffoldRecord(was, holders, System.nanoTime()));
       }
 
       Minecraft client = Minecraft.getInstance();
@@ -173,26 +173,26 @@ public final class AiScaffold {
          AutismClientAddon.LOG.info("[AI] scaffold record dropped while standing at {} by {}", cell.toShortString(), caller);
       }
 
-      for (AiScaffold.JobScope scope : init_Set) {
-         if (scope.init_LinkedHashMap.remove(cell.asLong()) != null) {
-            scope.init_J++;
+      for (AiScaffold.JobScope scope : openScopes) {
+         if (scope.ownedBlocks.remove(cell.asLong()) != null) {
+            scope.revision++;
          }
       }
 
-      for (LinkedHashMap<Long, Block> job : init_Map.values()) {
+      for (LinkedHashMap<Long, Block> job : journalRecords.values()) {
          job.remove(cell.asLong());
       }
    }
 
    public static void onBlockChanged(BlockPos pos, BlockState state) {
-      if (!load_LinkedHashMap.isEmpty()) {
-         AiScaffold.ScaffoldRecord forgotten = load_LinkedHashMap.remove(pos.asLong());
+      if (!forgottenRecords.isEmpty()) {
+         AiScaffold.ScaffoldRecord forgotten = forgottenRecords.remove(pos.asLong());
          if (forgotten != null && System.nanoTime() - forgotten.nanos() <= 10000000000L && matches(forgotten.block(), state.getBlock())) {
-            init_LinkedHashMap.put(pos.asLong(), forgotten.block());
+            placedBlocks.put(pos.asLong(), forgotten.block());
 
             for (AiScaffold.JobScope scope : forgotten.scopes()) {
-               if (init_Set.contains(scope) && scope.init_LinkedHashMap.put(pos.asLong(), forgotten.block()) != forgotten.block()) {
-                  scope.init_J++;
+               if (openScopes.contains(scope) && scope.ownedBlocks.put(pos.asLong(), forgotten.block()) != forgotten.block()) {
+                  scope.revision++;
                }
             }
 
@@ -202,7 +202,7 @@ public final class AiScaffold {
    }
 
    public static Block recordedBlock(BlockPos cell) {
-      return init_LinkedHashMap.get(cell.asLong());
+      return placedBlocks.get(cell.asLong());
    }
 
    public static boolean isScaffold(BlockPos cell) {
@@ -210,8 +210,8 @@ public final class AiScaffold {
          return true;
       }
 
-      for (AiScaffold.JobScope scope : init_Set) {
-         if (scope.init_LinkedHashMap.containsKey(cell.asLong())) {
+      for (AiScaffold.JobScope scope : openScopes) {
+         if (scope.ownedBlocks.containsKey(cell.asLong())) {
             return true;
          }
       }
@@ -230,7 +230,7 @@ public final class AiScaffold {
    public static List<BlockPos> recordedIn(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
       List<BlockPos> out = new ArrayList<>();
 
-      for (long key : init_LinkedHashMap.keySet()) {
+      for (long key : placedBlocks.keySet()) {
          BlockPos cell = BlockPos.of(key);
          if (cell.getX() >= minX && cell.getX() <= maxX && cell.getY() >= minY && cell.getY() <= maxY && cell.getZ() >= minZ && cell.getZ() <= maxZ) {
             out.add(cell);
@@ -241,48 +241,48 @@ public final class AiScaffold {
       return out;
    }
 
-   static int init_I() {
-      return init_LinkedHashMap.size();
+   static int unusedPlacedCount() {
+      return placedBlocks.size();
    }
 
    public static void reset() {
-      init_LinkedHashMap.clear();
-      load_LinkedHashMap.clear();
-      init_Set.clear();
-      init_Map.clear();
+      placedBlocks.clear();
+      forgottenRecords.clear();
+      openScopes.clear();
+      journalRecords.clear();
    }
 
    private record ScaffoldRecord(Block block, List<AiScaffold.JobScope> scopes, long nanos) {
    }
 
    public static final class JobScope implements AutoCloseable {
-      private final LinkedHashMap<Long, Block> init_LinkedHashMap;
-      private final Path init_Path;
-      private long init_J;
+      private final LinkedHashMap<Long, Block> ownedBlocks;
+      private final Path journal;
+      private long revision;
       private long savedRevision = -1L;
-      private CompletableFuture<Void> init_CompletableFuture = CompletableFuture.completedFuture(null);
+      private CompletableFuture<Void> pendingSave = CompletableFuture.completedFuture(null);
 
       private JobScope() {
          this(new LinkedHashMap<>(), null);
       }
 
       private JobScope(LinkedHashMap<Long, Block> records, Path journal) {
-         this.init_LinkedHashMap = records;
-         this.init_Path = journal;
-         AiScaffold.init_Set.add(this);
+         this.ownedBlocks = records;
+         this.journal = journal;
+         AiScaffold.openScopes.add(this);
       }
 
       public List<BlockPos> ownedCells() {
-         return this.init_LinkedHashMap.keySet().stream().map(BlockPos::of).toList();
+         return this.ownedBlocks.keySet().stream().map(BlockPos::of).toList();
       }
 
       public Block recorded(BlockPos pos) {
-         return this.init_LinkedHashMap.get(pos.asLong());
+         return this.ownedBlocks.get(pos.asLong());
       }
 
       public void persist() {
-         if (this.init_Path != null && (this.savedRevision != this.init_J || this.init_CompletableFuture.isCompletedExceptionally())) {
-            LinkedHashMap<Long, Block> snapshot = new LinkedHashMap<>(this.init_LinkedHashMap);
+         if (this.journal != null && (this.savedRevision != this.revision || this.pendingSave.isCompletedExceptionally())) {
+            LinkedHashMap<Long, Block> snapshot = new LinkedHashMap<>(this.ownedBlocks);
             JsonArray rows = new JsonArray();
             snapshot.forEach(
                (cell, block) -> {
@@ -292,24 +292,24 @@ public final class AiScaffold {
                   );
                }
             );
-            this.savedRevision = this.init_J;
-            CompletableFuture<Void> previous = AiScaffold.load_Map.getOrDefault(this.init_Path, CompletableFuture.completedFuture(null));
-            this.init_CompletableFuture = previous.handle((ignored, failure) -> null).thenRunAsync(() -> {
+            this.savedRevision = this.revision;
+            CompletableFuture<Void> previous = AiScaffold.pendingSaves.getOrDefault(this.journal, CompletableFuture.completedFuture(null));
+            this.pendingSave = previous.handle((ignored, failure) -> null).thenRunAsync(() -> {
                try {
-                  AiJson.writeAtomicJson(this.init_Path, rows);
+                  AiJson.writeAtomicJson(this.journal, rows);
                } catch (IOException e) {
                   AutismClientAddon.LOG.warn("[AI] Could not save scaffold ownership: {}", e.getMessage());
                   throw new CompletionException(e);
                }
-            }, AiScaffold.init_ExecutorService);
-            AiScaffold.load_Map.put(this.init_Path, this.init_CompletableFuture);
-            AiScaffold.recordedBlocks.put(this.init_Path, snapshot);
-            if (AiScaffold.load_Map.size() > 64) {
-               Iterator<Entry<Path, CompletableFuture<Void>>> iterator = AiScaffold.load_Map.entrySet().iterator();
+            }, AiScaffold.SAVE_EXECUTOR);
+            AiScaffold.pendingSaves.put(this.journal, this.pendingSave);
+            AiScaffold.recordedBlocks.put(this.journal, snapshot);
+            if (AiScaffold.pendingSaves.size() > 64) {
+               Iterator<Entry<Path, CompletableFuture<Void>>> iterator = AiScaffold.pendingSaves.entrySet().iterator();
 
                while (iterator.hasNext()) {
                   Entry<Path, CompletableFuture<Void>> write = iterator.next();
-                  if (!write.getKey().equals(this.init_Path) && write.getValue().isDone() && !AiScaffold.auditInUse(write.getKey())) {
+                  if (!write.getKey().equals(this.journal) && write.getValue().isDone() && !AiScaffold.auditInUse(write.getKey())) {
                      AiScaffold.recordedBlocks.remove(write.getKey());
                      iterator.remove();
                   }
@@ -318,28 +318,28 @@ public final class AiScaffold {
          }
       }
 
-      CompletableFuture<Void> init_CompletableFuture() {
-         return this.init_CompletableFuture;
+      CompletableFuture<Void> unusedPendingSave() {
+         return this.pendingSave;
       }
 
       @Override
       public void close() {
          this.persist();
-         if (this.init_Path != null) {
+         if (this.journal != null) {
             // Nothing saves this scope after close, so wait for the write and retry it once if it failed.
             try {
-               this.init_CompletableFuture.join();
+               this.pendingSave.join();
             } catch (RuntimeException failed) {
                this.persist();
                try {
-                  this.init_CompletableFuture.join();
+                  this.pendingSave.join();
                } catch (RuntimeException again) {
-                  AutismClientAddon.LOG.warn("[AI] Scaffold ownership for {} was not saved", this.init_Path);
+                  AutismClientAddon.LOG.warn("[AI] Scaffold ownership for {} was not saved", this.journal);
                }
             }
          }
 
-         AiScaffold.init_Set.remove(this);
+         AiScaffold.openScopes.remove(this);
       }
    }
 }

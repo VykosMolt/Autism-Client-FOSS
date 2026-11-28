@@ -10,8 +10,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public final class CustomSkyboxRenderer {
-   private static final AutismBufferSource.LazySource init_c_DataUtil = new AutismBufferSource.LazySource(786432);
-   private static final float[][] init_FArr2 = new float[][]{
+   private static final AutismBufferSource.LazySource BUFFER = new AutismBufferSource.LazySource(786432);
+   private static final float[][] FACE_VERTS = new float[][]{
       {-1.0F, -1.0F, 1.0F, -1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, -1.0F, 1.0F},
       {1.0F, -1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, -1.0F, 1.0F, -1.0F, -1.0F},
       {1.0F, -1.0F, -1.0F, 1.0F, 1.0F, -1.0F, -1.0F, 1.0F, -1.0F, -1.0F, -1.0F, -1.0F},
@@ -19,7 +19,7 @@ public final class CustomSkyboxRenderer {
       {-1.0F, 1.0F, -1.0F, -1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, -1.0F},
       {-1.0F, -1.0F, -1.0F, -1.0F, -1.0F, 1.0F, 1.0F, -1.0F, 1.0F, 1.0F, -1.0F, -1.0F}
    };
-   private static final float[][] load_FArr2 = new float[][]{
+   private static final float[][] FACE_UVS = new float[][]{
       {0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F},
       {0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F},
       {0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F},
@@ -27,14 +27,14 @@ public final class CustomSkyboxRenderer {
       {0.0F, 1.0F, 0.0F, 0.0F, 1.0F, 0.0F, 1.0F, 1.0F},
       {0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F}
    };
-   private static final Identifier[] init_IdentifierArr = new Identifier[]{
+   private static final Identifier[] FACE_TEXTURES = new Identifier[]{
       panorama("panorama_0"), panorama("panorama_1"), panorama("panorama_2"), panorama("panorama_3"), panorama("panorama_5"), panorama("panorama_4")
    };
    private static final float init_F = 64.0F;
    private static final float load_F = 32.0F;
    private static final float SPIN_RATE = 0.286F;
    private static float spinAngle;
-   private static long init_J;
+   private static long lastFrameNanos;
 
    private CustomSkyboxRenderer() {
    }
@@ -44,13 +44,13 @@ public final class CustomSkyboxRenderer {
          return false;
       }
 
-      WorldModule w = init_bi();
+      WorldModule w = worldModule();
       return w != null && w.isEnabled() && w.bool("skybox") && Minecraft.getInstance().level != null;
    }
 
    public static void render(float partialTick) {
       Minecraft mc = Minecraft.getInstance();
-      WorldModule w = init_bi();
+      WorldModule w = worldModule();
       if (mc.level != null && w != null) {
          boolean recolor = w.bool("skybox-recolor");
          int customColor = am.init_I_Module(w, "skybox-color", -50373);
@@ -60,16 +60,16 @@ public final class CustomSkyboxRenderer {
          Vector3f corner = new Vector3f();
 
          try {
-            AutismBufferSource bufferSource = init_c_DataUtil.init();
+            AutismBufferSource bufferSource = BUFFER.init();
 
-            for (int face = 0; face < init_FArr2.length; face++) {
+            for (int face = 0; face < FACE_VERTS.length; face++) {
                Identifier texture = recolor
-                  ? ThemeTextureRecolorer.recolor(init_IdentifierArr[face], ThemePaletteManager.getPalette().targetArgb(ThemePaletteManager.ColorRole.BACKDROP))
-                  : ThemeTextureRecolorer.recolor(init_IdentifierArr[face], customColor);
+                  ? ThemeTextureRecolorer.recolor(FACE_TEXTURES[face], ThemePaletteManager.getPalette().targetArgb(ThemePaletteManager.ColorRole.BACKDROP))
+                  : ThemeTextureRecolorer.recolor(FACE_TEXTURES[face], customColor);
                if (texture != null) {
                   VertexConsumer buffer = bufferSource.buffer(autismclient.render.AutismRenderTypes.waypointDiscSeeThrough(texture));
-                  float[] verts = init_FArr2[face];
-                  float[] uvs = load_FArr2[face];
+                  float[] verts = FACE_VERTS[face];
+                  float[] uvs = FACE_UVS[face];
 
                   for (int i = 0; i < 4; i++) {
                      rotation.transformPosition(verts[i * 3], verts[i * 3 + 1], verts[i * 3 + 2], corner);
@@ -86,12 +86,12 @@ public final class CustomSkyboxRenderer {
 
    private static float spin(boolean spinning, float speed) {
       long now = System.nanoTime();
-      if (init_J == 0L) {
-         init_J = now;
+      if (lastFrameNanos == 0L) {
+         lastFrameNanos = now;
       }
 
-      float dt = (float)(now - init_J) / 1.0E9F;
-      init_J = now;
+      float dt = (float)(now - lastFrameNanos) / 1.0E9F;
+      lastFrameNanos = now;
       if (spinning && dt > 0.0F) {
          spinAngle = (spinAngle + Math.min(dt, 0.25F) * 0.286F * speed) % 360.0F;
       }
@@ -103,7 +103,7 @@ public final class CustomSkyboxRenderer {
       return Identifier.fromNamespaceAndPath("autismclient", "textures/gui/title/background/" + name + ".png");
    }
 
-   private static WorldModule init_bi() {
+   private static WorldModule worldModule() {
       return al.init_Module_Str("world") instanceof WorldModule w ? w : null;
    }
 }

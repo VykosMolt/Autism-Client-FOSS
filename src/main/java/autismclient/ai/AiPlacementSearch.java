@@ -7,42 +7,42 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 
 final class AiPlacementSearch {
-   private final List<AiPlacementSearch.PlacementCandidate> init_List;
+   private final List<AiPlacementSearch.PlacementCandidate> candidates;
    private final AiPlacementSearch.WorldProbe world;
-   private final boolean init_Z;
-   private final Map<List<AiBuilder.CellSpec>, AiPlacementSearch.CellTemplate> init_Map = new IdentityHashMap<>();
-   private int init_I;
-   private int load_I;
+   private final boolean clearTerrain;
+   private final Map<List<AiBuilder.CellSpec>, AiPlacementSearch.CellTemplate> templateCache = new IdentityHashMap<>();
+   private int candidateIndex;
+   private int cursorX;
    private int cursorY;
    private int cursorZ;
    private int sizeX;
    private int sizeY;
    private int sizeZ;
-   private int close;
-   private int open;
-   private int poll;
-   private int push;
-   private Map<Long, AiBuilder.CellSpec> load_Map;
+   private int changedCells;
+   private int breakCount;
+   private int unsupportedCount;
+   private int matchedCount;
+   private Map<Long, AiBuilder.CellSpec> currentCells;
    private AiPlacementSearch.CandidateScore best;
-   private boolean load_Z;
-   private long init_J;
+   private boolean done;
+   private long classifiedCells;
 
    AiPlacementSearch(List<AiPlacementSearch.PlacementCandidate> candidates, AiPlacementSearch.WorldProbe world, boolean clearTerrain) {
-      this.init_List = List.copyOf(candidates);
+      this.candidates = List.copyOf(candidates);
       this.world = world;
-      this.init_Z = clearTerrain;
+      this.clearTerrain = clearTerrain;
    }
 
    void step(int budget, long deadline) {
-      while (!this.load_Z && budget-- > 0 && System.nanoTime() < deadline) {
-         if (this.load_Map == null) {
-            if (this.init_I >= this.init_List.size()) {
-               this.load_Z = true;
+      while (!this.done && budget-- > 0 && System.nanoTime() < deadline) {
+         if (this.currentCells == null) {
+            if (this.candidateIndex >= this.candidates.size()) {
+               this.done = true;
                break;
             }
 
-            AiPlacementSearch.PlacementCandidate c = this.init_List.get(this.init_I);
-            AiPlacementSearch.CellTemplate template = this.init_Map.get(c.cells());
+            AiPlacementSearch.PlacementCandidate c = this.candidates.get(this.candidateIndex);
+            AiPlacementSearch.CellTemplate template = this.templateCache.get(c.cells());
             if (template == null) {
                Map<Long, AiBuilder.CellSpec> map = new HashMap<>();
                int w = 0;
@@ -57,50 +57,50 @@ final class AiPlacementSearch {
                }
 
                template = new AiPlacementSearch.CellTemplate(map, w, h, d);
-               this.init_Map.put(c.cells(), template);
+               this.templateCache.put(c.cells(), template);
             }
 
-            this.load_Map = template.cells();
+            this.currentCells = template.cells();
             this.sizeX = template.width();
             this.sizeY = template.height();
             this.sizeZ = template.depth();
-            this.load_I = this.cursorY = this.cursorZ = this.close = this.open = this.poll = this.push = 0;
-            if (this.load_Map.isEmpty() || (long)this.sizeX * this.sizeY * this.sizeZ > 1000000L) {
-               this.init_V();
+            this.cursorX = this.cursorY = this.cursorZ = this.changedCells = this.breakCount = this.unsupportedCount = this.matchedCount = 0;
+            if (this.currentCells.isEmpty() || (long)this.sizeX * this.sizeY * this.sizeZ > 1000000L) {
+               this.nextCandidate();
                continue;
             }
          }
 
-         AiPlacementSearch.PlacementCandidate candidate = this.init_List.get(this.init_I);
-         AiBuilder.CellSpec cell = this.load_Map.get(packKey(this.load_I, this.cursorY, this.cursorZ));
-         BlockPos pos = candidate.origin().offset(this.load_I, this.cursorY, this.cursorZ);
+         AiPlacementSearch.PlacementCandidate candidate = this.candidates.get(this.candidateIndex);
+         AiBuilder.CellSpec cell = this.currentCells.get(packKey(this.cursorX, this.cursorY, this.cursorZ));
+         BlockPos pos = candidate.origin().offset(this.cursorX, this.cursorY, this.cursorZ);
          AiPlacementSearch.CellEdit edit = this.world.classify(pos, cell);
-         this.init_J++;
+         this.classifiedCells++;
          if (edit == AiPlacementSearch.CellEdit.UNSAFE) {
-            this.init_V();
+            this.nextCandidate();
          } else {
             if (cell != null) {
                if (edit == AiPlacementSearch.CellEdit.MATCH) {
-                  this.push++;
+                  this.matchedCount++;
                } else {
-                  this.close++;
+                  this.changedCells++;
                   if (edit == AiPlacementSearch.CellEdit.BREAK) {
-                     this.open++;
+                     this.breakCount++;
                   }
 
-                  if (!this.load_Map.containsKey(packKey(this.load_I, this.cursorY - 1, this.cursorZ)) && this.world.init_Z(pos, cell)) {
-                     this.poll++;
+                  if (!this.currentCells.containsKey(packKey(this.cursorX, this.cursorY - 1, this.cursorZ)) && this.world.init_Z(pos, cell)) {
+                     this.unsupportedCount++;
                   }
                }
-            } else if (this.init_Z && edit == AiPlacementSearch.CellEdit.BREAK) {
-               this.open++;
+            } else if (this.clearTerrain && edit == AiPlacementSearch.CellEdit.BREAK) {
+               this.breakCount++;
             }
 
-            if (this.best != null && this.close + 3L * this.open + 2L * this.poll > this.best.work()) {
-               this.init_V();
+            if (this.best != null && this.changedCells + 3L * this.breakCount + 2L * this.unsupportedCount > this.best.work()) {
+               this.nextCandidate();
             } else {
-               if (++this.load_I == this.sizeX) {
-                  this.load_I = 0;
+               if (++this.cursorX == this.sizeX) {
+                  this.cursorX = 0;
                   if (++this.cursorZ == this.sizeZ) {
                      this.cursorZ = 0;
                      this.cursorY++;
@@ -108,21 +108,21 @@ final class AiPlacementSearch {
                }
 
                if (this.cursorY == this.sizeY) {
-                  AiPlacementSearch.CandidateScore score = new AiPlacementSearch.CandidateScore(candidate, this.close, this.open, this.poll, this.push);
+                  AiPlacementSearch.CandidateScore score = new AiPlacementSearch.CandidateScore(candidate, this.changedCells, this.breakCount, this.unsupportedCount, this.matchedCount);
                   if (this.best == null || score.compareTo(this.best) < 0) {
                      this.best = score;
                   }
 
-                  this.init_V();
+                  this.nextCandidate();
                }
             }
          }
       }
    }
 
-   private void init_V() {
-      this.init_I++;
-      this.load_Map = null;
+   private void nextCandidate() {
+      this.candidateIndex++;
+      this.currentCells = null;
    }
 
    private static long packKey(int x, int y, int z) {
@@ -134,19 +134,19 @@ final class AiPlacementSearch {
    }
 
    boolean isDone() {
-      return this.load_Z;
+      return this.done;
    }
 
    int comparedCount() {
-      return Math.min(this.init_I, this.init_List.size());
+      return Math.min(this.candidateIndex, this.candidates.size());
    }
 
    int candidateCount() {
-      return this.init_List.size();
+      return this.candidates.size();
    }
 
    long init_J() {
-      return this.init_J;
+      return this.classifiedCells;
    }
 
    private record CellTemplate(Map<Long, AiBuilder.CellSpec> cells, int width, int height, int depth) {

@@ -56,7 +56,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    private AutismKeybindOverlay keybindOverlay;
    private AutismAdminToolsOverlay adminToolsOverlay;
    private String selectedModuleId;
-   private final Set<String> load = new LinkedHashSet<>();
+   private final Set<String> stashedOverlayIds = new LinkedHashSet<>();
    private boolean menuClosed;
    private long closeAnimStart;
 
@@ -79,7 +79,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    }
 
    public void runMenuAction(String id) {
-      this.load(id);
+      this.openTool(id);
    }
 
    @Override
@@ -92,11 +92,11 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
 
       this.menuClosed = false;
-      this.write();
+      this.setupOverlays();
       if (this.isTitleSetup()) {
-         this.flush();
+         this.stashForeignOverlays();
       } else {
-         this.sync();
+         this.restoreHiddenOverlays();
       }
 
       if (this.menuController == null) {
@@ -285,7 +285,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    }
 
    private void closeToParent() {
-      this.read();
+      this.closeMenu();
       if (this.minecraft != null) {
          this.minecraft.gui.setScreen(this.parent);
       }
@@ -293,10 +293,10 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    @Override
    public void removed() {
-      this.read();
+      this.closeMenu();
    }
 
-   private void read() {
+   private void closeMenu() {
       if (!this.menuClosed) {
          this.menuClosed = true;
          if (this.menuController != null) {
@@ -304,10 +304,10 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          }
 
          OverlayManager.getInstance().restoreStashedIfFits();
-         this.push();
-         this.update();
-         this.close();
-         this.poll();
+         this.saveOverlayStates();
+         this.hideTransientOverlays();
+         this.restoreStashedOverlays();
+         this.leaveConfigurationMode();
       }
    }
 
@@ -321,15 +321,15 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          Set<Class<? extends Packet<?>>> selected = PacketFilterListCodec.parse(module.value(option.id()), c2s);
          if (c2s) {
             this.packetSelectorOverlay
-               .openC2sMultiSelect((packetClass, enabled) -> this.init(module, option, true, packetClass, enabled), selected);
+               .openC2sMultiSelect((packetClass, enabled) -> this.togglePacketSelection(module, option, true, packetClass, enabled), selected);
          } else {
             this.packetSelectorOverlay
-               .openS2cMultiSelect((packetClass, enabled) -> this.init(module, option, false, packetClass, enabled), selected);
+               .openS2cMultiSelect((packetClass, enabled) -> this.togglePacketSelection(module, option, false, packetClass, enabled), selected);
          }
       }
    }
 
-   private void init(Module module, Setting<?, ?> option, boolean c2s, Class<? extends Packet<?>> packetClass, boolean selected) {
+   private void togglePacketSelection(Module module, Setting<?, ?> option, boolean c2s, Class<? extends Packet<?>> packetClass, boolean selected) {
       Set<Class<? extends Packet<?>>> packets = new LinkedHashSet<>(PacketFilterListCodec.parse(module.value(option.id()), c2s));
       if (selected) {
          packets.add(packetClass);
@@ -345,7 +345,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
    }
 
-   private void write() {
+   private void setupOverlays() {
       OverlayManager manager = OverlayManager.getInstance();
       if (!AutismLiteVariant.enabled()) {
          autismclient.ai.AiAssistant.getInstance().restoreOverlay();
@@ -523,13 +523,13 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    private void setOverlaysHidden(boolean hidden) {
       if (hidden) {
-         this.update();
+         this.hideTransientOverlays();
       } else {
-         this.sync();
+         this.restoreHiddenOverlays();
       }
    }
 
-   private void update() {
+   private void hideTransientOverlays() {
       hiddenOverlayIds.clear();
       this.hideTransientOverlay(this.macroListOverlay);
       this.hideTransientOverlay(this.fabricatorOverlay);
@@ -565,7 +565,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
    }
 
-   private void sync() {
+   private void restoreHiddenOverlays() {
       if (!hiddenOverlayIds.isEmpty()) {
          Set<String> restoreIds = new LinkedHashSet<>(hiddenOverlayIds);
          hiddenOverlayIds.clear();
@@ -578,13 +578,13 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
    }
 
-   private void flush() {
+   private void stashForeignOverlays() {
       OverlayManager manager = OverlayManager.getInstance();
-      this.load.clear();
+      this.stashedOverlayIds.clear();
 
       for (AutismOverlay overlay : manager.getOverlays()) {
          if (overlay != null && overlay.isVisible() && !this.isOwnedOverlay(overlay)) {
-            this.load.add(overlay.getOverlayId());
+            this.stashedOverlayIds.add(overlay.getOverlayId());
             manager.setHidden(overlay, true);
          }
       }
@@ -604,17 +604,17 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          || overlay == ActionEditorOverlay.getInstance();
    }
 
-   private void close() {
-      if (!this.load.isEmpty()) {
+   private void restoreStashedOverlays() {
+      if (!this.stashedOverlayIds.isEmpty()) {
          OverlayManager manager = OverlayManager.getInstance();
 
          for (AutismOverlay overlay : manager.getOverlays()) {
-            if (overlay != null && this.load.contains(overlay.getOverlayId())) {
+            if (overlay != null && this.stashedOverlayIds.contains(overlay.getOverlayId())) {
                manager.setHidden(overlay, false);
             }
          }
 
-         this.load.clear();
+         this.stashedOverlayIds.clear();
       }
    }
 
@@ -649,7 +649,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       return this.customFilterOverlay;
    }
 
-   private void load(String id) {
+   private void openTool(String id) {
       if ("schematics".equals(id)) {
          if (!AutismLiteVariant.enabled()) {
             SchematicWorkspace.toggleWindow();
@@ -659,30 +659,30 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
             autismclient.ai.AiAssistant.getInstance().toggle();
          }
       } else if ("macros".equals(id)) {
-         this.open();
+         this.toggleMacroEditor();
       } else if ("keys".equals(id)) {
-         this.load(this.keybindOverlay);
+         this.toggleOverlay(this.keybindOverlay);
       } else if (this.isTitleSetup()) {
          switch (id) {
             case "lan":
-               this.load(this.lanSyncOverlay);
+               this.toggleOverlay(this.lanSyncOverlay);
                break;
             case "queue":
-               this.load(this.queueEditorOverlay);
+               this.toggleOverlay(this.queueEditorOverlay);
                break;
             case "packets":
-               this.load(this.ensureCustomFilterOverlay(OverlayManager.getInstance()));
+               this.toggleOverlay(this.ensureCustomFilterOverlay(OverlayManager.getInstance()));
                break;
             case "logger":
                autismclient.modules.ModuleRuntimeManager globalxx = autismclient.modules.ModuleRuntimeManager.getInstance();
                if (globalxx != null) {
-                  this.load(globalxx.getOrCreatePacketLoggerOverlay());
+                  this.toggleOverlay(globalxx.getOrCreatePacketLoggerOverlay());
                }
                break;
             case "server":
                autismclient.modules.ModuleRuntimeManager globalx = autismclient.modules.ModuleRuntimeManager.getInstance();
                if (globalx != null) {
-                  this.load(globalx.getOrCreateServerInfoOverlay());
+                  this.toggleOverlay(globalx.getOrCreateServerInfoOverlay());
                }
                break;
          }
@@ -691,30 +691,30 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          if (global != null) {
             switch (id) {
                case "admin":
-                  this.load(this.adminToolsOverlay);
+                  this.toggleOverlay(this.adminToolsOverlay);
                   break;
                case "lan":
-                  this.load(this.lanSyncOverlay);
+                  this.toggleOverlay(this.lanSyncOverlay);
                   break;
                case "queue":
-                  this.load(this.queueEditorOverlay);
+                  this.toggleOverlay(this.queueEditorOverlay);
                   break;
                case "logger":
                   AutismPacketLoggerOverlay logger = global.getOrCreatePacketLoggerOverlay();
                   if (logger != null) {
                      logger.loadBounds();
                      OverlayManager.getInstance().register(logger);
-                     this.load(logger);
+                     this.toggleOverlay(logger);
                   }
                   break;
                case "packets":
-                  this.load(this.ensureCustomFilterOverlay(OverlayManager.getInstance()));
+                  this.toggleOverlay(this.ensureCustomFilterOverlay(OverlayManager.getInstance()));
                   break;
                case "server":
                   AutismServerInfoOverlay serverInfo = global.getOrCreateServerInfoOverlay();
                   if (serverInfo != null) {
                      OverlayManager.getInstance().register(serverInfo);
-                     this.load(serverInfo);
+                     this.toggleOverlay(serverInfo);
                   }
                   break;
                case "send":
@@ -733,7 +733,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
    }
 
-   private void open() {
+   private void toggleMacroEditor() {
       AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.getInstance();
       if (editor != null) {
          OverlayManager.getInstance().register(editor);
@@ -746,11 +746,11 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
          OverlayManager.getInstance().bringToFront(editor);
       } else {
-         this.load(this.macroListOverlay);
+         this.toggleOverlay(this.macroListOverlay);
       }
    }
 
-   private void load(AutismOverlay overlay) {
+   private void toggleOverlay(AutismOverlay overlay) {
       if (overlay != null) {
          OverlayManager.getInstance().register(overlay);
          overlay.setVisible(!overlay.isVisible());
@@ -795,7 +795,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
    }
 
-   private void poll() {
+   private void leaveConfigurationMode() {
       if (this.macroListOverlay != null) {
          this.macroListOverlay.setConfigurationOnly(false);
       }
@@ -832,28 +832,28 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
    }
 
-   private void push() {
-      this.read(this.macroListOverlay);
-      this.read(this.fabricatorOverlay);
-      this.read(this.lanSyncOverlay);
-      this.read(this.queueEditorOverlay);
-      this.read(this.customFilterOverlay);
-      this.read(this.keybindOverlay);
-      this.read(this.adminToolsOverlay);
+   private void saveOverlayStates() {
+      this.saveOverlayState(this.macroListOverlay);
+      this.saveOverlayState(this.fabricatorOverlay);
+      this.saveOverlayState(this.lanSyncOverlay);
+      this.saveOverlayState(this.queueEditorOverlay);
+      this.saveOverlayState(this.customFilterOverlay);
+      this.saveOverlayState(this.keybindOverlay);
+      this.saveOverlayState(this.adminToolsOverlay);
       autismclient.modules.ModuleRuntimeManager global = autismclient.modules.ModuleRuntimeManager.getInstance();
       if (global != null) {
-         this.read(global.getPacketLoggerOverlay());
-         this.read(global.getServerInfoOverlay());
+         this.saveOverlayState(global.getPacketLoggerOverlay());
+         this.saveOverlayState(global.getServerInfoOverlay());
       }
 
-      this.read(AutismMacroEditorOverlay.getInstance());
-      this.read(ActionEditorOverlay.getInstance());
+      this.saveOverlayState(AutismMacroEditorOverlay.getInstance());
+      this.saveOverlayState(ActionEditorOverlay.getInstance());
       if (this.customFilterOverlay != null) {
-         this.read(this.customFilterOverlay.getPresetOverlay());
+         this.saveOverlayState(this.customFilterOverlay.getPresetOverlay());
       }
    }
 
-   private void read(AutismOverlay overlay) {
+   private void saveOverlayState(AutismOverlay overlay) {
       if (overlay != null) {
          if (overlay instanceof AutismMacroListOverlay macroList) {
             macroList.saveState();
@@ -984,7 +984,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
       @Override
       public void init(String id) {
-         AutismModulesScreen.this.load(id);
+         AutismModulesScreen.this.openTool(id);
       }
 
       @Override

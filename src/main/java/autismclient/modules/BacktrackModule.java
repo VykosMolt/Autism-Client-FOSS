@@ -51,15 +51,15 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class BacktrackModule extends Module {
-   public static final String init_Str = "backtrack";
+   public static final String MODULE_ID = "backtrack";
    private static final Minecraft CLIENT = Minecraft.getInstance();
-   private static final long init_J = 350000000L;
-   private static final long load_J = 100000000L;
-   private static final double init_D = 0.65;
+   private static final long HIT_CONFIRM_WINDOW_NANOS = 350000000L;
+   private static final long OUT_OF_REACH_GRACE_NANOS = 100000000L;
+   private static final double REACH_EXTENSION = 0.65;
    private static volatile BacktrackModule instance;
    private final AtomicLong resetTicket = new AtomicLong();
    private long epoch;
-   private final Map<Packet<?>, BacktrackModule.ArmContext> init_Map = new IdentityHashMap<>();
+   private final Map<Packet<?>, BacktrackModule.ArmContext> armContexts = new IdentityHashMap<>();
    private final BacktrackPacketQueue<Packet<?>> packetQueue = new BacktrackPacketQueue<>(128);
    private final BacktrackPositionTracker positionTracker = new BacktrackPositionTracker();
    private final BacktrackTrailHistory trailHistory = new BacktrackTrailHistory();
@@ -67,11 +67,11 @@ public final class BacktrackModule extends Module {
    private LocalPlayer player;
    private ClientPacketListener connection;
    private LivingEntity target;
-   private LivingEntity load_LivingEntity;
-   private LivingEntity read_LivingEntity;
+   private LivingEntity hitTarget;
+   private LivingEntity confirmedHitTarget;
    private long lastHitAt;
    private long confirmedHitAt;
-   private Vec3 init_Vec3;
+   private Vec3 reachablePosition;
    private long reachableAt;
    private long outOfReachSince;
    private long hitInterval;
@@ -87,7 +87,7 @@ public final class BacktrackModule extends Module {
    private long set;
    private double maxHeldMillis;
    private String targetReason = "idle";
-   private String read_Str = "idle";
+   private String holdStatus = "idle";
 
    public BacktrackModule() {
       super("backtrack", "Backtrack", ae.init_ae, "Briefly hold a retreating target's movement updates.");
@@ -228,7 +228,7 @@ public final class BacktrackModule extends Module {
          && !TeamsModule.init(candidate, "killaura");
    }
 
-   private boolean load_Z_10() {
+   private boolean canBacktrack() {
       return CLIENT.player != null
          && CLIENT.level != null
          && CLIENT.getConnection() != null
@@ -247,15 +247,15 @@ public final class BacktrackModule extends Module {
    public boolean onPacketSend(Packet<?> packet) {
       if (CLIENT.isSameThread()
          && packet instanceof ServerboundAttackPacket attack
-         && this.load_Z_10()
+         && this.canBacktrack()
          && CLIENT.level.getEntity(attack.entityId()) instanceof LivingEntity victim
          && this.isValidTarget(victim)) {
-         synchronized (this.init_Map) {
-            if (this.init_Map.size() >= 16) {
-               this.init_Map.clear();
+         synchronized (this.armContexts) {
+            if (this.armContexts.size() >= 16) {
+               this.armContexts.clear();
             }
 
-            this.init_Map
+            this.armContexts
                .put(
                   packet,
                   new BacktrackModule.ArmContext(
@@ -272,8 +272,8 @@ public final class BacktrackModule extends Module {
       BacktrackModule module = instance;
       if (module != null && packet instanceof ServerboundAttackPacket) {
          BacktrackModule.ArmContext arm;
-         synchronized (module.init_Map) {
-            arm = module.init_Map.remove(packet);
+         synchronized (module.armContexts) {
+            arm = module.armContexts.remove(packet);
          }
 
          if (arm != null) {
@@ -293,8 +293,8 @@ public final class BacktrackModule extends Module {
                         module.resetQueue(false);
                      }
 
-                     module.hitInterval = module.load_LivingEntity == arm.victim() && module.lastHitAt != 0L ? at - module.lastHitAt : 0L;
-                     if (module.load_LivingEntity != arm.victim()) {
+                     module.hitInterval = module.hitTarget == arm.victim() && module.lastHitAt != 0L ? at - module.lastHitAt : 0L;
+                     if (module.hitTarget != arm.victim()) {
                         module.recentHitTimes.clear();
                      }
 
@@ -303,11 +303,11 @@ public final class BacktrackModule extends Module {
                      }
 
                      module.recentHitTimes.addLast(at);
-                     module.load_LivingEntity = arm.victim();
+                     module.hitTarget = arm.victim();
                      module.lastHitAt = at;
                      module.hits++;
-                     if (module.load_Z_10()) {
-                        module.init_V_19();
+                     if (module.canBacktrack()) {
+                        module.updateTarget();
                      }
                   }
                }
@@ -323,24 +323,24 @@ public final class BacktrackModule extends Module {
             this.resetQueue(false);
          }
 
-         if (!this.load_Z_10()) {
+         if (!this.canBacktrack()) {
             this.resetQueue(true);
          } else {
-            this.init_V_19();
+            this.updateTarget();
             if (this.target != null) {
                long now = System.nanoTime();
-               if (this.init_Z_J_2(now)
-                  && this.init_Z_AABB_3(this.target.getBoundingBox(), this.positionTracker.position(), this.player.getEyePosition(), now)) {
-                  this.init_V_Z_4(false);
+               if (this.shouldHold(now)
+                  && this.isUsefulHold(this.target.getBoundingBox(), this.positionTracker.position(), this.player.getEyePosition(), now)) {
+                  this.releasePackets(false);
                } else {
-                  this.init_V_Z_4(true);
+                  this.releasePackets(true);
                }
             }
          }
       }
    }
 
-   private void init_V_19() {
+   private void updateTarget() {
       if (this.level == null) {
          this.level = CLIENT.level;
          this.player = CLIENT.player;
@@ -349,9 +349,9 @@ public final class BacktrackModule extends Module {
 
       LivingEntity selected = this.selectTarget();
       if (selected != this.target) {
-         this.init_V_Z_4(true);
+         this.releasePackets(true);
          this.trailHistory.clear();
-         this.init_Vec3 = null;
+         this.reachablePosition = null;
          this.target = selected;
          if (this.target != null) {
             InterpolationHandler interpolation = this.target.getInterpolation();
@@ -360,15 +360,15 @@ public final class BacktrackModule extends Module {
                : this.target.position();
             this.positionTracker.reset(this.target.getPositionCodec().getBase(), received);
             this.packetQueue.bind(this.level, this.player, this.connection, this.target);
-            this.init_V_AABB(this.target.getBoundingBox(), received, this.player.getEyePosition(), System.nanoTime());
+            this.updateReachablePosition(this.target.getBoundingBox(), received, this.player.getEyePosition(), System.nanoTime());
          }
       }
    }
 
    private LivingEntity selectTarget() {
-      this.targetReason = this.read_Str = "idle";
+      this.targetReason = this.holdStatus = "idle";
       if ("Hit".equals(this.choice("target"))) {
-         return this.withReason(this.load_LivingEntity_2(), "hit");
+         return this.withReason(this.recentHitTarget(), "hit");
       }
 
       if ("Combat".equals(this.choice("target"))) {
@@ -386,7 +386,7 @@ public final class BacktrackModule extends Module {
             }
          }
 
-         return this.withReason(this.load_LivingEntity_2(), "hit");
+         return this.withReason(this.recentHitTarget(), "hit");
       } else {
          LivingEntity best = null;
          double distance = this.reach();
@@ -408,27 +408,27 @@ public final class BacktrackModule extends Module {
 
    private LivingEntity withReason(LivingEntity candidate, String reason) {
       if (candidate != null) {
-         this.targetReason = this.read_Str = reason;
+         this.targetReason = this.holdStatus = reason;
       }
 
       return candidate;
    }
 
-   private boolean init_Z_J_2(long now) {
-      this.read_Str = this.targetReason;
+   private boolean shouldHold(long now) {
+      this.holdStatus = this.targetReason;
       if (this.isValidTarget(this.target) && this.target.hurtTime <= this.integer("hurt-time") && this.integer("hold-time") > 0) {
          if ((this.lastSelfHurtAt == 0L || now - this.lastSelfHurtAt >= 50000000L) && (!this.bool("pause-on-hurt") || this.player.hurtTime <= 0)) {
             if (this.bool("smart-timing") && !"crystal-aura".equals(this.targetReason) && !"anchor-aura".equals(this.targetReason)) {
                boolean auraIntent = "kill-aura".equals(this.targetReason);
                if (!auraIntent && !this.isAimedAt(this.target)) {
-                  this.read_Str = "off-aim";
+                  this.holdStatus = "off-aim";
                   return false;
                }
 
                int ping = this.pingMillis();
                int hold = this.integer("hold-time");
                long sinceHit = now - this.lastHitAt;
-               if (this.target != this.load_LivingEntity || !init_Z_J(sinceHit, hold, ping) && !init_Z_J_2(sinceHit, this.hitInterval, hold)) {
+               if (this.target != this.hitTarget || !withinHoldHorizon(sinceHit, hold, ping) && !withinHitCadence(sinceHit, this.hitInterval, hold)) {
                   int lookahead = hold + Math.min(100, ping / 2);
                   if (auraIntent && al.init_Module_Str("kill-aura") instanceof KillAuraModule aura) {
                      if (aura.activeTarget() == this.target && aura.init_Z_I_7(lookahead)) {
@@ -441,7 +441,7 @@ public final class BacktrackModule extends Module {
                      return true;
                   }
 
-                  this.read_Str = "waiting-charge";
+                  this.holdStatus = "waiting-charge";
                   return false;
                } else {
                   return true;
@@ -450,7 +450,7 @@ public final class BacktrackModule extends Module {
                return true;
             }
          } else {
-            this.read_Str = "hurt-pause";
+            this.holdStatus = "hurt-pause";
             return false;
          }
       } else {
@@ -468,10 +468,10 @@ public final class BacktrackModule extends Module {
          && attacker == CLIENT.player
          && module.target == victim
          && module.isSameSession()
-         && module.load_Z_10()
+         && module.canBacktrack()
          && module.integer("hold-time") > 0
          && autismclient.util.LegacyCombatDetector.isLegacyCombat(attacker)) {
-         if (module.init_Z_LivingEntity_J(module.target, System.nanoTime())) {
+         if (module.canHitFromWire(module.target, System.nanoTime())) {
             return false;
          }
 
@@ -482,7 +482,7 @@ public final class BacktrackModule extends Module {
       }
    }
 
-   private boolean init_Z_LivingEntity_J(LivingEntity victim, long now) {
+   private boolean canHitFromWire(LivingEntity victim, long now) {
       ServerRotationTracker.RotationSnapshot wire = ServerRotationTracker.getSnapshot();
       if (wire.initialized() && wire.position() != null) {
          Vec3 eye = wire.position().add(0.0, this.player.getEyeHeight(), 0.0);
@@ -497,7 +497,7 @@ public final class BacktrackModule extends Module {
             if (rayHits(latest, eye, look, reach - 0.035)) {
                return true;
             } else if (this.packetQueue.size() != 0 && this.hasReachableServerPosition(now)) {
-               AABB reachable = drawn.move(this.init_Vec3.subtract(current));
+               AABB reachable = drawn.move(this.reachablePosition.subtract(current));
                return rayHits(drawn, eye, look, reach - 0.035)
                   && rayHits(reachable, eye, look, reach - 0.06)
                   && rayHits(latest, eye, look, reach + 0.65);
@@ -519,7 +519,7 @@ public final class BacktrackModule extends Module {
       return entry == null ? 0 : Math.clamp(entry.getLatency(), 0, 300);
    }
 
-   public static boolean init_Z_J(long age, int holdMillis, int pingMillis) {
+   public static boolean withinHoldHorizon(long age, int holdMillis, int pingMillis) {
       int horizon = Math.clamp(pingMillis, 200, 300) + 100;
       return holdMillis > 0 && age >= 0L && age <= horizon * 1000000L;
    }
@@ -535,15 +535,15 @@ public final class BacktrackModule extends Module {
       return Double.isFinite(ticksUntilAttack) && ticksUntilAttack <= Math.max(0, Math.min(300, holdMillis)) / 50.0 + 1.0;
    }
 
-   public static boolean init_Z_J_2(long age, long interval, int holdMillis) {
+   public static boolean withinHitCadence(long age, long interval, int holdMillis) {
       long window = (Math.max(0, Math.min(300, holdMillis)) + 50L) * 1000000L;
       return age >= 0L && interval > 0L && interval <= window && age <= Math.min(window, interval + 50000000L);
    }
 
-   private LivingEntity load_LivingEntity_2() {
-      if (this.load_LivingEntity != null && this.isValidTarget(this.load_LivingEntity)) {
+   private LivingEntity recentHitTarget() {
+      if (this.hitTarget != null && this.isValidTarget(this.hitTarget)) {
          long age = System.nanoTime() - this.lastHitAt;
-         return age > this.integer("attack-window") * 1000000L && !init_Z_J(age, this.integer("hold-time"), this.pingMillis()) ? null : this.load_LivingEntity;
+         return age > this.integer("attack-window") * 1000000L && !withinHoldHorizon(age, this.integer("hold-time"), this.pingMillis()) ? null : this.hitTarget;
       } else {
          return null;
       }
@@ -588,14 +588,14 @@ public final class BacktrackModule extends Module {
          if (packet instanceof ClientboundDamageEventPacket damage
             && damage.entityId() != this.player.getId()
             && this.level.getEntity(damage.entityId()) instanceof LivingEntity victim
-            && (victim == this.target || victim == this.load_LivingEntity)) {
+            && (victim == this.target || victim == this.hitTarget)) {
             DamageSource cause = damage.getSource(this.level);
             if (cause.getEntity() != null) {
                this.lastDamageEventAt = System.nanoTime();
             }
 
             if (cause.getDirectEntity() == this.player && cause.is(DamageTypes.PLAYER_ATTACK)) {
-               this.init_V_LivingEntity_J(victim, this.lastDamageEventAt);
+               this.confirmHit(victim, this.lastDamageEventAt);
             } else if (cause.getEntity() == null) {
                this.onSourcelessDamage(victim, System.nanoTime());
             }
@@ -622,12 +622,12 @@ public final class BacktrackModule extends Module {
             || packet instanceof ClientboundSetHealthPacket health && health.getHealth() < this.player.getHealth()
             || packet instanceof ClientboundSetEntityMotionPacket motion && motion.id() == this.player.getId()) {
             this.lastSelfHurtAt = System.nanoTime();
-            this.init_Vec3 = null;
-            this.init_V_Z_4(true);
+            this.reachablePosition = null;
+            this.releasePackets(true);
             this.trailHistory.clear();
             return false;
          } else {
-            if (!this.load_Z_10()) {
+            if (!this.canBacktrack()) {
                this.resetQueue(true);
                return false;
             }
@@ -677,15 +677,15 @@ public final class BacktrackModule extends Module {
                AABB box = this.target.getBoundingBox();
                long now = System.nanoTime();
                if (moved && !next.equals(before)) {
-                  this.init_V_AABB(box, next, eye, now);
+                  this.updateReachablePosition(box, next, eye, now);
                }
 
                double nextRangeSq = distanceToBox(box.move(next.subtract(this.target.position())), eye);
                double beforeRangeSq = distanceToBox(box.move(before.subtract(this.target.position())), eye);
                boolean approaching = moved
                   && (this.hasRecentConfirmedHit(now) ? Math.sqrt(nextRangeSq) + 0.08 < Math.sqrt(beforeRangeSq) : nextRangeSq + 0.0025 < beforeRangeSq);
-               if (next.distanceToSqr(before) > 16.0 || approaching || !this.init_Z_J_2(now) || !this.init_Z_AABB_3(box, next, eye, now)) {
-                  this.init_V_Z_4(true);
+               if (next.distanceToSqr(before) > 16.0 || approaching || !this.shouldHold(now) || !this.isUsefulHold(box, next, eye, now)) {
+                  this.releasePackets(true);
                   return false;
                }
 
@@ -694,7 +694,7 @@ public final class BacktrackModule extends Module {
                }
 
                if (!this.packetQueue.offer(packet, now, this.integer("hold-time") * 1000000L)) {
-                  this.init_V_Z_4(true);
+                  this.releasePackets(true);
                   return false;
                }
 
@@ -713,51 +713,51 @@ public final class BacktrackModule extends Module {
    }
 
    private boolean hasRecentConfirmedHit(long now) {
-      return this.target != null && this.target == this.read_LivingEntity && now - this.confirmedHitAt <= 350000000L;
+      return this.target != null && this.target == this.confirmedHitTarget && now - this.confirmedHitAt <= 350000000L;
    }
 
-   private void init_V_LivingEntity_J(LivingEntity victim, long at) {
-      this.read_LivingEntity = victim;
+   private void confirmHit(LivingEntity victim, long at) {
+      this.confirmedHitTarget = victim;
       this.confirmedHitAt = at;
       if (victim == this.target) {
-         this.init_V_AABB(victim.getBoundingBox(), this.positionTracker.position(), this.player.getEyePosition(), at);
+         this.updateReachablePosition(victim.getBoundingBox(), this.positionTracker.position(), this.player.getEyePosition(), at);
       }
    }
 
    private void onSourcelessDamage(LivingEntity victim, long now) {
-      if (victim == this.load_LivingEntity && autismclient.util.LegacyCombatDetector.isLegacyCombat(this.player) && (this.lastDamageEventAt == 0L || now - this.lastDamageEventAt > 75000000L)) {
+      if (victim == this.hitTarget && autismclient.util.LegacyCombatDetector.isLegacyCombat(this.player) && (this.lastDamageEventAt == 0L || now - this.lastDamageEventAt > 75000000L)) {
          int ping = this.pingMillis();
 
          for (long attack : this.recentHitTimes) {
-            if (init_Z_J_I(now - attack, ping)) {
-               this.init_V_LivingEntity_J(victim, now);
+            if (isPlausibleHitDelay(now - attack, ping)) {
+               this.confirmHit(victim, now);
                return;
             }
          }
       }
    }
 
-   public static boolean init_Z_J_I(long ageNanos, int pingMillis) {
+   public static boolean isPlausibleHitDelay(long ageNanos, int pingMillis) {
       int ping = Math.clamp(pingMillis, 0, 300);
       return ageNanos >= Math.max(0, ping - 100) * 1000000L && ageNanos <= Math.max(300, ping + 125) * 1000000L;
    }
 
    private boolean hasReachableServerPosition(long now) {
-      return this.hasRecentConfirmedHit(now) && this.init_Vec3 != null && this.outOfReachSince != 0L && now - this.outOfReachSince <= 100000000L && now - this.reachableAt <= 150000000L;
+      return this.hasRecentConfirmedHit(now) && this.reachablePosition != null && this.outOfReachSince != 0L && now - this.outOfReachSince <= 100000000L && now - this.reachableAt <= 150000000L;
    }
 
-   private void init_V_AABB(AABB box, Vec3 next, Vec3 eye, long now) {
+   private void updateReachablePosition(AABB box, Vec3 next, Vec3 eye, long now) {
       double reach = this.reach();
       if (box.move(next.subtract(this.target.position())).distanceToSqr(eye) <= reach * reach) {
-         this.init_Vec3 = next;
+         this.reachablePosition = next;
          this.reachableAt = now;
          this.outOfReachSince = 0L;
-      } else if (this.init_Vec3 != null && this.outOfReachSince == 0L) {
+      } else if (this.reachablePosition != null && this.outOfReachSince == 0L) {
          this.outOfReachSince = now;
       }
    }
 
-   private boolean init_Z_AABB_3(AABB box, Vec3 received, Vec3 eye, long now) {
+   private boolean isUsefulHold(AABB box, Vec3 received, Vec3 eye, long now) {
       Vec3 current = this.target.position();
       double min = this.decimal("min-distance");
       double reach = this.reach();
@@ -772,10 +772,10 @@ public final class BacktrackModule extends Module {
       AABB latest = box.move(received.subtract(current));
       return serverPositionIsFarther(box, current, received, eye, min, reach)
          ? hasSharedHitPoint(eye, box, latest, latest, reach, reach)
-         : this.hasReachableServerPosition(now) && isReachRescue(box, current, this.init_Vec3, received, eye, min, reach);
+         : this.hasReachableServerPosition(now) && isReachRescue(box, current, this.reachablePosition, received, eye, min, reach);
    }
 
-   private void init_V_Z_4(boolean all) {
+   private void releasePackets(boolean all) {
       if (this.packetQueue.size() != 0) {
          if (this.isSameSession()
             && this.target != null
@@ -808,25 +808,25 @@ public final class BacktrackModule extends Module {
    private void resetQueue(boolean replay) {
       this.trailHistory.clear();
       if (replay && this.isSameSession()) {
-         this.init_V_Z_4(true);
+         this.releasePackets(true);
       }
 
       this.discardedPackets = this.discardedPackets + this.packetQueue.size();
       this.packetQueue.clear();
-      synchronized (this.init_Map) {
-         this.init_Map.clear();
+      synchronized (this.armContexts) {
+         this.armContexts.clear();
       }
 
       this.recentHitTimes.clear();
       this.lastDamageEventAt = 0L;
-      this.target = this.load_LivingEntity = this.read_LivingEntity = null;
+      this.target = this.hitTarget = this.confirmedHitTarget = null;
       this.level = null;
       this.player = null;
       this.connection = null;
       this.lastHitAt = 0L;
-      this.init_Vec3 = null;
+      this.reachablePosition = null;
       this.hitInterval = this.lastSelfHurtAt = 0L;
-      this.targetReason = this.read_Str = "idle";
+      this.targetReason = this.holdStatus = "idle";
       this.epoch++;
    }
 
@@ -843,12 +843,12 @@ public final class BacktrackModule extends Module {
          Vec3 received = module.positionTracker.position();
          AABB drawn = entity.getBoundingBox();
          long now = System.nanoTime();
-         if (!module.init_Z_AABB_3(drawn, received, eyes, now)) {
+         if (!module.isUsefulHold(drawn, received, eyes, now)) {
             return null;
          }
 
          double reach = module.reach();
-         return drawn.move(received.subtract(entity.position())).distanceToSqr(eyes) <= reach * reach ? received : module.init_Vec3;
+         return drawn.move(received.subtract(entity.position())).distanceToSqr(eyes) <= reach * reach ? received : module.reachablePosition;
       } else {
          return null;
       }
@@ -879,7 +879,7 @@ public final class BacktrackModule extends Module {
          this.maxHeldMillis,
          live ? this.positionTracker.position() : null,
          this.epoch,
-         this.read_Str,
+         this.holdStatus,
          this.isSameSession() ? this.pingMillis() : 0,
          live && this.bool("server-position") && (this.packetQueue.size() > 0 || this.trailHistory.hasRecentTrail(this.target, now)),
          live && this.hasRecentConfirmedHit(now),
@@ -918,7 +918,7 @@ public final class BacktrackModule extends Module {
    }
 
    public static boolean isUsefulBacktrack(AABB drawn, Vec3 rendered, Vec3 server, Vec3 eye, double minimum, double maximum) {
-      return serverPositionIsFarther(drawn, rendered, server, eye, minimum, maximum) && init_Z_AABB(drawn, drawn.move(server.subtract(rendered)), eye, maximum);
+      return serverPositionIsFarther(drawn, rendered, server, eye, minimum, maximum) && rayHitsInset(drawn, drawn.move(server.subtract(rendered)), eye, maximum);
    }
 
    private static boolean serverPositionIsFarther(AABB drawn, Vec3 rendered, Vec3 server, Vec3 eye, double minimum, double maximum) {
@@ -981,7 +981,7 @@ public final class BacktrackModule extends Module {
       return rayHitsBox(a, eye, point, reach) && rayHitsBox(b, eye, point, reach) && rayHitsBox(c, eye, point, latestReach);
    }
 
-   private static boolean init_Z_AABB(AABB drawn, AABB received, Vec3 eye, double range) {
+   private static boolean rayHitsInset(AABB drawn, AABB received, Vec3 eye, double range) {
       Vec3 middle = drawn.getCenter();
       double inset = Math.min(0.1, Math.min(received.getXsize(), Math.min(received.getYsize(), received.getZsize())) * 0.25);
       AABB interior = received.deflate(inset);

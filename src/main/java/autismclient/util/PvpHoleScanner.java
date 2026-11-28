@@ -36,7 +36,7 @@ public final class PvpHoleScanner {
    private static final int sync = 64000;
    private static final Set<PvpHoleScanner.ScanSubscriber> subscribers = new CopyOnWriteArraySet<>();
    private static volatile PvpHoleScanner.HoleSnapshot snapshot = PvpHoleScanner.HoleSnapshot.EMPTY;
-   private static volatile boolean init_Z;
+   private static volatile boolean rescanRequested;
    private static PvpHoleScanner.HoleScan activeScan;
    private static BlockPos lastCentre;
    private static int lastHorizontalRadius;
@@ -66,7 +66,7 @@ public final class PvpHoleScanner {
 
    public static void reset() {
       snapshot = PvpHoleScanner.HoleSnapshot.EMPTY;
-      init_Z = true;
+      rescanRequested = true;
       Minecraft mc = Minecraft.getInstance();
       if (mc.isSameThread()) {
          resetState();
@@ -118,8 +118,8 @@ public final class PvpHoleScanner {
    private static void tickScan() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.isSameThread()) {
-         if (init_Z) {
-            init_Z = false;
+         if (rescanRequested) {
+            rescanRequested = false;
             resetState();
          }
 
@@ -292,7 +292,7 @@ public final class PvpHoleScanner {
             }
 
             if (this.lastRowY != this.cursorY) {
-               this.init_V_I(this.cursorY);
+               this.resetRowWindow(this.cursorY);
             }
 
             this.scanCell(this.cursorX, this.cursorY, this.cursorZ);
@@ -313,7 +313,7 @@ public final class PvpHoleScanner {
          return this.done;
       }
 
-      private void init_V_I(int row) {
+      private void resetRowWindow(int row) {
          if (this.lastRowY != -2147483648 && row - this.lastRowY == 1) {
             int slot = row + 2 & 3;
             Arrays.fill(this.cells, slot * this.gridCells, (slot + 1) * this.gridCells, (byte)0);
@@ -326,7 +326,7 @@ public final class PvpHoleScanner {
       }
 
       private void scanCell(int cellX, int cellY, int cellZ) {
-         if (!this.isClaimed(cellX, cellZ) && this.init_Z(cellX, cellY, cellZ)) {
+         if (!this.isClaimed(cellX, cellZ) && this.isHoleCell(cellX, cellY, cellZ)) {
             int resistant = 0;
             int open1 = -1;
             int open2 = -1;
@@ -344,18 +344,18 @@ public final class PvpHoleScanner {
 
             switch (resistant) {
                case 2:
-                  this.init_V(cellX, cellY, cellZ, PvpHoleScanner.HORIZONTALS[open1], PvpHoleScanner.HORIZONTALS[open2]);
+                  this.checkTwoByTwo(cellX, cellY, cellZ, PvpHoleScanner.HORIZONTALS[open1], PvpHoleScanner.HORIZONTALS[open2]);
                   break;
                case 3:
                   this.extendThroughOpenSide(cellX, cellY, cellZ, PvpHoleScanner.HORIZONTALS[open1]);
                   break;
                case 4:
-                  this.load_V(cellX, cellY, cellZ);
+                  this.addSingleHole(cellX, cellY, cellZ);
             }
          }
       }
 
-      private void load_V(int cellX, int cellY, int cellZ) {
+      private void addSingleHole(int cellX, int cellY, int cellZ) {
          boolean bedrock = this.cellAt(cellX, cellY - 1, cellZ) == 4;
 
          for (int i = 0; bedrock && i < PvpHoleScanner.HORIZONTALS.length; i++) {
@@ -369,7 +369,7 @@ public final class PvpHoleScanner {
       private void extendThroughOpenSide(int cellX, int cellY, int cellZ, Direction open) {
          int otherX = cellX + open.getStepX();
          int otherZ = cellZ + open.getStepZ();
-         if (this.init_Z(otherX, cellY, otherZ)) {
+         if (this.isHoleCell(otherX, cellY, otherZ)) {
             Direction back = open.getOpposite();
 
             for (Direction direction : PvpHoleScanner.HORIZONTALS) {
@@ -387,29 +387,29 @@ public final class PvpHoleScanner {
          }
       }
 
-      private void init_V(int cellX, int cellY, int cellZ, Direction d1, Direction d2) {
+      private void checkTwoByTwo(int cellX, int cellY, int cellZ, Direction d1, Direction d2) {
          int ax = cellX + d1.getStepX();
          int az = cellZ + d1.getStepZ();
-         if (this.init_Z(ax, cellY, az, d1, d2.getOpposite())) {
+         if (this.isWalledCell(ax, cellY, az, d1, d2.getOpposite())) {
             int bx = cellX + d2.getStepX();
             int bz = cellZ + d2.getStepZ();
-            if (this.init_Z(bx, cellY, bz, d2, d1.getOpposite())) {
+            if (this.isWalledCell(bx, cellY, bz, d2, d1.getOpposite())) {
                int cx = bx + d1.getStepX();
                int cz = bz + d1.getStepZ();
-               if (this.init_Z(cx, cellY, cz, d1, d2)) {
+               if (this.isWalledCell(cx, cellY, cz, d1, d2)) {
                   this.addHole(new PvpHoleScanner.Hole(PvpHoleScanner.HoleType.TWO_BY_TWO, new BlockPos(Math.min(cellX, cx), cellY, Math.min(cellZ, cz)), 2, 2));
                }
             }
          }
       }
 
-      private boolean init_Z(int cellX, int cellY, int cellZ, Direction a, Direction b) {
-         return this.init_Z(cellX, cellY, cellZ)
+      private boolean isWalledCell(int cellX, int cellY, int cellZ, Direction a, Direction b) {
+         return this.isHoleCell(cellX, cellY, cellZ)
             && isBlastProof(this.cellAt(cellX + a.getStepX(), cellY, cellZ + a.getStepZ()))
             && isBlastProof(this.cellAt(cellX + b.getStepX(), cellY, cellZ + b.getStepZ()));
       }
 
-      private boolean init_Z(int cellX, int cellY, int cellZ) {
+      private boolean isHoleCell(int cellX, int cellY, int cellZ) {
          return isBlastProof(this.cellAt(cellX, cellY - 1, cellZ))
             && this.cellAt(cellX, cellY, cellZ) == 1
             && this.cellAt(cellX, cellY + 1, cellZ) == 1

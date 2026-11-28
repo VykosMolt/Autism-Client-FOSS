@@ -29,7 +29,7 @@ public final class ToggleSwitchRenderer {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
       int track = lerpColor(-12961216, context.init_TableIndex().colors().accent, eased);
       if (hovered) {
-         track = init(track, 0.12F);
+         track = lighten(track, 0.12F);
       }
 
       autismclient.gui.f.PacketUtil.load(graphics, bounds, bounds.sync() / 2, track);
@@ -112,7 +112,7 @@ public final class ToggleSwitchRenderer {
       return a << 24 | r << 16 | g << 8 | b;
    }
 
-   private static int init(int color, float amount) {
+   private static int lighten(int color, float amount) {
       int r = color >> 16 & 0xFF;
       int g = color >> 8 & 0xFF;
       int b = color & 0xFF;

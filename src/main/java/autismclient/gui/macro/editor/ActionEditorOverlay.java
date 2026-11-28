@@ -192,7 +192,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private static final int node = 22;
    private static final int task = 5;
    private static final int pool = 14;
-   private static final long init_J = 500L;
+   private static final long TAB_NAMES_CACHE_MS = 500L;
    private static final int index = 40;
    private static final double init_D = 16.0;
    private static final int count = 12;
@@ -352,9 +352,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private int payloadFieldCount = 0;
    private int payloadTabIndex = 0;
    private boolean payloadContentDirty = false;
-   private boolean set_Z = false;
-   private boolean put_Z = false;
-   private boolean add_Z = false;
+   private boolean jsonAlreadyEncoded = false;
+   private boolean payloadEdited = false;
+   private boolean reencodeFromJson = false;
    private boolean payloadModeUserSelected = false;
    private boolean payloadAddTypeUserSelected = false;
    private boolean suppressPayloadListeners = false;
@@ -429,13 +429,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private List<autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool> packetMatchRules;
    private int selectedPacketRule = -1;
    private final List<String> playerNameOptions = new ArrayList<>();
-   private final Map<String, String> get_Map = new HashMap<>();
-   private final Map<String, Component> set_Map = new HashMap<>();
+   private final Map<String, String> playerPrefixes = new HashMap<>();
+   private final Map<String, Component> prefixComponents = new HashMap<>();
    private boolean playerOptionsLoaded = false;
    private final List<String> autismModuleNames = new ArrayList<>();
    private List<ak.Inner_DataUtil> toggleModuleEntries;
    private Runnable onPreSave;
-   private final List<ActionEditorOverlay.ClickRegion> valid_List = new ArrayList<>();
+   private final List<ActionEditorOverlay.ClickRegion> clickRegions = new ArrayList<>();
    private autismclient.gui.f.NetHelper bodyClip;
    private float frameDelta = 0.0F;
    private final List<ActionEditorOverlay.ScrollbarRegion> scrollbarRegions = new ArrayList<>();
@@ -942,8 +942,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       this.playerNameOptions.clear();
-      this.get_Map.clear();
-      this.set_Map.clear();
+      this.playerPrefixes.clear();
+      this.prefixComponents.clear();
       this.playerOptionsLoaded = false;
       if (action instanceof PayAction) {
          ThemedTextInputBox search = this.internalTextFields.get("players");
@@ -1176,7 +1176,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             contentField.setValue(this.replaceScriptChannel(contentField.getValue(), target));
          }
 
-         this.put_Z = true;
+         this.payloadEdited = true;
       } finally {
          this.suppressPayloadListeners = false;
       }
@@ -1234,7 +1234,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    public void setVisible(boolean v) {
       this.visible = v;
       if (v) {
-         this.valid_List.clear();
+         this.clickRegions.clear();
          this.scrollbarRegions.clear();
       } else {
          this.flushPendingPayloadEdit(true);
@@ -1258,7 +1258,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.dropdowns);
             this.packetSelector.setVisible(false);
             this.raceStepSelector.setVisible(false);
-            this.valid_List.clear();
+            this.clickRegions.clear();
             this.scrollbarRegions.clear();
          }
       }
@@ -1414,7 +1414,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          String key = this.captureSession.key();
          if ("_item_entries".equals(key) && this.itemActionDraft != null) {
-            this.load_V_ArrayUtil(capturedTarget);
+            this.applyCapturedItemTarget(capturedTarget);
             this.captureSession.clear();
             this.finishCapture(false, false);
             return true;
@@ -1508,7 +1508,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                ActionEditorOverlay.EntryResult result = this.isStoreItemTargetsKey(key)
                   ? this.captureSlotEntry(slot, itemName, registryId, visibleSlot, useSlot, list)
-                  : this.init_ActionEditorOverla_FieldDef(
+                  : this.addCapturedEntry(
                      this.findField(key),
                      key,
                      list,
@@ -1573,7 +1573,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.visible || this.isClosing()) {
          this.flushPendingPayloadEdit(false);
          this.frameDelta = delta;
-         this.valid_List.clear();
+         this.clickRegions.clear();
          this.scrollbarRegions.clear();
          int rawMouseX = mouseX;
          int rawMouseY = mouseY;
@@ -1732,7 +1732,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       } else if (this.editingAction != null && this.editingAction.getType() == MacroActionType.WAIT_CHAT) {
          int x = this.editorX + 4;
          int w = this.editorWidth - 8;
-         this.init_V_GuiGraphicsExtract(context, x, bodyTop, bodyBtm - this.footerHeight(), w, mouseX, mouseY, delta);
+         this.renderWaitChatEditor(context, x, bodyTop, bodyBtm - this.footerHeight(), w, mouseX, mouseY, delta);
       } else if (this.editingAction != null && this.editingAction.getType() == MacroActionType.SELECT_SLOT) {
          int x = this.editorX + 4;
          int w = this.editorWidth - 8;
@@ -1762,7 +1762,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int w = this.editorWidth - 8 - sbReserve;
             autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(this.editorX + 1, bodyTop, Math.max(0, this.editorWidth - 2), contentAreaH);
             this.bodyClip = clip;
-            int firstBodyHit = this.valid_List.size();
+            int firstBodyHit = this.clickRegions.size();
             UiClipStack.getInstance().push(context, clip);
 
             try {
@@ -1798,7 +1798,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int w = this.editorWidth - 8 - sbReserve;
             autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(this.editorX + 1, bodyTop, Math.max(0, this.editorWidth - 2), contentAreaH);
             this.bodyClip = clip;
-            int firstBodyHit = this.valid_List.size();
+            int firstBodyHit = this.clickRegions.size();
             UiClipStack.getInstance().push(context, clip);
 
             try {
@@ -1830,7 +1830,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int w = this.editorWidth - 8 - sbReserve;
             autismclient.gui.f.NetHelper clip = autismclient.gui.f.NetHelper.init(this.editorX + 1, bodyTop, Math.max(0, this.editorWidth - 2), contentAreaH);
             this.bodyClip = clip;
-            int firstBodyHit = this.valid_List.size();
+            int firstBodyHit = this.clickRegions.size();
             UiClipStack.getInstance().push(context, clip);
 
             try {
@@ -1873,7 +1873,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          } else if (this.lanStepEntries != null) {
             int x = this.editorX + 4;
             int w = this.editorWidth - 8;
-            this.write_V_GuiGraphicsExtract(context, x, bodyTop, w, mouseX, mouseY, delta);
+            this.renderLanSyncEditor(context, x, bodyTop, w, mouseX, mouseY, delta);
          } else if (this.fieldSchema != null && !this.fieldSchema.fields().isEmpty()) {
             int contentBtm = bodyBtm - this.footerHeight();
             int contentAreaH = contentBtm - bodyTop;
@@ -1938,7 +1938,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                            || this.editingAction.getType() != MacroActionType.PLACE
                            || !"itemName".equals(field.key()) && !"packetOrder".equals(field.key())
                      )) {
-                     this.init_V_GuiGraphicsExtract_5(context, field, x, y, w, mouseX, mouseY, delta);
+                     this.renderFieldControl(context, field, x, y, w, mouseX, mouseY, delta);
                      y += this.fieldHeight(field) + 2;
                   }
                }
@@ -1952,18 +1952,18 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                            || this.editingAction.getType() != MacroActionType.PLACE
                            || !"itemName".equals(field.key()) && !"packetOrder".equals(field.key())
                      )) {
-                     this.init_V_GuiGraphicsExtract_5(context, field, x, y, w, mouseX, mouseY, delta);
+                     this.renderFieldControl(context, field, x, y, w, mouseX, mouseY, delta);
                      y += this.fieldHeight(field) + 2;
                   }
                }
 
                if (this.editingAction != null && this.editingAction.getType() == MacroActionType.PACKET) {
-                  this.load_V(context, x, y, w, mouseX, mouseY);
+                  this.renderRawPacketControls(context, x, y, w, mouseX, mouseY);
                   y += 52;
                }
 
                if (this.editingAction != null && this.editingAction.getType() == MacroActionType.SEND_PACKET) {
-                  this.write_V(context, x, y, w, mouseX, mouseY);
+                  this.renderQueuedPacketsControls(context, x, y, w, mouseX, mouseY);
                   y += 52;
                }
 
@@ -2065,7 +2065,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                );
                if (iy + 13 > cy && iy < cy + selAreaH) {
                   int fi = i;
-                  this.valid_List
+                  this.clickRegions
                      .add(
                         new ActionEditorOverlay.ClickRegion(
                            x, Math.max(cy, iy), itemW, Math.min(iy + 13, cy + selAreaH) - Math.max(cy, iy), () -> this.toggleItemEntrySelection(fi)
@@ -2076,7 +2076,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (iy + 13 > cy && iy < cy + selAreaH) {
                   int delX = x + itemW + 2;
                   int fi = i;
-                  this.init_V_GuiGraphicsExtract_2(ctx, delX, iy, delW, mx, my, () -> {
+                  this.renderRemoveButton(ctx, delX, iy, delW, mx, my, () -> {
                      this.itemActionDraft.itemNames.remove(fi);
                      if (fi < this.itemActionDraft.itemTargets.size()) {
                         this.itemActionDraft.itemTargets.remove(fi);
@@ -2150,7 +2150,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (this.selectedItemEntry >= 0) {
                this.clearItemEntrySelection();
             } else {
-               this.flush_V_2();
+               this.commitItemEntryEditClearingSelection();
             }
          });
       }
@@ -2234,7 +2234,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          cy += 16;
-         if (this.reset_Z()) {
+         if (this.showsSelectedItemScope()) {
             this.renderSelectedItemScope(ctx, x, cy, w, mx, my);
             cy += 16;
          }
@@ -2327,7 +2327,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private boolean reset_Z() {
+   private boolean showsSelectedItemScope() {
       if (this.itemActionDraft != null && this.selectedItemEntry >= 0 && this.selectedItemEntry < this.itemActionDraft.itemNames.size()) {
          MacroItemTarget target = this.itemTargetAt(this.itemActionDraft.itemTargets, this.itemActionDraft.itemNames, this.selectedItemEntry);
          return target.hasItemFilter() && !target.hasSlot()
@@ -2452,7 +2452,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void flush_V_2() {
+   private void commitItemEntryEditClearingSelection() {
       this.commitItemEntryEdit(false);
    }
 
@@ -2490,7 +2490,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void load_V_ArrayUtil(MacroItemTarget rawTarget) {
+   private void applyCapturedItemTarget(MacroItemTarget rawTarget) {
       if (this.itemActionDraft != null) {
          MacroItemTarget target = stripSlotIfFiltered(rawTarget);
          String entry = target == null ? "" : target.toSpecString();
@@ -2590,7 +2590,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                boolean useMax = this.toggleStates.getOrDefault("craft_useMax_" + i, false);
                int removeX = x + w - sbGap - removeW;
                int fi = i;
-               this.init_V_GuiGraphicsExtract_2(ctx, removeX, siy + 1, removeW, mx, my, () -> {
+               this.renderRemoveButton(ctx, removeX, siy + 1, removeW, mx, my, () -> {
                   this.craftEntries.remove(fi);
                   this.rebuildCraftAmountFields();
                   ScrollableListView vp = this.entryViewports.get("_craft_entries");
@@ -2711,7 +2711,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                AutoCraftingEngine.CraftOption fOpt = opt;
                boolean fInList = inList;
-               this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, ry, recW, 13, () -> {
+               this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, ry, recW, 13, () -> {
                   if (fInList) {
                      this.craftEntries.removeIf(e -> fOpt.recipeKey != null && fOpt.recipeKey.equals(e.recipeKey) || fOpt.recipeKeyHash >= 0 && fOpt.recipeKeyHash == e.recipeId);
                      this.rebuildCraftAmountFields();
@@ -2857,7 +2857,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                );
                if (iy + 13 > cy && iy < cy + selAreaH) {
                   int fi = i;
-                  this.valid_List
+                  this.clickRegions
                      .add(
                         new ActionEditorOverlay.ClickRegion(
                            x, Math.max(cy, iy), dropItemW, Math.min(iy + 13, cy + selAreaH) - Math.max(cy, iy), () -> this.toggleDropEntrySelection(fi)
@@ -2868,7 +2868,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (iy + 13 > cy && iy < cy + selAreaH) {
                   int delX = x + dropItemW + 2;
                   int fi = i;
-                  this.init_V_GuiGraphicsExtract_2(ctx, delX, iy, delW, mx, my, () -> {
+                  this.renderRemoveButton(ctx, delX, iy, delW, mx, my, () -> {
                      this.dropActionDraft.itemNames.remove(fi);
                      if (fi < this.dropActionDraft.itemTargets.size()) {
                         this.dropActionDraft.itemTargets.remove(fi);
@@ -2926,7 +2926,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (this.selectedDropEntry >= 0) {
                this.clearDropEntrySelection();
             } else {
-               this.reset_V();
+               this.commitDropEntryEditClearingSelection();
             }
          });
       }
@@ -3132,7 +3132,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void reset_V() {
+   private void commitDropEntryEditClearingSelection() {
       this.commitDropEntryEdit(false);
    }
 
@@ -3276,7 +3276,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void write_V_GuiGraphicsExtract(GuiGraphicsExtractor ctx, int x, int bodyTop, int w, int mx, int my, float delta) {
+   private void renderLanSyncEditor(GuiGraphicsExtractor ctx, int x, int bodyTop, int w, int mx, int my, float delta) {
       Identifier font = this.styleTheme.init_Identifier_l(l.read);
       int cy = bodyTop + 4;
       boolean filterByUser = this.toggleStates.getOrDefault("lan_filterByUser", false);
@@ -3354,7 +3354,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   }
 
                   int fi = i;
-                  this.init_V_GuiGraphicsExtract_2(ctx, removeX, iy + 1, removeW, mx, my, () -> {
+                  this.renderRemoveButton(ctx, removeX, iy + 1, removeW, mx, my, () -> {
                      this.lanStepEntries.remove(fi);
                      this.rebuildLanStepFields();
                      ScrollableListView vp = this.entryViewports.get("_lan_entries");
@@ -3428,7 +3428,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void load_V(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
+   private void renderRawPacketControls(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       Identifier font = this.styleTheme.init_Identifier_l(l.read);
       int btnH = 13;
       int topY = y + 2;
@@ -3439,7 +3439,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.renderSecondaryButton(ctx, topBtns[0], topY, topBtns[1], btnH, "Queue First", mx, my, () -> {
          List<AutismSessionState.DelayedPacket> queue = AutismSessionState.getInstance().getDelayedPackets();
          if (queue != null && !queue.isEmpty()) {
-            this.init_V_ck_CachePool(queue.get(0));
+            this.storeSinglePacket(queue.get(0));
             AutismClientMessaging.sendPrefixed("Loaded first queued packet");
          } else {
             AutismClientMessaging.sendPrefixed("Queue is empty");
@@ -3448,7 +3448,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.renderSecondaryButton(ctx, topBtns[2], topY, topBtns[3], btnH, "Paste Base64", mx, my, () -> {
          List<AutismSessionState.DelayedPacket> pasted = MacroClipboardCodec.readPackets();
          if (pasted != null && !pasted.isEmpty()) {
-            this.init_V_ck_CachePool(pasted.get(0));
+            this.storeSinglePacket(pasted.get(0));
             AutismClientMessaging.sendPrefixed("Loaded first pasted packet");
          } else {
             AutismClientMessaging.sendPrefixed("Failed to paste packet data");
@@ -3713,12 +3713,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   true
                );
                int fi = i;
-               this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, rowW, 13, () -> {
+               this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, rowW, 13, () -> {
                   this.applyPacketRuleValue();
                   this.selectedPacketRule = fi;
                   this.loadPacketRuleValue();
                }));
-               this.init_V_GuiGraphicsExtract_2(ctx, x + rowW + 2, iy, delW, mx, my, () -> {
+               this.renderRemoveButton(ctx, x + rowW + 2, iy, delW, mx, my, () -> {
                   this.packetMatchRules.remove(fi);
                   if (this.selectedPacketRule >= this.packetMatchRules.size()) {
                      this.selectedPacketRule = this.packetMatchRules.size() - 1;
@@ -3894,7 +3894,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             );
             int rowIndex = i;
             if (!removable) {
-               this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, textW, 13, () -> rowAction.accept(rowIndex)));
+               this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, textW, 13, () -> rowAction.accept(rowIndex)));
             }
 
             if (removable) {
@@ -3923,7 +3923,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   }
                );
                int removeX = modeX + modeW + 2;
-               this.init_V_GuiGraphicsExtract_2(ctx, removeX, iy, removeW, mx, my, () -> rowAction.accept(rowIndex));
+               this.renderRemoveButton(ctx, removeX, iy, removeW, mx, my, () -> rowAction.accept(rowIndex));
             }
          }
       }
@@ -3932,7 +3932,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return y + listH;
    }
 
-   private void write_V(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
+   private void renderQueuedPacketsControls(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       Identifier font = this.styleTheme.init_Identifier_l(l.read);
       int btnH = 13;
       int topY = y + 2;
@@ -3986,9 +3986,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ActionEditorOverlay.PayloadEditorState state = this.buildPayloadEditorState(seedAction);
       this.payloadTemplate = state.template();
       this.payloadContentDirty = false;
-      this.set_Z = false;
-      this.put_Z = false;
-      this.add_Z = false;
+      this.jsonAlreadyEncoded = false;
+      this.payloadEdited = false;
+      this.reencodeFromJson = false;
       this.payloadModeUserSelected = false;
       this.payloadAddTypeUserSelected = false;
       this.suppressPayloadListeners = false;
@@ -3997,7 +3997,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       channelField.setPlaceholder(Component.literal("namespace:channel"));
       channelField.setChangedListener(text -> {
          if (!this.suppressPayloadListeners) {
-            this.put_Z = true;
+            this.payloadEdited = true;
             if (this.payloadEditor != null) {
                this.payloadEditor.channel = text != null && !text.isBlank() ? text.strip() : "minecraft:brand";
                this.payloadEditor.bumpRevision();
@@ -4021,7 +4021,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       contentField.setBackgroundColorOverride(1376389388);
       contentField.setMaxLength(32767);
       contentField.setPlaceholder(Component.literal("direction = C2S\nphase = PLAY\nchannel = minecraft:brand\n\nwriteMcString = vanilla"));
-      contentField.setDisplayTextProvider(this::init_Component_Str);
+      contentField.setDisplayTextProvider(this::contentDisplayText);
       contentField.setRevisionProvider(this::payloadRevision);
       contentField.setChangedListener(text -> {
          if (!this.suppressPayloadListeners) {
@@ -4076,7 +4076,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       logicalView.setEditable(true);
       logicalView.setMaxLength(32767);
       logicalView.setPlaceholder(Component.literal("direction = C2S\nphase = PLAY\nchannel = minecraft:brand\nbodyHex = ..."));
-      logicalView.setDisplayTextProvider(this::write_Component);
+      logicalView.setDisplayTextProvider(this::logicalDisplayText);
       logicalView.setRevisionProvider(this::payloadRevision);
       logicalView.setChangedListener(text -> {
          if (!this.suppressPayloadListeners) {
@@ -4259,9 +4259,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   textField.setValue(AutismPayloadSupport.decodePrintableUtf8(encoded.bytes()));
                }
 
-               this.put_Z = true;
-               this.set_Z = true;
-               this.add_Z = false;
+               this.payloadEdited = true;
+               this.jsonAlreadyEncoded = true;
+               this.reencodeFromJson = false;
             } finally {
                this.suppressPayloadListeners = false;
             }
@@ -4443,13 +4443,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   this.inferPayloadModeSelection();
                   break;
                case HEX:
-                  this.init_V_Str_2(edit.text());
+                  this.applyHexEdit(edit.text());
                   break;
                case UTF8:
-                  this.load_V_Str(edit.text());
+                  this.applyUtf8Edit(edit.text());
                   break;
                case LOGICAL:
-                  this.read_V(edit.text());
+                  this.applyLogicalEdit(edit.text());
                   break;
                case PREVIEW_ONLY:
                   this.pushPayloadContentToFields(false);
@@ -4460,14 +4460,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_Str_2(String text) {
+   private void applyHexEdit(String text) {
       if (this.payloadEditor != null && this.payloadEditor.parseHex(text)) {
          this.payloadContentDirty = true;
          this.pushPayloadEditorToFields(false);
       }
    }
 
-   private void load_V_Str(String text) {
+   private void applyUtf8Edit(String text) {
       if (this.payloadEditor != null) {
          this.payloadEditor.setUtf8(text);
          this.payloadContentDirty = true;
@@ -4475,7 +4475,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void read_V(String text) {
+   private void applyLogicalEdit(String text) {
       if (this.payloadEditor != null && this.payloadEditor.setLogical(text)) {
          this.payloadContentDirty = true;
          this.pushPayloadEditorToFields(false);
@@ -4765,7 +4765,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ctx, sendBtns[0], cy, sendBtns[1], 13, sendLbl, OverlayActionButton.ButtonTone.SUCCESS, !this.configurationOnly && built.isValid() && !modelBad, mx, my, () -> {
             if (!this.configurationOnly) {
                try {
-                  PayloadAction action = this.load_H();
+                  PayloadAction action = this.payloadActionFromDraft();
                   action.execute(MC);
                } catch (Exception e) {
                   AutismClientMessaging.sendPrefixed("§cPayload send failed: " + AutismPayloadSupport.describeError(e));
@@ -4976,7 +4976,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return out;
    }
 
-   private String load_Str_BArr(byte[] bytes) {
+   private String unusedPrintableText(byte[] bytes) {
       String text = AutismPayloadSupport.decodePrintableUtf8(bytes);
       if (text != null && !text.isBlank()) {
          for (int i = 0; i < text.length(); i++) {
@@ -5028,7 +5028,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return this.payloadEditor == null ? 0L : this.payloadEditor.revision();
    }
 
-   private Component init_Component_Str(String source) {
+   private Component contentDisplayText(String source) {
       MutableComponent out = Component.empty();
       String safe = source == null ? "" : source;
       String[] lines = safe.replace("\r\n", "\n").replace('\r', '\n').split("\n", -1);
@@ -5150,7 +5150,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return out;
    }
 
-   private Component write_Component(String source) {
+   private Component logicalDisplayText(String source) {
       MutableComponent out = Component.empty();
       String safe = source == null ? "" : source;
       String[] lines = safe.replace("\r\n", "\n").replace('\r', '\n').split("\n", -1);
@@ -5472,7 +5472,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.suppressPayloadListeners = false;
          }
 
-         this.put_Z = true;
+         this.payloadEdited = true;
          this.payloadContentDirty = true;
          this.resizeEditorToContent();
       }
@@ -5498,11 +5498,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.payloadEditor != null) {
          String decoded = this.payloadEditor.close == null ? "payload" : this.payloadEditor.close;
          int bytes = this.payloadEditor.bodyBytes == null ? 0 : this.payloadEditor.bodyBytes.length;
-         return !this.payloadContentDirty && !this.put_Z ? "Ready: " + bytes + "B " + decoded : "Edited: " + bytes + "B " + decoded;
+         return !this.payloadContentDirty && !this.payloadEdited ? "Ready: " + bytes + "B " + decoded : "Edited: " + bytes + "B " + decoded;
       } else if (this.payloadContentDirty) {
          return "Edited: script rebuilds bytes";
       } else {
-         return this.put_Z ? "Edited: channel changed" : "Payload builder ready";
+         return this.payloadEdited ? "Edited: channel changed" : "Payload builder ready";
       }
    }
 
@@ -5554,10 +5554,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          this.pushPayloadEditorToFields(true);
-         this.put_Z = false;
+         this.payloadEdited = false;
          this.payloadContentDirty = false;
-         this.set_Z = false;
-         this.add_Z = false;
+         this.jsonAlreadyEncoded = false;
+         this.reencodeFromJson = false;
          this.payloadModeUserSelected = false;
          this.payloadAddTypeUserSelected = false;
       } finally {
@@ -5760,7 +5760,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             ctx, seedBtns[2], cy, seedBtns[3], 13, sendNowLbl, OverlayActionButton.ButtonTone.SUCCESS, !this.configurationOnly, mx, my, () -> {
                if (!this.configurationOnly) {
                   try {
-                     PayloadAction action = this.load_H();
+                     PayloadAction action = this.payloadActionFromDraft();
                      action.execute(MC);
                   } catch (Exception e) {
                      AutismClientMessaging.sendPrefixed("§cPayload send failed: " + AutismPayloadSupport.describeError(e));
@@ -5789,7 +5789,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private PayloadAction load_H() {
+   private PayloadAction payloadActionFromDraft() {
       if (this.payloadActionDraft == null && this.editingAction == null) {
          PayloadAction action = new PayloadAction();
          if (this.payloadActionDraft != null) {
@@ -5848,7 +5848,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         if (this.add_Z && jsonUsable && jsonEncoded != null && !this.set_Z && !this.put_Z) {
+         if (this.reencodeFromJson && jsonUsable && jsonEncoded != null && !this.jsonAlreadyEncoded && !this.payloadEdited) {
             try {
                jsonEncoded = PayloadJsonCodec.encode(action);
                action.channel = jsonEncoded.channel();
@@ -6030,7 +6030,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       button.active = active;
       OverlayActionButton.render(ctx, this.font, button, mx, my);
-      this.valid_List.add(new ActionEditorOverlay.ClickRegion(button, action));
+      this.clickRegions.add(new ActionEditorOverlay.ClickRegion(button, action));
       return button;
    }
 
@@ -6091,14 +6091,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       OverlayActionButton button = autismclient.gui.macro.editor.capture.CaptureButtonRenderer.render(
          ctx, this.font, autismclient.gui.f.NetHelper.init(x, y, w, h), mode, capturing, active, mx, my, idleLabel, capturingLabel, action
       );
-      this.valid_List.add(new ActionEditorOverlay.ClickRegion(button, action));
+      this.clickRegions.add(new ActionEditorOverlay.ClickRegion(button, action));
       return button;
    }
 
-   private void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, int x, int y, int size, int mx, int my, Runnable action) {
+   private void renderRemoveButton(GuiGraphicsExtractor ctx, int x, int y, int size, int mx, int my, Runnable action) {
       boolean hovered = mx >= x && mx < x + size && my >= y && my < y + size;
       autismclient.gui.macro.editor.capture.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), hovered);
-      this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
+      this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
          if (mouseButton != 0) {
             return false;
          }
@@ -6337,7 +6337,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                case NUMBER:
                case DECIMAL:
                case SLOT:
-                  this.setFieldPlaceholder(field.key(), this.init_Str_FieldDef(field));
+                  this.setFieldPlaceholder(field.key(), this.placeholderFor(field));
                   break;
                case BLOCK_POS:
                   this.setXyzPlaceholders(field.key());
@@ -6389,7 +6389,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String init_Str_FieldDef(FieldDef field) {
+   private String placeholderFor(FieldDef field) {
       if (field == null) {
          return "";
       }
@@ -6540,7 +6540,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return text == null ? "" : text.trim().replaceAll("\\s+", " ");
    }
 
-   private void init_V_GuiGraphicsExtract_5(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my, float delta) {
+   private void renderFieldControl(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my, float delta) {
       if (this.isWaitForGuiBeforeKey(field.key())) {
          this.renderGuiWaitRow(ctx, this.styleTheme.init_Identifier_l(l.read), field.key(), "waitForGuiAfter", x, y, w, mx, my);
       } else if ("safeClickDelayTicks".equals(field.key())) {
@@ -6588,7 +6588,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       Identifier font = this.styleTheme.init_Identifier_l(l.read);
       int lw = this.labelWidth(w, field.label(), font, 56);
       this.drawTrimmedText(ctx, field.label(), x, y, lw, font);
-      String summary = this.flush_Str(field.key());
+      String summary = this.conditionSummary(field.key());
       int valX = this.controlX(x, lw);
       int valW = this.valueFieldWidth(w, lw);
       int color = UiColorPalette.textBright();
@@ -6598,7 +6598,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.f.b.k.init(ctx, this.font, trimmed, font, color, valX, y + 2, false);
    }
 
-   private String flush_Str(String conditionKey) {
+   private String conditionSummary(String conditionKey) {
       CompoundTag stored = this.actionTag != null && this.actionTag.get(conditionKey) instanceof CompoundTag c ? c : null;
       boolean hasFlatEditor = this.fieldByKey("cond_kind") != null;
       boolean flatEditable = hasFlatEditor;
@@ -6840,7 +6840,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    ) {
       boolean hovered = active && mx >= x && mx < x + size && my >= y && my < y + size;
       autismclient.gui.macro.editor.capture.EditorListRowHelper.init(ctx, autismclient.gui.f.NetHelper.init(x, y, size, size), symbol, hovered, danger);
-      this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
+      this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, y, size, size, (mouseX, mouseY, mouseButton) -> {
          if (active && mouseButton == 0) {
             action.run();
             return true;
@@ -7350,7 +7350,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   int hitTop = Math.max(iy, listY);
                   int hitBottom = Math.min(iy + 14, listY + listH);
                   if (hitBottom > hitTop) {
-                     this.valid_List
+                     this.clickRegions
                         .add(
                            new ActionEditorOverlay.ClickRegion(
                               x, hitTop, itemW, hitBottom - hitTop, () -> autismclient.util.MacroLibraryManager.getInstance().toggleFolderCollapsed(folderRow.folderName())
@@ -7371,7 +7371,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      false
                   );
                   String selectedMacro = macroName;
-                  this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, itemW, 14, () -> backingField.setValue(selectedMacro)));
+                  this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, itemW, 14, () -> backingField.setValue(selectedMacro)));
                }
             }
          }
@@ -7560,7 +7560,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (editable && editIdx >= 0 && editIdx < lst.size() && af != null) {
          String nameText = af.getValue().strip();
          String slotText = hasSlotField && slotField != null ? slotField.getValue().strip() : "";
-         String entry = write_Str_Str_Str(nameText, slotText);
+         String entry = itemSlotEntry(nameText, slotText);
          if (!entry.isEmpty()) {
             String normalized = this.isXCarryEntriesKey(key) ? this.normalizeItemEntry(entry) : (this.isItemTargetsKey(key) ? StoreItemAction.normalizeTarget(entry) : entry);
             if (normalized != null && !normalized.isBlank() && !normalized.equals(lst.get(editIdx))) {
@@ -7578,7 +7578,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             ctx, toolbar.read().read(), toolbar.read().write(), toolbar.read().update(), btnH, "+Add", OverlayActionButton.ButtonTone.SUCCESS, true, mx, my, () -> {
                String nameText = af.getValue().strip();
                String slotText = hasSlotField && fSlotField != null ? fSlotField.getValue().strip() : "";
-               String entry = write_Str_Str_Str(nameText, slotText);
+               String entry = itemSlotEntry(nameText, slotText);
                if (!entry.isEmpty() && this.addListEntry(field, lst, entry)) {
                   af.setValue("");
                   if (fSlotField != null) {
@@ -7602,7 +7602,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (isItemSlot) {
                   this.startCapture(fKey);
                } else {
-                  this.init_V_FieldDef_List(fField, fLst);
+                  this.startListFieldCapture(fField, fLst);
                }
             }
          );
@@ -7701,7 +7701,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (editable) {
                   int fri = ri;
                   ThemedTextInputBox fSlotF2 = hasSlotField ? this.textFields.get(key + "_slot") : null;
-                  this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, rowAreaW, 14, () -> {
+                  this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, rowAreaW, 14, () -> {
                      int curIdx = this.listEditIndices.getOrDefault(key, -1);
                      if (curIdx == fri) {
                         this.listEditIndices.put(key, -1);
@@ -7792,7 +7792,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                int delX = actionX;
                int fRi = ri;
-               this.init_V_GuiGraphicsExtract_2(ctx, delX, iy + 1, delW, mx, my, () -> {
+               this.renderRemoveButton(ctx, delX, iy + 1, delW, mx, my, () -> {
                   lst.remove(fRi);
                   if (xcarryList) {
                      this.removeXCarryDestination(fRi);
@@ -7873,7 +7873,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   false
                );
                int fi = i;
-               this.init_V_GuiGraphicsExtract_2(ctx, delX, siy, delW, mx, my, () -> {
+               this.renderRemoveButton(ctx, delX, siy, delW, mx, my, () -> {
                   sel.remove(fi);
                   ScrollableListView vp = this.entryViewports.get(key);
                   if (vp != null) {
@@ -7907,7 +7907,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       String headerLabel = autismclient.gui.f.b.k.init(this.font, "Available Blocks", headerTextW, font, UiColorPalette.textBody());
       int headerTextY = UiLayoutMath.centerTextY(cy, headerH, this.styleTheme.init_I_l(l.read), this.styleTheme.flush());
       this.renderCaptureButton(
-         ctx, cbX, cy, capBtnW2, capBtnH2, field.captureMode(), false, true, mx, my, () -> this.init_V_FieldDef_List(field, sel)
+         ctx, cbX, cy, capBtnW2, capBtnH2, field.captureMode(), false, true, mx, my, () -> this.startListFieldCapture(field, sel)
       );
       autismclient.gui.f.b.k.init(ctx, this.font, headerLabel, font, UiColorPalette.textBody(), x, headerTextY, false);
       cy += headerH + 2;
@@ -7941,13 +7941,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                false
             );
             if (!already) {
-               this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, catItemW, 13, () -> {
+               this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, catItemW, 13, () -> {
                   if (!sel.contains(id)) {
                      sel.add(id);
                   }
                }));
             } else {
-               this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, catItemW, 13, () -> sel.remove(id)));
+               this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, catItemW, 13, () -> sel.remove(id)));
             }
          }
       }
@@ -8001,7 +8001,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                font,
                -38037,
                this.editorX + Math.max(4, (this.editorWidth - this.textWidth(font, text)) / 2),
-               UiLayoutMath.centerTextY(footerY + 2, warnH, this.init_I_Identifier(font), this.styleTheme.flush()),
+               UiLayoutMath.centerTextY(footerY + 2, warnH, this.fontLineHeight(font), this.styleTheme.flush()),
                false
             );
          }
@@ -8235,7 +8235,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       AutismSessionState.getInstance().setTimedCaptureMode(false);
       this.visible = this.visibleBeforeCapture;
       this.visibleBeforeCapture = false;
-      this.valid_List.clear();
+      this.clickRegions.clear();
       this.scrollbarRegions.clear();
       OverlayManager.getInstance().bringToFront(this);
       if (this.restoreScreenAfterCapture) {
@@ -8542,7 +8542,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.actionTag != null) {
          if (this.itemActionDraft != null) {
             if (this.selectedItemEntry >= 0 && this.selectedItemEntry < this.itemActionDraft.itemNames.size()) {
-               this.flush_V_2();
+               this.commitItemEntryEditClearingSelection();
             }
 
             for (int i = 0; i < this.itemActionDraft.itemNames.size(); i++) {
@@ -8615,7 +8615,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.actionTag.put("entries", entryTags);
          } else if (this.dropActionDraft != null) {
             if (this.selectedDropEntry >= 0 && this.selectedDropEntry < this.dropActionDraft.itemNames.size()) {
-               this.reset_V();
+               this.commitDropEntryEditClearingSelection();
             }
 
             while (this.dropActionDraft.itemCounts.size() < this.dropActionDraft.itemNames.size()) {
@@ -8657,7 +8657,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             this.actionTag = this.dropActionDraft.toTag();
             this.actionTag.putString("packetOrder", this.enumValue("packetOrder"));
          } else if (this.payloadActionDraft != null) {
-            this.payloadActionDraft = this.load_H();
+            this.payloadActionDraft = this.payloadActionFromDraft();
             this.actionTag = this.payloadActionDraft.toTag();
          } else {
             if (this.lanStepEntries != null) {
@@ -9197,7 +9197,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       }
 
-      for (ActionEditorOverlay.ClickRegion r : this.valid_List) {
+      for (ActionEditorOverlay.ClickRegion r : this.clickRegions) {
          if (r.containsPoint(imx, imy) && r.fireClick(mx, my, button)) {
             this.resizeEditorToContent();
             return true;
@@ -10099,7 +10099,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void resizeEditorToContent() {
-      this.valid_List.clear();
+      this.clickRegions.clear();
       this.scrollbarRegions.clear();
       this.refreshVariableWarning();
       int neededH = 18 + this.itemEditorHeight() + this.footerHeight() + 4;
@@ -10444,7 +10444,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          && "entityTargets".equals(key);
    }
 
-   private boolean clear_Z_Str(String key) {
+   private boolean replacesOnCapture(String key) {
       return false;
    }
 
@@ -10467,7 +10467,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         return this.init_ActionEditorOverla_FieldDef(this.findField("targetItems"), "targetItems", entries, captured.toSpecString());
+         return this.addCapturedEntry(this.findField("targetItems"), "targetItems", entries, captured.toSpecString());
       } else {
          return new ActionEditorOverlay.EntryResult(false, "Could not read that slot", -38037);
       }
@@ -10556,7 +10556,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private ActionEditorOverlay.EntryResult init_ActionEditorOverla_FieldDef(FieldDef field, String key, List<String> entries, String rawEntry) {
+   private ActionEditorOverlay.EntryResult addCapturedEntry(FieldDef field, String key, List<String> entries, String rawEntry) {
       if (entries == null) {
          return null;
       }
@@ -10842,7 +10842,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return Component.literal(safeFallback);
    }
 
-   private static String write_Str_Str_Str(String name, String slotText) {
+   private static String itemSlotEntry(String name, String slotText) {
       String n = name == null ? "" : name.strip();
       int slot = -1;
       if (slotText != null && !slotText.isBlank()) {
@@ -10963,7 +10963,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_ck_CachePool(AutismSessionState.DelayedPacket packet) {
+   private void storeSinglePacket(AutismSessionState.DelayedPacket packet) {
       if (this.actionTag != null && packet != null) {
          List<AutismSessionState.DelayedPacket> single = Collections.singletonList(packet);
          String base64 = MacroClipboardCodec.encodeQueue(single);
@@ -11303,7 +11303,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (storeEditing && search != null) {
             String nameText = search.getValue().strip();
             String slotText = storeSlotF.getValue().strip();
-            String entry = write_Str_Str_Str(nameText, slotText);
+            String entry = itemSlotEntry(nameText, slotText);
             if (!entry.isEmpty()) {
                String normalized = StoreItemAction.normalizeTarget(entry);
                if (normalized != null && !normalized.isBlank() && !normalized.equals(selected.get(storeEditIdx))) {
@@ -11318,7 +11318,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (search != null) {
                String nameText = search.getValue().strip();
                String slotText = fStoreSlotF.getValue().strip();
-               String entry = write_Str_Str_Str(nameText, slotText);
+               String entry = itemSlotEntry(nameText, slotText);
                if (!entry.isEmpty()) {
                   String normalized = StoreItemAction.normalizeTarget(entry);
                   if (normalized != null && !normalized.isBlank() && !selected.contains(normalized)) {
@@ -11450,7 +11450,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (auditEditing && search != null) {
             String nameText = search.getValue().strip();
             String slotText = auditSlotF.getValue().strip();
-            String entry = write_Str_Str_Str(nameText, slotText);
+            String entry = itemSlotEntry(nameText, slotText);
             if (!entry.isEmpty()) {
                String normalized = StoreItemAction.normalizeTarget(entry);
                if (normalized != null && !normalized.isBlank() && !normalized.equals(selected.get(auditEditIdx))) {
@@ -11473,7 +11473,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                } else {
                   String nameText = search.getValue().strip();
                   String slotText = fAuditSlotF.getValue().strip();
-                  String entryx = write_Str_Str_Str(nameText, slotText);
+                  String entryx = itemSlotEntry(nameText, slotText);
                   if (!entryx.isEmpty()) {
                      String normalizedx = StoreItemAction.normalizeTarget(entryx);
                      if (normalizedx != null && !normalizedx.isBlank() && !selected.contains(normalizedx)) {
@@ -11585,7 +11585,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       Map<String, List<String>> byPrefix = new LinkedHashMap<>();
 
       for (String name : this.filterList(this.playerNameOptions, query)) {
-         byPrefix.computeIfAbsent(this.set_Str(name), ignored -> new ArrayList<>()).add(name);
+         byPrefix.computeIfAbsent(this.playerPrefixOf(name), ignored -> new ArrayList<>()).add(name);
       }
 
       List<String> order = new ArrayList<>(byPrefix.keySet());
@@ -11645,7 +11645,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                int cx = x + 6;
                autismclient.gui.f.b.k.init(ctx, this.font, marker, font, headerColor, cx, baseY, false);
                cx += markerW;
-               Component styled = row.prefix().isBlank() ? null : this.set_Map.get(row.prefix());
+               Component styled = row.prefix().isBlank() ? null : this.prefixComponents.get(row.prefix());
                if (styled != null && this.font.width(styled) <= rankMaxW) {
                   ctx.text(this.font, styled, cx, baseY, -1, false);
                   cx += this.font.width(styled);
@@ -11659,7 +11659,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
                autismclient.gui.f.b.k.init(ctx, this.font, counter, font, headerColor, cx, baseY, false);
                List<String> targetMembers = members;
-               this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, w, rowH, () -> this.toggleGroup(selected, targetMembers)));
+               this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, w, rowH, () -> this.toggleGroup(selected, targetMembers)));
             } else {
                boolean sel = this.containsIgnoreCase(selected, row.load());
                boolean hovered = mx >= x && mx < x + w && my >= iy && my < iy + rowH;
@@ -11675,7 +11675,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   false
                );
                String name = row.load();
-               this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, w, rowH, () -> this.togglePlayer(selected, name)));
+               this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, w, rowH, () -> this.togglePlayer(selected, name)));
             }
          }
 
@@ -11745,7 +11745,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   }
                });
                int removeX = modeX + modeW + 2;
-               this.init_V_GuiGraphicsExtract_2(ctx, removeX, iy + 1, removeW, mx, my, () -> {
+               this.renderRemoveButton(ctx, removeX, iy + 1, removeW, mx, my, () -> {
                   if (entryIndex >= 0 && entryIndex < selected.size()) {
                      selected.remove(entryIndex);
                      ScrollableListView vp = this.entryViewports.get("toggle_module_selected");
@@ -11831,8 +11831,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void scanPayPlayers() {
       this.playerNameOptions.clear();
-      this.get_Map.clear();
-      this.set_Map.clear();
+      this.playerPrefixes.clear();
+      this.prefixComponents.clear();
       this.playerOptionsLoaded = true;
       ScrollableListView vp = this.listViewports.get("pay_players_scan");
       if (vp != null) {
@@ -11843,9 +11843,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (player != null && player.name() != null && !player.name().isBlank() && !this.containsIgnoreCase(this.playerNameOptions, player.name())) {
             this.playerNameOptions.add(player.name());
             if (player.hasPrefix()) {
-               this.get_Map.put(player.name().toLowerCase(Locale.ROOT), player.load());
+               this.playerPrefixes.put(player.name().toLowerCase(Locale.ROOT), player.load());
                if (player.prefixComponent() != null) {
-                  this.set_Map.putIfAbsent(player.load(), player.prefixComponent());
+                  this.prefixComponents.putIfAbsent(player.load(), player.prefixComponent());
                }
             }
          }
@@ -11860,7 +11860,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                for (String name : probed) {
                   if (!this.containsIgnoreCase(this.playerNameOptions, name)) {
                      this.playerNameOptions.add(name);
-                     this.get_Map.putIfAbsent(name.toLowerCase(Locale.ROOT), "unknown");
+                     this.playerPrefixes.putIfAbsent(name.toLowerCase(Locale.ROOT), "unknown");
                      changed = true;
                   }
                }
@@ -11874,8 +11874,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.playerNameOptions.sort(String::compareToIgnoreCase);
    }
 
-   private String set_Str(String name) {
-      return name == null ? "" : this.get_Map.getOrDefault(name.toLowerCase(Locale.ROOT), "");
+   private String playerPrefixOf(String name) {
+      return name == null ? "" : this.playerPrefixes.getOrDefault(name.toLowerCase(Locale.ROOT), "");
    }
 
    private void toggleGroup(List<String> selected, List<String> members) {
@@ -12068,7 +12068,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                );
                int fi = i;
                if (iy + 13 > cy && iy < cy + selAreaH) {
-                  this.valid_List
+                  this.clickRegions
                      .add(
                         new ActionEditorOverlay.ClickRegion(
                            x, Math.max(cy, iy), rowW, Math.min(iy + 13, cy + selAreaH) - Math.max(cy, iy), () -> this.toggleSlotChangeSelection(fi)
@@ -12077,7 +12077,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
 
                int delX = x + rowW + 2;
-               this.init_V_GuiGraphicsExtract_2(ctx, delX, iy, delW, mx, my, () -> {
+               this.renderRemoveButton(ctx, delX, iy, delW, mx, my, () -> {
                   if (this.selectedSlotChangeEntry == fi) {
                      this.selectedSlotChangeEntry = -1;
                      this.clearSlotChangeInputs();
@@ -12205,7 +12205,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy = this.renderFieldByKey(ctx, "useCount", x, cy, w, mx, my, delta);
       cy = this.renderFieldByKey(ctx, "waitForGui", x, cy, w, mx, my, delta);
       cy = this.renderFieldByKey(ctx, "guiName", x, cy, w, mx, my, delta);
-      String itemTarget = this.run_Str();
+      String itemTarget = this.itemTargetText();
       String mode = this.enumValue("useMode");
       String hint = "CUSTOM_HOLD".equals(mode) ? "Hold-uses " + itemTarget + " for the set ticks." : "Uses " + itemTarget + " for the set count.";
       this.renderHint(ctx, x, cy, w, hint);
@@ -12375,7 +12375,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       int cy = bodyTop + 4;
       FieldDef posField = this.fieldByKey("pos");
       if (posField != null) {
-         cy = this.init_I_GuiGraphicsExtract_4(ctx, posField, x, cy, w, mx, my, delta);
+         cy = this.renderTripleFieldRow(ctx, posField, x, cy, w, mx, my, delta);
       }
 
       this.renderSecondaryButton(ctx, x, cy, Math.min(w, this.buttonWidth("Capture Here")), 13, "Capture Here", mx, my, this::capturePlayerPosition);
@@ -12461,7 +12461,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy = this.renderFieldByKey(ctx, "guiType", x, cy, w, mx, my, delta);
       cy = this.renderFieldByKey(ctx, "matchMode", x, cy, w, mx, my, delta);
       cy = this.renderFieldByKey(ctx, "guiTitle", x, cy, w, mx, my, delta);
-      cy = this.init_I_GuiGraphicsExtract_2(ctx, this.textFields.get("guiTitle"), x, cy, w, mx, my);
+      cy = this.renderCaptureNameRow(ctx, this.textFields.get("guiTitle"), x, cy, w, mx, my);
       cy = this.renderFieldByKey(ctx, "saveAs", x, cy, w, mx, my, delta);
       cy = this.renderFieldByKey(ctx, "timeoutMs", x, cy, w, mx, my, delta);
       String mode = this.enumValue("waitMode");
@@ -12529,7 +12529,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy += 18;
       this.renderSecondaryButton(ctx, x, cy, Math.min(w, this.buttonWidth("Use InteractionHand Item")), 13, "Use InteractionHand Item", mx, my, this::clearCooldownItemName);
       cy += 18;
-      this.renderHint(ctx, x, cy, w, this.set_Str());
+      this.renderHint(ctx, x, cy, w, this.heldItemHint());
    }
 
    private void renderWaitInventoryPredicateEditor(GuiGraphicsExtractor ctx, int x, int bodyTop, int w, int mx, int my, float delta) {
@@ -12583,7 +12583,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       cy = this.renderFieldByKey(ctx, "exampleText", x, cy, w, mx, my, delta);
       cy = this.renderFieldByKey(ctx, "selectedText", x, cy, w, mx, my, delta);
       autismclient.util.macro.CaptureValueAction draft = this.buildCaptureDraft();
-      String primaryName = this.init_Str_TaskQueue(draft);
+      String primaryName = this.capturePrimaryName(draft);
       String token = primaryName.isBlank() ? "" : "{" + primaryName + "}";
       boolean exampleCapture = draft.source == autismclient.util.macro.CaptureValueAction.CaptureSource.RECENT_CHAT
          || draft.source == autismclient.util.macro.CaptureValueAction.CaptureSource.GUI_TITLE
@@ -12705,7 +12705,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                false
             );
             autismclient.util.macro.CaptureValueAction.SidebarLine selectedLine = line;
-            this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, rowY, itemW, 22, () -> this.useSidebarLine(selectedLine)));
+            this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, rowY, itemW, 22, () -> this.useSidebarLine(selectedLine)));
          }
       }
 
@@ -12782,7 +12782,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                rowY + 3,
                false
             );
-            this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, rowY, itemW, 14, () -> this.copyToClipboard(name, "Name copied.")));
+            this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, rowY, itemW, 14, () -> this.copyToClipboard(name, "Name copied.")));
          }
       }
 
@@ -12926,16 +12926,16 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void clipHitRegions(int fromIndex, autismclient.gui.f.NetHelper clip) {
       if (clip != null) {
-         for (int i = this.valid_List.size() - 1; i >= Math.max(0, fromIndex); i--) {
-            ActionEditorOverlay.ClickRegion region = this.valid_List.get(i);
+         for (int i = this.clickRegions.size() - 1; i >= Math.max(0, fromIndex); i--) {
+            ActionEditorOverlay.ClickRegion region = this.clickRegions.get(i);
             int left = Math.max(region.x, clip.read());
             int top = Math.max(region.y, clip.write());
             int right = Math.min(region.x + region.width, clip.init());
             int bottom = Math.min(region.y + region.height, clip.load());
             if (right <= left || bottom <= top) {
-               this.valid_List.remove(i);
+               this.clickRegions.remove(i);
             } else if (left != region.x || top != region.y || right != region.x + region.width || bottom != region.y + region.height) {
-               this.valid_List.set(i, new ActionEditorOverlay.ClickRegion(left, top, right - left, bottom - top, region.clickHandler));
+               this.clickRegions.set(i, new ActionEditorOverlay.ClickRegion(left, top, right - left, bottom - top, region.clickHandler));
             }
          }
       }
@@ -13069,7 +13069,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return draft;
    }
 
-   private String init_Str_TaskQueue(autismclient.util.macro.CaptureValueAction draft) {
+   private String capturePrimaryName(autismclient.util.macro.CaptureValueAction draft) {
       if (draft == null) {
          return "";
       }
@@ -13108,11 +13108,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.startCapture("wait_inventory_slot");
    }
 
-   private void init_V_GuiGraphicsExtract(GuiGraphicsExtractor ctx, int x, int bodyTop, int contentBottom, int w, int mx, int my, float delta) {
+   private void renderWaitChatEditor(GuiGraphicsExtractor ctx, int x, int bodyTop, int contentBottom, int w, int mx, int my, float delta) {
       Identifier font = this.styleTheme.init_Identifier_l(l.read);
       int cy = bodyTop + 4;
       cy = this.renderFieldByKey(ctx, "pattern", x, cy, w, mx, my, delta);
-      cy = this.init_I_GuiGraphicsExtract_2(ctx, this.textFields.get("pattern"), x, cy, w, mx, my);
+      cy = this.renderCaptureNameRow(ctx, this.textFields.get("pattern"), x, cy, w, mx, my);
       cy = this.renderFieldByKey(ctx, "matchMode", x, cy, w, mx, my, delta);
       String matchMode = this.enumValue("matchMode");
       if ("MATCH".equals(matchMode)) {
@@ -13163,7 +13163,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.renderChatResults(ctx, x, cy, w, availableListHeight, mx, my, history);
    }
 
-   private int init_I_GuiGraphicsExtract_2(GuiGraphicsExtractor ctx, ThemedTextInputBox patternField, int x, int y, int w, int mx, int my) {
+   private int renderCaptureNameRow(GuiGraphicsExtractor ctx, ThemedTextInputBox patternField, int x, int y, int w, int mx, int my) {
       ThemedTextInputBox nameField = this.internalTextFields.get("_capture_name");
       if (nameField != null && patternField != null) {
          int buttonW = this.buttonWidth("Capture");
@@ -13701,7 +13701,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   }
 
                   MacroExecutor.LoggedChatMessage selected = value;
-                  this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, itemW, itemH, () -> {
+                  this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, itemW, itemH, () -> {
                      if (onSelect != null) {
                         onSelect.accept(selected);
                      }
@@ -14089,7 +14089,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return itemName.isEmpty() ? "Uses hotbar slot " + fallbackSlot + "." : "Uses the named item, else slot " + fallbackSlot + ".";
    }
 
-   private String run_Str() {
+   private String itemTargetText() {
       ThemedTextInputBox field = this.textFields.get("itemName");
       String item = field != null ? field.getValue().trim() : "";
       ThemedTextInputBox slotField = this.textFields.get("slot");
@@ -14171,7 +14171,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String set_Str() {
+   private String heldItemHint() {
       ThemedTextInputBox itemField = this.textFields.get("itemName");
       String itemName = itemField != null ? itemField.getValue().trim() : "";
       String handLabel = this.toggleStates.getOrDefault("checkMainHand", true) ? "main hand" : "off hand";
@@ -14255,7 +14255,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       FieldDef field = this.fieldByKey(key);
       if (field != null && this.isFieldApplicable(field)) {
-         this.init_V_GuiGraphicsExtract_5(ctx, field, x, y, w, mx, my, delta);
+         this.renderFieldControl(ctx, field, x, y, w, mx, my, delta);
          return y + this.fieldHeight(field) + 2;
       }
 
@@ -14420,7 +14420,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (editable) {
                int fi = i;
                String rawText = value instanceof String rawValue ? rawValue : formatter.apply(value);
-               this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, rowW, 13, () -> {
+               this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, rowW, 13, () -> {
                   int curIdx = this.listEditIndices.getOrDefault(listKey, -1);
                   if (curIdx == fi) {
                      this.listEditIndices.put(listKey, -1);
@@ -14434,7 +14434,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             int removeX = x + rowW + 2;
             int fi2 = i;
-            this.init_V_GuiGraphicsExtract_2(ctx, removeX, iy, removeW, mx, my, () -> {
+            this.renderRemoveButton(ctx, removeX, iy, removeW, mx, my, () -> {
                removeAction.accept(values.get(fi2));
                if (editable) {
                   int curSel = this.listEditIndices.getOrDefault(listKey, -1);
@@ -14521,7 +14521,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   false
                );
                T clickedValue = value;
-               this.valid_List.add(new ActionEditorOverlay.ClickRegion(x, iy, itemW, rowH, () -> clickAction.accept(clickedValue)));
+               this.clickRegions.add(new ActionEditorOverlay.ClickRegion(x, iy, itemW, rowH, () -> clickAction.accept(clickedValue)));
             }
          }
 
@@ -14940,7 +14940,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return Component.literal(label);
    }
 
-   private void init_V_aM_CachePool(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
+   private void unusedRuleFields(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
       if (rule != null) {
          Class<? extends Packet<?>> packetClass = this.rulePacketClass(rule);
          List<String> fields = new ArrayList<>(autismclient.util.macro.WaitPacketMatchAction.fieldNames(packetClass));
@@ -15220,7 +15220,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return names;
    }
 
-   private int init_I_GuiGraphicsExtract_4(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my, float delta) {
+   private int renderTripleFieldRow(GuiGraphicsExtractor ctx, FieldDef field, int x, int y, int w, int mx, int my, float delta) {
       Identifier font = this.styleTheme.init_Identifier_l(l.read);
       this.drawTrimmedText(ctx, field.label(), x, y, w, font);
       y += 13;
@@ -15323,7 +15323,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.itemActionDraft != null) {
          int h = 100;
          h += 16;
-         if (this.reset_Z()) {
+         if (this.showsSelectedItemScope()) {
             h += 16;
          }
 
@@ -15816,7 +15816,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          && this.itemActionDraft.getItemClickType(this.selectedItemEntry) == ContainerClickType.PICKUP_ALL;
    }
 
-   private int next_I() {
+   private int unusedFixedHeight() {
       int h = 4;
       h += 16;
       h += 16;
@@ -15834,11 +15834,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void drawTrimmedText(GuiGraphicsExtractor ctx, String text, int x, int y, int maxW, Identifier font) {
       String trimmed = autismclient.gui.f.b.k.init(this.font, text, maxW - 4, font, -1);
       autismclient.gui.f.b.k.init(
-         ctx, this.font, trimmed, font, UiColorPalette.textBright(), x, UiLayoutMath.centerTextY(y, 14, this.init_I_Identifier(font), this.styleTheme.flush()), false
+         ctx, this.font, trimmed, font, UiColorPalette.textBright(), x, UiLayoutMath.centerTextY(y, 14, this.fontLineHeight(font), this.styleTheme.flush()), false
       );
    }
 
-   private int init_I_Identifier(Identifier font) {
+   private int fontLineHeight(Identifier font) {
       if (autismclient.gui.f.a.DataUtil.read.equals(font)) {
          return this.styleTheme.init_I_l(l.init);
       } else {
@@ -15978,7 +15978,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return false;
    }
 
-   private void init_V_FieldDef_List(FieldDef field, List<String> lst) {
+   private void startListFieldCapture(FieldDef field, List<String> lst) {
       if (field.captureMode() == CaptureMode.PACKET_NAME) {
          boolean both = this.editingAction != null && this.editingAction.getType() == MacroActionType.PACKET_GATE;
          if (!both) {
@@ -16054,7 +16054,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             });
          } else if (field.captureMode() == CaptureMode.ENTITY_ID) {
             boolean specificCapture = this.isEntityTargetsKey(field.key());
-            boolean replaceOnCapture = this.clear_Z_Str(field.key());
+            boolean replaceOnCapture = this.replacesOnCapture(field.key());
             state.setCaptureSpecificEntity(specificCapture);
             state.setEntityCaptureCallback(payload -> {
                String value = payload == null ? "" : payload.strip();

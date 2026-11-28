@@ -53,7 +53,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
 
    @Override
    public String getDisplayName() {
-      String suffix = this.match == WaitGamemodeChangeAction.MatchMode.TO_MODE ? " -> " + this.init_Str_6() : " Change";
+      String suffix = this.match == WaitGamemodeChangeAction.MatchMode.TO_MODE ? " -> " + this.gameModeLabel() : " Change";
       return "Wait Gamemode" + suffix + (this.detectFake ? " (fake ok)" : "");
    }
 
@@ -98,7 +98,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
       return var10000;
    }
 
-   private String init_Str_6() {
+   private String gameModeLabel() {
       String lower = this.gameMode.name().toLowerCase(Locale.ROOT);
       return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
    }

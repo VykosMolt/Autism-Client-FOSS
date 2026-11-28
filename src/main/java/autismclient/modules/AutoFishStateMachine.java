@@ -3,25 +3,25 @@ package autismclient.modules;
 import java.util.function.IntSupplier;
 
 final class AutoFishStateMachine {
-   static final int init_I = -1;
+   static final int NO_HOOK = -1;
    static final int load_I = 8;
    private static final int read_I = 2;
    private static final int write_I = 4;
    private AutoFishStateMachine.FishState state = AutoFishStateMachine.FishState.IDLE;
    private long tick;
    private long actionSeq;
-   private long read_J;
-   private long write_J;
-   private long update_J;
-   private long sync_J;
-   private int update_I = -1;
-   private int sync_I = -1;
-   private int flush_I;
-   private long flush_J = -9223372036854775808L;
-   private long close_J = -9223372036854775808L;
+   private long nextActionTick;
+   private long castTick;
+   private long castSettleTick;
+   private long reelTick;
+   private int trackedHook = -1;
+   private int reeledHook = -1;
+   private int missingHookTicks;
+   private long lastMissingTick = -9223372036854775808L;
+   private long lastBiteTick = -9223372036854775808L;
    private AutoFishStateMachine.PendingAction pendingAction;
    private AutoFishStateMachine.FishState resumeState;
-   private boolean init_Z;
+   private boolean catchCompleted;
    private int settleTicks = 8;
    private IntSupplier recastDelay = () -> 10;
 
@@ -29,7 +29,7 @@ final class AutoFishStateMachine {
       return this.state;
    }
 
-   boolean init_Z() {
+   boolean unusedIsFishing() {
       return this.state == AutoFishStateMachine.FishState.CAST_WAIT
          || this.state == AutoFishStateMachine.FishState.FISHING
          || this.state == AutoFishStateMachine.FishState.CATCH_DELAY
@@ -41,7 +41,7 @@ final class AutoFishStateMachine {
       this.tick++;
       this.settleTicks = Math.max(8, settleTicks);
       this.recastDelay = recastDelay;
-      this.load(observedHook);
+      this.observeHook(observedHook);
       if (this.pendingAction != null) {
          if (this.tick - this.pendingAction.load() > 4L) {
             this.init(this.pendingAction, false, observedHook);
@@ -49,82 +49,82 @@ final class AutoFishStateMachine {
 
          return null;
       } else {
-         if (this.state == AutoFishStateMachine.FishState.CAST_WAIT && this.tick >= this.update_J) {
+         if (this.state == AutoFishStateMachine.FishState.CAST_WAIT && this.tick >= this.castSettleTick) {
             this.state = AutoFishStateMachine.FishState.FISHING;
          }
 
          if (this.state == AutoFishStateMachine.FishState.REEL_WAIT) {
-            if (observedHook == -1 && (this.update_I != -1 ? this.flush_I >= 2 : this.tick - this.sync_J >= this.settleTicks)) {
-               this.write();
+            if (observedHook == -1 && (this.trackedHook != -1 ? this.missingHookTicks >= 2 : this.tick - this.reelTick >= this.settleTicks)) {
+               this.completeCatch();
             }
 
             return null;
          } else {
-            if (this.state == AutoFishStateMachine.FishState.FISHING && autoCast && timeoutTicks > 0 && this.tick - this.write_J >= timeoutTicks
+            if (this.state == AutoFishStateMachine.FishState.FISHING && autoCast && timeoutTicks > 0 && this.tick - this.castTick >= timeoutTicks
                )
              {
                this.state = AutoFishStateMachine.FishState.CATCH_DELAY;
-               this.read_J = this.tick;
+               this.nextActionTick = this.tick;
             }
 
-            if (this.state == AutoFishStateMachine.FishState.CATCH_DELAY && this.tick >= this.read_J) {
-               return this.init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(AutoFishStateMachine.RodAction.REEL, observedHook);
+            if (this.state == AutoFishStateMachine.FishState.CATCH_DELAY && this.tick >= this.nextActionTick) {
+               return this.beginAction(AutoFishStateMachine.RodAction.REEL, observedHook);
             } else {
                return (this.state == AutoFishStateMachine.FishState.IDLE || this.state == AutoFishStateMachine.FishState.RECAST_DELAY)
-                     && this.tick >= this.read_J
+                     && this.tick >= this.nextActionTick
                      && autoCast
                      && !movementBusy
                      && observedHook == -1
-                  ? this.init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(AutoFishStateMachine.RodAction.CAST, -1)
+                  ? this.beginAction(AutoFishStateMachine.RodAction.CAST, -1)
                   : null;
             }
          }
       }
    }
 
-   private void load(int observed) {
+   private void observeHook(int observed) {
       if (observed != -1) {
-         this.flush_I = 0;
-         if (observed != this.sync_I
+         this.missingHookTicks = 0;
+         if (observed != this.reeledHook
             || this.state != AutoFishStateMachine.FishState.RECAST_DELAY && this.state != AutoFishStateMachine.FishState.CAST_PENDING) {
-            if ((this.update_I == -1 || observed == this.update_I)
+            if ((this.trackedHook == -1 || observed == this.trackedHook)
                && this.state != AutoFishStateMachine.FishState.IDLE
                && this.state != AutoFishStateMachine.FishState.RECAST_DELAY
                && this.state != AutoFishStateMachine.FishState.CAST_PENDING) {
-               this.update_I = observed;
-               if (this.state == AutoFishStateMachine.FishState.CAST_WAIT && this.tick >= this.update_J) {
+               this.trackedHook = observed;
+               if (this.state == AutoFishStateMachine.FishState.CAST_WAIT && this.tick >= this.castSettleTick) {
                   this.state = AutoFishStateMachine.FishState.FISHING;
                }
             } else {
-               this.read(observed);
+               this.adoptCastHook(observed);
             }
          } else {
             this.clearPendingAction();
-            this.update_I = observed;
+            this.trackedHook = observed;
             this.state = AutoFishStateMachine.FishState.REEL_WAIT;
          }
       } else {
-         if (this.flush_J != this.tick) {
-            this.flush_I++;
-            this.flush_J = this.tick;
+         if (this.lastMissingTick != this.tick) {
+            this.missingHookTicks++;
+            this.lastMissingTick = this.tick;
          }
 
-         if (this.update_I != -1
-            && this.flush_I >= 2
+         if (this.trackedHook != -1
+            && this.missingHookTicks >= 2
             && (
                this.state == AutoFishStateMachine.FishState.FISHING
                   || this.state == AutoFishStateMachine.FishState.CATCH_DELAY
                   || this.state == AutoFishStateMachine.FishState.REEL_PENDING
             )) {
-            this.write();
+            this.completeCatch();
          }
       }
    }
 
    boolean init_Z(int delay) {
-      if (this.state == AutoFishStateMachine.FishState.FISHING && this.tick >= this.update_J) {
+      if (this.state == AutoFishStateMachine.FishState.FISHING && this.tick >= this.castSettleTick) {
          this.state = AutoFishStateMachine.FishState.CATCH_DELAY;
-         this.read_J = this.tick + Math.max(0, delay);
+         this.nextActionTick = this.tick + Math.max(0, delay);
          return true;
       } else {
          return false;
@@ -132,18 +132,18 @@ final class AutoFishStateMachine {
    }
 
    boolean init_Z_I_J(int delay, long clientTick) {
-      boolean fresh = this.close_J == -9223372036854775808L || clientTick - this.close_J >= 4L;
-      this.close_J = clientTick;
+      boolean fresh = this.lastBiteTick == -9223372036854775808L || clientTick - this.lastBiteTick >= 4L;
+      this.lastBiteTick = clientTick;
       if (fresh && this.state == AutoFishStateMachine.FishState.CAST_WAIT) {
          this.state = AutoFishStateMachine.FishState.CATCH_DELAY;
-         this.read_J = Math.max(this.update_J, this.tick + Math.max(0, delay));
+         this.nextActionTick = Math.max(this.castSettleTick, this.tick + Math.max(0, delay));
          return true;
       } else {
          return fresh && this.init_Z(delay);
       }
    }
 
-   private AutoFishStateMachine.PendingAction init_BitSetUtil_CachePo_BitSetUtil_DataUti_I(AutoFishStateMachine.RodAction action, int observed) {
+   private AutoFishStateMachine.PendingAction beginAction(AutoFishStateMachine.RodAction action, int observed) {
       this.resumeState = this.state;
       this.state = action == AutoFishStateMachine.RodAction.CAST ? AutoFishStateMachine.FishState.CAST_PENDING : AutoFishStateMachine.FishState.REEL_PENDING;
       this.pendingAction = new AutoFishStateMachine.PendingAction(++this.actionSeq, action, observed, this.tick);
@@ -156,7 +156,7 @@ final class AutoFishStateMachine {
       } else if (use.action() == AutoFishStateMachine.RodAction.CAST) {
          return observed == -1;
       } else {
-         return use.init_I() == -1 ? this.update_I == -1 || observed == this.update_I : observed == use.init_I();
+         return use.init_I() == -1 ? this.trackedHook == -1 || observed == this.trackedHook : observed == use.init_I();
       }
    }
 
@@ -166,67 +166,67 @@ final class AutoFishStateMachine {
          this.pendingAction = null;
          if (dispatched && valid) {
             if (use.action() == AutoFishStateMachine.RodAction.CAST) {
-               this.update_I = -1;
-               this.sync_I = -1;
-               this.flush_I = 0;
-               this.write_J = this.tick;
-               this.update_J = this.tick + 8L;
+               this.trackedHook = -1;
+               this.reeledHook = -1;
+               this.missingHookTicks = 0;
+               this.castTick = this.tick;
+               this.castSettleTick = this.tick + 8L;
                this.state = AutoFishStateMachine.FishState.CAST_WAIT;
             } else {
-               this.update_I = observed != -1 ? observed : use.init_I();
-               this.sync_I = this.update_I;
-               this.flush_I = 0;
-               this.sync_J = this.tick;
+               this.trackedHook = observed != -1 ? observed : use.init_I();
+               this.reeledHook = this.trackedHook;
+               this.missingHookTicks = 0;
+               this.reelTick = this.tick;
                this.state = AutoFishStateMachine.FishState.REEL_WAIT;
             }
          } else {
             this.state = this.resumeState;
-            this.read_J = this.tick + 2L;
-            this.load(observed);
+            this.nextActionTick = this.tick + 2L;
+            this.observeHook(observed);
          }
       }
    }
 
-   private void write() {
+   private void completeCatch() {
       this.clearPendingAction();
-      this.sync_I = this.update_I;
+      this.reeledHook = this.trackedHook;
       this.state = AutoFishStateMachine.FishState.RECAST_DELAY;
-      this.read_J = this.tick + Math.max(1, this.recastDelay.getAsInt());
-      this.init_Z = true;
+      this.nextActionTick = this.tick + Math.max(1, this.recastDelay.getAsInt());
+      this.catchCompleted = true;
    }
 
    boolean load_Z() {
-      boolean result = this.init_Z;
-      this.init_Z = false;
+      boolean result = this.catchCompleted;
+      this.catchCompleted = false;
       return result;
    }
 
-   private void read(int observed) {
+   private void adoptCastHook(int observed) {
       this.clearPendingAction();
-      this.update_I = observed;
-      this.sync_I = -1;
-      this.flush_I = 0;
-      this.flush_J = -9223372036854775808L;
-      this.write_J = this.tick;
-      this.update_J = this.tick + 8L;
+      this.trackedHook = observed;
+      this.reeledHook = -1;
+      this.missingHookTicks = 0;
+      this.lastMissingTick = -9223372036854775808L;
+      this.castTick = this.tick;
+      this.castSettleTick = this.tick + 8L;
       this.state = AutoFishStateMachine.FishState.CAST_WAIT;
-      this.init_Z = false;
+      this.catchCompleted = false;
    }
 
    void init_V(int beforeUseHook) {
       this.clearPendingAction();
-      this.init_Z = false;
+      this.catchCompleted = false;
       if (beforeUseHook != -1) {
-         this.update_I = beforeUseHook;
-         this.sync_I = this.update_I;
-         this.flush_I = 0;
-         this.sync_J = this.tick;
+         this.trackedHook = beforeUseHook;
+         this.reeledHook = this.trackedHook;
+         this.missingHookTicks = 0;
+         this.reelTick = this.tick;
          this.state = AutoFishStateMachine.FishState.REEL_WAIT;
       } else {
-         this.update_I = this.sync_I = -1;
-         this.flush_I = 0;
-         this.write_J = this.tick;
-         this.update_J = this.tick + 8L;
+         this.trackedHook = this.reeledHook = -1;
+         this.missingHookTicks = 0;
+         this.castTick = this.tick;
+         this.castSettleTick = this.tick + 8L;
          this.state = AutoFishStateMachine.FishState.CAST_WAIT;
       }
    }
@@ -238,7 +238,7 @@ final class AutoFishStateMachine {
          || this.state == AutoFishStateMachine.FishState.REEL_PENDING;
       this.init_V(-1);
       if (wasCast) {
-         this.sync_J = this.tick;
+         this.reelTick = this.tick;
          this.state = AutoFishStateMachine.FishState.REEL_WAIT;
       }
    }
@@ -253,7 +253,7 @@ final class AutoFishStateMachine {
          this.state = AutoFishStateMachine.FishState.FISHING;
       }
 
-      this.init_Z = false;
+      this.catchCompleted = false;
    }
 
    private void clearPendingAction() {
@@ -264,11 +264,11 @@ final class AutoFishStateMachine {
    void read() {
       this.clearPendingAction();
       this.state = AutoFishStateMachine.FishState.IDLE;
-      this.update_I = this.sync_I = -1;
-      this.flush_I = 0;
-      this.read_J = this.write_J = this.update_J = this.sync_J = this.tick = 0L;
-      this.close_J = this.flush_J = -9223372036854775808L;
-      this.init_Z = false;
+      this.trackedHook = this.reeledHook = -1;
+      this.missingHookTicks = 0;
+      this.nextActionTick = this.castTick = this.castSettleTick = this.reelTick = this.tick = 0L;
+      this.lastBiteTick = this.lastMissingTick = -9223372036854775808L;
+      this.catchCompleted = false;
    }
 
    record PendingAction(long init_J, AutoFishStateMachine.RodAction action, int init_I, long load) {

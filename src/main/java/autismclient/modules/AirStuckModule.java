@@ -10,14 +10,14 @@ public final class AirStuckModule extends Module {
 
    @Override
    public void preMovementTick() {
-      if (this.init_Z()) {
+      if (this.isActive()) {
          MC.player.setDeltaMovement(Vec3.ZERO);
       }
    }
 
    @Override
    public Vec3 onPlayerMove(MoverType type, Vec3 movement) {
-      if (!this.init_Z()) {
+      if (!this.isActive()) {
          return movement;
       }
 
@@ -25,7 +25,7 @@ public final class AirStuckModule extends Module {
       return Vec3.ZERO;
    }
 
-   private boolean init_Z() {
+   private boolean isActive() {
       return this.isEnabled() && MC.player != null && MC.player.isAlive() && !MC.player.isPassenger() && !MC.player.isSpectator() && !aD.read_Z();
    }
 
