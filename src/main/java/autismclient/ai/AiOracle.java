@@ -447,7 +447,7 @@ final class AiOracle {
 
                autismclient.util.oresim.OreSimEngine.GenerationProgress progress = autismclient.util.oresim.OreSimEngine.progress();
                if (!progress.isComplete() && ++this.simTicks < 400) {
-                  return this.running("Simulating ore generation (" + progress.done() + "/" + progress.load() + " chunks)");
+                  return this.running("Simulating ore generation (" + progress.done() + "/" + progress.total() + " chunks)");
                }
 
                Vec3 eye = mc.player.getEyePosition();
@@ -507,7 +507,7 @@ final class AiOracle {
                      "simulatedChunks",
                      progress.done(),
                      "totalChunks",
-                     progress.load(),
+                     progress.total(),
                      "positions",
                      positions
                   )
@@ -524,7 +524,7 @@ final class AiOracle {
          JsonObject statusData() {
             autismclient.util.oresim.OreSimEngine.GenerationProgress p = autismclient.util.oresim.OreSimEngine.progress();
             return AiJson.objectOf(
-               "engineStatus", autismclient.util.oresim.OreSimEngine.status().name(), "simulatedChunks", p.done(), "totalChunks", p.load()
+               "engineStatus", autismclient.util.oresim.OreSimEngine.status().name(), "simulatedChunks", p.done(), "totalChunks", p.total()
             );
          }
 

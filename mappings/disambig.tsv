@@ -57963,3 +57963,15 @@ M	autismclient/modules/t	write	(Lnet/minecraft/world/entity/LivingEntity;)Z	auti
 M	autismclient/util/AutismMacroListOverlay	entry	()I	autismclient/util/AutismMacroListOverlay	statusDotSize	()I
 M	autismclient/util/AutismPacketLoggerOverlay	load	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIII)V	autismclient/util/AutismPacketLoggerOverlay	renderBlockedSection	(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIII)V
 M	autismclient/util/AutismPacketLoggerOverlay	write	(DDI)Z	autismclient/util/AutismPacketLoggerOverlay	clickBlockedSection	(DDI)Z
+F	autismclient/util/CachePool$StreamUtil	load	Ljava/lang/String;	autismclient/util/AntiVanishRosterTracker$VanishAlert	evidence	Ljava/lang/String;
+M	autismclient/util/CachePool$StreamUtil	load	()Ljava/lang/String;	autismclient/util/AntiVanishRosterTracker$VanishAlert	evidence	()Ljava/lang/String;
+F	autismclient/util/bu$StateCache	init	Ljava/lang/String;	autismclient/util/PacketInspectorEngine$ParsedMessagePair	sender	Ljava/lang/String;
+M	autismclient/util/bu$StateCache	init	()Ljava/lang/String;	autismclient/util/PacketInspectorEngine$ParsedMessagePair	sender	()Ljava/lang/String;
+F	autismclient/util/bu$StateCache	load	Ljava/lang/String;	autismclient/util/PacketInspectorEngine$ParsedMessagePair	message	Ljava/lang/String;
+M	autismclient/util/bu$StateCache	load	()Ljava/lang/String;	autismclient/util/PacketInspectorEngine$ParsedMessagePair	message	()Ljava/lang/String;
+F	autismclient/util/bu$TextFormat	init	I	autismclient/util/PacketInspectorEngine$VarIntRead	value	I
+M	autismclient/util/bu$TextFormat	init	()I	autismclient/util/PacketInspectorEngine$VarIntRead	value	()I
+F	autismclient/util/bu$TextFormat	load	I	autismclient/util/PacketInspectorEngine$VarIntRead	nextIndex	I
+M	autismclient/util/bu$TextFormat	load	()I	autismclient/util/PacketInspectorEngine$VarIntRead	nextIndex	()I
+F	autismclient/util/oresim/StreamUtil$ConfigStore	load	I	autismclient/util/oresim/OreSimEngine$GenerationProgress	total	I
+M	autismclient/util/oresim/StreamUtil$ConfigStore	load	()I	autismclient/util/oresim/OreSimEngine$GenerationProgress	total	()I

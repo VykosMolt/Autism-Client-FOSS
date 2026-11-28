@@ -598,7 +598,7 @@ public final class AntiVanishModule extends Module {
          for (autismclient.util.AntiVanishRosterTracker.VanishAlert alert : this.rosterTracker.collectAlerts(at)) {
             if (this.isTrackedAlert(alert.uuid(), alert.name(), alert.uuidOnly())) {
                AntiVanishModule.Detection detection = new AntiVanishModule.Detection(
-                  alert.name(), "Hidden player: " + alert.load(), 100, at + 20000L, alert.uuidOnly(), false
+                  alert.name(), "Hidden player: " + alert.evidence(), 100, at + 20000L, alert.uuidOnly(), false
                );
                this.detections.put(alert.uuid(), detection);
                this.alertedDetections.put(alert.uuid(), detection);

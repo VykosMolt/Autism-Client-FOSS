@@ -901,18 +901,18 @@ public final class OreSimEngine {
       boolean shouldDrop(int var1, long var2);
    }
 
-   public record GenerationProgress(long generation, int done, int load) {
+   public record GenerationProgress(long generation, int done, int total) {
       public GenerationProgress {
-         load = Math.max(0, load);
-         done = Math.max(0, Math.min(done, load));
+         total = Math.max(0, total);
+         done = Math.max(0, Math.min(done, total));
       }
 
       public double fraction() {
-         return this.load == 0 ? 0.0 : (double)this.done / this.load;
+         return this.total == 0 ? 0.0 : (double)this.done / this.total;
       }
 
       public boolean isComplete() {
-         return this.load > 0 && this.done >= this.load;
+         return this.total > 0 && this.done >= this.total;
       }
    }
 

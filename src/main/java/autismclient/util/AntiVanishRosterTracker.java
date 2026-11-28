@@ -408,7 +408,7 @@ public final class AntiVanishRosterTracker {
    public record ActorInfo(UUID id, String name, boolean init_Z, boolean load) {
    }
 
-   public record VanishAlert(UUID uuid, String name, String load, boolean uuidOnly) {
+   public record VanishAlert(UUID uuid, String name, String evidence, boolean uuidOnly) {
       public VanishAlert(UUID id, String name, String evidence) {
          this(id, name, evidence, false);
       }

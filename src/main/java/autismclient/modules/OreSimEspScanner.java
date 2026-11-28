@@ -708,7 +708,7 @@ public final class OreSimEspScanner {
             return "worldgen failed";
          } else {
             autismclient.util.oresim.OreSimEngine.GenerationProgress progress = autismclient.util.oresim.OreSimEngine.progress();
-            if (progress.load() > 0) {
+            if (progress.total() > 0) {
                return progressText(progress);
             } else if (shaderCullMode) {
                return "Shader cull mode";
@@ -724,7 +724,7 @@ public final class OreSimEspScanner {
    }
 
    static String progressText(autismclient.util.oresim.OreSimEngine.GenerationProgress progress) {
-      return progress.done() + "/" + progress.load() + " chunks";
+      return progress.done() + "/" + progress.total() + " chunks";
    }
 
    @FunctionalInterface

@@ -1550,8 +1550,8 @@ public final class PacketInspectorEngine {
          for (int offset = 0; offset < raw.length - 2 && shown < 6; offset++) {
             PacketInspectorEngine.VarIntRead varInt = readVarInt(raw, offset);
             if (varInt != null) {
-               int length = varInt.init();
-               int start = varInt.load();
+               int length = varInt.value();
+               int start = varInt.nextIndex();
                if (isPlausibleLength(length, start, raw.length)) {
                   String key = start + ":" + length;
                   if (seen.add(key)) {
@@ -1864,22 +1864,22 @@ public final class PacketInspectorEngine {
 
          while (index < raw.length && values.size() < Math.max(1, max)) {
             PacketInspectorEngine.VarIntRead length = readVarInt(raw, index);
-            if (length == null || length.init() < 0 || length.init() > 32767) {
+            if (length == null || length.value() < 0 || length.value() > 32767) {
                return List.of();
             }
 
-            index = length.load();
-            if (index + length.init() > raw.length) {
+            index = length.nextIndex();
+            if (index + length.value() > raw.length) {
                return List.of();
             }
 
-            String value = new String(raw, index, length.init(), StandardCharsets.UTF_8);
+            String value = new String(raw, index, length.value(), StandardCharsets.UTF_8);
             if (!isMostlyPrintableText(value)) {
                return List.of();
             }
 
             values.add(value);
-            index += length.init();
+            index += length.value();
          }
 
          return index == raw.length ? values : List.of();
@@ -1939,9 +1939,9 @@ public final class PacketInspectorEngine {
             if (!occupied.contains(offset)) {
                PacketInspectorEngine.VarIntRead length = readVarInt(raw, offset);
                if (length != null) {
-                  int valueLength = length.init();
+                  int valueLength = length.value();
                   if (valueLength >= 1 && valueLength <= 32767) {
-                     int start = length.load();
+                     int start = length.nextIndex();
                      if (start + valueLength <= raw.length) {
                         String value = new String(raw, start, valueLength, StandardCharsets.UTF_8);
                         if (isMostlyPrintableText(value)) {
@@ -2069,12 +2069,12 @@ public final class PacketInspectorEngine {
 
          while (index < raw.length && values.size() < Math.max(1, max) && index < 20) {
             PacketInspectorEngine.VarIntRead read = readVarInt(raw, index);
-            if (read == null || read.load() <= index) {
+            if (read == null || read.nextIndex() <= index) {
                break;
             }
 
-            values.add(String.valueOf(read.init()));
-            index = read.load();
+            values.add(String.valueOf(read.value()));
+            index = read.nextIndex();
          }
 
          return values;
@@ -3339,8 +3339,8 @@ public final class PacketInspectorEngine {
             builder.line("Kind: " + (Boolean.TRUE.equals(overlay) ? "Overlay / HUD message" : "Game / system message"), UiColorPalette.textBright());
             PacketInspectorEngine.ParsedMessagePair parsed = parseChatLine(message);
             if (parsed != null) {
-               builder.line("Possible Sender: " + parsed.init(), UiColorPalette.textBright());
-               builder.line("Message: " + quote(sanitize(parsed.load())), UiColorPalette.successText());
+               builder.line("Possible Sender: " + parsed.sender(), UiColorPalette.textBright());
+               builder.line("Message: " + quote(sanitize(parsed.message())), UiColorPalette.successText());
             } else if (message != null && !message.isBlank()) {
                builder.line("Message: " + quote(sanitize(message)), UiColorPalette.successText());
             } else if (content != null) {
@@ -5204,7 +5204,7 @@ public final class PacketInspectorEngine {
       METHOD;
    }
 
-   private record ParsedMessagePair(String init, String load) {
+   private record ParsedMessagePair(String sender, String message) {
    }
 
    private record DecodeCheckPair(boolean init, boolean load) {
@@ -5236,7 +5236,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private record VarIntRead(int init, int load) {
+   private record VarIntRead(int value, int nextIndex) {
    }
 
    private static final class ByteCursor {
