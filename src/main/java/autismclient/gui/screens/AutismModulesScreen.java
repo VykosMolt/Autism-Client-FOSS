@@ -57,8 +57,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    private AutismAdminToolsOverlay adminToolsOverlay;
    private String selectedModuleId;
    private final Set<String> load = new LinkedHashSet<>();
-   private boolean init_Z;
-   private long init_J;
+   private boolean menuClosed;
+   private long closeAnimStart;
 
    public AutismModulesScreen(Screen parent) {
       this(parent, AutismModulesScreen.ScreenMode.IN_GAME);
@@ -78,20 +78,20 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       return this.menuController;
    }
 
-   public void init_V_Str_4(String id) {
+   public void runMenuAction(String id) {
       this.load(id);
    }
 
    @Override
    protected void init() {
-      if (this.init_Z) {
-         this.init_J = 0L;
+      if (this.menuClosed) {
+         this.closeAnimStart = 0L;
          if (this.menuController != null) {
             this.menuController.read_V();
          }
       }
 
-      this.init_Z = false;
+      this.menuClosed = false;
       this.write();
       if (this.isTitleSetup()) {
          this.flush();
@@ -121,7 +121,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    @Override
    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-      if (this.init_J != 0L && System.nanoTime() - this.init_J >= 180000000L) {
+      if (this.closeAnimStart != 0L && System.nanoTime() - this.closeAnimStart >= 180000000L) {
          this.closeToParent();
       } else {
          if (this.menuController == null) {
@@ -157,7 +157,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    @Override
    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-      if (this.init_J != 0L) {
+      if (this.closeAnimStart != 0L) {
          return true;
       } else {
          int mx = cA.init_I_D(event.x());
@@ -177,7 +177,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    @Override
    public boolean mouseReleased(MouseButtonEvent event) {
-      if (this.init_J != 0L) {
+      if (this.closeAnimStart != 0L) {
          return true;
       } else {
          int mx = cA.init_I_D(event.x());
@@ -198,7 +198,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    @Override
    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-      if (this.init_J != 0L) {
+      if (this.closeAnimStart != 0L) {
          return true;
       } else {
          int mx = cA.init_I_D(event.x());
@@ -219,7 +219,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    @Override
    public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
-      if (this.init_J != 0L) {
+      if (this.closeAnimStart != 0L) {
          return true;
       } else {
          int mx = cA.init_I_D(x);
@@ -236,7 +236,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    @Override
    public boolean keyPressed(KeyEvent input) {
-      if (this.init_J != 0L) {
+      if (this.closeAnimStart != 0L) {
          return true;
       } else if (this.packetSelectorOverlay != null
          && this.packetSelectorOverlay.isVisible()
@@ -261,7 +261,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
    @Override
    public boolean charTyped(CharacterEvent input) {
-      if (this.init_J != 0L) {
+      if (this.closeAnimStart != 0L) {
          return true;
       } else {
          char chr = (char)input.codepoint();
@@ -297,8 +297,8 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    }
 
    private void read() {
-      if (!this.init_Z) {
-         this.init_Z = true;
+      if (!this.menuClosed) {
+         this.menuClosed = true;
          if (this.menuController != null) {
             this.menuController.close();
          }
@@ -771,7 +771,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
    }
 
-   private void init_V_Module(Module module) {
+   private void addModuleToMacro(Module module) {
       if (module != null) {
          AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.getInstance();
          if (editor != null) {
@@ -989,7 +989,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
       @Override
       public void init(Module module) {
-         AutismModulesScreen.this.init_V_Module(module);
+         AutismModulesScreen.this.addModuleToMacro(module);
       }
    }
 }

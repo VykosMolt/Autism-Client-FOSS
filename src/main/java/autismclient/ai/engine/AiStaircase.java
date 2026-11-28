@@ -96,7 +96,7 @@ public final class AiStaircase {
                BlockPos feet = new BlockPos(x + d[0], y - 1, z + d[1]);
                if (isClearStand(feet, floors, blocked) && !noFloor.test(feet.below())) {
                   floors.add(feet.below().asLong());
-                  int run = 1 + init_I_BlockPos(feet, d, horizon - 1, floors, blocked, noFloor);
+                  int run = 1 + longestDescent(feet, d, horizon - 1, floors, blocked, noFloor);
                   floors.remove(feet.below().asLong());
                   if (run > bestRun) {
                      chosen = d;
@@ -125,7 +125,7 @@ public final class AiStaircase {
       return out;
    }
 
-   private static int init_I_BlockPos(BlockPos from, int[] last, int left, Set<Long> floors, Predicate<BlockPos> blocked, Predicate<BlockPos> noFloor) {
+   private static int longestDescent(BlockPos from, int[] last, int left, Set<Long> floors, Predicate<BlockPos> blocked, Predicate<BlockPos> noFloor) {
       if (left == 0) {
          return 0;
       }
@@ -137,7 +137,7 @@ public final class AiStaircase {
             BlockPos next = from.offset(d[0], -1, d[1]);
             if (isClearStand(next, floors, blocked) && !noFloor.test(next.below())) {
                floors.add(next.below().asLong());
-               int run = 1 + init_I_BlockPos(next, d, left - 1, floors, blocked, noFloor);
+               int run = 1 + longestDescent(next, d, left - 1, floors, blocked, noFloor);
                floors.remove(next.below().asLong());
                best = Math.max(best, run);
                if (best == left) {
@@ -256,10 +256,10 @@ public final class AiStaircase {
    }
 
    public static BlockPos findStairTop(Level level, BlockPos feet, BlockPos ore, Predicate<BlockPos> blocked, int maxDepth) {
-      return init_BlockPos_BlockGetter(level, feet, ore, blocked, maxDepth, (x, z) -> level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, x, z));
+      return findStairTopUsing(level, feet, ore, blocked, maxDepth, (x, z) -> level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, x, z));
    }
 
-   static BlockPos init_BlockPos_BlockGetter(
+   static BlockPos findStairTopUsing(
       BlockGetter level, BlockPos feet, BlockPos ore, Predicate<BlockPos> blocked, int maxDepth, IntBinaryOperator surfaceHeight
    ) {
       BlockPos best = null;
@@ -422,14 +422,14 @@ public final class AiStaircase {
    }
 
    public static BlockPos init_BlockPos_Level(Level level, BlockPos from, int radius, int minDrop, Predicate<BlockState> matches, Predicate<BlockPos> usable) {
-      return init_BlockPos_Level_2(level, from, radius, matches, p -> {
+      return findBestBlock(level, from, radius, matches, p -> {
          int drop = from.getY() - p.getY();
          return drop < minDrop ? 1.7976931348623157E308 : Math.max(Math.abs(p.getX() - from.getX()) + Math.abs(p.getZ() - from.getZ()), drop) + drop * 0.01;
       }, usable);
    }
 
    public static BlockPos findTarget(Level level, BlockPos from, int radius, int minDrop, Predicate<BlockState> matches, Predicate<BlockPos> usable) {
-      return init_BlockPos_Level_2(
+      return findBestBlock(
          level, from, radius, matches, p -> from.getY() - p.getY() < minDrop ? 1.7976931348623157E308 : AiBlockMine.travelCost(level, from, p), usable
       );
    }
@@ -450,7 +450,7 @@ public final class AiStaircase {
          return first;
       }
 
-      BlockPos complete = init_BlockPos_Level_2(
+      BlockPos complete = findBestBlock(
          level,
          from,
          radius,
@@ -462,11 +462,11 @@ public final class AiStaircase {
          return first;
       }
 
-      if (!completeNoDeeper(init_I_Level(level, from, first), init_I_Level(level, from, complete))) {
+      if (!completeNoDeeper(depthBelowSurface(level, from, first), depthBelowSurface(level, from, complete))) {
          return first;
       }
 
-      BlockPos remainder = init_BlockPos_Level_2(
+      BlockPos remainder = findBestBlock(
          level,
          from,
          radius,
@@ -488,7 +488,7 @@ public final class AiStaircase {
       return completeDepth <= firstDepth;
    }
 
-   private static int init_I_Level(Level level, BlockPos from, BlockPos ore) {
+   private static int depthBelowSurface(Level level, BlockPos from, BlockPos ore) {
       int surface = level.getHeight(Types.MOTION_BLOCKING_NO_LEAVES, ore.getX(), ore.getZ());
       return Math.max(0, Math.min(from.getY(), surface) - ore.getY());
    }
@@ -523,10 +523,10 @@ public final class AiStaircase {
    }
 
    private static BlockPos init_BlockPos_Level_2(Level level, BlockPos from, int radius, Predicate<BlockState> matches, ToDoubleFunction<BlockPos> score) {
-      return init_BlockPos_Level_2(level, from, radius, matches, score, p -> true);
+      return findBestBlock(level, from, radius, matches, score, p -> true);
    }
 
-   private static BlockPos init_BlockPos_Level_2(
+   private static BlockPos findBestBlock(
       Level level, BlockPos from, int radius, Predicate<BlockState> matches, ToDoubleFunction<BlockPos> score, Predicate<BlockPos> usable
    ) {
       BlockPos best = null;

@@ -4,8 +4,8 @@ import java.security.SecureRandom;
 
 public final class CoordinateSpoofer {
    private static final SecureRandom RANDOM = new SecureRandom();
-   private static final long init_J = 1024L;
-   private static final long load_J = 20000000L;
+   private static final long REGION_SIZE = 1024L;
+   private static final long SPOOF_RANGE = 20000000L;
    private static volatile boolean active;
    private static volatile CoordinateSpoofer.SpoofMode mode = CoordinateSpoofer.SpoofMode.OFFSET;
    private static volatile boolean spoofYEnabled = false;

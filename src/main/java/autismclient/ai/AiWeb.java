@@ -30,7 +30,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 final class AiWeb {
-   private static final int init = 1000000;
+   private static final int MAX_BODY_BYTES = 1000000;
 
    private AiWeb() {
    }

@@ -252,7 +252,7 @@ public class XCarryAction implements MacroAction {
 
          try {
             if (mc.player.containerMenu != mc.player.inventoryMenu) {
-               this.init_V_Minecraft_5(mc);
+               this.runFromContainer(mc);
                return;
             }
 
@@ -260,7 +260,7 @@ public class XCarryAction implements MacroAction {
             if (handler.getCarried().isEmpty()) {
                switch (this.mode) {
                   case PUT_IN:
-                     this.init_V_InventoryMenu_Minecraft(handler, mc);
+                     this.putInCarry(handler, mc);
                      return;
                   case TAKE_OUT:
                      this.load(handler, mc);
@@ -273,7 +273,7 @@ public class XCarryAction implements MacroAction {
                }
             }
 
-            init_Z_InventoryMenu_Minecraft(handler, mc);
+            splitCarriedToOne(handler, mc);
             this.syncCarryState(handler, true);
          } finally {
             shared.setArmorSlotBypassEnabled(prevBypass);
@@ -281,14 +281,14 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   private void init_V_Minecraft_5(Minecraft mc) {
+   private void runFromContainer(Minecraft mc) {
       if (mc.getConnection() != null) {
          this.enableAllSources();
          autismclient.util.InteractionTargetRef containerTarget = AutismSessionState.getInstance().getLastInteractionTarget();
          if (containerTarget != null) {
             InventoryMenu playerHandler = mc.player.inventoryMenu;
             if (!playerHandler.getCarried().isEmpty()) {
-               init_Z_InventoryMenu_Minecraft(playerHandler, mc);
+               splitCarriedToOne(playerHandler, mc);
                this.syncCarryState(playerHandler, true);
             } else {
                AbstractContainerMenu containerHandler = mc.player.containerMenu;
@@ -302,7 +302,7 @@ public class XCarryAction implements MacroAction {
                mc.player.containerMenu = playerHandler;
                switch (this.mode) {
                   case PUT_IN:
-                     this.init_V_InventoryMenu_Minecraft(playerHandler, mc);
+                     this.putInCarry(playerHandler, mc);
                      break;
                   case TAKE_OUT:
                      this.load(playerHandler, mc);
@@ -318,7 +318,7 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   private void init_V_InventoryMenu_Minecraft(InventoryMenu handler, Minecraft mc) {
+   private void putInCarry(InventoryMenu handler, Minecraft mc) {
       this.enableAllSources();
       List<MacroItemTarget> targets = this.runtimeTargets();
       if (targets.isEmpty()) {
@@ -375,7 +375,7 @@ public class XCarryAction implements MacroAction {
       for (Integer slotId : this.carrySlotSet()) {
          if (slotId != null && slotId >= 0 && slotId < handler.slots.size()) {
             Slot slot = handler.slots.get(slotId);
-            if (!slot.getItem().isEmpty() && (this.entries.isEmpty() || this.init_Z_Slot_I(slot, slotId))) {
+            if (!slot.getItem().isEmpty() && (this.entries.isEmpty() || this.slotSelected(slot, slotId))) {
                mc.gameMode.handleContainerInput(handler.containerId, slotId, 0, ContainerInput.QUICK_MOVE, mc.player);
             }
          }
@@ -390,7 +390,7 @@ public class XCarryAction implements MacroAction {
       for (Integer slotId : this.carrySlotSet()) {
          if (slotId != null && slotId >= 0 && slotId < handler.slots.size()) {
             Slot slot = handler.slots.get(slotId);
-            if (!slot.getItem().isEmpty() && (this.entries.isEmpty() || this.init_Z_Slot_I(slot, slotId))) {
+            if (!slot.getItem().isEmpty() && (this.entries.isEmpty() || this.slotSelected(slot, slotId))) {
                mc.gameMode.handleContainerInput(handler.containerId, slotId, 1, ContainerInput.THROW, mc.player);
             }
          }
@@ -399,7 +399,7 @@ public class XCarryAction implements MacroAction {
       this.syncCarryState(handler, true);
    }
 
-   private boolean init_Z_Slot_I(Slot slot, int slotId) {
+   private boolean slotSelected(Slot slot, int slotId) {
       for (MacroItemTarget entryTarget : this.runtimeTargets()) {
          if (entryTarget != null) {
             if (entryTarget.hasSlot()) {
@@ -490,7 +490,7 @@ public class XCarryAction implements MacroAction {
          return moves;
       }
 
-      init_V_InventoryMenu(handler, rows, storageSlotSet);
+      fitRowsToAvailable(handler, rows, storageSlotSet);
       init(handler, rows, storageSlotSet, moves);
       return moves;
    }
@@ -585,7 +585,7 @@ public class XCarryAction implements MacroAction {
          return false;
       }
 
-      if (!init_Z_InventoryMenu_2(handler, slot, target)) {
+      if (!slotMatchesTarget(handler, slot, target)) {
          return false;
       }
 
@@ -656,7 +656,7 @@ public class XCarryAction implements MacroAction {
       Map<String, Integer> neededByKey = new LinkedHashMap<>();
       if (playerHandler != null) {
          List<XCarryAction.EntryRow> rows = this.buildRows(playerHandler);
-         init_V_InventoryMenu(playerHandler, rows, this.carrySlotIds());
+         fitRowsToAvailable(playerHandler, rows, this.carrySlotIds());
 
          for (XCarryAction.EntryRow row : rows) {
             if (row.sync > 0 && row.target != null && row.target.hasItemFilter()) {
@@ -933,7 +933,7 @@ public class XCarryAction implements MacroAction {
 
       Set<Integer> excluded = excludedSlotIds == null ? Set.of() : excludedSlotIds;
       if (target.hasSlot()) {
-         int exactSlot = init_I_AbstractContainerM_I(handler, target.slot);
+         int exactSlot = inventorySlotIndex(handler, target.slot);
          if (exactSlot < 0) {
             return -1;
          }
@@ -1025,7 +1025,7 @@ public class XCarryAction implements MacroAction {
       if (!handler.getCarried().isEmpty() && handler.getCarried().getCount() == amount) {
          mc.gameMode.handleContainerInput(handler.containerId, toSlotId, 0, ContainerInput.PICKUP, mc.player);
          if (!handler.getCarried().isEmpty()) {
-            init_Z_InventoryMenu(handler, mc, fromSlotId);
+            returnCarried(handler, mc, fromSlotId);
          }
 
          ItemStack targetAfter = targetSlot.getItem();
@@ -1034,12 +1034,12 @@ public class XCarryAction implements MacroAction {
             && targetAfter.getCount() >= targetCountBefore + amount
             && handler.getCarried().isEmpty();
       } else {
-         init_Z_InventoryMenu(handler, mc, fromSlotId);
+         returnCarried(handler, mc, fromSlotId);
          return false;
       }
    }
 
-   private static boolean init_Z_InventoryMenu(InventoryMenu handler, Minecraft mc, int preferredSlotId) {
+   private static boolean returnCarried(InventoryMenu handler, Minecraft mc, int preferredSlotId) {
       if (handler == null || mc == null || mc.player == null || mc.gameMode == null) {
          return false;
       }
@@ -1095,7 +1095,7 @@ public class XCarryAction implements MacroAction {
    private boolean load(InventoryMenu handler, Minecraft mc, int startTargetIndex, int maxTargets) {
       if (handler != null && mc != null && mc.player != null && mc.gameMode != null) {
          if (!handler.getCarried().isEmpty()) {
-            return init_Z_InventoryMenu_Minecraft(handler, mc);
+            return splitCarriedToOne(handler, mc);
          }
 
          List<MacroItemTarget> targets = this.runtimeTargets();
@@ -1131,7 +1131,7 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   private static boolean init_Z_InventoryMenu_Minecraft(InventoryMenu handler, Minecraft mc) {
+   private static boolean splitCarriedToOne(InventoryMenu handler, Minecraft mc) {
       if (handler == null || mc == null || mc.player == null || mc.gameMode == null) {
          return false;
       }
@@ -1195,7 +1195,7 @@ public class XCarryAction implements MacroAction {
    private ItemStack findMatchingStack(InventoryMenu handler, MacroItemTarget target, Set<Integer> excludedSlotIds) {
       if (handler != null && target != null) {
          for (Slot slot : handler.slots) {
-            if (slot != null && !excludedSlotIds.contains(slot.index) && isStorageItemSlot(slot) && init_Z_InventoryMenu_2(handler, slot, target)) {
+            if (slot != null && !excludedSlotIds.contains(slot.index) && isStorageItemSlot(slot) && slotMatchesTarget(handler, slot, target)) {
                return slot.getItem();
             }
          }
@@ -1264,7 +1264,7 @@ public class XCarryAction implements MacroAction {
       return rows;
    }
 
-   private static void init_V_InventoryMenu(InventoryMenu handler, List<XCarryAction.EntryRow> rows, Set<Integer> excludedSlotIds) {
+   private static void fitRowsToAvailable(InventoryMenu handler, List<XCarryAction.EntryRow> rows, Set<Integer> excludedSlotIds) {
       if (handler != null && rows != null && !rows.isEmpty()) {
          Map<String, Integer> available = new LinkedHashMap<>();
 
@@ -1273,7 +1273,7 @@ public class XCarryAction implements MacroAction {
                ItemStack stack = slot.getItem();
                if (!stack.isEmpty()) {
                   for (XCarryAction.EntryRow row : rows) {
-                     if (row.target != null && init_Z_InventoryMenu_2(handler, slot, row.target)) {
+                     if (row.target != null && slotMatchesTarget(handler, slot, row.target)) {
                         String key = targetKey(row.target);
                         available.put(key, available.getOrDefault(key, 0) + stack.getCount());
                         break;
@@ -1453,7 +1453,7 @@ public class XCarryAction implements MacroAction {
       return slot != null && slot.index >= 5 && !slot.getItem().isEmpty();
    }
 
-   private static int init_I_AbstractContainerM_I(AbstractContainerMenu handler, int configuredSlot) {
+   private static int inventorySlotIndex(AbstractContainerMenu handler, int configuredSlot) {
       for (Slot slot : handler.slots) {
          if (slot != null
             && slot.index >= 0
@@ -1481,7 +1481,7 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   private static boolean init_Z_InventoryMenu_2(InventoryMenu handler, Slot slot, MacroItemTarget target) {
+   private static boolean slotMatchesTarget(InventoryMenu handler, Slot slot, MacroItemTarget target) {
       if (handler != null && slot != null && target != null && !slot.getItem().isEmpty()) {
          int visibleSlot = visibleSlot(handler, slot.index);
          return target.hasSlot() && target.slot != visibleSlot ? false : matchesTarget(slot.getItem(), target, visibleSlot);

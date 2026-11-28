@@ -23,7 +23,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public final class CommandSuggestions {
    private static volatile List<String> blockIdsCache;
-   private static volatile List<String> load_List;
+   private static volatile List<String> placeableBlockIdsCache;
    private static volatile List<String> entityIdsCache;
    private static volatile String[][] itemIdIndex;
    private static volatile String[][] blockIdIndex;
@@ -151,7 +151,7 @@ public final class CommandSuggestions {
    }
 
    public static List<String> load() {
-      List<String> cached = load_List;
+      List<String> cached = placeableBlockIdsCache;
       if (cached != null) {
          return cached;
       }
@@ -165,7 +165,7 @@ public final class CommandSuggestions {
          }
       }
 
-      return load_List = List.copyOf(ids);
+      return placeableBlockIdsCache = List.copyOf(ids);
    }
 
    public static List<String> entityIds() {

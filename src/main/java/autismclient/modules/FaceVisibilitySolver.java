@@ -13,7 +13,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 final class FaceVisibilitySolver {
-   private static final double init = 1.0E-7;
+   private static final double EPSILON = 1.0E-7;
 
    private FaceVisibilitySolver() {
    }

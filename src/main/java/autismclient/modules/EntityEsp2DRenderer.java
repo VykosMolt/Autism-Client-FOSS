@@ -153,7 +153,7 @@ public final class EntityEsp2DRenderer {
          shown = new EntityEsp2DRenderer.SmoothedHealth(health);
          healthByEntity.put(entity.getId(), shown);
       } else {
-         shown.init_F = shown.init_F + (health - shown.init_F) * healthLerp;
+         shown.fraction = shown.fraction + (health - shown.fraction) * healthLerp;
       }
 
       shown.frame = frame;
@@ -163,9 +163,9 @@ public final class EntityEsp2DRenderer {
       float x = BOUNDS.sx - 3.0F * px - barW;
       fillRect(context, x, y - px, barW, h + 2.0F * px, alphaBits(0.62F * fade));
       float inner = barW - 2.0F * px;
-      float filled = h * shown.init_F;
+      float filled = h * shown.fraction;
       if (!(filled <= 0.25F * px)) {
-         int color = alphaBits(fade) | Mth.hsvToRgb(shown.init_F / 3.0F, 0.78F, 1.0F);
+         int color = alphaBits(fade) | Mth.hsvToRgb(shown.fraction / 3.0F, 0.78F, 1.0F);
          fillRect(context, x + px, y + h - filled, inner, filled, color);
       }
    }
@@ -243,11 +243,11 @@ public final class EntityEsp2DRenderer {
    }
 
    private static final class SmoothedHealth {
-      float init_F;
+      float fraction;
       long frame;
 
       SmoothedHealth(float value) {
-         this.init_F = value;
+         this.fraction = value;
       }
    }
 }

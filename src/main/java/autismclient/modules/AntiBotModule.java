@@ -7,9 +7,9 @@ import autismclient.api.module.IntSetting;
 import java.util.List;
 
 public final class AntiBotModule extends Module {
-   static final String init_Str = "Conservative";
-   static final String load_Str = "Aggressive";
-   static final String read_Str = "Custom";
+   static final String MODE_CONSERVATIVE = "Conservative";
+   static final String MODE_AGGRESSIVE = "Aggressive";
+   static final String MODE_CUSTOM = "Custom";
    final ChoiceSetting mode = this.add(
       new ChoiceSetting("mode", "Mode", "Conservative", "Conservative", "Aggressive", "Custom").description("Detection strictness preset").build()
    );

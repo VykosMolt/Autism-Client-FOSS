@@ -54,31 +54,31 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 final class AiCombat {
-   private static final double sync_D = 0.92;
-   private static final float init_F = 0.92F;
+   private static final double REACH_FACTOR = 0.92;
+   private static final float READY_STRENGTH = 0.92F;
    private static final double flush_D = 6.0;
    private static final int close_I = 40;
    static final int init_I = 3;
    static final int load_I = 12;
    private static final int open_I = 8;
-   static final long init_J = 15000000000L;
+   static final long IGNORE_NANOS = 15000000000L;
    static final int read_I = 60;
    static final int write_I = 45;
    static final int update_I = 12;
    static final int sync_I = 8;
    static final double init_D = 0.5;
-   static final double load_D = 70.0;
+   static final double COVER_YAW_DEG = 70.0;
    private static final Map<Integer, Long> blazeFirstSeen = new HashMap<>();
    private static long blazeScanTick = -9223372036854775808L;
-   static final long load_J = 2500000000L;
+   static final long NO_PROGRESS_NANOS = 2500000000L;
    static final double read_D = 10.0;
-   static final long read_J = 8000000000L;
+   static final long ENDERMAN_IGNORE_NANOS = 8000000000L;
    static final double write_D = 2.0;
    static final int flush_I = 8;
    static final Map<UUID, Long> ignoredUntil = new ConcurrentHashMap<>();
    private static final int poll = 12;
    private static final int push = 3;
-   private static final double close_D = 1.4;
+   private static final double PILLAR_MAX_HORIZONTAL = 1.4;
    private static final double open_D = 1.0;
    private static final int pop = 12;
    static final double update_D = 16.0;
@@ -161,7 +161,7 @@ final class AiCombat {
       return dx * dx + dz * dz < 1.0E-4 ? true : Math.abs(Mth.wrapDegrees(yawTo(mc, t.x(), t.z()) - yaw)) <= 70.0;
    }
 
-   static boolean init_Z_Minecraft_2(Minecraft mc, List<AiProjectiles.IncomingProjectile> ts, float yaw) {
+   static boolean allWithinCoverYaw(Minecraft mc, List<AiProjectiles.IncomingProjectile> ts, float yaw) {
       for (AiProjectiles.IncomingProjectile t : ts) {
          if (!init_Z_Minecraft(mc, t, yaw)) {
             return false;
@@ -192,7 +192,7 @@ final class AiCombat {
       return best;
    }
 
-   static Entity init_Entity(Minecraft mc) {
+   static Entity findFiringBlaze(Minecraft mc) {
       if (mc.player != null && mc.level != null) {
          long now = autismclient.util.AutismSessionState.getInstance().getClientTick();
          if (now != blazeScanTick) {
@@ -236,7 +236,7 @@ final class AiCombat {
       return new AiOperation() {
          final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
          int ticksLeft = ticks;
-         boolean init_Z;
+         boolean shieldUp;
 
          {
             this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
@@ -253,7 +253,7 @@ final class AiCombat {
             }
 
             boolean hasShield = AiDefense.hasShield(mc);
-            Entity shooter = !hasShield ? null : (AiThreats.isLegacyCombatEnabled() ? AiCombat.init_Entity(mc) : AiThreats.findImminentShooter(mc, 12));
+            Entity shooter = !hasShield ? null : (AiThreats.isLegacyCombatEnabled() ? AiCombat.findFiringBlaze(mc) : AiThreats.findImminentShooter(mc, 12));
             AiProjectiles.IncomingProjectile coming = hasShield && !AiThreats.isLegacyCombatEnabled() ? AiCombat.nearestIncoming(mc) : null;
             if (coming != null) {
                this.aim
@@ -265,20 +265,20 @@ final class AiCombat {
             }
 
             boolean want = shooter != null || coming != null;
-            if (want != this.init_Z) {
-               this.init_Z = want;
+            if (want != this.shieldUp) {
+               this.shieldUp = want;
                mc.options.keyUse.setDown(want);
             }
 
-            return new AiOperation.Result(AiOperation.Status.RUNNING, this.init_Z ? "Shield up against a blaze" : "Waiting", "{}", List.of());
+            return new AiOperation.Result(AiOperation.Status.RUNNING, this.shieldUp ? "Shield up against a blaze" : "Waiting", "{}", List.of());
          }
 
          AiOperation.Result finish(AiOperation.Status status) {
-            if (this.init_Z && mc.options != null) {
+            if (this.shieldUp && mc.options != null) {
                mc.options.keyUse.setDown(false);
             }
 
-            this.init_Z = false;
+            this.shieldUp = false;
             this.aim.clear();
             return new AiOperation.Result(status, status == AiOperation.Status.SUCCEEDED ? "waited" : "cancelled", "{}", List.of());
          }
@@ -290,7 +290,7 @@ final class AiCombat {
       };
    }
 
-   static int init_I_D(double gap, double slack, double readyIn, double chase, boolean kite) {
+   static int radialStep(double gap, double slack, double readyIn, double chase, boolean kite) {
       if (readyIn <= 1.0) {
          return slack < 0.05 ? 1 : 0;
       } else if (!kite) {
@@ -328,14 +328,14 @@ final class AiCombat {
       return entity.isUnderWater() ? true : entity.isInWater() && entity.level().getFluidState(entity.blockPosition().below()).is(FluidTags.WATER);
    }
 
-   static boolean init_Z_Z(boolean unreachable, double distanceSq, double reachGap, boolean deepWater, boolean legacy) {
+   static boolean engageable(boolean unreachable, double distanceSq, double reachGap, boolean deepWater, boolean legacy) {
       return (!unreachable || distanceSq < 9.0 && reachGap <= 1.0) && (legacy || !deepWater || reachGap <= 1.0);
    }
 
    static boolean init_Z_Minecraft_Entity(Minecraft mc, Entity entity) {
       if (mc.player != null && entity != null && entity.isAlive()) {
          double gap = entity instanceof Mob mob ? AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox()) : 0.0;
-         return init_Z_Z(isIgnored(entity), entity.distanceToSqr(mc.player), gap, isInDeepWater(entity), AiThreats.isLegacyCombatEnabled());
+         return engageable(isIgnored(entity), entity.distanceToSqr(mc.player), gap, isInDeepWater(entity), AiThreats.isLegacyCombatEnabled());
       } else {
          return false;
       }
@@ -449,7 +449,7 @@ final class AiCombat {
             int found = -2147483648;
 
             for (int y = floorY + 1; y >= floorY - 1 && found == -2147483648; y--) {
-               if (init_Z_Minecraft(mc, cell, x, y, z)) {
+               if (isStandableCell(mc, cell, x, y, z)) {
                   found = y;
                }
             }
@@ -471,7 +471,7 @@ final class AiCombat {
       }
    }
 
-   private static boolean init_Z_Minecraft(Minecraft mc, MutableBlockPos cell, int x, int y, int z) {
+   private static boolean isStandableCell(Minecraft mc, MutableBlockPos cell, int x, int y, int z) {
       BlockState floor = mc.level.getBlockState(cell.set(x, y - 1, z));
       if (floor.getFluidState().isEmpty() && !floor.getCollisionShape(mc.level, cell).isEmpty()) {
          for (int h = 0; h <= 1; h++) {
@@ -491,7 +491,7 @@ final class AiCombat {
       return AiItems.resolveItem("minecraft:shield");
    }
 
-   static boolean init_Z(Minecraft mc) {
+   static boolean nearFarmland(Minecraft mc) {
       BlockPos feet = mc.player.blockPosition();
 
       for (int dx = -1; dx <= 1; dx++) {
@@ -507,7 +507,7 @@ final class AiCombat {
       return false;
    }
 
-   static boolean init_Z_AABB(AABB target, Vec3 eye, double reach) {
+   static boolean reachableFromJumpApex(AABB target, Vec3 eye, double reach) {
       return target.distanceToSqr(eye.add(0.0, 1.25, 0.0)) <= reach * reach;
    }
 
@@ -567,63 +567,63 @@ final class AiCombat {
             final float startHealth = mc.player.getHealth();
             final AiCombatDeaths deaths = new AiCombatDeaths();
             Entity target;
-            AiOperation init_AiOperation;
-            AiOperation load_AiOperation;
-            AiOperation read_AiOperation;
-            AiOperation write_AiOperation;
+            AiOperation travelLeg;
+            AiOperation eatOp;
+            AiOperation healOp;
+            AiOperation dodgeOp;
             int killed;
-            int read_I;
-            int write_I;
-            int update_I;
-            int sync_I;
-            int flush_I;
+            int trackingTicks;
+            int unhittableDrops;
+            int strikerScanCooldown;
+            int tickCount;
+            int targetSelectedTick;
             int targetSwitches;
             String selectionReason = "initial target";
             boolean defensiveDetour;
-            int open_I;
+            int outOfReachTicks;
             int strafeFlipTicks;
             int swings;
             int lavaJumpsRefused;
             boolean strafeRight = true;
-            boolean read_Z;
+            boolean cancelled;
             boolean childUncertain;
             JsonObject childUncertainty = new JsonObject();
             boolean shieldRaised;
-            boolean sync_Z;
-            boolean flush_Z;
-            boolean close_Z;
+            boolean healAttempted;
+            boolean legIsPillar;
+            boolean legObstructed;
             int pillarBlocksUsed;
             String airborneReason;
             String retreatReason;
             float lowestHealth;
-            AiOperation update_AiOperation;
+            AiOperation perchTravelOp;
             int pillarLandingTicks;
-            BlockPos init_BlockPos;
-            boolean open_Z;
+            BlockPos perchBase;
+            boolean onPerch;
             int noneNearTicks;
             int keepDistanceTicks;
             int stallTargetId = -1;
             int stallTicks;
-            double init_D = 1.7976931348623157E308;
+            double stallBestDistance = 1.7976931348623157E308;
             int perchKnockoffs;
             int pillarCentreTicks;
-            boolean poll_Z;
-            boolean push_Z;
+            boolean placingBackstop;
+            boolean backstopFailed;
             final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer().fast();
-            boolean pop_Z;
-            Entity load_Entity;
+            boolean shieldPlacing;
+            Entity shieldShooter;
             int shooterMemoryTicks;
             int shieldStanceTicks;
             int next;
-            Vec3 init_Vec3;
+            Vec3 exposePoint;
             int shieldBlockCount;
             int progressTargetId = -1;
-            double load_D;
-            long load_J;
+            double bestProgressDistance;
+            long lastProgressNanos;
             int blazeWaitTicks;
             int critJumpTicks;
             int crowdSwitchTicks;
-            final Map<UUID, Long> init_Map;
+            final Map<UUID, Long> ignoredTargets;
 
             {
                this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
@@ -633,12 +633,12 @@ final class AiCombat {
                   AiItems.equipOffhand(AiCombat.shieldSpec());
                }
 
-               this.init_Map = AiCombat.ignoredUntil;
+               this.ignoredTargets = AiCombat.ignoredUntil;
             }
 
             @Override
             public AiOperation.Result tick() {
-               if (this.read_Z
+               if (this.cancelled
                   || mc.player == null
                   || mc.level == null
                   || mc.level != this.startLevel
@@ -653,17 +653,17 @@ final class AiCombat {
 
                this.deaths.sweep(mc);
                this.killed = this.deaths.killCount();
-               this.sync_I++;
+               this.tickCount++;
                this.lowestHealth = Math.min(this.lowestHealth, mc.player.getHealth());
                if (System.nanoTime() > this.deadlineNanos) {
                   return this.finish(AiOperation.Status.TIMED_OUT, "Fight deadline reached");
                }
 
-               if (this.open_Z) {
+               if (this.onPerch) {
                   mc.options.keyShift.setDown(true);
                }
 
-               if (!AiThreats.isLegacyCombatEnabled() && !this.open_Z && mc.player.onGround() && AiEndRun.init_Z(mc)) {
+               if (!AiThreats.isLegacyCombatEnabled() && !this.onPerch && mc.player.onGround() && AiEndRun.init_Z(mc)) {
                   BlockPos out = AiEndRun.init_BlockPos(mc);
                   if (out != null) {
                      this.cancelChild();
@@ -679,19 +679,19 @@ final class AiCombat {
                   }
                }
 
-               if (!AiThreats.isLegacyCombatEnabled() && !this.open_Z) {
+               if (!AiThreats.isLegacyCombatEnabled() && !this.onPerch) {
                   Creeper blast = AiCombat.mostDangerousCreeper(mc);
                   if (blast != null && (blast != this.target || blast.getSwelling(1.0F) >= 0.08F)) {
                      this.childUncertain = this.childUncertain | this.requiresReconciliationAfterEmergency();
                      this.cancelChild();
-                     if (this.load_AiOperation != null) {
-                        this.load_AiOperation.cancel();
-                        this.load_AiOperation = null;
+                     if (this.eatOp != null) {
+                        this.eatOp.cancel();
+                        this.eatOp = null;
                      }
 
-                     if (this.read_AiOperation != null) {
-                        this.read_AiOperation.cancel();
-                        this.read_AiOperation = null;
+                     if (this.healOp != null) {
+                        this.healOp.cancel();
+                        this.healOp = null;
                      }
 
                      this.lowerShield();
@@ -700,25 +700,25 @@ final class AiCombat {
                   }
                }
 
-               if (this.read_AiOperation != null) {
-                  AiOperation.Result r = this.read_AiOperation.tick();
+               if (this.healOp != null) {
+                  AiOperation.Result r = this.healOp.tick();
                   if (!r.terminal()) {
                      return this.running("Using " + healWith + " before re-engaging");
                   }
 
                   this.recordChildResult(r);
-                  this.read_AiOperation.cancel();
-                  this.read_AiOperation = null;
+                  this.healOp.cancel();
+                  this.healOp = null;
                   return this.running("Re-engaging after " + healWith);
                } else {
-                  if (this.write_AiOperation != null) {
-                     AiOperation.Result defense = this.write_AiOperation.tick();
+                  if (this.dodgeOp != null) {
+                     AiOperation.Result defense = this.dodgeOp.tick();
                      if (!defense.terminal()) {
                         return this.running("Answering an unblockable projectile: " + defense.message());
                      }
 
-                     this.write_AiOperation.cancel();
-                     this.write_AiOperation = null;
+                     this.dodgeOp.cancel();
+                     this.dodgeOp = null;
                      if (defense.status() == AiOperation.Status.UNCERTAIN) {
                         this.cancel();
                         return defense;
@@ -730,11 +730,11 @@ final class AiCombat {
                      if (shot != null && AiCombat.ticksToClosest(shot) <= 8 && (!AiDefense.canBlock(mc, mc.level.getEntity(shot.entityId())) || !AiDefense.shieldReadyFor(mc, AiCombat.ticksToClosest(shot)))) {
                         this.cancelChild();
                         this.releaseAllInputs();
-                        this.write_AiOperation = AiDodge.dodge(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4));
-                        AiOperation.Result defense = this.write_AiOperation.tick();
+                        this.dodgeOp = AiDodge.dodge(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4));
+                        AiOperation.Result defense = this.dodgeOp.tick();
                         if (defense.terminal()) {
-                           this.write_AiOperation.cancel();
-                           this.write_AiOperation = null;
+                           this.dodgeOp.cancel();
+                           this.dodgeOp = null;
                            if (defense.status() == AiOperation.Status.UNCERTAIN) {
                               this.cancel();
                               return defense;
@@ -746,26 +746,26 @@ final class AiCombat {
                   }
 
                   if (perch > 0) {
-                     AiOperation.Result held = this.load_AiOperation_Result_8();
+                     AiOperation.Result held = this.holdPerch();
                      if (held != null) {
                         return held;
                      }
                   } else if (hold) {
-                     AiOperation.Result held = this.read_AiOperation_Result_5();
+                     AiOperation.Result held = this.holdGround();
                      if (held != null) {
                         return held;
                      }
                   }
 
-                  if (mc.player.getHealth() <= retreatHealth && !this.open_Z) {
-                     if (healTarget != null && !this.sync_Z && AiItems.countInInventory(healTarget) > 0) {
-                        this.sync_Z = true;
+                  if (mc.player.getHealth() <= retreatHealth && !this.onPerch) {
+                     if (healTarget != null && !this.healAttempted && AiItems.countInInventory(healTarget) > 0) {
+                        this.healAttempted = true;
                         this.cancelChild();
                         this.releaseAllInputs();
-                        this.read_AiOperation = this.healOperation();
+                        this.healOp = this.healOperation();
                         return this.running("Retreating to use " + healWith);
                      } else {
-                        this.retreatReason = AiCombat.lowHealthReason(this.sync_Z);
+                        this.retreatReason = AiCombat.lowHealthReason(this.healAttempted);
                         return this.fail(
                            AiFailure.LOW_HEALTH,
                            "Disengaged at " + (int)mc.player.getHealth() + " health (retreat threshold " + (int)retreatHealth + "); heal before re-engaging"
@@ -777,29 +777,29 @@ final class AiCombat {
                      }
 
                      if (eatBelow > 0) {
-                        if (this.load_AiOperation != null) {
-                           if (!this.update_Z_2()) {
-                              this.childUncertain = this.childUncertain | this.load_AiOperation.requiresReconciliationAfterEmergency();
-                              this.load_AiOperation.cancel();
-                              this.load_AiOperation = null;
+                        if (this.eatOp != null) {
+                           if (!this.noThreatsNearby()) {
+                              this.childUncertain = this.childUncertain | this.eatOp.requiresReconciliationAfterEmergency();
+                              this.eatOp.cancel();
+                              this.eatOp = null;
                               return this.running("A threat closed in while eating; re-engaging");
                            }
 
-                           AiOperation.Result r = this.load_AiOperation.tick();
+                           AiOperation.Result r = this.eatOp.tick();
                            if (!r.terminal()) {
                               return this.running("Eating before re-engaging");
                            }
 
                            this.recordChildResult(r);
-                           this.load_AiOperation.cancel();
-                           this.load_AiOperation = null;
+                           this.eatOp.cancel();
+                           this.eatOp = null;
                            return this.running("Re-engaging after eating");
                         }
 
-                        if (mc.player.getFoodData().getFoodLevel() < eatBelow && this.update_Z_2()) {
+                        if (mc.player.getFoodData().getFoodLevel() < eatBelow && this.noThreatsNearby()) {
                            this.cancelChild();
                            this.releaseAllInputs();
-                           this.load_AiOperation = AiSurvival.eat(AiJson.objectOf("timeoutSeconds", 15));
+                           this.eatOp = AiSurvival.eat(AiJson.objectOf("timeoutSeconds", 15));
                            return this.running("Disengaging to eat");
                         }
                      }
@@ -835,18 +835,18 @@ final class AiCombat {
 
                      if (this.target == null) {
                         this.target = this.selectTarget();
-                        this.flush_I = this.sync_I;
+                        this.targetSelectedTick = this.tickCount;
                         if (this.target instanceof LivingEntity requested) {
                            this.deaths.watch(requested);
                         }
 
-                        this.read_I = 0;
-                        this.open_I = 0;
+                        this.trackingTicks = 0;
+                        this.outOfReachTicks = 0;
                         this.next = 0;
-                        this.init_Vec3 = null;
+                        this.exposePoint = null;
                         this.pillarBlocksUsed = 0;
                         if (this.target == null) {
-                           AiOperation.Result waiting = this.init_AiOperation_Result_9();
+                           AiOperation.Result waiting = this.waitForAirborneMob();
                            if (waiting != null) {
                               return waiting;
                            }
@@ -868,15 +868,15 @@ final class AiCombat {
                         return this.running("Defensive threat left; reacquiring the requested target");
                      }
 
-                     if (!AiThreats.isLegacyCombatEnabled() && !this.defensiveDetour && --this.update_I <= 0) {
-                        this.update_I = 4;
-                        Entity striker = this.load_Entity_2();
+                     if (!AiThreats.isLegacyCombatEnabled() && !this.defensiveDetour && --this.strikerScanCooldown <= 0) {
+                        this.strikerScanCooldown = 4;
+                        Entity striker = this.findMeleeStriker();
                         if (striker != null && striker != this.target && !this.isInMeleeContact(this.target)) {
                            this.switchTarget(striker, "melee attacker at the body");
-                           this.read_I = 0;
-                           this.open_I = 0;
+                           this.trackingTicks = 0;
+                           this.outOfReachTicks = 0;
                            this.next = 0;
-                           this.init_Vec3 = null;
+                           this.exposePoint = null;
                         }
                      }
 
@@ -919,40 +919,40 @@ final class AiCombat {
                         }
 
                         double hitDistance = Math.sqrt(this.target.getBoundingBox().distanceToSqr(mc.player.getEyePosition()));
-                        double attackDistance = AiCombat.effectiveReach(reach, this.open_Z || hold);
-                        if ((this.open_Z || hold) && hitDistance > attackDistance && ++this.open_I > 12) {
+                        double attackDistance = AiCombat.effectiveReach(reach, this.onPerch || hold);
+                        if ((this.onPerch || hold) && hitDistance > attackDistance && ++this.outOfReachTicks > 12) {
                            Entity next = this.selectTarget();
                            if (next != null
                               && next != this.target
                               && next.getBoundingBox().distanceToSqr(mc.player.getEyePosition()) <= attackDistance * attackDistance) {
                               this.switchTarget(next, "reachable target while holding ground");
                               hitDistance = Math.sqrt(this.target.getBoundingBox().distanceToSqr(mc.player.getEyePosition()));
-                              this.read_I = this.open_I = 0;
+                              this.trackingTicks = this.outOfReachTicks = 0;
                               this.next = 0;
-                              this.init_Vec3 = null;
+                              this.exposePoint = null;
                            }
                         }
 
                         if (!(hitDistance > attackDistance)) {
-                           this.open_I = 0;
+                           this.outOfReachTicks = 0;
                            Vec3 hitPoint = autismclient.ai.engine.AiAim.bestEntityAimPoint(this.target);
-                           if (!this.open_Z && !hold && !autismclient.ai.engine.AiAim.canHitEntityAt(this.target, hitPoint)) {
+                           if (!this.onPerch && !hold && !autismclient.ai.engine.AiAim.canHitEntityAt(this.target, hitPoint)) {
                               return !approach ? this.fail(AiFailure.UNREACHABLE, "Target's attack ray is obstructed and approach is disabled") : this.approachTarget(distance, true);
                            }
 
                            this.cancelChild();
                            this.progressTargetId = -1;
-                           if (this.open_Z
+                           if (this.onPerch
                               && !autismclient.ai.engine.AiAim.canHitEntityAt(this.target, hitPoint)
                               && this.next < 20
                               && mc.player.onGround()) {
-                              if (this.init_Vec3 == null || !this.canWalkTo(this.init_Vec3)) {
-                                 this.init_Vec3 = this.init_Vec3_5();
+                              if (this.exposePoint == null || !this.canWalkTo(this.exposePoint)) {
+                                 this.exposePoint = this.findExposurePoint();
                               }
 
-                              if (this.init_Vec3 != null && Math.hypot(this.init_Vec3.x - mc.player.getX(), this.init_Vec3.z - mc.player.getZ()) > 0.04) {
-                                 double x = this.init_Vec3.x;
-                                 double z = this.init_Vec3.z;
+                              if (this.exposePoint != null && Math.hypot(this.exposePoint.x - mc.player.getX(), this.exposePoint.z - mc.player.getZ()) > 0.04) {
+                                 double x = this.exposePoint.x;
+                                 double z = this.exposePoint.z;
                                  this.next++;
                                  this.aim.aimAt(hitPoint);
                                  this.aim.tick();
@@ -961,26 +961,26 @@ final class AiCombat {
                               }
                            }
 
-                           if (this.open_Z) {
+                           if (this.onPerch) {
                               this.releaseAllInputs();
                            }
 
                            this.aim.aimAt(hitPoint);
                            this.aim.tick();
                            if (this.aim.isAimedAtEntity(this.target)) {
-                              this.read_I = 0;
-                              this.write_I = 0;
+                              this.trackingTicks = 0;
+                              this.unhittableDrops = 0;
                               this.selectBestWeapon();
                               if (!AiThreats.isLegacyCombatEnabled()) {
-                                 return this.init_AiOperation_Result_Vec3(hitPoint);
+                                 return this.meleeInReach(hitPoint);
                               }
 
                               this.updateShield();
-                              if (this.load_Z_6()) {
+                              if (this.canStrafe()) {
                                  this.strafeAround();
                               }
 
-                              Entity volley = AiDefense.hasShield(mc) ? AiCombat.init_Entity(mc) : null;
+                              Entity volley = AiDefense.hasShield(mc) ? AiCombat.findFiringBlaze(mc) : null;
                               if (volley != null && volley != this.target) {
                                  this.aim.aimAt(autismclient.ai.engine.AiAim.bestEntityAimPoint(volley));
                                  this.aim.tick();
@@ -1008,11 +1008,11 @@ final class AiCombat {
                                        + ")"
                                  );
                               } else {
-                                 this.read_V_4();
+                                 this.tryCritJump();
                                  return this.running("Waiting out the attack cooldown");
                               }
-                           } else if (++this.read_I <= 40) {
-                              if (this.load_Z_6()) {
+                           } else if (++this.trackingTicks <= 40) {
+                              if (this.canStrafe()) {
                                  this.strafeAround();
                               }
 
@@ -1020,9 +1020,9 @@ final class AiCombat {
                            } else {
                               Entity dropped = this.target;
                               this.target = null;
-                              if (!this.open_Z && !hold) {
+                              if (!this.onPerch && !hold) {
                                  AiCombat.ignoreUntil(dropped, System.nanoTime() + 15000000000L);
-                              } else if (++this.write_I >= 3) {
+                              } else if (++this.unhittableDrops >= 3) {
                                  AiCombat.ignoreUntil(dropped, System.nanoTime() + 15000000000L);
                                  this.releaseAllInputs();
                                  return this.finish(
@@ -1033,10 +1033,10 @@ final class AiCombat {
 
                               return this.running("Could not acquire " + BuiltInRegistries.ENTITY_TYPE.getKey(dropped.getType()).getPath());
                            }
-                        } else if (this.open_Z || hold) {
+                        } else if (this.onPerch || hold) {
                            this.releaseAllInputs();
                            boolean hasShield = AiDefense.hasShield(mc);
-                           Entity shooter = hasShield ? (AiThreats.isLegacyCombatEnabled() ? AiCombat.init_Entity(mc) : AiThreats.findImminentShooter(mc, 12)) : null;
+                           Entity shooter = hasShield ? (AiThreats.isLegacyCombatEnabled() ? AiCombat.findFiringBlaze(mc) : AiThreats.findImminentShooter(mc, 12)) : null;
                            AiProjectiles.IncomingProjectile coming = hasShield && !AiThreats.isLegacyCombatEnabled() ? AiCombat.nearestIncoming(mc) : null;
                            if (coming != null) {
                               this.aim
@@ -1079,14 +1079,14 @@ final class AiCombat {
                            return this.running("The enderman teleported off; not chasing it");
                         } else {
                            int run = AiCombat.init_I_Minecraft(mc, this.target, 16.0);
-                           return run >= 0 ? this.runInApproach(distance, run == 1) : this.init_AiOperation_Result_D(distance);
+                           return run >= 0 ? this.runInApproach(distance, run == 1) : this.approachClear(distance);
                         }
                      }
                   }
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_Vec3(Vec3 hitPoint) {
+            AiOperation.Result meleeInReach(Vec3 hitPoint) {
                boolean shield = AiDefense.hasShield(mc);
                float strength = mc.player.getAttackStrengthScale(0.0F);
                double recharge = 20.0 / Math.max(0.1, mc.player.getAttributeValue(Attributes.ATTACK_SPEED));
@@ -1095,10 +1095,10 @@ final class AiCombat {
                AiThreats.ThreatKind profile = AiThreats.classify(this.target);
                Entity volley = shield ? AiThreats.findImminentShooter(mc, 12) : null;
                if (volley == null || volley == this.target && ready && AiThreats.ticksUntilRangedShot(mc, volley) > 11) {
-                  if (!AiThreats.isLegacyCombatEnabled() && !this.open_Z && !hold && AiThreats.isMeleeThreat(profile)) {
+                  if (!AiThreats.isLegacyCombatEnabled() && !this.onPerch && !hold && AiThreats.isMeleeThreat(profile)) {
                      double knock = profile == AiThreats.ThreatKind.HOGLIN ? 6.0 : 2.5;
                      if (this.knockbackIsUnsafe(mc.player.getX(), mc.player.getZ(), knock)) {
-                        int side = this.init_I_D(knock);
+                        int side = this.knockbackSide(knock);
                         if (side != 0) {
                            mc.options.keySprint.setDown(false);
                            mc.options.keyJump.setDown(false);
@@ -1121,11 +1121,11 @@ final class AiCombat {
 
                   double gap = this.target instanceof Mob mob ? AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox()) : 10.0;
                   double reach = AiDefense.attackReach(mc);
-                  double slack = AiCombat.effectiveReach(reach, this.open_Z || hold)
+                  double slack = AiCombat.effectiveReach(reach, this.onPerch || hold)
                      - Math.sqrt(this.target.getBoundingBox().distanceToSqr(mc.player.getEyePosition()));
-                  boolean meleeMob = AiThreats.isMeleeThreat(profile) && !this.open_Z;
+                  boolean meleeMob = AiThreats.isMeleeThreat(profile) && !this.onPerch;
                   boolean kite = meleeMob && AiThreats.estimateThreatSpeedScore(this.target) < 0.19;
-                  boolean cornered = kite && !AiThreats.isLegacyCombatEnabled() && !this.open_Z && !this.init_Z_Entity(this.target);
+                  boolean cornered = kite && !AiThreats.isLegacyCombatEnabled() && !this.onPerch && !this.hasRoomToBackOff(this.target);
                   if (cornered) {
                      kite = false;
                   }
@@ -1147,7 +1147,7 @@ final class AiCombat {
                      mc.player.resetAttackStrengthTicker();
                      this.swings++;
                      if (kite && gap < 1.0) {
-                        this.init_V_I(-1);
+                        this.applyRadialStep(-1);
                      } else {
                         this.releaseMovementKeys();
                      }
@@ -1178,20 +1178,20 @@ final class AiCombat {
                      }
 
                      if (crowd != null) {
-                        boolean room = this.init_Z_Entity(crowd);
-                        double attackRange = AiCombat.effectiveReach(AiDefense.attackReach(mc), this.open_Z || hold);
+                        boolean room = this.hasRoomToBackOff(crowd);
+                        double attackRange = AiCombat.effectiveReach(AiDefense.attackReach(mc), this.onPerch || hold);
                         boolean otherHittable = mc.player.hasLineOfSight(crowd)
                            && crowd.getBoundingBox().distanceToSqr(mc.player.getEyePosition()) <= attackRange * attackRange;
                         if (!AiThreats.isLegacyCombatEnabled()
                            && (!room || ++this.crowdSwitchTicks > 10)
-                           && AiCombatPriority.shouldSwitchTarget(gap, crowdGap, this.sync_I - this.flush_I, slack >= 0.0, otherHittable)) {
+                           && AiCombatPriority.shouldSwitchTarget(gap, crowdGap, this.tickCount - this.targetSelectedTick, slack >= 0.0, otherHittable)) {
                            this.crowdSwitchTicks = 0;
                            this.switchTarget(crowd, "closer reachable melee threat");
                            return this.running("Turning on the " + BuiltInRegistries.ENTITY_TYPE.getKey(crowd.getType()).getPath() + " at the player");
                         }
 
                         if (room) {
-                           this.init_V_Entity(crowd);
+                           this.stepAwayFrom(crowd);
                            return this.running("Out of the " + BuiltInRegistries.ENTITY_TYPE.getKey(crowd.getType()).getPath() + "'s reach");
                         }
 
@@ -1207,19 +1207,19 @@ final class AiCombat {
                      }
 
                      if (!meleeMob) {
-                        if (this.load_Z_6()) {
+                        if (this.canStrafe()) {
                            this.strafeAround();
                         }
 
-                        this.read_V_4();
+                        this.tryCritJump();
                         return this.running("Waiting out the attack cooldown");
                      } else {
-                        int radial = AiCombat.init_I_D(gap, slack, readyIn, AiThreats.estimateThreatSpeedScore(this.target), kite);
-                        this.init_V_I(radial);
+                        int radial = AiCombat.radialStep(gap, slack, readyIn, AiThreats.estimateThreatSpeedScore(this.target), kite);
+                        this.applyRadialStep(radial);
                         if (cornered && radial == 0 && slack > 0.2 && readyIn <= 7.0 && this.hasHeadroom()) {
-                           this.read_V_4();
+                           this.tryCritJump();
                         } else if (radial == 0 && gap > 0.6 && slack > 0.2 && readyIn < 8.0 && !wantShield) {
-                           this.read_V_4();
+                           this.tryCritJump();
                         } else {
                            mc.options.keyJump.setDown(false);
                         }
@@ -1293,7 +1293,7 @@ final class AiCombat {
                return false;
             }
 
-            int init_I_D(double knock) {
+            int knockbackSide(double knock) {
                double yaw = Math.toRadians(mc.player.getYRot());
                double rx = -Math.cos(yaw);
                double rz = -Math.sin(yaw);
@@ -1311,7 +1311,7 @@ final class AiCombat {
                return 0;
             }
 
-            void init_V_I(int radial) {
+            void applyRadialStep(int radial) {
                mc.options.keySprint.setDown(false);
                mc.options.keyJump.setDown(false);
                if (radial > 0) {
@@ -1338,14 +1338,14 @@ final class AiCombat {
                      mc.options.keyRight.setDown(false);
                   } else {
                      mc.options.keyDown.setDown(false);
-                     if (this.load_Z_6()) {
+                     if (this.canStrafe()) {
                         this.strafeAround();
                      }
                   }
                }
             }
 
-            void init_V_Entity(Entity from) {
+            void stepAwayFrom(Entity from) {
                float away = autismclient.ai.engine.AiPhysics.yawTowards(from.getX(), from.getZ(), mc.player.getX(), mc.player.getZ());
                int[] keys = autismclient.ai.engine.AiMotionSafety.relativeMoveAxes(mc.player.getYRot(), away);
                double radians = Math.toRadians(away);
@@ -1370,7 +1370,7 @@ final class AiCombat {
                mc.options.keySprint.setDown(false);
             }
 
-            AiOperation.Result init_AiOperation_Result_D(double distance) {
+            AiOperation.Result approachClear(double distance) {
                return this.approachTarget(distance, false);
             }
 
@@ -1390,13 +1390,13 @@ final class AiCombat {
                         mc.options.keyUse.setDown(true);
                      }
 
-                     this.load_J = System.nanoTime();
+                     this.lastProgressNanos = System.nanoTime();
                      return this.running("Shield up against the " + BuiltInRegistries.ENTITY_TYPE.getKey(due.getType()).getPath() + " on the way in");
                   }
 
                   this.lowerShield();
                   if (!this.target.onGround() && this.target.getBoundingBox().minY - mc.player.getEyeY() < reach * 0.8) {
-                     BlockPos under = this.init_BlockPos_Entity(this.target);
+                     BlockPos under = this.groundUnder(this.target);
                      if (under != null) {
                         goalCell = under;
                      }
@@ -1424,37 +1424,37 @@ final class AiCombat {
                         mc.options.keyUse.setDown(up);
                      }
 
-                     this.load_J = System.nanoTime();
+                     this.lastProgressNanos = System.nanoTime();
                      return this.running("Waiting for the blaze to come down");
                   } else {
-                     return this.init_AiOperation_Result_Str_5("hovering above the 3-block pillar cap");
+                     return this.failAirborne("hovering above the 3-block pillar cap");
                   }
                } else {
                   if (plan != AiCombat.Inner_DataUtil.GROUND) {
                      return this.reachElevatedTarget(plan, distance, reach);
                   }
 
-                  if (this.init_AiOperation != null && obstructed && !this.close_Z) {
+                  if (this.travelLeg != null && obstructed && !this.legObstructed) {
                      this.cancelChild();
                   }
 
-                  if (this.init_AiOperation == null) {
-                     this.close_Z = obstructed;
-                     this.init_AiOperation = AiGoto.travelToCompat(
+                  if (this.travelLeg == null) {
+                     this.legObstructed = obstructed;
+                     this.travelLeg = AiGoto.travelToCompat(
                         goalCell, obstructed ? 1.2 : 2.0, true, true, true, 8, autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST
                      );
-                     this.flush_Z = false;
+                     this.legIsPillar = false;
                   }
 
                   long now = System.nanoTime();
-                  if (this.progressTargetId != this.target.getId() || distance < this.load_D - 1.0) {
+                  if (this.progressTargetId != this.target.getId() || distance < this.bestProgressDistance - 1.0) {
                      this.progressTargetId = this.target.getId();
-                     this.load_D = distance;
-                     this.load_J = now;
+                     this.bestProgressDistance = distance;
+                     this.lastProgressNanos = now;
                   } else if (autismclient.ai.engine.AiSight.isRangedShooter(this.target)
                      && (
-                        now - this.load_J > 2500000000L
-                           || distance > this.load_D + 2.0
+                        now - this.lastProgressNanos > 2500000000L
+                           || distance > this.bestProgressDistance + 2.0
                               && autismclient.ai.engine.AiSight.hasLineOfSight(
                                  mc.level, this.target.getEyePosition(), mc.player.getEyePosition(), -9223372036854775808L, -9223372036854775808L
                               )
@@ -1467,7 +1467,7 @@ final class AiCombat {
                      return this.running("Not closing on the " + BuiltInRegistries.ENTITY_TYPE.getKey(dropped.getType()).getPath());
                   }
 
-                  AiOperation.Result legResult = this.init_AiOperation.tick();
+                  AiOperation.Result legResult = this.travelLeg.tick();
                   if (legResult.terminal()) {
                      this.cancelChild();
                      if (legResult.status() == AiOperation.Status.FAILED) {
@@ -1497,7 +1497,7 @@ final class AiCombat {
                         mc.options.keyUse.setDown(true);
                      }
 
-                     this.load_J = System.nanoTime();
+                     this.lastProgressNanos = System.nanoTime();
                      return this.running("Shield up against the " + BuiltInRegistries.ENTITY_TYPE.getKey(due.getType()).getPath() + " on the run in");
                   }
                }
@@ -1507,11 +1507,11 @@ final class AiCombat {
                mc.options.keyRight.setDown(false);
                this.lowerShield();
                long now = System.nanoTime();
-               if (this.progressTargetId != this.target.getId() || distance < this.load_D - 1.0) {
+               if (this.progressTargetId != this.target.getId() || distance < this.bestProgressDistance - 1.0) {
                   this.progressTargetId = this.target.getId();
-                  this.load_D = distance;
-                  this.load_J = now;
-               } else if (autismclient.ai.engine.AiSight.isRangedShooter(this.target) && now - this.load_J > 2500000000L) {
+                  this.bestProgressDistance = distance;
+                  this.lastProgressNanos = now;
+               } else if (autismclient.ai.engine.AiSight.isRangedShooter(this.target) && now - this.lastProgressNanos > 2500000000L) {
                   Entity dropped = this.target;
                   this.target = null;
                   this.releaseAllInputs();
@@ -1545,48 +1545,48 @@ final class AiCombat {
             }
 
             AiOperation.Result reachElevatedTarget(AiCombat.Inner_DataUtil plan, double distance, double reach) {
-               if (this.init_AiOperation == null) {
-                  BlockPos under = this.init_BlockPos_Entity(this.target);
+               if (this.travelLeg == null) {
+                  BlockPos under = this.groundUnder(this.target);
                   if (under == null) {
-                     return this.init_AiOperation_Result_Str_5("no standable, lava-free ground under the target");
+                     return this.failAirborne("no standable, lava-free ground under the target");
                   }
 
                   if (plan == AiCombat.Inner_DataUtil.PILLAR) {
                      int needed = AiCombat.pillarHeightToReach(this.target.getY() - mc.player.getY(), reach);
                      if (needed < 0 || this.pillarBlocksUsed + needed > 3) {
-                        return this.init_AiOperation_Result_Str_5("the target out-climbs the 3-block pillar cap");
+                        return this.failAirborne("the target out-climbs the 3-block pillar cap");
                      }
 
                      if (!AiCombat.isSafeStep(mc, under)) {
-                        return this.init_AiOperation_Result_Str_5("unsafe footing under the target");
+                        return this.failAirborne("unsafe footing under the target");
                      }
 
                      if (!this.hasScaffoldBlock()) {
-                        return this.init_AiOperation_Result_Str_5("no hotbar construction blocks to pillar with");
+                        return this.failAirborne("no hotbar construction blocks to pillar with");
                      }
 
-                     this.init_AiOperation = AiGoto.travelToCompat(under.above(needed), 0.8, false, true, false, 8);
-                     this.flush_Z = true;
+                     this.travelLeg = AiGoto.travelToCompat(under.above(needed), 0.8, false, true, false, 8);
+                     this.legIsPillar = true;
                      this.pillarBlocksUsed += needed;
                   } else {
-                     this.init_AiOperation = AiGoto.travelToCompat(under, 1.2, false, false, false, 8);
-                     this.flush_Z = false;
+                     this.travelLeg = AiGoto.travelToCompat(under, 1.2, false, false, false, 8);
+                     this.legIsPillar = false;
                   }
                }
 
-               AiOperation.Result legResult = this.init_AiOperation.tick();
+               AiOperation.Result legResult = this.travelLeg.tick();
                if (legResult.terminal()) {
-                  boolean pillar = this.flush_Z;
+                  boolean pillar = this.legIsPillar;
                   this.cancelChild();
                   return legResult.status() != AiOperation.Status.SUCCEEDED
-                     ? this.init_AiOperation_Result_Str_5(pillar ? "the pillar climb could not complete" : "no route to the ground under the target")
+                     ? this.failAirborne(pillar ? "the pillar climb could not complete" : "no route to the ground under the target")
                      : this.running(pillar ? "Pillared up under the target" : "Under the target; re-evaluating");
                } else {
-                  return this.running(this.flush_Z ? "Pillaring up to the target" : "Moving under the target (" + (int)distance + "m)");
+                  return this.running(this.legIsPillar ? "Pillaring up to the target" : "Moving under the target (" + (int)distance + "m)");
                }
             }
 
-            BlockPos init_BlockPos_Entity(Entity entity) {
+            BlockPos groundUnder(Entity entity) {
                BlockPos at = entity.blockPosition();
 
                for (int drop = 0; drop < 12; at = at.below()) {
@@ -1627,7 +1627,7 @@ final class AiCombat {
                return AiPlanks.plankYield(mc.player.getInventory()) > 0;
             }
 
-            AiOperation.Result init_AiOperation_Result_9() {
+            AiOperation.Result waitForAirborneMob() {
                if (!AiThreats.isLegacyCombatEnabled() && this.blazeWaitTicks <= 400) {
                   Entity blaze = null;
                   double wait = radius + 16.0;
@@ -1648,10 +1648,10 @@ final class AiCombat {
 
                   double reachNow = AiDefense.attackReach(mc);
                   if (blaze.getBoundingBox().distanceToSqr(mc.player.getEyePosition()) <= reachNow * reachNow) {
-                     this.init_Map.remove(blaze.getId());
+                     this.ignoredTargets.remove(blaze.getId());
                      this.target = blaze;
-                     this.read_I = 0;
-                     this.open_I = 0;
+                     this.trackingTicks = 0;
+                     this.outOfReachTicks = 0;
                      return this.running("In reach: fighting the " + BuiltInRegistries.ENTITY_TYPE.getKey(blaze.getType()).getPath());
                   }
 
@@ -1668,7 +1668,7 @@ final class AiCombat {
                   }
 
                   if (this.blazeWaitTicks % 40 == 0) {
-                     this.init_Map.remove(blaze.getId());
+                     this.ignoredTargets.remove(blaze.getId());
                   }
 
                   return this.running("Waiting for the blaze to come into reach");
@@ -1677,11 +1677,11 @@ final class AiCombat {
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_Str_5(String why) {
+            AiOperation.Result failAirborne(String why) {
                if (this.target instanceof Blaze || this.target instanceof Enderman) {
                   AiCombat.ignoreUntil(this.target, System.nanoTime() + 2000000000L);
                   this.target = null;
-                  AiOperation.Result waiting = this.init_AiOperation_Result_9();
+                  AiOperation.Result waiting = this.waitForAirborneMob();
                   if (waiting != null) {
                      return waiting;
                   }
@@ -1693,8 +1693,8 @@ final class AiCombat {
                );
             }
 
-            boolean load_Z_6() {
-               if (this.open_Z) {
+            boolean canStrafe() {
+               if (this.onPerch) {
                   mc.options.keyLeft.setDown(false);
                   mc.options.keyRight.setDown(false);
                   return false;
@@ -1776,7 +1776,7 @@ final class AiCombat {
                }
             }
 
-            boolean init_Z_Entity(Entity from) {
+            boolean hasRoomToBackOff(Entity from) {
                double dx = mc.player.getX() - from.getX();
                double dz = mc.player.getZ() - from.getZ();
                double len = Math.sqrt(dx * dx + dz * dz);
@@ -1816,15 +1816,15 @@ final class AiCombat {
                return mc.level.getBlockState(over).getCollisionShape(mc.level, over).isEmpty();
             }
 
-            void read_V_4() {
+            void tryCritJump() {
                boolean nearlyReady = mc.player.getAttackStrengthScale(0.0F) > 0.6F;
                double reach = AiCombat.effectiveReach(AiDefense.attackReach(mc), false);
                double forward = (mc.options.keyUp.isDown() ? 1 : 0) - (mc.options.keyDown.isDown() ? 1 : 0);
                double strafe = (mc.options.keyLeft.isDown() ? 1 : 0) - (mc.options.keyRight.isDown() ? 1 : 0);
                boolean attempt = nearlyReady
                   && mc.player.onGround()
-                  && !this.open_Z
-                  && !AiCombat.init_Z(mc)
+                  && !this.onPerch
+                  && !AiCombat.nearFarmland(mc)
                   && !mc.player.isInWater()
                   && !mc.player.onClimbable()
                   && !mc.player.isPassenger()
@@ -1832,7 +1832,7 @@ final class AiCombat {
                   && !this.shieldRaised
                   && !this.projectileIncoming()
                   && this.hasHeadroom()
-                  && AiCombat.init_Z_AABB(this.target.getBoundingBox(), mc.player.getEyePosition(), reach);
+                  && AiCombat.reachableFromJumpApex(this.target.getBoundingBox(), mc.player.getEyePosition(), reach);
                boolean safe = attempt && autismclient.ai.engine.AiMotionSafety.isPlayerMoveSafe(forward, strafe, true, mc.player.isSprinting());
                if (attempt && !safe) {
                   this.lavaJumpsRefused++;
@@ -1850,7 +1850,7 @@ final class AiCombat {
 
             void updateShield() {
                boolean hasShield = AiDefense.hasShield(mc);
-               boolean wantShield = hasShield && (AiCombat.init_Entity(mc) != null || mc.player.getAttackStrengthScale(0.0F) < 0.92F && this.projectileIncoming());
+               boolean wantShield = hasShield && (AiCombat.findFiringBlaze(mc) != null || mc.player.getAttackStrengthScale(0.0F) < 0.92F && this.projectileIncoming());
                if (wantShield != this.shieldRaised) {
                   this.shieldRaised = wantShield;
                   if (wantShield) {
@@ -1868,7 +1868,7 @@ final class AiCombat {
                }
             }
 
-            boolean update_Z_2() {
+            boolean noThreatsNearby() {
                return !this.projectileIncoming() && AiSurvival.nearestThreat(mc) == null;
             }
 
@@ -1876,11 +1876,11 @@ final class AiCombat {
                return new AiOperation() {
                   final int startCount = AiItems.countInInventory(healTarget);
                   int waitTicks;
-                  boolean init_Z;
+                  boolean healCancelled;
 
                   @Override
                   public AiOperation.Result tick() {
-                     if (!this.init_Z && mc.player != null) {
+                     if (!this.healCancelled && mc.player != null) {
                         if (AiItems.countInInventory(healTarget) < this.startCount) {
                            return this.finish(AiOperation.Status.SUCCEEDED);
                         }
@@ -1910,7 +1910,7 @@ final class AiCombat {
 
                   @Override
                   public void cancel() {
-                     this.init_Z = true;
+                     this.healCancelled = true;
                      if (mc.options != null) {
                         mc.options.keyUse.setDown(false);
                      }
@@ -1932,7 +1932,7 @@ final class AiCombat {
                if (explicitId >= 0) {
                   Entity explicit = mc.level.getEntity(explicitId);
                   if (explicit != null && this.explicitTargetUuid != null && this.explicitTargetUuid.equals(explicit.getUUID())) {
-                     Long until = this.init_Map.get(this.explicitTargetUuid);
+                     Long until = this.ignoredTargets.get(this.explicitTargetUuid);
                      return explicit != null && explicit.isAlive() && (until == null || until <= System.nanoTime()) ? explicit : null;
                   } else {
                      return null;
@@ -1942,7 +1942,7 @@ final class AiCombat {
                   List<AiCombat.Inner_StreamUtil> candidates = new ArrayList<>();
                   double eyeReach = AiDefense.attackReach(mc) * 0.8;
                   long now = System.nanoTime();
-                  this.init_Map.values().removeIf(until -> until < now);
+                  this.ignoredTargets.values().removeIf(until -> until < now);
 
                   for (Entity entity : mc.level.entitiesForRendering()) {
                      if (entity != mc.player && entity.isAlive() && entity instanceof LivingEntity living && this.matchesTargetFilter(entity)) {
@@ -1975,7 +1975,7 @@ final class AiCombat {
                   for (int i = 1; i < candidates.size(); i++) {
                      boolean in = found.get(i).getBoundingBox().distanceToSqr(mc.player.getEyePosition()) <= range * range;
                      boolean bestIn = found.get(best).getBoundingBox().distanceToSqr(mc.player.getEyePosition()) <= range * range;
-                     boolean preferred = (this.open_Z || hold) && in != bestIn ? in : order.compare(candidates.get(i), candidates.get(best)) < 0;
+                     boolean preferred = (this.onPerch || hold) && in != bestIn ? in : order.compare(candidates.get(i), candidates.get(best)) < 0;
                      if (preferred
                         || order.compare(candidates.get(i), candidates.get(best)) == 0 && in == bestIn && found.get(i).getId() < found.get(best).getId()) {
                         best = i;
@@ -1986,7 +1986,7 @@ final class AiCombat {
                }
             }
 
-            Entity load_Entity_2() {
+            Entity findMeleeStriker() {
                Entity best = null;
                double bestGap = 0.5;
 
@@ -2015,13 +2015,13 @@ final class AiCombat {
                      this.deaths.watch(requested);
                   }
 
-                  this.flush_I = this.sync_I;
+                  this.targetSelectedTick = this.tickCount;
                   this.targetSwitches++;
                   this.selectionReason = why;
                   this.cancelChild();
-                  this.read_I = this.open_I = 0;
+                  this.trackingTicks = this.outOfReachTicks = 0;
                   this.next = 0;
-                  this.init_Vec3 = null;
+                  this.exposePoint = null;
                   AiRunTrace.emitServiceEvent(
                      "combat_target_switch",
                      AiJson.objectOf(
@@ -2051,10 +2051,10 @@ final class AiCombat {
             }
 
             void cancelChild() {
-               if (this.init_AiOperation != null) {
-                  this.childUncertain = this.childUncertain | this.init_AiOperation.requiresReconciliationAfterEmergency();
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+               if (this.travelLeg != null) {
+                  this.childUncertain = this.childUncertain | this.travelLeg.requiresReconciliationAfterEmergency();
+                  this.travelLeg.cancel();
+                  this.travelLeg = null;
                }
             }
 
@@ -2150,32 +2150,32 @@ final class AiCombat {
                return out;
             }
 
-            AiOperation.Result load_AiOperation_Result_8() {
+            AiOperation.Result holdPerch() {
                for (Entity entity : mc.level.entitiesForRendering()) {
                   if (entity instanceof Creeper creeper && creeper.isAlive() && creeper.distanceToSqr(mc.player) < 25.0) {
-                     if (this.update_AiOperation != null) {
-                        this.update_AiOperation.cancel();
-                        this.update_AiOperation = null;
+                     if (this.perchTravelOp != null) {
+                        this.perchTravelOp.cancel();
+                        this.perchTravelOp = null;
                      }
 
                      return this.fail(AiFailure.TARGET_GONE, "A creeper at the pillar; leaving the perch to the guard");
                   }
                }
 
-               if (this.open_Z) {
-                  if (mc.player.onGround() && mc.player.getY() < this.init_BlockPos.getY() + perch - 0.5) {
+               if (this.onPerch) {
+                  if (mc.player.onGround() && mc.player.getY() < this.perchBase.getY() + perch - 0.5) {
                      this.releaseAllInputs();
                      mc.options.keyShift.setDown(false);
                      if (++this.perchKnockoffs > 2) {
                         return this.fail(AiFailure.UNREACHABLE, "Knocked off the perch three times");
                      }
 
-                     this.open_Z = false;
+                     this.onPerch = false;
                      this.pillarLandingTicks = 0;
                      this.shieldBlockCount = 0;
-                     if (this.pop_Z) {
+                     if (this.shieldPlacing) {
                         this.placer.reset();
-                        this.pop_Z = false;
+                        this.shieldPlacing = false;
                      }
 
                      return this.running("Knocked off the perch; back up");
@@ -2187,8 +2187,8 @@ final class AiCombat {
                      }
 
                      if (mc.player.onGround() && this.pillarCentreTicks < 40) {
-                        double cx = this.init_BlockPos.getX() + 0.5;
-                        double cz = this.init_BlockPos.getZ() + 0.5;
+                        double cx = this.perchBase.getX() + 0.5;
+                        double cz = this.perchBase.getZ() + 0.5;
                         double dx = cx - mc.player.getX();
                         double dz = cz - mc.player.getZ();
                         if (dx * dx + dz * dz > 0.0144) {
@@ -2216,24 +2216,24 @@ final class AiCombat {
                         mc.options.keyShift.setDown(true);
                      }
 
-                     return this.read_AiOperation_Result_5();
+                     return this.holdGround();
                   }
                } else {
-                  if (this.update_AiOperation == null) {
+                  if (this.perchTravelOp == null) {
                      this.releaseAllInputs();
                      if (!mc.player.onGround() && ++this.pillarLandingTicks < 10) {
                         return this.running("Landing before the pillar");
                      }
 
-                     int up = this.init_I_11();
+                     int up = this.currentPerchHeight();
                      if (up >= perch) {
-                        this.init_BlockPos = mc.player.blockPosition().below(perch);
-                        this.open_Z = true;
+                        this.perchBase = mc.player.blockPosition().below(perch);
+                        this.onPerch = true;
                         this.pillarCentreTicks = 0;
                         return this.running("On the pillar");
                      }
 
-                     this.init_BlockPos = mc.player.blockPosition().below(up);
+                     this.perchBase = mc.player.blockPosition().below(up);
 
                      for (int h = 2; h <= perch - up + 1; h++) {
                         BlockPos over = mc.player.blockPosition().above(h);
@@ -2242,18 +2242,18 @@ final class AiCombat {
                         }
                      }
 
-                     this.update_AiOperation = AiGoto.travelToCompat(this.init_BlockPos.above(perch), 0.5, false, true, false, 4);
+                     this.perchTravelOp = AiGoto.travelToCompat(this.perchBase.above(perch), 0.5, false, true, false, 4);
                   }
 
-                  AiOperation.Result r = this.update_AiOperation.tick();
+                  AiOperation.Result r = this.perchTravelOp.tick();
                   if (!r.terminal()) {
                      return this.running("Pillaring up out of reach");
                   } else {
-                     this.update_AiOperation.cancel();
-                     this.update_AiOperation = null;
+                     this.perchTravelOp.cancel();
+                     this.perchTravelOp = null;
                      AutismClientAddon.LOG.info("[AI] fight: perch {} ({}) at {}", r.status(), r.message(), mc.player.blockPosition().toShortString());
-                     if (r.status() == AiOperation.Status.SUCCEEDED && !(mc.player.getY() < this.init_BlockPos.getY() + perch - 0.5)) {
-                        this.open_Z = true;
+                     if (r.status() == AiOperation.Status.SUCCEEDED && !(mc.player.getY() < this.perchBase.getY() + perch - 0.5)) {
+                        this.onPerch = true;
                         this.pillarCentreTicks = 0;
                         return this.running("On the pillar");
                      } else {
@@ -2263,7 +2263,7 @@ final class AiCombat {
                }
             }
 
-            int init_I_11() {
+            int currentPerchHeight() {
                BlockPos feet = mc.player.blockPosition();
                if (mc.level.getBlockState(feet.below()).getCollisionShape(mc.level, feet.below()).isEmpty()) {
                   return 0;
@@ -2289,8 +2289,8 @@ final class AiCombat {
                return height == 2147483647 ? 0 : height;
             }
 
-            AiOperation.Result read_AiOperation_Result_5() {
-               if (perch == 0 && this.sync_I % 10 == 0 && Boolean.getBoolean("autism.ai.quick")) {
+            AiOperation.Result holdGround() {
+               if (perch == 0 && this.tickCount % 10 == 0 && Boolean.getBoolean("autism.ai.quick")) {
                   System.out.println("[AI quick] hold support " + AiGuard.hasSafeFootingAroundPlayer() + " at " + mc.player.blockPosition().toShortString());
                }
 
@@ -2299,8 +2299,8 @@ final class AiCombat {
                }
 
                Entity shooter = AiShield.rangedShooterBeyond(mc, AiDefense.attackReach(mc) * 0.92);
-               if (shooter == null && this.pop_Z && this.load_Entity != null && this.load_Entity.isAlive() && ++this.shooterMemoryTicks <= 12) {
-                  shooter = this.load_Entity;
+               if (shooter == null && this.shieldPlacing && this.shieldShooter != null && this.shieldShooter.isAlive() && ++this.shooterMemoryTicks <= 12) {
+                  shooter = this.shieldShooter;
                } else if (shooter != null) {
                   this.shooterMemoryTicks = 0;
                }
@@ -2314,13 +2314,13 @@ final class AiCombat {
                      );
                   }
 
-                  AiOperation.Result shielding = this.init_AiOperation_Result_Entity(shooter);
+                  AiOperation.Result shielding = this.shieldAgainst(shooter);
                   if (shielding != null) {
                      return shielding;
                   }
-               } else if (this.pop_Z) {
+               } else if (this.shieldPlacing) {
                   this.placer.reset();
-                  this.pop_Z = false;
+                  this.shieldPlacing = false;
                }
 
                boolean near = false;
@@ -2357,7 +2357,7 @@ final class AiCombat {
 
                if (perch == 0 && this.target != null) {
                   double d = Math.sqrt(this.target.getBoundingBox().distanceToSqr(mc.player.getEyePosition()));
-                  if (this.stallTargetId == this.target.getId() && !(d <= 3.5) && !(d < this.init_D - 1.0)) {
+                  if (this.stallTargetId == this.target.getId() && !(d <= 3.5) && !(d < this.stallBestDistance - 1.0)) {
                      if (++this.stallTicks > 60) {
                         long until = System.nanoTime() + 15000000000L;
 
@@ -2376,7 +2376,7 @@ final class AiCombat {
                      }
                   } else {
                      this.stallTargetId = this.target.getId();
-                     this.init_D = d;
+                     this.stallBestDistance = d;
                      this.stallTicks = 0;
                   }
                }
@@ -2388,11 +2388,11 @@ final class AiCombat {
                return this.target == null ? 1.7976931348623157E308 : mc.player.distanceTo(this.target);
             }
 
-            Vec3 init_Vec3_5() {
+            Vec3 findExposurePoint() {
                List<Vec3> edges = new ArrayList<>();
-               edges.add(AiCombat.edgePointToward(this.init_BlockPos, this.target.position()));
-               double x = this.init_BlockPos.getX() + 0.5;
-               double z = this.init_BlockPos.getZ() + 0.5;
+               edges.add(AiCombat.edgePointToward(this.perchBase, this.target.position()));
+               double x = this.perchBase.getX() + 0.5;
+               double z = this.perchBase.getZ() + 0.5;
 
                for (int dx = -1; dx <= 1; dx++) {
                   for (int dz = -1; dz <= 1; dz++) {
@@ -2463,13 +2463,13 @@ final class AiCombat {
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_Entity(Entity shooter) {
-               if (!this.open_Z) {
+            AiOperation.Result shieldAgainst(Entity shooter) {
+               if (!this.onPerch) {
                   for (Entity entity : mc.level.entitiesForRendering()) {
                      if (entity instanceof Enemy && entity.isAlive() && !autismclient.ai.engine.AiSight.isRangedShooter(entity) && mc.player.distanceTo(entity) <= 3.2) {
-                        if (this.pop_Z) {
+                        if (this.shieldPlacing) {
                            this.placer.reset();
-                           this.pop_Z = false;
+                           this.shieldPlacing = false;
                         }
 
                         return null;
@@ -2477,26 +2477,26 @@ final class AiCombat {
                   }
                }
 
-               if (this.pop_Z) {
-                  if (this.open_Z
+               if (this.shieldPlacing) {
+                  if (this.onPerch
                      && this.placer.targetPos() != null
                      && mc.player.getBoundingBox().intersects(new AABB(this.placer.targetPos()))
                      && this.shieldStanceTicks < 40
                      && mc.player.onGround()) {
-                     double x = this.init_BlockPos.getX() + 0.5;
-                     double z = this.init_BlockPos.getZ() + 0.5;
+                     double x = this.perchBase.getX() + 0.5;
+                     double z = this.perchBase.getZ() + 0.5;
                      this.sneakToward(x, z);
                      this.shieldStanceTicks++;
                      return this.running("Clearing the shield cell");
                   }
 
-                  if (this.open_Z
+                  if (this.onPerch
                      && this.shieldStanceTicks < 12
                      && this.placer.targetPos() != null
                      && !autismclient.ai.engine.AiPlacer.canPlaceFromHere(this.placer.targetPos(), AiShield.bestBlock(mc))) {
                      BlockPos cell = this.placer.targetPos();
                      if (mc.player.onGround()) {
-                        Vec3 edge = AiCombat.edgePointToward(this.init_BlockPos, Vec3.atCenterOf(cell));
+                        Vec3 edge = AiCombat.edgePointToward(this.perchBase, Vec3.atCenterOf(cell));
                         double x = edge.x;
                         double z = edge.z;
                         if (Math.hypot(x - mc.player.getX(), z - mc.player.getZ()) > 0.04) {
@@ -2508,7 +2508,7 @@ final class AiCombat {
                   }
 
                   this.releaseAllInputs();
-                  if (this.open_Z) {
+                  if (this.onPerch) {
                      mc.options.keyShift.setDown(true);
                   }
 
@@ -2517,11 +2517,11 @@ final class AiCombat {
                      return this.running("Shielding the pillar from the " + BuiltInRegistries.ENTITY_TYPE.getKey(shooter.getType()).getPath());
                   }
 
-                  this.pop_Z = false;
+                  this.shieldPlacing = false;
                   if (s == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
                      this.shieldBlockCount++;
                      this.pillarCentreTicks = 0;
-                     this.init_Vec3 = null;
+                     this.exposePoint = null;
                      this.next = 0;
                      AutismClientAddon.LOG
                         .info(
@@ -2529,13 +2529,13 @@ final class AiCombat {
                            this.placer.targetPos().toShortString(),
                            BuiltInRegistries.ENTITY_TYPE.getKey(shooter.getType()).getPath()
                         );
-                  } else if (this.poll_Z) {
+                  } else if (this.placingBackstop) {
                      if (Boolean.getBoolean("autism.navigation.debug")) {
                         AutismClientAddon.LOG
                            .info("[AI] fight: backstop failed at {}: {}", this.placer.targetPos(), this.placer.failureReason());
                      }
 
-                     this.push_Z = true;
+                     this.backstopFailed = true;
                   } else {
                      if (Boolean.getBoolean("autism.navigation.debug")) {
                         AutismClientAddon.LOG
@@ -2557,9 +2557,9 @@ final class AiCombat {
                   }
 
                   Item block = AiShield.bestBlock(mc);
-                  BlockPos behind = this.open_Z && block != null && !this.push_Z ? AiShield.behindCell(mc, shooter) : null;
+                  BlockPos behind = this.onPerch && block != null && !this.backstopFailed ? AiShield.behindCell(mc, shooter) : null;
                   BlockPos cell = block == null ? null : (behind != null ? behind : AiShield.coverCell(mc, shooter));
-                  this.poll_Z = behind != null;
+                  this.placingBackstop = behind != null;
                   if (cell == null) {
                      if (Boolean.getBoolean("autism.navigation.debug")) {
                         AutismClientAddon.LOG
@@ -2570,11 +2570,11 @@ final class AiCombat {
                      return null;
                   } else {
                      this.placer.start(cell, block);
-                     this.load_Entity = shooter;
+                     this.shieldShooter = shooter;
                      this.shooterMemoryTicks = 0;
-                     this.pop_Z = true;
+                     this.shieldPlacing = true;
                      this.shieldStanceTicks = 0;
-                     return this.init_AiOperation_Result_Entity(shooter);
+                     return this.shieldAgainst(shooter);
                   }
                }
             }
@@ -2616,57 +2616,57 @@ final class AiCombat {
             @Override
             public boolean canInterruptNow() {
                return !this.placer.needsReconciliation()
-                  && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow())
-                  && (this.update_AiOperation == null || this.update_AiOperation.canInterruptNow())
-                  && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow())
-                  && (this.read_AiOperation == null || this.read_AiOperation.canInterruptNow())
-                  && (this.write_AiOperation == null || this.write_AiOperation.canInterruptNow());
+                  && (this.travelLeg == null || this.travelLeg.canInterruptNow())
+                  && (this.perchTravelOp == null || this.perchTravelOp.canInterruptNow())
+                  && (this.eatOp == null || this.eatOp.canInterruptNow())
+                  && (this.healOp == null || this.healOp.canInterruptNow())
+                  && (this.dodgeOp == null || this.dodgeOp.canInterruptNow());
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
                return this.childUncertain
                   || this.placer.needsReconciliation()
-                  || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.update_AiOperation != null && this.update_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.read_AiOperation != null && this.read_AiOperation.requiresReconciliationAfterEmergency()
-                  || this.write_AiOperation != null && this.write_AiOperation.requiresReconciliationAfterEmergency();
+                  || this.travelLeg != null && this.travelLeg.requiresReconciliationAfterEmergency()
+                  || this.perchTravelOp != null && this.perchTravelOp.requiresReconciliationAfterEmergency()
+                  || this.eatOp != null && this.eatOp.requiresReconciliationAfterEmergency()
+                  || this.healOp != null && this.healOp.requiresReconciliationAfterEmergency()
+                  || this.dodgeOp != null && this.dodgeOp.requiresReconciliationAfterEmergency();
             }
 
             @Override
             public void cancel() {
-               if (!this.read_Z) {
-                  this.read_Z = true;
+               if (!this.cancelled) {
+                  this.cancelled = true;
                   this.cancelChild();
-                  if (this.update_AiOperation != null) {
-                     this.update_AiOperation.cancel();
-                     this.update_AiOperation = null;
+                  if (this.perchTravelOp != null) {
+                     this.perchTravelOp.cancel();
+                     this.perchTravelOp = null;
                   }
 
-                  if (this.write_AiOperation != null) {
-                     this.write_AiOperation.cancel();
-                     this.write_AiOperation = null;
+                  if (this.dodgeOp != null) {
+                     this.dodgeOp.cancel();
+                     this.dodgeOp = null;
                   }
 
-                  if (this.load_AiOperation != null) {
-                     this.load_AiOperation.cancel();
-                     this.load_AiOperation = null;
+                  if (this.eatOp != null) {
+                     this.eatOp.cancel();
+                     this.eatOp = null;
                   }
 
-                  if (this.read_AiOperation != null) {
-                     this.read_AiOperation.cancel();
-                     this.read_AiOperation = null;
+                  if (this.healOp != null) {
+                     this.healOp.cancel();
+                     this.healOp = null;
                   }
 
                   this.releaseAllInputs();
-                  if (this.open_Z && mc.options != null) {
+                  if (this.onPerch && mc.options != null) {
                      mc.options.keyShift.setDown(false);
                   }
 
-                  if (this.pop_Z) {
+                  if (this.shieldPlacing) {
                      this.placer.reset();
-                     this.pop_Z = false;
+                     this.shieldPlacing = false;
                   }
 
                   this.aim.clear();

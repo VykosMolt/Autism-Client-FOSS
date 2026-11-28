@@ -3,10 +3,10 @@ package autismclient.util;
 import java.util.Random;
 
 public final class HumanizedAimStepper {
-   private static final double init_D = 50.0;
-   private static final double load_D = 8.0;
-   private static final double read_D = 5.7735;
-   private static final double write_D = 1.875;
+   private static final double MS_PER_TICK = 50.0;
+   private static final double GOAL_JUMP_DEG = 8.0;
+   private static final double SMOOTHERSTEP_PEAK_ACCEL = 5.7735;
+   private static final double SMOOTHERSTEP_PEAK_SPEED = 1.875;
    private static final double update = 14.0;
    private static final double sync = 2.0;
    private static final double flush = 0.75;
@@ -17,15 +17,15 @@ public final class HumanizedAimStepper {
    private static final double pop = 0.96;
    private final Random random;
    private final HumanHandProfile hand;
-   private boolean init_Z;
+   private boolean aimInitialized;
    private double aimYaw;
    private double aimPitch;
-   private boolean load_Z;
+   private boolean hasLastGoal;
    private double lastGoalYaw;
    private double lastGoalPitch;
    private double goalVelocityYaw;
    private double goalVelocityPitch;
-   private boolean read_Z;
+   private boolean stroking;
    private double strokeYaw;
    private double strokePitch;
    private double perpYaw;
@@ -36,8 +36,8 @@ public final class HumanizedAimStepper {
    private double strokeEase;
    private double strokeOffsetYaw;
    private double strokeOffsetPitch;
-   private int init_I;
-   private boolean write_Z;
+   private int pauseTicks;
+   private boolean handBack;
    private double tremorYaw;
    private double tremorPitch;
    private double driftYaw;
@@ -58,21 +58,21 @@ public final class HumanizedAimStepper {
    }
 
    public void setHandBack(boolean on) {
-      this.write_Z = on;
+      this.handBack = on;
    }
 
    public void reset() {
-      this.init_Z = false;
-      this.load_Z = false;
-      this.read_Z = false;
-      this.write_Z = false;
-      this.init_I = 0;
+      this.aimInitialized = false;
+      this.hasLastGoal = false;
+      this.stroking = false;
+      this.handBack = false;
+      this.pauseTicks = 0;
       this.goalVelocityYaw = this.goalVelocityPitch = 0.0;
       this.tremorYaw = this.tremorPitch = this.driftYaw = this.driftPitch = 0.0;
    }
 
-   public boolean init_Z() {
-      return this.read_Z;
+   public boolean isStroking() {
+      return this.stroking;
    }
 
    public double[] step(
@@ -86,8 +86,8 @@ public final class HumanizedAimStepper {
       boolean move
    ) {
       double tolerance = Math.max(0.5, toleranceDeg);
-      if (!this.init_Z) {
-         this.init_Z = true;
+      if (!this.aimInitialized) {
+         this.aimInitialized = true;
          this.aimYaw = actualYawDeg;
          this.aimPitch = actualPitchDeg;
       } else {
@@ -102,10 +102,10 @@ public final class HumanizedAimStepper {
       if (move) {
          this.aimYaw = this.aimYaw + this.hand.poll() * this.goalVelocityYaw;
          this.aimPitch = this.aimPitch + this.hand.poll() * this.goalVelocityPitch;
-         if (this.read_Z) {
+         if (this.stroking) {
             this.advanceStroke();
-         } else if (this.init_I > 0) {
-            this.init_I--;
+         } else if (this.pauseTicks > 0) {
+            this.pauseTicks--;
          } else if (Math.hypot(errYaw, errPitch) > this.settleTolerance(tolerance)) {
             this.beginStroke(errYaw, errPitch, tolerance, maxYawStep, maxPitchStep);
             this.advanceStroke();
@@ -143,7 +143,7 @@ public final class HumanizedAimStepper {
    }
 
    private void trackGoalVelocity(double goalYaw, double goalPitch) {
-      if (this.load_Z) {
+      if (this.hasLastGoal) {
          double dYaw = goalYaw - this.lastGoalYaw;
          double dPitch = goalPitch - this.lastGoalPitch;
          if (Math.hypot(dYaw, dPitch) > 8.0) {
@@ -155,14 +155,14 @@ public final class HumanizedAimStepper {
          }
       }
 
-      this.load_Z = true;
+      this.hasLastGoal = true;
       this.lastGoalYaw = goalYaw;
       this.lastGoalPitch = goalPitch;
    }
 
    private void beginStroke(double errYaw, double errPitch, double tolerance, double maxYawStep, double maxPitchStep) {
       double distance = Math.hypot(errYaw, errPitch);
-      double gain = this.write_Z
+      double gain = this.handBack
          ? 0.96 + 0.040000000000000036 * this.random.nextDouble()
          : clamp(this.hand.read() + this.hand.write() * this.clampedGaussian(), 0.8, 1.06);
       double ny = -errPitch / distance;
@@ -177,8 +177,8 @@ public final class HumanizedAimStepper {
       this.strokeEase = clamp(this.hand.close() * (1.0 + 0.05 * this.clampedGaussian()), 0.75, 1.0);
       double width = Math.max(1.0, 2.0 * tolerance);
       double fittsMs = this.hand.fittsIntercept() + this.hand.fittsSlope() * (Math.log(1.0 + length / width) / Math.log(2.0));
-      double ticks = this.write_Z ? 0.0 : fittsMs / 50.0 * Math.exp(this.hand.open() * this.clampedGaussian());
-      ticks = Math.max(ticks, Math.sqrt(5.7735 * length / ((this.write_Z ? 20.0 : 14.0) * this.strokeEase * this.strokeEase)));
+      double ticks = this.handBack ? 0.0 : fittsMs / 50.0 * Math.exp(this.hand.open() * this.clampedGaussian());
+      ticks = Math.max(ticks, Math.sqrt(5.7735 * length / ((this.handBack ? 20.0 : 14.0) * this.strokeEase * this.strokeEase)));
       if (maxYawStep > 0.0) {
          ticks = Math.max(ticks, 1.875 * Math.abs(this.strokeYaw) / maxYawStep);
       }
@@ -187,11 +187,11 @@ public final class HumanizedAimStepper {
          ticks = Math.max(ticks, 1.875 * Math.abs(this.strokePitch) / maxPitchStep);
       }
 
-      this.strokeTicks = Math.max(2.0, ticks) * (this.write_Z ? 1.0 + 0.12 * this.random.nextDouble() : 1.0);
+      this.strokeTicks = Math.max(2.0, ticks) * (this.handBack ? 1.0 + 0.12 * this.random.nextDouble() : 1.0);
       this.strokeTick = 0.0;
       this.strokeOffsetYaw = 0.0;
       this.strokeOffsetPitch = 0.0;
-      this.read_Z = true;
+      this.stroking = true;
    }
 
    private void advanceStroke() {
@@ -207,8 +207,8 @@ public final class HumanizedAimStepper {
       this.strokeOffsetYaw = y;
       this.strokeOffsetPitch = p;
       if (s >= 1.0) {
-         this.read_Z = false;
-         this.init_I = this.write_Z
+         this.stroking = false;
+         this.pauseTicks = this.handBack
             ? this.random.nextInt(2)
             : this.hand.init_I() + this.random.nextInt(Math.max(1, this.hand.load_I() - this.hand.init_I() + 1));
       }

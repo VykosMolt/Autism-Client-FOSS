@@ -50,7 +50,7 @@ public final class AnimatedToggleButtonRenderer {
       }
    }
 
-   public static long init_J_I(int width) {
+   public static long toggleDurationNanos(int width) {
       float t = clamp01((float)(width - 40) / Math.max(1, 56));
       return Math.round(2.05E8F + -7.7E7F * t);
    }

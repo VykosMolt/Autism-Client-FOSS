@@ -87,7 +87,7 @@ public final class ViewmodelState {
       return offHandX;
    }
 
-   public static float open_F() {
+   public static float offHandY() {
       return offHandY;
    }
 

@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 
 public final class AiChatOps {
-   private static final long init = 5000000000L;
+   private static final long DEADLINE_NANOS = 5000000000L;
 
    private AiChatOps() {
    }

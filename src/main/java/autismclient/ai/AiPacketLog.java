@@ -33,7 +33,7 @@ import net.minecraft.network.protocol.status.StatusPacketTypes;
 public final class AiPacketLog {
    static final int init_I = 50;
    static final int load = 10;
-   static final int read = 30;
+   static final int MAX_SCHEMA_LIMIT = 30;
    static final int write = 64;
    private static final int update = 2048;
    private static final int sync = 2048;

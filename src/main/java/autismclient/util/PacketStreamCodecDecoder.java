@@ -56,7 +56,7 @@ public final class PacketStreamCodecDecoder {
          Throwable firstFailure = null;
 
          for (PacketStreamCodecDecoder.NamedCodec candidate : codecs) {
-            for (PacketStreamCodecDecoder.BufferFactory factory : init_List(body)) {
+            for (PacketStreamCodecDecoder.BufferFactory factory : bufferFactories(body)) {
                ByteBuf buffer = factory.create();
 
                try {
@@ -94,7 +94,7 @@ public final class PacketStreamCodecDecoder {
       }
    }
 
-   public static byte[] init_BArr(byte[] plaintextBytes) {
+   public static byte[] stripPacketId(byte[] plaintextBytes) {
       ByteBuf buf = Unpooled.wrappedBuffer(plaintextBytes == null ? new byte[0] : plaintextBytes);
 
       try {
@@ -151,7 +151,7 @@ public final class PacketStreamCodecDecoder {
       }
    }
 
-   private static List<PacketStreamCodecDecoder.BufferFactory> init_List(byte[] bodyBytes) {
+   private static List<PacketStreamCodecDecoder.BufferFactory> bufferFactories(byte[] bodyBytes) {
       byte[] bytes = bodyBytes == null ? new byte[0] : (byte[])bodyBytes.clone();
       List<PacketStreamCodecDecoder.BufferFactory> out = new ArrayList<>();
       RegistryAccess access = registryAccess();

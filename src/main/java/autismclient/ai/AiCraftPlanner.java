@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 public final class AiCraftPlanner {
-   private static final int init = 8;
+   private static final int MAX_DEPTH = 8;
    private static final int load = 256;
 
    private AiCraftPlanner() {

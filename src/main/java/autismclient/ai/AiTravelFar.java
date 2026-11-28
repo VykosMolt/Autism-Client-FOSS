@@ -11,7 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 final class AiTravelFar {
-   private static final double init = 4096.0;
+   private static final double REGION_PLAN_MIN_DIST_SQ = 4096.0;
    private static final double load = 40.0;
    private static final double read = 1936.0;
 

@@ -14,7 +14,7 @@ import net.minecraft.client.Minecraft;
 
 public final class AiLanSync {
    static final int init_I = 256;
-   static final int load = 100;
+   static final int MAX_REMOTE_MACROS = 100;
    static final List<String> init_List = List.of(
       "start",
       "stop",

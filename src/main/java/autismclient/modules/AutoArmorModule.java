@@ -29,14 +29,14 @@ public final class AutoArmorModule extends Module {
    private static final Map<EquipmentSlot, Integer> ARMOR_MENU_SLOTS = new EnumMap<>(EquipmentSlot.class);
    private int cooldownTicks;
    private int lastArmorValue = -1;
-   private boolean init_Z;
-   private static final int read_I = 4;
+   private boolean openedInventory;
+   private static final int SCAN_INTERVAL_TICKS = 4;
    private int lastScanTick = -4;
    private int lastInventoryRevision = -1;
    private final Map<String, String> rawRangeValues = new HashMap<>();
    private final Map<String, ValueRange> rangeCache = new HashMap<>();
-   private boolean load_Z;
-   private boolean read_Z;
+   private boolean sessionActive;
+   private boolean closePending;
    private int sync;
    private int closeAt;
    private int nextOperationAt;
@@ -117,18 +117,18 @@ public final class AutoArmorModule extends Module {
    @Override
    public void onGameLeft() {
       this.resetState();
-      this.init_Z = false;
+      this.openedInventory = false;
    }
 
    private void resetState() {
-      if (this.load_Z && this.sync > 0) {
+      if (this.sessionActive && this.sync > 0) {
          this.closeInventory();
       }
 
       this.cooldownTicks = 0;
       this.lastArmorValue = -1;
-      this.load_Z = false;
-      this.read_Z = false;
+      this.sessionActive = false;
+      this.closePending = false;
       this.sync = 0;
       this.closeAt = 0;
       this.nextOperationAt = 0;
@@ -141,22 +141,22 @@ public final class AutoArmorModule extends Module {
    public void preMovementTick() {
       if (MC != null && MC.player != null && MC.level != null && !aD.read_Z() && !MC.player.isSpectator()) {
          this.trackArmorValue();
-         if (this.load_Z) {
+         if (this.sessionActive) {
             if (AutoTotemModule.init_Z_6()) {
                this.finishSession(true);
             } else {
-               this.read_V_9();
+               this.tickSession();
             }
          } else if (!AutoTotemModule.init_Z_6()) {
             if (!this.hasAnyDelay()) {
-               this.load_V_15();
+               this.tickInstant();
             } else if (MC.player.containerMenu != MC.player.inventoryMenu) {
-               this.flush_V_4();
+               this.closeForeignContainer();
             } else if (!this.bool("not-using-item") || !MC.player.isUsingItem()) {
                if (this.bool("no-movement") && isMovingInput()) {
                   if (this.shouldAutoOpenInventory()) {
                      MC.gui.setScreen(new InventoryScreen(MC.player));
-                     this.init_Z = true;
+                     this.openedInventory = true;
                   }
                } else if (!BlinkPacketManager.isHoldingActionsOnly()) {
                   int now = AutismSessionState.getInstance().getClientTick();
@@ -166,7 +166,7 @@ public final class AutoArmorModule extends Module {
                         this.lastInventoryRevision = timesChanged;
                         this.lastScanTick = now;
                         if (this.findBestMove() == null) {
-                           if (this.init_Z) {
+                           if (this.openedInventory) {
                               this.closeOpenedInventory();
                            }
 
@@ -178,10 +178,10 @@ public final class AutoArmorModule extends Module {
 
                            if (now >= this.open) {
                               this.open = -1;
-                              this.load_Z = true;
-                              this.read_Z = false;
+                              this.sessionActive = true;
+                              this.closePending = false;
                               this.sync = 0;
-                              this.read_V_9();
+                              this.tickSession();
                            }
                         }
                      }
@@ -192,16 +192,16 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private void load_V_15() {
+   private void tickInstant() {
       if (this.cooldownTicks > 0) {
          this.cooldownTicks--;
       } else if (MC.player.containerMenu != MC.player.inventoryMenu) {
-         this.flush_V_4();
+         this.closeForeignContainer();
       } else if (!this.bool("not-using-item") || !MC.player.isUsingItem()) {
          if (this.bool("no-movement") && isMovingInput()) {
             if (this.shouldAutoOpenInventory()) {
                MC.gui.setScreen(new InventoryScreen(MC.player));
-               this.init_Z = true;
+               this.openedInventory = true;
             }
          } else if (!BlinkPacketManager.isHoldingActionsOnly()) {
             this.tryEquipBest();
@@ -209,7 +209,7 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private void read_V_9() {
+   private void tickSession() {
       int now = AutismSessionState.getInstance().getClientTick();
       nextClickAt = now + this.clickDelay();
       if (now >= this.closeAt) {
@@ -218,7 +218,7 @@ public final class AutoArmorModule extends Module {
             && MC.player.containerMenu == MC.player.inventoryMenu
             && !BlinkPacketManager.isHoldingActionsOnly()
             && (!this.bool("not-using-item") || !MC.player.isUsingItem())) {
-            if (this.read_Z) {
+            if (this.closePending) {
                AutoArmorModule.ArmorMove rest = this.findBestMove();
                if (rest == null) {
                   if (this.sync > 0) {
@@ -229,12 +229,12 @@ public final class AutoArmorModule extends Module {
                   return;
                }
 
-               this.read_Z = false;
+               this.closePending = false;
             }
 
             AutoArmorModule.ArmorMove move = this.findBestMove();
             if (move == null) {
-               this.read_Z = true;
+               this.closePending = true;
                this.closeAt = now + this.randomDelay("close-delay", 3, 5);
             } else if (!this.init(move.slot(), move.candidate(), move.stack())) {
                this.closeAt = now + 1;
@@ -243,7 +243,7 @@ public final class AutoArmorModule extends Module {
                if (this.findBestMove() != null) {
                   this.closeAt = now + this.randomDelay("click-delay", 3, 5);
                } else {
-                  this.read_Z = true;
+                  this.closePending = true;
                   this.closeAt = now + this.randomDelay("close-delay", 3, 5);
                }
             }
@@ -258,8 +258,8 @@ public final class AutoArmorModule extends Module {
          this.closeInventory();
       }
 
-      this.load_Z = false;
-      this.read_Z = false;
+      this.sessionActive = false;
+      this.closePending = false;
       this.sync = 0;
       this.nextOperationAt = AutismSessionState.getInstance().getClientTick() + this.randomDelay("operation-delay", 3, 5);
    }
@@ -303,7 +303,7 @@ public final class AutoArmorModule extends Module {
       if (move != null && this.init(move.slot(), move.candidate(), move.stack())) {
          this.cooldownTicks = 1;
       } else {
-         if (this.init_Z) {
+         if (this.openedInventory) {
             this.closeOpenedInventory();
          }
 
@@ -473,7 +473,7 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private void flush_V_4() {
+   private void closeForeignContainer() {
       if (this.bool("save-armor") && this.bool("auto-open-inventory") && this.hasLowDurabilityArmor()) {
          Screen screen = MC.gui.screen();
          if (screen instanceof AbstractContainerScreen && !(screen instanceof InventoryScreen)) {
@@ -509,8 +509,8 @@ public final class AutoArmorModule extends Module {
    }
 
    private void closeOpenedInventory() {
-      if (this.init_Z) {
-         this.init_Z = false;
+      if (this.openedInventory) {
+         this.openedInventory = false;
          if (MC != null && MC.gui.screen() instanceof InventoryScreen screen) {
             screen.onClose();
          }

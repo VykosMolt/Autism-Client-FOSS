@@ -61,7 +61,7 @@ public final class GuiMovementPassThrough {
    }
 
    public static void tick() {
-      if (load_Z()) {
+      if (shouldPassThrough()) {
          syncKey(MINECRAFT.options.keyUp);
          syncKey(MINECRAFT.options.keyDown);
          syncKey(MINECRAFT.options.keyLeft);
@@ -161,7 +161,7 @@ public final class GuiMovementPassThrough {
       }
    }
 
-   private static boolean load_Z() {
+   private static boolean shouldPassThrough() {
       if (autismclient.modules.AutoTotemModule.init_Z_6()) {
          releaseAll();
          return false;

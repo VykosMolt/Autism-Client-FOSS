@@ -1,7 +1,7 @@
 package autismclient.gui.ui.widgets;
 
 public final class ScrollbarRenderer {
-   private static final int init = 3;
+   private static final int MAX_TRACK_WIDTH = 3;
    private static final int load = -6578008;
    private static final int read = -3551788;
 

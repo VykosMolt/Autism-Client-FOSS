@@ -25,7 +25,7 @@ final class AiAnvil {
    private static final int write = 40;
    private static final int update = 40;
    private static final int sync = 40;
-   static final int init = 39;
+   static final int MAX_LEVEL_COST = 39;
 
    private AiAnvil() {
    }

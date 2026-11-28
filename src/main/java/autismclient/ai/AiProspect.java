@@ -23,8 +23,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 final class AiProspect {
    private static final int init_I = 16;
-   private static final int load_I = 24;
-   private static final double init_D = 3.5;
+   private static final int MINE_RADIUS = 24;
+   private static final double SITE_ARRIVE_RADIUS = 3.5;
    private static final int read = 90;
    private static final Map<String, String> ITEM_KINDS = new LinkedHashMap<>();
    private static final Map<String, String> BLOCK_KINDS = new LinkedHashMap<>();
@@ -91,21 +91,21 @@ final class AiProspect {
             final long deadlineNanos = System.nanoTime() + timeoutSeconds * 1000000000L;
             final List<BlockPos> candidates = new ArrayList<>();
             final Set<Long> visited = new LinkedHashSet<>();
-            final JsonArray init_JsonArray = new JsonArray();
+            final JsonArray attempts = new JsonArray();
             final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard();
-            AiOperation init_AiOperation;
-            AiOperation load_AiOperation;
+            AiOperation predictOp;
+            AiOperation siteOp;
             AiOperation childOp;
-            String init_Str = "";
-            int init_I;
+            String guardReason = "";
+            int guardInterrupts;
             Inner_DataUtil phase = Inner_DataUtil.LOCATE;
-            BlockPos init_BlockPos;
-            String load_Str = "";
-            boolean init_Z;
+            BlockPos currentSite;
+            String lastFailure = "";
+            boolean cancelled;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.init_Z && mc.player != null && mc.level != null) {
+               if (!this.cancelled && mc.player != null && mc.level != null) {
                   if (System.nanoTime() > this.deadlineNanos) {
                      return this.finish(
                         AiItems.countInInventory(target) > held ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT,
@@ -126,19 +126,19 @@ final class AiProspect {
                      return tier;
                   }
 
-                  AiOperation.Result guarded = this.init_AiOperation_Result_29();
+                  AiOperation.Result guarded = this.tickGuard();
                   if (guarded != null) {
                      return guarded;
                   }
 
-                  if (this.init_AiOperation != null) {
-                     AiOperation.Result result = this.init_AiOperation.tick();
+                  if (this.predictOp != null) {
+                     AiOperation.Result result = this.predictOp.tick();
                      if (!result.terminal()) {
                         return this.running(result.message());
                      }
 
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+                     this.predictOp.cancel();
+                     this.predictOp = null;
                      if (result.status() != AiOperation.Status.SUCCEEDED) {
                         return this.finish(AiOperation.Status.FAILED, "Could not predict " + kind + " positions: " + result.message());
                      }
@@ -150,19 +150,19 @@ final class AiProspect {
 
                      this.phase = Inner_DataUtil.TRAVEL;
                      return this.running("Located " + this.candidates.size() + " predicted " + kind + " site(s)");
-                  } else if (this.load_AiOperation != null) {
-                     AiOperation.Result result = this.load_AiOperation.tick();
+                  } else if (this.siteOp != null) {
+                     AiOperation.Result result = this.siteOp.tick();
                      if (!result.terminal()) {
                         return this.running(result.message());
                      }
 
-                     this.load_AiOperation.cancel();
-                     this.load_AiOperation = null;
-                     this.init_JsonArray
+                     this.siteOp.cancel();
+                     this.siteOp = null;
+                     this.attempts
                         .add(
                            AiJson.objectOf(
                               "site",
-                              this.init_BlockPos == null ? "" : this.init_BlockPos.toShortString(),
+                              this.currentSite == null ? "" : this.currentSite.toShortString(),
                               "phase",
                               this.phase.name(),
                               "status",
@@ -181,8 +181,8 @@ final class AiProspect {
 
                      if (this.phase == Inner_DataUtil.TRAVEL) {
                         if (result.status() != AiOperation.Status.SUCCEEDED) {
-                           this.load_Str = "travel: " + result.message();
-                           this.init_BlockPos = null;
+                           this.lastFailure = "travel: " + result.message();
+                           this.currentSite = null;
                            this.phase = Inner_DataUtil.TRAVEL;
                            return this.running("Site unreachable; trying the next prediction");
                         } else {
@@ -190,16 +190,16 @@ final class AiProspect {
                            return this.running("Arrived; extracting " + kind);
                         }
                      } else {
-                        this.load_Str = "extract: " + result.message();
-                        this.init_BlockPos = null;
+                        this.lastFailure = "extract: " + result.message();
+                        this.currentSite = null;
                         this.phase = Inner_DataUtil.TRAVEL;
                         return this.running("Site exhausted; trying the next prediction");
                      }
                   } else if (this.phase == Inner_DataUtil.LOCATE) {
-                     this.init_AiOperation = AiOracle.create(AiJson.objectOf("query", kind, "cap", 16));
+                     this.predictOp = AiOracle.create(AiJson.objectOf("query", kind, "cap", 16));
                      return this.running("Predicting " + kind + " positions from the world seed");
                   } else if (this.phase == Inner_DataUtil.EXTRACT) {
-                     this.load_AiOperation = autismclient.ai.engine.AiMine.mine(
+                     this.siteOp = autismclient.ai.engine.AiMine.mine(
                         AiJson.objectOf(
                            "block",
                            AiProspect.oreBlockId(kind),
@@ -211,20 +211,20 @@ final class AiProspect {
                            Math.min(90, this.secondsLeft())
                         )
                      );
-                     return this.running("Extracting " + kind + " around " + (this.init_BlockPos == null ? "the area" : this.init_BlockPos.toShortString()));
+                     return this.running("Extracting " + kind + " around " + (this.currentSite == null ? "the area" : this.currentSite.toShortString()));
                   } else {
-                     this.init_BlockPos = this.nearestCandidate();
-                     if (this.init_BlockPos != null) {
-                        this.visited.add(this.init_BlockPos.asLong());
-                        this.load_AiOperation = AiGoto.travelToCompat(this.init_BlockPos, 3.5, true, true, true, Math.min(240, this.secondsLeft()));
-                        return this.running("Travelling to predicted " + kind + " at " + this.init_BlockPos.toShortString());
+                     this.currentSite = this.nearestCandidate();
+                     if (this.currentSite != null) {
+                        this.visited.add(this.currentSite.asLong());
+                        this.siteOp = AiGoto.travelToCompat(this.currentSite, 3.5, true, true, true, Math.min(240, this.secondsLeft()));
+                        return this.running("Travelling to predicted " + kind + " at " + this.currentSite.toShortString());
                      } else if (this.candidates.isEmpty()) {
                         this.phase = Inner_DataUtil.LOCATE;
                         return this.running("Re-predicting from the new position");
                      } else {
                         return this.finish(
                            AiOperation.Status.FAILED,
-                           "Every predicted " + kind + " site was tried" + (this.load_Str.isEmpty() ? "" : "; last failure " + this.load_Str)
+                           "Every predicted " + kind + " site was tried" + (this.lastFailure.isEmpty() ? "" : "; last failure " + this.lastFailure)
                         );
                      }
                   }
@@ -233,16 +233,16 @@ final class AiProspect {
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_29() {
+            AiOperation.Result tickGuard() {
                if (this.childOp != null) {
                   AiOperation.Result result = this.childOp.tick();
                   if (!result.terminal()) {
-                     return this.running("Interrupted: " + this.init_Str + " - " + result.message());
+                     return this.running("Interrupted: " + this.guardReason + " - " + result.message());
                   }
 
                   this.childOp.cancel();
                   this.childOp = null;
-                  return this.running("Resuming after " + this.init_Str);
+                  return this.running("Resuming after " + this.guardReason);
                } else {
                   AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
                   AiOperation action = AiGuard.createResponseOperation(this.guardPolicy, vitals, this.secondsLeft());
@@ -250,15 +250,15 @@ final class AiProspect {
                      return null;
                   }
 
-                  this.init_Str = AiGuard.decisionReason(this.guardPolicy, vitals);
-                  this.init_I++;
-                  if (this.load_AiOperation != null) {
-                     this.load_AiOperation.cancel();
-                     this.load_AiOperation = null;
+                  this.guardReason = AiGuard.decisionReason(this.guardPolicy, vitals);
+                  this.guardInterrupts++;
+                  if (this.siteOp != null) {
+                     this.siteOp.cancel();
+                     this.siteOp = null;
                   }
 
                   this.childOp = action;
-                  return this.running("Interrupted: " + this.init_Str);
+                  return this.running("Interrupted: " + this.guardReason);
                }
             }
 
@@ -352,12 +352,12 @@ final class AiProspect {
                   "sitesTried",
                   this.visited.size()
                );
-               if (this.init_BlockPos != null) {
-                  out.addProperty("site", this.init_BlockPos.toShortString());
+               if (this.currentSite != null) {
+                  out.addProperty("site", this.currentSite.toShortString());
                }
 
-               out.add("attempts", this.init_JsonArray);
-               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.init_I, this.init_Str));
+               out.add("attempts", this.attempts);
+               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.guardInterrupts, this.guardReason));
                out.addProperty("provenance", "Oracle positions are seed predictions, confirmed only by the extraction phase");
                return out;
             }
@@ -384,21 +384,21 @@ final class AiProspect {
 
             @Override
             public void cancel() {
-               if (!this.init_Z) {
-                  this.init_Z = true;
+               if (!this.cancelled) {
+                  this.cancelled = true;
                   if (this.childOp != null) {
                      this.childOp.cancel();
                      this.childOp = null;
                   }
 
-                  if (this.init_AiOperation != null) {
-                     this.init_AiOperation.cancel();
-                     this.init_AiOperation = null;
+                  if (this.predictOp != null) {
+                     this.predictOp.cancel();
+                     this.predictOp = null;
                   }
 
-                  if (this.load_AiOperation != null) {
-                     this.load_AiOperation.cancel();
-                     this.load_AiOperation = null;
+                  if (this.siteOp != null) {
+                     this.siteOp.cancel();
+                     this.siteOp = null;
                   }
                }
             }

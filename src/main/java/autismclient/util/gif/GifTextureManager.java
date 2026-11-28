@@ -39,25 +39,25 @@ import net.minecraft.util.Util;
 public final class GifTextureManager {
    private static final long init_J = 1000L;
    private static final double init_D = 1.0;
-   private static final double load_D = 60.0;
-   private static final long load_J = 150L;
-   private static final long read_J = 2000L;
-   private static final long write_J = 300000L;
-   private static final long update_J = 536870912L;
+   private static final double MAX_FPS = 60.0;
+   private static final long DECODE_DELAY_MS = 150L;
+   private static final long OFFSCREEN_AFTER_MS = 2000L;
+   private static final long IDLE_EVICT_MS = 300000L;
+   private static final long CACHE_BUDGET_BYTES = 536870912L;
    private static final long sync_J = 1000L;
    private static final int init_I = 64;
    private static final int load_I = 64;
    private static final int read_I = 3072;
-   private static final long flush_J = 64000000L;
+   private static final long MAX_FRAME_PIXELS = 64000000L;
    private static final int write_I = 3072;
    private static final int update_I = 64;
    private static final int sync_I = 32;
-   private static final int[] init_IArr = new int[]{1, 1, 10, 16};
-   private static final int[] load_IArr = new int[]{12, 1, 10, 16};
-   private static final int[] read_IArr = new int[]{0, 1, 1, 16};
-   private static final int[] write_IArr = new int[]{11, 1, 1, 16};
-   private static final int[] update_IArr = new int[]{1, 0, 10, 1};
-   private static final int[] sync_IArr = new int[]{11, 0, 10, 1};
+   private static final int[] CAPE_FRONT_UV = new int[]{1, 1, 10, 16};
+   private static final int[] CAPE_BACK_UV = new int[]{12, 1, 10, 16};
+   private static final int[] CAPE_LEFT_UV = new int[]{0, 1, 1, 16};
+   private static final int[] CAPE_RIGHT_UV = new int[]{11, 1, 1, 16};
+   private static final int[] CAPE_TOP_UV = new int[]{1, 0, 10, 1};
+   private static final int[] CAPE_BOTTOM_UV = new int[]{11, 0, 10, 1};
    private static final int flush_I = 2;
    private static final int close_I = 2;
    private static final int open_I = 10;
@@ -154,9 +154,9 @@ public final class GifTextureManager {
             BasicFileAttributes attrs = Files.readAttributes(entry.path, BasicFileAttributes.class);
             long mtime = attrs.lastModifiedTime().toMillis();
             long size = attrs.size();
-            if (mtime != entry.init_J || size != entry.load_J) {
-               entry.init_J = mtime;
-               entry.load_J = size;
+            if (mtime != entry.fileMtime || size != entry.fileSize) {
+               entry.fileMtime = mtime;
+               entry.fileSize = size;
                entry.state = GifTextureManager.LoadState.LOADING;
                clearTexture(entry);
                queueDecode(entry);
@@ -325,8 +325,8 @@ public final class GifTextureManager {
          payload.closeImages();
       } else if (payload.mipChains() == null) {
          markFailed(entry, payload.error() != null ? payload.error() : "could not load image");
-         entry.init_J = payload.init_J();
-         entry.load_J = payload.load_J();
+         entry.fileMtime = payload.init_J();
+         entry.fileSize = payload.load_J();
       } else {
          GifTextureManager.AnimatedTexture texture = null;
 
@@ -355,8 +355,8 @@ public final class GifTextureManager {
          entry.textureBytes = texture.size;
          entry.state = GifTextureManager.LoadState.READY;
          entry.lastError = null;
-         entry.init_J = payload.init_J();
-         entry.load_J = payload.load_J();
+         entry.fileMtime = payload.init_J();
+         entry.fileSize = payload.load_J();
          entry.nextCheckMs = System.currentTimeMillis() + 1000L;
          if (entry.path != null && payload.sourceWidth() > 0 && payload.read() > 0) {
             imageDims.put(entry.path.toString(), new int[]{payload.sourceWidth(), payload.read()});
@@ -418,7 +418,7 @@ public final class GifTextureManager {
          GifTextureManager.ArgbFrames var10000;
          switch (entry.surface) {
             case CAPE:
-               var10000 = init_CachePool_JsonUtil_DataUtil_DataUtil(decoded, entry.keepAspect, entry.quality, stale);
+               var10000 = buildCapeFrames(decoded, entry.keepAspect, entry.quality, stale);
                break;
             case SHIELD:
                var10000 = buildShieldFrames(decoded, entry.keepAspect, entry.quality, stale);
@@ -479,11 +479,11 @@ public final class GifTextureManager {
       }
    }
 
-   private static GifTextureManager.ArgbFrames init_CachePool_JsonUtil_DataUtil_DataUtil(
+   private static GifTextureManager.ArgbFrames buildCapeFrames(
       GifImageDecoder.DecodedImage decoded, boolean keepAspect, double quality, BooleanSupplier stale
    ) {
       int frames = decoded.frames().length;
-      double faceScale = 64.0 / init_IArr[2];
+      double faceScale = 64.0 / CAPE_FRONT_UV[2];
       int width = Math.max(64, Math.min(3072, (int)Math.round(decoded.width() * quality * faceScale)));
 
       while (width > 64 && (long)width * (width / 2) * frames > 64000000L) {
@@ -501,14 +501,14 @@ public final class GifTextureManager {
          Graphics2D graphics = canvas.createGraphics();
          applyQualityHints(graphics);
          BufferedImage frame = toBufferedImage(decoded.frames()[i], decoded.width(), decoded.load());
-         drawRegion(graphics, frame, decoded.width(), decoded.load(), init_IArr, sx, sy, keepAspect);
-         drawRegion(graphics, frame, decoded.width(), decoded.load(), load_IArr, sx, sy, keepAspect);
+         drawRegion(graphics, frame, decoded.width(), decoded.load(), CAPE_FRONT_UV, sx, sy, keepAspect);
+         drawRegion(graphics, frame, decoded.width(), decoded.load(), CAPE_BACK_UV, sx, sy, keepAspect);
          int w = decoded.width();
          int hh = decoded.load();
-         drawRegion(graphics, frame, read_IArr, sx, sy, 0, 0, 1, hh);
-         drawRegion(graphics, frame, write_IArr, sx, sy, w - 1, 0, w, hh);
-         drawRegion(graphics, frame, update_IArr, sx, sy, 0, hh - 1, w, hh);
-         drawRegion(graphics, frame, sync_IArr, sx, sy, 0, 0, w, 1);
+         drawRegion(graphics, frame, CAPE_LEFT_UV, sx, sy, 0, 0, 1, hh);
+         drawRegion(graphics, frame, CAPE_RIGHT_UV, sx, sy, w - 1, 0, w, hh);
+         drawRegion(graphics, frame, CAPE_TOP_UV, sx, sy, 0, hh - 1, w, hh);
+         drawRegion(graphics, frame, CAPE_BOTTOM_UV, sx, sy, 0, 0, w, 1);
          graphics.dispose();
          out[i] = canvas.getRGB(0, 0, width, height, null, 0, width);
       }
@@ -564,7 +564,7 @@ public final class GifTextureManager {
       }
    }
 
-   static int[] init_IArr_IArr(int[] frameArgb, int frameW, int frameH, boolean keepAspect) {
+   static int[] scaleFrameDefaultSize(int[] frameArgb, int frameW, int frameH, boolean keepAspect) {
       return scaleFrame(frameArgb, frameW, frameH, keepAspect, 64);
    }
 
@@ -789,7 +789,7 @@ public final class GifTextureManager {
       private int frameIndex;
       private long lastTickMs = -1L;
       private long cycleElapsedMs;
-      private boolean init_Z;
+      private boolean animationFailed;
 
       private AnimatedTexture(String label, NativeImage[][] chains, int[] delaysMs, int averageDelayMs, double targetFps, boolean mipmap) {
          this.mipChains = chains;
@@ -834,11 +834,11 @@ public final class GifTextureManager {
       @Override
       public void tick() {
          GifTextureManager.pollFiles();
-         if (!this.init_Z && this.delaysMs.length >= 2) {
+         if (!this.animationFailed && this.delaysMs.length >= 2) {
             try {
                this.advance();
             } catch (Throwable t) {
-               this.init_Z = true;
+               this.animationFailed = true;
                AutismClientAddon.LOG.warn("GIF animation stopped: {}", t.toString());
             }
          }
@@ -889,8 +889,8 @@ public final class GifTextureManager {
       volatile double fps;
       volatile GifTextureManager.LoadState state = GifTextureManager.LoadState.LOADING;
       volatile String lastError;
-      volatile long init_J = -1L;
-      volatile long load_J = -1L;
+      volatile long fileMtime = -1L;
+      volatile long fileSize = -1L;
       volatile long nextCheckMs;
       volatile long generation;
       volatile GifTextureManager.AnimatedTexture texture;

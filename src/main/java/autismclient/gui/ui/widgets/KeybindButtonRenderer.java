@@ -2,7 +2,7 @@ package autismclient.gui.ui.widgets;
 import autismclient.gui.f.b.CachePool;
 
 public final class KeybindButtonRenderer {
-   public static final int init = 34;
+   public static final int BUTTON_WIDTH = 34;
    public static final int load = 13;
 
    private KeybindButtonRenderer() {

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 public final class ClickTimingMath {
-   public static final long init_J = 1000000000L;
+   public static final long NANOS_PER_SECOND_LONG = 1000000000L;
    private static final BigDecimal NANOS_PER_SECOND = BigDecimal.valueOf(1000000000L);
 
    private ClickTimingMath() {

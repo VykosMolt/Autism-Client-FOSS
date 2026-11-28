@@ -15,16 +15,16 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    private static final List<KeyClickOutput> OUTPUTS = new ArrayList<>();
    private static long generation;
    private final boolean useKey;
-   private boolean load_Z;
-   private boolean read_Z;
+   private boolean pressed;
+   private boolean ownsKey;
    private long releaseAtNanos = -9223372036854775808L;
-   private static final long read_J = 50000000L;
+   private static final long REPRESS_GUARD_NANOS = 50000000L;
    private long pressNanos = -9223372036854775808L;
    private long lastFireNanos = -9223372036854775808L;
    private long activeGeneration = -9223372036854775808L;
    private int pendingClicks;
    private int consumedClicks;
-   private boolean write_Z;
+   private boolean returnedClicks;
 
    private KeyClickOutput(boolean useKey) {
       this.useKey = useKey;
@@ -44,7 +44,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    public static boolean isAnyPressed(boolean useKey) {
       synchronized (OUTPUTS) {
          for (KeyClickOutput output : OUTPUTS) {
-            if (output.useKey == useKey && output.load_Z) {
+            if (output.useKey == useKey && output.pressed) {
                return true;
             }
          }
@@ -58,11 +58,11 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    }
 
    public void setOwnsKey(boolean owns) {
-      this.read_Z = owns;
+      this.ownsKey = owns;
    }
 
    public boolean isPressed() {
-      return this.load_Z;
+      return this.pressed;
    }
 
    public boolean isPhysicallyDown() {
@@ -72,12 +72,12 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
 
    @Override
    public boolean init_Z_J(long now) {
-      if (!this.load_Z && canClick()) {
+      if (!this.pressed && canClick()) {
          KeyMapping mapping = this.mapping();
          if (mapping != null && !mapping.isUnbound()) {
             KeyMappingControl.of(mapping).autism$simulatePress(true);
             this.lastFireNanos = System.nanoTime();
-            this.load_Z = true;
+            this.pressed = true;
             if (!this.useKey) {
                this.pendingClicks++;
             }
@@ -98,15 +98,15 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
 
    @Override
    public void init_V_J(long now) {
-      if (this.load_Z) {
-         this.load_Z = false;
+      if (this.pressed) {
+         this.pressed = false;
          this.releaseAtNanos = -9223372036854775808L;
          KeyMapping mapping = this.mapping();
          if (mapping != null) {
             KeyMappingControl bridge = KeyMappingControl.of(mapping);
             if (!canClick()) {
                bridge.autism$resetPressedState();
-            } else if (!this.read_Z && bridge.autism$isActuallyDown()) {
+            } else if (!this.ownsKey && bridge.autism$isActuallyDown()) {
                bridge.autism$resetPressedState();
             } else {
                bridge.autism$simulatePress(false);
@@ -117,7 +117,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
 
    @Override
    public void onClick(long now) {
-      this.load_Z = true;
+      this.pressed = true;
       this.releaseAtNanos = -9223372036854775808L;
    }
 
@@ -136,14 +136,14 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    }
 
    public void releaseIfDue(long now) {
-      if (this.load_Z && this.releaseAtNanos != -9223372036854775808L && now >= this.releaseAtNanos) {
+      if (this.pressed && this.releaseAtNanos != -9223372036854775808L && now >= this.releaseAtNanos) {
          this.init_V_J(now);
       }
    }
 
    public void release() {
-      this.read_Z = false;
-      if (this.load_Z) {
+      this.ownsKey = false;
+      if (this.pressed) {
          this.init_V_J(System.nanoTime());
       }
    }
@@ -168,9 +168,9 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       this.consumedClicks = 0;
       KeyMapping mapping = this.mapping();
       if (this.useKey || this.pendingClicks <= 0 || mapping == null || MINECRAFT.player == null) {
-         this.write_Z = false;
-      } else if (this.write_Z) {
-         this.write_Z = false;
+         this.returnedClicks = false;
+      } else if (this.returnedClicks) {
+         this.returnedClicks = false;
          if (!(MINECRAFT.hitResult instanceof EntityHitResult)) {
             while (this.pendingClicks > 0 && mapping.consumeClick()) {
                this.pendingClicks--;
@@ -197,7 +197,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
       }
 
       this.pendingClicks = this.consumedClicks;
-      this.write_Z = this.consumedClicks > 0;
+      this.returnedClicks = this.consumedClicks > 0;
       this.consumedClicks = 0;
    }
 
@@ -208,7 +208,7 @@ public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper 
    public static void sync() {
       synchronized (OUTPUTS) {
          for (KeyClickOutput output : OUTPUTS) {
-            if (output.load_Z && (!canClick() || output.activeGeneration != generation)) {
+            if (output.pressed && (!canClick() || output.activeGeneration != generation)) {
                output.release();
             }
          }

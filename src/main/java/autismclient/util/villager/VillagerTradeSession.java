@@ -25,7 +25,7 @@ public final class VillagerTradeSession {
    private VillagerTradeSession.Inner_DataUtil view;
    private Object boundMenu;
    private Object boundLevel;
-   private Object read_Obj;
+   private Object boundConnection;
    private VillagerTradeSession.Inner_StreamUtil phase = VillagerTradeSession.Inner_StreamUtil.SELECT;
    private VillagerTradeSession.Inner_CachePool status = VillagerTradeSession.Inner_CachePool.RUNNING;
    private int waitTicks;
@@ -36,7 +36,7 @@ public final class VillagerTradeSession {
    private int cursorRemainder;
    private int pop;
    private int tick;
-   private ItemStack init_ItemStack = ItemStack.EMPTY;
+   private ItemStack expectedOutput = ItemStack.EMPTY;
    private ItemStack serverCursor = ItemStack.EMPTY;
    private int heldBefore;
    private int get;
@@ -101,7 +101,7 @@ public final class VillagerTradeSession {
 
          for (int i = 3; i < Math.min(39, packet.items().size()); i++) {
             ItemStack stack = packet.items().get(i);
-            if (ItemStack.isSameItemSameComponents(stack, session.init_ItemStack)) {
+            if (ItemStack.isSameItemSameComponents(stack, session.expectedOutput)) {
                count += stack.getCount();
             }
          }
@@ -216,11 +216,11 @@ public final class VillagerTradeSession {
          this.view = current;
          this.boundMenu = current.menu();
          this.boundLevel = current.level();
-         this.read_Obj = current.connectionToken();
+         this.boundConnection = current.connectionToken();
          active = this;
       }
 
-      if (this.boundMenu == current.menu() && this.boundLevel == current.level() && this.read_Obj == current.connectionToken()) {
+      if (this.boundMenu == current.menu() && this.boundLevel == current.level() && this.boundConnection == current.connectionToken()) {
          this.view = current;
          if (this.phase != VillagerTradeSession.Inner_StreamUtil.TAKE && this.phase != VillagerTradeSession.Inner_StreamUtil.STORED) {
             if (this.phase == VillagerTradeSession.Inner_StreamUtil.DELAY) {
@@ -292,19 +292,19 @@ public final class VillagerTradeSession {
                ItemStack output = this.view.slotItem(2);
                if (ItemStack.matches(output, offer.getResult())
                   && offer.satisfiedBy(this.view.slotItem(0), this.view.slotItem(1))) {
-                  this.init_ItemStack = output.copy();
+                  this.expectedOutput = output.copy();
                   this.offerCost = TradeOfferFilter.cost(offer);
                   if (!TradeOfferFilter.affordable(this.offerCost, this.spentEmeralds, this.emeraldBudget, this.emeraldCount(), this.emeraldReserve)) {
                      return this.finish(VillagerTradeSession.Inner_CachePool.BUDGET, "Emerald limit reached");
                   }
 
-                  if (this.inventoryRoom(this.init_ItemStack) < this.init_ItemStack.getCount()) {
+                  if (this.inventoryRoom(this.expectedOutput) < this.expectedOutput.getCount()) {
                      return this.finish(VillagerTradeSession.Inner_CachePool.INVENTORY_FULL, "Inventory full");
                   }
 
                   this.offer = offer;
                   this.offerUsesBefore = offer.getUses();
-                  this.init_V_I(2);
+                  this.pickUp(2);
                   this.phase = VillagerTradeSession.Inner_StreamUtil.TAKE;
                   this.message = "Confirming purchase";
                   return this.status;
@@ -314,20 +314,20 @@ public final class VillagerTradeSession {
             } else {
                if (this.phase == VillagerTradeSession.Inner_StreamUtil.STORE) {
                   ItemStack cursor = this.view.carried();
-                  if (cursor.isEmpty() || !ItemStack.isSameItemSameComponents(cursor, this.init_ItemStack)) {
+                  if (cursor.isEmpty() || !ItemStack.isSameItemSameComponents(cursor, this.expectedOutput)) {
                      return this.finish(VillagerTradeSession.Inner_CachePool.UNCERTAIN, "Cursor changed during trade");
                   }
 
-                  this.init_ItemStack = cursor.copy();
-                  int slot = this.firstSlotWithRoom(this.init_ItemStack);
+                  this.expectedOutput = cursor.copy();
+                  int slot = this.firstSlotWithRoom(this.expectedOutput);
                   if (slot < 0) {
                      return this.finish(VillagerTradeSession.Inner_CachePool.INVENTORY_FULL, "Inventory full; result is on cursor");
                   }
 
-                  int room = this.roomAt(slot, this.init_ItemStack);
-                  this.cursorRemainder = Math.max(0, this.init_ItemStack.getCount() - room);
-                  this.heldBefore = this.countInInventory(this.init_ItemStack);
-                  this.init_V_I(slot);
+                  int room = this.roomAt(slot, this.expectedOutput);
+                  this.cursorRemainder = Math.max(0, this.expectedOutput.getCount() - room);
+                  this.heldBefore = this.countInInventory(this.expectedOutput);
+                  this.pickUp(slot);
                   this.phase = VillagerTradeSession.Inner_StreamUtil.STORED;
                   this.message = "Storing purchase";
                }
@@ -337,7 +337,7 @@ public final class VillagerTradeSession {
          } else {
             if (this.pop > this.tick) {
                if (this.phase == VillagerTradeSession.Inner_StreamUtil.TAKE) {
-                  if (!ItemStack.matches(this.serverCursor, this.init_ItemStack)) {
+                  if (!ItemStack.matches(this.serverCursor, this.expectedOutput)) {
                      return this.finish(VillagerTradeSession.Inner_CachePool.REJECTED, "Purchase was not confirmed");
                   }
 
@@ -351,8 +351,8 @@ public final class VillagerTradeSession {
                } else {
                   boolean cursorMatches = this.cursorRemainder == 0
                      ? this.serverCursor.isEmpty()
-                     : ItemStack.isSameItemSameComponents(this.serverCursor, this.init_ItemStack) && this.serverCursor.getCount() == this.cursorRemainder;
-                  if (!cursorMatches || this.get != this.heldBefore + this.init_ItemStack.getCount() - this.cursorRemainder) {
+                     : ItemStack.isSameItemSameComponents(this.serverCursor, this.expectedOutput) && this.serverCursor.getCount() == this.cursorRemainder;
+                  if (!cursorMatches || this.get != this.heldBefore + this.expectedOutput.getCount() - this.cursorRemainder) {
                      return this.finish(VillagerTradeSession.Inner_CachePool.UNCERTAIN, "Inventory transfer was not confirmed");
                   }
 
@@ -379,7 +379,7 @@ public final class VillagerTradeSession {
       }
    }
 
-   private void init_V_I(int slot) {
+   private void pickUp(int slot) {
       this.tick = this.pop;
       this.waitTicks = 0;
       this.view.pickUpSlot(slot);
@@ -462,10 +462,10 @@ public final class VillagerTradeSession {
    }
 
    public void init_V_Minecraft(Minecraft mc) {
-      this.load_V();
+      this.abort();
    }
 
-   void load_V() {
+   void abort() {
       if (this.view != null
          && (
             !this.view.carried().isEmpty()

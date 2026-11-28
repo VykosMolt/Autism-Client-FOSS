@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class PluginSignatureCatalog {
-   private static final int init_I = 512;
+   private static final int MAX_CHANNELS = 512;
    private static final Pattern CHANNEL_PATTERN = Pattern.compile("(?i)\\b[a-z0-9_.-]{2,64}:[a-z0-9_./-]{1,128}\\b");
    private static final Map<String, PluginSignatureCatalog.ServerChannelState> serverStates = new HashMap<>();
    private static final Map<String, String> NAMESPACE_ALIASES = Map.ofEntries(
@@ -184,7 +184,7 @@ public final class PluginSignatureCatalog {
       Map.entry("essential", "Essential")
    );
    private static final Set<String> IGNORED_NAMESPACES = Set.of("minecraft", "brigadier", "autism", "autismclient", "c");
-   private static final Set<String> load_Set = Set.of(
+   private static final Set<String> CONTROL_CHANNELS = Set.of(
       "minecraft:register", "minecraft:unregister", "register", "unregister", "minecraft:brand", "brand", "bungeecord", "bungeecord:main"
    );
 
@@ -197,7 +197,7 @@ public final class PluginSignatureCatalog {
          return false;
       }
 
-      if (load_Set.contains(normalized)) {
+      if (CONTROL_CHANNELS.contains(normalized)) {
          return true;
       }
 
@@ -289,7 +289,7 @@ public final class PluginSignatureCatalog {
       return state == null ? 0L : state.revision;
    }
 
-   public static synchronized String init_Str(String serverAddress, String brand) {
+   public static synchronized String channelListFor(String serverAddress, String brand) {
       PluginSignatureCatalog.ServerChannelState state = serverStates.get(normalizeAddress(serverAddress));
       if (state == null) {
          return "";

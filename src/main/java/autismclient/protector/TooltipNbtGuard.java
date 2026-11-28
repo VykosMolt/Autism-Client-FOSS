@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 public final class TooltipNbtGuard {
-   static final int init = 512;
+   static final int MAX_LINES = 512;
 
    private TooltipNbtGuard() {
    }

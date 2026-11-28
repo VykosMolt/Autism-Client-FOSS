@@ -20,8 +20,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class FrameEspCatalog {
-   public static final String init_Str = "frame-esp";
-   private static final int load_I = 1024;
+   public static final String MODULE_ID = "frame-esp";
+   private static final int MAX_HITS = 1024;
    public static final List<FrameEspCatalog.FrameTarget> TARGETS = List.of(
       new FrameEspCatalog.FrameTarget("minecraft:elytra", "Elytra", -865100801),
       new FrameEspCatalog.FrameTarget("minecraft:totem_of_undying", "Totem of Undying", -855649729),

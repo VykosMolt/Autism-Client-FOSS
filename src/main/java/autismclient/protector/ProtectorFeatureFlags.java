@@ -16,16 +16,16 @@ public final class ProtectorFeatureFlags {
    private static final boolean load_Z;
    private static final int FLAG_ENABLED = 1;
    private static final int FLAG_FILTER_CHANNELS = 4;
-   private static final int read = 8;
-   private static final int write = 16;
-   private static final int update = 32;
-   private static final int sync = 64;
-   private static final int flush = 128;
-   private static final int close = 256;
+   private static final int FLAG_TRANSLATION_PROTECTION = 8;
+   private static final int FLAG_DISABLE_TELEMETRY = 16;
+   private static final int FLAG_BLOCK_LOCAL_URLS = 32;
+   private static final int FLAG_ISOLATE_PACK_CACHE = 64;
+   private static final int FLAG_STRIP_SERVER_PACKS = 128;
+   private static final int FLAG_CHAT_SIGNING_OFF = 256;
    private static final int open = 512;
    private static final ProtectorFeatureFlags.FlagState EMPTY_STATE = new ProtectorFeatureFlags.FlagState(false, null, 0, 0);
    private static volatile ProtectorFeatureFlags.FlagState cachedState = EMPTY_STATE;
-   private static final int poll = 1024;
+   private static final int MAX_DIRECT_PACKETS = 1024;
    private static final Map<Object, Boolean> init_Map;
 
    private ProtectorFeatureFlags() {

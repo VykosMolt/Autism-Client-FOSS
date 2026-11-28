@@ -30,7 +30,7 @@ public final class ManualInteractionYield {
    private static final int read = 25;
    private static final int write = 2;
    static final int init_I = 8;
-   private static final long init_J = 1500000000L;
+   private static final long COMBAT_WINDOW_NANOS = 1500000000L;
    private static int lastTick = -2147483648;
    private static int graceTicks;
    private static boolean yielding;

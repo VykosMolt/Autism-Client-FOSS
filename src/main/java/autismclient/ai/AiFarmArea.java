@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 
 final class AiFarmArea {
    static final String FARMLAND = "farmland";
-   static final String load = "soul_sand";
+   static final String SOUL_SAND = "soul_sand";
    private static final Set<String> FARMLAND_CROPS = Set.of("minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots");
 
    private AiFarmArea() {

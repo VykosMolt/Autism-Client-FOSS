@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
 public final class MacroStepColorHelper {
-   public static final int init = -11184811;
+   public static final int COMPLETED_COLOR = -11184811;
    public static final int load = -3750202;
 
    private MacroStepColorHelper() {

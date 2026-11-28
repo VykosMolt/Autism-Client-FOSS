@@ -842,7 +842,7 @@ public final class AiDirectOps {
       String kind = "";
       String lastMessage = "";
       String lastData = "{}";
-      long load_J;
+      long unusedLongField;
 
       Inner_DataUtil(String id, AiOperation op, AutoCloseable lease, List<String> resources, Object world, int emergencyKey) {
          this.id = id;

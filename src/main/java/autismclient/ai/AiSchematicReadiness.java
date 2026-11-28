@@ -174,7 +174,7 @@ final class AiSchematicReadiness {
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
          AiBuilder.checkNotCancelled();
-         List<AiSchematicReadiness.StateProblem> problems = states.computeIfAbsent(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()), ignored -> init_List(cell));
+         List<AiSchematicReadiness.StateProblem> problems = states.computeIfAbsent(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()), ignored -> stateProblems(cell));
          issueCount += problems.size();
          if (omitted != null && !problems.isEmpty()) {
             omitted.add(packKey(cell.dx(), cell.dy(), cell.dz()));
@@ -717,7 +717,7 @@ final class AiSchematicReadiness {
       }
    }
 
-   private static List<AiSchematicReadiness.StateProblem> init_List(AiBuilder.CellSpec cell) {
+   private static List<AiSchematicReadiness.StateProblem> stateProblems(AiBuilder.CellSpec cell) {
       ArrayList<AiSchematicReadiness.StateProblem> problems = new ArrayList<>();
 
       for (String gap : AiBuilder.unsupportedProperties(cell)) {

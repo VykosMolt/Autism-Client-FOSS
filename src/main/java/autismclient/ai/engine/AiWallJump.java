@@ -17,23 +17,23 @@ public final class AiWallJump {
    }
 
    static AiJumpSolver.JumpPlan putAt(AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, List<BlockPos> var4) {
-      return putAt(var0, AiPhysics.MotionState.standing(var1.getX() + 0.5, var2, var1.getZ() + 0.5), var1, var4);
+      return planWithDefaults(var0, AiPhysics.MotionState.standing(var1.getX() + 0.5, var2, var1.getZ() + 0.5), var1, var4);
    }
 
-   static AiJumpSolver.JumpPlan putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, List<BlockPos> var3) {
-      return putAt(var0, var1, var2, var3, false, 0.0F / 0.0F, 180.0F);
+   static AiJumpSolver.JumpPlan planWithDefaults(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, List<BlockPos> var3) {
+      return planVariants(var0, var1, var2, var3, false, 0.0F / 0.0F, 180.0F);
    }
 
    static AiJumpSolver.JumpPlan putAt(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, List<BlockPos> var3, float var4, float var5
    ) {
-      return putAt(var0, var1, var2, var3, false, var4, var5);
+      return planVariants(var0, var1, var2, var3, false, var4, var5);
    }
 
    static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_3(
       AiPhysics.PhysicsWorld var0, BlockPos var1, double var2, BlockPos var4, double var5
    ) {
-      AiJumpSolver.JumpPlan var7 = putAt(
+      AiJumpSolver.JumpPlan var7 = planVariants(
          var0, AiPhysics.MotionState.standing(var1.getX() + 0.5, var2, var1.getZ() + 0.5), var1, List.of(var4), true, 0.0F / 0.0F, 180.0F
       );
       if (var7 == null && !(var5 < 0.1)) {
@@ -46,67 +46,67 @@ public final class AiWallJump {
          );
          return !AiJumpSolver.canStandAt(var0, var12.x(), var2, var12.z())
             ? null
-            : putAt(var0, var12, var1, List.of(var4), true, 0.0F / 0.0F, 180.0F);
+            : planVariants(var0, var12, var1, List.of(var4), true, 0.0F / 0.0F, 180.0F);
       } else {
          return var7;
       }
    }
 
-   private static AiJumpSolver.JumpPlan putAt(
+   private static AiJumpSolver.JumpPlan planVariants(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, List<BlockPos> var3, boolean var4, float var5, float var6
    ) {
       if (var4) {
-         AiJumpSolver.JumpPlan var13 = putAt(var0, var1, var2, var3, true, false, false, 0.0F / 0.0F, 180.0F);
-         if (var13 != null && !putAt(var0, var13)) {
-            AiJumpSolver.JumpPlan var14 = putAt(var0, var1, var2, var3, true, true, false, 0.0F / 0.0F, 180.0F);
+         AiJumpSolver.JumpPlan var13 = searchSides(var0, var1, var2, var3, true, false, false, 0.0F / 0.0F, 180.0F);
+         if (var13 != null && !passesPaceChecks(var0, var13)) {
+            AiJumpSolver.JumpPlan var14 = searchSides(var0, var1, var2, var3, true, true, false, 0.0F / 0.0F, 180.0F);
             return var14 != null ? var14 : var13;
          } else {
             return var13;
          }
       } else {
-         AiJumpSolver.JumpPlan var7 = putAt(var0, var1, var2, var3, false, true, false, var5, var6);
+         AiJumpSolver.JumpPlan var7 = searchSides(var0, var1, var2, var3, false, true, false, var5, var6);
          if (var7 != null) {
             return var7;
          }
 
          double var8 = Math.hypot(var1.x() - (var2.getX() + 0.5), var1.z() - (var2.getZ() + 0.5));
          if (var8 <= 0.015) {
-            AiJumpSolver.JumpPlan var15 = putAt(var0, var1, var2, var3, false, false, false, var5, var6);
+            AiJumpSolver.JumpPlan var15 = searchSides(var0, var1, var2, var3, false, false, false, var5, var6);
             if (var15 != null) {
                return var15;
             }
 
-            AiJumpSolver.JumpPlan var17 = putAt(var0, var1, var2, var3, false, true, true, var5, var6);
-            return var17 != null ? var17 : putAt(var0, var1, var2, var3, false, false, true, var5, var6);
+            AiJumpSolver.JumpPlan var17 = searchSides(var0, var1, var2, var3, false, true, true, var5, var6);
+            return var17 != null ? var17 : searchSides(var0, var1, var2, var3, false, false, true, var5, var6);
          } else {
-            AiJumpSolver.JumpPlan var10 = putAt(var0, var1, var2, var3, false, true, true, var5, var6);
+            AiJumpSolver.JumpPlan var10 = searchSides(var0, var1, var2, var3, false, true, true, var5, var6);
             if (var10 != null) {
                return var10;
             }
 
             if (Float.isNaN(var5)) {
-               AiJumpSolver.JumpPlan var11 = putAt_IoUtil_TextState_TokenCore_TaskStat_2(var0, var1, var2, var3, true);
+               AiJumpSolver.JumpPlan var11 = planFromStanding(var0, var1, var2, var3, true);
                if (var11 != null) {
                   return var11;
                }
             }
 
-            AiJumpSolver.JumpPlan var16 = putAt(var0, var1, var2, var3, false, false, false, var5, var6);
+            AiJumpSolver.JumpPlan var16 = searchSides(var0, var1, var2, var3, false, false, false, var5, var6);
             if (var16 != null) {
                return var16;
             } else {
-               AiJumpSolver.JumpPlan var12 = putAt(var0, var1, var2, var3, false, false, true, var5, var6);
+               AiJumpSolver.JumpPlan var12 = searchSides(var0, var1, var2, var3, false, false, true, var5, var6);
                if (var12 != null) {
                   return var12;
                } else {
-                  return Float.isNaN(var5) ? putAt_IoUtil_TextState_TokenCore_TaskStat_2(var0, var1, var2, var3, false) : null;
+                  return Float.isNaN(var5) ? planFromStanding(var0, var1, var2, var3, false) : null;
                }
             }
          }
       }
    }
 
-   private static boolean putAt(AiPhysics.PhysicsWorld var0, AiJumpSolver.JumpPlan var1) {
+   private static boolean passesPaceChecks(AiPhysics.PhysicsWorld var0, AiJumpSolver.JumpPlan var1) {
       if (var1 != null && var1.maneuver() != null) {
          AiPhysics.MotionState var2 = var1.maneuver().start();
 
@@ -125,13 +125,13 @@ public final class AiWallJump {
       }
    }
 
-   private static AiJumpSolver.JumpPlan putAt(
+   private static AiJumpSolver.JumpPlan searchSidesDefault(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, List<BlockPos> var3, boolean var4, boolean var5, boolean var6
    ) {
-      return putAt(var0, var1, var2, var3, var4, var5, var6, 0.0F / 0.0F, 180.0F);
+      return searchSides(var0, var1, var2, var3, var4, var5, var6, 0.0F / 0.0F, 180.0F);
    }
 
-   private static AiJumpSolver.JumpPlan putAt(
+   private static AiJumpSolver.JumpPlan searchSides(
       AiPhysics.PhysicsWorld var0,
       AiPhysics.MotionState var1,
       BlockPos var2,
@@ -156,13 +156,13 @@ public final class AiWallJump {
          for (BlockPos var24 : var3) {
             var22++;
             boolean var25 = var22 == var3.size();
-            var21 = putAt(var0, var1.y(), var20, var21, var24, var22, var25, var4, var5, var6, var22 == 1 ? var7 : 0.0F / 0.0F, var8);
+            var21 = expandCell(var0, var1.y(), var20, var21, var24, var22, var25, var4, var5, var6, var22 == 1 ? var7 : 0.0F / 0.0F, var8);
             if (var21.isEmpty()) {
                break;
             }
 
             if (var25) {
-               AiJumpSolver.JumpPlan var26 = putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var1, (AiWallJump.SearchNode)var21.getFirst(), var24, var14);
+               AiJumpSolver.JumpPlan var26 = toJumpPlan(var0, var1, (AiWallJump.SearchNode)var21.getFirst(), var24, var14);
                if (var15 == null || var26.ticks() < var15.ticks() || var26.ticks() == var15.ticks() && var26.margin() > var15.margin()) {
                   var15 = var26;
                }
@@ -173,7 +173,7 @@ public final class AiWallJump {
       return var15;
    }
 
-   private static List<AiWallJump.SearchNode> putAt(
+   private static List<AiWallJump.SearchNode> expandCell(
       AiPhysics.PhysicsWorld var0,
       double var1,
       AiWallJump.WallFrame var3,
@@ -194,9 +194,9 @@ public final class AiWallJump {
       boolean var18 = var8 && var1 != Math.floor(var1);
 
       for (AiWallJump.SearchNode var20 : var4) {
-         putAt(var0, var1, var3, var20, var15, var9, !Float.isNaN(var11), var10 && var6 == 1, var18, var11, var12);
+         addJumpsWithin(var0, var1, var3, var20, var15, var9, !Float.isNaN(var11), var10 && var6 == 1, var18, var11, var12);
          if (var8) {
-            putAt(var0, var1, var3, var20, var15, var9);
+            expandWallApproach(var0, var1, var3, var20, var15, var9);
          } else if (var6 == 1) {
             float[] var56 = var10
                ? new float[]{-30.0F, -24.0F, -18.0F, -12.0F, -6.0F, 0.0F, 6.0F, 12.0F, 18.0F, 24.0F, 30.0F}
@@ -217,7 +217,7 @@ public final class AiWallJump {
                         break;
                      }
 
-                     putAt(var0, var1, var3, var83, var15, var9, true, false, false, var81, Math.min(30.0F, var12));
+                     addJumpsWithin(var0, var1, var3, var83, var15, var9, true, false, false, var81, Math.min(30.0F, var12));
                   }
                }
             }
@@ -231,11 +231,11 @@ public final class AiWallJump {
                      AiPhysics.MoveInput var35 = new AiPhysics.MoveInput(var26, var34, false, var30, false, var3.yaw());
                      AiWallJump.SearchNode var36 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var20, var35, var9);
                      if (var36 != null && var36.body().onGround()) {
-                        putAt(var0, var1, var3, var36, var15, var9, false, var10, false);
+                        addJumpsAnyYaw(var0, var1, var3, var36, var15, var9, false, var10, false);
                         if (var10) {
                            AiWallJump.SearchNode var37 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var36, var35, var9);
                            if (var37 != null && var37.body().onGround()) {
-                              putAt(var0, var1, var3, var37, var15, var9, false, true, false);
+                              addJumpsAnyYaw(var0, var1, var3, var37, var15, var9, false, true, false);
                            }
                         }
                      }
@@ -269,7 +269,7 @@ public final class AiWallJump {
                      continue;
                   }
                } else {
-                  double var68 = putAt(var3, var13, var65, var9);
+                  double var68 = wallAlignCost(var3, var13, var65, var9);
                   double var73 = var10 && var6 == 1 ? 0.5 : 0.6;
                   if (var3.advance(var65) >= 0.17 && var3.across(var65) >= var73) {
                      var55.add(new AiWallJump.SearchNode(var65, var63.input(), var63.parent(), var68));
@@ -328,7 +328,7 @@ public final class AiWallJump {
                                  + 2.5 * Math.abs(var41 + var3.drift(var38) - 0.812)
                                  - 2.0 * Math.min(var43, 0.3);
                            } else {
-                              var52 = putAt(var3, var13, var38, var9);
+                              var52 = wallAlignCost(var3, var13, var38, var9);
                            }
                         }
 
@@ -349,7 +349,7 @@ public final class AiWallJump {
       return topCandidates(var55, var7 ? 1 : (var10 ? 80 : 40));
    }
 
-   private static void putAt(
+   private static void expandRunUp(
       AiPhysics.PhysicsWorld var0,
       double var1,
       AiWallJump.WallFrame var3,
@@ -382,7 +382,7 @@ public final class AiWallJump {
                         double var35 = 0.18;
                         double var37 = 0.4 * Math.abs(var4 - 1.2 - var29) + 1.8 * Math.abs(var31 - var35) - 1.2 * var33;
                         var13.add(new AiWallJump.SearchNode(var28, var26, var15, var37));
-                        putAt(var0, var1, var3, var27, var7, var9, true);
+                        addJumpsFollowing(var0, var1, var3, var27, var7, var9, true);
                      }
                   }
                }
@@ -393,7 +393,7 @@ public final class AiWallJump {
       }
    }
 
-   private static void putAt(
+   private static void expandWallApproach(
       AiPhysics.PhysicsWorld var0,
       double var1,
       AiWallJump.WallFrame var3,
@@ -420,7 +420,7 @@ public final class AiWallJump {
                         + 1.7 * Math.abs(0.67 - var3.across(var24) - 0.7 * var3.drift(var24))
                         - 0.3 * var25;
                      var11.add(new AiWallJump.SearchNode(var24, var22, var13, var27));
-                     putAt(var0, var1, var3, var23, var5, var6, false, false, var8);
+                     addJumpsAnyYaw(var0, var1, var3, var23, var5, var6, false, false, var8);
                   }
                }
             }
@@ -430,7 +430,7 @@ public final class AiWallJump {
       }
    }
 
-   private static double putAt(AiWallJump.WallFrame var0, double var1, AiPhysics.MotionState var3, boolean var4) {
+   private static double wallAlignCost(AiWallJump.WallFrame var0, double var1, AiPhysics.MotionState var3, boolean var4) {
       double var5 = var0.across(var3);
       double var7 = var4 ? 8.0 * Math.max(0.0, 0.8045 - var5) : 0.0;
       return 1.7 * Math.abs(var0.along(var3) - var1 - 0.14)
@@ -440,7 +440,7 @@ public final class AiWallJump {
          + 0.5 * Math.abs(var0.drift(var3));
    }
 
-   private static void fill(
+   private static void addJumpsPaced(
       AiPhysics.PhysicsWorld var0,
       double var1,
       AiWallJump.WallFrame var3,
@@ -448,10 +448,10 @@ public final class AiWallJump {
       List<AiWallJump.SearchNode> var5,
       boolean var6
    ) {
-      putAt(var0, var1, var3, var4, var5, var6, false, false, false);
+      addJumpsAnyYaw(var0, var1, var3, var4, var5, var6, false, false, false);
    }
 
-   private static void putAt(
+   private static void addJumpsFollowing(
       AiPhysics.PhysicsWorld var0,
       double var1,
       AiWallJump.WallFrame var3,
@@ -460,10 +460,10 @@ public final class AiWallJump {
       boolean var6,
       boolean var7
    ) {
-      putAt(var0, var1, var3, var4, var5, var6, var7, false, false);
+      addJumpsAnyYaw(var0, var1, var3, var4, var5, var6, var7, false, false);
    }
 
-   private static void putAt(
+   private static void addJumpsFine(
       AiPhysics.PhysicsWorld var0,
       double var1,
       AiWallJump.WallFrame var3,
@@ -473,10 +473,10 @@ public final class AiWallJump {
       boolean var7,
       boolean var8
    ) {
-      putAt(var0, var1, var3, var4, var5, var6, var7, var8, false);
+      addJumpsAnyYaw(var0, var1, var3, var4, var5, var6, var7, var8, false);
    }
 
-   private static void putAt(
+   private static void addJumpsAnyYaw(
       AiPhysics.PhysicsWorld var0,
       double var1,
       AiWallJump.WallFrame var3,
@@ -487,10 +487,10 @@ public final class AiWallJump {
       boolean var8,
       boolean var9
    ) {
-      putAt(var0, var1, var3, var4, var5, var6, var7, var8, var9, 0.0F / 0.0F, 30.0F);
+      addJumpsWithin(var0, var1, var3, var4, var5, var6, var7, var8, var9, 0.0F / 0.0F, 30.0F);
    }
 
-   private static void putAt(
+   private static void addJumpsWithin(
       AiPhysics.PhysicsWorld var0,
       double var1,
       AiWallJump.WallFrame var3,
@@ -587,7 +587,7 @@ public final class AiWallJump {
       return var1;
    }
 
-   private static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat_2(
+   private static AiJumpSolver.JumpPlan planFromStanding(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, List<BlockPos> var3, boolean var4
    ) {
       if (var1.onGround() && var1.pose() == 0) {
@@ -713,7 +713,7 @@ public final class AiWallJump {
                }
 
                if (var54 && var53.pose() == 0) {
-                  AiJumpSolver.JumpPlan var56 = putAt(var0, var53, var2, var3, false, var4, var40);
+                  AiJumpSolver.JumpPlan var56 = searchSidesDefault(var0, var53, var2, var3, false, var4, var40);
                   if (var56 != null && var56.maneuver() != null) {
                      var var58 = var56.maneuver().inputs();
                      if (!var58.isEmpty()) {
@@ -807,7 +807,7 @@ public final class AiWallJump {
       }
    }
 
-   private static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat(
+   private static AiJumpSolver.JumpPlan toJumpPlan(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiWallJump.SearchNode var2, BlockPos var3, float var4
    ) {
       ArrayDeque var5 = new ArrayDeque();

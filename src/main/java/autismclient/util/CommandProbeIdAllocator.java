@@ -3,7 +3,7 @@ package autismclient.util;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class CommandProbeIdAllocator {
-   public static final int init_I = 2000000000;
+   public static final int FIRST_ID = 2000000000;
    private static final AtomicInteger NEXT_ID = new AtomicInteger(2000000000);
 
    public static int next() {

@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
 final class AiLavaEscape {
-   static final int init = 16;
+   static final int SEARCH_RADIUS = 16;
    static final int load = 2048;
    static final int read = 600;
 

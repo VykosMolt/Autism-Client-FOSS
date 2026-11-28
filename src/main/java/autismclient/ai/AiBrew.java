@@ -28,7 +28,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 final class AiBrew {
-   private static final int init = 80;
+   private static final int OPEN_TIMEOUT_TICKS = 80;
    private static final int load = 100;
    private static final int read = 40;
    private static final int write = 120;

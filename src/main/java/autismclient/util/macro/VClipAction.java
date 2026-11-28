@@ -17,7 +17,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class VClipAction implements MacroAction {
-   private static final double init_D = 0.5;
+   private static final double SCAN_STEP = 0.5;
    private static final double load = 128.0;
    public VClipAction.ClipMode mode = VClipAction.ClipMode.MANUAL;
    public double deltaY = 0.0;

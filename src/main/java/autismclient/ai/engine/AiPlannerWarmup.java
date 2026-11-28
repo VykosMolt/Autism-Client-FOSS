@@ -31,7 +31,7 @@ public final class AiPlannerWarmup {
    private static void runWarmup() {
       try {
          long var0 = System.nanoTime();
-         AiPathfinder.GridView var2 = putAt_FileStore_TextStor();
+         AiPathfinder.GridView var2 = warmupGrid();
          AiPathfinder.PathOptions var3 = new AiPathfinder.PathOptions(
                false, false, false, true, false, true, AiPathfinder.RouteStrategy.FASTEST, AiPathfinder.ThreatField.NONE
             )
@@ -58,14 +58,14 @@ public final class AiPlannerWarmup {
             }
          }
 
-         int var12 = putAt(var2, var0 + 12000000000L);
+         int var12 = warmJumpSolver(var2, var0 + 12000000000L);
          AiNavDebug.log("planner warm-up " + (System.nanoTime() - var0) / 1000000L + " ms, " + var12 + " jumps");
       } catch (Throwable var11) {
          AiNavDebug.log("planner warm-up skipped: " + var11);
       }
    }
 
-   static int putAt(AiPathfinder.GridView var0, long var1) {
+   static int warmJumpSolver(AiPathfinder.GridView var0, long var1) {
       int var3 = 0;
 
       for (int var4 = 0; var4 < 3; var4++) {
@@ -73,7 +73,7 @@ public final class AiPlannerWarmup {
 
          for (byte var6 = 0; var6 <= 24; var6 += 3) {
             for (byte var7 = 0; var7 <= 24; var7 += 3) {
-               BlockPos var8 = putAt(var0, var6, var7);
+               BlockPos var8 = standPosAt(var0, var6, var7);
 
                for (int[] var12 : OFFSETS) {
                   int var13 = var6 + var12[0];
@@ -83,7 +83,7 @@ public final class AiPlannerWarmup {
                         return var3;
                      }
 
-                     BlockPos var15 = putAt(var0, var13, var14);
+                     BlockPos var15 = standPosAt(var0, var13, var14);
                      AiJumpSolver.solve(var5, var8, var8.getY(), var15, var15.getY(), (var3 & 1) == 0 ? 0.0 : 0.2, (var3 & 2) == 0, false, true, false, false);
                      var3++;
                   }
@@ -95,7 +95,7 @@ public final class AiPlannerWarmup {
       return var3;
    }
 
-   private static BlockPos putAt(AiPathfinder.GridView var0, int var1, int var2) {
+   private static BlockPos standPosAt(AiPathfinder.GridView var0, int var1, int var2) {
       for (int var3 = 60; var3 <= 66; var3++) {
          if (!var0.probe(var1, var3, var2).passable()) {
             return new BlockPos(var1, var3 + 1, var2);
@@ -105,7 +105,7 @@ public final class AiPlannerWarmup {
       return new BlockPos(var1, 64, var2);
    }
 
-   static AiPathfinder.GridView putAt_FileStore_TextStor() {
+   static AiPathfinder.GridView warmupGrid() {
       Long2ObjectOpenHashMap var0 = new Long2ObjectOpenHashMap();
       AiPathfinder.CellInfo var1 = AiPathfinder.CellInfo.fullBlock(1.0 / 0.0);
 

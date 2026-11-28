@@ -13,8 +13,8 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 public final class PromptDialogScreen extends VirtualScaledScreen {
-   private static final int init_I = 17;
-   private static final int load_I = 5;
+   private static final int HEADER_HEIGHT = 17;
+   private static final int CHOICE_GAP = 5;
    private static final int read = 7;
    private static final int write = 16;
    private final List<String> lines;

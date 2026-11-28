@@ -19,7 +19,7 @@ public class MsdfEditBox extends EditBox {
    private boolean load;
    private int cursor = -1;
    private String lastValue = "";
-   private long init_J;
+   private long blinkResetMs;
 
    public MsdfEditBox(Font font, int width, int height, Component narration) {
       super(font, width, height, narration);
@@ -45,7 +45,7 @@ public class MsdfEditBox extends EditBox {
       return super.preeditUpdated(event);
    }
 
-   private boolean init_Z() {
+   private boolean canUseMsdf() {
       AutismEditBoxAccessor acc = (AutismEditBoxAccessor)this;
       String value = this.getValue();
       return !this.load
@@ -61,7 +61,7 @@ public class MsdfEditBox extends EditBox {
       );
    }
 
-   private void init_V() {
+   private void updateScroll() {
       String value = this.getValue();
       int cursor = Utf16TextCursor.clampIndex(value, this.getCursorPosition());
       float available = Math.max(1, this.getInnerWidth() - 1);
@@ -81,7 +81,7 @@ public class MsdfEditBox extends EditBox {
    }
 
    private int cursorIndexAt(double mouseX) {
-      this.init_V();
+      this.updateScroll();
       String value = this.getValue();
       float target = (float)mouseX - this.textStartX() + this.caret;
       float previousWidth = 0.0F;
@@ -102,7 +102,7 @@ public class MsdfEditBox extends EditBox {
 
    @Override
    public void onClick(MouseButtonEvent event, boolean doubleClick) {
-      if (!this.init_Z()) {
+      if (!this.canUseMsdf()) {
          super.onClick(event, doubleClick);
       } else {
          int clicked = this.cursorIndexAt(event.x());
@@ -116,23 +116,23 @@ public class MsdfEditBox extends EditBox {
             this.moveCursorTo(clicked, event.hasShiftDown());
          }
 
-         this.init_J = Util.getMillis();
+         this.blinkResetMs = Util.getMillis();
       }
    }
 
    @Override
    protected void onDrag(MouseButtonEvent event, double dx, double dy) {
-      if (!this.init_Z()) {
+      if (!this.canUseMsdf()) {
          super.onDrag(event, dx, dy);
       } else {
          this.moveCursorTo(this.cursorIndexAt(event.x()), true);
-         this.init_J = Util.getMillis();
+         this.blinkResetMs = Util.getMillis();
       }
    }
 
    @Override
    public int getScreenX(int charIndex) {
-      if (!this.init_Z()) {
+      if (!this.canUseMsdf()) {
          return super.getScreenX(charIndex);
       }
 
@@ -140,7 +140,7 @@ public class MsdfEditBox extends EditBox {
          return this.getX();
       }
 
-      this.init_V();
+      this.updateScroll();
       int end = Utf16TextCursor.clampIndex(this.getValue(), charIndex);
       return Math.round(this.textStartX() - this.caret + this.textWidth(this.getValue().substring(0, end)));
    }
@@ -149,11 +149,11 @@ public class MsdfEditBox extends EditBox {
    public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
       if (this.isVisible()) {
          AutismEditBoxAccessor acc = (AutismEditBoxAccessor)this;
-         if (!this.init_Z()) {
+         if (!this.canUseMsdf()) {
             super.extractWidgetRenderState(graphics, mouseX, mouseY, delta);
          } else {
             String value = this.getValue();
-            this.init_V();
+            this.updateScroll();
             autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, MsdfEditBox.FontSource.font(), mouseX, mouseY);
             autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
             autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.BODY;
@@ -173,7 +173,7 @@ public class MsdfEditBox extends EditBox {
             if (cursor != this.cursor || !value.equals(this.lastValue)) {
                this.cursor = cursor;
                this.lastValue = value;
-               this.init_J = Util.getMillis();
+               this.blinkResetMs = Util.getMillis();
             }
 
             int textColor = acc.autism$isEditable() ? colors.textPrimary : colors.textMuted;
@@ -205,7 +205,7 @@ public class MsdfEditBox extends EditBox {
                   context.init_PoolEntry().draw(graphics, acc.autism$suggestion(), Math.round(cursorX), Math.round(textY), colors.textMuted);
                }
 
-               long blinkStart = Math.max(this.init_J, acc.autism$focusedTime());
+               long blinkStart = Math.max(this.blinkResetMs, acc.autism$focusedTime());
                if (this.isFocused() && (Util.getMillis() - blinkStart) / 500L % 2L == 0L) {
                   int caret = Math.max(clipLeft, Math.min(clipRight - 1, Math.round(cursorX)));
                   graphics.fill(caret, selectionTop, caret + 1, selectionBottom, textColor | 0xFF000000);

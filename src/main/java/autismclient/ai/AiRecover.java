@@ -42,7 +42,7 @@ final class AiRecover {
             AiOperation guardOp;
             String guardReason = "";
             int guardInterrupts;
-            int load_I;
+            int settleTicks;
             boolean atGrave;
             boolean cancelled;
             boolean read;
@@ -125,11 +125,11 @@ final class AiRecover {
                      }
 
                      if (nearest != null) {
-                        this.load_I = 0;
+                        this.settleTicks = 0;
                         return this.running("Standing on the drops");
                      }
 
-                     if (++this.load_I < 20) {
+                     if (++this.settleTicks < 20) {
                         return this.running("Waiting for pickups to settle");
                      }
 
@@ -319,7 +319,7 @@ final class AiRecover {
       );
    }
 
-   static BlockPos init_BlockPos() {
+   static BlockPos lastDeathPos() {
       AiDeathLog.DeathRecord death = AiDeathLog.lastDeath();
       return death == null ? null : death.position();
    }

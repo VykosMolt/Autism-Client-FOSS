@@ -17,16 +17,16 @@ import net.minecraft.world.phys.Vec3;
 
 public final class AntiKnockbackModule extends Module {
    private final KnockbackCounterStrafe counterStrafe = new KnockbackCounterStrafe();
-   private int init_I = -2147483648;
-   private int load_I = -2147483648;
+   private int damageTick = -2147483648;
+   private int motionTick = -2147483648;
    private Vec3 preHitMotion = Vec3.ZERO;
-   private int read_I = -2147483648;
-   private boolean init_Z;
+   private int counterStartTick = -2147483648;
+   private boolean actOnHit;
    private boolean counterMovement;
-   private boolean read_Z;
-   private long init_J;
-   private long load_J;
-   private long read_J;
+   private boolean awaitingMotion;
+   private long hitsHandled;
+   private long jumpResets;
+   private long brakesApplied;
 
    public AntiKnockbackModule() {
       super("anti-knockback", "AntiKnockback", ae.init_ae, "Jump reset and briefly counter enemy knockback");
@@ -79,24 +79,24 @@ public final class AntiKnockbackModule extends Module {
          Entity attacker = source.getEntity();
          boolean projectile = source.is(DamageTypes.ARROW) || source.is(DamageTypes.TRIDENT);
          if (attacker != MC.player && (attacker instanceof LivingEntity || projectile)) {
-            m.init_I = m.clientTick();
+            m.damageTick = m.clientTick();
             boolean reset = "JumpReset".equals(m.choice("mode"));
-            m.init_Z = !reset || ThreadLocalRandom.current().nextInt(100) < m.integer("chance");
+            m.actOnHit = !reset || ThreadLocalRandom.current().nextInt(100) < m.integer("chance");
             m.counterMovement = !reset || m.bool("counter-movement");
-            boolean motionReady = m.isRecent(m.load_I);
-            m.read_Z = reset && projectile && !motionReady;
+            boolean motionReady = m.isRecent(m.motionTick);
+            m.awaitingMotion = reset && projectile && !motionReady;
             m.counterStrafe.reset();
-            if (m.init_Z) {
-               if (!m.read_Z) {
+            if (m.actOnHit) {
+               if (!m.awaitingMotion) {
                   m.counterStrafe.start(motionReady ? m.preHitMotion : Vec3.ZERO, reset, motionReady && m.counterMovement, m.integer("counter-ticks"));
-                  m.read_I = m.clientTick();
+                  m.counterStartTick = m.clientTick();
                }
 
-               m.init_J++;
+               m.hitsHandled++;
             }
 
-            if (m.isRecent(m.load_I)) {
-               m.init_I = m.load_I = -2147483648;
+            if (m.isRecent(m.motionTick)) {
+               m.damageTick = m.motionTick = -2147483648;
             }
          }
       }
@@ -105,21 +105,21 @@ public final class AntiKnockbackModule extends Module {
    public static void init_V_I_7(int entityId) {
       AntiKnockbackModule m = activeInstance();
       if (m != null && m.canAct() && entityId == MC.player.getId()) {
-         m.load_I = m.clientTick();
+         m.motionTick = m.clientTick();
          m.preHitMotion = MC.player.getDeltaMovement();
-         if (m.isRecent(m.init_I)) {
-            if (m.init_Z) {
-               if (m.read_Z) {
+         if (m.isRecent(m.damageTick)) {
+            if (m.actOnHit) {
+               if (m.awaitingMotion) {
                   m.counterStrafe.start(m.preHitMotion, true, m.counterMovement, m.integer("counter-ticks"));
                } else {
                   m.counterStrafe.start(m.preHitMotion, m.counterMovement, m.integer("counter-ticks"));
                }
 
-               m.read_I = m.clientTick();
+               m.counterStartTick = m.clientTick();
             }
 
-            m.read_Z = false;
-            m.init_I = m.load_I = -2147483648;
+            m.awaitingMotion = false;
+            m.damageTick = m.motionTick = -2147483648;
          }
       }
    }
@@ -136,29 +136,29 @@ public final class AntiKnockbackModule extends Module {
       }
 
       if (m.canAct() && !ClutchModule.read_Z_20() && !DangerModule.sync_Z_12() && !ScaffoldModule.write_Z_5() && !ScaffoldModule.update_Z_5() && !AutoTotemModule.init_Z_6() && !AutoArmorModule.init_Z_20()) {
-         int age = m.clientTick() - m.read_I;
-         if (m.read_I != -2147483648 && age >= 0 && age <= 6) {
+         int age = m.clientTick() - m.counterStartTick;
+         if (m.counterStartTick != -2147483648 && age >= 0 && age <= 6) {
             boolean ground = MC.player.onGround() && ((AutismLivingEntityAccessor)MC.player).autism$getNoJumpDelay() == 0;
             boolean braking = m.counterStrafe.ticksLeft() > 0;
             Input result = m.counterStrafe.apply(original, MC.player.getDeltaMovement(), SilentMovementCoordinator.getMovementYaw(MC.player), ground);
             if (result.jump() && !original.jump()) {
-               m.load_J++;
+               m.jumpResets++;
             }
 
             if (braking && result != original) {
-               m.read_J++;
+               m.brakesApplied++;
             }
 
             return result;
          } else {
             m.counterStrafe.reset();
-            m.read_I = -2147483648;
-            if (!m.isRecent(m.init_I)) {
-               m.init_I = -2147483648;
+            m.counterStartTick = -2147483648;
+            if (!m.isRecent(m.damageTick)) {
+               m.damageTick = -2147483648;
             }
 
-            if (!m.isRecent(m.load_I)) {
-               m.load_I = -2147483648;
+            if (!m.isRecent(m.motionTick)) {
+               m.motionTick = -2147483648;
             }
 
             return original;
@@ -171,8 +171,8 @@ public final class AntiKnockbackModule extends Module {
 
    private void resetState() {
       this.counterStrafe.reset();
-      this.init_I = this.load_I = this.read_I = -2147483648;
-      this.init_Z = this.counterMovement = this.read_Z = false;
+      this.damageTick = this.motionTick = this.counterStartTick = -2147483648;
+      this.actOnHit = this.counterMovement = this.awaitingMotion = false;
    }
 
    public static void init_V_16() {
@@ -182,22 +182,22 @@ public final class AntiKnockbackModule extends Module {
       }
    }
 
-   public long init_J_4() {
-      return this.init_J;
+   public long handledHitCount() {
+      return this.hitsHandled;
    }
 
-   public long load_J() {
-      return this.load_J;
+   public long jumpResetCount() {
+      return this.jumpResets;
    }
 
    public long read() {
-      return this.read_J;
+      return this.brakesApplied;
    }
 
    @Override
    public void onEnable() {
       this.resetState();
-      this.init_J = this.load_J = this.read_J = 0L;
+      this.hitsHandled = this.jumpResets = this.brakesApplied = 0L;
    }
 
    @Override

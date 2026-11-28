@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class AiGoal {
    static final long init_J = 1500000000L;
-   static final long load = 3000000000L;
+   static final long LABEL_STABLE_NANOS = 3000000000L;
    private static final Map<Object, AiGoal.GoalEntry> goals = new ConcurrentHashMap<>();
    private static final Object VIS_OWNER = new Object();
    private static final AiGoal.StableLabel LABEL = new AiGoal.StableLabel();

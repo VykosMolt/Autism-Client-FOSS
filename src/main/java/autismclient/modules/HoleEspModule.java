@@ -16,17 +16,17 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class HoleEspModule extends Module implements autismclient.util.PvpHoleScanner.ScanSubscriber {
-   private static final String init_Str = "Box";
-   private static final String load_Str = "GlowingPlane";
-   private static final double init_D = 0.19607843137254902;
-   private static final double load_D = 0.39215686274509803;
-   private static final float init_F = 1.5F;
+   private static final String MODE_BOX = "Box";
+   private static final String MODE_GLOWING_PLANE = "GlowingPlane";
+   private static final double FILL_ALPHA = 0.19607843137254902;
+   private static final double OUTLINE_ALPHA = 0.39215686274509803;
+   private static final float LINE_WIDTH = 1.5F;
    private static final double read_D = 0.002;
    private static final double write_D = 0.002;
-   private static volatile boolean init_Z;
+   private static volatile boolean renderHookRegistered;
    private static HoleEspModule cachedInstance;
    private int settingsRevision = -1;
-   private boolean load_Z = true;
+   private boolean glowingPlane = true;
    private boolean fill = true;
    private boolean outline = true;
    private int horizontalDistance = 32;
@@ -126,7 +126,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       int revision = al.init_I();
       if (revision != this.settingsRevision) {
          this.settingsRevision = revision;
-         this.load_Z = !"Box".equals(this.choice("mode"));
+         this.glowingPlane = !"Box".equals(this.choice("mode"));
          this.fill = this.bool("fill");
          this.outline = this.bool("outline");
          this.horizontalDistance = this.integer("horizontal-distance");
@@ -151,8 +151,8 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
    }
 
    private static synchronized void ensureRenderHook() {
-      if (!init_Z) {
-         init_Z = true;
+      if (!renderHookRegistered) {
+         renderHookRegistered = true;
          LevelRenderEvents.COLLECT_SUBMITS
             .register(
                context -> {
@@ -225,7 +225,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
             int color = scaleAlpha(this.colorFor(hole.type()), 0.19607843137254902 * fade);
             if (color != 0) {
                AABB box = hole.box().move(-camera.x, -camera.y, -camera.z);
-               if (this.load_Z) {
+               if (this.glowingPlane) {
                   double floorY = box.minY + 0.002;
                   drawFlatQuad(pose, buffer, box.minX, box.maxX, box.minZ, box.maxZ, floorY, color);
                   if (this.glowHeight > 0.0) {
@@ -256,7 +256,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
             int color = scaleAlpha(this.colorFor(hole.type()), 0.39215686274509803 * fade);
             if (color != 0) {
                AABB box = hole.box().move(-camera.x, -camera.y, -camera.z);
-               if (this.load_Z) {
+               if (this.glowingPlane) {
                   drawOutlineAt(pose, buffer, box, box.minY + 0.002, color);
                } else {
                   drawBoxEdges(pose, buffer, box.inflate(0.002), color);

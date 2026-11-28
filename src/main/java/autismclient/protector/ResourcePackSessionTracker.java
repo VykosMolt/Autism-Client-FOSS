@@ -24,8 +24,8 @@ import net.minecraft.network.protocol.common.ServerboundResourcePackPacket;
 import net.minecraft.network.protocol.common.ServerboundResourcePackPacket.Action;
 
 public final class ResourcePackSessionTracker {
-   static final int init_I = 32;
-   static final int load_I = 64;
+   static final int MAX_PENDING_PACKS = 32;
+   static final int MAX_TERMINAL_PACKS = 64;
    private static final Object LOCK = new Object();
    private static final Map<ConnectionPrivacyRegistry.ConnectionSession, ResourcePackSessionTracker.PackSession> sessionsByContext = new IdentityHashMap<>();
    private static final Map<Object, ResourcePackSessionTracker.PackSession> sessionsBySource = new IdentityHashMap<>();
@@ -47,9 +47,9 @@ public final class ResourcePackSessionTracker {
       }
    };
    private static long nextSessionId;
-   private static boolean init_Z;
-   private static boolean load_Z;
-   private static boolean read_Z;
+   private static boolean drainRunning;
+   private static boolean drainRequestedAgain;
+   private static boolean drainAgainIncludesPrimary;
    private static boolean write;
    private static BiConsumer<ConnectionPrivacyRegistry.ConnectionSession, ServerboundResourcePackPacket> responseOutput;
    private static Executor drainExecutor = DEFAULT_DRAIN_EXECUTOR;
@@ -68,7 +68,7 @@ public final class ResourcePackSessionTracker {
       synchronized (LOCK) {
          Object resolvedManager = manager != null ? manager : context.serverPackManager();
          session = sessionsByContext.get(context);
-         if (session != null && session.load_Z && isSameSession(session, source, resolvedManager)) {
+         if (session != null && session.active && isSameSession(session, source, resolvedManager)) {
             if (session.source == null && source != null) {
                ResourcePackSessionTracker.PackSession sourceOwner = sessionsBySource.get(source);
                if (sourceOwner != null && sourceOwner != session) {
@@ -134,7 +134,7 @@ public final class ResourcePackSessionTracker {
 
       synchronized (LOCK) {
          ResourcePackSessionTracker.PackSession session = sessionsByContext.get(context);
-         return session != null && session.load_Z ? session : null;
+         return session != null && session.active ? session : null;
       }
    }
 
@@ -145,15 +145,15 @@ public final class ResourcePackSessionTracker {
 
       synchronized (LOCK) {
          ResourcePackSessionTracker.PackSession session = sessionsBySource.get(source);
-         return session != null && session.load_Z ? session : null;
+         return session != null && session.active ? session : null;
       }
    }
 
    public static boolean isActive(ResourcePackSessionTracker.PackSession session) {
-      if (session != null && session.load_Z) {
+      if (session != null && session.active) {
          synchronized (LOCK) {
             ConnectionPrivacyRegistry.ConnectionSession context = session.context;
-            return session.load_Z
+            return session.active
                && sessionsByContext.get(context) == session
                && ConnectionPrivacyRegistry.isActive(context)
                && session.lifecycleId == context.lifecycleId()
@@ -185,7 +185,7 @@ public final class ResourcePackSessionTracker {
       }
 
       synchronized (LOCK) {
-         return session.init_Z;
+         return session.hasFilteredPack;
       }
    }
 
@@ -210,7 +210,7 @@ public final class ResourcePackSessionTracker {
             session.revision++;
             generation = ++session.generationCounter;
             if (policy != ResourcePackSessionTracker.PackPolicy.FULL) {
-               session.init_Z = true;
+               session.hasFilteredPack = true;
             }
 
             ResourcePackSessionTracker.PackEntry push = new ResourcePackSessionTracker.PackEntry(packId, generation, policy);
@@ -300,7 +300,7 @@ public final class ResourcePackSessionTracker {
    public static boolean init_Z(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null && packId != null) {
          synchronized (LOCK) {
-            return session.init_Z;
+            return session.hasFilteredPack;
          }
       } else {
          return false;
@@ -314,7 +314,7 @@ public final class ResourcePackSessionTracker {
          synchronized (LOCK) {
             ResourcePackSessionTracker.PackEntry push = session.packs.get(packId);
             if (push == null) {
-               return session.init_Z ? -1L : 0L;
+               return session.hasFilteredPack ? -1L : 0L;
             }
 
             if (push.policy == ResourcePackSessionTracker.PackPolicy.FULL) {
@@ -325,9 +325,9 @@ public final class ResourcePackSessionTracker {
                return -1L;
             }
 
-            if (!push.load_Z) {
-               push.load_Z = true;
-               push.read_J++;
+            if (!push.downloadStarted) {
+               push.downloadStarted = true;
+               push.stateRevision++;
                progress = push.downloadFailed;
             }
 
@@ -335,7 +335,7 @@ public final class ResourcePackSessionTracker {
          }
 
          if (progress) {
-            write_V(session);
+            requestSessionDrain(session);
          }
 
          return generation;
@@ -360,21 +360,21 @@ public final class ResourcePackSessionTracker {
             push.feedback = vanilla;
             if (!push.discarded && !push.push) {
                if (update == Update.ACCEPTED) {
-                  if (!push.init_Z && push.policy != ResourcePackSessionTracker.PackPolicy.DECLINE) {
-                     push.init_Z = true;
-                     push.read_J++;
+                  if (!push.accepted && push.policy != ResourcePackSessionTracker.PackPolicy.DECLINE) {
+                     push.accepted = true;
+                     push.stateRevision++;
                      progress = true;
                   }
-               } else if (update == Update.DOWNLOADED && !push.read_Z && !push.downloadFailed && push.init_Z && push.load_Z) {
-                  push.read_Z = true;
-                  push.read_J++;
+               } else if (update == Update.DOWNLOADED && !push.downloaded && !push.downloadFailed && push.accepted && push.downloadStarted) {
+                  push.downloaded = true;
+                  push.stateRevision++;
                   progress = true;
                }
             }
          }
 
          if (progress) {
-            write_V(session);
+            requestSessionDrain(session);
          }
 
          return true;
@@ -396,38 +396,38 @@ public final class ResourcePackSessionTracker {
             if (!push.discarded && !push.push) {
                switch (result) {
                   case APPLIED:
-                     if (!push.applied && push.read_Z && !push.activationFailed && !push.downloadFailed) {
+                     if (!push.applied && push.downloaded && !push.activationFailed && !push.downloadFailed) {
                         push.applied = true;
-                        push.read_J++;
+                        push.stateRevision++;
                         progress = true;
                      }
                      break;
                   case DOWNLOAD_FAILED:
-                     if (!push.downloadFailed && !push.read_Z && !push.activationFailed) {
+                     if (!push.downloadFailed && !push.downloaded && !push.activationFailed) {
                         push.downloadFailed = true;
-                        push.read_J++;
+                        push.stateRevision++;
                         progress = true;
                      }
                      break;
                   case ACTIVATION_FAILED:
                      if (!push.activationFailed && !push.applied && !push.downloadFailed) {
                         push.activationFailed = true;
-                        push.read_J++;
+                        push.stateRevision++;
                         progress = true;
                      }
                      break;
                   case DECLINED:
                      if (!push.declined) {
                         push.declined = true;
-                        push.read_J++;
+                        push.stateRevision++;
                         progress = true;
                      }
                      break;
                   case DISCARDED:
                      if (!push.discarded) {
                         push.discarded = true;
-                        push.load_J++;
-                        push.read_J++;
+                        push.discardEpoch++;
+                        push.stateRevision++;
                         progress = true;
                      }
                }
@@ -436,7 +436,7 @@ public final class ResourcePackSessionTracker {
 
          IsolatedPackDownloader.init_V(session, packId);
          if (progress) {
-            write_V(session);
+            requestSessionDrain(session);
          }
 
          return true;
@@ -445,7 +445,7 @@ public final class ResourcePackSessionTracker {
       }
    }
 
-   public static void init_V() {
+   public static void drainNow() {
       requestDrain(true);
    }
 
@@ -462,22 +462,22 @@ public final class ResourcePackSessionTracker {
          write = false;
       }
 
-      init_V();
+      drainNow();
    }
 
-   private static void write_V(ResourcePackSessionTracker.PackSession session) {
+   private static void requestSessionDrain(ResourcePackSessionTracker.PackSession session) {
       requestDrain(!session.context.isMultiConnection());
    }
 
    private static void requestDrain(boolean includePrimary) {
       synchronized (LOCK) {
-         if (init_Z) {
-            load_Z = true;
-            read_Z |= includePrimary;
+         if (drainRunning) {
+            drainRequestedAgain = true;
+            drainAgainIncludesPrimary |= includePrimary;
             return;
          }
 
-         init_Z = true;
+         drainRunning = true;
       }
 
       dispatchDrain(includePrimary);
@@ -504,7 +504,7 @@ public final class ResourcePackSessionTracker {
          }
       } catch (Throwable rejected) {
          synchronized (LOCK) {
-            init_Z = false;
+            drainRunning = false;
             write = true;
          }
       }
@@ -512,9 +512,9 @@ public final class ResourcePackSessionTracker {
 
    private static void resetDrainFlags() {
       synchronized (LOCK) {
-         init_Z = false;
-         load_Z = false;
-         read_Z = false;
+         drainRunning = false;
+         drainRequestedAgain = false;
+         drainAgainIncludesPrimary = false;
       }
    }
 
@@ -525,11 +525,11 @@ public final class ResourcePackSessionTracker {
          drainResponses(includePrimary);
       } finally {
          synchronized (LOCK) {
-            init_Z = false;
-            followUp = load_Z;
-            followUpPrimary = read_Z;
-            load_Z = false;
-            read_Z = false;
+            drainRunning = false;
+            followUp = drainRequestedAgain;
+            followUpPrimary = drainAgainIncludesPrimary;
+            drainRequestedAgain = false;
+            drainAgainIncludesPrimary = false;
          }
       }
 
@@ -548,7 +548,7 @@ public final class ResourcePackSessionTracker {
                   if (action != null) {
                      push.pendingAction = action;
                      sends.add(
-                        new ResourcePackSessionTracker.ResponseEvent(session, push.id, push.generation, action, push.feedback, push.load_J, push.read_J)
+                        new ResourcePackSessionTracker.ResponseEvent(session, push.id, push.generation, action, push.feedback, push.discardEpoch, push.stateRevision)
                      );
                   }
                }
@@ -587,7 +587,7 @@ public final class ResourcePackSessionTracker {
             }
 
             recordSentAction(send.session, push, send.action);
-            if (push.read_J != send.read) {
+            if (push.stateRevision != send.read) {
                return null;
             }
 
@@ -598,7 +598,7 @@ public final class ResourcePackSessionTracker {
 
             push.pendingAction = next;
             return new ResourcePackSessionTracker.ResponseEvent(
-               send.session, push.id, push.generation, next, push.feedback, push.load_J, push.read_J
+               send.session, push.id, push.generation, next, push.feedback, push.discardEpoch, push.stateRevision
             );
          } else {
             return null;
@@ -652,7 +652,7 @@ public final class ResourcePackSessionTracker {
             return false;
          }
 
-         if (push.discarded && send.action != Action.DISCARDED && send.load != push.load_J) {
+         if (push.discarded && send.action != Action.DISCARDED && send.load != push.discardEpoch) {
             return false;
          }
 
@@ -691,18 +691,18 @@ public final class ResourcePackSessionTracker {
       }
 
       if (!push.acceptedSent) {
-         if (push.init_Z) {
+         if (push.accepted) {
             return Action.ACCEPTED;
          } else {
             return push.discarded ? Action.DISCARDED : null;
          }
       } else {
-         if (push.downloadFailed && push.load_Z) {
+         if (push.downloadFailed && push.downloadStarted) {
             return Action.FAILED_DOWNLOAD;
          }
 
          if (!push.downloadedSent) {
-            if (push.read_Z) {
+            if (push.downloaded) {
                return Action.DOWNLOADED;
             } else {
                return push.discarded ? Action.DISCARDED : null;
@@ -799,11 +799,11 @@ public final class ResourcePackSessionTracker {
    public static void init(ConnectionPrivacyRegistry.ConnectionSession context, UUID packId) {
       ResourcePackSessionTracker.PackSession session = sessionFor(context);
       if (session != null) {
-         init_V(session, packId);
+         removePack(session, packId);
       }
    }
 
-   public static void init_V(ResourcePackSessionTracker.PackSession session, UUID packId) {
+   public static void removePack(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null) {
          List<ResourcePackSessionTracker.PendingWait> waits;
          synchronized (LOCK) {
@@ -838,11 +838,11 @@ public final class ResourcePackSessionTracker {
          Runnable handler;
          List<ResourcePackSessionTracker.PendingWait> waits;
          synchronized (LOCK) {
-            if (!session.load_Z) {
+            if (!session.active) {
                return;
             }
 
-            session.load_Z = false;
+            session.active = false;
             sessionsByContext.remove(session.context, session);
             if (session.source != null) {
                sessionsBySource.remove(session.source, session);
@@ -930,9 +930,9 @@ public final class ResourcePackSessionTracker {
       Supplier<Executor> gameThread
    ) {
       synchronized (LOCK) {
-         init_Z = false;
-         load_Z = false;
-         read_Z = false;
+         drainRunning = false;
+         drainRequestedAgain = false;
+         drainAgainIncludesPrimary = false;
          write = false;
          responseOutput = output;
          drainExecutor = drains;
@@ -942,9 +942,9 @@ public final class ResourcePackSessionTracker {
 
    static void reset() {
       synchronized (LOCK) {
-         init_Z = false;
-         load_Z = false;
-         read_Z = false;
+         drainRunning = false;
+         drainRequestedAgain = false;
+         drainAgainIncludesPrimary = false;
          write = false;
          responseOutput = null;
          drainExecutor = DEFAULT_DRAIN_EXECUTOR;
@@ -967,8 +967,8 @@ public final class ResourcePackSessionTracker {
       private Object source;
       private Object manager;
       private Runnable disconnectHandler;
-      private boolean init_Z;
-      private boolean load_Z = true;
+      private boolean hasFilteredPack;
+      private boolean active = true;
 
       private PackSession(long id, ConnectionPrivacyRegistry.ConnectionSession context, Object source, Object manager, Runnable disconnectHandler) {
          this.id = id;
@@ -1032,16 +1032,16 @@ public final class ResourcePackSessionTracker {
       private final long generation;
       private final ResourcePackSessionTracker.PackPolicy policy;
       private PackLoadFeedback feedback;
-      private boolean init_Z;
-      private boolean load_Z;
-      private boolean read_Z;
+      private boolean accepted;
+      private boolean downloadStarted;
+      private boolean downloaded;
       private boolean applied;
       private boolean downloadFailed;
       private boolean activationFailed;
       private boolean declined;
       private boolean discarded;
-      private long load_J;
-      private long read_J;
+      private long discardEpoch;
+      private long stateRevision;
       private boolean acceptedSent;
       private boolean downloadedSent;
       private boolean push;

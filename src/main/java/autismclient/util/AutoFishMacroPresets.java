@@ -5,8 +5,8 @@ import autismclient.util.macro.RaceEligibilityChecker;
 import java.util.Locale;
 
 public final class AutoFishMacroPresets {
-   public static final String init = "AutoFish - Free Slots Stop";
-   public static final String load = "AutoFish - Durability Stop";
+   public static final String FREE_SLOTS_STOP_NAME = "AutoFish - Free Slots Stop";
+   public static final String DURABILITY_STOP_NAME = "AutoFish - Durability Stop";
    public static final String read = "AutoFish - Custom Stop";
 
    private AutoFishMacroPresets() {

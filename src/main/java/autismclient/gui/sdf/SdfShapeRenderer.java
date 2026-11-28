@@ -25,22 +25,22 @@ import org.joml.Matrix3x2f;
 import org.lwjgl.system.MemoryUtil;
 
 public final class SdfShapeRenderer {
-   public static final int init_I = 8;
-   private static final int load_I = 64;
-   private static final int read_I = 12;
+   public static final int FLOATS_PER_QUAD = 8;
+   private static final int TILE_SIZE = 64;
+   private static final int TILE_MARGIN = 12;
    private static final int write = 20;
    private static final int[] TILE_RADII = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
    private static final int update = 64 * TILE_RADII.length;
    private static final int sync = 128;
    private static final Identifier ATLAS_ID = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_shapes");
    private static volatile SdfShapeRenderer.ShapeAtlas atlasInstance;
-   private static volatile boolean init_Z;
+   private static volatile boolean atlasFailed;
    private static final int flush = 512;
    private static final int close = 10;
    private static final LinkedHashMap<SdfShapeRenderer.ShapeKey, SdfShapeRenderer.ShapeAtlas> shapeCache = new LinkedHashMap<>(16, 0.75F, true);
    private static final ArrayDeque<SdfShapeRenderer.ShapeAtlas> retiredAtlases = new ArrayDeque<>();
-   private static boolean load_Z;
-   private static boolean read_Z;
+   private static boolean retireHookRegistered;
+   private static boolean shapeAtlasFailed;
    private static int cachedPixels;
    private static final int poll = 4194304;
    private static volatile NativeImage prewarmedImage;
@@ -193,15 +193,15 @@ public final class SdfShapeRenderer {
                fillRoundRect(graphics, centerX - values.getFirst() / 2.0F, y, values.getFirst(), h, r, color);
             } else if (r <= 0.0F) {
                init(graphics, centerX, y, values, heights, color);
-            } else if (!read_Z && isAvailable()) {
+            } else if (!shapeAtlasFailed && isAvailable()) {
                SdfShapeRenderer.ShapeKey key = new SdfShapeRenderer.ShapeKey(values, List.copyOf(sizes), r);
-               if (!load_Z) {
+               if (!retireHookRegistered) {
                   ClientTickEvents.END_CLIENT_TICK.register(mc -> {
                      while (!retiredAtlases.isEmpty()) {
                         retiredAtlases.removeFirst().close();
                      }
                   });
-                  load_Z = true;
+                  retireHookRegistered = true;
                }
 
                SdfShapeRenderer.ShapeAtlas shape = shapeCache.get(key);
@@ -216,7 +216,7 @@ public final class SdfShapeRenderer {
                         pixels.close();
                      }
 
-                     read_Z = true;
+                     shapeAtlasFailed = true;
                      init(graphics, centerX, y, values, heights, color);
                      return;
                   }
@@ -314,7 +314,7 @@ public final class SdfShapeRenderer {
    }
 
    public static void reset() {
-      read_Z = false;
+      shapeAtlasFailed = false;
       shapeCache.values().forEach(AbstractTexture::close);
       shapeCache.clear();
       cachedPixels = 0;
@@ -339,7 +339,7 @@ public final class SdfShapeRenderer {
       }
 
       atlasInstance = null;
-      init_Z = false;
+      atlasFailed = false;
    }
 
    private static int bestTile(float radius) {
@@ -453,11 +453,11 @@ public final class SdfShapeRenderer {
    }
 
    public static void prewarm() {
-      if (atlasInstance == null && !init_Z && prewarmedImage == null) {
+      if (atlasInstance == null && !atlasFailed && prewarmedImage == null) {
          try {
             NativeImage built = buildAtlasImage();
             synchronized (SdfShapeRenderer.class) {
-               if (atlasInstance == null && !init_Z && prewarmedImage == null) {
+               if (atlasInstance == null && !atlasFailed && prewarmedImage == null) {
                   prewarmedImage = built;
                } else {
                   built.close();
@@ -470,10 +470,10 @@ public final class SdfShapeRenderer {
 
    private static SdfShapeRenderer.ShapeAtlas atlas() {
       SdfShapeRenderer.ShapeAtlas current = atlasInstance;
-      if (current == null && !init_Z) {
+      if (current == null && !atlasFailed) {
          synchronized (SdfShapeRenderer.class) {
             current = atlasInstance;
-            if (current == null && !init_Z) {
+            if (current == null && !atlasFailed) {
                try {
                   NativeImage pixels = prewarmedImage;
                   prewarmedImage = null;
@@ -485,7 +485,7 @@ public final class SdfShapeRenderer {
                   Minecraft.getInstance().getTextureManager().register(ATLAS_ID, current);
                   atlasInstance = current;
                } catch (Throwable t) {
-                  init_Z = true;
+                  atlasFailed = true;
                   return null;
                }
             }

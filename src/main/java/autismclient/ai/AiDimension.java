@@ -48,7 +48,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 final class AiDimension {
-   private static final int write = 400;
+   private static final int PORTAL_WAIT_TICKS = 400;
    private static final int update = 40;
    private static final int sync = 48;
    static final int[] init_IArr = new int[]{1, 0, 2, -1};

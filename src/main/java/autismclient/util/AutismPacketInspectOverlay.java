@@ -21,8 +21,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    private static final int close_I = 8;
    private final Font font;
    private final autismclient.gui.f.b.CharEncoder theme = new autismclient.gui.f.b.CharEncoder();
-   private boolean write_Z;
-   private boolean update_Z;
+   private boolean visible;
+   private boolean collapsed;
    private boolean dragging;
    private double dragOffsetX;
    private double dragOffsetY;
@@ -54,8 +54,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    public AutismPacketInspectOverlay(Font textRenderer) {
       this.font = textRenderer;
-      this.panelWidth = this.run_I_16();
-      this.panelHeight = this.get_I_14();
+      this.panelWidth = this.defaultPanelWidth();
+      this.panelHeight = this.defaultPanelHeight();
    }
 
    public void show(PacketInspectorEngine.InspectionReport inspection, AutismPacketLoggerOverlay.LoggedPacketEntry sourceEntry, int anchorX, int anchorY) {
@@ -67,8 +67,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          this.report = inspection;
          this.entry = sourceEntry;
          this.analysisRequested = false;
-         this.write_Z = true;
-         this.update_Z = false;
+         this.visible = true;
+         this.collapsed = false;
          this.scrollKey = this.scrollKeyFor(inspection, sourceEntry);
          this.scrollOffset = savedScroll.getOrDefault(this.scrollKey, 0);
          this.listView = null;
@@ -91,8 +91,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          this.clearAnalysis();
          this.entry = sourceEntry;
          this.analysisRequested = false;
-         this.write_Z = true;
-         this.update_Z = false;
+         this.visible = true;
+         this.collapsed = false;
          this.scrollKey = this.scrollKeyFor(null, sourceEntry);
          this.scrollOffset = savedScroll.getOrDefault(this.scrollKey, 0);
          this.listView = null;
@@ -106,7 +106,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    public void clearInspection() {
       this.rememberScroll();
-      this.write_Z = false;
+      this.visible = false;
       this.dragging = false;
       this.entry = null;
       this.clearAnalysis();
@@ -196,14 +196,14 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-      if (this.write_Z || this.isClosing()) {
+      if (this.visible || this.isClosing()) {
          this.applyAnalysis();
          OverlayBounds bounds = this.getBounds();
          String title = this.report == null ? "Packet Inspect" : this.report.title();
-         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.update_Z, this.dragging);
-         boolean clipBody = this.beginBodyClip(context, bounds, this.update_Z);
+         this.renderWindowFrame(context, mouseX, mouseY, bounds, title, this.collapsed, this.dragging);
+         boolean clipBody = this.beginBodyClip(context, bounds, this.collapsed);
          if (!clipBody) {
-            this.renderInactiveDim(context, bounds, this.update_Z, this.dragging);
+            this.renderInactiveDim(context, bounds, this.collapsed, this.dragging);
          } else {
             try {
                int listX = this.panelX + this.contentPadding();
@@ -221,11 +221,11 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
                int listY = progressY + progressHeight;
                int listWidth = this.panelWidth - this.contentPadding() * 2;
-               int listHeight = Math.max(1, this.panelHeight - 14 - this.set_I_14() - this.state() - tabsHeight - progressHeight);
-               int innerX = listX + this.add_I_12();
-               int innerY = listY + this.add_I_12();
-               int innerWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.maxTextWidth(listWidth, this.add_I_12());
-               int innerHeight = listHeight - this.add_I_12() * 2;
+               int listHeight = Math.max(1, this.panelHeight - 14 - this.footerHeight() - this.state() - tabsHeight - progressHeight);
+               int innerX = listX + this.listInnerPadding();
+               int innerY = listY + this.listInnerPadding();
+               int innerWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.maxTextWidth(listWidth, this.listInnerPadding());
+               int innerHeight = listHeight - this.listInnerPadding() * 2;
                int lineH = this.lineHeight();
                if (!OverlayManager.getInstance().isFocused(this) && !OverlayManager.getInstance().isTopmost(this)) {
                   boolean var32 = false;
@@ -279,7 +279,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                   this.listView.renderScrollbar(context, mouseX, mouseY);
                }
 
-               int footerY = this.panelY + this.panelHeight - this.set_I_14() + this.queue();
+               int footerY = this.panelY + this.panelHeight - this.footerHeight() + this.queue();
                autismclient.gui.f.b.k.init(
                   context,
                   this.font,
@@ -322,7 +322,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                }
             } finally {
                this.endBodyClip(context, clipBody);
-               this.renderInactiveDim(context, bounds, this.update_Z, this.dragging);
+               this.renderInactiveDim(context, bounds, this.collapsed, this.dragging);
             }
          }
       }
@@ -364,7 +364,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             String value = text.substring(colonIndex + 1).stripLeading();
             String prefix = indentComponent + label + " ";
             int prefixWidth = this.textWidth(prefix);
-            int continuationOffset = Math.min(prefixWidth, indentWidth + this.start_I_11());
+            int continuationOffset = Math.min(prefixWidth, indentWidth + this.continuationIndent());
             this.wrapSegment(prefix, value, line.color(), prefixWidth, continuationOffset, maxWidth, target);
          } else {
             this.wrapText(text.substring(leadingSpaces), indentWidth, line.color(), maxWidth, target);
@@ -490,7 +490,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-      if (!this.write_Z) {
+      if (!this.visible) {
          return false;
       }
 
@@ -506,14 +506,14 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             return true;
          }
       } else {
-         if (this.update_Z) {
+         if (this.collapsed) {
             return true;
          }
 
          int tabsHeight = this.value();
          int progressHeight = this.progressHeight();
          int listY = this.panelY + 14 + this.size() + tabsHeight + progressHeight;
-         int listHeight = Math.max(1, this.panelHeight - 14 - this.set_I_14() - this.state() - tabsHeight - progressHeight);
+         int listHeight = Math.max(1, this.panelHeight - 14 - this.footerHeight() - this.state() - tabsHeight - progressHeight);
          int listX = this.panelX + this.contentPadding();
          int listWidth = this.panelWidth - this.contentPadding() * 2;
          if (button == 0
@@ -523,7 +523,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             return true;
          }
 
-         int footerY = this.panelY + this.panelHeight - this.set_I_14() + this.queue();
+         int footerY = this.panelY + this.panelHeight - this.footerHeight() + this.queue();
          if (button == 0) {
             for (AutismPacketInspectOverlay.FooterButton footerButton : this.footerButtons(footerY)) {
                if (mouseX >= footerButton.x()
@@ -564,8 +564,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          this.rememberScroll();
       }
 
-      if (this.write_Z && button == 0 && this.dragging) {
-         this.setBounds(new OverlayBounds((int)Math.round(mouseX - this.dragOffsetX), (int)Math.round(mouseY - this.dragOffsetY), this.panelWidth, this.panelHeight, this.write_Z, this.update_Z));
+      if (this.visible && button == 0 && this.dragging) {
+         this.setBounds(new OverlayBounds((int)Math.round(mouseX - this.dragOffsetX), (int)Math.round(mouseY - this.dragOffsetY), this.panelWidth, this.panelHeight, this.visible, this.collapsed));
          return true;
       } else {
          return false;
@@ -574,11 +574,11 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-      if (this.write_Z && !this.update_Z) {
+      if (this.visible && !this.collapsed) {
          int tabsHeight = this.value();
          int progressHeight = this.progressHeight();
          int listY = this.panelY + 14 + this.size() + tabsHeight + progressHeight;
-         int listHeight = Math.max(1, this.panelHeight - 14 - this.set_I_14() - this.state() - tabsHeight - progressHeight);
+         int listHeight = Math.max(1, this.panelHeight - 14 - this.footerHeight() - this.state() - tabsHeight - progressHeight);
          int listX = this.panelX + this.contentPadding();
          int listWidth = this.panelWidth - this.contentPadding() * 2;
          if (mouseX < listX || mouseX > listX + listWidth || mouseY < listY || mouseY > listY + listHeight) {
@@ -597,7 +597,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-      if (!this.write_Z) {
+      if (!this.visible) {
          return false;
       } else if (keyCode == 256) {
          this.clearInspection();
@@ -614,12 +614,12 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean isVisible() {
-      return this.write_Z;
+      return this.visible;
    }
 
    @Override
    public void setVisible(boolean visible) {
-      this.write_Z = visible;
+      this.visible = visible;
       if (!visible) {
          this.clearInspection();
       }
@@ -627,17 +627,17 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean containsPoint(double mouseX, double mouseY) {
-      if (!this.write_Z) {
+      if (!this.visible) {
          return false;
       }
 
-      int height = this.update_Z ? 14 : this.panelHeight;
+      int height = this.collapsed ? 14 : this.panelHeight;
       return mouseX >= this.panelX && mouseX <= this.panelX + this.panelWidth && mouseY >= this.panelY && mouseY <= this.panelY + height;
    }
 
    @Override
    public boolean isOverHeader(double mouseX, double mouseY) {
-      return !this.write_Z
+      return !this.visible
          ? false
          : mouseX >= this.panelX
             && mouseX <= this.panelX + this.panelWidth
@@ -653,13 +653,13 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean isCollapsed() {
-      return this.update_Z;
+      return this.collapsed;
    }
 
    @Override
    public void setCollapsed(boolean collapsed) {
-      if (this.update_Z != collapsed) {
-         this.update_Z = collapsed;
+      if (this.collapsed != collapsed) {
+         this.collapsed = collapsed;
          this.dragging = false;
          if (collapsed) {
             this.clearFocusAndDismissMenu();
@@ -676,7 +676,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public OverlayBounds getBounds() {
-      return new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight, this.write_Z, this.update_Z);
+      return new OverlayBounds(this.panelX, this.panelY, this.panelWidth, this.panelHeight, this.visible, this.collapsed);
    }
 
    @Override
@@ -688,8 +688,8 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          this.panelY = clamped.y;
          this.panelWidth = clamped.width;
          this.panelHeight = clamped.height;
-         this.write_Z = clamped.visible;
-         this.update_Z = clamped.collapsed;
+         this.visible = clamped.visible;
+         this.collapsed = clamped.collapsed;
          if (sizeChanged) {
             this.linesDirty = true;
          }
@@ -698,12 +698,12 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    @Override
    public int getMinWidth() {
-      return this.pop_I_18();
+      return this.minPanelWidth();
    }
 
    @Override
    public int getMinHeight() {
-      return this.tick_I_16();
+      return this.minPanelHeight();
    }
 
    private void runAction(AutismPacketInspectOverlay.PacketAction action) {
@@ -898,15 +898,15 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       int footerInfoWidth = this.textWidth(lineCount + " lines") + this.contentPadding() + 15;
       int footerButtonsWidth = this.actionsWidth();
       int titleWidth = this.textWidth(this.report == null ? "Packet Inspect" : this.report.title()) + this.entry();
-      int minWidth = Math.max(this.pop_I_18(), Math.max(titleWidth, footerInfoWidth + footerButtonsWidth + this.node()));
+      int minWidth = Math.max(this.minPanelWidth(), Math.max(titleWidth, footerInfoWidth + footerButtonsWidth + this.node()));
       int maxWidth = Math.max(minWidth, Math.min(this.stop(), screenWidth - 12));
-      int maxHeight = Math.max(this.tick_I_16(), Math.min(this.next(), screenHeight - 12));
+      int maxHeight = Math.max(this.minPanelHeight(), Math.min(this.next(), screenHeight - 12));
       int desiredWidth = this.bestPanelWidth(minWidth, maxWidth);
       AutismPacketInspectOverlay.PanelFit fit = this.fitWidth(desiredWidth);
       int desiredVisibleLines = Math.max(3, Math.min(fit.load(), this.prev()));
-      int desiredListHeight = Math.max(this.task(), desiredVisibleLines * lineHeight + this.add_I_12() * 2 + 2);
-      int desiredHeight = 14 + this.size() + this.value() + this.progressHeight() + desiredListHeight + this.set_I_14() + this.buffer();
-      desiredHeight = Math.min(maxHeight, Math.max(this.tick_I_16(), desiredHeight));
+      int desiredListHeight = Math.max(this.task(), desiredVisibleLines * lineHeight + this.listInnerPadding() * 2 + 2);
+      int desiredHeight = 14 + this.size() + this.value() + this.progressHeight() + desiredListHeight + this.footerHeight() + this.buffer();
+      desiredHeight = Math.min(maxHeight, Math.max(this.minPanelHeight(), desiredHeight));
       this.setBounds(new OverlayBounds(anchorX, anchorY, desiredWidth, desiredHeight, true, false));
    }
 
@@ -959,7 +959,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
    private AutismPacketInspectOverlay.PanelFit fitWidth(int panelWidthCandidate) {
       int listWidth = Math.max(32, panelWidthCandidate - this.contentPadding() * 2);
-      int contentWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.maxTextWidth(listWidth, this.add_I_12());
+      int contentWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.maxTextWidth(listWidth, this.listInnerPadding());
       List<AutismPacketInspectOverlay.InspectLine> measured = new ArrayList<>();
       if (this.report != null) {
          for (PacketInspectorEngine.ColoredLine line : this.report.lines()) {
@@ -1069,23 +1069,23 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          : 0;
    }
 
-   private int pop_I_18() {
+   private int minPanelWidth() {
       return 176;
    }
 
-   private int tick_I_16() {
-      return 14 + this.size() + this.task() + this.set_I_14() + this.buffer();
+   private int minPanelHeight() {
+      return 14 + this.size() + this.task() + this.footerHeight() + this.buffer();
    }
 
-   private int run_I_16() {
+   private int defaultPanelWidth() {
       return 220;
    }
 
-   private int get_I_14() {
+   private int defaultPanelHeight() {
       return 173;
    }
 
-   private int set_I_14() {
+   private int footerHeight() {
       return this.queue() + this.reset() + 4;
    }
 
@@ -1093,7 +1093,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       return 4;
    }
 
-   private int add_I_12() {
+   private int listInnerPadding() {
       return 3;
    }
 
@@ -1105,7 +1105,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   private int start_I_11() {
+   private int continuationIndent() {
       return 32;
    }
 
@@ -1166,7 +1166,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int task() {
-      return 3 * this.lineHeight() + this.add_I_12() * 2 + 2;
+      return 3 * this.lineHeight() + this.listInnerPadding() * 2 + 2;
    }
 
    private record InspectLine(String label, int labelColor, String value, int valueColor, int read) {

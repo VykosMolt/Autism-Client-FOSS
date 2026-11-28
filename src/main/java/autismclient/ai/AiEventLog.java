@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 final class AiEventLog {
-   static final int init_I = 256;
+   static final int MAX_EVENTS = 256;
    private static final AiEventLog INSTANCE = new AiEventLog();
    private final ArrayDeque<AiEventLog.LoggedEvent> events = new ArrayDeque<>(256);
    private long sequence;

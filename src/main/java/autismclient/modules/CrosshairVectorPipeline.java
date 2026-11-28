@@ -27,7 +27,7 @@ import org.joml.Matrix3x2fStack;
 import org.lwjgl.system.MemoryUtil;
 
 final class CrosshairVectorPipeline {
-   private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "ui/crosshair_vector");
+   private static final Identifier PIPELINE_ID = Identifier.fromNamespaceAndPath("autismclient", "ui/crosshair_vector");
    private static final int init_I = 128;
    private static final LinkedHashMap<CrosshairVectorPipeline.StyleKey, CrosshairVectorPipeline.ParameterTexture> parameterCache = new LinkedHashMap<>(16, 0.75F, true);
    private static final ArrayDeque<CrosshairVectorPipeline.ParameterTexture> retired = new ArrayDeque<>();
@@ -180,7 +180,7 @@ final class CrosshairVectorPipeline {
       return Compat263.createRenderPipeline(
          Identifier.fromNamespaceAndPath("autismclient", "pipeline/" + name),
          Compat263.getVertexShader(base),
-         init_Identifier,
+         PIPELINE_ID,
          base.getShaderDefines(),
          base.getBindGroupLayouts(),
          base.getColorTargetStates().toArray(new ColorTargetState[0]),

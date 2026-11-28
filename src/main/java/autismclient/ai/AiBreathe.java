@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 
 public final class AiBreathe {
    static final double init_D = 0.4;
-   static final int init_I = 24;
+   static final int MAX_AIR_SEARCH_HEIGHT = 24;
    static final int load = 2000;
 
    private AiBreathe() {
@@ -58,15 +58,15 @@ public final class AiBreathe {
          return new AiOperation() {
             final long deadlineNanos = System.nanoTime() + seconds * 1000000000L;
             final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
-            BlockPos init_BlockPos;
-            List<BlockPos> init_List = new ArrayList<>();
-            int init_I;
-            boolean init_Z;
+            BlockPos airTarget;
+            List<BlockPos> airPath = new ArrayList<>();
+            int replanCooldown;
+            boolean cancelled;
 
             @Override
             public AiOperation.Result tick() {
                LocalPlayer player = mc.player;
-               if (!this.init_Z && player != null && mc.level != null) {
+               if (!this.cancelled && player != null && mc.level != null) {
                   boolean headOut = !player.isUnderWater();
                   if (headOut && player.getAirSupply() >= player.getMaxAirSupply() * 0.9) {
                      return this.finish(AiOperation.Status.SUCCEEDED, "Breathing again (air " + player.getAirSupply() + "/" + player.getMaxAirSupply() + ")");
@@ -83,10 +83,10 @@ public final class AiBreathe {
                      return this.running("Treading water while the air refills (" + player.getAirSupply() + ")");
                   }
 
-                  if (--this.init_I <= 0) {
-                     this.init_List = new ArrayList<>();
-                     this.init_BlockPos = AiBreathe.findAir(mc, player.blockPosition(), this.init_List);
-                     this.init_I = 10;
+                  if (--this.replanCooldown <= 0) {
+                     this.airPath = new ArrayList<>();
+                     this.airTarget = AiBreathe.findAir(mc, player.blockPosition(), this.airPath);
+                     this.replanCooldown = 10;
                   }
 
                   BlockPos head = BlockPos.containing(player.getX(), player.getEyeY(), player.getZ());
@@ -94,7 +94,7 @@ public final class AiBreathe {
                   BlockState roofState = mc.level.getBlockState(roof);
                   boolean roofSolid = !roofState.getCollisionShape(mc.level, roof).isEmpty();
                   if (roofSolid
-                     && (this.init_BlockPos == null || this.init_List.size() > 5)
+                     && (this.airTarget == null || this.airPath.size() > 5)
                      && roofState.getDestroySpeed(mc.level, roof) >= 0.0F
                      && roofState.getDestroySpeed(mc.level, roof) <= 3.0F
                      && AiBreathe.hasAirAbove(mc, roof)) {
@@ -109,22 +109,22 @@ public final class AiBreathe {
                      autismclient.ai.engine.AiBlockDigger.continueBreakingBlockCompat(mc, roof, Direction.DOWN);
                      return this.running("Breaking the roof at " + roof.toShortString() + " (air " + player.getAirSupply() + ")");
                   } else {
-                     if (this.init_BlockPos == null) {
+                     if (this.airTarget == null) {
                         mc.options.keyUp.setDown(false);
                         return this.running("No air found nearby; swimming up");
                      }
 
-                     BlockPos step = this.init_BlockPos;
+                     BlockPos step = this.airTarget;
                      BlockPos feetNow = player.blockPosition();
 
-                     for (int i = 0; i < this.init_List.size(); i++) {
-                        if (this.init_List.get(i).equals(feetNow) || this.init_List.get(i).equals(head)) {
-                           step = i + 1 < this.init_List.size() ? this.init_List.get(i + 1) : this.init_BlockPos;
+                     for (int i = 0; i < this.airPath.size(); i++) {
+                        if (this.airPath.get(i).equals(feetNow) || this.airPath.get(i).equals(head)) {
+                           step = i + 1 < this.airPath.size() ? this.airPath.get(i + 1) : this.airTarget;
                         }
                      }
 
-                     if (step == this.init_BlockPos && !this.init_List.isEmpty() && !this.init_List.contains(feetNow) && !this.init_List.contains(head)) {
-                        step = this.init_List.get(0);
+                     if (step == this.airTarget && !this.airPath.isEmpty() && !this.airPath.contains(feetNow) && !this.airPath.contains(head)) {
+                        step = this.airPath.get(0);
                      }
 
                      Vec3 target = Vec3.atCenterOf(step);
@@ -133,7 +133,7 @@ public final class AiBreathe {
                      double flat = Math.hypot(target.x - player.getX(), target.z - player.getZ());
                      boolean boxBlocked = !mc.level.noCollision(player, player.getBoundingBox().move(0.0, 0.6, 0.0));
                      mc.options.keyUp.setDown(flat > 0.4 || boxBlocked && flat > 0.08);
-                     return this.running("Swimming to air at " + this.init_BlockPos.toShortString() + " (air " + player.getAirSupply() + ")");
+                     return this.running("Swimming to air at " + this.airTarget.toShortString() + " (air " + player.getAirSupply() + ")");
                   }
                } else {
                   return this.finish(AiOperation.Status.CANCELLED, "Cancelled");
@@ -157,7 +157,7 @@ public final class AiBreathe {
 
             @Override
             public void cancel() {
-               this.init_Z = true;
+               this.cancelled = true;
                this.releaseKeys();
             }
          };

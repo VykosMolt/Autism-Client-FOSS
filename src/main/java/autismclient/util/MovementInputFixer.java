@@ -13,21 +13,21 @@ public final class MovementInputFixer {
    public static final int load_I = 3;
    static final float sync_F = 90.0F;
    private static final int read_I = -2147483648;
-   private static final int[] init_IArr = new int[]{7, 0, 1};
-   private static final int[] load_IArr = new int[]{3, 4, 5};
-   private static final int[] read_IArr = new int[]{2};
-   private static final int[] write_IArr = new int[]{6};
-   private int write_I = -2147483648;
+   private static final int[] FORWARD_KEYS = new int[]{7, 0, 1};
+   private static final int[] BACKWARD_KEYS = new int[]{3, 4, 5};
+   private static final int[] POSITIVE_SIDE_KEYS = new int[]{2};
+   private static final int[] NEGATIVE_SIDE_KEYS = new int[]{6};
+   private int currentBand = -2147483648;
    private int chosen = -1;
-   private int sync_I;
-   private float flush_F;
+   private int chosenStreak;
+   private float lateralDrift;
    private float pressed = 0.0F / 0.0F;
    private int clientTick = -2147483648;
-   private int close_I = -2147483648;
-   private int open_I = -1;
-   private int poll_I;
-   private float open_F;
-   private float poll_F = 0.0F / 0.0F;
+   private int prevBand = -2147483648;
+   private int prevChosen = -1;
+   private int prevChosenStreak;
+   private float prevLateralDrift;
+   private float prevPressed = 0.0F / 0.0F;
 
    public void reset() {
       this.clearState();
@@ -40,17 +40,17 @@ public final class MovementInputFixer {
 
    public Input init(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.FootingModel footing) {
       MovementInputFixer copy = new MovementInputFixer();
-      copy.write_I = this.write_I;
+      copy.currentBand = this.currentBand;
       copy.chosen = this.chosen;
-      copy.sync_I = this.sync_I;
-      copy.flush_F = this.flush_F;
+      copy.chosenStreak = this.chosenStreak;
+      copy.lateralDrift = this.lateralDrift;
       copy.pressed = this.pressed;
       copy.clientTick = this.clientTick;
-      copy.close_I = this.close_I;
-      copy.open_I = this.open_I;
-      copy.poll_I = this.poll_I;
-      copy.open_F = this.open_F;
-      copy.poll_F = this.poll_F;
+      copy.prevBand = this.prevBand;
+      copy.prevChosen = this.prevChosen;
+      copy.prevChosenStreak = this.prevChosenStreak;
+      copy.prevLateralDrift = this.prevLateralDrift;
+      copy.prevPressed = this.prevPressed;
       return copy.load(input, cameraYaw, silentYaw, clientTick, footing);
    }
 
@@ -64,21 +64,21 @@ public final class MovementInputFixer {
       }
 
       if (clientTick == this.clientTick) {
-         this.write_I = this.close_I;
-         this.chosen = this.open_I;
-         this.sync_I = this.poll_I;
-         this.flush_F = this.open_F;
-         this.pressed = this.poll_F;
+         this.currentBand = this.prevBand;
+         this.chosen = this.prevChosen;
+         this.chosenStreak = this.prevChosenStreak;
+         this.lateralDrift = this.prevLateralDrift;
+         this.pressed = this.prevPressed;
       } else {
          if (this.clientTick == -2147483648 || clientTick != this.clientTick + 1) {
             this.clearState();
          }
 
-         this.close_I = this.write_I;
-         this.open_I = this.chosen;
-         this.poll_I = this.sync_I;
-         this.open_F = this.flush_F;
-         this.poll_F = this.pressed;
+         this.prevBand = this.currentBand;
+         this.prevChosen = this.chosen;
+         this.prevChosenStreak = this.chosenStreak;
+         this.prevLateralDrift = this.lateralDrift;
+         this.prevPressed = this.pressed;
          this.clientTick = clientTick;
       }
 
@@ -91,26 +91,26 @@ public final class MovementInputFixer {
 
       float pressed = (float)Math.toDegrees(Math.atan2(sideways, forward));
       if (Float.isNaN(this.pressed) || pressed != this.pressed) {
-         this.flush_F = 0.0F;
+         this.lateralDrift = 0.0F;
       }
 
       this.pressed = pressed;
       float wanted = (float)Mth.wrapDegrees(pressed - ((double)cameraYaw - silentYaw));
-      int next = init_I_I_F(this.write_I, Math.abs(wanted));
-      if (next != this.write_I) {
-         this.write_I = next;
-         this.flush_F = 0.0F;
+      int next = init_I_I_F(this.currentBand, Math.abs(wanted));
+      if (next != this.currentBand) {
+         this.currentBand = next;
+         this.lateralDrift = 0.0F;
       }
 
-      int[] keys = this.write_I > 0 ? init_IArr : (this.write_I < 0 ? load_IArr : (wanted >= 0.0F ? read_IArr : write_IArr));
+      int[] keys = this.currentBand > 0 ? FORWARD_KEYS : (this.currentBand < 0 ? BACKWARD_KEYS : (wanted >= 0.0F ? POSITIVE_SIDE_KEYS : NEGATIVE_SIDE_KEYS));
       int chosen = this.init_Z_IArr_F(keys, wanted) ? this.chosen : this.bestKey(keys, wanted);
       if (footing != null) {
          chosen = init(chosen, wanted, pressed, cameraYaw, silentYaw, footing);
       }
 
-      this.sync_I = chosen == this.chosen ? this.sync_I + 1 : 1;
+      this.chosenStreak = chosen == this.chosen ? this.chosenStreak + 1 : 1;
       this.chosen = chosen;
-      this.flush_F = Mth.clamp(this.flush_F + lateralError(wanted, chosen), -0.75F, 0.75F);
+      this.lateralDrift = Mth.clamp(this.lateralDrift + lateralError(wanted, chosen), -0.75F, 0.75F);
       return inputForKey(chosen, input);
    }
 
@@ -170,8 +170,8 @@ public final class MovementInputFixer {
             return false;
          }
 
-         float band = this.sync_I < 2 ? 0.75F : 0.5F;
-         return Math.abs(this.flush_F + lateralError(wanted, this.chosen)) <= band;
+         float band = this.chosenStreak < 2 ? 0.75F : 0.5F;
+         return Math.abs(this.lateralDrift + lateralError(wanted, this.chosen)) <= band;
       } else {
          return false;
       }
@@ -185,7 +185,7 @@ public final class MovementInputFixer {
       for (int k : keys) {
          float offset = Math.abs(angleError(wanted, k));
          if (!(offset > 45.001F)) {
-            float after = Math.abs(this.flush_F + lateralError(wanted, k));
+            float after = Math.abs(this.lateralDrift + lateralError(wanted, k));
             if (after < bestError - 1.0E-6F || Math.abs(after - bestError) <= 1.0E-6F && offset < bestOffset) {
                best = k;
                bestError = after;
@@ -237,10 +237,10 @@ public final class MovementInputFixer {
    }
 
    private void clearState() {
-      this.write_I = -2147483648;
+      this.currentBand = -2147483648;
       this.chosen = -1;
-      this.sync_I = 0;
-      this.flush_F = 0.0F;
+      this.chosenStreak = 0;
+      this.lateralDrift = 0.0F;
       this.pressed = 0.0F / 0.0F;
    }
 

@@ -51,11 +51,11 @@ import net.minecraft.world.phys.Vec3;
 final class AiSchematic {
    private static final long load_J = 67108864L;
    private static final long read_J = 67108864L;
-   private static final int write_I = 1631;
+   private static final int FLATTENING_DATA_VERSION = 1631;
    static final int init_I = 2097152;
    static final int load_I = 4096;
-   static final int read_I = 1024;
-   static final long init_J = 66049L;
+   static final int MAX_HORIZONTAL_SPAN = 1024;
+   static final long MAX_FOOTPRINT_AREA = 66049L;
    private static final int update_I = 2097152;
    static final String[] EXTENSIONS = new String[]{".schem", ".schematic", ".litematic"};
    private static final String[] DYE_COLORS = new String[]{

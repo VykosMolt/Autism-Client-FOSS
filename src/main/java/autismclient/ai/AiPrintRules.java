@@ -52,7 +52,7 @@ import net.minecraft.world.level.material.FluidState;
 
 public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    public static final AiPrintRules INSTANCE = new AiPrintRules();
-   public static final String init_Str = "lit";
+   public static final String LIT_STATE = "lit";
 
    private AiPrintRules() {
    }

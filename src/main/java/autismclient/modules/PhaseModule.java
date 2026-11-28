@@ -565,7 +565,7 @@ public final class PhaseModule extends Module {
    }
 
    private static final class ClipMode implements PhaseModule.PhaseMode {
-      private static final double init = 0.07840000152;
+      private static final double SNAP_DOWN_OFFSET = 0.07840000152;
 
       @Override
       public void modePreMovementTick() {

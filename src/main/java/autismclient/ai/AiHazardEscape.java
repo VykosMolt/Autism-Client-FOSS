@@ -41,17 +41,17 @@ final class AiHazardEscape {
       return new AiOperation() {
          final AiGuardLayer guard = new AiGuardLayer(new AiGuard.GuardPolicy(false, false, false, 16.0F, 7.0F, 14, false, Set.of()), "hazard escape");
          final long deadlineNanos = System.nanoTime() + seconds * 1000000000L;
-         boolean init_Z;
-         String init_Str = "";
+         boolean cancelled;
+         String hazard = "";
 
          @Override
          public AiOperation.Result tick() {
-            if (this.init_Z || mc.level != level || mc.player != player || mc.getConnection() != connection || mc.player == null || !mc.player.isAlive()) {
+            if (this.cancelled || mc.level != level || mc.player != player || mc.getConnection() != connection || mc.player == null || !mc.player.isAlive()) {
                return this.finish(AiOperation.Status.CANCELLED, "Hazard escape context changed");
             }
 
             if (System.nanoTime() >= this.deadlineNanos) {
-               return this.finish(AiOperation.Status.TIMED_OUT, "Hazard escape deadline reached: " + this.init_Str);
+               return this.finish(AiOperation.Status.TIMED_OUT, "Hazard escape deadline reached: " + this.hazard);
             }
 
             String next = AiHazardEscape.currentHazard(mc);
@@ -60,7 +60,7 @@ final class AiHazardEscape {
             }
 
             if (next != null) {
-               this.init_Str = next;
+               this.hazard = next;
             }
 
             AiOperation.Result result = this.guard
@@ -72,7 +72,7 @@ final class AiHazardEscape {
 
                return result;
             } else {
-               return this.finish(AiOperation.Status.FAILED, "No safe environmental escape available: " + this.init_Str);
+               return this.finish(AiOperation.Status.FAILED, "No safe environmental escape available: " + this.hazard);
             }
          }
 
@@ -80,7 +80,7 @@ final class AiHazardEscape {
             boolean pending = this.guard.requiresReconciliation();
             this.guard.cancel();
             return AiGuardLayer.wrapPendingTermination(
-               pending, AiGameOperations.result(status, message, AiJson.objectOf("hazard", this.init_Str, "reobserveBeforeResuming", true))
+               pending, AiGameOperations.result(status, message, AiJson.objectOf("hazard", this.hazard, "reobserveBeforeResuming", true))
             );
          }
 
@@ -96,7 +96,7 @@ final class AiHazardEscape {
 
          @Override
          public void cancel() {
-            this.init_Z = true;
+            this.cancelled = true;
             this.guard.cancel();
          }
       };

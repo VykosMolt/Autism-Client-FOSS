@@ -32,10 +32,10 @@ import net.minecraft.network.chat.Component;
 
 public class StringListEditorScreen extends VirtualScaledScreen {
    private static final autismclient.gui.f.b.CharEncoder theme = new autismclient.gui.f.b.CharEncoder();
-   private static final int init_I = 300;
+   private static final int MAX_PANEL_WIDTH = 300;
    private static final int load_I = 4;
    private static final int read_I = 3;
-   private static final int write_I = -872086265;
+   private static final int BACKDROP_COLOR = -872086265;
    private static final int update = -1441722092;
    private static final int sync = -1441000940;
    private static final int flush = -791321;
@@ -100,7 +100,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          this.layoutInputs();
          this.drawHeader(graphics, x, y, panelW, panelH, this.screenTitle(), mx, my);
          if (panelW < 180 || panelH < 100) {
-            this.drawClippedText(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.sync_I_4(), 12), mutedTextColor(), Math.max(0, panelW - 8));
+            this.drawClippedText(graphics, "Window too small.", x + 4, this.centeredTextY(y + this.headerHeight(), 12), mutedTextColor(), Math.max(0, panelW - 8));
             return;
          }
 
@@ -309,7 +309,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
 
    private void drawHeader(GuiGraphicsExtractor graphics, int x, int y, int width, int height, String title, int mx, int my) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, width, height);
-      int headerH = this.sync_I_4();
+      int headerH = this.headerHeight();
       autismclient.gui.ui.widgets.DialogFrameRenderer.draw(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
@@ -903,7 +903,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          for (PlayerInfo info : this.minecraft.getConnection().getOnlinePlayers()) {
             if (info != null && info.getProfile() != null && info.getProfile().name() != null) {
                String name = info.getProfile().name();
-               if (this.init_Z_Str(name) && (query.isEmpty() || name.toLowerCase(Locale.ROOT).startsWith(query)) && !names.contains(name)) {
+               if (this.isSuggestableName(name) && (query.isEmpty() || name.toLowerCase(Locale.ROOT).startsWith(query)) && !names.contains(name)) {
                   names.add(name);
                }
             }
@@ -913,7 +913,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             for (AbstractClientPlayer player : this.minecraft.level.players()) {
                if (player != null && player.getGameProfile() != null && player.getGameProfile().name() != null) {
                   String name = player.getGameProfile().name();
-                  if (this.init_Z_Str(name) && (query.isEmpty() || name.toLowerCase(Locale.ROOT).startsWith(query)) && !names.contains(name)) {
+                  if (this.isSuggestableName(name) && (query.isEmpty() || name.toLowerCase(Locale.ROOT).startsWith(query)) && !names.contains(name)) {
                      names.add(name);
                   }
                }
@@ -931,7 +931,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       }
    }
 
-   private boolean init_Z_Str(String name) {
+   private boolean isSuggestableName(String name) {
       String trimmed = name == null ? "" : name.trim();
       if (trimmed.length() < 4) {
          return false;
@@ -1037,7 +1037,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(autismclient.gui.f.b.k.init(this.font, label, theme.init_Identifier_l(l.read), 0));
    }
 
-   private int sync_I_4() {
+   private int headerHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
@@ -1050,7 +1050,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    }
 
    private int fieldY() {
-      return this.panelY() + this.sync_I_4() + 4;
+      return this.panelY() + this.headerHeight() + 4;
    }
 
    private int searchFieldY() {
@@ -1105,7 +1105,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
 
    private int panelHeight() {
       int rowH = this.rowHeight();
-      int chrome = this.sync_I_4() + 4 + (this.fieldHeight() + 2) * 3 + 6 + 4;
+      int chrome = this.headerHeight() + 4 + (this.fieldHeight() + 2) * 3 + 6 + 4;
       int maxRows = Math.max(4, (int)(this.virtualHeight() * 0.65F) / rowH);
       int content = this.isRankPickerReady() ? this.scannedNames.size() + this.currentValues().size() : this.currentValues().size();
       int rows = Math.max(4, Math.min(maxRows, content));

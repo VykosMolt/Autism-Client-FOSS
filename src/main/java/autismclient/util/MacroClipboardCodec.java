@@ -50,7 +50,7 @@ public class MacroClipboardCodec {
    private static final int init_I = 1;
    private static final String MACRO_TYPE = "autism_macro";
    private static final String load = "autism_macro_steps";
-   private static final String read = "autism_macro_list";
+   private static final String MACRO_LIST_TYPE = "autism_macro_list";
    private static String lastClipboard;
    private static List<AutismMacro> clipboardMacros = List.of();
    private static boolean clipboardIsCut;

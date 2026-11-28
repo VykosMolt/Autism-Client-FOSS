@@ -12,7 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
 final class PrintSpatialIndex {
-   private static final int init_I = 12;
+   private static final int LEAF_SIZE = 12;
    private final int[] order;
    private final int[] ids;
    private final int[] xs;

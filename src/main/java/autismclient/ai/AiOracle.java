@@ -63,9 +63,9 @@ final class AiOracle {
    static final int write = 16;
    private static final int update = 8;
    private static final int sync = 4096;
-   private static final long init_J = 60000000000L;
+   private static final long QUERY_DEADLINE_NANOS = 60000000000L;
    private static final int flush = 400;
-   private static final double init_D = 24.0;
+   private static final double THREAT_RADIUS = 24.0;
    private static final int close = 25;
    private static final int open = 3;
    private static final ExecutorService WORLDGEN_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
@@ -83,7 +83,7 @@ final class AiOracle {
       }
    };
    private static long hideVillagesBit = -1L;
-   private static final AtomicInteger init_AtomicInteger = new AtomicInteger();
+   private static final AtomicInteger enableCount = new AtomicInteger();
    static final Map<String, AiOracle.StructureSpec> STRUCTURES = buildStructureSpecs();
    private static final int poll = 64;
 
@@ -92,14 +92,14 @@ final class AiOracle {
 
    static void enable(boolean on) {
       if (on) {
-         init_AtomicInteger.incrementAndGet();
+         enableCount.incrementAndGet();
       } else {
-         init_AtomicInteger.updateAndGet(n -> Math.max(0, n - 1));
+         enableCount.updateAndGet(n -> Math.max(0, n - 1));
       }
    }
 
    static boolean isActive() {
-      return init_AtomicInteger.get() > 0;
+      return enableCount.get() > 0;
    }
 
    static AiOperation create(JsonObject args) {
@@ -117,10 +117,10 @@ final class AiOracle {
                   var10000 = scanBlocks("water", state -> state.getBlock() == Blocks.WATER, cap, radiusChunks(args));
                   break;
                case VILLAGE:
-                  var10000 = init_AiOperation_I_I(cap, radiusChunks(args));
+                  var10000 = scanVillages(cap, radiusChunks(args));
                   break;
                case THREATS:
-                  var10000 = init_AiOperation_I(cap);
+                  var10000 = scanThreats(cap);
                   break;
                case ORE:
                   var10000 = locateOre(q.ore(), cap, AiJson.getString(args, "seed", ""));
@@ -405,12 +405,12 @@ final class AiOracle {
       final int mask = oreKindMask(kind);
       return new AiOperation() {
          final long deadlineNanos = System.nanoTime() + 60000000000L;
-         int init_I;
-         boolean init_Z;
+         int simTicks;
+         boolean cancelled;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && mc.player != null && mc.level != null) {
+            if (!this.cancelled && mc.player != null && mc.level != null) {
                autismclient.util.oresim.OreSimEngine.init(mc.level, mc.player.blockPosition(), seed.value(), 8, mask);
                if (autismclient.util.oresim.OreSimEngine.hasError()) {
                   return this.finish(
@@ -446,7 +446,7 @@ final class AiOracle {
                }
 
                autismclient.util.oresim.OreSimEngine.GenerationProgress progress = autismclient.util.oresim.OreSimEngine.progress();
-               if (!progress.isComplete() && ++this.init_I < 400) {
+               if (!progress.isComplete() && ++this.simTicks < 400) {
                   return this.running("Simulating ore generation (" + progress.done() + "/" + progress.load() + " chunks)");
                }
 
@@ -535,8 +535,8 @@ final class AiOracle {
 
          @Override
          public void cancel() {
-            if (!this.init_Z) {
-               this.init_Z = true;
+            if (!this.cancelled) {
+               this.cancelled = true;
                autismclient.util.oresim.OreSimEngine.pause();
             }
          }
@@ -1124,12 +1124,12 @@ final class AiOracle {
          final long deadlineNanos = System.nanoTime() + 60000000000L;
          final List<AiOracle.BlockHit> found = new ArrayList<>();
          List<int[]> chunkOrder;
-         int init_I;
-         boolean init_Z;
+         int nextChunk;
+         boolean cancelled;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && mc.player != null && mc.level != null) {
+            if (!this.cancelled && mc.player != null && mc.level != null) {
                if (System.nanoTime() > this.deadlineNanos) {
                   return this.finish(AiOperation.Status.TIMED_OUT, "Block scan deadline reached", this.statusData());
                }
@@ -1140,17 +1140,17 @@ final class AiOracle {
 
                Vec3 eye = mc.player.getEyePosition();
 
-               for (int budget = 8; budget > 0 && this.init_I < this.chunkOrder.size() && this.found.size() < 4096; budget--) {
-                  int[] c = this.chunkOrder.get(this.init_I++);
+               for (int budget = 8; budget > 0 && this.nextChunk < this.chunkOrder.size() && this.found.size() < 4096; budget--) {
+                  int[] c = this.chunkOrder.get(this.nextChunk++);
                   LevelChunk chunk = mc.level.getChunkSource().getChunk(c[0], c[1], ChunkStatus.FULL, false);
                   if (chunk != null) {
                      AiOracle.collectMatches(mc.level, chunk, target, eye, this.found);
                   }
                }
 
-               if (this.init_I < this.chunkOrder.size() && this.found.size() < 4096) {
+               if (this.nextChunk < this.chunkOrder.size() && this.found.size() < 4096) {
                   return AiGameOperations.result(
-                     AiOperation.Status.RUNNING, "Scanning loaded chunks for " + label + " (" + this.init_I + "/" + this.chunkOrder.size() + ")", this.statusData()
+                     AiOperation.Status.RUNNING, "Scanning loaded chunks for " + label + " (" + this.nextChunk + "/" + this.chunkOrder.size() + ")", this.statusData()
                   );
                }
 
@@ -1179,7 +1179,7 @@ final class AiOracle {
                      "matches",
                      this.found.size(),
                      "scannedChunks",
-                     this.init_I,
+                     this.nextChunk,
                      "positions",
                      positions
                   )
@@ -1191,7 +1191,7 @@ final class AiOracle {
 
          JsonObject statusData() {
             return AiJson.objectOf(
-               "query", label, "scannedChunks", this.init_I, "totalChunks", this.chunkOrder == null ? 0 : this.chunkOrder.size(), "matches", this.found.size()
+               "query", label, "scannedChunks", this.nextChunk, "totalChunks", this.chunkOrder == null ? 0 : this.chunkOrder.size(), "matches", this.found.size()
             );
          }
 
@@ -1202,7 +1202,7 @@ final class AiOracle {
 
          @Override
          public void cancel() {
-            this.init_Z = true;
+            this.cancelled = true;
          }
       };
    }
@@ -1236,19 +1236,19 @@ final class AiOracle {
       }
    }
 
-   private static AiOperation init_AiOperation_I_I(final int cap, final int radiusChunks) {
+   private static AiOperation scanVillages(final int cap, final int radiusChunks) {
       final Minecraft mc = Minecraft.getInstance();
       final long mask = hideVillagesMask();
       return new AiOperation() {
          final long deadlineNanos = System.nanoTime() + 60000000000L;
          final List<AiOracle.BlockHit> found = new ArrayList<>();
          List<int[]> chunkOrder;
-         int init_I;
-         boolean init_Z;
+         int nextChunk;
+         boolean cancelled;
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.init_Z && mc.player != null && mc.level != null) {
+            if (!this.cancelled && mc.player != null && mc.level != null) {
                if (System.nanoTime() > this.deadlineNanos) {
                   return this.finish(AiOperation.Status.TIMED_OUT, "Village scan deadline reached", this.statusData());
                }
@@ -1259,8 +1259,8 @@ final class AiOracle {
 
                Vec3 eye = mc.player.getEyePosition();
 
-               for (int budget = 8; budget > 0 && this.init_I < this.chunkOrder.size(); budget--) {
-                  int[] c = this.chunkOrder.get(this.init_I++);
+               for (int budget = 8; budget > 0 && this.nextChunk < this.chunkOrder.size(); budget--) {
+                  int[] c = this.chunkOrder.get(this.nextChunk++);
                   LevelChunk chunk = mc.level.getChunkSource().getChunk(c[0], c[1], ChunkStatus.FULL, false);
                   if (chunk != null) {
                      int centerX = chunk.getPos().getMinBlockX() + 8;
@@ -1273,9 +1273,9 @@ final class AiOracle {
                   }
                }
 
-               if (this.init_I < this.chunkOrder.size()) {
+               if (this.nextChunk < this.chunkOrder.size()) {
                   return AiGameOperations.result(
-                     AiOperation.Status.RUNNING, "Scanning loaded chunks for villages (" + this.init_I + "/" + this.chunkOrder.size() + ")", this.statusData()
+                     AiOperation.Status.RUNNING, "Scanning loaded chunks for villages (" + this.nextChunk + "/" + this.chunkOrder.size() + ")", this.statusData()
                   );
                }
 
@@ -1316,7 +1316,7 @@ final class AiOracle {
                      "matches",
                      this.found.size(),
                      "scannedChunks",
-                     this.init_I,
+                     this.nextChunk,
                      "nearest",
                      nearest,
                      "chunks",
@@ -1330,7 +1330,7 @@ final class AiOracle {
 
          JsonObject statusData() {
             return AiJson.objectOf(
-               "query", "village", "scannedChunks", this.init_I, "totalChunks", this.chunkOrder == null ? 0 : this.chunkOrder.size(), "matches", this.found.size()
+               "query", "village", "scannedChunks", this.nextChunk, "totalChunks", this.chunkOrder == null ? 0 : this.chunkOrder.size(), "matches", this.found.size()
             );
          }
 
@@ -1341,7 +1341,7 @@ final class AiOracle {
 
          @Override
          public void cancel() {
-            this.init_Z = true;
+            this.cancelled = true;
          }
       };
    }
@@ -1362,7 +1362,7 @@ final class AiOracle {
       return false;
    }
 
-   private static AiOperation init_AiOperation_I(final int cap) {
+   private static AiOperation scanThreats(final int cap) {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          boolean done;

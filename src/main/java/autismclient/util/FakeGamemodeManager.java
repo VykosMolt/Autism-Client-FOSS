@@ -6,11 +6,11 @@ import net.minecraft.world.level.GameType;
 
 public final class FakeGamemodeManager {
    private static boolean active;
-   private static boolean load_Z;
+   private static boolean applyingLocalMode;
    private static GameType realMode;
    private static GameType fakeMode;
-   private static long init_J;
-   private static long load_J;
+   private static long realRevision;
+   private static long fakeRevision;
 
    private FakeGamemodeManager() {
    }
@@ -33,7 +33,7 @@ public final class FakeGamemodeManager {
       active = true;
       fakeMode = mode;
       if (previousDisplayed != mode) {
-         load_J++;
+         fakeRevision++;
       }
 
       init(mc, mode);
@@ -57,7 +57,7 @@ public final class FakeGamemodeManager {
       active = false;
       fakeMode = null;
       if (previousDisplayed != restore) {
-         load_J++;
+         fakeRevision++;
       }
 
       init(mc, restore);
@@ -65,10 +65,10 @@ public final class FakeGamemodeManager {
    }
 
    public static synchronized void onRealGamemodeChanged(GameType mode) {
-      if (!load_Z && mode != null) {
+      if (!applyingLocalMode && mode != null) {
          if (realMode != mode) {
             realMode = mode;
-            init_J++;
+            realRevision++;
          }
 
          if (active && fakeMode != null) {
@@ -82,11 +82,11 @@ public final class FakeGamemodeManager {
 
    public static synchronized void reset() {
       active = false;
-      load_Z = false;
+      applyingLocalMode = false;
       realMode = null;
       fakeMode = null;
-      init_J++;
-      load_J++;
+      realRevision++;
+      fakeRevision++;
    }
 
    public static synchronized FakeGamemodeManager.GamemodeSnapshot snapshot() {
@@ -94,7 +94,7 @@ public final class FakeGamemodeManager {
       GameType current = mc != null && mc.gameMode != null ? mc.gameMode.getPlayerMode() : null;
       GameType real = realMode != null ? realMode : current;
       GameType displayed = active && fakeMode != null ? fakeMode : real;
-      return new FakeGamemodeManager.GamemodeSnapshot(real, displayed, active, init_J, load_J);
+      return new FakeGamemodeManager.GamemodeSnapshot(real, displayed, active, realRevision, fakeRevision);
    }
 
    public static GameType parseMode(String input) {
@@ -142,12 +142,12 @@ public final class FakeGamemodeManager {
    }
 
    private static void init(Minecraft mc, GameType mode) {
-      load_Z = true;
+      applyingLocalMode = true;
 
       try {
          mc.gameMode.setLocalMode(mode);
       } finally {
-         load_Z = false;
+         applyingLocalMode = false;
       }
    }
 

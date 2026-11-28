@@ -12,7 +12,7 @@ import org.joml.Vector4f;
 
 public final class DangerHudRenderer {
    private static final Matrix4f PROJECTION = new Matrix4f();
-   private static final autismclient.gui.ui.widgets.WorldIndicatorBadge.BadgeSize init_TaskTimer_StreamUt = autismclient.gui.ui.widgets.WorldIndicatorBadge.size(0, 1, false);
+   private static final autismclient.gui.ui.widgets.WorldIndicatorBadge.BadgeSize BADGE_SIZE = autismclient.gui.ui.widgets.WorldIndicatorBadge.size(0, 1, false);
    private static final Vector4f PROJECTED = new Vector4f();
    private static final float[] placedMarkerX = new float[6];
    private static final float[] placedMarkerY = new float[6];
@@ -96,7 +96,7 @@ public final class DangerHudRenderer {
                      autismclient.gui.ui.widgets.WorldIndicatorBadge.render(
                         context,
                         new autismclient.gui.ui.widgets.WorldIndicatorBadge.BadgePlacement(markerX, markerY, angle),
-                        init_TaskTimer_StreamUt,
+                        BADGE_SIZE,
                         scale,
                         warning.kind().icon(),
                         null,

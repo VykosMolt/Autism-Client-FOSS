@@ -137,16 +137,16 @@ final class AiFieldWork {
       final int yf = field.getFirst().getY() + 1;
       return new AiOperation() {
          final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
-         final Map<Long, Integer> init_Map;
-         final Map<Long, Integer> load_Map;
+         final Map<Long, Integer> brokeAtTick;
+         final Map<Long, Integer> sownAtTick;
          boolean rowSweep;
-         boolean load_Z;
+         boolean rowAimSet;
          int rowHarvests;
-         final int load_I;
-         final Item init_Item;
-         final boolean read_Z;
+         final int startSlot;
+         final Item startItem;
+         final boolean startItemDamageable;
          int pathIndex;
-         int write_I;
+         int stallTicks;
          int ticks;
          int brokenCount;
          int sownCount;
@@ -156,36 +156,36 @@ final class AiFieldWork {
          int confirmedSown;
          int finalDropTicks;
          AiFieldPlan.FaceTarget lastFaceTarget;
-         final Map<Long, Long> read_Map;
-         final Set<Long> init_Set;
-         AiOperation init_AiOperation;
-         boolean write_Z;
-         boolean update_Z;
-         Vec3 init_Vec3;
+         final Map<Long, Long> breakRevision;
+         final Set<Long> ownSown;
+         AiOperation walkOp;
+         boolean reachedField;
+         boolean cancelled;
+         Vec3 lastPos;
          final Set<Long> unresolvedReplants;
 
          {
             this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.CALM);
-            this.init_Map = new HashMap<>();
-            this.load_Map = new HashMap<>();
-            this.load_I = mc.player.getInventory().getSelectedSlot();
-            this.init_Item = mc.player.getMainHandItem().getItem();
-            this.read_Z = mc.player.getMainHandItem().isDamageableItem();
+            this.brokeAtTick = new HashMap<>();
+            this.sownAtTick = new HashMap<>();
+            this.startSlot = mc.player.getInventory().getSelectedSlot();
+            this.startItem = mc.player.getMainHandItem().getItem();
+            this.startItemDamageable = mc.player.getMainHandItem().isDamageableItem();
             this.pathIndex = 1;
-            this.read_Map = new HashMap<>();
-            this.init_Set = new HashSet<>();
+            this.breakRevision = new HashMap<>();
+            this.ownSown = new HashSet<>();
             this.unresolvedReplants = new HashSet<>();
          }
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.update_Z && mc.player != null && mc.level != null) {
+            if (!this.cancelled && mc.player != null && mc.level != null) {
                this.ticks++;
                if (mc.gui.screen() != null) {
                   autismclient.util.BlockAttackGraceWindow.clear();
-                  this.load_V_2();
+                  this.releaseInputs();
                   this.aim.clear();
-                  this.load_Z = false;
+                  this.rowAimSet = false;
                   this.lastFaceTarget = null;
                   return this.running("Harvest paused while a screen is open");
                }
@@ -196,14 +196,14 @@ final class AiFieldWork {
                   path.addAll(AiFieldPlan.sweepPath(field, 1, mc.player.blockPosition()));
                   this.pathIndex = 1;
                   this.rowSweep = true;
-                  this.load_Z = false;
+                  this.rowAimSet = false;
                }
 
                for (long key : this.unresolvedReplants) {
                   AiServerEvidence.BlockUpdate update = AiServerEvidence.lastBlockUpdate(BlockPos.of(key).above());
-                  boolean breakConfirmed = update != null && update.revision() > this.read_Map.get(key) && update.state().isAir();
-                  int since = this.load_Map.getOrDefault(key, this.init_Map.getOrDefault(key, this.ticks));
-                  if ((!breakConfirmed || this.load_Map.containsKey(key)) && this.ticks - since > 120) {
+                  boolean breakConfirmed = update != null && update.revision() > this.breakRevision.get(key) && update.state().isAir();
+                  int since = this.sownAtTick.getOrDefault(key, this.brokeAtTick.getOrDefault(key, this.ticks));
+                  if ((!breakConfirmed || this.sownAtTick.containsKey(key)) && this.ticks - since > 120) {
                      return this.finish(AiOperation.Status.FAILED, "Server has not confirmed the crop/replant at " + BlockPos.of(key).above().toShortString());
                   }
                }
@@ -239,30 +239,30 @@ final class AiFieldWork {
                }
 
                this.finalDropTicks = 0;
-               if (!this.write_Z) {
-                  if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGoto.travelToCompat(BlockPos.containing(path.getFirst()), 1.2, false, false, false, 60);
+               if (!this.reachedField) {
+                  if (this.walkOp == null) {
+                     this.walkOp = AiGoto.travelToCompat(BlockPos.containing(path.getFirst()), 1.2, false, false, false, 60);
                   }
 
-                  AiOperation.Result r = this.init_AiOperation.tick();
+                  AiOperation.Result r = this.walkOp.tick();
                   if (!r.terminal()) {
                      return this.running("Walking to the field: " + r.message());
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
-                  this.write_Z = true;
+                  this.walkOp.cancel();
+                  this.walkOp = null;
+                  this.reachedField = true;
                }
 
-               this.load_V_2();
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result r = this.init_AiOperation.tick();
+               this.releaseInputs();
+               if (this.walkOp != null) {
+                  AiOperation.Result r = this.walkOp.tick();
                   if (!r.terminal()) {
                      return this.running("Walking around the field obstruction: " + r.message());
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.walkOp.cancel();
+                  this.walkOp = null;
                   if (r.status() != AiOperation.Status.SUCCEEDED) {
                      return this.finish(AiOperation.Status.FAILED, "No safe walking route around the field obstruction");
                   }
@@ -280,10 +280,10 @@ final class AiFieldWork {
                int ripe = 0;
                int behind = 0;
                boolean fixedRow = this.rowSweep && this.pathIndex % 2 == 1;
-               if (fixedRow && !this.load_Z) {
+               if (fixedRow && !this.rowAimSet) {
                   float yaw = Math.abs(heading.x) > Math.abs(heading.z) ? 0.0F : 90.0F;
                   this.aim.setTargetRotation(new autismclient.util.RotationMath.Rotation(yaw, 80.0F));
-                  this.load_Z = true;
+                  this.rowAimSet = true;
                }
 
                BlockHitResult currentRay = autismclient.ai.engine.AiAim.raycastLookBlock();
@@ -338,7 +338,7 @@ final class AiFieldWork {
                   if (AiFieldPlan.init(this.lastFaceTarget, nextGoal, autismclient.ai.engine.AiAim.raycastLookBlock())) {
                      this.aim.aimAt(bestHit.getLocation());
                      this.aimRequests++;
-                     this.load_Z = false;
+                     this.rowAimSet = false;
                   }
 
                   this.lastFaceTarget = nextGoal;
@@ -349,8 +349,8 @@ final class AiFieldWork {
                   BlockHitResult ray = autismclient.ai.engine.AiAim.raycastLookBlock();
                   if (ray != null && ray.getBlockPos().equals(best)) {
                      if (bestBreak) {
-                        if (this.read_Z && mc.player.getInventory().getItem(this.load_I).is(this.init_Item)) {
-                           autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.load_I);
+                        if (this.startItemDamageable && mc.player.getInventory().getItem(this.startSlot).is(this.startItem)) {
+                           autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, this.startSlot);
                         }
 
                         long ground = best.below().asLong();
@@ -365,11 +365,11 @@ final class AiFieldWork {
                            }
 
                            if (replant && this.unresolvedReplants.add(ground)) {
-                              this.read_Map.put(ground, revision);
-                              this.init_Map.put(ground, this.ticks);
+                              this.breakRevision.put(ground, revision);
+                              this.brokeAtTick.put(ground, this.ticks);
                            }
 
-                           this.init_Set.remove(ground);
+                           this.ownSown.remove(ground);
                         }
                      } else if (ray.getDirection() == Direction.UP && this.canReplant(best) && mc.level.getBlockState(best.above()).isAir() && this.holdSeed(seed)) {
                         for (InteractionHand hand : InteractionHand.values()) {
@@ -381,8 +381,8 @@ final class AiFieldWork {
 
                               this.sownCount++;
                               acted = true;
-                              this.init_Set.add(best.asLong());
-                              this.load_Map.put(best.asLong(), this.ticks);
+                              this.ownSown.add(best.asLong());
+                              this.sownAtTick.put(best.asLong(), this.ticks);
                               break;
                            }
 
@@ -401,10 +401,10 @@ final class AiFieldWork {
                   }
 
                   Vec3 pos = mc.player.position();
-                  boolean moved = this.init_Vec3 != null && pos.distanceToSqr(this.init_Vec3) > 1.0E-4;
-                  this.init_Vec3 = pos;
-                  this.write_I = !acted && !moved ? this.write_I + 1 : 0;
-                  return this.write_I > 60
+                  boolean moved = this.lastPos != null && pos.distanceToSqr(this.lastPos) > 1.0E-4;
+                  this.lastPos = pos;
+                  this.stallTicks = !acted && !moved ? this.stallTicks + 1 : 0;
+                  return this.stallTicks > 60
                      ? this.finish(AiOperation.Status.FAILED, "Drops out of reach: " + lying.size() + " left lying")
                      : this.running("Harvest: picking up " + lying.size() + " drops");
                } else {
@@ -413,11 +413,11 @@ final class AiFieldWork {
                      if (this.pathIndex < path.size() - 1) {
                         this.pathIndex++;
                      } else {
-                        int bare = this.load_I_3();
+                        int bare = this.bareReplantCount();
                         if (ripe == 0 && !this.unresolvedReplants.isEmpty()) {
                            boolean waiting = this.unresolvedReplants
                               .stream()
-                              .anyMatch(key -> autismclient.util.BlockBreakGraceCalc.inGrace(this.ticks, this.init_Map.get(key), this.pingMs()));
+                              .anyMatch(key -> autismclient.util.BlockBreakGraceCalc.inGrace(this.ticks, this.brokeAtTick.get(key), this.pingMs()));
                            if (lying.isEmpty() && bare > 0 && AiGameState.countInventoryItem(seedItem) <= 0 && !waiting) {
                               return this.finish(AiOperation.Status.FAILED, "Harvest needs " + seedItem + " to replant " + bare + " plots");
                            }
@@ -454,10 +454,10 @@ final class AiFieldWork {
                   }
 
                   Vec3 pos = mc.player.position();
-                  boolean moved = this.init_Vec3 != null && pos.distanceToSqr(this.init_Vec3) > 1.0E-4;
-                  this.init_Vec3 = pos;
-                  this.write_I = !acted && !moved ? this.write_I + 1 : 0;
-                  return this.write_I > 100
+                  boolean moved = this.lastPos != null && pos.distanceToSqr(this.lastPos) > 1.0E-4;
+                  this.lastPos = pos;
+                  this.stallTicks = !acted && !moved ? this.stallTicks + 1 : 0;
+                  return this.stallTicks > 100
                      ? this.finish(AiOperation.Status.FAILED, "Harvest stalled with " + ripe + " ripe crops left")
                      : this.running("Harvest: " + this.brokenCount + " broken, " + this.sownCount + " sown, " + ripe + " ripe left");
                }
@@ -467,8 +467,8 @@ final class AiFieldWork {
          }
 
          void moveToward(Vec3 point) {
-            if (!AiFieldWork.steerToward(mc, point) && this.init_AiOperation == null) {
-               this.init_AiOperation = AiGoto.travelToCompat(BlockPos.containing(point), 0.65, false, false, false, 20);
+            if (!AiFieldWork.steerToward(mc, point) && this.walkOp == null) {
+               this.walkOp = AiGoto.travelToCompat(BlockPos.containing(point), 0.65, false, false, false, 20);
             }
          }
 
@@ -494,21 +494,21 @@ final class AiFieldWork {
                long key = iterator.next();
                BlockPos ground = BlockPos.of(key);
                BlockPos above = ground.above();
-               boolean ownClick = this.init_Set.contains(key);
+               boolean ownClick = this.ownSown.contains(key);
                AiReplantEvidence.ReplantState state = AiReplantEvidence.init(
                   mc.level.getBlockState(above),
                   AiServerEvidence.lastBlockUpdate(above),
-                  this.read_Map.getOrDefault(key, 0L),
+                  this.breakRevision.getOrDefault(key, 0L),
                   crop,
                   ownClick,
                   AiGameState.countInventoryItem(seedItem)
                );
                if (state == AiReplantEvidence.ReplantState.LOCAL || state == AiReplantEvidence.ReplantState.EXTERNAL) {
                   iterator.remove();
-                  this.init_Set.remove(key);
-                  this.init_Map.remove(key);
-                  this.load_Map.remove(key);
-                  this.read_Map.remove(key);
+                  this.ownSown.remove(key);
+                  this.brokeAtTick.remove(key);
+                  this.sownAtTick.remove(key);
+                  this.breakRevision.remove(key);
                   if (state == AiReplantEvidence.ReplantState.LOCAL) {
                      this.confirmedSown++;
                   } else {
@@ -546,7 +546,7 @@ final class AiFieldWork {
 
          boolean canReplant(BlockPos ground) {
             long key = ground.asLong();
-            if (this.init_Set.contains(key)) {
+            if (this.ownSown.contains(key)) {
                return false;
             } else {
                return !this.unresolvedReplants.contains(key)
@@ -554,9 +554,9 @@ final class AiFieldWork {
                   : AiReplantEvidence.init(
                      mc.level.getBlockState(ground.above()),
                      AiServerEvidence.lastBlockUpdate(ground.above()),
-                     this.read_Map.get(key),
+                     this.breakRevision.get(key),
                      this.ticks,
-                     this.init_Map.get(key),
+                     this.brokeAtTick.get(key),
                      this.pingMs(),
                      false
                   );
@@ -577,7 +577,7 @@ final class AiFieldWork {
             return false;
          }
 
-         int load_I_3() {
+         int bareReplantCount() {
             if (replant && seedItem != null) {
                int n = 0;
 
@@ -594,7 +594,7 @@ final class AiFieldWork {
             }
          }
 
-         void load_V_2() {
+         void releaseInputs() {
             AiFieldWork.releaseControls(mc);
          }
 
@@ -634,14 +634,14 @@ final class AiFieldWork {
 
          @Override
          public void cancel() {
-            this.update_Z = true;
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            this.cancelled = true;
+            if (this.walkOp != null) {
+               this.walkOp.cancel();
             }
 
             autismclient.util.BlockAttackGraceWindow.clear();
             if (mc.player != null) {
-               this.load_V_2();
+               this.releaseInputs();
             }
 
             this.aim.clear();
@@ -723,9 +723,9 @@ final class AiFieldWork {
       final List<Vec3> path = AiFieldPlan.sweepPath(plots, 9, mc.player.blockPosition());
       return new AiOperation() {
          final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
-         final Set<Long> init_Set = new HashSet<>();
+         final Set<Long> plotKeys = new HashSet<>();
          int pathIndex;
-         int load_I;
+         int stallTicks;
          int ticks;
          int tilled;
          int sownCount;
@@ -735,35 +735,35 @@ final class AiFieldWork {
          int seedsSeen;
          int aimRequests;
          AiFieldPlan.FaceTarget lastFaceTarget;
-         final Set<Long> load_Set;
-         final Set<Long> read_Set;
-         double init_D;
-         final Set<Integer> write_Set;
-         String init_Str;
-         AiOperation init_AiOperation;
-         boolean init_Z;
-         boolean load_Z;
-         Vec3 init_Vec3;
+         final Set<Long> seenCrops;
+         final Set<Long> seenFarmland;
+         double maxFallDistance;
+         final Set<Integer> loggedItemIds;
+         String lastClick;
+         AiOperation walkOp;
+         boolean reachedField;
+         boolean cancelled;
+         Vec3 lastPos;
          int missedRetargets;
          int settleTicks;
 
          {
             for (BlockPos p : plots) {
-               this.init_Set.add(p.asLong());
+               this.plotKeys.add(p.asLong());
             }
 
             this.aim.setProfile(autismclient.ai.engine.AiAim.AimProfile.FAST);
             this.pathIndex = 1;
             this.seedsSeen = -1;
-            this.load_Set = new HashSet<>();
-            this.read_Set = new HashSet<>();
-            this.write_Set = new HashSet<>();
-            this.init_Str = "-";
+            this.seenCrops = new HashSet<>();
+            this.seenFarmland = new HashSet<>();
+            this.loggedItemIds = new HashSet<>();
+            this.lastClick = "-";
          }
 
          @Override
          public AiOperation.Result tick() {
-            if (!this.load_Z && mc.player != null && mc.level != null) {
+            if (!this.cancelled && mc.player != null && mc.level != null) {
                this.ticks++;
                if (mc.gui.screen() != null) {
                   autismclient.util.BlockAttackGraceWindow.clear();
@@ -772,41 +772,41 @@ final class AiFieldWork {
                   return this.running("Field work paused while a screen is open");
                }
 
-               if (!this.init_Z) {
-                  if (this.init_AiOperation == null) {
-                     this.init_AiOperation = AiGoto.travelToCompat(BlockPos.containing(path.getFirst()), 1.2, false, false, false, 60);
+               if (!this.reachedField) {
+                  if (this.walkOp == null) {
+                     this.walkOp = AiGoto.travelToCompat(BlockPos.containing(path.getFirst()), 1.2, false, false, false, 60);
                   }
 
-                  AiOperation.Result r = this.init_AiOperation.tick();
+                  AiOperation.Result r = this.walkOp.tick();
                   if (!r.terminal()) {
                      return this.running("Walking to the field: " + r.message());
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
-                  this.init_Z = true;
+                  this.walkOp.cancel();
+                  this.walkOp = null;
+                  this.reachedField = true;
                }
 
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result r = this.init_AiOperation.tick();
+               if (this.walkOp != null) {
+                  AiOperation.Result r = this.walkOp.tick();
                   if (!r.terminal()) {
                      return this.running("Walking to a plot the lines missed: " + r.message());
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.walkOp.cancel();
+                  this.walkOp = null;
                   this.settleTicks = 20;
                }
 
                this.releaseControls();
-               if (!this.init_Z_3()) {
+               if (!this.equipTools()) {
                   return ++this.equipAttempts > 40
                      ? this.finish(AiOperation.Status.FAILED, "Could not take the hoe and the seeds in hand")
                      : this.running("Taking the hoe and the seeds in hand");
                }
 
                this.equipAttempts = 0;
-               this.init_V_5();
+               this.debugTrackLosses();
                Vec3 eye = mc.player.getEyePosition();
                double reach = mc.player.blockInteractionRange() - 0.15;
                boolean seeds = AiGameState.countInventoryItem(seedItem) > 0;
@@ -874,7 +874,7 @@ final class AiFieldWork {
                      BlockPos missed = this.strandedPasses >= 2 && this.missedRetargets < 6 ? this.nearestPendingPlot(seeds) : null;
                      if (missed != null) {
                         this.missedRetargets++;
-                        this.init_AiOperation = AiGoto.travelToCompat(missed.above(), 1.6, false, false, false, 20);
+                        this.walkOp = AiGoto.travelToCompat(missed.above(), 1.6, false, false, false, 20);
                         return this.running("Walking to a plot the lines missed at " + missed.toShortString());
                      }
 
@@ -912,10 +912,10 @@ final class AiFieldWork {
                }
 
                Vec3 pos = mc.player.position();
-               boolean moved = this.init_Vec3 != null && pos.distanceToSqr(this.init_Vec3) > 1.0E-4;
-               this.init_Vec3 = pos;
-               this.load_I = !clicked && !moved ? this.load_I + 1 : 0;
-               return this.load_I > 100
+               boolean moved = this.lastPos != null && pos.distanceToSqr(this.lastPos) > 1.0E-4;
+               this.lastPos = pos;
+               this.stallTicks = !clicked && !moved ? this.stallTicks + 1 : 0;
+               return this.stallTicks > 100
                   ? this.finish(AiOperation.Status.FAILED, "Field work stalled with " + pending + " plots left")
                   : this.running("Field: " + this.tilled + " tilled, " + this.sownCount + " sown, " + pending + " left");
             } else {
@@ -941,7 +941,7 @@ final class AiFieldWork {
             return best;
          }
 
-         void init_V_5() {
+         void debugTrackLosses() {
             int seedsNow = AiGameState.countInventoryItem(seedItem);
             boolean debug = Boolean.getBoolean("autism.navigation.debug");
             if (debug && this.seedsSeen >= 0 && seedsNow > this.seedsSeen) {
@@ -956,13 +956,13 @@ final class AiFieldWork {
             }
 
             this.seedsSeen = seedsNow;
-            this.init_D = Math.max(this.init_D, mc.player.fallDistance);
+            this.maxFallDistance = Math.max(this.maxFallDistance, mc.player.fallDistance);
             AABB box = new AABB(
                origin.getX() - 3, origin.getY() - 2, origin.getZ() - 3, origin.getX() + width + 3, origin.getY() + 4, origin.getZ() + length + 3
             );
             if (debug) {
                for (ItemEntity item : mc.level.getEntitiesOfClass(ItemEntity.class, box)) {
-                  if (this.write_Set.add(item.getId())) {
+                  if (this.loggedItemIds.add(item.getId())) {
                      BlockPos at = item.blockPosition();
                      AutismClientAddon.LOG
                         .info(
@@ -972,7 +972,7 @@ final class AiFieldWork {
                            item.position(),
                            mc.level.getBlockState(at),
                            mc.level.getBlockState(at.below()),
-                           this.init_Str,
+                           this.lastClick,
                            this.ticks
                         );
                   }
@@ -982,8 +982,8 @@ final class AiFieldWork {
             for (BlockPos p : plots) {
                boolean farm = mc.level.getBlockState(p).is(Blocks.FARMLAND);
                if (farm) {
-                  this.read_Set.add(p.asLong());
-               } else if (this.read_Set.remove(p.asLong())) {
+                  this.seenFarmland.add(p.asLong());
+               } else if (this.seenFarmland.remove(p.asLong())) {
                   AutismClientAddon.LOG
                      .info(
                         "[AI] field: farmland lost at {} -> {}: body {} onGround {} vy {} fall {} (max {}) jump {} sprint {} keys {}{}{}{}",
@@ -993,7 +993,7 @@ final class AiFieldWork {
                         mc.player.onGround(),
                         mc.player.getDeltaMovement().y,
                         mc.player.fallDistance,
-                        this.init_D,
+                        this.maxFallDistance,
                         mc.options.keyJump.isDown(),
                         mc.player.isSprinting(),
                         mc.options.keyUp.isDown() ? "W" : "",
@@ -1005,8 +1005,8 @@ final class AiFieldWork {
 
                boolean has = mc.level.getBlockState(p.above()).is(crop);
                if (has) {
-                  this.load_Set.add(p.asLong());
-               } else if (this.load_Set.remove(p.asLong())) {
+                  this.seenCrops.add(p.asLong());
+               } else if (this.seenCrops.remove(p.asLong())) {
                   this.lostCount++;
                   AutismClientAddon.LOG
                      .info(
@@ -1028,7 +1028,7 @@ final class AiFieldWork {
 
             for (InteractionHand hand : InteractionHand.values()) {
                InteractionResult result = mc.gameMode.useItemOn(mc.player, hand, hit);
-               this.init_Str = p.toShortString()
+               this.lastClick = p.toShortString()
                   + " "
                   + hand
                   + " "
@@ -1059,7 +1059,7 @@ final class AiFieldWork {
             return false;
          }
 
-         boolean init_Z_3() {
+         boolean equipTools() {
             AiItems.ItemSpec seed = AiItems.resolveItem(seedItem);
             if (crop == Blocks.NETHER_WART) {
                if (seed.matches(mc.player.getMainHandItem()) || seed.matches(mc.player.getOffhandItem())) {
@@ -1094,8 +1094,8 @@ final class AiFieldWork {
          }
 
          void moveToward(Vec3 target) {
-            if (!AiFieldWork.steerToward(mc, target) && this.init_AiOperation == null) {
-               this.init_AiOperation = AiGoto.travelToCompat(BlockPos.containing(target), 0.65, false, false, false, 20);
+            if (!AiFieldWork.steerToward(mc, target) && this.walkOp == null) {
+               this.walkOp = AiGoto.travelToCompat(BlockPos.containing(target), 0.65, false, false, false, 20);
             }
          }
 
@@ -1118,9 +1118,9 @@ final class AiFieldWork {
 
          @Override
          public void cancel() {
-            this.load_Z = true;
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            this.cancelled = true;
+            if (this.walkOp != null) {
+               this.walkOp.cancel();
             }
 
             autismclient.util.BlockAttackGraceWindow.clear();

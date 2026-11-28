@@ -16,17 +16,17 @@ public final class ModNamespaceCatalog {
    private static final Set<String> BUILTIN_NAMESPACES = Set.of("minecraft", "java", "mixinextras", "fabricloader", "fabric-loader", "fabric", "fabric-api", "fabric_api");
    private static final Set<String> FORCED_MODS = Set.of("voicechat");
    private static final Set<String> foreignModIds = ConcurrentHashMap.newKeySet();
-   private static final Set<String> write_Set = ConcurrentHashMap.newKeySet();
-   private static final Set<String> update_Set = ConcurrentHashMap.newKeySet();
-   private static final Set<String> sync_Set = ConcurrentHashMap.newKeySet();
+   private static final Set<String> localModIds = ConcurrentHashMap.newKeySet();
+   private static final Set<String> fabricNamespaces = ConcurrentHashMap.newKeySet();
+   private static final Set<String> serverKnownKeys = ConcurrentHashMap.newKeySet();
    private static final Map<String, String> serverTranslations = new ConcurrentHashMap<>();
-   private static final Map<String, Set<String>> load_Map = new ConcurrentHashMap<>();
+   private static final Map<String, Set<String>> keyOwners = new ConcurrentHashMap<>();
    private static final Set<String> flush = ConcurrentHashMap.newKeySet();
-   private static final Map<String, Set<String>> read_Map = new ConcurrentHashMap<>();
-   private static final int init_I = 8192;
+   private static final Map<String, Set<String>> blockKeyOwners = new ConcurrentHashMap<>();
+   private static final int MAX_CACHE_ENTRIES = 8192;
    private static final Map<String, ModNamespaceCatalog.Decision> decisionCache = new ConcurrentHashMap<>();
    private static final Map<String, Boolean> blockedCache = new ConcurrentHashMap<>();
-   private static final Map<String, Boolean> sync_Map = new ConcurrentHashMap<>();
+   private static final Map<String, Boolean> modSegmentCache = new ConcurrentHashMap<>();
    private static final AtomicBoolean initialized = new AtomicBoolean(false);
 
    private ModNamespaceCatalog() {
@@ -39,16 +39,16 @@ public final class ModNamespaceCatalog {
                String normalized = normalizeModId(mod.getMetadata().getId());
                if (normalized != null && !BUILTIN_NAMESPACES.contains(normalized)) {
                   if (!normalized.startsWith("fabric-") && !normalized.startsWith("fabric_")) {
-                     write_Set.add(normalized);
+                     localModIds.add(normalized);
                   } else {
-                     update_Set.add(normalized);
+                     fabricNamespaces.add(normalized);
                   }
                }
             }
 
-            update_Set.add("fabric");
-            update_Set.add("fabric-api");
-            update_Set.addAll(FORCED_MODS);
+            fabricNamespaces.add("fabric");
+            fabricNamespaces.add("fabric-api");
+            fabricNamespaces.addAll(FORCED_MODS);
 
             for (String id : FORCED_MODS) {
                read_V(id);
@@ -71,14 +71,14 @@ public final class ModNamespaceCatalog {
    }
 
    public static void reset() {
-      sync_Set.clear();
+      serverKnownKeys.clear();
       serverTranslations.clear();
-      load_Map.clear();
+      keyOwners.clear();
       clearCaches();
    }
 
    public static void init_V(String key) {
-      if (key != null && !key.isBlank() && sync_Set.add(key)) {
+      if (key != null && !key.isBlank() && serverKnownKeys.add(key)) {
          clearCaches();
       }
    }
@@ -92,7 +92,7 @@ public final class ModNamespaceCatalog {
 
    public static void load(String key, String modId) {
       String normalized = normalizeModId(modId);
-      if (key != null && !key.isBlank() && normalized != null && load_Map.computeIfAbsent(key, ignored -> ConcurrentHashMap.newKeySet()).add(normalized)) {
+      if (key != null && !key.isBlank() && normalized != null && keyOwners.computeIfAbsent(key, ignored -> ConcurrentHashMap.newKeySet()).add(normalized)) {
          clearCaches();
       }
    }
@@ -100,9 +100,9 @@ public final class ModNamespaceCatalog {
    public static void init(Iterable<String> removed, Map<String, String> renamed) {
       if (removed != null) {
          for (String key : removed) {
-            sync_Set.remove(key);
+            serverKnownKeys.remove(key);
             serverTranslations.remove(key);
-            load_Map.remove(key);
+            keyOwners.remove(key);
          }
       }
 
@@ -110,11 +110,11 @@ public final class ModNamespaceCatalog {
          for (Entry<String, String> entry : renamed.entrySet()) {
             String from = entry.getKey();
             String to = entry.getValue();
-            sync_Set.remove(from);
+            serverKnownKeys.remove(from);
             serverTranslations.remove(from);
-            load_Map.remove(from);
+            keyOwners.remove(from);
             if (to != null && !to.isBlank()) {
-               sync_Set.add(to);
+               serverKnownKeys.add(to);
             }
          }
       }
@@ -130,7 +130,7 @@ public final class ModNamespaceCatalog {
 
    public static void read(String key, String modId) {
       String normalized = normalizeModId(modId);
-      if (key != null && !key.isBlank() && normalized != null && read_Map.computeIfAbsent(key, ignored -> ConcurrentHashMap.newKeySet()).add(normalized)) {
+      if (key != null && !key.isBlank() && normalized != null && blockKeyOwners.computeIfAbsent(key, ignored -> ConcurrentHashMap.newKeySet()).add(normalized)) {
          clearCaches();
       }
    }
@@ -177,7 +177,7 @@ public final class ModNamespaceCatalog {
    }
 
    public static boolean init_Z(String key) {
-      return key != null && flush.contains(key) && !read_Map.containsKey(key);
+      return key != null && flush.contains(key) && !blockKeyOwners.containsKey(key);
    }
 
    public static boolean isBlockedKey(String key) {
@@ -200,8 +200,8 @@ public final class ModNamespaceCatalog {
    }
 
    public static boolean write(String key) {
-      if (key != null && !key.isEmpty() && !write_Set.isEmpty()) {
-         Boolean cached = sync_Map.get(key);
+      if (key != null && !key.isEmpty() && !localModIds.isEmpty()) {
+         Boolean cached = modSegmentCache.get(key);
          if (cached != null) {
             return cached;
          }
@@ -214,7 +214,7 @@ public final class ModNamespaceCatalog {
             if (i == len || key.charAt(i) == '.') {
                if (i > start) {
                   String segment = key.substring(start, i).toLowerCase(Locale.ROOT);
-                  if (write_Set.contains(segment)) {
+                  if (localModIds.contains(segment)) {
                      result = true;
                      break;
                   }
@@ -224,7 +224,7 @@ public final class ModNamespaceCatalog {
             }
          }
 
-         putBounded(sync_Map, key, result);
+         putBounded(modSegmentCache, key, result);
          return result;
       } else {
          return false;
@@ -242,7 +242,7 @@ public final class ModNamespaceCatalog {
       }
 
       String lower = namespace.toLowerCase(Locale.ROOT);
-      return !"minecraft".equals(lower) && !"c".equals(lower) ? update_Set.contains(lower) : true;
+      return !"minecraft".equals(lower) && !"c".equals(lower) ? fabricNamespaces.contains(lower) : true;
    }
 
    private static boolean update(String modId) {
@@ -251,13 +251,13 @@ public final class ModNamespaceCatalog {
    }
 
    private static ModNamespaceCatalog.Decision decide(String key) {
-      if (!sync_Set.contains(key) && !VanillaTranslationKeyLoader.isVanillaKey(key)) {
+      if (!serverKnownKeys.contains(key) && !VanillaTranslationKeyLoader.isVanillaKey(key)) {
          String serverValue = serverTranslations.get(key);
          if (serverValue != null) {
             return ModNamespaceCatalog.Decision.init(serverValue);
          }
 
-         Set<String> owners = load_Map.get(key);
+         Set<String> owners = keyOwners.get(key);
          if (owners != null && !owners.isEmpty()) {
             for (String owner : owners) {
                if (update(owner)) {
@@ -279,7 +279,7 @@ public final class ModNamespaceCatalog {
          return false;
       }
 
-      Set<String> owners = read_Map.get(key);
+      Set<String> owners = blockKeyOwners.get(key);
       if (owners != null && !owners.isEmpty()) {
          for (String owner : owners) {
             if (update(owner)) {
@@ -304,7 +304,7 @@ public final class ModNamespaceCatalog {
    private static void clearCaches() {
       decisionCache.clear();
       blockedCache.clear();
-      sync_Map.clear();
+      modSegmentCache.clear();
    }
 
    private static String normalizeModId(String modId) {

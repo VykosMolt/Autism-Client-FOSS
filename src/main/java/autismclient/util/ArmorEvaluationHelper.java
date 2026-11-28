@@ -37,7 +37,7 @@ public final class ArmorEvaluationHelper {
    );
    private static final float[] PROTECTION_WEIGHTS = new float[]{1.2F, 0.4F, 0.39F, 0.38F};
    private static final float[] PROTECTION_FACTORS = new float[]{0.04F, 0.08F, 0.15F, 0.08F};
-   private static final ResourceKey<Enchantment>[] load_ResourceKeyArr = keys(
+   private static final ResourceKey<Enchantment>[] WEIGHTED_ENCHANTS = keys(
       Enchantments.FEATHER_FALLING, Enchantments.THORNS, Enchantments.RESPIRATION, Enchantments.AQUA_AFFINITY, Enchantments.UNBREAKING
    );
    private static final float[] ENCHANT_WEIGHTS = new float[]{3.0F, 1.0F, 0.1F, 0.05F, 0.01F};
@@ -103,7 +103,7 @@ public final class ArmorEvaluationHelper {
       }
 
       for (int pass = 0; pass < 2; pass++) {
-         Map<EquipmentSlot, ArmorEvaluationHelper.ArmorScore> kit = init_Map_Map(current);
+         Map<EquipmentSlot, ArmorEvaluationHelper.ArmorScore> kit = scoreKit(current);
          Comparator<ArmorEvaluationHelper.ArmorCandidate> comparator = candidateOrder(kit, threshold);
          Map<EquipmentSlot, ArmorEvaluationHelper.ArmorCandidate> next = new EnumMap<>(EquipmentSlot.class);
 
@@ -117,7 +117,7 @@ public final class ArmorEvaluationHelper {
       return current;
    }
 
-   private static Map<EquipmentSlot, ArmorEvaluationHelper.ArmorScore> init_Map_Map(Map<EquipmentSlot, ArmorEvaluationHelper.ArmorCandidate> current) {
+   private static Map<EquipmentSlot, ArmorEvaluationHelper.ArmorScore> scoreKit(Map<EquipmentSlot, ArmorEvaluationHelper.ArmorCandidate> current) {
       double totalDefense = 0.0;
       double totalToughness = 0.0;
 
@@ -145,7 +145,7 @@ public final class ArmorEvaluationHelper {
       Comparator<ArmorEvaluationHelper.ArmorCandidate> byReduction = Comparator.comparingDouble(c -> round3(init_D_TaskTimer_DataUtil_Map(c, kit)));
       return Comparator.<ArmorEvaluationHelper.ArmorCandidate, Boolean>comparing(c -> remainingDurability(c.stack()) > threshold)
          .thenComparing(byReduction.reversed())
-         .thenComparingDouble(c -> round3(load_D(c.stack())))
+         .thenComparingDouble(c -> round3(enchantScore(c.stack())))
          .thenComparingInt(c -> enchantmentCount(c.stack()))
          .thenComparingInt(c -> enchantability(c.stack()))
          .thenComparing(c -> c.kind() == ArmorEvaluationHelper.SourceKind.ARMOR)
@@ -175,11 +175,11 @@ public final class ArmorEvaluationHelper {
       return sum;
    }
 
-   private static double load_D(ItemStack stack) {
+   private static double enchantScore(ItemStack stack) {
       double sum = 0.0;
 
-      for (int i = 0; i < load_ResourceKeyArr.length; i++) {
-         sum += enchantLevel(stack, load_ResourceKeyArr[i]) * ENCHANT_WEIGHTS[i];
+      for (int i = 0; i < WEIGHTED_ENCHANTS.length; i++) {
+         sum += enchantLevel(stack, WEIGHTED_ENCHANTS[i]) * ENCHANT_WEIGHTS[i];
       }
 
       return sum;

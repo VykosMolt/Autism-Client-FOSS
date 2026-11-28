@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.Random;
 
 public final class RotationStreamPlanner {
-   private static final double init = 0.15;
+   private static final double DEFAULT_GCD = 0.15;
    private static final double load = 4.0;
    private static final double read = 0.7;
    private static final double write = 0.3;
@@ -23,7 +23,7 @@ public final class RotationStreamPlanner {
    private static final double put = 0.3;
    private static final double add = 0.08;
    private static final double clear = 0.9;
-   private static final double reset = 1.1;
+   private static final double MAX_WANDER_WEIGHT = 1.1;
    private static final double start = 2.75;
    private static final double stop = 0.5;
    private static final double next = 89.9;

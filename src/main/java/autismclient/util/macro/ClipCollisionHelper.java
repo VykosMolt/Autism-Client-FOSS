@@ -8,7 +8,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class ClipCollisionHelper {
-   public static final double init = 3.0;
+   public static final double MAX_SINGLE_DROP = 3.0;
    public static final double load = 0.0625;
 
    private ClipCollisionHelper() {

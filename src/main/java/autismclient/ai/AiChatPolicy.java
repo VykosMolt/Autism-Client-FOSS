@@ -16,7 +16,7 @@ final class AiChatPolicy {
    static final int load_I = 512;
    static final int read_I = 256;
    static final int write_I = 220;
-   static final int update = 40;
+   static final int MIN_REPLY_CHARS = 40;
    static final int sync = 8;
    static final int flush = 1;
    static final int close = 30;

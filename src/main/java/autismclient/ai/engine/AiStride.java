@@ -219,7 +219,7 @@ final class AiStride {
       return var0 >= 0 && (var1 < 0 || var0 <= var1);
    }
 
-   static AiPhysics.MoveInput putAt_TokenCore_CacheHel_TokenCore_TaskStat(
+   static AiPhysics.MoveInput approachInputFor(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5, boolean var6
    ) {
       double var7 = Math.hypot(var2.getX() + 0.5 - var1.x(), var2.getZ() + 0.5 - var1.z());
@@ -290,7 +290,7 @@ final class AiStride {
 
                for (int var22 = 0; var22 < 3; var22++) {
                   AiStride.StridePlan var23 = new AiStride.StridePlan(null, var21, var22 == 0, var22 == 2 ? 2 : 0, 0, 0.0);
-                  AiStride.FallResult var24 = putAt(var0, var23, 0, var2, var4, var5, var6);
+                  AiStride.FallResult var24 = simulateLanding(var0, var23, 0, var2, var4, var5, var6);
                   if (var24 != null) {
                      AiPhysics.MotionState var25 = var24.at();
                      double var26 = (var25.vx() * var7 + var25.vz() * var9) / var13;
@@ -314,7 +314,7 @@ final class AiStride {
       }
    }
 
-   static AiStride.StridePlan fill(AiPhysics.MotionState var0, BlockPos var1, double var2, LongPredicate var4, AiPhysics.PhysicsWorld var5) {
+   static AiStride.StridePlan planAfterBrake(AiPhysics.MotionState var0, BlockPos var1, double var2, LongPredicate var4, AiPhysics.PhysicsWorld var5) {
       if (!(var0.speed() < 0.06) && var0.onGround() && var0.pose() == 0) {
          float var6 = AiPhysics.yawBetween(0.0, 0.0, var0.vx(), var0.vz());
 
@@ -343,10 +343,10 @@ final class AiStride {
    static AiStride.FallResult putAt_UiCore_TableCache_TokenCore_TableCac(
       AiPhysics.MotionState var0, AiStride.StridePlan var1, int var2, double var3, LongPredicate var5, AiPhysics.PhysicsWorld var6
    ) {
-      return putAt(var0, var1, var2, var3, var5, var6, false);
+      return simulateLanding(var0, var1, var2, var3, var5, var6, false);
    }
 
-   static AiStride.FallResult putAt(
+   static AiStride.FallResult simulateLanding(
       AiPhysics.MotionState var0, AiStride.StridePlan var1, int var2, double var3, LongPredicate var5, AiPhysics.PhysicsWorld var6, boolean var7
    ) {
       for (int var8 = var2; var8 < 14; var8++) {
@@ -369,7 +369,7 @@ final class AiStride {
       return null;
    }
 
-   static AiStride.StrideAction putAt(
+   static AiStride.StrideAction chooseAction(
       AiPhysics.MotionState var0,
       AiPhysics.MoveInput var1,
       AiPhysics.MoveInput var2,

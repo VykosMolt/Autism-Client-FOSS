@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 
 final class AiCombatPriority {
-   static final int init = 12;
+   static final int MIN_HELD_TICKS = 12;
 
    private AiCombatPriority() {
    }

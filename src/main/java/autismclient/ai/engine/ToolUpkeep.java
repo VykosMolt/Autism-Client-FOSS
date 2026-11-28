@@ -3,7 +3,7 @@ package autismclient.ai.engine;
 import java.util.List;
 
 public final class ToolUpkeep {
-   public static final int init = 2;
+   public static final int MIN_DURABILITY_LEFT = 2;
 
    private ToolUpkeep() {
    }

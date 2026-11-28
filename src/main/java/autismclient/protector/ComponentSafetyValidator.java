@@ -15,7 +15,7 @@ import net.minecraft.network.chat.numbers.FixedFormat;
 import net.minecraft.network.chat.numbers.NumberFormat;
 
 public final class ComponentSafetyValidator {
-   private static final int init = 64;
+   private static final int MAX_DEPTH = 64;
    private static final int load = 65536;
    private static final int read = 16384;
 

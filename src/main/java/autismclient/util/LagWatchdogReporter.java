@@ -14,7 +14,7 @@ import net.minecraft.client.gui.screens.Screen;
 
 public final class LagWatchdogReporter {
    private static final int init_I = 20;
-   private static final int load_I = 200;
+   private static final int SAMPLE_TICKS = 200;
    private static final boolean LAG_TEST = Boolean.getBoolean("autism.lagtest");
    private static final long LOW_FPS_HOLD_MS = LAG_TEST ? 3000L : 15000L;
    private static final long REPORT_INTERVAL_MS = LAG_TEST ? 30000L : 300000L;
@@ -24,7 +24,7 @@ public final class LagWatchdogReporter {
    private static int lowFpsSamples;
    private static long lowFpsSince;
    private static long lastReportMs;
-   private static boolean load_Z;
+   private static boolean sampling;
    private static Map<String, long[]> perfSnapshot;
    private static int lastFps;
    private static long lastPollMs;
@@ -35,8 +35,8 @@ public final class LagWatchdogReporter {
    public static void tick(Minecraft client) {
       try {
          bK.init_V();
-         if (load_Z && !bK.init_Z()) {
-            load_Z = false;
+         if (sampling && !bK.init_Z()) {
+            sampling = false;
             logReport(client);
          }
 
@@ -58,7 +58,7 @@ public final class LagWatchdogReporter {
       baselineFps = -1.0;
       lowFpsSamples = 0;
       lowFpsSince = 0L;
-      load_Z = false;
+      sampling = false;
       perfSnapshot = null;
    }
 
@@ -73,7 +73,7 @@ public final class LagWatchdogReporter {
          int fps = client.getFps();
          long now = System.currentTimeMillis();
          if (fps > 0 && auditLow(fps, client.gui.screen() != null, now)) {
-            if (!load_Z && now - lastReportMs >= REPORT_INTERVAL_MS) {
+            if (!sampling && now - lastReportMs >= REPORT_INTERVAL_MS) {
                lastReportMs = now;
                lastFps = fps;
                if (!bK.read_Z()) {
@@ -82,7 +82,7 @@ public final class LagWatchdogReporter {
                } else {
                   perfSnapshot = bK.init_Map();
                   bK.init(200);
-                  load_Z = true;
+                  sampling = true;
                   AutismClientAddon.LOG
                      .warn(
                         "[AutismLagReport] sustained low fps detected (fps={} baseline={}); sampling frame time for 10s...",
