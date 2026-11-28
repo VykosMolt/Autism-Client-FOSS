@@ -134,6 +134,7 @@ Everything in Sections 1–5 applies. These rules come from running Claude Code 
 **Known `AstBatchRenamer` pitfalls**
 - A row-less record component cannot take a new name when an explicit method in the record already holds the original accessor key in `disambig.tsv`. The packager merges the two methods, and Gate 2 reports a diff. The same goes for a component renamed to the name of an explicit getter.
 - "Refused arity-colliding overload merge" means a name chosen in a later plan already exists in `dev`. Patch a copy of the plan (drop or rename the row) instead of editing the original.
+- Never rename an interface method that a lambda or method reference implements. `ReverseRemapJar` does not remap the method name inside `invokedynamic`, so the jar would point at a name that no longer exists. Gate 2 catches it as a diff; no pre-check does.
 - The renamer can wrongly refuse an anonymous-class member as "shadowed by" its own new name. Drop the row.
 - The renamer writes neither `mappings/enum-names.tsv` nor `mappings/record-names.tsv`. Enum constants with no table entry cannot be renamed, so `Enum.name()` stays the same.
 - A public member with no caller outside its own file can be renamed, since the jar keeps the original name. List each one in `PROGRESS.md` so the owner can freeze it.
