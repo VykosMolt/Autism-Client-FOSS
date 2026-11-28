@@ -34,7 +34,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
          if (load(this.connection, packet)) {
             super.write(ctx, msg, promise);
          } else {
-            OutboundChannelPolicy.Inner_DataUtil verdict = OutboundChannelPolicy.init(this.connection, packet);
+            OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.init(this.connection, packet);
             switch (verdict.kind) {
                case PASS:
                   ProtectorFeatureFlags.load(packet);
@@ -54,7 +54,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
 
    public static boolean init(Connection connection, Channel channel, Packet<?> packet) {
       if (connection != null && init(channel) && (packet instanceof ServerboundCustomPayloadPacket || packet instanceof ServerboundCustomQueryAnswerPacket)) {
-         OutboundChannelPolicy.Inner_DataUtil verdict = OutboundChannelPolicy.init(connection, packet);
+         OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.init(connection, packet);
          Packet var10000;
          switch (verdict.kind) {
             case PASS:
@@ -113,7 +113,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
          return true;
       }
 
-      OutboundChannelPolicy.Inner_DataUtil verdict = OutboundChannelPolicy.init(connection, packet);
+      OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.init(connection, packet);
       ProtectorFeatureFlags.load(packet);
       switch (verdict.kind) {
          case PASS:

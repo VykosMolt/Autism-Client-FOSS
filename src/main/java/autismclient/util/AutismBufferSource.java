@@ -65,11 +65,11 @@ public final class AutismBufferSource implements AutoCloseable {
       }
    }
 
-   public static final class Inner_DataUtil {
+   public static final class LazySource {
       private final int bufferSize;
       private AutismBufferSource current;
 
-      public Inner_DataUtil(int bufferSize) {
+      public LazySource(int bufferSize) {
          this.bufferSize = bufferSize;
       }
 

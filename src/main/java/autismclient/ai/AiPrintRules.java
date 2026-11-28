@@ -58,12 +58,12 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    }
 
    public static List<autismclient.ai.print.PrintTarget> targetsFromFile(Path file, BlockPos origin, int rotation, String mirror) {
-      AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
+      AiSchematic.LoadedSchematic loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
       return init(AiBuilder.normalizeSchematicBlueprint(loaded.blueprint()));
    }
 
-   public static AiPrintRules.Inner_DataUtil init(Path file, BlockPos origin, int rotation, String mirror, Provider registries, boolean fixtureContents) {
-      AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
+   public static AiPrintRules.PrintInputs init(Path file, BlockPos origin, int rotation, String mirror, Provider registries, boolean fixtureContents) {
+      AiSchematic.LoadedSchematic loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
       AiBuilder.Blueprint normalized = AiBuilder.normalizeSchematicBlueprint(loaded.blueprint());
       AiSchematicMachinePlan machine = AiSchematicMachinePlan.fromSchematic(loaded, loaded.blueprint()).init(normalized);
       List<AiSchematicMachinePlan.ContainerPlan> hoppers = machine.load(origin, registries);
@@ -81,11 +81,11 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          });
       }
 
-      return new AiPrintRules.Inner_DataUtil(init(normalized), actions.vehicles(), hoppers, actions.outcomes(), Map.copyOf(contents), actions);
+      return new AiPrintRules.PrintInputs(init(normalized), actions.vehicles(), hoppers, actions.outcomes(), Map.copyOf(contents), actions);
    }
 
    public static Map<Long, ListTag> containerContentsFromFile(Path file, BlockPos origin, int rotation, String mirror) {
-      AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
+      AiSchematic.LoadedSchematic loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
       HashMap<Long, ListTag> out = new HashMap<>();
       BlockPos o = loaded.blueprint().origin();
       loaded.containerContents().forEach((k, v) -> out.put(o.offset(BlockPos.of(k)).asLong(), v));
@@ -164,7 +164,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          AiBuilder.checkNotCancelled();
          AiBuilder.CellSpec cell = cells.get(i);
          BlockState wanted = AiBuilder.toBlockState(cell);
-         autismclient.ai.print.PrintTarget.Inner_DataUtil kind = init_ListPool_DataUtil(cell);
+         autismclient.ai.print.PrintTarget.TargetKind kind = init_ListPool_DataUtil(cell);
          Item item = init_Item(cell, kind, wanted);
          targets.add(new autismclient.ai.print.PrintTarget(i, blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()), wanted, kind, item, cell));
       }
@@ -172,28 +172,28 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       return Collections.unmodifiableList(targets);
    }
 
-   private static autismclient.ai.print.PrintTarget.Inner_DataUtil init_ListPool_DataUtil(AiBuilder.CellSpec cell) {
+   private static autismclient.ai.print.PrintTarget.TargetKind init_ListPool_DataUtil(AiBuilder.CellSpec cell) {
       if (AiBuilder.fluidOfCell(cell) != null) {
-         return AiBuilder.isFlowingFluidCell(cell) ? autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW : autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID;
+         return AiBuilder.isFlowingFluidCell(cell) ? autismclient.ai.print.PrintTarget.TargetKind.FLOW : autismclient.ai.print.PrintTarget.TargetKind.FLUID;
       }
 
       if (!AiSchematicActions.isBedHead(cell) && !"upper".equals(cell.properties().get("half"))) {
          String id = cell.block();
          if (id.equals("minecraft:farmland") || id.equals("minecraft:dirt_path")) {
-            return autismclient.ai.print.PrintTarget.Inner_DataUtil.SOIL;
+            return autismclient.ai.print.PrintTarget.TargetKind.SOIL;
          } else if (id.startsWith("minecraft:potted_")) {
-            return autismclient.ai.print.PrintTarget.Inner_DataUtil.POT;
+            return autismclient.ai.print.PrintTarget.TargetKind.POT;
          } else if (AiSchematicActions.write(cell)) {
-            return autismclient.ai.print.PrintTarget.Inner_DataUtil.CAULDRON;
+            return autismclient.ai.print.PrintTarget.TargetKind.CAULDRON;
          } else {
-            return AiSchematicActions.isFilledComposter(cell) ? autismclient.ai.print.PrintTarget.Inner_DataUtil.COMPOSTER : autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE;
+            return AiSchematicActions.isFilledComposter(cell) ? autismclient.ai.print.PrintTarget.TargetKind.COMPOSTER : autismclient.ai.print.PrintTarget.TargetKind.PLACE;
          }
       } else {
-         return autismclient.ai.print.PrintTarget.Inner_DataUtil.PARTNER;
+         return autismclient.ai.print.PrintTarget.TargetKind.PARTNER;
       }
    }
 
-   private static Item init_Item(AiBuilder.CellSpec cell, autismclient.ai.print.PrintTarget.Inner_DataUtil kind, BlockState state) {
+   private static Item init_Item(AiBuilder.CellSpec cell, autismclient.ai.print.PrintTarget.TargetKind kind, BlockState state) {
       Item var10000;
       switch (kind) {
          case PLACE:
@@ -232,7 +232,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    @Override
    public boolean isFinished(autismclient.ai.print.PrintTarget target, BlockState live) {
       AiBuilder.CellSpec cell = cellSpec(target);
-      if (target.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLUID && target.kind() != autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW) {
+      if (target.kind() != autismclient.ai.print.PrintTarget.TargetKind.FLUID && target.kind() != autismclient.ai.print.PrintTarget.TargetKind.FLOW) {
          if ((!cell.block().equals("minecraft:dirt") || !cell.properties().isEmpty()) && !cell.block().equals("minecraft:grass_block")
             || !live.is(Blocks.DIRT) && !live.is(Blocks.GRASS_BLOCK)) {
             return needsBulbPulse(target.wanted(), live) ? false : AiBuilder.matchesExactCell(cell, live);
@@ -243,7 +243,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          Fluid fluid = AiBuilder.fluidOfCell(cell);
          FluidState liveFluid = live.getFluidState();
          return fluid != null && !liveFluid.isEmpty() && liveFluid.getType().isSame(fluid)
-            ? target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.FLOW || liveFluid.isSource()
+            ? target.kind() == autismclient.ai.print.PrintTarget.TargetKind.FLOW || liveFluid.isSource()
             : false;
       }
    }
@@ -312,11 +312,11 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    }
 
    @Override
-   public autismclient.ai.print.PrintRules.Inner_CachePool nextInteraction(autismclient.ai.print.PrintTarget target, BlockState live) {
+   public autismclient.ai.print.PrintRules.Interaction nextInteraction(autismclient.ai.print.PrintTarget target, BlockState live) {
       AiBuilder.CellSpec cell = cellSpec(target);
       Block block = live.getBlock();
       if (needsBulbPulse(target.wanted(), live)) {
-         return new autismclient.ai.print.PrintRules.Inner_CachePool(Items.REDSTONE_BLOCK, "lit");
+         return new autismclient.ai.print.PrintRules.Interaction(Items.REDSTONE_BLOCK, "lit");
       }
 
       if (AiBuilder.matchesExactCell(cell, live)) {
@@ -330,7 +330,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
 
          for (Direction side : Direction.values()) {
             if (MultifaceBlock.hasFace(target.wanted(), side) && !MultifaceBlock.hasFace(live, side)) {
-               return new autismclient.ai.print.PrintRules.Inner_CachePool(block.asItem(), side.getName());
+               return new autismclient.ai.print.PrintRules.Interaction(block.asItem(), side.getName());
             }
          }
 
@@ -342,7 +342,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
                   return null;
                }
 
-               return new autismclient.ai.print.PrintRules.Inner_CachePool(
+               return new autismclient.ai.print.PrintRules.Interaction(
                   cell.block().equals("minecraft:dirt_path") ? Items.WOODEN_SHOVEL : Items.WOODEN_HOE, "soil"
                );
             case POT:
@@ -351,15 +351,15 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
                }
 
                Item plant = AiSchematicActions.init(target.wanted().getBlock());
-               return plant == Items.AIR ? null : new autismclient.ai.print.PrintRules.Inner_CachePool(plant, "plant");
+               return plant == Items.AIR ? null : new autismclient.ai.print.PrintRules.Interaction(plant, "plant");
             case CAULDRON:
-               return !live.is(Blocks.CAULDRON) && !AiSchematicActions.isPartialFill(cell, live) ? null : new autismclient.ai.print.PrintRules.Inner_CachePool(AiSchematicActions.cauldronFillItem(cell), "fill");
+               return !live.is(Blocks.CAULDRON) && !AiSchematicActions.isPartialFill(cell, live) ? null : new autismclient.ai.print.PrintRules.Interaction(AiSchematicActions.cauldronFillItem(cell), "fill");
             case COMPOSTER:
                int wanted = Integer.parseInt(cell.properties().getOrDefault("level", "0"));
-               return live.getValue(ComposterBlock.LEVEL) < wanted ? new autismclient.ai.print.PrintRules.Inner_CachePool(Items.PUMPKIN_PIE, "level") : null;
+               return live.getValue(ComposterBlock.LEVEL) < wanted ? new autismclient.ai.print.PrintRules.Interaction(Items.PUMPKIN_PIE, "level") : null;
             default:
                if (block instanceof SlabBlock && "double".equals(cell.properties().get("type")) && live.getValue(SlabBlock.TYPE) != SlabType.DOUBLE) {
-                  return new autismclient.ai.print.PrintRules.Inner_CachePool(block.asItem(), "type");
+                  return new autismclient.ai.print.PrintRules.Interaction(block.asItem(), "type");
                } else {
                   for (Entry<String, String> entry : cell.properties().entrySet()) {
                      String name = entry.getKey();
@@ -371,7 +371,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
                               item = block.asItem();
                            }
 
-                           return new autismclient.ai.print.PrintRules.Inner_CachePool(item == null ? Items.AIR : item, name);
+                           return new autismclient.ai.print.PrintRules.Interaction(item == null ? Items.AIR : item, name);
                         }
                      }
                   }
@@ -429,41 +429,41 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    }
 
    @Override
-   public Map<BlockPos, autismclient.ai.print.PrintRules.Inner_DataUtil> signalPaths(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
-      HashMap<BlockPos, autismclient.ai.print.PrintRules.Inner_DataUtil> result = new HashMap<>();
-      AiPrinterCircuit.influences(world, source, targets).forEach((at, influence) -> result.put(at, autismclient.ai.print.PrintRules.Inner_DataUtil.valueOf(influence.name())));
+   public Map<BlockPos, autismclient.ai.print.PrintRules.SignalReach> signalPaths(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+      HashMap<BlockPos, autismclient.ai.print.PrintRules.SignalReach> result = new HashMap<>();
+      AiPrinterCircuit.influences(world, source, targets).forEach((at, influence) -> result.put(at, autismclient.ai.print.PrintRules.SignalReach.valueOf(influence.name())));
       return result;
    }
 
    @Override
-   public autismclient.ai.print.PrintRules.Inner_StreamUtil traceSignals(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+   public autismclient.ai.print.PrintRules.SignalTrace traceSignals(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
       AiPrinterCircuit.Inner_JsonUtil trace = AiPrinterCircuit.trace(world, source, targets);
-      HashMap<BlockPos, autismclient.ai.print.PrintRules.Inner_DataUtil> reached = new HashMap<>();
-      trace.reached().forEach((at, result) -> reached.put(at, autismclient.ai.print.PrintRules.Inner_DataUtil.valueOf(result.name())));
-      return new autismclient.ai.print.PrintRules.Inner_StreamUtil(reached, autismclient.ai.print.PrintRules.Inner_DataUtil.valueOf(trace.unseen().name()));
+      HashMap<BlockPos, autismclient.ai.print.PrintRules.SignalReach> reached = new HashMap<>();
+      trace.reached().forEach((at, result) -> reached.put(at, autismclient.ai.print.PrintRules.SignalReach.valueOf(result.name())));
+      return new autismclient.ai.print.PrintRules.SignalTrace(reached, autismclient.ai.print.PrintRules.SignalReach.valueOf(trace.unseen().name()));
    }
 
    @Override
-   public autismclient.ai.print.PrintRules.Inner_StreamUtil traceSignalsWithConfiguration(
+   public autismclient.ai.print.PrintRules.SignalTrace traceSignalsWithConfiguration(
       BlockGetter world, BlockPos source, Set<BlockPos> targets, Set<BlockPos> configurationTargets
    ) {
-      autismclient.ai.print.PrintRules.Inner_StreamUtil normal = this.traceSignals(world, source, targets);
+      autismclient.ai.print.PrintRules.SignalTrace normal = this.traceSignals(world, source, targets);
       if (configurationTargets.isEmpty()) {
          return normal;
       }
 
       AiPrinterCircuit.Inner_JsonUtil construction = AiPrinterCircuit.load(world, source, configurationTargets);
-      HashMap<BlockPos, autismclient.ai.print.PrintRules.Inner_DataUtil> reached = new HashMap<>(normal.reached());
+      HashMap<BlockPos, autismclient.ai.print.PrintRules.SignalReach> reached = new HashMap<>(normal.reached());
       construction.reached()
          .forEach(
             (at, effect) -> reached.merge(
                at,
-               autismclient.ai.print.PrintRules.Inner_DataUtil.valueOf(effect.name()),
-               (before, after) -> (autismclient.ai.print.PrintRules.Inner_DataUtil)(before == autismclient.ai.print.PrintRules.Inner_DataUtil.REACHES ? before : after)
+               autismclient.ai.print.PrintRules.SignalReach.valueOf(effect.name()),
+               (before, after) -> (autismclient.ai.print.PrintRules.SignalReach)(before == autismclient.ai.print.PrintRules.SignalReach.REACHES ? before : after)
             )
          );
-      return new autismclient.ai.print.PrintRules.Inner_StreamUtil(
-         Map.copyOf(reached), construction.unseen() == AiPrinterCircuit.Inner_ConfigStore.UNKNOWN ? autismclient.ai.print.PrintRules.Inner_DataUtil.UNKNOWN : normal.unseen()
+      return new autismclient.ai.print.PrintRules.SignalTrace(
+         Map.copyOf(reached), construction.unseen() == AiPrinterCircuit.Inner_ConfigStore.UNKNOWN ? autismclient.ai.print.PrintRules.SignalReach.UNKNOWN : normal.unseen()
       );
    }
 
@@ -476,7 +476,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    }
 
    public static boolean placeableFromAbove(autismclient.ai.print.PrintTarget target) {
-      if (target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE && target.cell() != null) {
+      if (target.kind() == autismclient.ai.print.PrintTarget.TargetKind.PLACE && target.cell() != null) {
          AiBuilder.CellSpec cell = cellSpec(target);
          Block block = target.wanted().getBlock();
          BlockState defaults = block.defaultBlockState();
@@ -538,7 +538,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    }
 
    public static autismclient.ai.engine.PlacementGoal.PlaceConstraint clickConstraint(autismclient.ai.print.PrintTarget target, BlockGetter world) {
-      if (target.cell() != null && target.kind() == autismclient.ai.print.PrintTarget.Inner_DataUtil.PLACE) {
+      if (target.cell() != null && target.kind() == autismclient.ai.print.PrintTarget.TargetKind.PLACE) {
          try {
             return AiBuilder.buildPlaceConstraint(cellSpec(target), target.wanted().getBlock(), target.pos(), world);
          } catch (RuntimeException e) {
@@ -576,7 +576,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          || b instanceof CommandBlock;
    }
 
-   public record Inner_DataUtil(
+   public record PrintInputs(
       List<autismclient.ai.print.PrintTarget> targets,
       List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
       List<AiSchematicMachinePlan.ContainerPlan> hoppers,
@@ -584,7 +584,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       Map<Long, ListTag> fixtureContents,
       AiSchematicMachinePlan.MachineSpec actions
    ) {
-      public Inner_DataUtil(
+      public PrintInputs(
          List<autismclient.ai.print.PrintTarget> targets,
          List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
          List<AiSchematicMachinePlan.ContainerPlan> hoppers,

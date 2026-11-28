@@ -30,7 +30,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
    private int scrollOffset = 0;
    private boolean init_Z = false;
    private double dragOffset = 0.0;
-   private final List<ForceOpPreviewScreen.Inner_DataUtil> hitRegions = new ArrayList<>();
+   private final List<ForceOpPreviewScreen.HitRegion> hitRegions = new ArrayList<>();
 
    public ForceOpPreviewScreen(Screen parent, String[] passwords) {
       super(Component.literal("ForceOp Preview"));
@@ -141,7 +141,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetrics();
             boolean overBar = metrics.containsTrack(mx, my);
             autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(graphics, metrics, overBar, this.init_Z);
-            this.hitRegions.add(new ForceOpPreviewScreen.Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR, innerX + innerW - 6, innerY, 6, innerH));
+            this.hitRegions.add(new ForceOpPreviewScreen.HitRegion(ForceOpPreviewScreen.HitKind.SCROLLBAR, innerX + innerW - 6, innerY, 6, innerH));
          }
       } finally {
          cA.load_V_GuiGraphicsExtract(graphics);
@@ -155,7 +155,7 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.init(bounds, headerH);
-      this.hitRegions.add(new ForceOpPreviewScreen.Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil.CLOSE, close.read(), close.write(), close.update(), close.sync()));
+      this.hitRegions.add(new ForceOpPreviewScreen.HitRegion(ForceOpPreviewScreen.HitKind.CLOSE, close.read(), close.write(), close.update(), close.sync()));
    }
 
    private void unusedDrawCenteredText(GuiGraphicsExtractor graphics, String text, int x, int y, int w, int h, int color) {
@@ -183,14 +183,14 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       int mx = cA.init_I_D(event.x());
       int my = cA.init_I_D(event.y());
 
-      for (ForceOpPreviewScreen.Inner_DataUtil hit : this.hitRegions) {
+      for (ForceOpPreviewScreen.HitRegion hit : this.hitRegions) {
          if (hit.contains(mx, my)) {
-            if (hit.kind == ForceOpPreviewScreen.Inner_StreamUtil.CLOSE && Compat263.mouseEventGlfwButton(event) == 0) {
+            if (hit.kind == ForceOpPreviewScreen.HitKind.CLOSE && Compat263.mouseEventGlfwButton(event) == 0) {
                this.onClose();
                return true;
             }
 
-            if (hit.kind == ForceOpPreviewScreen.Inner_StreamUtil.SCROLLBAR && Compat263.mouseEventGlfwButton(event) == 0) {
+            if (hit.kind == ForceOpPreviewScreen.HitKind.SCROLLBAR && Compat263.mouseEventGlfwButton(event) == 0) {
                autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = this.scrollbarMetrics();
                if (metrics.containsThumb(mx, my)) {
                   this.init_Z = true;
@@ -270,13 +270,13 @@ public class ForceOpPreviewScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualHeight(), this.panelHeight(), 6);
    }
 
-   private record Inner_DataUtil(ForceOpPreviewScreen.Inner_StreamUtil kind, int x, int load, int read, int write) {
+   private record HitRegion(ForceOpPreviewScreen.HitKind kind, int x, int load, int read, int write) {
       boolean contains(int mx, int my) {
          return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }
    }
 
-   private enum Inner_StreamUtil {
+   private enum HitKind {
       CLOSE,
       SCROLLBAR;
    }

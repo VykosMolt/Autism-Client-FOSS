@@ -131,7 +131,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   public static PayloadJsonCodec.Inner_DataUtil encode(autismclient.util.macro.PayloadAction action) {
+   public static PayloadJsonCodec.EncodedPayload encode(autismclient.util.macro.PayloadAction action) {
       if (action == null) {
          throw new IllegalArgumentException("Missing payload action");
       }
@@ -164,7 +164,7 @@ public final class PayloadJsonCodec {
             Throwable primaryFailure = var9;
 
             try {
-               PayloadJsonCodec.Inner_DataUtil fallback = load(action, root, channel, rawFallbackBytes);
+               PayloadJsonCodec.EncodedPayload fallback = load(action, root, channel, rawFallbackBytes);
                if (fallback.bytes().length == 0 && root.has("payload")) {
                   throw new IllegalArgumentException("Known payload rebuild failed and no raw fallback bytes were available", primaryFailure);
                } else {
@@ -179,7 +179,7 @@ public final class PayloadJsonCodec {
             }
          }
       } else {
-         return new PayloadJsonCodec.Inner_DataUtil(channel, rawFallbackBytes);
+         return new PayloadJsonCodec.EncodedPayload(channel, rawFallbackBytes);
       }
    }
 
@@ -187,7 +187,7 @@ public final class PayloadJsonCodec {
       return name != null && (name.startsWith("net.minecraft.") || name.startsWith("autismclient."));
    }
 
-   private static PayloadJsonCodec.Inner_DataUtil init(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload init(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
       if (!init_Z(action.payloadClassName)) {
          return load(action, root, channel, rawFallbackBytes);
       }
@@ -228,7 +228,7 @@ public final class PayloadJsonCodec {
       return null;
    }
 
-   private static PayloadJsonCodec.Inner_DataUtil init(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, Class<?> payloadClass, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload init(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, Class<?> payloadClass, byte[] rawFallbackBytes) {
       int value;
       if (root.has("commandApiValue") && root.get("commandApiValue").isJsonPrimitive()) {
          value = root.get("commandApiValue").getAsInt();
@@ -248,14 +248,14 @@ public final class PayloadJsonCodec {
             if (intCtor.newInstance(value) instanceof CustomPacketPayload cp) {
                byte[] bytes = AutismPayloadSupport.encodePayloadBytes(cp);
                if (bytes.length > 0) {
-                  return new PayloadJsonCodec.Inner_DataUtil(channel, bytes);
+                  return new PayloadJsonCodec.EncodedPayload(channel, bytes);
                }
             }
          }
       } catch (Throwable var9) {
       }
 
-      return new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, value));
+      return new PayloadJsonCodec.EncodedPayload(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, value));
    }
 
    private static Constructor<?> findConstructor(Class<?> clazz) {
@@ -269,46 +269,46 @@ public final class PayloadJsonCodec {
       return null;
    }
 
-   private static PayloadJsonCodec.Inner_DataUtil init(JsonElement payloadElement, Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload init(JsonElement payloadElement, Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
       try {
          CustomPacketPayload templatePayload = init(payloadClass.getName(), rawFallbackBytes);
          if (init(payloadElement, (Type)payloadClass, payloadClass, templatePayload, 0) instanceof CustomPacketPayload cp) {
             byte[] bytes = AutismPayloadSupport.encodePayloadBytes(cp);
             if (bytes.length > 0) {
-               return new PayloadJsonCodec.Inner_DataUtil(channel, bytes);
+               return new PayloadJsonCodec.EncodedPayload(channel, bytes);
             }
          }
       } catch (Throwable var7) {
       }
 
       byte[] bytes = init(payloadClass, rawFallbackBytes);
-      return new PayloadJsonCodec.Inner_DataUtil(channel, bytes != null ? bytes : rawFallbackBytes);
+      return new PayloadJsonCodec.EncodedPayload(channel, bytes != null ? bytes : rawFallbackBytes);
    }
 
-   private static PayloadJsonCodec.Inner_DataUtil load(JsonElement payloadElement, Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload load(JsonElement payloadElement, Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
       try {
          CustomPacketPayload templatePayload = init(payloadClass.getName(), rawFallbackBytes);
          if (init(payloadElement, (Type)payloadClass, payloadClass, templatePayload, 0) instanceof CustomPacketPayload cp) {
             byte[] bytes = AutismPayloadSupport.encodePayloadBytes(cp);
             if (bytes.length > 0) {
-               return new PayloadJsonCodec.Inner_DataUtil(channel, bytes);
+               return new PayloadJsonCodec.EncodedPayload(channel, bytes);
             }
          }
       } catch (Throwable var7) {
       }
 
       byte[] bytes = init(payloadClass, rawFallbackBytes);
-      return new PayloadJsonCodec.Inner_DataUtil(channel, bytes != null ? bytes : rawFallbackBytes);
+      return new PayloadJsonCodec.EncodedPayload(channel, bytes != null ? bytes : rawFallbackBytes);
    }
 
-   private static PayloadJsonCodec.Inner_DataUtil load(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload load(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
       if (root.has("commandApiValue") && root.get("commandApiValue").isJsonPrimitive()) {
          int value = root.get("commandApiValue").getAsInt();
-         return new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, value));
+         return new PayloadJsonCodec.EncodedPayload(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, value));
       } else {
          return action.commandApiRecognized && action.commandApiOverride
-            ? new PayloadJsonCodec.Inner_DataUtil(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, action.commandApiValue))
-            : new PayloadJsonCodec.Inner_DataUtil(channel, rawFallbackBytes);
+            ? new PayloadJsonCodec.EncodedPayload(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, action.commandApiValue))
+            : new PayloadJsonCodec.EncodedPayload(channel, rawFallbackBytes);
       }
    }
 
@@ -958,8 +958,8 @@ public final class PayloadJsonCodec {
       return rawBytes != null && rawBytes.length >= 4 ? ByteBuffer.wrap(rawBytes, 0, 4).order(ByteOrder.BIG_ENDIAN).getInt() : 0;
    }
 
-   public record Inner_DataUtil(String channel, byte[] bytes) {
-      public Inner_DataUtil {
+   public record EncodedPayload(String channel, byte[] bytes) {
+      public EncodedPayload {
          bytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
       }
 

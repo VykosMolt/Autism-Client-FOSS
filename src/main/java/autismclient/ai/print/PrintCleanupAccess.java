@@ -206,7 +206,7 @@ final class PrintCleanupAccess {
       final Long2ObjectOpenHashMap<BlockState> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
       final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
       LongIterator init_LongIterator;
-      final PrintView.Inner_StreamUtil init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new Inner_StreamUtil();
+      final PrintView.DynamicShapeTracker init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new DynamicShapeTracker();
       int init_I;
       int load_I;
       Vec3 init_Vec3;
@@ -254,8 +254,8 @@ final class PrintCleanupAccess {
          boolean dependencyOnly = this.init_I == 3;
 
          try (
-            PrintView.Inner_TaskQueue capture = PrintCleanupAccess.this.core.view.openReadTracker();
-            PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = this.init_ArrayUtil_StreamUt.attach();
+            PrintView.ReadTracker capture = PrintCleanupAccess.this.core.view.openReadTracker();
+            PrintView.DynamicShapeTracker.ShapeAttachment geometry = this.init_ArrayUtil_StreamUt.attach();
          ) {
             try {
                for (int steps = 0; steps < 128 && PrintCleanupAccess.this.core.view.workUnits() - started < Math.max(1L, allowance); steps++) {
@@ -282,7 +282,7 @@ final class PrintCleanupAccess {
                      }
 
                      PrintTarget target = new PrintTarget(
-                        -1, pos, PrintCleanupAccess.this.core.view.getBlockState(pos), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
+                        -1, pos, PrintCleanupAccess.this.core.view.getBlockState(pos), PrintTarget.TargetKind.PLACE, Items.AIR, null
                      );
                      if (PrintClicks.findClick(
                            PrintCleanupAccess.this.core.view,
@@ -305,7 +305,7 @@ final class PrintCleanupAccess {
                      this.init_I = 1;
                      this.init_Vec3 = this.certificate.point;
                   } else {
-                     PrintFlight.Inner_BufferHelper route = this.init_I == 1 ? this.certificate.before : this.certificate.after;
+                     PrintFlight.FlightPath route = this.init_I == 1 ? this.certificate.before : this.certificate.after;
                      boolean removed = this.init_I == 2;
                      if (removed) {
                         PrintCleanupAccess.this.core.view.pushHypothesis(BlockPos.of(this.key), Blocks.AIR.defaultBlockState());
@@ -377,7 +377,7 @@ final class PrintCleanupAccess {
       final long read_J = PrintCleanupAccess.this.update;
       final boolean creativeMode = PrintCleanupAccess.this.core.env.isCreativeMode();
       final boolean load_Z;
-      final PrintView.Inner_StreamUtil init_ArrayUtil_StreamUt;
+      final PrintView.DynamicShapeTracker init_ArrayUtil_StreamUt;
       final Long2ObjectOpenHashMap<BlockState> hypotheses;
       final LongOpenHashSet ownedTemporaries;
       final LongOpenHashSet load_LongOpenHashSet;
@@ -399,7 +399,7 @@ final class PrintCleanupAccess {
 
       Inner_CachePool(BlockPos position, BlockState state) {
          this.load_Z = PrintCleanupAccess.this.entries.isEmpty();
-         this.init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new Inner_StreamUtil();
+         this.init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new DynamicShapeTracker();
          this.hypotheses = new Long2ObjectOpenHashMap<>();
          this.ownedTemporaries = new LongOpenHashSet();
          this.load_LongOpenHashSet = new LongOpenHashSet();
@@ -446,7 +446,7 @@ final class PrintCleanupAccess {
          if (!this.init()) {
             this.flush = true;
          } else if (!this.update) {
-            try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = this.init_ArrayUtil_StreamUt.attach()) {
+            try (PrintView.DynamicShapeTracker.ShapeAttachment geometry = this.init_ArrayUtil_StreamUt.attach()) {
                this.load(allowance);
             } finally {
                if (!this.init_ArrayUtil_StreamUt.verifyStillValid()) {
@@ -707,13 +707,13 @@ final class PrintCleanupAccess {
       final PrintClicks.Inner_DataUtil clickBudget = new PrintClicks.Inner_DataUtil(18000);
       List<Vec3> init_List;
       Vec3 init_Vec3;
-      PrintCore.h init_UiHelper_h;
-      PrintCore.h load_UiHelper_h;
+      PrintCore.FlightExitSearch init_UiHelper_h;
+      PrintCore.FlightExitSearch load_UiHelper_h;
       PrintCleanupAccess.Inner_BufferHelper init_BufferHelper_Buffe;
       int init_I;
       int load_I;
       int read_I;
-      final PrintView.Inner_StreamUtil init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new Inner_StreamUtil();
+      final PrintView.DynamicShapeTracker init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new DynamicShapeTracker();
       boolean init_Z;
       boolean load_Z;
       boolean read_Z;
@@ -724,12 +724,12 @@ final class PrintCleanupAccess {
          this.key = key;
          BlockPos pos = BlockPos.of(key);
          this.target = new PrintTarget(
-            -1, pos, PrintCleanupAccess.this.core.view.getBlockState(pos), PrintTarget.Inner_DataUtil.PLACE, Items.AIR, null
+            -1, pos, PrintCleanupAccess.this.core.view.getBlockState(pos), PrintTarget.TargetKind.PLACE, Items.AIR, null
          );
          this.workstations.addAll(PrintFlightWorkstations.init(pos));
          this.workstations.sort(Comparator.<Long>comparingDouble(k -> BlockPos.of(k).distToCenterSqr(Vec3.atCenterOf(pos))).thenComparingLong(k -> k));
          if (preferred == null) {
-            PrintCore.at recovery = PrintCleanupAccess.this.core.recoveries.get(key);
+            PrintCore.SupportRecovery recovery = PrintCleanupAccess.this.core.recoveries.get(key);
             if (recovery != null) {
                preferred = recovery.work();
             }
@@ -748,7 +748,7 @@ final class PrintCleanupAccess {
          } else {
             long transientBefore = PrintCleanupAccess.this.core.view.untrackedReadCount();
 
-            try (PrintView.Inner_StreamUtil.Inner_StreamUtil_2 geometry = this.init_ArrayUtil_StreamUt.attach()) {
+            try (PrintView.DynamicShapeTracker.ShapeAttachment geometry = this.init_ArrayUtil_StreamUt.attach()) {
                this.load(allowance);
             } finally {
                this.load_Z = this.load_Z | PrintCleanupAccess.this.core.view.untrackedReadCount() != transientBefore;
@@ -837,7 +837,7 @@ final class PrintCleanupAccess {
                   continue;
                }
 
-               this.init_UiHelper_h = PrintCleanupAccess.this.core.new h(this.init_Vec3);
+               this.init_UiHelper_h = PrintCleanupAccess.this.core.new FlightExitSearch(this.init_Vec3);
                this.read_I = 1;
             }
 
@@ -866,7 +866,7 @@ final class PrintCleanupAccess {
                   }
 
                   if (this.load_UiHelper_h == null) {
-                     this.load_UiHelper_h = PrintCleanupAccess.this.core.new h(this.init_Vec3);
+                     this.load_UiHelper_h = PrintCleanupAccess.this.core.new FlightExitSearch(this.init_Vec3);
                   }
 
                   this.load_UiHelper_h.init(left);
@@ -899,7 +899,7 @@ final class PrintCleanupAccess {
          }
       }
 
-      private boolean init(PrintCore.h exit) {
+      private boolean init(PrintCore.FlightExitSearch exit) {
          return exit.search != null
             && exit.search.result == null
             && !exit.search.openQueue.isEmpty()
@@ -909,8 +909,8 @@ final class PrintCleanupAccess {
 
    record Inner_DataUtil(
       Vec3 point,
-      PrintFlight.Inner_BufferHelper before,
-      PrintFlight.Inner_BufferHelper after,
+      PrintFlight.FlightPath before,
+      PrintFlight.FlightPath after,
       Long2ObjectOpenHashMap<BlockState> reads,
       LongOpenHashSet neighbors,
       boolean stable

@@ -16,7 +16,7 @@ public final class PayloadNotificationTracker {
    private PayloadNotificationTracker() {
    }
 
-   public static synchronized void init(String channel, String direction, PayloadChannelFilterManager.Inner_StreamUtil match) {
+   public static synchronized void init(String channel, String direction, PayloadChannelFilterManager.MatchedRule match) {
       if ("S2C".equalsIgnoreCase(direction) && !autismclient.modules.aD.init_Z()) {
          String normalized = init(channel);
          if (!normalized.isBlank()) {
@@ -84,7 +84,7 @@ public final class PayloadNotificationTracker {
       bi.init("Payload: " + label + " +" + state.init_I, -14249);
    }
 
-   private static String init(String channel, PayloadChannelFilterManager.Inner_StreamUtil match) {
+   private static String init(String channel, PayloadChannelFilterManager.MatchedRule match) {
       if (match != null && match.pattern() != null && !match.pattern().isBlank()) {
          String pattern = match.pattern().trim().toLowerCase(Locale.ROOT);
          return pattern.contains("*") ? pattern : channel;

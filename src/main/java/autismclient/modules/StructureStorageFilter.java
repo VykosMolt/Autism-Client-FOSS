@@ -11,7 +11,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 
 public final class StructureStorageFilter {
-   public static final List<StructureStorageFilter.Inner_DataUtil> init = List.of(
+   public static final List<StructureStorageFilter.StructureFilter> init = List.of(
       init_aq_DataUtil_Str(
          "hide-trial-chambers", "Hide Trial Chambers", Blocks.TRIAL_SPAWNER, Blocks.VAULT, Blocks.CHISELED_TUFF, Blocks.TUFF_BRICKS, Blocks.POLISHED_TUFF
       ),
@@ -60,8 +60,8 @@ public final class StructureStorageFilter {
       init_aq_DataUtil_Str("hide-swamp-huts", "Hide Swamp Huts", Blocks.CAULDRON, Blocks.SPRUCE_PLANKS, Blocks.CRAFTING_TABLE)
    );
 
-   private static StructureStorageFilter.Inner_DataUtil init_aq_DataUtil_Str(String settingId, String label, Block... markers) {
-      return new StructureStorageFilter.Inner_DataUtil(settingId, label, Set.of(markers));
+   private static StructureStorageFilter.StructureFilter init_aq_DataUtil_Str(String settingId, String label, Block... markers) {
+      return new StructureStorageFilter.StructureFilter(settingId, label, Set.of(markers));
    }
 
    private StructureStorageFilter() {
@@ -133,6 +133,6 @@ public final class StructureStorageFilter {
       return state != null && markers.contains(state.getBlock());
    }
 
-   public record Inner_DataUtil(String id, String load, Set<Block> init_Set) {
+   public record StructureFilter(String id, String load, Set<Block> init_Set) {
    }
 }

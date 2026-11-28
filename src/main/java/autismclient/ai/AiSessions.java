@@ -28,10 +28,10 @@ public final class AiSessions {
    static final int load = 1000000;
    static final int read = 1000000;
    private final Path sessionsDir;
-   private final Map<String, AiSessions.Inner_StreamUtil> metaById = new LinkedHashMap<>();
+   private final Map<String, AiSessions.SessionMeta> metaById = new LinkedHashMap<>();
    private final Set<String> init_Set = new HashSet<>();
 
-   public static boolean isEmptySession(AiSessions.Inner_DataUtil d) {
+   public static boolean isEmptySession(AiSessions.SessionData d) {
       return d.objective.isBlank() && d.queue.isEmpty() && d.messages.stream().noneMatch(m -> "user".equals(m.role()));
    }
 
@@ -50,7 +50,7 @@ public final class AiSessions {
          try (Stream<Path> entries = Files.list(this.sessionsDir)) {
             for (Path file : entries.filter(p -> p.getFileName().toString().endsWith(".json")).sorted().toList()) {
                try {
-                  AiSessions.Inner_DataUtil d = fromJson(AiJson.parseObject(Files.readString(file)));
+                  AiSessions.SessionData d = fromJson(AiJson.parseObject(Files.readString(file)));
                   this.load(d);
                } catch (Exception var6) {
                }
@@ -59,7 +59,7 @@ public final class AiSessions {
       }
    }
 
-   private void load(AiSessions.Inner_DataUtil d) {
+   private void load(AiSessions.SessionData d) {
       this.metaById.put(d.id, metaOf(d));
       if (isEmptySession(d)) {
          this.init_Set.add(d.id);
@@ -82,18 +82,18 @@ public final class AiSessions {
       return removed;
    }
 
-   public synchronized List<AiSessions.Inner_StreamUtil> load() {
-      return this.metaById.values().stream().sorted(Comparator.comparingLong(AiSessions.Inner_StreamUtil::lastActiveAt).reversed()).toList();
+   public synchronized List<AiSessions.SessionMeta> load() {
+      return this.metaById.values().stream().sorted(Comparator.comparingLong(AiSessions.SessionMeta::lastActiveAt).reversed()).toList();
    }
 
-   public synchronized AiSessions.Inner_DataUtil init_cd_DataUtil() throws IOException {
-      AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
+   public synchronized AiSessions.SessionData init_cd_DataUtil() throws IOException {
+      AiSessions.SessionData d = new AiSessions.SessionData();
       d.createdAt = d.lastActiveAt = System.currentTimeMillis();
       this.save(d);
       return d;
    }
 
-   public synchronized AiSessions.Inner_DataUtil readSession(String id) throws IOException {
+   public synchronized AiSessions.SessionData readSession(String id) throws IOException {
       Path file = this.sessionFile(id);
       if (!Files.isRegularFile(file)) {
          throw new IOException("Unknown session " + id);
@@ -102,7 +102,7 @@ public final class AiSessions {
       }
    }
 
-   public synchronized void save(AiSessions.Inner_DataUtil d) throws IOException {
+   public synchronized void save(AiSessions.SessionData d) throws IOException {
       AiJson.writeAtomicJson(this.sessionFile(d.id), toJson(d));
       this.load(d);
    }
@@ -115,9 +115,9 @@ public final class AiSessions {
       Files.deleteIfExists(this.read(id));
    }
 
-   public synchronized AiSessions.Inner_DataUtil fork(String id) throws IOException {
-      AiSessions.Inner_DataUtil parent = this.readSession(id);
-      AiSessions.Inner_DataUtil child = fromJson(toJson(parent).deepCopy());
+   public synchronized AiSessions.SessionData fork(String id) throws IOException {
+      AiSessions.SessionData parent = this.readSession(id);
+      AiSessions.SessionData child = fromJson(toJson(parent).deepCopy());
       child.id = UUID.randomUUID().toString();
       child.parentId = id;
       String base = parent.title;
@@ -141,7 +141,7 @@ public final class AiSessions {
 
    public synchronized void rename(String id, String title) throws IOException {
       if (title != null && !title.isBlank()) {
-         AiSessions.Inner_DataUtil d = this.readSession(id);
+         AiSessions.SessionData d = this.readSession(id);
          d.title = title.trim();
          this.save(d);
       } else {
@@ -300,8 +300,8 @@ public final class AiSessions {
       return cut.trim() + "…";
    }
 
-   public static AiSessions.Inner_DataUtil init(JsonObject legacy, String newId, long now, int defaultTaskMinutes) {
-      AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
+   public static AiSessions.SessionData init(JsonObject legacy, String newId, long now, int defaultTaskMinutes) {
+      AiSessions.SessionData d = new AiSessions.SessionData();
       d.id = newId;
       d.createdAt = d.lastActiveAt = now;
       d.objective = AiJson.getString(legacy, "objective", "");
@@ -328,11 +328,11 @@ public final class AiSessions {
       return d;
    }
 
-   public static AiSessions.Inner_StreamUtil metaOf(AiSessions.Inner_DataUtil d) {
-      return new AiSessions.Inner_StreamUtil(d.id, d.title, d.createdAt, d.lastActiveAt, d.parentId, d.state, d.messages.size());
+   public static AiSessions.SessionMeta metaOf(AiSessions.SessionData d) {
+      return new AiSessions.SessionMeta(d.id, d.title, d.createdAt, d.lastActiveAt, d.parentId, d.state, d.messages.size());
    }
 
-   static JsonObject metaToJson(AiSessions.Inner_StreamUtil m) {
+   static JsonObject metaToJson(AiSessions.SessionMeta m) {
       return AiJson.objectOf(
          "id",
          m.id(),
@@ -351,8 +351,8 @@ public final class AiSessions {
       );
    }
 
-   static AiSessions.Inner_StreamUtil metaFromJson(JsonObject o) {
-      return new AiSessions.Inner_StreamUtil(
+   static AiSessions.SessionMeta metaFromJson(JsonObject o) {
+      return new AiSessions.SessionMeta(
          AiJson.getString(o, "id", ""),
          AiJson.getString(o, "title", "New session"),
          o.has("createdAt") ? o.get("createdAt").getAsLong() : 0L,
@@ -381,7 +381,7 @@ public final class AiSessions {
       return kept;
    }
 
-   static JsonObject toJson(AiSessions.Inner_DataUtil d) {
+   static JsonObject toJson(AiSessions.SessionData d) {
       JsonArray queue = new JsonArray();
       d.queue.forEach(queue::add);
       JsonArray updates = new JsonArray();
@@ -444,8 +444,8 @@ public final class AiSessions {
       );
    }
 
-   static AiSessions.Inner_DataUtil fromJson(JsonObject o) {
-      AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
+   static AiSessions.SessionData fromJson(JsonObject o) {
+      AiSessions.SessionData d = new AiSessions.SessionData();
       d.id = AiJson.getString(o, "id", UUID.randomUUID().toString());
       d.title = AiJson.getString(o, "title", "New session");
       String parent = AiJson.getString(o, "parentId", "");
@@ -528,7 +528,7 @@ public final class AiSessions {
       return this.sessionsDir.resolve(id + ".transcript.jsonl.1");
    }
 
-   public static final class Inner_DataUtil {
+   public static final class SessionData {
       public String id = UUID.randomUUID().toString();
       public String title = "New session";
       public String parentId;
@@ -558,6 +558,6 @@ public final class AiSessions {
       public String wire;
    }
 
-   public record Inner_StreamUtil(String id, String title, long createdAt, long lastActiveAt, String parentId, String state, int messageCount) {
+   public record SessionMeta(String id, String title, long createdAt, long lastActiveAt, String parentId, String state, int messageCount) {
    }
 }

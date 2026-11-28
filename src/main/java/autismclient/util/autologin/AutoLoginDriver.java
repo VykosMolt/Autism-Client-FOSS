@@ -10,7 +10,7 @@ import java.util.Map;
 
 public final class AutoLoginDriver {
    private final AutoLoginBackend host;
-   private volatile AuthPromptParser.Inner_DataUtil detection;
+   private volatile AuthPromptParser.AuthPrompt detection;
    private volatile long init_J;
    private volatile AutoLoginTimings newConfig;
    private volatile AutoLoginDriver.Inner_DataUtil init_CachePool_DataUtil;
@@ -29,7 +29,7 @@ public final class AutoLoginDriver {
    private String load_Str;
 
    public AutoLoginDriver(AutoLoginBackend host) {
-      this.detection = AuthPromptParser.Inner_DataUtil.NONE;
+      this.detection = AuthPromptParser.AuthPrompt.NONE;
       this.newConfig = AutoLoginTimings.defaults();
       this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.IDLE;
       this.close = -9223372036854775808L;
@@ -45,13 +45,13 @@ public final class AutoLoginDriver {
    }
 
    public void reset(long now) {
-      this.detection = AuthPromptParser.Inner_DataUtil.NONE;
+      this.detection = AuthPromptParser.AuthPrompt.NONE;
       this.init_J = now == 0L ? 1L : now;
    }
 
    public void init(String line) {
-      AuthPromptParser.Inner_DataUtil detection = AuthPromptParser.init(line);
-      if (detection.kind() != AuthPromptParser.Inner_StreamUtil.NONE) {
+      AuthPromptParser.AuthPrompt detection = AuthPromptParser.init(line);
+      if (detection.kind() != AuthPromptParser.PromptKind.NONE) {
          this.detection = detection;
       }
    }
@@ -178,8 +178,8 @@ public final class AutoLoginDriver {
          }
 
          if (now - this.read_J >= this.newConfig.promptDelayMs()) {
-            AuthPromptParser.Inner_DataUtil detection = this.detection;
-            if (detection.kind() != AuthPromptParser.Inner_StreamUtil.NONE) {
+            AuthPromptParser.AuthPrompt detection = this.detection;
+            if (detection.kind() != AuthPromptParser.PromptKind.NONE) {
                if (now >= this.write) {
                   if (this.init_I >= this.newConfig.maxAttempts()) {
                      this.load();
@@ -188,14 +188,14 @@ public final class AutoLoginDriver {
                      if (password.isEmpty()) {
                         this.load("AuthMe login");
                      } else if (this.host.load()) {
-                        this.detection = AuthPromptParser.Inner_DataUtil.NONE;
+                        this.detection = AuthPromptParser.AuthPrompt.NONE;
                         if (!this.host.sendCommand(detection.init(password))) {
                            this.detection = detection;
                            this.write = now + 250L;
                         } else {
                            this.init_I++;
                            this.write = now + this.newConfig.read();
-                           if (detection.kind() == AuthPromptParser.Inner_StreamUtil.REGISTER) {
+                           if (detection.kind() == AuthPromptParser.PromptKind.REGISTER) {
                               this.init_Str = detection.command();
                               this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.REGISTERING;
                               this.init_Z = true;

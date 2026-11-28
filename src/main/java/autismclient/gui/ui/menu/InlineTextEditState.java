@@ -8,13 +8,13 @@ import net.minecraft.client.Minecraft;
 final class InlineTextEditState {
    final Object owner;
    private final String initialText;
-   private final InlineTextEditState.Inner_DataUtil sink;
+   private final InlineTextEditState.TextSink sink;
    String text;
    int cursor;
    private int anchor;
    private int scrollX;
 
-   InlineTextEditState(Object owner, String initial, InlineTextEditState.Inner_DataUtil sink) {
+   InlineTextEditState(Object owner, String initial, InlineTextEditState.TextSink sink) {
       this.owner = owner;
       this.sink = sink;
       this.initialText = initial == null ? "" : initial;
@@ -52,7 +52,7 @@ final class InlineTextEditState {
       this.sink.accept(this.initialText);
    }
 
-   int indexAt(float x, float fieldX, InlineTextEditState.Inner_StreamUtil widths) {
+   int indexAt(float x, float fieldX, InlineTextEditState.TextWidth widths) {
       float best = 3.4028235E38F;
       int bestIndex = 0;
       int i = 0;
@@ -235,11 +235,11 @@ final class InlineTextEditState {
       return Character.isLetterOrDigit(c) || c == '_' || c == '.' || c == '-';
    }
 
-   interface Inner_DataUtil {
+   interface TextSink {
       void accept(String var1);
    }
 
-   interface Inner_StreamUtil {
+   interface TextWidth {
       float width(String var1);
    }
 }

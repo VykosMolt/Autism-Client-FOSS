@@ -32,7 +32,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public final class PearlGhostRenderer {
-   private static final AutismBufferSource.Inner_DataUtil BUFFERS = new AutismBufferSource.Inner_DataUtil(786432);
+   private static final AutismBufferSource.LazySource BUFFERS = new AutismBufferSource.LazySource(786432);
    private static final Vector3f NORMAL = new Vector3f();
    private static final AvatarRenderState AVATAR_STATE = new AvatarRenderState();
    private static PlayerModel wideModel;
@@ -60,7 +60,7 @@ public final class PearlGhostRenderer {
             AutismBufferSource buffers = BUFFERS.init();
             VertexConsumer lines = buffers.init(autismclient.render.AutismRenderTypes.aiPlanLines());
 
-            for (IncomingProjectileScanner.Inner_BufferHelper warning : danger.read_List_2()) {
+            for (IncomingProjectileScanner.ProjectileWarning warning : danger.read_List_2()) {
                if (!warning.entity().isRemoved()) {
                   int color = danger.warningColor(warning);
                   List<Vec3> points = warning.init_A_DataUtil().points();
@@ -88,10 +88,10 @@ public final class PearlGhostRenderer {
                   }
 
                   if (danger.isKindOptionEnabled(warning.kind(), "trajectory") && warning.init_A_DataUtil().init_Vec3() != null) {
-                     Vec3 at = warning.kind() == IncomingProjectileScanner.Inner_StreamUtil.PEARL
+                     Vec3 at = warning.kind() == IncomingProjectileScanner.ProjectileKind.PEARL
                         ? warning.init_A_DataUtil().load()
                         : warning.init_A_DataUtil().init_Vec3();
-                     drawCircle(pose, lines, at.add(0.0, 0.025, 0.0), warning.kind() == IncomingProjectileScanner.Inner_StreamUtil.PEARL ? 0.48 : 0.24, camera, color);
+                     drawCircle(pose, lines, at.add(0.0, 0.025, 0.0), warning.kind() == IncomingProjectileScanner.ProjectileKind.PEARL ? 0.48 : 0.24, camera, color);
                   }
                }
             }
@@ -102,17 +102,17 @@ public final class PearlGhostRenderer {
                load(pose.last(), fill, danger.blastPredictions(), camera);
             }
 
-            if (danger.isKindEnabled(IncomingProjectileScanner.Inner_StreamUtil.PEARL) && danger.bool("pearl-ghost")) {
-               ArrayList<IncomingProjectileScanner.Inner_BufferHelper> ghosts = new ArrayList<>(danger.write_List());
+            if (danger.isKindEnabled(IncomingProjectileScanner.ProjectileKind.PEARL) && danger.bool("pearl-ghost")) {
+               ArrayList<IncomingProjectileScanner.ProjectileWarning> ghosts = new ArrayList<>(danger.write_List());
                ghosts.removeIf(
                   warningx -> warningx.init_A_DataUtil().load() == null
                      || !(warningx.shooter() instanceof AbstractClientPlayer)
                      || !warningx.shooter().isAlive()
                      || warningx.entity().isRemoved()
                );
-               ghosts.sort(Comparator.<IncomingProjectileScanner.Inner_BufferHelper>comparingDouble(warningx -> warningx.init_A_DataUtil().load().distanceToSqr(camera)).reversed());
+               ghosts.sort(Comparator.<IncomingProjectileScanner.ProjectileWarning>comparingDouble(warningx -> warningx.init_A_DataUtil().load().distanceToSqr(camera)).reversed());
 
-               for (IncomingProjectileScanner.Inner_BufferHelper warning : ghosts) {
+               for (IncomingProjectileScanner.ProjectileWarning warning : ghosts) {
                   init_V_Minecraft(mc, pose, buffers, warning, camera, partial, danger.decimal("ghost-opacity"));
                }
             }
@@ -123,7 +123,7 @@ public final class PearlGhostRenderer {
    }
 
    private static void init_V_Minecraft(
-      Minecraft mc, PoseStack pose, AutismBufferSource buffers, IncomingProjectileScanner.Inner_BufferHelper warning, Vec3 camera, float partial, double opacity
+      Minecraft mc, PoseStack pose, AutismBufferSource buffers, IncomingProjectileScanner.ProjectileWarning warning, Vec3 camera, float partial, double opacity
    ) {
       init(
          mc,
@@ -139,16 +139,16 @@ public final class PearlGhostRenderer {
       );
    }
 
-   static void init(Pose pose, VertexConsumer lines, List<FireballBlastPredictor.Inner_DataUtil> blocks, Vec3 camera) {
-      for (FireballBlastPredictor.Inner_DataUtil block : blocks) {
+   static void init(Pose pose, VertexConsumer lines, List<FireballBlastPredictor.DestroyedBlock> blocks, Vec3 camera) {
+      for (FireballBlastPredictor.DestroyedBlock block : blocks) {
          AABB box = new AABB(block.pos()).inflate(0.002).move(camera.scale(-1.0));
          int alpha = (int)Math.round(90.0 + 125.0 * block.init_D());
          WorldLineRenderer.init(pose, lines, box, 16729413 | alpha << 24, 1.5F);
       }
    }
 
-   static void load(Pose pose, VertexConsumer fill, List<FireballBlastPredictor.Inner_DataUtil> blocks, Vec3 camera) {
-      for (FireballBlastPredictor.Inner_DataUtil block : blocks) {
+   static void load(Pose pose, VertexConsumer fill, List<FireballBlastPredictor.DestroyedBlock> blocks, Vec3 camera) {
+      for (FireballBlastPredictor.DestroyedBlock block : blocks) {
          AABB box = new AABB(block.pos()).inflate(0.001).move(camera.scale(-1.0));
          int alpha = (int)Math.round(14.0 + 35.0 * block.init_D());
          WorldLineRenderer.init(pose, fill, box, 16729413 | alpha << 24);

@@ -81,17 +81,17 @@ public final class NoRenderModule extends Module {
    private final BoolSetting moon = this.add(new BoolSetting("moon", "Moon", false).group("Sky").description("Hide the moon"));
    private final BoolSetting sunriseGlow = this.add(new BoolSetting("sunrise-glow", "Sunset Glow", false).group("Sky").description("Hide sunrise/sunset glow"));
    private final BoolSetting clouds = this.add(new BoolSetting("clouds", "Clouds", false).group("Sky").description("Hide the clouds"));
-   private final EnumSetting<NoRenderModule.Inner_DataUtil> timeMode = this.add(
-      new EnumSetting<>("time", "Time", NoRenderModule.Inner_DataUtil.VANILLA, NoRenderModule.Inner_DataUtil.values()).group("Time & Weather").description("Force a client time")
+   private final EnumSetting<NoRenderModule.TimeMode> timeMode = this.add(
+      new EnumSetting<>("time", "Time", NoRenderModule.TimeMode.VANILLA, NoRenderModule.TimeMode.values()).group("Time & Weather").description("Force a client time")
    );
    private final IntSetting customTime = this.add(
       new IntSetting("custom-time", "Custom Time", 6000, 0, 24000, 100)
          .group("Time & Weather")
          .description("Custom time in ticks")
-         .visibleWhen(() -> this.timeMode.get() == NoRenderModule.Inner_DataUtil.CUSTOM)
+         .visibleWhen(() -> this.timeMode.get() == NoRenderModule.TimeMode.CUSTOM)
    );
-   private final EnumSetting<NoRenderModule.Inner_StreamUtil> weatherMode = this.add(
-      new EnumSetting<>("weather-changer", "Weather Changer", NoRenderModule.Inner_StreamUtil.VANILLA, NoRenderModule.Inner_StreamUtil.values())
+   private final EnumSetting<NoRenderModule.WeatherMode> weatherMode = this.add(
+      new EnumSetting<>("weather-changer", "Weather Changer", NoRenderModule.WeatherMode.VANILLA, NoRenderModule.WeatherMode.values())
          .group("Time & Weather")
          .description("Force client weather")
    );
@@ -194,11 +194,11 @@ public final class NoRenderModule extends Module {
       NoRenderState.moon = this.moon.get();
       NoRenderState.sunriseGlow = this.sunriseGlow.get();
       NoRenderState.clouds = this.clouds.get();
-      NoRenderModule.Inner_DataUtil tm = this.timeMode.get();
-      NoRenderState.forceTimeEnabled = tm != NoRenderModule.Inner_DataUtil.VANILLA;
+      NoRenderModule.TimeMode tm = this.timeMode.get();
+      NoRenderState.forceTimeEnabled = tm != NoRenderModule.TimeMode.VANILLA;
       NoRenderState.forcedTimeTicks = this.forcedTimeTicks(tm);
-      NoRenderModule.Inner_StreamUtil wm = this.weatherMode.get();
-      NoRenderState.forceWeatherEnabled = wm != NoRenderModule.Inner_StreamUtil.VANILLA;
+      NoRenderModule.WeatherMode wm = this.weatherMode.get();
+      NoRenderState.forceWeatherEnabled = wm != NoRenderModule.WeatherMode.VANILLA;
       float var10000;
       switch (wm) {
          case RAIN:
@@ -213,7 +213,7 @@ public final class NoRenderModule extends Module {
       }
 
       NoRenderState.forcedRainLevel = var10000;
-      NoRenderState.forcedThunderLevel = wm == NoRenderModule.Inner_StreamUtil.THUNDER ? 1.0F : 0.0F;
+      NoRenderState.forcedThunderLevel = wm == NoRenderModule.WeatherMode.THUNDER ? 1.0F : 0.0F;
       NoRenderState.hiddenEntities = this.hiddenEntities.get();
       NoRenderState.dropSpawnPackets = this.dropSpawnPackets.get();
       NoRenderState.armor = this.armor.get();
@@ -225,7 +225,7 @@ public final class NoRenderModule extends Module {
       NoRenderState.enable();
    }
 
-   private long forcedTimeTicks(NoRenderModule.Inner_DataUtil mode) {
+   private long forcedTimeTicks(NoRenderModule.TimeMode mode) {
       long var10000;
       switch (mode) {
          case VANILLA:
@@ -266,7 +266,7 @@ public final class NoRenderModule extends Module {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum TimeMode {
       VANILLA,
       DAY,
       NOON,
@@ -277,7 +277,7 @@ public final class NoRenderModule extends Module {
       CUSTOM;
    }
 
-   public enum Inner_StreamUtil {
+   public enum WeatherMode {
       VANILLA,
       CLEAR,
       RAIN,

@@ -11,7 +11,7 @@ final class AiReplantEvidence {
       return before.is(crop) && AiFarm.isRipe(before) && after.isAir();
    }
 
-   static boolean init(BlockState current, AiServerEvidence.Inner_DataUtil update, long brokenRevision, int now, int brokenAt, int latencyMillis, boolean ownClickPending) {
+   static boolean init(BlockState current, AiServerEvidence.BlockUpdate update, long brokenRevision, int now, int brokenAt, int latencyMillis, boolean ownClickPending) {
       return !ownClickPending
          && current.isAir()
          && update != null
@@ -20,15 +20,15 @@ final class AiReplantEvidence {
          && !autismclient.util.BlockBreakGraceCalc.init(now, brokenAt, latencyMillis);
    }
 
-   static AiReplantEvidence.Inner_DataUtil init(BlockState current, AiServerEvidence.Inner_DataUtil update, long brokenRevision, Block crop, boolean ownReplantClick, int seedsHeld) {
+   static AiReplantEvidence.ReplantState init(BlockState current, AiServerEvidence.BlockUpdate update, long brokenRevision, Block crop, boolean ownReplantClick, int seedsHeld) {
       if (current.is(crop) && update != null && update.revision() > brokenRevision && update.state().is(crop) && !AiFarm.isRipe(update.state())) {
-         return ownReplantClick ? AiReplantEvidence.Inner_DataUtil.LOCAL : AiReplantEvidence.Inner_DataUtil.EXTERNAL;
+         return ownReplantClick ? AiReplantEvidence.ReplantState.LOCAL : AiReplantEvidence.ReplantState.EXTERNAL;
       } else {
-         return current.isAir() && seedsHeld <= 0 && !ownReplantClick ? AiReplantEvidence.Inner_DataUtil.MISSING : AiReplantEvidence.Inner_DataUtil.PENDING;
+         return current.isAir() && seedsHeld <= 0 && !ownReplantClick ? AiReplantEvidence.ReplantState.MISSING : AiReplantEvidence.ReplantState.PENDING;
       }
    }
 
-   enum Inner_DataUtil {
+   enum ReplantState {
       PENDING,
       LOCAL,
       EXTERNAL,

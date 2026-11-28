@@ -63,7 +63,7 @@ public final class GridWalkNavigator {
    private static final int[] KEY_MASKS = new int[]{1, 3, 9, 2, 8, 6, 12, 4};
    private static final int[] DX = new int[]{1, -1, 0, 0};
    private static final int[] DZ = new int[]{0, 0, 1, -1};
-   private static final ArrayList<GridWalkNavigator.Inner_StreamUtil> path = new ArrayList<>();
+   private static final ArrayList<GridWalkNavigator.PathNode> path = new ArrayList<>();
    private static int pathIndex;
    private static BlockPos currentTarget;
    private static int nodeX;
@@ -73,9 +73,9 @@ public final class GridWalkNavigator {
    private static final HashMap<Long, Long> cameFrom = new HashMap<>();
    private static final HashSet<Long> init_HashSet = new HashSet<>();
    private static final HashSet<Long> closed = new HashSet<>();
-   private static final PriorityQueue<GridWalkNavigator.Inner_DataUtil> openQueue = new PriorityQueue<>();
+   private static final PriorityQueue<GridWalkNavigator.OpenEntry> openQueue = new PriorityQueue<>();
    private static final ArrayList<Long> pathKeys = new ArrayList<>();
-   private static final ArrayList<GridWalkNavigator.Inner_StreamUtil> read_ArrayList = new ArrayList<>();
+   private static final ArrayList<GridWalkNavigator.PathNode> read_ArrayList = new ArrayList<>();
    private static final HashSet<Long> goalKeys = new HashSet<>();
    private static final HashMap<Long, Boolean> standableCache = new HashMap<>();
    private static boolean cacheEnabled;
@@ -243,7 +243,7 @@ public final class GridWalkNavigator {
          && init_Z_D(px, py, pz, currentTarget.getX() + 0.5, currentTarget.getZ() + 0.5);
       boolean needPlan = pathIndex >= path.size() && !followGoal;
       if (pathIndex < path.size()) {
-         GridWalkNavigator.Inner_StreamUtil node = path.get(pathIndex);
+         GridWalkNavigator.PathNode node = path.get(pathIndex);
          double segX = node.init_I - nodeX;
          double segZ = node.z - nodeZ;
          double fromX = nodeX + 0.5;
@@ -320,7 +320,7 @@ public final class GridWalkNavigator {
          int nodeZ;
          boolean nodeJump;
          if (pathIndex < path.size()) {
-            GridWalkNavigator.Inner_StreamUtil node = path.get(pathIndex);
+            GridWalkNavigator.PathNode node = path.get(pathIndex);
             nodeX = node.init_I;
             nodeY = node.y;
             nodeZ = node.z;
@@ -406,7 +406,7 @@ public final class GridWalkNavigator {
       if (currentTarget == null) {
          return null;
       } else if (pathIndex < path.size()) {
-         GridWalkNavigator.Inner_StreamUtil node = path.get(pathIndex);
+         GridWalkNavigator.PathNode node = path.get(pathIndex);
          return new BlockPos(node.init_I, node.y, node.z);
       } else {
          return load_Z ? currentTarget : null;
@@ -525,7 +525,7 @@ public final class GridWalkNavigator {
 
    private static void init_V_D(double px, double py, double pz, int feetY) {
       while (pathIndex < path.size() && (pathIndex != path.size() - 1 || init_Z())) {
-         GridWalkNavigator.Inner_StreamUtil node = path.get(pathIndex);
+         GridWalkNavigator.PathNode node = path.get(pathIndex);
          double dx = node.init_I + 0.5 - px;
          double dz = node.z + 0.5 - pz;
          if (dx * dx + dz * dz < 0.25 && Math.abs(feetY - node.y) <= 1 && (!node.jump || init_Z_bA_StreamUtil_D(node, py))) {
@@ -539,7 +539,7 @@ public final class GridWalkNavigator {
       }
    }
 
-   private static boolean init_Z_bA_StreamUtil_D(GridWalkNavigator.Inner_StreamUtil node, double py) {
+   private static boolean init_Z_bA_StreamUtil_D(GridWalkNavigator.PathNode node, double py) {
       double ledgeTop = floorHeight(node.init_I, node.y, node.z);
       return py >= ledgeTop - 0.0625;
    }
@@ -642,18 +642,18 @@ public final class GridWalkNavigator {
       }
 
       gScore.put(startKey, 0);
-      openQueue.add(new GridWalkNavigator.Inner_DataUtil(startKey, heuristic(startX, startY, startZ)));
+      openQueue.add(new GridWalkNavigator.OpenEntry(startKey, heuristic(startX, startY, startZ)));
       int expanded = 0;
 
       while (!openQueue.isEmpty() && expanded < expansionLimit) {
-         GridWalkNavigator.Inner_DataUtil entry = openQueue.poll();
+         GridWalkNavigator.OpenEntry entry = openQueue.poll();
          if (closed.add(entry.key)) {
             expanded++;
             if (goalKeys.contains(entry.key)) {
                if (materialize) {
                   reconstructPath(startKey, entry.key, startX, startY, startZ);
                   if (path.isEmpty()) {
-                     path.add(new GridWalkNavigator.Inner_StreamUtil(startX, startY, startZ, false));
+                     path.add(new GridWalkNavigator.PathNode(startX, startY, startZ, false));
                   }
                }
 
@@ -750,7 +750,7 @@ public final class GridWalkNavigator {
                init_HashSet.remove(key);
             }
 
-            openQueue.add(new GridWalkNavigator.Inner_DataUtil(key, g + heuristic(nx, ny, nz)));
+            openQueue.add(new GridWalkNavigator.OpenEntry(key, g + heuristic(nx, ny, nz)));
          }
       }
    }
@@ -789,7 +789,7 @@ public final class GridWalkNavigator {
 
       for (int i = pathKeys.size() - 1; i >= 0; i--) {
          long nodeKey = pathKeys.get(i);
-         path.add(new GridWalkNavigator.Inner_StreamUtil(BlockPos.getX(nodeKey), BlockPos.getY(nodeKey), BlockPos.getZ(nodeKey), init_HashSet.contains(nodeKey)));
+         path.add(new GridWalkNavigator.PathNode(BlockPos.getX(nodeKey), BlockPos.getY(nodeKey), BlockPos.getZ(nodeKey), init_HashSet.contains(nodeKey)));
       }
 
       init_V_I(startX, startY, startZ);
@@ -808,14 +808,14 @@ public final class GridWalkNavigator {
             int limit = Math.min(path.size() - 1, i + 12);
 
             for (int j = limit; j > i; j--) {
-               GridWalkNavigator.Inner_StreamUtil candidate = path.get(j);
+               GridWalkNavigator.PathNode candidate = path.get(j);
                if (!candidate.jump && candidate.y == anchorY && init_Z_I(anchorX, anchorY, anchorZ, candidate.init_I, candidate.z)) {
                   far = j;
                   break;
                }
             }
 
-            GridWalkNavigator.Inner_StreamUtil next = path.get(far);
+            GridWalkNavigator.PathNode next = path.get(far);
             read_ArrayList.add(next);
             anchorX = next.init_I;
             anchorY = next.y;
@@ -1066,31 +1066,31 @@ public final class GridWalkNavigator {
       }
    }
 
-   private static final class Inner_DataUtil implements Comparable<GridWalkNavigator.Inner_DataUtil> {
+   private static final class OpenEntry implements Comparable<GridWalkNavigator.OpenEntry> {
       final long key;
       final int fScore;
 
-      Inner_DataUtil(long key, int f) {
+      OpenEntry(long key, int f) {
          this.key = key;
          this.fScore = f;
       }
 
-      public int compareTo(GridWalkNavigator.Inner_DataUtil other) {
+      public int compareTo(GridWalkNavigator.OpenEntry other) {
          return this.compareScore(other);
       }
 
-      public int compareScore(GridWalkNavigator.Inner_DataUtil other) {
+      public int compareScore(GridWalkNavigator.OpenEntry other) {
          return Integer.compare(this.fScore, other.fScore);
       }
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class PathNode {
       final int init_I;
       final int y;
       final int z;
       final boolean jump;
 
-      Inner_StreamUtil(int x, int y, int z, boolean jump) {
+      PathNode(int x, int y, int z, boolean jump) {
          this.init_I = x;
          this.y = y;
          this.z = z;

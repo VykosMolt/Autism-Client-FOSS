@@ -26,9 +26,9 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    private final autismclient.gui.ui.widgets.TextInputWidget s2cSearch;
    private final AutismPacketSelectorOverlay packetSelector;
    private final AutismCustomFilterPresetOverlay presetOverlay;
-   private final List<AutismCustomFilterOverlay.Inner_DataUtil> actionButtons = new ArrayList<>();
-   private final AutismCustomFilterOverlay.Inner_StreamUtil c2sList = new AutismCustomFilterOverlay.Inner_StreamUtil();
-   private final AutismCustomFilterOverlay.Inner_StreamUtil s2cList = new AutismCustomFilterOverlay.Inner_StreamUtil();
+   private final List<AutismCustomFilterOverlay.ActionButton> actionButtons = new ArrayList<>();
+   private final AutismCustomFilterOverlay.PacketList c2sList = new AutismCustomFilterOverlay.PacketList();
+   private final AutismCustomFilterOverlay.PacketList s2cList = new AutismCustomFilterOverlay.PacketList();
    private int panelX = 260;
    private int panelY = 36;
    private int panelWidth = 220;
@@ -248,7 +248,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       boolean c2s,
       autismclient.modules.ModuleRuntimeManager module,
       autismclient.gui.ui.widgets.TextInputWidget searchField,
-      AutismCustomFilterOverlay.Inner_StreamUtil listState
+      AutismCustomFilterOverlay.PacketList listState
    ) {
       String label = c2s ? "C2S Packets" : "S2C Packets";
       Set<Class<? extends Packet<?>>> selectedPackets = c2s ? module.getCustomC2sPacketsCopy() : module.getCustomS2cPacketsCopy();
@@ -326,7 +326,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                   autismclient.gui.ui.widgets.ListRowRenderer.drawRowSeparator(context, x + 2, rowY + this.rowHeight(), contentWidth);
                   this.actionButtons
                      .add(
-                        new AutismCustomFilterOverlay.Inner_DataUtil(x + 2, rowY, contentWidth, this.rowHeight(), () -> this.deselectPacket(c2s, packetClass), true)
+                        new AutismCustomFilterOverlay.ActionButton(x + 2, rowY, contentWidth, this.rowHeight(), () -> this.deselectPacket(c2s, packetClass), true)
                      );
                }
             );
@@ -416,7 +416,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
    }
 
    private List<Class<? extends Packet<?>>> cachedFilteredPackets(
-      AutismCustomFilterOverlay.Inner_StreamUtil state, Set<Class<? extends Packet<?>>> packets, String query
+      AutismCustomFilterOverlay.PacketList state, Set<Class<? extends Packet<?>>> packets, String query
    ) {
       String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
       int sourceHash = packets == null ? 0 : packets.hashCode();
@@ -492,7 +492,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
          mouseX,
          mouseY
       );
-      this.actionButtons.add(new AutismCustomFilterOverlay.Inner_DataUtil(x, y, w, this.set_I_3(), action, enabled));
+      this.actionButtons.add(new AutismCustomFilterOverlay.ActionButton(x, y, w, this.set_I_3(), action, enabled));
       return y + this.set_I_3() + this.searchGap();
    }
 
@@ -500,7 +500,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       GuiGraphicsExtractor context, int mouseX, int mouseY, int x, int y, int width, String label, Runnable action, boolean enabled, String animationKey
    ) {
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, width, this.set_I_3(), label, enabled, animationKey, mouseX, mouseY);
-      this.actionButtons.add(new AutismCustomFilterOverlay.Inner_DataUtil(x, y, width, this.set_I_3(), action, true));
+      this.actionButtons.add(new AutismCustomFilterOverlay.ActionButton(x, y, width, this.set_I_3(), action, true));
       return y + this.set_I_3() + this.searchGap();
    }
 
@@ -553,7 +553,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
 
          this.blurSearchFields();
          if (button == 0) {
-            for (AutismCustomFilterOverlay.Inner_DataUtil actionButton : this.actionButtons) {
+            for (AutismCustomFilterOverlay.ActionButton actionButton : this.actionButtons) {
                if (actionButton.contains(mouseX, mouseY)) {
                   if (!actionButton.enabled()) {
                      return true;
@@ -674,7 +674,7 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       return autismclient.gui.ui.widgets.ScrollListLayout.compute(x, y, width, listHeight, rowCount, this.rowHeight(), this.start_I_3(), scrollOffset, this.scrollbarWidth(), this.scrollbarGutter());
    }
 
-   private boolean init_Z_AutismCustomFilter(AutismCustomFilterOverlay.Inner_StreamUtil listState, int dragId, double mouseX, double mouseY) {
+   private boolean init_Z_AutismCustomFilter(AutismCustomFilterOverlay.PacketList listState, int dragId, double mouseX, double mouseY) {
       autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics metrics = listState.scrollbarMetrics;
       if (metrics == null || !metrics.isScrollable()) {
          return false;
@@ -824,13 +824,13 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
       return mouseX >= field.x() && mouseX <= field.x() + field.width() && mouseY >= field.y() && mouseY <= field.y() + field.height();
    }
 
-   private record Inner_DataUtil(int init_I, int load, int read, int write, Runnable action, boolean enabled) {
+   private record ActionButton(int init_I, int load, int read, int write, Runnable action, boolean enabled) {
       boolean contains(double mouseX, double mouseY) {
          return mouseX >= this.init_I && mouseX < this.init_I + this.read && mouseY >= this.load && mouseY < this.load + this.write;
       }
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class PacketList {
       private int init_I;
       private int y;
       private int width;

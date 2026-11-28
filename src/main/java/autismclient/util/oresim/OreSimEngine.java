@@ -32,22 +32,22 @@ public final class OreSimEngine {
    private static final int MAX_CACHED_CONTEXTS = 3;
    private static final long AUDIT_WRITE_DELAY_NANOS = TimeUnit.SECONDS.toNanos(5L);
    private static final Object LOCK = new Object();
-   private static final Map<Long, OreSimEngine.Inner_DataUtil> chunkOres = new ConcurrentHashMap<>();
-   private static final Map<Long, OreSimEngine.Inner_DataUtil> pendingChunkOres = new HashMap<>();
+   private static final Map<Long, OreSimEngine.ChunkOres> chunkOres = new ConcurrentHashMap<>();
+   private static final Map<Long, OreSimEngine.ChunkOres> pendingChunkOres = new HashMap<>();
    private static final LongOpenHashSet inFlightTiles = new LongOpenHashSet();
    private static boolean initialChunkPending;
    private static final LongOpenHashSet disprovenPositions = new LongOpenHashSet();
    private static final int MAX_DISPROVEN = 200000;
    private static final OreSimWorkerPool WORKERS = new OreSimWorkerPool("Autism-OreSim-Worldgen");
-   private static final LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> contextCache = new LinkedHashMap<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap>(
+   private static final LinkedHashMap<OreSimEngine.WorldKey, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> contextCache = new LinkedHashMap<OreSimEngine.WorldKey, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap>(
       4, 0.75F, true
    ) {
       @Override
-      protected boolean removeEldestEntry(Entry<OreSimEngine.Inner_StreamUtil, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> eldest) {
+      protected boolean removeEldestEntry(Entry<OreSimEngine.WorldKey, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap> eldest) {
          return this.size() > 3;
       }
    };
-   private static OreSimEngine.Inner_StreamUtil activeWorldKey;
+   private static OreSimEngine.WorldKey activeWorldKey;
    private static volatile autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap worldgenContext;
    private static volatile long generation;
    private static volatile boolean contextLoading;
@@ -72,19 +72,19 @@ public final class OreSimEngine {
    private OreSimEngine() {
    }
 
-   public static OreSimEngine.Inner_BufferHelper status() {
+   public static OreSimEngine.EngineStatus status() {
       if (errored) {
-         return OreSimEngine.Inner_BufferHelper.ERROR;
+         return OreSimEngine.EngineStatus.ERROR;
       } else if (unsupportedDimension) {
-         return OreSimEngine.Inner_BufferHelper.UNSUPPORTED_DIMENSION;
+         return OreSimEngine.EngineStatus.UNSUPPORTED_DIMENSION;
       } else if (worldgenUnverified) {
-         return OreSimEngine.Inner_BufferHelper.UNVERIFIED_WORLDGEN;
+         return OreSimEngine.EngineStatus.UNVERIFIED_WORLDGEN;
       } else if (activeWorldKey == null) {
-         return OreSimEngine.Inner_BufferHelper.IDLE;
+         return OreSimEngine.EngineStatus.IDLE;
       } else if (!contextLoading && worldgenContext != null) {
-         return generating ? OreSimEngine.Inner_BufferHelper.GENERATING : OreSimEngine.Inner_BufferHelper.READY;
+         return generating ? OreSimEngine.EngineStatus.GENERATING : OreSimEngine.EngineStatus.READY;
       } else {
-         return OreSimEngine.Inner_BufferHelper.LOADING_CONTEXT;
+         return OreSimEngine.EngineStatus.LOADING_CONTEXT;
       }
    }
 
@@ -108,10 +108,10 @@ public final class OreSimEngine {
       return chunkOres.size();
    }
 
-   public static OreSimEngine.Inner_ConfigStore progress() {
+   public static OreSimEngine.GenerationProgress progress() {
       synchronized (LOCK) {
          if (activeWorldKey == null) {
-            return new OreSimEngine.Inner_ConfigStore(generation, 0, 0);
+            return new OreSimEngine.GenerationProgress(generation, 0, 0);
          }
 
          int centerX = SectionPos.blockToSectionCoord(trackedCenterX);
@@ -129,7 +129,7 @@ public final class OreSimEngine {
             }
          }
 
-         return new OreSimEngine.Inner_ConfigStore(generation, complete, diameter * diameter);
+         return new OreSimEngine.GenerationProgress(generation, complete, diameter * diameter);
       }
    }
 
@@ -263,7 +263,7 @@ public final class OreSimEngine {
                statusMessage = "Unsupported dimension " + dimension.identifier();
             }
          } else {
-            OreSimEngine.Inner_StreamUtil wanted = new OreSimEngine.Inner_StreamUtil(worldSeed, dimension);
+            OreSimEngine.WorldKey wanted = new OreSimEngine.WorldKey(worldSeed, dimension);
             synchronized (LOCK) {
                if (!wanted.equals(activeWorldKey)) {
                   switchWorld(wanted);
@@ -292,7 +292,7 @@ public final class OreSimEngine {
                   int maxParallel = WORKERS.maxWorkers();
 
                   while (inFlightTiles.size() < maxParallel) {
-                     OreSimEngine.Inner_TaskQueue tile = nearestTile(trackedCenterX, trackedCenterZ, requestedRadius);
+                     OreSimEngine.ChunkTile tile = nearestTile(trackedCenterX, trackedCenterZ, requestedRadius);
                      if (tile == null) {
                         break;
                      }
@@ -311,7 +311,7 @@ public final class OreSimEngine {
       return Level.OVERWORLD.equals(dimension) || Level.NETHER.equals(dimension) || Level.END.equals(dimension);
    }
 
-   private static void switchWorld(OreSimEngine.Inner_StreamUtil wanted) {
+   private static void switchWorld(OreSimEngine.WorldKey wanted) {
       generation++;
       cancelWorkers();
       activeWorldKey = wanted;
@@ -344,7 +344,7 @@ public final class OreSimEngine {
       }
    }
 
-   private static void buildContext(OreSimEngine.Inner_StreamUtil key, long token) {
+   private static void buildContext(OreSimEngine.WorldKey key, long token) {
       WORKERS.init(() -> {
          autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap built;
          boolean tagsVerified;
@@ -391,7 +391,7 @@ public final class OreSimEngine {
                   throw new IllegalStateException("Generator omitted initial complete chunk " + chunkX + ", " + chunkZ);
                }
 
-               OreSimEngine.Inner_DataUtil ores = extractOres(chunk, () -> token != generation);
+               OreSimEngine.ChunkOres ores = extractOres(chunk, () -> token != generation);
                if (!context.init_Z()) {
                   failIfCurrent(token, "Minecraft block tags changed during initial chunk generation");
                   return;
@@ -432,7 +432,7 @@ public final class OreSimEngine {
       });
    }
 
-   private static void generateTile(OreSimEngine.Inner_TaskQueue tile, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
+   private static void generateTile(OreSimEngine.ChunkTile tile, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
       long tileKey = ChunkPos.pack(tile.minChunkX(), tile.load());
       inFlightTiles.add(tileKey);
       generating = true;
@@ -455,7 +455,7 @@ public final class OreSimEngine {
                int regionMinX = tile.minChunkX() - 2;
                int regionMinZ = tile.load() - 2;
                Map<Long, ChunkAccess> generated = new autismclient.util.oresim.worldgen.OreSimRegionGenerator(context).generateRegion(regionMinX, regionMinZ, 8, () -> token != generation);
-               Map<Long, OreSimEngine.Inner_DataUtil> completed = new HashMap<>(16);
+               Map<Long, OreSimEngine.ChunkOres> completed = new HashMap<>(16);
 
                for (int dxx = 0; dxx < 4; dxx++) {
                   for (int dzx = 0; dzx < 4; dzx++) {
@@ -468,7 +468,7 @@ public final class OreSimEngine {
                            throw new IllegalStateException("Generator omitted complete chunk " + chunkX + ", " + chunkZ);
                         }
 
-                        OreSimEngine.Inner_DataUtil ores = extractOres(chunk, () -> token != generation);
+                        OreSimEngine.ChunkOres ores = extractOres(chunk, () -> token != generation);
                         completed.put(chunkKey, ores);
                      }
                   }
@@ -481,7 +481,7 @@ public final class OreSimEngine {
                      if (token == generation && context == worldgenContext) {
                         int added = 0;
 
-                        for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : completed.entrySet()) {
+                        for (Entry<Long, OreSimEngine.ChunkOres> entry : completed.entrySet()) {
                            if (!chunkOres.containsKey(entry.getKey()) && !pendingChunkOres.containsKey(entry.getKey())) {
                               added += entry.getValue().size();
                            }
@@ -490,7 +490,7 @@ public final class OreSimEngine {
                         if (totalPositions + added > 600000) {
                            oreCapReached = true;
                         } else {
-                           for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : completed.entrySet()) {
+                           for (Entry<Long, OreSimEngine.ChunkOres> entry : completed.entrySet()) {
                               if (!chunkOres.containsKey(entry.getKey()) && !pendingChunkOres.containsKey(entry.getKey())) {
                                  pendingChunkOres.put(entry.getKey(), entry.getValue());
                                  totalPositions = totalPositions + entry.getValue().size();
@@ -518,19 +518,19 @@ public final class OreSimEngine {
       });
    }
 
-   private static OreSimEngine.Inner_DataUtil extractOres(ChunkAccess chunk, BooleanSupplier cancelled) {
+   private static OreSimEngine.ChunkOres extractOres(ChunkAccess chunk, BooleanSupplier cancelled) {
       LongArrayList positions = new LongArrayList();
       IntArrayList stateIds = new IntArrayList();
       autismclient.util.oresim.worldgen.OreSimRegionGenerator.scanChunk(chunk, state -> OreBlockCatalog.init(state.getBlock()), (x, y, z, state) -> {
-         int stateId = OreBlockCatalog.Inner_StreamUtil.init(state);
+         int stateId = OreBlockCatalog.StateRegistry.init(state);
          if (stateId >= 0) {
             positions.add(BlockPos.asLong(x, y, z));
             stateIds.add(stateId);
          }
       }, cancelled);
       return positions.isEmpty()
-         ? OreSimEngine.Inner_DataUtil.EMPTY
-         : new OreSimEngine.Inner_DataUtil(positions.toLongArray(), stateIds.toIntArray());
+         ? OreSimEngine.ChunkOres.EMPTY
+         : new OreSimEngine.ChunkOres(positions.toLongArray(), stateIds.toIntArray());
    }
 
    private static void fail(long token, String message, Throwable error) {
@@ -634,14 +634,14 @@ public final class OreSimEngine {
       });
    }
 
-   private static OreSimEngine.Inner_TaskQueue nearestTile(int blockX, int blockZ, int radius) {
+   private static OreSimEngine.ChunkTile nearestTile(int blockX, int blockZ, int radius) {
       int centerChunkX = SectionPos.blockToSectionCoord(blockX);
       int centerChunkZ = SectionPos.blockToSectionCoord(blockZ);
       int minTileX = Math.floorDiv(centerChunkX - radius, 4);
       int maxTileX = Math.floorDiv(centerChunkX + radius, 4);
       int minTileZ = Math.floorDiv(centerChunkZ - radius, 4);
       int maxTileZ = Math.floorDiv(centerChunkZ + radius, 4);
-      OreSimEngine.Inner_TaskQueue best = null;
+      OreSimEngine.ChunkTile best = null;
 
       for (int tileX = minTileX; tileX <= maxTileX; tileX++) {
          for (int tileZ = minTileZ; tileZ <= maxTileZ; tileZ++) {
@@ -650,7 +650,7 @@ public final class OreSimEngine {
             if (!inFlightTiles.contains(ChunkPos.pack(minChunkX, minChunkZ)) && !tileComplete(minChunkX, minChunkZ)) {
                double distance = distanceToTile(blockX + 0.5, blockZ + 0.5, minChunkX, minChunkZ);
                if (best == null || distance < best.distance() || distance == best.distance() && tileOrderedBefore(minChunkX, minChunkZ, best)) {
-                  best = new OreSimEngine.Inner_TaskQueue(minChunkX, minChunkZ, distance);
+                  best = new OreSimEngine.ChunkTile(minChunkX, minChunkZ, distance);
                }
             }
          }
@@ -682,7 +682,7 @@ public final class OreSimEngine {
       return dx * dx + dz * dz;
    }
 
-   private static boolean tileOrderedBefore(int x, int z, OreSimEngine.Inner_TaskQueue other) {
+   private static boolean tileOrderedBefore(int x, int z, OreSimEngine.ChunkTile other) {
       return x < other.minChunkX() || x == other.minChunkX() && z < other.load();
    }
 
@@ -690,10 +690,10 @@ public final class OreSimEngine {
       if (!pendingChunkOres.isEmpty()) {
          NearestChunkSelector.Inner_DataUtil missing = nearestMissingChunk();
          boolean changed = false;
-         Iterator<Entry<Long, OreSimEngine.Inner_DataUtil>> iterator = pendingChunkOres.entrySet().iterator();
+         Iterator<Entry<Long, OreSimEngine.ChunkOres>> iterator = pendingChunkOres.entrySet().iterator();
 
          while (iterator.hasNext()) {
-            Entry<Long, OreSimEngine.Inner_DataUtil> entry = iterator.next();
+            Entry<Long, OreSimEngine.ChunkOres> entry = iterator.next();
             int chunkX = ChunkPos.getX(entry.getKey());
             int chunkZ = ChunkPos.getZ(entry.getKey());
             if (NearestChunkSelector.init(trackedCenterX + 0.5, trackedCenterZ + 0.5, chunkX, chunkZ, missing)) {
@@ -723,17 +723,17 @@ public final class OreSimEngine {
       int keep = requestedRadius + 4;
       int removed = 0;
 
-      for (Entry<Long, OreSimEngine.Inner_DataUtil> entry : chunkOres.entrySet()) {
+      for (Entry<Long, OreSimEngine.ChunkOres> entry : chunkOres.entrySet()) {
          long key = entry.getKey();
          if ((Math.abs(ChunkPos.getX(key) - centerX) > keep || Math.abs(ChunkPos.getZ(key) - centerZ) > keep) && chunkOres.remove(key, entry.getValue())) {
             removed += entry.getValue().size();
          }
       }
 
-      Iterator<Entry<Long, OreSimEngine.Inner_DataUtil>> pending = pendingChunkOres.entrySet().iterator();
+      Iterator<Entry<Long, OreSimEngine.ChunkOres>> pending = pendingChunkOres.entrySet().iterator();
 
       while (pending.hasNext()) {
-         Entry<Long, OreSimEngine.Inner_DataUtil> entry = pending.next();
+         Entry<Long, OreSimEngine.ChunkOres> entry = pending.next();
          long key = entry.getKey();
          if (Math.abs(ChunkPos.getX(key) - centerX) > keep || Math.abs(ChunkPos.getZ(key) - centerZ) > keep) {
             removed += entry.getValue().size();
@@ -778,7 +778,7 @@ public final class OreSimEngine {
                for (int dx = -ring; dx <= ring; dx++) {
                   for (int dz = -ring; dz <= ring; dz++) {
                      if (Math.max(Math.abs(dx), Math.abs(dz)) == ring) {
-                        OreSimEngine.Inner_DataUtil ores = chunkOres.get(ChunkPos.pack(centerX + dx, centerZ + dz));
+                        OreSimEngine.ChunkOres ores = chunkOres.get(ChunkPos.pack(centerX + dx, centerZ + dz));
                         if (ores != null && ores.positions.length != 0) {
                            for (int i = 0; i < ores.positions.length; i++) {
                               int stateId = ores.stateIds[i];
@@ -819,7 +819,7 @@ public final class OreSimEngine {
          synchronized (disprovenPositions) {
             for (int chunkX = minX >> 4; chunkX <= maxX >> 4; chunkX++) {
                for (int chunkZ = minZ >> 4; chunkZ <= maxZ >> 4; chunkZ++) {
-                  OreSimEngine.Inner_DataUtil ores = chunkOres.get(ChunkPos.pack(chunkX, chunkZ));
+                  OreSimEngine.ChunkOres ores = chunkOres.get(ChunkPos.pack(chunkX, chunkZ));
                   if (ores != null) {
                      for (long packed : ores.positions) {
                         if (!disprovenPositions.contains(packed)) {
@@ -838,7 +838,7 @@ public final class OreSimEngine {
       }
    }
 
-   public static void forEachPosition(BlockPos center, int blockRadius, OreSimEngine.Inner_CachePool judge) {
+   public static void forEachPosition(BlockPos center, int blockRadius, OreSimEngine.DropJudge judge) {
       if (center != null && judge != null && !chunkOres.isEmpty()) {
          int minX = center.getX() - blockRadius;
          int maxX = center.getX() + blockRadius;
@@ -851,7 +851,7 @@ public final class OreSimEngine {
          synchronized (disprovenPositions) {
             for (int chunkX = minX >> 4; chunkX <= maxX >> 4; chunkX++) {
                for (int chunkZ = minZ >> 4; chunkZ <= maxZ >> 4; chunkZ++) {
-                  OreSimEngine.Inner_DataUtil ores = chunkOres.get(ChunkPos.pack(chunkX, chunkZ));
+                  OreSimEngine.ChunkOres ores = chunkOres.get(ChunkPos.pack(chunkX, chunkZ));
                   if (ores != null) {
                      for (int i = 0; i < ores.positions.length; i++) {
                         long packed = ores.positions[i];
@@ -886,7 +886,7 @@ public final class OreSimEngine {
       return -1;
    }
 
-   public enum Inner_BufferHelper {
+   public enum EngineStatus {
       IDLE,
       LOADING_CONTEXT,
       GENERATING,
@@ -897,12 +897,12 @@ public final class OreSimEngine {
    }
 
    @FunctionalInterface
-   public interface Inner_CachePool {
+   public interface DropJudge {
       boolean shouldDrop(int var1, long var2);
    }
 
-   public record Inner_ConfigStore(long generation, int done, int load) {
-      public Inner_ConfigStore {
+   public record GenerationProgress(long generation, int done, int load) {
+      public GenerationProgress {
          load = Math.max(0, load);
          done = Math.max(0, Math.min(done, load));
       }
@@ -916,12 +916,12 @@ public final class OreSimEngine {
       }
    }
 
-   private static final class Inner_DataUtil {
-      static final OreSimEngine.Inner_DataUtil EMPTY = new OreSimEngine.Inner_DataUtil(new long[0], new int[0]);
+   private static final class ChunkOres {
+      static final OreSimEngine.ChunkOres EMPTY = new OreSimEngine.ChunkOres(new long[0], new int[0]);
       final long[] positions;
       final int[] stateIds;
 
-      Inner_DataUtil(long[] positions, int[] stateIds) {
+      ChunkOres(long[] positions, int[] stateIds) {
          this.positions = positions;
          this.stateIds = stateIds;
       }
@@ -931,10 +931,10 @@ public final class OreSimEngine {
       }
    }
 
-   private record Inner_StreamUtil(long seed, ResourceKey<Level> dimension) {
+   private record WorldKey(long seed, ResourceKey<Level> dimension) {
    }
 
-   private record Inner_TaskQueue(int minChunkX, int load, double distance) {
+   private record ChunkTile(int minChunkX, int load, double distance) {
       long packedPos() {
          return ChunkPos.pack(this.minChunkX, this.load);
       }

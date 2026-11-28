@@ -25,8 +25,8 @@ final class AiFarmArea {
       }
    }
 
-   static AiFarmArea.Inner_DataUtil fromArgs(JsonObject args) {
-      return !hasCorners(args) ? null : new AiFarmArea.Inner_DataUtil(parseCorner(args.getAsJsonObject("from"), "from"), parseCorner(args.getAsJsonObject("to"), "to"));
+   static AiFarmArea.Area fromArgs(JsonObject args) {
+      return !hasCorners(args) ? null : new AiFarmArea.Area(parseCorner(args.getAsJsonObject("from"), "from"), parseCorner(args.getAsJsonObject("to"), "to"));
    }
 
    static String substrateFor(JsonObject args, String cropBlock) {
@@ -111,8 +111,8 @@ final class AiFarmArea {
       return AiJson.objectOf("x", pos.getX(), "y", pos.getY(), "z", pos.getZ());
    }
 
-   record Inner_DataUtil(BlockPos from, BlockPos to) {
-      Inner_DataUtil {
+   record Area(BlockPos from, BlockPos to) {
+      Area {
          from = from.immutable();
          to = to.immutable();
       }
@@ -157,8 +157,8 @@ final class AiFarmArea {
          return this.maxY() - this.minY();
       }
 
-      AiFarmBuild.Inner_StreamUtil layout(String substrate) {
-         return new AiFarmBuild.Inner_StreamUtil(this.width(), this.length(), "soul_sand".equals(substrate) ? List.of() : AiFarmBuild.init(this.width(), this.length()));
+      AiFarmBuild.FarmLayout layout(String substrate) {
+         return new AiFarmBuild.FarmLayout(this.width(), this.length(), "soul_sand".equals(substrate) ? List.of() : AiFarmBuild.init(this.width(), this.length()));
       }
 
       List<BlockPos> cells(int groundY) {

@@ -427,8 +427,8 @@ public final class AiToolCallParser {
       return (int)Math.floor(parseRelativeCoord(token, base));
    }
 
-   public static AiToolCallParser.Inner_StreamUtil init(String sub, List<String> args, double px, double py, double pz) {
-      AiToolCallParser.Inner_StreamUtil var10000;
+   public static AiToolCallParser.ToolCall init(String sub, List<String> args, double px, double py, double pz) {
+      AiToolCallParser.ToolCall var10000;
       switch (sub) {
          case "goto":
             var10000 = gotoCall(args, px, py, pz);
@@ -437,14 +437,14 @@ public final class AiToolCallParser {
             var10000 = parkourCall(args, px, py, pz);
             break;
          case "mine":
-            AiToolCallParser.Inner_StreamUtil mine = targetCountCall(args, "game:mine", "block", "Usage: .tools mine <block[=amount][,block[=amount]...]> [count per block]");
-            var10000 = new AiToolCallParser.Inner_StreamUtil("game:mine", AiMiningQuota.normalizeArgs(mine.arguments()));
+            AiToolCallParser.ToolCall mine = targetCountCall(args, "game:mine", "block", "Usage: .tools mine <block[=amount][,block[=amount]...]> [count per block]");
+            var10000 = new AiToolCallParser.ToolCall("game:mine", AiMiningQuota.normalizeArgs(mine.arguments()));
             break;
          case "chop":
             var10000 = targetCountCall(args, "game:chop", "block", "Usage: .tools chop <block> [count]");
             break;
          case "farm":
-            AiToolCallParser.Inner_StreamUtil farm = targetCountCall(args, "game:farm", "crop", "Usage: .tools farm <wheat|carrots|potatoes|beetroots> [plots]");
+            AiToolCallParser.ToolCall farm = targetCountCall(args, "game:farm", "crop", "Usage: .tools farm <wheat|carrots|potatoes|beetroots> [plots]");
             farm.arguments().addProperty("action", "build");
             var10000 = farm;
             break;
@@ -454,7 +454,7 @@ public final class AiToolCallParser {
                out.addProperty("type", joinArgs(args, args.size()));
             }
 
-            var10000 = new AiToolCallParser.Inner_StreamUtil("game:follow", out);
+            var10000 = new AiToolCallParser.ToolCall("game:follow", out);
             break;
          case "fight":
             var10000 = targetCountCall(args, "game:fight", "target", "Usage: .tools fight <type> [count]");
@@ -489,7 +489,7 @@ public final class AiToolCallParser {
             break;
          case "collect":
          case "gather":
-            AiToolCallParser.Inner_StreamUtil collect = targetCountCall(args, "game:collect", "item", "Usage: .tools collect <item> [count]");
+            AiToolCallParser.ToolCall collect = targetCountCall(args, "game:collect", "item", "Usage: .tools collect <item> [count]");
             if (!collect.arguments().has("count")) {
                collect.arguments().addProperty("count", 1);
             }
@@ -510,7 +510,7 @@ public final class AiToolCallParser {
                out2.addProperty("item", value);
             }
 
-            var10000 = new AiToolCallParser.Inner_StreamUtil("game:trade", out2);
+            var10000 = new AiToolCallParser.ToolCall("game:trade", out2);
             break;
          }
          case "events": {
@@ -528,7 +528,7 @@ public final class AiToolCallParser {
                out3.addProperty("since", since);
             }
 
-            var10000 = new AiToolCallParser.Inner_StreamUtil("game:events", out3);
+            var10000 = new AiToolCallParser.ToolCall("game:events", out3);
             break;
          }
          default:
@@ -538,12 +538,12 @@ public final class AiToolCallParser {
       return var10000;
    }
 
-   private static AiToolCallParser.Inner_StreamUtil parkourCall(List<String> args, double px, double py, double pz) {
-      AiToolCallParser.Inner_CachePool options = parseParkourFlags(args);
+   private static AiToolCallParser.ToolCall parkourCall(List<String> args, double px, double py, double pz) {
+      AiToolCallParser.ParkourFlags options = parseParkourFlags(args);
       String usage = PARKOUR_USAGE;
       args = args.stream().filter(arg -> !isParkourFlag(arg)).toList();
 
-      AiToolCallParser.Inner_StreamUtil trip;
+      AiToolCallParser.ToolCall trip;
       try {
          if (!args.isEmpty() && args.getFirst().equalsIgnoreCase("to")) {
             args = args.subList(1, args.size());
@@ -566,7 +566,7 @@ public final class AiToolCallParser {
             JsonObject dest = parseCoordsObject(args.subList(args.size() - 3, args.size()), px, py, pz);
             dest.add("checkpoints", checkpoints);
             dest.addProperty("allowInventory", false);
-            trip = new AiToolCallParser.Inner_StreamUtil("game:goto", dest);
+            trip = new AiToolCallParser.ToolCall("game:goto", dest);
          } else {
             trip = gotoCall(args, px, py, pz);
          }
@@ -574,7 +574,7 @@ public final class AiToolCallParser {
          throw new IllegalArgumentException(e.getMessage().replace(GOTO_USAGE, usage));
       }
 
-      return new AiToolCallParser.Inner_StreamUtil(trip.id(), init_JsonObject_JsonObject_ParkourOptions(trip.arguments(), options));
+      return new AiToolCallParser.ToolCall(trip.id(), init_JsonObject_JsonObject_ParkourOptions(trip.arguments(), options));
    }
 
    private static JsonObject parseCoordsObject(List<String> coords, double px, double py, double pz) {
@@ -593,7 +593,7 @@ public final class AiToolCallParser {
       return isNoFallFlag(token) || parkourSpeedFlags.contains(token.toLowerCase(Locale.ROOT));
    }
 
-   public static AiToolCallParser.Inner_CachePool parseParkourFlags(List<String> args) {
+   public static AiToolCallParser.ParkourFlags parseParkourFlags(List<String> args) {
       boolean noFall = false;
       int speed = -1;
 
@@ -612,14 +612,14 @@ public final class AiToolCallParser {
          }
       }
 
-      return new AiToolCallParser.Inner_CachePool(noFall, speed);
+      return new AiToolCallParser.ParkourFlags(noFall, speed);
    }
 
    static JsonObject withParkourOptions(JsonObject destination, boolean assumeNoDamage) {
-      return init_JsonObject_JsonObject_ParkourOptions(destination, new AiToolCallParser.Inner_CachePool(assumeNoDamage, -1));
+      return init_JsonObject_JsonObject_ParkourOptions(destination, new AiToolCallParser.ParkourFlags(assumeNoDamage, -1));
    }
 
-   static JsonObject init_JsonObject_JsonObject_ParkourOptions(JsonObject destination, AiToolCallParser.Inner_CachePool options) {
+   static JsonObject init_JsonObject_JsonObject_ParkourOptions(JsonObject destination, AiToolCallParser.ParkourFlags options) {
       JsonObject out = destination.deepCopy();
       out.addProperty("parkour", true);
       if (options.noFall()) {
@@ -640,10 +640,10 @@ public final class AiToolCallParser {
       return out;
    }
 
-   public record Inner_CachePool(boolean noFall, int speedLevel) {
+   public record ParkourFlags(boolean noFall, int speedLevel) {
    }
 
-   private static AiToolCallParser.Inner_StreamUtil gotoCall(List<String> args, double px, double py, double pz) {
+   private static AiToolCallParser.ToolCall gotoCall(List<String> args, double px, double py, double pz) {
       if (args.size() >= 2 && args.get(0).equalsIgnoreCase("to")) {
          args = args.subList(1, args.size());
       }
@@ -652,16 +652,16 @@ public final class AiToolCallParser {
          String a = args.get(0).toLowerCase(Locale.ROOT);
          String b = args.get(1).toLowerCase(Locale.ROOT);
          if (DIRECTION_WORDS.contains(a) && b.matches("\\d+(\\.\\d+)?")) {
-            return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.objectOf("direction", a, "distance", Double.parseDouble(b)));
+            return new AiToolCallParser.ToolCall("game:goto", AiJson.objectOf("direction", a, "distance", Double.parseDouble(b)));
          }
 
          if (DIRECTION_WORDS.contains(b) && a.matches("\\d+(\\.\\d+)?")) {
-            return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.objectOf("direction", b, "distance", Double.parseDouble(a)));
+            return new AiToolCallParser.ToolCall("game:goto", AiJson.objectOf("direction", b, "distance", Double.parseDouble(a)));
          }
       }
 
       if (args.size() == 1 && !args.get(0).matches("-?~?\\d.*")) {
-         return new AiToolCallParser.Inner_StreamUtil("game:goto", AiJson.objectOf("waypoint", args.get(0)));
+         return new AiToolCallParser.ToolCall("game:goto", AiJson.objectOf("waypoint", args.get(0)));
       }
 
       if (args.size() >= 3 && args.size() <= 5) {
@@ -701,13 +701,13 @@ public final class AiToolCallParser {
             out.addProperty("strategy", strategy);
          }
 
-         return new AiToolCallParser.Inner_StreamUtil("game:goto", out);
+         return new AiToolCallParser.ToolCall("game:goto", out);
       } else {
          throw new IllegalArgumentException("Usage: .tools goto <x> <y> <z> [radius] [strategy] | goto <direction> <blocks> | goto <waypoint>");
       }
    }
 
-   private static AiToolCallParser.Inner_StreamUtil targetCountCall(List<String> args, String id, String key, String usage) {
+   private static AiToolCallParser.ToolCall targetCountCall(List<String> args, String id, String key, String usage) {
       if (args.isEmpty()) {
          throw new IllegalArgumentException(usage);
       }
@@ -718,7 +718,7 @@ public final class AiToolCallParser {
       if (!counted && args.size() > 1 && args.get(0).matches("\\d+")) {
          out.addProperty(key, String.join("_", args.subList(1, args.size())));
          out.addProperty("count", parseCount(args.get(0), usage));
-         return new AiToolCallParser.Inner_StreamUtil(id, out);
+         return new AiToolCallParser.ToolCall(id, out);
       }
 
       out.addProperty(key, joinArgs(args, counted ? args.size() - 1 : args.size()));
@@ -726,14 +726,14 @@ public final class AiToolCallParser {
          out.addProperty("count", parseCount(args.get(args.size() - 1), usage));
       }
 
-      return new AiToolCallParser.Inner_StreamUtil(id, out);
+      return new AiToolCallParser.ToolCall(id, out);
    }
 
    static String joinArgs(List<String> args, int end) {
       return String.join("_", args.subList(0, end));
    }
 
-   private static AiToolCallParser.Inner_StreamUtil fillCall(List<String> args, double px, double py, double pz) {
+   private static AiToolCallParser.ToolCall fillCall(List<String> args, double px, double py, double pz) {
       if (args.size() >= 7 && args.size() <= 8) {
          JsonObject out = new JsonObject();
          out.addProperty("x", parseBlockCoord(args.get(0), px));
@@ -758,13 +758,13 @@ public final class AiToolCallParser {
             }
          }
 
-         return new AiToolCallParser.Inner_StreamUtil("game:fill", out);
+         return new AiToolCallParser.ToolCall("game:fill", out);
       } else {
          throw new IllegalArgumentException("Usage: .tools fill <x> <y> <z> <x2> <y2> <z2> <block> [hollow|solid]");
       }
    }
 
-   private static AiToolCallParser.Inner_StreamUtil digCall(List<String> args) {
+   private static AiToolCallParser.ToolCall digCall(List<String> args) {
       if (args.isEmpty() || !args.get(0).equalsIgnoreCase("tunnel") || args.size() > 3) {
          throw new IllegalArgumentException("Usage: .tools dig tunnel <north|south|east|west> [length]");
       }
@@ -792,14 +792,14 @@ public final class AiToolCallParser {
          out.addProperty("length", length);
       }
 
-      return new AiToolCallParser.Inner_StreamUtil("game:dig", out);
+      return new AiToolCallParser.ToolCall("game:dig", out);
    }
 
-   private static AiToolCallParser.Inner_StreamUtil noArgCall(List<String> args, String id, String usage) {
+   private static AiToolCallParser.ToolCall noArgCall(List<String> args, String id, String usage) {
       if (!args.isEmpty()) {
          throw new IllegalArgumentException(usage);
       } else {
-         return new AiToolCallParser.Inner_StreamUtil(id, new JsonObject());
+         return new AiToolCallParser.ToolCall(id, new JsonObject());
       }
    }
 
@@ -894,6 +894,6 @@ public final class AiToolCallParser {
       return previous[b.length()];
    }
 
-   public record Inner_StreamUtil(String id, JsonObject arguments) {
+   public record ToolCall(String id, JsonObject arguments) {
    }
 }

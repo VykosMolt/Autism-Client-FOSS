@@ -44,7 +44,7 @@ final class AiBucket {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiBucket.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "fill"));
+         final AiBucket.BucketAction action = parseAction(AiJson.getString(args, "action", "fill"));
          final String fluid = AiJson.getString(args, "fluid", "water").trim().toLowerCase(Locale.ROOT);
          if (!fluid.equals("water") && !fluid.equals("lava")) {
             throw new IllegalArgumentException("fluid must be water or lava");
@@ -53,7 +53,7 @@ final class AiBucket {
          boolean hasTarget = args.has("x") && args.has("y") && args.has("z");
          final BlockPos explicit = hasTarget ? AiGameOperations.requireBlockPos(args) : null;
          final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 60)));
-         if (action == AiBucket.Inner_DataUtil.EMPTY
+         if (action == AiBucket.BucketAction.EMPTY
             && fluid.equals("water")
             && mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)) {
             return AiGameOperations.immediate(
@@ -63,8 +63,8 @@ final class AiBucket {
             );
          }
 
-         final String bucketId = action == AiBucket.Inner_DataUtil.FILL ? "minecraft:bucket" : "minecraft:" + fluid + "_bucket";
-         final String resultId = action == AiBucket.Inner_DataUtil.FILL ? "minecraft:" + fluid + "_bucket" : "minecraft:bucket";
+         final String bucketId = action == AiBucket.BucketAction.FILL ? "minecraft:bucket" : "minecraft:" + fluid + "_bucket";
+         final String resultId = action == AiBucket.BucketAction.FILL ? "minecraft:" + fluid + "_bucket" : "minecraft:bucket";
          return new AiOperation() {
             final Object level = mc.level;
             final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -92,7 +92,7 @@ final class AiBucket {
                   return this.finish(AiOperation.Status.CANCELLED, "Bucket target belongs to the previous dimension");
                }
 
-               if (action == AiBucket.Inner_DataUtil.EMPTY
+               if (action == AiBucket.BucketAction.EMPTY
                   && fluid.equals("water")
                   && mc.level.environmentAttributes().getDimensionValue(EnvironmentAttributes.WATER_EVAPORATES)) {
                   return this.finish(AiOperation.Status.FAILED, "Water placement refused by the current dimension rule");
@@ -106,7 +106,7 @@ final class AiBucket {
                   if (AiGameState.countInventoryItem(resultId) > this.resultCountBefore && AiServerEvidence.inventoryRevision() > this.inventoryRevision) {
                      return this.finish(
                         AiOperation.Status.SUCCEEDED,
-                        action == AiBucket.Inner_DataUtil.FILL ? "Filled a bucket with " + fluid : "Emptied the " + fluid + " bucket"
+                        action == AiBucket.BucketAction.FILL ? "Filled a bucket with " + fluid : "Emptied the " + fluid + " bucket"
                      );
                   } else {
                      return ++this.waitTicks > 40
@@ -125,14 +125,14 @@ final class AiBucket {
                   }
 
                   if (this.target == null) {
-                     this.target = action == AiBucket.Inner_DataUtil.FILL ? this.findFillTarget() : this.findEmptyTarget();
+                     this.target = action == AiBucket.BucketAction.FILL ? this.findFillTarget() : this.findEmptyTarget();
                      this.load_I = 0;
                   }
 
                   if (this.target == null) {
                      return this.finish(
                         AiOperation.Status.FAILED,
-                        action == AiBucket.Inner_DataUtil.FILL
+                        action == AiBucket.BucketAction.FILL
                            ? "No " + fluid + " SOURCE block within reach (flowing " + fluid + " cannot be picked up)"
                            : "No free cell within reach to empty the bucket into"
                      );
@@ -149,13 +149,13 @@ final class AiBucket {
                      return this.finish(AiOperation.Status.FAILED, "Could not aim at " + this.target.toShortString());
                   }
 
-                  BlockHitResult hit = this.raycast(action == AiBucket.Inner_DataUtil.FILL ? Fluid.SOURCE_ONLY : Fluid.NONE);
+                  BlockHitResult hit = this.raycast(action == AiBucket.BucketAction.FILL ? Fluid.SOURCE_ONLY : Fluid.NONE);
                   boolean waterlog = fluid.equals("water") && AiBucket.isWaterloggable(mc.level.getBlockState(this.target));
                   if (!AiBucket.hitMatchesWaterlog(action, hit, this.target, waterlog)) {
                      return this.running("Turning toward " + this.target.toShortString());
                   }
 
-                  if (action == AiBucket.Inner_DataUtil.EMPTY
+                  if (action == AiBucket.BucketAction.EMPTY
                      && fluid.equals("water")
                      && !waterlog
                      && AiBucket.isWaterloggable(mc.level.getBlockState(hit.getBlockPos()))) {
@@ -166,7 +166,7 @@ final class AiBucket {
                      return this.running("Writing the look before using the bucket");
                   }
 
-                  if (action == AiBucket.Inner_DataUtil.EMPTY && fluid.equals("lava")) {
+                  if (action == AiBucket.BucketAction.EMPTY && fluid.equals("lava")) {
                      mc.options.keyUp.setDown(false);
                      mc.options.keyDown.setDown(false);
                      mc.options.keyLeft.setDown(false);
@@ -221,7 +221,7 @@ final class AiBucket {
             }
 
             Vec3 aimPoint() {
-               if (action == AiBucket.Inner_DataUtil.FILL) {
+               if (action == AiBucket.BucketAction.FILL) {
                   if (!this.isSourceFluid(this.target)) {
                      return null;
                   }
@@ -373,11 +373,11 @@ final class AiBucket {
          : false;
    }
 
-   static boolean hitMatches(AiBucket.Inner_DataUtil action, BlockHitResult hit, BlockPos target) {
+   static boolean hitMatches(AiBucket.BucketAction action, BlockHitResult hit, BlockPos target) {
       return hitMatchesWaterlog(action, hit, target, false);
    }
 
-   static boolean hitMatchesWaterlog(AiBucket.Inner_DataUtil action, BlockHitResult hit, BlockPos target, boolean waterlog) {
+   static boolean hitMatchesWaterlog(AiBucket.BucketAction action, BlockHitResult hit, BlockPos target, boolean waterlog) {
       if (hit == null) {
          return false;
       }
@@ -417,7 +417,7 @@ final class AiBucket {
          for (Direction face : Direction.values()) {
             if (!water || !isWaterloggable(mc.level.getBlockState(target.relative(face.getOpposite())))) {
                BlockHitResult hit = autismclient.ai.engine.AiBlockInteraction.findFaceHit(mc, target.relative(face.getOpposite()), face);
-               if (hitMatches(AiBucket.Inner_DataUtil.EMPTY, hit, target)
+               if (hitMatches(AiBucket.BucketAction.EMPTY, hit, target)
                   && (
                      best == null || mc.player.getEyePosition().distanceToSqr(hit.getLocation()) < mc.player.getEyePosition().distanceToSqr(best.getLocation())
                   )) {
@@ -445,9 +445,9 @@ final class AiBucket {
       return null;
    }
 
-   private static AiBucket.Inner_DataUtil parseAction(String text) {
+   private static AiBucket.BucketAction parseAction(String text) {
       try {
-         return AiBucket.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
+         return AiBucket.BucketAction.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("action must be fill or empty");
       }
@@ -457,7 +457,7 @@ final class AiBucket {
       return BuiltInRegistries.ITEM.getKey(fluid.equals("lava") ? Items.LAVA_BUCKET : Items.WATER_BUCKET).toString();
    }
 
-   enum Inner_DataUtil {
+   enum BucketAction {
       FILL,
       EMPTY;
    }

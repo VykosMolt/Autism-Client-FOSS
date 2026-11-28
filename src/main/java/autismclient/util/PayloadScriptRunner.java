@@ -8,8 +8,8 @@ public final class PayloadScriptRunner {
    private PayloadScriptRunner() {
    }
 
-   public static PayloadScriptRunner.Inner_StreamUtil init(String javaSource, PayloadScriptRunner.Inner_DataUtil context) {
-      PayloadScriptRunner.Inner_DataUtil safeContext = context == null ? new PayloadScriptRunner.Inner_DataUtil("minecraft:empty", new byte[0], null) : context;
+   public static PayloadScriptRunner.ScriptOutput init(String javaSource, PayloadScriptRunner.ScriptContext context) {
+      PayloadScriptRunner.ScriptContext safeContext = context == null ? new PayloadScriptRunner.ScriptContext("minecraft:empty", new byte[0], null) : context;
       String trimmed = javaSource == null ? "" : javaSource.trim();
       if (!trimmed.isEmpty()) {
          AutismClientMessaging.sendPrefixed("§eNote: Java scripting is disabled. Sending raw payload bytes.");
@@ -18,12 +18,12 @@ public final class PayloadScriptRunner {
       return safeContext.init(safeContext.getChannel(), safeContext.getRawBytes());
    }
 
-   public static final class Inner_DataUtil {
+   public static final class ScriptContext {
       private final String channel;
       private final byte[] rawBytes;
       private final Integer commandApiValue;
 
-      public Inner_DataUtil(String channel, byte[] rawBytes, Integer commandApiValue) {
+      public ScriptContext(String channel, byte[] rawBytes, Integer commandApiValue) {
          this.channel = channel == null ? "minecraft:empty" : channel;
          this.rawBytes = rawBytes == null ? new byte[0] : (byte[])rawBytes.clone();
          this.commandApiValue = commandApiValue;
@@ -74,13 +74,13 @@ public final class PayloadScriptRunner {
          return AutismPayloadSupport.withLeadingBigEndianInt(this.rawBytes, value);
       }
 
-      public PayloadScriptRunner.Inner_StreamUtil init(String nextChannel, byte[] bytes) {
-         return new PayloadScriptRunner.Inner_StreamUtil(nextChannel != null && !nextChannel.isBlank() ? nextChannel : this.channel, bytes);
+      public PayloadScriptRunner.ScriptOutput init(String nextChannel, byte[] bytes) {
+         return new PayloadScriptRunner.ScriptOutput(nextChannel != null && !nextChannel.isBlank() ? nextChannel : this.channel, bytes);
       }
    }
 
-   public record Inner_StreamUtil(String channel, byte[] bytes) {
-      public Inner_StreamUtil {
+   public record ScriptOutput(String channel, byte[] bytes) {
+      public ScriptOutput {
          bytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
       }
 

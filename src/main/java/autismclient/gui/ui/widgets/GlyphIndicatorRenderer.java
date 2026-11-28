@@ -12,7 +12,7 @@ public final class GlyphIndicatorRenderer {
       }
    }
 
-   public static void init(GuiGraphicsExtractor context, int x, int y, int size, GlyphIndicatorRenderer.Inner_DataUtil direction, int color, int shadowColor, float alpha) {
+   public static void init(GuiGraphicsExtractor context, int x, int y, int size, GlyphIndicatorRenderer.GlyphDirection direction, int color, int shadowColor, float alpha) {
       if (!(alpha <= 0.001F)) {
          int resolved = autismclient.gui.f.PacketUtil.init(color, alpha);
          autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, size, size);
@@ -42,7 +42,7 @@ public final class GlyphIndicatorRenderer {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum GlyphDirection {
       RIGHT,
       DOWN,
       UP;

@@ -87,7 +87,7 @@ final class AiSurvival {
 
       AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
       Entity threat = nearestThreat(mc);
-      if (threat != null && AiThreats.classify(threat) == AiThreats.Inner_DataUtil.AVOID) {
+      if (threat != null && AiThreats.classify(threat) == AiThreats.ThreatKind.AVOID) {
          return load(AiJson.objectOf("radius", 12, "distance", 12, "timeoutSeconds", 15));
       }
 

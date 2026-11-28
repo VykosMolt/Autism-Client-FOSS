@@ -7,10 +7,10 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 
 final class AiPlacementSearch {
-   private final List<AiPlacementSearch.Inner_DataUtil> init_List;
-   private final AiPlacementSearch.Inner_ConfigStore init_aQ_ConfigStore;
+   private final List<AiPlacementSearch.PlacementCandidate> init_List;
+   private final AiPlacementSearch.WorldProbe init_aQ_ConfigStore;
    private final boolean init_Z;
-   private final Map<List<AiBuilder.CellSpec>, AiPlacementSearch.Inner_BufferHelper> init_Map = new IdentityHashMap<>();
+   private final Map<List<AiBuilder.CellSpec>, AiPlacementSearch.CellTemplate> init_Map = new IdentityHashMap<>();
    private int init_I;
    private int load_I;
    private int read;
@@ -23,11 +23,11 @@ final class AiPlacementSearch {
    private int poll;
    private int push;
    private Map<Long, AiBuilder.CellSpec> load_Map;
-   private AiPlacementSearch.Inner_CachePool init_aQ_CachePool;
+   private AiPlacementSearch.CandidateScore init_aQ_CachePool;
    private boolean load_Z;
    private long init_J;
 
-   AiPlacementSearch(List<AiPlacementSearch.Inner_DataUtil> candidates, AiPlacementSearch.Inner_ConfigStore world, boolean clearTerrain) {
+   AiPlacementSearch(List<AiPlacementSearch.PlacementCandidate> candidates, AiPlacementSearch.WorldProbe world, boolean clearTerrain) {
       this.init_List = List.copyOf(candidates);
       this.init_aQ_ConfigStore = world;
       this.init_Z = clearTerrain;
@@ -41,8 +41,8 @@ final class AiPlacementSearch {
                break;
             }
 
-            AiPlacementSearch.Inner_DataUtil c = this.init_List.get(this.init_I);
-            AiPlacementSearch.Inner_BufferHelper template = this.init_Map.get(c.cells());
+            AiPlacementSearch.PlacementCandidate c = this.init_List.get(this.init_I);
+            AiPlacementSearch.CellTemplate template = this.init_Map.get(c.cells());
             if (template == null) {
                Map<Long, AiBuilder.CellSpec> map = new HashMap<>();
                int w = 0;
@@ -56,7 +56,7 @@ final class AiPlacementSearch {
                   d = Math.max(d, cell.dz() + 1);
                }
 
-               template = new AiPlacementSearch.Inner_BufferHelper(map, w, h, d);
+               template = new AiPlacementSearch.CellTemplate(map, w, h, d);
                this.init_Map.put(c.cells(), template);
             }
 
@@ -71,20 +71,20 @@ final class AiPlacementSearch {
             }
          }
 
-         AiPlacementSearch.Inner_DataUtil candidate = this.init_List.get(this.init_I);
+         AiPlacementSearch.PlacementCandidate candidate = this.init_List.get(this.init_I);
          AiBuilder.CellSpec cell = this.load_Map.get(init(this.load_I, this.read, this.write));
          BlockPos pos = candidate.origin().offset(this.load_I, this.read, this.write);
-         AiPlacementSearch.Inner_StreamUtil edit = this.init_aQ_ConfigStore.classify(pos, cell);
+         AiPlacementSearch.CellEdit edit = this.init_aQ_ConfigStore.classify(pos, cell);
          this.init_J++;
-         if (edit == AiPlacementSearch.Inner_StreamUtil.UNSAFE) {
+         if (edit == AiPlacementSearch.CellEdit.UNSAFE) {
             this.init_V();
          } else {
             if (cell != null) {
-               if (edit == AiPlacementSearch.Inner_StreamUtil.MATCH) {
+               if (edit == AiPlacementSearch.CellEdit.MATCH) {
                   this.push++;
                } else {
                   this.close++;
-                  if (edit == AiPlacementSearch.Inner_StreamUtil.BREAK) {
+                  if (edit == AiPlacementSearch.CellEdit.BREAK) {
                      this.open++;
                   }
 
@@ -92,7 +92,7 @@ final class AiPlacementSearch {
                      this.poll++;
                   }
                }
-            } else if (this.init_Z && edit == AiPlacementSearch.Inner_StreamUtil.BREAK) {
+            } else if (this.init_Z && edit == AiPlacementSearch.CellEdit.BREAK) {
                this.open++;
             }
 
@@ -108,7 +108,7 @@ final class AiPlacementSearch {
                }
 
                if (this.read == this.sync) {
-                  AiPlacementSearch.Inner_CachePool score = new AiPlacementSearch.Inner_CachePool(candidate, this.close, this.open, this.poll, this.push);
+                  AiPlacementSearch.CandidateScore score = new AiPlacementSearch.CandidateScore(candidate, this.close, this.open, this.poll, this.push);
                   if (this.init_aQ_CachePool == null || score.compareTo(this.init_aQ_CachePool) < 0) {
                      this.init_aQ_CachePool = score;
                   }
@@ -129,7 +129,7 @@ final class AiPlacementSearch {
       return (x & 65535L) << 32 | (y & 65535L) << 16 | z & 65535L;
    }
 
-   AiPlacementSearch.Inner_CachePool getResult() {
+   AiPlacementSearch.CandidateScore getResult() {
       return this.init_aQ_CachePool;
    }
 
@@ -149,30 +149,30 @@ final class AiPlacementSearch {
       return this.init_J;
    }
 
-   private record Inner_BufferHelper(Map<Long, AiBuilder.CellSpec> cells, int width, int height, int depth) {
+   private record CellTemplate(Map<Long, AiBuilder.CellSpec> cells, int width, int height, int depth) {
    }
 
-   record Inner_CachePool(AiPlacementSearch.Inner_DataUtil candidate, int place, int remove, int support, int matched) implements Comparable<AiPlacementSearch.Inner_CachePool> {
+   record CandidateScore(AiPlacementSearch.PlacementCandidate candidate, int place, int remove, int support, int matched) implements Comparable<AiPlacementSearch.CandidateScore> {
       long work() {
          return this.place + 3L * this.remove + 2L * this.support;
       }
 
-      public int compareTo(AiPlacementSearch.Inner_CachePool other) {
+      public int compareTo(AiPlacementSearch.CandidateScore other) {
          int cost = Long.compare(this.work(), other.work());
          return cost != 0 ? cost : Double.compare(this.candidate.distance(), other.candidate.distance());
       }
    }
 
-   interface Inner_ConfigStore {
-      AiPlacementSearch.Inner_StreamUtil classify(BlockPos var1, AiBuilder.CellSpec var2);
+   interface WorldProbe {
+      AiPlacementSearch.CellEdit classify(BlockPos var1, AiBuilder.CellSpec var2);
 
       boolean init_Z(BlockPos var1, AiBuilder.CellSpec var2);
    }
 
-   record Inner_DataUtil(BlockPos origin, int rotation, List<AiBuilder.CellSpec> cells, double distance) {
+   record PlacementCandidate(BlockPos origin, int rotation, List<AiBuilder.CellSpec> cells, double distance) {
    }
 
-   enum Inner_StreamUtil {
+   enum CellEdit {
       MATCH,
       PLACE,
       BREAK,

@@ -4,10 +4,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class FlowAction implements MacroAction {
-   public FlowAction.Inner_StreamUtil target = FlowAction.Inner_StreamUtil.LABEL;
+   public FlowAction.FlowTarget target = FlowAction.FlowTarget.LABEL;
    public int amount = 1;
    public String labelName = "";
-   public FlowAction.Inner_DataUtil onMissingLabel = FlowAction.Inner_DataUtil.CONTINUE;
+   public FlowAction.MissingLabelPolicy onMissingLabel = FlowAction.MissingLabelPolicy.CONTINUE;
    public boolean conditional = false;
    public MacroCondition condition = MacroCondition.createDefault();
    private boolean init = true;
@@ -43,10 +43,10 @@ public class FlowAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.target = MacroNbtCodecHelper.parseEnum(FlowAction.Inner_StreamUtil.class, tag.getStringOr("target", "LABEL"), FlowAction.Inner_StreamUtil.LABEL);
+      this.target = MacroNbtCodecHelper.parseEnum(FlowAction.FlowTarget.class, tag.getStringOr("target", "LABEL"), FlowAction.FlowTarget.LABEL);
       this.amount = Math.max(0, tag.getIntOr("amount", 1));
       this.labelName = tag.getStringOr("labelName", "");
-      this.onMissingLabel = MacroNbtCodecHelper.parseEnum(FlowAction.Inner_DataUtil.class, tag.getStringOr("onMissingLabel", "CONTINUE"), FlowAction.Inner_DataUtil.CONTINUE);
+      this.onMissingLabel = MacroNbtCodecHelper.parseEnum(FlowAction.MissingLabelPolicy.class, tag.getStringOr("onMissingLabel", "CONTINUE"), FlowAction.MissingLabelPolicy.CONTINUE);
       this.conditional = tag.getBooleanOr("conditional", false);
       this.condition = MacroCondition.init(tag, "condition", "cond_");
       if (tag.contains("enabled")) {
@@ -102,12 +102,12 @@ public class FlowAction implements MacroAction {
       this.init = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum MissingLabelPolicy {
       CONTINUE,
       STOP;
    }
 
-   public enum Inner_StreamUtil {
+   public enum FlowTarget {
       FORWARD,
       BACK,
       STEP,

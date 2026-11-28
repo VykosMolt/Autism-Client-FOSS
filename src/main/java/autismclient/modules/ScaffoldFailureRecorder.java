@@ -13,19 +13,19 @@ import net.minecraft.world.phys.Vec3;
 
 final class ScaffoldFailureRecorder {
    static final int init_I = 192;
-   private final ArrayDeque<ScaffoldFailureRecorder.Inner_StreamUtil> init_ArrayDeque = new ArrayDeque<>();
+   private final ArrayDeque<ScaffoldFailureRecorder.PlacementFact> init_ArrayDeque = new ArrayDeque<>();
    private final Map<BlockPos, Integer> init_Map = new HashMap<>();
    private long init_J = -9223372036854775808L;
    private boolean init_Z;
 
-   synchronized void init(ScaffoldFailureRecorder.Inner_StreamUtil fact) {
+   synchronized void init(ScaffoldFailureRecorder.PlacementFact fact) {
       this.init_ArrayDeque.addLast(fact);
       if ("use".equals(fact.init_Str()) && fact.init_BlockPos() != null) {
          this.init_Map.merge(fact.init_BlockPos(), 1, Integer::sum);
       }
 
       while (this.init_ArrayDeque.size() > 192) {
-         ScaffoldFailureRecorder.Inner_StreamUtil removed = this.init_ArrayDeque.removeFirst();
+         ScaffoldFailureRecorder.PlacementFact removed = this.init_ArrayDeque.removeFirst();
          if ("use".equals(removed.init_Str()) && removed.init_BlockPos() != null) {
             this.init_Map.computeIfPresent(removed.init_BlockPos(), (cell, count) -> count <= 1 ? null : count - 1);
          }
@@ -36,9 +36,9 @@ final class ScaffoldFailureRecorder {
       return cell != null && this.init_Map.containsKey(cell);
    }
 
-   synchronized ScaffoldFailureRecorder.Inner_DataUtil init(String reason, BlockPos cell, int sequence, int tick, long now) {
+   synchronized ScaffoldFailureRecorder.FailureCapture init(String reason, BlockPos cell, int sequence, int tick, long now) {
       if (this.init(cell) && (!this.init_Z || now - this.init_J >= 4000000000L)) {
-         ScaffoldFailureRecorder.Inner_DataUtil capture = new ScaffoldFailureRecorder.Inner_DataUtil(!this.init_Z, reason, cell.immutable(), sequence, tick, List.copyOf(this.init_ArrayDeque));
+         ScaffoldFailureRecorder.FailureCapture capture = new ScaffoldFailureRecorder.FailureCapture(!this.init_Z, reason, cell.immutable(), sequence, tick, List.copyOf(this.init_ArrayDeque));
          this.init_Z = true;
          this.init_J = now;
          return capture;
@@ -54,7 +54,7 @@ final class ScaffoldFailureRecorder {
       this.init_Z = false;
    }
 
-   record Inner_DataUtil(boolean init_Z, String init_Str, BlockPos init_BlockPos, int init_I, int load, List<ScaffoldFailureRecorder.Inner_StreamUtil> init_List) {
+   record FailureCapture(boolean init_Z, String init_Str, BlockPos init_BlockPos, int init_I, int load, List<ScaffoldFailureRecorder.PlacementFact> init_List) {
       String toJson() {
          return new GsonBuilder().setPrettyPrinting().create().toJson(this);
       }
@@ -68,7 +68,7 @@ final class ScaffoldFailureRecorder {
       }
    }
 
-   record Inner_StreamUtil(
+   record PlacementFact(
       String init_Str,
       int init_I,
       int load_I,
@@ -82,7 +82,7 @@ final class ScaffoldFailureRecorder {
       Input init_Input,
       String load_Str
    ) {
-      Inner_StreamUtil {
+      PlacementFact {
          init_BlockPos = init_BlockPos == null ? null : init_BlockPos.immutable();
          load_BlockPos = load_BlockPos == null ? null : load_BlockPos.immutable();
       }

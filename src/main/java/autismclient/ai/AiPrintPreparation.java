@@ -42,7 +42,7 @@ final class AiPrintPreparation implements AiOperation {
    static final int load_I = 4096;
    static final long init_J = 2000000L;
    private final Minecraft client = Minecraft.getInstance();
-   private final AiPrintPreparation.Inner_TaskQueue worldGuard = new AiPrintPreparation.Inner_TaskQueue(this.client.level, this.client.player);
+   private final AiPrintPreparation.WorldGuard worldGuard = new AiPrintPreparation.WorldGuard(this.client.level, this.client.player);
    private final Provider registries = this.client.level.registryAccess();
    private final BlockPos startPos = this.client.player.blockPosition().immutable();
    private final Path schematicPath;
@@ -52,14 +52,14 @@ final class AiPrintPreparation implements AiOperation {
    private final boolean verify;
    private final long deadlineNanos;
    private final long startedNanos = System.nanoTime();
-   private final AiPrintPreparation.Inner_SyncManager worker = new AiPrintPreparation.Inner_SyncManager();
+   private final AiPrintPreparation.PreparationWorker worker = new AiPrintPreparation.PreparationWorker();
    private Future<?> pendingTask;
-   private AiPrintPreparation.Inner_BufferHelper phase = AiPrintPreparation.Inner_BufferHelper.DECODE;
-   private AiPrintPreparation.Inner_DataUtil decoded;
-   private AiPrintPreparation.Inner_ConfigStore normalized;
-   private AiPrintPreparation.Inner_StreamUtil leafScan;
-   private AiPrintPreparation.Inner_CachePool materialPlan;
-   private AiPrintPreparation.Inner_NetHelper worldScan;
+   private AiPrintPreparation.PreparationPhase phase = AiPrintPreparation.PreparationPhase.DECODE;
+   private AiPrintPreparation.DecodedSchematic decoded;
+   private AiPrintPreparation.NormalizedSchematic normalized;
+   private AiPrintPreparation.LeafSnapshotScan leafScan;
+   private AiPrintPreparation.MaterialPlan materialPlan;
+   private AiPrintPreparation.StockScan worldScan;
    private JsonObject missingMaterials;
    private boolean materialsChecked;
    private boolean cancelled;
@@ -89,9 +89,9 @@ final class AiPrintPreparation implements AiOperation {
       }
    }
 
-   private AiPrintPreparation.Inner_DataUtil decodeSchematic() throws IOException {
-      AiPrintPreparation.Inner_StateCache stamp = AiPrintPreparation.Inner_StateCache.read(this.schematicPath);
-      AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(
+   private AiPrintPreparation.DecodedSchematic decodeSchematic() throws IOException {
+      AiPrintPreparation.FileStamp stamp = AiPrintPreparation.FileStamp.read(this.schematicPath);
+      AiSchematic.LoadedSchematic loaded = AiSchematic.load(
          this.schematicPath, this.origin, this.options.rotation(), this.options.mirror(), this.skipUnknown, 2097152
       );
       AiBuilder.checkNotCancelled();
@@ -104,10 +104,10 @@ final class AiPrintPreparation implements AiOperation {
       LinkedHashSet<BlockPos> neighbors = new LinkedHashSet<>(AiBuilder.collectLeafNeighborPositions(blueprint));
       neighbors.addAll(AiSchematicReadiness.read(blueprint));
       neighbors.addAll(AiSchematicReadiness.load(blueprint));
-      if (!stamp.equals(AiPrintPreparation.Inner_StateCache.read(this.schematicPath))) {
+      if (!stamp.equals(AiPrintPreparation.FileStamp.read(this.schematicPath))) {
          throw new IOException("Schematic changed while it was being read; start the build again");
       } else {
-         return new AiPrintPreparation.Inner_DataUtil(
+         return new AiPrintPreparation.DecodedSchematic(
             blueprint,
             this.options.withSignText(loaded.signText()).withMachine(AiSchematicMachinePlan.fromSchematic(loaded, blueprint)),
             List.copyOf(neighbors),
@@ -116,24 +116,24 @@ final class AiPrintPreparation implements AiOperation {
       }
    }
 
-   private AiPrintPreparation.Inner_ConfigStore init(AiPrintPreparation.Inner_DataUtil input, Map<Long, BlockState> snapshot) throws IOException {
+   private AiPrintPreparation.NormalizedSchematic init(AiPrintPreparation.DecodedSchematic input, Map<Long, BlockState> snapshot) throws IOException {
       AiBuilder.Blueprint blueprint = AiBuilder.normalizeSchematicBlueprint(input.blueprint(), snapshot);
       requireBuildableCells(blueprint);
       AiBuilder.checkNotCancelled();
-      AiSchematicReadiness.Inner_DataUtil buildable = AiSchematicReadiness.assessBuildable(blueprint, 16, snapshot);
+      AiSchematicReadiness.BuildableAssessment buildable = AiSchematicReadiness.assessBuildable(blueprint, 16, snapshot);
       blueprint = buildable.blueprint();
       AiBuilder.checkNotCancelled();
       List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(blueprint));
-      autismclient.ai.print.PrintCore.ao geometry = autismclient.ai.print.PrintCore.prepareGeometry(targets, AiBuilder::checkNotCancelled);
+      autismclient.ai.print.PrintCore.PreparedGeometry geometry = autismclient.ai.print.PrintCore.prepareGeometry(targets, AiBuilder::checkNotCancelled);
       AiBuilder.checkNotCancelled();
       AiBuilder.Blueprint construction = AiBuilder.stripPoweredLevers(blueprint);
-      AiPrintPreparation.Inner_JsonUtil source = AiPrintPreparation.Inner_JsonUtil.of(blueprint);
-      if (!input.stamp().equals(AiPrintPreparation.Inner_StateCache.read(this.schematicPath))) {
+      AiPrintPreparation.SourceIndex source = AiPrintPreparation.SourceIndex.of(blueprint);
+      if (!input.stamp().equals(AiPrintPreparation.FileStamp.read(this.schematicPath))) {
          throw new IOException("Schematic changed during preparation; start the build again");
       }
 
       AiBuilder.BuildOptions power = input.power().withMachine(input.power().machine().init(blueprint));
-      return new AiPrintPreparation.Inner_ConfigStore(
+      return new AiPrintPreparation.NormalizedSchematic(
          blueprint,
          construction,
          power,
@@ -223,13 +223,13 @@ final class AiPrintPreparation implements AiOperation {
                         return this.runningResult("Reading schematic");
                      }
 
-                     this.decoded = (AiPrintPreparation.Inner_DataUtil)this.pendingTask.get();
+                     this.decoded = (AiPrintPreparation.DecodedSchematic)this.pendingTask.get();
                      this.pendingTask = null;
                      this.progressSteps++;
                      this.cellCount = this.decoded.blueprint().cells().size();
                      this.update = this.progressSteps + this.decoded.leafNeighbors().size() + this.cellCount + 2L;
-                     this.leafScan = new AiPrintPreparation.Inner_StreamUtil(this.decoded.leafNeighbors());
-                     this.phase = AiPrintPreparation.Inner_BufferHelper.LEAVES;
+                     this.leafScan = new AiPrintPreparation.LeafSnapshotScan(this.decoded.leafNeighbors());
+                     this.phase = AiPrintPreparation.PreparationPhase.LEAVES;
                      break;
                   case LEAVES:
                      int before = this.leafScan.nextIndex;
@@ -242,9 +242,9 @@ final class AiPrintPreparation implements AiOperation {
                      this.progressSteps = this.progressSteps + (this.leafScan.nextIndex - before);
                      if (this.leafScan.isComplete()) {
                         Map<Long, BlockState> snapshot = this.leafScan.snapshot();
-                        AiPrintPreparation.Inner_DataUtil input = this.decoded;
+                        AiPrintPreparation.DecodedSchematic input = this.decoded;
                         this.pendingTask = this.worker.init(() -> this.init(input, snapshot));
-                        this.phase = AiPrintPreparation.Inner_BufferHelper.NORMALIZE;
+                        this.phase = AiPrintPreparation.PreparationPhase.NORMALIZE;
                      }
                      break;
                   case NORMALIZE:
@@ -252,14 +252,14 @@ final class AiPrintPreparation implements AiOperation {
                         return this.runningResult("Preparing schematic rules and targets");
                      }
 
-                     this.normalized = (AiPrintPreparation.Inner_ConfigStore)this.pendingTask.get();
+                     this.normalized = (AiPrintPreparation.NormalizedSchematic)this.pendingTask.get();
                      this.pendingTask = null;
                      this.progressSteps++;
                      this.cellCount = this.normalized.blueprint().cells().size();
                      this.worker.close();
                      this.skippedCells = this.normalized.skipped();
 
-                     for (AiSchematicReadiness.Inner_StreamUtil issue : this.normalized.audit().issues()) {
+                     for (AiSchematicReadiness.ReadinessIssue issue : this.normalized.audit().issues()) {
                         AiBuilder.CellSpec cell = issue.cell();
                         this.preflightIssues
                            .add(
@@ -285,12 +285,12 @@ final class AiPrintPreparation implements AiOperation {
                         return this.init(AiOperation.Status.FAILED, "No cells in the selected schematic can be placed at this site", AiFailure.PLACEMENT_IMPOSSIBLE);
                      }
 
-                     this.materialPlan = new AiPrintPreparation.Inner_CachePool(this.normalized.stockPlan(), this.normalized.source().keys());
-                     this.phase = this.isCreativeInstabuild() ? AiPrintPreparation.Inner_BufferHelper.HANDOFF : AiPrintPreparation.Inner_BufferHelper.MATERIALS;
+                     this.materialPlan = new AiPrintPreparation.MaterialPlan(this.normalized.stockPlan(), this.normalized.source().keys());
+                     this.phase = this.isCreativeInstabuild() ? AiPrintPreparation.PreparationPhase.HANDOFF : AiPrintPreparation.PreparationPhase.MATERIALS;
                      break;
                   case MATERIALS:
                      if (this.isCreativeInstabuild()) {
-                        this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                        this.phase = AiPrintPreparation.PreparationPhase.HANDOFF;
                      } else {
                         int beforeWrite = this.materialPlan.nextCell;
                         this.materialPlan.init(4096, System.nanoTime() + 2000000L, this.client.level);
@@ -299,44 +299,44 @@ final class AiPrintPreparation implements AiOperation {
                            this.missingMaterials = this.computeMissingMaterials();
                            this.materialsChecked = true;
                            if (this.missingMaterials.isEmpty()) {
-                              this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                              this.phase = AiPrintPreparation.PreparationPhase.HANDOFF;
                            } else {
                               if (!this.normalized.power().shulkerStock()) {
                                  return this.load();
                               }
 
-                              this.worldScan = new AiPrintPreparation.Inner_NetHelper(
+                              this.worldScan = new AiPrintPreparation.StockScan(
                                  this.startPos, this.normalized.blueprint().origin(), this.normalized.source()
                               );
                               this.update = Math.max(this.update, this.progressSteps + this.worldScan.totalVolume() + 1L);
-                              this.phase = AiPrintPreparation.Inner_BufferHelper.STOCK;
+                              this.phase = AiPrintPreparation.PreparationPhase.STOCK;
                            }
                         }
                      }
                      break;
                   case STOCK:
                      if (this.isCreativeInstabuild()) {
-                        this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                        this.phase = AiPrintPreparation.PreparationPhase.HANDOFF;
                      } else {
                         long beforeUpdate = this.worldScan.scannedBlocks;
                         this.worldScan
                            .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.client.level, pos), this.client.level::getBlockState);
                         this.progressSteps = this.progressSteps + (this.worldScan.scannedBlocks - beforeUpdate);
                         if (this.worldScan.done) {
-                           this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                           this.phase = AiPrintPreparation.PreparationPhase.HANDOFF;
                         } else if (this.worldScan.isDone()) {
                            this.missingMaterials = this.computeMissingMaterials();
                            if (!this.missingMaterials.isEmpty()) {
                               return this.load();
                            }
 
-                           this.phase = AiPrintPreparation.Inner_BufferHelper.HANDOFF;
+                           this.phase = AiPrintPreparation.PreparationPhase.HANDOFF;
                         }
                      }
                      break;
                   case HANDOFF:
                      if (!this.isCreativeInstabuild() && !this.materialsChecked) {
-                        this.phase = AiPrintPreparation.Inner_BufferHelper.MATERIALS;
+                        this.phase = AiPrintPreparation.PreparationPhase.MATERIALS;
                      } else {
                         if (this.isCreativeInstabuild() || this.worldScan != null && this.worldScan.done) {
                            break label216;
@@ -351,11 +351,11 @@ final class AiPrintPreparation implements AiOperation {
                            return this.load();
                         }
 
-                        this.worldScan = new AiPrintPreparation.Inner_NetHelper(
+                        this.worldScan = new AiPrintPreparation.StockScan(
                            this.startPos, this.normalized.blueprint().origin(), this.normalized.source()
                         );
                         this.update = Math.max(this.update, this.progressSteps + this.worldScan.totalVolume() + 1L);
-                        this.phase = AiPrintPreparation.Inner_BufferHelper.STOCK;
+                        this.phase = AiPrintPreparation.PreparationPhase.STOCK;
                      }
                }
 
@@ -529,7 +529,7 @@ final class AiPrintPreparation implements AiOperation {
       return this.printOperation != null && this.printOperation.requiresReconciliationAfterEmergency();
    }
 
-   private enum Inner_BufferHelper {
+   private enum PreparationPhase {
       DECODE,
       LEAVES,
       NORMALIZE,
@@ -538,14 +538,14 @@ final class AiPrintPreparation implements AiOperation {
       HANDOFF;
    }
 
-   static final class Inner_CachePool {
+   static final class MaterialPlan {
       final AiBuilder.Blueprint blueprint;
       final Set<Long> sourceKeys;
       final Set<BlockPos> load = new HashSet<>();
-      private final Map<AiPrintPreparation.Inner_CachePool.Inner_DataUtil, AiCellMaterials.Inner_CachePool> requirementsByKey = new LinkedHashMap<>();
+      private final Map<AiPrintPreparation.MaterialPlan.RequirementKey, AiCellMaterials.MaterialRequirement> requirementsByKey = new LinkedHashMap<>();
       int nextCell;
 
-      Inner_CachePool(AiBuilder.Blueprint blueprint, Set<Long> source) {
+      MaterialPlan(AiBuilder.Blueprint blueprint, Set<Long> source) {
          this.blueprint = blueprint;
          this.sourceKeys = source;
       }
@@ -564,14 +564,14 @@ final class AiPrintPreparation implements AiOperation {
                BlockPos at = this.blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                BlockState live = world.getBlockState(at);
                if (!AiBuilder.matchesSchematicCell(cell, live)) {
-                  for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.init(cell, live, world.getFluidState(at.above()).is(FluidTags.WATER))) {
+                  for (AiCellMaterials.MaterialRequirement requirement : AiCellMaterials.init(cell, live, world.getFluidState(at.above()).is(FluidTags.WATER))) {
                      this.init(requirement);
                   }
 
                   BlockPos foundation = AiSchematicActions.foundationFor(cell, at, world, this.sourceKeys);
                   if (foundation != null && this.load.add(foundation)) {
                      this.init(
-                        new AiCellMaterials.Inner_CachePool(AiCellMaterials.Inner_DataUtil.PLACE, "minecraft:dirt", Items.DIRT, 1, AiCellMaterials.Inner_BufferHelper.CONSUME)
+                        new AiCellMaterials.MaterialRequirement(AiCellMaterials.CellAction.PLACE, "minecraft:dirt", Items.DIRT, 1, AiCellMaterials.MaterialUse.CONSUME)
                      );
                   }
                }
@@ -579,16 +579,16 @@ final class AiPrintPreparation implements AiOperation {
          }
       }
 
-      private void init(AiCellMaterials.Inner_CachePool requirement) {
-         AiPrintPreparation.Inner_CachePool.Inner_DataUtil key = new AiPrintPreparation.Inner_CachePool.Inner_DataUtil(requirement.itemSpec(), requirement.use());
-         AiCellMaterials.Inner_CachePool previous = this.requirementsByKey.get(key);
+      private void init(AiCellMaterials.MaterialRequirement requirement) {
+         AiPrintPreparation.MaterialPlan.RequirementKey key = new AiPrintPreparation.MaterialPlan.RequirementKey(requirement.itemSpec(), requirement.use());
+         AiCellMaterials.MaterialRequirement previous = this.requirementsByKey.get(key);
          if (previous == null) {
             this.requirementsByKey.put(key, requirement);
-         } else if (requirement.use() == AiCellMaterials.Inner_BufferHelper.CONSUME) {
+         } else if (requirement.use() == AiCellMaterials.MaterialUse.CONSUME) {
             this.requirementsByKey
                .put(
                   key,
-                  new AiCellMaterials.Inner_CachePool(
+                  new AiCellMaterials.MaterialRequirement(
                      previous.action(), previous.itemSpec(), previous.item(), Math.addExact(previous.count(), requirement.count()), previous.use()
                   )
                );
@@ -599,32 +599,32 @@ final class AiPrintPreparation implements AiOperation {
          return this.nextCell == this.blueprint.cells().size();
       }
 
-      List<AiCellMaterials.Inner_CachePool> requirements() {
+      List<AiCellMaterials.MaterialRequirement> requirements() {
          return List.copyOf(this.requirementsByKey.values());
       }
 
-      private record Inner_DataUtil(String spec, AiCellMaterials.Inner_BufferHelper use) {
+      private record RequirementKey(String spec, AiCellMaterials.MaterialUse use) {
       }
    }
 
-   record Inner_ConfigStore(
+   record NormalizedSchematic(
       AiBuilder.Blueprint blueprint,
       AiBuilder.Blueprint stockPlan,
       AiBuilder.BuildOptions power,
-      AiSchematicReadiness.Inner_TaskQueue audit,
+      AiSchematicReadiness.ReadinessReport audit,
       int skipped,
       List<autismclient.ai.print.PrintTarget> targets,
-      AiPrintPreparation.Inner_JsonUtil source,
+      AiPrintPreparation.SourceIndex source,
       AiSchematicMachinePlan.MachineSpec nativeActions,
-      autismclient.ai.print.PrintCore.ao geometry
+      autismclient.ai.print.PrintCore.PreparedGeometry geometry
    ) {
    }
 
-   record Inner_DataUtil(AiBuilder.Blueprint blueprint, AiBuilder.BuildOptions power, List<BlockPos> leafNeighbors, AiPrintPreparation.Inner_StateCache stamp) {
+   record DecodedSchematic(AiBuilder.Blueprint blueprint, AiBuilder.BuildOptions power, List<BlockPos> leafNeighbors, AiPrintPreparation.FileStamp stamp) {
    }
 
-   record Inner_JsonUtil(Set<Long> keys, int minX, int maxX, int minZ, int maxZ) {
-      static AiPrintPreparation.Inner_JsonUtil of(AiBuilder.Blueprint blueprint) {
+   record SourceIndex(Set<Long> keys, int minX, int maxX, int minZ, int maxZ) {
+      static AiPrintPreparation.SourceIndex of(AiBuilder.Blueprint blueprint) {
          HashSet<Long> keys = new HashSet<>();
          int minX = 2147483647;
          int maxX = -2147483648;
@@ -641,12 +641,12 @@ final class AiPrintPreparation implements AiOperation {
             maxZ = Math.max(maxZ, at.getZ());
          }
 
-         return new AiPrintPreparation.Inner_JsonUtil(Collections.unmodifiableSet(keys), minX, maxX, minZ, maxZ);
+         return new AiPrintPreparation.SourceIndex(Collections.unmodifiableSet(keys), minX, maxX, minZ, maxZ);
       }
    }
 
-   static final class Inner_NetHelper {
-      private final List<AiPrintPreparation.Inner_NetHelper.Inner_DataUtil> regions = new ArrayList<>(2);
+   static final class StockScan {
+      private final List<AiPrintPreparation.StockScan.ScanRegion> regions = new ArrayList<>(2);
       private final Set<Long> sourceKeys;
       int regionIndex;
       int load;
@@ -656,13 +656,13 @@ final class AiPrintPreparation implements AiOperation {
       boolean done;
       BlockPos stockPos;
 
-      Inner_NetHelper(BlockPos player, BlockPos origin, AiPrintPreparation.Inner_JsonUtil index) {
+      StockScan(BlockPos player, BlockPos origin, AiPrintPreparation.SourceIndex index) {
          this.sourceKeys = index.keys();
-         this.regions.add(new AiPrintPreparation.Inner_NetHelper.Inner_DataUtil(player.offset(-24, -8, -24), player.offset(24, 8, 24)));
+         this.regions.add(new AiPrintPreparation.StockScan.ScanRegion(player.offset(-24, -8, -24), player.offset(24, 8, 24)));
          if (index.minX() <= index.maxX()) {
             this.regions
                .add(
-                  new AiPrintPreparation.Inner_NetHelper.Inner_DataUtil(
+                  new AiPrintPreparation.StockScan.ScanRegion(
                      new BlockPos(index.minX() - 24, origin.getY() - 8, index.minZ() - 24),
                      new BlockPos(index.maxX() + 24, origin.getY() + 8, index.maxZ() + 24)
                   )
@@ -718,7 +718,7 @@ final class AiPrintPreparation implements AiOperation {
       long totalVolume() {
          long total = 0L;
 
-         for (AiPrintPreparation.Inner_NetHelper.Inner_DataUtil region : this.regions) {
+         for (AiPrintPreparation.StockScan.ScanRegion region : this.regions) {
             total += ((long)region.max().getX() - region.min().getX() + 1L)
                * ((long)region.max().getY() - region.min().getY() + 1L)
                * ((long)region.max().getZ() - region.min().getZ() + 1L);
@@ -731,23 +731,23 @@ final class AiPrintPreparation implements AiOperation {
          return this.done || this.regionIndex >= this.regions.size();
       }
 
-      private record Inner_DataUtil(BlockPos min, BlockPos max) {
+      private record ScanRegion(BlockPos min, BlockPos max) {
       }
    }
 
-   record Inner_StateCache(long size, FileTime modified, Object fileKey) {
-      static AiPrintPreparation.Inner_StateCache read(Path file) throws IOException {
+   record FileStamp(long size, FileTime modified, Object fileKey) {
+      static AiPrintPreparation.FileStamp read(Path file) throws IOException {
          BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
-         return new AiPrintPreparation.Inner_StateCache(attributes.size(), attributes.lastModifiedTime(), attributes.fileKey());
+         return new AiPrintPreparation.FileStamp(attributes.size(), attributes.lastModifiedTime(), attributes.fileKey());
       }
    }
 
-   static final class Inner_StreamUtil {
+   static final class LeafSnapshotScan {
       final List<BlockPos> positions;
       private final Map<Long, BlockState> statesByPos = new HashMap<>();
       int nextIndex;
 
-      Inner_StreamUtil(List<BlockPos> positions) {
+      LeafSnapshotScan(List<BlockPos> positions) {
          this.positions = positions;
       }
 
@@ -778,7 +778,7 @@ final class AiPrintPreparation implements AiOperation {
       }
    }
 
-   static final class Inner_SyncManager implements AutoCloseable {
+   static final class PreparationWorker implements AutoCloseable {
       private final ExecutorService executor = Executors.newSingleThreadExecutor(task -> {
          Thread thread = new Thread(task, "schematic-preparation");
          thread.setDaemon(true);
@@ -816,7 +816,7 @@ final class AiPrintPreparation implements AiOperation {
       }
    }
 
-   record Inner_TaskQueue(Object world, Object player) {
+   record WorldGuard(Object world, Object player) {
       boolean matches(Object currentWorld, Object currentPlayer) {
          return this.world != null && this.player != null && this.world == currentWorld && this.player == currentPlayer;
       }

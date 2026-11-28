@@ -540,7 +540,7 @@ public final class AiBlockMine {
             BlockPos travelCostFeet;
             int travelCostTick = -1;
             final Map<Long, Long> pendingDropDeadlines = new LinkedHashMap<>();
-            final AiBlockMine.Inner_CachePool dropAttribution = new AiBlockMine.Inner_CachePool();
+            final AiBlockMine.DropAttribution dropAttribution = new AiBlockMine.DropAttribution();
             final Set<Long> countedCells = new HashSet<>();
             final Map<Long, String> blockIdByCell = new HashMap<>();
             final Map<Long, Integer> failuresByCell = new HashMap<>();
@@ -579,8 +579,8 @@ public final class AiBlockMine {
             final Set<Long> stuckCells = new HashSet<>();
             final Set<Long> goalSet = new LinkedHashSet<>();
             AiGoto.GotoOp travel;
-            AiBlockMine.Inner_TaskQueue currentGatherGoal;
-            AiBlockMine.Inner_TaskQueue replannedDropGoal;
+            AiBlockMine.GatherGoal currentGatherGoal;
+            AiBlockMine.GatherGoal replannedDropGoal;
             BlockPos breaking;
             int descentDepth;
             BlockPos pillarDirt;
@@ -609,8 +609,8 @@ public final class AiBlockMine {
             long exploreSince;
             long settleSince;
             AiPathfinder.PathGoal travelGoal;
-            AiBlockMine.Inner_BufferHelper exploreGoal;
-            AiBlockMine.Inner_StreamUtil descent;
+            AiBlockMine.ExploreGoal exploreGoal;
+            AiBlockMine.DescentGoal descent;
             BlockPos descentTarget;
             final Map<String, Integer> descentFailures = new HashMap<>();
             final Set<Vec3> freshDropSpots = new HashSet<>();
@@ -624,7 +624,7 @@ public final class AiBlockMine {
             int progressBrokenSnapshot;
             int progressHeldSnapshot;
             long progressSince;
-            final AiBlockMine.Inner_ConfigStore pathProgress = new AiBlockMine.Inner_ConfigStore();
+            final AiBlockMine.PathProgress pathProgress = new AiBlockMine.PathProgress();
             int lowestWorkY = 2147483647;
             int scanRadius = radius;
             List<BlockPos> scanHits = new ArrayList<>();
@@ -987,14 +987,14 @@ public final class AiBlockMine {
                               AiMotionAudit.note("gather dig " + this.breaking.toShortString());
                            }
 
-                           AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(this.breaking);
-                           if (status == AiBlockDigger.Inner_DataUtil_2.init) {
+                           AiBlockDigger.DigOutcome status = this.init_RefQueue_DataUtil_(this.breaking);
+                           if (status == AiBlockDigger.DigOutcome.init) {
                               return this.running("Breaking " + mc.level.getBlockState(this.breaking).getBlock().getName().getString());
                            }
 
                            BlockPos was = this.breaking;
                            this.breaking = null;
-                           if (status == AiBlockDigger.Inner_DataUtil_2.load) {
+                           if (status == AiBlockDigger.DigOutcome.load) {
                               this.breakFailures = 0;
                               if (this.breakingTarget) {
                                  this.onBroken(was);
@@ -1147,8 +1147,8 @@ public final class AiBlockMine {
                                     AiMotionAudit.note("gather dig " + inReach.toShortString());
                                  }
 
-                                 AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil_(inReach);
-                                 if (status == AiBlockDigger.Inner_DataUtil_2.read) {
+                                 AiBlockDigger.DigOutcome status = this.init_RefQueue_DataUtil_(inReach);
+                                 if (status == AiBlockDigger.DigOutcome.read) {
                                     if (this.read_RefQueue_DataUtil.lastFailureReasonCompat().equals("no tool that gets its drops")) {
                                        return this.missingTool(inReach);
                                     }
@@ -1320,7 +1320,7 @@ public final class AiBlockMine {
                                           .info("[AI] block mine {}: no tree loaded; heading for the wooded biome at {}", label, wood.toShortString());
                                     }
 
-                                    this.exploreGoal = new AiBlockMine.Inner_BufferHelper(mc.player.blockPosition(), exploreY, wood);
+                                    this.exploreGoal = new AiBlockMine.ExploreGoal(mc.player.blockPosition(), exploreY, wood);
                                  }
 
                                  if (this.exploreGoal.toward != null
@@ -1329,7 +1329,7 @@ public final class AiBlockMine {
                                           mc.player.getZ() - this.exploreGoal.toward.getZ()
                                        )
                                        < 16.0) {
-                                    this.exploreGoal = new AiBlockMine.Inner_BufferHelper(mc.player.blockPosition(), exploreY);
+                                    this.exploreGoal = new AiBlockMine.ExploreGoal(mc.player.blockPosition(), exploreY);
                                  }
 
                                  return System.nanoTime() - this.exploreSince > 90000000000L
@@ -1406,7 +1406,7 @@ public final class AiBlockMine {
                                           );
                                        }
 
-                                       this.descent = AiBlockMine.Inner_StreamUtil.descentToward(feet, nearest);
+                                       this.descent = AiBlockMine.DescentGoal.descentToward(feet, nearest);
                                        if (this.veinCommitment.isIdle()) {
                                           this.commitVein(nearest);
                                        }
@@ -1456,7 +1456,7 @@ public final class AiBlockMine {
                                  }
                               }
 
-                              AiBlockMine.Inner_TaskQueue goal = new AiBlockMine.Inner_TaskQueue(goalCells, goalItems, noShaft, wet);
+                              AiBlockMine.GatherGoal goal = new AiBlockMine.GatherGoal(goalCells, goalItems, noShaft, wet);
                               if (treeMode) {
                                  goal.reachAbove = 5;
 
@@ -1660,12 +1660,12 @@ public final class AiBlockMine {
             }
 
             AiOperation.Result startTravel(AiPathfinder.PathGoal goal, String message) {
-               if (this.veinCommitment.isIdle() && goal instanceof AiBlockMine.Inner_TaskQueue t && !t.targetBlocks.isEmpty()) {
+               if (this.veinCommitment.isIdle() && goal instanceof AiBlockMine.GatherGoal t && !t.targetBlocks.isEmpty()) {
                   this.commitVein(t.targetBlocks.getFirst());
                }
 
-               boolean changed = goal instanceof AiBlockMine.Inner_TaskQueue t ? !t.sameGoal(this.currentGatherGoal) : goal != this.travelGoal;
-               if (AiBlockMine.NAVIGATION_TRACE && changed && goal instanceof AiBlockMine.Inner_TaskQueue t) {
+               boolean changed = goal instanceof AiBlockMine.GatherGoal t ? !t.sameGoal(this.currentGatherGoal) : goal != this.travelGoal;
+               if (AiBlockMine.NAVIGATION_TRACE && changed && goal instanceof AiBlockMine.GatherGoal t) {
                   AutismClientAddon.LOG
                      .info(
                         "[AI] gather goal {} blocks (first {}), {} items (first {}), was {} blocks / {} items",
@@ -1679,7 +1679,7 @@ public final class AiBlockMine {
                }
 
                if (this.travel == null) {
-                  if (goal instanceof AiBlockMine.Inner_TaskQueue t && !t.targetBlocks.isEmpty()) {
+                  if (goal instanceof AiBlockMine.GatherGoal t && !t.targetBlocks.isEmpty()) {
                      AutismClientAddon.LOG
                         .info(
                            "[AI] block mine {}: route from {} to {} targets, nearest {} (h {})",
@@ -1713,9 +1713,9 @@ public final class AiBlockMine {
                }
 
                this.travel.init(this.collectingInBox, this.collectingInBox ? this::coversInBoxItems : null);
-               this.travel.init_V_I_2(goal instanceof AiBlockMine.Inner_StreamUtil ? this.descentDepth : 0);
+               this.travel.init_V_I_2(goal instanceof AiBlockMine.DescentGoal ? this.descentDepth : 0);
                List<BlockPos> work;
-               List var20 = work = goal instanceof AiBlockMine.Inner_TaskQueue t
+               List var20 = work = goal instanceof AiBlockMine.GatherGoal t
                   ? (t.targetBlocks.isEmpty() && !t.targetItems.isEmpty() && !dropsOnly ? this.goalBlocks() : t.targetBlocks)
                   : List.of();
                if (!work.isEmpty()) {
@@ -1726,13 +1726,13 @@ public final class AiBlockMine {
                }
 
                this.travelGoal = goal;
-               this.currentGatherGoal = goal instanceof AiBlockMine.Inner_TaskQueue t ? t : null;
+               this.currentGatherGoal = goal instanceof AiBlockMine.GatherGoal t ? t : null;
                AiOperation.Result r = this.travel.tick();
                if (!r.terminal()) {
                   return this.running(message + ": " + r.message());
                }
 
-               AiBlockMine.Inner_TaskQueue failedGoal = this.currentGatherGoal;
+               AiBlockMine.GatherGoal failedGoal = this.currentGatherGoal;
                BlockPos stuck = this.travel.getStuckCell();
                if (stuck != null) {
                   this.stuckCells.add(stuck.asLong());
@@ -1966,7 +1966,7 @@ public final class AiBlockMine {
                }
             }
 
-            AiBlockDigger.Inner_DataUtil_2 init_RefQueue_DataUtil_(BlockPos cell) {
+            AiBlockDigger.DigOutcome init_RefQueue_DataUtil_(BlockPos cell) {
                Set<UUID> before = null;
                if (this.breakingTarget && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell) && this.isTargetBlock(cell)) {
                   before = new HashSet<>();
@@ -1982,9 +1982,9 @@ public final class AiBlockMine {
                   }
                }
 
-               AiBlockDigger.Inner_DataUtil_2 result = this.read_RefQueue_DataUtil
+               AiBlockDigger.DigOutcome result = this.read_RefQueue_DataUtil
                   .digCompat(cell, this.aimPoint(cell), this.nextLineDirection(cell));
-               if (before != null && (this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell) || result == AiBlockDigger.Inner_DataUtil_2.load)) {
+               if (before != null && (this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell) || result == AiBlockDigger.DigOutcome.load)) {
                   this.dropAttribution.recordPresent(cell.asLong(), before);
                }
 
@@ -2244,7 +2244,7 @@ public final class AiBlockMine {
                   return cell != null && this.isTargetBlock(cell) ? "Breaking blocks" : "Clearing access";
                } else if (this.steppingToDrop
                   || this.collectingInBox
-                  || this.travelGoal instanceof AiBlockMine.Inner_TaskQueue target && target.targetBlocks.isEmpty() && !target.targetItems.isEmpty()) {
+                  || this.travelGoal instanceof AiBlockMine.GatherGoal target && target.targetBlocks.isEmpty() && !target.targetItems.isEmpty()) {
                   return "Collecting drops";
                } else if (!this.exploring && !this.knownTargets.isEmpty()) {
                   return this.travel != null && !this.travel.isAtGoal()
@@ -3651,16 +3651,16 @@ public final class AiBlockMine {
       return out;
    }
 
-   static final class Inner_BufferHelper implements AiPathfinder.PathGoal {
+   static final class ExploreGoal implements AiPathfinder.PathGoal {
       final BlockPos origin;
       final int level;
       final BlockPos toward;
 
-      Inner_BufferHelper(BlockPos origin, int level) {
+      ExploreGoal(BlockPos origin, int level) {
          this(origin, level, null);
       }
 
-      Inner_BufferHelper(BlockPos origin, int level, BlockPos toward) {
+      ExploreGoal(BlockPos origin, int level, BlockPos toward) {
          this.origin = origin;
          this.level = level;
          this.toward = toward;
@@ -3680,7 +3680,7 @@ public final class AiBlockMine {
       }
    }
 
-   static final class Inner_CachePool {
+   static final class DropAttribution {
       final Map<Long, Set<UUID>> entitiesByCell = new HashMap<>();
       final Set<UUID> attributedEntities = new HashSet<>();
 
@@ -3712,7 +3712,7 @@ public final class AiBlockMine {
       }
    }
 
-   static final class Inner_ConfigStore {
+   static final class PathProgress {
       final Map<Long, Integer> bestRemainingByEnd = new HashMap<>();
 
       boolean recordImproved(BlockPos end, int remaining) {
@@ -3733,11 +3733,11 @@ public final class AiBlockMine {
       }
    }
 
-   static final class Inner_DataUtil implements AiPathfinder.PathGoal {
+   static final class TargetCellsGoal implements AiPathfinder.PathGoal {
       final Set<Long> targetCells = new HashSet<>();
       final List<BlockPos> targets;
 
-      Inner_DataUtil(List<BlockPos> targets) {
+      TargetCellsGoal(List<BlockPos> targets) {
          this.targets = List.copyOf(targets);
 
          for (BlockPos p : targets) {
@@ -3767,17 +3767,17 @@ public final class AiBlockMine {
       }
    }
 
-   static final class Inner_StreamUtil implements AiPathfinder.PathGoal {
+   static final class DescentGoal implements AiPathfinder.PathGoal {
       final int maxY;
       final BlockPos toward;
       final double maxAcross;
       Set<Long> blocked = Set.of();
 
-      Inner_StreamUtil(int y, BlockPos toward) {
+      DescentGoal(int y, BlockPos toward) {
          this(y, toward, 1.7976931348623157E308);
       }
 
-      Inner_StreamUtil(int y, BlockPos toward, double maxAcross) {
+      DescentGoal(int y, BlockPos toward, double maxAcross) {
          this.maxY = y;
          this.toward = toward;
          this.maxAcross = maxAcross;
@@ -3788,9 +3788,9 @@ public final class AiBlockMine {
          return !this.blocked.contains(cell.asLong());
       }
 
-      static AiBlockMine.Inner_StreamUtil descentToward(BlockPos feet, BlockPos target) {
+      static AiBlockMine.DescentGoal descentToward(BlockPos feet, BlockPos target) {
          double across = Math.hypot(feet.getX() - target.getX(), feet.getZ() - target.getZ());
-         return new AiBlockMine.Inner_StreamUtil(Math.max(target.getY(), feet.getY() - 8), target, Math.max(3.0, across - 8.0));
+         return new AiBlockMine.DescentGoal(Math.max(target.getY(), feet.getY() - 8), target, Math.max(3.0, across - 8.0));
       }
 
       boolean stillDescendingToward(BlockPos feet, BlockPos target) {
@@ -3815,7 +3815,7 @@ public final class AiBlockMine {
       }
    }
 
-   static final class Inner_TaskQueue implements AiPathfinder.PathGoal {
+   static final class GatherGoal implements AiPathfinder.PathGoal {
       final Set<Long> dryTargetCells = new HashSet<>();
       final Set<Long> noShaftCells;
       final List<BlockPos> targetBlocks;
@@ -3826,15 +3826,15 @@ public final class AiBlockMine {
       int reachAbove = 2;
       final Set<Long> update = new HashSet<>();
 
-      Inner_TaskQueue(List<BlockPos> blocks, List<Vec3> items) {
+      GatherGoal(List<BlockPos> blocks, List<Vec3> items) {
          this(blocks, items, Set.of());
       }
 
-      Inner_TaskQueue(List<BlockPos> blocks, List<Vec3> items, Set<Long> noShaft) {
+      GatherGoal(List<BlockPos> blocks, List<Vec3> items, Set<Long> noShaft) {
          this(blocks, items, noShaft, Set.of());
       }
 
-      Inner_TaskQueue(List<BlockPos> blocks, List<Vec3> items, Set<Long> noShaft, Set<Long> wet) {
+      GatherGoal(List<BlockPos> blocks, List<Vec3> items, Set<Long> noShaft, Set<Long> wet) {
          this.targetBlocks = List.copyOf(blocks);
          this.targetItems = List.copyOf(items);
          this.noShaftCells = Set.copyOf(noShaft);
@@ -3931,7 +3931,7 @@ public final class AiBlockMine {
          return !this.write.contains(cell.asLong());
       }
 
-      boolean sameGoal(AiBlockMine.Inner_TaskQueue other) {
+      boolean sameGoal(AiBlockMine.GatherGoal other) {
          if (other != null && this.dryTargetCells.equals(other.dryTargetCells) && this.excludedStances.equals(other.excludedStances) && this.targetItems.size() == other.targetItems.size()) {
             for (int i = 0; i < this.targetItems.size(); i++) {
                if (this.targetItems.get(i).distanceToSqr(other.targetItems.get(i)) > 0.25) {

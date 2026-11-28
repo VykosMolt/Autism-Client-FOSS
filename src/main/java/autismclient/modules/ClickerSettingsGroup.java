@@ -24,7 +24,7 @@ final class ClickerSettingsGroup {
    private final double defaultCpsCeiling;
    private final ValueRange defaultButterflyBand;
    private final boolean capRage;
-   private final Map<autismclient.util.clicker.ClickTechnique, ClickerSettingsGroup.Inner_DataUtil> sections = new EnumMap<>(autismclient.util.clicker.ClickTechnique.class);
+   private final Map<autismclient.util.clicker.ClickTechnique, ClickerSettingsGroup.TechniqueSection> sections = new EnumMap<>(autismclient.util.clicker.ClickTechnique.class);
    private autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore cachedHandTraits;
 
    ClickerSettingsGroup(Module module, String group, autismclient.util.clicker.ClickTechnique fallback, BooleanSupplier visible) {
@@ -87,7 +87,7 @@ final class ClickerSettingsGroup {
 
    void registerSections() {
       for (autismclient.util.clicker.ClickTechnique each : autismclient.util.clicker.ClickTechnique.values()) {
-         this.sections.put(each, new ClickerSettingsGroup.Inner_DataUtil(each));
+         this.sections.put(each, new ClickerSettingsGroup.TechniqueSection(each));
       }
    }
 
@@ -96,7 +96,7 @@ final class ClickerSettingsGroup {
    }
 
    autismclient.util.clicker.ClickProfile profile() {
-      ClickerSettingsGroup.Inner_DataUtil section = this.sections.get(this.technique());
+      ClickerSettingsGroup.TechniqueSection section = this.sections.get(this.technique());
       return section == null ? autismclient.util.clicker.ClickProfile.forTechnique(this.technique()) : section.profile();
    }
 
@@ -116,12 +116,12 @@ final class ClickerSettingsGroup {
    }
 
    String init_Str_Str(String settingId) {
-      ClickerSettingsGroup.Inner_DataUtil section = this.sectionFor(settingId);
+      ClickerSettingsGroup.TechniqueSection section = this.sectionFor(settingId);
       return section == null ? null : section.intervalValue();
    }
 
    boolean init(String settingId, String value) {
-      ClickerSettingsGroup.Inner_DataUtil section = this.sectionFor(settingId);
+      ClickerSettingsGroup.TechniqueSection section = this.sectionFor(settingId);
       if (section == null) {
          return false;
       }
@@ -130,9 +130,9 @@ final class ClickerSettingsGroup {
       return true;
    }
 
-   private ClickerSettingsGroup.Inner_DataUtil sectionFor(String settingId) {
+   private ClickerSettingsGroup.TechniqueSection sectionFor(String settingId) {
       if (settingId != null && settingId.endsWith("-interval")) {
-         for (ClickerSettingsGroup.Inner_DataUtil section : this.sections.values()) {
+         for (ClickerSettingsGroup.TechniqueSection section : this.sections.values()) {
             if (section.intervalKey.equals(settingId)) {
                return section;
             }
@@ -153,7 +153,7 @@ final class ClickerSettingsGroup {
       return Math.round(value * 100.0) / 100.0;
    }
 
-   private final class Inner_DataUtil {
+   private final class TechniqueSection {
       private final autismclient.util.clicker.ClickTechnique kind;
       private final String title;
       private final String cpsKey;
@@ -174,7 +174,7 @@ final class ClickerSettingsGroup {
       private String[] cachedValues;
       private autismclient.util.clicker.ClickProfile cachedProfile;
 
-      Inner_DataUtil(autismclient.util.clicker.ClickTechnique kind) {
+      TechniqueSection(autismclient.util.clicker.ClickTechnique kind) {
          this.kind = kind;
          String key = kind.init_Str.toLowerCase(Locale.ROOT);
          this.title = kind.init_Str + " Clicking";
@@ -295,7 +295,7 @@ final class ClickerSettingsGroup {
             return this.cachedProfile;
          }
 
-         autismclient.util.clicker.ClickProfile.Inner_DataUtil builder = autismclient.util.clicker.ClickProfile.builder(this.kind);
+         autismclient.util.clicker.ClickProfile.ProfileBuilder builder = autismclient.util.clicker.ClickProfile.builder(this.kind);
          if (this.fixedCps != null) {
             builder.cpsRange(this.fixedCps.get(), this.fixedCps.get());
          } else {

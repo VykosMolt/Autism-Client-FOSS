@@ -68,7 +68,7 @@ final class AiGhastReflect {
    private long evidenceRevision;
    private boolean reflected;
    private boolean load_Z;
-   private AiGhastReflect.Inner_StreamUtil init_V_StreamUtil;
+   private AiGhastReflect.InterceptPlan init_V_StreamUtil;
    private JsonObject lastRejection;
    private String state = "idle";
    private String reason = "No incoming ghast fireball";
@@ -119,7 +119,7 @@ final class AiGhastReflect {
             Entity projectile = this.mc.level.getEntity(this.projectileId);
             Ghast ghast = source instanceof Ghast g && g.getUUID().equals(this.ghastUuid) ? g : null;
             LargeFireball ball = projectile instanceof LargeFireball b && b.getUUID().equals(this.projectileUuid) ? b : null;
-            AiServerEvidence.Inner_StreamUtil motion = AiServerEvidence.lastEntityVelocity(this.projectileId);
+            AiServerEvidence.EntityVelocity motion = AiServerEvidence.lastEntityVelocity(this.projectileId);
             if (!this.reflected
                && motion != null
                && motion.identity().equals(this.projectileUuid)
@@ -200,7 +200,7 @@ final class AiGhastReflect {
          this.load_Z = false;
          if (this.mc.player.isWithinAttackRange(this.mc.player.getMainHandItem(), ball.getBoundingBox(), 0.0)
             && !this.mc.player.cannotAttackWithItem(this.mc.player.getMainHandItem(), 0)) {
-            AiGhastReflect.Inner_DataUtil immediate = ghast != null && ghast.isAlive()
+            AiGhastReflect.FireballFlight immediate = ghast != null && ghast.isAlive()
                ? init(
                   eye,
                   ball.position(),
@@ -212,12 +212,12 @@ final class AiGhastReflect {
                )
                : null;
             if (immediate != null && this.init_Z_Vec3(ball.position(), immediate, ball)) {
-               this.init_V_StreamUtil = new AiGhastReflect.Inner_StreamUtil(immediate, 0, 0, 0, yawOf(immediate.direction), 0.0);
+               this.init_V_StreamUtil = new AiGhastReflect.InterceptPlan(immediate, 0, 0, 0, yawOf(immediate.direction), 0.0);
             } else {
-               AiGhastReflect.Inner_DataUtil bat = this.init_V_DataUtil_LargeFireball(ball);
+               AiGhastReflect.FireballFlight bat = this.init_V_DataUtil_LargeFireball(ball);
                if (bat != null) {
                   this.load_Z = true;
-                  this.init_V_StreamUtil = new AiGhastReflect.Inner_StreamUtil(bat, 0, 0, 0, yawOf(bat.direction), 0.0);
+                  this.init_V_StreamUtil = new AiGhastReflect.InterceptPlan(bat, 0, 0, 0, yawOf(bat.direction), 0.0);
                }
             }
          }
@@ -254,9 +254,9 @@ final class AiGhastReflect {
                return null;
             }
 
-            AiGhastReflect.Inner_DataUtil actual = init(ball.position(), direction, ghast == null ? null : ghast.getBoundingBox(), this.ghastMotion, this.load_Z);
+            AiGhastReflect.FireballFlight actual = init(ball.position(), direction, ghast == null ? null : ghast.getBoundingBox(), this.ghastMotion, this.load_Z);
             if (!this.load_Z && (actual == null || !this.init_Z_Vec3(ball.position(), actual, ball))) {
-               AiGhastReflect.Inner_DataUtil bat = init(ball.position(), direction, null, Vec3.ZERO, true);
+               AiGhastReflect.FireballFlight bat = init(ball.position(), direction, null, Vec3.ZERO, true);
                if (bat != null
                   && ball.getDeltaMovement().normalize().dot(direction) < 0.98
                   && this.init_Z_Vec3(ball.position(), bat, ball)
@@ -272,7 +272,7 @@ final class AiGhastReflect {
                this.mc.options.keySprint.setDown(false);
                this.incomingVelocity = ball.getDeltaMovement();
                this.sentDirection = direction;
-               AiServerEvidence.Inner_StreamUtil evidence = AiServerEvidence.lastEntityVelocity(this.projectileId);
+               AiServerEvidence.EntityVelocity evidence = AiServerEvidence.lastEntityVelocity(this.projectileId);
                this.evidenceRevision = evidence == null ? 0L : evidence.revision();
                this.update_I = this.mc.player.tickCount;
                this.tick = actual.ticks;
@@ -411,10 +411,10 @@ final class AiGhastReflect {
       }
    }
 
-   private AiGhastReflect.Inner_DataUtil init_V_DataUtil_LargeFireball(LargeFireball ball) {
+   private AiGhastReflect.FireballFlight init_V_DataUtil_LargeFireball(LargeFireball ball) {
       Vec3 eye = this.mc.player.getEyePosition();
       AABB pick = ball.getBoundingBox().inflate(ball.getPickRadius());
-      AiGhastReflect.Inner_DataUtil best = null;
+      AiGhastReflect.FireballFlight best = null;
       double score = -1.7976931348623157E308;
 
       for (Vec3 direction : aimDirections(eye, pick, AiDefense.attackReach(this.mc))) {
@@ -441,7 +441,7 @@ final class AiGhastReflect {
                double candidate = direction.y;
                if (candidate > score) {
                   score = candidate;
-                  best = new AiGhastReflect.Inner_DataUtil(direction, 24, position);
+                  best = new AiGhastReflect.FireballFlight(direction, 24, position);
                }
             }
          }
@@ -492,20 +492,20 @@ final class AiGhastReflect {
       return observed.lengthSqr() <= 1.0 ? observed : Vec3.ZERO;
    }
 
-   private AiGhastReflect.Inner_StreamUtil init_V_StreamUtil_LargeFireball(LargeFireball ball, Ghast ghast, List<AiProjectiles.IncomingProjectile> threats) {
+   private AiGhastReflect.InterceptPlan init_V_StreamUtil_LargeFireball(LargeFireball ball, Ghast ghast, List<AiProjectiles.IncomingProjectile> threats) {
       this.rejections.clear();
       Vec3 eye = this.mc.player.getEyePosition();
       double reach = AiDefense.attackReach(this.mc);
-      AiGhastReflect.Inner_DataUtil now = init(eye, ball.position(), ball.getBoundingBox().inflate(ball.getPickRadius()), ghast.getBoundingBox(), this.ghastMotion, 0, reach);
+      AiGhastReflect.FireballFlight now = init(eye, ball.position(), ball.getBoundingBox().inflate(ball.getPickRadius()), ghast.getBoundingBox(), this.ghastMotion, 0, reach);
       if (now != null
          && this.mc.player.isWithinAttackRange(this.mc.player.getMainHandItem(), ball.getBoundingBox(), 0.0)
          && this.init_Z_Vec3(ball.position(), now, ball)
          && autismclient.ai.engine.AiCombatMotion.init(this.mc, 0.0, 0.0, 4) != null
          && this.init_Z_LargeFireball(ball, this.mc.player.getBoundingBox(), 0, threats)) {
-         return new AiGhastReflect.Inner_StreamUtil(now, 0, 0, 0, yawOf(now.direction), 0.0);
+         return new AiGhastReflect.InterceptPlan(now, 0, 0, 0, yawOf(now.direction), 0.0);
       }
 
-      AiGhastReflect.Inner_DataUtil lead = simulateFlight(ball.position(), ghast.getBoundingBox(), this.ghastMotion, 0);
+      AiGhastReflect.FireballFlight lead = simulateFlight(ball.position(), ghast.getBoundingBox(), this.ghastMotion, 0);
       if (lead == null) {
          this.reject("target_beyond_prediction_horizon");
          return null;
@@ -530,7 +530,7 @@ final class AiGhastReflect {
          position = next;
       }
 
-      AiGhastReflect.Inner_StreamUtil best = null;
+      AiGhastReflect.InterceptPlan best = null;
 
       for (int forward = -1; forward <= 1; forward++) {
          for (int strafe = -1; strafe <= 1; strafe++) {
@@ -552,7 +552,7 @@ final class AiGhastReflect {
                         this.reject("outside_physical_attack_range");
                      } else {
                         AABB futureBall = actualBall.inflate(ball.getPickRadius());
-                        AiGhastReflect.Inner_DataUtil flight = init(futureEye, inbound[tick], futureBall, ghast.getBoundingBox(), this.ghastMotion, tick, reach - 0.2);
+                        AiGhastReflect.FireballFlight flight = init(futureEye, inbound[tick], futureBall, ghast.getBoundingBox(), this.ghastMotion, tick, reach - 0.2);
                         if (flight == null) {
                            this.reject("no_common_attack_and_ghast_intercept_ray");
                         } else if (!this.isClearPath(futureEye, futureEye.add(flight.direction.scale(reach)), ball)) {
@@ -563,7 +563,7 @@ final class AiGhastReflect {
                            if (this.init_Z_LargeFireball(ball, body, tick, threats)) {
                               double error = shift.horizontalDistance();
                               if (best == null || tick < best.interceptTicks || tick == best.interceptTicks && error < best.error) {
-                                 best = new AiGhastReflect.Inner_StreamUtil(flight, tick, forward, strafe, facing, error);
+                                 best = new AiGhastReflect.InterceptPlan(flight, tick, forward, strafe, facing, error);
                               }
                               break;
                            }
@@ -615,12 +615,12 @@ final class AiGhastReflect {
       return true;
    }
 
-   static AiGhastReflect.Inner_DataUtil init(Vec3 eye, Vec3 launch, AABB ball, AABB target, Vec3 motion, int delay, double reach) {
+   static AiGhastReflect.FireballFlight init(Vec3 eye, Vec3 launch, AABB ball, AABB target, Vec3 motion, int delay, double reach) {
       if (ball.distanceToSqr(eye) > reach * reach) {
          return null;
       }
 
-      AiGhastReflect.Inner_DataUtil centre = simulateFlight(launch, target, motion, delay);
+      AiGhastReflect.FireballFlight centre = simulateFlight(launch, target, motion, delay);
       if (centre == null) {
          return null;
       }
@@ -639,7 +639,7 @@ final class AiGhastReflect {
                if (rayHitsBall(eye, direction, ball, reach)) {
                   int hit = init(launch, direction, target, motion, delay);
                   if (hit > 0) {
-                     return new AiGhastReflect.Inner_DataUtil(direction, hit, target.getCenter().add(motion.scale(delay + hit)));
+                     return new AiGhastReflect.FireballFlight(direction, hit, target.getCenter().add(motion.scale(delay + hit)));
                   }
                }
             }
@@ -649,7 +649,7 @@ final class AiGhastReflect {
       return null;
    }
 
-   static AiGhastReflect.Inner_DataUtil simulateFlight(Vec3 launch, AABB target, Vec3 motion, int delay) {
+   static AiGhastReflect.FireballFlight simulateFlight(Vec3 launch, AABB target, Vec3 motion, int delay) {
       double distance = 0.0;
       double speed = 1.0;
 
@@ -660,7 +660,7 @@ final class AiGhastReflect {
          if (!(distance < point.distanceTo(launch))) {
             Vec3 direction = point.subtract(launch).normalize();
             int hit = init(launch, direction, target, motion, delay);
-            return hit > 0 ? new AiGhastReflect.Inner_DataUtil(direction, hit, point) : null;
+            return hit > 0 ? new AiGhastReflect.FireballFlight(direction, hit, point) : null;
          }
       }
 
@@ -685,13 +685,13 @@ final class AiGhastReflect {
       return -1;
    }
 
-   static AiGhastReflect.Inner_DataUtil init(Vec3 launch, Vec3 direction, AABB target, Vec3 motion, boolean defensive) {
+   static AiGhastReflect.FireballFlight init(Vec3 launch, Vec3 direction, AABB target, Vec3 motion, boolean defensive) {
       if (direction == null || direction.lengthSqr() < 0.9) {
          return null;
       }
 
       if (defensive) {
-         return new AiGhastReflect.Inner_DataUtil(direction, 24, launch.add(direction.scale(24.0)));
+         return new AiGhastReflect.FireballFlight(direction, 24, launch.add(direction.scale(24.0)));
       }
 
       if (target == null) {
@@ -699,7 +699,7 @@ final class AiGhastReflect {
       }
 
       int ticks = init(launch, direction, target, motion, 0);
-      return ticks > 0 ? new AiGhastReflect.Inner_DataUtil(direction, ticks, target.getCenter().add(motion.scale(ticks))) : null;
+      return ticks > 0 ? new AiGhastReflect.FireballFlight(direction, ticks, target.getCenter().add(motion.scale(ticks))) : null;
    }
 
    static boolean rayHitsBall(Vec3 eye, Vec3 direction, AABB ball, double reach) {
@@ -714,7 +714,7 @@ final class AiGhastReflect {
       return (float)(Math.toDegrees(Math.atan2(d.z, d.x)) - 90.0);
    }
 
-   private boolean init_Z_Vec3(Vec3 position, AiGhastReflect.Inner_DataUtil flight, Entity ball) {
+   private boolean init_Z_Vec3(Vec3 position, AiGhastReflect.FireballFlight flight, Entity ball) {
       Vec3 velocity = flight.direction;
 
       for (int tick = 1; tick <= flight.ticks; tick++) {
@@ -900,9 +900,9 @@ final class AiGhastReflect {
       this.update();
    }
 
-   record Inner_DataUtil(Vec3 direction, int ticks, Vec3 target) {
+   record FireballFlight(Vec3 direction, int ticks, Vec3 target) {
    }
 
-   private record Inner_StreamUtil(AiGhastReflect.Inner_DataUtil flight, int interceptTicks, int forward, int strafe, float yaw, double error) {
+   private record InterceptPlan(AiGhastReflect.FireballFlight flight, int interceptTicks, int forward, int strafe, float yaw, double error) {
    }
 }

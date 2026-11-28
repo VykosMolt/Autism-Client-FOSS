@@ -134,10 +134,10 @@ final class AiSmelt {
             final boolean collect = AiJson.getBoolean(args, "collect", false);
             final boolean loadOnly = AiJson.getBoolean(args, "loadOnly", false);
 
-            final AiSmelt.Inner_CachePool resolved;
+            final AiSmelt.SmeltRecipe resolved;
             try {
                resolved = collect
-                  ? new AiSmelt.Inner_CachePool(
+                  ? new AiSmelt.SmeltRecipe(
                      load(AiJson.getString(args, "item", "")),
                      load(AiJson.getString(args, "input", "")),
                      fuelOrCoal(AiJson.getString(args, "fuel", "")),
@@ -797,7 +797,7 @@ final class AiSmelt {
       return BuiltInRegistries.ITEM.getOptional(Identifier.parse(id)).orElseThrow(() -> new IllegalArgumentException("Unknown item " + id));
    }
 
-   static AiSmelt.Inner_CachePool init(Minecraft mc, AiItems.ItemSpec outputTarget, String inputSpec, String fuelSpec, int items) {
+   static AiSmelt.SmeltRecipe init(Minecraft mc, AiItems.ItemSpec outputTarget, String inputSpec, String fuelSpec, int items) {
       List<String> tried = new ArrayList<>();
 
       record Inner_DataUtil(Item output, autismclient.util.AutoCraftingEngine.SmeltRecipe plan, Item input, int stationTier) {
@@ -820,7 +820,7 @@ final class AiSmelt {
       for (Inner_DataUtil candidate : viable) {
          Item fuel = init(fuelSpec, candidate.input(), items);
          if (fuel != null) {
-            return new AiSmelt.Inner_CachePool(candidate.output(), candidate.input(), fuel, candidate.plan().station());
+            return new AiSmelt.SmeltRecipe(candidate.output(), candidate.input(), fuel, candidate.plan().station());
          }
       }
 
@@ -1042,6 +1042,6 @@ final class AiSmelt {
       return out;
    }
 
-   record Inner_CachePool(Item output, Item input, Item fuel, String stationId) {
+   record SmeltRecipe(Item output, Item input, Item fuel, String stationId) {
    }
 }

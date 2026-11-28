@@ -64,7 +64,7 @@ public final class OreBlockCatalog {
       return known.contains(block);
    }
 
-   public static OreBlockCatalog.Inner_DataUtil init(String blockId) {
+   public static OreBlockCatalog.OreKind init(String blockId) {
       if (blockId == null) {
          return null;
       }
@@ -75,7 +75,7 @@ public final class OreBlockCatalog {
          path = path.substring(colon + 1);
       }
 
-      for (OreBlockCatalog.Inner_DataUtil kind : OreBlockCatalog.Inner_DataUtil.values()) {
+      for (OreBlockCatalog.OreKind kind : OreBlockCatalog.OreKind.values()) {
          if (path.contains(kind.read_Str)) {
             return kind;
          }
@@ -84,7 +84,7 @@ public final class OreBlockCatalog {
       return null;
    }
 
-   public enum Inner_DataUtil {
+   public enum OreKind {
       COAL("coal", "Coal", -11645352, "coal"),
       IRON("iron", "Iron", -2579078, "iron"),
       GOLD("gold", "Gold", -204725, "gold"),
@@ -101,7 +101,7 @@ public final class OreBlockCatalog {
       public final int init_I;
       public final String read_Str;
 
-      Inner_DataUtil(String id, String label, int defaultColor, String match) {
+      OreKind(String id, String label, int defaultColor, String match) {
          this.init_Str = id;
          this.load_Str = label;
          this.init_I = defaultColor;
@@ -113,15 +113,15 @@ public final class OreBlockCatalog {
       }
    }
 
-   public static final class Inner_StreamUtil {
+   public static final class StateRegistry {
       private static final Map<BlockState, Integer> stateIds = new IdentityHashMap<>();
       private static volatile BlockState[] states = new BlockState[0];
-      private static volatile OreBlockCatalog.Inner_DataUtil[] kinds = new OreBlockCatalog.Inner_DataUtil[0];
+      private static volatile OreBlockCatalog.OreKind[] kinds = new OreBlockCatalog.OreKind[0];
 
-      private Inner_StreamUtil() {
+      private StateRegistry() {
       }
 
-      private static synchronized int idFor(BlockState state, OreBlockCatalog.Inner_DataUtil kind) {
+      private static synchronized int idFor(BlockState state, OreBlockCatalog.OreKind kind) {
          Integer existing = stateIds.get(state);
          if (existing != null) {
             return existing;
@@ -129,7 +129,7 @@ public final class OreBlockCatalog {
 
          int id = states.length;
          BlockState[] nextStates = Arrays.copyOf(states, id + 1);
-         OreBlockCatalog.Inner_DataUtil[] nextKinds = Arrays.copyOf(kinds, id + 1);
+         OreBlockCatalog.OreKind[] nextKinds = Arrays.copyOf(kinds, id + 1);
          nextStates[id] = state;
          nextKinds[id] = kind;
          stateIds.put(state, id);
@@ -143,8 +143,8 @@ public final class OreBlockCatalog {
          return id >= 0 && id < snapshot.length ? snapshot[id] : null;
       }
 
-      public static OreBlockCatalog.Inner_DataUtil kindById(int id) {
-         OreBlockCatalog.Inner_DataUtil[] snapshot = kinds;
+      public static OreBlockCatalog.OreKind kindById(int id) {
+         OreBlockCatalog.OreKind[] snapshot = kinds;
          return id >= 0 && id < snapshot.length ? snapshot[id] : null;
       }
 
@@ -155,7 +155,7 @@ public final class OreBlockCatalog {
       public static int init(BlockState state) {
          if (state != null && OreBlockCatalog.init(state.getBlock())) {
             Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-            OreBlockCatalog.Inner_DataUtil kind = id == null ? null : OreBlockCatalog.init(id.toString());
+            OreBlockCatalog.OreKind kind = id == null ? null : OreBlockCatalog.init(id.toString());
             return kind == null ? -1 : idFor(state, kind);
          } else {
             return -1;

@@ -24,7 +24,7 @@ import net.minecraft.world.phys.Vec3;
 public final class AiServerEvidence {
    private static final Map<Long, Long> blockRevisions = new LinkedHashMap<>();
    private static final Map<Long, Long> chunkRevisions = new LinkedHashMap<>();
-   private static final Map<Long, AiServerEvidence.Inner_DataUtil> blockStates = new HashMap<>();
+   private static final Map<Long, AiServerEvidence.BlockUpdate> blockStates = new HashMap<>();
    private static final List<Consumer<BlockPos>> blockObservers = new ArrayList<>();
    private static final List<LongConsumer> chunkObservers = new ArrayList<>();
    private static long blockRevisionCounter;
@@ -39,12 +39,12 @@ public final class AiServerEvidence {
    private static int burnLastTick;
    private static float burnPreHealth;
    private static boolean burnOnFire;
-   private static AiServerEvidence.Inner_BufferHelper lastBurnDamage;
+   private static AiServerEvidence.BurnDamage lastBurnDamage;
    private static long velocityRevisionCounter;
-   private static final Map<Integer, AiServerEvidence.Inner_StreamUtil> entityVelocities = new LinkedHashMap<>();
+   private static final Map<Integer, AiServerEvidence.EntityVelocity> entityVelocities = new LinkedHashMap<>();
    private static final Map<Integer, Long> containerRevisions = new LinkedHashMap<>();
    private static final Map<Integer, Long> containerReplyCounts = new LinkedHashMap<>();
-   private static final Map<Integer, Deque<AiServerEvidence.Inner_CachePool>> containerReplyHistory = new LinkedHashMap<>();
+   private static final Map<Integer, Deque<AiServerEvidence.ContainerReply>> containerReplyHistory = new LinkedHashMap<>();
    private static final Deque<Map<String, Object>> recentServerMessages = new ArrayDeque<>();
    private static final Long2ObjectLinkedOpenHashMap<BlockState> preChangeBlockStates = new Long2ObjectLinkedOpenHashMap<>();
 
@@ -125,7 +125,7 @@ public final class AiServerEvidence {
       if (state == null) {
          blockStates.remove(key);
       } else {
-         blockStates.put(key, new AiServerEvidence.Inner_DataUtil(stamp, state));
+         blockStates.put(key, new AiServerEvidence.BlockUpdate(stamp, state));
       }
 
       if (Minecraft.getInstance() != null) {
@@ -141,7 +141,7 @@ public final class AiServerEvidence {
       notifyBlockObservers(pos);
    }
 
-   public static AiServerEvidence.Inner_DataUtil lastBlockUpdate(BlockPos pos) {
+   public static AiServerEvidence.BlockUpdate lastBlockUpdate(BlockPos pos) {
       return blockStates.get(pos.asLong());
    }
 
@@ -192,8 +192,8 @@ public final class AiServerEvidence {
 
    static void recordContainerItemCounts(int id, Map<String, Integer> counts) {
       recordContainerUpdate(id);
-      Deque<AiServerEvidence.Inner_CachePool> history = containerReplyHistory.computeIfAbsent(id, key -> new ArrayDeque<>());
-      history.addLast(new AiServerEvidence.Inner_CachePool(containerReplyCount(id), Map.copyOf(counts)));
+      Deque<AiServerEvidence.ContainerReply> history = containerReplyHistory.computeIfAbsent(id, key -> new ArrayDeque<>());
+      history.addLast(new AiServerEvidence.ContainerReply(containerReplyCount(id), Map.copyOf(counts)));
 
       while (history.size() > 16) {
          history.removeFirst();
@@ -201,7 +201,7 @@ public final class AiServerEvidence {
    }
 
    static OptionalInt minItemCountAfterReply(int id, long afterReply, String item) {
-      Deque<AiServerEvidence.Inner_CachePool> history = containerReplyHistory.get(id);
+      Deque<AiServerEvidence.ContainerReply> history = containerReplyHistory.get(id);
       return history == null
          ? OptionalInt.empty()
          : history.stream().filter(reply -> reply.reply() > afterReply).mapToInt(reply -> reply.counts().getOrDefault(item, 0)).min();
@@ -235,14 +235,14 @@ public final class AiServerEvidence {
    }
 
    public static void recordEntityVelocity(int id, UUID identity, Vec3 velocity) {
-      entityVelocities.put(id, new AiServerEvidence.Inner_StreamUtil(++velocityRevisionCounter, identity, velocity));
+      entityVelocities.put(id, new AiServerEvidence.EntityVelocity(++velocityRevisionCounter, identity, velocity));
 
       while (entityVelocities.size() > 256) {
          entityVelocities.remove(entityVelocities.keySet().iterator().next());
       }
    }
 
-   public static AiServerEvidence.Inner_StreamUtil lastEntityVelocity(int id) {
+   public static AiServerEvidence.EntityVelocity lastEntityVelocity(int id) {
       return entityVelocities.get(id);
    }
 
@@ -265,7 +265,7 @@ public final class AiServerEvidence {
          lastBurnDamage = null;
          float loss = burnPreHealth - health;
          if (burnDamageCount == 1 && burnOnFire && isWithinTwoTicks(tick, burnDamageTick) && Float.isFinite(burnPreHealth) && Float.isFinite(health) && loss > 0.0F && loss <= 1.0F) {
-            lastBurnDamage = new AiServerEvidence.Inner_BufferHelper(identity, burnDamageTick, tick, burnPreHealth, health);
+            lastBurnDamage = new AiServerEvidence.BurnDamage(identity, burnDamageTick, tick, burnPreHealth, health);
          }
 
          burnDamageCount = 0;
@@ -366,18 +366,18 @@ public final class AiServerEvidence {
       serverMessageRevisionCounter++;
    }
 
-   private record Inner_BufferHelper(UUID identity, int sourceTick, int healthTick, float before, float health) {
+   private record BurnDamage(UUID identity, int sourceTick, int healthTick, float before, float health) {
    }
 
-   private record Inner_CachePool(long reply, Map<String, Integer> counts) {
+   private record ContainerReply(long reply, Map<String, Integer> counts) {
    }
 
-   public record Inner_DataUtil(long revision, BlockState state) {
-      public Inner_DataUtil {
+   public record BlockUpdate(long revision, BlockState state) {
+      public BlockUpdate {
          Objects.requireNonNull(state);
       }
    }
 
-   public record Inner_StreamUtil(long revision, UUID identity, Vec3 velocity) {
+   public record EntityVelocity(long revision, UUID identity, Vec3 velocity) {
    }
 }

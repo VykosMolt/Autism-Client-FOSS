@@ -29,7 +29,7 @@ final class AiFill {
    private AiFill() {
    }
 
-   static AiFill.Inner_DataUtil init_J_DataUtil(JsonObject args) {
+   static AiFill.FillBox init_J_DataUtil(JsonObject args) {
       if (args.has("x") && args.has("y") && args.has("z")) {
          int x = AiJson.getInt(args, "x", 0);
          int y = AiJson.getInt(args, "y", 0);
@@ -50,7 +50,7 @@ final class AiFill {
             if (ex * ey * ez > 4096L) {
                throw new IllegalArgumentException("Box volume " + ex * ey * ez + " exceeds 4096 cells");
             } else {
-               return new AiFill.Inner_DataUtil(
+               return new AiFill.FillBox(
                   (int)Math.min(x, x2), (int)Math.min(y, y2), (int)Math.min(z, z2), (int)Math.max(x, x2), (int)Math.max(y, y2), (int)Math.max(z, z2)
                );
             }
@@ -62,11 +62,11 @@ final class AiFill {
       }
    }
 
-   static boolean init(AiFill.Inner_DataUtil box, int x, int y, int z) {
+   static boolean init(AiFill.FillBox box, int x, int y, int z) {
       return x == box.minX() || x == box.maxX() || y == box.minY() || y == box.maxY() || z == box.minZ() || z == box.maxZ();
    }
 
-   static boolean init(String shape, String axis, AiFill.Inner_DataUtil box, int x, int y, int z) {
+   static boolean init(String shape, String axis, AiFill.FillBox box, int x, int y, int z) {
       boolean var10000;
       switch (shape) {
          case "walls":
@@ -94,7 +94,7 @@ final class AiFill {
       return var10000;
    }
 
-   private static boolean load(AiFill.Inner_DataUtil box, int x, int y, int z) {
+   private static boolean load(AiFill.FillBox box, int x, int y, int z) {
       double sx = box.maxX() - box.minX() + 1;
       double sy = box.maxY() - box.minY() + 1;
       double sz = box.maxZ() - box.minZ() + 1;
@@ -104,7 +104,7 @@ final class AiFill {
       return dx * dx + dy * dy + dz * dz <= 1.000000001;
    }
 
-   private static boolean read(AiFill.Inner_DataUtil box, int x, int y, int z) {
+   private static boolean read(AiFill.FillBox box, int x, int y, int z) {
       return !load(box, x + 1, y, z)
          || !load(box, x - 1, y, z)
          || !load(box, x, y + 1, z)
@@ -113,7 +113,7 @@ final class AiFill {
          || !load(box, x, y, z - 1);
    }
 
-   private static boolean init(String axis, AiFill.Inner_DataUtil box, int x, int y, int z) {
+   private static boolean init(String axis, AiFill.FillBox box, int x, int y, int z) {
       boolean var10000;
       switch (axis) {
          case "x":
@@ -129,7 +129,7 @@ final class AiFill {
       return var10000;
    }
 
-   private static boolean load(String axis, AiFill.Inner_DataUtil box, int x, int y, int z) {
+   private static boolean load(String axis, AiFill.FillBox box, int x, int y, int z) {
       boolean var10000;
       switch (axis) {
          case "x":
@@ -153,11 +153,11 @@ final class AiFill {
       return da * da + db * db <= 1.000000001;
    }
 
-   static List<BlockPos> init(AiFill.Inner_DataUtil box, boolean hollow) {
+   static List<BlockPos> init(AiFill.FillBox box, boolean hollow) {
       return init(box, hollow ? "shell" : "box", "y");
    }
 
-   static List<BlockPos> init(AiFill.Inner_DataUtil box, String shape, String axis) {
+   static List<BlockPos> init(AiFill.FillBox box, String shape, String axis) {
       List<BlockPos> out = new ArrayList<>();
       int centerX = (box.minX() + box.maxX()) / 2;
       int centerZ = (box.minZ() + box.maxZ()) / 2;
@@ -190,7 +190,7 @@ final class AiFill {
    static AiOperation create(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         AiFill.Inner_DataUtil box = init_J_DataUtil(args);
+         AiFill.FillBox box = init_J_DataUtil(args);
          if (box.volume() > 4096L) {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
@@ -239,7 +239,7 @@ final class AiFill {
    static AiOperation load(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         AiFill.Inner_DataUtil box = init_J_DataUtil(args);
+         AiFill.FillBox box = init_J_DataUtil(args);
          if (box.volume() > 4096L) {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
@@ -257,7 +257,7 @@ final class AiFill {
       }
    }
 
-   private static List<AiBuilder.CellSpec> init(AiFill.Inner_DataUtil box, ClientLevel level) {
+   private static List<AiBuilder.CellSpec> init(AiFill.FillBox box, ClientLevel level) {
       List<AiBuilder.CellSpec> cells = new ArrayList<>();
       int unloaded = 0;
 
@@ -336,7 +336,7 @@ final class AiFill {
             int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
             boolean verify = AiJson.getBoolean(args, "verify", true);
             return !clearCells.isEmpty()
-               ? new AiFill.Inner_BufferHelper(clearCells, blueprint, timeoutSeconds)
+               ? new AiFill.ReplaceOperation(clearCells, blueprint, timeoutSeconds)
                : AiBuilder.buildBlueprint(blueprint, verify, timeoutSeconds);
          } else {
             throw new IllegalArgumentException("game:paste supports rotation and mirror only; repeat/layers/substitutes belong to game:build");
@@ -374,7 +374,7 @@ final class AiFill {
       return var10000;
    }
 
-   static AiFill.Inner_StreamUtil init(AiFill.Inner_DataUtil box, String action, int[] step, int amount, int minY, int maxY) {
+   static AiFill.TransformedBox init(AiFill.FillBox box, String action, int[] step, int amount, int minY, int maxY) {
       int minX = box.minX();
       int lo = box.minY();
       int minZ = box.minZ();
@@ -469,10 +469,10 @@ final class AiFill {
             }
       }
 
-      return new AiFill.Inner_StreamUtil(new AiFill.Inner_DataUtil(minX, lo, minZ, maxX, hi, maxZ), clamped);
+      return new AiFill.TransformedBox(new AiFill.FillBox(minX, lo, minZ, maxX, hi, maxZ), clamped);
    }
 
-   static AiFill.Inner_CachePool init(List<AiBuilder.CellSpec> cells, String action, int[] step, int amount, int maxCells) {
+   static AiFill.TransformedCells init(List<AiBuilder.CellSpec> cells, String action, int[] step, int amount, int maxCells) {
       int minX = 2147483647;
       int minY = 2147483647;
       int minZ = 2147483647;
@@ -527,7 +527,7 @@ final class AiFill {
          out.removeIf(cell -> init(cell, step, layers, loX, loY, loZ, hiX, hiY, hiZ));
       }
 
-      return new AiFill.Inner_CachePool(AiBuilder.normalizeCells(out, maxCells), clamped);
+      return new AiFill.TransformedCells(AiBuilder.normalizeCells(out, maxCells), clamped);
    }
 
    private static boolean init(AiBuilder.CellSpec cell, int[] step, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
@@ -616,9 +616,9 @@ final class AiFill {
             int minY = client.level.getMinY();
             int maxY = client.level.getMaxY() - 1;
             if (clipboard.isEmpty()) {
-               AiFill.Inner_DataUtil box = init_J_DataUtil(args);
-               AiFill.Inner_StreamUtil transformed = init(box, action, step, amount, minY, maxY);
-               AiFill.Inner_DataUtil out = transformed.box();
+               AiFill.FillBox box = init_J_DataUtil(args);
+               AiFill.TransformedBox transformed = init(box, action, step, amount, minY, maxY);
+               AiFill.FillBox out = transformed.box();
                if (out.volume() > 4096L) {
                   throw new IllegalArgumentException("Transformed box volume " + out.volume() + " exceeds 4096 cells; expand in smaller steps");
                }
@@ -682,7 +682,7 @@ final class AiFill {
                }
 
                String name = AiClipboard.validateName(clipboard);
-               AiFill.Inner_CachePool transformed = init(AiClipboard.load(name), action, step, amount, 4096);
+               AiFill.TransformedCells transformed = init(AiClipboard.load(name), action, step, amount, 4096);
                AiClipboard.init(name, transformed.cells());
                int[] extents = init(transformed.cells());
                return AiGameOperations.immediate(
@@ -719,7 +719,7 @@ final class AiFill {
    static AiOperation update(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         AiFill.Inner_DataUtil box = init_J_DataUtil(args);
+         AiFill.FillBox box = init_J_DataUtil(args);
          if (box.volume() > 4096L) {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
@@ -757,7 +757,7 @@ final class AiFill {
                "Missing materials: " + missing,
                AiJson.objectOf("missing", missing, "replaced", 0, "dug", 0, "failed", new JsonArray())
             )
-            : new AiFill.Inner_BufferHelper(digCells, blueprint, timeoutSeconds);
+            : new AiFill.ReplaceOperation(digCells, blueprint, timeoutSeconds);
       } else {
          throw new IllegalArgumentException("Replacing requires a connected living player");
       }
@@ -778,7 +778,7 @@ final class AiFill {
       }
    }
 
-   private static final class Inner_BufferHelper implements AiOperation {
+   private static final class ReplaceOperation implements AiOperation {
       final Minecraft init_Minecraft = Minecraft.getInstance();
       final List<BlockPos> digCells;
       final AiBuilder.Blueprint blueprint;
@@ -793,7 +793,7 @@ final class AiFill {
       AiOperation load_AiOperation;
       boolean init_Z;
 
-      Inner_BufferHelper(List<BlockPos> digCells, AiBuilder.Blueprint blueprint, int timeoutSeconds) {
+      ReplaceOperation(List<BlockPos> digCells, AiBuilder.Blueprint blueprint, int timeoutSeconds) {
          this.digCells = digCells;
          this.blueprint = blueprint;
          this.init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -960,15 +960,15 @@ final class AiFill {
       }
    }
 
-   record Inner_CachePool(List<AiBuilder.CellSpec> cells, boolean clamped) {
+   record TransformedCells(List<AiBuilder.CellSpec> cells, boolean clamped) {
    }
 
-   record Inner_DataUtil(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+   record FillBox(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
       long volume() {
          return (long)(this.maxX - this.minX + 1) * (this.maxY - this.minY + 1) * (this.maxZ - this.minZ + 1);
       }
    }
 
-   record Inner_StreamUtil(AiFill.Inner_DataUtil box, boolean clamped) {
+   record TransformedBox(AiFill.FillBox box, boolean clamped) {
    }
 }

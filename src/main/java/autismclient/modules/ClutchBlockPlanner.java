@@ -38,7 +38,7 @@ final class ClutchBlockPlanner {
    static final int init_I = 4;
    private static final List<AABB> UNIT_CUBE = List.of(new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0));
 
-   private static boolean nothingPlaceableNear(ClutchBlockPlanner.Inner_DataUtil world, Vec3 eye, double cellReach, LongOpenHashSet linkable) {
+   private static boolean nothingPlaceableNear(ClutchBlockPlanner.PlacementWorld world, Vec3 eye, double cellReach, LongOpenHashSet linkable) {
       double distance = Math.sqrt(cellReach) + 1.0 + 1.0E-6;
       if (!world.init(eye, distance)) {
          return false;
@@ -58,56 +58,56 @@ final class ClutchBlockPlanner {
    private ClutchBlockPlanner() {
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil plan(
-      List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.Inner_DataUtil world, int firstTick, double fallSoFar, double health, BlockPos keep
+   static ClutchBlockPlanner.ClutchPlan plan(
+      List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.PlacementWorld world, int firstTick, double fallSoFar, double health, BlockPos keep
    ) {
       return bodies != null && !bodies.isEmpty()
          ? plan(bodies, eyeHeight, reach, world, firstTick, fallSoFar, health, keep, Mth.floor(bodies.getFirst().minY + 1.0E-6) - 1, null)
          : null;
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil plan(
+   static ClutchBlockPlanner.ClutchPlan plan(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
-      ClutchBlockPlanner.Inner_DataUtil world,
+      ClutchBlockPlanner.PlacementWorld world,
       int firstTick,
       double fallSoFar,
       double health,
       BlockPos keep,
       int homeRow,
-      ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> firstCost
+      ToDoubleFunction<ClutchBlockPlanner.PlacementLink> firstCost
    ) {
       return plan(bodies, eyeHeight, reach, world, firstTick, fallSoFar, health, keep, homeRow, firstCost, 2147483647);
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil plan(
+   static ClutchBlockPlanner.ClutchPlan plan(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
-      ClutchBlockPlanner.Inner_DataUtil world,
+      ClutchBlockPlanner.PlacementWorld world,
       int firstTick,
       double fallSoFar,
       double health,
       BlockPos keep,
       int homeRow,
-      ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> firstCost,
+      ToDoubleFunction<ClutchBlockPlanner.PlacementLink> firstCost,
       int blocks
    ) {
       return plan(bodies, eyeHeight, reach, world, firstTick, fallSoFar, health, keep, homeRow, firstCost, blocks, ClutchFallPhysics::estimateFallDamage, 0.0, 1.0 / 0.0);
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil plan(
+   static ClutchBlockPlanner.ClutchPlan plan(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
-      ClutchBlockPlanner.Inner_DataUtil world,
+      ClutchBlockPlanner.PlacementWorld world,
       int firstTick,
       double fallSoFar,
       double health,
       BlockPos keep,
       int homeRow,
-      ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> firstCost,
+      ToDoubleFunction<ClutchBlockPlanner.PlacementLink> firstCost,
       int blocks,
       DoubleUnaryOperator damage,
       double bestEffortReach
@@ -115,17 +115,17 @@ final class ClutchBlockPlanner {
       return plan(bodies, eyeHeight, reach, world, firstTick, fallSoFar, health, keep, homeRow, firstCost, blocks, damage, bestEffortReach, 1.0 / 0.0);
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil plan(
+   static ClutchBlockPlanner.ClutchPlan plan(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
-      ClutchBlockPlanner.Inner_DataUtil world,
+      ClutchBlockPlanner.PlacementWorld world,
       int firstTick,
       double fallSoFar,
       double health,
       BlockPos keep,
       int homeRow,
-      ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> firstCost,
+      ToDoubleFunction<ClutchBlockPlanner.PlacementLink> firstCost,
       int blocks,
       DoubleUnaryOperator damage,
       double bestEffortReach,
@@ -134,17 +134,17 @@ final class ClutchBlockPlanner {
       return plan(bodies, eyeHeight, reach, world, firstTick, fallSoFar, health, keep, homeRow, firstCost, blocks, damage, bestEffortReach, uncaught, List.of());
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil plan(
+   static ClutchBlockPlanner.ClutchPlan plan(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
-      ClutchBlockPlanner.Inner_DataUtil world,
+      ClutchBlockPlanner.PlacementWorld world,
       int firstTick,
       double fallSoFar,
       double health,
       BlockPos keep,
       int homeRow,
-      ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> firstCost,
+      ToDoubleFunction<ClutchBlockPlanner.PlacementLink> firstCost,
       int blocks,
       DoubleUnaryOperator damage,
       double bestEffortReach,
@@ -156,17 +156,17 @@ final class ClutchBlockPlanner {
       );
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil init(
+   static ClutchBlockPlanner.ClutchPlan init(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
-      ClutchBlockPlanner.Inner_DataUtil world,
+      ClutchBlockPlanner.PlacementWorld world,
       int firstTick,
       double fallSoFar,
       double health,
       BlockPos keep,
       int homeRow,
-      ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> firstCost,
+      ToDoubleFunction<ClutchBlockPlanner.PlacementLink> firstCost,
       int blocks,
       DoubleUnaryOperator damage,
       double bestEffortReach,
@@ -195,40 +195,40 @@ final class ClutchBlockPlanner {
       );
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil init(
+   static ClutchBlockPlanner.ClutchPlan init(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
-      ClutchBlockPlanner.Inner_DataUtil world,
+      ClutchBlockPlanner.PlacementWorld world,
       int firstTick,
       double fallSoFar,
       double health,
       BlockPos keep,
       int homeRow,
-      ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> firstCost,
+      ToDoubleFunction<ClutchBlockPlanner.PlacementLink> firstCost,
       int blocks,
       DoubleUnaryOperator damage,
       double uncaught,
       List<Vec3> writtenEyes,
       boolean marginal
    ) {
-      ClutchBlockPlanner.Inner_JsonUtil result = planSearch(
+      ClutchBlockPlanner.ClutchPlan result = planSearch(
          bodies, eyeHeight, reach, world, firstTick, fallSoFar, health, keep, homeRow, firstCost, blocks, damage, 0.0, uncaught, writtenEyes, marginal, true
       );
-      return result == null ? null : new ClutchBlockPlanner.Inner_JsonUtil(result.init_List(), result.init_BlockPos(), result.init_I(), result.init_D(), result.load(), true);
+      return result == null ? null : new ClutchBlockPlanner.ClutchPlan(result.init_List(), result.init_BlockPos(), result.init_I(), result.init_D(), result.load(), true);
    }
 
-   private static ClutchBlockPlanner.Inner_JsonUtil planSearch(
+   private static ClutchBlockPlanner.ClutchPlan planSearch(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
-      ClutchBlockPlanner.Inner_DataUtil world,
+      ClutchBlockPlanner.PlacementWorld world,
       int firstTick,
       double fallSoFar,
       double health,
       BlockPos keep,
       int homeRow,
-      ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> firstCost,
+      ToDoubleFunction<ClutchBlockPlanner.PlacementLink> firstCost,
       int blocks,
       DoubleUnaryOperator damage,
       double bestEffortReach,
@@ -238,7 +238,7 @@ final class ClutchBlockPlanner {
       boolean immediate
    ) {
       if (bodies != null && bodies.size() >= 2 && world != null && blocks > 0) {
-         ClutchBlockPlanner.Inner_TaskQueue flight = new ClutchBlockPlanner.Inner_TaskQueue(
+         ClutchBlockPlanner.FallFlight flight = new ClutchBlockPlanner.FallFlight(
             bodies, eyeHeight, world, fallSoFar, writtenEyes, !(bestEffortReach > 0.0) && !marginal ? 0.06 : 1.0E-6
          );
          flight.margin = marginal ? 1.0E-5 : 0.02;
@@ -247,7 +247,7 @@ final class ClutchBlockPlanner {
             return bestEffortReach > 0.0 ? flight.nearestPlan(firstTick, bestEffortReach) : null;
          }
 
-         ClutchBlockPlanner.Inner_BufferHelper choice = new ClutchBlockPlanner.Inner_BufferHelper(flight, health, keep, homeRow, firstCost, blocks, damage, Math.max(0.0, uncaught - 2.0));
+         ClutchBlockPlanner.PlanChooser choice = new ClutchBlockPlanner.PlanChooser(flight, health, keep, homeRow, firstCost, blocks, damage, Math.max(0.0, uncaught - 2.0));
          int horizon = choice.survivableHorizon(bestEffortReach > 0.0);
          if (bestEffortReach > 0.0 && uncaught >= health) {
             horizon = Math.max(horizon, Math.max(1, firstTick) + 3 + 1);
@@ -257,10 +257,10 @@ final class ClutchBlockPlanner {
             return bestEffortReach > 0.0 ? flight.nearestPlan(firstTick, bestEffortReach) : null;
          }
 
-         ClutchBlockPlanner.Inner_StateCache strict = flight.search(firstTick, reach, !immediate, horizon);
-         ClutchBlockPlanner.Inner_JsonUtil plan = choice.bestPlan(strict, false, false);
+         ClutchBlockPlanner.LinkSearch strict = flight.search(firstTick, reach, !immediate, horizon);
+         ClutchBlockPlanner.ClutchPlan plan = choice.bestPlan(strict, false, false);
          if (plan == null && !(bestEffortReach <= 0.0)) {
-            ClutchBlockPlanner.Inner_StateCache relaxed = flight.search(firstTick, Math.max(reach, bestEffortReach), false, horizon);
+            ClutchBlockPlanner.LinkSearch relaxed = flight.search(firstTick, Math.max(reach, bestEffortReach), false, horizon);
             plan = choice.bestPlan(relaxed, false, true);
             if (plan == null) {
                plan = choice.bestPlan(strict, true, false);
@@ -283,28 +283,28 @@ final class ClutchBlockPlanner {
       }
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil nearestReachPlan(
-      List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.Inner_DataUtil world, int firstTick, List<Vec3> writtenEyes
+   static ClutchBlockPlanner.ClutchPlan nearestReachPlan(
+      List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.PlacementWorld world, int firstTick, List<Vec3> writtenEyes
    ) {
       return bodies != null && bodies.size() >= 2 && world != null
-         ? new ClutchBlockPlanner.Inner_TaskQueue(bodies, eyeHeight, world, 0.0, writtenEyes, 1.0E-6).nearestPlanWithin(firstTick, reach, Math.min(bodies.size(), 8))
+         ? new ClutchBlockPlanner.FallFlight(bodies, eyeHeight, world, 0.0, writtenEyes, 1.0E-6).nearestPlanWithin(firstTick, reach, Math.min(bodies.size(), 8))
          : null;
    }
 
-   static ClutchBlockPlanner.Inner_JsonUtil load(List<AABB> bodies, double eyeHeight, double reach, final ClutchBlockPlanner.Inner_DataUtil world, int firstTick, List<Vec3> eyes) {
-      ClutchBlockPlanner.Inner_NetHelper tower = towerLink(bodies, eyeHeight, reach, world, firstTick, eyes);
-      ClutchBlockPlanner.Inner_JsonUtil nearby = tower != null && tower.init_I() <= firstTick + 1
+   static ClutchBlockPlanner.ClutchPlan load(List<AABB> bodies, double eyeHeight, double reach, final ClutchBlockPlanner.PlacementWorld world, int firstTick, List<Vec3> eyes) {
+      ClutchBlockPlanner.PlacementLink tower = towerLink(bodies, eyeHeight, reach, world, firstTick, eyes);
+      ClutchBlockPlanner.ClutchPlan nearby = tower != null && tower.init_I() <= firstTick + 1
          ? null
          : nearestReachPlan(bodies, eyeHeight, reach, world, firstTick, eyes);
-      ClutchBlockPlanner.Inner_JsonUtil first = nearby == null || tower != null && nearby.init_k_NetHelper().init_I() >= tower.init_I()
-         ? (tower == null ? null : new ClutchBlockPlanner.Inner_JsonUtil(List.of(tower), tower.init_BlockPos(), tower.load_I() + 1, 0.0, false))
+      ClutchBlockPlanner.ClutchPlan first = nearby == null || tower != null && nearby.init_k_NetHelper().init_I() >= tower.init_I()
+         ? (tower == null ? null : new ClutchBlockPlanner.ClutchPlan(List.of(tower), tower.init_BlockPos(), tower.load_I() + 1, 0.0, false))
          : nearby;
       if (first == null) {
          return null;
       }
 
-      final ClutchBlockPlanner.Inner_NetHelper root = first.init_k_NetHelper();
-      ClutchBlockPlanner.Inner_DataUtil withRoot = new ClutchBlockPlanner.Inner_DataUtil() {
+      final ClutchBlockPlanner.PlacementLink root = first.init_k_NetHelper();
+      ClutchBlockPlanner.PlacementWorld withRoot = new ClutchBlockPlanner.PlacementWorld() {
          @Override
          public boolean load(int x, int y, int z) {
             return x == root.init_BlockPos().getX() && y == root.init_BlockPos().getY() && z == root.init_BlockPos().getZ() || world.load(x, y, z);
@@ -326,26 +326,26 @@ final class ClutchBlockPlanner {
          }
       };
       int after = root.init_I() + 1;
-      ClutchBlockPlanner.Inner_NetHelper next = towerLink(bodies, eyeHeight, reach, withRoot, after, eyes);
-      ClutchBlockPlanner.Inner_JsonUtil extra = next != null && next.init_I() <= after ? null : nearestReachPlan(bodies, eyeHeight, reach, withRoot, after, eyes);
+      ClutchBlockPlanner.PlacementLink next = towerLink(bodies, eyeHeight, reach, withRoot, after, eyes);
+      ClutchBlockPlanner.ClutchPlan extra = next != null && next.init_I() <= after ? null : nearestReachPlan(bodies, eyeHeight, reach, withRoot, after, eyes);
       if (extra != null && (next == null || extra.init_k_NetHelper().init_I() < next.init_I())) {
          next = extra.init_k_NetHelper();
       }
 
       return next != null && next.init_I() == after && next.load_BlockPos().equals(root.init_BlockPos())
-         ? new ClutchBlockPlanner.Inner_JsonUtil(List.of(root, next), first.init_BlockPos(), first.init_I(), first.init_D(), first.load())
+         ? new ClutchBlockPlanner.ClutchPlan(List.of(root, next), first.init_BlockPos(), first.init_I(), first.init_D(), first.load())
          : first;
    }
 
-   static List<ClutchBlockPlanner.Inner_NetHelper> unusedCandidateLinks(List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.Inner_DataUtil world, int firstTick, int limit) {
+   static List<ClutchBlockPlanner.PlacementLink> unusedCandidateLinks(List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.PlacementWorld world, int firstTick, int limit) {
       return init_List_List(bodies, eyeHeight, reach, world, firstTick, limit, List.of());
    }
 
-   static List<ClutchBlockPlanner.Inner_NetHelper> init_List_List(
-      List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.Inner_DataUtil world, int firstTick, int limit, List<Vec3> writtenEyes
+   static List<ClutchBlockPlanner.PlacementLink> init_List_List(
+      List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.PlacementWorld world, int firstTick, int limit, List<Vec3> writtenEyes
    ) {
       if (bodies != null && bodies.size() >= 2 && world != null && limit > 0) {
-         ClutchBlockPlanner.Inner_TaskQueue flight = new ClutchBlockPlanner.Inner_TaskQueue(bodies, eyeHeight, world, 0.0, writtenEyes);
+         ClutchBlockPlanner.FallFlight flight = new ClutchBlockPlanner.FallFlight(bodies, eyeHeight, world, 0.0, writtenEyes);
          int horizon = Math.min(bodies.size() - 1, 12);
          int radius = Mth.ceil(reach) + 1;
          double cellReach = (reach + 1.0) * (reach + 1.0);
@@ -400,13 +400,13 @@ final class ClutchBlockPlanner {
          }
 
          found.sort((a, b) -> a[2] != b[2] ? Long.compare(a[2], b[2]) : Long.compare(a[3], b[3]));
-         List<ClutchBlockPlanner.Inner_NetHelper> links = new ArrayList<>(Math.min(limit, found.size()));
+         List<ClutchBlockPlanner.PlacementLink> links = new ArrayList<>(Math.min(limit, found.size()));
 
          for (long[] entry : found.subList(0, Math.min(limit, found.size()))) {
             BlockPos cell = BlockPos.of(entry[0]);
             Direction face = DIRECTIONS[(int)entry[1]];
             int k = (int)entry[2];
-            links.add(new ClutchBlockPlanner.Inner_NetHelper(cell, cell.relative(face.getOpposite()), face, k, k));
+            links.add(new ClutchBlockPlanner.PlacementLink(cell, cell.relative(face.getOpposite()), face, k, k));
          }
 
          return links;
@@ -415,12 +415,12 @@ final class ClutchBlockPlanner {
       }
    }
 
-   static ClutchBlockPlanner.Inner_NetHelper unusedTowerLink(List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.Inner_DataUtil world, int firstTick) {
+   static ClutchBlockPlanner.PlacementLink unusedTowerLink(List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.PlacementWorld world, int firstTick) {
       return towerLink(bodies, eyeHeight, reach, world, firstTick, List.of());
    }
 
-   static ClutchBlockPlanner.Inner_NetHelper towerLink(
-      List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.Inner_DataUtil world, int firstTick, List<Vec3> writtenEyes
+   static ClutchBlockPlanner.PlacementLink towerLink(
+      List<AABB> bodies, double eyeHeight, double reach, ClutchBlockPlanner.PlacementWorld world, int firstTick, List<Vec3> writtenEyes
    ) {
       if (bodies != null && bodies.size() >= 2 && world != null) {
          int horizon = Math.min(bodies.size() - 2, 4);
@@ -476,7 +476,7 @@ final class ClutchBlockPlanner {
                   last = later++;
                }
 
-               return new ClutchBlockPlanner.Inner_NetHelper(cell, support, face, k, last);
+               return new ClutchBlockPlanner.PlacementLink(cell, support, face, k, last);
             }
          }
 
@@ -646,7 +646,7 @@ final class ClutchBlockPlanner {
       return polygon;
    }
 
-   static List<ClutchBlockPlanner.Inner_StreamUtil> init_List_Vec3_2(
+   static List<ClutchBlockPlanner.AimAngles> init_List_Vec3_2(
       Vec3 eye,
       Vec3 nextEye,
       AABB rect,
@@ -680,7 +680,7 @@ final class ClutchBlockPlanner {
          int low = (int)Math.ceil((min - base) / gcd) - 1;
          int high = (int)Math.floor((max - base) / gcd) + 1;
          int centre = (int)Math.round(((min + max) * 0.5 - base) / gcd);
-         List<ClutchBlockPlanner.Inner_StreamUtil> result = new ArrayList<>(8);
+         List<ClutchBlockPlanner.AimAngles> result = new ArrayList<>(8);
          List<Double> margins = new ArrayList<>(8);
 
          for (int step = 0; step <= Math.max(centre - low, high - centre) * 2; step++) {
@@ -729,7 +729,7 @@ final class ClutchBlockPlanner {
                            if (ClutchFallPhysics.matchesPlacementHit(hit, support, face)
                               && autismclient.util.BlockPlacementPlanner.isPointInsideFace(rect, face, hit.getLocation(), margin)
                               && init_Z_Vec3_2(nextEye, look, placed, nextFace, reach)) {
-                              ClutchBlockPlanner.Inner_StreamUtil found = new ClutchBlockPlanner.Inner_StreamUtil(yaw, pitch);
+                              ClutchBlockPlanner.AimAngles found = new ClutchBlockPlanner.AimAngles(yaw, pitch);
                               if (!result.contains(found)) {
                                  BlockHitResult following = AABB.clip(UNIT_CUBE, nextEye, nextEye.add(look.scale(reach)), placed);
                                  Vec3 point = following.getLocation();
@@ -777,7 +777,7 @@ final class ClutchBlockPlanner {
       }
    }
 
-   static List<ClutchBlockPlanner.Inner_StreamUtil> init_List_Vec3(
+   static List<ClutchBlockPlanner.AimAngles> init_List_Vec3(
       Vec3 approximateEye,
       AABB rect,
       BlockPos support,
@@ -789,7 +789,7 @@ final class ClutchBlockPlanner {
       float fromPitch,
       double gcd,
       double margin,
-      DoubleFunction<ClutchFallPhysics.Inner_DataUtil> eyes
+      DoubleFunction<ClutchFallPhysics.AirSweep> eyes
    ) {
       if (face.getAxis() != Axis.Y && nextFace != null && nextFace.getAxis() != Axis.Y && Double.isFinite(gcd) && !(gcd < 0.009) && !(gcd > 10.0)) {
          double middle = Math.toDegrees(Math.atan2(-(rect.getCenter().x - approximateEye.x), rect.getCenter().z - approximateEye.z));
@@ -812,7 +812,7 @@ final class ClutchBlockPlanner {
          int low = (int)Math.ceil((min - base) / gcd) - 1;
          int high = (int)Math.floor((max - base) / gcd) + 1;
          int centre = (int)Math.round(((min + max) * 0.5 - base) / gcd);
-         List<ClutchBlockPlanner.Inner_StreamUtil> result = new ArrayList<>(8);
+         List<ClutchBlockPlanner.AimAngles> result = new ArrayList<>(8);
          List<Double> scores = new ArrayList<>(8);
          AABB followingRect = init(placed, nextFace);
 
@@ -820,7 +820,7 @@ final class ClutchBlockPlanner {
             int count = centre + (step % 2 == 0 ? step / 2 : -(step + 1) / 2);
             if (count >= low && count <= high) {
                float yaw = fromYaw + (float)(count * gcd);
-               ClutchFallPhysics.Inner_DataUtil window = eyes.apply(yaw);
+               ClutchFallPhysics.AirSweep window = eyes.apply(yaw);
                if (window != null) {
                   Vec3 flat = Vec3.directionFromRotation(0.0F, yaw);
                   double[] here = pitchRangeOnFace(window.startEye(), flat, rect, face, margin);
@@ -842,7 +842,7 @@ final class ClutchBlockPlanner {
                               if (ClutchFallPhysics.matchesPlacementHit(hit, support, face)
                                  && autismclient.util.BlockPlacementPlanner.isPointInsideFace(rect, face, hit.getLocation(), margin)
                                  && ClutchFallPhysics.matchesPlacementHit(following, placed, nextFace)) {
-                                 ClutchBlockPlanner.Inner_StreamUtil found = new ClutchBlockPlanner.Inner_StreamUtil(yaw, pitch);
+                                 ClutchBlockPlanner.AimAngles found = new ClutchBlockPlanner.AimAngles(yaw, pitch);
                                  if (!result.contains(found)) {
                                     Vec3 point = following.getLocation();
                                     AABB box = new AABB(placed);
@@ -1078,12 +1078,12 @@ final class ClutchBlockPlanner {
       return var10000;
    }
 
-   private record Inner_BufferHelper(
-      ClutchBlockPlanner.Inner_TaskQueue flight,
+   private record PlanChooser(
+      ClutchBlockPlanner.FallFlight flight,
       double health,
       BlockPos keep,
       int homeRow,
-      ToDoubleFunction<ClutchBlockPlanner.Inner_NetHelper> firstCost,
+      ToDoubleFunction<ClutchBlockPlanner.PlacementLink> firstCost,
       int blocks,
       DoubleUnaryOperator damage,
       double maxCatchDamage
@@ -1102,7 +1102,7 @@ final class ClutchBlockPlanner {
          return last;
       }
 
-      ClutchBlockPlanner.Inner_JsonUtil bestPlan(ClutchBlockPlanner.Inner_StateCache search, boolean fatal, boolean reachOut) {
+      ClutchBlockPlanner.ClutchPlan bestPlan(ClutchBlockPlanner.LinkSearch search, boolean fatal, boolean reachOut) {
          LongArrayList goals = new LongArrayList();
          Long2DoubleOpenHashMap cheap = new Long2DoubleOpenHashMap();
 
@@ -1133,12 +1133,12 @@ final class ClutchBlockPlanner {
          }
 
          goals.sort((a, b) -> Double.compare(cheap.get(a), cheap.get(b)));
-         ClutchBlockPlanner.Inner_JsonUtil chosen = null;
+         ClutchBlockPlanner.ClutchPlan chosen = null;
          double chosenScore = 1.0 / 0.0;
 
          for (int g = 0; g < Math.min(goals.size(), this.firstCost == null ? 1 : 6); g++) {
             long goal = goals.getLong(g);
-            ClutchBlockPlanner.Inner_JsonUtil plan = this.planToGoal(
+            ClutchBlockPlanner.ClutchPlan plan = this.planToGoal(
                goal, this.flight.landingDue.get(goal), this.flight.landingFall.get(goal), search, reachOut
             );
             double score = cheap.get(goal) + (this.firstCost == null ? 0.0 : this.firstCost.applyAsDouble(plan.init_k_NetHelper()));
@@ -1151,7 +1151,7 @@ final class ClutchBlockPlanner {
          return chosen;
       }
 
-      private ClutchBlockPlanner.Inner_JsonUtil planToGoal(long goal, int landingTick, double fall, ClutchBlockPlanner.Inner_StateCache search, boolean reachOut) {
+      private ClutchBlockPlanner.ClutchPlan planToGoal(long goal, int landingTick, double fall, ClutchBlockPlanner.LinkSearch search, boolean reachOut) {
          Vec3[] eyes = this.flight.eyes;
          double reach = search.reach();
          LongArrayList chain = new LongArrayList();
@@ -1190,16 +1190,16 @@ final class ClutchBlockPlanner {
             next = last;
          }
 
-         List<ClutchBlockPlanner.Inner_NetHelper> links = new ArrayList<>(chain.size());
+         List<ClutchBlockPlanner.PlacementLink> links = new ArrayList<>(chain.size());
 
          for (int i = 0; i < chain.size(); i++) {
             long key = chain.getLong(i);
             BlockPos cell = BlockPos.of(key);
             Direction face = autismclient.modules.ClutchBlockPlanner.DIRECTIONS[search.parentFace().get(key)];
-            links.add(new ClutchBlockPlanner.Inner_NetHelper(cell, cell.relative(face.getOpposite()), face, search.earliestTick().get(key), latest[i]));
+            links.add(new ClutchBlockPlanner.PlacementLink(cell, cell.relative(face.getOpposite()), face, search.earliestTick().get(key), latest[i]));
          }
 
-         return new ClutchBlockPlanner.Inner_JsonUtil(List.copyOf(links), BlockPos.of(goal), landingTick, fall, reachOut);
+         return new ClutchBlockPlanner.ClutchPlan(List.copyOf(links), BlockPos.of(goal), landingTick, fall, reachOut);
       }
 
       private boolean canPlaceAt(long key, BlockPos support, Direction face, int k, int clearUntil, double reach) {
@@ -1213,13 +1213,13 @@ final class ClutchBlockPlanner {
       }
    }
 
-   private static final class Inner_CachePool {
-      private final ClutchBlockPlanner.Inner_DataUtil world;
+   private static final class CellCache {
+      private final ClutchBlockPlanner.PlacementWorld world;
       private final Long2ByteOpenHashMap cache = new Long2ByteOpenHashMap();
       private final Long2ByteOpenHashMap supportCache = new Long2ByteOpenHashMap();
       private final Long2ByteOpenHashMap adjacentSupportCache = new Long2ByteOpenHashMap();
 
-      Inner_CachePool(ClutchBlockPlanner.Inner_DataUtil world) {
+      CellCache(ClutchBlockPlanner.PlacementWorld world) {
          this.world = world;
       }
 
@@ -1263,12 +1263,12 @@ final class ClutchBlockPlanner {
       }
    }
 
-   private static final class Inner_ConfigStore {
+   private static final class BodyContacts {
       private final List<AABB> bodies;
       private final AABB bounds;
       private final Long2ObjectOpenHashMap<int[]> contactsByCell = new Long2ObjectOpenHashMap<>();
 
-      Inner_ConfigStore(List<AABB> bodies) {
+      BodyContacts(List<AABB> bodies) {
          this.bodies = bodies;
          AABB all = bodies.getFirst();
 
@@ -1335,7 +1335,7 @@ final class ClutchBlockPlanner {
       }
    }
 
-   interface Inner_DataUtil {
+   interface PlacementWorld {
       boolean load(int var1, int var2, int var3);
 
       boolean read(int var1, int var2, int var3);
@@ -1357,12 +1357,12 @@ final class ClutchBlockPlanner {
       }
    }
 
-   record Inner_JsonUtil(List<ClutchBlockPlanner.Inner_NetHelper> init_List, BlockPos init_BlockPos, int init_I, double init_D, boolean init_Z, boolean load) {
-      Inner_JsonUtil(List<ClutchBlockPlanner.Inner_NetHelper> links, BlockPos landing, int landingTick, double fall, boolean reachOut) {
+   record ClutchPlan(List<ClutchBlockPlanner.PlacementLink> init_List, BlockPos init_BlockPos, int init_I, double init_D, boolean init_Z, boolean load) {
+      ClutchPlan(List<ClutchBlockPlanner.PlacementLink> links, BlockPos landing, int landingTick, double fall, boolean reachOut) {
          this(links, landing, landingTick, fall, reachOut, false);
       }
 
-      ClutchBlockPlanner.Inner_NetHelper init_k_NetHelper() {
+      ClutchBlockPlanner.PlacementLink init_k_NetHelper() {
          return this.init_List.getFirst();
       }
 
@@ -1379,10 +1379,10 @@ final class ClutchBlockPlanner {
       }
    }
 
-   record Inner_NetHelper(BlockPos init_BlockPos, BlockPos load_BlockPos, Direction init_Direction, int init_I, int load_I) {
+   record PlacementLink(BlockPos init_BlockPos, BlockPos load_BlockPos, Direction init_Direction, int init_I, int load_I) {
    }
 
-   private record Inner_StateCache(
+   private record LinkSearch(
       Long2IntOpenHashMap earliestTick,
       Long2LongOpenHashMap parent,
       Long2ByteOpenHashMap parentFace,
@@ -1391,33 +1391,33 @@ final class ClutchBlockPlanner {
    ) {
    }
 
-   record Inner_StreamUtil(float init, float load) {
+   record AimAngles(float init, float load) {
    }
 
-   private static final class Inner_TaskQueue {
+   private static final class FallFlight {
       final List<AABB> bodies;
       final Vec3[] eyes;
-      final ClutchBlockPlanner.Inner_DataUtil world;
+      final ClutchBlockPlanner.PlacementWorld world;
       double margin = 0.02;
       boolean immediate;
-      final ClutchBlockPlanner.Inner_CachePool cells;
-      final ClutchBlockPlanner.Inner_ConfigStore contacts;
+      final ClutchBlockPlanner.CellCache cells;
+      final ClutchBlockPlanner.BodyContacts contacts;
       final Long2IntOpenHashMap landingDue = new Long2IntOpenHashMap();
       final Long2DoubleOpenHashMap landingFall = new Long2DoubleOpenHashMap();
 
-      Inner_TaskQueue(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_DataUtil world, double fallSoFar) {
+      FallFlight(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.PlacementWorld world, double fallSoFar) {
          this(bodies, eyeHeight, world, fallSoFar, List.of());
       }
 
-      Inner_TaskQueue(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_DataUtil world, double fallSoFar, List<Vec3> writtenEyes) {
+      FallFlight(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.PlacementWorld world, double fallSoFar, List<Vec3> writtenEyes) {
          this(bodies, eyeHeight, world, fallSoFar, writtenEyes, 0.06);
       }
 
-      Inner_TaskQueue(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.Inner_DataUtil world, double fallSoFar, List<Vec3> writtenEyes, double landingInset) {
+      FallFlight(List<AABB> bodies, double eyeHeight, ClutchBlockPlanner.PlacementWorld world, double fallSoFar, List<Vec3> writtenEyes, double landingInset) {
          this.bodies = bodies;
          this.world = world;
-         this.cells = new ClutchBlockPlanner.Inner_CachePool(world);
-         this.contacts = new ClutchBlockPlanner.Inner_ConfigStore(bodies);
+         this.cells = new ClutchBlockPlanner.CellCache(world);
+         this.contacts = new ClutchBlockPlanner.BodyContacts(bodies);
          int horizon = bodies.size() - 1;
          this.eyes = new Vec3[bodies.size()];
 
@@ -1459,7 +1459,7 @@ final class ClutchBlockPlanner {
          }
       }
 
-      ClutchBlockPlanner.Inner_StateCache search(int firstTick, double reach, boolean carried, int lastTick) {
+      ClutchBlockPlanner.LinkSearch search(int firstTick, double reach, boolean carried, int lastTick) {
          int horizon = Math.min(this.bodies.size() - 1, lastTick);
          Long2IntOpenHashMap best = new Long2IntOpenHashMap();
          best.defaultReturnValue(-1);
@@ -1582,15 +1582,15 @@ final class ClutchBlockPlanner {
             }
          }
 
-         return new ClutchBlockPlanner.Inner_StateCache(best, parent, parentFace, linkable, reach);
+         return new ClutchBlockPlanner.LinkSearch(best, parent, parentFace, linkable, reach);
       }
 
-      ClutchBlockPlanner.Inner_JsonUtil nearestPlan(int firstTick, double reach) {
+      ClutchBlockPlanner.ClutchPlan nearestPlan(int firstTick, double reach) {
          return this.nearestPlanWithin(firstTick, reach, this.bodies.size());
       }
 
-      ClutchBlockPlanner.Inner_JsonUtil nearestPlanWithin(int firstTick, double reach, int nearbyTicks) {
-         ClutchBlockPlanner.Inner_NetHelper chosen = null;
+      ClutchBlockPlanner.ClutchPlan nearestPlanWithin(int firstTick, double reach, int nearbyTicks) {
+         ClutchBlockPlanner.PlacementLink chosen = null;
          double chosenScore = 1.0 / 0.0;
          int radius = Mth.ceil(reach) + 1;
          double cellReach = (reach + 1.0) * (reach + 1.0);
@@ -1644,7 +1644,7 @@ final class ClutchBlockPlanner {
                                  double score = nearest + k * 0.25;
                                  if (score < chosenScore) {
                                     chosenScore = score;
-                                    chosen = new ClutchBlockPlanner.Inner_NetHelper(new BlockPos(x, y, z), support, face, k, k);
+                                    chosen = new ClutchBlockPlanner.PlacementLink(new BlockPos(x, y, z), support, face, k, k);
                                  }
                               }
                            }
@@ -1655,7 +1655,7 @@ final class ClutchBlockPlanner {
             }
          }
 
-         return chosen == null ? null : new ClutchBlockPlanner.Inner_JsonUtil(List.of(chosen), chosen.init_BlockPos(), this.bodies.size() - 1, 0.0 / 0.0, true);
+         return chosen == null ? null : new ClutchBlockPlanner.ClutchPlan(List.of(chosen), chosen.init_BlockPos(), this.bodies.size() - 1, 0.0 / 0.0, true);
       }
    }
 }

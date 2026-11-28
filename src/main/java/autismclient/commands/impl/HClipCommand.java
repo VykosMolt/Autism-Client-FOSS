@@ -27,22 +27,22 @@ public class HClipCommand extends Command {
       });
       root.then(init("blocks", options -> options));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("forward").executes(ctx -> {
-         autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(0.0);
-         options.mode = autismclient.util.macro.HClipAction.Inner_CachePool.FORWARD;
+         autismclient.util.macro.HClipAction.ClipOptions options = autismclient.util.macro.HClipAction.ClipOptions.init(0.0);
+         options.mode = autismclient.util.macro.HClipAction.ClipMode.FORWARD;
          init(options);
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("back").executes(ctx -> {
-         autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(0.0);
-         options.mode = autismclient.util.macro.HClipAction.Inner_CachePool.BACK;
+         autismclient.util.macro.HClipAction.ClipOptions options = autismclient.util.macro.HClipAction.ClipOptions.init(0.0);
+         options.mode = autismclient.util.macro.HClipAction.ClipMode.BACK;
          init(options);
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("default").then(init("blocks", options -> options)));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("paper").then(init("blocks", options -> options)));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("padding").then(init("blocks", options -> options)));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("single").then(init("blocks", autismclient.util.macro.HClipAction.Inner_BufferHelper::init)));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("normal").then(init("blocks", autismclient.util.macro.HClipAction.Inner_BufferHelper::init)));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("single").then(init("blocks", autismclient.util.macro.HClipAction.ClipOptions::init)));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("normal").then(init("blocks", autismclient.util.macro.HClipAction.ClipOptions::init)));
       root.then(
          LiteralArgumentBuilder.<AutismCommandSource>literal("custom")
             .then(
@@ -53,7 +53,7 @@ public class HClipCommand extends Command {
                            .suggests(autismclient.commands.CommandSuggestions::read)
                            .executes(
                               ctx -> {
-                                 autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(
+                                 autismclient.util.macro.HClipAction.ClipOptions options = autismclient.util.macro.HClipAction.ClipOptions.init(
                                     DoubleArgumentType.getDouble(ctx, "blocks")
                                  );
                                  options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
@@ -66,7 +66,7 @@ public class HClipCommand extends Command {
                                  .suggests(autismclient.commands.CommandSuggestions::write)
                                  .executes(
                                     ctx -> {
-                                       autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(
+                                       autismclient.util.macro.HClipAction.ClipOptions options = autismclient.util.macro.HClipAction.ClipOptions.init(
                                           DoubleArgumentType.getDouble(ctx, "blocks")
                                        );
                                        options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
@@ -79,7 +79,7 @@ public class HClipCommand extends Command {
                                  ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("updateLocal", BoolArgumentType.bool())
                                        .suggests(autismclient.commands.CommandSuggestions::flush)
                                        .executes(ctx -> {
-                                          autismclient.util.macro.HClipAction.Inner_BufferHelper options = init(ctx);
+                                          autismclient.util.macro.HClipAction.ClipOptions options = init(ctx);
                                           options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                           init(options);
                                           return 1;
@@ -88,7 +88,7 @@ public class HClipCommand extends Command {
                                        ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("vehicle", BoolArgumentType.bool())
                                              .suggests(autismclient.commands.CommandSuggestions::flush)
                                              .executes(ctx -> {
-                                                autismclient.util.macro.HClipAction.Inner_BufferHelper options = init(ctx);
+                                                autismclient.util.macro.HClipAction.ClipOptions options = init(ctx);
                                                 options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                                 options.tryVehicleFirst = BoolArgumentType.getBool(ctx, "vehicle");
                                                 init(options);
@@ -98,7 +98,7 @@ public class HClipCommand extends Command {
                                              RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("forceGround", BoolArgumentType.bool())
                                                 .suggests(autismclient.commands.CommandSuggestions::flush)
                                                 .executes(ctx -> {
-                                                   autismclient.util.macro.HClipAction.Inner_BufferHelper options = init(ctx);
+                                                   autismclient.util.macro.HClipAction.ClipOptions options = init(ctx);
                                                    options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                                    options.tryVehicleFirst = BoolArgumentType.getBool(ctx, "vehicle");
                                                    options.forceGrounded = BoolArgumentType.getBool(ctx, "forceGround");
@@ -119,7 +119,7 @@ public class HClipCommand extends Command {
          .suggests(autismclient.commands.CommandSuggestions::load)
          .executes(
             ctx -> {
-               autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(
+               autismclient.util.macro.HClipAction.ClipOptions options = autismclient.util.macro.HClipAction.ClipOptions.init(
                   DoubleArgumentType.getDouble(ctx, name)
                );
                init(customizer.apply(options));
@@ -128,8 +128,8 @@ public class HClipCommand extends Command {
          );
    }
 
-   private static autismclient.util.macro.HClipAction.Inner_BufferHelper init(CommandContext<AutismCommandSource> ctx) {
-      autismclient.util.macro.HClipAction.Inner_BufferHelper options = autismclient.util.macro.HClipAction.Inner_BufferHelper.init(
+   private static autismclient.util.macro.HClipAction.ClipOptions init(CommandContext<AutismCommandSource> ctx) {
+      autismclient.util.macro.HClipAction.ClipOptions options = autismclient.util.macro.HClipAction.ClipOptions.init(
          DoubleArgumentType.getDouble(ctx, "blocks")
       );
       options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
@@ -139,15 +139,15 @@ public class HClipCommand extends Command {
    }
 
    public static void init(double blocks) {
-      init(autismclient.util.macro.HClipAction.Inner_BufferHelper.init(blocks));
+      init(autismclient.util.macro.HClipAction.ClipOptions.init(blocks));
    }
 
-   private static void init(autismclient.util.macro.HClipAction.Inner_BufferHelper options) {
+   private static void init(autismclient.util.macro.HClipAction.ClipOptions options) {
       options.chatFeedback = true;
       autismclient.util.macro.HClipAction.init(Minecraft.getInstance(), options);
    }
 
    private interface Inner_DataUtil {
-      autismclient.util.macro.HClipAction.Inner_BufferHelper apply(autismclient.util.macro.HClipAction.Inner_BufferHelper var1);
+      autismclient.util.macro.HClipAction.ClipOptions apply(autismclient.util.macro.HClipAction.ClipOptions var1);
    }
 }

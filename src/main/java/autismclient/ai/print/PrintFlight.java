@@ -182,8 +182,8 @@ final class PrintFlight {
       return current;
    }
 
-   static PrintFlight.Inner_BufferHelper findFlightPath(PrintView view, Vec3 start, Set<Long> goals, int limit) {
-      PrintFlight.Inner_ConfigStore search = new PrintFlight.Inner_ConfigStore(view, start, goals, limit);
+   static PrintFlight.FlightPath findFlightPath(PrintView view, Vec3 start, Set<Long> goals, int limit) {
+      PrintFlight.FlightSearch search = new PrintFlight.FlightSearch(view, start, goals, limit);
       search.stepSearch(9223372036854775807L);
       return search.result;
    }
@@ -478,10 +478,10 @@ final class PrintFlight {
       }
    }
 
-   record Inner_BufferHelper(List<Vec3> points, long goal) {
+   record FlightPath(List<Vec3> points, long goal) {
    }
 
-   static final class Inner_CachePool {
+   static final class StallDetector {
       private Vec3 lastDestination;
       private double bestDistanceSq;
       private long lastProgressTick;
@@ -503,36 +503,36 @@ final class PrintFlight {
       }
    }
 
-   static final class Inner_ConfigStore {
+   static final class FlightSearch {
       private static final int REVERSE_PROBE_AFTER_EXPANSIONS = 256;
       private static final int MAX_REVERSE_PROBE_GOALS = 64;
       final PrintView view;
       final Set<Long> goalCells;
       final Vec3 exactGoal;
       final int maxExpansions;
-      final PriorityQueue<PrintFlight.Inner_StreamUtil> openQueue = new PriorityQueue<>(
-         Comparator.comparingDouble(PrintFlight.Inner_StreamUtil::estimate)
-            .thenComparing(Comparator.comparingDouble(PrintFlight.Inner_StreamUtil::cost).reversed())
-            .thenComparingLong(PrintFlight.Inner_StreamUtil::key)
+      final PriorityQueue<PrintFlight.FlightNode> openQueue = new PriorityQueue<>(
+         Comparator.comparingDouble(PrintFlight.FlightNode::estimate)
+            .thenComparing(Comparator.comparingDouble(PrintFlight.FlightNode::cost).reversed())
+            .thenComparingLong(PrintFlight.FlightNode::key)
       );
       final Long2DoubleOpenHashMap bestCostByCell = new Long2DoubleOpenHashMap();
       final long startCellKey;
       Vec3 initialPoint;
-      PrintFlight.Inner_ConfigStore.Inner_DataUtil reverseProbe;
+      PrintFlight.FlightSearch.ReverseProbe reverseProbe;
       boolean reverseProbeStarted;
       int expandedNodes;
       boolean finished;
-      PrintFlight.Inner_BufferHelper result;
+      PrintFlight.FlightPath result;
 
-      Inner_ConfigStore(PrintView view, Vec3 start, Set<Long> goals, int limit) {
+      FlightSearch(PrintView view, Vec3 start, Set<Long> goals, int limit) {
          this(view, start, goals, null, limit);
       }
 
-      Inner_ConfigStore(PrintView view, Vec3 start, Vec3 goal, int limit) {
+      FlightSearch(PrintView view, Vec3 start, Vec3 goal, int limit) {
          this(view, start, Set.of(BlockPos.containing(goal).asLong()), goal, limit);
       }
 
-      private Inner_ConfigStore(PrintView view, Vec3 start, Set<Long> goals, Vec3 exactGoal, int limit) {
+      private FlightSearch(PrintView view, Vec3 start, Set<Long> goals, Vec3 exactGoal, int limit) {
          this.view = view;
          this.goalCells = new LinkedHashSet<>(goals);
          this.exactGoal = exactGoal;
@@ -543,18 +543,18 @@ final class PrintFlight {
          if (goals.isEmpty()) {
             this.finished = true;
          } else if (exactGoal != null && start.distanceToSqr(exactGoal) <= 4.0 && PrintFlight.isFlightSegmentClear(view, start, exactGoal)) {
-            this.result = new PrintFlight.Inner_BufferHelper(List.of(exactGoal), BlockPos.containing(exactGoal).asLong());
+            this.result = new PrintFlight.FlightPath(List.of(exactGoal), BlockPos.containing(exactGoal).asLong());
             this.finished = true;
          } else {
             Vec3 entry = PrintFlight.cellFlightPoint(this.startCellKey);
-            PrintFlight.Inner_StreamUtil origin = new PrintFlight.Inner_StreamUtil(this.startCellKey, start, 0.0, 0.0, null);
+            PrintFlight.FlightNode origin = new PrintFlight.FlightNode(this.startCellKey, start, 0.0, 0.0, null);
             boolean centred = PrintFlight.isFlightSegmentClear(view, start, entry);
             Vec3 initial = centred ? entry : start;
             this.initialPoint = initial;
             double initialCost = start.distanceTo(initial);
             this.openQueue
                .add(
-                  new PrintFlight.Inner_StreamUtil(
+                  new PrintFlight.FlightNode(
                      this.startCellKey, initial, initialCost, initialCost + this.heuristic(initial), centred && initialCost > 1.0E-7 ? origin : null
                   )
                );
@@ -569,7 +569,7 @@ final class PrintFlight {
             if (!this.reverseProbeStarted && this.exactGoal == null && this.expandedNodes >= 256) {
                this.reverseProbeStarted = true;
                if (this.goalCells.size() <= 64) {
-                  this.reverseProbe = new PrintFlight.Inner_ConfigStore.Inner_DataUtil();
+                  this.reverseProbe = new PrintFlight.FlightSearch.ReverseProbe();
                }
             }
 
@@ -590,7 +590,7 @@ final class PrintFlight {
                return;
             }
 
-            PrintFlight.Inner_StreamUtil at = this.openQueue.remove();
+            PrintFlight.FlightNode at = this.openQueue.remove();
             if (!(at.cost > this.bestCostByCell.get(at.key) + 1.0E-7)) {
                Vec3 finish = this.exactGoal == null ? PrintFlight.cellFlightPoint(at.key) : this.exactGoal;
                boolean nearGoal = this.exactGoal == null ? this.goalCells.contains(at.key) : at.point.distanceToSqr(this.exactGoal) <= 4.0;
@@ -598,14 +598,14 @@ final class PrintFlight {
                   ArrayList<Vec3> reverse = new ArrayList<>();
                   reverse.add(finish);
 
-                  for (PrintFlight.Inner_StreamUtil p = at; p.parent != null; p = p.parent) {
+                  for (PrintFlight.FlightNode p = at; p.parent != null; p = p.parent) {
                      if (!p.point.equals(reverse.get(reverse.size() - 1))) {
                         reverse.add(p.point);
                      }
                   }
 
                   Collections.reverse(reverse);
-                  this.result = new PrintFlight.Inner_BufferHelper(
+                  this.result = new PrintFlight.FlightPath(
                      List.copyOf(reverse), this.exactGoal == null ? at.key : BlockPos.containing(this.exactGoal).asLong()
                   );
                   this.finished = true;
@@ -622,7 +622,7 @@ final class PrintFlight {
                      && PrintFlight.isFlightSegmentClear(this.view, at.point, next)
                      && (this.goalCells.contains(key) || !PrintFlight.isNearObservedLava(this.view, next))) {
                      this.bestCostByCell.put(key, cost);
-                     this.openQueue.add(new PrintFlight.Inner_StreamUtil(key, next, cost, cost + this.heuristic(next), at));
+                     this.openQueue.add(new PrintFlight.FlightNode(key, next, cost, cost + this.heuristic(next), at));
                   }
                }
             }
@@ -633,8 +633,8 @@ final class PrintFlight {
          return this.exactGoal == null ? PrintFlight.estimateDistanceToGoals(point, this.goalCells) : point.distanceTo(this.exactGoal);
       }
 
-      final class Inner_DataUtil {
-         final Iterator<Long> goalIterator = Inner_ConfigStore.this.goalCells.iterator();
+      final class ReverseProbe {
+         final Iterator<Long> goalIterator = FlightSearch.this.goalCells.iterator();
          final LongOpenHashSet visited = new LongOpenHashSet();
          final LongArrayFIFOQueue frontier = new LongArrayFIFOQueue();
          long currentKey;
@@ -644,10 +644,10 @@ final class PrintFlight {
          boolean provedUnreachable;
 
          private boolean reachesStart(long key, Vec3 to) {
-            int distance = Math.abs(BlockPos.getX(key) - BlockPos.getX(Inner_ConfigStore.this.startCellKey))
-               + Math.abs(BlockPos.getY(key) - BlockPos.getY(Inner_ConfigStore.this.startCellKey))
-               + Math.abs(BlockPos.getZ(key) - BlockPos.getZ(Inner_ConfigStore.this.startCellKey));
-            return distance <= 1 && PrintFlight.isFlightSegmentClear(Inner_ConfigStore.this.view, Inner_ConfigStore.this.initialPoint, to);
+            int distance = Math.abs(BlockPos.getX(key) - BlockPos.getX(FlightSearch.this.startCellKey))
+               + Math.abs(BlockPos.getY(key) - BlockPos.getY(FlightSearch.this.startCellKey))
+               + Math.abs(BlockPos.getZ(key) - BlockPos.getZ(FlightSearch.this.startCellKey));
+            return distance <= 1 && PrintFlight.isFlightSegmentClear(FlightSearch.this.view, FlightSearch.this.initialPoint, to);
          }
 
          private void enqueueOrComplete(long key, Vec3 value) {
@@ -660,13 +660,13 @@ final class PrintFlight {
          }
 
          void stepProbe(long allowance) {
-            long started = Inner_ConfigStore.this.view.workUnits();
+            long started = FlightSearch.this.view.workUnits();
             int structural = 0;
 
-            while (!this.done && structural++ < 1024 && Inner_ConfigStore.this.view.workUnits() - started < allowance) {
+            while (!this.done && structural++ < 1024 && FlightSearch.this.view.workUnits() - started < allowance) {
                if (this.goalIterator.hasNext()) {
                   long key = this.goalIterator.next();
-                  if (!this.visited.contains(key) && PrintFlight.isFlightPointSafe(Inner_ConfigStore.this.view, PrintFlight.cellFlightPoint(key))) {
+                  if (!this.visited.contains(key) && PrintFlight.isFlightPointSafe(FlightSearch.this.view, PrintFlight.cellFlightPoint(key))) {
                      this.enqueueOrComplete(key, PrintFlight.cellFlightPoint(key));
                   }
                } else {
@@ -689,8 +689,8 @@ final class PrintFlight {
                      long key = BlockPos.offset(this.currentKey, d[0], d[1], d[2]);
                      if (!this.visited.contains(key)) {
                         Vec3 predecessor = PrintFlight.cellFlightPoint(key);
-                        if (PrintFlight.isFlightPointSafe(Inner_ConfigStore.this.view, predecessor)
-                           && PrintFlight.isFlightSegmentClear(Inner_ConfigStore.this.view, predecessor, this.currentPoint)) {
+                        if (PrintFlight.isFlightPointSafe(FlightSearch.this.view, predecessor)
+                           && PrintFlight.isFlightSegmentClear(FlightSearch.this.view, predecessor, this.currentPoint)) {
                            this.enqueueOrComplete(key, predecessor);
                         }
                      }
@@ -701,6 +701,6 @@ final class PrintFlight {
       }
    }
 
-   private record Inner_StreamUtil(long key, Vec3 point, double cost, double estimate, PrintFlight.Inner_StreamUtil parent) {
+   private record FlightNode(long key, Vec3 point, double cost, double estimate, PrintFlight.FlightNode parent) {
    }
 }

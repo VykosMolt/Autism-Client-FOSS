@@ -33,13 +33,13 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    private static final int read_I = 3;
    private final Screen parent;
    private final List<autismclient.gui.ui.widgets.OverlayActionButton> buttons = new ArrayList<>();
-   private final List<PluginLibraryScreen.Inner_CachePool> rowHits = new ArrayList<>();
-   private final List<PluginLibraryScreen.Inner_StreamUtil> visibleRows = new ArrayList<>();
+   private final List<PluginLibraryScreen.RowHit> rowHits = new ArrayList<>();
+   private final List<PluginLibraryScreen.ListRow> visibleRows = new ArrayList<>();
    private final Set<String> expandedKeys = new HashSet<>();
    private EditBox searchField;
    private String searchQuery = "";
-   private PluginLibraryScreen.Inner_DataUtil groupMode = PluginLibraryScreen.Inner_DataUtil.BY_SERVER;
-   private List<PluginLibraryScreen.Inner_StreamUtil> filteredRows = List.of();
+   private PluginLibraryScreen.GroupMode groupMode = PluginLibraryScreen.GroupMode.BY_SERVER;
+   private List<PluginLibraryScreen.ListRow> filteredRows = List.of();
    private int headerCount;
    private int scrollOffset;
    private boolean draggingScrollbar;
@@ -77,10 +77,10 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
    }
 
    private String searchHint() {
-      return this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? "Search servers or plugins..." : "Search plugins...";
+      return this.groupMode == PluginLibraryScreen.GroupMode.BY_SERVER ? "Search servers or plugins..." : "Search plugins...";
    }
 
-   private void setGroupMode(PluginLibraryScreen.Inner_DataUtil next) {
+   private void setGroupMode(PluginLibraryScreen.GroupMode next) {
       if (this.groupMode != next) {
          this.groupMode = next;
          this.expandedKeys.clear();
@@ -101,8 +101,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       this.rebuildButtons();
    }
 
-   private List<PluginLibraryScreen.Inner_ConfigStore> serverEntries() {
-      Map<String, PluginLibraryScreen.Inner_ConfigStore> byAddress = new LinkedHashMap<>();
+   private List<PluginLibraryScreen.ServerEntry> serverEntries() {
+      Map<String, PluginLibraryScreen.ServerEntry> byAddress = new LinkedHashMap<>();
       Map<String, AutismConfig.PluginScanCacheEntry> all = AutismConfig.getGlobal().allPluginScans();
 
       for (Entry<String, AutismConfig.PluginScanCacheEntry> item : all.entrySet()) {
@@ -111,17 +111,17 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
             String address = entry.serverAddress != null && !entry.serverAddress.isBlank() ? entry.serverAddress : addressFromScanKey(item.getKey());
             if (address != null && !address.isBlank()) {
                String lower = address.toLowerCase(Locale.ROOT);
-               PluginLibraryScreen.Inner_ConfigStore existing = byAddress.get(lower);
+               PluginLibraryScreen.ServerEntry existing = byAddress.get(lower);
                if (existing == null || existing.scannedAtMs < entry.scannedAtMs) {
                   String name = entry.serverName != null && !entry.serverName.isBlank() ? entry.serverName : address;
-                  byAddress.put(lower, new PluginLibraryScreen.Inner_ConfigStore(address, name, sortedUnique(entry.plugins), entry.scannedAtMs));
+                  byAddress.put(lower, new PluginLibraryScreen.ServerEntry(address, name, sortedUnique(entry.plugins), entry.scannedAtMs));
                }
             }
          }
       }
 
-      List<PluginLibraryScreen.Inner_ConfigStore> servers = new ArrayList<>(byAddress.values());
-      servers.sort(Comparator.<PluginLibraryScreen.Inner_ConfigStore>comparingLong(r -> r.scannedAtMs).reversed());
+      List<PluginLibraryScreen.ServerEntry> servers = new ArrayList<>(byAddress.values());
+      servers.sort(Comparator.<PluginLibraryScreen.ServerEntry>comparingLong(r -> r.scannedAtMs).reversed());
       return servers;
    }
 
@@ -146,16 +146,16 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       return new ArrayList<>(set);
    }
 
-   private List<PluginLibraryScreen.Inner_StreamUtil> buildRows() {
+   private List<PluginLibraryScreen.ListRow> buildRows() {
       String query = this.searchQuery.toLowerCase(Locale.ROOT);
-      List<PluginLibraryScreen.Inner_ConfigStore> servers = this.serverEntries();
-      return this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? this.rowsByServer(servers, query) : this.rowsByPlugin(servers, query);
+      List<PluginLibraryScreen.ServerEntry> servers = this.serverEntries();
+      return this.groupMode == PluginLibraryScreen.GroupMode.BY_SERVER ? this.rowsByServer(servers, query) : this.rowsByPlugin(servers, query);
    }
 
-   private List<PluginLibraryScreen.Inner_StreamUtil> rowsByServer(List<PluginLibraryScreen.Inner_ConfigStore> servers, String query) {
-      List<PluginLibraryScreen.Inner_StreamUtil> rows = new ArrayList<>();
+   private List<PluginLibraryScreen.ListRow> rowsByServer(List<PluginLibraryScreen.ServerEntry> servers, String query) {
+      List<PluginLibraryScreen.ListRow> rows = new ArrayList<>();
 
-      for (PluginLibraryScreen.Inner_ConfigStore server : servers) {
+      for (PluginLibraryScreen.ServerEntry server : servers) {
          boolean nameHit = query.isEmpty() || fuzzyMatches(server.name, query) || fuzzyMatches(server.address, query);
          boolean pluginHit = false;
          if (!query.isEmpty()) {
@@ -170,8 +170,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          if (query.isEmpty() || nameHit || pluginHit) {
             String key = "srv:" + server.address.toLowerCase(Locale.ROOT);
             boolean open = this.expandedKeys.contains(key);
-            PluginLibraryScreen.Inner_StreamUtil row = PluginLibraryScreen.Inner_StreamUtil.groupRow(
-               PluginLibraryScreen.Inner_BufferHelper.SERVER,
+            PluginLibraryScreen.ListRow row = PluginLibraryScreen.ListRow.groupRow(
+               PluginLibraryScreen.RowType.SERVER,
                key,
                server.displayAddress,
                server.plugins.size() + (server.plugins.size() == 1 ? " plugin  " : " plugins  ") + ago(server.scannedAtMs),
@@ -197,20 +197,20 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                }
 
                for (String plugin : shown) {
-                  rows.add(PluginLibraryScreen.Inner_StreamUtil.childRow(PluginLibraryScreen.Inner_BufferHelper.SERVER_PLUGIN, plugin, ""));
+                  rows.add(PluginLibraryScreen.ListRow.childRow(PluginLibraryScreen.RowType.SERVER_PLUGIN, plugin, ""));
                }
             }
          }
       }
 
-      this.headerCount = rows.isEmpty() ? 0 : (int)rows.stream().filter(r -> r.type == PluginLibraryScreen.Inner_BufferHelper.SERVER).count();
+      this.headerCount = rows.isEmpty() ? 0 : (int)rows.stream().filter(r -> r.type == PluginLibraryScreen.RowType.SERVER).count();
       return rows;
    }
 
-   private List<PluginLibraryScreen.Inner_StreamUtil> rowsByPlugin(List<PluginLibraryScreen.Inner_ConfigStore> servers, String query) {
-      Map<String, List<PluginLibraryScreen.Inner_ConfigStore>> byPlugin = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+   private List<PluginLibraryScreen.ListRow> rowsByPlugin(List<PluginLibraryScreen.ServerEntry> servers, String query) {
+      Map<String, List<PluginLibraryScreen.ServerEntry>> byPlugin = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-      for (PluginLibraryScreen.Inner_ConfigStore server : servers) {
+      for (PluginLibraryScreen.ServerEntry server : servers) {
          for (String plugin : server.plugins) {
             if (query.isEmpty() || fuzzyMatches(plugin, query)) {
                byPlugin.computeIfAbsent(plugin, k -> new ArrayList<>()).add(server);
@@ -218,26 +218,26 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          }
       }
 
-      List<Entry<String, List<PluginLibraryScreen.Inner_ConfigStore>>> ordered = new ArrayList<>(byPlugin.entrySet());
+      List<Entry<String, List<PluginLibraryScreen.ServerEntry>>> ordered = new ArrayList<>(byPlugin.entrySet());
       ordered.sort(
-         Comparator.<Entry<String, List<PluginLibraryScreen.Inner_ConfigStore>>>comparingInt(e -> e.getValue().size())
+         Comparator.<Entry<String, List<PluginLibraryScreen.ServerEntry>>>comparingInt(e -> e.getValue().size())
             .reversed()
             .thenComparing(e -> e.getKey().toLowerCase(Locale.ROOT))
       );
-      List<PluginLibraryScreen.Inner_StreamUtil> rows = new ArrayList<>();
+      List<PluginLibraryScreen.ListRow> rows = new ArrayList<>();
 
-      for (Entry<String, List<PluginLibraryScreen.Inner_ConfigStore>> entry : ordered) {
+      for (Entry<String, List<PluginLibraryScreen.ServerEntry>> entry : ordered) {
          int count = entry.getValue().size();
          String key = "plg:" + entry.getKey().toLowerCase(Locale.ROOT);
          boolean open = this.expandedKeys.contains(key);
-         PluginLibraryScreen.Inner_StreamUtil row = PluginLibraryScreen.Inner_StreamUtil.groupRow(
-            PluginLibraryScreen.Inner_BufferHelper.PLUGIN, key, entry.getKey(), "on " + count + (count == 1 ? " server" : " servers"), open
+         PluginLibraryScreen.ListRow row = PluginLibraryScreen.ListRow.groupRow(
+            PluginLibraryScreen.RowType.PLUGIN, key, entry.getKey(), "on " + count + (count == 1 ? " server" : " servers"), open
          );
          row.servers = entry.getValue();
          rows.add(row);
          if (open) {
-            for (PluginLibraryScreen.Inner_ConfigStore server : entry.getValue()) {
-               rows.add(PluginLibraryScreen.Inner_StreamUtil.childRow(PluginLibraryScreen.Inner_BufferHelper.PLUGIN_SERVER, server.displayAddress, ago(server.scannedAtMs)));
+            for (PluginLibraryScreen.ServerEntry server : entry.getValue()) {
+               rows.add(PluginLibraryScreen.ListRow.childRow(PluginLibraryScreen.RowType.PLUGIN_SERVER, server.displayAddress, ago(server.scannedAtMs)));
             }
          }
       }
@@ -323,10 +323,10 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       this.buttons
          .add(
             autismclient.gui.ui.widgets.OverlayActionButton.create(
-                  toggleX, toggleY, toggleW, ctl, Component.literal("By Server"), b -> this.setGroupMode(PluginLibraryScreen.Inner_DataUtil.BY_SERVER)
+                  toggleX, toggleY, toggleW, ctl, Component.literal("By Server"), b -> this.setGroupMode(PluginLibraryScreen.GroupMode.BY_SERVER)
                )
                .setTone(
-                  this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER
+                  this.groupMode == PluginLibraryScreen.GroupMode.BY_SERVER
                      ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS
                      : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY
                )
@@ -339,10 +339,10 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                   toggleW,
                   ctl,
                   Component.literal("By Plugin"),
-                  b -> this.setGroupMode(PluginLibraryScreen.Inner_DataUtil.BY_PLUGIN)
+                  b -> this.setGroupMode(PluginLibraryScreen.GroupMode.BY_PLUGIN)
                )
                .setTone(
-                  this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_PLUGIN
+                  this.groupMode == PluginLibraryScreen.GroupMode.BY_PLUGIN
                      ? autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS
                      : autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY
                )
@@ -361,15 +361,15 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
 
       for (int i = firstVisible; i < this.filteredRows.size() && rowY < bottom; rowY += pitch) {
          if (rowY + rowH > top) {
-            PluginLibraryScreen.Inner_StreamUtil row = this.filteredRows.get(i);
+            PluginLibraryScreen.ListRow row = this.filteredRows.get(i);
             row.y = rowY;
             this.visibleRows.add(row);
             boolean fullyVisible = rowY >= top && rowY + rowH <= bottom;
-            boolean parent = row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER || row.type == PluginLibraryScreen.Inner_BufferHelper.PLUGIN;
+            boolean parent = row.type == PluginLibraryScreen.RowType.SERVER || row.type == PluginLibraryScreen.RowType.PLUGIN;
             if (parent && fullyVisible) {
                int btnY = rowY + (rowH - btnH) / 2;
                int cursor = this.listRight() - 1;
-               if (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER) {
+               if (row.type == PluginLibraryScreen.RowType.SERVER) {
                   cursor -= btnH;
                   this.buttons
                      .add(
@@ -386,7 +386,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                      autismclient.gui.ui.widgets.OverlayActionButton.create(cursor, btnY, copyW, btnH, Component.literal("Copy"), b -> this.copyRow(row))
                         .setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY)
                   );
-               this.rowHits.add(new PluginLibraryScreen.Inner_CachePool(this.listLeft(), rowY, Math.max(1, cursor - 4 - this.listLeft()), rowH, row.key));
+               this.rowHits.add(new PluginLibraryScreen.RowHit(this.listLeft(), rowY, Math.max(1, cursor - 4 - this.listLeft()), rowH, row.key));
             }
          }
 
@@ -410,8 +410,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       return this.buttonWidth("Copy");
    }
 
-   private void removeServerScan(PluginLibraryScreen.Inner_StreamUtil row) {
-      if (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER && row.serverAddress != null) {
+   private void removeServerScan(PluginLibraryScreen.ListRow row) {
+      if (row.type == PluginLibraryScreen.RowType.SERVER && row.serverAddress != null) {
          AutismConfig.getGlobal().removePluginScan(row.serverAddress);
          this.expandedKeys.remove(row.key);
          this.seenScanRevision = AutismConfig.getGlobal().pluginScanRevision();
@@ -419,20 +419,20 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       }
    }
 
-   private void copyRow(PluginLibraryScreen.Inner_StreamUtil row) {
+   private void copyRow(PluginLibraryScreen.ListRow row) {
       String text;
       String note;
-      if (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER && row.plugins != null) {
+      if (row.type == PluginLibraryScreen.RowType.SERVER && row.plugins != null) {
          text = String.join("\n", row.plugins);
          note = "Copied " + row.plugins.size() + " plugins from " + row.label;
       } else {
-         if (row.type != PluginLibraryScreen.Inner_BufferHelper.PLUGIN || row.servers == null) {
+         if (row.type != PluginLibraryScreen.RowType.PLUGIN || row.servers == null) {
             return;
          }
 
          List<String> names = new ArrayList<>();
 
-         for (PluginLibraryScreen.Inner_ConfigStore s : row.servers) {
+         for (PluginLibraryScreen.ServerEntry s : row.servers) {
             names.add(s.displayAddress);
          }
 
@@ -458,7 +458,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          this.drawCard(graphics, this.listCardX(), this.listCardY(), this.listCardWidth(), this.listCardHeight(), -1206840035);
          String count = this.headerCount
             + (
-               this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER
+               this.groupMode == PluginLibraryScreen.GroupMode.BY_SERVER
                   ? (this.headerCount == 1 ? " server" : " servers")
                   : (this.headerCount == 1 ? " plugin" : " plugins")
             );
@@ -468,7 +468,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          int titleX = this.innerX() + this.backButtonWidth() + 4;
          this.drawClippedText(graphics, "Plugin Library", titleX, headerTextY, GuiColorPalette.flush, Math.max(1, countX - 8 - titleX));
          this.drawClippedText(graphics, count, countX, headerTextY, GuiColorPalette.close, countW + 4);
-         String header = this.groupMode == PluginLibraryScreen.Inner_DataUtil.BY_SERVER ? "Servers you have scanned" : "Plugin -> servers running it";
+         String header = this.groupMode == PluginLibraryScreen.GroupMode.BY_SERVER ? "Servers you have scanned" : "Plugin -> servers running it";
          this.drawClippedText(graphics, header, this.listCardX() + 4, this.centeredTextY(this.listCardY() + 4, 12), GuiColorPalette.close, this.listCardWidth() - 8);
          String queryLower = this.searchQuery.toLowerCase(Locale.ROOT);
          autismclient.gui.ui.UiClipStack.getInstance()
@@ -483,7 +483,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
                   graphics, this.emptyMessage(), this.listLeft() + 4, this.centeredTextY(this.listTop(), this.rowHeight()), GuiColorPalette.close, this.listRight() - this.listLeft() - 4
                );
             } else {
-               for (PluginLibraryScreen.Inner_StreamUtil row : this.visibleRows) {
+               for (PluginLibraryScreen.ListRow row : this.visibleRows) {
                   this.drawRow(graphics, row, mx, my, queryLower);
                }
             }
@@ -512,8 +512,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          : "Nothing matches \"" + this.searchQuery + "\".";
    }
 
-   private void drawRow(GuiGraphicsExtractor graphics, PluginLibraryScreen.Inner_StreamUtil row, int mx, int my, String queryLower) {
-      boolean child = row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER_PLUGIN || row.type == PluginLibraryScreen.Inner_BufferHelper.PLUGIN_SERVER;
+   private void drawRow(GuiGraphicsExtractor graphics, PluginLibraryScreen.ListRow row, int mx, int my, String queryLower) {
+      boolean child = row.type == PluginLibraryScreen.RowType.SERVER_PLUGIN || row.type == PluginLibraryScreen.RowType.PLUGIN_SERVER;
       int x = this.listLeft();
       int y = row.y;
       int w = this.listRight() - this.listLeft();
@@ -537,7 +537,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       int baseColor = child ? -3158065 : GuiColorPalette.flush;
       int secondaryColor = GuiColorPalette.close;
       int secondaryW = row.secondary.isEmpty() ? 0 : k.init(this.font, row.secondary, labelFont(), secondaryColor);
-      int rowActionReserve = child ? 0 : this.copyButtonWidth() + 2 + (row.type == PluginLibraryScreen.Inner_BufferHelper.SERVER ? this.rowButtonHeight() + 2 : 0);
+      int rowActionReserve = child ? 0 : this.copyButtonWidth() + 2 + (row.type == PluginLibraryScreen.RowType.SERVER ? this.rowButtonHeight() + 2 : 0);
       int rightLimit = this.listRight() - rowActionReserve - 4;
       int secondaryX = Math.max(textLeft + 20, rightLimit - secondaryW);
       int primaryMax = Math.max(20, (row.secondary.isEmpty() ? rightLimit : secondaryX - 8) - textLeft);
@@ -599,7 +599,7 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       }
 
       if (Compat263.mouseEventGlfwButton(ve) == 0) {
-         for (PluginLibraryScreen.Inner_CachePool hit : this.rowHits) {
+         for (PluginLibraryScreen.RowHit hit : this.rowHits) {
             if (hit.contains(mx, my)) {
                this.toggleExpanded(hit.key);
                return true;
@@ -781,21 +781,21 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       return this.cardWidth() < 260 || this.virtualHeight() < this.listTop() + this.rowPitch() * 2;
    }
 
-   private enum Inner_BufferHelper {
+   private enum RowType {
       SERVER,
       SERVER_PLUGIN,
       PLUGIN,
       PLUGIN_SERVER;
    }
 
-   private static final class Inner_CachePool {
+   private static final class RowHit {
       final int x;
       final int y;
       final int width;
       final int height;
       final String key;
 
-      Inner_CachePool(int x, int y, int width, int height, String key) {
+      RowHit(int x, int y, int width, int height, String key) {
          this.x = x;
          this.y = y;
          this.width = width;
@@ -808,14 +808,14 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       }
    }
 
-   private static final class Inner_ConfigStore {
+   private static final class ServerEntry {
       final String address;
       final String name;
       final String displayAddress;
       final List<String> plugins;
       final long scannedAtMs;
 
-      Inner_ConfigStore(String address, String name, List<String> plugins, long scannedAtMs) {
+      ServerEntry(String address, String name, List<String> plugins, long scannedAtMs) {
          this.address = address;
          this.name = name;
          this.displayAddress = address;
@@ -824,24 +824,24 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
       }
    }
 
-   private enum Inner_DataUtil {
+   private enum GroupMode {
       BY_SERVER,
       BY_PLUGIN;
    }
 
-   private static final class Inner_StreamUtil {
-      PluginLibraryScreen.Inner_BufferHelper type;
+   private static final class ListRow {
+      PluginLibraryScreen.RowType type;
       String key = "";
       String label = "";
       String secondary = "";
       boolean expanded;
       String serverAddress;
       List<String> plugins;
-      List<PluginLibraryScreen.Inner_ConfigStore> servers;
+      List<PluginLibraryScreen.ServerEntry> servers;
       int y;
 
-      static PluginLibraryScreen.Inner_StreamUtil groupRow(PluginLibraryScreen.Inner_BufferHelper type, String key, String primary, String secondary, boolean expanded) {
-         PluginLibraryScreen.Inner_StreamUtil row = new PluginLibraryScreen.Inner_StreamUtil();
+      static PluginLibraryScreen.ListRow groupRow(PluginLibraryScreen.RowType type, String key, String primary, String secondary, boolean expanded) {
+         PluginLibraryScreen.ListRow row = new PluginLibraryScreen.ListRow();
          row.type = type;
          row.key = key;
          row.label = primary;
@@ -850,8 +850,8 @@ public class PluginLibraryScreen extends VirtualScaledScreen {
          return row;
       }
 
-      static PluginLibraryScreen.Inner_StreamUtil childRow(PluginLibraryScreen.Inner_BufferHelper type, String primary, String secondary) {
-         PluginLibraryScreen.Inner_StreamUtil row = new PluginLibraryScreen.Inner_StreamUtil();
+      static PluginLibraryScreen.ListRow childRow(PluginLibraryScreen.RowType type, String primary, String secondary) {
+         PluginLibraryScreen.ListRow row = new PluginLibraryScreen.ListRow();
          row.type = type;
          row.label = primary;
          row.secondary = secondary;

@@ -46,7 +46,7 @@ final class AiPrintOp implements AiOperation {
    private final AiBuilder.BuildOptions options;
    private final AiPrintSupply supply;
    private AiOperation child;
-   private AiScaffold.Inner_StreamUtil jobScope;
+   private AiScaffold.JobScope jobScope;
    private BlockPos terrainCell;
    private boolean terrainDone;
    private boolean load_Z;
@@ -76,7 +76,7 @@ final class AiPrintOp implements AiOperation {
    private long tickCount;
    private long maxTickNanos;
    private static final int flush_I = 16384;
-   private final AiScaffold.Inner_StreamUtil scaffold;
+   private final AiScaffold.JobScope scaffold;
    private final ArrayDeque<BlockPos> revisitQueue = new ArrayDeque<>();
    private long nextPersistAt;
 
@@ -118,7 +118,7 @@ final class AiPrintOp implements AiOperation {
       AiBuilder.BuildOptions power,
       List<autismclient.ai.print.PrintTarget> preparedTargets,
       AiSchematicMachinePlan.MachineSpec actions,
-      autismclient.ai.print.PrintCore.ao geometry
+      autismclient.ai.print.PrintCore.PreparedGeometry geometry
    ) {
       AiPrintSupply.validateOptions(power);
       this.blueprint = blueprint;
@@ -159,7 +159,7 @@ final class AiPrintOp implements AiOperation {
       this.originalSlot = this.mc.player == null ? 0 : this.mc.player.getInventory().getSelectedSlot();
       AiServerEvidence.addBlockObserver(this.blockObserver);
       AiServerEvidence.addChunkObserver(this.chunkObserver);
-      AiPrintOp.Inner_DataUtil.init("[AI] print v2: {} cells", this.targets.size());
+      AiPrintOp.PrintLog.init("[AI] print v2: {} cells", this.targets.size());
    }
 
    @Override
@@ -315,7 +315,7 @@ final class AiPrintOp implements AiOperation {
             && !(opened instanceof InventoryScreen)
             && this.mc.player.containerMenu != this.mc.player.inventoryMenu
             && this.env.hasRecentClick()) {
-            AiPrintOp.Inner_DataUtil.init("[AI] print v2: closing {} the build opened", opened.getClass().getSimpleName());
+            AiPrintOp.PrintLog.init("[AI] print v2: closing {} the build opened", opened.getClass().getSimpleName());
             AiMenuClose.closeMenu();
             this.env.clearRecentClick();
             this.env.releaseControls();
@@ -584,7 +584,7 @@ final class AiPrintOp implements AiOperation {
    private AiOperation.Result read_AiOperation_Result_9() {
       this.write_Z = true;
       this.write_I = AiPrintSupply.load(this.mc.player.getInventory(), Items.DIRT);
-      this.startChild(new AiPrintOp.Inner_StreamUtil(Math.max(this.init_I, this.supply.init_I())));
+      this.startChild(new AiPrintOp.LocalSoilGather(Math.max(this.init_I, this.supply.init_I())));
       return this.init_AiOperation_Result_Str_9("Gathering soil nearby");
    }
 
@@ -686,7 +686,7 @@ final class AiPrintOp implements AiOperation {
       }
 
       JsonObject data = this.init_JsonObject_42();
-      AiPrintOp.Inner_DataUtil.init("[AI] print v2: {} - {} ({})", status, message, data);
+      AiPrintOp.PrintLog.init("[AI] print v2: {} - {} ({})", status, message, data);
       return status == AiOperation.Status.SUCCEEDED
          ? new AiOperation.Result(status, message, data.toString(), List.of())
          : new AiOperation.Result(status, message, data.toString(), List.of(), failure);
@@ -888,7 +888,7 @@ final class AiPrintOp implements AiOperation {
                         : (
                            this.missingItem == null && this.requestedContents.isEmpty()
                               ? (
-                                 this.core.getPhase() == autismclient.ai.print.PrintCore.J.TEARDOWN
+                                 this.core.getPhase() == autismclient.ai.print.PrintCore.PrintPhase.TEARDOWN
                                     ? "drain"
                                     : this.core.getPhase().name().toLowerCase(Locale.ROOT)
                               )
@@ -929,7 +929,7 @@ final class AiPrintOp implements AiOperation {
       o.addProperty("machineOutcomesUnverified", this.core.machineOutcomesUnverified());
       o.addProperty(
          "machineComplete",
-         this.core.getPhase() == autismclient.ai.print.PrintCore.J.DONE
+         this.core.getPhase() == autismclient.ai.print.PrintCore.PrintPhase.DONE
             && this.core.containersSkipped() == 0
             && this.core.railVehiclesSkipped() == 0
             && this.core.machineOutcomesUnverified() == 0
@@ -967,7 +967,7 @@ final class AiPrintOp implements AiOperation {
       o.addProperty("terrainCleared", this.supply.terrainCleared);
       o.addProperty("soilCollected", this.init_I_28());
       o.addProperty("soilBroken", this.soilBroken);
-      o.addProperty("interactionAwaitingAck", this.env.interactionReceiptState() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.PENDING);
+      o.addProperty("interactionAwaitingAck", this.env.interactionReceiptState() == autismclient.ai.print.PrintEnv.ReceiptState.PENDING);
       o.addProperty(
          "recoveryRequired",
          AiMenuClose.load()
@@ -975,7 +975,7 @@ final class AiPrintOp implements AiOperation {
             || this.sync_Z
             || this.core.hasUncertainMachineWork()
             || this.env.hasPendingHandSwap()
-            || this.env.interactionReceiptState() == autismclient.ai.print.PrintEnv.Inner_StreamUtil.UNCERTAIN
+            || this.env.interactionReceiptState() == autismclient.ai.print.PrintEnv.ReceiptState.UNCERTAIN
       );
       if (this.init_JsonObject != null) {
          o.add("externalWork", this.init_JsonObject.deepCopy());
@@ -1053,13 +1053,13 @@ final class AiPrintOp implements AiOperation {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class PrintLog {
       static void init(String format, Object... args) {
          AutismClientAddon.LOG.info(format, args);
       }
    }
 
-   private final class Inner_StreamUtil implements AiOperation {
+   private final class LocalSoilGather implements AiOperation {
       private final List<BlockPos> init_List = new ArrayList<>();
       private final long deadline = System.nanoTime() + 600000000000L;
       private final AiPreparationReceipt receipt = new AiPreparationReceipt();
@@ -1072,7 +1072,7 @@ final class AiPrintOp implements AiOperation {
       private boolean init_Z;
       private final int update;
 
-      Inner_StreamUtil(int target) {
+      LocalSoilGather(int target) {
          BlockPos center = AiPrintOp.this.mc.player.blockPosition();
 
          for (BlockPos pos : BlockPos.betweenClosed(center.offset(-32, -4, -32), center.offset(32, 4, 32))) {
@@ -1145,7 +1145,7 @@ final class AiPrintOp implements AiOperation {
          if (result.status() != AiOperation.Status.SUCCEEDED) {
             AiPrintOp.this.init_Set.add(this.init_BlockPos.asLong());
             if (AiPrintOp.this.core.trace) {
-               AiPrintOp.Inner_DataUtil.init("[AI] print v2: local soil at {} skipped: {}", this.init_BlockPos.toShortString(), result.message());
+               AiPrintOp.PrintLog.init("[AI] print v2: local soil at {} skipped: {}", this.init_BlockPos.toShortString(), result.message());
             }
 
             return result.status() == AiOperation.Status.FAILED && !this.receipt.requiresReconciliation(completed) && ++this.load < 24

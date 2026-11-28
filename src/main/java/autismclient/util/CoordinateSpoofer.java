@@ -7,7 +7,7 @@ public final class CoordinateSpoofer {
    private static final long init_J = 1024L;
    private static final long load_J = 20000000L;
    private static volatile boolean active;
-   private static volatile CoordinateSpoofer.Inner_DataUtil mode = CoordinateSpoofer.Inner_DataUtil.OFFSET;
+   private static volatile CoordinateSpoofer.SpoofMode mode = CoordinateSpoofer.SpoofMode.OFFSET;
    private static volatile boolean spoofYEnabled = false;
    private static double offsetX;
    private static double offsetY;
@@ -40,8 +40,8 @@ public final class CoordinateSpoofer {
       return active && !autismclient.modules.aD.init_Z();
    }
 
-   public static void init(CoordinateSpoofer.Inner_DataUtil m, boolean spoofY) {
-      mode = m == null ? CoordinateSpoofer.Inner_DataUtil.OFFSET : m;
+   public static void init(CoordinateSpoofer.SpoofMode m, boolean spoofY) {
+      mode = m == null ? CoordinateSpoofer.SpoofMode.OFFSET : m;
       spoofYEnabled = spoofY;
       reroll();
       active = true;
@@ -51,7 +51,7 @@ public final class CoordinateSpoofer {
       active = false;
    }
 
-   public static void init(CoordinateSpoofer.Inner_DataUtil m) {
+   public static void init(CoordinateSpoofer.SpoofMode m) {
       if (m != null) {
          mode = m;
       }
@@ -143,7 +143,7 @@ public final class CoordinateSpoofer {
             fz = z + offsetZ;
       }
 
-      if (!spoofYEnabled && mode != CoordinateSpoofer.Inner_DataUtil.FROZEN) {
+      if (!spoofYEnabled && mode != CoordinateSpoofer.SpoofMode.FROZEN) {
          fy = y;
       }
 
@@ -173,7 +173,7 @@ public final class CoordinateSpoofer {
       return RANDOM.nextBoolean() ? s : -s;
    }
 
-   public enum Inner_DataUtil {
+   public enum SpoofMode {
       OFFSET,
       SCALED,
       ROTATED,

@@ -35,7 +35,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private static final int write_I = 70;
    private final Screen parent;
    private final List<autismclient.gui.ui.widgets.OverlayActionButton> buttons = new ArrayList<>();
-   private final List<ProxiesScreen.Inner_StreamUtil> rows = new ArrayList<>();
+   private final List<ProxiesScreen.ProxyRow> rows = new ArrayList<>();
    private final autismclient.gui.ui.widgets.ScrollOffsetController scroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
    private EditBox nameField;
    private EditBox addressField;
@@ -44,7 +44,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private EditBox passwordField;
    private EditBox searchField;
    private ProxyProtocolType protocol = ProxyProtocolType.Socks5;
-   private ProxiesScreen.Inner_DataUtil filter = ProxiesScreen.Inner_DataUtil.ALL;
+   private ProxiesScreen.ProxyFilter filter = ProxiesScreen.ProxyFilter.ALL;
    private bW editingProxy;
    private String searchQuery = "";
    private int update_I;
@@ -58,7 +58,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private long cachedListRevision = -9223372036854775808L;
    private long cachedRefreshRevision = -9223372036854775808L;
    private String cachedQuery = null;
-   private ProxiesScreen.Inner_DataUtil cachedFilter = null;
+   private ProxiesScreen.ProxyFilter cachedFilter = null;
    private List<bW> cachedFiltered = List.of();
    private long activeRevision = -9223372036854775808L;
    private bW cachedActive;
@@ -123,8 +123,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
          int actionGap = 2;
          int usableW = this.inputWidth();
          ProxyListManager manager = ProxyListManager.getInstance();
-         ProxyListManager.Inner_TaskQueue refreshStatus = manager.getRefreshStatus();
-         ProxyListManager.Inner_BufferHelper importStatus = manager.getImportStatus();
+         ProxyListManager.RefreshStatus refreshStatus = manager.getRefreshStatus();
+         ProxyListManager.ImportStatus importStatus = manager.getImportStatus();
          boolean refreshRunning = refreshStatus.running();
          boolean importRunning = importStatus.running();
          String typeLabel = "Type: " + this.protocol;
@@ -191,15 +191,15 @@ public class ProxiesScreen extends VirtualScaledScreen {
          int filterX = this.inputX();
          int filterGap = 2;
          int[] filterWidths = this.fitLabelWidths(usableW, filterGap, "All", "Alive", "Dead", "Unchecked", "Enabled", "Sort", "Clear All");
-         this.addFilterButton(filterX, filterY, filterWidths[0], ProxiesScreen.Inner_DataUtil.ALL, "All");
+         this.addFilterButton(filterX, filterY, filterWidths[0], ProxiesScreen.ProxyFilter.ALL, "All");
          filterX += filterWidths[0] + filterGap;
-         this.addFilterButton(filterX, filterY, filterWidths[1], ProxiesScreen.Inner_DataUtil.ALIVE, "Alive");
+         this.addFilterButton(filterX, filterY, filterWidths[1], ProxiesScreen.ProxyFilter.ALIVE, "Alive");
          filterX += filterWidths[1] + filterGap;
-         this.addFilterButton(filterX, filterY, filterWidths[2], ProxiesScreen.Inner_DataUtil.DEAD, "Dead");
+         this.addFilterButton(filterX, filterY, filterWidths[2], ProxiesScreen.ProxyFilter.DEAD, "Dead");
          filterX += filterWidths[2] + filterGap;
-         this.addFilterButton(filterX, filterY, filterWidths[3], ProxiesScreen.Inner_DataUtil.UNCHECKED, "Unchecked");
+         this.addFilterButton(filterX, filterY, filterWidths[3], ProxiesScreen.ProxyFilter.UNCHECKED, "Unchecked");
          filterX += filterWidths[3] + filterGap;
-         this.addFilterButton(filterX, filterY, filterWidths[4], ProxiesScreen.Inner_DataUtil.ENABLED, "Enabled");
+         this.addFilterButton(filterX, filterY, filterWidths[4], ProxiesScreen.ProxyFilter.ENABLED, "Enabled");
          filterX += filterWidths[4] + filterGap;
          autismclient.gui.ui.widgets.OverlayActionButton sort = autismclient.gui.ui.widgets.OverlayActionButton.create(
                filterX, filterY, filterWidths[5], ctl, Component.literal("Sort"), b -> this.sort()
@@ -238,7 +238,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       }
    }
 
-   private ProxiesScreen.Inner_StreamUtil createRow(bW proxy, int rowY, boolean activeSection) {
+   private ProxiesScreen.ProxyRow createRow(bW proxy, int rowY, boolean activeSection) {
       int btnH = this.rowButtonHeight();
       int btnY = rowY + (this.rowHeight() - btnH) / 2;
       int toggleW = Math.max(this.buttonWidth("ON"), this.buttonWidth("OFF"));
@@ -260,10 +260,10 @@ public class ProxiesScreen extends VirtualScaledScreen {
       check.active = proxy.init_bW_CachePool != bW.Inner_CachePool.CHECKING;
       autismclient.gui.ui.widgets.OverlayActionButton delete = autismclient.gui.ui.widgets.OverlayActionButton.create(deleteX, btnY, btnH, btnH, Component.empty(), b -> this.deleteProxy(proxy));
       delete.setTone(autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER).setIcon(GuiIconAtlas.DELETE);
-      return new ProxiesScreen.Inner_StreamUtil(proxy, rowY, activeSection, toggle, check, delete);
+      return new ProxiesScreen.ProxyRow(proxy, rowY, activeSection, toggle, check, delete);
    }
 
-   private void addFilterButton(int x, int y, int width, ProxiesScreen.Inner_DataUtil value, String label) {
+   private void addFilterButton(int x, int y, int width, ProxiesScreen.ProxyFilter value, String label) {
       autismclient.gui.ui.widgets.OverlayActionButton button = autismclient.gui.ui.widgets.OverlayActionButton.create(x, y, width, this.controlHeight(), Component.literal(label), b -> {
          this.filter = value;
          this.update_I = 0;
@@ -282,13 +282,13 @@ public class ProxiesScreen extends VirtualScaledScreen {
       int maxScroll = this.maxScroll(this.orderedProxies().size());
       this.update_I = clampScroll(this.update_I, maxScroll);
       this.scroll.jumpTo(this.update_I, maxScroll);
-      ProxyListManager.Inner_TaskQueue status = ProxyListManager.getInstance().getRefreshStatus();
+      ProxyListManager.RefreshStatus status = ProxyListManager.getInstance().getRefreshStatus();
       if (status.revision() != this.seenRefreshRevision) {
          this.seenRefreshRevision = status.revision();
          this.rebuildButtons();
       }
 
-      ProxyListManager.Inner_BufferHelper importStatus = ProxyListManager.getInstance().getImportStatus();
+      ProxyListManager.ImportStatus importStatus = ProxyListManager.getInstance().getImportStatus();
       if (importStatus.revision() != this.seenImportRevision) {
          this.seenImportRevision = importStatus.revision();
          this.rebuildButtons();
@@ -379,7 +379,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       if (manager.getImportStatus().running()) {
          this.toast("Finish import before refreshing.", -14249);
       } else {
-         ProxyListManager.Inner_TaskQueue currentStatus = manager.getRefreshStatus();
+         ProxyListManager.RefreshStatus currentStatus = manager.getRefreshStatus();
          if (currentStatus.running()) {
             if (manager.cancelRefresh()) {
                this.toast("Proxy refresh canceled.", -14249);
@@ -396,7 +396,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
             autismclient.util.BackgroundTaskExecutor.init("Autism-Proxy-Refresh-Watch", () -> !manager.getRefreshStatus().running(), () -> {
                if (this.minecraft != null) {
                   this.minecraft.execute(() -> {
-                     ProxyListManager.Inner_TaskQueue finished = manager.getRefreshStatus();
+                     ProxyListManager.RefreshStatus finished = manager.getRefreshStatus();
                      if (finished.generation() == generation && finished.checkedCount() >= finished.totalCount()) {
                         this.toast("Proxy refresh finished.", GuiColorPalette.open);
                      }
@@ -462,7 +462,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
    private void open_V() {
       ProxyListManager manager = ProxyListManager.getInstance();
-      ProxyListManager.Inner_BufferHelper status = manager.getImportStatus();
+      ProxyListManager.ImportStatus status = manager.getImportStatus();
       if (status.running()) {
          if (manager.cancelImport()) {
             this.toast("Proxy import canceled.", -14249);
@@ -516,7 +516,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       autismclient.util.BackgroundTaskExecutor.init("Autism-Proxy-Import-Watch", () -> !manager.getImportStatus().running(), () -> {
          if (this.minecraft != null) {
             this.minecraft.execute(() -> {
-               ProxyListManager.Inner_BufferHelper finished = manager.getImportStatus();
+               ProxyListManager.ImportStatus finished = manager.getImportStatus();
                if (finished.generation() == generation && !finished.canceled()) {
                   this.toast("Imported " + finished.addedCount() + " proxies.", finished.addedCount() > 0 ? GuiColorPalette.open : -14249);
                   this.update_I = 0;
@@ -647,8 +647,8 @@ public class ProxiesScreen extends VirtualScaledScreen {
          ProxyListManager manager = ProxyListManager.getInstance();
          int total = manager.size();
          int enabled = manager.countEnabledValidProxies();
-         ProxyListManager.Inner_TaskQueue refreshStatus = manager.getRefreshStatus();
-         ProxyListManager.Inner_BufferHelper importStatus = manager.getImportStatus();
+         ProxyListManager.RefreshStatus refreshStatus = manager.getRefreshStatus();
+         ProxyListManager.ImportStatus importStatus = manager.getImportStatus();
          String summary = proxies.size() == total ? total + " proxies  enabled " + enabled : proxies.size() + " / " + total + " proxies  enabled " + enabled;
          String workLabel = this.importStatusLabel(importStatus);
          int workColor = importStatus.running() ? -7429889 : -14249;
@@ -673,7 +673,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
             );
 
          try {
-            for (ProxiesScreen.Inner_StreamUtil row : this.rows) {
+            for (ProxiesScreen.ProxyRow row : this.rows) {
                this.renderRow(graphics, row, virtualMouseX, virtualMouseY);
             }
          } finally {
@@ -725,7 +725,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       super.removed();
    }
 
-   private void renderRow(GuiGraphicsExtractor graphics, ProxiesScreen.Inner_StreamUtil row, int mouseX, int mouseY) {
+   private void renderRow(GuiGraphicsExtractor graphics, ProxiesScreen.ProxyRow row, int mouseX, int mouseY) {
       bW proxy = row.proxy;
       boolean selected = proxy.equals(this.editingProxy);
       int x = this.rowLeft();
@@ -833,7 +833,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
             }
          }
 
-         for (ProxiesScreen.Inner_StreamUtil row : this.rows) {
+         for (ProxiesScreen.ProxyRow row : this.rows) {
             if (this.clickRow(row, virtualEvent.x(), virtualEvent.y(), Compat263.mouseEventGlfwButton(virtualEvent))) {
                return true;
             }
@@ -844,7 +844,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       }
    }
 
-   private boolean clickRow(ProxiesScreen.Inner_StreamUtil row, double x, double y, int button) {
+   private boolean clickRow(ProxiesScreen.ProxyRow row, double x, double y, int button) {
       if (row == null) {
          return false;
       }
@@ -945,7 +945,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       long listRevision = manager.getListRevision();
       long refreshRevision = manager.getRefreshStatus().revision();
       String query = normalize(this.searchQuery);
-      boolean statusSensitive = this.filter != ProxiesScreen.Inner_DataUtil.ALL || !query.isEmpty();
+      boolean statusSensitive = this.filter != ProxiesScreen.ProxyFilter.ALL || !query.isEmpty();
       boolean cacheValid = this.cachedFilter == this.filter
          && query.equals(this.cachedQuery)
          && this.cachedListRevision == listRevision
@@ -956,7 +956,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
 
       List<bW> proxies = manager.getItems();
       List<bW> filtered;
-      if (query.isEmpty() && this.filter == ProxiesScreen.Inner_DataUtil.ALL) {
+      if (query.isEmpty() && this.filter == ProxiesScreen.ProxyFilter.ALL) {
          filtered = proxies;
       } else {
          filtered = new ArrayList<>();
@@ -1077,7 +1077,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       return var10000;
    }
 
-   private String refreshStatusLabel(ProxyListManager.Inner_TaskQueue status) {
+   private String refreshStatusLabel(ProxyListManager.RefreshStatus status) {
       if (status == null) {
          return "";
       } else if (status.running()) {
@@ -1087,7 +1087,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       }
    }
 
-   private String importStatusLabel(ProxyListManager.Inner_BufferHelper status) {
+   private String importStatusLabel(ProxyListManager.ImportStatus status) {
       if (status == null) {
          return "";
       } else if (status.running()) {
@@ -1097,7 +1097,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       }
    }
 
-   private void renderWorkStatus(GuiGraphicsExtractor graphics, ProxyListManager.Inner_TaskQueue refreshStatus, ProxyListManager.Inner_BufferHelper importStatus) {
+   private void renderWorkStatus(GuiGraphicsExtractor graphics, ProxyListManager.RefreshStatus refreshStatus, ProxyListManager.ImportStatus importStatus) {
       boolean importing = importStatus != null && importStatus.running();
       boolean refreshing = refreshStatus != null && refreshStatus.running();
       if (importing || refreshing) {
@@ -1398,7 +1398,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       return ThemePaletteManager.recolor(argb, ThemePaletteManager.ColorRole.SUCCESS);
    }
 
-   private enum Inner_DataUtil {
+   private enum ProxyFilter {
       ALL,
       ALIVE,
       DEAD,
@@ -1406,7 +1406,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
       ENABLED;
    }
 
-   private record Inner_StreamUtil(
+   private record ProxyRow(
       bW proxy,
       int y,
       boolean activeSection,

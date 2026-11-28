@@ -26,14 +26,14 @@ final class KBDisplacementWarmup {
    private static void load() {
       try {
          AABB body = new AABB(0.2, 10.0, 0.2, 0.8, 11.8, 0.8);
-         KnockbackThrowPlanner.Inner_SyncManager counter = KnockbackThrowPlanner.Inner_SyncManager.init(180.0F, 0.13, 0.026);
-         KnockbackThrowPlanner.Inner_BufferHelper hypotheses = new KnockbackThrowPlanner.Inner_BufferHelper(counter, new Vec3[]{new Vec3(0.0, -0.0784, 0.0)});
+         KnockbackThrowPlanner.CounterSteer counter = KnockbackThrowPlanner.CounterSteer.init(180.0F, 0.13, 0.026);
+         KnockbackThrowPlanner.CounterHypotheses hypotheses = new KnockbackThrowPlanner.CounterHypotheses(counter, new Vec3[]{new Vec3(0.0, -0.0784, 0.0)});
 
          for (int run = 0; run < 400; run++) {
             int width = 1 + 2 * (run % 3);
             KBDisplacementWarmup.Inner_DataUtil world = new KBDisplacementWarmup.Inner_DataUtil(width);
-            KnockbackThrowPlanner.Inner_ConfigStore input = new KnockbackThrowPlanner.Inner_ConfigStore(body, new Vec3(0.5, 10.0, -0.8), new Vec3(0.0, -0.0784, 0.0), true, 0.0, 0.5, 10.0, false);
-            KnockbackThrowPlanner.init(input, 0.0F, 0.15, new KnockbackThrowPlanner.Inner_StateCache(100.0, 3.0, false, 0, 1 + run % 10), hypotheses, world);
+            KnockbackThrowPlanner.ThrowInput input = new KnockbackThrowPlanner.ThrowInput(body, new Vec3(0.5, 10.0, -0.8), new Vec3(0.0, -0.0784, 0.0), true, 0.0, 0.5, 10.0, false);
+            KnockbackThrowPlanner.init(input, 0.0F, 0.15, new KnockbackThrowPlanner.PlanSettings(100.0, 3.0, false, 0, 1 + run % 10), hypotheses, world);
             if ((run & 31) == 31) {
                Thread.sleep(5L);
             }
@@ -44,7 +44,7 @@ final class KBDisplacementWarmup {
       }
    }
 
-   private static final class Inner_DataUtil implements KnockbackThrowPlanner.Inner_UiHelper {
+   private static final class Inner_DataUtil implements KnockbackThrowPlanner.ThrowWorld {
       final AABB platform;
       final List<VoxelShape> shapes;
 
@@ -90,9 +90,9 @@ final class KBDisplacementWarmup {
       }
 
       @Override
-      public KnockbackThrowPlanner.Inner_CachePool init_W_CachePool_AABB(AABB body) {
+      public KnockbackThrowPlanner.FloorProbe init_W_CachePool_AABB(AABB body) {
          boolean under = this.platform.maxY <= body.minY + 0.01 && this.overlapsPlatform(body.minX, body.maxX, body.minZ, body.maxZ);
-         return under ? new KnockbackThrowPlanner.Inner_CachePool(this.platform.maxY, false, false, true) : new KnockbackThrowPlanner.Inner_CachePool(0.0, true, false, true);
+         return under ? new KnockbackThrowPlanner.FloorProbe(this.platform.maxY, false, false, true) : new KnockbackThrowPlanner.FloorProbe(0.0, true, false, true);
       }
 
       @Override
@@ -101,10 +101,10 @@ final class KBDisplacementWarmup {
       }
 
       @Override
-      public TerrainDropGrid.Inner_StreamUtil init_V_StreamUtil_I(int x, int z, int base, double stepTop) {
+      public TerrainDropGrid.Column init_V_StreamUtil_I(int x, int z, int base, double stepTop) {
          boolean cell = this.overlapsPlatform(x, x + 1, z, z + 1);
          long walls = cell ? TerrainDropGrid.init_J_I(base, this.platform.minY, this.platform.maxY) : 0L;
-         return new TerrainDropGrid.Inner_StreamUtil(walls, 0L, cell ? this.platform.maxY : -1.0 / 0.0, (byte)(cell ? 1 : 2), 0.6F);
+         return new TerrainDropGrid.Column(walls, 0L, cell ? this.platform.maxY : -1.0 / 0.0, (byte)(cell ? 1 : 2), 0.6F);
       }
    }
 }

@@ -10,7 +10,7 @@ import net.minecraft.nbt.Tag;
 public class WaitForLanStepAction implements MacroAction {
    public boolean filterByUser = false;
    public int defaultStep = 1;
-   public List<WaitForLanStepAction.Inner_DataUtil> entries = new ArrayList<>();
+   public List<WaitForLanStepAction.StepEntry> entries = new ArrayList<>();
    public boolean listenDuringPreviousAction = false;
    private boolean enabled = true;
 
@@ -30,7 +30,7 @@ public class WaitForLanStepAction implements MacroAction {
       } else if (this.entries.isEmpty()) {
          return "Wait LAN: any @ step " + this.defaultStep;
       } else if (this.entries.size() == 1) {
-         WaitForLanStepAction.Inner_DataUtil e = this.entries.get(0);
+         WaitForLanStepAction.StepEntry e = this.entries.get(0);
          return "Wait LAN: " + (e.username.isEmpty() ? "any" : e.username) + " @ " + e.step;
       } else {
          return "Wait LAN: " + this.entries.size() + " peers";
@@ -61,7 +61,7 @@ public class WaitForLanStepAction implements MacroAction {
       tag.putBoolean("enabled", this.enabled);
       ListTag list = new ListTag();
 
-      for (WaitForLanStepAction.Inner_DataUtil entry : this.entries) {
+      for (WaitForLanStepAction.StepEntry entry : this.entries) {
          list.add(entry.toTag());
       }
 
@@ -83,20 +83,20 @@ public class WaitForLanStepAction implements MacroAction {
       if (tag.contains("entries")) {
          for (Tag el : tag.getList("entries").orElse(new ListTag())) {
             if (el instanceof CompoundTag c) {
-               this.entries.add(WaitForLanStepAction.Inner_DataUtil.fromTag(c));
+               this.entries.add(WaitForLanStepAction.StepEntry.fromTag(c));
             }
          }
       }
    }
 
-   public static class Inner_DataUtil {
+   public static class StepEntry {
       public String username = "";
       public int step = 1;
 
-      public Inner_DataUtil() {
+      public StepEntry() {
       }
 
-      public Inner_DataUtil(String username, int step) {
+      public StepEntry(String username, int step) {
          this.username = username != null ? username : "";
          this.step = Math.max(1, step);
       }
@@ -108,8 +108,8 @@ public class WaitForLanStepAction implements MacroAction {
          return tag;
       }
 
-      public static WaitForLanStepAction.Inner_DataUtil fromTag(CompoundTag tag) {
-         WaitForLanStepAction.Inner_DataUtil e = new WaitForLanStepAction.Inner_DataUtil();
+      public static WaitForLanStepAction.StepEntry fromTag(CompoundTag tag) {
+         WaitForLanStepAction.StepEntry e = new WaitForLanStepAction.StepEntry();
          e.username = tag.getStringOr("username", "");
          e.step = tag.getIntOr("step", 1);
          return e;

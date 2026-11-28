@@ -18,14 +18,14 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
    private static final int read = 7;
    private static final int write = 16;
    private final List<String> lines;
-   private final List<PromptDialogScreen.Inner_DataUtil> choices;
+   private final List<PromptDialogScreen.Choice> choices;
    private final Runnable onDismiss;
    private ThemedTextInputBox input;
    private final String initialValue;
    private final Consumer<String> onRename;
    private boolean closed;
 
-   public PromptDialogScreen(String title, List<String> lines, List<PromptDialogScreen.Inner_DataUtil> choices, Runnable dismissed) {
+   public PromptDialogScreen(String title, List<String> lines, List<PromptDialogScreen.Choice> choices, Runnable dismissed) {
       super(Component.literal(title));
       this.lines = List.copyOf(lines);
       this.choices = List.copyOf(choices);
@@ -41,8 +41,8 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
       this.onDismiss = () -> {};
       this.initialValue = value;
       this.choices = List.of(
-         new PromptDialogScreen.Inner_DataUtil("Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::onClose),
-         new PromptDialogScreen.Inner_DataUtil("Rename", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, this::submitRename)
+         new PromptDialogScreen.Choice("Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::onClose),
+         new PromptDialogScreen.Choice("Rename", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, this::submitRename)
       );
    }
 
@@ -104,7 +104,7 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
          }
 
          for (int i = 0; i < this.choices.size(); i++) {
-            PromptDialogScreen.Inner_DataUtil choice = this.choices.get(i);
+            PromptDialogScreen.Choice choice = this.choices.get(i);
             autismclient.gui.f.NetHelper bounds = this.init(p, i);
             autismclient.gui.f.b.CachePool.init(ui, bounds, choice.label(), choice.style(), bounds.init_Z(mx, my), false);
          }
@@ -209,6 +209,6 @@ public final class PromptDialogScreen extends VirtualScaledScreen {
       }
    }
 
-   public record Inner_DataUtil(String label, autismclient.gui.f.b.CachePool.Inner_DataUtil style, Runnable action) {
+   public record Choice(String label, autismclient.gui.f.b.CachePool.Inner_DataUtil style, Runnable action) {
    }
 }

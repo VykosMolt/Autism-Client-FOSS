@@ -15,7 +15,7 @@ import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 
 public final class AutoLoginModule extends Module {
    private static volatile AutoLoginModule init_CharEncoder;
-   private final autismclient.util.autologin.AutoLoginDriver init_CachePool = new autismclient.util.autologin.AutoLoginDriver(new AutoLoginModule.Inner_DataUtil());
+   private final autismclient.util.autologin.AutoLoginDriver init_CachePool = new autismclient.util.autologin.AutoLoginDriver(new AutoLoginModule.ModuleBackend());
 
    AutoLoginModule() {
       super("auto-login", "AutoLogin", ae.read, "Answers server login and register gates.");
@@ -66,7 +66,7 @@ public final class AutoLoginModule extends Module {
       }
    }
 
-   private final class Inner_DataUtil implements autismclient.util.autologin.AutoLoginBackend {
+   private final class ModuleBackend implements autismclient.util.autologin.AutoLoginBackend {
       @Override
       public String password() {
          String configured = AutoLoginModule.this.text("password");

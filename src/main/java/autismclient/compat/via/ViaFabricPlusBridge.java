@@ -26,7 +26,7 @@ import net.minecraft.network.Connection;
 public final class ViaFabricPlusBridge {
    private static final String init_Str = "viafabricplus-clientconnection";
    private static final String load = "vv:mod_details";
-   private static final ThreadLocal<ViaFabricPlusBridge.StreamUtil> init_ThreadLocal = new ThreadLocal<>();
+   private static final ThreadLocal<ViaFabricPlusBridge.DetectionAttempt> init_ThreadLocal = new ThreadLocal<>();
 
    private ViaFabricPlusBridge() {
    }
@@ -52,8 +52,8 @@ public final class ViaFabricPlusBridge {
       }
    }
 
-   public static Socket init(String host, int port, ViaFabricPlusBridge.BufferHelper original) throws IOException {
-      ViaFabricPlusBridge.StreamUtil scoped = init_ThreadLocal.get();
+   public static Socket init(String host, int port, ViaFabricPlusBridge.SocketOpener original) throws IOException {
+      ViaFabricPlusBridge.DetectionAttempt scoped = init_ThreadLocal.get();
       if (scoped != null) {
          return init(
             scoped.getAddress().getAddress().getHostAddress(),
@@ -75,19 +75,19 @@ public final class ViaFabricPlusBridge {
       }
 
       ProxyListManager manager = ProxyListManager.getInstance();
-      ViaFabricPlusBridge.ConfigStore route;
+      ViaFabricPlusBridge.ProxyRoute route;
       synchronized (manager) {
-         route = ViaFabricPlusBridge.ConfigStore.init(manager.getActiveProxy());
+         route = ViaFabricPlusBridge.ProxyRoute.init(manager.getActiveProxy());
       }
 
       return init(host, port, route, original);
    }
 
-   public static ViaFabricPlusBridge.CachePool init(bW proxy, InetSocketAddress address) throws IOException {
+   public static ViaFabricPlusBridge.DetectionScope init(bW proxy, InetSocketAddress address) throws IOException {
       return init(proxy, address, 10000L);
    }
 
-   static ViaFabricPlusBridge.CachePool init(bW proxy, InetSocketAddress address, long timeoutMs) throws IOException {
+   static ViaFabricPlusBridge.DetectionScope init(bW proxy, InetSocketAddress address, long timeoutMs) throws IOException {
       if (address == null || address.isUnresolved()) {
          throw new IOException("AUTO protocol destination is unresolved");
       }
@@ -96,9 +96,9 @@ public final class ViaFabricPlusBridge {
          throw new IOException("Invalid AUTO protocol deadline");
       }
 
-      ViaFabricPlusBridge.StreamUtil previous = init_ThreadLocal.get();
-      ViaFabricPlusBridge.StreamUtil current = new ViaFabricPlusBridge.StreamUtil(ViaFabricPlusBridge.ConfigStore.init(proxy), address);
-      current.init_ScheduledFuture = ViaFabricPlusBridge.Inner_DataUtil.init.schedule(current::init_V, timeoutMs, TimeUnit.MILLISECONDS);
+      ViaFabricPlusBridge.DetectionAttempt previous = init_ThreadLocal.get();
+      ViaFabricPlusBridge.DetectionAttempt current = new ViaFabricPlusBridge.DetectionAttempt(ViaFabricPlusBridge.ProxyRoute.init(proxy), address);
+      current.init_ScheduledFuture = ViaFabricPlusBridge.DeadlineScheduler.init.schedule(current::init_V, timeoutMs, TimeUnit.MILLISECONDS);
       init_ThreadLocal.set(current);
       return () -> {
          current.init_V();
@@ -112,7 +112,7 @@ public final class ViaFabricPlusBridge {
 
    private static Socket init() throws IOException {
       Socket socket = new Socket(Proxy.NO_PROXY);
-      ViaFabricPlusBridge.StreamUtil scope = init_ThreadLocal.get();
+      ViaFabricPlusBridge.DetectionAttempt scope = init_ThreadLocal.get();
       if (scope != null) {
          scope.init(socket);
       }
@@ -120,11 +120,11 @@ public final class ViaFabricPlusBridge {
       return socket;
    }
 
-   static Socket init(String host, int port, bW proxy, ViaFabricPlusBridge.BufferHelper original) throws IOException {
-      return init(host, port, ViaFabricPlusBridge.ConfigStore.init(proxy), original);
+   static Socket init(String host, int port, bW proxy, ViaFabricPlusBridge.SocketOpener original) throws IOException {
+      return init(host, port, ViaFabricPlusBridge.ProxyRoute.init(proxy), original);
    }
 
-   private static Socket init(String host, int port, ViaFabricPlusBridge.ConfigStore proxy, ViaFabricPlusBridge.BufferHelper original) throws IOException, SocketException {
+   private static Socket init(String host, int port, ViaFabricPlusBridge.ProxyRoute proxy, ViaFabricPlusBridge.SocketOpener original) throws IOException, SocketException {
       if (proxy == null) {
          return original.open(host, port);
       }
@@ -279,22 +279,22 @@ public final class ViaFabricPlusBridge {
    }
 
    @FunctionalInterface
-   public interface BufferHelper {
+   public interface SocketOpener {
       Socket open(String var1, int var2) throws IOException;
    }
 
    @FunctionalInterface
-   public interface CachePool extends AutoCloseable {
+   public interface DetectionScope extends AutoCloseable {
       @Override
       void close();
    }
 
-   private record ConfigStore(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
-      private static ViaFabricPlusBridge.ConfigStore init(bW proxy) throws IOException {
+   private record ProxyRoute(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
+      private static ViaFabricPlusBridge.ProxyRoute init(bW proxy) throws IOException {
          if (proxy == null) {
             return null;
          } else if (proxy.init_bZ != null && proxy.read != null && !proxy.read.isBlank() && proxy.init_I >= 1 && proxy.init_I <= 65535) {
-            return new ViaFabricPlusBridge.ConfigStore(
+            return new ViaFabricPlusBridge.ProxyRoute(
                proxy.init_bZ, proxy.read, proxy.init_I, proxy.write == null ? "" : proxy.write, proxy.update == null ? "" : proxy.update
             );
          } else {
@@ -308,7 +308,7 @@ public final class ViaFabricPlusBridge {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class DeadlineScheduler {
       private static final ScheduledThreadPoolExecutor init = init();
 
       private static ScheduledThreadPoolExecutor init() {
@@ -322,19 +322,19 @@ public final class ViaFabricPlusBridge {
       }
    }
 
-   private static final class StreamUtil {
-      private final ViaFabricPlusBridge.ConfigStore proxy;
+   private static final class DetectionAttempt {
+      private final ViaFabricPlusBridge.ProxyRoute proxy;
       private final InetSocketAddress address;
       private ScheduledFuture<?> init_ScheduledFuture;
       private Socket init_Socket;
       private boolean init_Z;
 
-      private StreamUtil(ViaFabricPlusBridge.ConfigStore proxy, InetSocketAddress address) {
+      private DetectionAttempt(ViaFabricPlusBridge.ProxyRoute proxy, InetSocketAddress address) {
          this.proxy = proxy;
          this.address = address;
       }
 
-      private ViaFabricPlusBridge.ConfigStore getProxy() {
+      private ViaFabricPlusBridge.ProxyRoute getProxy() {
          return this.proxy;
       }
 

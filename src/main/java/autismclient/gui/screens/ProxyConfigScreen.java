@@ -28,7 +28,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    private final Screen parent;
    private final List<autismclient.gui.ui.widgets.OverlayActionButton> buttons = new ArrayList<>();
    private final List<autismclient.gui.ui.widgets.DropdownWidget> dropdowns = new ArrayList<>();
-   private final List<ProxyConfigScreen.Inner_StreamUtil> rows = new ArrayList<>();
+   private final List<ProxyConfigScreen.SettingRow> rows = new ArrayList<>();
    private int scroll;
    private int panelWidth = 380;
    private int sync;
@@ -120,11 +120,11 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    private void init(
-      String label, String hint, int current, IntConsumer setter, int[] options, ProxyConfigScreen.Inner_CachePool formatter, int panelX, int panelW, int y
+      String label, String hint, int current, IntConsumer setter, int[] options, ProxyConfigScreen.IntFormatter formatter, int panelX, int panelW, int y
    ) {
       List<String> labels = this.init(options, formatter);
       int controlW = this.widestOption(labels);
-      this.rows.add(new ProxyConfigScreen.Inner_StreamUtil(label, "", hint, y, false, false, controlW));
+      this.rows.add(new ProxyConfigScreen.SettingRow(label, "", hint, y, false, false, controlW));
       if (this.isRowVisible(y)) {
          this.dropdowns
             .add(
@@ -140,9 +140,9 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(String label, boolean enabled, String hint, ProxyConfigScreen.Inner_DataUtil setter, int panelX, int panelW, int y) {
+   private void init(String label, boolean enabled, String hint, ProxyConfigScreen.BoolSetter setter, int panelX, int panelW, int y) {
       int controlW = Math.max(this.buttonWidthFor("Enabled"), this.buttonWidthFor("Disabled"));
-      this.rows.add(new ProxyConfigScreen.Inner_StreamUtil(label, enabled ? "Enabled" : "Disabled", hint, y, true, enabled, controlW));
+      this.rows.add(new ProxyConfigScreen.SettingRow(label, enabled ? "Enabled" : "Disabled", hint, y, true, enabled, controlW));
       if (this.isRowVisible(y)) {
          this.buttons
             .add(
@@ -193,7 +193,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       return index;
    }
 
-   private List<String> init(int[] options, ProxyConfigScreen.Inner_CachePool formatter) {
+   private List<String> init(int[] options, ProxyConfigScreen.IntFormatter formatter) {
       List<String> labels = new ArrayList<>();
 
       for (int option : options) {
@@ -240,7 +240,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
             return;
          }
 
-         for (ProxyConfigScreen.Inner_StreamUtil row : this.rows) {
+         for (ProxyConfigScreen.SettingRow row : this.rows) {
             this.init(graphics, row, panelX, panelW);
          }
 
@@ -257,7 +257,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, ProxyConfigScreen.Inner_StreamUtil row, int panelX, int panelW) {
+   private void init(GuiGraphicsExtractor graphics, ProxyConfigScreen.SettingRow row, int panelX, int panelW) {
       if (this.isRowVisible(row.y())) {
          int x = this.init_I_I_5(panelX);
          int y = row.y();
@@ -379,7 +379,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       int text = 0;
       int control = 0;
 
-      for (ProxyConfigScreen.Inner_StreamUtil row : this.rows) {
+      for (ProxyConfigScreen.SettingRow row : this.rows) {
          text = Math.max(text, Math.max(this.load(row.label()), this.load(row.read())));
          control = Math.max(control, row.controlWidth());
       }
@@ -485,15 +485,15 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    }
 
    @FunctionalInterface
-   private interface Inner_CachePool {
+   private interface IntFormatter {
       String format(int var1);
    }
 
    @FunctionalInterface
-   private interface Inner_DataUtil {
+   private interface BoolSetter {
       void accept(boolean var1);
    }
 
-   private record Inner_StreamUtil(String label, String value, String read, int y, boolean toggle, boolean enabled, int controlWidth) {
+   private record SettingRow(String label, String value, String read, int y, boolean toggle, boolean enabled, int controlWidth) {
    }
 }

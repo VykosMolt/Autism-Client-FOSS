@@ -108,7 +108,7 @@ public final class ResourcePackDownloadScope {
    public static ResourcePackDownloadScope.Inner_CachePool init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, String host, int port, String username, String password) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
       snapshot.ensureCurrent();
-      PackUrlValidator.Inner_ConfigStore target = init(host, port);
+      PackUrlValidator.ParsedTarget target = init(host, port);
       byte[] usernameBytes = init(username);
 
       byte[] passwordBytes;
@@ -136,7 +136,7 @@ public final class ResourcePackDownloadScope {
       };
    }
 
-   static ResourcePackDownloadScope.Inner_ConfigStore init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_BufferHelper route) {
+   static ResourcePackDownloadScope.Inner_ConfigStore init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.PackRoute route) {
       if (snapshot != null && route != null && route.proxyType() == Type.SOCKS && route.init_Z()) {
          ResourcePackDownloadScope.Inner_ConfigStore authentication = read.get();
          return authentication != null
@@ -151,7 +151,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   private static PackUrlValidator.Inner_ConfigStore init(String host, int port) throws IOException {
+   private static PackUrlValidator.ParsedTarget init(String host, int port) throws IOException {
       if (host != null && !host.isBlank() && port >= 1 && port <= 65535) {
          String literal = host.indexOf(58) >= 0 && !host.startsWith("[") ? "[" + host + "]" : host;
 

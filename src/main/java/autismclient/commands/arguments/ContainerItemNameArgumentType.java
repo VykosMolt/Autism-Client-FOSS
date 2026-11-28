@@ -21,7 +21,7 @@ import net.minecraft.world.item.ItemStack;
 public final class ContainerItemNameArgumentType implements ArgumentType<String> {
    private static AbstractContainerMenu cachedMenu;
    private static int cachedRevision = -2147483648;
-   private static List<ContainerItemNameArgumentType.Inner_DataUtil> cachedItems = List.of();
+   private static List<ContainerItemNameArgumentType.ItemCandidate> cachedItems = List.of();
 
    private ContainerItemNameArgumentType() {
    }
@@ -51,7 +51,7 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
 
       Minecraft mc = Minecraft.getInstance();
 
-      for (ContainerItemNameArgumentType.Inner_DataUtil candidate : containerItems(mc)) {
+      for (ContainerItemNameArgumentType.ItemCandidate candidate : containerItems(mc)) {
          if (candidate.load().startsWith(remaining)) {
             builder.suggest(StringArgumentType.escapeIfRequired(candidate.init()));
          }
@@ -60,7 +60,7 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
       return builder.buildFuture();
    }
 
-   private static List<ContainerItemNameArgumentType.Inner_DataUtil> containerItems(Minecraft mc) {
+   private static List<ContainerItemNameArgumentType.ItemCandidate> containerItems(Minecraft mc) {
       AbstractContainerMenu menu = mc.player == null ? null : mc.player.containerMenu;
       int revision = menu == null ? -1 : menu.getStateId();
       if (menu == cachedMenu && revision == cachedRevision) {
@@ -80,10 +80,10 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
          }
       }
 
-      List<ContainerItemNameArgumentType.Inner_DataUtil> rebuilt = new ArrayList<>(names.size());
+      List<ContainerItemNameArgumentType.ItemCandidate> rebuilt = new ArrayList<>(names.size());
 
       for (String name : names) {
-         rebuilt.add(new ContainerItemNameArgumentType.Inner_DataUtil(name, name.toLowerCase(Locale.ROOT)));
+         rebuilt.add(new ContainerItemNameArgumentType.ItemCandidate(name, name.toLowerCase(Locale.ROOT)));
       }
 
       cachedMenu = menu;
@@ -117,6 +117,6 @@ public final class ContainerItemNameArgumentType implements ArgumentType<String>
       }
    }
 
-   private record Inner_DataUtil(String init, String load) {
+   private record ItemCandidate(String init, String load) {
    }
 }

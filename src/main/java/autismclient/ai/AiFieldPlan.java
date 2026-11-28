@@ -22,12 +22,12 @@ final class AiFieldPlan {
          return List.of();
       }
 
-      AiFieldPlan.Inner_DataUtil x = init(cells, Axis.X, band, near);
-      AiFieldPlan.Inner_DataUtil z = init(cells, Axis.Z, band, near);
-      AiFieldPlan.Inner_DataUtil best = x.cost() <= z.cost() ? x : z;
+      AiFieldPlan.FieldRoute x = init(cells, Axis.X, band, near);
+      AiFieldPlan.FieldRoute z = init(cells, Axis.Z, band, near);
+      AiFieldPlan.FieldRoute best = x.cost() <= z.cost() ? x : z;
       List<Vec3> out = new ArrayList<>();
 
-      for (AiFieldPlan.Inner_CachePool leg : best.legs()) {
+      for (AiFieldPlan.Leg leg : best.legs()) {
          out.add(Vec3.atBottomCenterOf(leg.start()));
          out.add(Vec3.atBottomCenterOf(leg.end()));
       }
@@ -35,16 +35,16 @@ final class AiFieldPlan {
       return out;
    }
 
-   private static AiFieldPlan.Inner_DataUtil init(List<BlockPos> cells, Axis axis, int band, BlockPos near) {
+   private static AiFieldPlan.FieldRoute init(List<BlockPos> cells, Axis axis, int band, BlockPos near) {
       int min = axis == Axis.X ? cells.stream().mapToInt(Vec3i::getZ).min().orElseThrow() : cells.stream().mapToInt(Vec3i::getX).min().orElseThrow();
-      Map<AiFieldPlan.Inner_BufferHelper, List<BlockPos>> rows = new HashMap<>();
+      Map<AiFieldPlan.RowKey, List<BlockPos>> rows = new HashMap<>();
 
       for (BlockPos cell : cells) {
          int perp = axis == Axis.X ? cell.getZ() : cell.getX();
-         rows.computeIfAbsent(new AiFieldPlan.Inner_BufferHelper(cell.getY(), Math.floorDiv(perp - min, band)), ignored -> new ArrayList<>()).add(cell);
+         rows.computeIfAbsent(new AiFieldPlan.RowKey(cell.getY(), Math.floorDiv(perp - min, band)), ignored -> new ArrayList<>()).add(cell);
       }
 
-      List<AiFieldPlan.Inner_CachePool> remaining = new ArrayList<>();
+      List<AiFieldPlan.Leg> remaining = new ArrayList<>();
 
       for (List<BlockPos> row : rows.values()) {
          int minPerp = row.stream().mapToInt(p -> axis == Axis.X ? p.getZ() : p.getX()).min().orElseThrow();
@@ -67,13 +67,13 @@ final class AiFieldPlan {
                int y = row.getFirst().getY();
                BlockPos start = axis == Axis.X ? new BlockPos(first, y + 1, line) : new BlockPos(line, y + 1, first);
                BlockPos end = axis == Axis.X ? new BlockPos(last, y + 1, line) : new BlockPos(line, y + 1, last);
-               remaining.add(new AiFieldPlan.Inner_CachePool(start, end, last - first));
+               remaining.add(new AiFieldPlan.Leg(start, end, last - first));
                runStart = i;
             }
          }
       }
 
-      List<AiFieldPlan.Inner_CachePool> orderedLegs = new ArrayList<>();
+      List<AiFieldPlan.Leg> orderedLegs = new ArrayList<>();
       Vec3 cursor = Vec3.atCenterOf(near);
       double travel = 0.0;
 
@@ -83,7 +83,7 @@ final class AiFieldPlan {
          boolean reverse = false;
 
          for (int i = 0; i < remaining.size(); i++) {
-            AiFieldPlan.Inner_CachePool leg = remaining.get(i);
+            AiFieldPlan.Leg leg = remaining.get(i);
             double start = cursor.distanceToSqr(Vec3.atCenterOf(leg.start()));
             double end = cursor.distanceToSqr(Vec3.atCenterOf(leg.end()));
             if (start < bestDistance) {
@@ -99,7 +99,7 @@ final class AiFieldPlan {
             }
          }
 
-         AiFieldPlan.Inner_CachePool next = remaining.remove(best);
+         AiFieldPlan.Leg next = remaining.remove(best);
          if (reverse) {
             next = next.reverse();
          }
@@ -109,7 +109,7 @@ final class AiFieldPlan {
          cursor = Vec3.atCenterOf(next.end());
       }
 
-      return new AiFieldPlan.Inner_DataUtil(List.copyOf(orderedLegs), travel + orderedLegs.size() * 2.0);
+      return new AiFieldPlan.FieldRoute(List.copyOf(orderedLegs), travel + orderedLegs.size() * 2.0);
    }
 
    static boolean init(boolean rows, int waypoint, boolean onRay) {
@@ -141,25 +141,25 @@ final class AiFieldPlan {
       return cells.size() >= (long)(maxX - minX + 1) * (maxZ - minZ + 1) * 0.7;
    }
 
-   static boolean init(AiFieldPlan.Inner_StreamUtil previous, AiFieldPlan.Inner_StreamUtil next, BlockHitResult ray) {
+   static boolean init(AiFieldPlan.FaceTarget previous, AiFieldPlan.FaceTarget next, BlockHitResult ray) {
       return next == null ? false : ray == null || !ray.getBlockPos().equals(next.cell()) || ray.getDirection() != next.face();
    }
 
-   private record Inner_BufferHelper(int y, int band) {
+   private record RowKey(int y, int band) {
    }
 
-   private record Inner_CachePool(BlockPos start, BlockPos end, double distance) {
-      AiFieldPlan.Inner_CachePool reverse() {
-         return new AiFieldPlan.Inner_CachePool(this.end, this.start, this.distance);
+   private record Leg(BlockPos start, BlockPos end, double distance) {
+      AiFieldPlan.Leg reverse() {
+         return new AiFieldPlan.Leg(this.end, this.start, this.distance);
       }
    }
 
-   private record Inner_DataUtil(List<AiFieldPlan.Inner_CachePool> legs, double cost) {
+   private record FieldRoute(List<AiFieldPlan.Leg> legs, double cost) {
    }
 
-   record Inner_StreamUtil(BlockPos cell, Direction face) {
-      static AiFieldPlan.Inner_StreamUtil of(BlockPos cell, Direction face) {
-         return new AiFieldPlan.Inner_StreamUtil(cell.immutable(), face);
+   record FaceTarget(BlockPos cell, Direction face) {
+      static AiFieldPlan.FaceTarget of(BlockPos cell, Direction face) {
+         return new AiFieldPlan.FaceTarget(cell.immutable(), face);
       }
    }
 }

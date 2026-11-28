@@ -22,7 +22,7 @@ public final class PacketComponentOriginTracker {
    private PacketComponentOriginTracker() {
    }
 
-   public static PacketComponentOriginTracker.Inner_DataUtil init_StreamUtil_DataUti() {
+   public static PacketComponentOriginTracker.OriginScope init_StreamUtil_DataUti() {
       int[] depth = depthCounter.get();
       if (depth == null) {
          depth = new int[1];
@@ -30,7 +30,7 @@ public final class PacketComponentOriginTracker {
       }
 
       depth[0]++;
-      return new PacketComponentOriginTracker.Inner_DataUtil();
+      return new PacketComponentOriginTracker.OriginScope();
    }
 
    public static boolean isDecoding() {
@@ -250,10 +250,10 @@ public final class PacketComponentOriginTracker {
       }
    }
 
-   public static final class Inner_DataUtil implements AutoCloseable {
+   public static final class OriginScope implements AutoCloseable {
       private boolean init;
 
-      private Inner_DataUtil() {
+      private OriginScope() {
       }
 
       @Override

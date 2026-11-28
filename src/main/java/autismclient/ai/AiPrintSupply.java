@@ -53,12 +53,12 @@ import net.minecraft.world.phys.Vec3;
 final class AiPrintSupply {
    private static final Direction[] DIRECTIONS = Direction.values();
    private final Minecraft mc = Minecraft.getInstance();
-   private final AiPrintSupply.Inner_CachePool prep;
+   private final AiPrintSupply.SupplyPreparation prep;
    private final Map<Long, AiBuilder.CellSpec> cells;
-   private final AiPrintSupply.Inner_TaskQueue shortage = new AiPrintSupply.Inner_TaskQueue();
+   private final AiPrintSupply.ShortageTracker shortage = new AiPrintSupply.ShortageTracker();
    private List<BlockPos> terrainCells;
    private int read;
-   private AiPrintSupply.Inner_BufferHelper stockScan;
+   private AiPrintSupply.StockSourceScan stockScan;
    private ItemStack carriedBox = ItemStack.EMPTY;
    private ItemStack contentsWanted = ItemStack.EMPTY;
    private final List<ItemStack> triedBoxes = new ArrayList<>();
@@ -82,7 +82,7 @@ final class AiPrintSupply {
 
    AiPrintSupply(AiBuilder.Blueprint blueprint, boolean clearTerrain) {
       ClientLevel world = this.mc.level;
-      this.prep = new AiPrintSupply.Inner_CachePool(
+      this.prep = new AiPrintSupply.SupplyPreparation(
          blueprint,
          world,
          p -> AiTerrain.isLoaded(world, p),
@@ -243,7 +243,7 @@ final class AiPrintSupply {
             return true;
          }
 
-         this.stockScan = new AiPrintSupply.Inner_BufferHelper(
+         this.stockScan = new AiPrintSupply.StockSourceScan(
             this.prep,
             this.shortage.item,
             this.shortage.triedSources,
@@ -306,14 +306,14 @@ final class AiPrintSupply {
                AiOperation approach = AiTerrain.isLoaded(this.mc.level, source) && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.mc, source) != null
                   ? null
                   : AiContainer.init(AiGoto.approachBlockToInteractCompat(source, 60, keep, false));
-               return new AiPrintSupply.Inner_NetHelper(
+               return new AiPrintSupply.StockWithdrawOperation(
                   approach,
                   () -> !AiTerrain.isLoaded(this.mc.level, source)
-                     ? AiPrintSupply.Inner_StreamUtil.UNKNOWN
+                     ? AiPrintSupply.StockState.UNKNOWN
                      : (
                         this.mc.level.getBlockState(source).getBlock() instanceof ShulkerBoxBlock
-                           ? AiPrintSupply.Inner_StreamUtil.SHULKER
-                           : AiPrintSupply.Inner_StreamUtil.REPLACED
+                           ? AiPrintSupply.StockState.SHULKER
+                           : AiPrintSupply.StockState.REPLACED
                      ),
                   () -> AiContainer.init(
                      AiJson.objectOf(
@@ -375,7 +375,7 @@ final class AiPrintSupply {
    }
 
    private static Set<Long> newCellSet() {
-      return Collections.newSetFromMap(new AiPrintSupply.Inner_ConfigStore<>());
+      return Collections.newSetFromMap(new AiPrintSupply.SectionedCellMap<>());
    }
 
    private static Set<Long> init(final Set<Long> first, final Set<Long> second) {
@@ -440,12 +440,12 @@ final class AiPrintSupply {
       return ((SignBlockEntity)field.get(editor)).getBlockPos();
    }
 
-   static final class Inner_BufferHelper {
-      final AiPrintSupply.Inner_CachePool prep;
+   static final class StockSourceScan {
+      final AiPrintSupply.SupplyPreparation prep;
       final Item item;
       final Set<Long> triedSources;
       final Vec3 scanOrigin;
-      final AiPrintSupply.Inner_DataUtil depotScan;
+      final AiPrintSupply.DepotScan depotScan;
       Iterator<Long> stockIterator;
       BlockPos bestSource;
       double bestDistSq = 1.0 / 0.0;
@@ -456,12 +456,12 @@ final class AiPrintSupply {
       boolean stockScanned;
       boolean finished;
 
-      Inner_BufferHelper(AiPrintSupply.Inner_CachePool prep, Item item, Set<Long> tried, BlockPos center, Vec3 from) {
+      StockSourceScan(AiPrintSupply.SupplyPreparation prep, Item item, Set<Long> tried, BlockPos center, Vec3 from) {
          this.prep = prep;
          this.item = item;
          this.triedSources = tried;
          this.scanOrigin = from;
-         this.depotScan = new AiPrintSupply.Inner_DataUtil(center, prep.world);
+         this.depotScan = new AiPrintSupply.DepotScan(center, prep.world);
       }
 
       void skipDepotScan() {
@@ -509,9 +509,9 @@ final class AiPrintSupply {
                BlockPos p = this.prep.worldPos(cell);
                BlockState live = this.prep.loaded.test(p) ? this.prep.readState(p) : null;
                if (live == null || !AiBuilder.matchesSchematicCell(cell, live)) {
-                  for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.init(cell, live, false)) {
+                  for (AiCellMaterials.MaterialRequirement requirement : AiCellMaterials.init(cell, live, false)) {
                      if (requirement.item() == this.item) {
-                        if (requirement.use() == AiCellMaterials.Inner_BufferHelper.REUSE) {
+                        if (requirement.use() == AiCellMaterials.MaterialUse.REUSE) {
                            this.read = Math.max(this.read, requirement.count());
                         } else {
                            this.consumeCount = Math.min(576, this.consumeCount + requirement.count());
@@ -535,61 +535,61 @@ final class AiPrintSupply {
       }
    }
 
-   static final class Inner_CachePool {
+   static final class SupplyPreparation {
       static final int MAX_PROBE_READS = 32;
       final AiBuilder.Blueprint blueprint;
       final LevelReader world;
       final Predicate<BlockPos> loaded;
-      final Map<Long, AiBuilder.CellSpec> cells = new AiPrintSupply.Inner_ConfigStore<>();
+      final Map<Long, AiBuilder.CellSpec> cells = new AiPrintSupply.SectionedCellMap<>();
       final Set<Long> stockCells = AiPrintSupply.newCellSet();
       final Set<Long> protectedCells = AiPrintSupply.newCellSet();
       final Set<Long> supportCandidates = AiPrintSupply.newCellSet();
       final Set<Long> dirtyChunks = ConcurrentHashMap.newKeySet();
-      final Map<Long, Set<Long>> chunksByCell = new AiPrintSupply.Inner_ConfigStore<>();
+      final Map<Long, Set<Long>> chunksByCell = new AiPrintSupply.SectionedCellMap<>();
       final Set<Long> ownedCells = Collections.unmodifiableSet(
          new AbstractSet<Long>() {
             @Override
             public boolean isEmpty() {
-               return Inner_CachePool.this.protectedCells.isEmpty() && !this.iterator().hasNext();
+               return SupplyPreparation.this.protectedCells.isEmpty() && !this.iterator().hasNext();
             }
 
             @Override
             public boolean contains(Object key) {
-               if (Inner_CachePool.this.protectedCells.contains(key)) {
+               if (SupplyPreparation.this.protectedCells.contains(key)) {
                   return true;
                }
 
-               Set<Long> chunks = Inner_CachePool.this.chunksByCell.get(key);
+               Set<Long> chunks = SupplyPreparation.this.chunksByCell.get(key);
                if (chunks != null) {
                   for (long chunk : chunks) {
-                     if (Inner_CachePool.this.dirtyChunks.contains(chunk)) {
+                     if (SupplyPreparation.this.dirtyChunks.contains(chunk)) {
                         return true;
                      }
                   }
                }
 
-               return Inner_CachePool.this.protectedCells.contains(key);
+               return SupplyPreparation.this.protectedCells.contains(key);
             }
 
             @Override
             public Iterator<Long> iterator() {
                return Stream.concat(
-                     Inner_CachePool.this.protectedCells.stream(),
-                     Inner_CachePool.this.supportCandidates.stream().filter(key -> !Inner_CachePool.this.protectedCells.contains(key) && this.contains(key))
+                     SupplyPreparation.this.protectedCells.stream(),
+                     SupplyPreparation.this.supportCandidates.stream().filter(key -> !SupplyPreparation.this.protectedCells.contains(key) && this.contains(key))
                   )
                   .iterator();
             }
 
             @Override
             public int size() {
-               if (Inner_CachePool.this.dirtyChunks.isEmpty()) {
-                  return Inner_CachePool.this.protectedCells.size();
+               if (SupplyPreparation.this.dirtyChunks.isEmpty()) {
+                  return SupplyPreparation.this.protectedCells.size();
                }
 
-               int n = Inner_CachePool.this.protectedCells.size();
+               int n = SupplyPreparation.this.protectedCells.size();
 
-               for (long key : Inner_CachePool.this.supportCandidates) {
-                  if (!Inner_CachePool.this.protectedCells.contains(key) && this.contains(key)) {
+               for (long key : SupplyPreparation.this.supportCandidates) {
+                  if (!SupplyPreparation.this.protectedCells.contains(key) && this.contains(key)) {
                      n++;
                   }
                }
@@ -598,12 +598,12 @@ final class AiPrintSupply {
             }
          }
       );
-      final List<BlockPos> terrainCells = new AiPrintSupply.Inner_JsonUtil();
-      final Map<Long, Set<Long>> readsByCell = new AiPrintSupply.Inner_ConfigStore<>();
-      final Map<Long, Set<Long>> ownersByChunk = new AiPrintSupply.Inner_ConfigStore<>();
-      private final LinkedHashMap<AiPrintSupply.Inner_CachePool.Inner_DataUtil, Iterator<Long>> pendingChanges = new LinkedHashMap<>();
+      final List<BlockPos> terrainCells = new AiPrintSupply.PagedPosList();
+      final Map<Long, Set<Long>> readsByCell = new AiPrintSupply.SectionedCellMap<>();
+      final Map<Long, Set<Long>> ownersByChunk = new AiPrintSupply.SectionedCellMap<>();
+      private final LinkedHashMap<AiPrintSupply.SupplyPreparation.PendingChange, Iterator<Long>> pendingChanges = new LinkedHashMap<>();
       private Iterator<Long> fullRecheck;
-      final AiPrintSupply.Inner_DataUtil depotScan;
+      final AiPrintSupply.DepotScan depotScan;
       final boolean clearTerrain;
       int indexed;
       int supportCursor;
@@ -621,12 +621,12 @@ final class AiPrintSupply {
       private BlockPos changedStock;
       private AuditBuilderHull auditHull;
 
-      Inner_CachePool(AiBuilder.Blueprint blueprint, LevelReader world, Predicate<BlockPos> loaded, BlockPos initialCenter, boolean clearTerrain) {
+      SupplyPreparation(AiBuilder.Blueprint blueprint, LevelReader world, Predicate<BlockPos> loaded, BlockPos initialCenter, boolean clearTerrain) {
          this.blueprint = blueprint;
          this.world = world;
          this.loaded = loaded;
          this.clearTerrain = clearTerrain;
-         this.depotScan = new AiPrintSupply.Inner_DataUtil(initialCenter, world);
+         this.depotScan = new AiPrintSupply.DepotScan(initialCenter, world);
       }
 
       boolean settled() {
@@ -770,11 +770,11 @@ final class AiPrintSupply {
          Set<Long> owners = this.ownersByChunk.get(key);
          if (owners != null && !owners.isEmpty()) {
             this.dirtyChunks.add(key);
-            this.init(new AiPrintSupply.Inner_CachePool.Inner_DataUtil(true, key), owners);
+            this.init(new AiPrintSupply.SupplyPreparation.PendingChange(true, key), owners);
          }
       }
 
-      private void init(AiPrintSupply.Inner_CachePool.Inner_DataUtil change, Set<Long> owners) {
+      private void init(AiPrintSupply.SupplyPreparation.PendingChange change, Set<Long> owners) {
          if (owners != null && !owners.isEmpty() && this.fullRecheck == null && !this.pendingChanges.containsKey(change)) {
             if (this.pendingChanges.size() >= 128) {
                this.pendingChanges.clear();
@@ -800,7 +800,7 @@ final class AiPrintSupply {
                return false;
             }
 
-            Entry<AiPrintSupply.Inner_CachePool.Inner_DataUtil, Iterator<Long>> entry = this.pendingChanges.entrySet().iterator().next();
+            Entry<AiPrintSupply.SupplyPreparation.PendingChange, Iterator<Long>> entry = this.pendingChanges.entrySet().iterator().next();
             if (entry.getValue().hasNext()) {
                this.protectedCells.add(entry.getValue().next());
             } else {
@@ -836,7 +836,7 @@ final class AiPrintSupply {
                   } else if (method.isDefault()) {
                      return InvocationHandler.invokeDefault(proxy, method, args);
                   } else {
-                     throw AiPrintSupply.Inner_CachePool.Inner_StreamUtil.init;
+                     throw AiPrintSupply.SupplyPreparation.IncompleteRead.init;
                   }
                } else if (++queries[0] <= 32 && this.loaded.test(p)) {
                   this.pop++;
@@ -855,14 +855,14 @@ final class AiPrintSupply {
 
                   return var10000;
                } else {
-                  throw AiPrintSupply.Inner_CachePool.Inner_StreamUtil.init;
+                  throw AiPrintSupply.SupplyPreparation.IncompleteRead.init;
                }
             }
          );
 
          try {
             return AiSchematicActions.init(candidate, this.cells, metered);
-         } catch (AiPrintSupply.Inner_CachePool.Inner_StreamUtil incomplete) {
+         } catch (AiPrintSupply.SupplyPreparation.IncompleteRead incomplete) {
             return true;
          } finally {
             Iterator var15 = reads.iterator();
@@ -878,26 +878,26 @@ final class AiPrintSupply {
                   boolean added = owners.add(candidate.asLong());
                   this.chunksByCell.computeIfAbsent(candidate.asLong(), ignored -> ConcurrentHashMap.newKeySet()).add(chunk);
                   if (added && this.dirtyChunks.contains(chunk) && this.fullRecheck == null) {
-                     this.pendingChanges.put(new AiPrintSupply.Inner_CachePool.Inner_DataUtil(true, chunk), owners.iterator());
+                     this.pendingChanges.put(new AiPrintSupply.SupplyPreparation.PendingChange(true, chunk), owners.iterator());
                   }
                }
             }
          }
       }
 
-      private record Inner_DataUtil(boolean chunk, long key) {
+      private record PendingChange(boolean chunk, long key) {
       }
 
-      private static final class Inner_StreamUtil extends RuntimeException {
-         static final AiPrintSupply.Inner_CachePool.Inner_StreamUtil init = new AiPrintSupply.Inner_CachePool.Inner_StreamUtil();
+      private static final class IncompleteRead extends RuntimeException {
+         static final AiPrintSupply.SupplyPreparation.IncompleteRead init = new AiPrintSupply.SupplyPreparation.IncompleteRead();
 
-         private Inner_StreamUtil() {
+         private IncompleteRead() {
             super(null, null, false, false);
          }
       }
    }
 
-   static final class Inner_ConfigStore<V> extends AbstractMap<Long, V> {
+   static final class SectionedCellMap<V> extends AbstractMap<Long, V> {
       private final ConcurrentSkipListMap<Long, Map<Long, V>> bySection = new ConcurrentSkipListMap<>();
       private final AtomicInteger size = new AtomicInteger();
 
@@ -945,12 +945,12 @@ final class AiPrintSupply {
          return new AbstractSet<Entry<Long, V>>() {
             @Override
             public int size() {
-               return Inner_ConfigStore.this.size.get();
+               return SectionedCellMap.this.size.get();
             }
 
             @Override
             public Iterator<Entry<Long, V>> iterator() {
-               final Iterator<Map<Long, V>> outer = Inner_ConfigStore.this.bySection.values().iterator();
+               final Iterator<Map<Long, V>> outer = SectionedCellMap.this.bySection.values().iterator();
                return new Iterator<Entry<Long, V>>() {
                   Iterator<Entry<Long, V>> init = Collections.emptyIterator();
 
@@ -980,7 +980,7 @@ final class AiPrintSupply {
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class DepotScan {
       static final int CUBE_CELLS = 40817;
       private static final int RADIUS = 24;
       final BlockPos center;
@@ -992,7 +992,7 @@ final class AiPrintSupply {
       Iterator<BlockPos> pending = Collections.emptyIterator();
       int load;
 
-      Inner_DataUtil(BlockPos center, LevelReader world) {
+      DepotScan(BlockPos center, LevelReader world) {
          this.center = center.immutable();
          this.level = world instanceof ClientLevel clientLevel ? clientLevel : null;
          this.minChunkX = center.getX() - RADIUS >> 4;
@@ -1006,7 +1006,7 @@ final class AiPrintSupply {
          return this.load >= this.total && !this.pending.hasNext();
       }
 
-      void init(AiPrintSupply.Inner_CachePool prep) {
+      void init(AiPrintSupply.SupplyPreparation prep) {
          BlockPos p;
          if (this.level != null) {
             if (!this.pending.hasNext()) {
@@ -1042,7 +1042,7 @@ final class AiPrintSupply {
       }
    }
 
-   static final class Inner_JsonUtil extends AbstractList<BlockPos> {
+   static final class PagedPosList extends AbstractList<BlockPos> {
       private final TreeMap<Integer, BlockPos[]> pages = new TreeMap<>();
       private int size;
 
@@ -1071,16 +1071,16 @@ final class AiPrintSupply {
       }
    }
 
-   static final class Inner_NetHelper implements AiOperation {
+   static final class StockWithdrawOperation implements AiOperation {
       private AiOperation navigation;
       private AiOperation opened;
-      private final Supplier<AiPrintSupply.Inner_StreamUtil> stateSupplier;
+      private final Supplier<AiPrintSupply.StockState> stateSupplier;
       private final Supplier<AiOperation> opener;
       private final long deadline;
       private final AiPreparationReceipt receipt = new AiPreparationReceipt();
       private AiOperation.Result finalResult;
 
-      Inner_NetHelper(AiOperation navigation, Supplier<AiPrintSupply.Inner_StreamUtil> state, Supplier<AiOperation> open, long deadline) {
+      StockWithdrawOperation(AiOperation navigation, Supplier<AiPrintSupply.StockState> state, Supplier<AiOperation> open, long deadline) {
          this.navigation = navigation;
          this.stateSupplier = state;
          this.opener = open;
@@ -1097,7 +1097,7 @@ final class AiPrintSupply {
             return this.init(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Stock navigation/withdrawal deadline reached", "{}", List.of(), AiFailure.TIMEOUT));
          }
 
-         if (this.stateSupplier.get() == AiPrintSupply.Inner_StreamUtil.REPLACED) {
+         if (this.stateSupplier.get() == AiPrintSupply.StockState.REPLACED) {
             return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
          }
 
@@ -1121,12 +1121,12 @@ final class AiPrintSupply {
             this.navigation = null;
          }
 
-         AiPrintSupply.Inner_StreamUtil observed = this.stateSupplier.get();
-         if (observed == AiPrintSupply.Inner_StreamUtil.UNKNOWN) {
+         AiPrintSupply.StockState observed = this.stateSupplier.get();
+         if (observed == AiPrintSupply.StockState.UNKNOWN) {
             return new AiOperation.Result(AiOperation.Status.RUNNING, "Waiting for the remembered stock chunk", "{}", List.of());
          }
 
-         if (observed == AiPrintSupply.Inner_StreamUtil.REPLACED) {
+         if (observed == AiPrintSupply.StockState.REPLACED) {
             return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
          }
 
@@ -1179,13 +1179,13 @@ final class AiPrintSupply {
       }
    }
 
-   enum Inner_StreamUtil {
+   enum StockState {
       UNKNOWN,
       SHULKER,
       REPLACED;
    }
 
-   static final class Inner_TaskQueue {
+   static final class ShortageTracker {
       Item item;
       int misses;
       final Set<Long> triedSources = new HashSet<>();

@@ -30,8 +30,8 @@ import net.minecraft.world.phys.Vec3;
 public final class AiSchematicMachinePlan {
    static final AiSchematicMachinePlan EMPTY = new AiSchematicMachinePlan(Map.of(), List.of());
    private final Map<Long, ListTag> containerContents;
-   private final List<AiSchematic.Inner_TaskQueue> vehicles;
-   private final List<AiSchematic.Inner_StreamUtil> frames;
+   private final List<AiSchematic.RailVehicleSpec> vehicles;
+   private final List<AiSchematic.ItemFrameSpec> frames;
    private final Set<Long> offRailCells;
    private final Set<Long> hopperCells;
    private final Map<Long, BlockState> containerStates;
@@ -39,24 +39,24 @@ public final class AiSchematicMachinePlan {
    private final Map<Long, BlockState> write;
    private final Set<Long> clockSections;
 
-   private AiSchematicMachinePlan(Map<Long, ListTag> contents, List<AiSchematic.Inner_TaskQueue> vehicles) {
+   private AiSchematicMachinePlan(Map<Long, ListTag> contents, List<AiSchematic.RailVehicleSpec> vehicles) {
       this(contents, vehicles, List.of());
    }
 
-   private AiSchematicMachinePlan(Map<Long, ListTag> contents, List<AiSchematic.Inner_TaskQueue> vehicles, List<AiSchematic.Inner_StreamUtil> frames) {
+   private AiSchematicMachinePlan(Map<Long, ListTag> contents, List<AiSchematic.RailVehicleSpec> vehicles, List<AiSchematic.ItemFrameSpec> frames) {
       this(contents, vehicles, Set.of(), Set.of(), Map.of(), Map.of(), Map.of(), Set.of(), frames);
    }
 
    private AiSchematicMachinePlan(
       Map<Long, ListTag> contents,
-      List<AiSchematic.Inner_TaskQueue> vehicles,
+      List<AiSchematic.RailVehicleSpec> vehicles,
       Set<Long> offRailCells,
       Set<Long> hopperCells,
       Map<Long, BlockState> containerStates,
       Map<Long, BlockState> outcomes,
       Map<Long, BlockState> clockContext,
       Set<Long> clockSections,
-      List<AiSchematic.Inner_StreamUtil> frames
+      List<AiSchematic.ItemFrameSpec> frames
    ) {
       HashMap<Long, ListTag> copy = new HashMap<>();
       contents.forEach((key, value) -> copy.put(key, value.copy()));
@@ -71,12 +71,12 @@ public final class AiSchematicMachinePlan {
       this.clockSections = Set.copyOf(clockSections);
    }
 
-   static AiSchematicMachinePlan fromSchematic(AiSchematic.Inner_BufferHelper source, AiBuilder.Blueprint selected) {
+   static AiSchematicMachinePlan fromSchematic(AiSchematic.LoadedSchematic source, AiBuilder.Blueprint selected) {
       AiSchematicMachinePlan plan = new AiSchematicMachinePlan(source.containerContents(), source.railVehicles(), source.itemFrames()).init(selected);
       HashMap<Long, BlockState> outcomes = new HashMap<>();
       HashSet<Long> vehicleCells = new HashSet<>();
 
-      for (AiSchematic.Inner_TaskQueue vehicle : plan.vehicles) {
+      for (AiSchematic.RailVehicleSpec vehicle : plan.vehicles) {
          long key = vehicle.rail().asLong();
          if (!plan.offRailCells.contains(key)) {
             vehicleCells.add(key);
@@ -107,7 +107,7 @@ public final class AiSchematicMachinePlan {
 
       HashSet<Long> vehicleCells = new HashSet<>();
 
-      for (AiSchematic.Inner_TaskQueue vehicle : this.vehicles) {
+      for (AiSchematic.RailVehicleSpec vehicle : this.vehicles) {
          vehicleCells.add(vehicle.rail().asLong());
       }
 
@@ -125,7 +125,7 @@ public final class AiSchematicMachinePlan {
       HashMap<Long, ListTag> kept = new HashMap<>();
       HashSet<Long> frameSupports = new HashSet<>();
 
-      for (AiSchematic.Inner_StreamUtil frame : this.frames) {
+      for (AiSchematic.ItemFrameSpec frame : this.frames) {
          frameSupports.add(frame.support().asLong());
       }
 
@@ -163,7 +163,7 @@ public final class AiSchematicMachinePlan {
          }
       }
 
-      List<AiSchematic.Inner_TaskQueue> carts = this.vehicles.stream().filter(vehicle -> cells.contains(vehicle.rail().asLong())).toList();
+      List<AiSchematic.RailVehicleSpec> carts = this.vehicles.stream().filter(vehicle -> cells.contains(vehicle.rail().asLong())).toList();
       HashMap<Long, BlockState> selectedOutcomes = new HashMap<>();
       this.outcomes.forEach((key, state) -> {
          boolean keep = selectedStates.containsKey(key);
@@ -208,7 +208,7 @@ public final class AiSchematicMachinePlan {
          });
       }
 
-      List<AiSchematic.Inner_StreamUtil> hung = this.frames.stream().filter(frame -> supported.contains(frame.support().asLong())).toList();
+      List<AiSchematic.ItemFrameSpec> hung = this.frames.stream().filter(frame -> supported.contains(frame.support().asLong())).toList();
       return kept.isEmpty() && carts.isEmpty() && selectedOutcomes.isEmpty() && hung.isEmpty()
          ? EMPTY
          : new AiSchematicMachinePlan(kept, carts, offRail, hoppers, storage, selectedOutcomes, context, sections, hung);
@@ -276,15 +276,15 @@ public final class AiSchematicMachinePlan {
       );
    }
 
-   List<autismclient.ai.print.PrintItemFrame.Inner_StreamUtil> write(BlockPos origin, Provider registries) {
+   List<autismclient.ai.print.PrintItemFrame.FrameSpec> write(BlockPos origin, Provider registries) {
       if (this.frames.isEmpty()) {
          return List.of();
       }
 
       RegistryOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
-      ArrayList<autismclient.ai.print.PrintItemFrame.Inner_StreamUtil> out = new ArrayList<>(this.frames.size());
+      ArrayList<autismclient.ai.print.PrintItemFrame.FrameSpec> out = new ArrayList<>(this.frames.size());
 
-      for (AiSchematic.Inner_StreamUtil frame : this.frames) {
+      for (AiSchematic.ItemFrameSpec frame : this.frames) {
          ItemStack item = ItemStack.EMPTY;
          boolean undecodable = false;
          if (frame.item() != null) {
@@ -297,7 +297,7 @@ public final class AiSchematicMachinePlan {
          }
 
          out.add(
-            new autismclient.ai.print.PrintItemFrame.Inner_StreamUtil(
+            new autismclient.ai.print.PrintItemFrame.FrameSpec(
                frame.id(), origin.offset(frame.cell()), frame.facing(), item, frame.rotation(), frame.invisible(), frame.fixed(), undecodable
             )
          );
@@ -415,7 +415,7 @@ public final class AiSchematicMachinePlan {
       Map<BlockPos, BlockState> outcomes,
       List<autismclient.ai.print.PrintSkippedContents> unavailable,
       List<autismclient.ai.print.PrintClockSpec> clocks,
-      List<autismclient.ai.print.PrintItemFrame.Inner_StreamUtil> frames
+      List<autismclient.ai.print.PrintItemFrame.FrameSpec> frames
    ) {
       static final AiSchematicMachinePlan.MachineSpec EMPTY = new AiSchematicMachinePlan.MachineSpec(List.of(), List.of(), Map.of());
 

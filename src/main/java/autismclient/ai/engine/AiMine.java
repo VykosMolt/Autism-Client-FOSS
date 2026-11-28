@@ -92,7 +92,7 @@ public final class AiMine {
                this.inventorySnapshot(),
                AiChunkMemory.getInstance()
             );
-            FutureTask<MiningTargetSearch.Inner_StreamUtil> routeSearch;
+            FutureTask<MiningTargetSearch.SearchResult> routeSearch;
             long routeSearchVersion = -1L;
             long routeSearchDeadline;
             boolean routeSearchPending;
@@ -486,7 +486,7 @@ public final class AiMine {
                      return null;
                   }
 
-                  MiningTargetSearch.Inner_StreamUtil choice;
+                  MiningTargetSearch.SearchResult choice;
                   try {
                      choice = this.routeSearch.get();
                   } catch (Exception e) {
@@ -544,7 +544,7 @@ public final class AiMine {
                      this.routeSearchPending = false;
                      this.routeSearchVersion = -1L;
                   } else {
-                     ArrayList<MiningTargetSearch.Inner_DataUtil> choices = new ArrayList<>();
+                     ArrayList<MiningTargetSearch.Candidate> choices = new ArrayList<>();
                      ItemStack[] tools = this.inventorySnapshot();
                      this.grid.updateHotbarCompat(tools);
                      long inventoryRevision = AiServerEvidence.inventoryRevision();
@@ -571,7 +571,7 @@ public final class AiMine {
                         }
 
                         if (Double.isFinite(cost)) {
-                           choices.add(new MiningTargetSearch.Inner_DataUtil(candidate, cost));
+                           choices.add(new MiningTargetSearch.Candidate(candidate, cost));
                         }
                      }
 
@@ -742,12 +742,12 @@ public final class AiMine {
                   }
                }
 
-               ToolUpkeep.Inner_DataUtil decision = ToolUpkeep.init(this.init(state));
-               if (decision instanceof ToolUpkeep.Inner_DataUtil.Inner_StreamUtil keep) {
+               ToolUpkeep.UpkeepDecision decision = ToolUpkeep.init(this.init(state));
+               if (decision instanceof ToolUpkeep.UpkeepDecision.KeepHotbar keep) {
                   this.selectSlot(keep.hotbarSlot());
                   return null;
                } else {
-                  if (decision instanceof ToolUpkeep.Inner_DataUtil.Inner_CachePool swap) {
+                  if (decision instanceof ToolUpkeep.UpkeepDecision.SwapFromBackpack swap) {
                      int selected = this.mc.player.getInventory().getSelectedSlot();
                      if (InventorySlotHelper.swapToHotbar(this.mc, swap.backpackSlot(), selected)) {
                         this.selectSlot(selected);
@@ -768,14 +768,14 @@ public final class AiMine {
                }
             }
 
-            List<ToolUpkeep.Inner_StreamUtil> init(BlockState state) {
+            List<ToolUpkeep.ToolSlot> init(BlockState state) {
                boolean handsOk = !state.requiresCorrectToolForDrops();
-               List<ToolUpkeep.Inner_StreamUtil> out = new ArrayList<>(36);
+               List<ToolUpkeep.ToolSlot> out = new ArrayList<>(36);
 
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = this.mc.player.getInventory().getItem(slot);
                   out.add(
-                     new ToolUpkeep.Inner_StreamUtil(
+                     new ToolUpkeep.ToolSlot(
                         slot,
                         stack.isDamageableItem() ? stack.getMaxDamage() - stack.getDamageValue() : -1,
                         handsOk || stack.isCorrectToolForDrops(state),

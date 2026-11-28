@@ -74,17 +74,17 @@ public final class AiRoutePolicy {
       }
    }
 
-   static long putAt_J(AiPathfinder.UiHelper var0) {
+   static long putAt_J(AiPathfinder.PathStep var0) {
       return (var0.from().asLong() * 31L + var0.to().asLong()) * 31L + var0.type().ordinal();
    }
 
-   static boolean putAt_Z_AABB(AABB var0, List<AiPathfinder.UiHelper> var1, int var2, AABB var3, Vec3 var4) {
+   static boolean putAt_Z_AABB(AABB var0, List<AiPathfinder.PathStep> var1, int var2, AABB var3, Vec3 var4) {
       if (var0.intersects(var3.expandTowards(var4.scale(3.0)).inflate(0.15))) {
          return false;
       }
 
       for (int var5 = var2; var5 < var1.size(); var5++) {
-         AiPathfinder.UiHelper var6 = (AiPathfinder.UiHelper)var1.get(var5);
+         AiPathfinder.PathStep var6 = (AiPathfinder.PathStep)var1.get(var5);
          BlockPos var7 = var6.from();
          BlockPos var8 = var6.to();
          AABB var9 = new AABB(
@@ -103,7 +103,7 @@ public final class AiRoutePolicy {
       return true;
    }
 
-   static boolean putAt_Z_FileStore_PacketHe_Function(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+   static boolean putAt_Z_FileStore_PacketHe_Function(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       if (var0.plannedBreakTicks() < 0.0) {
          return false;
       }
@@ -120,11 +120,11 @@ public final class AiRoutePolicy {
       return var2 - var0.plannedBreakTicks() > 10.0;
    }
 
-   static boolean fill(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+   static boolean fill(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       return putAt_Z_FileStore_PacketHe(var0, var1, false);
    }
 
-   static boolean putAt_Z_FileStore_PacketHe(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.CellInfo> var1, boolean var2) {
+   static boolean putAt_Z_FileStore_PacketHe(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1, boolean var2) {
       if (var2 && var0.type() == AiPathfinder.MoveType.BRIDGE_CELL) {
          AiPathfinder.CellInfo var3 = (AiPathfinder.CellInfo)var1.apply(var0.to().below());
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var1.apply(var0.to());
@@ -146,7 +146,7 @@ public final class AiRoutePolicy {
       }
    }
 
-   private static boolean value(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+   private static boolean value(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       boolean var10000;
       switch (var0.type()) {
          case WALK:
@@ -321,7 +321,7 @@ public final class AiRoutePolicy {
       return var10000;
    }
 
-   private static boolean prevEx(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+   private static boolean prevEx(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       boolean var10000;
       switch (var0.type()) {
          case DESCEND_2:
@@ -409,11 +409,11 @@ public final class AiRoutePolicy {
          : var2.loaded() && var2.water() && !var2.lava() && !var2.hazardFeet() && var3.loaded() && (var3.water() || var3.passable()) && !var3.lava();
    }
 
-   static int putAt_I_List(List<AiPathfinder.UiHelper> var0, int var1, int var2, Function<BlockPos, AiPathfinder.CellInfo> var3) {
+   static int putAt_I_List(List<AiPathfinder.PathStep> var0, int var1, int var2, Function<BlockPos, AiPathfinder.CellInfo> var3) {
       return putAt_I_List(var0, var1, var2, var3, false);
    }
 
-   static int putAt_I_List(List<AiPathfinder.UiHelper> var0, int var1, int var2, Function<BlockPos, AiPathfinder.CellInfo> var3, boolean var4) {
+   static int putAt_I_List(List<AiPathfinder.PathStep> var0, int var1, int var2, Function<BlockPos, AiPathfinder.CellInfo> var3, boolean var4) {
       int var5 = Math.min(var0.size(), var1 + 1 + var2);
       HashMap var6 = new HashMap();
       Function var7 = var2x -> {
@@ -422,7 +422,7 @@ public final class AiRoutePolicy {
       };
 
       for (int var8 = Math.max(0, var1); var8 < var5; var8++) {
-         AiPathfinder.UiHelper var9 = (AiPathfinder.UiHelper)var0.get(var8);
+         AiPathfinder.PathStep var9 = (AiPathfinder.PathStep)var0.get(var8);
          if (var8 > var1 && !putAt_Z_FileStore_PacketHe(var9, var6.isEmpty() ? var3 : var7, var4)) {
             return var8;
          }
@@ -439,19 +439,19 @@ public final class AiRoutePolicy {
       return -1;
    }
 
-   public static int putAt(List<AiPathfinder.UiHelper> var0) {
+   public static int putAt(List<AiPathfinder.PathStep> var0) {
       Minecraft var1 = Minecraft.getInstance();
       if (var1.level == null) {
          return -1;
       }
 
       Function var2 = var1x -> AiPathfinder.LiveGridView.classifyCell(var1, var1.level, ((BlockPos)var1x), putAt_ItemStackArr);
-      return !var0.isEmpty() && !putAt_Z_FileStore_PacketHe((AiPathfinder.UiHelper)var0.getFirst(), var2, true)
+      return !var0.isEmpty() && !putAt_Z_FileStore_PacketHe((AiPathfinder.PathStep)var0.getFirst(), var2, true)
          ? 0
          : putAt_I_List(var0, 0, var0.size(), var2, true);
    }
 
-   static int putAt_I_List_2(List<AiPathfinder.UiHelper> var0, int var1, int var2, boolean var3, boolean var4) {
+   static int putAt_I_List_2(List<AiPathfinder.PathStep> var0, int var1, int var2, boolean var3, boolean var4) {
       if (var3) {
          return -1;
       }
@@ -460,7 +460,7 @@ public final class AiRoutePolicy {
       int var6 = Math.min(var0.size(), var1 + 1 + var2);
 
       for (int var7 = Math.max(var5, 0); var7 < var6; var7++) {
-         if (putAt(((AiPathfinder.UiHelper)var0.get(var7)).type())) {
+         if (putAt(((AiPathfinder.PathStep)var0.get(var7)).type())) {
             return var7;
          }
       }
@@ -487,7 +487,7 @@ public final class AiRoutePolicy {
          || var0 == AiPathfinder.MoveType.PILLAR;
    }
 
-   static boolean putAt_Z(AiPathfinder.UiHelper var0) {
+   static boolean putAt_Z(AiPathfinder.PathStep var0) {
       if (var0.to().getY() == var0.from().getY() && var0.cellsToBreak().isEmpty() && var0.cellsToPlace().isEmpty()) {
          boolean var10000;
          switch (var0.type()) {
@@ -575,7 +575,7 @@ public final class AiRoutePolicy {
       return var6 && var3 > 6.0;
    }
 
-   static boolean putAt_Z_FileStore_PacketHe_BlockPos(AiPathfinder.UiHelper var0, BlockPos var1) {
+   static boolean putAt_Z_FileStore_PacketHe_BlockPos(AiPathfinder.PathStep var0, BlockPos var1) {
       int var2 = Integer.signum(var0.to().getX() - var0.from().getX());
       int var3 = Integer.signum(var0.to().getZ() - var0.from().getZ());
       return var1.equals(var0.to()) || var1.equals(var0.to().offset(var2, 0, var3)) || var1.equals(var0.to().offset(2 * var2, 0, 2 * var3));
@@ -635,7 +635,7 @@ public final class AiRoutePolicy {
       }
    }
 
-   static boolean putAt_Z_FileStore_PacketHe(AiPathfinder.UiHelper var0, int var1, int var2, double var3, boolean var5) {
+   static boolean putAt_Z_FileStore_PacketHe(AiPathfinder.PathStep var0, int var1, int var2, double var3, boolean var5) {
       if (!var5) {
          return false;
       } else {
@@ -655,7 +655,7 @@ public final class AiRoutePolicy {
       return var0 >= var2 - (var3 ? 0.0625 : 0.0) - 0.01;
    }
 
-   static Vec3 putAt_Vec3_Vec3_FileStore_PacketHe(Vec3 var0, AiPathfinder.UiHelper var1) {
+   static Vec3 putAt_Vec3_Vec3_FileStore_PacketHe(Vec3 var0, AiPathfinder.PathStep var1) {
       int var2 = Integer.signum(var1.to().getX() - var1.from().getX());
       int var3 = Integer.signum(var1.to().getZ() - var1.from().getZ());
       if (var2 != 0 == (var3 != 0)) {
@@ -668,7 +668,7 @@ public final class AiRoutePolicy {
       return var8 >= 0.199 ? var0 : new Vec3(var2 != 0 ? var4 + var2 * 0.2 : var0.x, var0.y, var3 != 0 ? var6 + var3 * 0.2 : var0.z);
    }
 
-   static Vec3 putAt_Vec3_FileStore_PacketHe_D(AiPathfinder.UiHelper var0, double var1) {
+   static Vec3 putAt_Vec3_FileStore_PacketHe_D(AiPathfinder.PathStep var0, double var1) {
       if (!var0.cellsToBreak().isEmpty()) {
          return Vec3.atCenterOf(var0.cellsToBreak().get(0));
       } else {
@@ -687,11 +687,11 @@ public final class AiRoutePolicy {
       return var5 || !var4 && var0 < var2 + 0.05 || var2 - var0 > 0.6;
    }
 
-   static double putAt_D_List_I(List<AiPathfinder.UiHelper> var0, int var1) {
-      double var2 = ((AiPathfinder.UiHelper)var0.get(var1)).to().getY();
+   static double putAt_D_List_I(List<AiPathfinder.PathStep> var0, int var1) {
+      double var2 = ((AiPathfinder.PathStep)var0.get(var1)).to().getY();
 
       for (int var4 = var1 + 1; var4 < Math.min(var0.size(), var1 + 5); var4++) {
-         AiPathfinder.UiHelper var5 = (AiPathfinder.UiHelper)var0.get(var4);
+         AiPathfinder.PathStep var5 = (AiPathfinder.PathStep)var0.get(var4);
          if (var5.type() == AiPathfinder.MoveType.JUMP_UP_1 || var5.type() == AiPathfinder.MoveType.STEP_UP_1) {
             return Math.max(var2, var5.to().getY());
          }
@@ -704,7 +704,7 @@ public final class AiRoutePolicy {
       return var2;
    }
 
-   static boolean readEx(AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+   static boolean readEx(AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
       if (var0.to().getY() < var0.from().getY()
          && (
             var0.type() == AiPathfinder.MoveType.DESCEND_1
@@ -727,7 +727,7 @@ public final class AiRoutePolicy {
    static final class Inner_CacheHelper {
       private final ArrayDeque<long[]> putAt = new ArrayDeque<>();
 
-      boolean putAt(AiPathfinder.UiHelper var1, long var2) {
+      boolean putAt(AiPathfinder.PathStep var1, long var2) {
          while (!this.putAt.isEmpty() && var2 - ((long[])this.putAt.peekFirst())[1] > 45000000000L) {
             this.putAt.pollFirst();
          }

@@ -16,14 +16,14 @@ final class AiSessionsDrawer {
    private final AiAssistantOverlay host;
    final autismclient.gui.ui.widgets.TextInputWidget searchInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search chats");
    final autismclient.gui.ui.widgets.TextInputWidget renameInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96);
-   private final AiUiKit.Inner_StreamUtil scroller = new AiUiKit.Inner_StreamUtil(false);
+   private final AiUiKit.ScrollPane scroller = new AiUiKit.ScrollPane(false);
    private autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
    boolean open;
    private String init_Str;
    private String load_Str;
    private long load_J;
-   private List<AiSessions.Inner_StreamUtil> filteredSessions = List.of();
-   private List<AiSessions.Inner_StreamUtil> lastSessions;
+   private List<AiSessions.SessionMeta> filteredSessions = List.of();
+   private List<AiSessions.SessionMeta> lastSessions;
    private String lastQuery = "";
 
    AiSessionsDrawer(AiService service, AiViewState view, AiAssistantOverlay host) {
@@ -92,7 +92,7 @@ final class AiSessionsDrawer {
             this::createSession
          );
          y += ctrl + 2;
-         List<AiSessions.Inner_StreamUtil> sessions = this.view.sessions;
+         List<AiSessions.SessionMeta> sessions = this.view.sessions;
          if (sessions.size() > 8) {
             kit.drawTextInput(this.searchInput, autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), ctrl));
             y += ctrl + 2;
@@ -101,7 +101,7 @@ final class AiSessionsDrawer {
             this.searchInput.setFocused(false);
          }
 
-         List<AiSessions.Inner_StreamUtil> rows = this.filterSessions(sessions, this.searchInput.getValue());
+         List<AiSessions.SessionMeta> rows = this.filterSessions(sessions, this.searchInput.getValue());
          autismclient.gui.f.NetHelper list = autismclient.gui.f.NetHelper.init(inner.read(), y, inner.update(), Math.max(0, inner.load() - y));
          int rowH = AiUiKit.inputHeight();
          int step = rowH + 1;
@@ -128,7 +128,7 @@ final class AiSessionsDrawer {
       }
    }
 
-   private void renderRow(AiUiKit kit, AiSessions.Inner_StreamUtil meta, autismclient.gui.f.NetHelper row, long now) {
+   private void renderRow(AiUiKit kit, AiSessions.SessionMeta meta, autismclient.gui.f.NetHelper row, long now) {
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       String id = meta.id();
       boolean active = id.equals(this.view.activeSessionId);
@@ -165,12 +165,12 @@ final class AiSessionsDrawer {
       }
    }
 
-   static String displayTitle(AiSessions.Inner_StreamUtil meta) {
+   static String displayTitle(AiSessions.SessionMeta meta) {
       String title = meta.title() == null ? "" : meta.title().trim();
       return !title.isEmpty() && !title.equals("New session") ? title : "New chat";
    }
 
-   private List<AiSessions.Inner_StreamUtil> filterSessions(List<AiSessions.Inner_StreamUtil> sessions, String query) {
+   private List<AiSessions.SessionMeta> filterSessions(List<AiSessions.SessionMeta> sessions, String query) {
       String q = query.trim().toLowerCase(Locale.ROOT);
       if (sessions == this.lastSessions && q.equals(this.lastQuery)) {
          return this.filteredSessions;
@@ -182,9 +182,9 @@ final class AiSessionsDrawer {
          return this.filteredSessions = sessions;
       }
 
-      List<AiSessions.Inner_StreamUtil> out = new ArrayList<>();
+      List<AiSessions.SessionMeta> out = new ArrayList<>();
 
-      for (AiSessions.Inner_StreamUtil meta : sessions) {
+      for (AiSessions.SessionMeta meta : sessions) {
          if (displayTitle(meta).toLowerCase(Locale.ROOT).contains(q)) {
             out.add(meta);
          }
@@ -224,9 +224,9 @@ final class AiSessionsDrawer {
    void onMenuAction(String id, int index) {
       switch (index) {
          case 0:
-            AiSessions.Inner_StreamUtil meta = null;
+            AiSessions.SessionMeta meta = null;
 
-            for (AiSessions.Inner_StreamUtil m : this.view.sessions) {
+            for (AiSessions.SessionMeta m : this.view.sessions) {
                if (m.id().equals(id)) {
                   meta = m;
                }

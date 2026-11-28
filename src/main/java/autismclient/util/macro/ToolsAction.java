@@ -30,7 +30,7 @@ public final class ToolsAction implements MacroAction {
    private boolean enabled = true;
 
    public boolean init() {
-      MacroToolBridge.Inner_TaskQueue tool = MacroToolBridge.findTool(this.toolId);
+      MacroToolBridge.ToolInfo tool = MacroToolBridge.findTool(this.toolId);
       if (tool == null) {
          return false;
       }
@@ -149,7 +149,7 @@ public final class ToolsAction implements MacroAction {
       }
    }
 
-   public MacroToolBridge.Inner_StreamUtil startJob(Minecraft mc, long owner) {
+   public MacroToolBridge.ToolJob startJob(Minecraft mc, long owner) {
       if (!"RUN".equals(this.operation)) {
          return MacroToolBridge.load(owner, this.scope, "");
       } else if (this.toolId != null && !this.toolId.isBlank()) {
@@ -183,7 +183,7 @@ public final class ToolsAction implements MacroAction {
       }
 
       try {
-         MacroToolBridge.Inner_TaskQueue definition = MacroToolBridge.findTool(this.toolId);
+         MacroToolBridge.ToolInfo definition = MacroToolBridge.findTool(this.toolId);
          if (definition == null) {
             return false;
          }
@@ -278,7 +278,7 @@ public final class ToolsAction implements MacroAction {
       this.saveAs = tag.getStringOr("saveAs", "");
       this.enabled = tag.getBooleanOr("enabled", true);
       JsonObject args = parseArgs(tag.getStringOr("argumentsJson", "{}"));
-      MacroToolBridge.Inner_TaskQueue definition = MacroToolBridge.findTool(this.toolId);
+      MacroToolBridge.ToolInfo definition = MacroToolBridge.findTool(this.toolId);
       JsonObject schema = definition == null ? new JsonObject() : JsonParser.parseString(definition.read()).getAsJsonObject();
       JsonObject properties = schema.has("properties") ? schema.getAsJsonObject("properties") : new JsonObject();
 

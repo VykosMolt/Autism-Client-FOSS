@@ -30,7 +30,7 @@ public final class AutismClientMessaging {
    private AutismClientMessaging() {
    }
 
-   public static AutismClientMessaging.Inner_DataUtil capture(List<String> sink) {
+   public static AutismClientMessaging.CaptureHandle capture(List<String> sink) {
       List<String> previous = CAPTURE.get();
       CAPTURE.set(sink);
       return () -> {
@@ -806,7 +806,7 @@ public final class AutismClientMessaging {
          || lower.contains(" crashed:");
    }
 
-   public interface Inner_DataUtil extends AutoCloseable {
+   public interface CaptureHandle extends AutoCloseable {
       @Override
       void close();
    }

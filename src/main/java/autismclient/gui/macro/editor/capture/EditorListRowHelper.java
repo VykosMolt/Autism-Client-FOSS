@@ -18,13 +18,13 @@ public final class EditorListRowHelper {
    private EditorListRowHelper() {
    }
 
-   public static EditorListRowHelper.Inner_DataUtil init(NetHelper bounds, boolean slotField, boolean capture) {
+   public static EditorListRowHelper.RowLayout init(NetHelper bounds, boolean slotField, boolean capture) {
       int captureWidth = capture ? 52 : 0;
       int captureX = bounds.init() - captureWidth;
       int addX = (capture ? captureX - 2 : bounds.init()) - 34;
       int slotX = slotField ? addX - 2 - 44 : 0;
       int textRight = slotField ? slotX : addX;
-      return new EditorListRowHelper.Inner_DataUtil(
+      return new EditorListRowHelper.RowLayout(
          NetHelper.init(bounds.read(), bounds.write(), Math.max(1, textRight - bounds.read() - 2), 13),
          slotField ? NetHelper.init(slotX, bounds.write(), 44, 13) : null,
          NetHelper.init(addX, bounds.write(), 34, 13),
@@ -138,6 +138,6 @@ public final class EditorListRowHelper {
       ListRowRenderer.drawSymbolButtonSquare(graphics, bounds.read(), bounds.write(), bounds.update(), symbol, hovered, danger);
    }
 
-   public record Inner_DataUtil(NetHelper init, NetHelper load, NetHelper read, NetHelper write) {
+   public record RowLayout(NetHelper init, NetHelper load, NetHelper read, NetHelper write) {
    }
 }

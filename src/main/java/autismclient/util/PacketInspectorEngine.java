@@ -252,7 +252,7 @@ public final class PacketInspectorEngine {
       if (payloadSnapshot != null) {
          builder.line("Payload Channel: " + payloadSnapshot.channel(), UiColorPalette.successText());
          builder.line("Payload Size: " + payloadSnapshot.byteLength() + " bytes", UiColorPalette.textBright());
-         PayloadChannelFilterManager.Inner_StreamUtil filter = matchingFilterRule(payloadSnapshot);
+         PayloadChannelFilterManager.MatchedRule filter = matchingFilterRule(payloadSnapshot);
          if (filter != null) {
             builder.line("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
          }
@@ -490,7 +490,7 @@ public final class PacketInspectorEngine {
       byte[] raw = snapshot.rawBytes();
       String channel = orFallback(snapshot.channel(), "unknown");
       builder.line("Channel: " + channel, UiColorPalette.successText());
-      PayloadChannelFilterManager.Inner_StreamUtil filter = matchingFilterRule(snapshot);
+      PayloadChannelFilterManager.MatchedRule filter = matchingFilterRule(snapshot);
       if (filter != null) {
          builder.line("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
       }
@@ -513,7 +513,7 @@ public final class PacketInspectorEngine {
          builder.line("CommandApi Value: " + snapshot.commandApiValue(), UiColorPalette.successText());
       }
 
-      PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.buildPreview(raw);
+      PayloadFieldCodec.PayloadPreview preview = PayloadFieldCodec.buildPreview(raw);
       if (isRegisterChannel(channel)) {
          List<String> channels = identifierPreview(raw, 10);
          if (!channels.isEmpty()) {
@@ -566,7 +566,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PayloadChannelFilterManager.Inner_StreamUtil matchingFilterRule(AutismPayloadSupport.PayloadEntry snapshot) {
+   private static PayloadChannelFilterManager.MatchedRule matchingFilterRule(AutismPayloadSupport.PayloadEntry snapshot) {
       if (snapshot == null) {
          return null;
       }
@@ -787,7 +787,7 @@ public final class PacketInspectorEngine {
             builder.line("CommandApi Value: " + payloadSnapshot.commandApiValue(), UiColorPalette.successText());
          }
 
-         PayloadFieldCodec.Inner_NetHelper preview = PayloadFieldCodec.buildPreview(payloadSnapshot.rawBytes());
+         PayloadFieldCodec.PayloadPreview preview = PayloadFieldCodec.buildPreview(payloadSnapshot.rawBytes());
          if (preview.mcStringPreview() != null && !preview.mcStringPreview().startsWith("<")) {
             builder.line("Minecraft String: " + preview.mcStringPreview(), UiColorPalette.successText());
          }
@@ -840,7 +840,7 @@ public final class PacketInspectorEngine {
       builder.line("Channel: " + snapshot.channel(), UiColorPalette.successText());
       builder.line("Direction: " + snapshot.direction() + " | Protocol: " + orFallback(snapshot.protocolPhase(), "unknown"), directionColor(snapshot.direction()));
       builder.line("Body Size: " + raw.length + " bytes", UiColorPalette.textBright());
-      PayloadChannelFilterManager.Inner_StreamUtil filter = matchingFilterRule(snapshot);
+      PayloadChannelFilterManager.MatchedRule filter = matchingFilterRule(snapshot);
       if (filter != null) {
          builder.line("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
       }

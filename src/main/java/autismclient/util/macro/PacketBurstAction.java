@@ -24,7 +24,7 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.phys.Vec3;
 
 public class PacketBurstAction implements MacroAction {
-   public PacketBurstAction.Inner_DataUtil mode = PacketBurstAction.Inner_DataUtil.CONTAINER_CLICK;
+   public PacketBurstAction.BurstMode mode = PacketBurstAction.BurstMode.CONTAINER_CLICK;
    public int count = 1;
    public int delayTicks = 0;
    public int slot = 0;
@@ -170,7 +170,7 @@ public class PacketBurstAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = MacroNbtCodecHelper.parseEnum(PacketBurstAction.Inner_DataUtil.class, tag.getStringOr("mode", "CONTAINER_CLICK"), PacketBurstAction.Inner_DataUtil.CONTAINER_CLICK);
+      this.mode = MacroNbtCodecHelper.parseEnum(PacketBurstAction.BurstMode.class, tag.getStringOr("mode", "CONTAINER_CLICK"), PacketBurstAction.BurstMode.CONTAINER_CLICK);
       this.count = tag.getIntOr("count", 1);
       this.delayTicks = tag.getIntOr("delayTicks", 0);
       this.slot = tag.getIntOr("slot", 0);
@@ -196,7 +196,7 @@ public class PacketBurstAction implements MacroAction {
       return "B";
    }
 
-   public enum Inner_DataUtil {
+   public enum BurstMode {
       CONTAINER_CLICK,
       ENTITY_INTERACT,
       CLIENT_COMMAND,

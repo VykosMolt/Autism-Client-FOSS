@@ -23,15 +23,15 @@ public final class UiTextRenderer {
          return this.size() > 2048;
       }
    };
-   private final Map<UiTextRenderer.Inner_DataUtil, String> trimCache = new LinkedHashMap<UiTextRenderer.Inner_DataUtil, String>(256, 0.75F, true) {
+   private final Map<UiTextRenderer.TrimKey, String> trimCache = new LinkedHashMap<UiTextRenderer.TrimKey, String>(256, 0.75F, true) {
       @Override
-      protected boolean removeEldestEntry(Entry<UiTextRenderer.Inner_DataUtil, String> eldest) {
+      protected boolean removeEldestEntry(Entry<UiTextRenderer.TrimKey, String> eldest) {
          return this.size() > 2048;
       }
    };
-   private final Map<UiTextRenderer.Inner_StreamUtil, List<String>> wrapCache = new LinkedHashMap<UiTextRenderer.Inner_StreamUtil, List<String>>(256, 0.75F, true) {
+   private final Map<UiTextRenderer.WrapKey, List<String>> wrapCache = new LinkedHashMap<UiTextRenderer.WrapKey, List<String>>(256, 0.75F, true) {
       @Override
-      protected boolean removeEldestEntry(Entry<UiTextRenderer.Inner_StreamUtil, List<String>> eldest) {
+      protected boolean removeEldestEntry(Entry<UiTextRenderer.WrapKey, List<String>> eldest) {
          return this.size() > 2048;
       }
    };
@@ -83,7 +83,7 @@ public final class UiTextRenderer {
          return safe;
       }
 
-      UiTextRenderer.Inner_DataUtil key = new UiTextRenderer.Inner_DataUtil(safe, maxWidth);
+      UiTextRenderer.TrimKey key = new UiTextRenderer.TrimKey(safe, maxWidth);
       String cached = this.trimCache.get(key);
       if (cached != null) {
          return cached;
@@ -209,7 +209,7 @@ public final class UiTextRenderer {
    public List<String> wrapLines(String text, int maxWidth) {
       String safe = text == null ? "" : text;
       int width = Math.max(1, maxWidth);
-      UiTextRenderer.Inner_StreamUtil key = new UiTextRenderer.Inner_StreamUtil(safe, width);
+      UiTextRenderer.WrapKey key = new UiTextRenderer.WrapKey(safe, width);
       List<String> cached = this.wrapCache.get(key);
       if (cached != null) {
          return cached;
@@ -265,14 +265,14 @@ public final class UiTextRenderer {
       }
    }
 
-   private record Inner_DataUtil(String text, int maxWidth) {
-      private Inner_DataUtil {
+   private record TrimKey(String text, int maxWidth) {
+      private TrimKey {
          Objects.requireNonNull(text);
       }
    }
 
-   private record Inner_StreamUtil(String text, int maxWidth) {
-      private Inner_StreamUtil {
+   private record WrapKey(String text, int maxWidth) {
+      private WrapKey {
          Objects.requireNonNull(text);
       }
    }

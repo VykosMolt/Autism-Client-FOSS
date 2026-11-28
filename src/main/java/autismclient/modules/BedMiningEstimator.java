@@ -34,15 +34,15 @@ final class BedMiningEstimator {
       init_Obj = null;
    }
 
-   static BedBreachRouteSolver.Inner_BufferHelper init(BlockPos bed, boolean tools, BlockPos mining, float progress) {
+   static BedBreachRouteSolver.BreachRoute init(BlockPos bed, boolean tools, BlockPos mining, float progress) {
       return init(bed, tools, mining, progress, 0.0);
    }
 
-   static BedBreachRouteSolver.Inner_BufferHelper load(BlockPos bed, boolean tools, BlockPos mining, float progress) {
+   static BedBreachRouteSolver.BreachRoute load(BlockPos bed, boolean tools, BlockPos mining, float progress) {
       return init(bed, tools, mining, progress, 8.0);
    }
 
-   private static BedBreachRouteSolver.Inner_BufferHelper init(BlockPos bed, boolean tools, BlockPos mining, float progress, double coverDepth) {
+   private static BedBreachRouteSolver.BreachRoute init(BlockPos bed, boolean tools, BlockPos mining, float progress, double coverDepth) {
       if (init_Obj != init_Minecraft.level) {
          init();
          init_Obj = init_Minecraft.level;
@@ -70,15 +70,15 @@ final class BedMiningEstimator {
       }
 
       AABB bounds = new AABB(bed).minmax(new AABB(paired ? other : bed)).minmax(new AABB(eye, eye)).inflate(0.01);
-      ArrayList<BedBreachRouteSolver.Inner_DataUtil> cells = new ArrayList<>();
-      HashMap<BlockState, BedBreachRouteSolver.Inner_DataUtil> costs = new HashMap<>();
+      ArrayList<BedBreachRouteSolver.BreachCell> cells = new ArrayList<>();
+      HashMap<BlockState, BedBreachRouteSolver.BreachCell> costs = new HashMap<>();
 
       for (BlockPos mutable : BlockPos.betweenClosed(
          BlockPos.containing(bounds.minX, bounds.minY, bounds.minZ), BlockPos.containing(bounds.maxX, bounds.maxY, bounds.maxZ)
       )) {
          BlockPos p = mutable.immutable();
          if (!init_Minecraft.level.isLoaded(p)) {
-            cells.add(new BedBreachRouteSolver.Inner_DataUtil(p, List.of(new AABB(p)), 1.0 / 0.0, -1, false));
+            cells.add(new BedBreachRouteSolver.BreachCell(p, List.of(new AABB(p)), 1.0 / 0.0, -1, false));
          } else {
             BlockState block = init_Minecraft.level.getBlockState(p);
             if (!block.isAir()) {
@@ -90,14 +90,14 @@ final class BedMiningEstimator {
                   int slot = init_Minecraft.player.getInventory().getSelectedSlot();
                   double ticks = 1.0 / 0.0;
                   if (breakable) {
-                     BedBreachRouteSolver.Inner_DataUtil cost = costs.get(block);
+                     BedBreachRouteSolver.BreachCell cost = costs.get(block);
                      if (cost == null) {
                         if (tools) {
                            slot = init(block);
                         }
 
                         ticks = init(block, p, init_Minecraft.player.getInventory().getItem(slot));
-                        cost = new BedBreachRouteSolver.Inner_DataUtil(p, List.of(), ticks, slot, target);
+                        cost = new BedBreachRouteSolver.BreachCell(p, List.of(), ticks, slot, target);
                         costs.put(block, cost);
                      }
 
@@ -110,7 +110,7 @@ final class BedMiningEstimator {
                      ticks = idealCosts.computeIfAbsent(block, b -> recommended.stream().mapToDouble(stack -> init(b, p, stack)).min().orElse(1.0 / 0.0));
                   }
 
-                  cells.add(new BedBreachRouteSolver.Inner_DataUtil(p, boxes, ticks, slot, target));
+                  cells.add(new BedBreachRouteSolver.BreachCell(p, boxes, ticks, slot, target));
                }
             }
          }
@@ -128,18 +128,18 @@ final class BedMiningEstimator {
          init_Map.put(bed.immutable(), cached);
       }
 
-      BedBreachRouteSolver.Inner_BufferHelper route = cached.init_DataPipe_CachePool.init(mining, progress, preferred);
+      BedBreachRouteSolver.BreachRoute route = cached.init_DataPipe_CachePool.init(mining, progress, preferred);
       if (ideal && route != null) {
-         List<BedBreachRouteSolver.Inner_DataUtil> actual = route.cells().stream().map(c -> {
+         List<BedBreachRouteSolver.BreachCell> actual = route.cells().stream().map(c -> {
             double ticksx = actualCosts.get(c.pos());
             if (c.pos().equals(mining)) {
                ticksx = Math.max(1.0, Math.ceil(ticksx * (1.0F - Math.clamp(progress, 0.0F, 1.0F))));
             }
 
-            return new BedBreachRouteSolver.Inner_DataUtil(c.pos(), c.boxes(), ticksx, c.slot(), c.init_Z());
+            return new BedBreachRouteSolver.BreachCell(c.pos(), c.boxes(), ticksx, c.slot(), c.init_Z());
          }).toList();
-         return new BedBreachRouteSolver.Inner_BufferHelper(
-            actual, route.eye(), actual.stream().mapToDouble(BedBreachRouteSolver.Inner_DataUtil::ticks).sum() + Math.max(0, actual.size() - 1) * 5, route.init_Z()
+         return new BedBreachRouteSolver.BreachRoute(
+            actual, route.eye(), actual.stream().mapToDouble(BedBreachRouteSolver.BreachCell::ticks).sum() + Math.max(0, actual.size() - 1) * 5, route.init_Z()
          );
       } else {
          return route;
@@ -188,7 +188,7 @@ final class BedMiningEstimator {
          Vec3 visible = BedTargetAimSolver.visibleAimPoint(boxes, blockers, eye, reach, preferred);
          Vec3 future = BedTargetAimSolver.visibleAimPoint(boxes, blockers, nextEye, reach, preferred);
          return new BedMiningEstimator.Inner_StreamUtil(
-            new BedBreachRouteSolver.Inner_DataUtil(pos, boxes, remaining, init_Minecraft.player.getInventory().getSelectedSlot(), state.getBlock() instanceof BedBlock),
+            new BedBreachRouteSolver.BreachCell(pos, boxes, remaining, init_Minecraft.player.getInventory().getSelectedSlot(), state.getBlock() instanceof BedBlock),
             future == null ? visible : future,
             visible != null
          );
@@ -270,9 +270,9 @@ final class BedMiningEstimator {
       );
    }
 
-   private record Inner_DataUtil(Vec3 eye, double reach, List<BedBreachRouteSolver.Inner_DataUtil> init_List, BedBreachRouteSolver.Inner_CachePool init_DataPipe_CachePool) {
+   private record Inner_DataUtil(Vec3 eye, double reach, List<BedBreachRouteSolver.BreachCell> init_List, BedBreachRouteSolver.RouteSet init_DataPipe_CachePool) {
    }
 
-   record Inner_StreamUtil(BedBreachRouteSolver.Inner_DataUtil init_DataPipe_DataUtil, Vec3 init_Vec3, boolean init_Z) {
+   record Inner_StreamUtil(BedBreachRouteSolver.BreachCell init_DataPipe_DataUtil, Vec3 init_Vec3, boolean init_Z) {
    }
 }

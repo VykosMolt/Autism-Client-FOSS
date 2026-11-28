@@ -36,16 +36,16 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 
 final class AiSchematicReadiness {
-   private static final AiSchematicReadiness.Inner_JsonUtil init_bX_JsonUtil = new AiSchematicReadiness.Inner_JsonUtil();
+   private static final AiSchematicReadiness.InconclusiveCheck init_bX_JsonUtil = new AiSchematicReadiness.InconclusiveCheck();
    private static final int init_I = 1048576;
    private static final int[][] init_IArr2 = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
 
    private AiSchematicReadiness() {
    }
 
-   static String init(AiSchematicReadiness.Inner_TaskQueue report) {
+   static String init(AiSchematicReadiness.ReadinessReport report) {
       if (!report.ready() && !report.issues().isEmpty()) {
-         AiSchematicReadiness.Inner_StreamUtil first = report.issues().getFirst();
+         AiSchematicReadiness.ReadinessIssue first = report.issues().getFirst();
          AiBuilder.CellSpec cell = first.cell();
          String block = cell.block().startsWith("minecraft:") ? cell.block().substring("minecraft:".length()) : cell.block();
          String var10000;
@@ -74,7 +74,7 @@ final class AiSchematicReadiness {
          }
 
          String why = var10000;
-         return first.kind() != AiSchematicReadiness.Inner_CachePool.UNSUPPORTED_STATE && first.kind() != AiSchematicReadiness.Inner_CachePool.NO_ACTION_PLAN
+         return first.kind() != AiSchematicReadiness.IssueKind.UNSUPPORTED_STATE && first.kind() != AiSchematicReadiness.IssueKind.NO_ACTION_PLAN
             ? "Cannot build as saved: "
                + report.issueCount()
                + (report.issueCount() == 1L ? " block" : " blocks")
@@ -105,22 +105,22 @@ final class AiSchematicReadiness {
       }
    }
 
-   static List<AiSchematicReadiness.Inner_StreamUtil> init(AiBuilder.Blueprint blueprint) {
+   static List<AiSchematicReadiness.ReadinessIssue> init(AiBuilder.Blueprint blueprint) {
       return init(blueprint, 2147483647).issues();
    }
 
-   static AiSchematicReadiness.Inner_TaskQueue init(AiBuilder.Blueprint blueprint, int exampleLimit) {
+   static AiSchematicReadiness.ReadinessReport init(AiBuilder.Blueprint blueprint, int exampleLimit) {
       return assess(blueprint, exampleLimit, null);
    }
 
-   static AiSchematicReadiness.Inner_TaskQueue assess(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context) {
+   static AiSchematicReadiness.ReadinessReport assess(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context) {
       return init(blueprint, exampleLimit, context, null);
    }
 
-   static AiSchematicReadiness.Inner_DataUtil assessBuildable(AiBuilder.Blueprint requested, int exampleLimit, Map<Long, BlockState> context) {
+   static AiSchematicReadiness.BuildableAssessment assessBuildable(AiBuilder.Blueprint requested, int exampleLimit, Map<Long, BlockState> context) {
       AiBuilder.Blueprint blueprint = requested;
       LongOpenHashSet omitted = new LongOpenHashSet();
-      ArrayList<AiSchematicReadiness.Inner_StreamUtil> examples = new ArrayList<>();
+      ArrayList<AiSchematicReadiness.ReadinessIssue> examples = new ArrayList<>();
       long issueCount = 0L;
       int distinctStates = 0;
       Map<Long, BlockState> observed = context;
@@ -129,7 +129,7 @@ final class AiSchematicReadiness {
       do {
          AiBuilder.checkNotCancelled();
          omitted.clear();
-         AiSchematicReadiness.Inner_TaskQueue audit = init(blueprint, exampleLimit - examples.size(), observed, omitted);
+         AiSchematicReadiness.ReadinessReport audit = init(blueprint, exampleLimit - examples.size(), observed, omitted);
          issueCount += audit.issueCount();
          distinctStates = Math.max(distinctStates, audit.distinctStates());
          examples.addAll(audit.issues());
@@ -158,37 +158,37 @@ final class AiSchematicReadiness {
          blueprint = new AiBuilder.Blueprint(blueprint.origin(), List.copyOf(kept));
       } while (!kept.isEmpty());
 
-      return new AiSchematicReadiness.Inner_DataUtil(blueprint, requested.cells().size() - blueprint.cells().size(), new AiSchematicReadiness.Inner_TaskQueue(issueCount, examples, distinctStates));
+      return new AiSchematicReadiness.BuildableAssessment(blueprint, requested.cells().size() - blueprint.cells().size(), new AiSchematicReadiness.ReadinessReport(issueCount, examples, distinctStates));
    }
 
-   private static AiSchematicReadiness.Inner_TaskQueue init(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context, LongSet omitted) {
+   private static AiSchematicReadiness.ReadinessReport init(AiBuilder.Blueprint blueprint, int exampleLimit, Map<Long, BlockState> context, LongSet omitted) {
       if (exampleLimit < 0) {
          throw new IllegalArgumentException("negative readiness example limit");
       }
 
-      ArrayList<AiSchematicReadiness.Inner_StreamUtil> issues = new ArrayList<>();
-      HashMap<AiSchematicReadiness.Inner_NetHelper, List<AiSchematicReadiness.Inner_ConfigStore>> states = new HashMap<>();
-      HashMap<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> pairPlans = new HashMap<>();
+      ArrayList<AiSchematicReadiness.ReadinessIssue> issues = new ArrayList<>();
+      HashMap<AiSchematicReadiness.BlockStateKey, List<AiSchematicReadiness.StateProblem>> states = new HashMap<>();
+      HashMap<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> pairPlans = new HashMap<>();
       Long2ObjectOpenHashMap<AiBuilder.CellSpec> partners = init(blueprint, pairPlans);
       long issueCount = 0L;
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
          AiBuilder.checkNotCancelled();
-         List<AiSchematicReadiness.Inner_ConfigStore> problems = states.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> init_List(cell));
+         List<AiSchematicReadiness.StateProblem> problems = states.computeIfAbsent(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()), ignored -> init_List(cell));
          issueCount += problems.size();
          if (omitted != null && !problems.isEmpty()) {
             omitted.add(init(cell.dx(), cell.dy(), cell.dz()));
          }
 
-         for (AiSchematicReadiness.Inner_ConfigStore problem : problems) {
+         for (AiSchematicReadiness.StateProblem problem : problems) {
             if (issues.size() >= exampleLimit) {
                break;
             }
 
-            issues.add(new AiSchematicReadiness.Inner_StreamUtil(problem.kind(), cell, problem.detail()));
+            issues.add(new AiSchematicReadiness.ReadinessIssue(problem.kind(), cell, problem.detail()));
          }
 
-         AiSchematicReadiness.Inner_BufferHelper pair = init(cell, pairPlans);
+         AiSchematicReadiness.PairPlan pair = init(cell, pairPlans);
          if (pair != null) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
             AiBuilder.CellSpec partner = partners.get(AiBuilder.packOffsetKey(at.getX(), at.getY(), at.getZ()));
@@ -203,8 +203,8 @@ final class AiSchematicReadiness {
 
                if (issues.size() < exampleLimit) {
                   issues.add(
-                     new AiSchematicReadiness.Inner_StreamUtil(
-                        partner == null ? AiSchematicReadiness.Inner_CachePool.MISSING_CONTEXT : AiSchematicReadiness.Inner_CachePool.CONFLICTING_PAIR,
+                     new AiSchematicReadiness.ReadinessIssue(
+                        partner == null ? AiSchematicReadiness.IssueKind.MISSING_CONTEXT : AiSchematicReadiness.IssueKind.CONFLICTING_PAIR,
                         cell,
                         "requires its native paired half at "
                            + at.toShortString()
@@ -218,7 +218,7 @@ final class AiSchematicReadiness {
       }
 
       issueCount += init(blueprint, context, pairPlans, exampleLimit, issues, omitted);
-      return new AiSchematicReadiness.Inner_TaskQueue(issueCount, issues, states.size());
+      return new AiSchematicReadiness.ReadinessReport(issueCount, issues, states.size());
    }
 
    private static long init(int x, int y, int z) {
@@ -228,9 +228,9 @@ final class AiSchematicReadiness {
    private static long init(
       AiBuilder.Blueprint blueprint,
       Map<Long, BlockState> context,
-      Map<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> pairPlans,
+      Map<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> pairPlans,
       int exampleLimit,
-      List<AiSchematicReadiness.Inner_StreamUtil> issues,
+      List<AiSchematicReadiness.ReadinessIssue> issues,
       LongSet omitted
    ) {
       List<AiBuilder.CellSpec> cells = blueprint.cells();
@@ -238,7 +238,7 @@ final class AiSchematicReadiness {
          return 0L;
       }
 
-      HashMap<AiSchematicReadiness.Inner_NetHelper, BlockState> resolved = new HashMap<>();
+      HashMap<AiSchematicReadiness.BlockStateKey, BlockState> resolved = new HashMap<>();
       Long2ObjectOpenHashMap<BlockState> placed = new Long2ObjectOpenHashMap<>(cells.size());
       int minX = 2147483647;
       int minY = 2147483647;
@@ -251,7 +251,7 @@ final class AiSchematicReadiness {
 
       for (AiBuilder.CellSpec cell : cells) {
          AiBuilder.checkNotCancelled();
-         BlockState state = resolved.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> AiBuilder.toBlockState(cell));
+         BlockState state = resolved.computeIfAbsent(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()), ignored -> AiBuilder.toBlockState(cell));
          placed.put(init(cell.dx(), cell.dy(), cell.dz()), state);
          minX = Math.min(minX, cell.dx());
          maxX = Math.max(maxX, cell.dx());
@@ -265,7 +265,7 @@ final class AiSchematicReadiness {
       }
 
       for (AiBuilder.CellSpec cell : cells) {
-         BlockState state = resolved.get(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()));
+         BlockState state = resolved.get(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()));
          if (state.getBlock() instanceof PistonBaseBlock && state.getValue(PistonBaseBlock.EXTENDED)) {
             Direction facing = state.getValue(PistonBaseBlock.FACING);
             long head = init(cell.dx() + facing.getStepX(), cell.dy() + facing.getStepY(), cell.dz() + facing.getStepZ());
@@ -311,26 +311,26 @@ final class AiSchematicReadiness {
 
       for (AiBuilder.CellSpec cell : checked) {
          AiBuilder.checkNotCancelled();
-         AiSchematicReadiness.Inner_BufferHelper plan = init(cell, pairPlans);
+         AiSchematicReadiness.PairPlan plan = init(cell, pairPlans);
          if (plan == null || !plan.needsExisting()) {
-            BlockState state = resolved.get(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()));
+            BlockState state = resolved.get(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()));
             BlockPos pos = origin.offset(cell.dx(), cell.dy(), cell.dz());
-            AiSchematicReadiness.Inner_ConfigStore problem = null;
+            AiSchematicReadiness.StateProblem problem = null;
 
             try {
                if (state.getBlock() instanceof FallingBlock) {
                   BlockState below = finished.apply(pos.below());
                   if (FallingBlock.isFree(below)) {
-                     problem = new AiSchematicReadiness.Inner_ConfigStore(
-                        AiSchematicReadiness.Inner_CachePool.FALLS, "rests on " + BuiltInRegistries.BLOCK.getKey(below.getBlock()) + " in the finished schematic, so it falls"
+                     problem = new AiSchematicReadiness.StateProblem(
+                        AiSchematicReadiness.IssueKind.FALLS, "rests on " + BuiltInRegistries.BLOCK.getKey(below.getBlock()) + " in the finished schematic, so it falls"
                      );
                   }
                } else if (!state.canSurvive(reader, pos)) {
-                  problem = new AiSchematicReadiness.Inner_ConfigStore(
-                     AiSchematicReadiness.Inner_CachePool.NO_SUPPORT, init(state, pos, origin, finished) + " in the finished schematic, which cannot hold it; vanilla breaks it off"
+                  problem = new AiSchematicReadiness.StateProblem(
+                     AiSchematicReadiness.IssueKind.NO_SUPPORT, init(state, pos, origin, finished) + " in the finished schematic, which cannot hold it; vanilla breaks it off"
                   );
                }
-            } catch (AiSchematicReadiness.Inner_JsonUtil inconclusive) {
+            } catch (AiSchematicReadiness.InconclusiveCheck inconclusive) {
                continue;
             } catch (RuntimeException unavailable) {
                continue;
@@ -343,7 +343,7 @@ final class AiSchematicReadiness {
                }
 
                if (issues.size() < exampleLimit) {
-                  issues.add(new AiSchematicReadiness.Inner_StreamUtil(problem.kind(), cell, problem.detail()));
+                  issues.add(new AiSchematicReadiness.ReadinessIssue(problem.kind(), cell, problem.detail()));
                }
             }
          }
@@ -354,7 +354,7 @@ final class AiSchematicReadiness {
 
    private static long init(
       List<AiBuilder.CellSpec> cells,
-      Map<AiSchematicReadiness.Inner_NetHelper, BlockState> resolved,
+      Map<AiSchematicReadiness.BlockStateKey, BlockState> resolved,
       Long2ObjectOpenHashMap<BlockState> placed,
       int x0,
       int y0,
@@ -365,7 +365,7 @@ final class AiSchematicReadiness {
       BlockPos origin,
       Map<Long, BlockState> context,
       int exampleLimit,
-      List<AiSchematicReadiness.Inner_StreamUtil> issues,
+      List<AiSchematicReadiness.ReadinessIssue> issues,
       LongSet omitted
    ) {
       LongOpenHashSet seen = new LongOpenHashSet();
@@ -375,7 +375,7 @@ final class AiSchematicReadiness {
 
       for (AiBuilder.CellSpec cell : cells) {
          AiBuilder.checkNotCancelled();
-         FluidState fluid = resolved.get(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties())).getFluidState();
+         FluidState fluid = resolved.get(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties())).getFluidState();
          long start = init(cell.dx(), cell.dy(), cell.dz());
          if (!fluid.isEmpty() && !seen.contains(start)) {
             boolean source = false;
@@ -440,10 +440,10 @@ final class AiSchematicReadiness {
                if (issues.size() < exampleLimit) {
                   issues.add(
                      edge
-                        ? new AiSchematicReadiness.Inner_StreamUtil(
-                           AiSchematicReadiness.Inner_CachePool.MISSING_CONTEXT, cell, body + " fed from outside the schematic, where the site has none; vanilla drains it"
+                        ? new AiSchematicReadiness.ReadinessIssue(
+                           AiSchematicReadiness.IssueKind.MISSING_CONTEXT, cell, body + " fed from outside the schematic, where the site has none; vanilla drains it"
                         )
-                        : new AiSchematicReadiness.Inner_StreamUtil(AiSchematicReadiness.Inner_CachePool.NO_SOURCE, cell, body + " with no source in the schematic; vanilla drains it")
+                        : new AiSchematicReadiness.ReadinessIssue(AiSchematicReadiness.IssueKind.NO_SOURCE, cell, body + " with no source in the schematic; vanilla drains it")
                   );
                }
             }
@@ -455,7 +455,7 @@ final class AiSchematicReadiness {
 
    static List<BlockPos> load(AiBuilder.Blueprint blueprint) {
       List<AiBuilder.CellSpec> cells = blueprint.cells();
-      HashMap<AiSchematicReadiness.Inner_NetHelper, BlockState> states = new HashMap<>();
+      HashMap<AiSchematicReadiness.BlockStateKey, BlockState> states = new HashMap<>();
       Long2ObjectOpenHashMap<BlockState> placed = new Long2ObjectOpenHashMap<>();
       int minX = 2147483647;
       int minY = 2147483647;
@@ -475,7 +475,7 @@ final class AiSchematicReadiness {
          if (cell.block().equals("minecraft:water") || cell.block().equals("minecraft:lava")) {
             placed.put(
                init(cell.dx(), cell.dy(), cell.dz()),
-               states.computeIfAbsent(new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()), ignored -> AiBuilder.toBlockState(cell))
+               states.computeIfAbsent(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()), ignored -> AiBuilder.toBlockState(cell))
             );
          }
       }
@@ -559,7 +559,7 @@ final class AiSchematicReadiness {
       String support;
       try {
          support = BuiltInRegistries.BLOCK.getKey(finished.apply(at).getBlock()).toString();
-      } catch (AiSchematicReadiness.Inner_JsonUtil outside) {
+      } catch (AiSchematicReadiness.InconclusiveCheck outside) {
          support = "unknown ground";
       }
 
@@ -631,13 +631,13 @@ final class AiSchematicReadiness {
    }
 
    private static Long2ObjectOpenHashMap<AiBuilder.CellSpec> init(
-      AiBuilder.Blueprint blueprint, Map<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> plans
+      AiBuilder.Blueprint blueprint, Map<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> plans
    ) {
       Long2ObjectOpenHashMap<AiBuilder.CellSpec> required = new Long2ObjectOpenHashMap<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
          AiBuilder.checkNotCancelled();
-         AiSchematicReadiness.Inner_BufferHelper pair = init(cell, plans);
+         AiSchematicReadiness.PairPlan pair = init(cell, plans);
          if (pair != null) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
             required.put(AiBuilder.packOffsetKey(at.getX(), at.getY(), at.getZ()), null);
@@ -658,13 +658,13 @@ final class AiSchematicReadiness {
    }
 
    static List<BlockPos> read(AiBuilder.Blueprint blueprint) {
-      HashMap<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> plans = new HashMap<>();
+      HashMap<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> plans = new HashMap<>();
       Long2ObjectOpenHashMap<AiBuilder.CellSpec> partners = init(blueprint, plans);
       LinkedHashSet<BlockPos> positions = new LinkedHashSet<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
          AiBuilder.checkNotCancelled();
-         AiSchematicReadiness.Inner_BufferHelper pair = init(cell, plans);
+         AiSchematicReadiness.PairPlan pair = init(cell, plans);
          if (pair != null && pair.needsExisting()) {
             BlockPos at = new BlockPos(cell.dx(), cell.dy(), cell.dz()).relative(pair.direction());
             if (partners.get(AiBuilder.packOffsetKey(at.getX(), at.getY(), at.getZ())) == null) {
@@ -676,15 +676,15 @@ final class AiSchematicReadiness {
       return List.copyOf(positions);
    }
 
-   private static AiSchematicReadiness.Inner_BufferHelper init(AiBuilder.CellSpec cell, Map<AiSchematicReadiness.Inner_NetHelper, Optional<AiSchematicReadiness.Inner_BufferHelper>> plans) {
+   private static AiSchematicReadiness.PairPlan init(AiBuilder.CellSpec cell, Map<AiSchematicReadiness.BlockStateKey, Optional<AiSchematicReadiness.PairPlan>> plans) {
       return plans.computeIfAbsent(
-            new AiSchematicReadiness.Inner_NetHelper(cell.block(), cell.properties()),
+            new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()),
             ignored -> {
                BlockState state = AiBuilder.toBlockState(cell);
                if (state.getBlock() instanceof BedBlock) {
                   boolean head = state.getValue(BedBlock.PART) == BedPart.HEAD;
                   return Optional.of(
-                     new AiSchematicReadiness.Inner_BufferHelper(
+                     new AiSchematicReadiness.PairPlan(
                         head ? state.getValue(BedBlock.FACING).getOpposite() : state.getValue(BedBlock.FACING), state.cycle(BedBlock.PART), head
                      )
                   );
@@ -695,7 +695,7 @@ final class AiSchematicReadiness {
                }
 
                boolean upper = state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;
-               return Optional.of(new AiSchematicReadiness.Inner_BufferHelper(upper ? Direction.DOWN : Direction.UP, state.cycle(BlockStateProperties.DOUBLE_BLOCK_HALF), upper));
+               return Optional.of(new AiSchematicReadiness.PairPlan(upper ? Direction.DOWN : Direction.UP, state.cycle(BlockStateProperties.DOUBLE_BLOCK_HALF), upper));
             }
          )
          .orElse(null);
@@ -717,15 +717,15 @@ final class AiSchematicReadiness {
       }
    }
 
-   private static List<AiSchematicReadiness.Inner_ConfigStore> init_List(AiBuilder.CellSpec cell) {
-      ArrayList<AiSchematicReadiness.Inner_ConfigStore> problems = new ArrayList<>();
+   private static List<AiSchematicReadiness.StateProblem> init_List(AiBuilder.CellSpec cell) {
+      ArrayList<AiSchematicReadiness.StateProblem> problems = new ArrayList<>();
 
       for (String gap : AiBuilder.unsupportedProperties(cell)) {
-         problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.UNSUPPORTED_STATE, gap));
+         problems.add(new AiSchematicReadiness.StateProblem(AiSchematicReadiness.IssueKind.UNSUPPORTED_STATE, gap));
       }
 
       if (!isSecondaryCell(cell) && AiSchematicActions.materialPlans(cell).isEmpty()) {
-         problems.add(new AiSchematicReadiness.Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool.NO_ACTION_PLAN, "required work has no placement, material, or verified interaction action"));
+         problems.add(new AiSchematicReadiness.StateProblem(AiSchematicReadiness.IssueKind.NO_ACTION_PLAN, "required work has no placement, material, or verified interaction action"));
       }
 
       return List.copyOf(problems);
@@ -738,10 +738,10 @@ final class AiSchematicReadiness {
          || "head".equals(cell.properties().get("part"));
    }
 
-   private record Inner_BufferHelper(Direction direction, BlockState wanted, boolean needsExisting) {
+   private record PairPlan(Direction direction, BlockState wanted, boolean needsExisting) {
    }
 
-   enum Inner_CachePool {
+   enum IssueKind {
       UNSUPPORTED_STATE,
       NO_ACTION_PLAN,
       CONFLICTING_PAIR,
@@ -751,22 +751,22 @@ final class AiSchematicReadiness {
       NO_SOURCE;
    }
 
-   private record Inner_ConfigStore(AiSchematicReadiness.Inner_CachePool kind, String detail) {
+   private record StateProblem(AiSchematicReadiness.IssueKind kind, String detail) {
    }
 
-   record Inner_DataUtil(AiBuilder.Blueprint blueprint, int skipped, AiSchematicReadiness.Inner_TaskQueue report) {
+   record BuildableAssessment(AiBuilder.Blueprint blueprint, int skipped, AiSchematicReadiness.ReadinessReport report) {
    }
 
-   private static final class Inner_JsonUtil extends RuntimeException {
-      Inner_JsonUtil() {
+   private static final class InconclusiveCheck extends RuntimeException {
+      InconclusiveCheck() {
          super(null, null, false, false);
       }
    }
 
-   private record Inner_NetHelper(String block, Map<String, String> properties) {
+   private record BlockStateKey(String block, Map<String, String> properties) {
    }
 
-   record Inner_StreamUtil(AiSchematicReadiness.Inner_CachePool kind, AiBuilder.CellSpec cell, String detail) {
+   record ReadinessIssue(AiSchematicReadiness.IssueKind kind, AiBuilder.CellSpec cell, String detail) {
       @Override
       public String toString() {
          return this.kind
@@ -784,8 +784,8 @@ final class AiSchematicReadiness {
       }
    }
 
-   record Inner_TaskQueue(long issueCount, List<AiSchematicReadiness.Inner_StreamUtil> issues, int distinctStates) {
-      Inner_TaskQueue {
+   record ReadinessReport(long issueCount, List<AiSchematicReadiness.ReadinessIssue> issues, int distinctStates) {
+      ReadinessReport {
          issues = List.copyOf(issues);
       }
 

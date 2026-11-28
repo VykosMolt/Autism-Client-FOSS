@@ -8,7 +8,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 final class PrintFailedWalks {
    static final int init_I = 128;
-   private final LinkedHashMap<PrintFailedWalks.Inner_DataUtil, Long2ObjectOpenHashMap<BlockState>> init_LinkedHashMap = new LinkedHashMap<>();
+   private final LinkedHashMap<PrintFailedWalks.WalkEdge, Long2ObjectOpenHashMap<BlockState>> init_LinkedHashMap = new LinkedHashMap<>();
 
    int size() {
       return this.init_LinkedHashMap.size();
@@ -26,7 +26,7 @@ final class PrintFailedWalks {
          && Math.abs(BlockPos.getZ(from) - BlockPos.getZ(to)) <= 1
          && from != to
          && !(Math.abs(fromFeet - toFeet) > 3.0)) {
-         try (PrintView.Inner_TaskQueue reads = view.openReadTracker()) {
+         try (PrintView.ReadTracker reads = view.openReadTracker()) {
             int minY = PrintView.floorInt(Math.min(fromFeet, toFeet)) - 1;
             int maxY = (int)Math.ceil(Math.max(fromFeet, toFeet) + 1.8 + 1.25);
 
@@ -42,7 +42,7 @@ final class PrintFailedWalks {
                return false;
             }
 
-            PrintFailedWalks.Inner_DataUtil edge = PrintFailedWalks.Inner_DataUtil.of(from, fromFeet, to, toFeet);
+            PrintFailedWalks.WalkEdge edge = PrintFailedWalks.WalkEdge.of(from, fromFeet, to, toFeet);
             if (!this.init_LinkedHashMap.containsKey(edge) && this.init_LinkedHashMap.size() >= 128) {
                this.init_LinkedHashMap.remove(this.init_LinkedHashMap.keySet().iterator().next());
             }
@@ -56,7 +56,7 @@ final class PrintFailedWalks {
    }
 
    boolean load(PrintView view, long from, double fromFeet, long to, double toFeet) {
-      PrintFailedWalks.Inner_DataUtil edge = PrintFailedWalks.Inner_DataUtil.of(from, fromFeet, to, toFeet);
+      PrintFailedWalks.WalkEdge edge = PrintFailedWalks.WalkEdge.of(from, fromFeet, to, toFeet);
       Long2ObjectOpenHashMap<BlockState> reads = this.init_LinkedHashMap.get(edge);
       if (reads == null) {
          return false;
@@ -75,9 +75,9 @@ final class PrintFailedWalks {
       return true;
    }
 
-   private record Inner_DataUtil(long from, long to, long fromHeight, long toHeight) {
-      static PrintFailedWalks.Inner_DataUtil of(long from, double fromFeet, long to, double toFeet) {
-         return new PrintFailedWalks.Inner_DataUtil(from, to, Double.doubleToLongBits(fromFeet), Double.doubleToLongBits(toFeet));
+   private record WalkEdge(long from, long to, long fromHeight, long toHeight) {
+      static PrintFailedWalks.WalkEdge of(long from, double fromFeet, long to, double toFeet) {
+         return new PrintFailedWalks.WalkEdge(from, to, Double.doubleToLongBits(fromFeet), Double.doubleToLongBits(toFeet));
       }
    }
 }

@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class MacroFpsOverrideManager {
    private static final long init_J = 0L;
    private static final long load = 600000000000L;
-   private static final ConcurrentHashMap<Long, MacroFpsOverrideManager.Inner_DataUtil> init_ConcurrentHashMap = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<Long, MacroFpsOverrideManager.FpsOverride> init_ConcurrentHashMap = new ConcurrentHashMap<>();
    private static volatile int init_I = -1;
    private static volatile long read = 9223372036854775807L;
 
@@ -21,7 +21,7 @@ public final class MacroFpsOverrideManager {
       if (durationNanos <= 0L) {
          clearOverride(ownerRunId);
       } else {
-         init_ConcurrentHashMap.put(ownerRunId, new MacroFpsOverrideManager.Inner_DataUtil(Math.max(0, fpsLimit), System.nanoTime() + durationNanos, false));
+         init_ConcurrentHashMap.put(ownerRunId, new MacroFpsOverrideManager.FpsOverride(Math.max(0, fpsLimit), System.nanoTime() + durationNanos, false));
          load(System.nanoTime());
       }
    }
@@ -33,7 +33,7 @@ public final class MacroFpsOverrideManager {
    public static synchronized void setOverride(long ownerRunId, int fpsLimit) {
       int limit = Math.max(0, fpsLimit);
       long expiry = limit == 0 ? System.nanoTime() + 600000000000L : 0L;
-      init_ConcurrentHashMap.put(ownerRunId, new MacroFpsOverrideManager.Inner_DataUtil(limit, expiry, true));
+      init_ConcurrentHashMap.put(ownerRunId, new MacroFpsOverrideManager.FpsOverride(limit, expiry, true));
       load(System.nanoTime());
    }
 
@@ -83,7 +83,7 @@ public final class MacroFpsOverrideManager {
       long now = System.nanoTime();
       long longest = 0L;
 
-      for (MacroFpsOverrideManager.Inner_DataUtil override : init_ConcurrentHashMap.values()) {
+      for (MacroFpsOverrideManager.FpsOverride override : init_ConcurrentHashMap.values()) {
          if (override.init_Z && override.init_I != 0) {
             return 9223372036854775807L;
          }
@@ -108,8 +108,8 @@ public final class MacroFpsOverrideManager {
       int effective = 2147483647;
       long nextExpiry = 9223372036854775807L;
 
-      for (Entry<Long, MacroFpsOverrideManager.Inner_DataUtil> entry : init_ConcurrentHashMap.entrySet()) {
-         MacroFpsOverrideManager.Inner_DataUtil override = entry.getValue();
+      for (Entry<Long, MacroFpsOverrideManager.FpsOverride> entry : init_ConcurrentHashMap.entrySet()) {
+         MacroFpsOverrideManager.FpsOverride override = entry.getValue();
          if (!override.init(now)) {
             init_ConcurrentHashMap.remove(entry.getKey(), override);
          } else {
@@ -124,7 +124,7 @@ public final class MacroFpsOverrideManager {
       read = init_I < 0 ? 9223372036854775807L : nextExpiry;
    }
 
-   private record Inner_DataUtil(int init_I, long expiry, boolean init_Z) {
+   private record FpsOverride(int init_I, long expiry, boolean init_Z) {
       boolean init(long now) {
          return this.init_Z && this.init_I != 0 ? true : now - this.expiry < 0L;
       }

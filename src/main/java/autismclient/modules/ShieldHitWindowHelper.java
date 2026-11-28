@@ -18,22 +18,22 @@ final class ShieldHitWindowHelper {
       return Math.min(10.0, 1.0 + Math.max(0.0, raiseTicks));
    }
 
-   static ShieldHitWindowHelper.Inner_CachePool init_l_CachePool_Z(boolean threat, boolean raised, int ownHurtTime, int raiseTicks, int ticksUntilOwnHit) {
+   static ShieldHitWindowHelper.ShieldAction init_l_CachePool_Z(boolean threat, boolean raised, int ownHurtTime, int raiseTicks, int ticksUntilOwnHit) {
       if (threat && ticksUntilOwnHit > 0) {
          int raise = Math.max(0, raiseTicks);
          if (raised) {
-            return ticksUntilOwnHit <= 1 ? ShieldHitWindowHelper.Inner_CachePool.DOWN : ShieldHitWindowHelper.Inner_CachePool.HOLD;
+            return ticksUntilOwnHit <= 1 ? ShieldHitWindowHelper.ShieldAction.DOWN : ShieldHitWindowHelper.ShieldAction.HOLD;
          } else {
-            return ticksUntilOwnHit <= raise + 1 ? ShieldHitWindowHelper.Inner_CachePool.DOWN : ShieldHitWindowHelper.Inner_CachePool.RAISE;
+            return ticksUntilOwnHit <= raise + 1 ? ShieldHitWindowHelper.ShieldAction.DOWN : ShieldHitWindowHelper.ShieldAction.RAISE;
          }
       } else {
-         return ShieldHitWindowHelper.Inner_CachePool.DOWN;
+         return ShieldHitWindowHelper.ShieldAction.DOWN;
       }
    }
 
-   static ShieldHitWindowHelper.Inner_CachePool init(boolean threat, boolean raised, int raiseTicks, int ticksUntilClick) {
+   static ShieldHitWindowHelper.ShieldAction init(boolean threat, boolean raised, int raiseTicks, int ticksUntilClick) {
       return !raised && threat && raiseTicks == 0 && ticksUntilClick == 1
-         ? ShieldHitWindowHelper.Inner_CachePool.RAISE
+         ? ShieldHitWindowHelper.ShieldAction.RAISE
          : init_l_CachePool_Z(threat, raised, 0, raiseTicks, ticksUntilClick);
    }
 
@@ -103,7 +103,7 @@ final class ShieldHitWindowHelper {
       return init(eye, view, victim) && isInReachWindow(eye, victim, minReach, maxReach + 0.5, margin);
    }
 
-   static int init(AABB body, Vec3 motion, ShieldHitWindowHelper.Inner_DataUtil collision) {
+   static int init(AABB body, Vec3 motion, ShieldHitWindowHelper.CollisionClipper collision) {
       for (int step = 0; step <= 1; step++) {
          Vec3 moved = collision.clip(body, motion);
          if (motion.y < 0.0 && Math.abs(moved.y - motion.y) > 1.0E-5) {
@@ -125,16 +125,16 @@ final class ShieldHitWindowHelper {
       return 2147483647;
    }
 
-   static final class Inner_BufferHelper {
+   static final class HitWindowTracker {
       static final int AFTER_HIT_WINDOW_TICKS = 60;
-      private final Map<UUID, ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil> windows = new HashMap<>();
+      private final Map<UUID, ShieldHitWindowHelper.HitWindowTracker.HitWindow> windows = new HashMap<>();
       private double timeScale = 1.0;
 
       boolean init_Z(UUID id, int hurt, int tick, boolean afterFirstHit) {
          if (!afterFirstHit) {
             return true;
          } else {
-            ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.get(id);
+            ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.get(id);
             if (w == null) {
                return false;
             } else {
@@ -150,19 +150,19 @@ final class ShieldHitWindowHelper {
       }
 
       void init() {
-         for (ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w : this.windows.values()) {
+         for (ShieldHitWindowHelper.HitWindowTracker.HitWindow w : this.windows.values()) {
             w.poll = -2147483648;
          }
       }
 
       void init_V_UUID_I(UUID id, int tick) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.get(id);
+         ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.get(id);
          if (w != null) {
             w.poll = tick;
          }
       }
 
-      private static boolean withinAfterHitWindow(ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w, int tick) {
+      private static boolean withinAfterHitWindow(ShieldHitWindowHelper.HitWindowTracker.HitWindow w, int tick) {
          long age = (long)tick - w.poll;
          return w.poll != -2147483648 && age >= 0L && age < 60L;
       }
@@ -176,7 +176,7 @@ final class ShieldHitWindowHelper {
       }
 
       boolean canAttackFor(UUID id, int hurt, int tick, double damage, boolean movingOpportunity) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
+         ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.HitWindowTracker.HitWindow());
          this.observeHurt(w, hurt, tick);
          if (tick == w.lastAttackTick) {
             return false;
@@ -188,7 +188,7 @@ final class ShieldHitWindowHelper {
       }
 
       boolean load(UUID id, int hurt, int tick, double damage) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
+         ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.HitWindowTracker.HitWindow());
          this.observeHurt(w, hurt, tick);
          if (tick == w.lastAttackTick) {
             return false;
@@ -203,12 +203,12 @@ final class ShieldHitWindowHelper {
 
       int init_I(UUID id, int hurt, int tick, double damage) {
          int ready = this.ticksUntilOpen(id, hurt, tick, false);
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.get(id);
+         ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.get(id);
          return w.ownWindow && damage > w.windowDamage + 0.01 ? (tick == w.lastAttackTick ? 1 : 0) : ready;
       }
 
       int ticksUntilOpenFor(UUID id, int hurt, int tick, boolean strict, boolean movingOpportunity) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
+         ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.HitWindowTracker.HitWindow());
          this.observeHurt(w, hurt, tick);
          int open = strict ? Math.max(openTick(w, hurt, movingOpportunity), w.windowCloseTick) : w.windowCloseTick;
          if (w.lastAttackTick == tick) {
@@ -218,12 +218,12 @@ final class ShieldHitWindowHelper {
          return Math.max(0, open - tick);
       }
 
-      private static int openTick(ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w, int hurt, boolean movingOpportunity) {
+      private static int openTick(ShieldHitWindowHelper.HitWindowTracker.HitWindow w, int hurt, boolean movingOpportunity) {
          return movingOpportunity && hurt == 0 && !w.hitInsideWindow ? Math.min(w.windowOpenTick, w.hitTick + 2) : w.windowOpenTick;
       }
 
       boolean unusedShouldWait(UUID id, int tick, int waitChance, DoubleSupplier random) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.get(id);
+         ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.get(id);
          if (w != null && tick != w.lastAttackTick && tick >= w.windowOpenTick && tick < w.windowCloseTick) {
             int chance = Math.clamp(waitChance, 10, 100);
             if (chance == 100) {
@@ -243,7 +243,7 @@ final class ShieldHitWindowHelper {
       }
 
       void init_V(UUID id, int hurt, int tick, double damage) {
-         ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil());
+         ShieldHitWindowHelper.HitWindowTracker.HitWindow w = this.windows.computeIfAbsent(id, ignored -> new ShieldHitWindowHelper.HitWindowTracker.HitWindow());
          this.observeHurt(w, hurt, tick);
          w.lastAttackTick = tick;
          if (tick < w.windowCloseTick) {
@@ -262,7 +262,7 @@ final class ShieldHitWindowHelper {
          }
       }
 
-      private void observeHurt(ShieldHitWindowHelper.Inner_BufferHelper.Inner_DataUtil w, int hurt, int tick) {
+      private void observeHurt(ShieldHitWindowHelper.HitWindowTracker.HitWindow w, int hurt, int tick) {
          if (w.observedTick != tick) {
             if (hurt > w.lastHurt) {
                boolean ours = tick >= w.hitTick && tick - w.hitTick <= w.windowLengthTicks && tick >= w.lastAttackTick && tick - w.lastAttackTick <= 4;
@@ -289,7 +289,7 @@ final class ShieldHitWindowHelper {
          this.timeScale = 1.0;
       }
 
-      private static final class Inner_DataUtil {
+      private static final class HitWindow {
          int observedTick = -2147483648;
          int hitTick = -1000;
          int lastHurt;
@@ -307,13 +307,13 @@ final class ShieldHitWindowHelper {
       }
    }
 
-   enum Inner_CachePool {
+   enum ShieldAction {
       DOWN,
       HOLD,
       RAISE;
    }
 
-   static final class Inner_ConfigStore {
+   static final class VelocityTracker {
       private Vec3 lastPosition;
       private Vec3 velocity = Vec3.ZERO;
       private int lastTick;
@@ -338,11 +338,11 @@ final class ShieldHitWindowHelper {
    }
 
    @FunctionalInterface
-   interface Inner_DataUtil {
+   interface CollisionClipper {
       Vec3 clip(AABB var1, Vec3 var2);
    }
 
-   static final class Inner_StreamUtil {
+   static final class TargetLock {
       private int lockTick = -1000;
       private int lastLockTick = -1000;
       private UUID lockedTarget;

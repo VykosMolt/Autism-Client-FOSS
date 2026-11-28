@@ -14,19 +14,19 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.network.protocol.Packet;
 
 public class DelayPacketsAction implements MacroAction {
-   public DelayPacketsAction.Inner_DataUtil mode = DelayPacketsAction.Inner_DataUtil.ENABLE;
+   public DelayPacketsAction.DelayMode mode = DelayPacketsAction.DelayMode.ENABLE;
    public boolean flushOnDisable = true;
    public List<String> c2sPacketNames = new ArrayList<>();
    public List<String> s2cPacketNames = new ArrayList<>();
    private boolean init = true;
 
    public void init() {
-      this.mode = DelayPacketsAction.Inner_DataUtil.values()[(this.mode.ordinal() + 1) % DelayPacketsAction.Inner_DataUtil.values().length];
+      this.mode = DelayPacketsAction.DelayMode.values()[(this.mode.ordinal() + 1) % DelayPacketsAction.DelayMode.values().length];
    }
 
    public void load() {
-      this.mode = DelayPacketsAction.Inner_DataUtil.values()[(this.mode.ordinal() - 1 + DelayPacketsAction.Inner_DataUtil.values().length)
-         % DelayPacketsAction.Inner_DataUtil.values().length];
+      this.mode = DelayPacketsAction.DelayMode.values()[(this.mode.ordinal() - 1 + DelayPacketsAction.DelayMode.values().length)
+         % DelayPacketsAction.DelayMode.values().length];
    }
 
    public void read() {
@@ -71,7 +71,7 @@ public class DelayPacketsAction implements MacroAction {
    public void execute(Minecraft mc) {
       AutismSessionState shared = AutismSessionState.getInstance();
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
-      boolean shouldEnable = this.mode == DelayPacketsAction.Inner_DataUtil.ENABLE;
+      boolean shouldEnable = this.mode == DelayPacketsAction.DelayMode.ENABLE;
       int flushed = 0;
       if (!shouldEnable && this.flushOnDisable && mc.getConnection() != null) {
          flushed = shared.flushDelayedPackets(mc.getConnection());
@@ -152,9 +152,9 @@ public class DelayPacketsAction implements MacroAction {
    public void fromTag(CompoundTag tag) {
       if (tag.contains("mode")) {
          try {
-            this.mode = DelayPacketsAction.Inner_DataUtil.valueOf(tag.getStringOr("mode", "ENABLE"));
+            this.mode = DelayPacketsAction.DelayMode.valueOf(tag.getStringOr("mode", "ENABLE"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = DelayPacketsAction.Inner_DataUtil.ENABLE;
+            this.mode = DelayPacketsAction.DelayMode.ENABLE;
          }
       }
 
@@ -186,9 +186,9 @@ public class DelayPacketsAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      String base = this.mode == DelayPacketsAction.Inner_DataUtil.ENABLE ? "Delay Pkts: ON" : "Delay Pkts: OFF";
+      String base = this.mode == DelayPacketsAction.DelayMode.ENABLE ? "Delay Pkts: ON" : "Delay Pkts: OFF";
       int total = this.c2sPacketNames.size() + this.s2cPacketNames.size();
-      if (this.mode == DelayPacketsAction.Inner_DataUtil.ENABLE && total > 0) {
+      if (this.mode == DelayPacketsAction.DelayMode.ENABLE && total > 0) {
          base = base + " (" + total + " pkts)";
       }
 
@@ -210,7 +210,7 @@ public class DelayPacketsAction implements MacroAction {
       this.init = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum DelayMode {
       ENABLE,
       DISABLE;
    }

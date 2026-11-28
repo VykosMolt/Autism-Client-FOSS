@@ -46,9 +46,9 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public final class ar {
-   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(4194304);
-   private static final AutismBufferSource.Inner_DataUtil load_c_DataUtil = new AutismBufferSource.Inner_DataUtil(4194304);
-   private static final AutismBufferSource.Inner_DataUtil read_c_DataUtil = new AutismBufferSource.Inner_DataUtil(786432);
+   private static final AutismBufferSource.LazySource init_c_DataUtil = new AutismBufferSource.LazySource(4194304);
+   private static final AutismBufferSource.LazySource load_c_DataUtil = new AutismBufferSource.LazySource(4194304);
+   private static final AutismBufferSource.LazySource read_c_DataUtil = new AutismBufferSource.LazySource(786432);
    private static final autismclient.util.CachedGpuMeshBuffer init_P = new autismclient.util.CachedGpuMeshBuffer("autism_esp_fill");
    private static final autismclient.util.CachedGpuMeshBuffer load_P = new autismclient.util.CachedGpuMeshBuffer("autism_esp_wire");
    private static final Pose init_PoseStack_Pose = new PoseStack().last();
@@ -311,7 +311,7 @@ public final class ar {
                      boolean storageEnabled = storage != null && storage.isEnabled();
                      boolean blockEnabled = blockEsp != null && blockEsp.isEnabled();
                      boolean spawnerEnabled = spawnerEsp != null && spawnerEsp.isEnabled();
-                     FrameEspCatalog.Inner_CachePool frameEsp = FrameEspCatalog.snapshot();
+                     FrameEspCatalog.CatalogSnapshot frameEsp = FrameEspCatalog.snapshot();
                      boolean frameEnabled = FrameEspCatalog.init(frameEsp);
                      boolean xrayBoxes = OreSimEspScanner.read_Z(xray);
                      boolean xrayGhosts = OreSimEspScanner.write_Z(xray);
@@ -333,7 +333,7 @@ public final class ar {
                      AABB tpClickBox = tpClick != null && tpClick.isEnabled() ? tpClick.targetBox() : null;
                      int tpClickColor = tpClickBox != null ? tpClick.targetColor() : 0;
                      if (!AutismLiteVariant.enabled()) {
-                        autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil destination = autismclient.ai.aP.init_j_StreamUtil();
+                        autismclient.ai.engine.AiStandingTarget.StandingSpot destination = autismclient.ai.aP.init_j_StreamUtil();
                         if (destination != null) {
                            tpClickBox = destination.box();
                            tpClickColor = destination.color();
@@ -1376,7 +1376,7 @@ public final class ar {
       }
    }
 
-   private static ar.Inner_CachePool init(FrameEspCatalog.Inner_CachePool settings, ClientLevel level, Player player) {
+   private static ar.Inner_CachePool init(FrameEspCatalog.CatalogSnapshot settings, ClientLevel level, Player player) {
       if (settings != null && level != null && player != null) {
          long scanKey = level.getGameTime();
          int revision = al.init_I();
@@ -1456,7 +1456,7 @@ public final class ar {
       }
 
       List<ar.Inner_StreamUtil> boxes = new ArrayList<>();
-      OreSimEspScanner.init(module, level, player, (OreSimEspScanner.Inner_DataUtil)(pos, state) -> boxes.add(new ar.Inner_StreamUtil(new AABB(pos), OreSimEspScanner.init(module, state.getBlock()), true)));
+      OreSimEspScanner.init(module, level, player, (OreSimEspScanner.OreSink)(pos, state) -> boxes.add(new ar.Inner_StreamUtil(new AABB(pos), OreSimEspScanner.init(module, state.getBlock()), true)));
       ar.Inner_CachePool next = ar.Inner_CachePool.init(
          level.getGameTime(), revision, player.chunkPosition().x(), player.chunkPosition().z(), boxes, List.of(), true, cached, level.getGameTime()
       );
@@ -1487,7 +1487,7 @@ public final class ar {
          int candidateCount = 0;
 
          for (int i = 0; i < simCount && candidateCount < 2176; i++) {
-            BlockState state = autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.stateById(init_IArr[i]);
+            BlockState state = autismclient.util.oresim.OreBlockCatalog.StateRegistry.stateById(init_IArr[i]);
             if (state != null && init_LongOpenHashSet.add(read_JArr[i])) {
                load_JArr[candidateCount] = read_JArr[i];
                init_BlockStateArr[candidateCount] = state;
@@ -1496,7 +1496,7 @@ public final class ar {
          }
 
          int[] candidateCountRef = new int[]{candidateCount};
-         OreSimEspScanner.init(module, level, player, (OreSimEspScanner.Inner_DataUtil)(pos, state) -> {
+         OreSimEspScanner.init(module, level, player, (OreSimEspScanner.OreSink)(pos, state) -> {
             long packed = pos.asLong();
             int index = candidateCountRef[0];
             if (index < 2176 && init_LongOpenHashSet.add(packed)) {
@@ -1885,12 +1885,12 @@ public final class ar {
       List<ar.Inner_BufferHelper> load_List,
       boolean init_Z,
       List<ar.Inner_StreamUtil> read_List,
-      List<EspVoxelMeshBuilder.Inner_DataUtil> write_List,
-      AtomicReference<EspVoxelMeshBuilder.Inner_CachePool> init_ag_CachePool,
+      List<EspVoxelMeshBuilder.ColoredBox> write_List,
+      AtomicReference<EspVoxelMeshBuilder.VoxelMesh> init_ag_CachePool,
       long read_J
    ) {
       private static long write_J = 1L;
-      private static final AtomicReference<EspVoxelMeshBuilder.Inner_CachePool> EMPTY_MESH = new AtomicReference<>(EspVoxelMeshBuilder.build(List.of()));
+      private static final AtomicReference<EspVoxelMeshBuilder.VoxelMesh> EMPTY_MESH = new AtomicReference<>(EspVoxelMeshBuilder.build(List.of()));
       private static final ar.Inner_CachePool init_ar_CachePool = new ar.Inner_CachePool(
          -9223372036854775808L, -1, -2147483648, -2147483648, 0L, List.of(), List.of(), false, List.of(), List.of(), EMPTY_MESH, -9223372036854775808L
       );
@@ -1920,25 +1920,25 @@ public final class ar {
          }
 
          List<ar.Inner_StreamUtil> unmeshed = new ArrayList<>();
-         List<EspVoxelMeshBuilder.Inner_DataUtil> source = new ArrayList<>();
+         List<EspVoxelMeshBuilder.ColoredBox> source = new ArrayList<>();
 
          for (ar.Inner_StreamUtil target : boxes) {
             if (target.init_Z()) {
-               source.add(new EspVoxelMeshBuilder.Inner_DataUtil(target.init_AABB(), target.init_I()));
+               source.add(new EspVoxelMeshBuilder.ColoredBox(target.init_AABB(), target.init_I()));
             } else {
                unmeshed.add(target);
             }
          }
 
          source.sort(ar.Inner_CachePool::init);
-         List<EspVoxelMeshBuilder.Inner_DataUtil> frozenSource = List.copyOf(source);
+         List<EspVoxelMeshBuilder.ColoredBox> frozenSource = List.copyOf(source);
          List<ar.Inner_StreamUtil> frozenUnmeshed = List.copyOf(unmeshed);
          boolean same = previous != null
             && previous.init_Z()
             && previous.write_List().size() == frozenSource.size()
             && previous.write_List().equals(frozenSource)
             && previous.read_List().equals(frozenUnmeshed);
-         AtomicReference<EspVoxelMeshBuilder.Inner_CachePool> geometryRef;
+         AtomicReference<EspVoxelMeshBuilder.VoxelMesh> geometryRef;
          if (same) {
             geometryRef = previous.init_ag_CachePool();
          } else if (frozenSource.size() <= 48) {
@@ -1958,7 +1958,7 @@ public final class ar {
          );
       }
 
-      private static int init(EspVoxelMeshBuilder.Inner_DataUtil left, EspVoxelMeshBuilder.Inner_DataUtil right) {
+      private static int init(EspVoxelMeshBuilder.ColoredBox left, EspVoxelMeshBuilder.ColoredBox right) {
          int compared = Integer.compare(left.color(), right.color());
          if (compared != 0) {
             return compared;
@@ -2000,13 +2000,13 @@ public final class ar {
       }
 
       private void init(Pose pose, VertexConsumer buffer, Vec3 camera, float opacity) {
-         EspVoxelMeshBuilder.Inner_CachePool geometry = this.init_Z ? this.init_ag_CachePool.get() : null;
+         EspVoxelMeshBuilder.VoxelMesh geometry = this.init_Z ? this.init_ag_CachePool.get() : null;
          if (geometry == null) {
             for (ar.Inner_StreamUtil target : this.init_List) {
                ar.load(pose, buffer, target.init_AABB().move(-camera.x, -camera.y, -camera.z), ar.init_I_I_F(target.init_I(), opacity));
             }
          } else {
-            for (EspVoxelMeshBuilder.Inner_ConfigStore face : geometry.faces()) {
+            for (EspVoxelMeshBuilder.MeshQuad face : geometry.faces()) {
                ar.init(
                   pose,
                   buffer,
@@ -2033,13 +2033,13 @@ public final class ar {
       }
 
       private void load(Pose pose, VertexConsumer buffer, Vec3 camera, float width) {
-         EspVoxelMeshBuilder.Inner_CachePool geometry = this.init_Z ? this.init_ag_CachePool.get() : null;
+         EspVoxelMeshBuilder.VoxelMesh geometry = this.init_Z ? this.init_ag_CachePool.get() : null;
          if (geometry == null) {
             for (ar.Inner_StreamUtil target : this.init_List) {
                ar.init(pose, buffer, target.init_AABB().move(-camera.x, -camera.y, -camera.z), target.init_I(), width);
             }
          } else {
-            for (EspVoxelMeshBuilder.Inner_StreamUtil edge : geometry.load()) {
+            for (EspVoxelMeshBuilder.MeshEdge edge : geometry.load()) {
                ar.load(
                   pose,
                   buffer,

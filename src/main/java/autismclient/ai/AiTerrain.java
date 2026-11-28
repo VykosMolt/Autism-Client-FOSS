@@ -63,7 +63,7 @@ final class AiTerrain {
 
          sections.sort(Comparator.comparingDouble(Inner_DataUtil::distance));
          List<BlockPos> result = new ArrayList<>();
-         AiTerrain.Inner_CachePool sites = separateShores ? new AiTerrain.Inner_CachePool(origin) : null;
+         AiTerrain.SiteSampler sites = separateShores ? new AiTerrain.SiteSampler(origin) : null;
 
          for (Inner_DataUtil section : sections) {
             for (int y = 0; y < 16; y++) {
@@ -182,11 +182,11 @@ final class AiTerrain {
       }
    }
 
-   static final class Inner_CachePool {
+   static final class SiteSampler {
       final BlockPos origin;
       final Map<Long, BlockPos> nearestPerCell = new HashMap<>();
 
-      Inner_CachePool(BlockPos origin) {
+      SiteSampler(BlockPos origin) {
          this.origin = origin;
       }
 

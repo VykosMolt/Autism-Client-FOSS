@@ -5,7 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
 public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroAction {
-   public WaitInventoryPredicateAction.Inner_DataUtil condition = WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS;
+   public WaitInventoryPredicateAction.InventoryCondition condition = WaitInventoryPredicateAction.InventoryCondition.ITEM_EXISTS;
    public String itemName = "";
    public int count = 1;
    public int slot = 0;
@@ -166,7 +166,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.condition = MacroNbtCodecHelper.parseEnum(WaitInventoryPredicateAction.Inner_DataUtil.class, tag.getStringOr("condition", "ITEM_EXISTS"), WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS);
+      this.condition = MacroNbtCodecHelper.parseEnum(WaitInventoryPredicateAction.InventoryCondition.class, tag.getStringOr("condition", "ITEM_EXISTS"), WaitInventoryPredicateAction.InventoryCondition.ITEM_EXISTS);
       this.itemName = tag.getStringOr("itemName", "");
       this.count = tag.getIntOr("count", 1);
       this.slot = tag.getIntOr("slot", 0);
@@ -195,7 +195,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
       this.saveAs = name == null ? "" : name;
    }
 
-   public enum Inner_DataUtil {
+   public enum InventoryCondition {
       ITEM_EXISTS,
       COUNT_AT_LEAST,
       COUNT_CHANGED,

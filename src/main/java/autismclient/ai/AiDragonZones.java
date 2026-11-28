@@ -32,7 +32,7 @@ public final class AiDragonZones {
       return part.inflate(1.0);
    }
 
-   static AiDragonZones.Inner_DataUtil zones(Minecraft mc) {
+   static AiDragonZones.DangerZones zones(Minecraft mc) {
       if (mc.player != null && mc.level != null) {
          List<AABB> push = new ArrayList<>();
          List<AABB> strike = new ArrayList<>();
@@ -50,9 +50,9 @@ public final class AiDragonZones {
             }
          }
 
-         return push.isEmpty() && strike.isEmpty() ? AiDragonZones.Inner_DataUtil.NONE : new AiDragonZones.Inner_DataUtil(push, strike);
+         return push.isEmpty() && strike.isEmpty() ? AiDragonZones.DangerZones.NONE : new AiDragonZones.DangerZones(push, strike);
       } else {
-         return AiDragonZones.Inner_DataUtil.NONE;
+         return AiDragonZones.DangerZones.NONE;
       }
    }
 
@@ -122,7 +122,7 @@ public final class AiDragonZones {
       return head != null && facing != null ? new double[]{head.getX() + facing.x * 2.5, head.getZ() + facing.z * 2.5, 5.0} : null;
    }
 
-   static boolean init(AiDragonZones.Inner_DataUtil zones, double[] breath, List<double[]> clouds, int x, int y, int z) {
+   static boolean init(AiDragonZones.DangerZones zones, double[] breath, List<double[]> clouds, int x, int y, int z) {
       if (zones.hits(cellBox(x, y, z), 1.0)) {
          return false;
       }
@@ -207,7 +207,7 @@ public final class AiDragonZones {
    }
 
    public static autismclient.ai.engine.AiPathfinder.ThreatField threatField(Minecraft mc) {
-      AiDragonZones.Inner_DataUtil zones = zones(mc);
+      AiDragonZones.DangerZones zones = zones(mc);
       List<double[]> clouds = new ArrayList<>(AiDragon.breathClouds(mc));
       double[] breath = breath(mc);
       if (breath != null) {
@@ -234,7 +234,7 @@ public final class AiDragonZones {
    }
 
    static AiOperation init(Minecraft mc, double clearance) {
-      AiDragonZones.Inner_DataUtil zones = zones(mc);
+      AiDragonZones.DangerZones zones = zones(mc);
       if (!zones.isEmpty() && zones.hits(mc.player.getBoundingBox(), 0.6)) {
          List<double[]> clouds = AiDragon.breathClouds(mc);
          BlockPos feet = mc.player.blockPosition();
@@ -263,8 +263,8 @@ public final class AiDragonZones {
       }
    }
 
-   record Inner_DataUtil(List<AABB> push, List<AABB> strike) {
-      static final AiDragonZones.Inner_DataUtil NONE = new AiDragonZones.Inner_DataUtil(List.of(), List.of());
+   record DangerZones(List<AABB> push, List<AABB> strike) {
+      static final AiDragonZones.DangerZones NONE = new AiDragonZones.DangerZones(List.of(), List.of());
 
       boolean isEmpty() {
          return this.push.isEmpty() && this.strike.isEmpty();

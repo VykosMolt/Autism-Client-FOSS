@@ -8,9 +8,9 @@ import net.minecraft.util.Mth;
 public final class MouseMovementRouter {
    private static final Minecraft CLIENT = Minecraft.getInstance();
    private static final double init_D = 0.05;
-   private static final EnumMap<MouseMovementRouter.Inner_StreamUtil, FractionalCountAccumulator> ACCUMULATORS = new EnumMap<>(MouseMovementRouter.Inner_StreamUtil.class);
+   private static final EnumMap<MouseMovementRouter.MovementSource, FractionalCountAccumulator> ACCUMULATORS = new EnumMap<>(MouseMovementRouter.MovementSource.class);
    private static final TimedMouseSmoother SMOOTHER = new TimedMouseSmoother();
-   private static volatile MouseMovementRouter.Inner_StreamUtil init_ba_StreamUtil;
+   private static volatile MouseMovementRouter.MovementSource init_ba_StreamUtil;
    private static boolean init_Z;
    private static long init_J;
 
@@ -18,10 +18,10 @@ public final class MouseMovementRouter {
    }
 
    public static void init_V_ce_DataUtil_ce_DataUtil(RotationMath.Rotation current, RotationMath.Rotation target) {
-      submitRotation(MouseMovementRouter.Inner_StreamUtil.GENERIC, current, target);
+      submitRotation(MouseMovementRouter.MovementSource.GENERIC, current, target);
    }
 
-   public static void submitRotation(MouseMovementRouter.Inner_StreamUtil source, RotationMath.Rotation current, RotationMath.Rotation target) {
+   public static void submitRotation(MouseMovementRouter.MovementSource source, RotationMath.Rotation current, RotationMath.Rotation target) {
       if (current != null && target != null) {
          float yawDelta = RotationMath.angleDelta(target.yaw(), current.yaw());
          float pitchDelta = Mth.clamp(target.pitch(), -90.0F, 90.0F) - Mth.clamp(current.pitch(), -90.0F, 90.0F);
@@ -30,10 +30,10 @@ public final class MouseMovementRouter {
    }
 
    public static void init_V_F_F(float yawDelta, float pitchDelta) {
-      submitDegrees(MouseMovementRouter.Inner_StreamUtil.GENERIC, yawDelta, pitchDelta);
+      submitDegrees(MouseMovementRouter.MovementSource.GENERIC, yawDelta, pitchDelta);
    }
 
-   public static void submitDegrees(MouseMovementRouter.Inner_StreamUtil source, float yawDelta, float pitchDelta) {
+   public static void submitDegrees(MouseMovementRouter.MovementSource source, float yawDelta, float pitchDelta) {
       if (!read()) {
          release(source);
       } else {
@@ -54,7 +54,7 @@ public final class MouseMovementRouter {
       }
    }
 
-   public static void submitCounts(MouseMovementRouter.Inner_StreamUtil source, long yawCounts, long pitchCounts) {
+   public static void submitCounts(MouseMovementRouter.MovementSource source, long yawCounts, long pitchCounts) {
       if (!read()) {
          release(source);
       } else {
@@ -73,16 +73,16 @@ public final class MouseMovementRouter {
    }
 
    public static void init_V_D_D(double deltaX, double deltaY) {
-      init_V_ba_StreamUtil(MouseMovementRouter.Inner_StreamUtil.GENERIC, deltaX, deltaY);
+      init_V_ba_StreamUtil(MouseMovementRouter.MovementSource.GENERIC, deltaX, deltaY);
    }
 
-   public static void init_V_ba_StreamUtil(MouseMovementRouter.Inner_StreamUtil source, double deltaX, double deltaY) {
+   public static void init_V_ba_StreamUtil(MouseMovementRouter.MovementSource source, double deltaX, double deltaY) {
       if (!read()) {
          release(source);
       } else if (Double.isFinite(deltaX) && Double.isFinite(deltaY)) {
-         if (source == MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST) {
+         if (source == MouseMovementRouter.MovementSource.AIM_ASSIST) {
             SMOOTHER.push(deltaX, deltaY, 0.05);
-         } else if (source != MouseMovementRouter.Inner_StreamUtil.SCAFFOLD_TELLY && source != MouseMovementRouter.Inner_StreamUtil.AUTO_FISH) {
+         } else if (source != MouseMovementRouter.MovementSource.SCAFFOLD_TELLY && source != MouseMovementRouter.MovementSource.AUTO_FISH) {
             if (!(Math.abs(deltaX) < 1.0E-7) || !(Math.abs(deltaY) < 1.0E-7)) {
                accumulatorFor(source).init(deltaX, deltaY);
             }
@@ -92,41 +92,41 @@ public final class MouseMovementRouter {
       }
    }
 
-   public static MouseMovementRouter.Inner_DataUtil consumeDelta() {
+   public static MouseMovementRouter.MouseDelta consumeDelta() {
       if (!read()) {
          reset();
-         return new MouseMovementRouter.Inner_DataUtil(0.0, 0.0);
+         return new MouseMovementRouter.MouseDelta(0.0, 0.0);
       }
 
       long now = System.nanoTime();
       double elapsedSeconds = init_J == 0L ? 0.016666666666666666 : Math.clamp((now - init_J) / 1.0E9, 0.001, 0.05);
       init_J = now;
-      MouseMovementRouter.Inner_StreamUtil exclusive = init_ba_StreamUtil;
+      MouseMovementRouter.MovementSource exclusive = init_ba_StreamUtil;
       if (exclusive != null) {
          load(exclusive);
-         FractionalCountAccumulator.Inner_DataUtil counts = init_dh_DataUtil_ba_StreamUtil_D(exclusive, elapsedSeconds);
-         return new MouseMovementRouter.Inner_DataUtil(counts.init(), counts.load());
+         FractionalCountAccumulator.WholeCounts counts = init_dh_DataUtil_ba_StreamUtil_D(exclusive, elapsedSeconds);
+         return new MouseMovementRouter.MouseDelta(counts.init(), counts.load());
       }
 
       long x = 0L;
       long y = 0L;
 
-      for (Entry<MouseMovementRouter.Inner_StreamUtil, FractionalCountAccumulator> entry : ACCUMULATORS.entrySet()) {
-         if (entry.getKey() != MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST && entry.getKey() != MouseMovementRouter.Inner_StreamUtil.SCAFFOLD_TELLY) {
+      for (Entry<MouseMovementRouter.MovementSource, FractionalCountAccumulator> entry : ACCUMULATORS.entrySet()) {
+         if (entry.getKey() != MouseMovementRouter.MovementSource.AIM_ASSIST && entry.getKey() != MouseMovementRouter.MovementSource.SCAFFOLD_TELLY) {
             FractionalCountAccumulator accumulator = entry.getValue();
-            FractionalCountAccumulator.Inner_DataUtil counts = accumulator.takeWhole();
+            FractionalCountAccumulator.WholeCounts counts = accumulator.takeWhole();
             x += counts.init();
             y += counts.load();
          }
       }
 
-      FractionalCountAccumulator.Inner_DataUtil aim = SMOOTHER.drain(elapsedSeconds);
+      FractionalCountAccumulator.WholeCounts aim = SMOOTHER.drain(elapsedSeconds);
       x += aim.init();
       y += aim.load();
-      FractionalCountAccumulator.Inner_DataUtil telly = accumulatorFor(MouseMovementRouter.Inner_StreamUtil.SCAFFOLD_TELLY).takeWhole();
+      FractionalCountAccumulator.WholeCounts telly = accumulatorFor(MouseMovementRouter.MovementSource.SCAFFOLD_TELLY).takeWhole();
       x += telly.init();
       y += telly.load();
-      return new MouseMovementRouter.Inner_DataUtil(x, y);
+      return new MouseMovementRouter.MouseDelta(x, y);
    }
 
    public static void init_V() {
@@ -146,15 +146,15 @@ public final class MouseMovementRouter {
       init_J = 0L;
    }
 
-   public static void release(MouseMovementRouter.Inner_StreamUtil source) {
-      if (source == MouseMovementRouter.Inner_StreamUtil.AUTO_FISH) {
+   public static void release(MouseMovementRouter.MovementSource source) {
+      if (source == MouseMovementRouter.MovementSource.AUTO_FISH) {
          init_Z = false;
       }
 
-      if (source == MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST) {
+      if (source == MouseMovementRouter.MovementSource.AIM_ASSIST) {
          SMOOTHER.reset();
          accumulatorFor(source).reset();
-      } else if (source == MouseMovementRouter.Inner_StreamUtil.SCAFFOLD_TELLY) {
+      } else if (source == MouseMovementRouter.MovementSource.SCAFFOLD_TELLY) {
          accumulatorFor(source).reset();
       } else {
          accumulatorFor(source).reset();
@@ -169,7 +169,7 @@ public final class MouseMovementRouter {
       return init_Z;
    }
 
-   public static void init_V_ba_StreamUtil_Z(MouseMovementRouter.Inner_StreamUtil source, boolean exclusive) {
+   public static void init_V_ba_StreamUtil_Z(MouseMovementRouter.MovementSource source, boolean exclusive) {
       if (exclusive) {
          if (source != null) {
             init_ba_StreamUtil = source;
@@ -187,7 +187,7 @@ public final class MouseMovementRouter {
       return init_ba_StreamUtil != null;
    }
 
-   public static boolean isActive(MouseMovementRouter.Inner_StreamUtil source) {
+   public static boolean isActive(MouseMovementRouter.MovementSource source) {
       return source != null && init_ba_StreamUtil == source;
    }
 
@@ -204,41 +204,41 @@ public final class MouseMovementRouter {
          && !autismclient.modules.aD.init_Z();
    }
 
-   private static FractionalCountAccumulator accumulatorFor(MouseMovementRouter.Inner_StreamUtil source) {
-      return ACCUMULATORS.get(source == null ? MouseMovementRouter.Inner_StreamUtil.GENERIC : source);
+   private static FractionalCountAccumulator accumulatorFor(MouseMovementRouter.MovementSource source) {
+      return ACCUMULATORS.get(source == null ? MouseMovementRouter.MovementSource.GENERIC : source);
    }
 
-   private static FractionalCountAccumulator.Inner_DataUtil init_dh_DataUtil_ba_StreamUtil_D(MouseMovementRouter.Inner_StreamUtil source, double elapsedSeconds) {
-      if (source == MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST) {
+   private static FractionalCountAccumulator.WholeCounts init_dh_DataUtil_ba_StreamUtil_D(MouseMovementRouter.MovementSource source, double elapsedSeconds) {
+      if (source == MouseMovementRouter.MovementSource.AIM_ASSIST) {
          return SMOOTHER.drain(elapsedSeconds);
       } else {
-         return source == MouseMovementRouter.Inner_StreamUtil.SCAFFOLD_TELLY ? accumulatorFor(source).takeWhole() : accumulatorFor(source).takeWhole();
+         return source == MouseMovementRouter.MovementSource.SCAFFOLD_TELLY ? accumulatorFor(source).takeWhole() : accumulatorFor(source).takeWhole();
       }
    }
 
-   private static void load(MouseMovementRouter.Inner_StreamUtil retained) {
-      if (retained != MouseMovementRouter.Inner_StreamUtil.AUTO_FISH) {
+   private static void load(MouseMovementRouter.MovementSource retained) {
+      if (retained != MouseMovementRouter.MovementSource.AUTO_FISH) {
          init_Z = false;
       }
 
-      for (Entry<MouseMovementRouter.Inner_StreamUtil, FractionalCountAccumulator> entry : ACCUMULATORS.entrySet()) {
+      for (Entry<MouseMovementRouter.MovementSource, FractionalCountAccumulator> entry : ACCUMULATORS.entrySet()) {
          if (entry.getKey() != retained) {
             entry.getValue().reset();
          }
       }
 
-      if (retained != MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST) {
+      if (retained != MouseMovementRouter.MovementSource.AIM_ASSIST) {
          SMOOTHER.reset();
       }
    }
 
    static {
-      for (MouseMovementRouter.Inner_StreamUtil source : MouseMovementRouter.Inner_StreamUtil.values()) {
+      for (MouseMovementRouter.MovementSource source : MouseMovementRouter.MovementSource.values()) {
          ACCUMULATORS.put(source, new FractionalCountAccumulator());
       }
    }
 
-   public record Inner_DataUtil(double init, double load) {
+   public record MouseDelta(double init, double load) {
       public boolean isZero() {
          return Math.abs(this.init) < 1.0E-7 && Math.abs(this.load) < 1.0E-7;
       }
@@ -248,7 +248,7 @@ public final class MouseMovementRouter {
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum MovementSource {
       GENERIC,
       AIM_ASSIST,
       AUTO_FISH,

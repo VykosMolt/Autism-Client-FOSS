@@ -49,7 +49,7 @@ public final class AiPacketSend {
       }
 
       String rawArgs = AiJson.getString(args, "args", "");
-      PacketCommandBuilder.Inner_StreamUtil built = PacketCommandBuilder.build(packetClass, rawArgs);
+      PacketCommandBuilder.BuildResult built = PacketCommandBuilder.build(packetClass, rawArgs);
       if (built != null && built.success() && built.packet() != null) {
          Packet<?> packet = built.packet();
          boolean regenerate = AiJson.getBoolean(args, "regenerate", false);

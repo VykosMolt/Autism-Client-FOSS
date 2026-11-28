@@ -300,7 +300,7 @@ public final class ScaffoldModule extends Module {
    private final SmoothRotationIntegrator rotationIntegrator = new SmoothRotationIntegrator();
    private RotationMath.Rotation previousGoal;
    private float directionChange;
-   private final autismclient.util.RotationStreamPlanner.Inner_TaskQueue rotationStream = new autismclient.util.RotationStreamPlanner.Inner_TaskQueue();
+   private final autismclient.util.RotationStreamPlanner.StreamState rotationStream = new autismclient.util.RotationStreamPlanner.StreamState();
    private final RangeSetting rotationSmoothness;
    private ScaffoldRotationSmoother rotationSmoother;
    private ScaffoldRotationSmoother.Inner_DataUtil cachedSmootherBand;
@@ -4002,8 +4002,8 @@ public final class ScaffoldModule extends Module {
    static RotationMath.Rotation smoothStep(
       SmoothRotationIntegrator smoother, RotationMath.Rotation current, float yawError, float pitchError, float directionChange, double gcd, float maxYawStep, float maxPitchStep
    ) {
-      SmoothRotationIntegrator.Inner_DataUtil step = smoother.step(yawError, pitchError, gcd, maxYawStep, maxPitchStep, 180.0F, directionChange, 0.35F, true, true);
-      RotationMath.Rotation delta = new SmoothRotationIntegrator.Inner_DataUtil(
+      SmoothRotationIntegrator.CountStep step = smoother.step(yawError, pitchError, gcd, maxYawStep, maxPitchStep, 180.0F, directionChange, 0.35F, true, true);
+      RotationMath.Rotation delta = new SmoothRotationIntegrator.CountStep(
             deadbandCounts(clampCounts(step.init(), maxYawStep, gcd), yawError, gcd), deadbandCounts(clampCounts(step.load(), maxPitchStep, gcd), pitchError, gcd)
          )
          .init(gcd);
@@ -6914,7 +6914,7 @@ public final class ScaffoldModule extends Module {
 
          RotationMath.Rotation from = this.lastSentRotation();
 
-         for (ClutchBlockPlanner.Inner_StreamUtil counts : ClutchBlockPlanner.init_List_Vec3_2(
+         for (ClutchBlockPlanner.AimAngles counts : ClutchBlockPlanner.init_List_Vec3_2(
             eye,
             next,
             ClutchBlockPlanner.init(target.support(), target.face()),
@@ -9704,7 +9704,7 @@ public final class ScaffoldModule extends Module {
       RotationMath.Rotation best = null;
       double cost = 1.0 / 0.0;
 
-      for (ClutchBlockPlanner.Inner_StreamUtil counts : ClutchBlockPlanner.init_List_Vec3_2(
+      for (ClutchBlockPlanner.AimAngles counts : ClutchBlockPlanner.init_List_Vec3_2(
          eye, nextEye, ClutchBlockPlanner.init(support, face), support, face, support, face, reach, from.yaw(), from.pitch(), gcd, 0.02
       )) {
          RotationMath.Rotation look = new RotationMath.Rotation(from.yaw() + RotationMath.angleDelta(counts.init(), from.yaw()), counts.load());
@@ -10702,7 +10702,7 @@ public final class ScaffoldModule extends Module {
          BlockHitResult hit = use.hitResult();
          this.failureRecorder
             .init(
-               new ScaffoldFailureRecorder.Inner_StreamUtil(
+               new ScaffoldFailureRecorder.PlacementFact(
                   "use",
                   tick,
                   use.sequence(),
@@ -10720,7 +10720,7 @@ public final class ScaffoldModule extends Module {
       } else if (packet instanceof ServerboundMovePlayerPacket move) {
          this.failureRecorder
             .init(
-               new ScaffoldFailureRecorder.Inner_StreamUtil(
+               new ScaffoldFailureRecorder.PlacementFact(
                   "move",
                   tick,
                   -1,
@@ -10736,9 +10736,9 @@ public final class ScaffoldModule extends Module {
                )
             );
       } else if (packet instanceof ServerboundPlayerInputPacket input) {
-         this.failureRecorder.init(new ScaffoldFailureRecorder.Inner_StreamUtil("input", tick, -1, null, null, null, lastWrittenPosition, null, null, wire, input.input(), null));
+         this.failureRecorder.init(new ScaffoldFailureRecorder.PlacementFact("input", tick, -1, null, null, null, lastWrittenPosition, null, null, wire, input.input(), null));
       } else if (packet instanceof ServerboundPlayerCommandPacket command) {
-         this.failureRecorder.init(new ScaffoldFailureRecorder.Inner_StreamUtil("command", tick, -1, null, null, null, lastWrittenPosition, null, null, wire, null, command.getAction().name()));
+         this.failureRecorder.init(new ScaffoldFailureRecorder.PlacementFact("command", tick, -1, null, null, null, lastWrittenPosition, null, null, wire, null, command.getAction().name()));
       }
    }
 
@@ -10746,7 +10746,7 @@ public final class ScaffoldModule extends Module {
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.isTellyOrEagleMode() && scaffold.failureRecorder.init(cell)) {
          BlockPos immutable = cell.immutable();
          scaffold.failureRecorder
-            .init(new ScaffoldFailureRecorder.Inner_StreamUtil("server-block", AutismSessionState.getInstance().getClientTick(), -1, immutable, null, null, null, null, null, null, null, state.toString()));
+            .init(new ScaffoldFailureRecorder.PlacementFact("server-block", AutismSessionState.getInstance().getClientTick(), -1, immutable, null, null, null, null, null, null, null, state.toString()));
          if (state.isAir()) {
             scaffold.captureFailure("server-sent-air-for-recent-use", immutable, -1);
          }
@@ -10755,7 +10755,7 @@ public final class ScaffoldModule extends Module {
 
    private void captureFailure(String reason, BlockPos cell, int sequence) {
       if (MC != null && MC.level != null && MC.player != null && this.capturingFailure.compareAndSet(false, true)) {
-         ScaffoldFailureRecorder.Inner_DataUtil capture = this.failureRecorder.init(reason, cell, sequence, AutismSessionState.getInstance().getClientTick(), System.nanoTime());
+         ScaffoldFailureRecorder.FailureCapture capture = this.failureRecorder.init(reason, cell, sequence, AutismSessionState.getInstance().getClientTick(), System.nanoTime());
          if (capture == null) {
             this.capturingFailure.set(false);
          } else {

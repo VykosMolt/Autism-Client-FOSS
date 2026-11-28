@@ -70,7 +70,7 @@ final class AiAttachments {
             throw new IllegalArgumentException("Schematic exceeds 64 MB");
          }
 
-         AiSchematic.Inner_DataUtil decoded = AiSchematic.decodeFile(temporary, false);
+         AiSchematic.DecodedFile decoded = AiSchematic.decodeFile(temporary, false);
          AiSchematic.init(AiBuilder.normalizeCells(decoded.cells(), 2097152, 1023));
          Path target = directory.resolve(name);
          if (Files.exists(target) && Files.mismatch(temporary, target) != -1L) {

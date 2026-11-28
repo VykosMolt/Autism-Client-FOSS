@@ -863,7 +863,7 @@ public final class AiPaceScript {
          AiPathfinder.PathResult var49 = var22[var44];
          var41.addAll(var49.movements());
 
-         for (AiPathfinder.UiHelper var59 : var49.movements()) {
+         for (AiPathfinder.PathStep var59 : var49.movements()) {
             BlockPos var62 = var59.to();
             int var31 = var12.size();
             AiJumpSolver.JumpPlan var32 = var59.jump();
@@ -1177,7 +1177,7 @@ public final class AiPaceScript {
    }
 
    public static AiPaceScript.Inner_JsonCache putAt(
-      AiPathfinder.GridView var0, AiPhysics.MotionState var1, List<AiPathfinder.UiHelper> var2, double var3, boolean var5, boolean var6
+      AiPathfinder.GridView var0, AiPhysics.MotionState var1, List<AiPathfinder.PathStep> var2, double var3, boolean var5, boolean var6
    ) {
       return putAt_TextPool_JsonCache_FileStore_TextStor_2(var0, var1, var2, var3, var5, var6, false);
    }
@@ -1185,7 +1185,7 @@ public final class AiPaceScript {
    public static AiPaceScript.Inner_JsonCache putAt_TextPool_JsonCache_FileStore_TextStor_2(
       AiPathfinder.GridView var0,
       AiPhysics.MotionState var1,
-      List<AiPathfinder.UiHelper> var2,
+      List<AiPathfinder.PathStep> var2,
       double var3,
       boolean var5,
       boolean var6,
@@ -1200,7 +1200,7 @@ public final class AiPaceScript {
          ArrayList<Boolean> var13 = new ArrayList<>(var2.size());
          ArrayList<AiPaceScript.Inner_JsonEntry> var14 = new ArrayList<>(var2.size());
          var9.add(new double[]{var1.x(), var1.y(), var1.z()});
-         BlockPos var15 = ((AiPathfinder.UiHelper)var2.getFirst()).from();
+         BlockPos var15 = ((AiPathfinder.PathStep)var2.getFirst()).from();
          if (var1.onGround()
             && !BlockPos.containing(var1.x(), var1.y() + 1.0E-4, var1.z()).equals(var15)
             && Math.hypot(var1.x() - var15.getX() - 0.5, var1.z() - var15.getZ() - 0.5) <= 1.25
@@ -1208,7 +1208,7 @@ public final class AiPaceScript {
             AiPaceScript.Inner_JsonCache.add(var9, var15.getX() + 0.5, var1.y(), var15.getZ() + 0.5, false);
          }
 
-         for (AiPathfinder.UiHelper var17 : var2) {
+         for (AiPathfinder.PathStep var17 : var2) {
             BlockPos var18 = var17.to();
             int var19 = var9.size();
             AiJumpSolver.JumpPlan var20 = var17.jump();
@@ -1282,7 +1282,7 @@ public final class AiPaceScript {
                   .climbable();
          }
 
-         BlockPos var33 = ((AiPathfinder.UiHelper)var2.getLast()).to();
+         BlockPos var33 = ((AiPathfinder.PathStep)var2.getLast()).to();
          return AiPaceScript.Inner_JsonCache.of(
             var9,
             List.of(var9.size() - 1),
@@ -5170,6 +5170,6 @@ public final class AiPaceScript {
    private record Inner_TextStore(List<AiPhysics.MoveInput> keys, BlockPos target) {
    }
 
-   public record Inner_TokenCodec(AiPaceScript.Inner_JsonCache guide, List<AiPathfinder.UiHelper> movements) {
+   public record Inner_TokenCodec(AiPaceScript.Inner_JsonCache guide, List<AiPathfinder.PathStep> movements) {
    }
 }

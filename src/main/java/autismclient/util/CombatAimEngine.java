@@ -69,7 +69,7 @@ public final class CombatAimEngine {
    private boolean aimingInsideStrikeBand;
    private double pitchOffset;
    private int postMoveCooldownTicks;
-   private CombatAimEngine.Inner_StreamUtil activeMove;
+   private CombatAimEngine.AimMove activeMove;
    private double lastSpeedScale = 1.0;
    private double excursionTargetOffset;
    private double forcedPitchDirection = 1.0;
@@ -139,7 +139,7 @@ public final class CombatAimEngine {
       return 1.22 + 0.2 * extractTraitFraction(this.handProfile.update());
    }
 
-   public double[] computeStep(CombatAimEngine.Inner_DataUtil f, double atYaw, double atPitch, double maxYaw, double maxPitch) {
+   public double[] computeStep(CombatAimEngine.AimFrame f, double atYaw, double atPitch, double maxYaw, double maxPitch) {
       if (this.lastSpeedScale != f.speedScale) {
          this.activeMove = null;
          this.lastSpeedScale = f.speedScale;
@@ -462,7 +462,7 @@ public final class CombatAimEngine {
       }
    }
 
-   public boolean shouldTriggerMiss(CombatAimEngine.Inner_DataUtil f) {
+   public boolean shouldTriggerMiss(CombatAimEngine.AimFrame f) {
       if (this.missFraction <= 0.0 || this.swingsSinceMiss < this.nextMissSwingThreshold || f.comboCount < 1) {
          return false;
       } else if (f.legacyNoCooldown) {
@@ -480,7 +480,7 @@ public final class CombatAimEngine {
       this.missWidthTier = roll < 0.7 ? 0 : (roll < 0.9 ? 1 : 2);
    }
 
-   private double computeMissYawOffset(CombatAimEngine.Inner_DataUtil f) {
+   private double computeMissYawOffset(CombatAimEngine.AimFrame f) {
       double lateral;
       if (this.missWidthTier == 0) {
          lateral = f.targetHalfWidthBlocks + 0.1 + 0.05 * (this.random.nextDouble() - 0.5);
@@ -530,7 +530,7 @@ public final class CombatAimEngine {
       }
    }
 
-   private void planStrikeCorrection(CombatAimEngine.Inner_DataUtil f, double error, double carried, double pitchError, double halfWidth, double pursuit, double maxYaw, double maxPitch) {
+   private void planStrikeCorrection(CombatAimEngine.AimFrame f, double error, double carried, double pitchError, double halfWidth, double pursuit, double maxYaw, double maxPitch) {
       double ticks = Math.ceil(f.ticksUntilAttack - 1.0E-6) + 1.0;
       double predicted = error + (pursuit - 1.0) * this.smoothedTargetYawVel * ticks + this.smoothedTargetYawVel;
       double low = computeInnerStrikeBound(halfWidth);
@@ -558,11 +558,11 @@ public final class CombatAimEngine {
       }
    }
 
-   private static boolean usesBoundedPitchMode(CombatAimEngine.Inner_DataUtil f) {
+   private static boolean usesBoundedPitchMode(CombatAimEngine.AimFrame f) {
       return f.boundedPitchMode && f.gcdStep <= 0.5;
    }
 
-   private boolean isPitchOutsideSoftBand(CombatAimEngine.Inner_DataUtil f, double pitchError) {
+   private boolean isPitchOutsideSoftBand(CombatAimEngine.AimFrame f, double pitchError) {
       return usesBoundedPitchMode(f) ? false : pitchError < -0.8 * f.pitchUpHalfWidth || pitchError > 0.8 * f.pitchDownHalfWidth;
    }
 
@@ -570,7 +570,7 @@ public final class CombatAimEngine {
       return this.consistentDirectionScore >= 8;
    }
 
-   private boolean isObserverStrafingFast(CombatAimEngine.Inner_DataUtil f) {
+   private boolean isObserverStrafingFast(CombatAimEngine.AimFrame f) {
       return !this.isTargetMovingFast() && Math.abs(f.observerYawShift) > 3.0;
    }
 
@@ -675,7 +675,7 @@ public final class CombatAimEngine {
    }
 
    private void startMove(
-      CombatAimEngine.Inner_DataUtil f, double start, double pitchError, double targetError, double ticks, double gainRoll, boolean excursion, double maxYaw, double maxPitch
+      CombatAimEngine.AimFrame f, double start, double pitchError, double targetError, double ticks, double gainRoll, boolean excursion, double maxYaw, double maxPitch
    ) {
       double duration = scaleTicksBySpeed(ticks, f.speedScale);
       double pitchTarget = clamp(this.pitchOffset, -0.45 * f.pitchUpHalfWidth, 0.45 * f.pitchDownHalfWidth);
@@ -695,7 +695,7 @@ public final class CombatAimEngine {
          duration = Math.max(duration, fitMoveDurationTicks(dPitch, duration, f.maxAccelUp, maxPitch));
       }
 
-      CombatAimEngine.Inner_StreamUtil next = new CombatAimEngine.Inner_StreamUtil();
+      CombatAimEngine.AimMove next = new CombatAimEngine.AimMove();
       next.startError = start;
       next.yawTravel = travel;
       next.pitchTravel = dPitch;
@@ -706,7 +706,7 @@ public final class CombatAimEngine {
    }
 
    private void advanceActiveMove(double expected) {
-      CombatAimEngine.Inner_StreamUtil m = this.activeMove;
+      CombatAimEngine.AimMove m = this.activeMove;
       m.elapsedTicks++;
       double s = Math.min(1.0, m.elapsedTicks / m.durationTicks);
       double progress = evaluateSmoothstep(s);
@@ -742,7 +742,7 @@ public final class CombatAimEngine {
       this.lastTargetCenterPitch = centerPitch;
    }
 
-   private boolean shouldStartExcursion(CombatAimEngine.Inner_DataUtil f, boolean preempt) {
+   private boolean shouldStartExcursion(CombatAimEngine.AimFrame f, boolean preempt) {
       if (f.prioritizeStrike && f.ticksUntilAttack <= 3.0) {
          return false;
       }
@@ -843,7 +843,7 @@ public final class CombatAimEngine {
       return wrapped;
    }
 
-   public static final class Inner_CachePool {
+   public static final class ArcStepper {
       private CombatAimEngine aimEngine;
       private double startYaw;
       private double startPitch;
@@ -854,10 +854,10 @@ public final class CombatAimEngine {
       private double arcAmplitude;
       private double lastSpeedScale;
 
-      public Inner_CachePool() {
+      public ArcStepper() {
       }
 
-      Inner_CachePool(CombatAimEngine hand) {
+      ArcStepper(CombatAimEngine hand) {
          this.aimEngine = hand;
       }
 
@@ -897,7 +897,7 @@ public final class CombatAimEngine {
       }
    }
 
-   public static final class Inner_DataUtil {
+   public static final class AimFrame {
       public double targetYaw;
       public double targetPitch;
       public double yawHalfWidth;
@@ -931,23 +931,23 @@ public final class CombatAimEngine {
       public float centerYawHint = 0.0F / 0.0F;
       public float nearestYawHint = 0.0F / 0.0F;
 
-      public CombatAimEngine.Inner_DataUtil setTargetFromAimY(Vec3 eyes, AABB box, double aimY) {
+      public CombatAimEngine.AimFrame setTargetFromAimY(Vec3 eyes, AABB box, double aimY) {
          return this.setTarget(eyes, box, computeAnchorAtHeight(box, aimY));
       }
 
-      public CombatAimEngine.Inner_DataUtil setTarget(Vec3 eyes, AABB box, Vec3 anchor) {
+      public CombatAimEngine.AimFrame setTarget(Vec3 eyes, AABB box, Vec3 anchor) {
          return this.setTarget(eyes, box, box, anchor);
       }
 
-      public CombatAimEngine.Inner_DataUtil setTarget(Vec3 eyes, AABB box, AABB region, Vec3 anchor) {
+      public CombatAimEngine.AimFrame setTarget(Vec3 eyes, AABB box, AABB region, Vec3 anchor) {
          return this.setTarget(eyes, box, region, anchor, null);
       }
 
-      public CombatAimEngine.Inner_DataUtil setTarget(Vec3 eyes, AABB box, AABB region, Vec3 anchor, Vec3 receivedTarget) {
+      public CombatAimEngine.AimFrame setTarget(Vec3 eyes, AABB box, AABB region, Vec3 anchor, Vec3 receivedTarget) {
          return this.setTarget(eyes, box, region, anchor, receivedTarget, null);
       }
 
-      public CombatAimEngine.Inner_DataUtil setTarget(Vec3 eyes, AABB box, AABB region, Vec3 anchor, Vec3 receivedTarget, AABB receivedBox) {
+      public CombatAimEngine.AimFrame setTarget(Vec3 eyes, AABB box, AABB region, Vec3 anchor, Vec3 receivedTarget, AABB receivedBox) {
          double width = Math.min(region.getXsize(), region.getZsize());
          double height = region.getYsize();
          double dx = anchor.x - eyes.x;
@@ -1149,7 +1149,7 @@ public final class CombatAimEngine {
       }
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class AimMove {
       double startError;
       double yawTravel;
       double pitchTravel;

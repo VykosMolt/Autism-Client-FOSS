@@ -3032,7 +3032,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       if (address != null && !address.isBlank()) {
          boolean changed = false;
 
-         for (PluginSignatureCatalog.Inner_CachePool fingerprint : PluginSignatureCatalog.fingerprints(address, this.serverBrand())) {
+         for (PluginSignatureCatalog.PluginFingerprint fingerprint : PluginSignatureCatalog.fingerprints(address, this.serverBrand())) {
             if (fingerprint != null && fingerprint.plugin() != null && !fingerprint.plugin().isBlank()) {
                changed |= this.init_Z_Map_bQ_CachePool(entries, fingerprint);
                AutismServerInfoOverlay.MatchConfidence confidence = this.confidenceForFingerprint(fingerprint);
@@ -3056,12 +3056,12 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private AutismServerInfoOverlay.MatchConfidence confidenceForFingerprint(PluginSignatureCatalog.Inner_CachePool fingerprint) {
+   private AutismServerInfoOverlay.MatchConfidence confidenceForFingerprint(PluginSignatureCatalog.PluginFingerprint fingerprint) {
       String basis = fingerprint == null ? "" : fingerprint.read();
       return "embedded".equalsIgnoreCase(basis) ? AutismServerInfoOverlay.MatchConfidence.STRONG : AutismServerInfoOverlay.MatchConfidence.EXACT;
    }
 
-   private boolean init_Z_Map_bQ_CachePool(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, PluginSignatureCatalog.Inner_CachePool fingerprint) {
+   private boolean init_Z_Map_bQ_CachePool(Map<String, AutismServerInfoOverlay.PluginAccumulator> entries, PluginSignatureCatalog.PluginFingerprint fingerprint) {
       if (entries != null && !entries.isEmpty() && fingerprint != null) {
          Set<String> keywords = this.fingerprintKeywords(fingerprint);
          if (keywords.isEmpty()) {
@@ -3104,7 +3104,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private Set<String> fingerprintKeywords(PluginSignatureCatalog.Inner_CachePool fingerprint) {
+   private Set<String> fingerprintKeywords(PluginSignatureCatalog.PluginFingerprint fingerprint) {
       LinkedHashSet<String> keywords = new LinkedHashSet<>();
       this.addFeatureKeywords(keywords, fingerprint.plugin());
       this.addFeatureKeywords(keywords, fingerprint.load());

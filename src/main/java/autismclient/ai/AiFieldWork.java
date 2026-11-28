@@ -49,16 +49,16 @@ final class AiFieldWork {
    private AiFieldWork() {
    }
 
-   static AiFieldWork.Inner_DataUtil classifyPlot(BlockState ground, BlockState above, Block crop, boolean seeds) {
+   static AiFieldWork.PlotState classifyPlot(BlockState ground, BlockState above, Block crop, boolean seeds) {
       boolean open = above.isAir();
       if (above.is(crop)) {
-         return AiFieldWork.Inner_DataUtil.DONE;
+         return AiFieldWork.PlotState.DONE;
       } else if (autismclient.util.FarmCropCatalog.canGrowOn(crop, ground)) {
-         return !open ? AiFieldWork.Inner_DataUtil.BLOCKED : (seeds ? AiFieldWork.Inner_DataUtil.SOW : AiFieldWork.Inner_DataUtil.DONE);
+         return !open ? AiFieldWork.PlotState.BLOCKED : (seeds ? AiFieldWork.PlotState.SOW : AiFieldWork.PlotState.DONE);
       } else if (crop != Blocks.NETHER_WART && (ground.is(Blocks.GRASS_BLOCK) || ground.is(Blocks.DIRT) || ground.is(Blocks.DIRT_PATH))) {
-         return open ? AiFieldWork.Inner_DataUtil.TILL : AiFieldWork.Inner_DataUtil.BLOCKED;
+         return open ? AiFieldWork.PlotState.TILL : AiFieldWork.PlotState.BLOCKED;
       } else {
-         return AiFieldWork.Inner_DataUtil.BLOCKED;
+         return AiFieldWork.PlotState.BLOCKED;
       }
    }
 
@@ -155,7 +155,7 @@ final class AiFieldWork {
          int externalReplants;
          int confirmedSown;
          int finalDropTicks;
-         AiFieldPlan.Inner_StreamUtil init_H_StreamUtil;
+         AiFieldPlan.FaceTarget init_H_StreamUtil;
          final Map<Long, Long> read_Map;
          final Set<Long> init_Set;
          AiOperation init_AiOperation;
@@ -200,7 +200,7 @@ final class AiFieldWork {
                }
 
                for (long key : this.unresolvedReplants) {
-                  AiServerEvidence.Inner_DataUtil update = AiServerEvidence.lastBlockUpdate(BlockPos.of(key).above());
+                  AiServerEvidence.BlockUpdate update = AiServerEvidence.lastBlockUpdate(BlockPos.of(key).above());
                   boolean breakConfirmed = update != null && update.revision() > this.read_Map.get(key) && update.state().isAir();
                   int since = this.load_Map.getOrDefault(key, this.init_Map.getOrDefault(key, this.ticks));
                   if ((!breakConfirmed || this.load_Map.containsKey(key)) && this.ticks - since > 120) {
@@ -334,7 +334,7 @@ final class AiFieldWork {
 
                boolean acted = false;
                if (best != null) {
-                  AiFieldPlan.Inner_StreamUtil nextGoal = AiFieldPlan.Inner_StreamUtil.of(best, bestBreak ? bestHit.getDirection() : Direction.UP);
+                  AiFieldPlan.FaceTarget nextGoal = AiFieldPlan.FaceTarget.of(best, bestBreak ? bestHit.getDirection() : Direction.UP);
                   if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.raycastLookBlock())) {
                      this.aim.aimAt(bestHit.getLocation());
                      this.aimRequests++;
@@ -495,7 +495,7 @@ final class AiFieldWork {
                BlockPos ground = BlockPos.of(key);
                BlockPos above = ground.above();
                boolean ownClick = this.init_Set.contains(key);
-               AiReplantEvidence.Inner_DataUtil state = AiReplantEvidence.init(
+               AiReplantEvidence.ReplantState state = AiReplantEvidence.init(
                   mc.level.getBlockState(above),
                   AiServerEvidence.lastBlockUpdate(above),
                   this.read_Map.getOrDefault(key, 0L),
@@ -503,13 +503,13 @@ final class AiFieldWork {
                   ownClick,
                   AiGameState.countInventoryItem(seedItem)
                );
-               if (state == AiReplantEvidence.Inner_DataUtil.LOCAL || state == AiReplantEvidence.Inner_DataUtil.EXTERNAL) {
+               if (state == AiReplantEvidence.ReplantState.LOCAL || state == AiReplantEvidence.ReplantState.EXTERNAL) {
                   iterator.remove();
                   this.init_Set.remove(key);
                   this.init_Map.remove(key);
                   this.load_Map.remove(key);
                   this.read_Map.remove(key);
-                  if (state == AiReplantEvidence.Inner_DataUtil.LOCAL) {
+                  if (state == AiReplantEvidence.ReplantState.LOCAL) {
                      this.confirmedSown++;
                   } else {
                      this.externalReplants++;
@@ -734,7 +734,7 @@ final class AiFieldWork {
          int lostCount;
          int seedsSeen;
          int aimRequests;
-         AiFieldPlan.Inner_StreamUtil init_H_StreamUtil;
+         AiFieldPlan.FaceTarget init_H_StreamUtil;
          final Set<Long> load_Set;
          final Set<Long> read_Set;
          double init_D;
@@ -818,8 +818,8 @@ final class AiFieldWork {
                int pending = 0;
 
                for (BlockPos p : plots) {
-                  AiFieldWork.Inner_DataUtil need = AiFieldWork.classifyPlot(mc.level.getBlockState(p), mc.level.getBlockState(p.above()), crop, seeds);
-                  if (need != AiFieldWork.Inner_DataUtil.DONE && need != AiFieldWork.Inner_DataUtil.BLOCKED) {
+                  AiFieldWork.PlotState need = AiFieldWork.classifyPlot(mc.level.getBlockState(p), mc.level.getBlockState(p.above()), crop, seeds);
+                  if (need != AiFieldWork.PlotState.DONE && need != AiFieldWork.PlotState.BLOCKED) {
                      pending++;
                      double along = (p.getX() + 0.5 - mc.player.getX()) * heading.x + (p.getZ() + 0.5 - mc.player.getZ()) * heading.z;
                      if (along < 0.6) {
@@ -847,7 +847,7 @@ final class AiFieldWork {
 
                boolean clicked = false;
                if (best != null) {
-                  AiFieldPlan.Inner_StreamUtil nextGoal = AiFieldPlan.Inner_StreamUtil.of(best, Direction.UP);
+                  AiFieldPlan.FaceTarget nextGoal = AiFieldPlan.FaceTarget.of(best, Direction.UP);
                   if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.raycastLookBlock())) {
                      this.aim.aimAt(bestHit.getLocation());
                      this.aimRequests++;
@@ -883,8 +883,8 @@ final class AiFieldWork {
                         int listed = 0;
 
                         for (BlockPos p : plots) {
-                           AiFieldWork.Inner_DataUtil need = AiFieldWork.classifyPlot(mc.level.getBlockState(p), mc.level.getBlockState(p.above()), crop, seeds);
-                           if (need != AiFieldWork.Inner_DataUtil.DONE && need != AiFieldWork.Inner_DataUtil.BLOCKED && listed++ < 6) {
+                           AiFieldWork.PlotState need = AiFieldWork.classifyPlot(mc.level.getBlockState(p), mc.level.getBlockState(p.above()), crop, seeds);
+                           if (need != AiFieldWork.PlotState.DONE && need != AiFieldWork.PlotState.BLOCKED && listed++ < 6) {
                               left.append(' ')
                                  .append(p.toShortString())
                                  .append(' ')
@@ -928,8 +928,8 @@ final class AiFieldWork {
             double bestDistance = 1.7976931348623157E308;
 
             for (BlockPos p : plots) {
-               AiFieldWork.Inner_DataUtil need = AiFieldWork.classifyPlot(mc.level.getBlockState(p), mc.level.getBlockState(p.above()), crop, seeds);
-               if (need != AiFieldWork.Inner_DataUtil.DONE && need != AiFieldWork.Inner_DataUtil.BLOCKED) {
+               AiFieldWork.PlotState need = AiFieldWork.classifyPlot(mc.level.getBlockState(p), mc.level.getBlockState(p.above()), crop, seeds);
+               if (need != AiFieldWork.PlotState.DONE && need != AiFieldWork.PlotState.BLOCKED) {
                   double d = p.distToCenterSqr(mc.player.position());
                   if (d < bestDistance) {
                      bestDistance = d;
@@ -1133,7 +1133,7 @@ final class AiFieldWork {
       };
    }
 
-   enum Inner_DataUtil {
+   enum PlotState {
       TILL,
       SOW,
       DONE,

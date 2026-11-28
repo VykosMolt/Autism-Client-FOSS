@@ -50,11 +50,11 @@ import net.minecraft.world.phys.Vec3;
 
 public final class BedEspModule extends Module {
    private static final Set<Block> COVER_BLOCKS = buildCoverBlocks();
-   private volatile List<BedEspModule.Inner_DataUtil> beds = List.of();
-   private final Map<BlockPos, BedEspModule.Inner_DataUtil> bedsByPos = new HashMap<>();
+   private volatile List<BedEspModule.BedInfo> beds = List.of();
+   private final Map<BlockPos, BedEspModule.BedInfo> bedsByPos = new HashMap<>();
    private final Map<BlockPos, Long> bedInputStamps = new HashMap<>();
    private final Map<BlockPos, BlockState[]> observedSurroundings = new HashMap<>();
-   private final Map<BlockPos, BedCoverPathSolver.Inner_CachePool> coverCache = new HashMap<>();
+   private final Map<BlockPos, BedCoverPathSolver.MinimalCover> coverCache = new HashMap<>();
    private final IdentityHashMap<ItemStack, Double> breakSpeedByStack = new IdentityHashMap<>();
    private List<BlockPos> bedPositions = List.of();
    private Object lastLevel;
@@ -86,27 +86,27 @@ public final class BedEspModule extends Module {
       return al.init_Module_Str("bed-esp") instanceof BedEspModule b ? b : null;
    }
 
-   static BedEspModule.Inner_CachePool policy() {
+   static BedEspModule.EspPolicy policy() {
       BedEspModule m = instance();
       return m == null
-         ? new BedEspModule.Inner_CachePool(true, true, true, 96)
-         : new BedEspModule.Inner_CachePool(m.bool("my-tools"), m.bool("path"), m.bool("tags"), m.integer("range"));
+         ? new BedEspModule.EspPolicy(true, true, true, 96)
+         : new BedEspModule.EspPolicy(m.bool("my-tools"), m.bool("path"), m.bool("tags"), m.integer("range"));
    }
 
-   List<BedEspModule.Inner_DataUtil> beds() {
+   List<BedEspModule.BedInfo> beds() {
       return BedNukerModule.active() == null
          ? this.beds
          : this.beds
             .stream()
             .map(
                b -> {
-                  BedBreachRouteSolver.Inner_BufferHelper route = BedNukerModule.routeFor(b.pos());
+                  BedBreachRouteSolver.BreachRoute route = BedNukerModule.routeFor(b.pos());
                   if (route == null) {
-                     return (BedEspModule.Inner_DataUtil)b;
+                     return (BedEspModule.BedInfo)b;
                   }
 
-                  List<BlockPos> cuts = route.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.Inner_DataUtil::pos).toList();
-                  return new BedEspModule.Inner_DataUtil(
+                  List<BlockPos> cuts = route.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.BreachCell::pos).toList();
+                  return new BedEspModule.BedInfo(
                      b.pos(),
                      b.partner(),
                      b.color(),
@@ -249,11 +249,11 @@ public final class BedEspModule extends Module {
             }
          }
 
-         ArrayList<BedEspModule.Inner_DataUtil> visible = new ArrayList<>();
+         ArrayList<BedEspModule.BedInfo> visible = new ArrayList<>();
          double range = this.integer("range");
 
          for (BlockPos p : this.bedPositions) {
-            BedEspModule.Inner_DataUtil bed = this.bedsByPos.get(p);
+            BedEspModule.BedInfo bed = this.bedsByPos.get(p);
             if (bed != null
                && MC.level.isLoaded(p)
                && MC.level.getBlockState(p).getBlock() instanceof BedBlock
@@ -369,11 +369,11 @@ public final class BedEspModule extends Module {
       return h * 31L + Double.doubleToLongBits(MC.player.getAttributeValue(Attributes.BLOCK_BREAK_SPEED));
    }
 
-   private BedEspModule.Inner_DataUtil analyzeBed(BlockPos p, BlockState state) {
+   private BedEspModule.BedInfo analyzeBed(BlockPos p, BlockState state) {
       BlockPos partner = p.relative(BedBlock.getConnectedDirection(state));
       boolean hasPartner = MC.level.isLoaded(partner) && isPartnerHalf(state, MC.level.getBlockState(partner));
-      BedCoverPathSolver.Inner_ConfigStore grid = new BedCoverPathSolver.Inner_ConfigStore(p.offset(-8, -3, -8), 18, 12, 18);
-      Map<Block, BedEspModule.Inner_BufferHelper> toolCache = new HashMap<>();
+      BedCoverPathSolver.CellGrid grid = new BedCoverPathSolver.CellGrid(p.offset(-8, -3, -8), 18, 12, 18);
+      Map<Block, BedEspModule.ToolChoice> toolCache = new HashMap<>();
       boolean loaded = true;
       this.breakSpeedByStack.clear();
       List<ItemStack> hotbar = this.hotbarTools();
@@ -388,24 +388,24 @@ public final class BedEspModule extends Module {
             loaded = false;
          } else if (!at.equals(p) && (!hasPartner || !at.equals(partner))) {
             if (s.isAir()) {
-               grid.nodes[i] = new BedCoverPathSolver.Inner_StreamUtil(0, 0.0, -1);
+               grid.nodes[i] = new BedCoverPathSolver.GridNode(0, 0.0, -1);
             } else if (init_Z_Block(s.getBlock())) {
-               BedEspModule.Inner_BufferHelper best = toolCache.computeIfAbsent(s.getBlock(), b -> this.bestTool(s, at, tools));
-               grid.nodes[i] = new BedCoverPathSolver.Inner_StreamUtil(2, best.breakTicks(), tools.indexOf(best.tool()));
+               BedEspModule.ToolChoice best = toolCache.computeIfAbsent(s.getBlock(), b -> this.bestTool(s, at, tools));
+               grid.nodes[i] = new BedCoverPathSolver.GridNode(2, best.breakTicks(), tools.indexOf(best.tool()));
             }
          } else {
-            grid.nodes[i] = new BedCoverPathSolver.Inner_StreamUtil(3, 0.0, -1);
+            grid.nodes[i] = new BedCoverPathSolver.GridNode(3, 0.0, -1);
             grid.init_List.add(i);
          }
       }
 
-      BedCoverPathSolver.Inner_CachePool cover = this.coverCache.computeIfAbsent(p, ignored -> BedCoverPathSolver.minimalCover(grid));
-      BedBreachRouteSolver.Inner_BufferHelper local = BedMiningEstimator.init(p, true, null, 0.0F);
-      BedCoverPathSolver.Inner_NetHelper plan = local == null
+      BedCoverPathSolver.MinimalCover cover = this.coverCache.computeIfAbsent(p, ignored -> BedCoverPathSolver.minimalCover(grid));
+      BedBreachRouteSolver.BreachRoute local = BedMiningEstimator.init(p, true, null, 0.0F);
+      BedCoverPathSolver.CoverPlan plan = local == null
          ? BedCoverPathSolver.plan(grid, MC.player.position(), MC.player.blockInteractionRange(), cover)
-         : new BedCoverPathSolver.Inner_NetHelper(
+         : new BedCoverPathSolver.CoverPlan(
             cover.cells(),
-            local.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.Inner_DataUtil::pos).toList(),
+            local.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.BreachCell::pos).toList(),
             List.of(),
             local.ticks(),
             true,
@@ -419,23 +419,23 @@ public final class BedEspModule extends Module {
          groups.computeIfAbsent(materialGroupName(MC.level.getBlockState(at).getBlock()), k -> new ArrayList<>()).add(at);
       }
 
-      List<BedEspModule.Inner_StreamUtil> materials = new ArrayList<>();
+      List<BedEspModule.CoverMaterial> materials = new ArrayList<>();
 
       for (Entry<String, List<BlockPos>> entry : groups.entrySet()) {
          Block b = MC.level.getBlockState(entry.getValue().getFirst()).getBlock();
          BlockPos at = entry.getValue().getFirst();
          materials.add(
-            new BedEspModule.Inner_StreamUtil(entry.getKey(), b, entry.getValue().size(), this.bestTool(MC.level.getBlockState(at), at, recommended).tool())
+            new BedEspModule.CoverMaterial(entry.getKey(), b, entry.getValue().size(), this.bestTool(MC.level.getBlockState(at), at, recommended).tool())
          );
       }
 
       List<ItemStack> routeTools = new ArrayList<>();
-      Map<Block, BedEspModule.Inner_BufferHelper> actualTools = this.bool("my-tools") ? toolCache : new HashMap<>();
+      Map<Block, BedEspModule.ToolChoice> actualTools = this.bool("my-tools") ? toolCache : new HashMap<>();
       double actualTicks = plan.load_Z() ? Math.max(0, plan.path().size() - 1) * 5 : 1.0 / 0.0;
 
       for (BlockPos at : plan.path()) {
          BlockState block = MC.level.getBlockState(at);
-         BedEspModule.Inner_BufferHelper actual = actualTools.computeIfAbsent(block.getBlock(), b -> this.bestTool(block, at, hotbar));
+         BedEspModule.ToolChoice actual = actualTools.computeIfAbsent(block.getBlock(), b -> this.bestTool(block, at, hotbar));
          actualTicks += actual.breakTicks();
          ItemStack tool = actual.tool();
          if (!tool.isEmpty() && routeTools.stream().noneMatch(t -> ItemStack.isSameItemSameComponents(t, tool))) {
@@ -445,8 +445,8 @@ public final class BedEspModule extends Module {
 
       AABB box = (hasPartner ? new AABB(p).minmax(new AABB(partner)) : new AABB(p)).setMaxY(p.getY() + 0.5625);
       if (local != null) {
-         List<BlockPos> cuts = local.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.Inner_DataUtil::pos).toList();
-         return new BedEspModule.Inner_DataUtil(
+         List<BlockPos> cuts = local.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.BreachCell::pos).toList();
+         return new BedEspModule.BedInfo(
             p,
             partner,
             ((BedBlock)state.getBlock()).getColor(),
@@ -464,7 +464,7 @@ public final class BedEspModule extends Module {
          );
       } else {
          String status = !plan.load_Z() ? (!loaded ? "Loading" : "No way in") : (plan.path().isEmpty() ? "Open" : "");
-         return new BedEspModule.Inner_DataUtil(
+         return new BedEspModule.BedInfo(
             p,
             partner,
             ((BedBlock)state.getBlock()).getColor(),
@@ -519,7 +519,7 @@ public final class BedEspModule extends Module {
       return tools;
    }
 
-   private BedEspModule.Inner_BufferHelper bestTool(BlockState state, BlockPos pos, List<ItemStack> tools) {
+   private BedEspModule.ToolChoice bestTool(BlockState state, BlockPos pos, List<ItemStack> tools) {
       double best = 1.0 / 0.0;
       ItemStack chosen = ItemStack.EMPTY;
       float hardness = state.getDestroySpeed(MC.level, pos);
@@ -560,7 +560,7 @@ public final class BedEspModule extends Module {
          }
       }
 
-      return new BedEspModule.Inner_BufferHelper(chosen, best);
+      return new BedEspModule.ToolChoice(chosen, best);
    }
 
    private double breakSpeedWith(ItemStack stack) {
@@ -605,19 +605,19 @@ public final class BedEspModule extends Module {
          );
    }
 
-   record Inner_BufferHelper(ItemStack tool, double breakTicks) {
+   record ToolChoice(ItemStack tool, double breakTicks) {
    }
 
-   record Inner_CachePool(boolean init_Z, boolean load, boolean read, int range) {
+   record EspPolicy(boolean init_Z, boolean load, boolean read, int range) {
    }
 
-   record Inner_DataUtil(
+   record BedInfo(
       BlockPos pos,
       BlockPos partner,
       DyeColor color,
       AABB box,
       Vec3 labelPos,
-      List<BedEspModule.Inner_StreamUtil> materials,
+      List<BedEspModule.CoverMaterial> materials,
       List<BlockPos> load_List,
       List<ItemStack> routeTools,
       double ticks,
@@ -629,6 +629,6 @@ public final class BedEspModule extends Module {
    ) {
    }
 
-   record Inner_StreamUtil(String name, Block block, int count, ItemStack icon) {
+   record CoverMaterial(String name, Block block, int count, ItemStack icon) {
    }
 }

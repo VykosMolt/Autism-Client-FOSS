@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Locale;
 
 final class AiPlaybooks {
-   private static volatile List<AiPlaybooks.Inner_DataUtil> init_List = List.of();
+   private static volatile List<AiPlaybooks.Playbook> init_List = List.of();
    private static volatile String init_Str;
 
    static void load() throws IOException {
@@ -21,12 +21,12 @@ final class AiPlaybooks {
          }
 
          JsonObject root = JsonParser.parseString(new String(in.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
-         List<AiPlaybooks.Inner_DataUtil> found = new ArrayList<>();
+         List<AiPlaybooks.Playbook> found = new ArrayList<>();
 
          for (JsonElement element : root.getAsJsonArray("playbooks")) {
             JsonObject p = element.getAsJsonObject();
             found.add(
-               new AiPlaybooks.Inner_DataUtil(
+               new AiPlaybooks.Playbook(
                   p.get("id").getAsString(),
                   p.get("title").getAsString(),
                   p.getAsJsonArray("keywords").asList().stream().map(JsonElement::getAsString).toList(),
@@ -45,7 +45,7 @@ final class AiPlaybooks {
          StringBuilder result = new StringBuilder();
          int used = 0;
 
-         for (AiPlaybooks.Inner_DataUtil p : init_List) {
+         for (AiPlaybooks.Playbook p : init_List) {
             boolean hit = false;
 
             for (String keyword : p.keywords()) {
@@ -111,6 +111,6 @@ final class AiPlaybooks {
       }
    }
 
-   private record Inner_DataUtil(String id, String title, List<String> keywords, List<String> body) {
+   private record Playbook(String id, String title, List<String> keywords, List<String> body) {
    }
 }

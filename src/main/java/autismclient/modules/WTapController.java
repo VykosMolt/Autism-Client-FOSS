@@ -106,7 +106,7 @@ final class WTapController {
    }
 
    private static boolean init_Z_Input(Input original) {
-      autismclient.util.MovementInputFixer.Inner_DataUtil footing = LedgeFootingPredictor.init(MC.player);
+      autismclient.util.MovementInputFixer.FootingModel footing = LedgeFootingPredictor.init(MC.player);
       if (footing == null) {
          return false;
       }

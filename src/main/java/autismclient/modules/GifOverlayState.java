@@ -5,13 +5,13 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class GifOverlayState {
-   private static volatile GifOverlayState.Inner_DataUtil init = GifOverlayState.Inner_DataUtil.DEFAULTS;
+   private static volatile GifOverlayState.OverlaySnapshot init = GifOverlayState.OverlaySnapshot.DEFAULTS;
 
    private GifOverlayState() {
    }
 
-   static void init(GifOverlayState.Inner_DataUtil snapshot) {
-      init = snapshot == null ? GifOverlayState.Inner_DataUtil.DEFAULTS : snapshot;
+   static void init(GifOverlayState.OverlaySnapshot snapshot) {
+      init = snapshot == null ? GifOverlayState.OverlaySnapshot.DEFAULTS : snapshot;
    }
 
    private static boolean update() {
@@ -19,12 +19,12 @@ public final class GifOverlayState {
    }
 
    public static boolean isCapeActive() {
-      GifOverlayState.Inner_DataUtil s = init;
+      GifOverlayState.OverlaySnapshot s = init;
       return s.enabled() && s.capeEnabled() && (!s.capePath().isBlank() || !s.capeOverrides().isEmpty()) && update();
    }
 
    public static boolean isShieldActive() {
-      GifOverlayState.Inner_DataUtil s = init;
+      GifOverlayState.OverlaySnapshot s = init;
       return s.enabled() && s.read_Z() && (!s.load_Str().isBlank() || !s.load_Map().isEmpty()) && update();
    }
 
@@ -36,7 +36,7 @@ public final class GifOverlayState {
       return init(init, playerName, false);
    }
 
-   private static String init(GifOverlayState.Inner_DataUtil s, String playerName, boolean cape) {
+   private static String init(GifOverlayState.OverlaySnapshot s, String playerName, boolean cape) {
       if (playerName != null && !playerName.isBlank()) {
          if (s.enabled() && (cape ? s.capeEnabled() : s.read_Z()) && update()) {
             String custom = (cape ? s.capeOverrides() : s.load_Map()).get(playerName.trim().toLowerCase(Locale.ROOT));
@@ -95,7 +95,7 @@ public final class GifOverlayState {
       return init.update_Str();
    }
 
-   record Inner_DataUtil(
+   record OverlaySnapshot(
       boolean enabled,
       boolean capeEnabled,
       boolean read_Z,
@@ -113,7 +113,7 @@ public final class GifOverlayState {
       Map<String, String> load_Map,
       String update_Str
    ) {
-      private static final GifOverlayState.Inner_DataUtil DEFAULTS = new GifOverlayState.Inner_DataUtil(
+      private static final GifOverlayState.OverlaySnapshot DEFAULTS = new GifOverlayState.OverlaySnapshot(
          false, false, false, "", "", "Self", "Self", 0.0, 0.0, false, false, 1.0, 1.0, Map.of(), Map.of(), ""
       );
    }

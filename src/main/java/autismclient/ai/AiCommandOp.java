@@ -25,7 +25,7 @@ public final class AiCommandOp {
    private AiCommandOp() {
    }
 
-   static AiCommandOp.Inner_StreamUtil init_UtilCore_StreamUti(JsonObject args) {
+   static AiCommandOp.CommandSpec init_UtilCore_StreamUti(JsonObject args) {
       String send = AiJson.getString(args, "send", "");
       if (send.startsWith("/")) {
          send = send.substring(1);
@@ -70,13 +70,13 @@ public final class AiCommandOp {
       }
 
       int timeout = Math.max(1, Math.min(120, AiJson.getInt(args, "timeoutSeconds", 10)));
-      return new AiCommandOp.Inner_StreamUtil(send, chat, match.isEmpty() ? null : match, compiled, timeout, AiJson.getBoolean(args, "capture", true));
+      return new AiCommandOp.CommandSpec(send, chat, match.isEmpty() ? null : match, compiled, timeout, AiJson.getBoolean(args, "capture", true));
    }
 
-   static AiCommandOp.Inner_DataUtil init(AiCommandOp.Inner_StreamUtil parsed) {
+   static AiCommandOp.ReplyMatcher init(AiCommandOp.CommandSpec parsed) {
       if (parsed.match() != null) {
          final String needle = parsed.match().toLowerCase(Locale.ROOT);
-         return new AiCommandOp.Inner_DataUtil() {
+         return new AiCommandOp.ReplyMatcher() {
             @Override
             public boolean init_Z(String text) {
                return text != null && text.toLowerCase(Locale.ROOT).contains(needle);
@@ -90,7 +90,7 @@ public final class AiCommandOp {
       } else if (parsed.regex() != null) {
          final Pattern pattern = parsed.regex();
          final List<String> names = init(pattern.pattern());
-         return new AiCommandOp.Inner_DataUtil() {
+         return new AiCommandOp.ReplyMatcher() {
             @Override
             public boolean init_Z(String text) {
                return text != null && pattern.matcher(text).find();
@@ -139,9 +139,9 @@ public final class AiCommandOp {
    }
 
    public static AiOperation create(JsonObject args) {
-      final AiCommandOp.Inner_StreamUtil parsed = init_UtilCore_StreamUti(args);
+      final AiCommandOp.CommandSpec parsed = init_UtilCore_StreamUti(args);
       if (Minecraft.getInstance() != null && Minecraft.getInstance().getConnection() != null) {
-         final AiCommandOp.Inner_DataUtil matcher = init(parsed);
+         final AiCommandOp.ReplyMatcher matcher = init(parsed);
          return new AiOperation() {
             final Minecraft init_Minecraft = Minecraft.getInstance();
             final long init_J = AiChatLedger.revision();
@@ -285,12 +285,12 @@ public final class AiCommandOp {
       return AiJson.objectOf("source", entry.source(), "sender", entry.sender(), "text", entry.text(), "untrusted", true);
    }
 
-   interface Inner_DataUtil {
+   interface ReplyMatcher {
       boolean init_Z(String var1);
 
       Map<String, String> init_Map(String var1);
    }
 
-   record Inner_StreamUtil(String send, boolean chat, String match, Pattern regex, int timeoutSeconds, boolean capture) {
+   record CommandSpec(String send, boolean chat, String match, Pattern regex, int timeoutSeconds, boolean capture) {
    }
 }

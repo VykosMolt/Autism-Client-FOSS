@@ -32,14 +32,14 @@ final class AiPrintRepeat implements AiOperation {
    final Object player;
    List<autismclient.ai.print.PrintTarget> firstTargets;
    AiSchematicMachinePlan.MachineSpec firstActions;
-   autismclient.ai.print.PrintCore.ao firstGeometry;
+   autismclient.ai.print.PrintCore.PreparedGeometry firstGeometry;
    final Provider registries;
    BlockPos knownStock;
-   AiPrintPreparation.Inner_SyncManager prepareWorker;
-   Future<AiPrintRepeat.Inner_DataUtil> pendingCopy;
-   AiPrintRepeat.Inner_DataUtil preparedCopy;
-   AiPrintPreparation.Inner_CachePool materialCheck;
-   AiPrintPreparation.Inner_NetHelper stockSearch;
+   AiPrintPreparation.PreparationWorker prepareWorker;
+   Future<AiPrintRepeat.PreparedCopy> pendingCopy;
+   AiPrintRepeat.PreparedCopy preparedCopy;
+   AiPrintPreparation.MaterialPlan materialCheck;
+   AiPrintPreparation.StockScan stockSearch;
    int containersFilled;
    int containersSkipped;
    int savedSlotsVerified;
@@ -56,7 +56,7 @@ final class AiPrintRepeat implements AiOperation {
       List<autismclient.ai.print.PrintTarget> firstTargets,
       BlockPos knownStock,
       AiSchematicMachinePlan.MachineSpec firstActions,
-      autismclient.ai.print.PrintCore.ao firstGeometry
+      autismclient.ai.print.PrintCore.PreparedGeometry firstGeometry
    ) {
       this.base = base;
       this.options = power;
@@ -142,16 +142,16 @@ final class AiPrintRepeat implements AiOperation {
       } else {
          if (this.preparedCopy == null) {
             if (this.pendingCopy == null) {
-               this.prepareWorker = new AiPrintPreparation.Inner_SyncManager();
+               this.prepareWorker = new AiPrintPreparation.PreparationWorker();
                this.pendingCopy = this.prepareWorker
                   .init(
                      () -> {
                         List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.init(shifted));
-                        return new AiPrintRepeat.Inner_DataUtil(
+                        return new AiPrintRepeat.PreparedCopy(
                            shifted,
                            AiBuilder.stripPoweredLevers(shifted),
                            targets,
-                           AiPrintPreparation.Inner_JsonUtil.of(shifted),
+                           AiPrintPreparation.SourceIndex.of(shifted),
                            this.options
                               .machine()
                               .machineSpec(shifted.origin(), this.registries),
@@ -181,7 +181,7 @@ final class AiPrintRepeat implements AiOperation {
                this.pendingCopy = null;
             }
 
-            this.materialCheck = new AiPrintPreparation.Inner_CachePool(this.preparedCopy.stockPlan(), this.preparedCopy.source().keys());
+            this.materialCheck = new AiPrintPreparation.MaterialPlan(this.preparedCopy.stockPlan(), this.preparedCopy.source().keys());
          }
 
          boolean creative = this.mc.gameMode != null
@@ -199,7 +199,7 @@ final class AiPrintRepeat implements AiOperation {
             if (!missing.isEmpty()) {
                if (this.options.shulkerStock()) {
                   if (this.stockSearch == null) {
-                     this.stockSearch = new AiPrintPreparation.Inner_NetHelper(
+                     this.stockSearch = new AiPrintPreparation.StockScan(
                         this.mc.player.blockPosition(), shifted.origin(), this.preparedCopy.source()
                      );
                   }
@@ -407,13 +407,13 @@ final class AiPrintRepeat implements AiOperation {
       }
    }
 
-   private record Inner_DataUtil(
+   private record PreparedCopy(
       AiBuilder.Blueprint blueprint,
       AiBuilder.Blueprint stockPlan,
       List<autismclient.ai.print.PrintTarget> targets,
-      AiPrintPreparation.Inner_JsonUtil source,
+      AiPrintPreparation.SourceIndex source,
       AiSchematicMachinePlan.MachineSpec actions,
-      autismclient.ai.print.PrintCore.ao geometry
+      autismclient.ai.print.PrintCore.PreparedGeometry geometry
    ) {
    }
 }

@@ -22,8 +22,8 @@ import net.minecraft.world.phys.Vec3;
 public final class FireballBlastPredictor {
    private static final int init_I = 1;
    private static final double[][] RAYS = buildRays();
-   private final Map<UUID, FireballBlastPredictor.Inner_StreamUtil> savedById = new HashMap<>();
-   private FireballBlastPredictor.Inner_StreamUtil init_x_StreamUtil;
+   private final Map<UUID, FireballBlastPredictor.SavedBlast> savedById = new HashMap<>();
+   private FireballBlastPredictor.SavedBlast init_x_StreamUtil;
    private Level level;
    private long tick = -9223372036854775808L;
 
@@ -34,7 +34,7 @@ public final class FireballBlastPredictor {
       this.tick = -9223372036854775808L;
    }
 
-   List<FireballBlastPredictor.Inner_DataUtil> predictAt(Level level, Vec3 center) {
+   List<FireballBlastPredictor.DestroyedBlock> predictAt(Level level, Vec3 center) {
       if (level != null && center != null) {
          long tick = level.getGameTime();
          boolean same = this.level == level && this.init_x_StreamUtil != null && this.init_x_StreamUtil.center.equals(center);
@@ -51,21 +51,21 @@ public final class FireballBlastPredictor {
       }
    }
 
-   List<FireballBlastPredictor.Inner_DataUtil> predict(Level level, List<IncomingProjectileScanner.Inner_BufferHelper> warnings) {
+   List<FireballBlastPredictor.DestroyedBlock> predict(Level level, List<IncomingProjectileScanner.ProjectileWarning> warnings) {
       HashSet<UUID> live = new HashSet<>();
       Map<BlockPos, Double> combined = new HashMap<>();
       int calculations = 0;
       Iterator var6 = warnings.iterator();
 
       while (true) {
-         FireballBlastPredictor.Inner_StreamUtil saved;
+         FireballBlastPredictor.SavedBlast saved;
          while (true) {
             if (!var6.hasNext()) {
                this.savedById.keySet().retainAll(live);
                return init(combined);
             }
 
-            IncomingProjectileScanner.Inner_BufferHelper warning = (IncomingProjectileScanner.Inner_BufferHelper)var6.next();
+            IncomingProjectileScanner.ProjectileWarning warning = (IncomingProjectileScanner.ProjectileWarning)var6.next();
             if (!warning.init_Z()
                && warning.entity() instanceof LargeFireball
                && !warning.entity().isRemoved()
@@ -87,13 +87,13 @@ public final class FireballBlastPredictor {
             }
          }
 
-         for (FireballBlastPredictor.Inner_DataUtil block : saved.blocks) {
+         for (FireballBlastPredictor.DestroyedBlock block : saved.blocks) {
             combined.merge(block.pos, block.init_D, Math::max);
          }
       }
    }
 
-   private static boolean init(FireballBlastPredictor.Inner_StreamUtil saved, Level level, Vec3 center) {
+   private static boolean init(FireballBlastPredictor.SavedBlast saved, Level level, Vec3 center) {
       return saved != null
          && saved.center.equals(center)
          && saved.positions.stream().noneMatch(pos -> isLoadedPos(level, pos))
@@ -103,10 +103,10 @@ public final class FireballBlastPredictor {
             .allMatch(entry -> isLoadedPos(level, entry.getKey()) && level.getBlockState(entry.getKey()) == entry.getValue());
    }
 
-   private static FireballBlastPredictor.Inner_StreamUtil init_x_StreamUtil_Level_Vec3(Level level, Vec3 center) {
+   private static FireballBlastPredictor.SavedBlast init_x_StreamUtil_Level_Vec3(Level level, Vec3 center) {
       Map<BlockPos, BlockState> states = new HashMap<>();
       HashSet<BlockPos> unavailable = new HashSet<>();
-      List<FireballBlastPredictor.Inner_DataUtil> blocks = init(pos -> {
+      List<FireballBlastPredictor.DestroyedBlock> blocks = init(pos -> {
          if (!isLoadedPos(level, pos)) {
             unavailable.add(pos);
             return null;
@@ -115,17 +115,17 @@ public final class FireballBlastPredictor {
             states.put(pos, state);
             FluidState fluid = state.getFluidState();
             float resistance = state.isAir() && fluid.isEmpty() ? -1.0F : Math.max(state.getBlock().getExplosionResistance(), fluid.getExplosionResistance());
-            return new FireballBlastPredictor.Inner_CachePool(resistance, !state.isAir() && !(state.getBlock() instanceof LiquidBlock));
+            return new FireballBlastPredictor.CellResistance(resistance, !state.isAir() && !(state.getBlock() instanceof LiquidBlock));
          }
       }, center, 1.0F);
-      return new FireballBlastPredictor.Inner_StreamUtil(center, states, unavailable, blocks);
+      return new FireballBlastPredictor.SavedBlast(center, states, unavailable, blocks);
    }
 
    private static boolean isLoadedPos(Level level, BlockPos pos) {
       return level.isInWorldBounds(pos) && level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4);
    }
 
-   static List<FireballBlastPredictor.Inner_DataUtil> init(FireballBlastPredictor.Inner_BufferHelper world, Vec3 center, float power) {
+   static List<FireballBlastPredictor.DestroyedBlock> init(FireballBlastPredictor.BlastWorld world, Vec3 center, float power) {
       if (center != null
          && Double.isFinite(center.x)
          && Double.isFinite(center.y)
@@ -133,7 +133,7 @@ public final class FireballBlastPredictor {
          && Float.isFinite(power)
          && !(power <= 0.0F)
          && !(power > 6.0F)) {
-         Map<Long, FireballBlastPredictor.Inner_CachePool> cells = new HashMap<>();
+         Map<Long, FireballBlastPredictor.CellResistance> cells = new HashMap<>();
          Map<BlockPos, Double> risks = new HashMap<>();
          MutableBlockPos pos = new MutableBlockPos();
 
@@ -152,7 +152,7 @@ public final class FireballBlastPredictor {
                   cells.put(key, world.cell(pos.immutable()));
                }
 
-               FireballBlastPredictor.Inner_CachePool cell = cells.get(key);
+               FireballBlastPredictor.CellResistance cell = cells.get(key);
                if (cell == null || !Float.isFinite(cell.init_F)) {
                   break;
                }
@@ -183,9 +183,9 @@ public final class FireballBlastPredictor {
       }
    }
 
-   private static List<FireballBlastPredictor.Inner_DataUtil> init(Map<BlockPos, Double> risks) {
-      List<FireballBlastPredictor.Inner_DataUtil> blocks = new ArrayList<>(risks.size());
-      risks.forEach((pos, risk) -> blocks.add(new FireballBlastPredictor.Inner_DataUtil(pos, risk)));
+   private static List<FireballBlastPredictor.DestroyedBlock> init(Map<BlockPos, Double> risks) {
+      List<FireballBlastPredictor.DestroyedBlock> blocks = new ArrayList<>(risks.size());
+      risks.forEach((pos, risk) -> blocks.add(new FireballBlastPredictor.DestroyedBlock(pos, risk)));
       blocks.sort(Comparator.comparingLong(block -> block.pos.asLong()));
       return List.copyOf(blocks);
    }
@@ -210,16 +210,16 @@ public final class FireballBlastPredictor {
       return rays.toArray(double[][]::new);
    }
 
-   interface Inner_BufferHelper {
-      FireballBlastPredictor.Inner_CachePool cell(BlockPos var1);
+   interface BlastWorld {
+      FireballBlastPredictor.CellResistance cell(BlockPos var1);
    }
 
-   record Inner_CachePool(float init_F, boolean init_Z) {
+   record CellResistance(float init_F, boolean init_Z) {
    }
 
-   public record Inner_DataUtil(BlockPos pos, double init_D) {
+   public record DestroyedBlock(BlockPos pos, double init_D) {
    }
 
-   private record Inner_StreamUtil(Vec3 center, Map<BlockPos, BlockState> states, Set<BlockPos> positions, List<FireballBlastPredictor.Inner_DataUtil> blocks) {
+   private record SavedBlast(Vec3 center, Map<BlockPos, BlockState> states, Set<BlockPos> positions, List<FireballBlastPredictor.DestroyedBlock> blocks) {
    }
 }

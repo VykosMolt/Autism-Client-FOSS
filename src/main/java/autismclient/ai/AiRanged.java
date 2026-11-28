@@ -244,12 +244,12 @@ final class AiRanged {
 
             autismclient.util.RotationMath.Rotation solveArc(Entity at) {
                ItemStack held = mc.player.getMainHandItem();
-               List<autismclient.modules.ProjectileBallistics.Inner_BufferHelper> possible = autismclient.modules.ProjectileBallistics.init(mc.player, held, true, false);
+               List<autismclient.modules.ProjectileBallistics.ProjectileShot> possible = autismclient.modules.ProjectileBallistics.init(mc.player, held, true, false);
                if (possible.isEmpty()) {
                   return null;
                }
 
-               autismclient.modules.ProjectileBallistics.Inner_DataUtil info = possible.get(0).info();
+               autismclient.modules.ProjectileBallistics.ProjectileInfo info = possible.get(0).info();
                Vec3 point = autismclient.ai.engine.AiAim.defaultEntityAimPoint(at);
                Vec3 motion = this.motionOf(at);
                if (motion.lengthSqr() >= 0.0025000000000000005) {
@@ -281,8 +281,8 @@ final class AiRanged {
                return new autismclient.util.RotationMath.Rotation(yaw, best);
             }
 
-            boolean wouldHit(autismclient.modules.ProjectileBallistics.Inner_DataUtil info, float yaw, float pitch, Entity at, Vec3 inherited) {
-               autismclient.modules.ProjectileBallistics.Inner_CachePool result = autismclient.modules.ProjectileBallistics.init(mc.level, mc.player, info, yaw, pitch, 120, inherited);
+            boolean wouldHit(autismclient.modules.ProjectileBallistics.ProjectileInfo info, float yaw, float pitch, Entity at, Vec3 inherited) {
+               autismclient.modules.ProjectileBallistics.Trajectory result = autismclient.modules.ProjectileBallistics.init(mc.level, mc.player, info, yaw, pitch, 120, inherited);
                HitResult hit = result.hit();
                Vec3 motion = this.motionOf(at);
                if (motion.lengthSqr() < 0.0025000000000000005) {

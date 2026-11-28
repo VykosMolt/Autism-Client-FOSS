@@ -10,11 +10,11 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    private final Font textRenderer;
    private final autismclient.gui.f.b.CharEncoder styleTheme = new autismclient.gui.f.b.CharEncoder();
    private final autismclient.gui.ui.widgets.TextInputWidget nameField;
-   private final List<AutismCustomFilterPresetOverlay.Inner_DataUtil> actionButtons = new ArrayList<>();
-   private final AutismCustomFilterPresetOverlay.Inner_StreamUtil presetList = new AutismCustomFilterPresetOverlay.Inner_StreamUtil();
-   private List<PacketPresetManager.Inner_DataUtil> builtInEntries = List.of();
-   private List<PacketPresetManager.Inner_DataUtil> userEntries = List.of();
-   private List<AutismCustomFilterPresetOverlay.Inner_CachePool> visibleRows = List.of();
+   private final List<AutismCustomFilterPresetOverlay.ActionButton> actionButtons = new ArrayList<>();
+   private final AutismCustomFilterPresetOverlay.PresetList presetList = new AutismCustomFilterPresetOverlay.PresetList();
+   private List<PacketPresetManager.PresetEntry> builtInEntries = List.of();
+   private List<PacketPresetManager.PresetEntry> userEntries = List.of();
+   private List<AutismCustomFilterPresetOverlay.PresetRow> visibleRows = List.of();
    private int panelX = 570;
    private int panelY = 48;
    private int panelWidth;
@@ -199,7 +199,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.widgets.ListRowRenderer.drawHeaderTitle(context, this.textRenderer, headerLabel, x, y);
       int headerY = y;
       y += this.textLineHeight();
-      List<AutismCustomFilterPresetOverlay.Inner_CachePool> rows = this.buildRows();
+      List<AutismCustomFilterPresetOverlay.PresetRow> rows = this.buildRows();
       this.presetList.rows = rows;
       autismclient.gui.ui.widgets.ScrollListLayout.ListLayout baseLayout = this.listLayout(x, y, width, listHeight, rows.size(), 0);
       int visualScroll = this.presetList.scroll.tickAndClamp(delta, baseLayout.maxScroll());
@@ -217,7 +217,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
             listLayout.forEachVisibleRow(
                rows.size(),
                (index, rowY) -> {
-                  AutismCustomFilterPresetOverlay.Inner_CachePool row = rows.get(index);
+                  AutismCustomFilterPresetOverlay.PresetRow row = rows.get(index);
                   int rowTextY = UiLayoutMath.centerTextY(rowY, this.rowHeight(), this.styleTheme.init_I_l(autismclient.gui.f.b.l.read), this.styleTheme.flush());
                   if (row.header) {
                      autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
@@ -312,27 +312,27 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          + this.contentInset();
    }
 
-   private List<AutismCustomFilterPresetOverlay.Inner_CachePool> buildRows() {
+   private List<AutismCustomFilterPresetOverlay.PresetRow> buildRows() {
       PacketPresetManager manager = PacketPresetManager.getInstance();
-      List<PacketPresetManager.Inner_DataUtil> builtInEntries = manager.builtInPresets();
-      List<PacketPresetManager.Inner_DataUtil> userEntries = manager.userPresets();
+      List<PacketPresetManager.PresetEntry> builtInEntries = manager.builtInPresets();
+      List<PacketPresetManager.PresetEntry> userEntries = manager.userPresets();
       if (builtInEntries == this.builtInEntries && userEntries == this.userEntries) {
          return this.visibleRows;
       }
 
-      List<AutismCustomFilterPresetOverlay.Inner_CachePool> rows = new ArrayList<>();
-      rows.add(AutismCustomFilterPresetOverlay.Inner_CachePool.headerRow("Developer Templates"));
+      List<AutismCustomFilterPresetOverlay.PresetRow> rows = new ArrayList<>();
+      rows.add(AutismCustomFilterPresetOverlay.PresetRow.headerRow("Developer Templates"));
 
-      for (PacketPresetManager.Inner_DataUtil entry : builtInEntries) {
-         rows.add(AutismCustomFilterPresetOverlay.Inner_CachePool.presetRow(entry));
+      for (PacketPresetManager.PresetEntry entry : builtInEntries) {
+         rows.add(AutismCustomFilterPresetOverlay.PresetRow.presetRow(entry));
       }
 
-      rows.add(AutismCustomFilterPresetOverlay.Inner_CachePool.headerRow("User Presets"));
+      rows.add(AutismCustomFilterPresetOverlay.PresetRow.headerRow("User Presets"));
       if (userEntries.isEmpty()) {
-         rows.add(AutismCustomFilterPresetOverlay.Inner_CachePool.noteRow("No user presets yet"));
+         rows.add(AutismCustomFilterPresetOverlay.PresetRow.noteRow("No user presets yet"));
       } else {
-         for (PacketPresetManager.Inner_DataUtil entry : userEntries) {
-            rows.add(AutismCustomFilterPresetOverlay.Inner_CachePool.presetRow(entry));
+         for (PacketPresetManager.PresetEntry entry : userEntries) {
+            rows.add(AutismCustomFilterPresetOverlay.PresetRow.presetRow(entry));
          }
       }
 
@@ -367,7 +367,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       if (presetName == null) {
          AutismClientMessaging.sendPrefixed("Select a user preset first.");
       } else {
-         PacketPresetManager.Inner_DataUtil entry = PacketPresetManager.getInstance().findPreset(presetName);
+         PacketPresetManager.PresetEntry entry = PacketPresetManager.getInstance().findPreset(presetName);
          if (entry != null && !entry.isBuiltIn()) {
             if (PacketPresetManager.getInstance().overwritePreset(entry.name())) {
                this.selectedPresetName = entry.name();
@@ -384,7 +384,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       if (presetName == null) {
          AutismClientMessaging.sendPrefixed("Select a user preset first.");
       } else {
-         PacketPresetManager.Inner_DataUtil entry = PacketPresetManager.getInstance().findPreset(presetName);
+         PacketPresetManager.PresetEntry entry = PacketPresetManager.getInstance().findPreset(presetName);
          if (entry != null && !entry.isBuiltIn()) {
             if (PacketPresetManager.getInstance().deletePreset(entry.name())) {
                if (entry.name().equals(this.selectedPresetName)) {
@@ -418,7 +418,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    private String resolveSelectedPresetName() {
       if (this.selectedPresetName != null) {
-         PacketPresetManager.Inner_DataUtil selectedEntry = PacketPresetManager.getInstance().findPreset(this.selectedPresetName);
+         PacketPresetManager.PresetEntry selectedEntry = PacketPresetManager.getInstance().findPreset(this.selectedPresetName);
          if (selectedEntry != null) {
             return selectedEntry.name();
          }
@@ -429,11 +429,11 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          return null;
       }
 
-      PacketPresetManager.Inner_DataUtil typedEntry = PacketPresetManager.getInstance().findPreset(typedName);
+      PacketPresetManager.PresetEntry typedEntry = PacketPresetManager.getInstance().findPreset(typedName);
       return typedEntry != null ? typedEntry.name() : null;
    }
 
-   private PacketPresetManager.Inner_DataUtil selectedEntry() {
+   private PacketPresetManager.PresetEntry selectedEntry() {
       return this.selectedPresetName == null ? null : PacketPresetManager.getInstance().findPreset(this.selectedPresetName);
    }
 
@@ -447,7 +447,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
    }
 
    private boolean canOverwrite() {
-      PacketPresetManager.Inner_DataUtil entry = this.selectedEntry();
+      PacketPresetManager.PresetEntry entry = this.selectedEntry();
       return entry != null && !entry.isBuiltIn();
    }
 
@@ -457,7 +457,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
    private int renderActionButton(GuiGraphicsExtractor context, int mouseX, int mouseY, int x, int y, int width, String label, Runnable action, boolean enabled) {
       this.drawButton(context, mouseX, mouseY, x, y, width, label, enabled);
-      this.actionButtons.add(new AutismCustomFilterPresetOverlay.Inner_DataUtil(x, y, width, this.buttonHeight(), action, enabled));
+      this.actionButtons.add(new AutismCustomFilterPresetOverlay.ActionButton(x, y, width, this.buttonHeight(), action, enabled));
       return y + this.buttonHeight() + this.sectionGap();
    }
 
@@ -469,7 +469,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       for (int i = 0; i < n; i++) {
          int w = i == n - 1 ? x + width - cx : cellW;
          this.drawButton(context, mouseX, mouseY, cx, y, w, labels[i], enabled[i]);
-         this.actionButtons.add(new AutismCustomFilterPresetOverlay.Inner_DataUtil(cx, y, w, this.buttonHeight(), actions[i], enabled[i]));
+         this.actionButtons.add(new AutismCustomFilterPresetOverlay.ActionButton(cx, y, w, this.buttonHeight(), actions[i], enabled[i]));
          cx += w + this.sectionGap();
       }
 
@@ -530,7 +530,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          }
 
          if (button == 0 && this.presetList.contains(mouseX, mouseY)) {
-            AutismCustomFilterPresetOverlay.Inner_CachePool row = this.presetList.rowAt(mouseY);
+            AutismCustomFilterPresetOverlay.PresetRow row = this.presetList.rowAt(mouseY);
             if (row != null && row.entry != null) {
                this.selectedPresetName = row.entry.name();
                this.nameField.setValue(this.selectedPresetName);
@@ -541,7 +541,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
 
          this.unfocusNameField();
          if (button == 0) {
-            for (AutismCustomFilterPresetOverlay.Inner_DataUtil actionButton : this.actionButtons) {
+            for (AutismCustomFilterPresetOverlay.ActionButton actionButton : this.actionButtons) {
                if (actionButton.contains(mouseX, mouseY)) {
                   if (!actionButton.enabled()) {
                      return true;
@@ -751,46 +751,46 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
       return 3;
    }
 
-   private static final class Inner_CachePool {
+   private static final class PresetRow {
       private final boolean header;
       private final boolean note;
       private final String label;
-      private final PacketPresetManager.Inner_DataUtil entry;
+      private final PacketPresetManager.PresetEntry entry;
 
-      private Inner_CachePool(boolean header, boolean note, String label, PacketPresetManager.Inner_DataUtil entry) {
+      private PresetRow(boolean header, boolean note, String label, PacketPresetManager.PresetEntry entry) {
          this.header = header;
          this.note = note;
          this.label = label;
          this.entry = entry;
       }
 
-      private static AutismCustomFilterPresetOverlay.Inner_CachePool headerRow(String label) {
-         return new AutismCustomFilterPresetOverlay.Inner_CachePool(true, false, label, null);
+      private static AutismCustomFilterPresetOverlay.PresetRow headerRow(String label) {
+         return new AutismCustomFilterPresetOverlay.PresetRow(true, false, label, null);
       }
 
-      private static AutismCustomFilterPresetOverlay.Inner_CachePool noteRow(String label) {
-         return new AutismCustomFilterPresetOverlay.Inner_CachePool(false, true, label, null);
+      private static AutismCustomFilterPresetOverlay.PresetRow noteRow(String label) {
+         return new AutismCustomFilterPresetOverlay.PresetRow(false, true, label, null);
       }
 
-      private static AutismCustomFilterPresetOverlay.Inner_CachePool presetRow(PacketPresetManager.Inner_DataUtil entry) {
-         return new AutismCustomFilterPresetOverlay.Inner_CachePool(false, false, null, entry);
+      private static AutismCustomFilterPresetOverlay.PresetRow presetRow(PacketPresetManager.PresetEntry entry) {
+         return new AutismCustomFilterPresetOverlay.PresetRow(false, false, null, entry);
       }
    }
 
-   private record Inner_DataUtil(int x, int load, int read, int write, Runnable action, boolean enabled) {
+   private record ActionButton(int x, int load, int read, int write, Runnable action, boolean enabled) {
       boolean contains(double mouseX, double mouseY) {
          return mouseX >= this.x && mouseX < this.x + this.read && mouseY >= this.load && mouseY < this.load + this.write;
       }
    }
 
-   private final class Inner_StreamUtil {
+   private final class PresetList {
       private int x;
       private int y;
       private int width;
       private int height;
       private final autismclient.gui.ui.widgets.ScrollOffsetController scroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
       private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics = null;
-      private List<AutismCustomFilterPresetOverlay.Inner_CachePool> rows = List.of();
+      private List<AutismCustomFilterPresetOverlay.PresetRow> rows = List.of();
 
       private void setBounds(int x, int y, int width, int height, autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics) {
          this.x = x;
@@ -804,7 +804,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
          return mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height;
       }
 
-      private AutismCustomFilterPresetOverlay.Inner_CachePool rowAt(double mouseY) {
+      private AutismCustomFilterPresetOverlay.PresetRow rowAt(double mouseY) {
          int idx = (int)((mouseY - this.y - 2.0 + this.scroll.getTargetOffset()) / AutismCustomFilterPresetOverlay.this.rowStep());
          return idx >= 0 && idx < this.rows.size() ? this.rows.get(idx) : null;
       }

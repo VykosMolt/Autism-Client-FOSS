@@ -75,7 +75,7 @@ final class AiSettingsView {
    private String write_Str = "";
    private final EnumSet<AiSettingsView.Inner_CachePool> collapsedSections = EnumSet.of(AiSettingsView.Inner_CachePool.LIMITS, AiSettingsView.Inner_CachePool.ADVANCED);
    private final Map<String, AiSettingsView.Inner_StreamUtil> pendingFlags = new HashMap<>();
-   private final AiUiKit.Inner_StreamUtil scroll = new AiUiKit.Inner_StreamUtil(false);
+   private final AiUiKit.ScrollPane scroll = new AiUiKit.ScrollPane(false);
    private AiSettings.Provider provider = AiSettings.Provider.OPENAI;
    private boolean builtIn;
    private String[] savedSnapshot = new String[0];
@@ -334,7 +334,7 @@ final class AiSettingsView {
 
    private void flush_V() {
       try {
-         if (this.modelCatalog.retarget(AiModelCatalog.Inner_DataUtil.of(this.provider, this.endpointField.getValue(), this.effectiveKey()))) {
+         if (this.modelCatalog.retarget(AiModelCatalog.CatalogKey.of(this.provider, this.endpointField.getValue(), this.effectiveKey()))) {
             autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.dropdowns);
             this.scanMessage = "Scan to load models for this connection";
             this.init_Z = false;
@@ -354,10 +354,10 @@ final class AiSettingsView {
       AiSettings.Provider p = this.provider;
 
       String k;
-      AiModelCatalog.Inner_DataUtil identity;
+      AiModelCatalog.CatalogKey identity;
       try {
          k = this.effectiveKey();
-         identity = AiModelCatalog.Inner_DataUtil.of(p, this.endpointField.getValue(), k);
+         identity = AiModelCatalog.CatalogKey.of(p, this.endpointField.getValue(), k);
       } catch (RuntimeException ex) {
          this.modelCatalog.reset();
          this.scanMessage = "Check the endpoint and saved credential, then scan again";
@@ -393,7 +393,7 @@ final class AiSettingsView {
                      .execute(
                         () -> {
                            try {
-                              if (!identity.equals(AiModelCatalog.Inner_DataUtil.of(this.provider, this.endpointField.getValue(), this.effectiveKey()))) {
+                              if (!identity.equals(AiModelCatalog.CatalogKey.of(this.provider, this.endpointField.getValue(), this.effectiveKey()))) {
                                  return;
                               }
                            } catch (RuntimeException ignored) {

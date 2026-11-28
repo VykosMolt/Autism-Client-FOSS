@@ -42,12 +42,12 @@ public class AutismSettingsScreen extends Screen {
    private static final int CONTROL_WIDTH = 110;
    private static final int MIN_PANEL_WIDTH = 200;
    private final Screen parent;
-   private final List<AutismSettingsScreen.CachePool> keybinds = new ArrayList<>();
+   private final List<AutismSettingsScreen.KeybindEntry> keybinds = new ArrayList<>();
    private int listeningKeybind = -1;
    private int scrollOffset;
    private boolean init_Z;
    private int scrollGrabOffset;
-   private final List<AutismSettingsScreen.Inner_DataUtil> clickRegions = new ArrayList<>();
+   private final List<AutismSettingsScreen.ClickRegion> clickRegions = new ArrayList<>();
    private NetHelper listBounds = NetHelper.init(0, 0, 0, 0);
    private int contentHeight;
    private int labelColumnWidth;
@@ -58,31 +58,31 @@ public class AutismSettingsScreen extends Screen {
       super(Component.literal("AUTISM Client Settings"));
       this.parent = parent;
       AutismConfig cfg = AutismConfig.getGlobal();
-      this.keybinds.add(new AutismSettingsScreen.CachePool("Module Menu", () -> cfg.keybindModuleMenu, v -> {
+      this.keybinds.add(new AutismSettingsScreen.KeybindEntry("Module Menu", () -> cfg.keybindModuleMenu, v -> {
          cfg.keybindModuleMenu = v;
          cfg.save();
       }));
-      this.keybinds.add(new AutismSettingsScreen.CachePool("Load GUI", () -> cfg.keybindLoadGui, v -> {
+      this.keybinds.add(new AutismSettingsScreen.KeybindEntry("Load GUI", () -> cfg.keybindLoadGui, v -> {
          cfg.keybindLoadGui = v;
          cfg.save();
       }));
-      this.keybinds.add(new AutismSettingsScreen.CachePool("Flush Queue", () -> cfg.keybindFlushQueue, v -> {
+      this.keybinds.add(new AutismSettingsScreen.KeybindEntry("Flush Queue", () -> cfg.keybindFlushQueue, v -> {
          cfg.keybindFlushQueue = v;
          cfg.save();
       }));
-      this.keybinds.add(new AutismSettingsScreen.CachePool("Clear Queue", () -> cfg.keybindClearQueue, v -> {
+      this.keybinds.add(new AutismSettingsScreen.KeybindEntry("Clear Queue", () -> cfg.keybindClearQueue, v -> {
          cfg.keybindClearQueue = v;
          cfg.save();
       }));
-      this.keybinds.add(new AutismSettingsScreen.CachePool("Toggle Logger", () -> cfg.keybindToggleLogger, v -> {
+      this.keybinds.add(new AutismSettingsScreen.KeybindEntry("Toggle Logger", () -> cfg.keybindToggleLogger, v -> {
          cfg.keybindToggleLogger = v;
          cfg.save();
       }));
-      this.keybinds.add(new AutismSettingsScreen.CachePool("Toggle Send", () -> cfg.keybindToggleSend, v -> {
+      this.keybinds.add(new AutismSettingsScreen.KeybindEntry("Toggle Send", () -> cfg.keybindToggleSend, v -> {
          cfg.keybindToggleSend = v;
          cfg.save();
       }));
-      this.keybinds.add(new AutismSettingsScreen.CachePool("Toggle Delay", () -> cfg.keybindToggleDelay, v -> {
+      this.keybinds.add(new AutismSettingsScreen.KeybindEntry("Toggle Delay", () -> cfg.keybindToggleDelay, v -> {
          cfg.keybindToggleDelay = v;
          cfg.save();
       }));
@@ -105,7 +105,7 @@ public class AutismSettingsScreen extends Screen {
          int sw = cA.init_I();
          int sh = cA.load_I();
          PacketUtil.init(graphics, NetHelper.init(0, 0, sw, sh), -267843831);
-         List<AutismSettingsScreen.BufferHelper> rows = this.buildRows();
+         List<AutismSettingsScreen.SettingsRow> rows = this.buildRows();
          int margin = 6;
          int contentW = 6 + this.labelColumnWidth + 12 + 110 + 2 + 6;
          int titleW = k.init(this.font, "AUTISM Client Settings", autismclient.gui.f.a.DataUtil.read, -791321) + 16;
@@ -159,13 +159,13 @@ public class AutismSettingsScreen extends Screen {
       }
    }
 
-   private List<AutismSettingsScreen.BufferHelper> buildRows() {
+   private List<AutismSettingsScreen.SettingsRow> buildRows() {
       AutismConfig cfg = AutismConfig.getGlobal();
       ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
-      List<AutismSettingsScreen.BufferHelper> out = new ArrayList<>();
+      List<AutismSettingsScreen.SettingsRow> out = new ArrayList<>();
       this.labelColumnWidth = this.labelWidth("Command Prefix");
 
-      for (AutismSettingsScreen.CachePool k : this.keybinds) {
+      for (AutismSettingsScreen.KeybindEntry k : this.keybinds) {
          this.labelColumnWidth = Math.max(this.labelColumnWidth, this.labelWidth(k.label()));
       }
 
@@ -208,7 +208,7 @@ public class AutismSettingsScreen extends Screen {
       return out;
    }
 
-   private AutismSettingsScreen.BufferHelper keybindRow(String label, AutismSettingsScreen.StreamUtil getter, Consumer<Boolean> setter) {
+   private AutismSettingsScreen.SettingsRow keybindRow(String label, AutismSettingsScreen.BoolGetter getter, Consumer<Boolean> setter) {
       this.labelColumnWidth = Math.max(this.labelColumnWidth, this.labelWidth(label));
       return (g, rb, mx, my, clickable) -> {
          boolean on = getter.get();
@@ -227,7 +227,7 @@ public class AutismSettingsScreen extends Screen {
       };
    }
 
-   private AutismSettingsScreen.BufferHelper cycleRow(String label, String value, Runnable onLeft, Runnable onRight) {
+   private AutismSettingsScreen.SettingsRow cycleRow(String label, String value, Runnable onLeft, Runnable onRight) {
       this.labelColumnWidth = Math.max(this.labelColumnWidth, this.labelWidth(label));
       return (g, rb, mx, my, clickable) -> {
          boolean hover = clickable && rb.init_Z(mx, my);
@@ -241,7 +241,7 @@ public class AutismSettingsScreen extends Screen {
       };
    }
 
-   private AutismSettingsScreen.BufferHelper prefixRow(ModuleRuntimeManager module, List<String> prefixes, String current) {
+   private AutismSettingsScreen.SettingsRow prefixRow(ModuleRuntimeManager module, List<String> prefixes, String current) {
       if (this.dropdown == null) {
          this.dropdown = new DropdownMenu(NetHelper.init(0, 0, 0, 0), prefixes, current, module::setCommandPrefix);
       } else {
@@ -269,9 +269,9 @@ public class AutismSettingsScreen extends Screen {
       };
    }
 
-   private AutismSettingsScreen.BufferHelper init_DataUtil_BufferHel(int idx) {
+   private AutismSettingsScreen.SettingsRow init_DataUtil_BufferHel(int idx) {
       return (g, rb, mx, my, clickable) -> {
-         AutismSettingsScreen.CachePool k = this.keybinds.get(idx);
+         AutismSettingsScreen.KeybindEntry k = this.keybinds.get(idx);
          boolean hover = clickable && rb.init_Z(mx, my);
          boolean active = this.listeningKeybind == idx;
          PacketUtil.load(
@@ -291,7 +291,7 @@ public class AutismSettingsScreen extends Screen {
       };
    }
 
-   private AutismSettingsScreen.BufferHelper init(String label, Runnable onClick) {
+   private AutismSettingsScreen.SettingsRow init(String label, Runnable onClick) {
       return (g, rb, mx, my, clickable) -> {
          this.drawButton(g, rb, label, clickable && rb.init_Z(mx, my), false);
          if (clickable) {
@@ -301,7 +301,7 @@ public class AutismSettingsScreen extends Screen {
    }
 
    private void addClickRegion(NetHelper bounds, Runnable onLeft, Runnable onRight) {
-      this.clickRegions.add(new AutismSettingsScreen.Inner_DataUtil(bounds, onLeft, onRight));
+      this.clickRegions.add(new AutismSettingsScreen.ClickRegion(bounds, onLeft, onRight));
    }
 
    private int clampScroll(int value) {
@@ -376,7 +376,7 @@ public class AutismSettingsScreen extends Screen {
       }
 
       for (int i = this.clickRegions.size() - 1; i >= 0; i--) {
-         AutismSettingsScreen.Inner_DataUtil hit = this.clickRegions.get(i);
+         AutismSettingsScreen.ClickRegion hit = this.clickRegions.get(i);
          if (hit.bounds().init_Z(mx, my)) {
             Runnable action = right ? hit.load() : hit.onLeft();
             if (action != null) {
@@ -464,17 +464,17 @@ public class AutismSettingsScreen extends Screen {
       this.minecraft.gui.setScreen(this.parent);
    }
 
-   private interface BufferHelper {
+   private interface SettingsRow {
       void render(GuiGraphicsExtractor var1, NetHelper var2, int var3, int var4, boolean var5);
    }
 
-   private record CachePool(String label, IntSupplier getter, IntConsumer setter) {
+   private record KeybindEntry(String label, IntSupplier getter, IntConsumer setter) {
    }
 
-   private record Inner_DataUtil(NetHelper bounds, Runnable onLeft, Runnable load) {
+   private record ClickRegion(NetHelper bounds, Runnable onLeft, Runnable load) {
    }
 
-   private interface StreamUtil {
+   private interface BoolGetter {
       boolean get();
    }
 }

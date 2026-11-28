@@ -65,33 +65,33 @@ public final class AiSavedContents {
       }
    }
 
-   public static AiSavedContents.Inner_DataUtil init(BlockState state, AbstractContainerMenu menu) {
+   public static AiSavedContents.SlotMapping init(BlockState state, AbstractContainerMenu menu) {
       Block block = state.getBlock();
       if (block instanceof ChestBlock && menu instanceof ChestMenu chest) {
          ChestType type = state.getValue(ChestBlock.TYPE);
          int size = type == ChestType.SINGLE ? 27 : 54;
-         return chest.getRowCount() * 9 == size ? new AiSavedContents.Inner_DataUtil(type == ChestType.LEFT ? 27 : 0, 27, size) : null;
+         return chest.getRowCount() * 9 == size ? new AiSavedContents.SlotMapping(type == ChestType.LEFT ? 27 : 0, 27, size) : null;
       } else if (block instanceof BarrelBlock && menu instanceof ChestMenu chest && chest.getRowCount() == 3) {
-         return new AiSavedContents.Inner_DataUtil(0, 27, 27);
+         return new AiSavedContents.SlotMapping(0, 27, 27);
       } else if (block instanceof ShulkerBoxBlock && menu instanceof ShulkerBoxMenu) {
-         return new AiSavedContents.Inner_DataUtil(0, 27, 27);
+         return new AiSavedContents.SlotMapping(0, 27, 27);
       } else if (block instanceof HopperBlock && menu instanceof HopperMenu) {
-         return new AiSavedContents.Inner_DataUtil(0, 5, 5);
+         return new AiSavedContents.SlotMapping(0, 5, 5);
       } else if (block instanceof DispenserBlock && menu instanceof DispenserMenu) {
-         return new AiSavedContents.Inner_DataUtil(0, 9, 9);
+         return new AiSavedContents.SlotMapping(0, 9, 9);
       } else {
-         return block instanceof CrafterBlock && menu instanceof CrafterMenu ? new AiSavedContents.Inner_DataUtil(0, 9, 9) : null;
+         return block instanceof CrafterBlock && menu instanceof CrafterMenu ? new AiSavedContents.SlotMapping(0, 9, 9) : null;
       }
    }
 
-   public static AiSavedContents.Inner_CachePool init(
-      AbstractContainerMenu menu, Inventory inventory, Player player, Map<Integer, ItemStack> saved, AiSavedContents.Inner_DataUtil layout
+   public static AiSavedContents.FillPlan init(
+      AbstractContainerMenu menu, Inventory inventory, Player player, Map<Integer, ItemStack> saved, AiSavedContents.SlotMapping layout
    ) {
       return init(menu, inventory, player, saved, layout, slot -> false);
    }
 
-   static AiSavedContents.Inner_CachePool init(
-      AbstractContainerMenu menu, Inventory inventory, Player player, Map<Integer, ItemStack> saved, AiSavedContents.Inner_DataUtil layout, IntPredicate clearing
+   static AiSavedContents.FillPlan init(
+      AbstractContainerMenu menu, Inventory inventory, Player player, Map<Integer, ItemStack> saved, AiSavedContents.SlotMapping layout, IntPredicate clearing
    ) {
       LinkedHashMap<Integer, ItemStack> targets = new LinkedHashMap<>();
       ArrayList<ItemStack> available = new ArrayList<>();
@@ -102,10 +102,10 @@ public final class AiSavedContents {
          }
       }
 
-      ArrayList<AiSavedContents.Inner_StreamUtil> missing = new ArrayList<>();
+      ArrayList<AiSavedContents.MissingItem> missing = new ArrayList<>();
       int satisfied = 0;
       if (!menu.getCarried().isEmpty()) {
-         return new AiSavedContents.Inner_CachePool(Map.of(), 0, List.of(), "The inventory cursor is occupied");
+         return new AiSavedContents.FillPlan(Map.of(), 0, List.of(), "The inventory cursor is occupied");
       }
 
       label78:
@@ -145,26 +145,26 @@ public final class AiSavedContents {
                      }
 
                      if (need > 0) {
-                        missing.add(new AiSavedContents.Inner_StreamUtil(raw, wanted, need));
+                        missing.add(new AiSavedContents.MissingItem(raw, wanted, need));
                      }
                      continue label78;
                   }
                }
 
-               return new AiSavedContents.Inner_CachePool(targets, satisfied, missing, "Saved slot " + raw + " does not accept this stack");
+               return new AiSavedContents.FillPlan(targets, satisfied, missing, "Saved slot " + raw + " does not accept this stack");
             }
 
-            return new AiSavedContents.Inner_CachePool(targets, satisfied, missing, "Saved slot " + raw + " has different or excess contents");
+            return new AiSavedContents.FillPlan(targets, satisfied, missing, "Saved slot " + raw + " has different or excess contents");
          }
 
-         return new AiSavedContents.Inner_CachePool(targets, satisfied, missing, "Invalid saved storage slot " + raw);
+         return new AiSavedContents.FillPlan(targets, satisfied, missing, "Invalid saved storage slot " + raw);
       }
 
-      return new AiSavedContents.Inner_CachePool(targets, satisfied, missing, null);
+      return new AiSavedContents.FillPlan(targets, satisfied, missing, null);
    }
 
-   public record Inner_CachePool(Map<Integer, ItemStack> targets, int satisfiedSlots, List<AiSavedContents.Inner_StreamUtil> missing, String conflict) {
-      public Inner_CachePool {
+   public record FillPlan(Map<Integer, ItemStack> targets, int satisfiedSlots, List<AiSavedContents.MissingItem> missing, String conflict) {
+      public FillPlan {
          targets = Map.copyOf(targets);
          missing = List.copyOf(missing);
       }
@@ -178,11 +178,11 @@ public final class AiSavedContents {
       }
    }
 
-   public record Inner_DataUtil(int offset, int savedSlots, int menuSlots) {
+   public record SlotMapping(int offset, int savedSlots, int menuSlots) {
    }
 
-   public record Inner_StreamUtil(int slot, ItemStack wanted, int count) {
-      public Inner_StreamUtil {
+   public record MissingItem(int slot, ItemStack wanted, int count) {
+      public MissingItem {
          wanted = wanted.copy();
       }
 

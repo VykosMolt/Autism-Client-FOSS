@@ -27,15 +27,15 @@ public interface PrintEnv {
       return this;
    }
 
-   default PrintEnv.Inner_StreamUtil interactionReceiptState() {
-      return PrintEnv.Inner_StreamUtil.NONE;
+   default PrintEnv.ReceiptState interactionReceiptState() {
+      return PrintEnv.ReceiptState.NONE;
    }
 
    default List<PrintRailVehicle.Inner_DataUtil> nearbyMinecarts(BlockPos rail) {
       return null;
    }
 
-   default List<PrintItemFrame.Inner_DataUtil> itemFramesAt(BlockPos cell) {
+   default List<PrintItemFrame.ObservedFrame> itemFramesAt(BlockPos cell) {
       return null;
    }
 
@@ -52,11 +52,11 @@ public interface PrintEnv {
    default void drainBlockChanges(LongConsumer changed) {
    }
 
-   default void drainBlockChangesWithPrior(PrintEnv.Inner_DataUtil changed) {
+   default void drainBlockChangesWithPrior(PrintEnv.BlockChangeSink changed) {
       this.drainBlockChanges(key -> changed.changed(key, null));
    }
 
-   default boolean drainBlockChangesBudgeted(PrintEnv.Inner_DataUtil changed, int budget) {
+   default boolean drainBlockChangesBudgeted(PrintEnv.BlockChangeSink changed, int budget) {
       this.drainBlockChangesWithPrior(changed);
       return true;
    }
@@ -186,11 +186,11 @@ public interface PrintEnv {
       return new Vec3(b.x(), b.y() + this.playerEyeHeight(), b.z());
    }
 
-   interface Inner_DataUtil {
+   interface BlockChangeSink {
       void changed(long var1, BlockState var3);
    }
 
-   enum Inner_StreamUtil {
+   enum ReceiptState {
       NONE,
       PENDING,
       UNCERTAIN;

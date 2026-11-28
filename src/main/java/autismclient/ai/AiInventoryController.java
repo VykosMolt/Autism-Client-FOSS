@@ -33,7 +33,7 @@ public final class AiInventoryController implements AiOperation {
    private ItemStack expectedSource = ItemStack.EMPTY;
    private ItemStack expectedDestination = ItemStack.EMPTY;
    private long inventoryRevision;
-   private AiContainerTransactions.Inner_DataUtil pendingPickup;
+   private AiContainerTransactions.TransactionReceipt pendingPickup;
    private boolean cancelled;
    private boolean clicked;
    private final Set<Integer> allowedSources;
@@ -136,12 +136,12 @@ public final class AiInventoryController implements AiOperation {
          }
 
          if (this.pendingPickup != null) {
-            AiContainerTransactions.Inner_StreamUtil state = this.pendingPickup.checkStatus(menu, System.nanoTime());
-            if (state == AiContainerTransactions.Inner_StreamUtil.WAITING) {
+            AiContainerTransactions.ReceiptState state = this.pendingPickup.checkStatus(menu, System.nanoTime());
+            if (state == AiContainerTransactions.ReceiptState.WAITING) {
                return this.init("Waiting for the server's storage slots and cursor");
             }
 
-            if (state != AiContainerTransactions.Inner_StreamUtil.CONFIRMED) {
+            if (state != AiContainerTransactions.ReceiptState.CONFIRMED) {
                return this.finish(
                   AiOperation.Status.UNCERTAIN, "The server did not confirm the storage transfer. Inspect the open storage and cursor before resuming."
                );

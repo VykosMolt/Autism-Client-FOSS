@@ -72,7 +72,7 @@ public final class AiBreakBlock {
          final Object level = this.mc.level;
          final long deadline = System.nanoTime() + Math.max(1, Math.min(3600, seconds)) * 1000000000L;
          final AiAim aim = new AiAim();
-         final AiBreakBlock.Inner_DataUtil children = new AiBreakBlock.Inner_DataUtil();
+         final AiBreakBlock.ChildTracker children = new AiBreakBlock.ChildTracker();
          final int originalSlot = this.mc.player == null ? -1 : this.mc.player.getInventory().getSelectedSlot();
          final AiBlockDigger init_RefQueue_DataUtil = new AiBlockDigger(
                this.mc,
@@ -157,13 +157,13 @@ public final class AiBreakBlock {
                }
 
                boolean wasDigging = this.init_RefQueue_DataUtil.isDiggingTargetCompat(target);
-               AiBlockDigger.Inner_DataUtil_2 status = this.init_RefQueue_DataUtil.digCompat(target);
+               AiBlockDigger.DigOutcome status = this.init_RefQueue_DataUtil.digCompat(target);
                this.aim.tick();
-               if (status == AiBlockDigger.Inner_DataUtil_2.load) {
+               if (status == AiBlockDigger.DigOutcome.load) {
                   return this.finish(AiOperation.Status.SUCCEEDED, null, "Observed target removed");
                }
 
-               if (status == AiBlockDigger.Inner_DataUtil_2.init) {
+               if (status == AiBlockDigger.DigOutcome.init) {
                   return this.running("Breaking target");
                }
 
@@ -247,7 +247,7 @@ public final class AiBreakBlock {
       };
    }
 
-   static final class Inner_DataUtil {
+   static final class ChildTracker {
       boolean needsReconciliation;
 
       boolean canInterrupt(boolean digging, boolean approachSafe) {

@@ -38,12 +38,12 @@ final class PrintWitnessCache {
       }
    }
 
-   PrintCore.aM witness(int id) {
+   PrintCore.StanceWitness witness(int id) {
       PrintWitnessCache.Inner_DataUtil entry = this.init_Int2ObjectLinkedOp.getAndMoveToLast(id);
       return entry == null ? null : entry.witness();
    }
 
-   PrintCore.aM load(int id) {
+   PrintCore.StanceWitness load(int id) {
       PrintWitnessCache.Inner_DataUtil entry = this.init_Int2ObjectLinkedOp.get(id);
       return entry == null ? null : entry.witness();
    }
@@ -73,8 +73,8 @@ final class PrintWitnessCache {
       return entry == null ? 0 : entry.cells().length;
    }
 
-   PrintCore.aM init(int id, PrintCore.aM witness) {
-      PrintCore.aM previous = this.read(id);
+   PrintCore.StanceWitness init(int id, PrintCore.StanceWitness witness) {
+      PrintCore.StanceWitness previous = this.read(id);
       if (witness == null) {
          return previous;
       }
@@ -113,7 +113,7 @@ final class PrintWitnessCache {
       }
    }
 
-   PrintCore.aM read(int id) {
+   PrintCore.StanceWitness read(int id) {
       PrintWitnessCache.Inner_DataUtil removed = this.init_Int2ObjectLinkedOp.remove(id);
       if (removed == null) {
          return null;
@@ -141,7 +141,7 @@ final class PrintWitnessCache {
       this.write = 0;
    }
 
-   void init_V_UiHelper_aM(PrintCore.aM marker) {
+   void init_V_UiHelper_aM(PrintCore.StanceWitness marker) {
       ObjectBidirectionalIterator<Entry<PrintWitnessCache.Inner_DataUtil>> iterator = this.init_Int2ObjectLinkedOp.int2ObjectEntrySet().fastIterator();
 
       while (iterator.hasNext()) {
@@ -158,27 +158,27 @@ final class PrintWitnessCache {
       return ids == null ? init_IArr : ids.toIntArray();
    }
 
-   Collection<PrintCore.aM> witnesses() {
-      return new AbstractCollection<PrintCore.aM>() {
+   Collection<PrintCore.StanceWitness> witnesses() {
+      return new AbstractCollection<PrintCore.StanceWitness>() {
          @Override
          public int size() {
             return PrintWitnessCache.this.init_Int2ObjectLinkedOp.size();
          }
 
          @Override
-         public Iterator<PrintCore.aM> iterator() {
+         public Iterator<PrintCore.StanceWitness> iterator() {
             final ObjectIterator<PrintWitnessCache.Inner_DataUtil> iterator = PrintWitnessCache.this.init_Int2ObjectLinkedOp.values().iterator();
-            return new Iterator<PrintCore.aM>() {
+            return new Iterator<PrintCore.StanceWitness>() {
                @Override
                public boolean hasNext() {
                   return iterator.hasNext();
                }
 
-               public PrintCore.aM next() {
+               public PrintCore.StanceWitness next() {
                   return this.init();
                }
 
-               public PrintCore.aM init() {
+               public PrintCore.StanceWitness init() {
                   return iterator.next().witness();
                }
             };
@@ -186,6 +186,6 @@ final class PrintWitnessCache {
       };
    }
 
-   private record Inner_DataUtil(PrintCore.aM witness, long[] cells) {
+   private record Inner_DataUtil(PrintCore.StanceWitness witness, long[] cells) {
    }
 }

@@ -55,7 +55,7 @@ final class AiSmith {
    static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final AiSmith.Inner_DataUtil mode = parseMode(AiJson.getString(args, "mode", "upgrade"));
+         final AiSmith.SmithMode mode = parseMode(AiJson.getString(args, "mode", "upgrade"));
          final String templateId = requireItemId(AiJson.getString(args, "template", ""), "template");
          final String baseId = requireItemId(AiJson.getString(args, "base", ""), "base");
          final String additionId = requireItemId(AiJson.getString(args, "addition", ""), "addition");
@@ -428,16 +428,16 @@ final class AiSmith {
       }
    }
 
-   private static AiSmith.Inner_DataUtil parseMode(String text) {
+   private static AiSmith.SmithMode parseMode(String text) {
       try {
-         return AiSmith.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
+         return AiSmith.SmithMode.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("mode must be upgrade or trim");
       }
    }
 
-   static String validateInputs(AiSmith.Inner_DataUtil mode, String templateId, String baseId, String additionId) {
-      if (mode == AiSmith.Inner_DataUtil.UPGRADE) {
+   static String validateInputs(AiSmith.SmithMode mode, String templateId, String baseId, String additionId) {
+      if (mode == AiSmith.SmithMode.UPGRADE) {
          if (!templateId.equals("minecraft:netherite_upgrade_smithing_template")) {
             return "upgrade needs minecraft:netherite_upgrade_smithing_template as the template";
          } else if (!additionId.equals("minecraft:netherite_ingot")) {
@@ -459,7 +459,7 @@ final class AiSmith {
       return path.endsWith("_helmet") || path.endsWith("_chestplate") || path.endsWith("_leggings") || path.endsWith("_boots") || path.equals("turtle_helmet");
    }
 
-   enum Inner_DataUtil {
+   enum SmithMode {
       UPGRADE,
       TRIM;
    }

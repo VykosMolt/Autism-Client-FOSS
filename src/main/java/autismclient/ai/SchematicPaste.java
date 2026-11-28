@@ -55,8 +55,8 @@ final class SchematicPaste {
    private final String operationId;
    private final boolean includeAir;
    private final boolean includeEntities;
-   private final Future<SchematicPaste.Inner_TableCache> init_Future;
-   private List<SchematicPaste.Inner_DataUtil> columns;
+   private final Future<SchematicPaste.PreparedPaste> init_Future;
+   private List<SchematicPaste.PasteColumn> columns;
    private BitSet[][] occupiedMasks;
    private long total;
    private final Map<BlockState, BlockState> transformedStates = new IdentityHashMap<>();
@@ -78,7 +78,7 @@ final class SchematicPaste {
    private LevelChunk cachedChunk;
    volatile boolean init_Z;
    volatile boolean finished;
-   volatile SchematicPaste.Inner_StreamUtil progress;
+   volatile SchematicPaste.PasteProgress progress;
 
    private SchematicPaste(
       IntegratedServer server,
@@ -139,7 +139,7 @@ final class SchematicPaste {
       }
    }
 
-   private void applyPrepared(SchematicPaste.Inner_TableCache prepared) {
+   private void applyPrepared(SchematicPaste.PreparedPaste prepared) {
       this.columns = prepared.columns();
       this.occupiedMasks = prepared.occupied();
       this.total = 2L * prepared.work() + this.document.blockEntities.size() + (this.includeEntities ? this.document.entities.size() : 0);
@@ -222,8 +222,8 @@ final class SchematicPaste {
                      this.phase = this.phase == 0 ? 1 : 4;
                      this.column = this.range = this.cell = 0;
                   } else {
-                     SchematicPaste.Inner_DataUtil column = this.columns.get(this.column);
-                     SchematicPaste.Inner_CachePool range = column.ranges.get(this.range);
+                     SchematicPaste.PasteColumn column = this.columns.get(this.column);
+                     SchematicPaste.YRange range = column.ranges.get(this.range);
                      int rangeSize = (range.max - range.min + 1) * 256;
                      long maskKey = (long)this.column << 32 | this.range;
                      if (this.cell < rangeSize) {
@@ -259,7 +259,7 @@ final class SchematicPaste {
                         int tx = x - this.origin.getX();
                         int tz = z - this.origin.getZ();
                         this.init_V_I(tx, y - this.origin.getY(), tz);
-                        SchematicDocument.Inner_CachePool region = this.document
+                        SchematicDocument.Region region = this.document
                            .regionAt(this.init_BlockPos_MutableBl.getX(), this.init_BlockPos_MutableBl.getY(), this.init_BlockPos_MutableBl.getZ());
                         if (region != null) {
                            BlockState saved = region.stateAt(
@@ -297,7 +297,7 @@ final class SchematicPaste {
                   if (this.blockEntityIndex >= this.document.blockEntities.size()) {
                      this.phase = 2;
                   } else {
-                     SchematicDocument.Inner_DataUtil saved = this.document.blockEntities.get(this.blockEntityIndex);
+                     SchematicDocument.BlockEntityData saved = this.document.blockEntities.get(this.blockEntityIndex);
                      BlockPos local = this.document.init(saved.position().getX(), saved.position().getY(), saved.position().getZ(), this.rotation, this.mirror);
                      BlockPos at = this.origin.offset(local);
                      if (!this.loadChunk(at.getX() >> 4, at.getZ() >> 4)) {
@@ -325,7 +325,7 @@ final class SchematicPaste {
                   }
 
                   if (this.includeEntities && this.entityIndex < this.document.entities.size()) {
-                     SchematicDocument.Inner_BufferHelper saved = this.document.entities.get(this.entityIndex);
+                     SchematicDocument.EntityData saved = this.document.entities.get(this.entityIndex);
                      double[] at = this.transformPoint(saved.x(), saved.y(), saved.z());
                      if (!this.loadChunk((int)Math.floor(at[0]) >> 4, (int)Math.floor(at[2]) >> 4)) {
                         break;
@@ -555,7 +555,7 @@ final class SchematicPaste {
       }
 
       String status = var10000;
-      this.progress = new SchematicPaste.Inner_StreamUtil(
+      this.progress = new SchematicPaste.PasteProgress(
          status,
          this.phase == 4 ? 100 : (this.total == 0L ? 0 : (int)Math.min(99L, 100L * this.done / this.total)),
          this.done,
@@ -570,18 +570,18 @@ final class SchematicPaste {
       return UUID.nameUUIDFromBytes((operation + ":" + index + ":" + child).getBytes(StandardCharsets.UTF_8));
    }
 
-   static SchematicPaste.Inner_TableCache prepare(SchematicDocument doc, BlockPos origin, int rotation, String mirror, boolean includeAir) {
-      List<SchematicPaste.Inner_DataUtil> columns = columnsFor(doc, origin, rotation, mirror);
+   static SchematicPaste.PreparedPaste prepare(SchematicDocument doc, BlockPos origin, int rotation, String mirror, boolean includeAir) {
+      List<SchematicPaste.PasteColumn> columns = columnsFor(doc, origin, rotation, mirror);
       Long2IntOpenHashMap columnIndex = new Long2IntOpenHashMap(columns.size());
       BitSet[][] occupied = new BitSet[columns.size()][];
       long work = 0L;
 
       for (int i = 0; i < columns.size(); i++) {
-         SchematicPaste.Inner_DataUtil col = columns.get(i);
+         SchematicPaste.PasteColumn col = columns.get(i);
          columnIndex.put(ChunkPos.pack(col.x(), col.z()), i);
          occupied[i] = new BitSet[col.ranges().size()];
 
-         for (SchematicPaste.Inner_CachePool range : col.ranges()) {
+         for (SchematicPaste.YRange range : col.ranges()) {
             work += (range.max() - range.min() + 1) * 256L;
          }
       }
@@ -591,7 +591,7 @@ final class SchematicPaste {
       BlockPos dz = doc.init(0, 0, 1, rotation, mirror).subtract(p0);
       boolean multiRegion = doc.regions.size() > 1;
 
-      for (SchematicDocument.Inner_CachePool r : doc.regions) {
+      for (SchematicDocument.Region r : doc.regions) {
          SchematicDocument.init();
          if (includeAir || !Arrays.stream(r.palette).allMatch(BlockStateBase::isAir)) {
             int cellIndex = 0;
@@ -616,7 +616,7 @@ final class SchematicPaste {
                      if (includeAir || !r.stateAtIndex(idx).isAir() && (!multiRegion || doc.regionAt(sx, sy, sz) == r)) {
                         int colIdx = columnIndex.get(ChunkPos.pack(wx >> 4, wz >> 4));
                         if (colIdx != lastCol) {
-                           List<SchematicPaste.Inner_CachePool> ranges = columns.get(colIdx).ranges();
+                           List<SchematicPaste.YRange> ranges = columns.get(colIdx).ranges();
                            rangeIdx = 0;
 
                            while (ranges.get(rangeIdx).max() < wy) {
@@ -643,13 +643,13 @@ final class SchematicPaste {
          }
       }
 
-      return new SchematicPaste.Inner_TableCache(columns, occupied, work);
+      return new SchematicPaste.PreparedPaste(columns, occupied, work);
    }
 
-   static List<SchematicPaste.Inner_DataUtil> columnsFor(SchematicDocument doc, BlockPos origin, int rotation, String mirror) {
-      TreeMap<Long, List<SchematicPaste.Inner_CachePool>> ranges = new TreeMap<>();
+   static List<SchematicPaste.PasteColumn> columnsFor(SchematicDocument doc, BlockPos origin, int rotation, String mirror) {
+      TreeMap<Long, List<SchematicPaste.YRange>> ranges = new TreeMap<>();
 
-      for (SchematicDocument.Inner_CachePool r : doc.regions) {
+      for (SchematicDocument.Region r : doc.regions) {
          BlockPos a = doc.init(r.originX, r.load, r.read, rotation, mirror);
          BlockPos b = doc.init(r.originX + r.write - 1, r.load, r.read + r.sync - 1, rotation, mirror);
          int x0 = origin.getX() + Math.min(a.getX(), b.getX()) >> 4;
@@ -660,40 +660,40 @@ final class SchematicPaste {
          for (int x = x0; x <= x1; x++) {
             for (int z = z0; z <= z1; z++) {
                ranges.computeIfAbsent(ChunkPos.pack(x, z), k -> new ArrayList<>())
-                  .add(new SchematicPaste.Inner_CachePool(origin.getY() + r.load, origin.getY() + r.load + r.update - 1));
+                  .add(new SchematicPaste.YRange(origin.getY() + r.load, origin.getY() + r.load + r.update - 1));
             }
          }
       }
 
-      ArrayList<SchematicPaste.Inner_DataUtil> columns = new ArrayList<>();
+      ArrayList<SchematicPaste.PasteColumn> columns = new ArrayList<>();
       ranges.forEach((key, list) -> {
-         list.sort(Comparator.comparingInt(SchematicPaste.Inner_CachePool::min));
-         ArrayList<SchematicPaste.Inner_CachePool> merged = new ArrayList<>();
+         list.sort(Comparator.comparingInt(SchematicPaste.YRange::min));
+         ArrayList<SchematicPaste.YRange> merged = new ArrayList<>();
 
-         for (SchematicPaste.Inner_CachePool range : list) {
+         for (SchematicPaste.YRange range : list) {
             if (!merged.isEmpty() && range.min <= merged.get(merged.size() - 1).max + 1) {
-               SchematicPaste.Inner_CachePool last = merged.remove(merged.size() - 1);
-               merged.add(new SchematicPaste.Inner_CachePool(last.min, Math.max(last.max, range.max)));
+               SchematicPaste.YRange last = merged.remove(merged.size() - 1);
+               merged.add(new SchematicPaste.YRange(last.min, Math.max(last.max, range.max)));
             } else {
                merged.add(range);
             }
          }
 
          ChunkPos pos = ChunkPos.unpack(key);
-         columns.add(new SchematicPaste.Inner_DataUtil(pos.x(), pos.z(), List.copyOf(merged)));
+         columns.add(new SchematicPaste.PasteColumn(pos.x(), pos.z(), List.copyOf(merged)));
       });
       return List.copyOf(columns);
    }
 
-   record Inner_CachePool(int min, int max) {
+   record YRange(int min, int max) {
    }
 
-   record Inner_DataUtil(int x, int z, List<SchematicPaste.Inner_CachePool> ranges) {
+   record PasteColumn(int x, int z, List<SchematicPaste.YRange> ranges) {
    }
 
-   record Inner_StreamUtil(String phase, int percent, long done, long total, JsonObject checkpoint, boolean complete, String error) {
+   record PasteProgress(String phase, int percent, long done, long total, JsonObject checkpoint, boolean complete, String error) {
    }
 
-   record Inner_TableCache(List<SchematicPaste.Inner_DataUtil> columns, BitSet[][] occupied, long work) {
+   record PreparedPaste(List<SchematicPaste.PasteColumn> columns, BitSet[][] occupied, long work) {
    }
 }

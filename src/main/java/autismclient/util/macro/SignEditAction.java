@@ -10,7 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
 
 public class SignEditAction implements MacroAction, GuiWaitAware {
-   public SignEditAction.Inner_StreamUtil targetMode = SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI;
+   public SignEditAction.TargetMode targetMode = SignEditAction.TargetMode.CURRENT_SIGN_GUI;
    public String line1 = "";
    public String line2 = "";
    public String line3 = "";
@@ -22,7 +22,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
    public boolean waitForGuiBefore = true;
    public boolean waitForGuiAfter = false;
    public String guiName = "SIGN";
-   public SignEditAction.Inner_DataUtil closeMode = SignEditAction.Inner_DataUtil.STAY_OPEN;
+   public SignEditAction.CloseMode closeMode = SignEditAction.CloseMode.STAY_OPEN;
    public boolean closeAfterEdit = false;
    public boolean closeWithPacket = false;
    public boolean sendCommandAfter = false;
@@ -71,13 +71,13 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
                   }
                }
 
-               SignEditAction.Inner_DataUtil mode = this.closeMode == null ? SignEditAction.Inner_DataUtil.STAY_OPEN : this.closeMode;
-               if (mode == SignEditAction.Inner_DataUtil.SEND_CLOSE_PACKET_ONLY) {
+               SignEditAction.CloseMode mode = this.closeMode == null ? SignEditAction.CloseMode.STAY_OPEN : this.closeMode;
+               if (mode == SignEditAction.CloseMode.SEND_CLOSE_PACKET_ONLY) {
                   mc.getConnection().send(new ServerboundContainerClosePacket(this.closePacketContainerId));
                }
 
-               if (mode == SignEditAction.Inner_DataUtil.CLOSE_LOCAL || mode == SignEditAction.Inner_DataUtil.CLOSE_WITH_PACKET) {
-                  if (mode == SignEditAction.Inner_DataUtil.CLOSE_WITH_PACKET && mc.player != null && mc.player.containerMenu != null) {
+               if (mode == SignEditAction.CloseMode.CLOSE_LOCAL || mode == SignEditAction.CloseMode.CLOSE_WITH_PACKET) {
+                  if (mode == SignEditAction.CloseMode.CLOSE_WITH_PACKET && mc.player != null && mc.player.containerMenu != null) {
                      mc.getConnection().send(new ServerboundContainerClosePacket(mc.player.containerMenu.containerId));
                   }
 
@@ -89,9 +89,9 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
    }
 
    private BlockPos targetPos(Minecraft mc) {
-      if (this.targetMode == SignEditAction.Inner_StreamUtil.MANUAL_POS) {
+      if (this.targetMode == SignEditAction.TargetMode.MANUAL_POS) {
          return new BlockPos(this.f_x_I, this.f_y_I, this.f_z_I);
-      } else if (this.targetMode == SignEditAction.Inner_StreamUtil.LAST_INTERACTED_BLOCK) {
+      } else if (this.targetMode == SignEditAction.TargetMode.LAST_INTERACTED_BLOCK) {
          return AutismSessionState.getInstance().getLastInteractedBlockPos();
       } else {
          return mc.gui.screen() instanceof SignEditScreenAccessor access ? access.autism$getSignPos() : null;
@@ -99,7 +99,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
    }
 
    private boolean editsFrontText(Minecraft mc) {
-      return this.targetMode == SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI && mc.gui.screen() instanceof SignEditScreenAccessor access ? access.autism$isFrontText() : this.frontText;
+      return this.targetMode == SignEditAction.TargetMode.CURRENT_SIGN_GUI && mc.gui.screen() instanceof SignEditScreenAccessor access ? access.autism$isFrontText() : this.frontText;
    }
 
    @Override
@@ -123,7 +123,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
-      tag.putString("closeMode", this.closeMode == null ? SignEditAction.Inner_DataUtil.STAY_OPEN.name() : this.closeMode.name());
+      tag.putString("closeMode", this.closeMode == null ? SignEditAction.CloseMode.STAY_OPEN.name() : this.closeMode.name());
       tag.putBoolean("sendCommandAfter", this.sendCommandAfter);
       tag.putString("commandAfter", this.commandAfter);
       tag.putInt("closePacketContainerId", this.closePacketContainerId);
@@ -132,7 +132,7 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.targetMode = MacroNbtCodecHelper.parseEnum(SignEditAction.Inner_StreamUtil.class, tag.getStringOr("targetMode", "CURRENT_SIGN_GUI"), SignEditAction.Inner_StreamUtil.CURRENT_SIGN_GUI);
+      this.targetMode = MacroNbtCodecHelper.parseEnum(SignEditAction.TargetMode.class, tag.getStringOr("targetMode", "CURRENT_SIGN_GUI"), SignEditAction.TargetMode.CURRENT_SIGN_GUI);
       this.line1 = tag.getStringOr("line1", "");
       this.line2 = tag.getStringOr("line2", "");
       this.line3 = tag.getStringOr("line3", "");
@@ -145,26 +145,26 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       this.waitForGuiAfter = tag.getBooleanOr("waitForGuiAfter", false);
       this.guiName = tag.getStringOr("guiName", "SIGN");
       if (tag.contains("closeMode")) {
-         this.closeMode = MacroNbtCodecHelper.parseEnum(SignEditAction.Inner_DataUtil.class, tag.getStringOr("closeMode", "STAY_OPEN"), SignEditAction.Inner_DataUtil.STAY_OPEN);
+         this.closeMode = MacroNbtCodecHelper.parseEnum(SignEditAction.CloseMode.class, tag.getStringOr("closeMode", "STAY_OPEN"), SignEditAction.CloseMode.STAY_OPEN);
       } else if (tag.getBooleanOr("sendClosePacketAfter", false)) {
-         this.closeMode = SignEditAction.Inner_DataUtil.SEND_CLOSE_PACKET_ONLY;
+         this.closeMode = SignEditAction.CloseMode.SEND_CLOSE_PACKET_ONLY;
       } else if (tag.getBooleanOr("closeAfterEdit", false)) {
-         this.closeMode = tag.getBooleanOr("closeWithPacket", false) ? SignEditAction.Inner_DataUtil.CLOSE_WITH_PACKET : SignEditAction.Inner_DataUtil.CLOSE_LOCAL;
+         this.closeMode = tag.getBooleanOr("closeWithPacket", false) ? SignEditAction.CloseMode.CLOSE_WITH_PACKET : SignEditAction.CloseMode.CLOSE_LOCAL;
       } else {
-         this.closeMode = SignEditAction.Inner_DataUtil.STAY_OPEN;
+         this.closeMode = SignEditAction.CloseMode.STAY_OPEN;
       }
 
-      this.closeAfterEdit = this.closeMode == SignEditAction.Inner_DataUtil.CLOSE_LOCAL || this.closeMode == SignEditAction.Inner_DataUtil.CLOSE_WITH_PACKET;
-      this.closeWithPacket = this.closeMode == SignEditAction.Inner_DataUtil.CLOSE_WITH_PACKET;
+      this.closeAfterEdit = this.closeMode == SignEditAction.CloseMode.CLOSE_LOCAL || this.closeMode == SignEditAction.CloseMode.CLOSE_WITH_PACKET;
+      this.closeWithPacket = this.closeMode == SignEditAction.CloseMode.CLOSE_WITH_PACKET;
       this.sendCommandAfter = tag.getBooleanOr("sendCommandAfter", false);
       this.commandAfter = tag.getStringOr("commandAfter", "");
-      this.sendClosePacketAfter = this.closeMode == SignEditAction.Inner_DataUtil.SEND_CLOSE_PACKET_ONLY;
+      this.sendClosePacketAfter = this.closeMode == SignEditAction.CloseMode.SEND_CLOSE_PACKET_ONLY;
       this.closePacketContainerId = tag.getIntOr("closePacketContainerId", 0);
    }
 
    @Override
    public String getDisplayName() {
-      String suffix = this.closeMode != SignEditAction.Inner_DataUtil.STAY_OPEN
+      String suffix = this.closeMode != SignEditAction.CloseMode.STAY_OPEN
          ? " + " + this.closeMode.name().toLowerCase(Locale.ROOT)
          : (this.sendCommandAfter ? " + command" : "");
       return "Edit sign" + suffix;
@@ -205,14 +205,14 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
       this.guiName = value;
    }
 
-   public enum Inner_DataUtil {
+   public enum CloseMode {
       STAY_OPEN,
       CLOSE_LOCAL,
       CLOSE_WITH_PACKET,
       SEND_CLOSE_PACKET_ONLY;
    }
 
-   public enum Inner_StreamUtil {
+   public enum TargetMode {
       CURRENT_SIGN_GUI,
       LAST_INTERACTED_BLOCK,
       MANUAL_POS;

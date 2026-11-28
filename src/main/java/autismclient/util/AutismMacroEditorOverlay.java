@@ -1163,7 +1163,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          for (MacroAction action : actions) {
             if (action instanceof autismclient.util.macro.PacketGateAction gate) {
                gate.gateId = UUID.randomUUID().toString();
-               pendingGateId = gate.scope == autismclient.util.macro.PacketGateAction.Inner_BufferHelper.MACRO_PASS ? null : gate.gateId;
+               pendingGateId = gate.scope == autismclient.util.macro.PacketGateAction.GateScope.MACRO_PASS ? null : gate.gateId;
             } else if (action instanceof autismclient.util.macro.EndPacketGateAction endGate && pendingGateId != null) {
                endGate.gateId = pendingGateId;
                pendingGateId = null;
@@ -2197,11 +2197,11 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private void addLookAtBlockAction() {
       autismclient.util.macro.LookAtBlockAction action = new autismclient.util.macro.LookAtBlockAction();
       if (MC.hitResult != null && MC.hitResult.getType() == Type.ENTITY && MC.crosshairPickEntity != null) {
-         action.targetMode = autismclient.util.macro.LookAtBlockAction.Inner_StreamUtil.ENTITY;
+         action.targetMode = autismclient.util.macro.LookAtBlockAction.TargetMode.ENTITY;
          action.entityIds.add(autismclient.util.macro.LookAtBlockAction.entityRef(MC.crosshairPickEntity));
       } else if (MC.hitResult != null && MC.hitResult.getType() == Type.BLOCK) {
          BlockHitResult hit = (BlockHitResult)MC.hitResult;
-         action.targetMode = autismclient.util.macro.LookAtBlockAction.Inner_StreamUtil.SPECIFIC;
+         action.targetMode = autismclient.util.macro.LookAtBlockAction.TargetMode.SPECIFIC;
          action.blockX = hit.getBlockPos().getX();
          action.blockY = hit.getBlockPos().getY();
          action.blockZ = hit.getBlockPos().getZ();
@@ -2361,7 +2361,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          if (!(this.macro.actions.get(headerIndex) instanceof autismclient.util.macro.PacketGateAction gate)) {
             return 0;
          } else {
-            if (gate.scope == autismclient.util.macro.PacketGateAction.Inner_BufferHelper.MACRO_PASS) {
+            if (gate.scope == autismclient.util.macro.PacketGateAction.GateScope.MACRO_PASS) {
                return 0;
             }
 
@@ -2434,7 +2434,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int index = this.macro.actions.indexOf(gate);
          if (index >= 0) {
             int end = index + this.sync_I(index);
-            if (gate.scope == autismclient.util.macro.PacketGateAction.Inner_BufferHelper.MACRO_PASS) {
+            if (gate.scope == autismclient.util.macro.PacketGateAction.GateScope.MACRO_PASS) {
                if (end > index && end < this.macro.actions.size() && this.macro.actions.get(end) instanceof autismclient.util.macro.EndPacketGateAction) {
                   this.macro.actions.remove(end);
                }
@@ -2590,7 +2590,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private void addOpenInventoryAction() {
       autismclient.util.macro.InventoryAction action = new autismclient.util.macro.InventoryAction();
-      action.mode = autismclient.util.macro.InventoryAction.Inner_DataUtil.OPEN;
+      action.mode = autismclient.util.macro.InventoryAction.InventoryMode.OPEN;
       this.appendAction(action);
    }
 
@@ -2651,13 +2651,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private List<MacroAction> update_List_2() {
       List<MacroAction> actions = new ArrayList<>();
       autismclient.util.macro.AssertAction assertBundle = new autismclient.util.macro.AssertAction();
-      assertBundle.check = autismclient.util.macro.AssertAction.Inner_DataUtil.HAS_BUNDLE;
+      assertBundle.check = autismclient.util.macro.AssertAction.CheckKind.HAS_BUNDLE;
       assertBundle.message = "Must have a bundle";
       actions.add(assertBundle);
       autismclient.util.macro.DisconnectAction dupe = new autismclient.util.macro.DisconnectAction();
-      dupe.mode = autismclient.util.macro.DisconnectAction.Inner_StreamUtil.KICK_DUPE;
-      dupe.lagMethod = autismclient.util.macro.DisconnectAction.Inner_BufferHelper.CLICK_SLOT;
-      dupe.kickMethod = autismclient.util.macro.DisconnectAction.Inner_CachePool.HURT;
+      dupe.mode = autismclient.util.macro.DisconnectAction.DisconnectMode.KICK_DUPE;
+      dupe.lagMethod = autismclient.util.macro.DisconnectAction.LagMethod.CLICK_SLOT;
+      dupe.kickMethod = autismclient.util.macro.DisconnectAction.KickMethod.HURT;
       dupe.packetCount = 200;
       actions.add(dupe);
       return actions;
@@ -2673,7 +2673,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       selectSlotOne.slot = 0;
       actions.add(selectSlotOne);
       autismclient.util.macro.AssertAction assertBundle = new autismclient.util.macro.AssertAction();
-      assertBundle.check = autismclient.util.macro.AssertAction.Inner_DataUtil.BUNDLE_V2_READY;
+      assertBundle.check = autismclient.util.macro.AssertAction.CheckKind.BUNDLE_V2_READY;
       assertBundle.message = "Slot 1 must contain a one-item bundle and no container GUI can be open";
       actions.add(assertBundle);
       actions.add(new autismclient.util.macro.BundleDupeV2Action());
@@ -2727,7 +2727,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       select.strategy = autismclient.util.macro.SelectSlotAction.Inner_DataUtil.BEST_DURABILITY;
       actions.add(select);
       autismclient.util.macro.UseItemPhaseAction phase = new autismclient.util.macro.UseItemPhaseAction();
-      phase.phase = autismclient.util.macro.UseItemPhaseAction.Inner_DataUtil.START_USE;
+      phase.phase = autismclient.util.macro.UseItemPhaseAction.UsePhase.START_USE;
       phase.holdTicks = 100;
       phase.gateDuringHold = true;
       phase.gatePlayerActions = true;
@@ -2770,18 +2770,18 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private List<MacroAction> tick_List() {
       List<MacroAction> actions = new ArrayList<>();
       autismclient.util.macro.AssertAction assertBundle = new autismclient.util.macro.AssertAction();
-      assertBundle.check = autismclient.util.macro.AssertAction.Inner_DataUtil.HELD_ITEM;
+      assertBundle.check = autismclient.util.macro.AssertAction.CheckKind.HELD_ITEM;
       assertBundle.itemName = "Bundle";
       assertBundle.message = "Must hold a bundle";
       actions.add(assertBundle);
       autismclient.util.macro.PacketBurstAction burst = new autismclient.util.macro.PacketBurstAction();
-      burst.mode = autismclient.util.macro.PacketBurstAction.Inner_DataUtil.BUNDLE_SELECT;
+      burst.mode = autismclient.util.macro.PacketBurstAction.BurstMode.BUNDLE_SELECT;
       burst.count = 1;
       burst.slot = -1;
       burst.bundleIndex = -1337;
       actions.add(burst);
       autismclient.util.macro.UseItemPhaseAction use = new autismclient.util.macro.UseItemPhaseAction();
-      use.phase = autismclient.util.macro.UseItemPhaseAction.Inner_DataUtil.USE_ONCE;
+      use.phase = autismclient.util.macro.UseItemPhaseAction.UsePhase.USE_ONCE;
       use.itemName = "Bundle";
       actions.add(use);
       return actions;
@@ -2976,7 +2976,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             "interaction",
             "Mouse Click",
             "Simulate mouse clicks in world.",
-            () -> this.appendAction(new autismclient.util.macro.ClickAction(autismclient.util.macro.ClickAction.Inner_DataUtil.RIGHT))
+            () -> this.appendAction(new autismclient.util.macro.ClickAction(autismclient.util.macro.ClickAction.MouseButton.RIGHT))
          );
          this.addPaletteEntry(
             entries, "network", "Packet", "Send captured packets from the queue.", () -> this.appendAction(new autismclient.util.macro.SendPacketAction())
@@ -2986,7 +2986,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
             g.gateId = UUID.randomUUID().toString();
             boolean wholePassDefault = this.macro != null && this.macro.loop && this.macro.actions.isEmpty();
             if (wholePassDefault) {
-               g.scope = autismclient.util.macro.PacketGateAction.Inner_BufferHelper.MACRO_PASS;
+               g.scope = autismclient.util.macro.PacketGateAction.GateScope.MACRO_PASS;
             }
 
             this.appendAction(g);

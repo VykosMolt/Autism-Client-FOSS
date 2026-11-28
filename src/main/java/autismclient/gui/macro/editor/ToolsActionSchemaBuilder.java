@@ -18,7 +18,7 @@ public final class ToolsActionSchemaBuilder {
 
    public static ActionFieldSchema init(ToolsAction action) {
       ActionFieldSchema.Builder builder = ActionFieldSchema.builder().enumField("operation", "Action", "RUN", "WAIT", "STOP", "PAUSE", "RESUME");
-      List<String> ids = new ArrayList<>(MacroToolBridge.listTools().stream().map(MacroToolBridge.Inner_TaskQueue::init).toList());
+      List<String> ids = new ArrayList<>(MacroToolBridge.listTools().stream().map(MacroToolBridge.ToolInfo::init).toList());
       if (!ids.contains(action.toolId)) {
          ids.addFirst(action.toolId);
       }
@@ -44,7 +44,7 @@ public final class ToolsActionSchemaBuilder {
       }
 
       builder.toggle("advanced", "More Options").showWhenEnum("operation", "RUN");
-      MacroToolBridge.Inner_TaskQueue tool = MacroToolBridge.findTool(action.toolId);
+      MacroToolBridge.ToolInfo tool = MacroToolBridge.findTool(action.toolId);
       if (tool != null) {
          JsonObject schema = JsonParser.parseString(tool.read()).getAsJsonObject();
          Set<String> required = new HashSet<>();

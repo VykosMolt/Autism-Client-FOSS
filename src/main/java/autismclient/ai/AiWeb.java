@@ -74,7 +74,7 @@ final class AiWeb {
 
       for (int redirect = 0; redirect < 4; redirect++) {
          InetAddress[] addresses = init(uri, checkpoint);
-         AiWeb.Inner_DataUtil exchange = init(uri, addresses, checkpoint);
+         AiWeb.HttpResult exchange = init(uri, addresses, checkpoint);
          if (exchange.status() < 300 || exchange.status() >= 400) {
             if (exchange.status() != 200) {
                throw new IOException("Page HTTP " + exchange.status());
@@ -234,7 +234,7 @@ final class AiWeb {
       }
    }
 
-   private static AiWeb.Inner_DataUtil init(URI uri, InetAddress[] addresses, Runnable checkpoint) throws IOException {
+   private static AiWeb.HttpResult init(URI uri, InetAddress[] addresses, Runnable checkpoint) throws IOException {
       boolean tls = "https".equals(uri.getScheme());
       int port = uri.getPort() >= 0 ? uri.getPort() : (tls ? 443 : 80);
       IOException failure = null;
@@ -290,8 +290,8 @@ final class AiWeb {
       throw failure != null ? failure : new IOException("No route to " + uri.getHost());
    }
 
-   private static AiWeb.Inner_DataUtil init(InputStream input, Runnable checkpoint) throws IOException {
-      AiWeb.Inner_StreamUtil reader = new AiWeb.Inner_StreamUtil(input, System.nanoTime() + 30000000000L, checkpoint);
+   private static AiWeb.HttpResult init(InputStream input, Runnable checkpoint) throws IOException {
+      AiWeb.DeadlineReader reader = new AiWeb.DeadlineReader(input, System.nanoTime() + 30000000000L, checkpoint);
       Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
       int informationalCount = 0;
@@ -361,7 +361,7 @@ final class AiWeb {
                      while ((trailer = reader.init(8192)) != null && !trailer.isEmpty()) {
                      }
 
-                     return new AiWeb.Inner_DataUtil(status, headers, body.toByteArray());
+                     return new AiWeb.HttpResult(status, headers, body.toByteArray());
                   }
 
                   init(reader, body, size);
@@ -392,12 +392,12 @@ final class AiWeb {
                }
             }
 
-            return new AiWeb.Inner_DataUtil(status, headers, body.toByteArray());
+            return new AiWeb.HttpResult(status, headers, body.toByteArray());
          }
       }
    }
 
-   private static void init(AiWeb.Inner_StreamUtil reader, ByteArrayOutputStream body, int count) throws IOException {
+   private static void init(AiWeb.DeadlineReader reader, ByteArrayOutputStream body, int count) throws IOException {
       byte[] chunk = new byte[8192];
       int remaining = count;
 
@@ -415,10 +415,10 @@ final class AiWeb {
       }
    }
 
-   private record Inner_DataUtil(int status, Map<String, String> headers, byte[] body) {
+   private record HttpResult(int status, Map<String, String> headers, byte[] body) {
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class DeadlineReader {
       private final InputStream input;
       private final long deadline;
       private final Runnable checkpoint;
@@ -426,7 +426,7 @@ final class AiWeb {
       private int init_I;
       private int load;
 
-      Inner_StreamUtil(InputStream in, long deadline, Runnable checkpoint) {
+      DeadlineReader(InputStream in, long deadline, Runnable checkpoint) {
          this.input = in;
          this.deadline = deadline;
          this.checkpoint = checkpoint;

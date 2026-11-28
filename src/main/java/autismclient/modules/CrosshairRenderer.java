@@ -35,8 +35,8 @@ public final class CrosshairRenderer {
    private static final int read = 2;
    private static final int write = 3;
    private static final int BYTES_PER_PIXEL = 4;
-   private static final CrosshairRenderer.Inner_BufferHelper init_o_BufferHelper = new CrosshairRenderer.Inner_BufferHelper("hud", 0L);
-   private static final CrosshairRenderer.Inner_BufferHelper load_o_BufferHelper = new CrosshairRenderer.Inner_BufferHelper("preview", 80L);
+   private static final CrosshairRenderer.TextureCache init_o_BufferHelper = new CrosshairRenderer.TextureCache("hud", 0L);
+   private static final CrosshairRenderer.TextureCache load_o_BufferHelper = new CrosshairRenderer.TextureCache("preview", 80L);
    private static int textureCounter;
 
    private CrosshairRenderer() {
@@ -62,7 +62,7 @@ public final class CrosshairRenderer {
          }
       }
 
-      CrosshairRenderer.Inner_DataUtil entry = init_o_BufferHelper.entryFor(look, guiScale, 0);
+      CrosshairRenderer.TextureEntry entry = init_o_BufferHelper.entryFor(look, guiScale, 0);
       if (entry == null) {
          return false;
       }
@@ -103,7 +103,7 @@ public final class CrosshairRenderer {
             }
          }
 
-         CrosshairRenderer.Inner_DataUtil entry = load_o_BufferHelper.entryFor(look, guiScale, maxPixels);
+         CrosshairRenderer.TextureEntry entry = load_o_BufferHelper.entryFor(look, guiScale, maxPixels);
          if (entry != null) {
             int x = (int)Math.round(centerX * pixelsPerUnit - entry.width() / 2.0);
             int y = (int)Math.round(centerY * pixelsPerUnit - entry.width() / 2.0);
@@ -121,7 +121,7 @@ public final class CrosshairRenderer {
       }
    }
 
-   private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, CrosshairRenderer.Inner_DataUtil entry, CrosshairRenderState.Inner_DataUtil look, int x, int y, int target) {
+   private static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, CrosshairRenderer.TextureEntry entry, CrosshairRenderState.Inner_DataUtil look, int x, int y, int target) {
       float opacity = look.init_F();
       boolean invert = target == 0 && look.init_Z();
       if (invert) {
@@ -152,7 +152,7 @@ public final class CrosshairRenderer {
       }
    }
 
-   private static void blitCell(GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairRenderer.Inner_DataUtil entry, int cell, int x, int y, int color) {
+   private static void blitCell(GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairRenderer.TextureEntry entry, int cell, int x, int y, int color) {
       int size = entry.width();
       graphics.blit(pipeline, entry.texture(), x, y, cell * (size + 2) + 1, 1.0F, size, size, size, size, entry.load(), entry.read(), color);
    }
@@ -211,21 +211,21 @@ public final class CrosshairRenderer {
       }
    }
 
-   private static final class Inner_BufferHelper {
+   private static final class TextureCache {
       private final String name;
       private final long throttleMillis;
-      private CrosshairRenderer.Inner_DataUtil cached;
+      private CrosshairRenderer.TextureEntry cached;
       private long lastBuildMillis;
 
-      Inner_BufferHelper(String name, long throttleMillis) {
+      TextureCache(String name, long throttleMillis) {
          this.name = name;
          this.throttleMillis = throttleMillis;
       }
 
-      CrosshairRenderer.Inner_DataUtil entryFor(CrosshairRenderState.Inner_DataUtil look, int guiScale, int maxPixels) {
+      CrosshairRenderer.TextureEntry entryFor(CrosshairRenderState.Inner_DataUtil look, int guiScale, int maxPixels) {
          boolean custom = look.style() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM;
          int outlinePx = look.load_Z() ? Math.max(1, (int)Math.round(look.write_D() * guiScale)) : 0;
-         CrosshairRenderer.Inner_StreamUtil key = new CrosshairRenderer.Inner_StreamUtil(
+         CrosshairRenderer.TextureKey key = new CrosshairRenderer.TextureKey(
             look.style(),
             look.init_D(),
             custom ? 0.0 : look.load_D(),
@@ -258,7 +258,7 @@ public final class CrosshairRenderer {
                ? CrosshairPresetGeometry.rasterize(look.art(), unit, border, border + 1)
                : CrosshairPresetGeometry.init(look.style(), unit, look.load_D(), look.read_D(), border, border + 1);
             if (maxPixels <= 0 || raster.pixelCount() <= maxPixels || attempt == 3) {
-               CrosshairRenderer.Inner_DataUtil built = this.build(key, raster);
+               CrosshairRenderer.TextureEntry built = this.build(key, raster);
                if (built == null) {
                   return this.cached;
                }
@@ -274,7 +274,7 @@ public final class CrosshairRenderer {
          }
       }
 
-      private CrosshairRenderer.Inner_DataUtil build(CrosshairRenderer.Inner_StreamUtil key, CrosshairPresetGeometry.Inner_CachePool raster) {
+      private CrosshairRenderer.TextureEntry build(CrosshairRenderer.TextureKey key, CrosshairPresetGeometry.Inner_CachePool raster) {
          int size = raster.pixelCount();
          int stride = size + 2;
          int width = stride * 4;
@@ -300,8 +300,8 @@ public final class CrosshairRenderer {
             }
 
             Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/crosshair/" + this.name + "_" + ++CrosshairRenderer.textureCounter);
-            CrosshairRenderer.MINECRAFT.getTextureManager().register(id, new CrosshairRenderer.Inner_CachePool(this.name, image));
-            return new CrosshairRenderer.Inner_DataUtil(key, id, size, width, height);
+            CrosshairRenderer.MINECRAFT.getTextureManager().register(id, new CrosshairRenderer.CrosshairTexture(this.name, image));
+            return new CrosshairRenderer.TextureEntry(key, id, size, width, height);
          } catch (Throwable t) {
             image.close();
             return null;
@@ -321,18 +321,18 @@ public final class CrosshairRenderer {
       }
    }
 
-   private static final class Inner_CachePool extends DynamicTexture {
-      Inner_CachePool(String name, NativeImage image) {
+   private static final class CrosshairTexture extends DynamicTexture {
+      CrosshairTexture(String name, NativeImage image) {
          super(() -> "AUTISM crosshair " + name, image);
          this.sampler = RenderSystem.getSamplerCache()
             .getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.NEAREST, FilterMode.NEAREST, false);
       }
    }
 
-   private record Inner_DataUtil(CrosshairRenderer.Inner_StreamUtil key, Identifier texture, int width, int load, int read) {
+   private record TextureEntry(CrosshairRenderer.TextureKey key, Identifier texture, int width, int load, int read) {
    }
 
-   private record Inner_StreamUtil(
+   private record TextureKey(
       CrosshairPresetGeometry.Inner_NetHelper init_p_NetHelper, double init_D, double load_D, double read_D, int init_I, int load_I, int read_I, CrosshairPixelArt init_m
    ) {
    }

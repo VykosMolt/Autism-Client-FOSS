@@ -103,7 +103,7 @@ public final class PacketCommandBuilder {
    private PacketCommandBuilder() {
    }
 
-   public static PacketCommandBuilder.Inner_DataUtil prepareArgs(String rawArgs) {
+   public static PacketCommandBuilder.PreparedArgs prepareArgs(String rawArgs) {
       List<String> tokens = tokenize(rawArgs == null ? "" : rawArgs);
       boolean dryRun = false;
       List<String> kept = new ArrayList<>();
@@ -119,28 +119,28 @@ public final class PacketCommandBuilder {
          }
       }
 
-      return new PacketCommandBuilder.Inner_DataUtil(joinQuoted(kept), dryRun);
+      return new PacketCommandBuilder.PreparedArgs(joinQuoted(kept), dryRun);
    }
 
-   public static PacketCommandBuilder.Inner_StreamUtil build(Class<? extends Packet<?>> packetClass, String rawArgs) {
+   public static PacketCommandBuilder.BuildResult build(Class<? extends Packet<?>> packetClass, String rawArgs) {
       if (packetClass == null) {
-         return PacketCommandBuilder.Inner_StreamUtil.error("Packet class is missing.");
+         return PacketCommandBuilder.BuildResult.error("Packet class is missing.");
       }
 
       Map<String, String> args;
       try {
          args = parseArgs(rawArgs);
       } catch (IllegalArgumentException e) {
-         return PacketCommandBuilder.Inner_StreamUtil.error(e.getMessage());
+         return PacketCommandBuilder.BuildResult.error(e.getMessage());
       }
 
       if (!args.containsKey("help") && !args.containsKey("?")) {
-         PacketCommandBuilder.Inner_StreamUtil rawCodec = init_bm_StreamUtil_Class_Map(packetClass, args);
+         PacketCommandBuilder.BuildResult rawCodec = init_bm_StreamUtil_Class_Map(packetClass, args);
          if (rawCodec != null) {
             return rawCodec;
          }
 
-         PacketCommandBuilder.Inner_StreamUtil special = buildSpecial(packetClass, args);
+         PacketCommandBuilder.BuildResult special = buildSpecial(packetClass, args);
          if (special != null) {
             return special;
          }
@@ -148,21 +148,21 @@ public final class PacketCommandBuilder {
          if (args.isEmpty()) {
             Packet<?> noArg = init_Packet_Class(packetClass);
             return noArg != null
-               ? PacketCommandBuilder.Inner_StreamUtil.built(noArg, "no-arg")
-               : PacketCommandBuilder.Inner_StreamUtil.error("Packet needs arguments. " + usage(packetClass));
+               ? PacketCommandBuilder.BuildResult.built(noArg, "no-arg")
+               : PacketCommandBuilder.BuildResult.error("Packet needs arguments. " + usage(packetClass));
          }
 
          if (packetClass.isRecord()) {
-            PacketCommandBuilder.Inner_StreamUtil record = buildRecord(packetClass, args);
+            PacketCommandBuilder.BuildResult record = buildRecord(packetClass, args);
             if (record != null) {
                return record;
             }
          }
 
-         PacketCommandBuilder.Inner_StreamUtil schema = buildFromSchema(packetClass, args);
-         return schema != null ? schema : PacketCommandBuilder.Inner_StreamUtil.error("Could not build " + packetName(packetClass) + ". " + usage(packetClass));
+         PacketCommandBuilder.BuildResult schema = buildFromSchema(packetClass, args);
+         return schema != null ? schema : PacketCommandBuilder.BuildResult.error("Could not build " + packetName(packetClass) + ". " + usage(packetClass));
       } else {
-         return PacketCommandBuilder.Inner_StreamUtil.usage(usage(packetClass));
+         return PacketCommandBuilder.BuildResult.usage(usage(packetClass));
       }
    }
 
@@ -269,7 +269,7 @@ public final class PacketCommandBuilder {
       return null;
    }
 
-   private static PacketCommandBuilder.Inner_StreamUtil init_bm_StreamUtil_Class_Map(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
+   private static PacketCommandBuilder.BuildResult init_bm_StreamUtil_Class_Map(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
       String bodyHex = firstArg(args, RAW_BODY_ARG_NAMES.toArray(new String[0]));
       String fullPacketHex = firstArg(args, FULL_PACKET_ARGS.toArray(new String[0]));
       String bodyBase64 = firstArg(args, BASE64_ARGS.toArray(new String[0]));
@@ -279,7 +279,7 @@ public final class PacketCommandBuilder {
       }
 
       if (provided > 1) {
-         return PacketCommandBuilder.Inner_StreamUtil.error("Use only one raw packet source: rawHex, packetHex, or base64.");
+         return PacketCommandBuilder.BuildResult.error("Use only one raw packet source: rawHex, packetHex, or base64.");
       }
 
       try {
@@ -293,31 +293,31 @@ public final class PacketCommandBuilder {
          }
 
          Packet<?> packet = fullPacket ? PacketStreamCodecDecoder.decodeFrame(packetClass, sourceBytes, null).packet() : PacketStreamCodecDecoder.decodeBody(packetClass, sourceBytes, null);
-         return PacketCommandBuilder.Inner_StreamUtil.built(packet, fullPacket ? "minecraft packet STREAM_CODEC" : "minecraft body STREAM_CODEC");
+         return PacketCommandBuilder.BuildResult.built(packet, fullPacket ? "minecraft packet STREAM_CODEC" : "minecraft body STREAM_CODEC");
       } catch (IllegalArgumentException e) {
-         return PacketCommandBuilder.Inner_StreamUtil.error(e.getMessage());
+         return PacketCommandBuilder.BuildResult.error(e.getMessage());
       } catch (Throwable t) {
-         return PacketCommandBuilder.Inner_StreamUtil.error("Minecraft codec decode failed: " + errorMessage(t));
+         return PacketCommandBuilder.BuildResult.error("Minecraft codec decode failed: " + errorMessage(t));
       }
    }
 
-   private static PacketCommandBuilder.Inner_StreamUtil buildSpecial(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
+   private static PacketCommandBuilder.BuildResult buildSpecial(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
       String name = packetClass.getName();
 
       try {
          if (packetClass == ServerboundContainerClosePacket.class) {
             rejectUnknownArgs(args, "containerId", "id");
-            return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundContainerClosePacket(intArgOr(args, PacketCommandBuilder::containerId, "containerId", "id")), "typed constructor");
+            return PacketCommandBuilder.BuildResult.built(new ServerboundContainerClosePacket(intArgOr(args, PacketCommandBuilder::containerId, "containerId", "id")), "typed constructor");
          }
 
          if (packetClass == ServerboundSetCarriedItemPacket.class) {
             rejectUnknownArgs(args, "slot");
-            return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundSetCarriedItemPacket(intArgOr(args, PacketCommandBuilder::selectedSlot, "slot")), "typed constructor");
+            return PacketCommandBuilder.BuildResult.built(new ServerboundSetCarriedItemPacket(intArgOr(args, PacketCommandBuilder::selectedSlot, "slot")), "typed constructor");
          }
 
          if (packetClass == ServerboundSelectBundleItemPacket.class) {
             rejectUnknownArgs(args, "slot", "selectedItemIndex", "index");
-            return PacketCommandBuilder.Inner_StreamUtil.built(
+            return PacketCommandBuilder.BuildResult.built(
                new ServerboundSelectBundleItemPacket(requireInt(args, "slot"), requireInt(args, "selectedItemIndex", "index")),
                "typed constructor"
             );
@@ -325,20 +325,20 @@ public final class PacketCommandBuilder {
 
          if (packetClass == CompatSwingPacket.class) {
             rejectUnknownArgs(args, "hand");
-            return PacketCommandBuilder.Inner_StreamUtil.built(
+            return PacketCommandBuilder.BuildResult.built(
                new CompatSwingPacket(enumArg(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand")), "typed constructor"
             );
          }
 
          if (packetClass == ServerboundPunchPacket.class) {
             rejectUnknownArgs(args);
-            return PacketCommandBuilder.Inner_StreamUtil.built(ServerboundPunchPacket.INSTANCE, "typed constructor");
+            return PacketCommandBuilder.BuildResult.built(ServerboundPunchPacket.INSTANCE, "typed constructor");
          }
 
          if (packetClass == ServerboundAttackPacket.class) {
             rejectUnknownArgs(args, "entityId", "id", "entity");
             int entityId = intArgOr(args, PacketCommandBuilder::targetedEntityId, "entityId", "id", "entity");
-            return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundAttackPacket(entityId), "typed constructor");
+            return PacketCommandBuilder.BuildResult.built(new ServerboundAttackPacket(entityId), "typed constructor");
          }
 
          if (packetClass == ServerboundUseItemPacket.class) {
@@ -347,7 +347,7 @@ public final class PacketCommandBuilder {
             int sequence = intArg(args, 0, "sequence");
             float yRot = floatArg(args, playerYaw(), "yRot", "yaw");
             float xRot = floatArg(args, playerPitch(), "xRot", "pitch");
-            return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundUseItemPacket(hand, sequence, yRot, xRot), "typed constructor");
+            return PacketCommandBuilder.BuildResult.built(new ServerboundUseItemPacket(hand, sequence, yRot, xRot), "typed constructor");
          }
 
          if (packetClass == ServerboundUseItemOnPacket.class) {
@@ -355,17 +355,17 @@ public final class PacketCommandBuilder {
             InteractionHand hand = enumArg(InteractionHand.class, args, InteractionHand.MAIN_HAND, "hand");
             BlockHitResult hitResult = hitResultArg(args);
             int sequence = intArg(args, 0, "sequence");
-            return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundUseItemOnPacket(hand, hitResult, sequence), "typed constructor");
+            return PacketCommandBuilder.BuildResult.built(new ServerboundUseItemOnPacket(hand, hitResult, sequence), "typed constructor");
          }
 
          if (packetClass == ServerboundClientCommandPacket.class) {
             rejectUnknownArgs(args, "action");
-            return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundClientCommandPacket(requireEnum(Action.class, args, "action")), "typed constructor");
+            return PacketCommandBuilder.BuildResult.built(new ServerboundClientCommandPacket(requireEnum(Action.class, args, "action")), "typed constructor");
          }
 
          if (packetClass == ServerboundChatCommandPacket.class) {
             rejectUnknownArgs(args, "command", "cmd");
-            return PacketCommandBuilder.Inner_StreamUtil.built(
+            return PacketCommandBuilder.BuildResult.built(
                new ServerboundChatCommandPacket(stripCommandSlash(requireString(args, firstArg(args, "command") != null ? "command" : "cmd"))),
                "typed constructor"
             );
@@ -378,7 +378,7 @@ public final class PacketCommandBuilder {
             long salt = longArg(args, 0L, "salt");
             MessageSignature signature = parseMessageSignature(firstArg(args, "signature"));
             Update lastSeen = parseLastSeenUpdate(firstArg(args, "lastSeenMessages", "lastSeen"));
-            return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundChatPacket(message, time, salt, Optional.ofNullable(signature), lastSeen), "typed constructor");
+            return PacketCommandBuilder.BuildResult.built(new ServerboundChatPacket(message, time, salt, Optional.ofNullable(signature), lastSeen), "typed constructor");
          }
 
          if (packetClass == ServerboundChatCommandSignedPacket.class) {
@@ -388,7 +388,7 @@ public final class PacketCommandBuilder {
             long salt = longArg(args, 0L, "salt");
             ArgumentSignatures signatures = parseArgumentSignatures(firstArg(args, "argumentSignatures", "signatures"));
             Update lastSeen = parseLastSeenUpdate(firstArg(args, "lastSeenMessages", "lastSeen"));
-            return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundChatCommandSignedPacket(command, time, salt, signatures, lastSeen), "typed constructor");
+            return PacketCommandBuilder.BuildResult.built(new ServerboundChatCommandSignedPacket(command, time, salt, signatures, lastSeen), "typed constructor");
          }
 
          if (packetClass == ServerboundChatSessionUpdatePacket.class) {
@@ -397,12 +397,12 @@ public final class PacketCommandBuilder {
             if (data == null) {
                throw new IllegalArgumentException("No current local chat session is available.");
             } else {
-               return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundChatSessionUpdatePacket(data), "current chat session");
+               return PacketCommandBuilder.BuildResult.built(new ServerboundChatSessionUpdatePacket(data), "current chat session");
             }
          } else {
             if (packetClass == ServerboundClientInformationPacket.class) {
                rejectUnknownArgs(args, "default", "information");
-               return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundClientInformationPacket(ClientInformation.createDefault()), "current client information");
+               return PacketCommandBuilder.BuildResult.built(new ServerboundClientInformationPacket(ClientInformation.createDefault()), "current client information");
             }
 
             if (packetClass != ServerboundCustomPayloadPacket.class) {
@@ -412,10 +412,10 @@ public final class PacketCommandBuilder {
                   String payload = firstArg(args, "payload");
                   if (payload != null && !init_Z_Str(payload)) {
                      return normalizeArgKey(payload).equals("discarded")
-                        ? PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundCustomQueryAnswerPacket(id, DiscardedQueryAnswerPayload.INSTANCE), "typed constructor")
-                        : PacketCommandBuilder.Inner_StreamUtil.error("Login custom query answers support payload=empty/null/discarded only from .send.");
+                        ? PacketCommandBuilder.BuildResult.built(new ServerboundCustomQueryAnswerPacket(id, DiscardedQueryAnswerPayload.INSTANCE), "typed constructor")
+                        : PacketCommandBuilder.BuildResult.error("Login custom query answers support payload=empty/null/discarded only from .send.");
                   } else {
-                     return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundCustomQueryAnswerPacket(id, null), "typed constructor");
+                     return PacketCommandBuilder.BuildResult.built(new ServerboundCustomQueryAnswerPacket(id, null), "typed constructor");
                   }
                } else if (packetClass == ServerboundEditBookPacket.class) {
                   rejectUnknownArgs(args, "slot", "pages", "page", "title");
@@ -426,7 +426,7 @@ public final class PacketCommandBuilder {
                   }
 
                   Optional<String> title = optionalString(firstArg(args, "title"));
-                  return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundEditBookPacket(slot, splitList(pagesValue, "\\|", 100), title), "typed constructor");
+                  return PacketCommandBuilder.BuildResult.built(new ServerboundEditBookPacket(slot, splitList(pagesValue, "\\|", 100), title), "typed constructor");
                } else {
                   if (packetClass == ServerboundSignUpdatePacket.class) {
                      rejectUnknownArgs(
@@ -435,7 +435,7 @@ public final class PacketCommandBuilder {
                      BlockPos pos = posArg(args);
                      boolean front = boolArg(args, true, "front", "isFrontText");
                      String[] lines = signLines(args);
-                     return PacketCommandBuilder.Inner_StreamUtil.built(Compat263.newSignUpdatePacket(pos, front, lines[0], lines[1], lines[2], lines[3]), "typed constructor");
+                     return PacketCommandBuilder.BuildResult.built(Compat263.newSignUpdatePacket(pos, front, lines[0], lines[1], lines[2], lines[3]), "typed constructor");
                   }
 
                   if (packetClass == ServerboundInteractPacket.class) {
@@ -446,7 +446,7 @@ public final class PacketCommandBuilder {
                         ? parseVec3(firstArg(args, "location", "pos"))
                         : entityHitLocation(new Vec3(doubleArg(args, 0.0, "x"), doubleArg(args, 0.0, "y"), doubleArg(args, 0.0, "z")));
                      boolean secondary = boolArg(args, false, "secondary", "usingSecondaryAction");
-                     return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundInteractPacket(entityId, hand, location, secondary), "typed constructor");
+                     return PacketCommandBuilder.BuildResult.built(new ServerboundInteractPacket(entityId, hand, location, secondary), "typed constructor");
                   }
 
                   if (packetClass == ServerboundContainerClickPacket.class) {
@@ -474,14 +474,14 @@ public final class PacketCommandBuilder {
                      ContainerInput input = requireEnum(ContainerInput.class, args, "containerInput", "input", "click");
                      Int2ObjectMap<HashedStack> changed = init_Int2ObjectMap_Str(firstArg(args, "changedSlots", "changed"));
                      HashedStack carried = parseHashedStack(firstArg(args, "carriedItem", "carried"));
-                     return PacketCommandBuilder.Inner_StreamUtil.built(
+                     return PacketCommandBuilder.BuildResult.built(
                         new ServerboundContainerClickPacket(containerId, stateId, slot, button, input, changed, carried), "typed constructor"
                      );
                   }
 
                   if (packetClass == ServerboundContainerButtonClickPacket.class) {
                      rejectUnknownArgs(args, "containerId", "id", "buttonId", "button");
-                     return PacketCommandBuilder.Inner_StreamUtil.built(
+                     return PacketCommandBuilder.BuildResult.built(
                         new ServerboundContainerButtonClickPacket(
                            intArgOr(args, PacketCommandBuilder::containerId, "containerId", "id"), requireInt(args, "buttonId", "button")
                         ),
@@ -491,7 +491,7 @@ public final class PacketCommandBuilder {
 
                   if (packetClass == ServerboundContainerSlotStateChangedPacket.class) {
                      rejectUnknownArgs(args, "slotId", "slot", "containerId", "id", "newState", "state", "enabled");
-                     return PacketCommandBuilder.Inner_StreamUtil.built(
+                     return PacketCommandBuilder.BuildResult.built(
                         new ServerboundContainerSlotStateChangedPacket(
                            requireInt(args, "slotId", "slot"),
                            intArgOr(args, PacketCommandBuilder::containerId, "containerId", "id"),
@@ -505,7 +505,7 @@ public final class PacketCommandBuilder {
                      rejectUnknownArgs(args, "slotNum", "slot", "itemStack", "item");
                      int slot = requireInt(args, "slotNum", "slot");
                      ItemStack stack = parseItemStack(firstArg(args, "itemStack", "item"));
-                     return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundSetCreativeModeSlotPacket(slot, stack), "typed constructor");
+                     return PacketCommandBuilder.BuildResult.built(new ServerboundSetCreativeModeSlotPacket(slot, stack), "typed constructor");
                   }
 
                   if (packetClass == ServerboundPlayerCommandPacket.class) {
@@ -518,13 +518,13 @@ public final class PacketCommandBuilder {
                         net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action.class, args, "action"
                      );
                      int data = intArg(args, 0, "data");
-                     return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundPlayerCommandPacket(MC.player, action, data), "current player constructor");
+                     return PacketCommandBuilder.BuildResult.built(new ServerboundPlayerCommandPacket(MC.player, action, data), "current player constructor");
                   } else {
                      if (packetClass == ServerboundPlayerInputPacket.class) {
                         rejectUnknownArgs(args, "forward", "backward", "left", "right", "jump", "shift", "sneak", "sprint", "empty");
                         return boolArg(args, false, "empty")
-                           ? PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundPlayerInputPacket(Input.EMPTY), "typed constructor")
-                           : PacketCommandBuilder.Inner_StreamUtil.built(
+                           ? PacketCommandBuilder.BuildResult.built(new ServerboundPlayerInputPacket(Input.EMPTY), "typed constructor")
+                           : PacketCommandBuilder.BuildResult.built(
                               new ServerboundPlayerInputPacket(
                                  new Input(
                                     boolArg(args, false, "forward"),
@@ -542,14 +542,14 @@ public final class PacketCommandBuilder {
 
                      if (packetClass == ServerboundPaddleBoatPacket.class) {
                         rejectUnknownArgs(args, "left", "right");
-                        return PacketCommandBuilder.Inner_StreamUtil.built(
+                        return PacketCommandBuilder.BuildResult.built(
                            new ServerboundPaddleBoatPacket(boolArg(args, false, "left"), boolArg(args, false, "right")), "typed constructor"
                         );
                      }
 
                      if (packetClass == ServerboundSetCommandBlockPacket.class) {
                         rejectUnknownArgs(args, "pos", "blockPos", "x", "y", "z", "command", "mode", "trackOutput", "conditional", "automatic");
-                        return PacketCommandBuilder.Inner_StreamUtil.built(
+                        return PacketCommandBuilder.BuildResult.built(
                            new ServerboundSetCommandBlockPacket(
                               posArg(args),
                               requireString(args, "command"),
@@ -564,7 +564,7 @@ public final class PacketCommandBuilder {
 
                      if (packetClass == ServerboundSetGameRulePacket.class) {
                         rejectUnknownArgs(args, "entries", "rules", "rule", "value");
-                        return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundSetGameRulePacket(init_List_Map(args)), "typed constructor");
+                        return PacketCommandBuilder.BuildResult.built(new ServerboundSetGameRulePacket(init_List_Map(args)), "typed constructor");
                      }
 
                      if (packetClass == ServerboundSeenAdvancementsPacket.class) {
@@ -575,12 +575,12 @@ public final class PacketCommandBuilder {
                         Identifier tab = action == net.minecraft.network.protocol.game.ServerboundSeenAdvancementsPacket.Action.OPENED_TAB
                            ? Identifier.parse(requireString(args, "tab"))
                            : null;
-                        return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundSeenAdvancementsPacket(action, tab), "typed constructor");
+                        return PacketCommandBuilder.BuildResult.built(new ServerboundSeenAdvancementsPacket(action, tab), "typed constructor");
                      }
 
                      if (packetClass == ServerboundTestInstanceBlockActionPacket.class) {
                         rejectUnknownArgs(args, "pos", "blockPos", "x", "y", "z", "action", "size", "rotation", "ignoreEntities", "ignore");
-                        return PacketCommandBuilder.Inner_StreamUtil.built(
+                        return PacketCommandBuilder.BuildResult.built(
                            new ServerboundTestInstanceBlockActionPacket(
                               posArg(args),
                               requireEnum(net.minecraft.network.protocol.game.ServerboundTestInstanceBlockActionPacket.Action.class, args, "action"),
@@ -601,12 +601,12 @@ public final class PacketCommandBuilder {
                         BlockPos pos = posArg(args);
                         Direction direction = requireEnum(Direction.class, args, "direction", "dir", "face");
                         int sequence = intArg(args, 0, "sequence");
-                        return PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundPlayerActionPacket(action, pos, direction, sequence), "typed constructor");
+                        return PacketCommandBuilder.BuildResult.built(new ServerboundPlayerActionPacket(action, pos, direction, sequence), "typed constructor");
                      }
 
                      if (packetClass == Pos.class || name.endsWith("ServerboundMovePlayerPacket$Pos")) {
                         rejectUnknownArgs(args, "x", "y", "z", "onGround", "ground", "horizontalCollision", "collision");
-                        return PacketCommandBuilder.Inner_StreamUtil.built(
+                        return PacketCommandBuilder.BuildResult.built(
                            new Pos(
                               doubleArg(args, playerX(), "x"),
                               doubleArg(args, playerY(), "y"),
@@ -620,7 +620,7 @@ public final class PacketCommandBuilder {
 
                      if (packetClass == PosRot.class || name.endsWith("ServerboundMovePlayerPacket$PosRot")) {
                         rejectUnknownArgs(args, "x", "y", "z", "yRot", "yaw", "xRot", "pitch", "onGround", "ground", "horizontalCollision", "collision");
-                        return PacketCommandBuilder.Inner_StreamUtil.built(
+                        return PacketCommandBuilder.BuildResult.built(
                            new PosRot(
                               doubleArg(args, playerX(), "x"),
                               doubleArg(args, playerY(), "y"),
@@ -636,7 +636,7 @@ public final class PacketCommandBuilder {
 
                      if (packetClass == Rot.class || name.endsWith("ServerboundMovePlayerPacket$Rot")) {
                         rejectUnknownArgs(args, "yRot", "yaw", "xRot", "pitch", "onGround", "ground", "horizontalCollision", "collision");
-                        return PacketCommandBuilder.Inner_StreamUtil.built(
+                        return PacketCommandBuilder.BuildResult.built(
                            new Rot(
                               floatArg(args, playerYaw(), "yRot", "yaw"),
                               floatArg(args, playerPitch(), "xRot", "pitch"),
@@ -649,7 +649,7 @@ public final class PacketCommandBuilder {
 
                      if (packetClass == StatusOnly.class || name.endsWith("ServerboundMovePlayerPacket$StatusOnly")) {
                         rejectUnknownArgs(args, "onGround", "ground", "horizontalCollision", "collision");
-                        return PacketCommandBuilder.Inner_StreamUtil.built(
+                        return PacketCommandBuilder.BuildResult.built(
                            new StatusOnly(boolArg(args, playerOnGround(), "onGround", "ground"), boolArg(args, playerHorizontalCollision(), "horizontalCollision", "collision")),
                            "typed constructor"
                         );
@@ -658,13 +658,13 @@ public final class PacketCommandBuilder {
                      if (packetClass == ServerboundMoveVehiclePacket.class) {
                         rejectUnknownArgs(args, "position", "pos", "x", "y", "z", "yRot", "yaw", "xRot", "pitch", "onGround", "ground");
                         if (args.isEmpty() && MC.player != null && MC.player.getVehicle() != null) {
-                           return PacketCommandBuilder.Inner_StreamUtil.built(ServerboundMoveVehiclePacket.fromEntity(MC.player.getVehicle()), "current vehicle");
+                           return PacketCommandBuilder.BuildResult.built(ServerboundMoveVehiclePacket.fromEntity(MC.player.getVehicle()), "current vehicle");
                         }
 
                         Vec3 position = firstArg(args, "position", "pos") != null
                            ? parseVec3(firstArg(args, "position", "pos"))
                            : new Vec3(doubleArg(args, playerX(), "x"), doubleArg(args, playerY(), "y"), doubleArg(args, playerZ(), "z"));
-                        return PacketCommandBuilder.Inner_StreamUtil.built(
+                        return PacketCommandBuilder.BuildResult.built(
                            Compat263.newServerboundMoveVehiclePacket(
                               position,
                               floatArg(args, playerYaw(), "yRot", "yaw"),
@@ -683,18 +683,18 @@ public final class PacketCommandBuilder {
                String channel = firstArg(args, "channel");
                String brand = firstArg(args, "brand", "payload");
                return brand != null && (channel == null || normalizeChannel(channel).equals("minecraft:brand") || normalizeChannel(channel).equals("brand"))
-                  ? PacketCommandBuilder.Inner_StreamUtil.built(new ServerboundCustomPayloadPacket(new BrandPayload(brand)), "brand payload")
-                  : PacketCommandBuilder.Inner_StreamUtil.error("Use Packet Logger > Payload Sender for arbitrary plugin payload bytes. .send can build minecraft:brand only.");
+                  ? PacketCommandBuilder.BuildResult.built(new ServerboundCustomPayloadPacket(new BrandPayload(brand)), "brand payload")
+                  : PacketCommandBuilder.BuildResult.error("Use Packet Logger > Payload Sender for arbitrary plugin payload bytes. .send can build minecraft:brand only.");
             }
          }
       } catch (IllegalArgumentException e) {
-         return PacketCommandBuilder.Inner_StreamUtil.error(e.getMessage());
+         return PacketCommandBuilder.BuildResult.error(e.getMessage());
       } catch (Throwable t) {
-         return PacketCommandBuilder.Inner_StreamUtil.error("Special builder failed: " + errorMessage(t));
+         return PacketCommandBuilder.BuildResult.error("Special builder failed: " + errorMessage(t));
       }
    }
 
-   private static PacketCommandBuilder.Inner_StreamUtil buildRecord(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
+   private static PacketCommandBuilder.BuildResult buildRecord(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
       RecordComponent[] components = packetClass.getRecordComponents();
       if (components != null && components.length != 0) {
          Constructor<?> constructor;
@@ -719,18 +719,18 @@ public final class PacketCommandBuilder {
 
             rejectUnknownArgList(args, normalizeNames(componentNames(components)));
             constructor.setAccessible(true);
-            return PacketCommandBuilder.Inner_StreamUtil.built((Packet<?>)constructor.newInstance(values), "record constructor");
+            return PacketCommandBuilder.BuildResult.built((Packet<?>)constructor.newInstance(values), "record constructor");
          } catch (IllegalArgumentException e) {
-            return PacketCommandBuilder.Inner_StreamUtil.error(e.getMessage());
+            return PacketCommandBuilder.BuildResult.error(e.getMessage());
          } catch (Throwable t) {
-            return PacketCommandBuilder.Inner_StreamUtil.error("Record builder failed: " + errorMessage(t));
+            return PacketCommandBuilder.BuildResult.error("Record builder failed: " + errorMessage(t));
          }
       } else {
          return null;
       }
    }
 
-   private static PacketCommandBuilder.Inner_StreamUtil buildFromSchema(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
+   private static PacketCommandBuilder.BuildResult buildFromSchema(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
       PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packetClass);
       if (schema != null && !schema.fields().isEmpty()) {
          String firstError = null;
@@ -750,7 +750,7 @@ public final class PacketCommandBuilder {
 
                   rejectUnknownArgList(args, normalizeNames(names));
                   constructor.setAccessible(true);
-                  return PacketCommandBuilder.Inner_StreamUtil.built((Packet<?>)constructor.newInstance(values), "schema constructor");
+                  return PacketCommandBuilder.BuildResult.built((Packet<?>)constructor.newInstance(values), "schema constructor");
                } catch (IllegalArgumentException e) {
                   if (firstError == null) {
                      firstError = e.getMessage();
@@ -760,7 +760,7 @@ public final class PacketCommandBuilder {
             }
          }
 
-         return firstError == null ? null : PacketCommandBuilder.Inner_StreamUtil.error(firstError);
+         return firstError == null ? null : PacketCommandBuilder.BuildResult.error(firstError);
       } else {
          return null;
       }
@@ -2362,20 +2362,20 @@ public final class PacketCommandBuilder {
       RAW_ALLOWED_ARGS = List.copyOf(names);
    }
 
-   public record Inner_DataUtil(String args, boolean dryRun) {
+   public record PreparedArgs(String args, boolean dryRun) {
    }
 
-   public record Inner_StreamUtil(Packet<?> packet, boolean success, boolean infoOnly, String message, String source) {
-      static PacketCommandBuilder.Inner_StreamUtil built(Packet<?> packet, String source) {
-         return new PacketCommandBuilder.Inner_StreamUtil(packet, true, false, "", source == null ? "builder" : source);
+   public record BuildResult(Packet<?> packet, boolean success, boolean infoOnly, String message, String source) {
+      static PacketCommandBuilder.BuildResult built(Packet<?> packet, String source) {
+         return new PacketCommandBuilder.BuildResult(packet, true, false, "", source == null ? "builder" : source);
       }
 
-      static PacketCommandBuilder.Inner_StreamUtil error(String message) {
-         return new PacketCommandBuilder.Inner_StreamUtil(null, false, false, message == null ? "Packet build failed." : message, "");
+      static PacketCommandBuilder.BuildResult error(String message) {
+         return new PacketCommandBuilder.BuildResult(null, false, false, message == null ? "Packet build failed." : message, "");
       }
 
-      static PacketCommandBuilder.Inner_StreamUtil usage(String message) {
-         return new PacketCommandBuilder.Inner_StreamUtil(null, false, true, message == null ? "" : message, "");
+      static PacketCommandBuilder.BuildResult usage(String message) {
+         return new PacketCommandBuilder.BuildResult(null, false, true, message == null ? "" : message, "");
       }
    }
 }

@@ -10,23 +10,23 @@ public final class MiningTargetSearch {
    private MiningTargetSearch() {
    }
 
-   public static MiningTargetSearch.Inner_StreamUtil init(
+   public static MiningTargetSearch.SearchResult init(
       AiPathfinder.GridView grid,
       BlockPos start,
-      List<MiningTargetSearch.Inner_DataUtil> candidates,
+      List<MiningTargetSearch.Candidate> candidates,
       AiPathfinder.PathOptions caps,
       double reach,
       double eyeHeight,
       long deadline
    ) {
-      List<MiningTargetSearch.Inner_DataUtil> ordered = new ArrayList<>(candidates);
-      ordered.sort(Comparator.<MiningTargetSearch.Inner_DataUtil>comparingDouble(c -> init(start, c, reach, eyeHeight)).thenComparingLong(c -> c.cell.asLong()));
+      List<MiningTargetSearch.Candidate> ordered = new ArrayList<>(candidates);
+      ordered.sort(Comparator.<MiningTargetSearch.Candidate>comparingDouble(c -> init(start, c, reach, eyeHeight)).thenComparingLong(c -> c.cell.asLong()));
       BlockPos best = null;
       double bestCost = 1.0 / 0.0;
       boolean pending = false;
 
       label74:
-      for (MiningTargetSearch.Inner_DataUtil candidate : ordered) {
+      for (MiningTargetSearch.Candidate candidate : ordered) {
          if (!(init(start, candidate, reach, eyeHeight) >= bestCost)) {
             if (!Thread.currentThread().isInterrupted() && System.nanoTime() < deadline) {
                AiPathfinder.PathGoal goal = new InteractionGoal(candidate.cell, reach, eyeHeight).init(grid);
@@ -50,7 +50,7 @@ public final class MiningTargetSearch {
                   }
 
                   if (!finished) {
-                     return new MiningTargetSearch.Inner_StreamUtil(best, bestCost, pending, true);
+                     return new MiningTargetSearch.SearchResult(best, bestCost, pending, true);
                   }
 
                   AiPathfinder.PathResult path = search.resultCompat();
@@ -59,7 +59,7 @@ public final class MiningTargetSearch {
                      continue label74;
                   }
 
-                  for (AiPathfinder.UiHelper move : path.movements()) {
+                  for (AiPathfinder.PathStep move : path.movements()) {
                      cost += move.costTicks();
                      constructionRemaining -= move.cellsToPlace().size();
                   }
@@ -78,21 +78,21 @@ public final class MiningTargetSearch {
                continue;
             }
 
-            return new MiningTargetSearch.Inner_StreamUtil(best, bestCost, pending, true);
+            return new MiningTargetSearch.SearchResult(best, bestCost, pending, true);
          }
          break;
       }
 
-      return new MiningTargetSearch.Inner_StreamUtil(best, bestCost, pending, false);
+      return new MiningTargetSearch.SearchResult(best, bestCost, pending, false);
    }
 
-   private static double init(BlockPos start, MiningTargetSearch.Inner_DataUtil candidate, double reach, double eyeHeight) {
+   private static double init(BlockPos start, MiningTargetSearch.Candidate candidate, double reach, double eyeHeight) {
       return candidate.miningTicks + new InteractionGoal(candidate.cell, reach, eyeHeight).heuristic(start.getX(), start.getY(), start.getZ());
    }
 
-   public record Inner_DataUtil(BlockPos cell, double miningTicks) {
+   public record Candidate(BlockPos cell, double miningTicks) {
    }
 
-   public record Inner_StreamUtil(BlockPos target, double totalTicks, boolean pending, boolean timedOut) {
+   public record SearchResult(BlockPos target, double totalTicks, boolean pending, boolean timedOut) {
    }
 }

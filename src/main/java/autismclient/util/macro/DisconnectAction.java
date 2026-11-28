@@ -31,13 +31,13 @@ import net.minecraft.world.phys.HitResult.Type;
 public class DisconnectAction implements MacroAction {
    private boolean init_Z = true;
    public int delayMs = 0;
-   public DisconnectAction.Inner_StreamUtil mode = DisconnectAction.Inner_StreamUtil.DISCONNECT;
-   public DisconnectAction.Inner_BufferHelper lagMethod = DisconnectAction.Inner_BufferHelper.CLICK_SLOT;
-   public DisconnectAction.Inner_CachePool kickMethod = DisconnectAction.Inner_CachePool.HURT;
+   public DisconnectAction.DisconnectMode mode = DisconnectAction.DisconnectMode.DISCONNECT;
+   public DisconnectAction.LagMethod lagMethod = DisconnectAction.LagMethod.CLICK_SLOT;
+   public DisconnectAction.KickMethod kickMethod = DisconnectAction.KickMethod.HURT;
    public int packetCount = 200;
    public boolean useNextAction = false;
    private transient List<MacroAction> init_List = null;
-   public DisconnectAction.Inner_DataUtil trigger = DisconnectAction.Inner_DataUtil.TELEPORT;
+   public DisconnectAction.DisconnectTrigger trigger = DisconnectAction.DisconnectTrigger.TELEPORT;
    public double targetX = 0.0;
    public double targetY = 0.0;
    public double targetZ = 0.0;
@@ -270,7 +270,7 @@ public class DisconnectAction implements MacroAction {
          || act instanceof BundleDupeV2Action
          || act instanceof CustomMenuAction
          || act instanceof ReportAction
-         || act instanceof DisconnectAction reader && reader.mode == DisconnectAction.Inner_StreamUtil.AUTO_DISCONNECT;
+         || act instanceof DisconnectAction reader && reader.mode == DisconnectAction.DisconnectMode.AUTO_DISCONNECT;
    }
 
    private boolean load_Z(Minecraft mc) {
@@ -431,25 +431,25 @@ public class DisconnectAction implements MacroAction {
 
       if (tag.contains("mode")) {
          try {
-            this.mode = DisconnectAction.Inner_StreamUtil.valueOf(tag.getStringOr("mode", "DISCONNECT"));
+            this.mode = DisconnectAction.DisconnectMode.valueOf(tag.getStringOr("mode", "DISCONNECT"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = DisconnectAction.Inner_StreamUtil.DISCONNECT;
+            this.mode = DisconnectAction.DisconnectMode.DISCONNECT;
          }
       }
 
       if (tag.contains("lagMethod")) {
          try {
-            this.lagMethod = DisconnectAction.Inner_BufferHelper.valueOf(tag.getStringOr("lagMethod", "CLICK_SLOT"));
+            this.lagMethod = DisconnectAction.LagMethod.valueOf(tag.getStringOr("lagMethod", "CLICK_SLOT"));
          } catch (IllegalArgumentException ignored) {
-            this.lagMethod = DisconnectAction.Inner_BufferHelper.CLICK_SLOT;
+            this.lagMethod = DisconnectAction.LagMethod.CLICK_SLOT;
          }
       }
 
       if (tag.contains("kickMethod")) {
          try {
-            this.kickMethod = DisconnectAction.Inner_CachePool.valueOf(tag.getStringOr("kickMethod", "HURT"));
+            this.kickMethod = DisconnectAction.KickMethod.valueOf(tag.getStringOr("kickMethod", "HURT"));
          } catch (IllegalArgumentException ignored) {
-            this.kickMethod = DisconnectAction.Inner_CachePool.HURT;
+            this.kickMethod = DisconnectAction.KickMethod.HURT;
          }
       }
 
@@ -463,9 +463,9 @@ public class DisconnectAction implements MacroAction {
 
       if (tag.contains("trigger")) {
          try {
-            this.trigger = DisconnectAction.Inner_DataUtil.valueOf(tag.getStringOr("trigger", "TELEPORT"));
+            this.trigger = DisconnectAction.DisconnectTrigger.valueOf(tag.getStringOr("trigger", "TELEPORT"));
          } catch (IllegalArgumentException ignored) {
-            this.trigger = DisconnectAction.Inner_DataUtil.TELEPORT;
+            this.trigger = DisconnectAction.DisconnectTrigger.TELEPORT;
          }
       }
 
@@ -550,7 +550,7 @@ public class DisconnectAction implements MacroAction {
 
    @Override
    public String getIcon() {
-      return this.mode == DisconnectAction.Inner_StreamUtil.AUTO_DISCONNECT ? "ADC" : "DC";
+      return this.mode == DisconnectAction.DisconnectMode.AUTO_DISCONNECT ? "ADC" : "DC";
    }
 
    @Override
@@ -563,19 +563,19 @@ public class DisconnectAction implements MacroAction {
       this.init_Z = e;
    }
 
-   public enum Inner_BufferHelper {
+   public enum LagMethod {
       CLICK_SLOT,
       BOAT_NBT,
       ENTITY_NBT;
    }
 
-   public enum Inner_CachePool {
+   public enum KickMethod {
       HURT,
       CLIENT_SETTINGS,
       INVALID_SLOT;
    }
 
-   public enum Inner_DataUtil {
+   public enum DisconnectTrigger {
       TELEPORT,
       POSITION,
       WORLD_CHANGE,
@@ -583,7 +583,7 @@ public class DisconnectAction implements MacroAction {
       INVENTORY_CLEAR;
    }
 
-   public enum Inner_StreamUtil {
+   public enum DisconnectMode {
       DISCONNECT,
       KICK,
       KICK_DUPE,

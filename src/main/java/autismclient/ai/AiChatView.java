@@ -19,9 +19,9 @@ final class AiChatView {
    final autismclient.gui.ui.widgets.TextInputWidget input = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(16000).setHistoryNavigationEnabled(true);
    final AiActionMenu actionMenu;
    private final AiTranscriptLayout transcriptLayout = new AiTranscriptLayout();
-   private final AiUiKit.Inner_StreamUtil transcriptScroll = new AiUiKit.Inner_StreamUtil(true);
+   private final AiUiKit.ScrollPane transcriptScroll = new AiUiKit.ScrollPane(true);
    private final Map<AiService.TranscriptEntry, Boolean> expandedOverrides = new IdentityHashMap<>();
-   private AiTranscriptLayout.Inner_ConfigStore textMeasurer;
+   private AiTranscriptLayout.TextMeasurer textMeasurer;
    private int layoutRevision;
    private boolean init_Z;
    private boolean load_Z;
@@ -306,9 +306,9 @@ final class AiChatView {
       this.read(kit, status);
    }
 
-   private AiTranscriptLayout.Inner_TaskQueue transcriptMetrics(AiUiKit kit) {
+   private AiTranscriptLayout.LayoutMetrics transcriptMetrics(AiUiKit kit) {
       int line = AiUiKit.lineHeight();
-      return new AiTranscriptLayout.Inner_TaskQueue(line, AiUiKit.rowHeight(), 4 + kit.measureTextWidth("You") + 6, 13, 3, 2, 5);
+      return new AiTranscriptLayout.LayoutMetrics(line, AiUiKit.rowHeight(), 4 + kit.measureTextWidth("You") + 6, 13, 3, 2, 5);
    }
 
    private void renderTranscript(AiUiKit kit, autismclient.gui.f.NetHelper v, long now) {
@@ -322,7 +322,7 @@ final class AiChatView {
             }
 
             int contentW = Math.max(40, v.update() - 6 - 3);
-            AiTranscriptLayout.Inner_TaskQueue m = this.transcriptMetrics(kit);
+            AiTranscriptLayout.LayoutMetrics m = this.transcriptMetrics(kit);
             this.transcriptLayout.init(this.view.transcript, contentW, textEpoch(), m, this.expandedOverrides, this.layoutRevision, this.textMeasurer);
             boolean live = this.view.isWorking();
             int liveH = AiUiKit.lineHeight() + 2;
@@ -332,10 +332,10 @@ final class AiChatView {
             kit.pushClip(v);
             int top = v.write() - this.transcriptScroll.offset;
             int viewBottom = this.transcriptScroll.offset + v.sync();
-            List<AiTranscriptLayout.Inner_DataUtil> blocks = this.transcriptLayout.load();
+            List<AiTranscriptLayout.MessageBlock> blocks = this.transcriptLayout.load();
 
             for (int i = this.transcriptLayout.firstBlockAt(this.transcriptScroll.offset); i < blocks.size(); i++) {
-               AiTranscriptLayout.Inner_DataUtil block = blocks.get(i);
+               AiTranscriptLayout.MessageBlock block = blocks.get(i);
                if (block.top() >= viewBottom) {
                   break;
                }
@@ -343,9 +343,9 @@ final class AiChatView {
                autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(v.read(), top + block.top(), contentW, block.bottom() - block.top());
                AiService.TranscriptEntry message = block.message();
                Runnable toggle = null;
-               if (block.kind() == AiTranscriptLayout.Inner_CachePool.USER) {
+               if (block.kind() == AiTranscriptLayout.LineKind.USER) {
                   PacketUtil.load(kit.graphics, bounds, 3, colors.cardSurface);
-               } else if (block.kind() == AiTranscriptLayout.Inner_CachePool.TOOL && !message.detail().isBlank()) {
+               } else if (block.kind() == AiTranscriptLayout.LineKind.TOOL && !message.detail().isBlank()) {
                   boolean expanded = block.expanded();
                   toggle = () -> this.toggleMessageExpanded(message, expanded);
                   autismclient.gui.f.NetHelper head = autismclient.gui.f.NetHelper.init(bounds.read(), bounds.write(), bounds.update(), m.tool());
@@ -357,10 +357,10 @@ final class AiChatView {
                kit.addInteractiveRegion(bounds, toggle, () -> copyMessageToClipboard(message), null);
             }
 
-            List<AiTranscriptLayout.Inner_BufferHelper> lines = this.transcriptLayout.lines();
+            List<AiTranscriptLayout.LayoutLine> lines = this.transcriptLayout.lines();
 
             for (int i = this.transcriptLayout.firstLineAt(this.transcriptScroll.offset); i < lines.size(); i++) {
-               AiTranscriptLayout.Inner_BufferHelper line = lines.get(i);
+               AiTranscriptLayout.LayoutLine line = lines.get(i);
                if (line.y() >= viewBottom) {
                   break;
                }
@@ -457,7 +457,7 @@ final class AiChatView {
       return var10000;
    }
 
-   private void drawTranscriptLine(AiUiKit kit, AiTranscriptLayout.Inner_BufferHelper line, int left, int x, int y, int contentW) {
+   private void drawTranscriptLine(AiUiKit kit, AiTranscriptLayout.LayoutLine line, int left, int x, int y, int contentW) {
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       if (line.spans() == null) {
          kit.drawText(line.text(), x, y, colors.textPrimary);
@@ -488,14 +488,14 @@ final class AiChatView {
                }
          }
 
-         int textY = line.deco() == AiTranscriptLayout.Inner_StreamUtil.HEADING ? y + 1 : y;
-         int base = line.deco() == AiTranscriptLayout.Inner_StreamUtil.QUOTE ? colors.textSecondary : colors.textPrimary;
+         int textY = line.deco() == AiTranscriptLayout.RowDecoration.HEADING ? y + 1 : y;
+         int base = line.deco() == AiTranscriptLayout.RowDecoration.QUOTE ? colors.textSecondary : colors.textPrimary;
          float cx = x;
 
-         for (AiTranscriptLayout.Inner_JsonUtil span : line.spans()) {
+         for (AiTranscriptLayout.StyledSpan span : line.spans()) {
             int style = span.style();
             int color = base;
-            if ((style & 4) != 0 && line.deco() != AiTranscriptLayout.Inner_StreamUtil.CODE) {
+            if ((style & 4) != 0 && line.deco() != AiTranscriptLayout.RowDecoration.CODE) {
                PacketUtil.load(kit.graphics, autismclient.gui.f.NetHelper.init(Math.round(cx) - 1, y, span.width() + 2, h), 2, colors.innerHighlight);
                color = -10497050;
             } else if ((style & 8) != 0) {

@@ -22,7 +22,7 @@ public class LookAtBlockAction implements MacroAction {
    public int blockX = 0;
    public int blockY = 0;
    public int blockZ = 0;
-   public LookAtBlockAction.Inner_StreamUtil targetMode = LookAtBlockAction.Inner_StreamUtil.SPECIFIC;
+   public LookAtBlockAction.TargetMode targetMode = LookAtBlockAction.TargetMode.SPECIFIC;
    public List<String> blockIds = new ArrayList<>();
    public List<String> entityIds = new ArrayList<>();
    public double searchRadius = 16.0;
@@ -38,7 +38,7 @@ public class LookAtBlockAction implements MacroAction {
       this.blockX = x;
       this.blockY = y;
       this.blockZ = z;
-      this.targetMode = LookAtBlockAction.Inner_StreamUtil.SPECIFIC;
+      this.targetMode = LookAtBlockAction.TargetMode.SPECIFIC;
    }
 
    public static String entityRef(Entity entity) {
@@ -55,9 +55,9 @@ public class LookAtBlockAction implements MacroAction {
       return RotateAction.stepForSmoothness(this.smoothness);
    }
 
-   public LookAtBlockAction.Inner_DataUtil resolveTarget(Minecraft mc) {
+   public LookAtBlockAction.LookTarget resolveTarget(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
-         LookAtBlockAction.Inner_DataUtil var10000;
+         LookAtBlockAction.LookTarget var10000;
          switch (this.targetMode) {
             case SPECIFIC:
                var10000 = rotationTo(mc.player.getEyePosition(), new Vec3(this.blockX + 0.5, this.blockY + 0.5, this.blockZ + 0.5));
@@ -81,7 +81,7 @@ public class LookAtBlockAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         LookAtBlockAction.Inner_DataUtil target = this.resolveTarget(mc);
+         LookAtBlockAction.LookTarget target = this.resolveTarget(mc);
          if (target != null && !this.smooth) {
             mc.player.setYRot(target.init());
             mc.player.setXRot(target.load());
@@ -135,12 +135,12 @@ public class LookAtBlockAction implements MacroAction {
 
       if (tag.contains("targetMode")) {
          try {
-            this.targetMode = LookAtBlockAction.Inner_StreamUtil.valueOf(tag.getStringOr("targetMode", LookAtBlockAction.Inner_StreamUtil.SPECIFIC.name()));
+            this.targetMode = LookAtBlockAction.TargetMode.valueOf(tag.getStringOr("targetMode", LookAtBlockAction.TargetMode.SPECIFIC.name()));
          } catch (Exception ignored) {
-            this.targetMode = LookAtBlockAction.Inner_StreamUtil.SPECIFIC;
+            this.targetMode = LookAtBlockAction.TargetMode.SPECIFIC;
          }
       } else {
-         this.targetMode = LookAtBlockAction.Inner_StreamUtil.SPECIFIC;
+         this.targetMode = LookAtBlockAction.TargetMode.SPECIFIC;
       }
 
       this.blockIds.clear();
@@ -218,7 +218,7 @@ public class LookAtBlockAction implements MacroAction {
       this.enabled = e;
    }
 
-   private LookAtBlockAction.Inner_DataUtil nearestBlockTarget(Minecraft mc) {
+   private LookAtBlockAction.LookTarget nearestBlockTarget(Minecraft mc) {
       if (mc.player != null && mc.level != null && !this.blockIds.isEmpty()) {
          Vec3 eyePos = mc.player.getEyePosition();
          BlockPos center = mc.player.blockPosition();
@@ -252,7 +252,7 @@ public class LookAtBlockAction implements MacroAction {
       }
    }
 
-   private LookAtBlockAction.Inner_DataUtil nearestEntityTarget(Minecraft mc) {
+   private LookAtBlockAction.LookTarget nearestEntityTarget(Minecraft mc) {
       if (mc.player != null && mc.level != null && !this.entityIds.isEmpty()) {
          Set<String> typeIds = new HashSet<>();
          Set<String> specificUuids = new HashSet<>();
@@ -332,18 +332,18 @@ public class LookAtBlockAction implements MacroAction {
       return this.entityIds.size() == 1 ? "Nearest " + first : "Nearest " + first + " (+" + (this.entityIds.size() - 1) + ")";
    }
 
-   private static LookAtBlockAction.Inner_DataUtil rotationTo(Vec3 from, Vec3 to) {
+   private static LookAtBlockAction.LookTarget rotationTo(Vec3 from, Vec3 to) {
       Vec3 diff = to.subtract(from);
       double dist = Math.sqrt(diff.x * diff.x + diff.z * diff.z);
       float yaw = (float)Math.toDegrees(Math.atan2(-diff.x, diff.z));
       float pitch = (float)(-Math.toDegrees(Math.atan2(diff.y, dist)));
-      return new LookAtBlockAction.Inner_DataUtil(yaw, pitch);
+      return new LookAtBlockAction.LookTarget(yaw, pitch);
    }
 
-   public record Inner_DataUtil(float init, float load) {
+   public record LookTarget(float init, float load) {
    }
 
-   public enum Inner_StreamUtil {
+   public enum TargetMode {
       SPECIFIC,
       BLOCK,
       ENTITY;

@@ -1170,11 +1170,11 @@ final class AiSchematicActions {
       };
    }
 
-   static List<AiCellMaterials.Inner_CachePool> materialPlans(AiBuilder.CellSpec cell) {
+   static List<AiCellMaterials.MaterialRequirement> materialPlans(AiBuilder.CellSpec cell) {
       return AiCellMaterials.init(cell);
    }
 
-   static List<AiCellMaterials.Inner_CachePool> materialPlans(AiBuilder.CellSpec cell, BlockPos target) {
+   static List<AiCellMaterials.MaterialRequirement> materialPlans(AiBuilder.CellSpec cell, BlockPos target) {
       Minecraft mc = Minecraft.getInstance();
       boolean waterAbove = mc.level.getFluidState(target.above()).is(FluidTags.WATER);
       return AiCellMaterials.init(cell, mc.level.getBlockState(target), waterAbove);
@@ -1188,8 +1188,8 @@ final class AiSchematicActions {
       return distinctItems(materialPlans(cell, target));
    }
 
-   private static List<Item> distinctItems(List<AiCellMaterials.Inner_CachePool> requirements) {
-      return requirements.stream().map(AiCellMaterials.Inner_CachePool::item).distinct().toList();
+   private static List<Item> distinctItems(List<AiCellMaterials.MaterialRequirement> requirements) {
+      return requirements.stream().map(AiCellMaterials.MaterialRequirement::item).distinct().toList();
    }
 
    static AiOperation load(final AiBuilder.CellSpec cell, final BlockPos target, Set<Long> shared) {

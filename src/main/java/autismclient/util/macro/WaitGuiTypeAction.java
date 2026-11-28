@@ -8,7 +8,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 
 public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
-   public WaitGuiTypeAction.Inner_DataUtil waitMode = WaitGuiTypeAction.Inner_DataUtil.OPEN;
+   public WaitGuiTypeAction.WaitMode waitMode = WaitGuiTypeAction.WaitMode.OPEN;
    public String guiType = "ANY";
    public String title = "";
    public PatternCaptureMatcher.MatchMode matchMode = PatternCaptureMatcher.MatchMode.MATCH;
@@ -78,7 +78,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.waitMode = MacroNbtCodecHelper.parseEnum(WaitGuiTypeAction.Inner_DataUtil.class, tag.getStringOr("waitMode", "OPEN"), WaitGuiTypeAction.Inner_DataUtil.OPEN);
+      this.waitMode = MacroNbtCodecHelper.parseEnum(WaitGuiTypeAction.WaitMode.class, tag.getStringOr("waitMode", "OPEN"), WaitGuiTypeAction.WaitMode.OPEN);
       this.guiType = tag.getStringOr("guiType", "ANY");
       this.title = tag.getStringOr("title", "");
       this.matchMode = MacroNbtCodecHelper.parseEnum(PatternCaptureMatcher.MatchMode.class, tag.getStringOr("matchMode", "MATCH"), PatternCaptureMatcher.MatchMode.MATCH);
@@ -107,7 +107,7 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
       this.saveAs = value == null ? "" : value;
    }
 
-   public enum Inner_DataUtil {
+   public enum WaitMode {
       OPEN,
       CLOSE;
    }

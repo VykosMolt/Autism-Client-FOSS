@@ -13,8 +13,8 @@ import net.minecraft.world.phys.Vec3;
 
 public final class MovementModuleHooks {
    private static final Minecraft MC = Minecraft.getInstance();
-   private static volatile MovementModuleHooks.Inner_StreamUtil init_ai_StreamUtil = MovementModuleHooks.Inner_StreamUtil.init(-1);
-   private static volatile MovementModuleHooks.Inner_DataUtil init_ai_DataUtil = MovementModuleHooks.Inner_DataUtil.init(-1);
+   private static volatile MovementModuleHooks.ToggleSnapshot init_ai_StreamUtil = MovementModuleHooks.ToggleSnapshot.init(-1);
+   private static volatile MovementModuleHooks.ModuleRefSnapshot init_ai_DataUtil = MovementModuleHooks.ModuleRefSnapshot.init(-1);
 
    private MovementModuleHooks() {
    }
@@ -131,26 +131,26 @@ public final class MovementModuleHooks {
       return al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled();
    }
 
-   private static MovementModuleHooks.Inner_StreamUtil init_ai_StreamUtil() {
+   private static MovementModuleHooks.ToggleSnapshot init_ai_StreamUtil() {
       int revision = al.init_I();
-      MovementModuleHooks.Inner_StreamUtil snapshot = init_ai_StreamUtil;
+      MovementModuleHooks.ToggleSnapshot snapshot = init_ai_StreamUtil;
       if (snapshot.init_I() == revision) {
          return snapshot;
       }
 
       if (al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled()) {
-         snapshot = new MovementModuleHooks.Inner_StreamUtil(revision, sprint.load(), sprint.write(), sprint.update());
+         snapshot = new MovementModuleHooks.ToggleSnapshot(revision, sprint.load(), sprint.write(), sprint.update());
       } else {
-         snapshot = MovementModuleHooks.Inner_StreamUtil.init(revision);
+         snapshot = MovementModuleHooks.ToggleSnapshot.init(revision);
       }
 
       init_ai_StreamUtil = snapshot;
       return snapshot;
    }
 
-   private static MovementModuleHooks.Inner_DataUtil init_ai_DataUtil() {
+   private static MovementModuleHooks.ModuleRefSnapshot init_ai_DataUtil() {
       int revision = al.init_I();
-      MovementModuleHooks.Inner_DataUtil snapshot = init_ai_DataUtil;
+      MovementModuleHooks.ModuleRefSnapshot snapshot = init_ai_DataUtil;
       if (snapshot.init_I() == revision) {
          return snapshot;
       }
@@ -159,7 +159,7 @@ public final class MovementModuleHooks {
       f.Inner_ListPool speed = al.init_Module_Str("speed") instanceof f.Inner_ListPool typed && typed.isEnabled() ? typed : null;
       Module noFall = al.init_Module_Str("no-fall");
       boolean noFallAntiBounce = noFall != null && noFall.isEnabled() && Boolean.parseBoolean(noFall.value("anti-bounce"));
-      snapshot = new MovementModuleHooks.Inner_DataUtil(revision, flight, speed, noFallAntiBounce);
+      snapshot = new MovementModuleHooks.ModuleRefSnapshot(revision, flight, speed, noFallAntiBounce);
       init_ai_DataUtil = snapshot;
       return snapshot;
    }
@@ -214,7 +214,7 @@ public final class MovementModuleHooks {
          || MC.player == null
          || entity != MC.player && entity != MC.player.getVehicle()) {
          if (entity == MC.player && !aD.init_Z()) {
-            MovementModuleHooks.Inner_DataUtil state = init_ai_DataUtil();
+            MovementModuleHooks.ModuleRefSnapshot state = init_ai_DataUtil();
             f.Inner_ListPool speed = state.init_f_ListPool();
             if (speed != null) {
                Vec3 movement = entity.getDeltaMovement();
@@ -227,15 +227,15 @@ public final class MovementModuleHooks {
       }
    }
 
-   private record Inner_DataUtil(int init_I, f.Inner_FileCache init_f_FileCache, f.Inner_ListPool init_f_ListPool, boolean init_Z) {
-      static MovementModuleHooks.Inner_DataUtil init(int revision) {
-         return new MovementModuleHooks.Inner_DataUtil(revision, null, null, false);
+   private record ModuleRefSnapshot(int init_I, f.Inner_FileCache init_f_FileCache, f.Inner_ListPool init_f_ListPool, boolean init_Z) {
+      static MovementModuleHooks.ModuleRefSnapshot init(int revision) {
+         return new MovementModuleHooks.ModuleRefSnapshot(revision, null, null, false);
       }
    }
 
-   private record Inner_StreamUtil(int init_I, boolean init_Z, boolean load, boolean read) {
-      static MovementModuleHooks.Inner_StreamUtil init(int revision) {
-         return new MovementModuleHooks.Inner_StreamUtil(revision, false, false, false);
+   private record ToggleSnapshot(int init_I, boolean init_Z, boolean load, boolean read) {
+      static MovementModuleHooks.ToggleSnapshot init(int revision) {
+         return new MovementModuleHooks.ToggleSnapshot(revision, false, false, false);
       }
    }
 }

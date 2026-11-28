@@ -14,16 +14,16 @@ import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.phys.Vec3;
 
 final class AiTelly {
-   static int init_I_I_List(int held, List<AiTelly.Inner_DataUtil> hotbar) {
+   static int init_I_I_List(int held, List<AiTelly.HotbarEntry> hotbar) {
       if (held >= 0 && held < hotbar.size()) {
-         AiTelly.Inner_DataUtil entry = hotbar.get(held);
+         AiTelly.HotbarEntry entry = hotbar.get(held);
          if (entry.construction() && entry.count() > 0) {
             return held;
          }
       }
 
       for (int i = 0; i < hotbar.size(); i++) {
-         AiTelly.Inner_DataUtil entry = hotbar.get(i);
+         AiTelly.HotbarEntry entry = hotbar.get(i);
          if (entry.construction() && entry.count() > 0) {
             return i;
          }
@@ -36,8 +36,8 @@ final class AiTelly {
       return playerY < walkSurfaceY - 2.0;
    }
 
-   static List<AiTelly.Inner_DataUtil> init_List(Minecraft mc) {
-      List<AiTelly.Inner_DataUtil> view = new ArrayList<>(9);
+   static List<AiTelly.HotbarEntry> init_List(Minecraft mc) {
+      List<AiTelly.HotbarEntry> view = new ArrayList<>(9);
 
       for (int i = 0; i < 9; i++) {
          ItemStack stack = mc.player.getInventory().getItem(i);
@@ -46,7 +46,7 @@ final class AiTelly {
             && block.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, mc.player.blockPosition())
             && !block.getBlock().defaultBlockState().hasBlockEntity()
             && autismclient.ai.engine.AiRestock.isConsumableBuildingBlock(stack, mc.player.getInventory());
-         view.add(new AiTelly.Inner_DataUtil(construction, construction ? stack.getCount() : 0));
+         view.add(new AiTelly.HotbarEntry(construction, construction ? stack.getCount() : 0));
       }
 
       return view;
@@ -55,7 +55,7 @@ final class AiTelly {
    static int init_I(Minecraft mc) {
       int total = 0;
 
-      for (AiTelly.Inner_DataUtil entry : init_List(mc)) {
+      for (AiTelly.HotbarEntry entry : init_List(mc)) {
          total += entry.count();
       }
 
@@ -73,7 +73,7 @@ final class AiTelly {
    }
 
    static AiOperation init(JsonObject args) {
-      final AiTelly.Inner_CachePool plan = AiTelly.Inner_CachePool.parse(args);
+      final AiTelly.TellyPlan plan = AiTelly.TellyPlan.parse(args);
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          return new AiOperation() {
@@ -130,7 +130,7 @@ final class AiTelly {
                );
                return new autismclient.ai.engine.AiBridgeDriver(
                   lane,
-                  autismclient.ai.engine.AiBridgeDriver.chooseStyle(plan.mode() == AiTelly.Inner_StreamUtil.TELLY, lane, mc.player, AiTelly.init_I(mc)),
+                  autismclient.ai.engine.AiBridgeDriver.chooseStyle(plan.mode() == AiTelly.BridgeMode.TELLY, lane, mc.player, AiTelly.init_I(mc)),
                   this.init_DataUtil
                );
             }
@@ -209,15 +209,15 @@ final class AiTelly {
                            );
                      }
 
-                     autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil step = this.init_NetHelper.init(slot, this::init, this.init_List::add);
-                     if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING) {
+                     autismclient.ai.engine.AiBridgeDriver.BridgeStatus step = this.init_NetHelper.init(slot, this::init, this.init_List::add);
+                     if (step == autismclient.ai.engine.AiBridgeDriver.BridgeStatus.INVALID_FOOTING) {
                         return this.init(AiOperation.Status.FAILED, "Bridge needs footing at the support's top level");
                      }
 
-                     if (step != autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.FELL
+                     if (step != autismclient.ai.engine.AiBridgeDriver.BridgeStatus.FELL
                         && !AiTelly.init_Z_D_D(mc.player.getY(), this.init_NetHelper.getLane().floorY() + 1)) {
                         String style = this.init_NetHelper.getBridger().getStyle().name().toLowerCase(Locale.ROOT);
-                        if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.DONE) {
+                        if (step == autismclient.ai.engine.AiBridgeDriver.BridgeStatus.DONE) {
                            this.init_NetHelper = null;
                            return AiGameOperations.result(
                               AiOperation.Status.RUNNING, "Lane done", AiJson.objectOf("placed", this.init_List.size(), "mode", style)
@@ -297,8 +297,8 @@ final class AiTelly {
       }
    }
 
-   record Inner_CachePool(Integer targetX, Integer targetZ, Double yawDegrees, int blocks, AiTelly.Inner_StreamUtil mode, boolean verify, int timeoutSeconds) {
-      static AiTelly.Inner_CachePool parse(JsonObject args) {
+   record TellyPlan(Integer targetX, Integer targetZ, Double yawDegrees, int blocks, AiTelly.BridgeMode mode, boolean verify, int timeoutSeconds) {
+      static AiTelly.TellyPlan parse(JsonObject args) {
          boolean hasX = args.has("x");
          boolean hasZ = args.has("z");
          boolean hasDirection = args.has("direction");
@@ -312,23 +312,23 @@ final class AiTelly {
             );
          }
 
-         AiTelly.Inner_StreamUtil var10000;
+         AiTelly.BridgeMode var10000;
          switch (AiJson.getString(args, "mode", "telly").toLowerCase(Locale.ROOT)) {
             case "walk":
-               var10000 = AiTelly.Inner_StreamUtil.WALK;
+               var10000 = AiTelly.BridgeMode.WALK;
                break;
             case "sprint":
-               var10000 = AiTelly.Inner_StreamUtil.SPRINT;
+               var10000 = AiTelly.BridgeMode.SPRINT;
                break;
             case "telly":
-               var10000 = AiTelly.Inner_StreamUtil.TELLY;
+               var10000 = AiTelly.BridgeMode.TELLY;
                break;
             default:
                throw new IllegalArgumentException("mode must be walk, sprint or telly");
          }
 
-         AiTelly.Inner_StreamUtil mode = var10000;
-         return new AiTelly.Inner_CachePool(
+         AiTelly.BridgeMode mode = var10000;
+         return new AiTelly.TellyPlan(
             hasX ? AiJson.getInt(args, "x", 0) : null,
             hasX ? AiJson.getInt(args, "z", 0) : null,
             hasDirection ? AiJson.getDouble(args, "direction", 0.0) : null,
@@ -348,10 +348,10 @@ final class AiTelly {
       }
    }
 
-   record Inner_DataUtil(boolean construction, int count) {
+   record HotbarEntry(boolean construction, int count) {
    }
 
-   enum Inner_StreamUtil {
+   enum BridgeMode {
       WALK,
       SPRINT,
       TELLY;

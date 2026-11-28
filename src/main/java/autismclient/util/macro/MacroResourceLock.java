@@ -5,12 +5,12 @@ import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MacroResourceLock {
-   private final EnumMap<MacroResourceClassifier.Inner_DataUtil, Object> owners = new EnumMap<>(MacroResourceClassifier.Inner_DataUtil.class);
+   private final EnumMap<MacroResourceClassifier.MacroResource, Object> owners = new EnumMap<>(MacroResourceClassifier.MacroResource.class);
 
-   public synchronized AutoCloseable init(EnumSet<MacroResourceClassifier.Inner_DataUtil> resources) {
-      EnumSet<MacroResourceClassifier.Inner_DataUtil> claimed = resources.clone();
+   public synchronized AutoCloseable init(EnumSet<MacroResourceClassifier.MacroResource> resources) {
+      EnumSet<MacroResourceClassifier.MacroResource> claimed = resources.clone();
 
-      for (MacroResourceClassifier.Inner_DataUtil resource : claimed) {
+      for (MacroResourceClassifier.MacroResource resource : claimed) {
          if (this.owners.containsKey(resource)) {
             return null;
          }
@@ -18,7 +18,7 @@ public final class MacroResourceLock {
 
       Object token = new Object();
 
-      for (MacroResourceClassifier.Inner_DataUtil resource : claimed) {
+      for (MacroResourceClassifier.MacroResource resource : claimed) {
          this.owners.put(resource, token);
       }
 
@@ -26,7 +26,7 @@ public final class MacroResourceLock {
       return () -> {
          if (closed.compareAndSet(false, true)) {
             synchronized (this) {
-               for (MacroResourceClassifier.Inner_DataUtil resourcex : claimed) {
+               for (MacroResourceClassifier.MacroResource resourcex : claimed) {
                   if (this.owners.get(resourcex) == token) {
                      this.owners.remove(resourcex);
                   }
@@ -36,7 +36,7 @@ public final class MacroResourceLock {
       };
    }
 
-   public synchronized boolean init(MacroResourceClassifier.Inner_DataUtil resource) {
+   public synchronized boolean init(MacroResourceClassifier.MacroResource resource) {
       return this.owners.containsKey(resource);
    }
 }

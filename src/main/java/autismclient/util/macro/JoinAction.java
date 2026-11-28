@@ -25,7 +25,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 
 public class JoinAction implements MacroAction {
-   public static final autismclient.util.JoinMacroController.Inner_StreamUtil DEFAULT_WHEN = autismclient.util.JoinMacroController.Inner_StreamUtil.PLAYABLE;
+   public static final autismclient.util.JoinMacroController.JoinTiming DEFAULT_WHEN = autismclient.util.JoinMacroController.JoinTiming.PLAYABLE;
    public static final int DEFAULT_TIMEOUT_SEC = 60;
    public static final int MAX_TIMEOUT_SEC = 300;
    static final long init_J = 5000L;
@@ -82,8 +82,8 @@ public class JoinAction implements MacroAction {
       return last != null && last.ip != null ? last.ip.trim() : "";
    }
 
-   public autismclient.util.JoinMacroController.Inner_StreamUtil timing() {
-      return autismclient.util.JoinMacroController.Inner_StreamUtil.init(this.when);
+   public autismclient.util.JoinMacroController.JoinTiming timing() {
+      return autismclient.util.JoinMacroController.JoinTiming.init(this.when);
    }
 
    public boolean join(Minecraft mc, Consumer<String> status) throws InterruptedException {
@@ -104,7 +104,7 @@ public class JoinAction implements MacroAction {
 
       try {
          long budgetMs = Math.max(1, Math.min(300, this.timeoutSec)) * 1000L;
-         return new JoinAction.Inner_CachePool(mc, address, this.timing(), budgetMs, status == null ? s -> {} : status).init_Z();
+         return new JoinAction.JoinAttempt(mc, address, this.timing(), budgetMs, status == null ? s -> {} : status).init_Z();
       } finally {
          init_ReentrantLock.unlock();
       }
@@ -196,7 +196,7 @@ public class JoinAction implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.server = tag.getStringOr("server", "");
-      this.when = autismclient.util.JoinMacroController.Inner_StreamUtil.init(tag.getStringOr("when", DEFAULT_WHEN.id())).id();
+      this.when = autismclient.util.JoinMacroController.JoinTiming.init(tag.getStringOr("when", DEFAULT_WHEN.id())).id();
       this.timeoutSec = Math.max(1, Math.min(300, tag.getIntOr("timeoutSec", 60)));
       if (tag.contains("enabled")) {
          this.init_Z = tag.getBooleanOr("enabled", true);
@@ -229,14 +229,14 @@ public class JoinAction implements MacroAction {
       this.init_Z = e;
    }
 
-   private static final class Inner_CachePool {
+   private static final class JoinAttempt {
       private final Minecraft mc;
       private final String address;
-      private final autismclient.util.JoinMacroController.Inner_StreamUtil timing;
+      private final autismclient.util.JoinMacroController.JoinTiming timing;
       private final long budgetMs;
       private final Consumer<String> status;
-      private final autismclient.util.JoinMacroController.Inner_DataUtil init_aA_DataUtil = new autismclient.util.JoinMacroController.Inner_DataUtil();
-      private JoinAction.Inner_DataUtil init_ClassCache_DataUti;
+      private final autismclient.util.JoinMacroController.ReadinessDetector init_aA_DataUtil = new autismclient.util.JoinMacroController.ReadinessDetector();
+      private JoinAction.ConnectAttempt init_ClassCache_DataUti;
       private int init_I;
       private long load_J;
       private long read_J;
@@ -246,7 +246,7 @@ public class JoinAction implements MacroAction {
       private Screen screen;
       private String line;
 
-      Inner_CachePool(Minecraft mc, String address, autismclient.util.JoinMacroController.Inner_StreamUtil timing, long budgetMs, Consumer<String> status) {
+      JoinAttempt(Minecraft mc, String address, autismclient.util.JoinMacroController.JoinTiming timing, long budgetMs, Consumer<String> status) {
          this.mc = mc;
          this.address = address;
          this.timing = timing;
@@ -312,7 +312,7 @@ public class JoinAction implements MacroAction {
                return this.load() ? this.read() : null;
             }
 
-            this.init_ClassCache_DataUti = JoinAction.Inner_DataUtil.init_ClassCache_DataUti_ConnectScreen_J(connecting, now);
+            this.init_ClassCache_DataUti = JoinAction.ConnectAttempt.init_ClassCache_DataUti_ConnectScreen_J(connecting, now);
             this.write = now;
          }
 
@@ -382,7 +382,7 @@ public class JoinAction implements MacroAction {
          this.init_I++;
          this.write = now;
          this.update = now + 5000L;
-         JoinAction.Inner_DataUtil next = new JoinAction.Inner_DataUtil(now, true);
+         JoinAction.ConnectAttempt next = new JoinAction.ConnectAttempt(now, true);
          this.init_ClassCache_DataUti = next;
          this.setStatusLine(this.init_I > 1 ? "Joining " + this.address + " (try " + this.init_I + ")" : "Joining " + this.address);
          ServerAddress target = ServerAddress.parseString(this.address);
@@ -454,7 +454,7 @@ public class JoinAction implements MacroAction {
       }
 
       private void init_V() {
-         JoinAction.Inner_DataUtil current = this.init_ClassCache_DataUti;
+         JoinAction.ConnectAttempt current = this.init_ClassCache_DataUti;
          if (current != null && current.ours) {
             current.read = true;
             ConnectScreen screen = current.screen;
@@ -472,7 +472,7 @@ public class JoinAction implements MacroAction {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class ConnectAttempt {
       volatile boolean ours;
       volatile ConnectScreen screen;
       volatile boolean load_Z;
@@ -480,48 +480,48 @@ public class JoinAction implements MacroAction {
       private final long startedAt;
       private long load_J = -1L;
 
-      Inner_DataUtil(long startedAt, boolean ours) {
+      ConnectAttempt(long startedAt, boolean ours) {
          this.startedAt = startedAt;
          this.ours = ours;
       }
 
-      static JoinAction.Inner_DataUtil init_ClassCache_DataUti_ConnectScreen_J(ConnectScreen screen, long now) {
-         JoinAction.Inner_DataUtil attempt = new JoinAction.Inner_DataUtil(now, false);
+      static JoinAction.ConnectAttempt init_ClassCache_DataUti_ConnectScreen_J(ConnectScreen screen, long now) {
+         JoinAction.ConnectAttempt attempt = new JoinAction.ConnectAttempt(now, false);
          attempt.screen = screen;
          attempt.load_Z = true;
          return attempt;
       }
 
-      JoinAction.Inner_StreamUtil init_ClassCache_StreamU_Minecraft_J(Minecraft mc, long now) {
+      JoinAction.AttemptStatus init_ClassCache_StreamU_Minecraft_J(Minecraft mc, long now) {
          if (!this.load_Z) {
-            return now - this.startedAt > 10000L ? JoinAction.Inner_StreamUtil.FAILED : JoinAction.Inner_StreamUtil.ALIVE;
+            return now - this.startedAt > 10000L ? JoinAction.AttemptStatus.FAILED : JoinAction.AttemptStatus.ALIVE;
          }
 
          ConnectScreen connecting = this.screen;
          if (connecting == null) {
-            return JoinAction.Inner_StreamUtil.FAILED;
+            return JoinAction.AttemptStatus.FAILED;
          }
 
          AutismConnectScreenAccessor access = (AutismConnectScreenAccessor)connecting;
          if (access.autism$aborted()) {
-            return this.read ? JoinAction.Inner_StreamUtil.FAILED : JoinAction.Inner_StreamUtil.CANCELLED;
+            return this.read ? JoinAction.AttemptStatus.FAILED : JoinAction.AttemptStatus.CANCELLED;
          }
 
          Screen current = OverlayScreenController.getActualScreen(mc);
          if (current == connecting || init_Z_AutismConnectScree(access)) {
             this.load_J = -1L;
-            return JoinAction.Inner_StreamUtil.ALIVE;
+            return JoinAction.AttemptStatus.ALIVE;
          }
 
          if (current instanceof DisconnectedScreen) {
-            return JoinAction.Inner_StreamUtil.FAILED;
+            return JoinAction.AttemptStatus.FAILED;
          }
 
          if (this.load_J < 0L) {
             this.load_J = now;
          }
 
-         return now - this.load_J > 2000L ? JoinAction.Inner_StreamUtil.FAILED : JoinAction.Inner_StreamUtil.ALIVE;
+         return now - this.load_J > 2000L ? JoinAction.AttemptStatus.FAILED : JoinAction.AttemptStatus.ALIVE;
       }
 
       boolean init_Z_Minecraft(Minecraft mc) {
@@ -540,7 +540,7 @@ public class JoinAction implements MacroAction {
       }
    }
 
-   enum Inner_StreamUtil {
+   enum AttemptStatus {
       ALIVE,
       FAILED,
       CANCELLED;

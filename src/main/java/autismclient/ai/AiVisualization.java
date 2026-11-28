@@ -53,15 +53,15 @@ public final class AiVisualization {
    private static final int poll = 16384;
    private static final long init_J = 450000000L;
    private static final long load_J = 200000000L;
-   private static final Map<Object, AiVisualization.Inner_CachePool> layers = new IdentityHashMap<>();
+   private static final Map<Object, AiVisualization.OverlayLayer> layers = new IdentityHashMap<>();
    private static final Map<BlockState, autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil> ghostModelCache = new IdentityHashMap<>();
-   private static final AutismBufferSource.Inner_DataUtil ghostBufferAllocator = new AutismBufferSource.Inner_DataUtil(4194304);
+   private static final AutismBufferSource.LazySource ghostBufferAllocator = new AutismBufferSource.LazySource(4194304);
    private static AiSettings settings = new AiSettings();
    private static boolean initialized;
    private static ClientLevel lastLevel;
    private static Object lastModelSet;
-   private static AiVisualization.Inner_DataUtil frame = AiVisualization.Inner_DataUtil.EMPTY;
-   private static AiVisualization.Inner_DataUtil hudFrame = AiVisualization.Inner_DataUtil.EMPTY;
+   private static AiVisualization.RenderFrame frame = AiVisualization.RenderFrame.EMPTY;
+   private static AiVisualization.RenderFrame hudFrame = AiVisualization.RenderFrame.EMPTY;
    private static int tickCounter;
    private static int statQuads;
    private static int statGhosts;
@@ -145,11 +145,11 @@ public final class AiVisualization {
       }
    }
 
-   private static AiVisualization.Inner_CachePool layerFor(Object owner) {
+   private static AiVisualization.OverlayLayer layerFor(Object owner) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.player != null) {
-         AiVisualization.Inner_CachePool l = layers.computeIfAbsent(owner, k -> {
-            AiVisualization.Inner_CachePool created = new AiVisualization.Inner_CachePool();
+         AiVisualization.OverlayLayer l = layers.computeIfAbsent(owner, k -> {
+            AiVisualization.OverlayLayer created = new AiVisualization.OverlayLayer();
             created.creationOrder = ++updateSequence;
             return created;
          });
@@ -162,26 +162,26 @@ public final class AiVisualization {
    }
 
    public static void clearOwner(Object owner) {
-      AiVisualization.Inner_CachePool l = layers.remove(owner);
+      AiVisualization.OverlayLayer l = layers.remove(owner);
       if (l != null) {
          l.closeMesh();
       }
    }
 
    public static void clearAllLayers() {
-      for (AiVisualization.Inner_CachePool l : layers.values()) {
+      for (AiVisualization.OverlayLayer l : layers.values()) {
          l.closeMesh();
       }
 
       layers.clear();
-      frame = hudFrame = AiVisualization.Inner_DataUtil.EMPTY;
+      frame = hudFrame = AiVisualization.RenderFrame.EMPTY;
       ghostModelCache.clear();
       lastModelSet = null;
       statHudWidth = 0;
    }
 
    public static void init(Object owner, String title, String activity, int completed, int target) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.taskStatus = AiTaskStatus.init(title, activity, completed, target);
          l.immediateStatus = false;
@@ -190,7 +190,7 @@ public final class AiVisualization {
    }
 
    public static void putAt(Object owner, String title, String activity, String detail, int percent) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.taskStatus = new AiTaskStatus.Inner_StreamUtil(title, activity, detail, percent);
          l.immediateStatus = true;
@@ -199,7 +199,7 @@ public final class AiVisualization {
    }
 
    public static void load(Object owner, String title, String activity, int metersAway, int percent) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.navStatus = new AiTaskStatus.Inner_StreamUtil(title, activity, metersAway + " m away", percent);
          l.navPriority = 12;
@@ -208,7 +208,7 @@ public final class AiVisualization {
    }
 
    static void init(Object owner, String title, String activity, int percent) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.navStatus = new AiTaskStatus.Inner_StreamUtil(title, activity, "", percent);
          l.navPriority = 5;
@@ -217,7 +217,7 @@ public final class AiVisualization {
    }
 
    static void init(Object owner, AiTaskStatus.Inner_StreamUtil content) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.content = content;
          l.contentOrder = ++updateSequence;
@@ -233,12 +233,12 @@ public final class AiVisualization {
          .sum();
    }
 
-   public static void putAt_V_Obj_3(Object owner, List<autismclient.ai.engine.AiPathfinder.UiHelper> path, int index, Supplier<BlockState> supportState) {
+   public static void putAt_V_Obj_3(Object owner, List<autismclient.ai.engine.AiPathfinder.PathStep> path, int index, Supplier<BlockState> supportState) {
       showPath(owner, path, index, supportState);
    }
 
-   public static void showPath(Object owner, List<autismclient.ai.engine.AiPathfinder.UiHelper> path, int index, Supplier<BlockState> supportState) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+   public static void showPath(Object owner, List<autismclient.ai.engine.AiPathfinder.PathStep> path, int index, Supplier<BlockState> supportState) {
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && settings.visualizePaths && (l.pathSource != path || l.pathIndex != index)) {
          l.pathSource = path;
          l.pathIndex = index;
@@ -246,16 +246,16 @@ public final class AiVisualization {
          l.lastCheckpointIndex = -1;
          l.activityStatus = new AiTaskStatus.Inner_StreamUtil("Travelling", "Following the planned route", "");
          l.priority = 10;
-         List<AiVisualization.Inner_BufferHelper> segments = new ArrayList<>();
-         List<AiVisualization.Inner_TaskState> markers = new ArrayList<>();
+         List<AiVisualization.RouteSegment> segments = new ArrayList<>();
+         List<AiVisualization.Marker> markers = new ArrayList<>();
          buildPathVisuals(path, index, segments, markers);
-         List<AiVisualization.Inner_StreamUtil> edits = new ArrayList<>();
+         List<AiVisualization.GhostBlock> edits = new ArrayList<>();
          Minecraft mc = Minecraft.getInstance();
          int end = Math.min(path.size(), Math.max(0, index) + 192);
          BlockState support = supportState.get();
 
          for (int i = Math.max(0, index); i < end; i++) {
-            autismclient.ai.engine.AiPathfinder.UiHelper m = path.get(i);
+            autismclient.ai.engine.AiPathfinder.PathStep m = path.get(i);
 
             for (BlockPos p : m.cellsToBreak()) {
                if (edits.size() < 64 && AiTerrain.isLoaded(mc.level, p)) {
@@ -278,7 +278,7 @@ public final class AiVisualization {
    }
 
    public static void init(Object owner, autismclient.ai.engine.AiPaceScript.Inner_IoHelper script, int tickIndex, List<BlockPos> checkpoints, int checkpointIndex) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && script != null && settings.visualizePaths) {
          int length = script.flowTemp();
          if (l.pathSource != script || l.pathIndex != tickIndex || l.lastScriptLength != length || l.lastCheckpointIndex != checkpointIndex) {
@@ -286,8 +286,8 @@ public final class AiVisualization {
             l.pathIndex = tickIndex;
             l.lastScriptLength = length;
             l.lastCheckpointIndex = checkpointIndex;
-            List<AiVisualization.Inner_BufferHelper> segments = new ArrayList<>();
-            List<AiVisualization.Inner_TaskState> markers = new ArrayList<>();
+            List<AiVisualization.RouteSegment> segments = new ArrayList<>();
+            List<AiVisualization.Marker> markers = new ArrayList<>();
             buildScriptVisuals(script, tickIndex, checkpoints, checkpointIndex, segments, markers);
             l.segments = List.copyOf(segments);
             l.markers = List.copyOf(markers);
@@ -298,14 +298,14 @@ public final class AiVisualization {
    }
 
    public static void init(Object owner, autismclient.ai.engine.AiPaceScript.Inner_JsonCache preview, List<BlockPos> checkpoints, int checkpointIndex) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && preview != null && settings.visualizePaths && (l.pathSource != preview || l.lastCheckpointIndex != checkpointIndex)) {
          l.pathSource = preview;
          l.pathIndex = 0;
          l.lastScriptLength = -1;
          l.lastCheckpointIndex = checkpointIndex;
-         List<AiVisualization.Inner_BufferHelper> segments = new ArrayList<>();
-         List<AiVisualization.Inner_TaskState> markers = new ArrayList<>();
+         List<AiVisualization.RouteSegment> segments = new ArrayList<>();
+         List<AiVisualization.Marker> markers = new ArrayList<>();
          buildPreviewVisuals(preview, checkpoints, checkpointIndex, segments, markers);
          l.segments = List.copyOf(segments);
          l.markers = List.copyOf(markers);
@@ -325,7 +325,7 @@ public final class AiVisualization {
    }
 
    static void buildPathVisuals(
-      List<autismclient.ai.engine.AiPathfinder.UiHelper> path, int index, List<AiVisualization.Inner_BufferHelper> segments, List<AiVisualization.Inner_TaskState> markers
+      List<autismclient.ai.engine.AiPathfinder.PathStep> path, int index, List<AiVisualization.RouteSegment> segments, List<AiVisualization.Marker> markers
    ) {
       if (path != null && !path.isEmpty()) {
          int startIdx = Math.max(0, index);
@@ -336,19 +336,19 @@ public final class AiVisualization {
             points.add(Vec3.atBottomCenterOf(path.get(startIdx).from()).add(0.0, 0.08, 0.0));
 
             for (int i = startIdx; i < endIdx; i++) {
-               autismclient.ai.engine.AiPathfinder.UiHelper m = path.get(i);
+               autismclient.ai.engine.AiPathfinder.PathStep m = path.get(i);
                Vec3 to = Vec3.atBottomCenterOf(m.to()).add(0.0, 0.08, 0.0);
                boolean air = isAirMove(m.type());
                points.add(to);
                airFlags.add(air);
                if (air && markers.size() < 31) {
-                  markers.add(new AiVisualization.Inner_TaskState(to.add(0.0, -0.04, 0.0), 0.22F, -1537414444, 1.25F));
+                  markers.add(new AiVisualization.Marker(to.add(0.0, -0.04, 0.0), 0.22F, -1537414444, 1.25F));
                }
             }
 
             if (markers.size() < 32) {
                Vec3 goal = points.getLast();
-               markers.add(new AiVisualization.Inner_TaskState(goal.add(0.0, -0.04, 0.0), 0.34F, -329780571, 1.75F));
+               markers.add(new AiVisualization.Marker(goal.add(0.0, -0.04, 0.0), 0.34F, -329780571, 1.75F));
             }
 
             buildRouteSegments(points, airFlags, segments);
@@ -360,8 +360,8 @@ public final class AiVisualization {
       autismclient.ai.engine.AiPaceScript.Inner_JsonCache preview,
       List<BlockPos> checkpoints,
       int checkpointIndex,
-      List<AiVisualization.Inner_BufferHelper> segments,
-      List<AiVisualization.Inner_TaskState> markers
+      List<AiVisualization.RouteSegment> segments,
+      List<AiVisualization.Marker> markers
    ) {
       double[] xs = preview.x();
       double[] ys = preview.y();
@@ -394,8 +394,8 @@ public final class AiVisualization {
       int tickIndex,
       List<BlockPos> checkpoints,
       int checkpointIndex,
-      List<AiVisualization.Inner_BufferHelper> segments,
-      List<AiVisualization.Inner_TaskState> markers
+      List<AiVisualization.RouteSegment> segments,
+      List<AiVisualization.Marker> markers
    ) {
       int total = script.flowTemp();
       int startIdx = Math.max(0, tickIndex);
@@ -418,7 +418,7 @@ public final class AiVisualization {
                boolean air = !cur.onGround() || cur.vy() > 0.1;
                Vec3 pt = new Vec3(cur.x(), cur.y() + (air ? 0.04 : 0.06), cur.z());
                if (!air && airTicks >= 3 && markers.size() < 28) {
-                  markers.add(new AiVisualization.Inner_TaskState(new Vec3(cur.x(), cur.y() + 0.035, cur.z()), 0.22F, -1470305580, 1.25F));
+                  markers.add(new AiVisualization.Marker(new Vec3(cur.x(), cur.y() + 0.035, cur.z()), 0.22F, -1470305580, 1.25F));
                }
 
                airTicks = air ? airTicks + 1 : 0;
@@ -458,7 +458,7 @@ public final class AiVisualization {
                for (int i = 0; i < segCount; i++) {
                   float t0 = (float)(cum[i] / totalDist);
                   float t1 = (float)(cum[i + 1] / totalDist);
-                  segments.add(new AiVisualization.Inner_BufferHelper(points.get(i), points.get(i + 1), t0, t1, airFlags.get(i), cum[i] < 2.2));
+                  segments.add(new AiVisualization.RouteSegment(points.get(i), points.get(i + 1), t0, t1, airFlags.get(i), cum[i] < 2.2));
                }
             }
 
@@ -467,7 +467,7 @@ public final class AiVisualization {
       }
    }
 
-   private static void addCheckpointMarkers(List<BlockPos> checkpoints, int checkpointIndex, List<AiVisualization.Inner_TaskState> markers) {
+   private static void addCheckpointMarkers(List<BlockPos> checkpoints, int checkpointIndex, List<AiVisualization.Marker> markers) {
       if (checkpoints != null && !checkpoints.isEmpty()) {
          int startIdx = Math.max(0, checkpointIndex);
 
@@ -476,12 +476,12 @@ public final class AiVisualization {
             boolean finish = i == checkpoints.size() - 1;
             int color = finish ? -329780571 : (i == startIdx ? -318779034 : -1199777537);
             float radius = finish ? 0.38F : 0.32F;
-            markers.add(new AiVisualization.Inner_TaskState(new Vec3(cp.getX() + 0.5, cp.getY() + 0.04, cp.getZ() + 0.5), radius, color, finish ? 1.85F : 1.55F));
+            markers.add(new AiVisualization.Marker(new Vec3(cp.getX() + 0.5, cp.getY() + 0.04, cp.getZ() + 0.5), radius, color, finish ? 1.85F : 1.55F));
          }
       }
    }
 
-   private static void buildRouteSegments(List<Vec3> points, List<Boolean> airFlags, List<AiVisualization.Inner_BufferHelper> segments) {
+   private static void buildRouteSegments(List<Vec3> points, List<Boolean> airFlags, List<AiVisualization.RouteSegment> segments) {
       int n = points.size();
       if (n >= 2) {
          ArrayList<Vec3> smooth = new ArrayList<>(Math.min(384, n * 3));
@@ -570,7 +570,7 @@ public final class AiVisualization {
             for (int i = 0; i < segCount; i++) {
                float t0 = (float)(cum[i] / totalDist);
                float t1 = (float)(cum[i + 1] / totalDist);
-               segments.add(new AiVisualization.Inner_BufferHelper(smooth.get(i), smooth.get(i + 1), t0, t1, smoothAir.get(i), cum[i] < 2.2));
+               segments.add(new AiVisualization.RouteSegment(smooth.get(i), smooth.get(i + 1), t0, t1, smoothAir.get(i), cum[i] < 2.2));
             }
          }
       }
@@ -601,11 +601,11 @@ public final class AiVisualization {
    }
 
    public static void init(Object owner, List<BlockPos> targets) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && settings.visualizeTargets && l.touchedNanos - l.targetUpdateNanos >= 200000000L) {
          l.targetUpdateNanos = l.touchedNanos;
          l.priority = 40;
-         List<AiVisualization.Inner_StreamUtil> out = new ArrayList<>();
+         List<AiVisualization.GhostBlock> out = new ArrayList<>();
 
          for (BlockPos p : targets) {
             if (out.size() >= 64) {
@@ -628,7 +628,7 @@ public final class AiVisualization {
    }
 
    public static void init(Object owner, BlockPos target) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && settings.visualizeTargets && AiTerrain.isLoaded(l.level, target)) {
          BlockState state = l.level.getBlockState(target);
          l.hasTarget = true;
@@ -641,7 +641,7 @@ public final class AiVisualization {
    }
 
    public static void init(Object owner, BlockPos target, BlockState state) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && state != null && settings.visualizeTargets) {
          l.hasTarget = true;
          if (l.touchedNanos - l.targetUpdateNanos >= 200000000L) {
@@ -667,12 +667,12 @@ public final class AiVisualization {
       return !loaded ? -885830 : (satisfied ? -12067963 : (replaceable ? -11093505 : -20923));
    }
 
-   private static AiVisualization.Inner_StreamUtil coloredGhost(BlockPos p, BlockState state, int color) {
-      return new AiVisualization.Inner_StreamUtil(p.immutable(), state, color, state.isSolidRender(), false, false);
+   private static AiVisualization.GhostBlock coloredGhost(BlockPos p, BlockState state, int color) {
+      return new AiVisualization.GhostBlock(p.immutable(), state, color, state.isSolidRender(), false, false);
    }
 
-   private static AiVisualization.Inner_StreamUtil ghost(BlockPos p, BlockState state, boolean active) {
-      return new AiVisualization.Inner_StreamUtil(p.immutable(), state, active ? -610078735 : 1885197528, false, true, active);
+   private static AiVisualization.GhostBlock ghost(BlockPos p, BlockState state, boolean active) {
+      return new AiVisualization.GhostBlock(p.immutable(), state, active ? -610078735 : 1885197528, false, true, active);
    }
 
    static void init(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview) {
@@ -680,7 +680,7 @@ public final class AiVisualization {
    }
 
    static void showCells(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, Predicate<BlockPos> hiddenSolid) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.hiddenSolid = hiddenSolid;
          init(owner, origin, cells, 0, true, true);
@@ -688,14 +688,14 @@ public final class AiVisualization {
    }
 
    static void init(Object owner, long now) {
-      AiVisualization.Inner_CachePool l = layers.get(owner);
+      AiVisualization.OverlayLayer l = layers.get(owner);
       if (l != null) {
          l.touchedNanos = now;
       }
    }
 
    static void init(Object owner, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview, boolean fullPlan) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && settings.visualizeGhosts && l.touchedNanos - l.targetUpdateNanos >= 200000000L) {
          l.targetUpdateNanos = l.touchedNanos;
          l.fullPlan = fullPlan;
@@ -709,7 +709,7 @@ public final class AiVisualization {
             l.activityStatus = preview
                ? new AiTaskStatus.Inner_StreamUtil("Schematic preview", cells.size() + " planned blocks", "Blue: place / Amber: obstruction / Green: complete")
                : AiTaskStatus.init("Building", "Following the build plan", cursor, cells.size());
-            List<AiVisualization.Inner_StreamUtil> out = new ArrayList<>();
+            List<AiVisualization.GhostBlock> out = new ArrayList<>();
             int x = 0;
             int y = 0;
             int z = 0;
@@ -747,7 +747,7 @@ public final class AiVisualization {
       }
    }
 
-   private static void updatePlanMesh(AiVisualization.Inner_CachePool l, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview) {
+   private static void updatePlanMesh(AiVisualization.OverlayLayer l, BlockPos origin, List<AiBuilder.CellSpec> cells, int cursor, boolean preview) {
       if (l.planMesh == null || !l.planMesh.init(origin, cells, preview)) {
          l.closeMesh();
          l.planMesh = new AiPlanMesh(origin, cells, preview, l.hiddenSolid);
@@ -783,12 +783,12 @@ public final class AiVisualization {
          Vec3 eye = mc.player == null ? Vec3.atCenterOf(origin) : mc.player.getEyePosition();
          int outlines = preview ? 0 : 12;
          List<Integer> nearest = l.planMesh.init(eye, outlines, 4096, System.nanoTime() + 2000000L);
-         List<AiVisualization.Inner_StreamUtil> out = new ArrayList<>(nearest.size());
+         List<AiVisualization.GhostBlock> out = new ArrayList<>(nearest.size());
 
          for (int i : nearest) {
             if (l.planMesh.colorAt(i) != -12067963) {
                BlockState state = l.planMesh.stateAt(i);
-               out.add(new AiVisualization.Inner_StreamUtil(l.planMesh.posAt(i), state, l.planMesh.colorAt(i), state.isSolidRender(), false, false, true));
+               out.add(new AiVisualization.GhostBlock(l.planMesh.posAt(i), state, l.planMesh.colorAt(i), state.isSolidRender(), false, false, true));
             }
          }
 
@@ -797,14 +797,14 @@ public final class AiVisualization {
    }
 
    static void load(Object owner) {
-      AiVisualization.Inner_CachePool l = layers.get(owner);
+      AiVisualization.OverlayLayer l = layers.get(owner);
       if (l != null) {
          l.targetUpdateNanos = 0L;
       }
    }
 
    static void init(Object owner, boolean moving) {
-      AiVisualization.Inner_CachePool l = layerFor(owner);
+      AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.moving = moving;
          if (l.planMesh != null) {
@@ -833,25 +833,25 @@ public final class AiVisualization {
          int cap = clampGhostLimit(settings.visualizationBlocks);
          int distance = Math.max(16, Math.min(256, settings.visualizationDistance));
          double range = (double)distance * distance;
-         Map<Long, AiVisualization.Inner_StreamUtil> ghosts = new LinkedHashMap<>();
-         Map<Long, AiVisualization.Inner_StreamUtil> targets = new LinkedHashMap<>();
-         List<AiVisualization.Inner_BufferHelper> route = new ArrayList<>();
-         List<AiVisualization.Inner_TaskState> markers = new ArrayList<>();
+         Map<Long, AiVisualization.GhostBlock> ghosts = new LinkedHashMap<>();
+         Map<Long, AiVisualization.GhostBlock> targets = new LinkedHashMap<>();
+         List<AiVisualization.RouteSegment> route = new ArrayList<>();
+         List<AiVisualization.Marker> markers = new ArrayList<>();
          AABB bounds = null;
          List<AiPlanMesh> plans = new ArrayList<>();
          List<AiTaskStatus.Inner_DataUtil> statuses = new ArrayList<>();
          long now = System.nanoTime();
-         ArrayList<AiVisualization.Inner_CachePool> activeLayers = new ArrayList<>(layers.values());
+         ArrayList<AiVisualization.OverlayLayer> activeLayers = new ArrayList<>(layers.values());
          activeLayers.sort(Comparator.comparingLong(l -> l.creationOrder));
 
-         for (AiVisualization.Inner_CachePool l : activeLayers) {
+         for (AiVisualization.OverlayLayer l : activeLayers) {
             if (l.level == mc.level && now - l.touchedNanos <= 450000000L) {
                if (settings.visualizeGhosts && l.planMesh != null) {
                   plans.add(l.planMesh);
                }
 
                if (settings.visualizeGhosts) {
-                  for (AiVisualization.Inner_StreamUtil g : l.ghosts) {
+                  for (AiVisualization.GhostBlock g : l.ghosts) {
                      if ((l.fullPlan || g.pos.distToCenterSqr(camera) <= range) && (ghosts.size() < cap || ghosts.containsKey(g.pos.asLong()))) {
                         if (l.fullPlan) {
                            ghosts.put(g.pos.asLong(), g);
@@ -863,9 +863,9 @@ public final class AiVisualization {
                }
 
                if (settings.visualizeTargets) {
-                  for (AiVisualization.Inner_StreamUtil g : l.targets) {
+                  for (AiVisualization.GhostBlock g : l.targets) {
                      if (g.pos.distToCenterSqr(camera) <= range) {
-                        AiVisualization.Inner_StreamUtil previous = targets.get(g.pos.asLong());
+                        AiVisualization.GhostBlock previous = targets.get(g.pos.asLong());
                         if (previous == null || g.active) {
                            targets.put(g.pos.asLong(), g);
                         }
@@ -874,13 +874,13 @@ public final class AiVisualization {
                }
 
                if (settings.visualizePaths) {
-                  for (AiVisualization.Inner_BufferHelper s : l.segments) {
+                  for (AiVisualization.RouteSegment s : l.segments) {
                      if (route.size() < 384 && Math.min(s.a.distanceToSqr(camera), s.b.distanceToSqr(camera)) <= range) {
                         route.add(s);
                      }
                   }
 
-                  for (AiVisualization.Inner_TaskState m : l.markers) {
+                  for (AiVisualization.Marker m : l.markers) {
                      if (markers.size() < 32 && m.pos.distanceToSqr(camera) <= range) {
                         markers.add(m);
                      }
@@ -913,40 +913,40 @@ public final class AiVisualization {
          }
 
          if (settings.visualizeGhosts) {
-            for (AiVisualization.Inner_StreamUtil g : targets.values()) {
+            for (AiVisualization.GhostBlock g : targets.values()) {
                if (!g.mining && (ghosts.size() < cap || ghosts.containsKey(g.pos.asLong()))) {
                   ghosts.put(g.pos.asLong(), g);
                }
             }
          }
 
-         ArrayList<AiVisualization.Inner_StreamUtil> sorted = new ArrayList<>(ghosts.values());
-         sorted.sort(Comparator.<AiVisualization.Inner_StreamUtil>comparingDouble(g -> g.pos.distToCenterSqr(camera)).reversed());
+         ArrayList<AiVisualization.GhostBlock> sorted = new ArrayList<>(ghosts.values());
+         sorted.sort(Comparator.<AiVisualization.GhostBlock>comparingDouble(g -> g.pos.distToCenterSqr(camera)).reversed());
          Vec3 body = mc.player == null ? camera : mc.player.getEyePosition();
-         List<AiVisualization.Inner_StreamUtil> quietTargets = selectQuietTargets(targets.values(), body);
-         frame = new AiVisualization.Inner_DataUtil(
+         List<AiVisualization.GhostBlock> quietTargets = selectQuietTargets(targets.values(), body);
+         frame = new AiVisualization.RenderFrame(
             mc.level, camera, List.copyOf(sorted), quietTargets, List.copyOf(route), List.copyOf(markers), bounds, AiTaskStatus.init(statuses, now), List.copyOf(plans)
          );
          hudFrame = frame;
          statCollectNanos = System.nanoTime() - started;
       } else {
-         frame = AiVisualization.Inner_DataUtil.EMPTY;
-         hudFrame = AiVisualization.Inner_DataUtil.EMPTY;
+         frame = AiVisualization.RenderFrame.EMPTY;
+         hudFrame = AiVisualization.RenderFrame.EMPTY;
          statHudWidth = 0;
       }
    }
 
-   static List<AiVisualization.Inner_StreamUtil> selectQuietTargets(Collection<AiVisualization.Inner_StreamUtil> targets, Vec3 body) {
-      ArrayList<AiVisualization.Inner_StreamUtil> targetView = new ArrayList<>(targets);
+   static List<AiVisualization.GhostBlock> selectQuietTargets(Collection<AiVisualization.GhostBlock> targets, Vec3 body) {
+      ArrayList<AiVisualization.GhostBlock> targetView = new ArrayList<>(targets);
       targetView.sort(
-         Comparator.<AiVisualization.Inner_StreamUtil, Boolean>comparing(gx -> !gx.active)
+         Comparator.<AiVisualization.GhostBlock, Boolean>comparing(gx -> !gx.active)
             .thenComparingDouble(gx -> gx.pos.distToCenterSqr(body))
             .thenComparingLong(gx -> gx.pos.asLong())
       );
-      List<AiVisualization.Inner_StreamUtil> quietTargets = new ArrayList<>();
+      List<AiVisualization.GhostBlock> quietTargets = new ArrayList<>();
       int miningCount = 0;
 
-      for (AiVisualization.Inner_StreamUtil g : targetView) {
+      for (AiVisualization.GhostBlock g : targetView) {
          if (!g.mining || (g.active || !(g.pos.distToCenterSqr(body) > 64.0)) && miningCount < 8) {
             if (g.mining) {
                miningCount++;
@@ -975,8 +975,8 @@ public final class AiVisualization {
    }
 
    public static void init(PoseStack matrices) {
-      AiVisualization.Inner_DataUtil f = frame;
-      frame = AiVisualization.Inner_DataUtil.EMPTY;
+      AiVisualization.RenderFrame f = frame;
+      frame = AiVisualization.RenderFrame.EMPTY;
       Minecraft mc = Minecraft.getInstance();
       if (f.world != null && f.world == mc.level) {
          long started = System.nanoTime();
@@ -1009,14 +1009,14 @@ public final class AiVisualization {
             VertexConsumer texture = source.init(autismclient.render.AutismRenderTypes.aiGhost());
             Set<Long> solid = new HashSet<>();
 
-            for (AiVisualization.Inner_StreamUtil g : f.ghosts) {
+            for (AiVisualization.GhostBlock g : f.ghosts) {
                if (g.fullCube) {
                   solid.add(g.pos.asLong());
                }
             }
 
             if (alpha > 0) {
-               for (AiVisualization.Inner_StreamUtil g : f.ghosts) {
+               for (AiVisualization.GhostBlock g : f.ghosts) {
                   if (!g.mining && !g.planned && !g.state.isAir()) {
                      autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = ghostModelCache.get(g.state);
                      if (model == null && baked < 8 && System.nanoTime() - started < 2000000L) {
@@ -1100,7 +1100,7 @@ public final class AiVisualization {
 
             if (settings.visualizeGhosts) {
                for (int i = Math.max(0, f.ghosts.size() - 192); i < f.ghosts.size(); i++) {
-                  AiVisualization.Inner_StreamUtil g = f.ghosts.get(i);
+                  AiVisualization.GhostBlock g = f.ghosts.get(i);
                   autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(g.pos).move(offset).deflate(0.006), -1342177280 | g.color & 16777215, 1.1F);
                }
             }
@@ -1109,7 +1109,7 @@ public final class AiVisualization {
                autismclient.util.WorldLineRenderer.init(pose, lines, f.bounds.move(offset), -1873364481, 1.6F);
             }
 
-            for (AiVisualization.Inner_BufferHelper s : f.route) {
+            for (AiVisualization.RouteSegment s : f.route) {
                float tm = (s.t0 + s.t1) * 0.5F;
                float w = (s.active ? 3.8F : 3.4F) - 1.7F * tm;
                autismclient.util.WorldLineRenderer.init(
@@ -1120,7 +1120,7 @@ public final class AiVisualization {
             double nextArrow = 1.8;
             double traveled = 0.0;
 
-            for (AiVisualization.Inner_BufferHelper s : f.route) {
+            for (AiVisualization.RouteSegment s : f.route) {
                Vec3 a = s.a.add(offset);
                Vec3 b = s.b.add(offset);
                float tm = (s.t0 + s.t1) * 0.5F;
@@ -1146,13 +1146,13 @@ public final class AiVisualization {
                traveled += segLen;
             }
 
-            for (AiVisualization.Inner_TaskState m : f.markers) {
+            for (AiVisualization.Marker m : f.markers) {
                Vec3 center = m.pos.add(offset);
                drawCircle(pose, lines, center, m.radius, 1510609696, m.width + 1.1F);
                drawCircle(pose, lines, center, m.radius, m.color, m.width);
             }
 
-            for (AiVisualization.Inner_StreamUtil g : f.targets) {
+            for (AiVisualization.GhostBlock g : f.targets) {
                AABB b = new AABB(g.pos).move(offset).inflate(g.mining ? 0.003 : 0.014);
                if (g.mining) {
                   List<Vec3> corners = faceCorners(b, faceTowardCamera(g.pos, f.camera));
@@ -1175,7 +1175,7 @@ public final class AiVisualization {
             statBlue = 0;
             statGreen = 0;
 
-            for (AiVisualization.Inner_StreamUtil g : f.ghosts) {
+            for (AiVisualization.GhostBlock g : f.ghosts) {
                if (!g.planned) {
                   if (g.color == -12067963) {
                      statGreen++;
@@ -1311,7 +1311,7 @@ public final class AiVisualization {
       long[] costs = Arrays.copyOf(frameCostNanos, frameCostCount);
       Arrays.sort(costs);
       long now = System.nanoTime();
-      List<AiVisualization.Inner_CachePool> plans = layers.values()
+      List<AiVisualization.OverlayLayer> plans = layers.values()
          .stream()
          .filter(l -> l.fullPlan && l.level == Minecraft.getInstance().level && now - l.touchedNanos <= 450000000L)
          .toList();
@@ -1437,20 +1437,20 @@ public final class AiVisualization {
       }
    }
 
-   record Inner_BufferHelper(Vec3 a, Vec3 b, float t0, float t1, boolean air, boolean active) {
+   record RouteSegment(Vec3 a, Vec3 b, float t0, float t1, boolean air, boolean active) {
    }
 
-   private static final class Inner_CachePool {
+   private static final class OverlayLayer {
       ClientLevel level;
       long touchedNanos;
       long targetUpdateNanos;
       long creationOrder;
       long statusOrder;
       long contentOrder;
-      List<AiVisualization.Inner_StreamUtil> ghosts = List.of();
-      List<AiVisualization.Inner_StreamUtil> targets = List.of();
-      List<AiVisualization.Inner_BufferHelper> segments = List.of();
-      List<AiVisualization.Inner_TaskState> markers = List.of();
+      List<AiVisualization.GhostBlock> ghosts = List.of();
+      List<AiVisualization.GhostBlock> targets = List.of();
+      List<AiVisualization.RouteSegment> segments = List.of();
+      List<AiVisualization.Marker> markers = List.of();
       Object pathSource;
       int pathIndex = -1;
       int lastScriptLength = -1;
@@ -1478,28 +1478,28 @@ public final class AiVisualization {
       }
    }
 
-   private record Inner_DataUtil(
+   private record RenderFrame(
       ClientLevel world,
       Vec3 camera,
-      List<AiVisualization.Inner_StreamUtil> ghosts,
-      List<AiVisualization.Inner_StreamUtil> targets,
-      List<AiVisualization.Inner_BufferHelper> route,
-      List<AiVisualization.Inner_TaskState> markers,
+      List<AiVisualization.GhostBlock> ghosts,
+      List<AiVisualization.GhostBlock> targets,
+      List<AiVisualization.RouteSegment> route,
+      List<AiVisualization.Marker> markers,
       AABB bounds,
       AiTaskStatus.Inner_StreamUtil status,
       List<AiPlanMesh> plans
    ) {
-      static final AiVisualization.Inner_DataUtil EMPTY = new AiVisualization.Inner_DataUtil(
+      static final AiVisualization.RenderFrame EMPTY = new AiVisualization.RenderFrame(
          null, Vec3.ZERO, List.of(), List.of(), List.of(), List.of(), null, AiTaskStatus.Inner_StreamUtil.EMPTY, List.of()
       );
    }
 
-   record Inner_StreamUtil(BlockPos pos, BlockState state, int color, boolean fullCube, boolean mining, boolean active, boolean planned) {
-      Inner_StreamUtil(BlockPos pos, BlockState state, int color, boolean fullCube, boolean mining, boolean active) {
+   record GhostBlock(BlockPos pos, BlockState state, int color, boolean fullCube, boolean mining, boolean active, boolean planned) {
+      GhostBlock(BlockPos pos, BlockState state, int color, boolean fullCube, boolean mining, boolean active) {
          this(pos, state, color, fullCube, mining, active, false);
       }
    }
 
-   record Inner_TaskState(Vec3 pos, float radius, int color, float width) {
+   record Marker(Vec3 pos, float radius, int color, float width) {
    }
 }

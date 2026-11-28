@@ -161,12 +161,12 @@ public final class TrajectoriesModule extends Module {
             if (!frame.equals(this.lastFrame) || !ItemStack.matches(stack, this.lastStack)) {
                List<TrajectoriesModule.Inner_ConfigStore> flights = new ArrayList<>(3);
 
-               for (ProjectileBallistics.Inner_BufferHelper shot : ProjectileBallistics.init(player, stack, true, true)) {
-                  ProjectileBallistics.Inner_CachePool result = ProjectileBallistics.init(MC.level, player, shot, yaw, pitch, inherited);
+               for (ProjectileBallistics.ProjectileShot shot : ProjectileBallistics.init(player, stack, true, true)) {
+                  ProjectileBallistics.Trajectory result = ProjectileBallistics.init(MC.level, player, shot, yaw, pitch, inherited);
                   if (result.points().size() > 1) {
                      flights.add(
                         new TrajectoriesModule.Inner_ConfigStore(
-                           result, shot.info().kind() == ProjectileBallistics.Inner_StreamUtil.ROCKET, init(result.hit(), item, stack)
+                           result, shot.info().kind() == ProjectileBallistics.ProjectileKind.ROCKET, init(result.hit(), item, stack)
                         )
                      );
                   }
@@ -189,7 +189,7 @@ public final class TrajectoriesModule extends Module {
             List<TrajectoriesModule.Inner_CachePool> result = new ArrayList<>(this.flights.size());
 
             for (TrajectoriesModule.Inner_ConfigStore visual : this.flights) {
-               ProjectileBallistics.Inner_CachePool flight = visual.flight();
+               ProjectileBallistics.Trajectory flight = visual.flight();
                result.add(
                   new TrajectoriesModule.Inner_CachePool(
                      flight.points(),
@@ -215,7 +215,7 @@ public final class TrajectoriesModule extends Module {
       }
    }
 
-   static Vec3 impactPoint(ProjectileBallistics.Inner_CachePool flight) {
+   static Vec3 impactPoint(ProjectileBallistics.Trajectory flight) {
       return flight.hit() != null && flight.points().size() >= 2 ? flight.points().get(flight.points().size() - 2) : null;
    }
 
@@ -386,7 +386,7 @@ public final class TrajectoriesModule extends Module {
    ) {
    }
 
-   private record Inner_ConfigStore(ProjectileBallistics.Inner_CachePool flight, boolean init_Z, TrajectoriesModule.Inner_BufferHelper init_aS_BufferHelper) {
+   private record Inner_ConfigStore(ProjectileBallistics.Trajectory flight, boolean init_Z, TrajectoriesModule.Inner_BufferHelper init_aS_BufferHelper) {
    }
 
    private record Inner_DataUtil(

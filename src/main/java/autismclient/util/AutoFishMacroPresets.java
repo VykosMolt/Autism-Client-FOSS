@@ -12,9 +12,9 @@ public final class AutoFishMacroPresets {
    private AutoFishMacroPresets() {
    }
 
-   public static AutismMacro init(AutoFishMacroPresets.Inner_DataUtil preset) {
+   public static AutismMacro init(AutoFishMacroPresets.Preset preset) {
       AutismMacro var10000;
-      switch (preset == null ? AutoFishMacroPresets.Inner_DataUtil.CUSTOM : preset) {
+      switch (preset == null ? AutoFishMacroPresets.Preset.CUSTOM : preset) {
          case FREE_SLOTS:
             var10000 = init("AutoFish - Free Slots Stop", freeSlotsWait());
             break;
@@ -45,15 +45,15 @@ public final class AutoFishMacroPresets {
       return macro != null && isStopPreset(macro.name);
    }
 
-   public static AutoFishMacroPresets.Inner_DataUtil presetFor(String name) {
+   public static AutoFishMacroPresets.Preset presetFor(String name) {
       if (name == null) {
          return null;
       } else if (init(name, "AutoFish - Free Slots Stop")) {
-         return AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS;
+         return AutoFishMacroPresets.Preset.FREE_SLOTS;
       } else if (init(name, "AutoFish - Durability Stop")) {
-         return AutoFishMacroPresets.Inner_DataUtil.DURABILITY;
+         return AutoFishMacroPresets.Preset.DURABILITY;
       } else {
-         return init(name, "AutoFish - Custom Stop") ? AutoFishMacroPresets.Inner_DataUtil.CUSTOM : null;
+         return init(name, "AutoFish - Custom Stop") ? AutoFishMacroPresets.Preset.CUSTOM : null;
       }
    }
 
@@ -167,17 +167,17 @@ public final class AutoFishMacroPresets {
 
    private static autismclient.util.macro.WaitDurabilityAction durabilityWait() {
       autismclient.util.macro.WaitDurabilityAction action = new autismclient.util.macro.WaitDurabilityAction();
-      action.targetMode = autismclient.util.macro.WaitDurabilityAction.Inner_CachePool.ITEM;
+      action.targetMode = autismclient.util.macro.WaitDurabilityAction.TargetMode.ITEM;
       action.itemName = "minecraft:fishing_rod";
-      action.measurement = autismclient.util.macro.WaitDurabilityAction.Inner_StreamUtil.REMAINING;
-      action.comparison = autismclient.util.macro.WaitDurabilityAction.Inner_DataUtil.AT_MOST;
+      action.measurement = autismclient.util.macro.WaitDurabilityAction.Measurement.REMAINING;
+      action.comparison = autismclient.util.macro.WaitDurabilityAction.Comparison.AT_MOST;
       action.value = 2;
       action.useNext = true;
       action.timeoutMs = 0;
       return action;
    }
 
-   public enum Inner_DataUtil {
+   public enum Preset {
       FREE_SLOTS,
       DURABILITY,
       CUSTOM;

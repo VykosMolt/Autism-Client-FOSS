@@ -73,7 +73,7 @@ final class AiSchematic {
    private AiSchematic() {
    }
 
-   static void init(List<Tag> entries, int offsetX, int offsetY, int offsetZ, List<AiSchematic.Inner_TaskQueue> into) {
+   static void init(List<Tag> entries, int offsetX, int offsetY, int offsetZ, List<AiSchematic.RailVehicleSpec> into) {
       for (Tag entry : entries) {
          if (entry instanceof CompoundTag outer) {
             CompoundTag data = outer.getCompound("Data").orElse(outer);
@@ -99,13 +99,13 @@ final class AiSchematic {
                   throw new IllegalArgumentException("Schematic exceeds 16384 saved rail vehicles");
                }
 
-               into.add(new AiSchematic.Inner_TaskQueue(id, new Vec3(x, y, z)));
+               into.add(new AiSchematic.RailVehicleSpec(id, new Vec3(x, y, z)));
             }
          }
       }
    }
 
-   static void init(List<Tag> entries, int offsetX, int offsetY, int offsetZ, int dataVersion, List<AiSchematic.Inner_StreamUtil> into) {
+   static void init(List<Tag> entries, int offsetX, int offsetY, int offsetZ, int dataVersion, List<AiSchematic.ItemFrameSpec> into) {
       int current = SharedConstants.getCurrentVersion().dataVersion().version();
 
       for (Tag entry : entries) {
@@ -162,7 +162,7 @@ final class AiSchematic {
                   }
 
                   into.add(
-                     new AiSchematic.Inner_StreamUtil(
+                     new AiSchematic.ItemFrameSpec(
                         id,
                         new BlockPos(x + offsetX, y + offsetY, z + offsetZ),
                         Direction.from3DDataValue(facing),
@@ -178,7 +178,7 @@ final class AiSchematic {
       }
    }
 
-   private static List<AiSchematic.Inner_StreamUtil> itemFrames(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
+   private static List<AiSchematic.ItemFrameSpec> itemFrames(AiSchematic.DecodedFile decoded, int rotation, String mirror, BlockPos minimum) {
       if (decoded.itemFrames().isEmpty()) {
          return List.of();
       }
@@ -186,9 +186,9 @@ final class AiSchematic {
       AiBuilder.CellSpec origin = AiBuilder.transformCell(
          new AiBuilder.CellSpec(0, 0, 0, "minecraft:stone"), rotation, mirror
       );
-      ArrayList<AiSchematic.Inner_StreamUtil> out = new ArrayList<>();
+      ArrayList<AiSchematic.ItemFrameSpec> out = new ArrayList<>();
 
-      for (AiSchematic.Inner_StreamUtil frame : decoded.itemFrames()) {
+      for (AiSchematic.ItemFrameSpec frame : decoded.itemFrames()) {
          BlockPos c = frame.cell();
          AiBuilder.CellSpec moved = AiBuilder.transformCell(
             new AiBuilder.CellSpec(c.getX(), c.getY(), c.getZ(), "minecraft:stone"), rotation, mirror
@@ -212,7 +212,7 @@ final class AiSchematic {
          }
 
          out.add(
-            new AiSchematic.Inner_StreamUtil(
+            new AiSchematic.ItemFrameSpec(
                frame.id(),
                new BlockPos(moved.dx() - minimum.getX(), moved.dy() - minimum.getY(), moved.dz() - minimum.getZ()),
                facing,
@@ -304,8 +304,8 @@ final class AiSchematic {
       return loadSchematic(file, origin, rotation, mirror, skipUnknown, maxCells, maxOffset).blueprint();
    }
 
-   static AiSchematic.Inner_BufferHelper load(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
-      AiSchematic.Inner_BufferHelper loaded = loadSchematic(file, origin, rotation, mirror, skipUnknown, maxCells, 1023);
+   static AiSchematic.LoadedSchematic load(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells) {
+      AiSchematic.LoadedSchematic loaded = loadSchematic(file, origin, rotation, mirror, skipUnknown, maxCells, 1023);
       init(loaded.blueprint().cells());
       return loaded;
    }
@@ -347,15 +347,15 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.Inner_BufferHelper loadSchematic(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells, int maxOffset) {
-      AiSchematic.Inner_DataUtil decoded = decodeFile(file, skipUnknown);
+   static AiSchematic.LoadedSchematic loadSchematic(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown, int maxCells, int maxOffset) {
+      AiSchematic.DecodedFile decoded = decodeFile(file, skipUnknown);
       List<AiBuilder.CellSpec> cells = AiBuilder.transformCells(decoded.cells(), rotation, mirror);
       if (cells.isEmpty()) {
          throw new IllegalArgumentException("Schematic contains no blocks to build");
       }
 
       BlockPos minimum = AiBuilder.minCellOffset(cells);
-      return new AiSchematic.Inner_BufferHelper(
+      return new AiSchematic.LoadedSchematic(
          new AiBuilder.Blueprint(origin, AiBuilder.normalizeCells(cells, maxCells, maxOffset, minimum)),
          signTexts(decoded, rotation, mirror, minimum),
          decoded.entities(),
@@ -409,7 +409,7 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.Inner_DataUtil decodeFile(Path file, boolean skipUnknown) {
+   static AiSchematic.DecodedFile decodeFile(Path file, boolean skipUnknown) {
       String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
       CompoundTag root = readNbt(file, 67108864L);
       if (root.getCompound("Regions").isPresent()) {
@@ -428,11 +428,11 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.Inner_DataUtil decode(CompoundTag root) {
+   static AiSchematic.DecodedFile decode(CompoundTag root) {
       return init_bP_DataUtil(root, false);
    }
 
-   static AiSchematic.Inner_DataUtil init_bP_DataUtil(CompoundTag root, boolean skipUnknown) {
+   static AiSchematic.DecodedFile init_bP_DataUtil(CompoundTag root, boolean skipUnknown) {
       root = root.getCompound("Schematic").orElse(root);
       int version = root.getIntOr("Version", 1);
       if (version >= 1 && version <= 3) {
@@ -444,7 +444,7 @@ final class AiSchematic {
             : root;
          CompoundTag paletteTag = blocks.getCompound("Palette").orElseThrow(() -> new IllegalArgumentException("Sponge schematic has no Palette compound"));
          int dataVersion = root.getIntOr("DataVersion", 1631);
-         Map<Integer, AiSchematic.Inner_ConfigStore> byIndex = new HashMap<>();
+         Map<Integer, AiSchematic.PaletteState> byIndex = new HashMap<>();
          Set<String> unknown = new LinkedHashSet<>();
          int unknownCells = 0;
          if (paletteTag.isEmpty()) {
@@ -507,7 +507,7 @@ final class AiSchematic {
                   int rest = index % (width * length);
                   int z = rest / width;
                   int x = rest % width;
-                  AiSchematic.Inner_ConfigStore state = byIndex.get(value);
+                  AiSchematic.PaletteState state = byIndex.get(value);
                   if (state == null && !byIndex.containsKey(value)) {
                      throw new IllegalArgumentException("Sponge BlockData names missing palette index " + value);
                   }
@@ -559,11 +559,11 @@ final class AiSchematic {
 
          TreeMap<String, Integer> entities = new TreeMap<>();
          countEntities(root.getListOrEmpty("Entities"), entities);
-         ArrayList<AiSchematic.Inner_TaskQueue> vehicles = new ArrayList<>();
+         ArrayList<AiSchematic.RailVehicleSpec> vehicles = new ArrayList<>();
          init(root.getListOrEmpty("Entities"), offset[0], offset[1], offset[2], vehicles);
-         ArrayList<AiSchematic.Inner_StreamUtil> frames = new ArrayList<>();
+         ArrayList<AiSchematic.ItemFrameSpec> frames = new ArrayList<>();
          init(root.getListOrEmpty("Entities"), offset[0], offset[1], offset[2], dataVersion, frames);
-         return new AiSchematic.Inner_DataUtil(
+         return new AiSchematic.DecodedFile(
             List.copyOf(cells),
             Set.of(),
             air + unknownCells,
@@ -597,15 +597,15 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.Inner_ConfigStore init_bP_ConfigStore_Str_Str(String raw, String context) {
+   static AiSchematic.PaletteState init_bP_ConfigStore_Str_Str(String raw, String context) {
       return init(raw, context, 0);
    }
 
-   static AiSchematic.Inner_ConfigStore parseState(String raw, int dataVersion) {
+   static AiSchematic.PaletteState parseState(String raw, int dataVersion) {
       return init(raw, "palette state " + raw, Math.max(1, dataVersion));
    }
 
-   private static AiSchematic.Inner_ConfigStore init(String raw, String context, int dataVersion) {
+   private static AiSchematic.PaletteState init(String raw, String context, int dataVersion) {
       int bracket = raw.indexOf(91);
       String id = (bracket < 0 ? raw : raw.substring(0, bracket)).trim();
       if (!id.contains(":")) {
@@ -632,7 +632,7 @@ final class AiSchematic {
       }
 
       if (dataVersion <= 0) {
-         return new AiSchematic.Inner_ConfigStore(id, init(id, properties, context));
+         return new AiSchematic.PaletteState(id, init(id, properties, context));
       }
 
       CompoundTag state = new CompoundTag();
@@ -646,7 +646,7 @@ final class AiSchematic {
       return init(state, dataVersion, dataVersion < 1631, context);
    }
 
-   static AiSchematic.Inner_ConfigStore init(CompoundTag entry, int dataVersion, boolean preFlattening, String context) {
+   static AiSchematic.PaletteState init(CompoundTag entry, int dataVersion, boolean preFlattening, String context) {
       String name = entry.getStringOr("Name", "");
       if (name.isBlank()) {
          throw new IllegalArgumentException(context + " has no block Name");
@@ -683,7 +683,7 @@ final class AiSchematic {
          properties.put(key, value);
       }
 
-      return new AiSchematic.Inner_ConfigStore(id, init(id, properties, context));
+      return new AiSchematic.PaletteState(id, init(id, properties, context));
    }
 
    static Map<String, String> init(String blockId, Map<String, String> properties, String context) {
@@ -755,13 +755,13 @@ final class AiSchematic {
       }
    }
 
-   static Map<Long, String> signTexts(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
+   static Map<Long, String> signTexts(AiSchematic.DecodedFile decoded, int rotation, String mirror) {
       return decoded.signText().isEmpty()
          ? Map.of()
          : signTexts(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
    }
 
-   private static Map<Long, String> signTexts(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
+   private static Map<Long, String> signTexts(AiSchematic.DecodedFile decoded, int rotation, String mirror, BlockPos minimum) {
       if (decoded.signText().isEmpty()) {
          return Map.of();
       }
@@ -782,13 +782,13 @@ final class AiSchematic {
       return Map.copyOf(out);
    }
 
-   static Map<Long, ListTag> load(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
+   static Map<Long, ListTag> load(AiSchematic.DecodedFile decoded, int rotation, String mirror) {
       return decoded.containerContents().isEmpty()
          ? Map.of()
          : containerContents(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
    }
 
-   private static Map<Long, ListTag> containerContents(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
+   private static Map<Long, ListTag> containerContents(AiSchematic.DecodedFile decoded, int rotation, String mirror, BlockPos minimum) {
       if (decoded.containerContents().isEmpty()) {
          return Map.of();
       }
@@ -844,13 +844,13 @@ final class AiSchematic {
       return result;
    }
 
-   static List<AiSchematic.Inner_TaskQueue> railVehicles(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror) {
+   static List<AiSchematic.RailVehicleSpec> railVehicles(AiSchematic.DecodedFile decoded, int rotation, String mirror) {
       return decoded.railVehicles().isEmpty()
          ? List.of()
          : railVehicles(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
    }
 
-   private static List<AiSchematic.Inner_TaskQueue> railVehicles(AiSchematic.Inner_DataUtil decoded, int rotation, String mirror, BlockPos minimum) {
+   private static List<AiSchematic.RailVehicleSpec> railVehicles(AiSchematic.DecodedFile decoded, int rotation, String mirror, BlockPos minimum) {
       if (decoded.railVehicles().isEmpty()) {
          return List.of();
       }
@@ -858,9 +858,9 @@ final class AiSchematic {
       int minX = minimum.getX();
       int minY = minimum.getY();
       int minZ = minimum.getZ();
-      ArrayList<AiSchematic.Inner_TaskQueue> out = new ArrayList<>();
+      ArrayList<AiSchematic.RailVehicleSpec> out = new ArrayList<>();
 
-      for (AiSchematic.Inner_TaskQueue vehicle : decoded.railVehicles()) {
+      for (AiSchematic.RailVehicleSpec vehicle : decoded.railVehicles()) {
          BlockPos rail = vehicle.rail();
          Vec3 pos = vehicle.position();
          double dx = pos.x - rail.getX() - 0.5;
@@ -880,7 +880,7 @@ final class AiSchematic {
          AiBuilder.CellSpec moved = AiBuilder.transformCell(
             new AiBuilder.CellSpec(rail.getX(), rail.getY(), rail.getZ(), "minecraft:stone"), rotation, mirror
          );
-         out.add(new AiSchematic.Inner_TaskQueue(vehicle.id(), new Vec3(moved.dx() - minX + 0.5 + dx, pos.y - minY, moved.dz() - minZ + 0.5 + dz)));
+         out.add(new AiSchematic.RailVehicleSpec(vehicle.id(), new Vec3(moved.dx() - minX + 0.5 + dx, pos.y - minY, moved.dz() - minZ + 0.5 + dz)));
       }
 
       return List.copyOf(out);
@@ -898,7 +898,7 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.Inner_DataUtil decodeSponge(CompoundTag root, boolean skipUnknown) {
+   static AiSchematic.DecodedFile decodeSponge(CompoundTag root, boolean skipUnknown) {
       int width = requiredDimension(root, "Width");
       int height = requiredDimension(root, "Height");
       int length = requiredDimension(root, "Length");
@@ -936,7 +936,7 @@ final class AiSchematic {
             int key = id << 8 | meta;
             AiBuilder.CellSpec template = mapped.get(key);
             if (template == null) {
-               AiSchematic.Inner_CachePool state = legacyBlock(id, meta);
+               AiSchematic.LegacyBlockState state = legacyBlock(id, meta);
                if (state == null) {
                   unmapped.add(id);
                   unknownCells++;
@@ -981,9 +981,9 @@ final class AiSchematic {
 
       TreeMap<String, Integer> entities = new TreeMap<>();
       countEntities(root.getListOrEmpty("Entities"), entities);
-      ArrayList<AiSchematic.Inner_TaskQueue> vehicles = new ArrayList<>();
+      ArrayList<AiSchematic.RailVehicleSpec> vehicles = new ArrayList<>();
       init(root.getListOrEmpty("Entities"), offsetX, offsetY, offsetZ, vehicles);
-      return new AiSchematic.Inner_DataUtil(
+      return new AiSchematic.DecodedFile(
          List.copyOf(cells),
          Set.copyOf(unmapped),
          air + (skipUnknown ? unknownCells : 0),
@@ -995,11 +995,11 @@ final class AiSchematic {
       );
    }
 
-   static AiSchematic.Inner_DataUtil load(CompoundTag root) {
+   static AiSchematic.DecodedFile load(CompoundTag root) {
       return load(root, false);
    }
 
-   static AiSchematic.Inner_DataUtil load(CompoundTag root, boolean skipUnknown) {
+   static AiSchematic.DecodedFile load(CompoundTag root, boolean skipUnknown) {
       int version = root.getIntOr("Version", 0);
       if (version >= 1 && version <= 7) {
          int dataVersion = root.getIntOr("MinecraftDataVersion", 1631);
@@ -1013,8 +1013,8 @@ final class AiSchematic {
          HashMap<Long, String> signText = new HashMap<>();
          HashMap<Long, ListTag> contents = new HashMap<>();
          TreeMap<String, Integer> entities = new TreeMap<>();
-         ArrayList<AiSchematic.Inner_TaskQueue> vehicles = new ArrayList<>();
-         ArrayList<AiSchematic.Inner_StreamUtil> frames = new ArrayList<>();
+         ArrayList<AiSchematic.RailVehicleSpec> vehicles = new ArrayList<>();
+         ArrayList<AiSchematic.ItemFrameSpec> frames = new ArrayList<>();
          ArrayList<BoundingBox> boxes = new ArrayList<>();
          Set<String> unknown = new LinkedHashSet<>();
          int unknownCells = 0;
@@ -1067,7 +1067,7 @@ final class AiSchematic {
                   throw new IllegalArgumentException("Litematic region \"" + regionName + "\" has no block palette");
                }
 
-               AiSchematic.Inner_ConfigStore[] states = new AiSchematic.Inner_ConfigStore[palette.size()];
+               AiSchematic.PaletteState[] states = new AiSchematic.PaletteState[palette.size()];
 
                for (int value = 0; value < palette.size(); value++) {
                   try {
@@ -1129,7 +1129,7 @@ final class AiSchematic {
                      );
                   }
 
-                  AiSchematic.Inner_ConfigStore state = states[value];
+                  AiSchematic.PaletteState state = states[value];
                   int y = index / (ax * az);
                   int rest = index % (ax * az);
                   int z = rest / ax;
@@ -1150,7 +1150,7 @@ final class AiSchematic {
          }
 
          auditCheckUnknown(unknown, unknownCells, cells.size());
-         return new AiSchematic.Inner_DataUtil(
+         return new AiSchematic.DecodedFile(
             List.copyOf(cells),
             Set.of(),
             air + unknownCells,
@@ -1171,26 +1171,26 @@ final class AiSchematic {
       return facing == null ? "north" : facing;
    }
 
-   private static AiSchematic.Inner_CachePool simpleBlock(String block) {
-      return new AiSchematic.Inner_CachePool("minecraft:" + block, Map.of());
+   private static AiSchematic.LegacyBlockState simpleBlock(String block) {
+      return new AiSchematic.LegacyBlockState("minecraft:" + block, Map.of());
    }
 
-   private static AiSchematic.Inner_CachePool init(String block, String k1, String v1) {
-      return new AiSchematic.Inner_CachePool("minecraft:" + block, Map.of(k1, v1));
+   private static AiSchematic.LegacyBlockState init(String block, String k1, String v1) {
+      return new AiSchematic.LegacyBlockState("minecraft:" + block, Map.of(k1, v1));
    }
 
-   private static AiSchematic.Inner_CachePool init(String block, String k1, String v1, String k2, String v2) {
-      return new AiSchematic.Inner_CachePool("minecraft:" + block, Map.of(k1, v1, k2, v2));
+   private static AiSchematic.LegacyBlockState init(String block, String k1, String v1, String k2, String v2) {
+      return new AiSchematic.LegacyBlockState("minecraft:" + block, Map.of(k1, v1, k2, v2));
    }
 
-   private static AiSchematic.Inner_CachePool init(String block, String k1, String v1, String k2, String v2, String k3, String v3) {
-      return new AiSchematic.Inner_CachePool("minecraft:" + block, Map.of(k1, v1, k2, v2, k3, v3));
+   private static AiSchematic.LegacyBlockState init(String block, String k1, String v1, String k2, String v2, String k3, String v3) {
+      return new AiSchematic.LegacyBlockState("minecraft:" + block, Map.of(k1, v1, k2, v2, k3, v3));
    }
 
-   static AiSchematic.Inner_CachePool legacyBlock(int id, int data) {
+   static AiSchematic.LegacyBlockState legacyBlock(int id, int data) {
       String color = DYE_COLORS[data & 15];
       String wood = WOOD_TYPES[Math.min(data & 7, 5)];
-      AiSchematic.Inner_CachePool var10000;
+      AiSchematic.LegacyBlockState var10000;
       switch (id) {
          case 1:
             String var10;
@@ -2089,8 +2089,8 @@ final class AiSchematic {
       return var10000;
    }
 
-   private static AiSchematic.Inner_CachePool legacyLog(String type, int data) {
-      AiSchematic.Inner_CachePool var10000;
+   private static AiSchematic.LegacyBlockState legacyLog(String type, int data) {
+      AiSchematic.LegacyBlockState var10000;
       switch (data & 12) {
          case 4:
             var10000 = init(type + "_log", "axis", "x");
@@ -2108,11 +2108,11 @@ final class AiSchematic {
       return var10000;
    }
 
-   private static AiSchematic.Inner_CachePool load(String block, int data) {
+   private static AiSchematic.LegacyBlockState load(String block, int data) {
       return init(block, "facing", TORCH_FACINGS[data & 3], "half", (data & 4) != 0 ? "top" : "bottom");
    }
 
-   private static AiSchematic.Inner_CachePool legacySlab(int data, boolean wooden) {
+   private static AiSchematic.LegacyBlockState legacySlab(int data, boolean wooden) {
       String[] stone = new String[]{
          "stone_slab", "sandstone_slab", "petrified_oak_slab", "cobblestone_slab", "brick_slab", "stone_brick_slab", "nether_brick_slab", "quartz_slab"
       };
@@ -2120,7 +2120,7 @@ final class AiSchematic {
       return init(block, "type", (data & 8) != 0 ? "top" : "bottom");
    }
 
-   private static AiSchematic.Inner_CachePool load(int data, boolean wooden) {
+   private static AiSchematic.LegacyBlockState load(int data, boolean wooden) {
       if (!wooden && (data & 8) != 0) {
          String var10000;
          switch (data & 7) {
@@ -2144,19 +2144,19 @@ final class AiSchematic {
       }
    }
 
-   private static AiSchematic.Inner_CachePool read(String block, int data) {
+   private static AiSchematic.LegacyBlockState read(String block, int data) {
       return (data & 8) != 0
          ? init(block, "half", "upper", "hinge", (data & 1) != 0 ? "right" : "left")
          : init(block, "facing", sync[data & 3], "half", "lower", "open", (data & 4) != 0 ? "true" : "false");
    }
 
-   private static AiSchematic.Inner_CachePool write(String block, int data) {
+   private static AiSchematic.LegacyBlockState write(String block, int data) {
       return init(block, "facing", HORIZONTAL_FACINGS[data & 3], "open", (data & 4) != 0 ? "true" : "false");
    }
 
-   private static AiSchematic.Inner_CachePool legacyLever(int data) {
+   private static AiSchematic.LegacyBlockState legacyLever(int data) {
       String powered = (data & 8) != 0 ? "true" : "false";
-      AiSchematic.Inner_CachePool var10000;
+      AiSchematic.LegacyBlockState var10000;
       switch (data & 7) {
          case 0:
             var10000 = init("lever", "face", "ceiling", "facing", "east", "powered", powered);
@@ -2186,9 +2186,9 @@ final class AiSchematic {
       return var10000;
    }
 
-   private static AiSchematic.Inner_CachePool update(String block, int data) {
+   private static AiSchematic.LegacyBlockState update(String block, int data) {
       String powered = (data & 8) != 0 ? "true" : "false";
-      AiSchematic.Inner_CachePool var10000;
+      AiSchematic.LegacyBlockState var10000;
       switch (data & 7) {
          case 1:
             var10000 = init(block, "face", "wall", "facing", "east", "powered", powered);
@@ -2212,7 +2212,7 @@ final class AiSchematic {
       return var10000;
    }
 
-   private static AiSchematic.Inner_CachePool sync(String block, int data) {
+   private static AiSchematic.LegacyBlockState sync(String block, int data) {
       String[] shapes = new String[]{
          "north_south",
          "east_west",
@@ -2233,17 +2233,17 @@ final class AiSchematic {
       return block.equals("powered_rail") ? init(block, "shape", shape, "powered", (data & 8) != 0 ? "true" : "false") : init(block, "shape", shape);
    }
 
-   private static AiSchematic.Inner_CachePool load(int data) {
+   private static AiSchematic.LegacyBlockState load(int data) {
       Map<String, String> properties = new LinkedHashMap<>();
       properties.put("south", (data & 1) != 0 ? "true" : "false");
       properties.put("west", (data & 2) != 0 ? "true" : "false");
       properties.put("north", (data & 4) != 0 ? "true" : "false");
       properties.put("east", (data & 8) != 0 ? "true" : "false");
       properties.put("up", "false");
-      return new AiSchematic.Inner_CachePool("minecraft:vine", Map.copyOf(properties));
+      return new AiSchematic.LegacyBlockState("minecraft:vine", Map.copyOf(properties));
    }
 
-   private static AiSchematic.Inner_CachePool read(int data) {
+   private static AiSchematic.LegacyBlockState read(int data) {
       String var10000;
       switch (data & 7) {
          case 1:
@@ -2269,36 +2269,36 @@ final class AiSchematic {
       return init(block, "half", (data & 8) != 0 ? "upper" : "lower");
    }
 
-   record Inner_BufferHelper(
+   record LoadedSchematic(
       AiBuilder.Blueprint blueprint,
       Map<Long, String> signText,
       Map<String, Integer> entities,
       Map<Long, ListTag> containerContents,
-      List<AiSchematic.Inner_TaskQueue> railVehicles,
-      List<AiSchematic.Inner_StreamUtil> itemFrames
+      List<AiSchematic.RailVehicleSpec> railVehicles,
+      List<AiSchematic.ItemFrameSpec> itemFrames
    ) {
-      Inner_BufferHelper(
+      LoadedSchematic(
          AiBuilder.Blueprint blueprint,
          Map<Long, String> signText,
          Map<String, Integer> entities,
          Map<Long, ListTag> containerContents,
-         List<AiSchematic.Inner_TaskQueue> railVehicles
+         List<AiSchematic.RailVehicleSpec> railVehicles
       ) {
          this(blueprint, signText, entities, containerContents, railVehicles, List.of());
       }
 
-      Inner_BufferHelper(AiBuilder.Blueprint blueprint, Map<Long, String> signText, Map<String, Integer> entities, Map<Long, ListTag> containerContents) {
+      LoadedSchematic(AiBuilder.Blueprint blueprint, Map<Long, String> signText, Map<String, Integer> entities, Map<Long, ListTag> containerContents) {
          this(blueprint, signText, entities, containerContents, List.of());
       }
    }
 
-   record Inner_CachePool(String block, Map<String, String> properties) {
+   record LegacyBlockState(String block, Map<String, String> properties) {
    }
 
-   record Inner_ConfigStore(String block, Map<String, String> properties) {
+   record PaletteState(String block, Map<String, String> properties) {
    }
 
-   record Inner_DataUtil(
+   record DecodedFile(
       List<AiBuilder.CellSpec> cells,
       Set<Integer> unmapped,
       int airCells,
@@ -2306,10 +2306,10 @@ final class AiSchematic {
       Map<Long, String> signText,
       Map<String, Integer> entities,
       Map<Long, ListTag> containerContents,
-      List<AiSchematic.Inner_TaskQueue> railVehicles,
-      List<AiSchematic.Inner_StreamUtil> itemFrames
+      List<AiSchematic.RailVehicleSpec> railVehicles,
+      List<AiSchematic.ItemFrameSpec> itemFrames
    ) {
-      Inner_DataUtil(
+      DecodedFile(
          List<AiBuilder.CellSpec> cells,
          Set<Integer> unmapped,
          int airCells,
@@ -2317,12 +2317,12 @@ final class AiSchematic {
          Map<Long, String> signText,
          Map<String, Integer> entities,
          Map<Long, ListTag> containerContents,
-         List<AiSchematic.Inner_TaskQueue> railVehicles
+         List<AiSchematic.RailVehicleSpec> railVehicles
       ) {
          this(cells, unmapped, airCells, format, signText, entities, containerContents, railVehicles, List.of());
       }
 
-      Inner_DataUtil(
+      DecodedFile(
          List<AiBuilder.CellSpec> cells,
          Set<Integer> unmapped,
          int airCells,
@@ -2334,28 +2334,28 @@ final class AiSchematic {
          this(cells, unmapped, airCells, format, signText, entities, containerContents, List.of());
       }
 
-      Inner_DataUtil(
+      DecodedFile(
          List<AiBuilder.CellSpec> cells, Set<Integer> unmapped, int airCells, String format, Map<Long, String> signText, Map<String, Integer> entities
       ) {
          this(cells, unmapped, airCells, format, signText, entities, Map.of());
       }
 
-      Inner_DataUtil(List<AiBuilder.CellSpec> cells, Set<Integer> unmapped, int airCells, String format) {
+      DecodedFile(List<AiBuilder.CellSpec> cells, Set<Integer> unmapped, int airCells, String format) {
          this(cells, unmapped, airCells, format, Map.of(), Map.of());
       }
 
-      Inner_DataUtil(List<AiBuilder.CellSpec> cells, Set<Integer> unmapped, int airCells, String format, Map<Long, String> signText) {
+      DecodedFile(List<AiBuilder.CellSpec> cells, Set<Integer> unmapped, int airCells, String format, Map<Long, String> signText) {
          this(cells, unmapped, airCells, format, signText, Map.of());
       }
    }
 
-   record Inner_StreamUtil(String id, BlockPos cell, Direction facing, CompoundTag item, int rotation, boolean invisible, boolean fixed) {
+   record ItemFrameSpec(String id, BlockPos cell, Direction facing, CompoundTag item, int rotation, boolean invisible, boolean fixed) {
       BlockPos support() {
          return this.cell.relative(this.facing.getOpposite());
       }
    }
 
-   record Inner_TaskQueue(String id, Vec3 position) {
+   record RailVehicleSpec(String id, Vec3 position) {
       BlockPos rail() {
          return BlockPos.containing(this.position);
       }

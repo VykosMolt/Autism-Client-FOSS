@@ -122,8 +122,8 @@ public final class AiLanSync {
       String self = lan.getLocalUsername();
       JsonArray clients = new JsonArray();
 
-      for (Entry<String, autismclient.util.LanSyncManager.Inner_DataUtil> entry : lan.getConnectedClients().entrySet()) {
-         autismclient.util.LanSyncManager.Inner_DataUtil info = entry.getValue();
+      for (Entry<String, autismclient.util.LanSyncManager.ClientInfo> entry : lan.getConnectedClients().entrySet()) {
+         autismclient.util.LanSyncManager.ClientInfo info = entry.getValue();
          clients.add(
             AiJson.objectOf(
                "name",
@@ -299,7 +299,7 @@ public final class AiLanSync {
             lan.setClientOffsetMs(requireString(args, "peer"), Math.max(0, AiJson.getInt(args, "offsetMs", 0)));
             break;
          case "setExecutionMethod":
-            lan.setExecutionMethod(autismclient.util.LanSyncManager.Inner_StreamUtil.valueOf(requireString(args, "method").toUpperCase(Locale.ROOT)));
+            lan.setExecutionMethod(autismclient.util.LanSyncManager.ExecutionMethod.valueOf(requireString(args, "method").toUpperCase(Locale.ROOT)));
             break;
          default:
             throw new IllegalArgumentException("Unknown LAN action '" + action + "'");
@@ -330,8 +330,8 @@ public final class AiLanSync {
 
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.player != null && mc.getConnection() != null) {
-         autismclient.util.LanSyncManager.Inner_JsonUtil state = lan.getSyncState();
-         if (state != autismclient.util.LanSyncManager.Inner_JsonUtil.IDLE && state != autismclient.util.LanSyncManager.Inner_JsonUtil.DONE) {
+         autismclient.util.LanSyncManager.SyncState state = lan.getSyncState();
+         if (state != autismclient.util.LanSyncManager.SyncState.IDLE && state != autismclient.util.LanSyncManager.SyncState.DONE) {
             throw new IllegalStateException("LAN Sync is busy with another synchronized action (" + state.name() + ")");
          }
       } else {
@@ -340,7 +340,7 @@ public final class AiLanSync {
    }
 
    private static void assignMacros(autismclient.util.LanSyncManager lan, Map<String, String> assignments) {
-      Map<String, autismclient.util.LanSyncManager.Inner_DataUtil> clients = lan.getConnectedClients();
+      Map<String, autismclient.util.LanSyncManager.ClientInfo> clients = lan.getConnectedClients();
       StringBuilder problems = new StringBuilder();
 
       for (Entry<String, String> entry : assignments.entrySet()) {

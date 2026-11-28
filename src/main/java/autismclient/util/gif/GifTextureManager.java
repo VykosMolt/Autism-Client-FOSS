@@ -62,13 +62,13 @@ public final class GifTextureManager {
    private static final int close_I = 2;
    private static final int open_I = 10;
    private static final int poll = 20;
-   private static final Map<String, GifTextureManager.Inner_StreamUtil> entriesByKey = new ConcurrentHashMap<>();
-   private static final Map<String, GifTextureManager.Inner_StreamUtil> entriesBySlot = new ConcurrentHashMap<>();
-   private static final Queue<GifTextureManager.Inner_CachePool> decodeJobs = new ConcurrentLinkedQueue<>();
+   private static final Map<String, GifTextureManager.GifEntry> entriesByKey = new ConcurrentHashMap<>();
+   private static final Map<String, GifTextureManager.GifEntry> entriesBySlot = new ConcurrentHashMap<>();
+   private static final Queue<GifTextureManager.DecodeJob> decodeJobs = new ConcurrentLinkedQueue<>();
    private static final AtomicBoolean workerRunning = new AtomicBoolean();
    private static final AtomicLong textureCounter = new AtomicLong();
    private static long nextPollMs;
-   private static final Map<String, GifTextureManager.ConfigStore> resolvedPaths = new ConcurrentHashMap<>();
+   private static final Map<String, GifTextureManager.ResolvedPath> resolvedPaths = new ConcurrentHashMap<>();
    private static final Map<String, int[]> imageDims = new ConcurrentHashMap<>();
    private static volatile long epoch;
 
@@ -76,19 +76,19 @@ public final class GifTextureManager {
    }
 
    public static Identifier texture(String path, double targetFps, double quality, String owner) {
-      return textureFor(path, targetFps, false, quality, GifTextureManager.NetHelper.HUD, owner);
+      return textureFor(path, targetFps, false, quality, GifTextureManager.TextureSurface.HUD, owner);
    }
 
    public static Identifier textureKeepAspect(String path, double targetFps, boolean keepAspect, double quality) {
-      return textureFor(path, targetFps, keepAspect, quality, GifTextureManager.NetHelper.CAPE, null);
+      return textureFor(path, targetFps, keepAspect, quality, GifTextureManager.TextureSurface.CAPE, null);
    }
 
    public static Identifier load(String path, double targetFps, boolean keepAspect, double quality) {
-      return textureFor(path, targetFps, keepAspect, quality, GifTextureManager.NetHelper.SHIELD, null);
+      return textureFor(path, targetFps, keepAspect, quality, GifTextureManager.TextureSurface.SHIELD, null);
    }
 
    public static int[] naturalSize(String path) {
-      GifTextureManager.ConfigStore resolved = resolvePath(path);
+      GifTextureManager.ResolvedPath resolved = resolvePath(path);
       if (resolved.path() == null) {
          return null;
       }
@@ -101,7 +101,7 @@ public final class GifTextureManager {
       epoch++;
       List<Identifier> ids = new ArrayList<>();
 
-      for (GifTextureManager.Inner_StreamUtil entry : entriesByKey.values()) {
+      for (GifTextureManager.GifEntry entry : entriesByKey.values()) {
          ids.add(entry.textureId);
       }
 
@@ -123,19 +123,19 @@ public final class GifTextureManager {
       });
    }
 
-   private static Identifier textureFor(String raw, double targetFps, boolean keepAspect, double quality, GifTextureManager.NetHelper surface, String owner) {
+   private static Identifier textureFor(String raw, double targetFps, boolean keepAspect, double quality, GifTextureManager.TextureSurface surface, String owner) {
       double fps = clampFps(targetFps);
       double clampedQuality = clampQuality(quality);
-      GifTextureManager.ConfigStore resolved = resolvePath(raw);
+      GifTextureManager.ResolvedPath resolved = resolvePath(raw);
       String source = resolved.path() != null ? resolved.path().toString() : String.valueOf(raw);
       String key = source + "|" + surface.init_Str + "|" + keepAspect + "|" + clampedQuality + (owner == null ? "" : "|" + owner);
       String slot = surface.init_Str + "|" + (owner == null ? source : "@" + owner);
       long now = System.currentTimeMillis();
-      GifTextureManager.Inner_StreamUtil entry = entriesByKey.get(key);
+      GifTextureManager.GifEntry entry = entriesByKey.get(key);
       if (entry == null) {
          Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/gif/" + sha1Hex(key) + "_" + textureCounter.incrementAndGet());
-         GifTextureManager.Inner_StreamUtil created = new GifTextureManager.Inner_StreamUtil(key, slot, id, resolved.path(), surface, keepAspect, clampedQuality, fps);
-         GifTextureManager.Inner_StreamUtil existing = entriesByKey.putIfAbsent(key, created);
+         GifTextureManager.GifEntry created = new GifTextureManager.GifEntry(key, slot, id, resolved.path(), surface, keepAspect, clampedQuality, fps);
+         GifTextureManager.GifEntry existing = entriesByKey.putIfAbsent(key, created);
          if (existing != null) {
             entry = existing;
          } else {
@@ -147,7 +147,7 @@ public final class GifTextureManager {
                queueDecode(created);
             }
          }
-      } else if (entry.state != GifTextureManager.TaskQueue.LOADING && entry.path != null && now >= entry.nextCheckMs) {
+      } else if (entry.state != GifTextureManager.LoadState.LOADING && entry.path != null && now >= entry.nextCheckMs) {
          entry.nextCheckMs = now + 1000L;
 
          try {
@@ -157,7 +157,7 @@ public final class GifTextureManager {
             if (mtime != entry.init_J || size != entry.load_J) {
                entry.init_J = mtime;
                entry.load_J = size;
-               entry.state = GifTextureManager.TaskQueue.LOADING;
+               entry.state = GifTextureManager.LoadState.LOADING;
                clearTexture(entry);
                queueDecode(entry);
             }
@@ -170,11 +170,11 @@ public final class GifTextureManager {
       }
 
       markUsed(entry, fps, now);
-      if (entry.state == GifTextureManager.TaskQueue.READY) {
+      if (entry.state == GifTextureManager.LoadState.READY) {
          return entry.textureId;
       } else {
-         GifTextureManager.Inner_StreamUtil fallback = entry.fallback;
-         if (fallback != null && fallback.state == GifTextureManager.TaskQueue.READY) {
+         GifTextureManager.GifEntry fallback = entry.fallback;
+         if (fallback != null && fallback.state == GifTextureManager.LoadState.READY) {
             markUsed(fallback, fps, now);
             return fallback.textureId;
          } else {
@@ -183,26 +183,26 @@ public final class GifTextureManager {
       }
    }
 
-   private static void markUsed(GifTextureManager.Inner_StreamUtil entry, double fps, long now) {
+   private static void markUsed(GifTextureManager.GifEntry entry, double fps, long now) {
       entry.lastUsedMs = now;
       entry.fps = fps;
-      GifTextureManager.Inner_DataUtil texture = entry.texture;
+      GifTextureManager.AnimatedTexture texture = entry.texture;
       if (texture != null) {
          texture.targetFps = fps;
       }
    }
 
-   private static void bindSlot(GifTextureManager.Inner_StreamUtil entry) {
-      GifTextureManager.Inner_StreamUtil previous = entriesBySlot.put(entry.slot, entry);
+   private static void bindSlot(GifTextureManager.GifEntry entry) {
+      GifTextureManager.GifEntry previous = entriesBySlot.put(entry.slot, entry);
       if (previous != null && previous != entry) {
-         GifTextureManager.Inner_StreamUtil keep = previous.state == GifTextureManager.TaskQueue.READY ? previous : previous.fallback;
+         GifTextureManager.GifEntry keep = previous.state == GifTextureManager.LoadState.READY ? previous : previous.fallback;
          previous.fallback = null;
          if (previous != keep) {
             releaseEntry(previous);
          }
 
          if (keep != null && keep != entry) {
-            if (entry.state == GifTextureManager.TaskQueue.LOADING) {
+            if (entry.state == GifTextureManager.LoadState.LOADING) {
                if (entry.fallback != null && entry.fallback != keep) {
                   releaseEntry(entry.fallback);
                }
@@ -215,7 +215,7 @@ public final class GifTextureManager {
       }
    }
 
-   private static long releaseEntry(GifTextureManager.Inner_StreamUtil entry) {
+   private static long releaseEntry(GifTextureManager.GifEntry entry) {
       if (entry.released) {
          return 0L;
       }
@@ -223,7 +223,7 @@ public final class GifTextureManager {
       entry.released = true;
       entriesByKey.remove(entry.key, entry);
       entriesBySlot.remove(entry.slot, entry);
-      GifTextureManager.Inner_StreamUtil current = entriesBySlot.get(entry.slot);
+      GifTextureManager.GifEntry current = entriesBySlot.get(entry.slot);
       if (current != null && current.fallback == entry) {
          current.fallback = null;
       }
@@ -231,7 +231,7 @@ public final class GifTextureManager {
       entry.generation++;
       long freed = entry.textureBytes;
       clearTexture(entry);
-      GifTextureManager.Inner_StreamUtil fallback = entry.fallback;
+      GifTextureManager.GifEntry fallback = entry.fallback;
       entry.fallback = null;
       if (fallback != null) {
          freed += releaseEntry(fallback);
@@ -240,8 +240,8 @@ public final class GifTextureManager {
       return freed;
    }
 
-   private static void releaseFallback(GifTextureManager.Inner_StreamUtil entry) {
-      GifTextureManager.Inner_StreamUtil fallback = entry.fallback;
+   private static void releaseFallback(GifTextureManager.GifEntry entry) {
+      GifTextureManager.GifEntry fallback = entry.fallback;
       entry.fallback = null;
       if (fallback != null) {
          releaseEntry(fallback);
@@ -251,9 +251,9 @@ public final class GifTextureManager {
    private static void trimCache() {
       long now = System.currentTimeMillis();
       long total = 0L;
-      List<GifTextureManager.Inner_StreamUtil> offScreen = new ArrayList<>();
+      List<GifTextureManager.GifEntry> offScreen = new ArrayList<>();
 
-      for (GifTextureManager.Inner_StreamUtil entry : entriesByKey.values()) {
+      for (GifTextureManager.GifEntry entry : entriesByKey.values()) {
          total += entry.textureBytes;
          if (now - entry.lastUsedMs > 2000L) {
             offScreen.add(entry);
@@ -262,7 +262,7 @@ public final class GifTextureManager {
 
       offScreen.sort(Comparator.comparingLong(entryx -> entryx.lastUsedMs));
 
-      for (GifTextureManager.Inner_StreamUtil entry : offScreen) {
+      for (GifTextureManager.GifEntry entry : offScreen) {
          if (now - entry.lastUsedMs <= 300000L && total <= 536870912L) {
             break;
          }
@@ -282,15 +282,15 @@ public final class GifTextureManager {
       }
    }
 
-   private static void queueDecode(GifTextureManager.Inner_StreamUtil entry) {
-      decodeJobs.add(new GifTextureManager.Inner_CachePool(entry, ++entry.generation, epoch, System.currentTimeMillis()));
+   private static void queueDecode(GifTextureManager.GifEntry entry) {
+      decodeJobs.add(new GifTextureManager.DecodeJob(entry, ++entry.generation, epoch, System.currentTimeMillis()));
       startWorker();
    }
 
    private static void startWorker() {
       if (workerRunning.compareAndSet(false, true)) {
          BackgroundTaskExecutor.submit("gif-load", () -> {
-            GifTextureManager.Inner_CachePool job;
+            GifTextureManager.DecodeJob job;
             try {
                while ((job = decodeJobs.poll()) != null) {
                   runDecodeJob(job);
@@ -305,22 +305,22 @@ public final class GifTextureManager {
       }
    }
 
-   private static void runDecodeJob(GifTextureManager.Inner_CachePool job) {
+   private static void runDecodeJob(GifTextureManager.DecodeJob job) {
       long waitMs = job.read() + 150L - System.currentTimeMillis();
       if (waitMs > 0L) {
          LockSupport.parkNanos(waitMs * 1000000L);
       }
 
       if (!job.isStale()) {
-         GifTextureManager.BufferHelper payload = decode(job);
+         GifTextureManager.DecodedGif payload = decode(job);
          if (payload != null && !runOnRenderThread(() -> applyDecoded(job, payload))) {
             payload.closeImages();
          }
       }
    }
 
-   private static void applyDecoded(GifTextureManager.Inner_CachePool job, GifTextureManager.BufferHelper payload) {
-      GifTextureManager.Inner_StreamUtil entry = job.entry();
+   private static void applyDecoded(GifTextureManager.DecodeJob job, GifTextureManager.DecodedGif payload) {
+      GifTextureManager.GifEntry entry = job.entry();
       if (job.isStale()) {
          payload.closeImages();
       } else if (payload.mipChains() == null) {
@@ -328,16 +328,16 @@ public final class GifTextureManager {
          entry.init_J = payload.init_J();
          entry.load_J = payload.load_J();
       } else {
-         GifTextureManager.Inner_DataUtil texture = null;
+         GifTextureManager.AnimatedTexture texture = null;
 
          try {
-            texture = new GifTextureManager.Inner_DataUtil(
+            texture = new GifTextureManager.AnimatedTexture(
                "autism " + entry.textureId.getPath(),
                payload.mipChains(),
                payload.delaysMs(),
                payload.averageDelayMs(),
                entry.fps,
-               entry.surface == GifTextureManager.NetHelper.HUD
+               entry.surface == GifTextureManager.TextureSurface.HUD
             );
             Minecraft.getInstance().getTextureManager().register(entry.textureId, texture);
          } catch (Throwable t) {
@@ -353,7 +353,7 @@ public final class GifTextureManager {
 
          entry.texture = texture;
          entry.textureBytes = texture.size;
-         entry.state = GifTextureManager.TaskQueue.READY;
+         entry.state = GifTextureManager.LoadState.READY;
          entry.lastError = null;
          entry.init_J = payload.init_J();
          entry.load_J = payload.load_J();
@@ -366,9 +366,9 @@ public final class GifTextureManager {
       }
    }
 
-   private static void markFailed(GifTextureManager.Inner_StreamUtil entry, String reason) {
-      boolean report = entry.state != GifTextureManager.TaskQueue.FAILED || !reason.equals(entry.lastError);
-      entry.state = GifTextureManager.TaskQueue.FAILED;
+   private static void markFailed(GifTextureManager.GifEntry entry, String reason) {
+      boolean report = entry.state != GifTextureManager.LoadState.FAILED || !reason.equals(entry.lastError);
+      entry.state = GifTextureManager.LoadState.FAILED;
       entry.lastError = reason;
       releaseFallback(entry);
       if (report) {
@@ -376,7 +376,7 @@ public final class GifTextureManager {
       }
    }
 
-   private static void clearTexture(GifTextureManager.Inner_StreamUtil entry) {
+   private static void clearTexture(GifTextureManager.GifEntry entry) {
       entry.texture = null;
       entry.textureBytes = 0L;
       runOnRenderThread(() -> {
@@ -405,17 +405,17 @@ public final class GifTextureManager {
       return true;
    }
 
-   private static GifTextureManager.BufferHelper decode(GifTextureManager.Inner_CachePool job) {
-      GifTextureManager.Inner_StreamUtil entry = job.entry();
+   private static GifTextureManager.DecodedGif decode(GifTextureManager.DecodeJob job) {
+      GifTextureManager.GifEntry entry = job.entry();
       BooleanSupplier stale = job::isStale;
       BasicFileAttributes attrs = null;
 
       try {
          attrs = Files.readAttributes(entry.path, BasicFileAttributes.class);
          byte[] bytes = Files.readAllBytes(entry.path);
-         GifImageDecoder.Inner_DataUtil decoded = GifImageDecoder.decode(bytes);
+         GifImageDecoder.DecodedImage decoded = GifImageDecoder.decode(bytes);
          checkCancelled(stale);
-         GifTextureManager.JsonUtil var10000;
+         GifTextureManager.ArgbFrames var10000;
          switch (entry.surface) {
             case CAPE:
                var10000 = init_CachePool_JsonUtil_DataUtil_DataUtil(decoded, entry.keepAspect, entry.quality, stale);
@@ -427,11 +427,11 @@ public final class GifTextureManager {
                var10000 = applyQuality(decoded, entry.quality, stale);
          }
 
-         GifTextureManager.JsonUtil transformed = var10000;
+         GifTextureManager.ArgbFrames transformed = var10000;
          int[][] argbFrames = transformed.argbFrames();
          int width = transformed.width();
          int height = transformed.load();
-         boolean mipmap = entry.surface == GifTextureManager.NetHelper.HUD;
+         boolean mipmap = entry.surface == GifTextureManager.TextureSurface.HUD;
          NativeImage[][] chains = new NativeImage[argbFrames.length][];
 
          try {
@@ -446,16 +446,16 @@ public final class GifTextureManager {
             throw t;
          }
 
-         return new GifTextureManager.BufferHelper(
+         return new GifTextureManager.DecodedGif(
             attrs.lastModifiedTime().toMillis(), attrs.size(), chains, decoded.delays(), decoded.read(), decoded.width(), decoded.load(), null
          );
       } catch (CancellationException e) {
          return null;
-      } catch (GifImageDecoder.Inner_CachePool e) {
-         return GifTextureManager.BufferHelper.failure(e.getMessage(), attrs);
+      } catch (GifImageDecoder.DecodeException e) {
+         return GifTextureManager.DecodedGif.failure(e.getMessage(), attrs);
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("GIF load failed for {}: {}", entry.path, t.toString());
-         return GifTextureManager.BufferHelper.failure("could not read image file", attrs);
+         return GifTextureManager.DecodedGif.failure("could not read image file", attrs);
       }
    }
 
@@ -479,8 +479,8 @@ public final class GifTextureManager {
       }
    }
 
-   private static GifTextureManager.JsonUtil init_CachePool_JsonUtil_DataUtil_DataUtil(
-      GifImageDecoder.Inner_DataUtil decoded, boolean keepAspect, double quality, BooleanSupplier stale
+   private static GifTextureManager.ArgbFrames init_CachePool_JsonUtil_DataUtil_DataUtil(
+      GifImageDecoder.DecodedImage decoded, boolean keepAspect, double quality, BooleanSupplier stale
    ) {
       int frames = decoded.frames().length;
       double faceScale = 64.0 / init_IArr[2];
@@ -513,12 +513,12 @@ public final class GifTextureManager {
          out[i] = canvas.getRGB(0, 0, width, height, null, 0, width);
       }
 
-      return new GifTextureManager.JsonUtil(width, height, out);
+      return new GifTextureManager.ArgbFrames(width, height, out);
    }
 
-   private static GifTextureManager.JsonUtil applyQuality(GifImageDecoder.Inner_DataUtil decoded, double quality, BooleanSupplier stale) {
+   private static GifTextureManager.ArgbFrames applyQuality(GifImageDecoder.DecodedImage decoded, double quality, BooleanSupplier stale) {
       if (quality >= 0.999) {
-         return new GifTextureManager.JsonUtil(decoded.width(), decoded.load(), decoded.frames());
+         return new GifTextureManager.ArgbFrames(decoded.width(), decoded.load(), decoded.frames());
       }
 
       int width = Math.max(1, (int)Math.round(decoded.width() * quality));
@@ -535,10 +535,10 @@ public final class GifTextureManager {
          out[i] = canvas.getRGB(0, 0, width, height, null, 0, width);
       }
 
-      return new GifTextureManager.JsonUtil(width, height, out);
+      return new GifTextureManager.ArgbFrames(width, height, out);
    }
 
-   private static GifTextureManager.JsonUtil buildShieldFrames(GifImageDecoder.Inner_DataUtil decoded, boolean keepAspect, double quality, BooleanSupplier stale) {
+   private static GifTextureManager.ArgbFrames buildShieldFrames(GifImageDecoder.DecodedImage decoded, boolean keepAspect, double quality, BooleanSupplier stale) {
       int frames = decoded.frames().length;
       double faceScale = 6.4;
       int target = (int)Math.round(Math.max(decoded.width(), decoded.load()) * quality * faceScale);
@@ -555,7 +555,7 @@ public final class GifTextureManager {
          out[i] = scaleFrame(decoded.frames()[i], decoded.width(), decoded.load(), keepAspect, size);
       }
 
-      return new GifTextureManager.JsonUtil(size, size, out);
+      return new GifTextureManager.ArgbFrames(size, size, out);
    }
 
    private static void checkCancelled(BooleanSupplier stale) {
@@ -675,24 +675,24 @@ public final class GifTextureManager {
       }
    }
 
-   private static GifTextureManager.ConfigStore resolvePath(String raw) {
+   private static GifTextureManager.ResolvedPath resolvePath(String raw) {
       if (raw == null) {
-         return new GifTextureManager.ConfigStore(null, "no image path set");
+         return new GifTextureManager.ResolvedPath(null, "no image path set");
       }
 
-      GifTextureManager.ConfigStore cached = resolvedPaths.get(raw);
+      GifTextureManager.ResolvedPath cached = resolvedPaths.get(raw);
       if (cached != null) {
          return cached;
       }
 
-      GifTextureManager.ConfigStore resolved = resolveSource(raw);
+      GifTextureManager.ResolvedPath resolved = resolveSource(raw);
       resolvedPaths.put(raw, resolved);
       return resolved;
    }
 
-   private static GifTextureManager.ConfigStore resolveSource(String raw) {
+   private static GifTextureManager.ResolvedPath resolveSource(String raw) {
       if (raw.isBlank()) {
-         return new GifTextureManager.ConfigStore(null, "no image path set");
+         return new GifTextureManager.ResolvedPath(null, "no image path set");
       }
 
       if (!raw.contains("://") && !raw.regionMatches(true, 0, "jar:", 0, 4)) {
@@ -704,15 +704,15 @@ public final class GifTextureManager {
 
             String name = path.getFileName() == null ? "" : path.getFileName().toString().toLowerCase(Locale.ROOT);
             if (!name.endsWith(".gif") && !name.endsWith(".png") && !name.endsWith(".jpg") && !name.endsWith(".jpeg")) {
-               return new GifTextureManager.ConfigStore(null, "unsupported file type (use .gif, .png or .jpg)");
+               return new GifTextureManager.ResolvedPath(null, "unsupported file type (use .gif, .png or .jpg)");
             }
 
             if (!Files.exists(path)) {
-               return new GifTextureManager.ConfigStore(null, "file not found: " + path.getFileName());
+               return new GifTextureManager.ResolvedPath(null, "file not found: " + path.getFileName());
             }
 
             if (!Files.isRegularFile(path)) {
-               return new GifTextureManager.ConfigStore(null, "not a file: " + path.getFileName());
+               return new GifTextureManager.ResolvedPath(null, "not a file: " + path.getFileName());
             }
 
             try {
@@ -721,12 +721,12 @@ public final class GifTextureManager {
                path = path.toAbsolutePath().normalize();
             }
 
-            return new GifTextureManager.ConfigStore(path, null);
+            return new GifTextureManager.ResolvedPath(path, null);
          } catch (Exception e) {
-            return new GifTextureManager.ConfigStore(null, "invalid image path");
+            return new GifTextureManager.ResolvedPath(null, "invalid image path");
          }
       } else {
-         return new GifTextureManager.ConfigStore(null, "invalid image path");
+         return new GifTextureManager.ResolvedPath(null, "invalid image path");
       }
    }
 
@@ -754,13 +754,13 @@ public final class GifTextureManager {
       }
    }
 
-   private record BufferHelper(
+   private record DecodedGif(
       long init_J, long load_J, NativeImage[][] mipChains, int[] delaysMs, int averageDelayMs, int sourceWidth, int read, String error
    ) {
-      static GifTextureManager.BufferHelper failure(String reason, BasicFileAttributes attrs) {
+      static GifTextureManager.DecodedGif failure(String reason, BasicFileAttributes attrs) {
          long mtime = attrs == null ? -1L : attrs.lastModifiedTime().toMillis();
          long size = attrs == null ? -1L : attrs.size();
-         return new GifTextureManager.BufferHelper(mtime, size, null, null, 1, 0, 0, reason);
+         return new GifTextureManager.DecodedGif(mtime, size, null, null, 1, 0, 0, reason);
       }
 
       void closeImages() {
@@ -768,16 +768,16 @@ public final class GifTextureManager {
       }
    }
 
-   private record ConfigStore(Path path, String error) {
+   private record ResolvedPath(Path path, String error) {
    }
 
-   private record Inner_CachePool(GifTextureManager.Inner_StreamUtil entry, long generation, long load, long read) {
+   private record DecodeJob(GifTextureManager.GifEntry entry, long generation, long load, long read) {
       boolean isStale() {
          return this.generation != this.entry.generation || this.load != GifTextureManager.epoch;
       }
    }
 
-   private static final class Inner_DataUtil extends AbstractTexture implements TickableTexture {
+   private static final class AnimatedTexture extends AbstractTexture implements TickableTexture {
       private final NativeImage[][] mipChains;
       private final int[] delaysMs;
       private final int averageDelayMs;
@@ -791,7 +791,7 @@ public final class GifTextureManager {
       private long cycleElapsedMs;
       private boolean init_Z;
 
-      private Inner_DataUtil(String label, NativeImage[][] chains, int[] delaysMs, int averageDelayMs, double targetFps, boolean mipmap) {
+      private AnimatedTexture(String label, NativeImage[][] chains, int[] delaysMs, int averageDelayMs, double targetFps, boolean mipmap) {
          this.mipChains = chains;
          this.delaysMs = delaysMs;
          this.averageDelayMs = averageDelayMs;
@@ -878,28 +878,28 @@ public final class GifTextureManager {
       }
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class GifEntry {
       final String key;
       final String slot;
       final Identifier textureId;
       final Path path;
-      final GifTextureManager.NetHelper surface;
+      final GifTextureManager.TextureSurface surface;
       final boolean keepAspect;
       final double quality;
       volatile double fps;
-      volatile GifTextureManager.TaskQueue state = GifTextureManager.TaskQueue.LOADING;
+      volatile GifTextureManager.LoadState state = GifTextureManager.LoadState.LOADING;
       volatile String lastError;
       volatile long init_J = -1L;
       volatile long load_J = -1L;
       volatile long nextCheckMs;
       volatile long generation;
-      volatile GifTextureManager.Inner_DataUtil texture;
-      GifTextureManager.Inner_StreamUtil fallback;
+      volatile GifTextureManager.AnimatedTexture texture;
+      GifTextureManager.GifEntry fallback;
       long lastUsedMs;
       long textureBytes;
       boolean released;
 
-      Inner_StreamUtil(String key, String slot, Identifier id, Path file, GifTextureManager.NetHelper surface, boolean keepAspect, double quality, double fps) {
+      GifEntry(String key, String slot, Identifier id, Path file, GifTextureManager.TextureSurface surface, boolean keepAspect, double quality, double fps) {
          this.key = key;
          this.slot = slot;
          this.textureId = id;
@@ -911,22 +911,22 @@ public final class GifTextureManager {
       }
    }
 
-   private record JsonUtil(int width, int load, int[][] argbFrames) {
+   private record ArgbFrames(int width, int load, int[][] argbFrames) {
    }
 
-   private enum NetHelper {
+   private enum TextureSurface {
       HUD("hud"),
       CAPE("cape"),
       SHIELD("shield");
 
       final String init_Str;
 
-      NetHelper(String tag) {
+      TextureSurface(String tag) {
          this.init_Str = tag;
       }
    }
 
-   private enum TaskQueue {
+   private enum LoadState {
       LOADING,
       READY,
       FAILED;

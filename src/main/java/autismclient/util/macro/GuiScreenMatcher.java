@@ -22,7 +22,7 @@ public final class GuiScreenMatcher {
       if (screen != null && !isClientScreen(screen)) {
          String trimmed = query == null ? "" : query.trim();
          if (!trimmed.isEmpty() && !trimmed.equalsIgnoreCase("any")) {
-            GuiScreenMatcher.Inner_DataUtil type = init_f_DataUtil(trimmed);
+            GuiScreenMatcher.GuiType type = init_f_DataUtil(trimmed);
             if (type != null && init(screen, type)) {
                return true;
             }
@@ -40,18 +40,18 @@ public final class GuiScreenMatcher {
    }
 
    public static boolean init(Screen screen, String guiType, String titleFilter) {
-      GuiScreenMatcher.Inner_DataUtil type = init_f_DataUtil(guiType);
+      GuiScreenMatcher.GuiType type = init_f_DataUtil(guiType);
       if (type == null) {
-         type = GuiScreenMatcher.Inner_DataUtil.ANY;
+         type = GuiScreenMatcher.GuiType.ANY;
       }
 
       return !init(screen, type) ? false : titleFilter == null || titleFilter.isBlank() || init(screen, titleFilter);
    }
 
-   public static boolean init(Screen screen, GuiScreenMatcher.Inner_DataUtil type) {
+   public static boolean init(Screen screen, GuiScreenMatcher.GuiType type) {
       if (screen != null && !isClientScreen(screen)) {
          boolean var10000;
-         switch (type == null ? GuiScreenMatcher.Inner_DataUtil.ANY : type) {
+         switch (type == null ? GuiScreenMatcher.GuiType.ANY : type) {
             case ANY:
                var10000 = true;
                break;
@@ -123,59 +123,59 @@ public final class GuiScreenMatcher {
       return screen != null && screen.getClass().getName().startsWith("autismclient.");
    }
 
-   private static GuiScreenMatcher.Inner_DataUtil init_f_DataUtil(String raw) {
+   private static GuiScreenMatcher.GuiType init_f_DataUtil(String raw) {
       if (raw != null && !raw.isBlank()) {
          String key = raw.trim().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
-         GuiScreenMatcher.Inner_DataUtil var10000;
+         GuiScreenMatcher.GuiType var10000;
          switch (key) {
             case "ANY":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.ANY;
+               var10000 = GuiScreenMatcher.GuiType.ANY;
                break;
             case "CONTAINER":
             case "GUI":
             case "CHEST":
             case "SHULKER":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.CONTAINER;
+               var10000 = GuiScreenMatcher.GuiType.CONTAINER;
                break;
             case "INVENTORY":
             case "PLAYER_INVENTORY":
             case "PLAYER":
             case "INV":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.INVENTORY;
+               var10000 = GuiScreenMatcher.GuiType.INVENTORY;
                break;
             case "SIGN":
             case "SIGN_GUI":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.SIGN;
+               var10000 = GuiScreenMatcher.GuiType.SIGN;
                break;
             case "HANGING_SIGN":
             case "HANGINGSIGN":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.HANGING_SIGN;
+               var10000 = GuiScreenMatcher.GuiType.HANGING_SIGN;
                break;
             case "BOOK":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.BOOK;
+               var10000 = GuiScreenMatcher.GuiType.BOOK;
                break;
             case "BOOK_EDIT":
             case "EDIT_BOOK":
             case "WRITABLE_BOOK":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.BOOK_EDIT;
+               var10000 = GuiScreenMatcher.GuiType.BOOK_EDIT;
                break;
             case "BOOK_SIGN":
             case "SIGN_BOOK":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.BOOK_SIGN;
+               var10000 = GuiScreenMatcher.GuiType.BOOK_SIGN;
                break;
             case "BOOK_VIEW":
             case "READ_BOOK":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.BOOK_VIEW;
+               var10000 = GuiScreenMatcher.GuiType.BOOK_VIEW;
                break;
             case "CHAT":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.CHAT;
+               var10000 = GuiScreenMatcher.GuiType.CHAT;
                break;
             case "CUSTOM_MENU":
             case "CUSTOM":
             case "CUSTOM_SCREEN":
             case "CUSTOMSCREEN":
             case "DIALOG":
-               var10000 = GuiScreenMatcher.Inner_DataUtil.CUSTOM_MENU;
+               var10000 = GuiScreenMatcher.GuiType.CUSTOM_MENU;
                break;
             default:
                var10000 = null;
@@ -188,10 +188,10 @@ public final class GuiScreenMatcher {
    }
 
    public static boolean isCustomMenuType(String raw) {
-      return init_f_DataUtil(raw) == GuiScreenMatcher.Inner_DataUtil.CUSTOM_MENU;
+      return init_f_DataUtil(raw) == GuiScreenMatcher.GuiType.CUSTOM_MENU;
    }
 
-   public enum Inner_DataUtil {
+   public enum GuiType {
       ANY,
       CONTAINER,
       INVENTORY,

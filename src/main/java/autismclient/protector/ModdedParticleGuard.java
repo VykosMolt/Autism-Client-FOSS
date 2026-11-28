@@ -60,7 +60,7 @@ public final class ModdedParticleGuard {
             } else if (input.registryAccess().lookupOrThrow(Registries.PARTICLE_TYPE).byId(id) != null) {
                throw failure;
             } else {
-               return ModdedParticleGuard.Inner_DataUtil.init_ByteReader_DataUti;
+               return ModdedParticleGuard.PlaceholderParticle.init_ByteReader_DataUti;
             }
          } else {
             throw failure;
@@ -69,7 +69,7 @@ public final class ModdedParticleGuard {
    }
 
    public static boolean init(ClientboundLevelParticlesPacket packet) {
-      return packet != null && packet.particle() == ModdedParticleGuard.Inner_DataUtil.init_ByteReader_DataUti;
+      return packet != null && packet.particle() == ModdedParticleGuard.PlaceholderParticle.init_ByteReader_DataUti;
    }
 
    public static boolean init(ParticleProvider<?> provider, ConnectionPrivacyRegistry.ConnectionSession context) {
@@ -83,17 +83,17 @@ public final class ModdedParticleGuard {
       return init(provider, context) ? null : invocation.get();
    }
 
-   private static final class Inner_DataUtil implements ParticleOptions {
-      private static final ModdedParticleGuard.Inner_DataUtil init_ByteReader_DataUti = new ModdedParticleGuard.Inner_DataUtil();
-      private static final ParticleType<ModdedParticleGuard.Inner_DataUtil> init_ParticleType = new ParticleType<ModdedParticleGuard.Inner_DataUtil>(false) {
+   private static final class PlaceholderParticle implements ParticleOptions {
+      private static final ModdedParticleGuard.PlaceholderParticle init_ByteReader_DataUti = new ModdedParticleGuard.PlaceholderParticle();
+      private static final ParticleType<ModdedParticleGuard.PlaceholderParticle> init_ParticleType = new ParticleType<ModdedParticleGuard.PlaceholderParticle>(false) {
          @Override
-         public MapCodec<ModdedParticleGuard.Inner_DataUtil> codec() {
-            return MapCodec.unit(ModdedParticleGuard.Inner_DataUtil.init_ByteReader_DataUti);
+         public MapCodec<ModdedParticleGuard.PlaceholderParticle> codec() {
+            return MapCodec.unit(ModdedParticleGuard.PlaceholderParticle.init_ByteReader_DataUti);
          }
 
          @Override
-         public StreamCodec<? super RegistryFriendlyByteBuf, ModdedParticleGuard.Inner_DataUtil> streamCodec() {
-            return StreamCodec.unit(ModdedParticleGuard.Inner_DataUtil.init_ByteReader_DataUti);
+         public StreamCodec<? super RegistryFriendlyByteBuf, ModdedParticleGuard.PlaceholderParticle> streamCodec() {
+            return StreamCodec.unit(ModdedParticleGuard.PlaceholderParticle.init_ByteReader_DataUti);
          }
       };
 

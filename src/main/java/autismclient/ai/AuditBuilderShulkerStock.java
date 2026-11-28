@@ -82,7 +82,7 @@ final class AuditBuilderShulkerStock {
       return null;
    }
 
-   static JsonObject before(AiService assistant, long generation, AiService.SessionState session, AiIntents.Inner_BufferHelper step, String label)
+   static JsonObject before(AiService assistant, long generation, AiService.SessionState session, AiIntents.IntentStep step, String label)
       throws InterruptedException {
       try {
          String capability = step.capability();
@@ -123,7 +123,7 @@ final class AuditBuilderShulkerStock {
                assistant.auditRunStep(
                   generation,
                   session,
-                  new AiIntents.Inner_BufferHelper("take materials from a shulker box", "game:container", take, "take " + missing.keySet() + " from the shulker box at " + box.toShortString()),
+                  new AiIntents.IntentStep("take materials from a shulker box", "game:container", take, "take " + missing.keySet() + " from the shulker box at " + box.toShortString()),
                   "stock/withdraw"
                );
                plan = plan(item, target);
@@ -149,7 +149,7 @@ final class AuditBuilderShulkerStock {
                return assistant.auditRunStep(
                   generation,
                   session,
-                  new AiIntents.Inner_BufferHelper("craft " + item, "game:craft", craft, "craft " + target + " " + item),
+                  new AiIntents.IntentStep("craft " + item, "game:craft", craft, "craft " + target + " " + item),
                   "stock/craft"
                );
             }

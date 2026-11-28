@@ -61,7 +61,7 @@ public final class AiToolsSuggest {
    private AiToolsSuggest() {
    }
 
-   public static AiToolsSuggest.Inner_DataUtil init(String remaining) {
+   public static AiToolsSuggest.ArgCursor init(String remaining) {
       int cut = 0;
 
       for (int i = remaining.length() - 1; i >= 0; i--) {
@@ -73,19 +73,19 @@ public final class AiToolsSuggest {
 
       String before = remaining.substring(0, cut).trim();
       int position = before.isEmpty() ? 0 : before.split("\\s+").length;
-      return new AiToolsSuggest.Inner_DataUtil(position, remaining.substring(cut), cut);
+      return new AiToolsSuggest.ArgCursor(position, remaining.substring(cut), cut);
    }
 
    public static CompletableFuture<Suggestions> init(String sub, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining();
-      AiToolsSuggest.Inner_DataUtil cursor = sub.equals("mine") ? load(remaining) : init(remaining);
+      AiToolsSuggest.ArgCursor cursor = sub.equals("mine") ? load(remaining) : init(remaining);
       int pos = cursor.position();
       SuggestionsBuilder at = builder.createOffset(builder.getStart() + cursor.offset());
 
       try {
          if (sub.equals("parkour")) {
             List<String> completed = AiToolCallParser.tokenize(remaining.substring(0, cursor.offset()));
-            AiToolCallParser.Inner_CachePool flags = AiToolCallParser.parseParkourFlags(completed);
+            AiToolCallParser.ParkourFlags flags = AiToolCallParser.parseParkourFlags(completed);
             List<String> destination = completed.stream().filter(token -> !AiToolCallParser.isParkourFlag(token)).toList();
             if (!flags.noFall()) {
                String flag = cursor.current().startsWith("-") ? "--no-fall-damage" : "nofall";
@@ -125,7 +125,7 @@ public final class AiToolsSuggest {
       return at.buildFuture();
    }
 
-   static AiToolsSuggest.Inner_DataUtil load(String remaining) {
+   static AiToolsSuggest.ArgCursor load(String remaining) {
       int comma = remaining.lastIndexOf(44);
       if (comma < 0 && !remaining.contains("=")) {
          return init(remaining);
@@ -140,15 +140,15 @@ public final class AiToolsSuggest {
       String tail = remaining.substring(start);
       int equals = tail.indexOf(61);
       if (equals >= 0 && tail.substring(equals + 1).chars().noneMatch(Character::isWhitespace)) {
-         return new AiToolsSuggest.Inner_DataUtil(1, tail.substring(equals + 1), start + equals + 1);
+         return new AiToolsSuggest.ArgCursor(1, tail.substring(equals + 1), start + equals + 1);
       }
 
-      AiToolsSuggest.Inner_DataUtil token = init(tail);
-      return new AiToolsSuggest.Inner_DataUtil(token.position() == 0 ? 0 : 1, token.current(), start + token.offset());
+      AiToolsSuggest.ArgCursor token = init(tail);
+      return new AiToolsSuggest.ArgCursor(token.position() == 0 ? 0 : 1, token.current(), start + token.offset());
    }
 
    public static CompletableFuture<Suggestions> init(SuggestionsBuilder builder) {
-      AiToolsSuggest.Inner_DataUtil cursor = init(builder.getRemaining());
+      AiToolsSuggest.ArgCursor cursor = init(builder.getRemaining());
       SuggestionsBuilder at = builder.createOffset(builder.getStart() + cursor.offset());
 
       try {
@@ -476,6 +476,6 @@ public final class AiToolsSuggest {
       }
    }
 
-   public record Inner_DataUtil(int position, String current, int offset) {
+   public record ArgCursor(int position, String current, int offset) {
    }
 }

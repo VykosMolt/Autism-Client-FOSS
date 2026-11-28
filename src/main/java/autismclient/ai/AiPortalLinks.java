@@ -27,7 +27,7 @@ final class AiPortalLinks {
    private static Object init_Obj;
    private static boolean init_Z;
    private static long init_J;
-   private static final List<AiPortalLinks.Inner_DataUtil> init_List = new ArrayList<>();
+   private static final List<AiPortalLinks.PortalLink> init_List = new ArrayList<>();
    private static final Map<String, Double> init_Map = new HashMap<>();
 
    private AiPortalLinks() {
@@ -87,7 +87,7 @@ final class AiPortalLinks {
                               ? saved.getAsJsonObject("arrivalEvidence")
                               : new JsonObject();
                            init_List.add(
-                              new AiPortalLinks.Inner_DataUtil(
+                              new AiPortalLinks.PortalLink(
                                  from,
                                  entrance,
                                  to,
@@ -105,7 +105,7 @@ final class AiPortalLinks {
                      }
                   }
 
-                  init_List.sort(Comparator.comparingLong(AiPortalLinks.Inner_DataUtil::observedAtMillis));
+                  init_List.sort(Comparator.comparingLong(AiPortalLinks.PortalLink::observedAtMillis));
                   service.savePortalMemory(init_Str, toJson());
                }
             }
@@ -134,7 +134,7 @@ final class AiPortalLinks {
       if (entrance != null && arrival != null && from != null && to != null && !from.equals(to)) {
          init_List.removeIf(link -> link.fromDimension.equals(from) && link.entrance.distSqr(entrance) < 16.0 && link.toDimension.equals(to));
          init_List.add(
-            new AiPortalLinks.Inner_DataUtil(
+            new AiPortalLinks.PortalLink(
                from,
                entrance.immutable(),
                to,
@@ -151,7 +151,7 @@ final class AiPortalLinks {
             "portal_link",
             AiJson.objectOf("from", from, "entrance", entrance.toShortString(), "to", to, "arrival", arrival.toShortString(), "safe", safe)
          );
-         init_List.sort(Comparator.comparingLong(AiPortalLinks.Inner_DataUtil::observedAtMillis));
+         init_List.sort(Comparator.comparingLong(AiPortalLinks.PortalLink::observedAtMillis));
 
          while (init_List.size() > 64) {
             init_List.remove(0);
@@ -427,7 +427,7 @@ final class AiPortalLinks {
    private static JsonArray toJson() {
       JsonArray out = new JsonArray();
 
-      for (AiPortalLinks.Inner_DataUtil link : init_List) {
+      for (AiPortalLinks.PortalLink link : init_List) {
          out.add(
             AiJson.objectOf(
                "fromDimension",
@@ -459,7 +459,7 @@ final class AiPortalLinks {
       return out;
    }
 
-   record Inner_DataUtil(
+   record PortalLink(
       String fromDimension,
       BlockPos entrance,
       String toDimension,

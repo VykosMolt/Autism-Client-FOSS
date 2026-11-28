@@ -369,7 +369,7 @@ final class AiEquip {
                      }
                   }
 
-                  AiEquip.Inner_StreamUtil move = this.nextMove();
+                  AiEquip.EquipMove move = this.nextMove();
                   if (move == null) {
                      String now = AiEquip.wornArmorSummary();
                      return this.finish(
@@ -378,7 +378,7 @@ final class AiEquip {
                      );
                   }
 
-                  if (move.kind() == AiEquip.Inner_DataUtil.CLEAR_WORN && mc.player.getInventory().getFreeSlot() < 0) {
+                  if (move.kind() == AiEquip.MoveKind.CLEAR_WORN && mc.player.getInventory().getFreeSlot() < 0) {
                      return this.finish(AiOperation.Status.FAILED, "No free inventory slot to swap out the worn " + AiEquip.itemId(mc.player.getItemBySlot(move.slot())));
                   }
 
@@ -395,37 +395,37 @@ final class AiEquip {
             }
          }
 
-         AiEquip.Inner_StreamUtil nextMove() {
-            Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = AiEquip.bestBySlot(
+         AiEquip.EquipMove nextMove() {
+            Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> best = AiEquip.bestBySlot(
                autismclient.util.ArmorEvaluationHelper.candidatesBySlot(this.inventoryView(), allowCursed, true), threshold, prefer
             );
             if (preferElytra) {
-               autismclient.util.ArmorEvaluationHelper.Inner_DataUtil elytra = this.wornElytraCandidate();
+               autismclient.util.ArmorEvaluationHelper.ArmorCandidate elytra = this.wornElytraCandidate();
                if (elytra != null) {
                   best.put(EquipmentSlot.CHEST, elytra);
                }
             }
 
             for (EquipmentSlot slot : autismclient.util.ArmorEvaluationHelper.ARMOR_SLOTS) {
-               autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate = best.get(slot);
-               if (candidate != null && candidate.kind() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR) {
+               autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate = best.get(slot);
+               if (candidate != null && candidate.kind() != autismclient.util.ArmorEvaluationHelper.SourceKind.ARMOR) {
                   ItemStack wornStack = mc.player.getItemBySlot(slot);
                   if (wornStack.isEmpty() || !wornStack.is(Items.ELYTRA) && !autismclient.util.ArmorEvaluationHelper.hasBindingCurse(wornStack)) {
                      int armorMenuSlot = AiEquip.ARMOR_MENU_SLOTS.get(slot);
                      if (wornStack.isEmpty()) {
-                        return candidate.kind() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap
-                           ? new AiEquip.Inner_StreamUtil(
-                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.itemId(candidate.stack())
+                        return candidate.kind() == autismclient.util.ArmorEvaluationHelper.SourceKind.HOTBAR && hotbarSwap
+                           ? new AiEquip.EquipMove(
+                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.MoveKind.MOVE_IN, AiEquip.itemId(candidate.stack())
                            )
-                           : new AiEquip.Inner_StreamUtil(
-                              slot, this.screenSlot(candidate), 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.itemId(candidate.stack())
+                           : new AiEquip.EquipMove(
+                              slot, this.screenSlot(candidate), 0, ContainerInput.QUICK_MOVE, AiEquip.MoveKind.MOVE_IN, AiEquip.itemId(candidate.stack())
                            );
                      } else {
-                        return candidate.kind() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && hotbarSwap && swapArmor
-                           ? new AiEquip.Inner_StreamUtil(
-                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.Inner_DataUtil.MOVE_IN, AiEquip.itemId(candidate.stack())
+                        return candidate.kind() == autismclient.util.ArmorEvaluationHelper.SourceKind.HOTBAR && hotbarSwap && swapArmor
+                           ? new AiEquip.EquipMove(
+                              slot, armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP, AiEquip.MoveKind.MOVE_IN, AiEquip.itemId(candidate.stack())
                            )
-                           : new AiEquip.Inner_StreamUtil(slot, armorMenuSlot, 0, ContainerInput.QUICK_MOVE, AiEquip.Inner_DataUtil.CLEAR_WORN, AiEquip.itemId(wornStack));
+                           : new AiEquip.EquipMove(slot, armorMenuSlot, 0, ContainerInput.QUICK_MOVE, AiEquip.MoveKind.CLEAR_WORN, AiEquip.itemId(wornStack));
                      }
                   }
                }
@@ -434,8 +434,8 @@ final class AiEquip {
             return null;
          }
 
-         autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper inventoryView() {
-            return new autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper() {
+         autismclient.util.ArmorEvaluationHelper.StackSource inventoryView() {
+            return new autismclient.util.ArmorEvaluationHelper.StackSource() {
                @Override
                public ItemStack init(int index) {
                   return mc.player.getInventory().getItem(index);
@@ -448,19 +448,19 @@ final class AiEquip {
             };
          }
 
-         autismclient.util.ArmorEvaluationHelper.Inner_DataUtil wornElytraCandidate() {
+         autismclient.util.ArmorEvaluationHelper.ArmorCandidate wornElytraCandidate() {
             ItemStack wornChest = mc.player.getItemBySlot(EquipmentSlot.CHEST);
             if (wornChest.is(Items.ELYTRA)) {
-               return new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(wornChest, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR, -1);
+               return new autismclient.util.ArmorEvaluationHelper.ArmorCandidate(wornChest, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.SourceKind.ARMOR, -1);
             }
 
             for (int inv = 0; inv < 36; inv++) {
                ItemStack stack = mc.player.getInventory().getItem(inv);
                if (stack.is(Items.ELYTRA)) {
-                  return new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(
+                  return new autismclient.util.ArmorEvaluationHelper.ArmorCandidate(
                      stack,
                      EquipmentSlot.CHEST,
-                     inv < 9 ? autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR : autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY,
+                     inv < 9 ? autismclient.util.ArmorEvaluationHelper.SourceKind.HOTBAR : autismclient.util.ArmorEvaluationHelper.SourceKind.INVENTORY,
                      inv
                   );
                }
@@ -468,11 +468,11 @@ final class AiEquip {
 
             ItemStack offhand = mc.player.getItemBySlot(EquipmentSlot.OFFHAND);
             return offhand.is(Items.ELYTRA)
-               ? new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(offhand, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY, 40)
+               ? new autismclient.util.ArmorEvaluationHelper.ArmorCandidate(offhand, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.SourceKind.INVENTORY, 40)
                : null;
          }
 
-         int screenSlot(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
+         int screenSlot(autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate) {
             return autismclient.util.InventorySlotHelper.toScreenSlot(mc, candidate.inventorySlot());
          }
 
@@ -502,15 +502,15 @@ final class AiEquip {
       };
    }
 
-   static Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> preferredCandidates(
-      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, AiItems.ItemSpec prefer
+   static Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.ArmorCandidate>> preferredCandidates(
+      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.ArmorCandidate>> byType, AiItems.ItemSpec prefer
    ) {
-      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> matching = new EnumMap<>(EquipmentSlot.class);
+      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.ArmorCandidate>> matching = new EnumMap<>(EquipmentSlot.class);
 
-      for (Entry<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> entry : byType.entrySet()) {
-         List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> kept = new ArrayList<>();
+      for (Entry<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.ArmorCandidate>> entry : byType.entrySet()) {
+         List<autismclient.util.ArmorEvaluationHelper.ArmorCandidate> kept = new ArrayList<>();
 
-         for (autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate : entry.getValue()) {
+         for (autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate : entry.getValue()) {
             if (prefer.matches(candidate.stack())) {
                kept.add(candidate);
             }
@@ -524,10 +524,10 @@ final class AiEquip {
       return matching;
    }
 
-   static Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> bestBySlot(
-      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> byType, int threshold, AiItems.ItemSpec prefer
+   static Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> bestBySlot(
+      Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.ArmorCandidate>> byType, int threshold, AiItems.ItemSpec prefer
    ) {
-      Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = autismclient.util.ArmorEvaluationHelper.bestBySlot(byType, threshold);
+      Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> best = autismclient.util.ArmorEvaluationHelper.bestBySlot(byType, threshold);
       if (prefer != null) {
          best.putAll(autismclient.util.ArmorEvaluationHelper.bestBySlot(preferredCandidates(byType, prefer), threshold));
       }
@@ -624,11 +624,11 @@ final class AiEquip {
       return text.toString();
    }
 
-   private enum Inner_DataUtil {
+   private enum MoveKind {
       MOVE_IN,
       CLEAR_WORN;
    }
 
-   private record Inner_StreamUtil(EquipmentSlot slot, int menuSlot, int button, ContainerInput input, AiEquip.Inner_DataUtil kind, String description) {
+   private record EquipMove(EquipmentSlot slot, int menuSlot, int button, ContainerInput input, AiEquip.MoveKind kind, String description) {
    }
 }

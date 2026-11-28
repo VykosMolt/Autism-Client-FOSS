@@ -293,7 +293,7 @@ public final class AiDigLine {
             options.add(new AiDigLine.Inner_DataUtil(lookYaw, lookPitch, List.copyOf(alreadyAimed), margin[0]));
          }
 
-         List<AiMiningTargetCost.Inner_DataUtil> choices = new ArrayList<>();
+         List<AiMiningTargetCost.TargetChoice> choices = new ArrayList<>();
 
          for (int i = 0; i < options.size(); i++) {
             AiDigLine.Inner_DataUtil line = options.get(i);
@@ -306,7 +306,7 @@ public final class AiDigLine {
             double turn = init(lookYaw, lookPitch, line);
             double time = AiMiningTargetCost.init(costs, needed, 0.0, turn > 1.0E-6 ? 1.0 : 0.0);
             BlockPos first = line.chain().get(0);
-            choices.add(new AiMiningTargetCost.Inner_DataUtil(i, time, turn, first.distToCenterSqr(eye), first.asLong()));
+            choices.add(new AiMiningTargetCost.TargetChoice(i, time, turn, first.distToCenterSqr(eye), first.asLong()));
          }
 
          int chosen = AiMiningTargetCost.init(choices);

@@ -30,7 +30,7 @@ final class AiViewState {
    AiService.UserPromptQuestion pendingQuestion;
    AiSettings settings = new AiSettings();
    boolean hasProviderKey;
-   List<AiSessions.Inner_StreamUtil> sessions = List.of();
+   List<AiSessions.SessionMeta> sessions = List.of();
    long workStartedMs;
    int pollCount;
 

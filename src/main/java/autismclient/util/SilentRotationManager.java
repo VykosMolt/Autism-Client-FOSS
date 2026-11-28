@@ -31,7 +31,7 @@ public final class SilentRotationManager {
    public static final String OWNER_KB_DISPLACEMENT = "kb-displacement";
    public static final String OWNER_AUTO_FARM = "auto-farm";
    public static final String OWNER_AI_ASSISTANT = "ai-assistant";
-   private static final RotationStreamPlanner.Inner_TaskQueue streamState = new RotationStreamPlanner.Inner_TaskQueue();
+   private static final RotationStreamPlanner.StreamState streamState = new RotationStreamPlanner.StreamState();
    private static RotationMath.Rotation currentRotation = null;
    private static RotationMath.Rotation targetRotation = null;
    private static String activeOwnerId = null;
@@ -60,7 +60,7 @@ public final class SilentRotationManager {
    private static final double RETURN_HUMANIZED_TOLERANCE = 2.5;
    private static final float FAST_RELEASE_MIN_CAMERA_DELTA = 4.0F;
    private static final float FAST_RELEASE_MAX_COMBINED_ANGLE = 38.0F;
-   private static SilentRotationManager.Inner_DataUtil customHandStepper;
+   private static SilentRotationManager.HandStepper customHandStepper;
    private static String visibleAimOwnerId;
    private static String customHandOwnerId;
    private static int customHandRequestTick = -2147483648;
@@ -154,11 +154,11 @@ public final class SilentRotationManager {
       return ownerId != null && ownerId.equals(humanizedOwnerId) && humanizedRequestTick == tick;
    }
 
-   public static void setCustomHandStepper(String ownerId, SilentRotationManager.Inner_DataUtil ownerHand) {
+   public static void setCustomHandStepper(String ownerId, SilentRotationManager.HandStepper ownerHand) {
       setCustomHandStepper(ownerId, ownerHand, 18.0);
    }
 
-   public static void setCustomHandStepper(String ownerId, SilentRotationManager.Inner_DataUtil ownerHand, double accelUp) {
+   public static void setCustomHandStepper(String ownerId, SilentRotationManager.HandStepper ownerHand, double accelUp) {
       customHandStepper = ownerHand;
       customHandOwnerId = ownerId;
       customHandRequestTick = AutismSessionState.getInstance().getClientTick();
@@ -310,19 +310,19 @@ public final class SilentRotationManager {
       }
    }
 
-   public static SilentRotationManager.Inner_StreamUtil selectUrgencyProfile(double remaining, int ticksLeft) {
+   public static SilentRotationManager.UrgencyProfile selectUrgencyProfile(double remaining, int ticksLeft) {
       int n = Math.max(1, ticksLeft);
       double angle = Math.max(0.0, remaining);
       if ((!(angle <= 4.0) || n <= 1 && !(angle <= 1.0)) && !(n >= 2.0 + angle / 16.0)) {
          if (n >= 1.0 + angle / 30.0) {
-            return new SilentRotationManager.Inner_StreamUtil(RotationStreamPlanner.Inner_StreamUtil.DANGER_RETURN, 37.0F, false);
+            return new SilentRotationManager.UrgencyProfile(RotationStreamPlanner.MotionProfile.DANGER_RETURN, 37.0F, false);
          } else {
             return n >= 1.0 + angle / 68.0
-               ? new SilentRotationManager.Inner_StreamUtil(RotationStreamPlanner.Inner_StreamUtil.TELLY_AIR_FLICK, 110.0F, false)
-               : new SilentRotationManager.Inner_StreamUtil(RotationStreamPlanner.Inner_StreamUtil.STANDARD, (float)Math.min(180.0, Math.max(30.0, angle / n + 2.0)), true);
+               ? new SilentRotationManager.UrgencyProfile(RotationStreamPlanner.MotionProfile.TELLY_AIR_FLICK, 110.0F, false)
+               : new SilentRotationManager.UrgencyProfile(RotationStreamPlanner.MotionProfile.STANDARD, (float)Math.min(180.0, Math.max(30.0, angle / n + 2.0)), true);
          }
       } else {
-         return new SilentRotationManager.Inner_StreamUtil(RotationStreamPlanner.Inner_StreamUtil.STANDARD, 40.0F, false);
+         return new SilentRotationManager.UrgencyProfile(RotationStreamPlanner.MotionProfile.STANDARD, 40.0F, false);
       }
    }
 
@@ -342,7 +342,7 @@ public final class SilentRotationManager {
             double remaining = Math.max(
                Math.abs(RotationMath.angleDelta(targetRotation.yaw(), currentRotation.yaw())), Math.abs(targetRotation.pitch() - currentRotation.pitch())
             );
-            SilentRotationManager.Inner_StreamUtil urgency = selectUrgencyProfile(remaining, ticksLeft);
+            SilentRotationManager.UrgencyProfile urgency = selectUrgencyProfile(remaining, ticksLeft);
             double gcd = RotationMath.gcdStep();
             if (urgency.directQuantized()) {
                currentRotation = RotationMath.stepQuantized(currentRotation, targetRotation, urgency.maxStepDegrees(), urgency.maxStepDegrees(), gcd);
@@ -365,18 +365,18 @@ public final class SilentRotationManager {
    }
 
    public static void tickPinQuiet(String ownerId, LocalPlayer player, boolean pinQuiet) {
-      tickInternal(ownerId, player, 72.0F, 72.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD, pinQuiet);
+      tickInternal(ownerId, player, 72.0F, 72.0F, RotationStreamPlanner.MotionProfile.STANDARD, pinQuiet);
    }
 
    public static void tick(String ownerId, LocalPlayer player, float maxYawStep, float maxPitchStep) {
-      tick(ownerId, player, maxYawStep, maxPitchStep, RotationStreamPlanner.Inner_StreamUtil.STANDARD);
+      tick(ownerId, player, maxYawStep, maxPitchStep, RotationStreamPlanner.MotionProfile.STANDARD);
    }
 
-   public static void tick(String ownerId, LocalPlayer player, float maxYawStep, float maxPitchStep, RotationStreamPlanner.Inner_StreamUtil profile) {
+   public static void tick(String ownerId, LocalPlayer player, float maxYawStep, float maxPitchStep, RotationStreamPlanner.MotionProfile profile) {
       tickInternal(ownerId, player, maxYawStep, maxPitchStep, profile, false);
    }
 
-   private static void tickInternal(String ownerId, LocalPlayer player, float maxYawStep, float maxPitchStep, RotationStreamPlanner.Inner_StreamUtil profile, boolean pinQuiet) {
+   private static void tickInternal(String ownerId, LocalPlayer player, float maxYawStep, float maxPitchStep, RotationStreamPlanner.MotionProfile profile, boolean pinQuiet) {
       if (player == null) {
          resetAll();
       } else if (activeOwnerId == null || activeOwnerId.equals(ownerId)) {
@@ -478,10 +478,10 @@ public final class SilentRotationManager {
       }
    }
 
-   public interface Inner_DataUtil {
+   public interface HandStepper {
       double[] step(RotationMath.Rotation var1, float var2, float var3);
    }
 
-   public record Inner_StreamUtil(RotationStreamPlanner.Inner_StreamUtil profile, float maxStepDegrees, boolean directQuantized) {
+   public record UrgencyProfile(RotationStreamPlanner.MotionProfile profile, float maxStepDegrees, boolean directQuantized) {
    }
 }

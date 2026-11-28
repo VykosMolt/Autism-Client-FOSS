@@ -115,11 +115,11 @@ public final class PacketDetailFormatter {
          return PacketDetailFormatter.Inner_CachePool.none();
       }
 
-      PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.packet);
+      PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.init(entry.packet);
       if (snapshot != null && snapshot.plaintext().length != 0) {
          try {
             Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)entry.packetClass;
-            PacketStreamCodecDecoder.Inner_CachePool decoded = PacketStreamCodecDecoder.decodeFrame(packetClass, snapshot.plaintext(), snapshot.load());
+            PacketStreamCodecDecoder.DecodedFrame decoded = PacketStreamCodecDecoder.decodeFrame(packetClass, snapshot.plaintext(), snapshot.load());
             return PacketDetailFormatter.Inner_CachePool.init(decoded.packet(), "decoded from captured plaintext with Minecraft STREAM_CODEC");
          } catch (Throwable t) {
             return PacketDetailFormatter.Inner_CachePool.init("captured plaintext was kept, but STREAM_CODEC decode failed: " + load(t));
@@ -681,7 +681,7 @@ public final class PacketDetailFormatter {
 
    private static void init_V_AutismPacketLogger_bh_StreamUtil(AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketDetailFormatter.Inner_StreamUtil out) {
       if (entry != null && entry.packet != null) {
-         PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.packet);
+         PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.init(entry.packet);
          if (snapshot != null) {
             out.read("Protocol: " + snapshot.load(), UiColorPalette.textBody());
             out.read("Direction: " + snapshot.direction(), "C2S".equalsIgnoreCase(snapshot.direction()) ? UiColorPalette.amber() : UiColorPalette.cyan());

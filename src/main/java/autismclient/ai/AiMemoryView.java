@@ -18,10 +18,10 @@ final class AiMemoryView {
    private final AiAssistantOverlay host;
    final autismclient.gui.ui.widgets.TextInputWidget searchInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(96).setPlaceholder("Search memory");
    final autismclient.gui.ui.widgets.TextInputWidget editInput = new autismclient.gui.ui.widgets.TextInputWidget().setMaxLength(4000);
-   private final AiUiKit.Inner_StreamUtil scroll = new AiUiKit.Inner_StreamUtil(false);
+   private final AiUiKit.ScrollPane scroll = new AiUiKit.ScrollPane(false);
    private final Set<String> expandedIds = new HashSet<>();
-   private final Map<String, AiMemoryView.Inner_StreamUtil> wrapCache = new HashMap<>();
-   private List<AiMemoryView.Inner_DataUtil> rows = List.of();
+   private final Map<String, AiMemoryView.WrappedText> wrapCache = new HashMap<>();
+   private List<AiMemoryView.MemoryRow> rows = List.of();
    private Object lastSource;
    private String query;
    private long nextRefreshAt;
@@ -64,10 +64,10 @@ final class AiMemoryView {
          this.lastSource = source;
          this.query = query;
          this.nextRefreshAt = now + 1000L;
-         List<AiMemoryView.Inner_DataUtil> rows = new ArrayList<>();
+         List<AiMemoryView.MemoryRow> rows = new ArrayList<>();
 
          for (AiMemoryStore.Memory memory : this.service.searchMemories(query)) {
-            rows.add(new AiMemoryView.Inner_DataUtil(memory, AiUiKit.flattenSingleLine(memory.text())));
+            rows.add(new AiMemoryView.MemoryRow(memory, AiUiKit.flattenSingleLine(memory.text())));
          }
 
          this.rows = rows;
@@ -122,7 +122,7 @@ final class AiMemoryView {
       int textW = Math.max(20, rowW - textX - 4 - (rowH - 2) * 2 - 2 - 4);
       int total = 0;
 
-      for (AiMemoryView.Inner_DataUtil row : this.rows) {
+      for (AiMemoryView.MemoryRow row : this.rows) {
          total += this.rowHeight(kit, row, textW, rowH, line) + 1;
       }
 
@@ -136,7 +136,7 @@ final class AiMemoryView {
          kit.pushClip(v);
          int y = v.write() - this.scroll.offset;
 
-         for (AiMemoryView.Inner_DataUtil entry : this.rows) {
+         for (AiMemoryView.MemoryRow entry : this.rows) {
             int h = this.rowHeight(kit, entry, textW, rowH, line);
             if (y >= v.load()) {
                break;
@@ -154,7 +154,7 @@ final class AiMemoryView {
       }
    }
 
-   private int rowHeight(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, int textW, int rowH, int line) {
+   private int rowHeight(AiUiKit kit, AiMemoryView.MemoryRow entry, int textW, int rowH, int line) {
       String id = entry.memory().id();
       if (this.expandedIds.contains(id) && !id.equals(this.editingId)) {
          int lines = this.wrappedLines(kit, entry, textW).size();
@@ -164,18 +164,18 @@ final class AiMemoryView {
       }
    }
 
-   private List<String> wrappedLines(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, int textW) {
+   private List<String> wrappedLines(AiUiKit kit, AiMemoryView.MemoryRow entry, int textW) {
       int epoch = AiChatView.textEpoch();
-      AiMemoryView.Inner_StreamUtil wrap = this.wrapCache.get(entry.memory().id());
+      AiMemoryView.WrappedText wrap = this.wrapCache.get(entry.memory().id());
       if (wrap == null || wrap.width() != textW || wrap.epoch() != epoch || !wrap.text().equals(entry.text())) {
-         wrap = new AiMemoryView.Inner_StreamUtil(entry.text(), textW, epoch, kit.renderContext.init_PoolEntry().wrapLines(entry.text(), textW));
+         wrap = new AiMemoryView.WrappedText(entry.text(), textW, epoch, kit.renderContext.init_PoolEntry().wrapLines(entry.text(), textW));
          this.wrapCache.put(entry.memory().id(), wrap);
       }
 
       return wrap.lines();
    }
 
-   private void renderRow(AiUiKit kit, AiMemoryView.Inner_DataUtil entry, autismclient.gui.f.NetHelper row, int chipW, int textX, int textW, long now) {
+   private void renderRow(AiUiKit kit, AiMemoryView.MemoryRow entry, autismclient.gui.f.NetHelper row, int chipW, int textX, int textW, long now) {
       autismclient.gui.ui.UiColorScheme colors = kit.colors;
       AiMemoryStore.Memory memory = entry.memory();
       String id = memory.id();
@@ -249,7 +249,7 @@ final class AiMemoryView {
       }
    }
 
-   private static String kindLabel(AiMemoryStore.Inner_DataUtil kind) {
+   private static String kindLabel(AiMemoryStore.MemoryKind kind) {
       String var10000;
       switch (kind) {
          case USER:
@@ -271,7 +271,7 @@ final class AiMemoryView {
       return var10000;
    }
 
-   private static int kindColor(AiUiKit kit, AiMemoryStore.Inner_DataUtil kind) {
+   private static int kindColor(AiUiKit kit, AiMemoryStore.MemoryKind kind) {
       int var10000;
       switch (kind) {
          case USER:
@@ -357,7 +357,7 @@ final class AiMemoryView {
       } else {
          this.id = null;
          this.service.forgetMemory(id);
-         List<AiMemoryView.Inner_DataUtil> next = new ArrayList<>(this.rows);
+         List<AiMemoryView.MemoryRow> next = new ArrayList<>(this.rows);
          next.removeIf(r -> r.memory().id().equals(id));
          this.rows = next;
          this.expandedIds.remove(id);
@@ -373,9 +373,9 @@ final class AiMemoryView {
       }
    }
 
-   private record Inner_DataUtil(AiMemoryStore.Memory memory, String text) {
+   private record MemoryRow(AiMemoryStore.Memory memory, String text) {
    }
 
-   private record Inner_StreamUtil(String text, int width, int epoch, List<String> lines) {
+   private record WrappedText(String text, int width, int epoch, List<String> lines) {
    }
 }

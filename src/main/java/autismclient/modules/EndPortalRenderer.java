@@ -21,7 +21,7 @@ import org.joml.Vector4f;
 
 public final class EndPortalRenderer {
    private static final Minecraft MINECRAFT = Minecraft.getInstance();
-   private static final AutismBufferSource.Inner_DataUtil BUFFERS = new AutismBufferSource.Inner_DataUtil(32768);
+   private static final AutismBufferSource.LazySource BUFFERS = new AutismBufferSource.LazySource(32768);
    private static final Matrix4f PROJECTION = new Matrix4f();
    private static final Vector4f SCRATCH_VECTOR = new Vector4f();
    private static final ItemStack FRAME_ICON = new ItemStack(Items.END_PORTAL_FRAME);
@@ -80,7 +80,7 @@ public final class EndPortalRenderer {
          }
 
          if (init(module, target, camera)) {
-            EndPortalDisplayHelper.Inner_DataUtil column = EndPortalDisplayHelper.init(camera, target, MINECRAFT.level.getMinY(), MINECRAFT.level.getMaxY() + 1.0);
+            EndPortalDisplayHelper.BeamColumn column = EndPortalDisplayHelper.init(camera, target, MINECRAFT.level.getMinY(), MINECRAFT.level.getMaxY() + 1.0);
             if (column != null) {
                init(matrices, source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough()), column, color);
             }
@@ -111,12 +111,12 @@ public final class EndPortalRenderer {
       }
    }
 
-   private static void init(PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.Inner_DataUtil column, int color) {
+   private static void init(PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.BeamColumn column, int color) {
       init(matrices, fill, column, column.read(), column.write(), color, 10, 28, 88);
    }
 
    private static void init(
-      PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.Inner_DataUtil column, double minY, double maxY, int color, int outer, int middle, int core
+      PoseStack matrices, VertexConsumer fill, EndPortalDisplayHelper.BeamColumn column, double minY, double maxY, int color, int outer, int middle, int core
    ) {
       WorldLineRenderer.init(matrices.last(), fill, column.init(column.sync(), minY, maxY), EndPortalDisplayHelper.init(color, outer));
       WorldLineRenderer.init(matrices.last(), fill, column.init(column.sync() * 0.5, minY, maxY), EndPortalDisplayHelper.init(color, middle));
@@ -127,7 +127,7 @@ public final class EndPortalRenderer {
       return new AABB(p.getX(), p.getY(), p.getZ(), p.getX() + 1, p.getY() + 0.8125, p.getZ() + 1);
    }
 
-   private static EndPortalRenderer.Inner_DataUtil markerFor(GuiGraphicsExtractor graphics, EndPortalModule module) {
+   private static EndPortalRenderer.PortalMarker markerFor(GuiGraphicsExtractor graphics, EndPortalModule module) {
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(graphics, MINECRAFT.font, 0, 0);
       Vec3 target = module.target();
       float scale = module.init_F();
@@ -139,10 +139,10 @@ public final class EndPortalRenderer {
          label = prompt;
       }
 
-      autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_StreamUtil size = autismclient.gui.ui.widgets.WorldIndicatorBadge.init(
+      autismclient.gui.ui.widgets.WorldIndicatorBadge.BadgeSize size = autismclient.gui.ui.widgets.WorldIndicatorBadge.init(
          ui.init_PoolEntry().measureWidth(label), 9, !label.isEmpty(), target != null
       );
-      autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_DataUtil placement;
+      autismclient.gui.ui.widgets.WorldIndicatorBadge.BadgePlacement placement;
       if (target == null) {
          placement = autismclient.gui.ui.widgets.WorldIndicatorBadge.init(0.0F, 0.0F, -1.0F, 180.0, ui.init_I(), ui.load_I(), size, scale, 104.0F * scale);
       } else {
@@ -161,7 +161,7 @@ public final class EndPortalRenderer {
          );
       }
 
-      return placement == null ? null : new EndPortalRenderer.Inner_DataUtil(placement, size, label, target != null, scale, module.color());
+      return placement == null ? null : new EndPortalRenderer.PortalMarker(placement, size, label, target != null, scale, module.color());
    }
 
    public static autismclient.gui.f.NetHelper hudBounds(GuiGraphicsExtractor graphics) {
@@ -170,7 +170,7 @@ public final class EndPortalRenderer {
          return autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
       }
 
-      EndPortalRenderer.Inner_DataUtil marker = markerFor(graphics, module);
+      EndPortalRenderer.PortalMarker marker = markerFor(graphics, module);
       return marker == null
          ? autismclient.gui.f.NetHelper.init(0, 0, 0, 0)
          : autismclient.gui.ui.widgets.WorldIndicatorBadge.init(marker.init_TaskTimer_DataUtil, marker.init_TaskTimer_StreamUt, marker.init_F);
@@ -179,7 +179,7 @@ public final class EndPortalRenderer {
    public static void renderHud(GuiGraphicsExtractor graphics) {
       EndPortalModule module = activeModule();
       if (module != null && module.showsGuide() && MINECRAFT.gui.screen() == null) {
-         EndPortalRenderer.Inner_DataUtil marker = markerFor(graphics, module);
+         EndPortalRenderer.PortalMarker marker = markerFor(graphics, module);
          if (marker != null) {
             autismclient.gui.ui.widgets.WorldIndicatorBadge.init(
                autismclient.gui.f.UiHelper.init(graphics, MINECRAFT.font, 0, 0),
@@ -195,9 +195,9 @@ public final class EndPortalRenderer {
       }
    }
 
-   private record Inner_DataUtil(
-      autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_DataUtil init_TaskTimer_DataUtil,
-      autismclient.gui.ui.widgets.WorldIndicatorBadge.Inner_StreamUtil init_TaskTimer_StreamUt,
+   private record PortalMarker(
+      autismclient.gui.ui.widgets.WorldIndicatorBadge.BadgePlacement init_TaskTimer_DataUtil,
+      autismclient.gui.ui.widgets.WorldIndicatorBadge.BadgeSize init_TaskTimer_StreamUt,
       String label,
       boolean init_Z,
       float init_F,

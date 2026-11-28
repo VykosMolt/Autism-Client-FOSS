@@ -59,7 +59,7 @@ public final class BacktrackModule extends Module {
    private static volatile BacktrackModule instance;
    private final AtomicLong resetTicket = new AtomicLong();
    private long epoch;
-   private final Map<Packet<?>, BacktrackModule.Inner_DataUtil> init_Map = new IdentityHashMap<>();
+   private final Map<Packet<?>, BacktrackModule.ArmContext> init_Map = new IdentityHashMap<>();
    private final BacktrackPacketQueue<Packet<?>> packetQueue = new BacktrackPacketQueue<>(128);
    private final BacktrackPositionTracker positionTracker = new BacktrackPositionTracker();
    private final BacktrackTrailHistory trailHistory = new BacktrackTrailHistory();
@@ -258,7 +258,7 @@ public final class BacktrackModule extends Module {
             this.init_Map
                .put(
                   packet,
-                  new BacktrackModule.Inner_DataUtil(
+                  new BacktrackModule.ArmContext(
                      CLIENT.level, CLIENT.player, CLIENT.getConnection(), victim, System.nanoTime(), this.epoch
                   )
                );
@@ -271,7 +271,7 @@ public final class BacktrackModule extends Module {
    public static void init_V_Connection_Packet(Connection connection, Packet<?> packet) {
       BacktrackModule module = instance;
       if (module != null && packet instanceof ServerboundAttackPacket) {
-         BacktrackModule.Inner_DataUtil arm;
+         BacktrackModule.ArmContext arm;
          synchronized (module.init_Map) {
             arm = module.init_Map.remove(packet);
          }
@@ -865,10 +865,10 @@ public final class BacktrackModule extends Module {
          : false;
    }
 
-   public BacktrackModule.Inner_StreamUtil init_TaskTimer_StreamUt() {
+   public BacktrackModule.StatusSnapshot init_TaskTimer_StreamUt() {
       boolean live = this.target != null && this.isSameSession();
       long now = System.nanoTime();
-      return new BacktrackModule.Inner_StreamUtil(
+      return new BacktrackModule.StatusSnapshot(
          this.target == null ? -1 : this.target.getId(),
          this.packetQueue.size(),
          this.push,
@@ -1005,7 +1005,7 @@ public final class BacktrackModule extends Module {
       return x * x + y * y + z * z;
    }
 
-   private record Inner_DataUtil(
+   private record ArmContext(
       ClientLevel level,
       LocalPlayer player,
       ClientPacketListener connection,
@@ -1015,7 +1015,7 @@ public final class BacktrackModule extends Module {
    ) {
    }
 
-   public record Inner_StreamUtil(
+   public record StatusSnapshot(
       int init_I,
       int load_I,
       long init_J,

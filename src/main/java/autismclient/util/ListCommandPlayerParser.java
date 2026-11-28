@@ -15,7 +15,7 @@ public final class ListCommandPlayerParser {
    private ListCommandPlayerParser() {
    }
 
-   public static Optional<List<ListCommandPlayerParser.Inner_DataUtil>> init(Component message) {
+   public static Optional<List<ListCommandPlayerParser.ListedPlayer>> init(Component message) {
       if (message != null
          && message.getSiblings().isEmpty()
          && message.getContents() instanceof TranslatableContents translated
@@ -25,12 +25,12 @@ public final class ListCommandPlayerParser {
             int var12 = intValue(args[0]);
             int max = intValue(args[1]);
             if (var12 >= 0 && var12 <= 4096 && max >= var12) {
-               List<ListCommandPlayerParser.Inner_DataUtil> players = new ArrayList<>();
+               List<ListCommandPlayerParser.ListedPlayer> players = new ArrayList<>();
                if (init(names, players, 0, new int[]{0}) && players.size() == var12) {
                   Set<UUID> ids = new HashSet<>();
                   Set<String> usernames = new HashSet<>();
 
-                  for (ListCommandPlayerParser.Inner_DataUtil p : players) {
+                  for (ListCommandPlayerParser.ListedPlayer p : players) {
                      if (!ids.add(p.uuid) || !usernames.add(p.name.toLowerCase(Locale.ROOT))) {
                         return Optional.empty();
                      }
@@ -51,7 +51,7 @@ public final class ListCommandPlayerParser {
       }
    }
 
-   private static boolean init(Component node, List<ListCommandPlayerParser.Inner_DataUtil> out, int depth, int[] visited) {
+   private static boolean init(Component node, List<ListCommandPlayerParser.ListedPlayer> out, int depth, int[] visited) {
       if (depth <= 16 && ++visited[0] <= 16384 && out.size() <= 4096) {
          if (node.getContents() instanceof TranslatableContents translated) {
             if (!translated.getKey().equals("commands.list.nameAndId")) {
@@ -74,7 +74,7 @@ public final class ListCommandPlayerParser {
                return false;
             }
 
-            out.add(new ListCommandPlayerParser.Inner_DataUtil(uuid, name));
+            out.add(new ListCommandPlayerParser.ListedPlayer(uuid, name));
          } else if (!(node.getContents() instanceof PlainTextContents text) || !text.text().matches("[,\\s]*")) {
             return false;
          }
@@ -109,6 +109,6 @@ public final class ListCommandPlayerParser {
       }
    }
 
-   public record Inner_DataUtil(UUID uuid, String name) {
+   public record ListedPlayer(UUID uuid, String name) {
    }
 }

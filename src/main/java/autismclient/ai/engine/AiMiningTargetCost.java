@@ -26,16 +26,16 @@ public final class AiMiningTargetCost {
       return ticks / useful;
    }
 
-   public static int init(List<AiMiningTargetCost.Inner_DataUtil> choices) {
+   public static int init(List<AiMiningTargetCost.TargetChoice> choices) {
       double quickest = 1.0 / 0.0;
 
-      for (AiMiningTargetCost.Inner_DataUtil choice : choices) {
+      for (AiMiningTargetCost.TargetChoice choice : choices) {
          quickest = Math.min(quickest, choice.ticksPerItem());
       }
 
-      AiMiningTargetCost.Inner_DataUtil best = null;
+      AiMiningTargetCost.TargetChoice best = null;
 
-      for (AiMiningTargetCost.Inner_DataUtil choice : choices) {
+      for (AiMiningTargetCost.TargetChoice choice : choices) {
          if (Double.isFinite(choice.ticksPerItem())
             && !(choice.ticksPerItem() > quickest + 1.0)
             && (
@@ -54,6 +54,6 @@ public final class AiMiningTargetCost {
       return best == null ? -1 : best.index();
    }
 
-   public record Inner_DataUtil(int index, double ticksPerItem, double turnDegrees, double distanceSq, long stableKey) {
+   public record TargetChoice(int index, double ticksPerItem, double turnDegrees, double distanceSq, long stableKey) {
    }
 }

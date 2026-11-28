@@ -13,49 +13,49 @@ public final class SodiumRegionResourceProbe {
    private static int read_I;
    private static volatile boolean init_Z;
    private static volatile boolean load_Z;
-   private static final ClassValue<SodiumRegionResourceProbe.Inner_CachePool> init_ClassValue = new ClassValue<SodiumRegionResourceProbe.Inner_CachePool>() {
-      protected SodiumRegionResourceProbe.Inner_CachePool computeValue(Class<?> type) {
+   private static final ClassValue<SodiumRegionResourceProbe.TranslucencyHandle> init_ClassValue = new ClassValue<SodiumRegionResourceProbe.TranslucencyHandle>() {
+      protected SodiumRegionResourceProbe.TranslucencyHandle computeValue(Class<?> type) {
          return this.init(type);
       }
 
-      protected SodiumRegionResourceProbe.Inner_CachePool init(Class<?> type) {
-         return new SodiumRegionResourceProbe.Inner_CachePool(SodiumRegionResourceProbe.init(type, "isTranslucent", 0));
+      protected SodiumRegionResourceProbe.TranslucencyHandle init(Class<?> type) {
+         return new SodiumRegionResourceProbe.TranslucencyHandle(SodiumRegionResourceProbe.init(type, "isTranslucent", 0));
       }
    };
-   private static final ClassValue<SodiumRegionResourceProbe.Inner_StreamUtil> load_ClassValue = new ClassValue<SodiumRegionResourceProbe.Inner_StreamUtil>() {
-      protected SodiumRegionResourceProbe.Inner_StreamUtil computeValue(Class<?> type) {
+   private static final ClassValue<SodiumRegionResourceProbe.IteratorHandle> load_ClassValue = new ClassValue<SodiumRegionResourceProbe.IteratorHandle>() {
+      protected SodiumRegionResourceProbe.IteratorHandle computeValue(Class<?> type) {
          return this.init(type);
       }
 
-      protected SodiumRegionResourceProbe.Inner_StreamUtil init(Class<?> type) {
-         return new SodiumRegionResourceProbe.Inner_StreamUtil(SodiumRegionResourceProbe.init(type, "iterator", 1));
+      protected SodiumRegionResourceProbe.IteratorHandle init(Class<?> type) {
+         return new SodiumRegionResourceProbe.IteratorHandle(SodiumRegionResourceProbe.init(type, "iterator", 1));
       }
    };
-   private static final ClassValue<SodiumRegionResourceProbe.Inner_ConfigStore> read_ClassValue = new ClassValue<SodiumRegionResourceProbe.Inner_ConfigStore>() {
-      protected SodiumRegionResourceProbe.Inner_ConfigStore computeValue(Class<?> type) {
+   private static final ClassValue<SodiumRegionResourceProbe.RenderListHandles> read_ClassValue = new ClassValue<SodiumRegionResourceProbe.RenderListHandles>() {
+      protected SodiumRegionResourceProbe.RenderListHandles computeValue(Class<?> type) {
          return this.init(type);
       }
 
-      protected SodiumRegionResourceProbe.Inner_ConfigStore init(Class<?> type) {
-         return new SodiumRegionResourceProbe.Inner_ConfigStore(SodiumRegionResourceProbe.init(type, "getRegion", 0), SodiumRegionResourceProbe.init(type, "sectionsWithGeometryIterator", 1));
+      protected SodiumRegionResourceProbe.RenderListHandles init(Class<?> type) {
+         return new SodiumRegionResourceProbe.RenderListHandles(SodiumRegionResourceProbe.init(type, "getRegion", 0), SodiumRegionResourceProbe.init(type, "sectionsWithGeometryIterator", 1));
       }
    };
-   private static final ClassValue<SodiumRegionResourceProbe.Inner_BufferHelper> write = new ClassValue<SodiumRegionResourceProbe.Inner_BufferHelper>() {
-      protected SodiumRegionResourceProbe.Inner_BufferHelper computeValue(Class<?> type) {
+   private static final ClassValue<SodiumRegionResourceProbe.RegionStorageHandles> write = new ClassValue<SodiumRegionResourceProbe.RegionStorageHandles>() {
+      protected SodiumRegionResourceProbe.RegionStorageHandles computeValue(Class<?> type) {
          return this.init(type);
       }
 
-      protected SodiumRegionResourceProbe.Inner_BufferHelper init(Class<?> type) {
-         return new SodiumRegionResourceProbe.Inner_BufferHelper(SodiumRegionResourceProbe.init(type, "getStorage", 1), SodiumRegionResourceProbe.init(type, "getCachedBatch", 1), SodiumRegionResourceProbe.init(type, "getResources", 0));
+      protected SodiumRegionResourceProbe.RegionStorageHandles init(Class<?> type) {
+         return new SodiumRegionResourceProbe.RegionStorageHandles(SodiumRegionResourceProbe.init(type, "getStorage", 1), SodiumRegionResourceProbe.init(type, "getCachedBatch", 1), SodiumRegionResourceProbe.init(type, "getResources", 0));
       }
    };
-   private static final ClassValue<SodiumRegionResourceProbe.Inner_DataUtil> update = new ClassValue<SodiumRegionResourceProbe.Inner_DataUtil>() {
-      protected SodiumRegionResourceProbe.Inner_DataUtil computeValue(Class<?> type) {
+   private static final ClassValue<SodiumRegionResourceProbe.EmptyCheckHandle> update = new ClassValue<SodiumRegionResourceProbe.EmptyCheckHandle>() {
+      protected SodiumRegionResourceProbe.EmptyCheckHandle computeValue(Class<?> type) {
          return this.init(type);
       }
 
-      protected SodiumRegionResourceProbe.Inner_DataUtil init(Class<?> type) {
-         return new SodiumRegionResourceProbe.Inner_DataUtil(SodiumRegionResourceProbe.init(type, "isEmpty", 0));
+      protected SodiumRegionResourceProbe.EmptyCheckHandle init(Class<?> type) {
+         return new SodiumRegionResourceProbe.EmptyCheckHandle(SodiumRegionResourceProbe.init(type, "isEmpty", 0));
       }
    };
 
@@ -110,8 +110,8 @@ public final class SodiumRegionResourceProbe {
 
       if (lists != null && pass != null) {
          try {
-            SodiumRegionResourceProbe.Inner_CachePool passAccess = init_ClassValue.get(pass.getClass());
-            SodiumRegionResourceProbe.Inner_StreamUtil listsAccess = load_ClassValue.get(lists.getClass());
+            SodiumRegionResourceProbe.TranslucencyHandle passAccess = init_ClassValue.get(pass.getClass());
+            SodiumRegionResourceProbe.IteratorHandle listsAccess = load_ClassValue.get(lists.getClass());
             if (passAccess.init() == null || listsAccess.init() == null) {
                return load_Z();
             }
@@ -124,21 +124,21 @@ public final class SodiumRegionResourceProbe {
             while (iterator.hasNext()) {
                Object renderList = iterator.next();
                if (renderList != null) {
-                  SodiumRegionResourceProbe.Inner_ConfigStore renderAccess = read_ClassValue.get(renderList.getClass());
+                  SodiumRegionResourceProbe.RenderListHandles renderAccess = read_ClassValue.get(renderList.getClass());
                   if (renderAccess.init() == null || renderAccess.load() == null) {
                      return load_Z();
                   }
 
                   Object region = (Object)renderAccess.init().invoke((Object)renderList);
                   if (region != null) {
-                     SodiumRegionResourceProbe.Inner_BufferHelper regionAccess = write.get(region.getClass());
+                     SodiumRegionResourceProbe.RegionStorageHandles regionAccess = write.get(region.getClass());
                      if (regionAccess.init() == null || regionAccess.load() == null || regionAccess.read() == null) {
                         return load_Z();
                      }
 
                      if ((Object)regionAccess.init().invoke((Object)region, (Object)pass) != null) {
                         Object batch = (Object)regionAccess.load().invoke((Object)region, (Object)pass);
-                        SodiumRegionResourceProbe.Inner_DataUtil batchAccess = batch == null ? null : update.get(batch.getClass());
+                        SodiumRegionResourceProbe.EmptyCheckHandle batchAccess = batch == null ? null : update.get(batch.getClass());
                         if (batchAccess != null && batchAccess.init() == null) {
                            return load_Z();
                         }
@@ -182,18 +182,18 @@ public final class SodiumRegionResourceProbe {
       return null;
    }
 
-   private record Inner_BufferHelper(MethodHandle init, MethodHandle load, MethodHandle read) {
+   private record RegionStorageHandles(MethodHandle init, MethodHandle load, MethodHandle read) {
    }
 
-   private record Inner_CachePool(MethodHandle init) {
+   private record TranslucencyHandle(MethodHandle init) {
    }
 
-   private record Inner_ConfigStore(MethodHandle init, MethodHandle load) {
+   private record RenderListHandles(MethodHandle init, MethodHandle load) {
    }
 
-   private record Inner_DataUtil(MethodHandle init) {
+   private record EmptyCheckHandle(MethodHandle init) {
    }
 
-   private record Inner_StreamUtil(MethodHandle init) {
+   private record IteratorHandle(MethodHandle init) {
    }
 }

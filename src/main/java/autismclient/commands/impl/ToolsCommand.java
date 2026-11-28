@@ -349,9 +349,9 @@ public final class ToolsCommand extends Command {
       boolean parkour = sub.equals("parkour");
       boolean parkourPicker = parkour && !args.isEmpty() && args.stream().allMatch(AiToolCallParser::isParkourFlag);
       if (parkourPicker || args.isEmpty() && (sub.equals("goto") || parkour)) {
-         AiToolCallParser.Inner_CachePool parkourOptions;
+         AiToolCallParser.ParkourFlags parkourOptions;
          try {
-            parkourOptions = parkour ? AiToolCallParser.parseParkourFlags(args) : new AiToolCallParser.Inner_CachePool(false, -1);
+            parkourOptions = parkour ? AiToolCallParser.parseParkourFlags(args) : new AiToolCallParser.ParkourFlags(false, -1);
          } catch (IllegalArgumentException e) {
             return this.sync(e.getMessage());
          }
@@ -366,7 +366,7 @@ public final class ToolsCommand extends Command {
       double py = mc.player != null ? mc.player.getY() : 0.0;
       double pz = mc.player != null ? mc.player.getZ() : 0.0;
 
-      AiToolCallParser.Inner_StreamUtil invocation;
+      AiToolCallParser.ToolCall invocation;
       try {
          invocation = AiToolCallParser.init(sub, args, px, py, pz);
       } catch (IllegalArgumentException e) {

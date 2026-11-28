@@ -115,7 +115,7 @@ public final class ModuleRuntimeManager {
    private volatile boolean hasEnabledPayloadFilterRule;
    private AutismServerInfoOverlay serverInfoOverlay;
    private AutismOverlay profilesOverlay;
-   private final Deque<ModuleRuntimeManager.Inner_StreamUtil> earlyPayloadCaptures = new ArrayDeque<>(96);
+   private final Deque<ModuleRuntimeManager.EarlyCapture> earlyPayloadCaptures = new ArrayDeque<>(96);
    private final Set<Packet<?>> seenPayloadPackets = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
    private final Deque<String> seenFingerprintOrder = new ArrayDeque<>(256);
    private final Set<String> seenFingerprints = new HashSet<>();
@@ -502,9 +502,9 @@ public final class ModuleRuntimeManager {
       }
    }
 
-   public ModuleRuntimeManager.Inner_DataUtil getPacketCapturePlan(boolean playConnection) {
+   public ModuleRuntimeManager.CapturePlan getPacketCapturePlan(boolean playConnection) {
       if (aD.init_Z()) {
-         return ModuleRuntimeManager.Inner_DataUtil.none();
+         return ModuleRuntimeManager.CapturePlan.none();
       }
 
       long captureState = autismclient.util.PacketCaptureState.getState();
@@ -512,8 +512,8 @@ public final class ModuleRuntimeManager {
       boolean passivePayloadCapture = autismclient.util.PacketCaptureState.load(captureState);
       if (!this.isActive()) {
          return !loggerCapture && !passivePayloadCapture
-            ? ModuleRuntimeManager.Inner_DataUtil.none()
-            : new ModuleRuntimeManager.Inner_DataUtil(false, passivePayloadCapture, loggerCapture, false);
+            ? ModuleRuntimeManager.CapturePlan.none()
+            : new ModuleRuntimeManager.CapturePlan(false, passivePayloadCapture, loggerCapture, false);
       }
 
       AutismSessionState shared = AutismSessionState.getInstance();
@@ -529,8 +529,8 @@ public final class ModuleRuntimeManager {
                || MacroExecutor.needsPacketEvents()
          );
       return !normalPath && !passivePayloadCapture && !loggerCapture && !serverInfoObservation
-         ? ModuleRuntimeManager.Inner_DataUtil.none()
-         : new ModuleRuntimeManager.Inner_DataUtil(normalPath, passivePayloadCapture, loggerCapture, serverInfoObservation);
+         ? ModuleRuntimeManager.CapturePlan.none()
+         : new ModuleRuntimeManager.CapturePlan(normalPath, passivePayloadCapture, loggerCapture, serverInfoObservation);
    }
 
    public boolean hasPassivePayloadWork() {
@@ -711,7 +711,7 @@ public final class ModuleRuntimeManager {
 
             captured = true;
          } else if (passiveWork) {
-            PayloadChannelFilterManager.Inner_StreamUtil filterMatch = this.matchPayloadFilter(snapshot.channel(), direction);
+            PayloadChannelFilterManager.MatchedRule filterMatch = this.matchPayloadFilter(snapshot.channel(), direction);
             if (filterMatch != null) {
                if (logger != null) {
                   logger.logPayload(System.currentTimeMillis(), this.packetLoggerTick, direction == null ? "" : direction, payloadClassForDirection(direction), snapshot);
@@ -780,7 +780,7 @@ public final class ModuleRuntimeManager {
 
                captured = true;
             } else if (passiveWork) {
-               PayloadChannelFilterManager.Inner_StreamUtil filterMatch = this.matchPayloadFilter(channel, direction);
+               PayloadChannelFilterManager.MatchedRule filterMatch = this.matchPayloadFilter(channel, direction);
                if (filterMatch != null) {
                   if (logger != null) {
                      logger.logPayloadPacket(packet, direction);
@@ -882,12 +882,12 @@ public final class ModuleRuntimeManager {
             }
 
             this.earlyPayloadCaptures
-               .addLast(new ModuleRuntimeManager.Inner_StreamUtil(System.currentTimeMillis(), this.packetLoggerTick, direction == null ? "" : direction, packetClass, snapshot));
+               .addLast(new ModuleRuntimeManager.EarlyCapture(System.currentTimeMillis(), this.packetLoggerTick, direction == null ? "" : direction, packetClass, snapshot));
          }
       }
    }
 
-   private PayloadChannelFilterManager.Inner_StreamUtil matchPayloadFilter(String channel, String direction) {
+   private PayloadChannelFilterManager.MatchedRule matchPayloadFilter(String channel, String direction) {
       if (channel != null && !channel.isBlank()) {
          PayloadChannelFilterManager listeners = this.getPayloadFilterManager();
          return listeners.hasAnyEnabledRule() ? listeners.findMatchingRule(channel, direction) : null;
@@ -1182,7 +1182,7 @@ public final class ModuleRuntimeManager {
 
    private void drainEarlyPayloadsToLogger(AutismPacketLoggerOverlay logger) {
       if (logger != null) {
-         List<ModuleRuntimeManager.Inner_StreamUtil> captures;
+         List<ModuleRuntimeManager.EarlyCapture> captures;
          synchronized (this.earlyPayloadCaptures) {
             if (this.earlyPayloadCaptures.isEmpty()) {
                return;
@@ -1192,7 +1192,7 @@ public final class ModuleRuntimeManager {
             this.earlyPayloadCaptures.clear();
          }
 
-         for (ModuleRuntimeManager.Inner_StreamUtil capture : captures) {
+         for (ModuleRuntimeManager.EarlyCapture capture : captures) {
             logger.logPayload(capture.timestampMs(), capture.tick(), capture.direction(), capture.packetClass(), capture.payload());
          }
       }
@@ -2000,14 +2000,14 @@ public final class ModuleRuntimeManager {
       }
    }
 
-   public record Inner_DataUtil(boolean normalPath, boolean passivePayloadCapture, boolean loggerCapture, boolean serverInfoObservation) {
-      private static final ModuleRuntimeManager.Inner_DataUtil NONE = new ModuleRuntimeManager.Inner_DataUtil(false, false, false, false);
+   public record CapturePlan(boolean normalPath, boolean passivePayloadCapture, boolean loggerCapture, boolean serverInfoObservation) {
+      private static final ModuleRuntimeManager.CapturePlan NONE = new ModuleRuntimeManager.CapturePlan(false, false, false, false);
 
-      public static ModuleRuntimeManager.Inner_DataUtil none() {
+      public static ModuleRuntimeManager.CapturePlan none() {
          return NONE;
       }
    }
 
-   private record Inner_StreamUtil(long timestampMs, int tick, String direction, Class<?> packetClass, AutismPayloadSupport.PayloadEntry payload) {
+   private record EarlyCapture(long timestampMs, int tick, String direction, Class<?> packetClass, AutismPayloadSupport.PayloadEntry payload) {
    }
 }

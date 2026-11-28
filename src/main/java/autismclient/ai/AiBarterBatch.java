@@ -53,14 +53,14 @@ final class AiBarterBatch {
             final long deadlineNanos = System.nanoTime() + seconds * 1000000000L;
             final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
             final AiGuardLayer guard = new AiGuardLayer(AiGuard.GuardPolicy.standard().withoutFlee().keeping(List.of("minecraft:gold_ingot", "minecraft:ender_pearl")), "barter");
-            final Map<UUID, AiBarterBatch.Inner_CachePool> pendingTrades = new LinkedHashMap<>();
+            final Map<UUID, AiBarterBatch.PendingTrade> pendingTrades = new LinkedHashMap<>();
             final Set<UUID> skippedPiglins = new HashSet<>();
             final Map<String, Integer> inventoryAtStart = AiBarterBatch.inventoryCounts();
             final Map<String, Integer> observedOutputs = new HashMap<>();
             final Map<String, Integer> confirmedOutputs = new HashMap<>();
             final Map<UUID, Integer> seenDropCounts = new HashMap<>(AiBarterBatch.nearbyDropCounts(mc));
             final Map<String, Integer> seenInventoryCounts = new HashMap<>(this.inventoryAtStart);
-            final AiBarterBatch.Inner_DataUtil goldOffer = new AiBarterBatch.Inner_DataUtil();
+            final AiBarterBatch.GoldOffer goldOffer = new AiBarterBatch.GoldOffer();
             AiOperation subOperation;
             Piglin offerTarget;
             Piglin approachedPiglin;
@@ -171,15 +171,15 @@ final class AiBarterBatch {
                   } else {
                      if (this.offerTarget != null) {
                         boolean admired = this.offerTarget.isAlive() && this.offerTarget.getOffhandItem().is(Items.GOLD_INGOT);
-                        AiBarterBatch.Inner_StreamUtil outcome = this.goldOffer
+                        AiBarterBatch.OfferOutcome outcome = this.goldOffer
                            .resolve(AiCraft.countItem("minecraft:gold_ingot"), admired, AiServerEvidence.inventoryRevision(), this.tickCount);
-                        if (outcome != AiBarterBatch.Inner_StreamUtil.ACCEPTED) {
-                           if (outcome == AiBarterBatch.Inner_StreamUtil.AMBIGUOUS) {
+                        if (outcome != AiBarterBatch.OfferOutcome.ACCEPTED) {
+                           if (outcome == AiBarterBatch.OfferOutcome.AMBIGUOUS) {
                               this.goldSpent = this.goldSpent + this.goldOffer.consumedGold();
                               return this.finish(AiOperation.Status.UNCERTAIN, "Gold changed by more than one ingot during a single adult interaction");
                            }
 
-                           if (outcome == AiBarterBatch.Inner_StreamUtil.UNACKNOWLEDGED) {
+                           if (outcome == AiBarterBatch.OfferOutcome.UNACKNOWLEDGED) {
                               return this.finish(
                                  AiOperation.Status.UNCERTAIN, "Adult interaction was not acknowledged; reobserve gold and offhand before spending again"
                               );
@@ -189,13 +189,13 @@ final class AiBarterBatch {
                         }
 
                         this.goldSpent++;
-                        AiBarterBatch.Inner_CachePool trade = new AiBarterBatch.Inner_CachePool(this.offerTarget, this.dropsBeforeOffer, this.inventoryBeforeOffer, this.offerTick);
+                        AiBarterBatch.PendingTrade trade = new AiBarterBatch.PendingTrade(this.offerTarget, this.dropsBeforeOffer, this.inventoryBeforeOffer, this.offerTick);
                         trade.admired = admired;
                         this.pendingTrades.put(this.offerTarget.getUUID(), trade);
                         this.offerTarget = null;
                      }
 
-                     for (AiBarterBatch.Inner_CachePool trade : new ArrayList<>(this.pendingTrades.values())) {
+                     for (AiBarterBatch.PendingTrade trade : new ArrayList<>(this.pendingTrades.values())) {
                         Piglin piglin = trade.piglin;
                         if (piglin.isAlive()
                            && mc.level.getEntity(piglin.getId()) == piglin
@@ -571,7 +571,7 @@ final class AiBarterBatch {
       return out;
    }
 
-   private static final class Inner_CachePool {
+   private static final class PendingTrade {
       final Piglin piglin;
       final UUID piglinId;
       final Map<UUID, Integer> dropsBefore;
@@ -580,7 +580,7 @@ final class AiBarterBatch {
       boolean admired;
       boolean gainObserved;
 
-      Inner_CachePool(Piglin piglin, Map<UUID, Integer> beforeDrops, Map<String, Integer> beforeInventory, int began) {
+      PendingTrade(Piglin piglin, Map<UUID, Integer> beforeDrops, Map<String, Integer> beforeInventory, int began) {
          this.piglin = piglin;
          this.piglinId = piglin.getUUID();
          this.dropsBefore = beforeDrops;
@@ -589,7 +589,7 @@ final class AiBarterBatch {
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class GoldOffer {
       private int goldBefore;
       private int offerTick;
       private int consumed;
@@ -608,7 +608,7 @@ final class AiBarterBatch {
          this.pending = true;
       }
 
-      AiBarterBatch.Inner_StreamUtil resolve(int gold, boolean admiring, long revision, int tick) {
+      AiBarterBatch.OfferOutcome resolve(int gold, boolean admiring, long revision, int tick) {
          if (!this.pending) {
             throw new IllegalStateException("No gold offer is pending");
          }
@@ -616,15 +616,15 @@ final class AiBarterBatch {
          int consumed = this.goldBefore - gold;
          this.consumed = Math.max(0, consumed);
          if (consumed <= 0 || !admiring && revision <= this.revisionAtOffer) {
-            return tick - this.offerTick > 60 ? AiBarterBatch.Inner_StreamUtil.UNACKNOWLEDGED : AiBarterBatch.Inner_StreamUtil.WAITING;
+            return tick - this.offerTick > 60 ? AiBarterBatch.OfferOutcome.UNACKNOWLEDGED : AiBarterBatch.OfferOutcome.WAITING;
          }
 
          if (consumed != 1) {
-            return AiBarterBatch.Inner_StreamUtil.AMBIGUOUS;
+            return AiBarterBatch.OfferOutcome.AMBIGUOUS;
          }
 
          this.pending = false;
-         return AiBarterBatch.Inner_StreamUtil.ACCEPTED;
+         return AiBarterBatch.OfferOutcome.ACCEPTED;
       }
 
       boolean isPending() {
@@ -636,7 +636,7 @@ final class AiBarterBatch {
       }
    }
 
-   enum Inner_StreamUtil {
+   enum OfferOutcome {
       WAITING,
       ACCEPTED,
       AMBIGUOUS,

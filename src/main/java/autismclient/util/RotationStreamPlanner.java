@@ -35,19 +35,19 @@ public final class RotationStreamPlanner {
       return 0.5 + (gcd > 0.0 ? gcd : 0.15);
    }
 
-   public static double[] lastStep(RotationStreamPlanner.Inner_TaskQueue s) {
+   public static double[] lastStep(RotationStreamPlanner.StreamState s) {
       return new double[]{s.lastYawStep, s.lastPitchStep};
    }
 
-   public static boolean isActive(RotationStreamPlanner.Inner_TaskQueue s) {
+   public static boolean isActive(RotationStreamPlanner.StreamState s) {
       return s != null && s.init_Z;
    }
 
-   public static RotationMath.Rotation currentRotation(RotationStreamPlanner.Inner_TaskQueue s) {
+   public static RotationMath.Rotation currentRotation(RotationStreamPlanner.StreamState s) {
       return isActive(s) ? new RotationMath.Rotation((float)s.yaw, (float)s.pitch) : null;
    }
 
-   public static void begin(RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation from) {
+   public static void begin(RotationStreamPlanner.StreamState s, RotationMath.Rotation from) {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(from, "from");
       s.yaw = from.yaw();
@@ -64,7 +64,7 @@ public final class RotationStreamPlanner {
       s.init_Z = true;
    }
 
-   public static void reset(RotationStreamPlanner.Inner_TaskQueue s) {
+   public static void reset(RotationStreamPlanner.StreamState s) {
       Objects.requireNonNull(s, "stream");
       s.init_Z = false;
       s.yaw = 0.0;
@@ -80,7 +80,7 @@ public final class RotationStreamPlanner {
       s.goalPitch = 0.0;
    }
 
-   public static void resume(RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation at, double lastStepYaw, double lastStepPitch, double gcd) {
+   public static void resume(RotationStreamPlanner.StreamState s, RotationMath.Rotation at, double lastStepYaw, double lastStepPitch, double gcd) {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(at, "at");
       double g = gcd > 0.0 ? gcd : 0.15;
@@ -98,20 +98,20 @@ public final class RotationStreamPlanner {
       s.init_Z = true;
    }
 
-   public static RotationStreamPlanner.Inner_ConfigStore init_ap_ConfigStore_ap_TaskQueue(
-      RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd
+   public static RotationStreamPlanner.StepResult init_ap_ConfigStore_ap_TaskQueue(
+      RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd
    ) {
       return init_ap_ConfigStore_ap_TaskQueue(s, goal, maxYawStep, maxPitchStep, gcd, true);
    }
 
-   public static RotationStreamPlanner.Inner_ConfigStore init_ap_ConfigStore_ap_TaskQueue(
-      RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset
+   public static RotationStreamPlanner.StepResult init_ap_ConfigStore_ap_TaskQueue(
+      RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset
    ) {
-      return init_ap_ConfigStore_ap_TaskQueue(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, RotationStreamPlanner.Inner_StreamUtil.STANDARD);
+      return init_ap_ConfigStore_ap_TaskQueue(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, RotationStreamPlanner.MotionProfile.STANDARD);
    }
 
-   public static RotationStreamPlanner.Inner_ConfigStore init_ap_ConfigStore_ap_TaskQueue(
-      RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset, RotationStreamPlanner.Inner_StreamUtil profile
+   public static RotationStreamPlanner.StepResult init_ap_ConfigStore_ap_TaskQueue(
+      RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset, RotationStreamPlanner.MotionProfile profile
    ) {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(goal, "goal");
@@ -121,7 +121,7 @@ public final class RotationStreamPlanner {
       }
 
       double g = gcd > 0.0 ? gcd : 0.15;
-      RotationStreamPlanner.Inner_BufferHelper rolls;
+      RotationStreamPlanner.RolledOffsets rolls;
       if (init_Z_ap_TaskQueue(s, goal, profile)) {
          s.load_ap_BufferHelper = init_ap_BufferHelper_Random(s.random, goal, profile);
          rolls = s.load_ap_BufferHelper;
@@ -132,13 +132,13 @@ public final class RotationStreamPlanner {
 
       s.goalYaw = goal.yaw();
       s.goalPitch = goal.pitch();
-      s.wanderWeight = profile == RotationStreamPlanner.Inner_StreamUtil.STANDARD ? wanderWeight(s.wanderWeight, s.random) : 1.0;
+      s.wanderWeight = profile == RotationStreamPlanner.MotionProfile.STANDARD ? wanderWeight(s.wanderWeight, s.random) : 1.0;
       s.yawDither = nextDither(s.yawDither, s.random);
       s.pitchDither = nextDither(s.pitchDither, s.random);
       double effectiveYaw = goal.yaw() + (applyGoalOffset ? rolls.yawGoalOffset : 0.0);
       double effectivePitch = clampPitch(goal.pitch() + (applyGoalOffset ? rolls.pitchGoalOffset : 0.0));
-      RotationStreamPlanner.Inner_DataUtil yawAxis = new RotationStreamPlanner.Inner_DataUtil(wrapDegrees(effectiveYaw - s.yaw), maxYawStep, g, s.lastYawStep, rolls.accelRoll, 0.0 / 0.0);
-      RotationStreamPlanner.Inner_DataUtil pitchAxis = new RotationStreamPlanner.Inner_DataUtil(effectivePitch - s.pitch, maxPitchStep, g, s.lastPitchStep, rolls.accelRoll, s.pitch);
+      RotationStreamPlanner.AxisApproach yawAxis = new RotationStreamPlanner.AxisApproach(wrapDegrees(effectiveYaw - s.yaw), maxYawStep, g, s.lastYawStep, rolls.accelRoll, 0.0 / 0.0);
+      RotationStreamPlanner.AxisApproach pitchAxis = new RotationStreamPlanner.AxisApproach(effectivePitch - s.pitch, maxPitchStep, g, s.lastPitchStep, rolls.accelRoll, s.pitch);
       int kYaw = init_I_ap_DataUtil(yawAxis, s.kYaw, rolls.init_D, rolls.stepScaleRoll * s.wanderWeight, s.random, s.yawDither);
       int kPitch = init_I_ap_DataUtil(pitchAxis, s.kPitch, rolls.pitchRoll, rolls.stepScaleRoll * s.wanderWeight, s.random, s.pitchDither);
       if (kYaw == 0 && Math.abs(kPitch * g) > 2.75 && yawAxis.isSettled() && s.random.nextDouble() < 0.5) {
@@ -149,10 +149,10 @@ public final class RotationStreamPlanner {
          kPitch = init_I_ap_DataUtil_Random(pitchAxis, s.random);
       }
 
-      return new RotationStreamPlanner.Inner_ConfigStore(s, kYaw, kPitch, g);
+      return new RotationStreamPlanner.StepResult(s, kYaw, kPitch, g);
    }
 
-   public static RotationMath.Rotation init_ce_DataUtil_ap_TaskQueue_ap_ConfigStore(RotationStreamPlanner.Inner_TaskQueue s, RotationStreamPlanner.Inner_ConfigStore step) {
+   public static RotationMath.Rotation init_ce_DataUtil_ap_TaskQueue_ap_ConfigStore(RotationStreamPlanner.StreamState s, RotationStreamPlanner.StepResult step) {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(step, "step");
       if (!s.init_Z) {
@@ -179,18 +179,18 @@ public final class RotationStreamPlanner {
       return currentRotation(s);
    }
 
-   public static RotationMath.Rotation init_ce_DataUtil_ap_TaskQueue(RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd) {
+   public static RotationMath.Rotation init_ce_DataUtil_ap_TaskQueue(RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd) {
       return stepToward(s, goal, maxYawStep, maxPitchStep, gcd, true);
    }
 
    public static RotationMath.Rotation stepToward(
-      RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset
+      RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset
    ) {
-      return stepToward(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, RotationStreamPlanner.Inner_StreamUtil.STANDARD);
+      return stepToward(s, goal, maxYawStep, maxPitchStep, gcd, applyGoalOffset, RotationStreamPlanner.MotionProfile.STANDARD);
    }
 
    public static RotationMath.Rotation stepToward(
-      RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset, RotationStreamPlanner.Inner_StreamUtil profile
+      RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, float maxYawStep, float maxPitchStep, double gcd, boolean applyGoalOffset, RotationStreamPlanner.MotionProfile profile
    ) {
       Objects.requireNonNull(s, "stream");
       Objects.requireNonNull(goal, "goal");
@@ -206,19 +206,19 @@ public final class RotationStreamPlanner {
    }
 
    public static RotationMath.Rotation stepBy(
-      RotationStreamPlanner.Inner_TaskQueue s, double yawDelta, double pitchDelta, float maxYawStep, float maxPitchStep, double gcd, double accelLimit
+      RotationStreamPlanner.StreamState s, double yawDelta, double pitchDelta, float maxYawStep, float maxPitchStep, double gcd, double accelLimit
    ) {
       return planDeltaStep(s, yawDelta, pitchDelta, maxYawStep, maxPitchStep, gcd, accelLimit, accelLimit);
    }
 
    public static RotationMath.Rotation planDeltaStep(
-      RotationStreamPlanner.Inner_TaskQueue s, double yawDelta, double pitchDelta, float maxYawStep, float maxPitchStep, double gcd, double accelUp, double accelDown
+      RotationStreamPlanner.StreamState s, double yawDelta, double pitchDelta, float maxYawStep, float maxPitchStep, double gcd, double accelUp, double accelDown
    ) {
       return planDeltaStep(s, yawDelta, pitchDelta, maxYawStep, maxPitchStep, gcd, accelUp, accelDown, false);
    }
 
    public static RotationMath.Rotation planDeltaStep(
-      RotationStreamPlanner.Inner_TaskQueue s,
+      RotationStreamPlanner.StreamState s,
       double yawDelta,
       double pitchDelta,
       float maxYawStep,
@@ -232,7 +232,7 @@ public final class RotationStreamPlanner {
    }
 
    public static RotationMath.Rotation init(
-      RotationStreamPlanner.Inner_TaskQueue s,
+      RotationStreamPlanner.StreamState s,
       double yawDelta,
       double pitchDelta,
       float maxYawStep,
@@ -249,10 +249,10 @@ public final class RotationStreamPlanner {
       }
 
       double g = gcd > 0.0 ? gcd : 0.15;
-      RotationStreamPlanner.Inner_CachePool yaw = new RotationStreamPlanner.Inner_CachePool(
+      RotationStreamPlanner.AxisQuantizer yaw = new RotationStreamPlanner.AxisQuantizer(
          maxYawStep, g, s.lastYawStep, s.kYaw, s.lastYawStep > 0.0 ? accelUp : accelDown, accelDown, 0.0 / 0.0, Math.abs(s.read_F)
       );
-      RotationStreamPlanner.Inner_CachePool pitch = new RotationStreamPlanner.Inner_CachePool(maxPitchStep, g, s.lastPitchStep, s.kPitch, s.lastPitchStep > 0.0 ? accelUp : accelDown, accelDown, s.pitch);
+      RotationStreamPlanner.AxisQuantizer pitch = new RotationStreamPlanner.AxisQuantizer(maxPitchStep, g, s.lastPitchStep, s.kPitch, s.lastPitchStep > 0.0 ? accelUp : accelDown, accelDown, s.pitch);
       int kYaw = yaw.quantizeDelta(yawDelta, s.random);
       int kPitch = pitch.quantizeDelta(pitchDelta, s.random);
       if (kYaw == 0 && Math.abs(kPitch * g) > 2.75 && s.random.nextDouble() < 0.5) {
@@ -283,7 +283,7 @@ public final class RotationStreamPlanner {
       return currentRotation(s);
    }
 
-   private static void init_V_ap_TaskQueue_2(RotationStreamPlanner.Inner_TaskQueue s, double gcd, float before, RotationStreamPlanner.Inner_CachePool axis, boolean naturalMouseAngles) {
+   private static void init_V_ap_TaskQueue_2(RotationStreamPlanner.StreamState s, double gcd, float before, RotationStreamPlanner.AxisQuantizer axis, boolean naturalMouseAngles) {
       float emitted = (float)s.yaw;
       float wrapped = wrapFloatDegrees(emitted);
       boolean forbidden = isQuarterTurn(wrapped);
@@ -332,7 +332,7 @@ public final class RotationStreamPlanner {
       return quantum > 0.0F && Math.abs(angle - (angle - angle % quantum)) == 0.0F;
    }
 
-   private static void init_V_ap_TaskQueue(RotationStreamPlanner.Inner_TaskQueue s, double gcd, float before, float yawBefore, RotationStreamPlanner.Inner_CachePool axis) {
+   private static void init_V_ap_TaskQueue(RotationStreamPlanner.StreamState s, double gcd, float before, float yawBefore, RotationStreamPlanner.AxisQuantizer axis) {
       float delta = (float)s.pitch - before;
       float yawDelta = (float)s.yaw - yawBefore;
       if (!(Math.abs(yawDelta) + Math.abs(delta) <= 0.75F) && isGcdAligned((float)s.pitch, gcd)) {
@@ -359,7 +359,7 @@ public final class RotationStreamPlanner {
       return counts == 0 ? angle : (float)angle + (float)(counts * (gcd / 0.15)) * 0.15F;
    }
 
-   private static void init_V_ap_TaskQueue_F(RotationStreamPlanner.Inner_TaskQueue s, float before) {
+   private static void init_V_ap_TaskQueue_F(RotationStreamPlanner.StreamState s, float before) {
       s.read_F = (float)s.yaw - before;
    }
 
@@ -381,20 +381,20 @@ public final class RotationStreamPlanner {
       return wrapped;
    }
 
-   public static void setExactYaw(RotationStreamPlanner.Inner_TaskQueue s, float exactYaw, float exactClosestYaw) {
+   public static void setExactYaw(RotationStreamPlanner.StreamState s, float exactYaw, float exactClosestYaw) {
       Objects.requireNonNull(s, "stream");
       s.exactYaw = exactYaw;
       s.exactClosestYaw = exactClosestYaw;
    }
 
-   static double[] load(RotationStreamPlanner.Inner_TaskQueue s) {
+   static double[] load(RotationStreamPlanner.StreamState s) {
       return isActive(s) && s.init_ap_BufferHelper != null
          ? new double[]{s.goalYaw + s.init_ap_BufferHelper.yawGoalOffset, clampPitch(s.goalPitch + s.init_ap_BufferHelper.pitchGoalOffset)}
          : null;
    }
 
-   private static RotationStreamPlanner.Inner_BufferHelper init_ap_BufferHelper_Random(Random random, RotationMath.Rotation goal, RotationStreamPlanner.Inner_StreamUtil profile) {
-      RotationStreamPlanner.Inner_BufferHelper rolls = new RotationStreamPlanner.Inner_BufferHelper();
+   private static RotationStreamPlanner.RolledOffsets init_ap_BufferHelper_Random(Random random, RotationMath.Rotation goal, RotationStreamPlanner.MotionProfile profile) {
+      RotationStreamPlanner.RolledOffsets rolls = new RotationStreamPlanner.RolledOffsets();
       rolls.profile = profile;
       rolls.init_D = profile.init_D + profile.load_D * random.nextDouble();
       rolls.pitchRoll = profile.init_D + profile.load_D * random.nextDouble();
@@ -412,7 +412,7 @@ public final class RotationStreamPlanner {
       return random.nextBoolean() ? magnitude : -magnitude;
    }
 
-   private static boolean init_Z_ap_TaskQueue(RotationStreamPlanner.Inner_TaskQueue s, RotationMath.Rotation goal, RotationStreamPlanner.Inner_StreamUtil profile) {
+   private static boolean init_Z_ap_TaskQueue(RotationStreamPlanner.StreamState s, RotationMath.Rotation goal, RotationStreamPlanner.MotionProfile profile) {
       if (s.init_ap_BufferHelper == null) {
          return true;
       }
@@ -426,7 +426,7 @@ public final class RotationStreamPlanner {
       return Math.max(Math.abs(dYaw), Math.abs(dPitch)) > 4.0;
    }
 
-   private static int init_I_ap_DataUtil(RotationStreamPlanner.Inner_DataUtil axis, int lastK, double peak, double ease, Random random, int dither) {
+   private static int init_I_ap_DataUtil(RotationStreamPlanner.AxisApproach axis, int lastK, double peak, double ease, Random random, int dither) {
       double desired = axis.remainingAbs <= 3.0 ? axis.remainingAbs : Math.min(Math.min(axis.remainingAbs * ease, axis.maxStep * peak), axis.accelCap);
       int k = axis.sign * (int)Math.round(desired / axis.stepUnit);
       if (!axis.isSettled() && (k == 0 || Integer.signum(k) != axis.sign)) {
@@ -466,7 +466,7 @@ public final class RotationStreamPlanner {
       return k != lastK || Math.abs(k * gcd) <= 1.25;
    }
 
-   private static int init_I_ap_DataUtil_Random(RotationStreamPlanner.Inner_DataUtil axis, Random random) {
+   private static int init_I_ap_DataUtil_Random(RotationStreamPlanner.AxisApproach axis, Random random) {
       int sign = random.nextBoolean() ? 1 : -1;
       if (axis.acceptsStep(sign)) {
          return sign;
@@ -516,8 +516,8 @@ public final class RotationStreamPlanner {
       return Math.max(-89.9, Math.min(89.9, pitch));
    }
 
-   private static final class Inner_BufferHelper {
-      RotationStreamPlanner.Inner_StreamUtil profile;
+   private static final class RolledOffsets {
+      RotationStreamPlanner.MotionProfile profile;
       double init_D;
       double pitchRoll;
       double stepScaleRoll;
@@ -528,7 +528,7 @@ public final class RotationStreamPlanner {
       double rolledGoalPitch;
    }
 
-   private static final class Inner_CachePool {
+   private static final class AxisQuantizer {
       private final double gcd;
       private final int lastK;
       private final double maxStep;
@@ -536,11 +536,11 @@ public final class RotationStreamPlanner {
       private final double currentPitch;
       private final float emitted;
 
-      Inner_CachePool(float cap, double gcd, double lastStep, int lastK, double accelUp, double accelDown, double pitchAcc) {
+      AxisQuantizer(float cap, double gcd, double lastStep, int lastK, double accelUp, double accelDown, double pitchAcc) {
          this(cap, gcd, lastStep, lastK, accelUp, accelDown, pitchAcc, 0.0F / 0.0F);
       }
 
-      Inner_CachePool(float cap, double gcd, double lastStep, int lastK, double accelUp, double accelDown, double pitchAcc, float emitted) {
+      AxisQuantizer(float cap, double gcd, double lastStep, int lastK, double accelUp, double accelDown, double pitchAcc, float emitted) {
          this.gcd = gcd;
          this.lastK = lastK;
          this.maxStep = Math.min(Math.max(0.0, cap), lastStep + accelUp);
@@ -627,13 +627,13 @@ public final class RotationStreamPlanner {
       }
    }
 
-   public static final class Inner_ConfigStore {
-      private final RotationStreamPlanner.Inner_TaskQueue owner;
+   public static final class StepResult {
+      private final RotationStreamPlanner.StreamState owner;
       private final int kYaw;
       private final int pitchSteps;
       private final double gcd;
 
-      private Inner_ConfigStore(RotationStreamPlanner.Inner_TaskQueue owner, int kYaw, int kPitch, double gcd) {
+      private StepResult(RotationStreamPlanner.StreamState owner, int kYaw, int kPitch, double gcd) {
          this.owner = owner;
          this.kYaw = kYaw;
          this.pitchSteps = kPitch;
@@ -648,7 +648,7 @@ public final class RotationStreamPlanner {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class AxisApproach {
       final double remainingAbs;
       final int sign;
       final double maxStep;
@@ -657,7 +657,7 @@ public final class RotationStreamPlanner {
       final double currentPitch;
       final boolean init_Z;
 
-      Inner_DataUtil(double remaining, float cap, double gcd, double lastStep, double accel, double pitchAcc) {
+      AxisApproach(double remaining, float cap, double gcd, double lastStep, double accel, double pitchAcc) {
          this.remainingAbs = Math.abs(remaining);
          this.sign = remaining > 0.0 ? 1 : (remaining < 0.0 ? -1 : 0);
          this.maxStep = cap;
@@ -690,7 +690,7 @@ public final class RotationStreamPlanner {
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum MotionProfile {
       STANDARD(0.7, 0.3, 0.55, 0.35, 8.0, 10.0),
       DANGER_RETURN(0.97, 0.03, 0.92, 0.06, 16.0, 2.0),
       TELLY_FLICK(0.97, 0.03, 0.97, 0.03, 60.0, 8.0),
@@ -708,7 +708,7 @@ public final class RotationStreamPlanner {
       private final double update_D;
       private final double sync_D;
 
-      Inner_StreamUtil(double peakMin, double peakSpan, double easeMin, double easeSpan, double accelMin, double accelSpan) {
+      MotionProfile(double peakMin, double peakSpan, double easeMin, double easeSpan, double accelMin, double accelSpan) {
          this.init_D = peakMin;
          this.load_D = peakSpan;
          this.read_D = easeMin;
@@ -718,7 +718,7 @@ public final class RotationStreamPlanner {
       }
    }
 
-   public static final class Inner_TaskQueue {
+   public static final class StreamState {
       private final Random random;
       private boolean init_Z;
       private double yaw;
@@ -727,8 +727,8 @@ public final class RotationStreamPlanner {
       private double lastPitchStep;
       private int kYaw;
       private int kPitch;
-      private RotationStreamPlanner.Inner_BufferHelper init_ap_BufferHelper;
-      private RotationStreamPlanner.Inner_BufferHelper load_ap_BufferHelper;
+      private RotationStreamPlanner.RolledOffsets init_ap_BufferHelper;
+      private RotationStreamPlanner.RolledOffsets load_ap_BufferHelper;
       private int yawDither;
       private int pitchDither;
       private float exactYaw = 0.0F / 0.0F;
@@ -738,11 +738,11 @@ public final class RotationStreamPlanner {
       private double goalYaw;
       private double goalPitch;
 
-      public Inner_TaskQueue() {
+      public StreamState() {
          this(new Random());
       }
 
-      public Inner_TaskQueue(Random random) {
+      public StreamState(Random random) {
          this.random = Objects.requireNonNull(random, "random");
       }
    }

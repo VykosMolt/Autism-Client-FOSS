@@ -10,7 +10,7 @@ final class DangerOptionKeys {
    static Map<String, String> init(Map<String, String> saved) {
       Map<String, String> result = new HashMap<>();
 
-      for (IncomingProjectileScanner.Inner_StreamUtil kind : IncomingProjectileScanner.Inner_StreamUtil.values()) {
+      for (IncomingProjectileScanner.ProjectileKind kind : IncomingProjectileScanner.ProjectileKind.values()) {
          for (String option : new String[]{"hud", "aim-preview"}) {
             String key = kind.id() + "-" + option;
             if (!saved.containsKey(key) && saved.containsKey(option)) {
@@ -37,7 +37,7 @@ final class DangerOptionKeys {
             try {
                double radius = Double.parseDouble(saved.get("relevance-radius"));
                if (Double.isFinite(radius)) {
-                  result.put(key, Double.toString(Math.clamp(radius, 1.0, 30.0) * (kind == IncomingProjectileScanner.Inner_StreamUtil.PEARL ? 2 : 1)));
+                  result.put(key, Double.toString(Math.clamp(radius, 1.0, 30.0) * (kind == IncomingProjectileScanner.ProjectileKind.PEARL ? 2 : 1)));
                }
             } catch (NumberFormatException var11) {
             }

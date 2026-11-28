@@ -23,7 +23,7 @@ public class ButtonNode extends LayoutNode {
    private l textTone = l.read;
    private boolean connectedStyle;
    private boolean connectedToggle;
-   private ConnectedButtonRenderer.Inner_DataUtil connectedEdges = ConnectedButtonRenderer.init;
+   private ConnectedButtonRenderer.ConnectedEdges connectedEdges = ConnectedButtonRenderer.init;
    private float toggleProgress;
    private boolean toggleInitialized;
    private long lastAnimNanos = System.nanoTime();
@@ -171,7 +171,7 @@ public class ButtonNode extends LayoutNode {
       return this;
    }
 
-   public ButtonNode setConnectedEdges(ConnectedButtonRenderer.Inner_DataUtil connectedEdges) {
+   public ButtonNode setConnectedEdges(ConnectedButtonRenderer.ConnectedEdges connectedEdges) {
       this.connectedEdges = connectedEdges == null ? ConnectedButtonRenderer.load : connectedEdges;
       return this;
    }

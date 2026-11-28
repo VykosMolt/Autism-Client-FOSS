@@ -7,8 +7,8 @@ public final class MacroResourceClassifier {
    private MacroResourceClassifier() {
    }
 
-   public static EnumSet<MacroResourceClassifier.Inner_DataUtil> init(MacroAction action) {
-      EnumSet<MacroResourceClassifier.Inner_DataUtil> resources = EnumSet.noneOf(MacroResourceClassifier.Inner_DataUtil.class);
+   public static EnumSet<MacroResourceClassifier.MacroResource> init(MacroAction action) {
+      EnumSet<MacroResourceClassifier.MacroResource> resources = EnumSet.noneOf(MacroResourceClassifier.MacroResource.class);
       if (action instanceof ToolsAction) {
          return resources;
       }
@@ -16,17 +16,17 @@ public final class MacroResourceClassifier {
       if (action instanceof ClickAction || action instanceof PlaceAction || action instanceof UseItemPhaseAction || action instanceof OpenContainerAction || action instanceof InteractEntityAction) {
          resources.addAll(
             EnumSet.of(
-               MacroResourceClassifier.Inner_DataUtil.INPUT,
-               MacroResourceClassifier.Inner_DataUtil.ROTATION,
-               MacroResourceClassifier.Inner_DataUtil.INVENTORY,
-               MacroResourceClassifier.Inner_DataUtil.GUI,
-               MacroResourceClassifier.Inner_DataUtil.WORLD_ACTION
+               MacroResourceClassifier.MacroResource.INPUT,
+               MacroResourceClassifier.MacroResource.ROTATION,
+               MacroResourceClassifier.MacroResource.INVENTORY,
+               MacroResourceClassifier.MacroResource.GUI,
+               MacroResourceClassifier.MacroResource.WORLD_ACTION
             )
          );
       }
 
       if (action instanceof VClipAction || action instanceof HClipAction || action instanceof PacedTpAction) {
-         resources.addAll(EnumSet.of(MacroResourceClassifier.Inner_DataUtil.INPUT, MacroResourceClassifier.Inner_DataUtil.NAVIGATION, MacroResourceClassifier.Inner_DataUtil.NETWORK));
+         resources.addAll(EnumSet.of(MacroResourceClassifier.MacroResource.INPUT, MacroResourceClassifier.MacroResource.NAVIGATION, MacroResourceClassifier.MacroResource.NETWORK));
       }
 
       if (action instanceof ClickAction
@@ -39,13 +39,13 @@ public final class MacroResourceClassifier {
          || action instanceof XCarryAction
          || action instanceof SwapSlotsAction
          || action instanceof SelectSlotAction) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.INVENTORY);
-         resources.add(MacroResourceClassifier.Inner_DataUtil.GUI);
+         resources.add(MacroResourceClassifier.MacroResource.INVENTORY);
+         resources.add(MacroResourceClassifier.MacroResource.GUI);
       }
 
       if (action instanceof WaitDurabilityAction durability && durability.useNext) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.INVENTORY);
-         resources.add(MacroResourceClassifier.Inner_DataUtil.GUI);
+         resources.add(MacroResourceClassifier.MacroResource.INVENTORY);
+         resources.add(MacroResourceClassifier.MacroResource.GUI);
       }
 
       if (action instanceof OpenContainerAction
@@ -56,57 +56,57 @@ public final class MacroResourceClassifier {
          || action instanceof DesyncAction
          || action instanceof NbtBookAction
          || action instanceof CustomMenuAction) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.GUI);
-         resources.add(MacroResourceClassifier.Inner_DataUtil.NETWORK);
+         resources.add(MacroResourceClassifier.MacroResource.GUI);
+         resources.add(MacroResourceClassifier.MacroResource.NETWORK);
       }
 
       if (action instanceof SendPacketAction || action instanceof PacketAction || action instanceof PacketClickAction || action instanceof PayloadAction || action instanceof PayAction || action instanceof SendChatAction) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.NETWORK);
+         resources.add(MacroResourceClassifier.MacroResource.NETWORK);
       }
 
       if (action instanceof DelayPacketsAction) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.NETWORK);
-         resources.add(MacroResourceClassifier.Inner_DataUtil.PACKET_DELAY);
+         resources.add(MacroResourceClassifier.MacroResource.NETWORK);
+         resources.add(MacroResourceClassifier.MacroResource.PACKET_DELAY);
       }
 
       if (action instanceof UseItemAction) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.INPUT);
-         resources.add(MacroResourceClassifier.Inner_DataUtil.NETWORK);
+         resources.add(MacroResourceClassifier.MacroResource.INPUT);
+         resources.add(MacroResourceClassifier.MacroResource.NETWORK);
       }
 
       if (action instanceof MoveAction || action instanceof SneakAction || action instanceof SprintAction || action instanceof JumpAction) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.INPUT);
+         resources.add(MacroResourceClassifier.MacroResource.INPUT);
       }
 
       if (action instanceof RotateAction || action instanceof LookAtBlockAction) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.ROTATION);
+         resources.add(MacroResourceClassifier.MacroResource.ROTATION);
       }
 
       if (action instanceof GoToAction || action instanceof MineAction || action instanceof InstaBreakAction || action instanceof BreakAction) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.NAVIGATION);
-         resources.add(MacroResourceClassifier.Inner_DataUtil.INPUT);
-         resources.add(MacroResourceClassifier.Inner_DataUtil.ROTATION);
-         resources.add(MacroResourceClassifier.Inner_DataUtil.NETWORK);
+         resources.add(MacroResourceClassifier.MacroResource.NAVIGATION);
+         resources.add(MacroResourceClassifier.MacroResource.INPUT);
+         resources.add(MacroResourceClassifier.MacroResource.ROTATION);
+         resources.add(MacroResourceClassifier.MacroResource.NETWORK);
       }
 
       if (action instanceof ak) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.WORLD_ACTION);
+         resources.add(MacroResourceClassifier.MacroResource.WORLD_ACTION);
       }
 
       if (action instanceof VillagerDupeAction) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.INVENTORY);
-         resources.add(MacroResourceClassifier.Inner_DataUtil.GUI);
+         resources.add(MacroResourceClassifier.MacroResource.INVENTORY);
+         resources.add(MacroResourceClassifier.MacroResource.GUI);
       }
 
       if (action instanceof WaitVillagerItemAction wait && wait.holdEmerald) {
-         resources.add(MacroResourceClassifier.Inner_DataUtil.INVENTORY);
+         resources.add(MacroResourceClassifier.MacroResource.INVENTORY);
       }
 
       return resources;
    }
 
-   public static EnumSet<MacroResourceClassifier.Inner_DataUtil> init(List<MacroAction> actions) {
-      EnumSet<MacroResourceClassifier.Inner_DataUtil> resources = EnumSet.noneOf(MacroResourceClassifier.Inner_DataUtil.class);
+   public static EnumSet<MacroResourceClassifier.MacroResource> init(List<MacroAction> actions) {
+      EnumSet<MacroResourceClassifier.MacroResource> resources = EnumSet.noneOf(MacroResourceClassifier.MacroResource.class);
       if (actions == null) {
          return resources;
       }
@@ -120,7 +120,7 @@ public final class MacroResourceClassifier {
       return resources;
    }
 
-   public enum Inner_DataUtil {
+   public enum MacroResource {
       INVENTORY,
       GUI,
       INPUT,

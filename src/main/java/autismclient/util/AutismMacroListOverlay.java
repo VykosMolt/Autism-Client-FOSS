@@ -37,7 +37,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    private boolean folderDialogOpen;
    private String renamingFolder;
    private autismclient.gui.ui.widgets.DropdownMenu openDropdown;
-   private final OverlayContextMenu<AutismMacroListOverlay.Inner_StreamUtil> contextMenu;
+   private final OverlayContextMenu<AutismMacroListOverlay.ListItem> contextMenu;
    private autismclient.gui.ui.layout.ButtonNode moveButton;
    private autismclient.gui.ui.layout.ButtonNode copyButton;
    private final Set<String> init_Set = new HashSet<>();
@@ -100,9 +100,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    private boolean add_Z = false;
    private boolean layoutDirty = true;
    private boolean configurationOnly;
-   private final List<AutismMacroListOverlay.Inner_DataUtil> hitRegions = new ArrayList<>();
-   private final List<AutismMacroListOverlay.Inner_ConfigStore> rowButtons = new ArrayList<>(4);
-   private List<AutismMacroListOverlay.Inner_StreamUtil> items = List.of();
+   private final List<AutismMacroListOverlay.HitRegion> hitRegions = new ArrayList<>();
+   private final List<AutismMacroListOverlay.RowButton> rowButtons = new ArrayList<>(4);
+   private List<AutismMacroListOverlay.ListItem> items = List.of();
    private long cachedCountRevision = -9223372036854775808L;
    private int cachedMacroCount;
 
@@ -149,8 +149,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       if (!this.selectedKeys.isEmpty()) {
          Set<String> visibleKeys = new HashSet<>();
 
-         for (AutismMacroListOverlay.Inner_StreamUtil item : this.items) {
-            if (item.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO && item.macro != null) {
+         for (AutismMacroListOverlay.ListItem item : this.items) {
+            if (item.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO && item.macro != null) {
                visibleKeys.add(MacroNameNormalizer.init(item.macro.name));
             }
          }
@@ -624,24 +624,24 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             listLayout.forEachVisibleRow(
                this.items.size(),
                (i, rowY) -> {
-                  AutismMacroListOverlay.Inner_StreamUtil item = this.items.get(i);
-                  if (item.kind == AutismMacroListOverlay.Inner_CachePool.FOLDER) {
+                  AutismMacroListOverlay.ListItem item = this.items.get(i);
+                  if (item.kind == AutismMacroListOverlay.ItemKind.FOLDER) {
                      this.renderFolderRow(context, rowContext, item, viewX + 1, rowY, listLayout.contentWidth());
-                  } else if (item.kind == AutismMacroListOverlay.Inner_CachePool.SECTION_HEADER) {
+                  } else if (item.kind == AutismMacroListOverlay.ItemKind.SECTION_HEADER) {
                      this.init_V_GuiGraphicsExtract_6(context, rowContext, item, viewX + 1, rowY, listLayout.contentWidth());
                   } else {
                      this.renderMacroRow(context, rowContext, item, viewX + 1, rowY, listLayout.contentWidth());
-                     if (item.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO
+                     if (item.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO
                         && item.macro != null
                         && item.macro.folder != null
                         && !item.macro.folder.isEmpty()) {
                         boolean continues = i + 1 < this.items.size()
-                           && this.items.get(i + 1).kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO
+                           && this.items.get(i + 1).kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO
                            && this.items.get(i + 1).macro != null
                            && MacroFolderLayout.key(this.items.get(i + 1).macro.folder).equals(MacroFolderLayout.key(item.macro.folder));
                         int railTop = rowY
                            - (
-                              i > 0 && this.items.get(i - 1).kind == AutismMacroListOverlay.Inner_CachePool.FOLDER
+                              i > 0 && this.items.get(i - 1).kind == AutismMacroListOverlay.ItemKind.FOLDER
                                  ? this.rowPitch() - this.rowHeight()
                                  : 0
                            );
@@ -703,7 +703,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void init_V_GuiGraphicsExtract_6(
-      GuiGraphicsExtractor context, autismclient.gui.ui.layout.LayoutContext rowContext, AutismMacroListOverlay.Inner_StreamUtil item, int x, int y, int width
+      GuiGraphicsExtractor context, autismclient.gui.ui.layout.LayoutContext rowContext, AutismMacroListOverlay.ListItem item, int x, int y, int width
    ) {
       int textY = UiLayoutMath.centerTextY(y, this.rowHeight(), this.styleTheme.init_I_l(autismclient.gui.f.b.l.load), this.styleTheme.flush());
       autismclient.gui.ui.widgets.PanelSurfaceHelper.drawDividerColored(context, x + this.dividerInset(), y + this.rowHeight() - 2, width - this.dividerInset() * 2, rowContext.applyAlpha(1124073471));
@@ -720,9 +720,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void renderMacroRow(
-      GuiGraphicsExtractor context, autismclient.gui.ui.layout.LayoutContext rowContext, AutismMacroListOverlay.Inner_StreamUtil item, int x, int y, int width
+      GuiGraphicsExtractor context, autismclient.gui.ui.layout.LayoutContext rowContext, AutismMacroListOverlay.ListItem item, int x, int y, int width
    ) {
-      boolean localRow = item.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO && item.macro != null;
+      boolean localRow = item.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO && item.macro != null;
       boolean draggedRow = localRow
          && (this.draggingMacros && this.draggedKeys.contains(MacroNameNormalizer.init(item.macro.name)) || this.draggingFolder && this.isPressedFolder(item.macro.folder));
       if (draggedRow) {
@@ -741,7 +741,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_9(
       GuiGraphicsExtractor context,
       autismclient.gui.ui.layout.LayoutContext rowContext,
-      AutismMacroListOverlay.Inner_StreamUtil item,
+      AutismMacroListOverlay.ListItem item,
       int x,
       int y,
       int width,
@@ -765,21 +765,21 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          );
       }
 
-      List<AutismMacroListOverlay.Inner_ConfigStore> buttons = this.rowButtonsFor(item);
+      List<AutismMacroListOverlay.RowButton> buttons = this.rowButtonsFor(item);
       int buttonCursor = x + width - this.rowPadding();
       int buttonY = y + this.rowButtonInset();
 
       for (int i = buttons.size() - 1; i >= 0; i--) {
-         AutismMacroListOverlay.Inner_ConfigStore button = buttons.get(i);
+         AutismMacroListOverlay.RowButton button = buttons.get(i);
          buttonCursor -= button.width;
          this.renderRowButton(context, rowContext, buttonCursor, buttonY, button.width, button);
          this.hitRegions
-            .add(new AutismMacroListOverlay.Inner_DataUtil(buttonCursor, buttonY, button.width, this.size_I_2(), item, button.action));
+            .add(new AutismMacroListOverlay.HitRegion(buttonCursor, buttonY, button.width, this.size_I_2(), item, button.action));
          buttonCursor -= this.iconGap();
       }
 
       int textLeft = x + this.rowPadding() + (item.macro != null && !item.macro.folder.isEmpty() ? 10 : 0);
-      if (item.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO) {
+      if (item.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO) {
          boolean running = isMacroRunning(item.macro.name);
          int dotColor = running ? rowContext.applyAlpha(-13379224) : rowContext.applyAlpha(-10132123);
          int dotTop = y + UiLayoutMath.centerStart(0, this.rowHeight(), this.entry());
@@ -829,7 +829,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       int primaryColor = var37;
       int secondaryColor = rowContext.applyAlpha(this.styleTheme.load(autismclient.gui.f.b.l.write));
       int textY = UiLayoutMath.centerTextY(y, this.rowHeight(), this.styleTheme.init_I_l(autismclient.gui.f.b.l.read), this.styleTheme.flush());
-      if (item.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO) {
+      if (item.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO) {
          int secondaryWidth = autismclient.gui.f.b.k.init(
             this.font, secondaryText, this.styleTheme.init_Identifier_l(autismclient.gui.f.b.l.read), secondaryColor
          );
@@ -895,9 +895,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void renderRowButton(
-      GuiGraphicsExtractor context, autismclient.gui.ui.layout.LayoutContext rowContext, int x, int y, int width, AutismMacroListOverlay.Inner_ConfigStore button
+      GuiGraphicsExtractor context, autismclient.gui.ui.layout.LayoutContext rowContext, int x, int y, int width, AutismMacroListOverlay.RowButton button
    ) {
-      if (button.action == AutismMacroListOverlay.Inner_BufferHelper.DELETE) {
+      if (button.action == AutismMacroListOverlay.RowAction.DELETE) {
          int size = this.size_I_2();
          autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButtonSquare(
             context, x + Math.max(0, (width - size) / 2), y, size, this.contains(x, y, width, this.size_I_2(), rowContext.mouseX(), rowContext.mouseY())
@@ -927,7 +927,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       return Math.min(maxWidth, this.buttonWidth(label));
    }
 
-   private List<AutismMacroListOverlay.Inner_ConfigStore> rowButtonsFor(AutismMacroListOverlay.Inner_StreamUtil item) {
+   private List<AutismMacroListOverlay.RowButton> rowButtonsFor(AutismMacroListOverlay.ListItem item) {
       this.rowButtons.clear();
       switch (item.kind) {
          case LOCAL_MACRO:
@@ -935,11 +935,11 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             if (!this.configurationOnly) {
                this.rowButtons
                   .add(
-                     new AutismMacroListOverlay.Inner_ConfigStore(
+                     new AutismMacroListOverlay.RowButton(
                         "",
                         running ? autismclient.gui.ui.layout.ButtonNode.Variant.DANGER : autismclient.gui.ui.layout.ButtonNode.Variant.SUCCESS,
                         this.data_I_2(),
-                        AutismMacroListOverlay.Inner_BufferHelper.RUN_TOGGLE,
+                        AutismMacroListOverlay.RowAction.RUN_TOGGLE,
                         running ? GuiIconAtlas.STOP : GuiIconAtlas.PLAY
                      )
                   );
@@ -947,43 +947,43 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
             this.rowButtons
                .add(
-                  new AutismMacroListOverlay.Inner_ConfigStore(
-                     "", autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.data_I_2(), AutismMacroListOverlay.Inner_BufferHelper.EDIT, GuiIconAtlas.EDIT
+                  new AutismMacroListOverlay.RowButton(
+                     "", autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.data_I_2(), AutismMacroListOverlay.RowAction.EDIT, GuiIconAtlas.EDIT
                   )
                );
             this.rowButtons
                .add(
-                  new AutismMacroListOverlay.Inner_ConfigStore(
+                  new AutismMacroListOverlay.RowButton(
                      "Move",
                      autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY,
                      this.clampedButtonWidth("Move", 44),
-                     AutismMacroListOverlay.Inner_BufferHelper.MOVE
+                     AutismMacroListOverlay.RowAction.MOVE
                   )
                );
             this.rowButtons
                .add(
-                  new AutismMacroListOverlay.Inner_ConfigStore(
+                  new AutismMacroListOverlay.RowButton(
                      "Copy",
                      autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY,
                      this.clampedButtonWidth("Copy", 44),
-                     AutismMacroListOverlay.Inner_BufferHelper.COPY
+                     AutismMacroListOverlay.RowAction.COPY
                   )
                );
             this.rowButtons
                .add(
-                  new AutismMacroListOverlay.Inner_ConfigStore(
-                     "X", autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.data_I_2(), AutismMacroListOverlay.Inner_BufferHelper.DELETE
+                  new AutismMacroListOverlay.RowButton(
+                     "X", autismclient.gui.ui.layout.ButtonNode.Variant.DANGER, this.data_I_2(), AutismMacroListOverlay.RowAction.DELETE
                   )
                );
             break;
          case REMOTE_MACRO:
             this.rowButtons
                .add(
-                  new AutismMacroListOverlay.Inner_ConfigStore(
+                  new AutismMacroListOverlay.RowButton(
                      "IMPORT",
                      autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY,
                      this.clampedButtonWidth("IMPORT", 58),
-                     AutismMacroListOverlay.Inner_BufferHelper.IMPORT_REMOTE
+                     AutismMacroListOverlay.RowAction.IMPORT_REMOTE
                   )
                );
             break;
@@ -992,7 +992,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       return this.rowButtons;
    }
 
-   private void onRowButton(AutismMacroListOverlay.Inner_StreamUtil item, AutismMacroListOverlay.Inner_BufferHelper action) {
+   private void onRowButton(AutismMacroListOverlay.ListItem item, AutismMacroListOverlay.RowAction action) {
       if (item != null && action != null) {
          switch (action) {
             case TOGGLE_FOLDER:
@@ -1071,10 +1071,10 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
 
    public void init_V_I_7(int count) {
       List<AutismMacro> picked = new ArrayList<>();
-      AutismMacroListOverlay.Inner_StreamUtil first = null;
+      AutismMacroListOverlay.ListItem first = null;
 
-      for (AutismMacroListOverlay.Inner_StreamUtil item : this.items) {
-         if (item.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO && item.macro != null) {
+      for (AutismMacroListOverlay.ListItem item : this.items) {
+         if (item.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO && item.macro != null) {
             if (first == null) {
                first = item;
             }
@@ -1095,7 +1095,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void init_V_AutismMacroListOve(AutismMacroListOverlay.Inner_StreamUtil item) {
+   private void init_V_AutismMacroListOve(AutismMacroListOverlay.ListItem item) {
       if (item.source != null && !item.source.isBlank()) {
          LanSyncManager sync = LanSyncManager.getInstance();
          Map<String, Map<String, AutismMacro>> allRemote = sync.getPeerMacros();
@@ -1257,8 +1257,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          if (!overRegion) {
             autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout = this.currentListLayout();
             int rowIndex = this.rowIndexAt(uiMouseY, listLayout);
-            AutismMacroListOverlay.Inner_StreamUtil rowItem = rowIndex >= 0 ? this.items.get(rowIndex) : null;
-            if (rowItem != null && rowItem.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO && rowItem.macro != null) {
+            AutismMacroListOverlay.ListItem rowItem = rowIndex >= 0 ? this.items.get(rowIndex) : null;
+            if (rowItem != null && rowItem.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO && rowItem.macro != null) {
                if (button == 1) {
                   this.openContextMenu(rowItem, Math.round(uiMouseX), Math.round(uiMouseY));
                   return true;
@@ -1296,9 +1296,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             uiMouseY
          )) {
          for (int i = this.hitRegions.size() - 1; i >= 0; i--) {
-            AutismMacroListOverlay.Inner_DataUtil region = this.hitRegions.get(i);
+            AutismMacroListOverlay.HitRegion region = this.hitRegions.get(i);
             if (region.contains(uiMouseX, uiMouseY)) {
-               if (region.action == AutismMacroListOverlay.Inner_BufferHelper.TOGGLE_FOLDER && region.item.source == null) {
+               if (region.action == AutismMacroListOverlay.RowAction.TOGGLE_FOLDER && region.item.source == null) {
                   this.pressedFolder = region.item.label;
                   this.folderPressX = uiMouseX;
                   this.folderPressY = uiMouseY;
@@ -1516,14 +1516,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       return this.visible && !this.collapsed && this.layoutHost.charTyped(chr, modifiers);
    }
 
-   private List<AutismMacroListOverlay.Inner_StreamUtil> buildItems(
+   private List<AutismMacroListOverlay.ListItem> buildItems(
       List<AutismMacro> localMacros, Map<String, Map<String, AutismMacro>> remoteMacros, LanSyncManager sync
    ) {
       String filter = this.searchInput.getValue().trim().toLowerCase(Locale.ROOT);
-      List<AutismMacroListOverlay.Inner_StreamUtil> items = new ArrayList<>();
+      List<AutismMacroListOverlay.ListItem> items = new ArrayList<>();
 
       for (MacroFolderLayout.Inner_DataUtil row : MacroLibraryManager.getInstance().getOrderedFolderEntries(filter, true, macro -> !AutoFishMacroPresets.load(macro))) {
-         items.add(row.init_Z() ? AutismMacroListOverlay.Inner_StreamUtil.folderItem(row, null) : AutismMacroListOverlay.Inner_StreamUtil.localMacroItem(row.macro()));
+         items.add(row.init_Z() ? AutismMacroListOverlay.ListItem.folderItem(row, null) : AutismMacroListOverlay.ListItem.localMacroItem(row.macro()));
       }
 
       if (sync.isInSession()) {
@@ -1533,14 +1533,14 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                available, List.of(), folder -> this.init_Set.contains(entry.getKey() + "\u0000" + MacroFolderLayout.key(folder)), filter, false
             );
             if (!remoteRows.isEmpty()) {
-               items.add(AutismMacroListOverlay.Inner_StreamUtil.sectionHeaderItem(entry.getKey(), -12122));
+               items.add(AutismMacroListOverlay.ListItem.sectionHeaderItem(entry.getKey(), -12122));
             }
 
             for (MacroFolderLayout.Inner_DataUtil row : remoteRows) {
                items.add(
                   row.init_Z()
-                     ? AutismMacroListOverlay.Inner_StreamUtil.folderItem(row, entry.getKey())
-                     : AutismMacroListOverlay.Inner_StreamUtil.remoteMacroItem(row.macro().name, entry.getKey())
+                     ? AutismMacroListOverlay.ListItem.folderItem(row, entry.getKey())
+                     : AutismMacroListOverlay.ListItem.remoteMacroItem(row.macro().name, entry.getKey())
                );
             }
          }
@@ -1550,7 +1550,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void renderFolderRow(
-      GuiGraphicsExtractor graphics, autismclient.gui.ui.layout.LayoutContext context, AutismMacroListOverlay.Inner_StreamUtil item, int x, int y, int width
+      GuiGraphicsExtractor graphics, autismclient.gui.ui.layout.LayoutContext context, AutismMacroListOverlay.ListItem item, int x, int y, int width
    ) {
       if (this.draggingFolder && item.source == null && this.isPressedFolder(item.label)) {
          autismclient.gui.ui.UiAlphaStack.push(0.35F);
@@ -1566,7 +1566,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void renderFolderControls(
-      GuiGraphicsExtractor graphics, autismclient.gui.ui.layout.LayoutContext context, AutismMacroListOverlay.Inner_StreamUtil item, int x, int y, int width
+      GuiGraphicsExtractor graphics, autismclient.gui.ui.layout.LayoutContext context, AutismMacroListOverlay.ListItem item, int x, int y, int width
    ) {
       int renameWidth = this.clampedButtonWidth("Rename", 56);
       int removeWidth = this.clampedButtonWidth("Remove", 56);
@@ -1583,7 +1583,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          !anyDrag && bounds.init_Z(Math.round(context.mouseX()), Math.round(context.mouseY()))
       );
       this.hitRegions
-         .add(new AutismMacroListOverlay.Inner_DataUtil(x, y, bounds.update(), this.rowHeight(), item, AutismMacroListOverlay.Inner_BufferHelper.TOGGLE_FOLDER));
+         .add(new AutismMacroListOverlay.HitRegion(x, y, bounds.update(), this.rowHeight(), item, AutismMacroListOverlay.RowAction.TOGGLE_FOLDER));
       if (this.draggingMacros && this.get_Z && this.set_Z && item.source == null && MacroFolderLayout.key(item.label).equals(MacroFolderLayout.key(this.dropTargetFolder))) {
          autismclient.gui.f.PacketUtil.load(
             graphics,
@@ -1593,11 +1593,11 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       }
 
       if (item.source == null) {
-         AutismMacroListOverlay.Inner_ConfigStore rename = new AutismMacroListOverlay.Inner_ConfigStore(
-            "Rename", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, renameWidth, AutismMacroListOverlay.Inner_BufferHelper.RENAME_FOLDER
+         AutismMacroListOverlay.RowButton rename = new AutismMacroListOverlay.RowButton(
+            "Rename", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, renameWidth, AutismMacroListOverlay.RowAction.RENAME_FOLDER
          );
-         AutismMacroListOverlay.Inner_ConfigStore remove = new AutismMacroListOverlay.Inner_ConfigStore(
-            "Remove", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, removeWidth, AutismMacroListOverlay.Inner_BufferHelper.REMOVE_FOLDER
+         AutismMacroListOverlay.RowButton remove = new AutismMacroListOverlay.RowButton(
+            "Remove", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, removeWidth, AutismMacroListOverlay.RowAction.REMOVE_FOLDER
          );
          int renameX = x + width - controls;
          int removeX = renameX + renameWidth + this.iconGap();
@@ -1605,11 +1605,11 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.renderRowButton(graphics, context, removeX, buttonY, removeWidth, remove);
          this.hitRegions
             .add(
-               new AutismMacroListOverlay.Inner_DataUtil(renameX, buttonY, renameWidth, this.size_I_2(), item, AutismMacroListOverlay.Inner_BufferHelper.RENAME_FOLDER)
+               new AutismMacroListOverlay.HitRegion(renameX, buttonY, renameWidth, this.size_I_2(), item, AutismMacroListOverlay.RowAction.RENAME_FOLDER)
             );
          this.hitRegions
             .add(
-               new AutismMacroListOverlay.Inner_DataUtil(removeX, buttonY, removeWidth, this.size_I_2(), item, AutismMacroListOverlay.Inner_BufferHelper.REMOVE_FOLDER)
+               new AutismMacroListOverlay.HitRegion(removeX, buttonY, removeWidth, this.size_I_2(), item, AutismMacroListOverlay.RowAction.REMOVE_FOLDER)
             );
       }
    }
@@ -1645,15 +1645,15 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void openMoveMenu(AutismMacroListOverlay.Inner_StreamUtil item) {
+   private void openMoveMenu(AutismMacroListOverlay.ListItem item) {
       if (item.macro != null) {
          List<String> folders = new ArrayList<>();
          folders.add("");
          folders.addAll(MacroLibraryManager.getInstance().getFolders());
          List<String> labels = folders.stream().map(f -> f.isEmpty() ? "Unfiled" : "Folder: " + f).toList();
-         AutismMacroListOverlay.Inner_DataUtil anchor = this.hitRegions
+         AutismMacroListOverlay.HitRegion anchor = this.hitRegions
             .stream()
-            .filter(r -> r.item == item && r.action == AutismMacroListOverlay.Inner_BufferHelper.MOVE)
+            .filter(r -> r.item == item && r.action == AutismMacroListOverlay.RowAction.MOVE)
             .findFirst()
             .orElse(null);
          if (anchor != null) {
@@ -1794,8 +1794,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          int to = -1;
 
          for (int i = 0; i < this.items.size(); i++) {
-            AutismMacroListOverlay.Inner_StreamUtil item = this.items.get(i);
-            if (item.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO && item.macro != null) {
+            AutismMacroListOverlay.ListItem item = this.items.get(i);
+            if (item.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO && item.macro != null) {
                String itemKey = MacroNameNormalizer.init(item.macro.name);
                if (itemKey.equals(this.selectionAnchorKey)) {
                   from = i;
@@ -1811,8 +1811,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             this.selectedKeys.clear();
 
             for (int i = Math.min(from, to); i <= Math.max(from, to); i++) {
-               AutismMacroListOverlay.Inner_StreamUtil item = this.items.get(i);
-               if (item.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO) {
+               AutismMacroListOverlay.ListItem item = this.items.get(i);
+               if (item.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO) {
                   this.addToSelection(item.macro);
                }
             }
@@ -1832,8 +1832,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void selectAllLocal() {
-      for (AutismMacroListOverlay.Inner_StreamUtil item : this.items) {
-         if (item.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO) {
+      for (AutismMacroListOverlay.ListItem item : this.items) {
+         if (item.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO) {
             this.addToSelection(item.macro);
          }
       }
@@ -1922,7 +1922,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private boolean pasteMacros() {
-      MacroClipboardCodec.Inner_StreamUtil paste = MacroClipboardCodec.pasteMacros();
+      MacroClipboardCodec.PastedMacros paste = MacroClipboardCodec.pasteMacros();
       if (paste.macros().isEmpty()) {
          bi.read("Clipboard has no macros.");
          return true;
@@ -1993,7 +1993,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       return new String[]{"Cut\tCtrl+X", "Copy\tCtrl+C", "Paste\tCtrl+V", "Duplicate\tCtrl+D", "Move to Folder...", "Delete\tDel", "Select All\tCtrl+A"};
    }
 
-   private void onContextMenuItem(AutismMacroListOverlay.Inner_StreamUtil item, int itemIndex) {
+   private void onContextMenuItem(AutismMacroListOverlay.ListItem item, int itemIndex) {
       switch (itemIndex) {
          case 0:
             this.cutSelected();
@@ -2018,7 +2018,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void openContextMenu(AutismMacroListOverlay.Inner_StreamUtil item, int mouseX, int mouseY) {
+   private void openContextMenu(AutismMacroListOverlay.ListItem item, int mouseX, int mouseY) {
       if (item.macro != null) {
          if (!this.isSelected(item.macro)) {
             this.selectOnly(item.macro);
@@ -2054,7 +2054,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void beginMacroPress(
-      AutismMacroListOverlay.Inner_StreamUtil item, float uiMouseX, float uiMouseY, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout, int rowIndex
+      AutismMacroListOverlay.ListItem item, float uiMouseX, float uiMouseY, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout listLayout, int rowIndex
    ) {
       this.pressedMacroKey = MacroNameNormalizer.init(item.macro.name);
       this.pressedMacroWasSelected = this.selectedKeys.contains(this.pressedMacroKey);
@@ -2196,9 +2196,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             if (index > lastLocal) {
                this.init_V_TextFormat_DataUti_2(listLayout, lastLocal + 1, lastLocal);
             } else {
-               AutismMacroListOverlay.Inner_StreamUtil item = this.items.get(index);
+               AutismMacroListOverlay.ListItem item = this.items.get(index);
                int rowTop = this.rowY(listLayout, index);
-               if (item.kind == AutismMacroListOverlay.Inner_CachePool.FOLDER) {
+               if (item.kind == AutismMacroListOverlay.ItemKind.FOLDER) {
                   if (uiMouseY < rowTop + listLayout.rowHeight() / 3.0F) {
                      this.init_V_TextFormat_DataUti_2(listLayout, index, lastLocal);
                   } else {
@@ -2232,7 +2232,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       String next = null;
 
       for (int i = gap; i <= lastLocal; i++) {
-         AutismMacroListOverlay.Inner_StreamUtil row = this.items.get(i);
+         AutismMacroListOverlay.ListItem row = this.items.get(i);
          if (init_Z_AutismMacroListOve(row) && !this.draggedKeys.contains(MacroNameNormalizer.init(row.macro.name))) {
             next = row.macro.name;
             break;
@@ -2243,12 +2243,12 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       List<String> above = new ArrayList<>();
 
       for (int i = gap - 1; i >= 0; i--) {
-         AutismMacroListOverlay.Inner_StreamUtil row = this.items.get(i);
+         AutismMacroListOverlay.ListItem row = this.items.get(i);
          if (init_Z_AutismMacroListOve(row)) {
             if (!this.draggedKeys.contains(MacroNameNormalizer.init(row.macro.name))) {
                break;
             }
-         } else if (row.kind == AutismMacroListOverlay.Inner_CachePool.FOLDER && row.source == null) {
+         } else if (row.kind == AutismMacroListOverlay.ItemKind.FOLDER && row.source == null) {
             above.add(0, row.label);
          }
       }
@@ -2268,8 +2268,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       this.put_Z = foldersAlreadyThere && this.init_Z_Str_Str_2("", next);
    }
 
-   private static boolean init_Z_AutismMacroListOve(AutismMacroListOverlay.Inner_StreamUtil row) {
-      return row.kind == AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO
+   private static boolean init_Z_AutismMacroListOve(AutismMacroListOverlay.ListItem row) {
+      return row.kind == AutismMacroListOverlay.ItemKind.LOCAL_MACRO
          && row.macro != null
          && (row.macro.folder == null || row.macro.folder.isEmpty());
    }
@@ -2278,9 +2278,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       int last = -1;
 
       for (int i = 0; i < this.items.size(); last = i++) {
-         AutismMacroListOverlay.Inner_StreamUtil item = this.items.get(i);
-         if (item.kind != AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO
-            && (item.kind != AutismMacroListOverlay.Inner_CachePool.FOLDER || item.source != null)) {
+         AutismMacroListOverlay.ListItem item = this.items.get(i);
+         if (item.kind != AutismMacroListOverlay.ItemKind.LOCAL_MACRO
+            && (item.kind != AutismMacroListOverlay.ItemKind.FOLDER || item.source != null)) {
             break;
          }
       }
@@ -2292,8 +2292,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       String folderKey = MacroFolderLayout.key(folder);
 
       for (int i = Math.max(0, from); i < this.items.size(); i++) {
-         AutismMacroListOverlay.Inner_StreamUtil candidate = this.items.get(i);
-         if (candidate.kind != AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO || candidate.macro == null) {
+         AutismMacroListOverlay.ListItem candidate = this.items.get(i);
+         if (candidate.kind != AutismMacroListOverlay.ItemKind.LOCAL_MACRO || candidate.macro == null) {
             return null;
          }
 
@@ -2398,9 +2398,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             if (index > lastLocal) {
                gap = lastLocal + 1;
             } else {
-               AutismMacroListOverlay.Inner_StreamUtil item = this.items.get(index);
+               AutismMacroListOverlay.ListItem item = this.items.get(index);
                boolean topHalf = uiMouseY < this.rowY(listLayout, index) + listLayout.rowHeight() / 2.0F;
-               if (item.kind == AutismMacroListOverlay.Inner_CachePool.FOLDER) {
+               if (item.kind == AutismMacroListOverlay.ItemKind.FOLDER) {
                   gap = topHalf ? index : this.folderEndIndex(index) + 1;
                } else if (init_Z_AutismMacroListOve(item)) {
                   gap = topHalf ? index : index + 1;
@@ -2412,8 +2412,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
             int own = -1;
 
             for (int i = 0; i <= lastLocal; i++) {
-               AutismMacroListOverlay.Inner_StreamUtil item = this.items.get(i);
-               if (item.kind == AutismMacroListOverlay.Inner_CachePool.FOLDER && item.source == null && this.isPressedFolder(item.label)) {
+               AutismMacroListOverlay.ListItem item = this.items.get(i);
+               if (item.kind == AutismMacroListOverlay.ItemKind.FOLDER && item.source == null && this.isPressedFolder(item.label)) {
                   own = i;
                   break;
                }
@@ -2425,13 +2425,13 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
                : this.rowY(listLayout, lastLocal) + listLayout.rowStep();
             if (own < 0 || gap != own && gap != this.folderEndIndex(own) + 1) {
                for (int i = gap; i <= lastLocal; i++) {
-                  AutismMacroListOverlay.Inner_StreamUtil item = this.items.get(i);
+                  AutismMacroListOverlay.ListItem item = this.items.get(i);
                   if (this.sync_Str == null && init_Z_AutismMacroListOve(item)) {
                      this.sync_Str = item.macro.name;
                   }
 
                   if (this.update_Str == null
-                     && item.kind == AutismMacroListOverlay.Inner_CachePool.FOLDER
+                     && item.kind == AutismMacroListOverlay.ItemKind.FOLDER
                      && item.source == null
                      && !this.isPressedFolder(item.label)) {
                      this.update_Str = item.label;
@@ -2445,13 +2445,13 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private int load_I_I_4(int index) {
-      AutismMacroListOverlay.Inner_StreamUtil item = this.items.get(index);
-      if (item.kind != AutismMacroListOverlay.Inner_CachePool.FOLDER && item.macro != null) {
+      AutismMacroListOverlay.ListItem item = this.items.get(index);
+      if (item.kind != AutismMacroListOverlay.ItemKind.FOLDER && item.macro != null) {
          String key = MacroFolderLayout.key(item.macro.folder);
 
          for (int i = index - 1; i >= 0; i--) {
-            AutismMacroListOverlay.Inner_StreamUtil row = this.items.get(i);
-            if (row.kind == AutismMacroListOverlay.Inner_CachePool.FOLDER && row.source == null && MacroFolderLayout.key(row.label).equals(key)) {
+            AutismMacroListOverlay.ListItem row = this.items.get(i);
+            if (row.kind == AutismMacroListOverlay.ItemKind.FOLDER && row.source == null && MacroFolderLayout.key(row.label).equals(key)) {
                return i;
             }
          }
@@ -2463,8 +2463,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private int folderEndIndex(int header) {
-      AutismMacroListOverlay.Inner_StreamUtil head = this.items.get(header);
-      if (head.kind != AutismMacroListOverlay.Inner_CachePool.FOLDER) {
+      AutismMacroListOverlay.ListItem head = this.items.get(header);
+      if (head.kind != AutismMacroListOverlay.ItemKind.FOLDER) {
          return header;
       }
 
@@ -2472,8 +2472,8 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       int end = header;
 
       for (int i = header + 1; i < this.items.size(); end = i++) {
-         AutismMacroListOverlay.Inner_StreamUtil row = this.items.get(i);
-         if (row.kind != AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO
+         AutismMacroListOverlay.ListItem row = this.items.get(i);
+         if (row.kind != AutismMacroListOverlay.ItemKind.LOCAL_MACRO
             || row.macro == null
             || !MacroFolderLayout.key(row.macro.folder).equals(key)) {
             break;
@@ -2484,10 +2484,10 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private void renderDraggedFolder(GuiGraphicsExtractor context, int x, int y, int width) {
-      AutismMacroListOverlay.Inner_StreamUtil folder = null;
+      AutismMacroListOverlay.ListItem folder = null;
 
-      for (AutismMacroListOverlay.Inner_StreamUtil item : this.items) {
-         if (item.kind == AutismMacroListOverlay.Inner_CachePool.FOLDER && item.source == null && this.isPressedFolder(item.label)) {
+      for (AutismMacroListOverlay.ListItem item : this.items) {
+         if (item.kind == AutismMacroListOverlay.ItemKind.FOLDER && item.source == null && this.isPressedFolder(item.label)) {
             folder = item;
             break;
          }
@@ -2664,7 +2664,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       return 4;
    }
 
-   private enum Inner_BufferHelper {
+   private enum RowAction {
       TOGGLE_FOLDER,
       RENAME_FOLDER,
       REMOVE_FOLDER,
@@ -2676,28 +2676,28 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       IMPORT_REMOTE;
    }
 
-   private enum Inner_CachePool {
+   private enum ItemKind {
       FOLDER,
       SECTION_HEADER,
       LOCAL_MACRO,
       REMOTE_MACRO;
    }
 
-   private static final class Inner_ConfigStore {
+   private static final class RowButton {
       private final String label;
       private final autismclient.gui.ui.layout.ButtonNode.Variant variant;
       private final int width;
-      private final AutismMacroListOverlay.Inner_BufferHelper action;
+      private final AutismMacroListOverlay.RowAction action;
       private final Identifier icon;
 
-      private Inner_ConfigStore(
-         String label, autismclient.gui.ui.layout.ButtonNode.Variant variant, int width, AutismMacroListOverlay.Inner_BufferHelper action
+      private RowButton(
+         String label, autismclient.gui.ui.layout.ButtonNode.Variant variant, int width, AutismMacroListOverlay.RowAction action
       ) {
          this(label, variant, width, action, null);
       }
 
-      private Inner_ConfigStore(
-         String label, autismclient.gui.ui.layout.ButtonNode.Variant variant, int width, AutismMacroListOverlay.Inner_BufferHelper action, Identifier icon
+      private RowButton(
+         String label, autismclient.gui.ui.layout.ButtonNode.Variant variant, int width, AutismMacroListOverlay.RowAction action, Identifier icon
       ) {
          this.label = label;
          this.variant = variant;
@@ -2707,16 +2707,16 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class HitRegion {
       private final int x;
       private final int y;
       private final int width;
       private final int height;
-      private final AutismMacroListOverlay.Inner_StreamUtil item;
-      private final AutismMacroListOverlay.Inner_BufferHelper action;
+      private final AutismMacroListOverlay.ListItem item;
+      private final AutismMacroListOverlay.RowAction action;
 
-      private Inner_DataUtil(
-         int x, int y, int width, int height, AutismMacroListOverlay.Inner_StreamUtil item, AutismMacroListOverlay.Inner_BufferHelper action
+      private HitRegion(
+         int x, int y, int width, int height, AutismMacroListOverlay.ListItem item, AutismMacroListOverlay.RowAction action
       ) {
          this.x = x;
          this.y = y;
@@ -2731,41 +2731,41 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_StreamUtil {
-      private AutismMacroListOverlay.Inner_CachePool kind;
+   private static final class ListItem {
+      private AutismMacroListOverlay.ItemKind kind;
       private String label;
       private int init_I;
       private AutismMacro macro;
       private String source;
       private MacroFolderLayout.Inner_DataUtil folderRow;
 
-      private static AutismMacroListOverlay.Inner_StreamUtil folderItem(MacroFolderLayout.Inner_DataUtil row, String source) {
-         AutismMacroListOverlay.Inner_StreamUtil item = new AutismMacroListOverlay.Inner_StreamUtil();
-         item.kind = AutismMacroListOverlay.Inner_CachePool.FOLDER;
+      private static AutismMacroListOverlay.ListItem folderItem(MacroFolderLayout.Inner_DataUtil row, String source) {
+         AutismMacroListOverlay.ListItem item = new AutismMacroListOverlay.ListItem();
+         item.kind = AutismMacroListOverlay.ItemKind.FOLDER;
          item.label = row.folderName();
          item.folderRow = row;
          item.source = source;
          return item;
       }
 
-      private static AutismMacroListOverlay.Inner_StreamUtil sectionHeaderItem(String label, int color) {
-         AutismMacroListOverlay.Inner_StreamUtil item = new AutismMacroListOverlay.Inner_StreamUtil();
-         item.kind = AutismMacroListOverlay.Inner_CachePool.SECTION_HEADER;
+      private static AutismMacroListOverlay.ListItem sectionHeaderItem(String label, int color) {
+         AutismMacroListOverlay.ListItem item = new AutismMacroListOverlay.ListItem();
+         item.kind = AutismMacroListOverlay.ItemKind.SECTION_HEADER;
          item.label = label;
          item.init_I = color;
          return item;
       }
 
-      private static AutismMacroListOverlay.Inner_StreamUtil localMacroItem(AutismMacro macro) {
-         AutismMacroListOverlay.Inner_StreamUtil item = new AutismMacroListOverlay.Inner_StreamUtil();
-         item.kind = AutismMacroListOverlay.Inner_CachePool.LOCAL_MACRO;
+      private static AutismMacroListOverlay.ListItem localMacroItem(AutismMacro macro) {
+         AutismMacroListOverlay.ListItem item = new AutismMacroListOverlay.ListItem();
+         item.kind = AutismMacroListOverlay.ItemKind.LOCAL_MACRO;
          item.macro = macro;
          return item;
       }
 
-      private static AutismMacroListOverlay.Inner_StreamUtil remoteMacroItem(String label, String source) {
-         AutismMacroListOverlay.Inner_StreamUtil item = new AutismMacroListOverlay.Inner_StreamUtil();
-         item.kind = AutismMacroListOverlay.Inner_CachePool.REMOTE_MACRO;
+      private static AutismMacroListOverlay.ListItem remoteMacroItem(String label, String source) {
+         AutismMacroListOverlay.ListItem item = new AutismMacroListOverlay.ListItem();
+         item.kind = AutismMacroListOverlay.ItemKind.REMOTE_MACRO;
          item.label = label;
          item.source = source;
          return item;

@@ -40,8 +40,8 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
    private final Screen parent;
    private final autismclient.gui.f.b.CharEncoder styleTheme = new autismclient.gui.f.b.CharEncoder();
    private final long openedAtMillis = System.currentTimeMillis();
-   private final SimpleVoiceChatDetectedScreen.Inner_DataUtil keepVanillaButton = new SimpleVoiceChatDetectedScreen.Inner_DataUtil("Keep Vanilla", () -> this.applyChoice(true));
-   private final SimpleVoiceChatDetectedScreen.Inner_DataUtil switchModdedButton = new SimpleVoiceChatDetectedScreen.Inner_DataUtil("Switch to Modded", () -> this.applyChoice(false));
+   private final SimpleVoiceChatDetectedScreen.DialogButton keepVanillaButton = new SimpleVoiceChatDetectedScreen.DialogButton("Keep Vanilla", () -> this.applyChoice(true));
+   private final SimpleVoiceChatDetectedScreen.DialogButton switchModdedButton = new SimpleVoiceChatDetectedScreen.DialogButton("Switch to Modded", () -> this.applyChoice(false));
    private int layoutScreenW = -1;
    private int layoutScreenH = -1;
    private int layoutScaleKey = -1;
@@ -283,7 +283,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
       k.init(graphics, this.font, text, fontId, color, x + (width - textW) / 2, y, false);
    }
 
-   private void renderButton(GuiGraphicsExtractor graphics, SimpleVoiceChatDetectedScreen.Inner_DataUtil btn, float mouseX, float mouseY, boolean enabled) {
+   private void renderButton(GuiGraphicsExtractor graphics, SimpleVoiceChatDetectedScreen.DialogButton btn, float mouseX, float mouseY, boolean enabled) {
       boolean hovered = enabled && btn.contains(mouseX, mouseY);
       autismclient.gui.f.SyncManager ctx = autismclient.gui.f.UiHelper.init(graphics, this.font, (int)mouseX, (int)mouseY);
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(btn.x, btn.y, btn.width, btn.height);
@@ -302,7 +302,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class DialogButton {
       private String label;
       private final Runnable action;
       private int x;
@@ -310,7 +310,7 @@ public class SimpleVoiceChatDetectedScreen extends Screen {
       private int width;
       private int height;
 
-      private Inner_DataUtil(String label, Runnable action) {
+      private DialogButton(String label, Runnable action) {
          this.label = label;
          this.action = action;
       }

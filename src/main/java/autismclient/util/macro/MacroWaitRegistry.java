@@ -997,11 +997,11 @@ public class MacroWaitRegistry {
 
    static class WaitGamemodeEntry implements MacroWaitRegistry.WaitEntry {
       final WaitGamemodeChangeAction action;
-      final autismclient.util.FakeGamemodeManager.Inner_StreamUtil baseline;
+      final autismclient.util.FakeGamemodeManager.GamemodeSnapshot baseline;
       final CompletableFuture<Void> future;
       private volatile boolean cancelled = false;
 
-      WaitGamemodeEntry(WaitGamemodeChangeAction action, autismclient.util.FakeGamemodeManager.Inner_StreamUtil baseline, CompletableFuture<Void> future) {
+      WaitGamemodeEntry(WaitGamemodeChangeAction action, autismclient.util.FakeGamemodeManager.GamemodeSnapshot baseline, CompletableFuture<Void> future) {
          this.action = action == null ? new WaitGamemodeChangeAction() : action;
          this.baseline = baseline == null ? autismclient.util.FakeGamemodeManager.snapshot() : baseline;
          this.future = future;
@@ -1009,7 +1009,7 @@ public class MacroWaitRegistry {
 
       @Override
       public boolean isWaitSatisfied(Minecraft mc) {
-         autismclient.util.FakeGamemodeManager.Inner_StreamUtil now = autismclient.util.FakeGamemodeManager.snapshot();
+         autismclient.util.FakeGamemodeManager.GamemodeSnapshot now = autismclient.util.FakeGamemodeManager.snapshot();
          return now.realRevision() > this.baseline.realRevision() && this.action.init(this.normalizeMode(now.realMode()))
             ? true
             : this.action.detectFake && now.fakeRevision() > this.baseline.fakeRevision() && this.action.init(this.normalizeMode(now.displayedMode()));
@@ -1488,7 +1488,7 @@ public class MacroWaitRegistry {
 
          int peerCount = sync.getConnectedClientCount();
 
-         for (WaitForLanStepAction.Inner_DataUtil req : this.action.entries) {
+         for (WaitForLanStepAction.StepEntry req : this.action.entries) {
             String targetUser = req.username;
             if (peerCount <= 2 && !targetUser.isEmpty()) {
                boolean nameExists = false;

@@ -33,32 +33,32 @@ final class PrintNav {
    static final double OVERSHOOT_CHECK_DROP_THRESHOLD = 2.1;
    static final double CROUCH_SPEED_FACTOR = 0.3;
 
-   static PrintNav.Inner_TaskQueue searchReachable(PrintView view, BlockPos start, PrintNav.Inner_DataUtil bounds, int maxNodes) {
+   static PrintNav.ReachResult searchReachable(PrintView view, BlockPos start, PrintNav.SearchBounds bounds, int maxNodes) {
       return searchReachable(view, start, bounds, maxNodes, null);
    }
 
-   static PrintNav.Inner_TaskQueue searchReachable(
-      PrintView view, BlockPos start, PrintNav.Inner_DataUtil bounds, int maxNodes, Predicate<BlockPos> rideable
+   static PrintNav.ReachResult searchReachable(
+      PrintView view, BlockPos start, PrintNav.SearchBounds bounds, int maxNodes, Predicate<BlockPos> rideable
    ) {
       return searchReachable(view, start, bounds, maxNodes, rideable, null);
    }
 
-   static PrintNav.Inner_TaskQueue searchReachable(
-      PrintView view, BlockPos start, PrintNav.Inner_DataUtil bounds, int maxNodes, Predicate<BlockPos> rideable, LongOpenHashSet avoid
+   static PrintNav.ReachResult searchReachable(
+      PrintView view, BlockPos start, PrintNav.SearchBounds bounds, int maxNodes, Predicate<BlockPos> rideable, LongOpenHashSet avoid
    ) {
       return searchReachable(view, start, bounds, maxNodes, rideable, avoid, null);
    }
 
-   static PrintNav.Inner_TaskQueue searchReachable(
+   static PrintNav.ReachResult searchReachable(
       PrintView view,
       BlockPos start,
-      PrintNav.Inner_DataUtil bounds,
+      PrintNav.SearchBounds bounds,
       int maxNodes,
       Predicate<BlockPos> rideable,
       LongOpenHashSet avoid,
-      PrintNav.Inner_StreamUtil blockedEdges
+      PrintNav.EdgeFilter blockedEdges
    ) {
-      PrintNav.Inner_NetHelper search = new PrintNav.Inner_NetHelper(view, start, bounds, maxNodes, rideable, avoid);
+      PrintNav.ReachSearch search = new PrintNav.ReachSearch(view, start, bounds, maxNodes, rideable, avoid);
       search.blockedEdges = blockedEdges;
       search.advance(9223372036854775807L);
       return search.result;
@@ -74,12 +74,12 @@ final class PrintNav {
    }
 
    private static boolean canDiagonalJumpCached(PrintView view, int x, int z, double h, int nx, int nz, double h2) {
-      PrintNav.Inner_CachePool key = new PrintNav.Inner_CachePool(
+      PrintNav.JumpKey key = new PrintNav.JumpKey(
          BlockPos.asLong(x, PrintView.floorInt(h), z), BlockPos.asLong(nx, PrintView.floorInt(h2), nz), Double.doubleToLongBits(h), Double.doubleToLongBits(h2)
       );
-      List<PrintNav.Inner_BufferHelper> proofs = view.diagonalJumpProofCache.get(key);
+      List<PrintNav.DiagonalJumpProof> proofs = view.diagonalJumpProofCache.get(key);
       if (proofs != null) {
-         for (PrintNav.Inner_BufferHelper proof : proofs) {
+         for (PrintNav.DiagonalJumpProof proof : proofs) {
             if (proof.matches(view)) {
                view.diagonalJumpCacheHits++;
                return proof.result();
@@ -89,19 +89,19 @@ final class PrintNav {
 
       view.diagonalJumpCacheMisses++;
 
-      try (PrintView.Inner_TaskQueue reads = view.openReadTracker()) {
+      try (PrintView.ReadTracker reads = view.openReadTracker()) {
          boolean result = simulateDiagonalJump(view, x, z, h, nx, nz, h2);
          if (reads.isComplete()) {
             if (view.diagonalJumpProofCache.size() >= 2048 && !view.diagonalJumpProofCache.containsKey(key)) {
                view.diagonalJumpProofCache.remove(view.diagonalJumpProofCache.keySet().iterator().next());
             }
 
-            List<PrintNav.Inner_BufferHelper> saved = view.diagonalJumpProofCache.computeIfAbsent(key, ignored -> new ArrayList<>());
+            List<PrintNav.DiagonalJumpProof> saved = view.diagonalJumpProofCache.computeIfAbsent(key, ignored -> new ArrayList<>());
             if (saved.size() >= 2) {
                saved.remove(0);
             }
 
-            saved.add(new PrintNav.Inner_BufferHelper(new Long2ObjectOpenHashMap<>(reads.recordedStates), result));
+            saved.add(new PrintNav.DiagonalJumpProof(new Long2ObjectOpenHashMap<>(reads.recordedStates), result));
          }
 
          return result;
@@ -115,7 +115,7 @@ final class PrintNav {
 
       AiPhysics.MotionState from = AiPhysics.MotionState.standing(x + 0.5, h, z + 0.5);
       float yaw = AiPhysics.yawTowards(x + 0.5, z + 0.5, nx + 0.5, nz + 0.5);
-      autismclient.ai.engine.AiJumpSolver.UiHelper jump = autismclient.ai.engine.AiJumpSolver.solveTakeoffCompat(
+      autismclient.ai.engine.AiJumpSolver.TakeoffTiming jump = autismclient.ai.engine.AiJumpSolver.solveTakeoffCompat(
          view.asPhysicsWorld(), from, yaw, false, new BlockPos(nx, PrintView.floorInt(h2), nz), h2, 6
       );
       return jump != null && jump.margin() >= -0.04;
@@ -352,7 +352,7 @@ final class PrintNav {
       return new Vec3(BlockPos.getX(key) + 0.5, feetY, BlockPos.getZ(key) + 0.5);
    }
 
-   record Inner_BufferHelper(Long2ObjectMap<BlockState> inputs, boolean result) {
+   record DiagonalJumpProof(Long2ObjectMap<BlockState> inputs, boolean result) {
       boolean matches(PrintView view) {
          for (Entry<BlockState> entry : this.inputs.long2ObjectEntrySet()) {
             if (view.getBlockState(BlockPos.of(entry.getLongKey())) != entry.getValue()) {
@@ -364,28 +364,28 @@ final class PrintNav {
       }
    }
 
-   record Inner_CachePool(long from, long to, long fromY, long toY) {
+   record JumpKey(long from, long to, long fromY, long toY) {
    }
 
-   private record Inner_ConfigStore(double cost, long cell) {
+   private record QueueEntry(double cost, long cell) {
    }
 
-   record Inner_DataUtil(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+   record SearchBounds(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
       boolean contains(int x, int y, int z) {
          return x >= this.minX && x <= this.maxX && y >= this.minY && y <= this.maxY && z >= this.minZ && z <= this.maxZ;
       }
    }
 
-   static final class Inner_NetHelper {
+   static final class ReachSearch {
       final PrintView view;
-      final PrintNav.Inner_DataUtil bounds;
+      final PrintNav.SearchBounds bounds;
       final int maxNodes;
       final Predicate<BlockPos> pillarablePredicate;
       LongOpenHashSet avoidCells;
-      PrintNav.Inner_StreamUtil blockedEdges;
+      PrintNav.EdgeFilter blockedEdges;
       final LongPredicate stopPredicate;
-      final PrintNav.Inner_TaskQueue result;
-      final PriorityQueue<PrintNav.Inner_ConfigStore> openQueue = new PriorityQueue<>((a, b) -> Double.compare(a.cost(), b.cost()));
+      final PrintNav.ReachResult result;
+      final PriorityQueue<PrintNav.QueueEntry> openQueue = new PriorityQueue<>((a, b) -> Double.compare(a.cost(), b.cost()));
       boolean finished;
       long matchedGoalKey = -9223372036854775808L;
       int expandedCount;
@@ -393,25 +393,25 @@ final class PrintNav {
       int scanY;
       int scanMaxY;
       int scanMinY;
-      PrintNav.Inner_ConfigStore currentNode;
+      PrintNav.QueueEntry currentNode;
       int curX;
       int curY;
       int curZ;
       int curPillarCount;
       double curHeight;
 
-      Inner_NetHelper(PrintView view, BlockPos start, PrintNav.Inner_DataUtil bounds, int maxNodes) {
+      ReachSearch(PrintView view, BlockPos start, PrintNav.SearchBounds bounds, int maxNodes) {
          this(view, start, bounds, maxNodes, null, null);
       }
 
-      Inner_NetHelper(PrintView view, BlockPos start, PrintNav.Inner_DataUtil bounds, int maxNodes, Predicate<BlockPos> rideable, LongOpenHashSet avoid) {
+      ReachSearch(PrintView view, BlockPos start, PrintNav.SearchBounds bounds, int maxNodes, Predicate<BlockPos> rideable, LongOpenHashSet avoid) {
          this(view, start, bounds, maxNodes, rideable, avoid, null);
       }
 
-      Inner_NetHelper(
+      ReachSearch(
          PrintView view,
          BlockPos start,
-         PrintNav.Inner_DataUtil bounds,
+         PrintNav.SearchBounds bounds,
          int maxNodes,
          Predicate<BlockPos> rideable,
          LongOpenHashSet avoid,
@@ -424,7 +424,7 @@ final class PrintNav {
          this.avoidCells = avoid;
          this.stopPredicate = stopAt;
          long key = start.asLong();
-         this.result = new PrintNav.Inner_TaskQueue(key);
+         this.result = new PrintNav.ReachResult(key);
          double height = view.standingHeightAt(start.getX(), start.getY(), start.getZ());
          if (Double.isNaN(height)) {
             height = start.getY();
@@ -432,7 +432,7 @@ final class PrintNav {
 
          this.result.costByCell.put(key, 0.0);
          this.result.feetYByCell.put(key, height);
-         this.openQueue.add(new PrintNav.Inner_ConfigStore(0.0, key));
+         this.openQueue.add(new PrintNav.QueueEntry(0.0, key));
       }
 
       void advance(long workBudget) {
@@ -445,7 +445,7 @@ final class PrintNav {
                   return;
                }
 
-               PrintNav.Inner_ConfigStore top = this.openQueue.poll();
+               PrintNav.QueueEntry top = this.openQueue.poll();
                long key = top.cell();
                if (!(top.cost() > this.result.costByCell.get(key) + 1.0E-9)) {
                   if (++this.expandedCount > this.maxNodes) {
@@ -482,7 +482,7 @@ final class PrintNav {
                            this.result.feetYByCell.put(next, this.curY + 1);
                            this.result.pillarCells.add(next);
                            this.result.pillarCountByCell.put(next, this.curPillarCount + 1);
-                           this.openQueue.add(new PrintNav.Inner_ConfigStore(cost, next));
+                           this.openQueue.add(new PrintNav.QueueEntry(cost, next));
                         }
                      }
                   }
@@ -520,7 +520,7 @@ final class PrintNav {
                               this.result.feetYByCell.put(next, height);
                               this.result.pillarCells.remove(next);
                               this.result.pillarCountByCell.put(next, this.curPillarCount);
-                              this.openQueue.add(new PrintNav.Inner_ConfigStore(cost, next));
+                              this.openQueue.add(new PrintNav.QueueEntry(cost, next));
                            }
                         }
                      }
@@ -532,11 +532,11 @@ final class PrintNav {
    }
 
    @FunctionalInterface
-   interface Inner_StreamUtil {
+   interface EdgeFilter {
       boolean blocked(long var1, double var3, long var5, double var7);
    }
 
-   static final class Inner_TaskQueue {
+   static final class ReachResult {
       final Long2DoubleOpenHashMap costByCell = new Long2DoubleOpenHashMap();
       final Long2LongOpenHashMap parentByCell = new Long2LongOpenHashMap();
       final Long2DoubleOpenHashMap feetYByCell = new Long2DoubleOpenHashMap();
@@ -553,7 +553,7 @@ final class PrintNav {
       private int bitsetSizeZ;
       private int indexedSize = -1;
 
-      Inner_TaskQueue(long start) {
+      ReachResult(long start) {
          this.startKey = start;
          this.costByCell.defaultReturnValue(0.0 / 0.0);
          this.feetYByCell.defaultReturnValue(0.0 / 0.0);

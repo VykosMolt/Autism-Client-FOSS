@@ -69,7 +69,7 @@ final class ThrownPearlTracker {
 
             for (int i = 0; i < Math.min(32, this.init_List.size()); i++) {
                ThrownEnderpearl pearl = this.init_List.get(i);
-               IncomingProjectileScanner.Inner_DataUtil flight = IncomingProjectileScanner.init(mc.level, pearl, IncomingProjectileScanner.Inner_StreamUtil.PEARL);
+               IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.init(mc.level, pearl, IncomingProjectileScanner.ProjectileKind.PEARL);
                if (flight.load() != null) {
                   this.init_Map.put(pearl.getUUID(), new ThrownPearlTracker.Inner_DataUtil(pearl.getUUID(), pearl.getId(), flight.load(), now + flight.init_D()));
                }

@@ -23,7 +23,7 @@ public final class AiRunTrace {
    private final Path rotatedFile;
    private final long startedAtMs;
    private long rotateLimitBytes;
-   private final List<AiRunTrace.Inner_DataUtil> splits = new CopyOnWriteArrayList<>();
+   private final List<AiRunTrace.TraceSplit> splits = new CopyOnWriteArrayList<>();
    private BufferedWriter writer;
    private long bytesWritten;
 
@@ -82,7 +82,7 @@ public final class AiRunTrace {
       this.rotateLimitBytes = Math.max(this.rotateLimitBytes, 64000000L);
    }
 
-   public List<AiRunTrace.Inner_DataUtil> getSplits() {
+   public List<AiRunTrace.TraceSplit> getSplits() {
       return List.copyOf(this.splits);
    }
 
@@ -128,7 +128,7 @@ public final class AiRunTrace {
    }
 
    public synchronized void recordSplit(String name, String detail) {
-      this.splits.add(new AiRunTrace.Inner_DataUtil(name, Math.max(0L, System.currentTimeMillis() - this.startedAtMs), detail == null ? "" : detail));
+      this.splits.add(new AiRunTrace.TraceSplit(name, Math.max(0L, System.currentTimeMillis() - this.startedAtMs), detail == null ? "" : detail));
       this.writeEventLine(
          "split", detail != null && !detail.isBlank() ? AiJson.objectOf("name", name, "detail", detail) : AiJson.objectOf("name", name)
       );
@@ -231,6 +231,6 @@ public final class AiRunTrace {
       return lines.size() <= n ? List.copyOf(lines) : List.copyOf(lines.subList(lines.size() - n, lines.size()));
    }
 
-   public record Inner_DataUtil(String name, long elapsedMs, String detail) {
+   public record TraceSplit(String name, long elapsedMs, String detail) {
    }
 }

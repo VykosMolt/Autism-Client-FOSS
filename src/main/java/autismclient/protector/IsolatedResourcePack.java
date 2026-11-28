@@ -22,13 +22,13 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PackResources.ResourceOutput;
 import net.minecraft.server.packs.resources.IoSupplier;
 
-public final class IsolatedResourcePack extends CompatAbstractPackResources implements IsolatedPackDownloader.Inner_BufferHelper {
+public final class IsolatedResourcePack extends CompatAbstractPackResources implements IsolatedPackDownloader.IsolationAware {
    private final IsolatedResourcePack.Inner_DataUtil snapshot;
    private final String prefix;
    private final boolean metadataOnly;
-   private final IsolatedPackDownloader.Inner_ConfigStore isolation;
+   private final IsolatedPackDownloader.PackIsolation isolation;
 
-   private IsolatedResourcePack(PackLocationInfo location, IsolatedResourcePack.Inner_DataUtil snapshot, String prefix, boolean metadataOnly, IsolatedPackDownloader.Inner_ConfigStore isolation) {
+   private IsolatedResourcePack(PackLocationInfo location, IsolatedResourcePack.Inner_DataUtil snapshot, String prefix, boolean metadataOnly, IsolatedPackDownloader.PackIsolation isolation) {
       super(location);
       this.snapshot = snapshot;
       this.prefix = prefix;
@@ -37,7 +37,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
    }
 
    @Override
-   public IsolatedPackDownloader.Inner_ConfigStore init() {
+   public IsolatedPackDownloader.PackIsolation init() {
       return this.isolation;
    }
 
@@ -182,7 +182,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
          return new IsolatedResourcePack.Inner_DataUtil(null, Map.of());
       }
 
-      IsolatedResourcePack init(PackLocationInfo location, String overlay, boolean metadataOnly, IsolatedPackDownloader.Inner_ConfigStore isolation) {
+      IsolatedResourcePack init(PackLocationInfo location, String overlay, boolean metadataOnly, IsolatedPackDownloader.PackIsolation isolation) {
          String prefix = overlay.isEmpty() ? "" : overlay + "/";
          return new IsolatedResourcePack(location, this, prefix, metadataOnly, isolation);
       }

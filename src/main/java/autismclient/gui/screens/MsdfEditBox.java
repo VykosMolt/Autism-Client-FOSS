@@ -154,7 +154,7 @@ public class MsdfEditBox extends EditBox {
          } else {
             String value = this.getValue();
             this.init_V();
-            autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, MsdfEditBox.Inner_DataUtil.init(), mouseX, mouseY);
+            autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, MsdfEditBox.FontSource.init(), mouseX, mouseY);
             autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
             autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.BODY;
             float size = autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face);
@@ -198,7 +198,7 @@ public class MsdfEditBox extends EditBox {
 
                autismclient.gui.sdf.MsdfTextRenderer.draw(graphics, face, value, drawX, textTop, size, textColor, false);
                if (value.isEmpty() && acc.autism$hint() != null && !this.isFocused()) {
-                  graphics.text(MsdfEditBox.Inner_DataUtil.init(), acc.autism$hint(), Math.round(this.init_F()), Math.round(textY), colors.textMuted);
+                  graphics.text(MsdfEditBox.FontSource.init(), acc.autism$hint(), Math.round(this.init_F()), Math.round(textY), colors.textMuted);
                }
 
                if (cursor == value.length() && value.length() < acc.autism$maxLength() && acc.autism$suggestion() != null) {
@@ -221,7 +221,7 @@ public class MsdfEditBox extends EditBox {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class FontSource {
       private static Font init() {
          return Minecraft.getInstance().font;
       }

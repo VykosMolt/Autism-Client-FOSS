@@ -11,7 +11,7 @@ public final class LedgeFootingPredictor {
    private LedgeFootingPredictor() {
    }
 
-   public static MovementInputFixer.Inner_DataUtil init(LocalPlayer player) {
+   public static MovementInputFixer.FootingModel init(LocalPlayer player) {
       if (player != null
          && player.onGround()
          && !player.isShiftKeyDown()

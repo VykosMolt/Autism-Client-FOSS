@@ -31,14 +31,14 @@ public final class LateRegisterSynthesizer {
       "secret", "state", "states", "remove_state", "add_group", "remove_group", "joined_group", "add_category", "remove_category"
    };
    private static final int init_I = 1024;
-   private static final Map<Connection, LateRegisterSynthesizer.Inner_DataUtil> SESSIONS = new IdentityHashMap<>();
+   private static final Map<Connection, LateRegisterSynthesizer.SessionState> SESSIONS = new IdentityHashMap<>();
    private static long load_J;
 
    private LateRegisterSynthesizer() {
    }
 
    public static void init_V(Connection connection) {
-      LateRegisterSynthesizer.Inner_DataUtil session = sessionFor(connection, true);
+      LateRegisterSynthesizer.SessionState session = sessionFor(connection, true);
       if (session != null) {
          synchronized (SESSIONS) {
             if (ConnectionPrivacyRegistry.isActive(session.privacySession)) {
@@ -49,7 +49,7 @@ public final class LateRegisterSynthesizer {
    }
 
    static boolean init_Z(Connection connection) {
-      LateRegisterSynthesizer.Inner_DataUtil session = sessionFor(connection, true);
+      LateRegisterSynthesizer.SessionState session = sessionFor(connection, true);
       if (session == null) {
          return false;
       }
@@ -109,7 +109,7 @@ public final class LateRegisterSynthesizer {
    }
 
    static List<Identifier> init(Connection connection, long tick) {
-      LateRegisterSynthesizer.Inner_DataUtil session = sessionFor(connection, true);
+      LateRegisterSynthesizer.SessionState session = sessionFor(connection, true);
       if (session == null) {
          return null;
       }
@@ -143,7 +143,7 @@ public final class LateRegisterSynthesizer {
    }
 
    static void init_V(Connection connection, boolean success) {
-      LateRegisterSynthesizer.Inner_DataUtil session = sessionFor(connection, false);
+      LateRegisterSynthesizer.SessionState session = sessionFor(connection, false);
       if (session != null) {
          synchronized (SESSIONS) {
             if (ConnectionPrivacyRegistry.isActive(session.privacySession) && session.load) {
@@ -154,7 +154,7 @@ public final class LateRegisterSynthesizer {
       }
    }
 
-   private static LateRegisterSynthesizer.Inner_DataUtil sessionFor(Connection connection, boolean create) {
+   private static LateRegisterSynthesizer.SessionState sessionFor(Connection connection, boolean create) {
       if (connection == null) {
          return null;
       }
@@ -162,7 +162,7 @@ public final class LateRegisterSynthesizer {
       ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getActive(connection);
       if (context != null && context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED) {
          synchronized (SESSIONS) {
-            LateRegisterSynthesizer.Inner_DataUtil existing = SESSIONS.get(connection);
+            LateRegisterSynthesizer.SessionState existing = SESSIONS.get(connection);
             if (existing != null) {
                if (existing.privacySession == context && existing.listener == context.packetListener() && ConnectionPrivacyRegistry.isActive(context)
                   )
@@ -174,7 +174,7 @@ public final class LateRegisterSynthesizer {
             }
 
             if (create && SESSIONS.size() < 1024 && ConnectionPrivacyRegistry.isActive(context)) {
-               LateRegisterSynthesizer.Inner_DataUtil created = new LateRegisterSynthesizer.Inner_DataUtil(context);
+               LateRegisterSynthesizer.SessionState created = new LateRegisterSynthesizer.SessionState(context);
                SESSIONS.put(connection, created);
                return created;
             } else {
@@ -254,7 +254,7 @@ public final class LateRegisterSynthesizer {
       return 5L;
    }
 
-   private static final class Inner_DataUtil {
+   private static final class SessionState {
       private final ConnectionPrivacyRegistry.ConnectionSession privacySession;
       private final PacketListener listener;
       private long init_J = -1L;
@@ -263,7 +263,7 @@ public final class LateRegisterSynthesizer {
       private boolean read;
       private boolean write;
 
-      private Inner_DataUtil(ConnectionPrivacyRegistry.ConnectionSession context) {
+      private SessionState(ConnectionPrivacyRegistry.ConnectionSession context) {
          this.privacySession = context;
          this.listener = context.packetListener();
       }

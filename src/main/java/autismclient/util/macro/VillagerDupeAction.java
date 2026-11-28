@@ -11,7 +11,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
    private static final int MAX_COUNT = 64;
    private static final int MAX_WATCH_TICKS = 10;
    public autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.ALL;
-   public VillagerDupeAction.Inner_StreamUtil targets = VillagerDupeAction.Inner_StreamUtil.ALL_IN_RANGE;
+   public VillagerDupeAction.TargetSelection targets = VillagerDupeAction.TargetSelection.ALL_IN_RANGE;
    public int count = 1;
    public int intervalTicks = 1;
    public int stopAfter = 0;
@@ -25,7 +25,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
    @Override
    public void run(MacroExecutionContext ctx) {
-      VillagerDupeAction.Inner_DataUtil driver = new VillagerDupeAction.Inner_DataUtil(
+      VillagerDupeAction.DupeRun driver = new VillagerDupeAction.DupeRun(
          ctx,
          new autismclient.util.villagerdupe.VillagerDupeDriver.CachePool(
             this.filter,
@@ -33,7 +33,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
             this.autoEmerald,
             this.autoShears,
             this.keepTotem,
-            this.targets == VillagerDupeAction.Inner_StreamUtil.NEAREST,
+            this.targets == VillagerDupeAction.TargetSelection.NEAREST,
             this.refresh,
             clamp(this.intervalTicks, 1, 20)
          ),
@@ -85,9 +85,9 @@ public final class VillagerDupeAction implements ContextMacroAction {
       this.filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(tag.getStringOr("filter", "ALL"));
 
       try {
-         this.targets = VillagerDupeAction.Inner_StreamUtil.valueOf(tag.getStringOr("targets", "ALL_IN_RANGE"));
+         this.targets = VillagerDupeAction.TargetSelection.valueOf(tag.getStringOr("targets", "ALL_IN_RANGE"));
       } catch (IllegalArgumentException e) {
-         this.targets = VillagerDupeAction.Inner_StreamUtil.ALL_IN_RANGE;
+         this.targets = VillagerDupeAction.TargetSelection.ALL_IN_RANGE;
       }
 
       this.count = clamp(tag.getIntOr("count", 1), 0, 64);
@@ -110,7 +110,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
    @Override
    public String getDisplayName() {
       String passes = this.count <= 0 ? (this.stopAfter > 0 ? " / " + this.stopAfter + " items" : " / until stopped") : " x" + this.count;
-      return "Villager Dupe / " + this.filter.init() + (this.targets == VillagerDupeAction.Inner_StreamUtil.NEAREST ? " / Nearest" : "") + passes;
+      return "Villager Dupe / " + this.filter.init() + (this.targets == VillagerDupeAction.TargetSelection.NEAREST ? " / Nearest" : "") + passes;
    }
 
    @Override
@@ -132,7 +132,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
       return Math.max(min, Math.min(max, n));
    }
 
-   private static final class Inner_DataUtil {
+   private static final class DupeRun {
       private final MacroExecutionContext ctx;
       private final autismclient.util.villagerdupe.VillagerDupeDriver driver = autismclient.util.villagerdupe.VillagerDupeDriver.getInstance();
       private final autismclient.util.villagerdupe.VillagerDupeDriver.CachePool options;
@@ -148,7 +148,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
       volatile boolean finished;
       volatile CompletableFuture<Void> init_CompletableFuture = new CompletableFuture<>();
 
-      Inner_DataUtil(MacroExecutionContext ctx, autismclient.util.villagerdupe.VillagerDupeDriver.CachePool opts, int passes, int limit, boolean stopWhenMissing) {
+      DupeRun(MacroExecutionContext ctx, autismclient.util.villagerdupe.VillagerDupeDriver.CachePool opts, int passes, int limit, boolean stopWhenMissing) {
          this.ctx = ctx;
          this.options = opts;
          this.passes = passes;
@@ -219,7 +219,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum TargetSelection {
       ALL_IN_RANGE,
       NEAREST;
    }

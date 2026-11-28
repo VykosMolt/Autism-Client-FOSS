@@ -29,8 +29,8 @@ import org.lwjgl.system.MemoryUtil;
 final class CrosshairVectorPipeline {
    private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "ui/crosshair_vector");
    private static final int init_I = 128;
-   private static final LinkedHashMap<CrosshairVectorPipeline.Inner_DataUtil, CrosshairVectorPipeline.Inner_StreamUtil> init_LinkedHashMap = new LinkedHashMap<>(16, 0.75F, true);
-   private static final ArrayDeque<CrosshairVectorPipeline.Inner_StreamUtil> init_ArrayDeque = new ArrayDeque<>();
+   private static final LinkedHashMap<CrosshairVectorPipeline.StyleKey, CrosshairVectorPipeline.ParameterTexture> init_LinkedHashMap = new LinkedHashMap<>(16, 0.75F, true);
+   private static final ArrayDeque<CrosshairVectorPipeline.ParameterTexture> init_ArrayDeque = new ArrayDeque<>();
    private static RenderPipeline init_RenderPipeline;
    private static RenderPipeline load;
    private static boolean init_Z;
@@ -63,10 +63,10 @@ final class CrosshairVectorPipeline {
             centerY = snapToPixel(centerY, pose.m11(), pose.m21(), pixelsPerGuiUnit, stroke);
             boolean inverted = look.init_Z() && target == 0;
             int fill = inverted ? -1 : (target != 0 ? target : look.init_I());
-            CrosshairVectorPipeline.Inner_DataUtil key = new CrosshairVectorPipeline.Inner_DataUtil(
+            CrosshairVectorPipeline.StyleKey key = new CrosshairVectorPipeline.StyleKey(
                shape.style().ordinal(), stroke, gap, outline, unit, fill, look.load_Z() ? look.load_I() : 0, Math.clamp(look.init_F(), 0.0F, 1.0F)
             );
-            CrosshairVectorPipeline.Inner_StreamUtil parameters = init(key);
+            CrosshairVectorPipeline.ParameterTexture parameters = init(key);
             float[] quad = init(centerX, centerY, extent);
             if (inverted) {
                graphics.nextStratum();
@@ -95,7 +95,7 @@ final class CrosshairVectorPipeline {
          float w = radiusX + 2.0F;
          float h = radiusY + 2.0F;
          float[] quad = new float[]{x - w, y - h, x + w, y + h, -w / radiusX, -h / radiusY, w / radiusX, h / radiusY};
-         CrosshairVectorPipeline.Inner_StreamUtil parameters = init(new CrosshairVectorPipeline.Inner_DataUtil(4, 0.0F, 0.0F, 0.0F, 0.0F, -1275068417, 0, 1.0F));
+         CrosshairVectorPipeline.ParameterTexture parameters = init(new CrosshairVectorPipeline.StyleKey(4, 0.0F, 0.0F, 0.0F, 0.0F, -1275068417, 0, 1.0F));
          init_V_GuiGraphicsExtract_2(graphics, init_RenderPipeline, parameters, quad, 0);
       }
    }
@@ -115,13 +115,13 @@ final class CrosshairVectorPipeline {
       return position + (Math.round(screenPosition - half) + half - screenPosition) / pixelSize;
    }
 
-   private static CrosshairVectorPipeline.Inner_StreamUtil init(CrosshairVectorPipeline.Inner_DataUtil key) {
-      CrosshairVectorPipeline.Inner_StreamUtil parameters = init_LinkedHashMap.get(key);
+   private static CrosshairVectorPipeline.ParameterTexture init(CrosshairVectorPipeline.StyleKey key) {
+      CrosshairVectorPipeline.ParameterTexture parameters = init_LinkedHashMap.get(key);
       if (parameters == null) {
-         parameters = new CrosshairVectorPipeline.Inner_StreamUtil(key);
+         parameters = new CrosshairVectorPipeline.ParameterTexture(key);
          init_LinkedHashMap.put(key, parameters);
          if (init_LinkedHashMap.size() > 128) {
-            Iterator<CrosshairVectorPipeline.Inner_StreamUtil> iterator = init_LinkedHashMap.values().iterator();
+            Iterator<CrosshairVectorPipeline.ParameterTexture> iterator = init_LinkedHashMap.values().iterator();
             init_ArrayDeque.add(iterator.next());
             iterator.remove();
          }
@@ -131,7 +131,7 @@ final class CrosshairVectorPipeline {
    }
 
    private static void init_V_GuiGraphicsExtract_2(
-      GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairVectorPipeline.Inner_StreamUtil parameters, float[] quad, int mode
+      GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairVectorPipeline.ParameterTexture parameters, float[] quad, int mode
    ) {
       autismclient.gui.sdf.TexturedQuadRenderState element = autismclient.gui.sdf.TexturedQuadRenderState.init(
          pipeline,
@@ -193,11 +193,11 @@ final class CrosshairVectorPipeline {
       );
    }
 
-   private record Inner_DataUtil(int init_I, float stroke, float gap, float outline, float write, int fill, int read_I, float update) {
+   private record StyleKey(int init_I, float stroke, float gap, float outline, float write, int fill, int read_I, float update) {
    }
 
-   private static final class Inner_StreamUtil extends AbstractTexture {
-      Inner_StreamUtil(CrosshairVectorPipeline.Inner_DataUtil key) {
+   private static final class ParameterTexture extends AbstractTexture {
+      ParameterTexture(CrosshairVectorPipeline.StyleKey key) {
          ByteBuffer data = MemoryUtil.memAlloc(64).order(ByteOrder.nativeOrder());
 
          try {

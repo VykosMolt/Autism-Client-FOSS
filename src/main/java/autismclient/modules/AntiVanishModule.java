@@ -54,20 +54,20 @@ public final class AntiVanishModule extends Module {
    private static final AtomicInteger nextRequestId = new AtomicInteger(-1000);
    private final autismclient.util.AntiVanishRosterTracker rosterTracker = new autismclient.util.AntiVanishRosterTracker();
    private final autismclient.util.PlayerQuitEventTracker quitTracker = new autismclient.util.PlayerQuitEventTracker();
-   private final Map<UUID, AntiVanishModule.Inner_DataUtil> alertedDetections = new LinkedHashMap<>();
+   private final Map<UUID, AntiVanishModule.Detection> alertedDetections = new LinkedHashMap<>();
    private final VanishActivityDetector activityDetector = new VanishActivityDetector();
    private volatile long epoch;
    private long lastActivityAlertAt = -1L;
-   private final Map<UUID, AntiVanishModule.Inner_DataUtil> detections = new LinkedHashMap<>();
+   private final Map<UUID, AntiVanishModule.Detection> detections = new LinkedHashMap<>();
    private final Map<UUID, GameType> lastGameModes = new HashMap<>();
-   private final Map<Integer, AntiVanishModule.Inner_CachePool> pendingSuggestionProbes = new HashMap<>();
+   private final Map<Integer, AntiVanishModule.SuggestionProbe> pendingSuggestionProbes = new HashMap<>();
    private final Map<String, String> unusedNameMap = new HashMap<>();
    private ClientPacketListener connection;
    private Object level;
    private long lastRequestAt = -1L;
    private long bannerUntil;
    private UUID bannerPlayer;
-   private AntiVanishModule.Inner_BufferHelper request;
+   private AntiVanishModule.RosterRequest request;
    private long nextListProbeAt;
    private long nextAlertBatchAt;
    private long sessionStartAt;
@@ -190,7 +190,7 @@ public final class AntiVanishModule extends Module {
          this.scanRoster(at);
          if (this.worldActivityEnabled()) {
             this.activityDetector.expire(at);
-            List<autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper> readings = this.activityDetector.unexplained(at);
+            List<autismclient.util.UnexplainedBlockTracker.ActivityReading> readings = this.activityDetector.unexplained(at);
             if (!readings.isEmpty() && (this.lastActivityAlertAt < 0L || at - this.lastActivityAlertAt >= 10000L) && this.bool("chat-alerts")) {
                this.lastActivityAlertAt = at;
                AutismClientMessaging.sendPrefixed(
@@ -307,7 +307,7 @@ public final class AntiVanishModule extends Module {
          } else if (this.bool("vanish-tracker")) {
             this.scanRoster(at);
             if (packet instanceof ClientboundCommandSuggestionsPacket reply) {
-               AntiVanishModule.Inner_CachePool request = this.pendingSuggestionProbes.remove(reply.id());
+               AntiVanishModule.SuggestionProbe request = this.pendingSuggestionProbes.remove(reply.id());
                if (request == null || !this.bool("completion-probe") || at - request.at > 4000L) {
                   return;
                }
@@ -352,7 +352,7 @@ public final class AntiVanishModule extends Module {
          && !(player.distanceToSqr(MC.player) > (double)this.integer("range") * this.integer("range"))) {
          String name = player.getGameProfile().name();
          boolean npc = ArmorFilterMatcher.init_Z_UUID(player.getUUID()) || AntiBotTracker.isConfirmedBotUuid(player.getUUID());
-         this.rosterTracker.init(new autismclient.util.AntiVanishRosterTracker.Inner_DataUtil(player.getUUID(), name, true, npc), action, at);
+         this.rosterTracker.init(new autismclient.util.AntiVanishRosterTracker.ActorInfo(player.getUUID(), name, true, npc), action, at);
       }
    }
 
@@ -379,7 +379,7 @@ public final class AntiVanishModule extends Module {
    }
 
    private void scanRoster(long at) {
-      List<autismclient.util.AntiVanishRosterTracker.Inner_ConfigStore> roster = new ArrayList<>();
+      List<autismclient.util.AntiVanishRosterTracker.RosterProfile> roster = new ArrayList<>();
       Collection<PlayerInfo> listed = this.connection.getListedOnlinePlayers();
 
       for (PlayerInfo info : this.connection.getOnlinePlayers()) {
@@ -394,7 +394,7 @@ public final class AntiVanishModule extends Module {
                }
             }
 
-            roster.add(new autismclient.util.AntiVanishRosterTracker.Inner_ConfigStore(profile.id(), profile.name(), listed.contains(info), this.isTrackedInfo(info)));
+            roster.add(new autismclient.util.AntiVanishRosterTracker.RosterProfile(profile.id(), profile.name(), listed.contains(info), this.isTrackedInfo(info)));
          }
       }
 
@@ -452,7 +452,7 @@ public final class AntiVanishModule extends Module {
    private void sendSuggestionProbe(long at) {
       String command = "minecraft:msg ";
       int id = nextRequestId.getAndUpdate(value -> value == -2147483648 ? -1000 : value - 1);
-      this.pendingSuggestionProbes.put(id, new AntiVanishModule.Inner_CachePool(at, command.length()));
+      this.pendingSuggestionProbes.put(id, new AntiVanishModule.SuggestionProbe(at, command.length()));
       this.lastRequestAt = at;
 
       try {
@@ -483,7 +483,7 @@ public final class AntiVanishModule extends Module {
          if (command == null) {
             this.nextListProbeAt = at + 30000L;
          } else {
-            this.request = new AntiVanishModule.Inner_BufferHelper(this.connection, this.level, command, at);
+            this.request = new AntiVanishModule.RosterRequest(this.connection, this.level, command, at);
             this.sendingListProbe = true;
 
             try {
@@ -507,14 +507,14 @@ public final class AntiVanishModule extends Module {
          && !packet.overlay()
          && module.bool("vanish-tracker")
          && module.bool("completion-probe")) {
-         AntiVanishModule.Inner_BufferHelper request = module.request;
+         AntiVanishModule.RosterRequest request = module.request;
          long at = nowMillis();
          if (request != null
             && request.connection == handler
             && request.level == MC.level
             && at >= request.at
             && at - request.at <= 4000L) {
-            Optional<List<autismclient.util.ListCommandPlayerParser.Inner_DataUtil>> parsed = autismclient.util.ListCommandPlayerParser.init(packet.content());
+            Optional<List<autismclient.util.ListCommandPlayerParser.ListedPlayer>> parsed = autismclient.util.ListCommandPlayerParser.init(packet.content());
             if (parsed.isEmpty()) {
                return false;
             }
@@ -522,10 +522,10 @@ public final class AntiVanishModule extends Module {
             module.request = null;
             module.scanRoster(at);
             Set<UUID> listed = handler.getListedOnlinePlayers().stream().map(p -> p.getProfile().id()).collect(Collectors.toSet());
-            List<autismclient.util.AntiVanishRosterTracker.Inner_ConfigStore> profiles = parsed.get()
+            List<autismclient.util.AntiVanishRosterTracker.RosterProfile> profiles = parsed.get()
                .stream()
                .map(
-                  p -> new autismclient.util.AntiVanishRosterTracker.Inner_ConfigStore(
+                  p -> new autismclient.util.AntiVanishRosterTracker.RosterProfile(
                      p.uuid(), p.name(), listed.contains(p.uuid()), module.isTrackedPlayer(p.uuid(), p.name())
                   )
                )
@@ -566,7 +566,7 @@ public final class AntiVanishModule extends Module {
       return false;
    }
 
-   private boolean isStillSuspect(UUID id, AntiVanishModule.Inner_DataUtil detection, long at) {
+   private boolean isStillSuspect(UUID id, AntiVanishModule.Detection detection, long at) {
       return detection.possibleVanish ? this.quitTracker.isSuspect(id, at) && !this.rosterTracker.init(id, at) : this.rosterTracker.init(id, at);
    }
 
@@ -595,9 +595,9 @@ public final class AntiVanishModule extends Module {
             this.clearBanner();
          }
 
-         for (autismclient.util.AntiVanishRosterTracker.Inner_StreamUtil alert : this.rosterTracker.collectAlerts(at)) {
+         for (autismclient.util.AntiVanishRosterTracker.VanishAlert alert : this.rosterTracker.collectAlerts(at)) {
             if (this.isTrackedAlert(alert.uuid(), alert.name(), alert.uuidOnly())) {
-               AntiVanishModule.Inner_DataUtil detection = new AntiVanishModule.Inner_DataUtil(
+               AntiVanishModule.Detection detection = new AntiVanishModule.Detection(
                   alert.name(), "Hidden player: " + alert.load(), 100, at + 20000L, alert.uuidOnly(), false
                );
                this.detections.put(alert.uuid(), detection);
@@ -605,9 +605,9 @@ public final class AntiVanishModule extends Module {
             }
          }
 
-         for (autismclient.util.PlayerQuitEventTracker.Inner_DataUtil alert : this.quitTracker.collectAlerts(at)) {
+         for (autismclient.util.PlayerQuitEventTracker.QuitAlert alert : this.quitTracker.collectAlerts(at)) {
             if (!this.rosterTracker.init(alert.uuid(), at) && this.isTrackedPlayer(alert.uuid(), alert.name())) {
-               AntiVanishModule.Inner_DataUtil detection = new AntiVanishModule.Inner_DataUtil(
+               AntiVanishModule.Detection detection = new AntiVanishModule.Detection(
                   alert.name(), "Possible vanish: left TAB without a matching leave message", 0, alert.expiresAt(), false, true
                );
                this.detections.put(alert.uuid(), detection);
@@ -618,7 +618,7 @@ public final class AntiVanishModule extends Module {
          this.alertedDetections.entrySet().removeIf(e -> !e.getValue().equals(this.detections.get(e.getKey())));
          if (!this.alertedDetections.isEmpty() && at >= this.nextAlertBatchAt) {
             this.nextAlertBatchAt = at + 1500L;
-            ArrayList<Entry<UUID, AntiVanishModule.Inner_DataUtil>> batch = new ArrayList<>(this.alertedDetections.entrySet());
+            ArrayList<Entry<UUID, AntiVanishModule.Detection>> batch = new ArrayList<>(this.alertedDetections.entrySet());
             this.alertedDetections.clear();
             this.announceBatch(batch.stream().filter(e -> !e.getValue().possibleVanish).toList(), false, at);
             this.announceBatch(batch.stream().filter(e -> e.getValue().possibleVanish).toList(), true, at);
@@ -626,7 +626,7 @@ public final class AntiVanishModule extends Module {
       }
    }
 
-   private void announceBatch(List<Entry<UUID, AntiVanishModule.Inner_DataUtil>> batch, boolean possible, long at) {
+   private void announceBatch(List<Entry<UUID, AntiVanishModule.Detection>> batch, boolean possible, long at) {
       if (!batch.isEmpty()) {
          String names = batch.stream().limit(3L).map(e -> e.getValue().playerName).collect(Collectors.joining(", "));
          if (batch.size() > 3) {
@@ -688,29 +688,29 @@ public final class AntiVanishModule extends Module {
          && (!module.detections.isEmpty() || module.worldActivityEnabled() && !module.activityDetector.unexplained(nowMillis()).isEmpty());
    }
 
-   private List<AntiVanishModule.Inner_StreamUtil> snapshotRows() {
+   private List<AntiVanishModule.HudRow> snapshotRows() {
       long at = nowMillis();
-      List<AntiVanishModule.Inner_StreamUtil> rows = new ArrayList<>(
+      List<AntiVanishModule.HudRow> rows = new ArrayList<>(
          this.detections
             .entrySet()
             .stream()
             .filter(e -> e.getValue().expiresAt > at && this.isStillSuspect(e.getKey(), e.getValue(), at))
             .map(Entry::getValue)
-            .sorted(Comparator.comparing(AntiVanishModule.Inner_DataUtil::playerName, String.CASE_INSENSITIVE_ORDER))
+            .sorted(Comparator.comparing(AntiVanishModule.Detection::playerName, String.CASE_INSENSITIVE_ORDER))
             .limit(4L)
-            .map(d -> new AntiVanishModule.Inner_StreamUtil(d.playerName, d.message, d.init_I))
+            .map(d -> new AntiVanishModule.HudRow(d.playerName, d.message, d.init_I))
             .toList()
       );
       if (this.worldActivityEnabled()) {
-         for (autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper reading : this.activityDetector.unexplained(at)) {
-            rows.add(new AntiVanishModule.Inner_StreamUtil(describeOffset(reading.pos()), reading.label(), 0));
+         for (autismclient.util.UnexplainedBlockTracker.ActivityReading reading : this.activityDetector.unexplained(at)) {
+            rows.add(new AntiVanishModule.HudRow(describeOffset(reading.pos()), reading.label(), 0));
          }
       }
 
       return List.copyOf(rows);
    }
 
-   public static String statusLabel(AntiVanishModule.Inner_StreamUtil entry) {
+   public static String statusLabel(AntiVanishModule.HudRow entry) {
       if (entry == null) {
          return "WATCH";
       }
@@ -762,7 +762,7 @@ public final class AntiVanishModule extends Module {
       }
    }
 
-   public static String roleLabel(AntiVanishModule.Inner_StreamUtil entry) {
+   public static String roleLabel(AntiVanishModule.HudRow entry) {
       if (entry == null) {
          return "Staff";
       } else if ("CRITICAL".equalsIgnoreCase(entry.severity())) {
@@ -784,12 +784,12 @@ public final class AntiVanishModule extends Module {
       return module == null ? "" : module.bannerNames;
    }
 
-   public static List<AntiVanishModule.Inner_StreamUtil> entries() {
+   public static List<AntiVanishModule.HudRow> entries() {
       AntiVanishModule module = instance();
       return module == null ? List.of() : module.snapshotRows();
    }
 
-   public static String entryRole(AntiVanishModule.Inner_StreamUtil entry) {
+   public static String entryRole(AntiVanishModule.HudRow entry) {
       if (entry == null) {
          return "Staff";
       } else {
@@ -802,7 +802,7 @@ public final class AntiVanishModule extends Module {
       }
    }
 
-   public static String entryTag(AntiVanishModule.Inner_StreamUtil entry) {
+   public static String entryTag(AntiVanishModule.HudRow entry) {
       if (entry == null) {
          return "";
       } else {
@@ -851,15 +851,15 @@ public final class AntiVanishModule extends Module {
          : "off";
    }
 
-   private record Inner_BufferHelper(ClientPacketListener connection, Object level, String command, long at) {
+   private record RosterRequest(ClientPacketListener connection, Object level, String command, long at) {
    }
 
-   private record Inner_CachePool(long at, int rangeStart) {
+   private record SuggestionProbe(long at, int rangeStart) {
    }
 
-   private record Inner_DataUtil(String playerName, String message, int init_I, long expiresAt, boolean unresolved, boolean possibleVanish) {
+   private record Detection(String playerName, String message, int init_I, long expiresAt, boolean unresolved, boolean possibleVanish) {
    }
 
-   public record Inner_StreamUtil(String severity, String load, int init_I) {
+   public record HudRow(String severity, String load, int init_I) {
    }
 }

@@ -23,12 +23,12 @@ public final class AiDirectOps {
    );
    private static final AiCatalog CATALOG = new AiCatalog();
    private static volatile AiDirectOps.Inner_DataUtil active;
-   private static volatile autismclient.util.macro.MacroToolBridge.Inner_StreamUtil latestJob;
+   private static volatile autismclient.util.macro.MacroToolBridge.ToolJob latestJob;
    private static final List<AiDirectOps.Inner_DataUtil> waiters = new ArrayList<>();
    private static volatile AiToolSettings cachedToolSettings;
    private static int pendingInputCleanups;
    private static int tickCount;
-   private static volatile autismclient.util.macro.MacroToolBridge.Inner_StreamUtil lastJob;
+   private static volatile autismclient.util.macro.MacroToolBridge.ToolJob lastJob;
    private static volatile AiOperation.Result lastResult;
 
    public static boolean init_Z(String id) {
@@ -116,7 +116,7 @@ public final class AiDirectOps {
       start(id, args);
    }
 
-   public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil start(String id, JsonObject args) {
+   public static autismclient.util.macro.MacroToolBridge.ToolJob start(String id, JsonObject args) {
       AiDirectOps.Inner_DataUtil running = active;
       if (running != null && !id.equals("client:run_macro")) {
          throw new IllegalStateException("Already running " + running.id + " (" + elapsedText(running) + ") - " + toolsCommand() + " stop first");
@@ -179,9 +179,9 @@ public final class AiDirectOps {
          lastJob = created.job;
          created.job.init(() -> Minecraft.getInstance().execute(() -> init(created.job)));
          if (lease != null) {
-            created.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Starting " + id, "{}");
+            created.job.init(autismclient.util.macro.MacroToolBridge.JobState.WAITING, "Starting " + id, "{}");
          } else {
-            created.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Waiting for shared controls", "{}");
+            created.job.init(autismclient.util.macro.MacroToolBridge.JobState.WAITING, "Waiting for shared controls", "{}");
          }
 
          lastResult = null;
@@ -195,12 +195,12 @@ public final class AiDirectOps {
       }
    }
 
-   public static autismclient.util.macro.MacroToolBridge.Inner_StreamUtil currentHandle() {
+   public static autismclient.util.macro.MacroToolBridge.ToolJob currentHandle() {
       AiDirectOps.Inner_DataUtil a = active;
       return a != null ? a.job : (latestJob != null ? latestJob : lastJob);
    }
 
-   public static void init(autismclient.util.macro.MacroToolBridge.Inner_StreamUtil job) {
+   public static void init(autismclient.util.macro.MacroToolBridge.ToolJob job) {
       AiDirectOps.Inner_DataUtil a = active;
       if (a != null && a.job == job) {
          failOp(a, AiFailure.CANCELLED, "Cancelled by its owner");
@@ -290,7 +290,7 @@ public final class AiDirectOps {
          AutismClientMessaging.sendPrefixed("§7" + a.id + " is already paused - " + toolsCommand() + " resume continues.");
       } else if (a.defense == null && !UNPAUSABLE_TOOL_IDS.contains(a.id)) {
          a.paused = true;
-         a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.PAUSED, "Paused", a.lastData);
+         a.job.init(autismclient.util.macro.MacroToolBridge.JobState.PAUSED, "Paused", a.lastData);
          releaseInputs(a);
          AutismClientMessaging.sendPrefixed("§e" + a.id + " paused (inputs released; its deadline keeps running) - " + toolsCommand() + " resume continues.");
       } else {
@@ -308,7 +308,7 @@ public final class AiDirectOps {
          a.paused = false;
          a.job
             .init(
-               a.lease == null ? autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING : autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.RUNNING,
+               a.lease == null ? autismclient.util.macro.MacroToolBridge.JobState.WAITING : autismclient.util.macro.MacroToolBridge.JobState.RUNNING,
                "Resumed",
                a.lastData
             );
@@ -362,7 +362,7 @@ public final class AiDirectOps {
                   return;
                }
 
-               a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.WAITING, "Starting " + a.id, a.lastData);
+               a.job.init(autismclient.util.macro.MacroToolBridge.JobState.WAITING, "Starting " + a.id, a.lastData);
             }
 
             if (mc.player != null && mc.player.isAlive() && a.resources.contains("INPUT") && a.resources.contains("ROTATION")) {
@@ -532,7 +532,7 @@ public final class AiDirectOps {
       a.lastMessage = result.message();
       a.lastData = data == null ? "{}" : data;
       if (!result.terminal()) {
-         a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.RUNNING, a.lastMessage, a.lastData);
+         a.job.init(autismclient.util.macro.MacroToolBridge.JobState.RUNNING, a.lastMessage, a.lastData);
          if (active == a) {
             String title = a.id.substring(a.id.indexOf(':') + 1).replace('_', ' ');
             String pretty = title.isEmpty() ? a.id : Character.toUpperCase(title.charAt(0)) + title.substring(1);
@@ -642,7 +642,7 @@ public final class AiDirectOps {
                pendingInputCleanups--;
             }
 
-            a.job.init(autismclient.util.macro.MacroToolBridge.Inner_ConfigStore.valueOf(result.status().name()), result.message(), result.dataJson());
+            a.job.init(autismclient.util.macro.MacroToolBridge.JobState.valueOf(result.status().name()), result.message(), result.dataJson());
          }
       });
    }
@@ -831,7 +831,7 @@ public final class AiDirectOps {
       final String id;
       final AiOperation op;
       AutoCloseable lease;
-      final autismclient.util.macro.MacroToolBridge.Inner_StreamUtil job;
+      final autismclient.util.macro.MacroToolBridge.ToolJob job;
       final List<String> resources;
       final int emergencyKey;
       final long startedAt = System.nanoTime();
@@ -851,7 +851,7 @@ public final class AiDirectOps {
          this.resources = resources;
          this.world = world;
          this.emergencyKey = emergencyKey;
-         this.job = new autismclient.util.macro.MacroToolBridge.Inner_StreamUtil(id);
+         this.job = new autismclient.util.macro.MacroToolBridge.ToolJob(id);
       }
    }
 }

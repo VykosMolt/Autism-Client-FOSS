@@ -193,7 +193,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @Inject(method = "handleAccumulatedMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MouseHandler;turnPlayer(D)V"))
    private void autism$applyQueuedRawMouseInput(CallbackInfo ci) {
-      MouseMovementRouter.Inner_DataUtil delta = MouseMovementRouter.consumeDelta();
+      MouseMovementRouter.MouseDelta delta = MouseMovementRouter.consumeDelta();
       if (MouseMovementRouter.hasActiveSource()) {
          this.accumulatedDX = delta.deltaX();
          this.accumulatedDY = delta.load();
@@ -210,7 +210,7 @@ public abstract class AutismMouseHandlerMixin {
 
    @ModifyExpressionValue(method = "turnPlayer", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Options;smoothCamera:Z"))
    private boolean autism$avoidDoubleSmoothingTelly(boolean original) {
-      return original && !MouseMovementRouter.isActive(MouseMovementRouter.Inner_StreamUtil.SCAFFOLD_TELLY) && !MouseMovementRouter.init_Z();
+      return original && !MouseMovementRouter.isActive(MouseMovementRouter.MovementSource.SCAFFOLD_TELLY) && !MouseMovementRouter.init_Z();
    }
 
    @Unique

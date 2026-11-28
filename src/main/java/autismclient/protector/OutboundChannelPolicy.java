@@ -17,17 +17,17 @@ public final class OutboundChannelPolicy {
    private static final int init_I = 256;
    private static final int load_I = 1024;
    private static final Map<ConnectionPrivacyRegistry.ConnectionSession, Set<ServerboundCustomQueryAnswerPacket>> init_Map = new IdentityHashMap<>();
-   private static final OutboundChannelPolicy.Inner_DataUtil init_ConfigStore_DataUt = new OutboundChannelPolicy.Inner_DataUtil(
-      OutboundChannelPolicy.Inner_DataUtil.Inner_DataUtil_2.PASS, null
+   private static final OutboundChannelPolicy.Verdict init_ConfigStore_DataUt = new OutboundChannelPolicy.Verdict(
+      OutboundChannelPolicy.Verdict.VerdictKind.PASS, null
    );
-   private static final OutboundChannelPolicy.Inner_DataUtil load_ConfigStore_DataUt = new OutboundChannelPolicy.Inner_DataUtil(
-      OutboundChannelPolicy.Inner_DataUtil.Inner_DataUtil_2.DROP, null
+   private static final OutboundChannelPolicy.Verdict load_ConfigStore_DataUt = new OutboundChannelPolicy.Verdict(
+      OutboundChannelPolicy.Verdict.VerdictKind.DROP, null
    );
 
    private OutboundChannelPolicy() {
    }
 
-   public static OutboundChannelPolicy.Inner_DataUtil init(Connection connection, Packet<?> packet) {
+   public static OutboundChannelPolicy.Verdict init(Connection connection, Packet<?> packet) {
       if (!(packet instanceof ServerboundCustomPayloadPacket) && !(packet instanceof ServerboundCustomQueryAnswerPacket)) {
          return init_ConfigStore_DataUt;
       } else {
@@ -115,7 +115,7 @@ public final class OutboundChannelPolicy {
       }
    }
 
-   private static OutboundChannelPolicy.Inner_DataUtil init(Connection connection, ConnectionPrivacyRegistry.ConnectionSession context, ServerboundCustomPayloadPacket packet) {
+   private static OutboundChannelPolicy.Verdict init(Connection connection, ConnectionPrivacyRegistry.ConnectionSession context, ServerboundCustomPayloadPacket packet) {
       CustomPacketPayload payload;
       try {
          payload = packet.payload();
@@ -127,8 +127,8 @@ public final class OutboundChannelPolicy {
          return payload instanceof BrandPayload ? init(new ServerboundCustomPayloadPacket(new BrandPayload("vanilla"))) : load_ConfigStore_DataUt;
       }
 
-      CustomPayloadFilter.Inner_DataUtil verdict = CustomPayloadFilter.init(connection, packet, false);
-      OutboundChannelPolicy.Inner_DataUtil var10000;
+      CustomPayloadFilter.Verdict verdict = CustomPayloadFilter.init(connection, packet, false);
+      OutboundChannelPolicy.Verdict var10000;
       switch (verdict.kind) {
          case PASS:
             var10000 = init_ConfigStore_DataUt;
@@ -146,7 +146,7 @@ public final class OutboundChannelPolicy {
       return var10000;
    }
 
-   private static OutboundChannelPolicy.Inner_DataUtil init(ConnectionPrivacyRegistry.ConnectionSession context, ServerboundCustomQueryAnswerPacket answer) {
+   private static OutboundChannelPolicy.Verdict init(ConnectionPrivacyRegistry.ConnectionSession context, ServerboundCustomQueryAnswerPacket answer) {
       if (context.privacyMode() == ConnectionPrivacyRegistry.PrivacyMode.MODDED) {
          return init_ConfigStore_DataUt;
       }
@@ -171,8 +171,8 @@ public final class OutboundChannelPolicy {
       }
    }
 
-   private static OutboundChannelPolicy.Inner_DataUtil init(Packet<?> replacement) {
-      return replacement == null ? load_ConfigStore_DataUt : new OutboundChannelPolicy.Inner_DataUtil(OutboundChannelPolicy.Inner_DataUtil.Inner_DataUtil_2.REPLACE, replacement);
+   private static OutboundChannelPolicy.Verdict init(Packet<?> replacement) {
+      return replacement == null ? load_ConfigStore_DataUt : new OutboundChannelPolicy.Verdict(OutboundChannelPolicy.Verdict.VerdictKind.REPLACE, replacement);
    }
 
    static void init() {
@@ -183,16 +183,16 @@ public final class OutboundChannelPolicy {
       LateRegisterSynthesizer.reset();
    }
 
-   public static final class Inner_DataUtil {
-      public final OutboundChannelPolicy.Inner_DataUtil.Inner_DataUtil_2 kind;
+   public static final class Verdict {
+      public final OutboundChannelPolicy.Verdict.VerdictKind kind;
       public final Packet<?> replacement;
 
-      private Inner_DataUtil(OutboundChannelPolicy.Inner_DataUtil.Inner_DataUtil_2 kind, Packet<?> replacement) {
+      private Verdict(OutboundChannelPolicy.Verdict.VerdictKind kind, Packet<?> replacement) {
          this.kind = kind;
          this.replacement = replacement;
       }
 
-      public enum Inner_DataUtil_2 {
+      public enum VerdictKind {
          PASS,
          DROP,
          REPLACE;

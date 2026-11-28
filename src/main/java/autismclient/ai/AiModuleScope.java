@@ -53,7 +53,7 @@ final class AiModuleScope implements AiOperation {
       return control;
    }
 
-   static autismclient.modules.ScopedToggleOverride.Inner_StreamUtil init(Module module, boolean enabled) {
+   static autismclient.modules.ScopedToggleOverride.OverrideHandle init(Module module, boolean enabled) {
       return register(module.borrowEnabled(enabled));
    }
 

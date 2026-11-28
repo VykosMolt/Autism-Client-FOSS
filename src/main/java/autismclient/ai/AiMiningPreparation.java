@@ -376,7 +376,7 @@ public final class AiMiningPreparation {
       }
    }
 
-   static AiMiningPreparation.Inner_DataUtil init(
+   static AiMiningPreparation.CraftOption init(
       AiCraftPlanner.RecipeGraph graph,
       boolean tableHeld,
       String log,
@@ -389,7 +389,7 @@ public final class AiMiningPreparation {
       double logTicks,
       int axeUses
    ) {
-      AiMiningPreparation.Inner_DataUtil best = null;
+      AiMiningPreparation.CraftOption best = null;
       if (remaining > 0 && !(after >= before) && axeUses > 0 && Double.isFinite(before)) {
          for (int extra = 0; extra <= Math.min(3, Math.max(0, nearbyLogs)) && (extra <= 0 || !log.isEmpty()); extra++) {
             AiCraftPlanner.CraftPlan plan = init(graph, "minecraft:wooden_axe", tableHeld, log, extra);
@@ -415,7 +415,7 @@ public final class AiMiningPreparation {
                double cost = setup + extra * logTicks + (extra > 0 ? 30 : 0) + fast * after + (afterCraft - fast) * before;
                double saving = remaining * before - cost;
                if (saving > 0.0 && (best == null || saving > best.savingTicks())) {
-                  best = new AiMiningPreparation.Inner_DataUtil(plan, extra, (int)Math.min(2147483647L, consumed), afterCraft, saving);
+                  best = new AiMiningPreparation.CraftOption(plan, extra, (int)Math.min(2147483647L, consumed), afterCraft, saving);
                }
             }
          }
@@ -509,14 +509,14 @@ public final class AiMiningPreparation {
          }
 
          double setup = 40 + (tableHeld ? 0 : 60);
-         AiMiningPreparation.Inner_DataUtil chosen = init(graph, tableHeld, "", goalLogs, remaining, 0, before, after, setup, before, Math.max(1, axe.getMaxDamage() - 2));
+         AiMiningPreparation.CraftOption chosen = init(graph, tableHeld, "", goalLogs, remaining, 0, before, after, setup, before, Math.max(1, axe.getMaxDamage() - 2));
          String chosenLog = "";
 
          for (Entry<String, List<BlockPos>> entry : local.entrySet()) {
             BlockState state = mc.level.getBlockState(entry.getValue().getFirst());
             double logTicks = autismclient.ai.engine.MiningCost.breakTicks(mc, ItemStack.EMPTY, state, state.getBlock().defaultDestroyTime(), factors);
             double walk = Math.sqrt(entry.getValue().stream().mapToDouble(at -> at.distSqr(origin)).max().orElse(0.0)) * 8.0;
-            AiMiningPreparation.Inner_DataUtil candidate = init(
+            AiMiningPreparation.CraftOption candidate = init(
                graph,
                tableHeld,
                entry.getKey(),
@@ -804,6 +804,6 @@ public final class AiMiningPreparation {
       );
    }
 
-   record Inner_DataUtil(AiCraftPlanner.CraftPlan plan, int extraLogs, int consumedGoalLogs, int remainingAfterCraft, double savingTicks) {
+   record CraftOption(AiCraftPlanner.CraftPlan plan, int extraLogs, int consumedGoalLogs, int remainingAfterCraft, double savingTicks) {
    }
 }

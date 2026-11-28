@@ -13,8 +13,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class TpClickModule extends Module {
-   private final autismclient.ai.engine.AiStandingTarget.Inner_DataUtil init_j_DataUtil = new autismclient.ai.engine.AiStandingTarget.Inner_DataUtil();
-   private autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil;
+   private final autismclient.ai.engine.AiStandingTarget.TargetCache init_j_DataUtil = new autismclient.ai.engine.AiStandingTarget.TargetCache();
+   private autismclient.ai.engine.AiStandingTarget.StandingSpot init_j_StreamUtil;
    private boolean init_Z;
 
    TpClickModule() {

@@ -22,21 +22,21 @@ import net.minecraft.world.phys.Vec3;
 public final class FrameEspCatalog {
    public static final String init_Str = "frame-esp";
    private static final int load_I = 1024;
-   public static final List<FrameEspCatalog.Inner_StreamUtil> TARGETS = List.of(
-      new FrameEspCatalog.Inner_StreamUtil("minecraft:elytra", "Elytra", -865100801),
-      new FrameEspCatalog.Inner_StreamUtil("minecraft:totem_of_undying", "Totem of Undying", -855649729),
-      new FrameEspCatalog.Inner_StreamUtil("minecraft:enchanted_golden_apple", "Enchanted Golden Apple", -855679797),
-      new FrameEspCatalog.Inner_StreamUtil("minecraft:netherite_ingot", "Netherite Ingot", -855672006),
-      new FrameEspCatalog.Inner_StreamUtil("minecraft:diamond", "Diamond", -867507242),
-      new FrameEspCatalog.Inner_StreamUtil("minecraft:nether_star", "Nether Star", -856493326),
-      new FrameEspCatalog.Inner_StreamUtil("minecraft:shulker_box", "Shulker Box", -860656641)
+   public static final List<FrameEspCatalog.FrameTarget> TARGETS = List.of(
+      new FrameEspCatalog.FrameTarget("minecraft:elytra", "Elytra", -865100801),
+      new FrameEspCatalog.FrameTarget("minecraft:totem_of_undying", "Totem of Undying", -855649729),
+      new FrameEspCatalog.FrameTarget("minecraft:enchanted_golden_apple", "Enchanted Golden Apple", -855679797),
+      new FrameEspCatalog.FrameTarget("minecraft:netherite_ingot", "Netherite Ingot", -855672006),
+      new FrameEspCatalog.FrameTarget("minecraft:diamond", "Diamond", -867507242),
+      new FrameEspCatalog.FrameTarget("minecraft:nether_star", "Nether Star", -856493326),
+      new FrameEspCatalog.FrameTarget("minecraft:shulker_box", "Shulker Box", -860656641)
    );
    public static final String DEFAULT_IDS;
    public static final int DEFAULT_COLOR = -859848769;
-   private static final Map<String, FrameEspCatalog.Inner_StreamUtil> TARGETS_BY_ID = new LinkedHashMap<>();
+   private static final Map<String, FrameEspCatalog.FrameTarget> TARGETS_BY_ID = new LinkedHashMap<>();
    private static volatile String read;
    private static volatile List<String> selectedIds = List.of();
-   private static volatile FrameEspCatalog.Inner_CachePool currentSnapshot;
+   private static volatile FrameEspCatalog.CatalogSnapshot currentSnapshot;
 
    private FrameEspCatalog() {
    }
@@ -73,7 +73,7 @@ public final class FrameEspCatalog {
    }
 
    public static int defaultColor(String itemId) {
-      FrameEspCatalog.Inner_StreamUtil target = itemId == null ? null : TARGETS_BY_ID.get(itemId.toLowerCase(Locale.ROOT));
+      FrameEspCatalog.FrameTarget target = itemId == null ? null : TARGETS_BY_ID.get(itemId.toLowerCase(Locale.ROOT));
       if (target != null) {
          return target.defaultColor();
       }
@@ -98,8 +98,8 @@ public final class FrameEspCatalog {
       }
    }
 
-   static FrameEspCatalog.Inner_CachePool snapshot() {
-      FrameEspCatalog.Inner_CachePool current = currentSnapshot;
+   static FrameEspCatalog.CatalogSnapshot snapshot() {
+      FrameEspCatalog.CatalogSnapshot current = currentSnapshot;
       int revision = al.init_I();
       boolean hidden = am.init_Z();
       if (current.revision() == revision && current.hidden() == hidden) {
@@ -118,9 +118,9 @@ public final class FrameEspCatalog {
       }
    }
 
-   private static FrameEspCatalog.Inner_CachePool init(int revision, boolean hidden) {
+   private static FrameEspCatalog.CatalogSnapshot init(int revision, boolean hidden) {
       if (hidden) {
-         return FrameEspCatalog.Inner_CachePool.init(revision, true);
+         return FrameEspCatalog.CatalogSnapshot.init(revision, true);
       }
 
       Module module = al.init_Module_Str("frame-esp");
@@ -135,7 +135,7 @@ public final class FrameEspCatalog {
          }
 
          boolean shader = !"Box".equals(module.value("mode"));
-         return new FrameEspCatalog.Inner_CachePool(
+         return new FrameEspCatalog.CatalogSnapshot(
             revision,
             false,
             true,
@@ -149,11 +149,11 @@ public final class FrameEspCatalog {
             Map.copyOf(colors)
          );
       } else {
-         return FrameEspCatalog.Inner_CachePool.init(revision, false);
+         return FrameEspCatalog.CatalogSnapshot.init(revision, false);
       }
    }
 
-   static int init(FrameEspCatalog.Inner_CachePool snapshot, ItemFrame frame) {
+   static int init(FrameEspCatalog.CatalogSnapshot snapshot, ItemFrame frame) {
       ItemStack stack = frame.getItem();
       if (stack.isEmpty()) {
          return snapshot.close() ? snapshot.load_I() : 0;
@@ -168,13 +168,13 @@ public final class FrameEspCatalog {
    }
 
    public static boolean init_Z() {
-      FrameEspCatalog.Inner_CachePool current = snapshot();
+      FrameEspCatalog.CatalogSnapshot current = snapshot();
       return current.load_Z() && current.read();
    }
 
    public static int outlineColor(Entity entity) {
       if (entity instanceof ItemFrame frame) {
-         FrameEspCatalog.Inner_CachePool current = snapshot();
+         FrameEspCatalog.CatalogSnapshot current = snapshot();
          if (!current.load_Z() || !current.read()) {
             return 0;
          }
@@ -194,11 +194,11 @@ public final class FrameEspCatalog {
       return outlineColor(entity) != 0;
    }
 
-   static boolean init(FrameEspCatalog.Inner_CachePool current) {
+   static boolean init(FrameEspCatalog.CatalogSnapshot current) {
       return current.load_Z() && (current.write() || current.update() || current.sync());
    }
 
-   static void init(FrameEspCatalog.Inner_CachePool current, ClientLevel level, Player player, BiConsumer<AABB, Integer> boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
+   static void init(FrameEspCatalog.CatalogSnapshot current, ClientLevel level, Player player, BiConsumer<AABB, Integer> boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
       if (level != null && player != null && current.load_Z()) {
          record Inner_DataUtil(ItemFrame init_ItemFrame, int init_I, double init_D) {
          }
@@ -242,7 +242,7 @@ public final class FrameEspCatalog {
    static {
       StringBuilder def = new StringBuilder();
 
-      for (FrameEspCatalog.Inner_StreamUtil target : TARGETS) {
+      for (FrameEspCatalog.FrameTarget target : TARGETS) {
          TARGETS_BY_ID.put(target.id(), target);
          if (def.length() > 0) {
             def.append('|');
@@ -252,10 +252,10 @@ public final class FrameEspCatalog {
       }
 
       DEFAULT_IDS = def.toString();
-      currentSnapshot = FrameEspCatalog.Inner_CachePool.init(-2147483648, false);
+      currentSnapshot = FrameEspCatalog.CatalogSnapshot.init(-2147483648, false);
    }
 
-   record Inner_CachePool(
+   record CatalogSnapshot(
       int revision,
       boolean hidden,
       boolean load_Z,
@@ -268,11 +268,11 @@ public final class FrameEspCatalog {
       int load_I,
       Map<Item, Integer> colors
    ) {
-      static FrameEspCatalog.Inner_CachePool init(int revision, boolean hidden) {
-         return new FrameEspCatalog.Inner_CachePool(revision, hidden, false, false, false, false, false, false, false, 0, Map.of());
+      static FrameEspCatalog.CatalogSnapshot init(int revision, boolean hidden) {
+         return new FrameEspCatalog.CatalogSnapshot(revision, hidden, false, false, false, false, false, false, false, 0, Map.of());
       }
    }
 
-   public record Inner_StreamUtil(String id, String load, int defaultColor) {
+   public record FrameTarget(String id, String load, int defaultColor) {
    }
 }

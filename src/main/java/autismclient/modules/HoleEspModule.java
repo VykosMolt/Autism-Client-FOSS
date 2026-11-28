@@ -15,7 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public final class HoleEspModule extends Module implements autismclient.util.PvpHoleScanner.Inner_ConfigStore {
+public final class HoleEspModule extends Module implements autismclient.util.PvpHoleScanner.ScanSubscriber {
    private static final String init_Str = "Box";
    private static final String load_Str = "GlowingPlane";
    private static final double init_D = 0.19607843137254902;
@@ -179,7 +179,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
                         return;
                      }
 
-                     List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes = autismclient.util.PvpHoleScanner.holes();
+                     List<autismclient.util.PvpHoleScanner.Hole> holes = autismclient.util.PvpHoleScanner.holes();
                      if (holes.isEmpty()) {
                         return;
                      }
@@ -210,11 +210,11 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       }
    }
 
-   private void drawHoles(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
+   private void drawHoles(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Hole> holes, Vec3 camera, Vec3 player) {
       long perf = bK.load_J();
       int drawn = 0;
 
-      for (autismclient.util.PvpHoleScanner.Inner_DataUtil hole : holes) {
+      for (autismclient.util.PvpHoleScanner.Hole hole : holes) {
          if (drawn >= this.maxHoles) {
             break;
          }
@@ -241,11 +241,11 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       bK.init("frame.holeEspFill", perf);
    }
 
-   private void renderHoles(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Inner_DataUtil> holes, Vec3 camera, Vec3 player) {
+   private void renderHoles(Pose pose, VertexConsumer buffer, List<autismclient.util.PvpHoleScanner.Hole> holes, Vec3 camera, Vec3 player) {
       long perf = bK.load_J();
       int drawn = 0;
 
-      for (autismclient.util.PvpHoleScanner.Inner_DataUtil hole : holes) {
+      for (autismclient.util.PvpHoleScanner.Hole hole : holes) {
          if (drawn >= this.maxHoles) {
             break;
          }
@@ -268,7 +268,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
       bK.init("frame.holeEspOutline", perf);
    }
 
-   private int colorFor(autismclient.util.PvpHoleScanner.Inner_StreamUtil type) {
+   private int colorFor(autismclient.util.PvpHoleScanner.HoleType type) {
       int var10000;
       switch (type) {
          case ONE_BY_ONE_BEDROCK:

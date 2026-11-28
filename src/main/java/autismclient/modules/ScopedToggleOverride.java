@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 public final class ScopedToggleOverride {
    private final BooleanSupplier configured;
    private final Consumer<Boolean> transition;
-   private final ArrayList<ScopedToggleOverride.Inner_DataUtil> init_ArrayList = new ArrayList<>();
+   private final ArrayList<ScopedToggleOverride.OverrideEntry> init_ArrayList = new ArrayList<>();
 
    public ScopedToggleOverride(BooleanSupplier configured, Consumer<Boolean> transition) {
       this.configured = configured;
@@ -18,9 +18,9 @@ public final class ScopedToggleOverride {
       return this.init_ArrayList.isEmpty() ? this.configured.getAsBoolean() : this.init_ArrayList.getLast().init;
    }
 
-   public ScopedToggleOverride.Inner_StreamUtil push(boolean enabled) {
+   public ScopedToggleOverride.OverrideHandle push(boolean enabled) {
       boolean before = this.isEnabled();
-      ScopedToggleOverride.Inner_DataUtil entry = new ScopedToggleOverride.Inner_DataUtil(enabled);
+      ScopedToggleOverride.OverrideEntry entry = new ScopedToggleOverride.OverrideEntry(enabled);
       this.init_ArrayList.add(entry);
 
       try {
@@ -48,10 +48,10 @@ public final class ScopedToggleOverride {
       }
    }
 
-   private final class Inner_DataUtil implements ScopedToggleOverride.Inner_StreamUtil {
+   private final class OverrideEntry implements ScopedToggleOverride.OverrideHandle {
       final boolean init;
 
-      Inner_DataUtil(boolean enabled) {
+      OverrideEntry(boolean enabled) {
          this.init = enabled;
       }
 
@@ -64,7 +64,7 @@ public final class ScopedToggleOverride {
       }
    }
 
-   public interface Inner_StreamUtil extends AutoCloseable {
+   public interface OverrideHandle extends AutoCloseable {
       @Override
       void close();
    }

@@ -51,7 +51,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class StorageEspCatalog {
-   public static final List<StorageEspCatalog.Inner_BufferHelper> TARGETS = List.of(
+   public static final List<StorageEspCatalog.StorageTarget> TARGETS = List.of(
       blockTarget("minecraft:chest", "Chest", () -> Blocks.CHEST.asItem().getDefaultInstance(), ChestBlockEntity.class),
       blockTarget("minecraft:trapped_chest", "Trapped Chest", () -> Blocks.TRAPPED_CHEST.asItem().getDefaultInstance(), TrappedChestBlockEntity.class),
       blockTarget("minecraft:ender_chest", "Ender Chest", () -> Blocks.ENDER_CHEST.asItem().getDefaultInstance(), EnderChestBlockEntity.class),
@@ -78,20 +78,20 @@ public final class StorageEspCatalog {
       entityTarget("minecraft:furnace_minecart", "Furnace Minecart", () -> Items.FURNACE_MINECART.getDefaultInstance(), MinecartFurnace.class),
       entityTarget("minecraft:chest_boat", "Chest Boat", () -> Items.OAK_CHEST_BOAT.getDefaultInstance(), AbstractChestBoat.class)
    );
-   private static final Map<String, StorageEspCatalog.Inner_BufferHelper> TARGETS_BY_ID;
+   private static final Map<String, StorageEspCatalog.StorageTarget> TARGETS_BY_ID;
    public static final String DEFAULT_IDS;
-   private static volatile StorageEspCatalog.Inner_ConfigStore cachedSelection = new StorageEspCatalog.Inner_ConfigStore("", List.of(), List.of());
+   private static volatile StorageEspCatalog.TargetSelection cachedSelection = new StorageEspCatalog.TargetSelection("", List.of(), List.of());
 
-   public static StorageEspCatalog.Inner_BufferHelper byId(String id) {
+   public static StorageEspCatalog.StorageTarget byId(String id) {
       return id == null ? null : TARGETS_BY_ID.get(id.toLowerCase(Locale.ROOT));
    }
 
-   private static StorageEspCatalog.Inner_BufferHelper blockTarget(String id, String label, Supplier<ItemStack> iconSupplier, Class<? extends BlockEntity> beClass) {
-      return new StorageEspCatalog.Inner_BufferHelper(id, label, "Blocks", iconSupplier, beClass, null);
+   private static StorageEspCatalog.StorageTarget blockTarget(String id, String label, Supplier<ItemStack> iconSupplier, Class<? extends BlockEntity> beClass) {
+      return new StorageEspCatalog.StorageTarget(id, label, "Blocks", iconSupplier, beClass, null);
    }
 
-   private static StorageEspCatalog.Inner_BufferHelper entityTarget(String id, String label, Supplier<ItemStack> iconSupplier, Class<? extends Entity> entityClass) {
-      return new StorageEspCatalog.Inner_BufferHelper(id, label, "Entities", iconSupplier, null, entityClass);
+   private static StorageEspCatalog.StorageTarget entityTarget(String id, String label, Supplier<ItemStack> iconSupplier, Class<? extends Entity> entityClass) {
+      return new StorageEspCatalog.StorageTarget(id, label, "Entities", iconSupplier, null, entityClass);
    }
 
    private StorageEspCatalog() {
@@ -109,17 +109,17 @@ public final class StorageEspCatalog {
       collectInto(module, level, player, tickDelta, boxEmit == null ? null : (box, color, meshable) -> boxEmit.accept(box, color), traceEmit);
    }
 
-   static void init(Module module, ClientLevel level, Player player, float tickDelta, StorageEspCatalog.Inner_DataUtil boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
+   static void init(Module module, ClientLevel level, Player player, float tickDelta, StorageEspCatalog.BoxSink boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
       collectInto(module, level, player, tickDelta, boxEmit, traceEmit);
    }
 
-   private static void collectInto(Module module, ClientLevel level, Player player, float tickDelta, StorageEspCatalog.Inner_DataUtil boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
+   private static void collectInto(Module module, ClientLevel level, Player player, float tickDelta, StorageEspCatalog.BoxSink boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
       if (module != null && level != null && player != null && (boxEmit != null || traceEmit != null)) {
-         StorageEspCatalog.Inner_ConfigStore selection = parseSelection(module.value("storage-list"));
-         List<StorageEspCatalog.Inner_BufferHelper> blockTargets = selection.blockTargets();
-         List<StorageEspCatalog.Inner_BufferHelper> entityTargets = selection.load();
+         StorageEspCatalog.TargetSelection selection = parseSelection(module.value("storage-list"));
+         List<StorageEspCatalog.StorageTarget> blockTargets = selection.blockTargets();
+         List<StorageEspCatalog.StorageTarget> entityTargets = selection.load();
          if (!blockTargets.isEmpty() || !entityTargets.isEmpty()) {
-            StorageEspCatalog.Inner_StreamUtil colors = readColors(module);
+            StorageEspCatalog.StorageColors colors = readColors(module);
             int chunkRadius = am.init_I();
             double maxDistSq = 2.0 * (chunkRadius * 16.0 + 16.0) * (chunkRadius * 16.0 + 16.0);
             Vec3 playerPos = player.position();
@@ -157,7 +157,7 @@ public final class StorageEspCatalog {
             if (!entityTargets.isEmpty()) {
                for (Entity entity : level.entitiesForRendering()) {
                   if (entity != null && entity.isAlive()) {
-                     StorageEspCatalog.Inner_BufferHelper matched = matchEntity(entity, entityTargets);
+                     StorageEspCatalog.StorageTarget matched = matchEntity(entity, entityTargets);
                      if (matched != null && !(distanceSq(playerPos, entity.getX(), entity.getY(), entity.getZ()) > maxDistSq)) {
                         AABB box = entityBox(entity, tickDelta).inflate(0.05);
                         int color = entityColor(colors, entity);
@@ -177,7 +177,7 @@ public final class StorageEspCatalog {
    }
 
    private static void scanChunk(
-      ClientLevel level, LevelChunk chunk, List<StorageEspCatalog.Inner_BufferHelper> blockTargets, StorageEspCatalog.Inner_StreamUtil colors, long hideMask, List<EspChunkWorker.EspBox> out
+      ClientLevel level, LevelChunk chunk, List<StorageEspCatalog.StorageTarget> blockTargets, StorageEspCatalog.StorageColors colors, long hideMask, List<EspChunkWorker.EspBox> out
    ) {
       Map<Integer, Long> sectionStructures = hideMask == 0L ? Map.of() : new HashMap<>();
 
@@ -196,11 +196,11 @@ public final class StorageEspCatalog {
       return shape != null && !shape.isEmpty() ? shape.bounds().move(pos.getX(), pos.getY(), pos.getZ()) : new AABB(pos);
    }
 
-   private static StorageEspCatalog.Inner_BufferHelper matchBlockEntity(BlockEntity be, List<StorageEspCatalog.Inner_BufferHelper> targets) {
-      StorageEspCatalog.Inner_BufferHelper best = null;
+   private static StorageEspCatalog.StorageTarget matchBlockEntity(BlockEntity be, List<StorageEspCatalog.StorageTarget> targets) {
+      StorageEspCatalog.StorageTarget best = null;
       int bestDepth = -1;
 
-      for (StorageEspCatalog.Inner_BufferHelper target : targets) {
+      for (StorageEspCatalog.StorageTarget target : targets) {
          if (target.beClass != null && target.beClass.isInstance(be)) {
             int depth = classDepth(be.getClass(), target.beClass);
             if (depth >= 0 && (best == null || depth < bestDepth)) {
@@ -213,11 +213,11 @@ public final class StorageEspCatalog {
       return best;
    }
 
-   private static StorageEspCatalog.Inner_BufferHelper matchEntity(Entity entity, List<StorageEspCatalog.Inner_BufferHelper> targets) {
-      StorageEspCatalog.Inner_BufferHelper best = null;
+   private static StorageEspCatalog.StorageTarget matchEntity(Entity entity, List<StorageEspCatalog.StorageTarget> targets) {
+      StorageEspCatalog.StorageTarget best = null;
       int bestDepth = -1;
 
-      for (StorageEspCatalog.Inner_BufferHelper target : targets) {
+      for (StorageEspCatalog.StorageTarget target : targets) {
          if (target.entityClass != null && target.entityClass.isInstance(entity)) {
             int depth = classDepth(entity.getClass(), target.entityClass);
             if (depth >= 0 && (best == null || depth < bestDepth)) {
@@ -244,7 +244,7 @@ public final class StorageEspCatalog {
       return -1;
    }
 
-   private static int blockEntityColor(StorageEspCatalog.Inner_StreamUtil colors, BlockEntity be) {
+   private static int blockEntityColor(StorageEspCatalog.StorageColors colors, BlockEntity be) {
       if (be instanceof TrappedChestBlockEntity) {
          return colors.init();
       } else if (be instanceof ChestBlockEntity) {
@@ -274,7 +274,7 @@ public final class StorageEspCatalog {
       }
    }
 
-   private static int entityColor(StorageEspCatalog.Inner_StreamUtil colors, Entity entity) {
+   private static int entityColor(StorageEspCatalog.StorageColors colors, Entity entity) {
       if (entity instanceof MinecartChest) {
          return colors.load();
       } else if (entity instanceof AbstractChestBoat) {
@@ -304,20 +304,20 @@ public final class StorageEspCatalog {
       return am.init_I_Module(module, option, fallback);
    }
 
-   private static StorageEspCatalog.Inner_ConfigStore parseSelection(String value) {
+   private static StorageEspCatalog.TargetSelection parseSelection(String value) {
       String safe = value == null ? "" : value;
-      StorageEspCatalog.Inner_ConfigStore cached = cachedSelection;
+      StorageEspCatalog.TargetSelection cached = cachedSelection;
       if (cached.safe().equals(safe)) {
          return cached;
       }
 
-      List<StorageEspCatalog.Inner_BufferHelper> blockTargets = new ArrayList<>();
-      List<StorageEspCatalog.Inner_BufferHelper> entityTargets = new ArrayList<>();
+      List<StorageEspCatalog.StorageTarget> blockTargets = new ArrayList<>();
+      List<StorageEspCatalog.StorageTarget> entityTargets = new ArrayList<>();
 
       for (String raw : safe.split("\\|")) {
          String token = raw.trim();
          if (!token.isEmpty()) {
-            StorageEspCatalog.Inner_BufferHelper target = byId(token);
+            StorageEspCatalog.StorageTarget target = byId(token);
             if (target != null) {
                if (target.init_Z()) {
                   blockTargets.add(target);
@@ -328,13 +328,13 @@ public final class StorageEspCatalog {
          }
       }
 
-      StorageEspCatalog.Inner_ConfigStore next = new StorageEspCatalog.Inner_ConfigStore(safe, List.copyOf(blockTargets), List.copyOf(entityTargets));
+      StorageEspCatalog.TargetSelection next = new StorageEspCatalog.TargetSelection(safe, List.copyOf(blockTargets), List.copyOf(entityTargets));
       cachedSelection = next;
       return next;
    }
 
-   private static StorageEspCatalog.Inner_StreamUtil readColors(Module module) {
-      return new StorageEspCatalog.Inner_StreamUtil(
+   private static StorageEspCatalog.StorageColors readColors(Module module) {
+      return new StorageEspCatalog.StorageColors(
          colorOption(module, "trapped-chest-color", -855695328),
          colorOption(module, "chest-color", -855662592),
          colorOption(module, "ender-chest-color", -864550657),
@@ -353,10 +353,10 @@ public final class StorageEspCatalog {
    }
 
    static {
-      Map<String, StorageEspCatalog.Inner_BufferHelper> map = new LinkedHashMap<>();
+      Map<String, StorageEspCatalog.StorageTarget> map = new LinkedHashMap<>();
       StringBuilder def = new StringBuilder();
 
-      for (StorageEspCatalog.Inner_BufferHelper target : TARGETS) {
+      for (StorageEspCatalog.StorageTarget target : TARGETS) {
          map.put(target.id, target);
          if (def.length() > 0) {
             def.append('|');
@@ -369,7 +369,7 @@ public final class StorageEspCatalog {
       DEFAULT_IDS = def.toString();
    }
 
-   public static final class Inner_BufferHelper {
+   public static final class StorageTarget {
       public final String id;
       public final String label;
       public final String read;
@@ -378,7 +378,7 @@ public final class StorageEspCatalog {
       private final Class<? extends BlockEntity> beClass;
       private final Class<? extends Entity> entityClass;
 
-      private Inner_BufferHelper(
+      private StorageTarget(
          String id, String label, String group, Supplier<ItemStack> iconSupplier, Class<? extends BlockEntity> beClass, Class<? extends Entity> entityClass
       ) {
          this.id = id;
@@ -404,7 +404,7 @@ public final class StorageEspCatalog {
       }
    }
 
-   public static final class Inner_CachePool {
+   public static final class TargetIds {
       public static final String CHEST = "minecraft:chest";
       public static final String TRAPPED_CHEST = "minecraft:trapped_chest";
       public static final String ENDER_CHEST = "minecraft:ender_chest";
@@ -426,18 +426,18 @@ public final class StorageEspCatalog {
       public static final String FURNACE_MINECART = "minecraft:furnace_minecart";
       public static final String CHEST_BOAT = "minecraft:chest_boat";
 
-      private Inner_CachePool() {
+      private TargetIds() {
       }
    }
 
-   private record Inner_ConfigStore(String safe, List<StorageEspCatalog.Inner_BufferHelper> blockTargets, List<StorageEspCatalog.Inner_BufferHelper> load) {
+   private record TargetSelection(String safe, List<StorageEspCatalog.StorageTarget> blockTargets, List<StorageEspCatalog.StorageTarget> load) {
    }
 
    @FunctionalInterface
-   interface Inner_DataUtil {
+   interface BoxSink {
       void accept(AABB var1, int var2, boolean var3);
    }
 
-   private record Inner_StreamUtil(int init, int load, int read, int write, int update, int sync, int flush, int close, int open, int poll) {
+   private record StorageColors(int init, int load, int read, int write, int update, int sync, int flush, int close, int open, int poll) {
    }
 }

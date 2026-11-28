@@ -24,7 +24,7 @@ public class FakeGmCommand extends Command {
       });
       root.then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("mode", StringArgumentType.word()).suggests(autismclient.commands.CommandSuggestions::set).executes(ctx -> {
          String mode = StringArgumentType.getString(ctx, "mode").toLowerCase(Locale.ROOT);
-         FakeGamemodeManager.Inner_DataUtil result;
+         FakeGamemodeManager.ApplyResult result;
          if (!"reset".equals(mode) && !"r".equals(mode)) {
             GameType resolved = FakeGamemodeManager.init(mode);
             if (resolved == null) {

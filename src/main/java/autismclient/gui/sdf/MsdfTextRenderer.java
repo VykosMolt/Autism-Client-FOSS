@@ -13,9 +13,9 @@ import org.joml.Matrix3x2f;
 
 public final class MsdfTextRenderer {
    private static final int CACHE_LIMIT = 2048;
-   private static final Map<MsdfTextRenderer.Inner_DataUtil, Float> WIDTH_CACHE = new LinkedHashMap<MsdfTextRenderer.Inner_DataUtil, Float>(256, 0.75F, true) {
+   private static final Map<MsdfTextRenderer.WidthKey, Float> WIDTH_CACHE = new LinkedHashMap<MsdfTextRenderer.WidthKey, Float>(256, 0.75F, true) {
       @Override
-      protected boolean removeEldestEntry(Entry<MsdfTextRenderer.Inner_DataUtil, Float> eldest) {
+      protected boolean removeEldestEntry(Entry<MsdfTextRenderer.WidthKey, Float> eldest) {
          return this.size() > 2048;
       }
    };
@@ -80,7 +80,7 @@ public final class MsdfTextRenderer {
          return 0.0F;
       }
 
-      MsdfTextRenderer.Inner_DataUtil key = new MsdfTextRenderer.Inner_DataUtil(font, safe, quantizeSize(size), forceVanilla);
+      MsdfTextRenderer.WidthKey key = new MsdfTextRenderer.WidthKey(font, safe, quantizeSize(size), forceVanilla);
       synchronized (WIDTH_CACHE) {
          Float cached = WIDTH_CACHE.get(key);
          if (cached != null) {
@@ -248,6 +248,6 @@ public final class MsdfTextRenderer {
       return Math.round(size * 64.0F) / 64.0F;
    }
 
-   private record Inner_DataUtil(MsdfFontFace font, String text, float size, boolean forceVanilla) {
+   private record WidthKey(MsdfFontFace font, String text, float size, boolean forceVanilla) {
    }
 }

@@ -4,13 +4,13 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 
 final class PrintFrontierWalk {
-   private final PrintNav.Inner_NetHelper init_TokenStore_NetHelp;
+   private final PrintNav.ReachSearch init_TokenStore_NetHelp;
    private final int chunkMinX;
    private final int chunkMinZ;
    private final int chunkMaxX;
    private final int write;
    private final double init_D;
-   final PrintNav.Inner_TaskQueue result;
+   final PrintNav.ReachResult result;
    LongOpenHashSet avoidCells;
    boolean done;
    boolean load_Z;
@@ -19,14 +19,14 @@ final class PrintFrontierWalk {
    private double load_D = 1.0 / 0.0;
    private double cost = 1.0 / 0.0;
 
-   PrintFrontierWalk(PrintView view, BlockPos start, PrintNav.Inner_DataUtil searchBounds, int chunkMinX, int chunkMinZ, int chunkMaxX, int chunkMaxZ, int maxNodes) {
+   PrintFrontierWalk(PrintView view, BlockPos start, PrintNav.SearchBounds searchBounds, int chunkMinX, int chunkMinZ, int chunkMaxX, int chunkMaxZ, int maxNodes) {
       this.chunkMinX = chunkMinX;
       this.chunkMinZ = chunkMinZ;
       this.chunkMaxX = chunkMaxX;
       this.write = chunkMaxZ;
       this.init_D = this.init_D(start.asLong());
       boolean supported = !Double.isNaN(view.standingHeightAt(start.getX(), start.getY(), start.getZ()));
-      this.init_TokenStore_NetHelp = new PrintNav.Inner_NetHelper(view, start, searchBounds, maxNodes, null, null, this::init_Z);
+      this.init_TokenStore_NetHelp = new PrintNav.ReachSearch(view, start, searchBounds, maxNodes, null, null, this::init_Z);
       this.result = this.init_TokenStore_NetHelp.result;
       if (!supported) {
          this.done = this.load_Z = true;

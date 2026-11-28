@@ -29,7 +29,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class BedNukerModule extends Module implements SilentMovementCoordinator.Participant {
-   private BedBreachRouteSolver.Inner_BufferHelper route;
+   private BedBreachRouteSolver.BreachRoute route;
    private final MineBreakPaceGuard paceGuard = new MineBreakPaceGuard();
    private BlockPos targetBed;
    private boolean miningStarted;
@@ -75,15 +75,15 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
       return al.init_Module_Str("bed-nuker") instanceof BedNukerModule m && m.isEnabled() ? m : null;
    }
 
-   static BedBreachRouteSolver.Inner_BufferHelper routeFor(BlockPos pos) {
+   static BedBreachRouteSolver.BreachRoute routeFor(BlockPos pos) {
       BedNukerModule m = active();
       return m != null && pos.equals(m.targetBed) ? m.route : null;
    }
 
-   static BedEspModule.Inner_DataUtil init_ClassCache_DataUti() {
+   static BedEspModule.BedInfo init_ClassCache_DataUti() {
       BedNukerModule m = active();
       if (m != null && m.route != null && m.targetBed != null && MC.level != null && MC.player != null) {
-         BedEspModule.Inner_CachePool policy = BedEspModule.policy();
+         BedEspModule.EspPolicy policy = BedEspModule.policy();
          if (!policy.load() && !policy.read()) {
             return null;
          }
@@ -97,8 +97,8 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             }
 
             box = box.setMaxY(m.targetBed.getY() + 0.5625);
-            List<BlockPos> cuts = m.route.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.Inner_DataUtil::pos).toList();
-            return new BedEspModule.Inner_DataUtil(
+            List<BlockPos> cuts = m.route.cells().stream().filter(c -> !c.init_Z()).map(BedBreachRouteSolver.BreachCell::pos).toList();
+            return new BedEspModule.BedInfo(
                m.targetBed,
                var7,
                block.getColor(),
@@ -311,10 +311,10 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          AutismMultiPlayerGameModeAccessor mining = (AutismMultiPlayerGameModeAccessor)MC.gameMode;
          BlockPos current = this.miningStarted && mining.autism$isDestroying() ? mining.autism$getDestroyBlockPos() : null;
          float progress = current == null ? 0.0F : mining.autism$getDestroyProgress();
-         BedBreachRouteSolver.Inner_BufferHelper best = null;
+         BedBreachRouteSolver.BreachRoute best = null;
          BlockPos selected = null;
          DyeColor own = TeamDyeColorResolver.init();
-         BedEspModule.Inner_CachePool policy = BedEspModule.policy();
+         BedEspModule.EspPolicy policy = BedEspModule.policy();
          Vec3 nextEye = this.init_Vec3_2();
          BedMiningEstimator.Inner_StreamUtil tracking = null;
          if (current != null
@@ -325,14 +325,14 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             && this.isTargetBed(block, own)) {
             tracking = BedMiningEstimator.init(current, this.route.eye(), progress, nextEye);
             if (tracking != null) {
-               ArrayList<BedBreachRouteSolver.Inner_DataUtil> cells = new ArrayList<>();
+               ArrayList<BedBreachRouteSolver.BreachCell> cells = new ArrayList<>();
                cells.add(tracking.init_DataPipe_DataUtil());
 
-               for (BedBreachRouteSolver.Inner_DataUtil cell : this.route.cells().subList(1, this.route.cells().size())) {
+               for (BedBreachRouteSolver.BreachCell cell : this.route.cells().subList(1, this.route.cells().size())) {
                   BlockState state = MC.level.getBlockState(cell.pos());
                   if (!state.isAir()) {
                      cells.add(
-                        new BedBreachRouteSolver.Inner_DataUtil(
+                        new BedBreachRouteSolver.BreachCell(
                            cell.pos(),
                            cell.boxes(),
                            BedMiningEstimator.init(state, cell.pos(), MC.player.getInventory().getItem(cell.slot())),
@@ -347,10 +347,10 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
                   .minmax(new AABB(this.targetBed.relative(BedBlock.getConnectedDirection(MC.level.getBlockState(this.targetBed)))))
                   .setMaxY(this.targetBed.getY() + 0.5625);
                boolean complete = bounds.distanceToSqr(MC.player.getEyePosition()) <= Math.pow(MC.player.blockInteractionRange(), 2.0);
-               best = new BedBreachRouteSolver.Inner_BufferHelper(
+               best = new BedBreachRouteSolver.BreachRoute(
                   List.copyOf(cells),
                   tracking.init_Vec3() == null ? this.route.eye() : tracking.init_Vec3(),
-                  cells.stream().mapToDouble(BedBreachRouteSolver.Inner_DataUtil::ticks).sum() + Math.max(0, cells.size() - 1) * 5,
+                  cells.stream().mapToDouble(BedBreachRouteSolver.BreachCell::ticks).sum() + Math.max(0, cells.size() - 1) * 5,
                   complete
                );
                selected = this.targetBed;
@@ -394,7 +394,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             candidates.sort(Comparator.comparingDouble(px -> px.distToCenterSqr(MC.player.position())));
 
             for (BlockPos p : candidates.stream().limit(8L).toList()) {
-               BedBreachRouteSolver.Inner_BufferHelper candidate = BedMiningEstimator.load(p, this.bool("auto-tool"), current, progress);
+               BedBreachRouteSolver.BreachRoute candidate = BedMiningEstimator.load(p, this.bool("auto-tool"), current, progress);
                if (candidate != null
                   && (
                      best == null

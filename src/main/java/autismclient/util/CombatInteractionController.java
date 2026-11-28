@@ -50,7 +50,7 @@ public final class CombatInteractionController {
    private static RotationMath.Rotation capturedRotation;
    private static RotationMath.Rotation aimRotation;
    private static long captureNanos;
-   private static final CombatAimEngine.Inner_DataUtil aimState = new CombatAimEngine.Inner_DataUtil();
+   private static final CombatAimEngine.AimFrame aimState = new CombatAimEngine.AimFrame();
 
    private static boolean close() {
       Module aura = autismclient.modules.al.init_Module_Str("kill-aura");

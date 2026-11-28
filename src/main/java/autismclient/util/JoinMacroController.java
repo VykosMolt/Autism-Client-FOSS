@@ -22,7 +22,7 @@ import net.minecraft.network.protocol.Packet;
 public final class JoinMacroController {
    private static boolean init_Z;
    private static boolean load;
-   private static final JoinMacroController.Inner_DataUtil detector = new JoinMacroController.Inner_DataUtil();
+   private static final JoinMacroController.ReadinessDetector detector = new JoinMacroController.ReadinessDetector();
    private static int init_I;
    private static volatile AutismMacro pendingMacro;
    private static volatile ClientConfigurationPacketListenerImpl configListener;
@@ -31,13 +31,13 @@ public final class JoinMacroController {
    private JoinMacroController() {
    }
 
-   public static JoinMacroController.Inner_StreamUtil timing() {
-      return JoinMacroController.Inner_StreamUtil.init(AutismConfig.getGlobal().joinMacroTiming);
+   public static JoinMacroController.JoinTiming timing() {
+      return JoinMacroController.JoinTiming.init(AutismConfig.getGlobal().joinMacroTiming);
    }
 
-   public static void init(JoinMacroController.Inner_StreamUtil timing) {
+   public static void init(JoinMacroController.JoinTiming timing) {
       AutismConfig config = AutismConfig.getGlobal();
-      config.joinMacroTiming = (timing == null ? JoinMacroController.Inner_StreamUtil.flush : timing).id();
+      config.joinMacroTiming = (timing == null ? JoinMacroController.JoinTiming.flush : timing).id();
       sync();
       config.save();
    }
@@ -57,13 +57,13 @@ public final class JoinMacroController {
       config.save();
    }
 
-   public static JoinMacroController.Inner_CachePool trigger() {
-      return init(JoinMacroController.Inner_CachePool.init_aA_CachePool_Str(AutismConfig.getGlobal().joinMacroTriggerJoin), keepEnabled());
+   public static JoinMacroController.JoinTrigger trigger() {
+      return init(JoinMacroController.JoinTrigger.init_aA_CachePool_Str(AutismConfig.getGlobal().joinMacroTriggerJoin), keepEnabled());
    }
 
-   public static void init(JoinMacroController.Inner_CachePool triggerJoin) {
+   public static void init(JoinMacroController.JoinTrigger triggerJoin) {
       AutismConfig config = AutismConfig.getGlobal();
-      config.joinMacroTriggerJoin = init(triggerJoin == null ? JoinMacroController.Inner_CachePool.FIRST : triggerJoin, config.joinMacroKeepEnabled).init();
+      config.joinMacroTriggerJoin = init(triggerJoin == null ? JoinMacroController.JoinTrigger.FIRST : triggerJoin, config.joinMacroKeepEnabled).init();
       sync();
       config.save();
    }
@@ -75,7 +75,7 @@ public final class JoinMacroController {
    public static void load(boolean keepEnabled) {
       AutismConfig config = AutismConfig.getGlobal();
       config.joinMacroKeepEnabled = keepEnabled;
-      config.joinMacroTriggerJoin = init(JoinMacroController.Inner_CachePool.init_aA_CachePool_Str(config.joinMacroTriggerJoin), keepEnabled).init();
+      config.joinMacroTriggerJoin = init(JoinMacroController.JoinTrigger.init_aA_CachePool_Str(config.joinMacroTriggerJoin), keepEnabled).init();
       sync();
       config.save();
    }
@@ -98,20 +98,20 @@ public final class JoinMacroController {
       init_V();
       init_Z = false;
       load = true;
-      if (timing() == JoinMacroController.Inner_StreamUtil.JOINING) {
-         load(JoinMacroController.Inner_StreamUtil.JOINING);
+      if (timing() == JoinMacroController.JoinTiming.JOINING) {
+         load(JoinMacroController.JoinTiming.JOINING);
       }
    }
 
    public static void onWorldLoaded() {
-      if (timing() == JoinMacroController.Inner_StreamUtil.WORLD) {
-         load(JoinMacroController.Inner_StreamUtil.WORLD);
+      if (timing() == JoinMacroController.JoinTiming.WORLD) {
+         load(JoinMacroController.JoinTiming.WORLD);
       }
    }
 
    public static void tick(Minecraft mc) {
       if (hasMacro() && !init_Z && mc != null) {
-         JoinMacroController.Inner_StreamUtil timing = timing();
+         JoinMacroController.JoinTiming timing = timing();
          if (detector.init(mc, timing, load)) {
             load(timing);
          }
@@ -385,7 +385,7 @@ public final class JoinMacroController {
       return true;
    }
 
-   private static void load(JoinMacroController.Inner_StreamUtil timing) {
+   private static void load(JoinMacroController.JoinTiming timing) {
       if (hasMacro() && !init_Z && trigger().init_Z_I(init_I)) {
          init_Z = true;
          String macroName = macroName();
@@ -400,7 +400,7 @@ public final class JoinMacroController {
                config.joinMacroName = "";
                config.joinMacroEnabled = false;
                config.save();
-            } else if (trigger() != JoinMacroController.Inner_CachePool.ANY) {
+            } else if (trigger() != JoinMacroController.JoinTrigger.ANY) {
                init_I = 0;
             }
 
@@ -444,16 +444,16 @@ public final class JoinMacroController {
       init_V();
    }
 
-   private static JoinMacroController.Inner_CachePool init(JoinMacroController.Inner_CachePool triggerJoin, boolean keepEnabled) {
-      JoinMacroController.Inner_CachePool value = triggerJoin == null ? JoinMacroController.Inner_CachePool.FIRST : triggerJoin;
-      if (keepEnabled && value == JoinMacroController.Inner_CachePool.FIRST) {
-         return JoinMacroController.Inner_CachePool.ANY;
+   private static JoinMacroController.JoinTrigger init(JoinMacroController.JoinTrigger triggerJoin, boolean keepEnabled) {
+      JoinMacroController.JoinTrigger value = triggerJoin == null ? JoinMacroController.JoinTrigger.FIRST : triggerJoin;
+      if (keepEnabled && value == JoinMacroController.JoinTrigger.FIRST) {
+         return JoinMacroController.JoinTrigger.ANY;
       } else {
-         return !keepEnabled && value == JoinMacroController.Inner_CachePool.ANY ? JoinMacroController.Inner_CachePool.FIRST : value;
+         return !keepEnabled && value == JoinMacroController.JoinTrigger.ANY ? JoinMacroController.JoinTrigger.FIRST : value;
       }
    }
 
-   public enum Inner_CachePool {
+   public enum JoinTrigger {
       ANY("ANY", "Every Join", 0),
       FIRST("FIRST", "1st Join", 1),
       SECOND("SECOND", "2nd Join", 2),
@@ -466,7 +466,7 @@ public final class JoinMacroController {
       private final String load_Str;
       private final int init_I;
 
-      Inner_CachePool(String id, String label, int number) {
+      JoinTrigger(String id, String label, int number) {
          this.init_Str = id;
          this.load_Str = label;
          this.init_I = number;
@@ -546,9 +546,9 @@ public final class JoinMacroController {
          }
       }
 
-      public static JoinMacroController.Inner_CachePool init_aA_CachePool_Str(String value) {
+      public static JoinMacroController.JoinTrigger init_aA_CachePool_Str(String value) {
          if (value != null) {
-            for (JoinMacroController.Inner_CachePool target : values()) {
+            for (JoinMacroController.JoinTrigger target : values()) {
                if (target.init_Str.equalsIgnoreCase(value)) {
                   return target;
                }
@@ -556,7 +556,7 @@ public final class JoinMacroController {
 
             try {
                int ordinal = Integer.parseInt(value.trim());
-               JoinMacroController.Inner_CachePool var10000;
+               JoinMacroController.JoinTrigger var10000;
                switch (ordinal) {
                   case 0:
                      var10000 = ANY;
@@ -587,7 +587,7 @@ public final class JoinMacroController {
       }
    }
 
-   public static final class Inner_DataUtil {
+   public static final class ReadinessDetector {
       private int init;
       private int load;
 
@@ -596,7 +596,7 @@ public final class JoinMacroController {
          this.load = 0;
       }
 
-      public boolean init(Minecraft mc, JoinMacroController.Inner_StreamUtil timing, boolean joined) {
+      public boolean init(Minecraft mc, JoinMacroController.JoinTiming timing, boolean joined) {
          if (!JoinMacroController.isInWorld(mc)) {
             this.init();
             return false;
@@ -637,7 +637,7 @@ public final class JoinMacroController {
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum JoinTiming {
       JOINING("JOINING", "Joining"),
       WORLD("WORLD", "In World"),
       FIRST_TICK("FIRST_TICK", "First Tick"),
@@ -647,9 +647,9 @@ public final class JoinMacroController {
 
       private final String init_Str;
       private final String load_Str;
-      public static final JoinMacroController.Inner_StreamUtil flush = PLAYABLE;
+      public static final JoinMacroController.JoinTiming flush = PLAYABLE;
 
-      Inner_StreamUtil(String id, String label) {
+      JoinTiming(String id, String label) {
          this.init_Str = id;
          this.load_Str = label;
       }
@@ -662,12 +662,12 @@ public final class JoinMacroController {
          return this.load_Str;
       }
 
-      public JoinMacroController.Inner_StreamUtil init_aA_StreamUtil() {
-         JoinMacroController.Inner_StreamUtil[] values = values();
+      public JoinMacroController.JoinTiming init_aA_StreamUtil() {
+         JoinMacroController.JoinTiming[] values = values();
          return values[(this.ordinal() + 1) % values.length];
       }
 
-      public static JoinMacroController.Inner_StreamUtil init(String value) {
+      public static JoinMacroController.JoinTiming init(String value) {
          if ("JOINING".equalsIgnoreCase(value)) {
             return JOINING;
          } else if ("WORLD".equalsIgnoreCase(value)) {

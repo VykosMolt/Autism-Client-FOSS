@@ -9,7 +9,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult.Type;
 
 public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware {
-   public ClickAction.Inner_DataUtil type;
+   public ClickAction.MouseButton type;
    public int clickCount = 1;
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = false;
@@ -19,7 +19,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
    public ClickAction() {
    }
 
-   public ClickAction(ClickAction.Inner_DataUtil type) {
+   public ClickAction(ClickAction.MouseButton type) {
       this.type = type;
       this.clickCount = 1;
    }
@@ -27,7 +27,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
    @Override
    public void execute(Minecraft mc) {
       if (mc.player != null && mc.gameMode != null) {
-         if (this.type == ClickAction.Inner_DataUtil.LEFT) {
+         if (this.type == ClickAction.MouseButton.LEFT) {
             ((AutismMinecraftAccessor)mc).autism$startAttack();
          } else if (mc.hitResult == null || mc.hitResult.getType() == Type.MISS) {
             mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
@@ -83,7 +83,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
-      tag.putString("clickType", (this.type == null ? ClickAction.Inner_DataUtil.RIGHT : this.type).name());
+      tag.putString("clickType", (this.type == null ? ClickAction.MouseButton.RIGHT : this.type).name());
       tag.putInt("clickCount", this.clickCount);
       tag.putBoolean("waitForGuiBefore", this.waitForGuiBefore);
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
@@ -96,14 +96,14 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
    public void fromTag(CompoundTag tag) {
       if (tag.contains("clickType")) {
          try {
-            this.type = ClickAction.Inner_DataUtil.valueOf(tag.getStringOr("clickType", "RIGHT"));
+            this.type = ClickAction.MouseButton.valueOf(tag.getStringOr("clickType", "RIGHT"));
          } catch (IllegalArgumentException e) {
-            this.type = ClickAction.Inner_DataUtil.RIGHT;
+            this.type = ClickAction.MouseButton.RIGHT;
          }
       }
 
       if (this.type == null) {
-         this.type = ClickAction.Inner_DataUtil.RIGHT;
+         this.type = ClickAction.MouseButton.RIGHT;
       }
 
       if (tag.contains("clickCount")) {
@@ -121,7 +121,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
 
    @Override
    public String getDisplayName() {
-      String base = this.type == ClickAction.Inner_DataUtil.LEFT ? "Left Click" : "Right Click";
+      String base = this.type == ClickAction.MouseButton.LEFT ? "Left Click" : "Right Click";
       if (this.clickCount > 1) {
          base = base + " x" + this.clickCount;
       }
@@ -131,10 +131,10 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
 
    @Override
    public String getIcon() {
-      return this.type == ClickAction.Inner_DataUtil.LEFT ? "L" : "R";
+      return this.type == ClickAction.MouseButton.LEFT ? "L" : "R";
    }
 
-   public enum Inner_DataUtil {
+   public enum MouseButton {
       LEFT,
       RIGHT;
    }

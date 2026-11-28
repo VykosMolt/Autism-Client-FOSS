@@ -90,7 +90,7 @@ public final class AutismSessionState {
    private int fabricatorSelectedRecipeId = -1;
    private String fabricatorSelectedRecipeKey = "";
    private int fabricatorRecipeScrollOffset = 0;
-   private final List<autismclient.util.macro.CraftAction.Inner_DataUtil> fabricatorCraftEntries = new ArrayList<>();
+   private final List<autismclient.util.macro.CraftAction.CraftEntry> fabricatorCraftEntries = new ArrayList<>();
    private int fabricatorSelectedCraftIndex = -1;
    private int fabricatorCraftScrollOffset = 0;
    private boolean lanSyncOverlayVisible = false;
@@ -1447,10 +1447,10 @@ public final class AutismSessionState {
       this.fabricatorRecipeScrollOffset = Math.max(0, offset);
    }
 
-   public synchronized List<autismclient.util.macro.CraftAction.Inner_DataUtil> getFabricatorCraftEntries() {
-      List<autismclient.util.macro.CraftAction.Inner_DataUtil> copies = new ArrayList<>(this.fabricatorCraftEntries.size());
+   public synchronized List<autismclient.util.macro.CraftAction.CraftEntry> getFabricatorCraftEntries() {
+      List<autismclient.util.macro.CraftAction.CraftEntry> copies = new ArrayList<>(this.fabricatorCraftEntries.size());
 
-      for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : this.fabricatorCraftEntries) {
+      for (autismclient.util.macro.CraftAction.CraftEntry entry : this.fabricatorCraftEntries) {
          if (entry != null) {
             copies.add(entry.copy());
          }
@@ -1459,10 +1459,10 @@ public final class AutismSessionState {
       return copies;
    }
 
-   public synchronized void setFabricatorCraftEntries(List<autismclient.util.macro.CraftAction.Inner_DataUtil> entries) {
+   public synchronized void setFabricatorCraftEntries(List<autismclient.util.macro.CraftAction.CraftEntry> entries) {
       this.fabricatorCraftEntries.clear();
       if (entries != null) {
-         for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : entries) {
+         for (autismclient.util.macro.CraftAction.CraftEntry entry : entries) {
             if (entry != null) {
                this.fabricatorCraftEntries.add(entry.copy());
             }

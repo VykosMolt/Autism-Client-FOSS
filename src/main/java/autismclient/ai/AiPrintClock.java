@@ -28,7 +28,7 @@ final class AiPrintClock {
 
          @Override
          public autismclient.ai.print.PrintMachineJob init(boolean powered) {
-            return new AiPrintClock.Inner_DataUtil(env, spec, powered);
+            return new AiPrintClock.ClockControlJob(env, spec, powered);
          }
 
          @Override
@@ -71,7 +71,7 @@ final class AiPrintClock {
       });
    }
 
-   private static final class Inner_DataUtil implements autismclient.ai.print.PrintMachineJob {
+   private static final class ClockControlJob implements autismclient.ai.print.PrintMachineJob {
       final autismclient.ai.print.LivePrintEnv env;
       final autismclient.ai.print.PrintClockSpec spec;
       final Object worldToken;
@@ -85,7 +85,7 @@ final class AiPrintClock {
       long startNanos;
       String message = "Preparing the source clock control";
 
-      Inner_DataUtil(autismclient.ai.print.LivePrintEnv env, autismclient.ai.print.PrintClockSpec spec, boolean powered) {
+      ClockControlJob(autismclient.ai.print.LivePrintEnv env, autismclient.ai.print.PrintClockSpec spec, boolean powered) {
          this.env = env;
          this.spec = spec;
          this.worldToken = env.worldToken();
@@ -183,7 +183,7 @@ final class AiPrintClock {
             return this.status = autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN;
          }
 
-         AiServerEvidence.Inner_DataUtil reply = AiServerEvidence.lastBlockUpdate(this.position());
+         AiServerEvidence.BlockUpdate reply = AiServerEvidence.lastBlockUpdate(this.position());
          if (reply == null
             || reply.revision() <= this.blockRevision
             || reply.state() != this.targetState

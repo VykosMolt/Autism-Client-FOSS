@@ -15,15 +15,15 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 
 public final class QueuedCombatAction {
-   private static QueuedCombatAction.Inner_DataUtil init;
-   private static QueuedCombatAction.Inner_DataUtil load;
+   private static QueuedCombatAction.PendingAction init;
+   private static QueuedCombatAction.PendingAction load;
 
    private QueuedCombatAction() {
    }
 
    public static boolean init(String owner, BlockHitResult hit, InteractionHand hand, BooleanSupplier legal, Runnable dispatched) {
       if (init == null && load == null) {
-         QueuedCombatAction.Inner_DataUtil action = new QueuedCombatAction.Inner_DataUtil(owner, hit, hand, null, legal, dispatched);
+         QueuedCombatAction.PendingAction action = new QueuedCombatAction.PendingAction(owner, hit, hand, null, legal, dispatched);
          if (!ClientInteractionOverride.queueUseBlock(hit, hand)) {
             return false;
          }
@@ -37,7 +37,7 @@ public final class QueuedCombatAction {
 
    public static boolean init(String owner, EntityHitResult hit, BooleanSupplier legal, Runnable dispatched) {
       if (init == null && load == null) {
-         QueuedCombatAction.Inner_DataUtil action = new QueuedCombatAction.Inner_DataUtil(owner, null, null, hit.getEntity(), legal, dispatched);
+         QueuedCombatAction.PendingAction action = new QueuedCombatAction.PendingAction(owner, null, null, hit.getEntity(), legal, dispatched);
          if (!ClientInteractionOverride.queueAttackEntity(owner, hit)) {
             return false;
          }
@@ -87,7 +87,7 @@ public final class QueuedCombatAction {
    }
 
    public static void init(Packet<?> packet) {
-      QueuedCombatAction.Inner_DataUtil action = load;
+      QueuedCombatAction.PendingAction action = load;
       if (action != null) {
          if (packet instanceof ServerboundUseItemOnPacket use
             && action.hit != null
@@ -109,7 +109,7 @@ public final class QueuedCombatAction {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class PendingAction {
       final String owner;
       final Minecraft client = Minecraft.getInstance();
       final Object playerRef = this.client.player;
@@ -122,14 +122,14 @@ public final class QueuedCombatAction {
       final BlockHitResult hit;
       final InteractionHand hand;
       final Entity entity;
-      final QueuedCombatAction.Inner_StreamUtil gate;
+      final QueuedCombatAction.DispatchGate gate;
 
-      Inner_DataUtil(String owner, BlockHitResult hit, InteractionHand hand, Entity entity, BooleanSupplier legal, Runnable dispatched) {
+      PendingAction(String owner, BlockHitResult hit, InteractionHand hand, Entity entity, BooleanSupplier legal, Runnable dispatched) {
          this.owner = owner;
          this.hit = hit;
          this.hand = hand;
          this.entity = entity;
-         this.gate = new QueuedCombatAction.Inner_StreamUtil(this::init, () -> this.read() && legal.getAsBoolean(), dispatched);
+         this.gate = new QueuedCombatAction.DispatchGate(this::init, () -> this.read() && legal.getAsBoolean(), dispatched);
       }
 
       boolean init() {
@@ -158,7 +158,7 @@ public final class QueuedCombatAction {
       }
    }
 
-   static final class Inner_StreamUtil {
+   static final class DispatchGate {
       final BooleanSupplier sessionOk;
       final BooleanSupplier inputOk;
       final Runnable onDispatch;
@@ -166,7 +166,7 @@ public final class QueuedCombatAction {
       boolean committed;
       boolean read;
 
-      Inner_StreamUtil(BooleanSupplier session, BooleanSupplier input, Runnable dispatched) {
+      DispatchGate(BooleanSupplier session, BooleanSupplier input, Runnable dispatched) {
          this.sessionOk = session;
          this.inputOk = input;
          this.onDispatch = dispatched;

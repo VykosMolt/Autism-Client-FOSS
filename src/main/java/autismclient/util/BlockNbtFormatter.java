@@ -18,7 +18,7 @@ public final class BlockNbtFormatter {
       CompoundTag state = root.getCompound("state").orElse(new CompoundTag());
       String blockId = state.getStringOr("Name", "minecraft:air");
       String raw = root.toString();
-      List<ItemNbtInspector.Inner_BufferHelper> nice = new ArrayList<>();
+      List<ItemNbtInspector.InspectLine> nice = new ArrayList<>();
       init(nice, "Identity", UiColorPalette.warmWhite());
       load(nice, "Block: " + blockId, UiColorPalette.softWhite());
       load(nice, "State: " + root.getStringOr("block_state", blockId), UiColorPalette.textBody());
@@ -60,13 +60,13 @@ public final class BlockNbtFormatter {
          load(nice, note, UiColorPalette.textBody());
       }
 
-      List<ItemNbtInspector.Inner_BufferHelper> rawLines = new ArrayList<>();
+      List<ItemNbtInspector.InspectLine> rawLines = new ArrayList<>();
       init(rawLines, "Raw Block SNBT", UiColorPalette.warmWhite());
       boolean truncated = raw.length() > 40000;
       String shown = truncated ? raw.substring(0, 40000) : raw;
 
       for (String rawLine : ItemNbtInspector.prettyLines(shown)) {
-         rawLines.add(new ItemNbtInspector.Inner_BufferHelper(rawLine, UiColorPalette.softWhite(), ItemNbtInspector.highlight(rawLine, UiColorPalette.softWhite())));
+         rawLines.add(new ItemNbtInspector.InspectLine(rawLine, UiColorPalette.softWhite(), ItemNbtInspector.highlight(rawLine, UiColorPalette.softWhite())));
       }
 
       if (truncated) {
@@ -75,7 +75,7 @@ public final class BlockNbtFormatter {
 
       StringBuilder pretty = new StringBuilder("Block NBT - ").append(blockId);
 
-      for (ItemNbtInspector.Inner_BufferHelper inspectionLine : nice) {
+      for (ItemNbtInspector.InspectLine inspectionLine : nice) {
          pretty.append('\n').append(inspectionLine.text());
       }
 
@@ -100,20 +100,20 @@ public final class BlockNbtFormatter {
       return pos.length >= 3 ? pos[0] + ", " + pos[1] + ", " + pos[2] : "<unknown>";
    }
 
-   private static void init(List<ItemNbtInspector.Inner_BufferHelper> lines, String title, int color) {
+   private static void init(List<ItemNbtInspector.InspectLine> lines, String title, int color) {
       load(lines, "[" + title + "]", color);
    }
 
-   private static void load(List<ItemNbtInspector.Inner_BufferHelper> lines, String text, int color) {
-      lines.add(new ItemNbtInspector.Inner_BufferHelper(text == null ? "" : text, color));
+   private static void load(List<ItemNbtInspector.InspectLine> lines, String text, int color) {
+      lines.add(new ItemNbtInspector.InspectLine(text == null ? "" : text, color));
    }
 
-   private static void init_V(List<ItemNbtInspector.Inner_BufferHelper> lines) {
+   private static void init_V(List<ItemNbtInspector.InspectLine> lines) {
       load(lines, "", UiColorPalette.textMuted());
    }
 
-   public record Inner_DataUtil(String init_Str, List<ItemNbtInspector.Inner_BufferHelper> lines, List<ItemNbtInspector.Inner_BufferHelper> rawLines, String load_Str, String read)
-      implements ItemNbtInspector.Inner_StreamUtil {
+   public record Inner_DataUtil(String init_Str, List<ItemNbtInspector.InspectLine> lines, List<ItemNbtInspector.InspectLine> rawLines, String load_Str, String read)
+      implements ItemNbtInspector.NbtInspection {
       @Override
       public String init_Str() {
          return "Block NBT - " + this.init_Str;

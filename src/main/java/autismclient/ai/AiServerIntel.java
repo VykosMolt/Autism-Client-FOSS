@@ -35,7 +35,7 @@ public final class AiServerIntel {
       return connectedToServer ? null : "Not connected to a multiplayer server; join one first (singleplayer has no server intelligence)";
    }
 
-   static List<AiServerIntel.Inner_DataUtil> init(
+   static List<AiServerIntel.PluginReport> init(
       List<String> plugins,
       Map<String, List<String>> commands,
       Map<String, String> evidence,
@@ -44,7 +44,7 @@ public final class AiServerIntel {
       Map<String, String> confidence,
       int maxCommands
    ) {
-      List<AiServerIntel.Inner_DataUtil> out = new ArrayList<>();
+      List<AiServerIntel.PluginReport> out = new ArrayList<>();
       if (plugins == null) {
          return out;
       }
@@ -53,7 +53,7 @@ public final class AiServerIntel {
          if (name != null && !name.isBlank()) {
             String display = name.trim();
             out.add(
-               new AiServerIntel.Inner_DataUtil(
+               new AiServerIntel.PluginReport(
                   display,
                   autismclient.util.PluginSignatureCatalog.canonicalName(display),
                   load_Str(init_Str(confidence, display)),
@@ -66,7 +66,7 @@ public final class AiServerIntel {
          }
       }
 
-      out.sort(Comparator.comparing(AiServerIntel.Inner_DataUtil::displayName, String.CASE_INSENSITIVE_ORDER));
+      out.sort(Comparator.comparing(AiServerIntel.PluginReport::displayName, String.CASE_INSENSITIVE_ORDER));
       return out;
    }
 
@@ -101,17 +101,17 @@ public final class AiServerIntel {
       return var10000;
    }
 
-   static List<AiServerIntel.Inner_DataUtil> init(List<AiServerIntel.Inner_DataUtil> plugins) {
-      List<AiServerIntel.Inner_DataUtil> out = new ArrayList<>();
+   static List<AiServerIntel.PluginReport> init(List<AiServerIntel.PluginReport> plugins) {
+      List<AiServerIntel.PluginReport> out = new ArrayList<>();
       if (plugins != null) {
-         for (AiServerIntel.Inner_DataUtil plugin : plugins) {
+         for (AiServerIntel.PluginReport plugin : plugins) {
             if (plugin != null && !plugin.displayName().isBlank() && load_Z(plugin.confidence()) && !init_Z(plugin.evidence())) {
                out.add(plugin);
             }
          }
       }
 
-      out.sort(Comparator.comparing(AiServerIntel.Inner_DataUtil::displayName, String.CASE_INSENSITIVE_ORDER));
+      out.sort(Comparator.comparing(AiServerIntel.PluginReport::displayName, String.CASE_INSENSITIVE_ORDER));
       return out;
    }
 
@@ -134,11 +134,11 @@ public final class AiServerIntel {
       return var10000;
    }
 
-   static JsonObject init_JsonObject(List<AiServerIntel.Inner_DataUtil> plugins, int charBudget) {
+   static JsonObject init_JsonObject(List<AiServerIntel.PluginReport> plugins, int charBudget) {
       JsonArray entries = new JsonArray();
       int included = 0;
       if (plugins != null) {
-         for (AiServerIntel.Inner_DataUtil plugin : plugins) {
+         for (AiServerIntel.PluginReport plugin : plugins) {
             JsonObject entry = init(plugin);
             if (entries.toString().length() + entry.toString().length() > charBudget) {
                break;
@@ -161,7 +161,7 @@ public final class AiServerIntel {
       return out;
    }
 
-   private static JsonObject init(AiServerIntel.Inner_DataUtil plugin) {
+   private static JsonObject init(AiServerIntel.PluginReport plugin) {
       JsonObject entry = new JsonObject();
       entry.addProperty("name", plugin.displayName());
       if (!plugin.key().isBlank()) {
@@ -448,7 +448,7 @@ public final class AiServerIntel {
          "probes",
          AiJson.objectOf("total", entry.totalProbes, "answered", entry.answeredProbes, "retried", entry.retriedProbes, "failed", entry.failedProbes)
       );
-      List<AiServerIntel.Inner_DataUtil> plugins = init(entry.plugins, entry.commands, entry.evidence, entry.channels, entry.guis, entry.confidence, 40);
+      List<AiServerIntel.PluginReport> plugins = init(entry.plugins, entry.commands, entry.evidence, entry.channels, entry.guis, entry.confidence, 40);
       out.addProperty("pluginCount", plugins.size());
       JsonObject bounded = init_JsonObject(plugins, 36000);
 
@@ -462,7 +462,7 @@ public final class AiServerIntel {
 
    private static void init(JsonObject out, String address, String brand) {
       if (!address.isBlank()) {
-         List<autismclient.util.PluginSignatureCatalog.Inner_CachePool> fingerprints;
+         List<autismclient.util.PluginSignatureCatalog.PluginFingerprint> fingerprints;
          try {
             fingerprints = autismclient.util.PluginSignatureCatalog.fingerprints(address, brand);
          } catch (Throwable ignored) {
@@ -473,7 +473,7 @@ public final class AiServerIntel {
             JsonArray array = new JsonArray();
             int included = 0;
 
-            for (autismclient.util.PluginSignatureCatalog.Inner_CachePool fingerprint : fingerprints) {
+            for (autismclient.util.PluginSignatureCatalog.PluginFingerprint fingerprint : fingerprints) {
                if (included++ >= 24) {
                   break;
                }
@@ -502,6 +502,6 @@ public final class AiServerIntel {
       }
    }
 
-   record Inner_DataUtil(String displayName, String key, String confidence, String evidence, List<String> commands, List<String> channels, List<String> guis) {
+   record PluginReport(String displayName, String key, String confidence, String evidence, List<String> commands, List<String> channels, List<String> guis) {
    }
 }

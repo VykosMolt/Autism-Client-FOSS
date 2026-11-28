@@ -26,17 +26,17 @@ final class AiMarkdown {
       return text == null ? "" : init_Pattern.matcher(text).replaceAll("");
    }
 
-   static List<AiMarkdown.Inner_DataUtil> parse(String markdown) {
+   static List<AiMarkdown.MarkdownBlock> parse(String markdown) {
       String text = init_Str(markdown).replace("\r", "");
-      List<AiMarkdown.Inner_DataUtil> blocks = new ArrayList<>();
+      List<AiMarkdown.MarkdownBlock> blocks = new ArrayList<>();
       StringBuilder pending = new StringBuilder();
-      AiMarkdown.Inner_StreamUtil pendingType = AiMarkdown.Inner_StreamUtil.PARAGRAPH;
+      AiMarkdown.BlockType pendingType = AiMarkdown.BlockType.PARAGRAPH;
       StringBuilder code = null;
 
       for (String line : text.split("\n", -1)) {
          if (code != null) {
             if (sync.matcher(line).matches()) {
-               blocks.add(init(AiMarkdown.Inner_StreamUtil.CODE, code.toString()));
+               blocks.add(init(AiMarkdown.BlockType.CODE, code.toString()));
                code = null;
             } else {
                if (!code.isEmpty()) {
@@ -54,19 +54,19 @@ final class AiMarkdown {
             Matcher m;
             if ((m = load_Pattern.matcher(line)).matches()) {
                init(pending, pendingType, blocks);
-               blocks.add(init(AiMarkdown.Inner_StreamUtil.HEADING, m.group(2), "", m.group(1).length(), 0));
+               blocks.add(init(AiMarkdown.BlockType.HEADING, m.group(2), "", m.group(1).length(), 0));
             } else if (update_Pattern.matcher(line).matches()) {
                init(pending, pendingType, blocks);
-               blocks.add(init(AiMarkdown.Inner_StreamUtil.RULE, ""));
+               blocks.add(init(AiMarkdown.BlockType.RULE, ""));
             } else if ((m = read_Pattern.matcher(line)).matches()) {
                init(pending, pendingType, blocks);
-               blocks.add(init(AiMarkdown.Inner_StreamUtil.BULLET, m.group(2), "", 0, m.group(1).length() / 2));
+               blocks.add(init(AiMarkdown.BlockType.BULLET, m.group(2), "", 0, m.group(1).length() / 2));
             } else if ((m = write_Pattern.matcher(line)).matches()) {
                init(pending, pendingType, blocks);
-               blocks.add(init(AiMarkdown.Inner_StreamUtil.NUMBERED, m.group(3), m.group(2) + ".", 0, m.group(1).length() / 2));
+               blocks.add(init(AiMarkdown.BlockType.NUMBERED, m.group(3), m.group(2) + ".", 0, m.group(1).length() / 2));
             } else {
-               AiMarkdown.Inner_StreamUtil type = line.startsWith(">") ? AiMarkdown.Inner_StreamUtil.QUOTE : AiMarkdown.Inner_StreamUtil.PARAGRAPH;
-               String content = type == AiMarkdown.Inner_StreamUtil.QUOTE ? line.substring(1).stripLeading() : line;
+               AiMarkdown.BlockType type = line.startsWith(">") ? AiMarkdown.BlockType.QUOTE : AiMarkdown.BlockType.PARAGRAPH;
+               String content = type == AiMarkdown.BlockType.QUOTE ? line.substring(1).stripLeading() : line;
                if (type != pendingType) {
                   init(pending, pendingType, blocks);
                   pendingType = type;
@@ -88,28 +88,28 @@ final class AiMarkdown {
             rest = rest.substring(0, rest.length() - 1);
          }
 
-         blocks.add(init(AiMarkdown.Inner_StreamUtil.CODE, rest));
+         blocks.add(init(AiMarkdown.BlockType.CODE, rest));
       }
 
       init(pending, pendingType, blocks);
       return blocks;
    }
 
-   private static void init(StringBuilder pending, AiMarkdown.Inner_StreamUtil type, List<AiMarkdown.Inner_DataUtil> blocks) {
+   private static void init(StringBuilder pending, AiMarkdown.BlockType type, List<AiMarkdown.MarkdownBlock> blocks) {
       if (!pending.isEmpty()) {
          blocks.add(init(type, pending.toString(), "", 0, 0));
          pending.setLength(0);
       }
    }
 
-   private static AiMarkdown.Inner_DataUtil init(AiMarkdown.Inner_StreamUtil type, String text) {
-      return new AiMarkdown.Inner_DataUtil(type, text, new byte[text.length()], "", 0, 0);
+   private static AiMarkdown.MarkdownBlock init(AiMarkdown.BlockType type, String text) {
+      return new AiMarkdown.MarkdownBlock(type, text, new byte[text.length()], "", 0, 0);
    }
 
-   static AiMarkdown.Inner_DataUtil init(AiMarkdown.Inner_StreamUtil type, String raw, String marker, int level, int indent) {
+   static AiMarkdown.MarkdownBlock init(AiMarkdown.BlockType type, String raw, String marker, int level, int indent) {
       StringBuilder out = new StringBuilder(raw.length());
       StringBuilder styles = new StringBuilder(raw.length());
-      int base = type == AiMarkdown.Inner_StreamUtil.HEADING ? 17 : 0;
+      int base = type == AiMarkdown.BlockType.HEADING ? 17 : 0;
       int bold = 0;
       int italic = 0;
       int n = raw.length();
@@ -186,7 +186,7 @@ final class AiMarkdown {
          bytes[ix] = (byte)styles.charAt(ix);
       }
 
-      return new AiMarkdown.Inner_DataUtil(type, out.toString(), bytes, marker, level, indent);
+      return new AiMarkdown.MarkdownBlock(type, out.toString(), bytes, marker, level, indent);
    }
 
    private static void init(StringBuilder out, StringBuilder styles, char c, int style) {
@@ -206,10 +206,10 @@ final class AiMarkdown {
       return false;
    }
 
-   record Inner_DataUtil(AiMarkdown.Inner_StreamUtil type, String text, byte[] styles, String marker, int level, int indent) {
+   record MarkdownBlock(AiMarkdown.BlockType type, String text, byte[] styles, String marker, int level, int indent) {
    }
 
-   enum Inner_StreamUtil {
+   enum BlockType {
       PARAGRAPH,
       HEADING,
       BULLET,

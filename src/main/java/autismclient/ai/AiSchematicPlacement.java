@@ -60,7 +60,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    private long fileModified;
    private long searchStartedAt;
    private AiPlacementSearch search;
-   private AiPlacementSearch.Inner_CachePool init_aQ_CachePool;
+   private AiPlacementSearch.CandidateScore init_aQ_CachePool;
    private AABB bounds;
    private Path path;
    private List<String> read_List;
@@ -71,7 +71,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    private int sizeX;
    private int sizeY;
    private int sizeZ;
-   private final AiLatestTransform<AiSchematicPlacement.Inner_StreamUtil, List<AiBuilder.CellSpec>> transformWorker = new AiLatestTransform<>(
+   private final AiLatestTransform<AiSchematicPlacement.TransformRequest, List<AiBuilder.CellSpec>> transformWorker = new AiLatestTransform<>(
       ForkJoinPool.commonPool(),
       action -> Minecraft.getInstance().execute(action),
       request -> AiBuilder.normalizeSchematicBlueprint(
@@ -114,19 +114,19 @@ final class AiSchematicPlacement extends AiPlacementSession {
          this.origin = mc.player.blockPosition().relative(mc.player.getDirection(), 4);
          active = this;
          int token = ++this.loadToken;
-         CompletableFuture.<AiSchematicPlacement.Inner_DataUtil>supplyAsync(
+         CompletableFuture.<AiSchematicPlacement.LoadedSchematic>supplyAsync(
                () -> {
                   try {
                      Path path = AiSchematic.resolveFile(AiSchematic.init(), name);
                      long size = Files.size(path);
                      long modified = Files.getLastModifiedTime(path).toMillis();
-                     AiSchematic.Inner_BufferHelper schematic = AiSchematic.load(path, BlockPos.ZERO, 0, "none", false, 2097152);
+                     AiSchematic.LoadedSchematic schematic = AiSchematic.load(path, BlockPos.ZERO, 0, "none", false, 2097152);
                      if (Files.size(path) == size && Files.getLastModifiedTime(path).toMillis() == modified) {
                         AiBuilder.Blueprint survival = AiBuilder.normalizeSchematicBlueprint(
                            new AiBuilder.Blueprint(BlockPos.ZERO, AiBuilder.normalizeCells(schematic.blueprint().cells(), 2097152, 4096))
                         );
                         String impossible = AiSchematicReadiness.init(AiSchematicReadiness.assess(survival, 1, null));
-                        return new AiSchematicPlacement.Inner_DataUtil(path, size, modified, schematic.blueprint().cells(), schematic.entities(), impossible);
+                        return new AiSchematicPlacement.LoadedSchematic(path, size, modified, schematic.blueprint().cells(), schematic.entities(), impossible);
                      } else {
                         throw new IllegalArgumentException("Schematic changed while loading; select it again");
                      }
@@ -480,7 +480,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       this.update_Z = false;
       this.search = null;
       this.init_aQ_CachePool = null;
-      this.transformWorker.init(new AiSchematicPlacement.Inner_StreamUtil(this.decodedCells, this.rotation, this.mirror));
+      this.transformWorker.init(new AiSchematicPlacement.TransformRequest(this.decodedCells, this.rotation, this.mirror));
    }
 
    private void onTransformed(List<AiBuilder.CellSpec> result, Throwable failure) {
@@ -588,7 +588,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    }
 
    private void init_V_BlockPos_List(BlockPos player, List<List<AiBuilder.CellSpec>> variants) {
-      List<AiPlacementSearch.Inner_DataUtil> sites = new ArrayList<>();
+      List<AiPlacementSearch.PlacementCandidate> sites = new ArrayList<>();
 
       for (int turn = 0; turn < 360; turn += 90) {
          List<AiBuilder.CellSpec> transformed = variants.get(turn / 90);
@@ -604,7 +604,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
                            double vertical = height + dy - player.getY();
                            double distance = dx * dx + dz * dz + vertical * vertical;
                            if (!(distance > 576.0)) {
-                              sites.add(new AiPlacementSearch.Inner_DataUtil(new BlockPos(anchor.getX(), height + dy, anchor.getZ()), turn, transformed, distance));
+                              sites.add(new AiPlacementSearch.PlacementCandidate(new BlockPos(anchor.getX(), height + dy, anchor.getZ()), turn, transformed, distance));
                            }
                         }
                      }
@@ -614,7 +614,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
          }
       }
 
-      sites.sort(Comparator.comparingDouble(AiPlacementSearch.Inner_DataUtil::distance));
+      sites.sort(Comparator.comparingDouble(AiPlacementSearch.PlacementCandidate::distance));
       this.loadError = "";
       this.init_aQ_CachePool = null;
       this.searchStartedAt = System.nanoTime();
@@ -629,7 +629,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       if (this.search != null) {
          this.search.init(4096, System.nanoTime() + 2000000L);
          if (this.search.isDone() || this.search.init_J() > 1500000L || System.nanoTime() - this.searchStartedAt > 8000000000L) {
-            AiPlacementSearch.Inner_CachePool found = this.search.getResult();
+            AiPlacementSearch.CandidateScore found = this.search.getResult();
             this.search = null;
             if (found == null) {
                this.loadError = "No safe site found. Move the preview or try another area.";
@@ -646,31 +646,31 @@ final class AiSchematicPlacement extends AiPlacementSession {
       }
    }
 
-   private AiPlacementSearch.Inner_ConfigStore init_aQ_ConfigStore() {
-      return new AiPlacementSearch.Inner_ConfigStore() {
+   private AiPlacementSearch.WorldProbe init_aQ_ConfigStore() {
+      return new AiPlacementSearch.WorldProbe() {
          @Override
-         public AiPlacementSearch.Inner_StreamUtil classify(BlockPos p, AiBuilder.CellSpec cell) {
+         public AiPlacementSearch.CellEdit classify(BlockPos p, AiBuilder.CellSpec cell) {
             if (AiTerrain.isLoaded(AiSchematicPlacement.this.level, p)
                && !AiSchematicPlacement.this.level.isOutsideBuildHeight(p)
                && AiSchematicPlacement.this.level.getWorldBorder().isWithinBounds(p)) {
                BlockState live = AiSchematicPlacement.this.level.getBlockState(p);
                if (cell != null && AiBuilder.matchesSchematicCell(cell, live)) {
-                  return AiPlacementSearch.Inner_StreamUtil.MATCH;
+                  return AiPlacementSearch.CellEdit.MATCH;
                } else if (cell == null && !AiSchematicPlacement.this.sync) {
-                  return AiPlacementSearch.Inner_StreamUtil.MATCH;
+                  return AiPlacementSearch.CellEdit.MATCH;
                } else if (live.isAir()) {
-                  return cell == null ? AiPlacementSearch.Inner_StreamUtil.MATCH : AiPlacementSearch.Inner_StreamUtil.PLACE;
+                  return cell == null ? AiPlacementSearch.CellEdit.MATCH : AiPlacementSearch.CellEdit.PLACE;
                } else {
                   return !live.hasBlockEntity()
                         && !(live.getDestroySpeed(AiSchematicPlacement.this.level, p) < 0.0F)
                         && live.getFluidState().isEmpty()
                         && AiSchematicActions.init(live)
                         && AiSchematicActions.init(AiSchematicPlacement.this.level, p)
-                     ? AiPlacementSearch.Inner_StreamUtil.BREAK
-                     : AiPlacementSearch.Inner_StreamUtil.UNSAFE;
+                     ? AiPlacementSearch.CellEdit.BREAK
+                     : AiPlacementSearch.CellEdit.UNSAFE;
                }
             } else {
-               return AiPlacementSearch.Inner_StreamUtil.UNSAFE;
+               return AiPlacementSearch.CellEdit.UNSAFE;
             }
          }
 
@@ -700,10 +700,10 @@ final class AiSchematicPlacement extends AiPlacementSession {
       try {
          AiSchematic.init(this.survivalCells);
          if (Files.size(this.path) == this.fileSize && Files.getLastModifiedTime(this.path).toMillis() == this.fileModified) {
-            AiPlacementSearch.Inner_ConfigStore view = this.init_aQ_ConfigStore();
+            AiPlacementSearch.WorldProbe view = this.init_aQ_ConfigStore();
 
             for (AiBuilder.CellSpec cell : this.survivalCells) {
-               if (view.classify(this.origin.offset(cell.dx(), cell.dy(), cell.dz()), cell) == AiPlacementSearch.Inner_StreamUtil.UNSAFE) {
+               if (view.classify(this.origin.offset(cell.dx(), cell.dy(), cell.dz()), cell) == AiPlacementSearch.CellEdit.UNSAFE) {
                   return "Placement overlaps protected blocks, fluids or unloaded terrain. Move the preview.";
                }
             }
@@ -755,12 +755,12 @@ final class AiSchematicPlacement extends AiPlacementSession {
          return List.of();
       }
 
-      List<AiCellMaterials.Inner_CachePool> needed = AiCellMaterials.combine(AiCellMaterials.init(this.survivalCells, this.origin, this.level));
+      List<AiCellMaterials.MaterialRequirement> needed = AiCellMaterials.combine(AiCellMaterials.init(this.survivalCells, this.origin, this.level));
       Inventory inventory = Minecraft.getInstance().player.getInventory();
       JsonObject missingMaterials = creative ? new JsonObject() : AiBuilder.missingMaterialsForContainer(needed, inventory, true);
       List<String> out = new ArrayList<>();
 
-      for (AiCellMaterials.Inner_CachePool requirement : creative ? List.<AiCellMaterials.Inner_CachePool>of() : needed) {
+      for (AiCellMaterials.MaterialRequirement requirement : creative ? List.<AiCellMaterials.MaterialRequirement>of() : needed) {
          JsonObject shortage = missingMaterials.getAsJsonObject(requirement.itemSpec());
          int missing = shortage == null ? 0 : shortage.get("missing").getAsInt();
          if (missing > 0) {
@@ -842,7 +842,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       return count;
    }
 
-   private static String requirementLabel(AiCellMaterials.Inner_CachePool requirement) {
+   private static String requirementLabel(AiCellMaterials.MaterialRequirement requirement) {
       String var10000;
       switch (requirement.itemSpec()) {
          case "hoe":
@@ -859,7 +859,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    }
 
    static Map<Item, Integer> materialsFor(List<AiBuilder.CellSpec> cells) {
-      ArrayList<AiCellMaterials.Inner_CachePool> plans = new ArrayList<>();
+      ArrayList<AiCellMaterials.MaterialRequirement> plans = new ArrayList<>();
 
       for (AiBuilder.CellSpec cell : cells) {
          plans.addAll(AiSchematicActions.materialPlans(cell));
@@ -868,9 +868,9 @@ final class AiSchematicPlacement extends AiPlacementSession {
       return AiCellMaterials.itemCounts(plans);
    }
 
-   private record Inner_DataUtil(Path path, long size, long modified, List<AiBuilder.CellSpec> cells, Map<String, Integer> entities, String impossible) {
+   private record LoadedSchematic(Path path, long size, long modified, List<AiBuilder.CellSpec> cells, Map<String, Integer> entities, String impossible) {
    }
 
-   private record Inner_StreamUtil(List<AiBuilder.CellSpec> from, int turn, String flip) {
+   private record TransformRequest(List<AiBuilder.CellSpec> from, int turn, String flip) {
    }
 }

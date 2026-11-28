@@ -137,9 +137,9 @@ final class AiNetherRun {
          && (r.message().contains("No route") || r.message().contains("Route search budget exhausted"));
    }
 
-   static AiNetherRun.Inner_DataUtil pearlBudget(int wanted, int eyes, int rawPearls, int confirmedBarters) {
+   static AiNetherRun.PearlBudget pearlBudget(int wanted, int eyes, int rawPearls, int confirmedBarters) {
       boolean proofOnly = confirmedBarters == 0 && (long)eyes + rawPearls >= wanted;
-      return new AiNetherRun.Inner_DataUtil(proofOnly ? 0 : Math.max(0, wanted - eyes), proofOnly ? 1 : 32);
+      return new AiNetherRun.PearlBudget(proofOnly ? 0 : Math.max(0, wanted - eyes), proofOnly ? 1 : 32);
    }
 
    static AiOperation create(JsonObject args) {
@@ -171,14 +171,14 @@ final class AiNetherRun {
             final long startDeathRevision = AiServerEvidence.deathRevision();
             final JsonArray init_JsonArray = new JsonArray();
             BlockPos portal = remembered;
-            final AiNetherRun.Inner_BufferHelper init_aB_BufferHelper = new AiNetherRun.Inner_BufferHelper();
+            final AiNetherRun.PortalScanCache init_aB_BufferHelper = new AiNetherRun.PortalScanCache();
             final Set<Long> init_Set = new HashSet<>();
-            final AiNetherRun.Inner_StreamUtil init_aB_StreamUtil = new AiNetherRun.Inner_StreamUtil();
+            final AiNetherRun.MiningMemory init_aB_StreamUtil = new AiNetherRun.MiningMemory();
             AiOperation child;
             String label = "";
             String lastLabel = "";
             int targetEntityId = -1;
-            AiNetherRun.Inner_TaskQueue phase;
+            AiNetherRun.RunPhase phase;
             int load_I;
             int read_I;
             int write_I;
@@ -205,7 +205,7 @@ final class AiNetherRun {
             long nextHealAt;
             int get_I;
             long sync_J;
-            final AiNetherRun.Inner_CachePool pearlTracker;
+            final AiNetherRun.PearlHuntTracker pearlTracker;
             long flush_J;
             long close_J;
             long open_J;
@@ -251,7 +251,7 @@ final class AiNetherRun {
                      .keeping(List.of("minecraft:blaze_rod", "minecraft:blaze_powder", "minecraft:ender_pearl", "minecraft:ender_eye", "minecraft:gold_ingot")),
                   "nether"
                );
-               this.pearlTracker = new AiNetherRun.Inner_CachePool();
+               this.pearlTracker = new AiNetherRun.PearlHuntTracker();
                this.load_Set = new HashSet<>();
                this.lootAttempts = new HashMap<>();
                this.read_Set = new HashSet<>();
@@ -463,7 +463,7 @@ final class AiNetherRun {
                            return this.finish(AiOperation.Status.UNCERTAIN, "Unexpected destination after Nether expedition");
                         }
 
-                        if (this.phase == AiNetherRun.Inner_TaskQueue.RETURN
+                        if (this.phase == AiNetherRun.RunPhase.RETURN
                            && this.child != null
                            && (this.label.equals("through the portal") || this.label.startsWith("build a portal home"))) {
                            AiOperation.Result arrival = this.child.tick();
@@ -499,7 +499,7 @@ final class AiNetherRun {
                            autismclient.ai.engine.AiPathfinder.MoveCosts.enableCautiousParkourCompat(5000000000L);
                         }
 
-                        if (this.phase == AiNetherRun.Inner_TaskQueue.RODS
+                        if (this.phase == AiNetherRun.RunPhase.RODS
                            && this.child != null
                            && AiNetherRun.isSpawnerApproachLabel(this.label)
                            && !this.guard.isActive()
@@ -857,7 +857,7 @@ final class AiNetherRun {
                      && System.nanoTime() > this.push_J) {
                      if (AiCraft.countItem("minecraft:gold_ingot") > 0) {
                         this.flush_I++;
-                        AiNetherRun.Inner_DataUtil goal = AiNetherRun.pearlBudget(pearls, AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), this.confirmedBarters);
+                        AiNetherRun.PearlBudget goal = AiNetherRun.pearlBudget(pearls, AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), this.confirmedBarters);
                         return this.startChild(
                            "barter an economical gold batch",
                            AiBarter.init(AiJson.objectOf("pearls", goal.pearls(), "gold", goal.gold(), "partners", 3, "timeoutSeconds", 180))
@@ -1040,7 +1040,7 @@ final class AiNetherRun {
                      && this.flush_I < 1
                      && this.hasBarterPiglinWithin(32.0)) {
                      this.flush_I++;
-                     AiNetherRun.Inner_DataUtil goal = AiNetherRun.pearlBudget(pearls, AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), this.confirmedBarters);
+                     AiNetherRun.PearlBudget goal = AiNetherRun.pearlBudget(pearls, AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), this.confirmedBarters);
                      return this.startChild(
                         "barter with the piglins before the blazes",
                         AiBarter.init(
@@ -1059,7 +1059,7 @@ final class AiNetherRun {
                   }
 
                   if (this.heldRods() < this.wantedRods || AiRunResources.isCampaignActive() && this.write_BlockPos == null) {
-                     this.phase = AiNetherRun.Inner_TaskQueue.FORTRESS;
+                     this.phase = AiNetherRun.RunPhase.FORTRESS;
                      if (this.load_BlockPos == null || System.nanoTime() > this.read_J) {
                         this.read_J = System.nanoTime() + 2000000000L;
                         List<BlockPos> found = AiWorldScan.findMobSpawners("minecraft:blaze", 12);
@@ -1094,7 +1094,7 @@ final class AiNetherRun {
                         }
 
                         if (this.heldRods() < this.wantedRods) {
-                           this.phase = AiNetherRun.Inner_TaskQueue.RODS;
+                           this.phase = AiNetherRun.RunPhase.RODS;
                            Entity blaze = this.nearestBlaze(24);
                            Entity inView = this.nearestVisibleBlaze(24);
                            if (inView != null) {
@@ -1359,7 +1359,7 @@ final class AiNetherRun {
                      }
                   } else {
                      if (this.heldPearls() < pearls && optionalPearls) {
-                        this.phase = AiNetherRun.Inner_TaskQueue.PEARLS;
+                        this.phase = AiNetherRun.RunPhase.PEARLS;
                         if (AiCraft.countItem("minecraft:gold_block") > 0 && this.sync_I < 3) {
                            this.sync_I++;
                            return this.startChild(
@@ -1379,7 +1379,7 @@ final class AiNetherRun {
 
                         if (AiCraft.countItem("minecraft:gold_ingot") > 0 && this.flush_I < 20 && this.hasBarterPiglinWithin(32.0) && System.nanoTime() > this.push_J) {
                            this.flush_I++;
-                           AiNetherRun.Inner_DataUtil goal = AiNetherRun.pearlBudget(pearls, AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), this.confirmedBarters);
+                           AiNetherRun.PearlBudget goal = AiNetherRun.pearlBudget(pearls, AiCraft.countItem("minecraft:ender_eye"), AiCraft.countItem("minecraft:ender_pearl"), this.confirmedBarters);
                            return this.startChild(
                               "barter with the piglins",
                               AiBarter.init(
@@ -1575,7 +1575,7 @@ final class AiNetherRun {
                      );
                }
 
-               this.phase = AiNetherRun.Inner_TaskQueue.RETURN;
+               this.phase = AiNetherRun.RunPhase.RETURN;
                BlockPos nearby = AiNetherRun.nearestPortalBlock(mc, mc.player.blockPosition(), 8);
                BlockPos loadedPortal = nearby != null
                   ? nearby
@@ -1768,7 +1768,7 @@ final class AiNetherRun {
                this.pathTarget = to;
                AiOperation.Result leg = this.startChild(
                   "explore for " + what + " toward " + to.toShortString(),
-                  AiGoto.createPersistentOpCompat(to, new AiNetherRun.Inner_NetHelper(to.getX(), to.getZ(), 10), 90),
+                  AiGoto.createPersistentOpCompat(to, new AiNetherRun.RadiusGoal(to.getX(), to.getZ(), 10), 90),
                   0,
                   true
                );
@@ -1841,7 +1841,7 @@ final class AiNetherRun {
                   this.routeStrategy(),
                   true,
                   2.0,
-                  new AiNetherRun.Inner_NetHelper(x, z, 6),
+                  new AiNetherRun.RadiusGoal(x, z, 6),
                   AiGoto.GotoOptions.DEFAULT
                );
             }
@@ -2369,7 +2369,7 @@ final class AiNetherRun {
       }
    }
 
-   static AiNetherRun.Inner_ConfigStore parseRouteReceipt(JsonObject stored) {
+   static AiNetherRun.RouteReceipt parseRouteReceipt(JsonObject stored) {
       try {
          if (!"OBSERVED_NETHER_ROUTE".equals(AiJson.getString(stored, "source", ""))) {
             return null;
@@ -2381,7 +2381,7 @@ final class AiNetherRun {
                int z = stored.get("spawnerZ").getAsInt();
                long at = stored.get("observedAtMs").getAsLong();
                return Math.abs((long)x) <= 30000000L && Math.abs((long)z) <= 30000000L && y >= -2048 && y <= 2048 && at > 0L
-                  ? new AiNetherRun.Inner_ConfigStore(barters, new BlockPos(x, y, z), at)
+                  ? new AiNetherRun.RouteReceipt(barters, new BlockPos(x, y, z), at)
                   : null;
             } else {
                return null;
@@ -2427,7 +2427,7 @@ final class AiNetherRun {
                   && mc.getConnection() == requestedConnection
                   && AiWorldIdentity.currentWorldKey(mc).equals(requestedWorld)) {
                   for (JsonElement entry : entries) {
-                     AiNetherRun.Inner_ConfigStore receipt = entry.isJsonObject() ? parseRouteReceipt(entry.getAsJsonObject()) : null;
+                     AiNetherRun.RouteReceipt receipt = entry.isJsonObject() ? parseRouteReceipt(entry.getAsJsonObject()) : null;
                      if (receipt != null) {
                         savedConfirmedBarters = Math.max(savedConfirmedBarters, receipt.barters());
                         if (rememberedSpawner == null) {
@@ -2447,7 +2447,7 @@ final class AiNetherRun {
       AiService service = AiService.getExistingInstance();
       if (service != null && savedConfirmedBarters > 0 && rememberedSpawner != null) {
          JsonArray receipts = new JsonArray();
-         receipts.add(new AiNetherRun.Inner_ConfigStore(savedConfirmedBarters, rememberedSpawner, System.currentTimeMillis()).toJson());
+         receipts.add(new AiNetherRun.RouteReceipt(savedConfirmedBarters, rememberedSpawner, System.currentTimeMillis()).toJson());
          service.saveNetherRouteMemory(routeWorldKey, receipts);
       }
    }
@@ -2863,7 +2863,7 @@ final class AiNetherRun {
       };
    }
 
-   static final class Inner_BufferHelper {
+   static final class PortalScanCache {
       private boolean scanned;
       private BlockPos portal;
 
@@ -2881,7 +2881,7 @@ final class AiNetherRun {
       }
    }
 
-   static final class Inner_CachePool {
+   static final class PearlHuntTracker {
       long startedAt;
       long lastSeenAt;
       long lastGainAt;
@@ -2927,7 +2927,7 @@ final class AiNetherRun {
       }
    }
 
-   record Inner_ConfigStore(int barters, BlockPos spawner, long observedAtMs) {
+   record RouteReceipt(int barters, BlockPos spawner, long observedAtMs) {
       JsonObject toJson() {
          return AiJson.objectOf(
             "source",
@@ -2946,10 +2946,10 @@ final class AiNetherRun {
       }
    }
 
-   record Inner_DataUtil(int pearls, int gold) {
+   record PearlBudget(int pearls, int gold) {
    }
 
-   record Inner_NetHelper(int x, int z, int radius) implements autismclient.ai.engine.AiPathfinder.PathGoal {
+   record RadiusGoal(int x, int z, int radius) implements autismclient.ai.engine.AiPathfinder.PathGoal {
       @Override
       public boolean isInGoal(int px, int py, int pz) {
          return (long)(px - this.x) * (px - this.x) + (long)(pz - this.z) * (pz - this.z) <= (long)this.radius * this.radius;
@@ -2966,7 +2966,7 @@ final class AiNetherRun {
       }
    }
 
-   static final class Inner_StreamUtil {
+   static final class MiningMemory {
       private final LinkedHashMap<Long, Long> deferredCells = new LinkedHashMap<>();
       final autismclient.ai.engine.AiMiningCommitment init_FieldCache = new autismclient.ai.engine.AiMiningCommitment();
       final autismclient.ai.engine.AiMiningCommitment blockCommitment = new autismclient.ai.engine.AiMiningCommitment();
@@ -2999,7 +2999,7 @@ final class AiNetherRun {
       }
    }
 
-   enum Inner_TaskQueue {
+   enum RunPhase {
       FORTRESS,
       RODS,
       PEARLS,

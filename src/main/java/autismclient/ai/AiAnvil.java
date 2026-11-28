@@ -33,7 +33,7 @@ final class AiAnvil {
    static AiOperation init(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         final AiAnvil.Inner_DataUtil mode = parseMode(AiJson.getString(args, "mode", "repair"));
+         final AiAnvil.AnvilMode mode = parseMode(AiJson.getString(args, "mode", "repair"));
          final String leftId = requireItemId(AiJson.getString(args, "left", ""), "left");
          final String rightId = requireItemId(AiJson.getString(args, "right", ""), "right");
          final int timeoutSeconds = Math.max(10, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 300)));
@@ -418,9 +418,9 @@ final class AiAnvil {
       }
    }
 
-   private static AiAnvil.Inner_DataUtil parseMode(String text) {
+   private static AiAnvil.AnvilMode parseMode(String text) {
       try {
-         return AiAnvil.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
+         return AiAnvil.AnvilMode.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("mode must be repair or combine");
       }
@@ -436,7 +436,7 @@ final class AiAnvil {
       }
    }
 
-   enum Inner_DataUtil {
+   enum AnvilMode {
       REPAIR,
       COMBINE;
    }

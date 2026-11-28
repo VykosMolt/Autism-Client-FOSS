@@ -8,7 +8,7 @@ public final class EndPortalSessionTracker {
    private Object load_Obj;
    private String init_Str;
    private String load_Str;
-   private EndPortalMemoryCache.Inner_DataUtil init_cR_DataUtil;
+   private EndPortalMemoryCache.DimensionMemory init_cR_DataUtil;
 
    public EndPortalSessionTracker(EndPortalMemoryCache memory) {
       this.cache = Objects.requireNonNull(memory);
@@ -35,7 +35,7 @@ public final class EndPortalSessionTracker {
       return world != null && connection != null && this.init_Obj == world && this.load_Obj == connection;
    }
 
-   public EndPortalMemoryCache.Inner_DataUtil getMemory() {
+   public EndPortalMemoryCache.DimensionMemory getMemory() {
       return this.init_cR_DataUtil;
    }
 

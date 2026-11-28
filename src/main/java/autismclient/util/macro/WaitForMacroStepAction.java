@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 public class WaitForMacroStepAction implements MacroAction {
    public String macroName = "";
    public int step = 1;
-   public WaitForMacroStepAction.Inner_DataUtil mode = WaitForMacroStepAction.Inner_DataUtil.COMPLETED_STEP;
+   public WaitForMacroStepAction.StepEvent mode = WaitForMacroStepAction.StepEvent.COMPLETED_STEP;
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
    private boolean init = true;
@@ -34,9 +34,9 @@ public class WaitForMacroStepAction implements MacroAction {
       this.step = Math.max(1, tag.getIntOr("step", 1));
 
       try {
-         this.mode = WaitForMacroStepAction.Inner_DataUtil.valueOf(tag.getStringOr("mode", WaitForMacroStepAction.Inner_DataUtil.COMPLETED_STEP.name()));
+         this.mode = WaitForMacroStepAction.StepEvent.valueOf(tag.getStringOr("mode", WaitForMacroStepAction.StepEvent.COMPLETED_STEP.name()));
       } catch (Exception ignored) {
-         this.mode = WaitForMacroStepAction.Inner_DataUtil.COMPLETED_STEP;
+         this.mode = WaitForMacroStepAction.StepEvent.COMPLETED_STEP;
       }
 
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
@@ -52,7 +52,7 @@ public class WaitForMacroStepAction implements MacroAction {
    @Override
    public String getDisplayName() {
       String name = this.macroName != null && !this.macroName.isBlank() ? this.macroName : "macro";
-      return this.mode == WaitForMacroStepAction.Inner_DataUtil.FINISHED ? "Wait: " + name + " finished" : "Wait: " + name + " step " + this.step;
+      return this.mode == WaitForMacroStepAction.StepEvent.FINISHED ? "Wait: " + name + " finished" : "Wait: " + name + " step " + this.step;
    }
 
    @Override
@@ -70,7 +70,7 @@ public class WaitForMacroStepAction implements MacroAction {
       this.init = enabled;
    }
 
-   public enum Inner_DataUtil {
+   public enum StepEvent {
       STARTED_STEP,
       COMPLETED_STEP,
       FINISHED;

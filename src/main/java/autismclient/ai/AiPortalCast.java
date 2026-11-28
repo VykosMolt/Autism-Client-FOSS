@@ -88,32 +88,32 @@ final class AiPortalCast {
    private AiPortalCast() {
    }
 
-   static AiPortalCast.Inner_ConfigStore classify(ClientLevel level, BlockPos pos) {
+   static AiPortalCast.CellKind classify(ClientLevel level, BlockPos pos) {
       if (!AiTerrain.isLoaded(level, pos)) {
-         return AiPortalCast.Inner_ConfigStore.SOLID;
+         return AiPortalCast.CellKind.SOLID;
       }
 
       BlockState state = level.getBlockState(pos);
       if (state.is(Blocks.OBSIDIAN)) {
-         return AiPortalCast.Inner_ConfigStore.OBSIDIAN;
+         return AiPortalCast.CellKind.OBSIDIAN;
       }
 
       FluidState fluid = state.getFluidState();
       if (!fluid.isEmpty()) {
          if (!fluid.isSource()) {
-            return AiPortalCast.Inner_ConfigStore.SOLID;
+            return AiPortalCast.CellKind.SOLID;
          } else if (fluid.is(FluidTags.LAVA)) {
-            return AiPortalCast.Inner_ConfigStore.LAVA;
+            return AiPortalCast.CellKind.LAVA;
          } else {
-            return fluid.is(FluidTags.WATER) ? AiPortalCast.Inner_ConfigStore.WATER : AiPortalCast.Inner_ConfigStore.SOLID;
+            return fluid.is(FluidTags.WATER) ? AiPortalCast.CellKind.WATER : AiPortalCast.CellKind.SOLID;
          }
       } else {
-         return !state.isAir() && !state.canBeReplaced() ? AiPortalCast.Inner_ConfigStore.SOLID : AiPortalCast.Inner_ConfigStore.AIR;
+         return !state.isAir() && !state.canBeReplaced() ? AiPortalCast.CellKind.SOLID : AiPortalCast.CellKind.AIR;
       }
    }
 
    static boolean init_Z(ClientLevel level, BlockPos anchor) {
-      AiPortalCast.Inner_TaskQueue lookup = pos -> classify(level, pos);
+      AiPortalCast.CellLookup lookup = pos -> classify(level, pos);
       List<BlockPos> sources = new ArrayList<>();
 
       for (BlockPos pos : BlockPos.betweenClosed(anchor.offset(-12, -6, -12), anchor.offset(12, 6, 12))) {
@@ -143,7 +143,7 @@ final class AiPortalCast {
                BlockPos origin = source.above().relative(axis, offset);
                if (tried.add(origin.asLong())) {
                   Set<BlockPos> reserved = reservedCells(origin, axis);
-                  AiPortalCast.Inner_StreamUtil plan = planCast(frameCellsSorted(origin, axis), axis, reserved, lookup);
+                  AiPortalCast.CastPlan plan = planCast(frameCellsSorted(origin, axis), axis, reserved, lookup);
                   if (plan.blocked() == null) {
                      if (plan.blocked() != null) {
                         Set<BlockPos> need = new HashSet<>(AiDimension.write(origin, axis));
@@ -157,7 +157,7 @@ final class AiPortalCast {
                         boolean ok = true;
 
                         for (BlockPos cell : need) {
-                           if (classify(level, cell) == AiPortalCast.Inner_ConfigStore.SOLID) {
+                           if (classify(level, cell) == AiPortalCast.CellKind.SOLID) {
                               if (!read(level, cell)) {
                                  ok = false;
                                  break;
@@ -171,7 +171,7 @@ final class AiPortalCast {
                            continue;
                         }
 
-                        AiPortalCast.Inner_TaskQueue after = pos -> dug.contains(pos) ? AiPortalCast.Inner_ConfigStore.AIR : classify(level, pos);
+                        AiPortalCast.CellLookup after = pos -> dug.contains(pos) ? AiPortalCast.CellKind.AIR : classify(level, pos);
                         plan = planCast(frameCellsSorted(origin, axis), axis, reserved, after);
                         if (plan.blocked() != null) {
                            continue;
@@ -238,53 +238,53 @@ final class AiPortalCast {
       return reserved;
    }
 
-   static AiPortalCast.Inner_StreamUtil planCast(List<BlockPos> cells, Direction axis, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup) {
-      List<AiPortalCast.Inner_BufferHelper> steps = new ArrayList<>(cells.size());
+   static AiPortalCast.CastPlan planCast(List<BlockPos> cells, Direction axis, Set<BlockPos> reserved, AiPortalCast.CellLookup lookup) {
+      List<AiPortalCast.CastStep> steps = new ArrayList<>(cells.size());
       int lavaNeeded = 0;
       int moldBlocks = 0;
 
       for (BlockPos cell : cells) {
-         AiPortalCast.Inner_ConfigStore kind = lookup.at(cell);
-         if (kind == AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
-            steps.add(new AiPortalCast.Inner_BufferHelper(cell.immutable(), AiPortalCast.Inner_DataUtil.SKIP, null, List.of(), null));
+         AiPortalCast.CellKind kind = lookup.at(cell);
+         if (kind == AiPortalCast.CellKind.OBSIDIAN) {
+            steps.add(new AiPortalCast.CastStep(cell.immutable(), AiPortalCast.CastAction.SKIP, null, List.of(), null));
          } else {
-            if (kind != AiPortalCast.Inner_ConfigStore.LAVA && kind != AiPortalCast.Inner_ConfigStore.AIR && kind != AiPortalCast.Inner_ConfigStore.WATER) {
-               return new AiPortalCast.Inner_StreamUtil(steps, cell.immutable(), "frame cell " + cell.toShortString() + " is occupied", lavaNeeded, moldBlocks);
+            if (kind != AiPortalCast.CellKind.LAVA && kind != AiPortalCast.CellKind.AIR && kind != AiPortalCast.CellKind.WATER) {
+               return new AiPortalCast.CastPlan(steps, cell.immutable(), "frame cell " + cell.toShortString() + " is occupied", lavaNeeded, moldBlocks);
             }
 
-            AiPortalCast.Inner_DataUtil action = kind == AiPortalCast.Inner_ConfigStore.LAVA ? AiPortalCast.Inner_DataUtil.WATER_OVER_LAVA : AiPortalCast.Inner_DataUtil.LAVA_THEN_WATER;
-            if (action == AiPortalCast.Inner_DataUtil.LAVA_THEN_WATER) {
+            AiPortalCast.CastAction action = kind == AiPortalCast.CellKind.LAVA ? AiPortalCast.CastAction.WATER_OVER_LAVA : AiPortalCast.CastAction.LAVA_THEN_WATER;
+            if (action == AiPortalCast.CastAction.LAVA_THEN_WATER) {
                lavaNeeded++;
             }
 
             BlockPos waterCell = cell.above();
-            AiPortalCast.Inner_ConfigStore above = lookup.at(waterCell);
-            if (above != AiPortalCast.Inner_ConfigStore.AIR && above != AiPortalCast.Inner_ConfigStore.WATER) {
-               return new AiPortalCast.Inner_StreamUtil(steps, cell.immutable(), "no room to pour above frame cell " + cell.toShortString(), lavaNeeded, moldBlocks);
+            AiPortalCast.CellKind above = lookup.at(waterCell);
+            if (above != AiPortalCast.CellKind.AIR && above != AiPortalCast.CellKind.WATER) {
+               return new AiPortalCast.CastPlan(steps, cell.immutable(), "no room to pour above frame cell " + cell.toShortString(), lavaNeeded, moldBlocks);
             }
 
             List<BlockPos> dams = damCells(waterCell, reserved, lookup);
-            AiPortalCast.Inner_SyncManager face = pourFace(waterCell, axis, reserved, lookup, dams);
+            AiPortalCast.PourFace face = pourFace(waterCell, axis, reserved, lookup, dams);
             if (face == null) {
-               return new AiPortalCast.Inner_StreamUtil(steps, cell.immutable(), "no face to pour water against above " + cell.toShortString(), lavaNeeded, moldBlocks);
+               return new AiPortalCast.CastPlan(steps, cell.immutable(), "no face to pour water against above " + cell.toShortString(), lavaNeeded, moldBlocks);
             }
 
             moldBlocks += dams.size() + (face.mold() != null ? 1 : 0);
-            steps.add(new AiPortalCast.Inner_BufferHelper(cell.immutable(), action, waterCell.immutable(), dams, face));
+            steps.add(new AiPortalCast.CastStep(cell.immutable(), action, waterCell.immutable(), dams, face));
          }
       }
 
-      return new AiPortalCast.Inner_StreamUtil(steps, null, "", lavaNeeded, moldBlocks);
+      return new AiPortalCast.CastPlan(steps, null, "", lavaNeeded, moldBlocks);
    }
 
-   static List<BlockPos> damCells(BlockPos waterCell, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup) {
+   static List<BlockPos> damCells(BlockPos waterCell, Set<BlockPos> reserved, AiPortalCast.CellLookup lookup) {
       List<BlockPos> dams = new ArrayList<>(4);
 
       for (Direction side : Plane.HORIZONTAL) {
          BlockPos n = waterCell.relative(side);
          if (!reserved.contains(n)) {
-            AiPortalCast.Inner_ConfigStore kind = lookup.at(n);
-            if (kind == AiPortalCast.Inner_ConfigStore.LAVA || kind == AiPortalCast.Inner_ConfigStore.AIR && lookup.at(n.below()) == AiPortalCast.Inner_ConfigStore.LAVA) {
+            AiPortalCast.CellKind kind = lookup.at(n);
+            if (kind == AiPortalCast.CellKind.LAVA || kind == AiPortalCast.CellKind.AIR && lookup.at(n.below()) == AiPortalCast.CellKind.LAVA) {
                dams.add(n.immutable());
             }
          }
@@ -293,27 +293,27 @@ final class AiPortalCast {
       return dams;
    }
 
-   static AiPortalCast.Inner_SyncManager pourFace(BlockPos pourCell, Direction axis, Set<BlockPos> reserved, AiPortalCast.Inner_TaskQueue lookup, List<BlockPos> dams) {
-      AiPortalCast.Inner_ConfigStore below = lookup.at(pourCell.below());
-      if (below != AiPortalCast.Inner_ConfigStore.SOLID && below != AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
+   static AiPortalCast.PourFace pourFace(BlockPos pourCell, Direction axis, Set<BlockPos> reserved, AiPortalCast.CellLookup lookup, List<BlockPos> dams) {
+      AiPortalCast.CellKind below = lookup.at(pourCell.below());
+      if (below != AiPortalCast.CellKind.SOLID && below != AiPortalCast.CellKind.OBSIDIAN) {
          for (BlockPos dam : dams) {
             for (Direction side : Plane.HORIZONTAL) {
                if (pourCell.relative(side).equals(dam)) {
-                  return new AiPortalCast.Inner_SyncManager(dam, side.getOpposite(), null);
+                  return new AiPortalCast.PourFace(dam, side.getOpposite(), null);
                }
             }
          }
 
          for (Direction side : sideOrder(axis)) {
             BlockPos n = pourCell.relative(side);
-            if (!reserved.contains(n) && lookup.at(n) == AiPortalCast.Inner_ConfigStore.AIR && lookup.at(n.below()) != AiPortalCast.Inner_ConfigStore.LAVA) {
-               return new AiPortalCast.Inner_SyncManager(n.immutable(), side.getOpposite(), n.immutable());
+            if (!reserved.contains(n) && lookup.at(n) == AiPortalCast.CellKind.AIR && lookup.at(n.below()) != AiPortalCast.CellKind.LAVA) {
+               return new AiPortalCast.PourFace(n.immutable(), side.getOpposite(), n.immutable());
             }
          }
 
          return null;
       } else {
-         return new AiPortalCast.Inner_SyncManager(pourCell.below().immutable(), Direction.UP, null);
+         return new AiPortalCast.PourFace(pourCell.below().immutable(), Direction.UP, null);
       }
    }
 
@@ -322,13 +322,13 @@ final class AiPortalCast {
    }
 
    static autismclient.ai.engine.AiPathfinder.PathGoal faceApproachGoal(
-      AiPortalCast.Inner_SyncManager face, Set<BlockPos> reserved, List<BlockPos> molds, Set<BlockPos> supports, double reach, double eyeHeight
+      AiPortalCast.PourFace face, Set<BlockPos> reserved, List<BlockPos> molds, Set<BlockPos> supports, double reach, double eyeHeight
    ) {
       return faceApproachGoalWith(face, reserved, molds, supports, reach, eyeHeight, false);
    }
 
    static autismclient.ai.engine.AiPathfinder.PathGoal faceApproachGoalWith(
-      AiPortalCast.Inner_SyncManager face, Set<BlockPos> reserved, List<BlockPos> molds, Set<BlockPos> supports, double reach, double eyeHeight, boolean lava
+      AiPortalCast.PourFace face, Set<BlockPos> reserved, List<BlockPos> molds, Set<BlockPos> supports, double reach, double eyeHeight, boolean lava
    ) {
       Set<Long> keep = new HashSet<>();
 
@@ -460,9 +460,9 @@ final class AiPortalCast {
                final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
                final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer();
                final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard().withoutCombat();
-               final AiPortalCast.Inner_TaskQueue cellLookup = this::classify;
-               AiPortalCast.Inner_NetHelper phase = AiPortalCast.Inner_NetHelper.PREFLIGHT;
-               AiPortalCast.Inner_CachePool stage = AiPortalCast.Inner_CachePool.STANCE;
+               final AiPortalCast.CellLookup cellLookup = this::classify;
+               AiPortalCast.CastPhase phase = AiPortalCast.CastPhase.PREFLIGHT;
+               AiPortalCast.CastStage stage = AiPortalCast.CastStage.STANCE;
                final ArrayDeque<BlockPos> siteDigs = new ArrayDeque<>();
                final Set<BlockPos> moldRetried = new HashSet<>();
                boolean approachingMold;
@@ -474,7 +474,7 @@ final class AiPortalCast {
                List<BlockPos> poolSources = new ArrayList<>();
                Set<BlockPos> reservedCells = Set.of();
                Set<BlockPos> frameCells = Set.of();
-               AiPortalCast.Inner_StreamUtil plan;
+               AiPortalCast.CastPlan plan;
                int waterBuckets;
                int lavaBuckets;
                int emptyBuckets;
@@ -492,18 +492,18 @@ final class AiPortalCast {
                int lightWaitTicks;
                int clear;
                long stepCellRevision;
-               AiPortalCast.Inner_SyncManager lavaFace;
-               AiPortalCast.Inner_SyncManager fireSpreadFace;
+               AiPortalCast.PourFace lavaFace;
+               AiPortalCast.PourFace fireSpreadFace;
                List<BlockPos> molds = List.of();
                Set<BlockPos> preexistingObsidian = new HashSet<>();
                AiOperation moveOp;
                AiOperation bucketOp;
                AiOperation guardOp;
-               AiPortalCast.Inner_StateCache faceApproach;
-               AiPortalCast.Inner_SyncManager approachFace;
+               AiPortalCast.FaceApproachOperation faceApproach;
+               AiPortalCast.PourFace approachFace;
                long approachDeadline;
                boolean approaching;
-               final Set<AiPortalCast.Inner_SyncManager> approachedFaces = new HashSet<>();
+               final Set<AiPortalCast.PourFace> approachedFaces = new HashSet<>();
                String guardReason = "";
                String lighter = "";
                AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
@@ -511,9 +511,9 @@ final class AiPortalCast {
                boolean pourClicked;
                boolean lit;
                boolean cancelled;
-               final AiPortalCast.Inner_RenderState waterRecovery = new AiPortalCast.Inner_RenderState();
-               final AiPortalCast.Inner_JsonUtil pourAck = new AiPortalCast.Inner_JsonUtil();
-               final AiPortalCast.Inner_UiHelper terminalGuard = new AiPortalCast.Inner_UiHelper();
+               final AiPortalCast.WaterRecovery waterRecovery = new AiPortalCast.WaterRecovery();
+               final AiPortalCast.PourAck pourAck = new AiPortalCast.PourAck();
+               final AiPortalCast.TerminalGuard terminalGuard = new AiPortalCast.TerminalGuard();
                final Set<BlockPos> supports = new HashSet<>();
 
                @Override
@@ -604,7 +604,7 @@ final class AiPortalCast {
                      return this.failWith(AiFailure.MISSING_MATERIALS, "Portal cast is missing materials: " + missing, missing);
                   }
 
-                  this.phase = AiPortalCast.Inner_NetHelper.LOCATE;
+                  this.phase = AiPortalCast.CastPhase.LOCATE;
                   return this.running("Materials ready; locating the lava pool");
                }
 
@@ -635,14 +635,14 @@ final class AiPortalCast {
                      }
                   }
 
-                  this.phase = AiPortalCast.Inner_NetHelper.SITE;
+                  this.phase = AiPortalCast.CastPhase.SITE;
                   return this.running("At the pool; planning the cast");
                }
 
                AiOperation.Result tickSitePhase() {
                   this.poolSources = this.lavaSourcesAround(this.pool);
                   Set<Long> tried = new HashSet<>();
-                  AiPortalCast.Inner_StreamUtil bestPlan = null;
+                  AiPortalCast.CastPlan bestPlan = null;
                   BlockPos bestOrigin = null;
                   Direction bestAxis = Direction.EAST;
                   double bestScore = 1.7976931348623157E308;
@@ -658,7 +658,7 @@ final class AiPortalCast {
                            BlockPos origin = source.above().relative(axis, offset);
                            if (tried.add(origin.asLong())) {
                               Set<BlockPos> siteReserved = AiPortalCast.reservedCells(origin, axis);
-                              AiPortalCast.Inner_StreamUtil candidate = AiPortalCast.planCast(AiPortalCast.frameCellsSorted(origin, axis), axis, siteReserved, this.cellLookup);
+                              AiPortalCast.CastPlan candidate = AiPortalCast.planCast(AiPortalCast.frameCellsSorted(origin, axis), axis, siteReserved, this.cellLookup);
                               if (candidate.blocked() == null) {
                                  long usable = this.poolSources.stream().filter(p -> !siteReserved.contains(p)).count();
                                  if (candidate.lavaNeeded() <= usable) {
@@ -684,7 +684,7 @@ final class AiPortalCast {
                         this.siteDigs.addAll(digs);
                         AutismClientAddon.LOG
                            .info("[AI] portal cast: clearing {} blocks over the pool at {} for the frame", digs.size(), this.pool.toShortString());
-                        this.phase = AiPortalCast.Inner_NetHelper.EXCAVATE;
+                        this.phase = AiPortalCast.CastPhase.EXCAVATE;
                         return this.running("Clearing " + digs.size() + " blocks for the frame");
                      }
                   }
@@ -717,13 +717,13 @@ final class AiPortalCast {
                      return this.failWith(AiFailure.MISSING_MATERIALS, "Portal cast at " + this.frameOrigin.toShortString() + " is missing materials: " + missing, missing);
                   }
 
-                  this.phase = this.waterHeld ? AiPortalCast.Inner_NetHelper.CAST : AiPortalCast.Inner_NetHelper.WATER;
+                  this.phase = this.waterHeld ? AiPortalCast.CastPhase.CAST : AiPortalCast.CastPhase.WATER;
                   return this.running("Cast site at " + this.frameOrigin.toShortString() + " along " + this.frameAxis.name().toLowerCase(Locale.ROOT));
                }
 
                AiOperation.Result tickWaterPhase() {
                   if (AiGameState.countInventoryItem("minecraft:water_bucket") > 0) {
-                     this.phase = AiPortalCast.Inner_NetHelper.CAST;
+                     this.phase = AiPortalCast.CastPhase.CAST;
                      return this.running("Water ready");
                   }
 
@@ -749,7 +749,7 @@ final class AiPortalCast {
                      return filled;
                   }
 
-                  this.phase = AiPortalCast.Inner_NetHelper.CAST;
+                  this.phase = AiPortalCast.CastPhase.CAST;
                   return this.running("Water bucket filled");
                }
 
@@ -761,20 +761,20 @@ final class AiPortalCast {
                         }
                      }
 
-                     this.phase = AiPortalCast.Inner_NetHelper.LIGHT;
+                     this.phase = AiPortalCast.CastPhase.LIGHT;
                      return this.running("Frame complete; lighting the portal");
                   } else {
-                     AiPortalCast.Inner_BufferHelper step = this.plan.steps().get(this.stepIndex);
+                     AiPortalCast.CastStep step = this.plan.steps().get(this.stepIndex);
                      if (this.mc.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN) && !this.waterRecovery.isRecoveryPending()) {
                         this.nextCell();
                         return this.running("Frame cell " + step.cell().toShortString() + " is obsidian");
                      }
 
                      if (this.waterRecovery.isRecoveryPending()
-                        && this.stage != AiPortalCast.Inner_CachePool.SCOOP
+                        && this.stage != AiPortalCast.CastStage.SCOOP
                         && this.mc.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN)
                         && AiServerEvidence.blockRevision(step.cell()) > this.stepCellRevision) {
-                        this.stage = AiPortalCast.Inner_CachePool.SCOOP;
+                        this.stage = AiPortalCast.CastStage.SCOOP;
                         this.pop = 0;
                      }
 
@@ -806,9 +806,9 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result tickStanceStage(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickStanceStage(AiPortalCast.CastStep step) {
                   this.stepCellRevision = AiServerEvidence.blockRevision(step.cell());
-                  if (step.action() == AiPortalCast.Inner_DataUtil.WATER_OVER_LAVA && this.classify(step.cell()) != AiPortalCast.Inner_ConfigStore.LAVA) {
+                  if (step.action() == AiPortalCast.CastAction.WATER_OVER_LAVA && this.classify(step.cell()) != AiPortalCast.CellKind.LAVA) {
                      return ++this.pop > 140
                         ? this.failWith(AiFailure.IMPOSSIBLE_STATE, "Frame cell " + step.cell().toShortString() + " no longer holds a lava source", null)
                         : this.running("Waiting for the lava at " + step.cell().toShortString() + " to settle");
@@ -829,7 +829,7 @@ final class AiPortalCast {
                   }
 
                   this.lavaFace = null;
-                  if (step.action() == AiPortalCast.Inner_DataUtil.LAVA_THEN_WATER && this.classify(step.cell()) != AiPortalCast.Inner_ConfigStore.LAVA) {
+                  if (step.action() == AiPortalCast.CastAction.LAVA_THEN_WATER && this.classify(step.cell()) != AiPortalCast.CellKind.LAVA) {
                      this.lavaFace = this.pourFaceFor(step.cell());
                      if (this.lavaFace == null) {
                         return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "No face to pour lava against at " + step.cell().toShortString(), null);
@@ -850,7 +850,7 @@ final class AiPortalCast {
                      }
                   }
 
-                  this.stage = AiPortalCast.Inner_CachePool.MOLDS;
+                  this.stage = AiPortalCast.CastStage.MOLDS;
                   return this.running("Casting frame cell " + step.cell().toShortString() + " (" + step.action().name().toLowerCase(Locale.ROOT) + ")");
                }
 
@@ -865,7 +865,7 @@ final class AiPortalCast {
                   return false;
                }
 
-               BlockPos init(BlockPos mold, AiPortalCast.Inner_BufferHelper step) {
+               BlockPos init(BlockPos mold, AiPortalCast.CastStep step) {
                   BlockPos best = null;
                   double bestDistance = 1.7976931348623157E308;
                   BlockPos feet = this.mc.player.blockPosition();
@@ -878,7 +878,7 @@ final class AiPortalCast {
                         && !this.molds.contains(side)
                         && !side.equals(feet)
                         && !side.equals(feet.above())
-                        && this.classify(side) == AiPortalCast.Inner_ConfigStore.AIR
+                        && this.classify(side) == AiPortalCast.CellKind.AIR
                         && this.hasSolidNeighbour(side)) {
                         double distance = this.mc.player.getEyePosition().distanceToSqr(Vec3.atCenterOf(side));
                         if (distance < bestDistance) {
@@ -891,7 +891,7 @@ final class AiPortalCast {
                   return best;
                }
 
-               AiOperation.Result tickMoldsStage(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickMoldsStage(AiPortalCast.CastStep step) {
                   if (this.approachingMold && this.moveOp != null) {
                      AiOperation.Result r = this.moveOp.tick();
                      if (!r.terminal()) {
@@ -905,8 +905,8 @@ final class AiPortalCast {
 
                   while (this.set < this.molds.size()) {
                      BlockPos mold = this.molds.get(this.set);
-                     AiPortalCast.Inner_ConfigStore there = this.classify(mold);
-                     if (there != AiPortalCast.Inner_ConfigStore.SOLID && there != AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
+                     AiPortalCast.CellKind there = this.classify(mold);
+                     if (there != AiPortalCast.CellKind.SOLID && there != AiPortalCast.CellKind.OBSIDIAN) {
                         Item item = this.firstPlaceable(AiPortalCast.THROWAWAY_BLOCKS);
                         if (item == null) {
                            return this.failWith(AiFailure.MISSING_MATERIALS, "Out of throwaway blocks for the mold at " + mold.toShortString(), this.missingOne("minecraft:dirt"));
@@ -952,17 +952,17 @@ final class AiPortalCast {
                      }
                   }
 
-                  this.stage = step.action() == AiPortalCast.Inner_DataUtil.LAVA_THEN_WATER && this.classify(step.cell()) != AiPortalCast.Inner_ConfigStore.LAVA
-                     ? AiPortalCast.Inner_CachePool.LAVA_REFILL
-                     : AiPortalCast.Inner_CachePool.WATER_POUR;
+                  this.stage = step.action() == AiPortalCast.CastAction.LAVA_THEN_WATER && this.classify(step.cell()) != AiPortalCast.CellKind.LAVA
+                     ? AiPortalCast.CastStage.LAVA_REFILL
+                     : AiPortalCast.CastStage.WATER_POUR;
                   this.pop = 0;
                   this.pourClicked = false;
                   return this.running("Molds placed");
                }
 
-               AiOperation.Result tickLavaRefillStage(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickLavaRefillStage(AiPortalCast.CastStep step) {
                   if (AiGameState.countInventoryItem("minecraft:lava_bucket") > 0) {
-                     this.stage = AiPortalCast.Inner_CachePool.LAVA_POUR;
+                     this.stage = AiPortalCast.CastStage.LAVA_POUR;
                      this.pop = 0;
                      this.pourClicked = false;
                      return this.running("Lava ready");
@@ -972,7 +972,7 @@ final class AiPortalCast {
                      List<BlockPos> sources = new ArrayList<>();
 
                      for (BlockPos source : this.poolSources) {
-                        if (this.classify(source) == AiPortalCast.Inner_ConfigStore.LAVA) {
+                        if (this.classify(source) == AiPortalCast.CellKind.LAVA) {
                            sources.add(source);
                         }
                      }
@@ -997,15 +997,15 @@ final class AiPortalCast {
                      return filled;
                   }
 
-                  this.stage = AiPortalCast.Inner_CachePool.LAVA_POUR;
+                  this.stage = AiPortalCast.CastStage.LAVA_POUR;
                   this.pop = 0;
                   this.pourClicked = false;
                   return this.running("Lava bucket filled");
                }
 
-               AiOperation.Result tickLavaPourStage(AiPortalCast.Inner_BufferHelper step) {
-                  if (this.classify(step.cell()) == AiPortalCast.Inner_ConfigStore.LAVA) {
-                     this.stage = AiPortalCast.Inner_CachePool.WATER_POUR;
+               AiOperation.Result tickLavaPourStage(AiPortalCast.CastStep step) {
+                  if (this.classify(step.cell()) == AiPortalCast.CellKind.LAVA) {
+                     this.stage = AiPortalCast.CastStage.WATER_POUR;
                      this.pop = 0;
                      this.pourClicked = false;
                      this.lavaPouredCount++;
@@ -1019,7 +1019,7 @@ final class AiPortalCast {
                         }
 
                         this.pop = 0;
-                        this.stage = AiPortalCast.Inner_CachePool.LAVA_REFILL;
+                        this.stage = AiPortalCast.CastStage.LAVA_REFILL;
                      }
 
                      return this.running("Confirming the lava pour at " + step.cell().toShortString());
@@ -1034,7 +1034,7 @@ final class AiPortalCast {
                      if (++this.pop > 60 * (this.tick + 1)) {
                         return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "Could not aim at the lava pour face for " + step.cell().toShortString(), null);
                      } else if (AiItems.equipHotbar(AiItems.resolveItem("minecraft:lava_bucket")) < 0) {
-                        this.stage = AiPortalCast.Inner_CachePool.LAVA_REFILL;
+                        this.stage = AiPortalCast.CastStage.LAVA_REFILL;
                         return this.running("Refilling the lava bucket");
                      } else if (this.mc.player.containerMenu != this.mc.player.inventoryMenu) {
                         this.mc.player.closeContainer();
@@ -1046,9 +1046,9 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result tickWaterPourStage(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickWaterPourStage(AiPortalCast.CastStep step) {
                   if (this.mc.level.getBlockState(step.cell()).is(Blocks.OBSIDIAN) && AiServerEvidence.blockRevision(step.cell()) > this.stepCellRevision) {
-                     this.stage = AiPortalCast.Inner_CachePool.SCOOP;
+                     this.stage = AiPortalCast.CastStage.SCOOP;
                      this.pop = 0;
                      return this.running("Obsidian confirmed at " + step.cell().toShortString());
                   }
@@ -1107,7 +1107,7 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result tickScoopStage(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result tickScoopStage(AiPortalCast.CastStep step) {
                   if (!this.waterRecovery.isRecoveryPending()) {
                      this.nextCell();
                      return this.running("Water recovered; next cell");
@@ -1238,7 +1238,7 @@ final class AiPortalCast {
                            : this.running("Placing the doorway wood");
                      }
                   } else if (this.clear == 1) {
-                     if (this.classify(side) == AiPortalCast.Inner_ConfigStore.LAVA) {
+                     if (this.classify(side) == AiPortalCast.CellKind.LAVA) {
                         this.clear = 3;
                         return this.running("Lava already beside the doorway");
                      }
@@ -1250,8 +1250,8 @@ final class AiPortalCast {
 
                      BlockPos mold = this.fireSpreadFace.mold();
                      if (mold != null
-                        && this.classify(mold) != AiPortalCast.Inner_ConfigStore.SOLID
-                        && this.classify(mold) != AiPortalCast.Inner_ConfigStore.OBSIDIAN) {
+                        && this.classify(mold) != AiPortalCast.CellKind.SOLID
+                        && this.classify(mold) != AiPortalCast.CellKind.OBSIDIAN) {
                         Item moldItem = this.firstPlaceable(AiPortalCast.THROWAWAY_BLOCKS);
                         if (moldItem == null) {
                            return this.failWith(AiFailure.MISSING_MATERIALS, "No throwaway block for the fire-spread mold", this.missingOne("minecraft:dirt"));
@@ -1283,7 +1283,7 @@ final class AiPortalCast {
                         return this.running("Waiting for the doorway wood to catch fire");
                      }
 
-                     if (this.classify(side) == AiPortalCast.Inner_ConfigStore.LAVA) {
+                     if (this.classify(side) == AiPortalCast.CellKind.LAVA) {
                         this.pourClicked = false;
                         this.clear = 3;
                         return this.running("Lava beside the doorway; waiting for the wood to catch");
@@ -1315,7 +1315,7 @@ final class AiPortalCast {
                            List<BlockPos> sources = new ArrayList<>();
 
                            for (BlockPos pool : this.poolSources) {
-                              if (this.classify(pool) == AiPortalCast.Inner_ConfigStore.LAVA) {
+                              if (this.classify(pool) == AiPortalCast.CellKind.LAVA) {
                                  sources.add(pool);
                               }
                            }
@@ -1340,7 +1340,7 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result pourOnFace(AiPortalCast.Inner_SyncManager face, boolean lava) {
+               AiOperation.Result pourOnFace(AiPortalCast.PourFace face, boolean lava) {
                   if (face == null) {
                      return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "The planned pour face is unavailable", null);
                   }
@@ -1386,7 +1386,7 @@ final class AiPortalCast {
                         lava
                      )
                   );
-                  this.faceApproach = new AiPortalCast.Inner_StateCache(child, this.approachDeadline, System::nanoTime);
+                  this.faceApproach = new AiPortalCast.FaceApproachOperation(child, this.approachDeadline, System::nanoTime);
                   this.approaching = true;
                   return this.tickFaceApproach();
                }
@@ -1408,7 +1408,7 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result init(AiPortalCast.Inner_SyncManager face) {
+               AiOperation.Result init(AiPortalCast.PourFace face) {
                   if (!this.pourClicked && !this.pourAck.isPending() && face != null) {
                      BlockPos pourCell = face.support().relative(face.face());
                      String bucket = BuiltInRegistries.ITEM.getKey(this.mc.player.getMainHandItem().getItem()).toString();
@@ -1450,7 +1450,7 @@ final class AiPortalCast {
                   }
                }
 
-               AiOperation.Result flush(AiPortalCast.Inner_BufferHelper step) {
+               AiOperation.Result flush(AiPortalCast.CastStep step) {
                   for (BlockPos zone : AiPortalCast.spreadZone(step.waterCell())) {
                      if (!this.frameCells.contains(zone) && !this.preexistingObsidian.contains(zone) && this.mc.level.getBlockState(zone).is(Blocks.OBSIDIAN)) {
                         return this.failWith(AiFailure.PLACEMENT_IMPOSSIBLE, "The pour spread: obsidian formed outside the frame at " + zone.toShortString(), null);
@@ -1460,11 +1460,11 @@ final class AiPortalCast {
                   return null;
                }
 
-               AiPortalCast.Inner_SyncManager pourFaceFor(BlockPos cell) {
-                  AiPortalCast.Inner_ConfigStore below = this.classify(cell.below());
-                  return below != AiPortalCast.Inner_ConfigStore.SOLID && below != AiPortalCast.Inner_ConfigStore.OBSIDIAN
+               AiPortalCast.PourFace pourFaceFor(BlockPos cell) {
+                  AiPortalCast.CellKind below = this.classify(cell.below());
+                  return below != AiPortalCast.CellKind.SOLID && below != AiPortalCast.CellKind.OBSIDIAN
                      ? AiPortalCast.pourFace(cell, this.frameAxis, this.reservedCells, this.cellLookup, List.of())
-                     : new AiPortalCast.Inner_SyncManager(cell.below().immutable(), Direction.UP, null);
+                     : new AiPortalCast.PourFace(cell.below().immutable(), Direction.UP, null);
                }
 
                AiOperation.Result tickMove(Supplier<AiOperation> factory, String what) {
@@ -1570,7 +1570,7 @@ final class AiPortalCast {
                void nextCell() {
                   this.castCellCount++;
                   this.stepIndex++;
-                  this.stage = AiPortalCast.Inner_CachePool.STANCE;
+                  this.stage = AiPortalCast.CastStage.STANCE;
                   this.pop = 0;
                   this.tick = 0;
                   this.molds = List.of();
@@ -1695,7 +1695,7 @@ final class AiPortalCast {
                               boolean ok = true;
 
                               for (BlockPos cell : need) {
-                                 if (this.classify(cell) == AiPortalCast.Inner_ConfigStore.SOLID) {
+                                 if (this.classify(cell) == AiPortalCast.CellKind.SOLID) {
                                     if (!this.load(cell)) {
                                        ok = false;
                                        break;
@@ -1707,9 +1707,9 @@ final class AiPortalCast {
 
                               if (ok && !digs.isEmpty() && digs.size() <= 30) {
                                  Set<BlockPos> dug = new HashSet<>(digs);
-                                 AiPortalCast.Inner_TaskQueue after = pos -> dug.contains(pos) ? AiPortalCast.Inner_ConfigStore.AIR : this.classify(pos);
+                                 AiPortalCast.CellLookup after = pos -> dug.contains(pos) ? AiPortalCast.CellKind.AIR : this.classify(pos);
                                  Set<BlockPos> reserved = AiPortalCast.reservedCells(origin, axis);
-                                 AiPortalCast.Inner_StreamUtil plan = AiPortalCast.planCast(AiPortalCast.frameCellsSorted(origin, axis), axis, reserved, after);
+                                 AiPortalCast.CastPlan plan = AiPortalCast.planCast(AiPortalCast.frameCellsSorted(origin, axis), axis, reserved, after);
                                  if (plan.blocked() == null) {
                                     long usable = sources.stream().filter(q -> !reserved.contains(q)).count();
                                     if (plan.lavaNeeded() <= usable) {
@@ -1833,12 +1833,12 @@ final class AiPortalCast {
                      }
                   }
 
-                  while (!this.siteDigs.isEmpty() && this.classify(this.siteDigs.peek()) != AiPortalCast.Inner_ConfigStore.SOLID) {
+                  while (!this.siteDigs.isEmpty() && this.classify(this.siteDigs.peek()) != AiPortalCast.CellKind.SOLID) {
                      this.siteDigs.poll();
                   }
 
                   if (this.siteDigs.isEmpty()) {
-                     this.phase = AiPortalCast.Inner_NetHelper.SITE;
+                     this.phase = AiPortalCast.CastPhase.SITE;
                      return this.running("Frame site cleared; planning the cast");
                   } else {
                      BlockPos cell = this.siteDigs.poll();
@@ -1847,27 +1847,27 @@ final class AiPortalCast {
                   }
                }
 
-               AiPortalCast.Inner_ConfigStore classify(BlockPos pos) {
+               AiPortalCast.CellKind classify(BlockPos pos) {
                   if (!AiTerrain.isLoaded(this.mc.level, pos)) {
-                     return AiPortalCast.Inner_ConfigStore.SOLID;
+                     return AiPortalCast.CellKind.SOLID;
                   }
 
                   BlockState state = this.mc.level.getBlockState(pos);
                   if (state.is(Blocks.OBSIDIAN)) {
-                     return AiPortalCast.Inner_ConfigStore.OBSIDIAN;
+                     return AiPortalCast.CellKind.OBSIDIAN;
                   }
 
                   FluidState fluid = state.getFluidState();
                   if (!fluid.isEmpty()) {
                      if (!fluid.isSource()) {
-                        return AiPortalCast.Inner_ConfigStore.SOLID;
+                        return AiPortalCast.CellKind.SOLID;
                      } else if (fluid.is(FluidTags.LAVA)) {
-                        return AiPortalCast.Inner_ConfigStore.LAVA;
+                        return AiPortalCast.CellKind.LAVA;
                      } else {
-                        return fluid.is(FluidTags.WATER) ? AiPortalCast.Inner_ConfigStore.WATER : AiPortalCast.Inner_ConfigStore.SOLID;
+                        return fluid.is(FluidTags.WATER) ? AiPortalCast.CellKind.WATER : AiPortalCast.CellKind.SOLID;
                      }
                   } else {
-                     return !state.isAir() && !state.canBeReplaced() ? AiPortalCast.Inner_ConfigStore.SOLID : AiPortalCast.Inner_ConfigStore.AIR;
+                     return !state.isAir() && !state.canBeReplaced() ? AiPortalCast.CellKind.SOLID : AiPortalCast.CellKind.AIR;
                   }
                }
 
@@ -1921,7 +1921,7 @@ final class AiPortalCast {
                   }
 
                   if (this.plan != null && this.stepIndex < this.plan.steps().size()) {
-                     AiPortalCast.Inner_BufferHelper step = this.plan.steps().get(this.stepIndex);
+                     AiPortalCast.CastStep step = this.plan.steps().get(this.stepIndex);
                      out.add(
                         "step",
                         AiJson.objectOf(
@@ -2051,10 +2051,10 @@ final class AiPortalCast {
       }
    }
 
-   record Inner_BufferHelper(BlockPos cell, AiPortalCast.Inner_DataUtil action, BlockPos waterCell, List<BlockPos> dams, AiPortalCast.Inner_SyncManager face) {
+   record CastStep(BlockPos cell, AiPortalCast.CastAction action, BlockPos waterCell, List<BlockPos> dams, AiPortalCast.PourFace face) {
    }
 
-   private enum Inner_CachePool {
+   private enum CastStage {
       STANCE,
       MOLDS,
       LAVA_REFILL,
@@ -2063,7 +2063,7 @@ final class AiPortalCast {
       SCOOP;
    }
 
-   enum Inner_ConfigStore {
+   enum CellKind {
       AIR,
       WATER,
       LAVA,
@@ -2071,13 +2071,13 @@ final class AiPortalCast {
       SOLID;
    }
 
-   enum Inner_DataUtil {
+   enum CastAction {
       SKIP,
       WATER_OVER_LAVA,
       LAVA_THEN_WATER;
    }
 
-   static final class Inner_JsonUtil {
+   static final class PourAck {
       private BlockPos pourCell;
       private String bucketId;
       private int filledBefore;
@@ -2121,7 +2121,7 @@ final class AiPortalCast {
       }
    }
 
-   enum Inner_NetHelper {
+   enum CastPhase {
       PREFLIGHT,
       LOCATE,
       SITE,
@@ -2131,7 +2131,7 @@ final class AiPortalCast {
       LIGHT;
    }
 
-   static final class Inner_RenderState {
+   static final class WaterRecovery {
       private BlockPos pourCell;
       private int filledBefore;
 
@@ -2158,7 +2158,7 @@ final class AiPortalCast {
       }
    }
 
-   static final class Inner_StateCache implements AiOperation {
+   static final class FaceApproachOperation implements AiOperation {
       private final AiOperation child;
       private final long deadline;
       private final LongSupplier clock;
@@ -2166,7 +2166,7 @@ final class AiPortalCast {
       private AiOperation.Result finalResult;
       private boolean cancelled;
 
-      Inner_StateCache(AiOperation child, long deadline, LongSupplier now) {
+      FaceApproachOperation(AiOperation child, long deadline, LongSupplier now) {
          this.child = child;
          this.deadline = deadline;
          this.clock = now;
@@ -2217,17 +2217,17 @@ final class AiPortalCast {
       }
    }
 
-   record Inner_StreamUtil(List<AiPortalCast.Inner_BufferHelper> steps, BlockPos blocked, String reason, int lavaNeeded, int moldBlocks) {
+   record CastPlan(List<AiPortalCast.CastStep> steps, BlockPos blocked, String reason, int lavaNeeded, int moldBlocks) {
    }
 
-   record Inner_SyncManager(BlockPos support, Direction face, BlockPos mold) {
+   record PourFace(BlockPos support, Direction face, BlockPos mold) {
    }
 
-   interface Inner_TaskQueue {
-      AiPortalCast.Inner_ConfigStore at(BlockPos var1);
+   interface CellLookup {
+      AiPortalCast.CellKind at(BlockPos var1);
    }
 
-   static final class Inner_UiHelper {
+   static final class TerminalGuard {
       private boolean terminated;
       private boolean terminalUnconfirmed;
 

@@ -14,10 +14,10 @@ public final class PayloadEditorModel {
    public int packetId = -1;
    public String update_Str = "";
    public String sync = "";
-   public List<PayloadFieldCodec.Inner_CachePool> fields = new ArrayList<>();
+   public List<PayloadFieldCodec.PayloadField> fields = new ArrayList<>();
    public byte[] bodyBytes = new byte[0];
    public byte[] load_BArr = new byte[0];
-   public PayloadEditorModel.Inner_StreamUtil init_bE_StreamUtil = PayloadEditorModel.Inner_StreamUtil.USER_EDITED;
+   public PayloadEditorModel.PayloadProvenance init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.USER_EDITED;
    public String flush = "";
    public String close = "Binary";
    public boolean hasCommandApiValue = false;
@@ -56,7 +56,7 @@ public final class PayloadEditorModel {
       model.packetId = action.payloadPacketId;
       model.update_Str = action.sourceProtocol == null ? "" : action.sourceProtocol;
       model.sync = action.payloadEncodingMode == null ? "" : action.payloadEncodingMode;
-      model.init_bE_StreamUtil = PayloadEditorModel.Inner_StreamUtil.init(action.payloadProvenance);
+      model.init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.init(action.payloadProvenance);
       model.hasCommandApiValue = action.commandApiRecognized;
       model.commandApiOverride = action.commandApiOverride;
       model.commandApiValue = action.commandApiValue;
@@ -70,14 +70,14 @@ public final class PayloadEditorModel {
          }
       }
 
-      List<PayloadFieldCodec.Inner_CachePool> fields = PayloadFieldCodec.parseFields(action.payloadFields);
+      List<PayloadFieldCodec.PayloadField> fields = PayloadFieldCodec.parseFields(action.payloadFields);
       if (!fields.isEmpty()) {
          model.fields = new ArrayList<>(fields);
          if (!model.init_Z_Z(false) && haveRaw) {
-            model.init_V_BArr_bE_StreamUtil(raw, PayloadEditorModel.Inner_StreamUtil.init(action.payloadProvenance));
+            model.init_V_BArr_bE_StreamUtil(raw, PayloadEditorModel.PayloadProvenance.init(action.payloadProvenance));
          }
       } else {
-         model.init_V_BArr_bE_StreamUtil(raw, PayloadEditorModel.Inner_StreamUtil.init(action.payloadProvenance));
+         model.init_V_BArr_bE_StreamUtil(raw, PayloadEditorModel.PayloadProvenance.init(action.payloadProvenance));
       }
 
       return model;
@@ -98,7 +98,7 @@ public final class PayloadEditorModel {
          : ("CONFIGURATION".equals(action.payloadPhase) ? "CONFIGURATION" : "");
       action.payloadClassName = this.write_Str == null ? "" : this.write_Str;
       action.payloadPacketId = this.packetId;
-      action.payloadProvenance = this.init_bE_StreamUtil == null ? PayloadEditorModel.Inner_StreamUtil.USER_EDITED.init() : this.init_bE_StreamUtil.init();
+      action.payloadProvenance = this.init_bE_StreamUtil == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.init() : this.init_bE_StreamUtil.init();
       action.payloadEncodingMode = this.sync();
       action.payloadFields = PayloadFieldCodec.formatFields(this.fields);
       action.payloadData = AutismPayloadSupport.toHexString(this.bodyBytes);
@@ -111,12 +111,12 @@ public final class PayloadEditorModel {
       return action;
    }
 
-   public PayloadFieldCodec.Inner_JsonUtil toSpec() {
-      return new PayloadFieldCodec.Inner_JsonUtil(
+   public PayloadFieldCodec.PayloadTemplate toSpec() {
+      return new PayloadFieldCodec.PayloadTemplate(
          this.channel,
-         PayloadFieldCodec.Inner_ConfigStore.parse(this.direction),
-         PayloadFieldCodec.Inner_TaskQueue.parse(this.phase),
-         PayloadFieldCodec.Inner_StreamUtil.parse(this.sync(), this.channel),
+         PayloadFieldCodec.PayloadDirection.parse(this.direction),
+         PayloadFieldCodec.ProtocolPhase.parse(this.phase),
+         PayloadFieldCodec.EncodingMode.parse(this.sync(), this.channel),
          this.fields == null ? List.of() : this.fields
       );
    }
@@ -173,7 +173,7 @@ public final class PayloadEditorModel {
          return false;
       } else {
          this.init_V_bE(parsed);
-         this.init_bE_StreamUtil = PayloadEditorModel.Inner_StreamUtil.USER_EDITED;
+         this.init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.USER_EDITED;
          this.bumpRevision();
          return true;
       }
@@ -181,7 +181,7 @@ public final class PayloadEditorModel {
 
    public boolean parseHex(String hex) {
       try {
-         this.init_V_BArr_bE_StreamUtil(init_BArr_Str(hex), PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
+         this.init_V_BArr_bE_StreamUtil(init_BArr_Str(hex), PayloadEditorModel.PayloadProvenance.USER_EDITED);
          this.flush = "";
          return true;
       } catch (Throwable t) {
@@ -192,7 +192,7 @@ public final class PayloadEditorModel {
    }
 
    public boolean read(String text) {
-      this.init_V_BArr_bE_StreamUtil((text == null ? "" : text).getBytes(StandardCharsets.UTF_8), PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
+      this.init_V_BArr_bE_StreamUtil((text == null ? "" : text).getBytes(StandardCharsets.UTF_8), PayloadEditorModel.PayloadProvenance.USER_EDITED);
       return true;
    }
 
@@ -245,16 +245,16 @@ public final class PayloadEditorModel {
 
       try {
          if (logicalHex != null && !logicalHex.isBlank()) {
-            PayloadEditorModel.Inner_DataUtil logical = init_bE_DataUtil_Str(logicalHex);
+            PayloadEditorModel.DecodedPayload logical = init_bE_DataUtil_Str(logicalHex);
             if (parsed.packetId >= 0 && logical.packetId != parsed.packetId) {
                throw new IllegalArgumentException("Logical packet id does not match packetId");
             }
 
             parsed.packetId = logical.packetId;
             parsed.channel = logical.channel;
-            parsed.init_V_BArr_bE_StreamUtil(logical.body, PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
+            parsed.init_V_BArr_bE_StreamUtil(logical.body, PayloadEditorModel.PayloadProvenance.USER_EDITED);
          } else if (bodyHex != null) {
-            parsed.init_V_BArr_bE_StreamUtil(init_BArr_Str(bodyHex), PayloadEditorModel.Inner_StreamUtil.USER_EDITED);
+            parsed.init_V_BArr_bE_StreamUtil(init_BArr_Str(bodyHex), PayloadEditorModel.PayloadProvenance.USER_EDITED);
          }
       } catch (Throwable t) {
          this.flush = AutismPayloadSupport.describeError(t);
@@ -263,7 +263,7 @@ public final class PayloadEditorModel {
       }
 
       this.init_V_bE(parsed);
-      this.init_bE_StreamUtil = PayloadEditorModel.Inner_StreamUtil.USER_EDITED;
+      this.init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.USER_EDITED;
       this.flush = "";
       this.bumpRevision();
       return true;
@@ -351,7 +351,7 @@ public final class PayloadEditorModel {
          sb.append("sourceProtocol = ").append(this.update_Str).append('\n');
       }
 
-      sb.append("provenance = ").append(this.init_bE_StreamUtil == null ? PayloadEditorModel.Inner_StreamUtil.USER_EDITED.init() : this.init_bE_StreamUtil.init()).append('\n');
+      sb.append("provenance = ").append(this.init_bE_StreamUtil == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.init() : this.init_bE_StreamUtil.init()).append('\n');
       sb.append("bodyBytes = ").append(this.bodyBytes == null ? 0 : this.bodyBytes.length).append('\n');
       sb.append("decoded = ").append(this.update()).append('\n');
       sb.append("bodyHex = ").append(AutismPayloadSupport.toHexString(this.bodyBytes)).append('\n');
@@ -386,8 +386,8 @@ public final class PayloadEditorModel {
    }
 
    private boolean init_Z_Z(boolean strict) {
-      PayloadFieldCodec.Inner_JsonUtil template = this.toSpec();
-      PayloadFieldCodec.Inner_DataUtil built = template.encode();
+      PayloadFieldCodec.PayloadTemplate template = this.toSpec();
+      PayloadFieldCodec.EncodeResult built = template.encode();
       if (!built.isValid()) {
          this.flush = String.join("; ", built.errors());
          if (strict) {
@@ -409,13 +409,13 @@ public final class PayloadEditorModel {
       return true;
    }
 
-   private void init_V_BArr_bE_StreamUtil(byte[] bytes, PayloadEditorModel.Inner_StreamUtil source) {
+   private void init_V_BArr_bE_StreamUtil(byte[] bytes, PayloadEditorModel.PayloadProvenance source) {
       this.bodyBytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
       this.load_BArr = (byte[])this.bodyBytes.clone();
       this.fields = new ArrayList<>(AutismPayloadSupport.inferPayloadFields(this.bodyBytes));
       this.sync = AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
       this.close = init_Str_BArr(this.bodyBytes);
-      this.init_bE_StreamUtil = source == null ? PayloadEditorModel.Inner_StreamUtil.USER_EDITED : source;
+      this.init_bE_StreamUtil = source == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED : source;
       this.load_V();
       this.flush = "";
       this.bumpRevision();
@@ -504,7 +504,7 @@ public final class PayloadEditorModel {
       return out;
    }
 
-   private static PayloadEditorModel.Inner_DataUtil init_bE_DataUtil_Str(String hex) {
+   private static PayloadEditorModel.DecodedPayload init_bE_DataUtil_Str(String hex) {
       byte[] bytes = init_BArr_Str(hex);
       int[] index = new int[]{0};
       Integer packetId = init_Integer_BArr_IArr(bytes, index);
@@ -515,7 +515,7 @@ public final class PayloadEditorModel {
             System.arraycopy(bytes, index[0], body, 0, body.length);
          }
 
-         return new PayloadEditorModel.Inner_DataUtil(packetId, channel, body);
+         return new PayloadEditorModel.DecodedPayload(packetId, channel, body);
       } else {
          throw new IllegalArgumentException("Missing logical packet id");
       }
@@ -604,17 +604,17 @@ public final class PayloadEditorModel {
       }
    }
 
-   private record Inner_DataUtil(int packetId, String channel, byte[] body) {
+   private record DecodedPayload(int packetId, String channel, byte[] body) {
    }
 
-   public enum Inner_StreamUtil {
+   public enum PayloadProvenance {
       CAPTURED_EXACT("capturedExact"),
       REENCODED_FROM_PAYLOAD("reencodedFromPayload"),
       USER_EDITED("userEdited");
 
       private final String init_Str;
 
-      Inner_StreamUtil(String tag) {
+      PayloadProvenance(String tag) {
          this.init_Str = tag;
       }
 
@@ -622,11 +622,11 @@ public final class PayloadEditorModel {
          return this.init_Str;
       }
 
-      public static PayloadEditorModel.Inner_StreamUtil init(String raw) {
+      public static PayloadEditorModel.PayloadProvenance init(String raw) {
          if (raw != null && !raw.isBlank()) {
             String normalized = raw.strip().toLowerCase(Locale.ROOT);
 
-            for (PayloadEditorModel.Inner_StreamUtil value : values()) {
+            for (PayloadEditorModel.PayloadProvenance value : values()) {
                if (value.init_Str.equalsIgnoreCase(normalized) || value.name().equalsIgnoreCase(normalized)) {
                   return value;
                }

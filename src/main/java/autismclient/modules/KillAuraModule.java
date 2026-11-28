@@ -137,15 +137,15 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    private static long lastAttackMillis;
    private static final SoundEvent HIT_SOUND = SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath("autismclient", "hitsound"));
    private final Random random = new Random();
-   private final KillAuraModule.Inner_StreamUtil aimWander = new KillAuraModule.Inner_StreamUtil(new Random());
-   private final KillAuraModule.Inner_CachePool clickScheduler = new KillAuraModule.Inner_CachePool();
+   private final KillAuraModule.AimWander aimWander = new KillAuraModule.AimWander(new Random());
+   private final KillAuraModule.ClickScheduler clickScheduler = new KillAuraModule.ClickScheduler();
    private final ClickerSettingsGroup combatClicker;
    private final Random missRandom = new Random();
-   private final KillAuraModule.Inner_ConfigStore missState = new KillAuraModule.Inner_ConfigStore();
-   private final KillAuraModule.Inner_DataUtil postAttackTracker = new KillAuraModule.Inner_DataUtil();
+   private final KillAuraModule.MissState missState = new KillAuraModule.MissState();
+   private final KillAuraModule.PostAttackTracker postAttackTracker = new KillAuraModule.PostAttackTracker();
    private final EntityMotionTracker motionTracker = new EntityMotionTracker();
    private autismclient.util.CombatAimEngine aimEngine;
-   private final autismclient.util.CombatAimEngine.Inner_DataUtil aimTuning = new autismclient.util.CombatAimEngine.Inner_DataUtil();
+   private final autismclient.util.CombatAimEngine.AimFrame aimTuning = new autismclient.util.CombatAimEngine.AimFrame();
    private Vec3 humanAimAnchor;
    private int lastSteppedTargetId = -1;
    private int groundYTargetId = -1;
@@ -180,7 +180,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    private int hitLandingTargetId = -1;
    private int hitLandingHurtTime;
    private int hitLandingTicksLeft;
-   private final ShieldHitWindowHelper.Inner_BufferHelper shieldHitWindow = new ShieldHitWindowHelper.Inner_BufferHelper();
+   private final ShieldHitWindowHelper.HitWindowTracker shieldHitWindow = new ShieldHitWindowHelper.HitWindowTracker();
    private InteractionHand blockHitHand;
    private ItemStack blockHitStack = ItemStack.EMPTY;
    private int blockHitSlot = -1;
@@ -196,7 +196,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    private String entityFilterSource = "";
    private Set<String> entityFilterIds = Set.of();
    private final HeldItemFilter heldItemFilter;
-   private final KillAuraModule.Inner_JsonUtil heldItemFilterCache = new KillAuraModule.Inner_JsonUtil();
+   private final KillAuraModule.TickCachedFlag heldItemFilterCache = new KillAuraModule.TickCachedFlag();
    private LivingEntity bedBudgetThreat;
    private int bedBudgetThreatTick = -2147483648;
    private int bedNukerBusyTick = -2147483648;
@@ -211,7 +211,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    static final double tick_D = 4.0;
    private int fallTicksCacheTick = -2147483648;
    private int cachedTicksUntilFalling = 2147483647;
-   private final KillAuraModule.Inner_JsonUtil allowedItemCache = new KillAuraModule.Inner_JsonUtil();
+   private final KillAuraModule.TickCachedFlag allowedItemCache = new KillAuraModule.TickCachedFlag();
    private boolean lastChanceHit;
    static final int STALL_TICKS = 12;
    private int readyStallTicks;
@@ -646,8 +646,8 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          hand.setMissChance(this.integer("miss-chance") * 0.01);
          Vec3 eyes = MC.player.getEyePosition();
          AABB targetBox = target.getBoundingBox();
-         Vec3 anchor = autismclient.util.CombatAimEngine.Inner_DataUtil.clampAnchorToReach(eyes, targetBox, this.humanAimAnchor, this.attackReach());
-         AABB region = autismclient.util.CombatAimEngine.Inner_DataUtil.shrinkRegionToReach(eyes, targetBox, anchor, this.attackReach());
+         Vec3 anchor = autismclient.util.CombatAimEngine.AimFrame.clampAnchorToReach(eyes, targetBox, this.humanAimAnchor, this.attackReach());
+         AABB region = autismclient.util.CombatAimEngine.AimFrame.shrinkRegionToReach(eyes, targetBox, anchor, this.attackReach());
          AABB receivedBox = null;
          Vec3 heldPose = BacktrackModule.init_Vec3_LivingEntity_Vec3(target, eyes);
          Vec3 sampled = heldPose != null ? heldPose : (this.motionTracker.isTracking(target) ? this.sampledReceivedPosition() : null);
@@ -717,7 +717,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   public static boolean init_Z_ce_DataUtil(RotationMath.Rotation goal, autismclient.util.CombatAimEngine.Inner_DataUtil frame, boolean pinQuiet) {
+   public static boolean init_Z_ce_DataUtil(RotationMath.Rotation goal, autismclient.util.CombatAimEngine.AimFrame frame, boolean pinQuiet) {
       if (AutismLiteVariant.enabled()) {
          return false;
       }
@@ -893,8 +893,8 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       AABB box = entity.getBoundingBox();
       Vec3 eyes = MC.player.getEyePosition();
       double ground = entity.getId() == this.groundYTargetId && !Double.isNaN(this.targetGroundY) ? Math.min(this.targetGroundY, entity.getY()) : entity.getY();
-      Vec3 anchor = autismclient.util.CombatAimEngine.Inner_DataUtil.clampAnchorToReach(
-         eyes, box, autismclient.util.CombatAimEngine.Inner_DataUtil.computeAnchorAtHeight(box, ground + this.getAimEngine().getPreferredAimHeightOffset()), this.attackReach()
+      Vec3 anchor = autismclient.util.CombatAimEngine.AimFrame.clampAnchorToReach(
+         eyes, box, autismclient.util.CombatAimEngine.AimFrame.computeAnchorAtHeight(box, ground + this.getAimEngine().getPreferredAimHeightOffset()), this.attackReach()
       );
       return this.rotationToBoxPoint(eyes, box, anchor, range * range) != null ? anchor : this.findVisibleAimPoint(entity, range, anchor);
    }
@@ -1125,14 +1125,14 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
             int raise = blockDelayTicks(MC.player.getItemInHand(hand));
             int ownHit = this.ticksUntilOwnHit();
-            ShieldHitWindowHelper.Inner_CachePool decision = this.isBlockHitCpsMode()
+            ShieldHitWindowHelper.ShieldAction decision = this.isBlockHitCpsMode()
                ? ShieldHitWindowHelper.init(true, this.blockHitHand != null, raise, ownHit)
                : ShieldHitWindowHelper.init_l_CachePool_Z(true, this.blockHitHand != null, MC.player.hurtTime, raise, ownHit);
             if (AutismSessionState.getInstance().getClientTick() == this.lastUnblockTick) {
-               decision = ShieldHitWindowHelper.Inner_CachePool.DOWN;
+               decision = ShieldHitWindowHelper.ShieldAction.DOWN;
             }
 
-            if (decision == ShieldHitWindowHelper.Inner_CachePool.DOWN) {
+            if (decision == ShieldHitWindowHelper.ShieldAction.DOWN) {
                this.stopBlockHit(false);
             } else if (this.blockHitHand != null
                && MC.player.isUsingItem()
@@ -3301,7 +3301,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       autismclient.util.KillAuraHitMarkerRenderer.load();
    }
 
-   static final class Inner_BufferHelper {
+   static final class FrameCatchUp {
       private static final long init = 1000000L;
       private static final long MAX_CATCH_UP_NANOS = 150000000L;
       private long lastFrameNanos = -9223372036854775808L;
@@ -3333,11 +3333,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private final class Inner_CachePool {
-      private final KillAuraModule.Inner_NetHelper clickCycle = new KillAuraModule.Inner_NetHelper(20, 2);
+   private final class ClickScheduler {
+      private final KillAuraModule.ClickCycle clickCycle = new KillAuraModule.ClickCycle(20, 2);
       private final autismclient.util.clicker.ClickPatternEngine patternEngine = new autismclient.util.clicker.ClickPatternEngine();
-      private final KillAuraModule.Inner_TaskQueue carriedClicks = new KillAuraModule.Inner_TaskQueue();
-      private final KillAuraModule.Inner_BufferHelper frameCatchUp = new KillAuraModule.Inner_BufferHelper();
+      private final KillAuraModule.CarriedClicks carriedClicks = new KillAuraModule.CarriedClicks();
+      private final KillAuraModule.FrameCatchUp frameCatchUp = new KillAuraModule.FrameCatchUp();
       private boolean active;
       private int pendingClicks;
       private int clicksThisTick;
@@ -3347,7 +3347,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       private final Map<String, Integer> reasonCounts = new TreeMap<>();
       private String lastReason = "";
 
-      Inner_CachePool() {
+      ClickScheduler() {
          this.patternEngine.setSpeedMultiplier(2.0);
          this.rebuildClickCycle();
       }
@@ -3595,7 +3595,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   static final class Inner_ConfigStore {
+   static final class MissState {
       static final int MISS_EXPIRE_TICKS = 2;
       private static final long MISS_EXPIRE_NANOS = 150000000L;
       private boolean pending;
@@ -3679,7 +3679,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class PostAttackTracker {
       static final double SETTLED_YAW_SPEED = 5.0;
       static final int WINDOW_SAMPLES = 21;
       static final int IDLE_RESET_SAMPLES = 30;
@@ -3696,11 +3696,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       private boolean hasLastRotation;
       private int idleSamples;
 
-      Inner_DataUtil() {
+      PostAttackTracker() {
          this(System::currentTimeMillis);
       }
 
-      Inner_DataUtil(LongSupplier clock) {
+      PostAttackTracker(LongSupplier clock) {
          this.clock = clock;
       }
 
@@ -3780,7 +3780,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   static final class Inner_JsonUtil {
+   static final class TickCachedFlag {
       private int cachedTick = -2147483648;
       private boolean cachedValue;
 
@@ -3794,13 +3794,13 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   static final class Inner_NetHelper {
+   static final class ClickCycle {
       private final int cycleSize;
       final int iterations;
       private final int[] cycle;
       private int cyclePosition;
 
-      Inner_NetHelper(int cycleLength, int iterations) {
+      ClickCycle(int cycleLength, int iterations) {
          this.cycleSize = cycleLength;
          this.iterations = iterations;
          this.cycle = new int[cycleLength * iterations];
@@ -3847,7 +3847,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   static final class Inner_StreamUtil {
+   static final class AimWander {
       private static final double read_D = 0.3;
       private static final double YAW_NOISE_BASE = 1.45;
       private static final double YAW_NOISE_SIGMA = 1.45 * Math.sqrt(0.6);
@@ -3896,7 +3896,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       private double smoothY;
       private double smoothZ;
 
-      Inner_StreamUtil(Random random) {
+      AimWander(Random random) {
          this.random = random;
       }
 
@@ -4063,7 +4063,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   static final class Inner_TaskQueue implements autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper {
+   static final class CarriedClicks implements autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper {
       private static final long STALE_NANOS = 150000000L;
       int capacity = 1;
       private int count;

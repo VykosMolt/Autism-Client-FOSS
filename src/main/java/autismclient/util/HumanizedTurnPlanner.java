@@ -63,9 +63,9 @@ public final class HumanizedTurnPlanner {
       return this.durationTicks;
    }
 
-   public HumanizedTurnPlanner.Inner_DataUtil step(double elapsedTicks, float actualYaw, float actualPitch, double quantum) {
+   public HumanizedTurnPlanner.TurnStep step(double elapsedTicks, float actualYaw, float actualPitch, double quantum) {
       if (!this.init_Z) {
-         return new HumanizedTurnPlanner.Inner_DataUtil(0L, 0L, true);
+         return new HumanizedTurnPlanner.TurnStep(0L, 0L, true);
       }
 
       if (Double.isFinite(elapsedTicks) && Float.isFinite(actualYaw) && Float.isFinite(actualPitch) && Double.isFinite(quantum) && !(quantum <= 1.0E-8)) {
@@ -87,7 +87,7 @@ public final class HumanizedTurnPlanner {
          long pitchCounts = Math.round((goalPitch - actualPitch) / quantum);
          if (this.progress >= 1.0 && yawCounts == 0L && pitchCounts == 0L) {
             this.init_Z = false;
-            return new HumanizedTurnPlanner.Inner_DataUtil(0L, 0L, true);
+            return new HumanizedTurnPlanner.TurnStep(0L, 0L, true);
          }
 
          long nowTick = Math.max(this.init_J, (long)Math.floor(Math.max(0.0, elapsedTicks)));
@@ -103,9 +103,9 @@ public final class HumanizedTurnPlanner {
          this.lastPitch = actualPitch;
          long yawBudget = (long)Math.floor(Math.max(0.0, 24.0 - this.tickYawMoved) / quantum + 1.0E-5);
          long pitchBudget = (long)Math.floor(Math.max(0.0, 2.0 - this.tickPitchMoved) / quantum + 1.0E-5);
-         return new HumanizedTurnPlanner.Inner_DataUtil(Math.clamp(yawCounts, -yawBudget, yawBudget), Math.clamp(pitchCounts, -pitchBudget, pitchBudget), false);
+         return new HumanizedTurnPlanner.TurnStep(Math.clamp(yawCounts, -yawBudget, yawBudget), Math.clamp(pitchCounts, -pitchBudget, pitchBudget), false);
       } else {
-         return new HumanizedTurnPlanner.Inner_DataUtil(0L, 0L, false);
+         return new HumanizedTurnPlanner.TurnStep(0L, 0L, false);
       }
    }
 
@@ -136,6 +136,6 @@ public final class HumanizedTurnPlanner {
       return angle;
    }
 
-   public record Inner_DataUtil(long yawCounts, long load, boolean done) {
+   public record TurnStep(long yawCounts, long load, boolean done) {
    }
 }

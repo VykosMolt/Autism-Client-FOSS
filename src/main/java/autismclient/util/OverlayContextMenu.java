@@ -189,7 +189,7 @@ public class OverlayContextMenu<T> {
       }
    }
 
-   public boolean init(double mouseX, double mouseY, int button, OverlayContextMenu.Inner_DataUtil<T> onPick) {
+   public boolean init(double mouseX, double mouseY, int button, OverlayContextMenu.PickHandler<T> onPick) {
       if (!this.isOpen()) {
          return false;
       }
@@ -226,7 +226,7 @@ public class OverlayContextMenu<T> {
    }
 
    @FunctionalInterface
-   public interface Inner_DataUtil<T> {
+   public interface PickHandler<T> {
       void onPicked(T var1, String var2, int var3);
    }
 }

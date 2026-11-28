@@ -1092,11 +1092,11 @@ final class AiCombat {
                double recharge = 20.0 / Math.max(0.1, mc.player.getAttributeValue(Attributes.ATTACK_SPEED));
                double readyIn = Math.max(0.0, (0.92F - strength) * recharge);
                boolean ready = strength >= 0.92F;
-               AiThreats.Inner_DataUtil profile = AiThreats.classify(this.target);
+               AiThreats.ThreatKind profile = AiThreats.classify(this.target);
                Entity volley = shield ? AiThreats.findImminentShooter(mc, 12) : null;
                if (volley == null || volley == this.target && ready && AiThreats.ticksUntilRangedShot(mc, volley) > 11) {
                   if (!AiThreats.isLegacyCombatEnabled() && !this.open_Z && !hold && AiThreats.isMeleeThreat(profile)) {
-                     double knock = profile == AiThreats.Inner_DataUtil.HOGLIN ? 6.0 : 2.5;
+                     double knock = profile == AiThreats.ThreatKind.HOGLIN ? 6.0 : 2.5;
                      if (this.knockbackIsUnsafe(mc.player.getX(), mc.player.getZ(), knock)) {
                         int side = this.init_I_D(knock);
                         if (side != 0) {
@@ -1992,8 +1992,8 @@ final class AiCombat {
 
                for (Entity entity : mc.level.entitiesForRendering()) {
                   if (entity instanceof Mob mob && mob.isAlive() && entity instanceof Enemy && !(mob.distanceToSqr(mc.player) > 36.0)) {
-                     AiThreats.Inner_DataUtil profile = AiThreats.classify(entity);
-                     if ((AiThreats.isMeleeThreat(profile) || profile == AiThreats.Inner_DataUtil.BLAZE) && AiThreats.isActiveThreat(mc, entity) && mc.player.hasLineOfSight(entity)) {
+                     AiThreats.ThreatKind profile = AiThreats.classify(entity);
+                     if ((AiThreats.isMeleeThreat(profile) || profile == AiThreats.ThreatKind.BLAZE) && AiThreats.isActiveThreat(mc, entity) && mc.player.hasLineOfSight(entity)) {
                         double gap = AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox());
                         if (gap < bestGap) {
                            bestGap = gap;
@@ -2043,7 +2043,7 @@ final class AiCombat {
                      : entity instanceof Enemy
                         && (
                            AiThreats.isLegacyCombatEnabled()
-                              || AiThreats.classify(entity) != AiThreats.Inner_DataUtil.AVOID && (!AiThreats.isNormallyPassiveOrNeutral(AiThreats.classify(entity)) || AiThreats.isActiveThreat(mc, entity))
+                              || AiThreats.classify(entity) != AiThreats.ThreatKind.AVOID && (!AiThreats.isNormallyPassiveOrNeutral(AiThreats.classify(entity)) || AiThreats.isActiveThreat(mc, entity))
                         );
                } else {
                   return false;

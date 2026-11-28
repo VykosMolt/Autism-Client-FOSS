@@ -598,7 +598,7 @@ final class AiFarm {
                while (queued-- > 0) {
                   AiFarm.Inner_CachePool w = this.followUps.poll();
                   if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
-                     AiServerEvidence.Inner_DataUtil update = AiServerEvidence.lastBlockUpdate(w.cell());
+                     AiServerEvidence.BlockUpdate update = AiServerEvidence.lastBlockUpdate(w.cell());
                      if (AiReplantEvidence.init(
                            this.mc.level.getBlockState(w.cell()),
                            update,
@@ -607,7 +607,7 @@ final class AiFarm {
                            false,
                            AiGameState.countInventoryItem(seed)
                         )
-                        == AiReplantEvidence.Inner_DataUtil.EXTERNAL) {
+                        == AiReplantEvidence.ReplantState.EXTERNAL) {
                         this.externalReplantCount++;
                         this.replantNotBefore.remove(w.cell().asLong());
                         this.harvestRevision.remove(w.cell().asLong());

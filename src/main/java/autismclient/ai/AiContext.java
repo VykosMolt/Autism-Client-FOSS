@@ -110,7 +110,7 @@ public final class AiContext {
       new String[]{"Use script_check first for syntax; verify gameplay effects after the run.", "The script's result reports what each step did."}
    );
    private static final String read_Str = init_Str();
-   private static volatile AiContext.Inner_CachePool init_c_CachePool;
+   private static volatile AiContext.CatalogCache init_c_CachePool;
    static final Set<String> load_Set = Set.of(
       "game:obtain",
       "game:craft",
@@ -207,7 +207,7 @@ public final class AiContext {
    }
 
    static String catalogTextFor(AiCatalog.Snapshot catalog, boolean speedrunScoped, boolean verify) {
-      AiContext.Inner_CachePool cached = init_c_CachePool;
+      AiContext.CatalogCache cached = init_c_CachePool;
       if (cached != null && cached.catalog() == catalog && cached.scoped() == speedrunScoped && cached.verify() == verify) {
          return cached.text();
       }
@@ -268,7 +268,7 @@ public final class AiContext {
       }
 
       String text = out.toString();
-      init_c_CachePool = new AiContext.Inner_CachePool(catalog, speedrunScoped, verify, text);
+      init_c_CachePool = new AiContext.CatalogCache(catalog, speedrunScoped, verify, text);
       return text;
    }
 
@@ -306,7 +306,7 @@ public final class AiContext {
       return out.toString();
    }
 
-   public static AiContext.Inner_StreamUtil buildPrompt(
+   public static AiContext.PromptParts buildPrompt(
       AiCatalog.Snapshot catalog,
       String objective,
       List<String> updates,
@@ -320,7 +320,7 @@ public final class AiContext {
       return init(catalog, objective, updates, taskState, planning, vision, true, memories, now, maxCharacters);
    }
 
-   public static AiContext.Inner_StreamUtil init(
+   public static AiContext.PromptParts init(
       AiCatalog.Snapshot catalog,
       String objective,
       List<String> updates,
@@ -353,7 +353,7 @@ public final class AiContext {
       }
 
       appendIfRoom(tier, memoriesText(memories, now, 6000), room);
-      return new AiContext.Inner_StreamUtil(stable, tier.toString());
+      return new AiContext.PromptParts(stable, tier.toString());
    }
 
    private static void appendIfRoom(StringBuilder tier, String section, int room) {
@@ -412,7 +412,7 @@ public final class AiContext {
    }
 
    static String init(
-      AiContext.Inner_DataUtil tracker,
+      AiContext.ObservationTracker tracker,
       String taskState,
       JsonObject structuredTask,
       int wheatBaseline,
@@ -453,17 +453,17 @@ public final class AiContext {
    public static String init(
       AiCatalog.Snapshot catalog, AiObservation observation, String objective, String task, List<AiMemoryStore.Memory> memories, int maxCharacters
    ) {
-      String turn = init(new AiContext.Inner_DataUtil(), task, new JsonObject(), -1, 60, 0L, null, null, observation);
-      AiContext.Inner_StreamUtil prompt = buildPrompt(
+      String turn = init(new AiContext.ObservationTracker(), task, new JsonObject(), -1, 60, 0L, null, null, observation);
+      AiContext.PromptParts prompt = buildPrompt(
          catalog, objective, List.of(), task, false, true, memories, System.currentTimeMillis(), maxCharacters - turn.length() - 1
       );
       return prompt.text() + "\n" + turn;
    }
 
-   private record Inner_CachePool(AiCatalog.Snapshot catalog, boolean scoped, boolean verify, String text) {
+   private record CatalogCache(AiCatalog.Snapshot catalog, boolean scoped, boolean verify, String text) {
    }
 
-   static final class Inner_DataUtil {
+   static final class ObservationTracker {
       static final int init_I = 10;
       static final double init_D = 0.6;
       private int load_I;
@@ -531,14 +531,14 @@ public final class AiContext {
       }
    }
 
-   public record Inner_StreamUtil(String stable, String objective) {
-      public Inner_StreamUtil {
+   public record PromptParts(String stable, String objective) {
+      public PromptParts {
          stable = stable == null ? "" : stable;
          objective = objective == null ? "" : objective;
       }
 
-      public static AiContext.Inner_StreamUtil of(String system) {
-         return new AiContext.Inner_StreamUtil(system, "");
+      public static AiContext.PromptParts of(String system) {
+         return new AiContext.PromptParts(system, "");
       }
 
       public String text() {

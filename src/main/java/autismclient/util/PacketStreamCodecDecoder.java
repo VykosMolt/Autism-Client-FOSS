@@ -24,7 +24,7 @@ public final class PacketStreamCodecDecoder {
    private PacketStreamCodecDecoder() {
    }
 
-   public static PacketStreamCodecDecoder.Inner_CachePool decodeFrame(Class<? extends Packet<?>> packetClass, byte[] plaintextBytes, String protocolPhase) {
+   public static PacketStreamCodecDecoder.DecodedFrame decodeFrame(Class<? extends Packet<?>> packetClass, byte[] plaintextBytes, String protocolPhase) {
       ByteBuf buf = Unpooled.wrappedBuffer(plaintextBytes == null ? new byte[0] : plaintextBytes);
 
       try {
@@ -35,7 +35,7 @@ public final class PacketStreamCodecDecoder {
          }
 
          Packet<?> packet = decodeBody(packetClass, body, protocolPhase);
-         return new PacketStreamCodecDecoder.Inner_CachePool(packet, packetId, body, "minecraft full packet STREAM_CODEC");
+         return new PacketStreamCodecDecoder.DecodedFrame(packet, packetId, body, "minecraft full packet STREAM_CODEC");
       } finally {
          buf.release();
       }
@@ -48,15 +48,15 @@ public final class PacketStreamCodecDecoder {
 
       byte[] body = bodyBytes == null ? new byte[0] : (byte[])bodyBytes.clone();
       if (packetClass != ServerboundCustomPayloadPacket.class && packetClass != ClientboundCustomPayloadPacket.class) {
-         List<PacketStreamCodecDecoder.Inner_StreamUtil> codecs = init(packetClass, protocolPhase);
+         List<PacketStreamCodecDecoder.NamedCodec> codecs = init(packetClass, protocolPhase);
          if (codecs.isEmpty()) {
             throw new IllegalArgumentException("No STREAM_CODEC found for " + packetClass.getName() + ".");
          }
 
          Throwable firstFailure = null;
 
-         for (PacketStreamCodecDecoder.Inner_StreamUtil candidate : codecs) {
-            for (PacketStreamCodecDecoder.Inner_DataUtil factory : init_List(body)) {
+         for (PacketStreamCodecDecoder.NamedCodec candidate : codecs) {
+            for (PacketStreamCodecDecoder.BufferFactory factory : init_List(body)) {
                ByteBuf buffer = factory.create();
 
                try {
@@ -110,8 +110,8 @@ public final class PacketStreamCodecDecoder {
       }
    }
 
-   private static List<PacketStreamCodecDecoder.Inner_StreamUtil> init(Class<?> packetClass, String protocolPhase) {
-      List<PacketStreamCodecDecoder.Inner_StreamUtil> candidates = new ArrayList<>();
+   private static List<PacketStreamCodecDecoder.NamedCodec> init(Class<?> packetClass, String protocolPhase) {
+      List<PacketStreamCodecDecoder.NamedCodec> candidates = new ArrayList<>();
 
       for (Class<?> cursor = packetClass; cursor != null && cursor != Object.class; cursor = cursor.getSuperclass()) {
          for (Field field : cursor.getDeclaredFields()) {
@@ -119,7 +119,7 @@ public final class PacketStreamCodecDecoder {
                try {
                   field.setAccessible(true);
                   if (field.get(null) instanceof StreamCodec codec) {
-                     candidates.add(new PacketStreamCodecDecoder.Inner_StreamUtil(field.getName(), codec));
+                     candidates.add(new PacketStreamCodecDecoder.NamedCodec(field.getName(), codec));
                   }
                } catch (Throwable var10) {
                }
@@ -151,9 +151,9 @@ public final class PacketStreamCodecDecoder {
       }
    }
 
-   private static List<PacketStreamCodecDecoder.Inner_DataUtil> init_List(byte[] bodyBytes) {
+   private static List<PacketStreamCodecDecoder.BufferFactory> init_List(byte[] bodyBytes) {
       byte[] bytes = bodyBytes == null ? new byte[0] : (byte[])bodyBytes.clone();
-      List<PacketStreamCodecDecoder.Inner_DataUtil> out = new ArrayList<>();
+      List<PacketStreamCodecDecoder.BufferFactory> out = new ArrayList<>();
       RegistryAccess access = init();
       if (access != null) {
          out.add(() -> new RegistryFriendlyByteBuf(Unpooled.wrappedBuffer((byte[])bytes.clone()), access));
@@ -233,8 +233,8 @@ public final class PacketStreamCodecDecoder {
       return message != null && !message.isBlank() ? message : t.getClass().getSimpleName();
    }
 
-   public record Inner_CachePool(Packet<?> packet, int init_I, byte[] init_BArr, String init_Str) {
-      public Inner_CachePool {
+   public record DecodedFrame(Packet<?> packet, int init_I, byte[] init_BArr, String init_Str) {
+      public DecodedFrame {
          init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
          init_Str = init_Str != null && !init_Str.isBlank() ? init_Str : "minecraft STREAM_CODEC";
       }
@@ -244,11 +244,11 @@ public final class PacketStreamCodecDecoder {
       }
    }
 
-   private interface Inner_DataUtil {
+   private interface BufferFactory {
       ByteBuf create();
    }
 
-   private record Inner_StreamUtil(String name, StreamCodec<ByteBuf, ?> codec) {
+   private record NamedCodec(String name, StreamCodec<ByteBuf, ?> codec) {
       Object init(ByteBuf buffer) {
          return this.codec.decode(buffer);
       }

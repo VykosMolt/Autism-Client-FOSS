@@ -298,8 +298,8 @@ public final class AiAddons {
       return json;
    }
 
-   static List<AiAddons.Inner_BufferHelper> parseDiagnostics(String output) {
-      List<AiAddons.Inner_BufferHelper> out = new ArrayList<>();
+   static List<AiAddons.CompileDiagnostic> parseDiagnostics(String output) {
+      List<AiAddons.CompileDiagnostic> out = new ArrayList<>();
       if (output == null) {
          return out;
       }
@@ -307,14 +307,14 @@ public final class AiAddons {
       for (String line : output.split("\\R")) {
          Matcher matcher = DIAGNOSTIC_PATTERN.matcher(line.trim());
          if (matcher.matches() && out.size() < 20) {
-            out.add(new AiAddons.Inner_BufferHelper(matcher.group(1), Long.parseLong(matcher.group(2)), matcher.group(3), matcher.group(4).trim()));
+            out.add(new AiAddons.CompileDiagnostic(matcher.group(1), Long.parseLong(matcher.group(2)), matcher.group(3), matcher.group(4).trim()));
          }
       }
 
       return out;
    }
 
-   static AiAddons.Inner_StreamUtil init_CachePool_StreamUt() {
+   static AiAddons.CompilerChoice init_CachePool_StreamUt() {
       return init(
          ToolProvider::getSystemJavaCompiler,
          Path.of(System.getProperty("java.home", ".")),
@@ -324,29 +324,29 @@ public final class AiAddons {
       );
    }
 
-   static AiAddons.Inner_StreamUtil init(
+   static AiAddons.CompilerChoice init(
       Supplier<JavaCompiler> system, Path javaHome, Function<String, Path> pathLookup, Supplier<String> javaHomeEnv, Supplier<List<Path>> prismRuntimeDirs
    ) {
       JavaCompiler compiler = system.get();
       if (compiler != null) {
-         return new AiAddons.Inner_StreamUtil(compiler, null);
+         return new AiAddons.CompilerChoice(compiler, null);
       }
 
       Path home = javacIn(javaHome == null ? null : javaHome.resolve("bin"));
       if (home != null) {
-         return new AiAddons.Inner_StreamUtil(null, home);
+         return new AiAddons.CompilerChoice(null, home);
       }
 
       Path onPath = pathLookup == null ? null : pathLookup.apply("javac");
       if (onPath != null) {
-         return new AiAddons.Inner_StreamUtil(null, onPath);
+         return new AiAddons.CompilerChoice(null, onPath);
       }
 
       String env = javaHomeEnv == null ? null : javaHomeEnv.get();
       if (env != null && !env.isBlank()) {
          Path fromEnv = javacIn(Path.of(env).resolve("bin"));
          if (fromEnv != null) {
-            return new AiAddons.Inner_StreamUtil(null, fromEnv);
+            return new AiAddons.CompilerChoice(null, fromEnv);
          }
       }
 
@@ -354,7 +354,7 @@ public final class AiAddons {
          for (Path dir : prismRuntimeDirs.get()) {
             Path found = javacIn(dir.resolve("bin"));
             if (found != null) {
-               return new AiAddons.Inner_StreamUtil(null, found);
+               return new AiAddons.CompilerChoice(null, found);
             }
          }
       }
@@ -438,7 +438,7 @@ public final class AiAddons {
       return List.copyOf(out);
    }
 
-   private static AiAddons.Inner_ConfigStore readManifest(Path addonDir) {
+   private static AiAddons.AddonManifest readManifest(Path addonDir) {
       Path file = addonDir.resolve("addon.json");
       if (!Files.isRegularFile(file)) {
          return null;
@@ -449,13 +449,13 @@ public final class AiAddons {
             return null;
          }
 
-         return AiAddons.Inner_ConfigStore.fromJson(JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject());
+         return AiAddons.AddonManifest.fromJson(JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8)).getAsJsonObject());
       } catch (Exception e) {
          return null;
       }
    }
 
-   private static void init(Path addonDir, AiAddons.Inner_ConfigStore meta) throws IOException {
+   private static void init(Path addonDir, AiAddons.AddonManifest meta) throws IOException {
       AiJson.writeAtomicJson(addonDir.resolve("addon.json"), meta.toJson());
    }
 
@@ -463,14 +463,14 @@ public final class AiAddons {
       return addonsRoot().resolve(id).normalize();
    }
 
-   private static AiAddons.Inner_ConfigStore init(String id, Path dir) {
-      AiAddons.Inner_ConfigStore meta = readManifest(dir);
+   private static AiAddons.AddonManifest init(String id, Path dir) {
+      AiAddons.AddonManifest meta = readManifest(dir);
       if (meta != null) {
          return meta;
       }
 
       String className = init(id, id);
-      return new AiAddons.Inner_ConfigStore(id, id, "", load_Str(id), load_Str(id) + "." + className, List.of(), List.of());
+      return new AiAddons.AddonManifest(id, id, "", load_Str(id), load_Str(id) + "." + className, List.of(), List.of());
    }
 
    private static AiOperation load(JsonObject args) {
@@ -512,7 +512,7 @@ public final class AiAddons {
          Path source = dir.resolve("src").resolve(pkg.replace('.', '/')).resolve(className + ".java");
          Files.createDirectories(source.getParent());
          Files.writeString(source, init(id, name, description, features), StandardCharsets.UTF_8);
-         init(dir, new AiAddons.Inner_ConfigStore(id, name, description, pkg, entryClass, features, List.of()));
+         init(dir, new AiAddons.AddonManifest(id, name, description, pkg, entryClass, features, List.of()));
          return init_AiOperation(
             AiOperation.Status.SUCCEEDED,
             "Scaffolded addon '" + id + "' (" + String.join(", ", features) + ")",
@@ -728,7 +728,7 @@ public final class AiAddons {
       }
    }
 
-   static AiOperation init(JsonObject args, final AiAddons.Inner_CachePool locator, final Supplier<List<Path>> classpath) {
+   static AiOperation init(JsonObject args, final AiAddons.CompilerLocator locator, final Supplier<List<Path>> classpath) {
       final String id = validateId(AiJson.getString(args, "id", ""));
       final Path dir = addonDir(id);
 
@@ -745,12 +745,12 @@ public final class AiAddons {
          );
       }
 
-      final AiAddons.Inner_ConfigStore meta = init(id, dir);
+      final AiAddons.AddonManifest meta = init(id, dir);
       return new AiOperation() {
          final long buildDeadline;
          final AtomicReference<Process> compilerProcess;
          final AtomicBoolean cancelRequested;
-         volatile AiAddons.Inner_DataUtil outcome;
+         volatile AiAddons.BuildOutcome outcome;
          Thread worker;
 
          {
@@ -776,7 +776,7 @@ public final class AiAddons {
                this.worker.start();
             }
 
-            AiAddons.Inner_DataUtil done = this.outcome;
+            AiAddons.BuildOutcome done = this.outcome;
             if (done == null) {
                if (System.nanoTime() > this.buildDeadline) {
                   this.cancel();
@@ -795,7 +795,7 @@ public final class AiAddons {
                if (!done.errors().isEmpty()) {
                   JsonArray errors = new JsonArray();
 
-                  for (AiAddons.Inner_BufferHelper diag : done.errors()) {
+                  for (AiAddons.CompileDiagnostic diag : done.errors()) {
                      errors.add(diag.toJson());
                   }
 
@@ -854,17 +854,17 @@ public final class AiAddons {
       }
    }
 
-   static AiAddons.Inner_DataUtil init(
+   static AiAddons.BuildOutcome init(
       Path dir,
-      AiAddons.Inner_ConfigStore meta,
+      AiAddons.AddonManifest meta,
       List<Path> sources,
-      AiAddons.Inner_StreamUtil compiler,
+      AiAddons.CompilerChoice compiler,
       List<Path> classpath,
       AtomicReference<Process> running,
       BooleanSupplier cancelled
    ) {
       if (compiler == null) {
-         return new AiAddons.Inner_DataUtil(false, "no Java compiler found; point the game at a full JDK", List.of(), 0, 0, "", "none", false);
+         return new AiAddons.BuildOutcome(false, "no Java compiler found; point the game at a full JDK", List.of(), 0, 0, "", "none", false);
       }
 
       Path classesDir = dir.resolve("classes");
@@ -873,10 +873,10 @@ public final class AiAddons {
          load(classesDir);
          Files.createDirectories(classesDir);
       } catch (IOException e) {
-         return new AiAddons.Inner_DataUtil(false, "Could not prepare classes dir: " + e.getMessage(), List.of(), 0, 0, "", compiler.describe(), false);
+         return new AiAddons.BuildOutcome(false, "Could not prepare classes dir: " + e.getMessage(), List.of(), 0, 0, "", compiler.describe(), false);
       }
 
-      List<AiAddons.Inner_BufferHelper> diags;
+      List<AiAddons.CompileDiagnostic> diags;
       boolean ok;
       try {
          if (compiler.inProcess()) {
@@ -888,19 +888,19 @@ public final class AiAddons {
          }
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
-         return new AiAddons.Inner_DataUtil(false, "Addon build cancelled", List.of(), 0, 0, "", compiler.describe(), true);
+         return new AiAddons.BuildOutcome(false, "Addon build cancelled", List.of(), 0, 0, "", compiler.describe(), true);
       } catch (Exception e) {
-         return new AiAddons.Inner_DataUtil(false, "Compiler failed to run: " + e.getMessage(), List.of(), 0, 0, "", compiler.describe(), false);
+         return new AiAddons.BuildOutcome(false, "Compiler failed to run: " + e.getMessage(), List.of(), 0, 0, "", compiler.describe(), false);
       }
 
       if (cancelled.getAsBoolean()) {
-         return new AiAddons.Inner_DataUtil(false, "Addon build cancelled", List.of(), 0, 0, "", compiler.describe(), true);
+         return new AiAddons.BuildOutcome(false, "Addon build cancelled", List.of(), 0, 0, "", compiler.describe(), true);
       }
 
-      List<AiAddons.Inner_BufferHelper> errors = diags.stream().filter(d -> d.kind().equals("error")).limit(20L).toList();
+      List<AiAddons.CompileDiagnostic> errors = diags.stream().filter(d -> d.kind().equals("error")).limit(20L).toList();
       int warnings = (int)diags.stream().filter(d -> d.kind().equals("warning")).count();
       if (!ok) {
-         return new AiAddons.Inner_DataUtil(
+         return new AiAddons.BuildOutcome(
             false,
             "Compilation failed with " + errors.size() + " error(s); fix with action=write and rebuild",
             errors,
@@ -915,11 +915,11 @@ public final class AiAddons {
       try {
          int classCount = init_I(classesDir);
          Path jar = init(dir, meta, classesDir);
-         return new AiAddons.Inner_DataUtil(
+         return new AiAddons.BuildOutcome(
             true, "Built " + classCount + " classes into " + jar.getFileName(), List.of(), warnings, classCount, jar.toString(), compiler.describe(), false
          );
       } catch (IOException e) {
-         return new AiAddons.Inner_DataUtil(
+         return new AiAddons.BuildOutcome(
             false, "Compiled but jar packaging failed: " + e.getMessage(), List.of(), warnings, 0, "", compiler.describe(), false
          );
       }
@@ -931,7 +931,7 @@ public final class AiAddons {
       }
    }
 
-   private static boolean init(JavaCompiler compiler, List<Path> sources, Path classesDir, List<Path> classpath, List<AiAddons.Inner_BufferHelper> diags) throws IOException {
+   private static boolean init(JavaCompiler compiler, List<Path> sources, Path classesDir, List<Path> classpath, List<AiAddons.CompileDiagnostic> diags) throws IOException {
       DiagnosticCollector<JavaFileObject> collector = new DiagnosticCollector<>();
       StringWriter log = new StringWriter();
 
@@ -963,7 +963,7 @@ public final class AiAddons {
 
          String kind = var10000;
          diags.add(
-            new AiAddons.Inner_BufferHelper(
+            new AiAddons.CompileDiagnostic(
                diagnostic.getSource() == null ? "" : diagnostic.getSource().getName(), diagnostic.getLineNumber(), kind, diagnostic.getMessage(Locale.ROOT)
             )
          );
@@ -972,7 +972,7 @@ public final class AiAddons {
       return ok;
    }
 
-   private static List<AiAddons.Inner_BufferHelper> init(
+   private static List<AiAddons.CompileDiagnostic> init(
       Path executable, List<Path> sources, Path classesDir, List<Path> classpath, AtomicReference<Process> running, BooleanSupplier cancelled
    ) throws IOException, InterruptedException {
       Path argsFile = Files.createTempFile("ai-addon-javac", ".args");
@@ -1033,7 +1033,7 @@ public final class AiAddons {
             running.compareAndSet(process, null);
          }
 
-         List<AiAddons.Inner_BufferHelper> parsed = new ArrayList<>(parseDiagnostics(output.toString()));
+         List<AiAddons.CompileDiagnostic> parsed = new ArrayList<>(parseDiagnostics(output.toString()));
          if (exitCode != 0 && parsed.stream().noneMatch(d -> d.kind().equals("error"))) {
             String summary = output.toString().trim();
             if (summary.isEmpty()) {
@@ -1042,7 +1042,7 @@ public final class AiAddons {
                summary = summary.substring(0, 400);
             }
 
-            parsed.add(new AiAddons.Inner_BufferHelper("", 0L, "error", summary));
+            parsed.add(new AiAddons.CompileDiagnostic("", 0L, "error", summary));
          }
 
          return parsed;
@@ -1069,7 +1069,7 @@ public final class AiAddons {
       return path.replace('\\', '/');
    }
 
-   private static Path init(Path dir, AiAddons.Inner_ConfigStore meta, Path classesDir) throws IOException {
+   private static Path init(Path dir, AiAddons.AddonManifest meta, Path classesDir) throws IOException {
       Path jar = dir.resolve(meta.id() + ".jar");
       String manifest = AiJson.GSON.toJson(init(meta.id(), meta.name(), meta.description(), meta.entryClass()));
 
@@ -1109,7 +1109,7 @@ public final class AiAddons {
          return init_AiOperation(AiOperation.Status.FAILED, "No compiled classes for '" + id + "'; run action=build first", AiJson.objectOf("id", id));
       }
 
-      AiAddons.Inner_ConfigStore meta = init(id, dir);
+      AiAddons.AddonManifest meta = init(id, dir);
       String entryClass = AiJson.getString(args, "entryClass", meta.entryClass());
       if (entryClass.isBlank()) {
          return init_AiOperation(
@@ -1226,7 +1226,7 @@ public final class AiAddons {
                   entry.addProperty("jar", Files.isRegularFile(dir.resolve(id + ".jar")));
                   entry.addProperty("runtimeLoaded", init_Z(id));
                   entry.addProperty("installed", hasModJar(id));
-                  AiAddons.Inner_ConfigStore meta = readManifest(dir);
+                  AiAddons.AddonManifest meta = readManifest(dir);
                   if (meta != null && !meta.entryClass().isBlank()) {
                      entry.addProperty("entryClass", meta.entryClass());
                   }
@@ -1260,7 +1260,7 @@ public final class AiAddons {
          }
       }
 
-      AiAddons.Inner_ConfigStore meta = readManifest(addonDir(id));
+      AiAddons.AddonManifest meta = readManifest(addonDir(id));
       if (meta != null && !meta.lastRegistered().isEmpty()) {
          data.add("registered", AiJson.GSON.toJsonTree(meta.lastRegistered().stream().limit(40L).toList()));
       }
@@ -1298,7 +1298,7 @@ public final class AiAddons {
       }
    }
 
-   record Inner_BufferHelper(String file, long line, String kind, String message) {
+   record CompileDiagnostic(String file, long line, String kind, String message) {
       JsonObject toJson() {
          JsonObject out = new JsonObject();
          out.addProperty("file", this.file);
@@ -1308,11 +1308,11 @@ public final class AiAddons {
       }
    }
 
-   interface Inner_CachePool {
-      AiAddons.Inner_StreamUtil find();
+   interface CompilerLocator {
+      AiAddons.CompilerChoice find();
    }
 
-   record Inner_ConfigStore(String id, String name, String description, String pkg, String entryClass, List<String> features, List<String> lastRegistered) {
+   record AddonManifest(String id, String name, String description, String pkg, String entryClass, List<String> features, List<String> lastRegistered) {
       JsonObject toJson() {
          JsonObject out = new JsonObject();
          out.addProperty("id", this.id);
@@ -1325,11 +1325,11 @@ public final class AiAddons {
          return out;
       }
 
-      AiAddons.Inner_ConfigStore withRegistered(List<String> registered) {
-         return new AiAddons.Inner_ConfigStore(this.id, this.name, this.description, this.pkg, this.entryClass, this.features, registered);
+      AiAddons.AddonManifest withRegistered(List<String> registered) {
+         return new AiAddons.AddonManifest(this.id, this.name, this.description, this.pkg, this.entryClass, this.features, registered);
       }
 
-      static AiAddons.Inner_ConfigStore fromJson(JsonObject json) {
+      static AiAddons.AddonManifest fromJson(JsonObject json) {
          List<String> features = new ArrayList<>();
          List<String> registered = new ArrayList<>();
          if (json.has("features")) {
@@ -1344,7 +1344,7 @@ public final class AiAddons {
             }
          }
 
-         return new AiAddons.Inner_ConfigStore(
+         return new AiAddons.AddonManifest(
             AiJson.getString(json, "id", ""),
             AiJson.getString(json, "name", ""),
             AiJson.getString(json, "description", ""),
@@ -1356,10 +1356,10 @@ public final class AiAddons {
       }
    }
 
-   record Inner_DataUtil(
+   record BuildOutcome(
       boolean success,
       String message,
-      List<AiAddons.Inner_BufferHelper> errors,
+      List<AiAddons.CompileDiagnostic> errors,
       int warningCount,
       int classCount,
       String jar,
@@ -1368,7 +1368,7 @@ public final class AiAddons {
    ) {
    }
 
-   record Inner_StreamUtil(JavaCompiler system, Path executable) {
+   record CompilerChoice(JavaCompiler system, Path executable) {
       boolean inProcess() {
          return this.system != null;
       }

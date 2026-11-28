@@ -17,12 +17,12 @@ final class EspVoxelMeshBuilder {
    private EspVoxelMeshBuilder() {
    }
 
-   static EspVoxelMeshBuilder.Inner_CachePool build(List<EspVoxelMeshBuilder.Inner_DataUtil> input) {
+   static EspVoxelMeshBuilder.VoxelMesh build(List<EspVoxelMeshBuilder.ColoredBox> input) {
       if (input != null && !input.isEmpty()) {
          Map<Integer, LongOpenHashSet> voxelsByColor = new HashMap<>();
-         List<EspVoxelMeshBuilder.Inner_DataUtil> partial = new ArrayList<>();
+         List<EspVoxelMeshBuilder.ColoredBox> partial = new ArrayList<>();
 
-         for (EspVoxelMeshBuilder.Inner_DataUtil target : input) {
+         for (EspVoxelMeshBuilder.ColoredBox target : input) {
             if (target != null && target.box() != null) {
                int[] voxel = voxelOf(target.box());
                if (voxel == null) {
@@ -33,20 +33,20 @@ final class EspVoxelMeshBuilder {
             }
          }
 
-         List<EspVoxelMeshBuilder.Inner_ConfigStore> quads = new ArrayList<>();
-         List<EspVoxelMeshBuilder.Inner_StreamUtil> edges = new ArrayList<>();
+         List<EspVoxelMeshBuilder.MeshQuad> quads = new ArrayList<>();
+         List<EspVoxelMeshBuilder.MeshEdge> edges = new ArrayList<>();
 
          for (Entry<Integer, LongOpenHashSet> group : voxelsByColor.entrySet()) {
             buildGroup(group.getValue(), group.getKey(), quads, edges);
          }
 
-         for (EspVoxelMeshBuilder.Inner_DataUtil box : init_List(partial)) {
+         for (EspVoxelMeshBuilder.ColoredBox box : init_List(partial)) {
             addBox(box.box(), box.color(), quads, edges);
          }
 
-         return new EspVoxelMeshBuilder.Inner_CachePool(List.copyOf(quads), List.copyOf(edges));
+         return new EspVoxelMeshBuilder.VoxelMesh(List.copyOf(quads), List.copyOf(edges));
       } else {
-         return EspVoxelMeshBuilder.Inner_CachePool.init_ag_CachePool;
+         return EspVoxelMeshBuilder.VoxelMesh.init_ag_CachePool;
       }
    }
 
@@ -72,7 +72,7 @@ final class EspVoxelMeshBuilder {
          : null;
    }
 
-   private static void buildGroup(LongOpenHashSet occupied, int color, List<EspVoxelMeshBuilder.Inner_ConfigStore> quads, List<EspVoxelMeshBuilder.Inner_StreamUtil> outputEdges) {
+   private static void buildGroup(LongOpenHashSet occupied, int color, List<EspVoxelMeshBuilder.MeshQuad> quads, List<EspVoxelMeshBuilder.MeshEdge> outputEdges) {
       if (occupied != null && !occupied.isEmpty()) {
          LongOpenHashSet[] candidates = new LongOpenHashSet[]{
             new LongOpenHashSet(occupied.size() * 4), new LongOpenHashSet(occupied.size() * 4), new LongOpenHashSet(occupied.size() * 4)
@@ -111,7 +111,7 @@ final class EspVoxelMeshBuilder {
             addEdgeCandidates(candidates, x, y, z);
          }
 
-         List<EspVoxelMeshBuilder.Inner_BufferHelper> visible = new ArrayList<>();
+         List<EspVoxelMeshBuilder.VisibleFace> visible = new ArrayList<>();
 
          for (int axis = 0; axis < candidates.length; axis++) {
             LongIterator iteratorx = candidates[axis].iterator();
@@ -122,7 +122,7 @@ final class EspVoxelMeshBuilder {
                int y = BlockPos.getY(packed);
                int z = BlockPos.getZ(packed);
                if (isVisibleEdge(occupied, axis, x, y, z)) {
-                  visible.add(new EspVoxelMeshBuilder.Inner_BufferHelper(axis, x, y, z, color));
+                  visible.add(new EspVoxelMeshBuilder.VisibleFace(axis, x, y, z, color));
                }
             }
          }
@@ -172,7 +172,7 @@ final class EspVoxelMeshBuilder {
       return count == 1 || count == 3 || count == 2 && (a && d || b && c);
    }
 
-   private static void init_V_List_List(List<EspVoxelMeshBuilder.Inner_BufferHelper> input, List<EspVoxelMeshBuilder.Inner_StreamUtil> output) {
+   private static void init_V_List_List(List<EspVoxelMeshBuilder.VisibleFace> input, List<EspVoxelMeshBuilder.MeshEdge> output) {
       input.sort((left, right) -> {
          int compared = Integer.compare(left.update(), right.update());
          if (compared != 0) {
@@ -195,11 +195,11 @@ final class EspVoxelMeshBuilder {
       int index = 0;
 
       while (index < input.size()) {
-         EspVoxelMeshBuilder.Inner_BufferHelper first = input.get(index++);
+         EspVoxelMeshBuilder.VisibleFace first = input.get(index++);
          int end = alongAxis(first) + 1;
 
          while (index < input.size()) {
-            EspVoxelMeshBuilder.Inner_BufferHelper next = input.get(index);
+            EspVoxelMeshBuilder.VisibleFace next = input.get(index);
             if (next.update() != first.update() || next.init() != first.init() || crossA(next) != crossA(first) || crossB(next) != crossB(first) || alongAxis(next) != end) {
                break;
             }
@@ -212,25 +212,25 @@ final class EspVoxelMeshBuilder {
       }
    }
 
-   private static int alongAxis(EspVoxelMeshBuilder.Inner_BufferHelper edge) {
+   private static int alongAxis(EspVoxelMeshBuilder.VisibleFace edge) {
       return edge.init() == 0 ? edge.load() : (edge.init() == 1 ? edge.read() : edge.write());
    }
 
-   private static int crossA(EspVoxelMeshBuilder.Inner_BufferHelper edge) {
+   private static int crossA(EspVoxelMeshBuilder.VisibleFace edge) {
       return edge.init() == 0 ? edge.read() : edge.load();
    }
 
-   private static int crossB(EspVoxelMeshBuilder.Inner_BufferHelper edge) {
+   private static int crossB(EspVoxelMeshBuilder.VisibleFace edge) {
       return edge.init() == 2 ? edge.read() : edge.write();
    }
 
-   private static void emitEdge(List<EspVoxelMeshBuilder.Inner_StreamUtil> output, EspVoxelMeshBuilder.Inner_BufferHelper edge, int end) {
+   private static void emitEdge(List<EspVoxelMeshBuilder.MeshEdge> output, EspVoxelMeshBuilder.VisibleFace edge, int end) {
       if (edge.init() == 0) {
-         output.add(new EspVoxelMeshBuilder.Inner_StreamUtil(edge.load(), edge.read(), edge.write(), end, edge.read(), edge.write(), edge.update()));
+         output.add(new EspVoxelMeshBuilder.MeshEdge(edge.load(), edge.read(), edge.write(), end, edge.read(), edge.write(), edge.update()));
       } else if (edge.init() == 1) {
-         output.add(new EspVoxelMeshBuilder.Inner_StreamUtil(edge.load(), edge.read(), edge.write(), edge.load(), end, edge.write(), edge.update()));
+         output.add(new EspVoxelMeshBuilder.MeshEdge(edge.load(), edge.read(), edge.write(), edge.load(), end, edge.write(), edge.update()));
       } else {
-         output.add(new EspVoxelMeshBuilder.Inner_StreamUtil(edge.load(), edge.read(), edge.write(), edge.load(), edge.read(), end, edge.update()));
+         output.add(new EspVoxelMeshBuilder.MeshEdge(edge.load(), edge.read(), edge.write(), edge.load(), edge.read(), end, edge.update()));
       }
    }
 
@@ -238,19 +238,19 @@ final class EspVoxelMeshBuilder {
       return occupied.contains(BlockPos.asLong(x, y, z));
    }
 
-   private static List<EspVoxelMeshBuilder.Inner_DataUtil> init_List(List<EspVoxelMeshBuilder.Inner_DataUtil> boxes) {
+   private static List<EspVoxelMeshBuilder.ColoredBox> init_List(List<EspVoxelMeshBuilder.ColoredBox> boxes) {
       if (boxes.size() < 2) {
          return boxes;
       }
 
-      List<EspVoxelMeshBuilder.Inner_DataUtil> merged = new ArrayList<>(boxes);
+      List<EspVoxelMeshBuilder.ColoredBox> merged = new ArrayList<>(boxes);
       int passes = 0;
 
       boolean changed;
       do {
          int before = merged.size();
-         List<EspVoxelMeshBuilder.Inner_DataUtil> var5 = init_List_List_I(merged, 0);
-         List<EspVoxelMeshBuilder.Inner_DataUtil> var6 = init_List_List_I(var5, 1);
+         List<EspVoxelMeshBuilder.ColoredBox> var5 = init_List_List_I(merged, 0);
+         List<EspVoxelMeshBuilder.ColoredBox> var6 = init_List_List_I(var5, 1);
          merged = init_List_List_I(var6, 2);
          changed = merged.size() < before;
       } while (changed && ++passes < 12);
@@ -258,20 +258,20 @@ final class EspVoxelMeshBuilder {
       return merged;
    }
 
-   private static List<EspVoxelMeshBuilder.Inner_DataUtil> init_List_List_I(List<EspVoxelMeshBuilder.Inner_DataUtil> boxes, int axis) {
+   private static List<EspVoxelMeshBuilder.ColoredBox> init_List_List_I(List<EspVoxelMeshBuilder.ColoredBox> boxes, int axis) {
       if (boxes.size() < 2) {
          return boxes;
       }
 
-      List<EspVoxelMeshBuilder.Inner_DataUtil> sorted = new ArrayList<>(boxes);
+      List<EspVoxelMeshBuilder.ColoredBox> sorted = new ArrayList<>(boxes);
       sorted.sort(mergeOrder(axis));
-      List<EspVoxelMeshBuilder.Inner_DataUtil> output = new ArrayList<>(sorted.size());
-      EspVoxelMeshBuilder.Inner_DataUtil current = sorted.getFirst();
+      List<EspVoxelMeshBuilder.ColoredBox> output = new ArrayList<>(sorted.size());
+      EspVoxelMeshBuilder.ColoredBox current = sorted.getFirst();
 
       for (int i = 1; i < sorted.size(); i++) {
-         EspVoxelMeshBuilder.Inner_DataUtil next = sorted.get(i);
+         EspVoxelMeshBuilder.ColoredBox next = sorted.get(i);
          if (canMerge(current, next, axis) && minOnAxis(next.box(), axis) <= maxOnAxis(current.box(), axis) + 1.0E-7) {
-            current = new EspVoxelMeshBuilder.Inner_DataUtil(union(current.box(), next.box(), axis), current.color());
+            current = new EspVoxelMeshBuilder.ColoredBox(union(current.box(), next.box(), axis), current.color());
          } else {
             output.add(current);
             current = next;
@@ -282,7 +282,7 @@ final class EspVoxelMeshBuilder {
       return output;
    }
 
-   private static Comparator<EspVoxelMeshBuilder.Inner_DataUtil> mergeOrder(int axis) {
+   private static Comparator<EspVoxelMeshBuilder.ColoredBox> mergeOrder(int axis) {
       return (left, right) -> {
          int compared = Integer.compare(left.color(), right.color());
          if (compared != 0) {
@@ -311,7 +311,7 @@ final class EspVoxelMeshBuilder {
       };
    }
 
-   private static boolean canMerge(EspVoxelMeshBuilder.Inner_DataUtil left, EspVoxelMeshBuilder.Inner_DataUtil right, int axis) {
+   private static boolean canMerge(EspVoxelMeshBuilder.ColoredBox left, EspVoxelMeshBuilder.ColoredBox right, int axis) {
       if (left.color() != right.color()) {
          return false;
       }
@@ -357,7 +357,7 @@ final class EspVoxelMeshBuilder {
       return Math.abs(left - right) <= 1.0E-7;
    }
 
-   private static void addBox(AABB box, int color, List<EspVoxelMeshBuilder.Inner_ConfigStore> quads, List<EspVoxelMeshBuilder.Inner_StreamUtil> edges) {
+   private static void addBox(AABB box, int color, List<EspVoxelMeshBuilder.MeshQuad> quads, List<EspVoxelMeshBuilder.MeshEdge> edges) {
       for (int face = 0; face < 6; face++) {
          addFace(quads, face, box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, color);
       }
@@ -368,50 +368,50 @@ final class EspVoxelMeshBuilder {
       double x2 = box.maxX;
       double y2 = box.maxY;
       double z2 = box.maxZ;
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x1, y1, z1, x2, y1, z1, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x2, y1, z1, x2, y1, z2, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x2, y1, z2, x1, y1, z2, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x1, y1, z2, x1, y1, z1, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x1, y2, z1, x2, y2, z1, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x2, y2, z1, x2, y2, z2, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x2, y2, z2, x1, y2, z2, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x1, y2, z2, x1, y2, z1, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x1, y1, z1, x1, y2, z1, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x2, y1, z1, x2, y2, z1, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x2, y1, z2, x2, y2, z2, color));
-      edges.add(new EspVoxelMeshBuilder.Inner_StreamUtil(x1, y1, z2, x1, y2, z2, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x1, y1, z1, x2, y1, z1, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x2, y1, z1, x2, y1, z2, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x2, y1, z2, x1, y1, z2, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x1, y1, z2, x1, y1, z1, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x1, y2, z1, x2, y2, z1, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x2, y2, z1, x2, y2, z2, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x2, y2, z2, x1, y2, z2, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x1, y2, z2, x1, y2, z1, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x1, y1, z1, x1, y2, z1, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x2, y1, z1, x2, y2, z1, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x2, y1, z2, x2, y2, z2, color));
+      edges.add(new EspVoxelMeshBuilder.MeshEdge(x1, y1, z2, x1, y2, z2, color));
    }
 
-   private static void addFace(List<EspVoxelMeshBuilder.Inner_ConfigStore> quads, int face, double x1, double y1, double z1, double x2, double y2, double z2, int color) {
+   private static void addFace(List<EspVoxelMeshBuilder.MeshQuad> quads, int face, double x1, double y1, double z1, double x2, double y2, double z2, int color) {
       switch (face) {
          case 0:
-            quads.add(new EspVoxelMeshBuilder.Inner_ConfigStore(x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2, color));
+            quads.add(new EspVoxelMeshBuilder.MeshQuad(x1, y1, z1, x2, y1, z1, x2, y1, z2, x1, y1, z2, color));
             break;
          case 1:
-            quads.add(new EspVoxelMeshBuilder.Inner_ConfigStore(x1, y2, z2, x2, y2, z2, x2, y2, z1, x1, y2, z1, color));
+            quads.add(new EspVoxelMeshBuilder.MeshQuad(x1, y2, z2, x2, y2, z2, x2, y2, z1, x1, y2, z1, color));
             break;
          case 2:
-            quads.add(new EspVoxelMeshBuilder.Inner_ConfigStore(x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2, color));
+            quads.add(new EspVoxelMeshBuilder.MeshQuad(x1, y1, z2, x2, y1, z2, x2, y2, z2, x1, y2, z2, color));
             break;
          case 3:
-            quads.add(new EspVoxelMeshBuilder.Inner_ConfigStore(x2, y1, z1, x1, y1, z1, x1, y2, z1, x2, y2, z1, color));
+            quads.add(new EspVoxelMeshBuilder.MeshQuad(x2, y1, z1, x1, y1, z1, x1, y2, z1, x2, y2, z1, color));
             break;
          case 4:
-            quads.add(new EspVoxelMeshBuilder.Inner_ConfigStore(x1, y1, z1, x1, y1, z2, x1, y2, z2, x1, y2, z1, color));
+            quads.add(new EspVoxelMeshBuilder.MeshQuad(x1, y1, z1, x1, y1, z2, x1, y2, z2, x1, y2, z1, color));
             break;
          default:
-            quads.add(new EspVoxelMeshBuilder.Inner_ConfigStore(x2, y1, z2, x2, y1, z1, x2, y2, z1, x2, y2, z2, color));
+            quads.add(new EspVoxelMeshBuilder.MeshQuad(x2, y1, z2, x2, y1, z1, x2, y2, z1, x2, y2, z2, color));
       }
    }
 
-   private record Inner_BufferHelper(int init, int load, int read, int write, int update) {
+   private record VisibleFace(int init, int load, int read, int write, int update) {
    }
 
-   record Inner_CachePool(List<EspVoxelMeshBuilder.Inner_ConfigStore> faces, List<EspVoxelMeshBuilder.Inner_StreamUtil> load) {
-      private static final EspVoxelMeshBuilder.Inner_CachePool init_ag_CachePool = new EspVoxelMeshBuilder.Inner_CachePool(List.of(), List.of());
+   record VoxelMesh(List<EspVoxelMeshBuilder.MeshQuad> faces, List<EspVoxelMeshBuilder.MeshEdge> load) {
+      private static final EspVoxelMeshBuilder.VoxelMesh init_ag_CachePool = new EspVoxelMeshBuilder.VoxelMesh(List.of(), List.of());
    }
 
-   record Inner_ConfigStore(
+   record MeshQuad(
       double init_D,
       double load,
       double read,
@@ -428,9 +428,9 @@ final class EspVoxelMeshBuilder {
    ) {
    }
 
-   record Inner_DataUtil(AABB box, int color) {
+   record ColoredBox(AABB box, int color) {
    }
 
-   record Inner_StreamUtil(double init_D, double load, double read, double write, double update, double sync, int color) {
+   record MeshEdge(double init_D, double load, double read, double write, double update, double sync, int color) {
    }
 }

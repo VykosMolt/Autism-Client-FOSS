@@ -9,7 +9,7 @@ final class TargetHurtWindowTracker {
    static final int LATE_GRACE_TICKS = 3;
    private static final int UNSET = -2147483648;
    private static final int RING_SIZE = 8;
-   private final Map<Integer, TargetHurtWindowTracker.Inner_DataUtil> windows = new HashMap<>();
+   private final Map<Integer, TargetHurtWindowTracker.HurtWindow> windows = new HashMap<>();
    private final int[] init_IArr = new int[8];
    private int ringCount;
    private int ringIndex;
@@ -25,7 +25,7 @@ final class TargetHurtWindowTracker {
    }
 
    boolean init_Z(int target, int tick, int fallback) {
-      TargetHurtWindowTracker.Inner_DataUtil w = this.windows.get(target);
+      TargetHurtWindowTracker.HurtWindow w = this.windows.get(target);
       if (w == null) {
          return false;
       }
@@ -35,7 +35,7 @@ final class TargetHurtWindowTracker {
    }
 
    void init_V(int target, int tick, int fallback) {
-      TargetHurtWindowTracker.Inner_DataUtil w = this.windowFor(target, tick);
+      TargetHurtWindowTracker.HurtWindow w = this.windowFor(target, tick);
       this.expireIfLate(w, tick, fallback);
       if (tick >= this.windowEnd(w)) {
          w.pendingAttackTick = tick;
@@ -43,7 +43,7 @@ final class TargetHurtWindowTracker {
    }
 
    void init(int target, int tick, boolean ours, int fallback) {
-      TargetHurtWindowTracker.Inner_DataUtil w = this.windowFor(target, tick);
+      TargetHurtWindowTracker.HurtWindow w = this.windowFor(target, tick);
       this.expireIfLate(w, tick, fallback);
       if (ours && w.pendingAttackTick != -2147483648 && tick >= w.pendingAttackTick) {
          this.recordInterval(tick - w.pendingAttackTick);
@@ -69,8 +69,8 @@ final class TargetHurtWindowTracker {
       this.windows.remove(target);
    }
 
-   private TargetHurtWindowTracker.Inner_DataUtil windowFor(int target, int tick) {
-      TargetHurtWindowTracker.Inner_DataUtil w = this.windows.computeIfAbsent(target, ignored -> new TargetHurtWindowTracker.Inner_DataUtil());
+   private TargetHurtWindowTracker.HurtWindow windowFor(int target, int tick) {
+      TargetHurtWindowTracker.HurtWindow w = this.windows.computeIfAbsent(target, ignored -> new TargetHurtWindowTracker.HurtWindow());
       w.lastSeenTick = tick;
       if (this.windows.size() > 64) {
          this.windows.values().removeIf(old -> tick - old.lastSeenTick > 400);
@@ -79,12 +79,12 @@ final class TargetHurtWindowTracker {
       return w;
    }
 
-   private int windowEnd(TargetHurtWindowTracker.Inner_DataUtil w) {
+   private int windowEnd(TargetHurtWindowTracker.HurtWindow w) {
       int until = Math.max(w.ownHurtEndTick, w.inferredHurtEndTick);
       return w.pendingAttackTick == -2147483648 ? until : Math.max(until, w.pendingAttackTick + 10);
    }
 
-   private void expireIfLate(TargetHurtWindowTracker.Inner_DataUtil w, int tick, int fallback) {
+   private void expireIfLate(TargetHurtWindowTracker.HurtWindow w, int tick, int fallback) {
       if (w.pendingAttackTick != -2147483648 && tick > w.pendingAttackTick + Math.max(1, this.init_I(fallback)) + 3) {
          w.pendingAttackTick = -2147483648;
       }
@@ -96,7 +96,7 @@ final class TargetHurtWindowTracker {
       this.ringCount = Math.min(8, this.ringCount + 1);
    }
 
-   private static final class Inner_DataUtil {
+   private static final class HurtWindow {
       int pendingAttackTick = -2147483648;
       int ownHurtEndTick = -2147483648;
       int inferredHurtEndTick = -2147483648;

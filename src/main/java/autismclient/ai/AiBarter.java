@@ -52,13 +52,13 @@ final class AiBarter {
    private AiBarter() {
    }
 
-   static AiBarter.Inner_StreamUtil decide(int pearlsTarget, int pearlsGained, int goldCarried, int goldSpent, int goldBudget, boolean pastDeadline) {
+   static AiBarter.BarterDecision decide(int pearlsTarget, int pearlsGained, int goldCarried, int goldSpent, int goldBudget, boolean pastDeadline) {
       if (pearlsTarget > 0 && pearlsGained >= pearlsTarget) {
-         return AiBarter.Inner_StreamUtil.PEARLS_MET;
+         return AiBarter.BarterDecision.PEARLS_MET;
       } else if (goldCarried > 0 && goldSpent < goldBudget) {
-         return pastDeadline ? AiBarter.Inner_StreamUtil.TIMED_OUT : AiBarter.Inner_StreamUtil.CONTINUE;
+         return pastDeadline ? AiBarter.BarterDecision.TIMED_OUT : AiBarter.BarterDecision.CONTINUE;
       } else {
-         return AiBarter.Inner_StreamUtil.GOLD_OUT;
+         return AiBarter.BarterDecision.GOLD_OUT;
       }
    }
 
@@ -110,7 +110,7 @@ final class AiBarter {
                Piglin piglin;
                Piglin admirer;
                BlockPos piglinPos;
-               AiBarter.Inner_DataUtil stage = AiBarter.Inner_DataUtil.APPROACH;
+               AiBarter.BarterStage stage = AiBarter.BarterStage.APPROACH;
                boolean armorChecked;
                boolean armorWarning;
                boolean cancelled;
@@ -144,17 +144,17 @@ final class AiBarter {
                      }
 
                      int pearlsGained = this.pearlsGained();
-                     AiBarter.Inner_StreamUtil decision = AiBarter.decide(
+                     AiBarter.BarterDecision decision = AiBarter.decide(
                         pearlsTarget, pearlsGained, AiGameState.countMainInventoryItem("minecraft:gold_ingot"), this.goldSpent, this.goldToTrade, System.nanoTime() > this.deadline
                      );
-                     if (decision == AiBarter.Inner_StreamUtil.GOLD_OUT
+                     if (decision == AiBarter.BarterDecision.GOLD_OUT
                         && (
-                           this.stage == AiBarter.Inner_DataUtil.AWAIT
-                              || this.stage == AiBarter.Inner_DataUtil.RECOVER
-                              || this.stage == AiBarter.Inner_DataUtil.COLLECT
+                           this.stage == AiBarter.BarterStage.AWAIT
+                              || this.stage == AiBarter.BarterStage.RECOVER
+                              || this.stage == AiBarter.BarterStage.COLLECT
                               || this.push < 3 && this.nearestItem(16.0) != null
                         )) {
-                        decision = AiBarter.Inner_StreamUtil.CONTINUE;
+                        decision = AiBarter.BarterDecision.CONTINUE;
                      }
 
                      switch (decision) {
@@ -222,14 +222,14 @@ final class AiBarter {
                                  }
                               }
 
-                              if (this.stage == AiBarter.Inner_DataUtil.APPROACH) {
+                              if (this.stage == AiBarter.BarterStage.APPROACH) {
                                  return this.tickApproach();
-                              } else if (this.stage == AiBarter.Inner_DataUtil.THROW) {
+                              } else if (this.stage == AiBarter.BarterStage.THROW) {
                                  return this.tickThrow();
-                              } else if (this.stage == AiBarter.Inner_DataUtil.AWAIT) {
+                              } else if (this.stage == AiBarter.BarterStage.AWAIT) {
                                  return this.tickAwait();
                               } else {
-                                 return this.stage == AiBarter.Inner_DataUtil.RECOVER ? this.recoverIngot() : this.collectDrops();
+                                 return this.stage == AiBarter.BarterStage.RECOVER ? this.recoverIngot() : this.collectDrops();
                               }
                            }
                      }
@@ -292,7 +292,7 @@ final class AiBarter {
                      }
 
                      this.releaseMovementKeys();
-                     this.stage = AiBarter.Inner_DataUtil.THROW;
+                     this.stage = AiBarter.BarterStage.THROW;
                      this.stageTicks = 0;
                      return this.running("In toss range of the piglin");
                   }
@@ -316,7 +316,7 @@ final class AiBarter {
                            this.ingotsThrown += spent;
                            this.refusedThrows = 0;
                            this.throwRevision = -1L;
-                           this.stage = AiBarter.Inner_DataUtil.AWAIT;
+                           this.stage = AiBarter.BarterStage.AWAIT;
                            this.stageTicks = 0;
                            return this.running("Ingot thrown; waiting for the piglin to pick it up");
                         } else if (AiServerEvidence.inventoryRevision() > this.throwRevision) {
@@ -338,7 +338,7 @@ final class AiBarter {
                         Piglin admirer = this.findAdmiringPiglin();
                         if (admirer != null) {
                            this.admirer = admirer;
-                           this.stage = AiBarter.Inner_DataUtil.AWAIT;
+                           this.stage = AiBarter.BarterStage.AWAIT;
                            this.stageTicks = 0;
                            return this.running("A piglin is already admiring an ingot");
                         }
@@ -354,7 +354,7 @@ final class AiBarter {
                         if (slot < 0) {
                            if (this.push < 3 && this.nearestItem(16.0) != null) {
                               this.push++;
-                              this.stage = AiBarter.Inner_DataUtil.RECOVER;
+                              this.stage = AiBarter.BarterStage.RECOVER;
                               return this.running("Recovering the thrown ingot");
                            } else {
                               return this.running("No ingot in the bag; re-evaluating");
@@ -383,7 +383,7 @@ final class AiBarter {
                      }
                   } else {
                      this.piglin = null;
-                     this.stage = AiBarter.Inner_DataUtil.APPROACH;
+                     this.stage = AiBarter.BarterStage.APPROACH;
                      return this.running("Piglin gone; re-targeting");
                   }
                }
@@ -407,7 +407,7 @@ final class AiBarter {
                         }
 
                         this.piglin = null;
-                        this.stage = AiBarter.Inner_DataUtil.APPROACH;
+                        this.stage = AiBarter.BarterStage.APPROACH;
                         this.stageTicks = 0;
                         return this.running("A baby piglin took the ingot; trying a piglin away from babies");
                      } else if (++this.stageTicks > 200) {
@@ -420,16 +420,16 @@ final class AiBarter {
 
                               this.piglin = null;
                               this.push = 0;
-                              this.stage = AiBarter.Inner_DataUtil.APPROACH;
+                              this.stage = AiBarter.BarterStage.APPROACH;
                               return this.running("This piglin keeps ignoring the ingot (it may be admire-disabled); trying another");
                            } else {
-                              this.stage = AiBarter.Inner_DataUtil.RECOVER;
+                              this.stage = AiBarter.BarterStage.RECOVER;
                               return this.running("Recovering the ignored ingot");
                            }
                         } else {
                            this.ingotsStolen++;
                            this.piglin = null;
-                           this.stage = AiBarter.Inner_DataUtil.APPROACH;
+                           this.stage = AiBarter.BarterStage.APPROACH;
                            return this.running("The ingot vanished without a barter (a baby piglin steals gold); continuing");
                         }
                      } else {
@@ -442,14 +442,14 @@ final class AiBarter {
                         if (!this.admirer.getOffhandItem().is(Items.GOLD_INGOT)) {
                            this.barters++;
                            this.babyStealsInRow = 0;
-                           this.stage = AiBarter.Inner_DataUtil.COLLECT;
+                           this.stage = AiBarter.BarterStage.COLLECT;
                            this.stageTicks = 0;
                            return this.running("Barter " + this.barters + " tossed its loot; collecting");
                         } else if (++this.stageTicks > 360) {
                            this.admirer = null;
                            this.piglin = null;
                            this.stageTicks = 0;
-                           this.stage = AiBarter.Inner_DataUtil.APPROACH;
+                           this.stage = AiBarter.BarterStage.APPROACH;
                            return this.running("The admire never resolved; re-targeting");
                         } else {
                            return this.running("The piglin is examining the ingot");
@@ -482,7 +482,7 @@ final class AiBarter {
                      this.goldSpent = Math.max(0, this.goldSpent - 1);
                   }
 
-                  this.stage = AiBarter.Inner_DataUtil.THROW;
+                  this.stage = AiBarter.BarterStage.THROW;
                   this.stageTicks = 0;
                   return this.running(
                      r.status() == AiOperation.Status.SUCCEEDED ? "Ingot recovered; re-throwing" : "The ingot is gone; continuing"
@@ -538,7 +538,7 @@ final class AiBarter {
                      this.pickupFailures.clear();
                      this.admirer = null;
                      this.piglin = null;
-                     this.stage = AiBarter.Inner_DataUtil.APPROACH;
+                     this.stage = AiBarter.BarterStage.APPROACH;
                      this.stageTicks = 0;
                      return this.running("Barter drops collected; continuing");
                   }
@@ -889,7 +889,7 @@ final class AiBarter {
       }
    }
 
-   private enum Inner_DataUtil {
+   private enum BarterStage {
       APPROACH,
       THROW,
       AWAIT,
@@ -897,7 +897,7 @@ final class AiBarter {
       COLLECT;
    }
 
-   enum Inner_StreamUtil {
+   enum BarterDecision {
       CONTINUE,
       PEARLS_MET,
       GOLD_OUT,

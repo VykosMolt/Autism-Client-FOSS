@@ -29,7 +29,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       .setPlaceholder("Chat title");
    private final List<autismclient.gui.ui.widgets.TextInputWidget> inputs;
    private final autismclient.util.OverlayContextMenu<String> contextMenu;
-   private AiAssistantOverlay.Inner_DataUtil tab = AiAssistantOverlay.Inner_DataUtil.CHAT;
+   private AiAssistantOverlay.OverlayTab tab = AiAssistantOverlay.OverlayTab.CHAT;
    private boolean pinned;
    private boolean renaming;
    private boolean sync_Z;
@@ -76,7 +76,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
    @Override
    public int getMinHeight() {
-      return this.tab == AiAssistantOverlay.Inner_DataUtil.CHAT && this.chatView != null
+      return this.tab == AiAssistantOverlay.OverlayTab.CHAT && this.chatView != null
          ? Math.max(180, 22 + AiUiKit.toolbarHeight() + 4 + 1 + this.chatView.preferredHeight())
          : 180;
    }
@@ -111,7 +111,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    @Override
    public boolean containsPoint(double x, double y) {
       return super.containsPoint(x, y)
-         || this.windowVisible && !this.windowCollapsed && this.tab == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.settingsView.isOverPopup(x, y);
+         || this.windowVisible && !this.windowCollapsed && this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.isOverPopup(x, y);
    }
 
    @Override
@@ -128,11 +128,11 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    void showSettings() {
-      this.switchTab(AiAssistantOverlay.Inner_DataUtil.SETTINGS);
+      this.switchTab(AiAssistantOverlay.OverlayTab.SETTINGS);
    }
 
    void showMemory() {
-      this.switchTab(AiAssistantOverlay.Inner_DataUtil.MEMORY);
+      this.switchTab(AiAssistantOverlay.OverlayTab.MEMORY);
    }
 
    void write_V() {
@@ -199,26 +199,26 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.chatView.setAttachmentsEnabled("attachments".equals(name));
       switch (name == null ? "" : name) {
          case "settings":
-            this.switchTab(AiAssistantOverlay.Inner_DataUtil.SETTINGS);
+            this.switchTab(AiAssistantOverlay.OverlayTab.SETTINGS);
             break;
          case "memory":
-            this.switchTab(AiAssistantOverlay.Inner_DataUtil.MEMORY);
+            this.switchTab(AiAssistantOverlay.OverlayTab.MEMORY);
             break;
          case "sessions":
-            this.switchTab(AiAssistantOverlay.Inner_DataUtil.CHAT);
+            this.switchTab(AiAssistantOverlay.OverlayTab.CHAT);
             if (!this.sessionsDrawer.open) {
                this.sessionsDrawer.toggle();
             }
             break;
          default:
-            this.switchTab(AiAssistantOverlay.Inner_DataUtil.CHAT);
+            this.switchTab(AiAssistantOverlay.OverlayTab.CHAT);
             this.sessionsDrawer.load();
       }
 
       this.viewState.invalidate();
    }
 
-   private void switchTab(AiAssistantOverlay.Inner_DataUtil next) {
+   private void switchTab(AiAssistantOverlay.OverlayTab next) {
       if (next != this.tab) {
          for (autismclient.gui.ui.widgets.TextInputWidget field : this.inputs) {
             field.setFocused(false);
@@ -228,15 +228,15 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          this.settingsView.closePopups();
          this.settingsView.cancelKeyCapture();
          this.contextMenu.close();
-         if (next == AiAssistantOverlay.Inner_DataUtil.SETTINGS) {
+         if (next == AiAssistantOverlay.OverlayTab.SETTINGS) {
             this.settingsView.loadSettings(this.service.getSettings());
          }
 
-         if (next == AiAssistantOverlay.Inner_DataUtil.MEMORY) {
+         if (next == AiAssistantOverlay.OverlayTab.MEMORY) {
             this.memoryView.reset();
          }
 
-         if (next != AiAssistantOverlay.Inner_DataUtil.CHAT) {
+         if (next != AiAssistantOverlay.OverlayTab.CHAT) {
             this.sessionsDrawer.load();
          }
 
@@ -246,8 +246,8 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    }
 
    private void toggleSessions() {
-      if (this.tab != AiAssistantOverlay.Inner_DataUtil.CHAT) {
-         this.switchTab(AiAssistantOverlay.Inner_DataUtil.CHAT);
+      if (this.tab != AiAssistantOverlay.OverlayTab.CHAT) {
+         this.switchTab(AiAssistantOverlay.OverlayTab.CHAT);
       }
 
       this.sessionsDrawer.toggle();
@@ -281,7 +281,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       if (this.windowVisible || this.isClosing()) {
          this.windowWidth = this.resolveWindowWidth(this.windowWidth, this.getMinWidth());
          this.windowHeight = this.resolveWindowHeight(this.windowHeight, this.getMinHeight());
-         if (this.tab == AiAssistantOverlay.Inner_DataUtil.CHAT) {
+         if (this.tab == AiAssistantOverlay.OverlayTab.CHAT) {
             int body = this.chatView.bodyHeight(this.windowWidth - 8);
             if (body > 0) {
                this.windowHeight = Math.min(this.windowHeight, Math.max(this.getMinHeight(), 22 + AiUiKit.toolbarHeight() + 4 + 1 + body));
@@ -299,7 +299,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             this.viewState.refresh(now, this.sessionsDrawer.open);
             this.recordMousePosition(mx, my);
             boolean blocked = this.contextMenu.init(mx, my)
-               || this.tab == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.settingsView.isOverPopup(mx, my);
+               || this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.isOverPopup(mx, my);
             this.ui.beginFrame(graphics, mx, my, blocked, delta);
             autismclient.gui.f.NetHelper content = autismclient.gui.f.NetHelper.init(
                this.windowX + 4, this.windowY + 14 + 4, this.windowWidth - 8, this.windowHeight - 14 - 8
@@ -323,12 +323,12 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
                   this.memoryView.render(this.ui, area, now);
             }
 
-            if (this.tab == AiAssistantOverlay.Inner_DataUtil.SETTINGS) {
+            if (this.tab == AiAssistantOverlay.OverlayTab.SETTINGS) {
                this.settingsView.renderPopups(this.ui);
             }
 
             this.contextMenu.init(graphics, mx, my);
-            if (!this.contextMenu.isOpen() && (this.tab != AiAssistantOverlay.Inner_DataUtil.SETTINGS || !this.settingsView.hasOpenDropdown())) {
+            if (!this.contextMenu.isOpen() && (this.tab != AiAssistantOverlay.OverlayTab.SETTINGS || !this.settingsView.hasOpenDropdown())) {
                this.ui.renderHoveredTooltip();
             }
          }
@@ -351,7 +351,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          );
       x += h + 2 + 2;
       right -= h;
-      boolean inChat = this.tab == AiAssistantOverlay.Inner_DataUtil.CHAT;
+      boolean inChat = this.tab == AiAssistantOverlay.OverlayTab.CHAT;
       this.ui
          .drawIconButton(
             autismclient.gui.f.NetHelper.init(right, bar.write(), h, h),
@@ -359,7 +359,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
             !inChat,
             false,
             inChat ? "Settings" : "Back to chat (Esc)",
-            () -> this.switchTab(inChat ? AiAssistantOverlay.Inner_DataUtil.SETTINGS : AiAssistantOverlay.Inner_DataUtil.CHAT)
+            () -> this.switchTab(inChat ? AiAssistantOverlay.OverlayTab.SETTINGS : AiAssistantOverlay.OverlayTab.CHAT)
          );
       right -= h + 2;
       this.ui
@@ -399,7 +399,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       if (!inChat) {
          this.ui
             .drawCenteredRowText(
-               this.tab == AiAssistantOverlay.Inner_DataUtil.SETTINGS ? "Settings" : "Memory",
+               this.tab == AiAssistantOverlay.OverlayTab.SETTINGS ? "Settings" : "Memory",
                title,
                title.read() + 4,
                title.update() - 8,
@@ -454,9 +454,9 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
          if (!this.windowCollapsed && this.ui.isInitialized()) {
             this.flush_Z = true;
-            if (this.tab == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.settingsView.clickPopup(x, y, button)) {
+            if (this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.clickPopup(x, y, button)) {
                return true;
-            } else if (this.tab == AiAssistantOverlay.Inner_DataUtil.CHAT
+            } else if (this.tab == AiAssistantOverlay.OverlayTab.CHAT
                && this.sessionsDrawer.open
                && !this.sessionsDrawer.contains(x, y)
                && this.chatView.init_NetHelper().init_Z((int)x, (int)y)) {
@@ -483,7 +483,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       }
 
       boolean used = this.ui.mouseReleased();
-      if (this.tab == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.settingsView.load_Z()) {
+      if (this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.load_Z()) {
          used = true;
       }
 
@@ -507,7 +507,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return true;
       }
 
-      if (this.tab == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.settingsView.load(x, y, button)) {
+      if (this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.load(x, y, button)) {
          return true;
       }
 
@@ -527,7 +527,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return true;
       }
 
-      if (this.tab == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.settingsView.scrollPopup(x, y, amount)) {
+      if (this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.scrollPopup(x, y, amount)) {
          return true;
       }
 
@@ -547,19 +547,19 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
 
       if (key == 258
          && (mods & 1) != 0
-         && this.tab == AiAssistantOverlay.Inner_DataUtil.CHAT
+         && this.tab == AiAssistantOverlay.OverlayTab.CHAT
          && !this.contextMenu.isOpen()
          && !this.viewState.settings.builtIn) {
          this.chatView.init_V();
          return true;
       }
 
-      if (this.tab == AiAssistantOverlay.Inner_DataUtil.SETTINGS && this.settingsView.captureKey(key)) {
+      if (this.tab == AiAssistantOverlay.OverlayTab.SETTINGS && this.settingsView.captureKey(key)) {
          return true;
       }
 
       autismclient.gui.ui.widgets.TextInputWidget focused = this.focusedInput();
-      return this.tab == AiAssistantOverlay.Inner_DataUtil.CHAT
+      return this.tab == AiAssistantOverlay.OverlayTab.CHAT
             && !this.sessionsDrawer.open
             && !this.contextMenu.isOpen()
             && this.chatView.init_Z_I_BitSetUtil(key, focused)
@@ -579,15 +579,15 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
          return true;
       } else if (this.sessionsDrawer.cancelRename() || this.memoryView.cancelEdit()) {
          return true;
-      } else if (this.tab == AiAssistantOverlay.Inner_DataUtil.CHAT && !this.sessionsDrawer.open && this.chatView.load_Z()) {
+      } else if (this.tab == AiAssistantOverlay.OverlayTab.CHAT && !this.sessionsDrawer.open && this.chatView.load_Z()) {
          return true;
       } else {
          autismclient.gui.ui.widgets.TextInputWidget focused = this.focusedInput();
          if (focused != null) {
             focused.setFocused(false);
             return true;
-         } else if (this.tab != AiAssistantOverlay.Inner_DataUtil.CHAT) {
-            this.switchTab(AiAssistantOverlay.Inner_DataUtil.CHAT);
+         } else if (this.tab != AiAssistantOverlay.OverlayTab.CHAT) {
+            this.switchTab(AiAssistantOverlay.OverlayTab.CHAT);
             return true;
          } else if (this.sessionsDrawer.open) {
             this.sessionsDrawer.load();
@@ -605,7 +605,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       }
 
       autismclient.gui.ui.widgets.TextInputWidget focused = this.focusedInput();
-      if (focused == null && this.tab == AiAssistantOverlay.Inner_DataUtil.CHAT && !this.sessionsDrawer.open && !this.contextMenu.isOpen()) {
+      if (focused == null && this.tab == AiAssistantOverlay.OverlayTab.CHAT && !this.sessionsDrawer.open && !this.contextMenu.isOpen()) {
          autismclient.gui.ui.widgets.TextInputWidget target = this.chatView.init_BitSetUtil_C(c);
          if (target != null) {
             this.init(target);
@@ -629,7 +629,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
    private boolean push_Z() {
       return this.flush_Z
             && (
-               this.tab != AiAssistantOverlay.Inner_DataUtil.CHAT
+               this.tab != AiAssistantOverlay.OverlayTab.CHAT
                   || this.sessionsDrawer.open
                   || this.settingsView.isCapturingKey()
                   || this.contextMenu.isOpen()
@@ -654,7 +654,7 @@ final class AiAssistantOverlay extends autismclient.util.DraggableOverlayWindow 
       this.settingsView.cancelKeyCapture();
    }
 
-   enum Inner_DataUtil {
+   enum OverlayTab {
       CHAT,
       SETTINGS,
       MEMORY;

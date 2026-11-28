@@ -61,11 +61,11 @@ public final class AutismHttp {
       }
    }
 
-   public static AutismHttp.Inner_DataUtil getResponse(String url, String bearerToken) {
+   public static AutismHttp.JsonResponse getResponse(String url, String bearerToken) {
       return getResponse(url, bearerToken, Map.of());
    }
 
-   public static AutismHttp.Inner_DataUtil getResponse(String url, String bearerToken, Map<String, String> headers) {
+   public static AutismHttp.JsonResponse getResponse(String url, String bearerToken, Map<String, String> headers) {
       HttpURLConnection connection = null;
       try {
          connection = init(url);
@@ -77,9 +77,9 @@ public final class AutismHttp {
          init(connection, headers);
          connection.setRequestProperty("Accept", "application/json");
          int code = connection.getResponseCode();
-         return new AutismHttp.Inner_DataUtil(code, readJsonBody(connection, code));
+         return new AutismHttp.JsonResponse(code, readJsonBody(connection, code));
       } catch (Exception e) {
-         return new AutismHttp.Inner_DataUtil(-1, null);
+         return new AutismHttp.JsonResponse(-1, null);
       } finally {
          if (connection != null) {
             connection.disconnect();
@@ -105,19 +105,19 @@ public final class AutismHttp {
       }
    }
 
-   public static AutismHttp.Inner_DataUtil postResponse(String url, String body) {
+   public static AutismHttp.JsonResponse postResponse(String url, String body) {
       return init(url, body, 15000, Map.of());
    }
 
-   public static AutismHttp.Inner_DataUtil init(String url, String body, int timeoutMs) {
+   public static AutismHttp.JsonResponse init(String url, String body, int timeoutMs) {
       return init(url, body, timeoutMs, Map.of());
    }
 
-   public static AutismHttp.Inner_DataUtil load(String url, String body, Map<String, String> headers) {
+   public static AutismHttp.JsonResponse load(String url, String body, Map<String, String> headers) {
       return init(url, body, 15000, headers);
    }
 
-   public static AutismHttp.Inner_DataUtil init(String url, String body, int timeoutMs, Map<String, String> headers) {
+   public static AutismHttp.JsonResponse init(String url, String body, int timeoutMs, Map<String, String> headers) {
       HttpURLConnection connection = null;
       try {
          connection = init(url, timeoutMs);
@@ -128,9 +128,9 @@ public final class AutismHttp {
          connection.setDoOutput(true);
          init(connection, body);
          int code = connection.getResponseCode();
-         return new AutismHttp.Inner_DataUtil(code, readJsonBody(connection, code));
+         return new AutismHttp.JsonResponse(code, readJsonBody(connection, code));
       } catch (Exception e) {
-         return new AutismHttp.Inner_DataUtil(-1, null);
+         return new AutismHttp.JsonResponse(-1, null);
       } finally {
          if (connection != null) {
             connection.disconnect();
@@ -183,11 +183,11 @@ public final class AutismHttp {
       }
    }
 
-   public static AutismHttp.Inner_DataUtil read_AutismHttp_DataUti(String url, String body) {
+   public static AutismHttp.JsonResponse read_AutismHttp_DataUti(String url, String body) {
       return read(url, body, Map.of());
    }
 
-   public static AutismHttp.Inner_DataUtil read(String url, String body, Map<String, String> headers) {
+   public static AutismHttp.JsonResponse read(String url, String body, Map<String, String> headers) {
       HttpURLConnection connection = null;
       try {
          connection = init(url);
@@ -198,9 +198,9 @@ public final class AutismHttp {
          connection.setDoOutput(true);
          init(connection, body);
          int code = connection.getResponseCode();
-         return new AutismHttp.Inner_DataUtil(code, readJsonBody(connection, code));
+         return new AutismHttp.JsonResponse(code, readJsonBody(connection, code));
       } catch (Exception e) {
-         return new AutismHttp.Inner_DataUtil(-1, null);
+         return new AutismHttp.JsonResponse(-1, null);
       } finally {
          if (connection != null) {
             connection.disconnect();
@@ -271,7 +271,7 @@ public final class AutismHttp {
       }
    }
 
-   public record Inner_DataUtil(int status, JsonObject body) {
+   public record JsonResponse(int status, JsonObject body) {
       public boolean isSuccess() {
          return this.status >= 200 && this.status < 300;
       }

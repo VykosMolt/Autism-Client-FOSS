@@ -53,7 +53,7 @@ public class DropCommand extends Command {
       );
    }
 
-   static DropCommand.Inner_DataUtil init_TextFormat_DataUti(String line) {
+   static DropCommand.DropSpec init_TextFormat_DataUti(String line) {
       List<String> words = new ArrayList<>();
       int amount = -1;
 
@@ -74,21 +74,21 @@ public class DropCommand extends Command {
       String spec = String.join("_", words);
       if (words.isEmpty()) {
          return amount > 0
-            ? new DropCommand.Inner_DataUtil(DropCommand.Inner_DataUtil.Inner_DataUtil_2.ITEM, amount, "")
-            : new DropCommand.Inner_DataUtil(DropCommand.Inner_DataUtil.Inner_DataUtil_2.UNKNOWN, -1, "");
+            ? new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.ITEM, amount, "")
+            : new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.UNKNOWN, -1, "");
       } else if (init.contains(spec)) {
-         return new DropCommand.Inner_DataUtil(DropCommand.Inner_DataUtil.Inner_DataUtil_2.FULL, -1, spec);
+         return new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.FULL, -1, spec);
       } else if (load.contains(spec)) {
          return amount > 0
-            ? new DropCommand.Inner_DataUtil(DropCommand.Inner_DataUtil.Inner_DataUtil_2.ITEM, amount, "")
-            : new DropCommand.Inner_DataUtil(DropCommand.Inner_DataUtil.Inner_DataUtil_2.HAND, -1, spec);
+            ? new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.ITEM, amount, "")
+            : new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.HAND, -1, spec);
       } else {
-         return new DropCommand.Inner_DataUtil(DropCommand.Inner_DataUtil.Inner_DataUtil_2.ITEM, amount, spec);
+         return new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.ITEM, amount, spec);
       }
    }
 
    private static int init_I(String line) {
-      DropCommand.Inner_DataUtil request = init_TextFormat_DataUti(line);
+      DropCommand.DropSpec request = init_TextFormat_DataUti(line);
       int var10000;
       switch (request.init_TextFormat_DataUti()) {
          case FULL:
@@ -335,8 +335,8 @@ public class DropCommand extends Command {
       return false;
    }
 
-   record Inner_DataUtil(DropCommand.Inner_DataUtil.Inner_DataUtil_2 init_TextFormat_DataUti, int init_I, String init_Str) {
-      enum Inner_DataUtil_2 {
+   record DropSpec(DropCommand.DropSpec.DropKind init_TextFormat_DataUti, int init_I, String init_Str) {
+      enum DropKind {
          FULL,
          HAND,
          ITEM,

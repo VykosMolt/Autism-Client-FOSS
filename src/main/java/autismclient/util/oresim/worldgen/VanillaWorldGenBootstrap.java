@@ -60,7 +60,7 @@ import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 
 public final class VanillaWorldGenBootstrap {
    private static final Object init_Obj = new Object();
-   private static volatile VanillaWorldGenBootstrap.Inner_DataUtil init_ConfigStore_DataUt;
+   private static volatile VanillaWorldGenBootstrap.BootstrapState init_ConfigStore_DataUt;
    private final long seed;
    private final ResourceKey<Level> dimension;
    private final Provider init_HolderLookup_Provi;
@@ -75,7 +75,7 @@ public final class VanillaWorldGenBootstrap {
    private VanillaWorldGenBootstrap(
       long seed,
       ResourceKey<Level> dimension,
-      VanillaWorldGenBootstrap.Inner_DataUtil bootstrap,
+      VanillaWorldGenBootstrap.BootstrapState bootstrap,
       ChunkGenerator generator,
       RandomState randomState,
       DimensionType dimensionType
@@ -94,7 +94,7 @@ public final class VanillaWorldGenBootstrap {
    }
 
    public static VanillaWorldGenBootstrap init(long seed, ResourceKey<Level> dimension) {
-      VanillaWorldGenBootstrap.Inner_DataUtil bootstrap = init_ConfigStore_DataUt();
+      VanillaWorldGenBootstrap.BootstrapState bootstrap = init_ConfigStore_DataUt();
       Provider lookup = bootstrap.registries();
       ResourceKey<LevelStem> stemKey = init(dimension);
       WorldPreset preset = lookup.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.NORMAL).value();
@@ -130,8 +130,8 @@ public final class VanillaWorldGenBootstrap {
       }
    }
 
-   private static VanillaWorldGenBootstrap.Inner_DataUtil init_ConfigStore_DataUt() {
-      VanillaWorldGenBootstrap.Inner_DataUtil bootstrap = init_ConfigStore_DataUt;
+   private static VanillaWorldGenBootstrap.BootstrapState init_ConfigStore_DataUt() {
+      VanillaWorldGenBootstrap.BootstrapState bootstrap = init_ConfigStore_DataUt;
       if (bootstrap != null) {
          return bootstrap;
       }
@@ -145,7 +145,7 @@ public final class VanillaWorldGenBootstrap {
       }
    }
 
-   private static VanillaWorldGenBootstrap.Inner_DataUtil load() {
+   private static VanillaWorldGenBootstrap.BootstrapState load() {
       VanillaPackResources vanilla = ServerPacksSource.createVanillaPackSource();
       CloseableResourceManager resources = new MultiPackResourceManager(PackType.SERVER_DATA, List.of(vanilla.fullResources()));
       Executor direct = Runnable::run;
@@ -167,7 +167,7 @@ public final class VanillaWorldGenBootstrap {
          StructureTemplateManager templates = new StructureTemplateManager(
             resources, storage, DataFixers.getDataFixer(), registries.lookupOrThrow(Registries.BLOCK).filterFeatures(FeatureFlags.DEFAULT_FLAGS)
          );
-         return new VanillaWorldGenBootstrap.Inner_DataUtil(registries, resources, storage, templates, vanillaBlockTags);
+         return new VanillaWorldGenBootstrap.BootstrapState(registries, resources, storage, templates, vanillaBlockTags);
       } catch (IOException error) {
          resources.close();
          throw new IllegalStateException("Could not create OreSim's temporary structure-template context", error);
@@ -307,7 +307,7 @@ public final class VanillaWorldGenBootstrap {
       return new PalettedContainerFactory(blockStrategy, defaultBlock, null, Strategy.createForBiomes(biomeIds), defaultBiome, null);
    }
 
-   private record Inner_DataUtil(
+   private record BootstrapState(
       Frozen registries,
       CloseableResourceManager resources,
       LevelStorageAccess storage,

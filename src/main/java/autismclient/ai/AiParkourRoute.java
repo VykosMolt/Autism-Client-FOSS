@@ -59,7 +59,7 @@ final class AiParkourRoute implements AiOperation {
    private boolean pollOf_Z;
    private boolean assumeNoFallDamage;
    private autismclient.ai.engine.AiLiveGrid putAt_PoolStore;
-   private volatile AiParkourRoute.Inner_CacheHelper putAt_RenderCodec_CacheH;
+   private volatile AiParkourRoute.PlaybackState putAt_RenderCodec_CacheH;
    private int pollAt_I;
    private int pollOf_I;
    private int paceHandoffs;
@@ -397,7 +397,7 @@ final class AiParkourRoute implements AiOperation {
             this.putAt(var35, var19);
          }
 
-         AiParkourRoute.Inner_CacheHelper var26 = this.putAt_RenderCodec_CacheH;
+         AiParkourRoute.PlaybackState var26 = this.putAt_RenderCodec_CacheH;
          if (var26 == null) {
             return this.fill(var1);
          }
@@ -548,7 +548,7 @@ final class AiParkourRoute implements AiOperation {
 
          Minecraft var22 = Minecraft.getInstance();
          if (this.putAt_BufferCore == null && !autismclient.util.OverlayScreenController.hasModalScreen()) {
-            autismclient.ai.engine.AiParkourFallWarning.Inner_DataUtil var27 = autismclient.ai.engine.AiParkourFallWarning.putAt_BufferCore_CacheHe_Minecraft_List(
+            autismclient.ai.engine.AiParkourFallWarning.FallRisk var27 = autismclient.ai.engine.AiParkourFallWarning.putAt_BufferCore_CacheHe_Minecraft_List(
                var22, var20.movements()
             );
             if (var27.damage() == 0.0F) {
@@ -570,7 +570,7 @@ final class AiParkourRoute implements AiOperation {
    }
 
    private void putAt(autismclient.ai.engine.AiPaceScript.Inner_IoPool var1, autismclient.ai.engine.AiPaceScript.Inner_JsonCache var2) {
-      AiParkourRoute.Inner_CacheHelper var3 = new AiParkourRoute.Inner_CacheHelper(var1);
+      AiParkourRoute.PlaybackState var3 = new AiParkourRoute.PlaybackState(var1);
       this.putAt_RenderCodec_CacheH = var3;
       boolean var4 = this.pollAt_Z && this.state_I == 0 && var1.touched() == 0 && var2.checkpoints().length >= 2;
       double var5 = var4 ? this.value_D : this.readEx_D;
@@ -616,7 +616,7 @@ final class AiParkourRoute implements AiOperation {
          autismclient.ai.engine.AiCameraTurn.putAt(var1, var3, var4);
       }
 
-      AiParkourRoute.Inner_CacheHelper var9 = this.putAt_RenderCodec_CacheH;
+      AiParkourRoute.PlaybackState var9 = this.putAt_RenderCodec_CacheH;
       autismclient.ai.engine.AiPaceScript.Inner_JsonCache var10 = this.putAt_TextPool_JsonCache;
       if (var10 != null && !AutismLiteVariant.enabled()) {
          AiVisualization.init(this, var10, this.waypoints, this.pollAt_I);
@@ -636,7 +636,7 @@ final class AiParkourRoute implements AiOperation {
       }
    }
 
-   private AiOperation.Result putAt(LocalPlayer var1, AiParkourRoute.Inner_CacheHelper var2, double var3, String var5) {
+   private AiOperation.Result putAt(LocalPlayer var1, AiParkourRoute.PlaybackState var2, double var3, String var5) {
       autismclient.ai.engine.AiPaceScript.Inner_JsonCache var6 = this.putAt_TextPool_JsonCache;
       if (this.putAt_TextPool_CacheHelp != null) {
          var3 = Math.max(var3, var6.cum()[this.putAt_TextPool_CacheHelp.point()]);
@@ -717,7 +717,7 @@ final class AiParkourRoute implements AiOperation {
       }
 
       autismclient.ai.engine.AiPacePlayback.fill_V_LocalPlayer(var1);
-      AiParkourRoute.Inner_CacheHelper var2 = this.putAt_RenderCodec_CacheH;
+      AiParkourRoute.PlaybackState var2 = this.putAt_RenderCodec_CacheH;
       if (var2 != null) {
          var2.putAt_Z = true;
       }
@@ -749,7 +749,7 @@ final class AiParkourRoute implements AiOperation {
       autismclient.ai.engine.AiNavDebug.log(var3);
       AutismClientAddon.LOG.info("[AI] " + var3);
       autismclient.ai.engine.AiPacePlayback.fill_V_LocalPlayer(var1);
-      AiParkourRoute.Inner_CacheHelper var4 = this.putAt_RenderCodec_CacheH;
+      AiParkourRoute.PlaybackState var4 = this.putAt_RenderCodec_CacheH;
       if (var4 != null) {
          var4.putAt_Z = true;
       }
@@ -816,7 +816,7 @@ final class AiParkourRoute implements AiOperation {
          this.putAt_BufferCore = null;
       }
 
-      AiParkourRoute.Inner_CacheHelper var1 = this.putAt_RenderCodec_CacheH;
+      AiParkourRoute.PlaybackState var1 = this.putAt_RenderCodec_CacheH;
       if (var1 != null) {
          var1.putAt_Z = true;
       }
@@ -836,13 +836,13 @@ final class AiParkourRoute implements AiOperation {
       this.putAt_HashEntry_TableCac.close();
    }
 
-   private static final class Inner_CacheHelper {
+   private static final class PlaybackState {
       final autismclient.ai.engine.AiPaceScript.Inner_IoHelper putAt_TextPool_IoHelper = new autismclient.ai.engine.AiPaceScript.Inner_IoHelper();
       final autismclient.ai.engine.AiPaceScript.Inner_IoPool putAt_TextPool_IoPool;
       volatile boolean putAt_Z;
       autismclient.ai.engine.AiPacePlayback putAt_TableUtil;
 
-      Inner_CacheHelper(autismclient.ai.engine.AiPaceScript.Inner_IoPool var1) {
+      PlaybackState(autismclient.ai.engine.AiPaceScript.Inner_IoPool var1) {
          this.putAt_TextPool_IoPool = var1;
       }
    }

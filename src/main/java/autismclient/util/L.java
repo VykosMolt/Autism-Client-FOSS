@@ -1005,7 +1005,7 @@ public final class L {
             }
          }
 
-         AutismHttp.Inner_DataUtil result = AutismHttp.read(
+         AutismHttp.JsonResponse result = AutismHttp.read(
             autismclient.e.DataUtil.init(
                new int[]{
                   -400249041,
@@ -1147,7 +1147,7 @@ public final class L {
                      retryForm
                   );
                   if (!retryProof.isEmpty()) {
-                     AutismHttp.Inner_DataUtil retry = AutismHttp.read(
+                     AutismHttp.JsonResponse retry = AutismHttp.read(
                         autismclient.e.DataUtil.init(
                            new int[]{
                               -400249033,

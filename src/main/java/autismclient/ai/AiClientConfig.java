@@ -613,11 +613,11 @@ final class AiClientConfig {
                case "presets":
                   JsonArray presets = new JsonArray();
 
-                  for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.getInstance().builtInPresets()) {
+                  for (PacketPresetManager.PresetEntry e : PacketPresetManager.getInstance().builtInPresets()) {
                      presets.add(presetJson(e));
                   }
 
-                  for (PacketPresetManager.Inner_DataUtil e : PacketPresetManager.getInstance().userPresets()) {
+                  for (PacketPresetManager.PresetEntry e : PacketPresetManager.getInstance().userPresets()) {
                      presets.add(presetJson(e));
                   }
 
@@ -678,7 +678,7 @@ final class AiClientConfig {
       return AiJson.objectOf("blockedC2S", packetNames(module.getCustomC2sPacketsCopy()), "blockedS2C", packetNames(module.getCustomS2cPacketsCopy()));
    }
 
-   private static JsonObject presetJson(PacketPresetManager.Inner_DataUtil e) {
+   private static JsonObject presetJson(PacketPresetManager.PresetEntry e) {
       return AiJson.objectOf("name", e.name(), "c2s", e.c2sCount(), "s2c", e.s2cCount(), "builtIn", e.isBuiltIn());
    }
 
@@ -849,7 +849,7 @@ final class AiClientConfig {
                }
 
                if (args.has("timing")) {
-                  autismclient.util.JoinMacroController.init(autismclient.util.JoinMacroController.Inner_StreamUtil.init(AiJson.getString(args, "timing", "PLAYABLE")));
+                  autismclient.util.JoinMacroController.init(autismclient.util.JoinMacroController.JoinTiming.init(AiJson.getString(args, "timing", "PLAYABLE")));
                }
 
                if (args.has("keepEnabled")) {

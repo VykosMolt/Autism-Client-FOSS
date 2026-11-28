@@ -15,9 +15,9 @@ import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 
 public class ReportAction implements MacroAction {
-   public ReportAction.Inner_CachePool startEvent = ReportAction.Inner_CachePool.ACTION_START;
-   public ReportAction.Inner_StreamUtil endEvent = ReportAction.Inner_StreamUtil.GUI_OPEN;
-   public ReportAction.Inner_DataUtil endCondition = ReportAction.Inner_DataUtil.GUI_OPEN;
+   public ReportAction.StartEvent startEvent = ReportAction.StartEvent.ACTION_START;
+   public ReportAction.EndEvent endEvent = ReportAction.EndEvent.GUI_OPEN;
+   public ReportAction.EndCondition endCondition = ReportAction.EndCondition.GUI_OPEN;
    public String reportLabel = "Report";
    public String startConditionType = RaceAction.Inner_DataUtil.DELAY.name();
    public String startActionType = MacroActionType.ITEM.name();
@@ -92,8 +92,8 @@ public class ReportAction implements MacroAction {
    }
 
    private Long auditAwaitStartNanos(Minecraft mc) {
-      if (this.startEvent != ReportAction.Inner_CachePool.ACTION_START && this.startEvent != ReportAction.Inner_CachePool.MANUAL) {
-         Predicate<Packet<?>> startMatch = this.startEvent == ReportAction.Inner_CachePool.COMMAND_SENT
+      if (this.startEvent != ReportAction.StartEvent.ACTION_START && this.startEvent != ReportAction.StartEvent.MANUAL) {
+         Predicate<Packet<?>> startMatch = this.startEvent == ReportAction.StartEvent.COMMAND_SENT
             ? p -> p instanceof ServerboundChatCommandPacket
                || p instanceof ServerboundChatCommandSignedPacket
                || p instanceof ServerboundChatPacket spc && spc.message() != null && spc.message().startsWith("/")
@@ -101,7 +101,7 @@ public class ReportAction implements MacroAction {
          MacroExecutor.PacketWaiter sendListener = MacroExecutor.registerOutgoingPacketWaiter(startMatch);
 
          try {
-            if (this.startEvent == ReportAction.Inner_CachePool.COMMAND_SENT) {
+            if (this.startEvent == ReportAction.StartEvent.COMMAND_SENT) {
                String command = init_Str_Str_2(this.commandText);
                if (command.isBlank()) {
                   sendListener.cancel();
@@ -137,14 +137,14 @@ public class ReportAction implements MacroAction {
       switch (this.endCondition) {
          case GUI_OPEN: {
             WaitForGuiAction action = new WaitForGuiAction();
-            action.waitMode = WaitForGuiAction.Inner_DataUtil.OPEN;
+            action.waitMode = WaitForGuiAction.WaitMode.OPEN;
             action.guiTitle = this.endGuiTitle == null ? "" : this.endGuiTitle;
             var10000 = action;
             break;
          }
          case GUI_CLOSE: {
             WaitForGuiAction action = new WaitForGuiAction();
-            action.waitMode = WaitForGuiAction.Inner_DataUtil.CLOSE;
+            action.waitMode = WaitForGuiAction.WaitMode.CLOSE;
             action.guiTitle = this.endGuiTitle == null ? "" : this.endGuiTitle;
             var10000 = action;
             break;
@@ -205,9 +205,9 @@ public class ReportAction implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       try {
-         this.startEvent = ReportAction.Inner_CachePool.valueOf(tag.getStringOr("startEvent", ReportAction.Inner_CachePool.ACTION_START.name()));
+         this.startEvent = ReportAction.StartEvent.valueOf(tag.getStringOr("startEvent", ReportAction.StartEvent.ACTION_START.name()));
       } catch (IllegalArgumentException e) {
-         this.startEvent = ReportAction.Inner_CachePool.ACTION_START;
+         this.startEvent = ReportAction.StartEvent.ACTION_START;
       }
 
       this.reportLabel = tag.getStringOr("reportLabel", "Report");
@@ -222,9 +222,9 @@ public class ReportAction implements MacroAction {
       this.positionTolerance = tag.getDoubleOr("positionTolerance", 5.0);
       if (tag.contains("endCondition")) {
          try {
-            this.endCondition = ReportAction.Inner_DataUtil.valueOf(tag.getStringOr("endCondition", ReportAction.Inner_DataUtil.GUI_OPEN.name()));
+            this.endCondition = ReportAction.EndCondition.valueOf(tag.getStringOr("endCondition", ReportAction.EndCondition.GUI_OPEN.name()));
          } catch (IllegalArgumentException e) {
-            this.endCondition = ReportAction.Inner_DataUtil.GUI_OPEN;
+            this.endCondition = ReportAction.EndCondition.GUI_OPEN;
          }
 
          this.endGuiTitle = tag.getStringOr("endGuiTitle", this.guiTitleSubstr);
@@ -237,9 +237,9 @@ public class ReportAction implements MacroAction {
          }
       } else {
          try {
-            this.endEvent = ReportAction.Inner_StreamUtil.valueOf(tag.getStringOr("endEvent", ReportAction.Inner_StreamUtil.GUI_OPEN.name()));
+            this.endEvent = ReportAction.EndEvent.valueOf(tag.getStringOr("endEvent", ReportAction.EndEvent.GUI_OPEN.name()));
          } catch (IllegalArgumentException e) {
-            this.endEvent = ReportAction.Inner_StreamUtil.GUI_OPEN;
+            this.endEvent = ReportAction.EndEvent.GUI_OPEN;
          }
 
          this.init_V_6();
@@ -249,22 +249,22 @@ public class ReportAction implements MacroAction {
    private void init_V_6() {
       switch (this.endEvent) {
          case GUI_OPEN:
-            this.endCondition = ReportAction.Inner_DataUtil.GUI_OPEN;
+            this.endCondition = ReportAction.EndCondition.GUI_OPEN;
             this.endGuiTitle = this.guiTitleSubstr;
             break;
          case GUI_CLOSE:
-            this.endCondition = ReportAction.Inner_DataUtil.GUI_CLOSE;
+            this.endCondition = ReportAction.EndCondition.GUI_CLOSE;
             this.endGuiTitle = this.guiTitleSubstr;
             break;
          case WORLD_CHANGE:
-            this.endCondition = ReportAction.Inner_DataUtil.WORLD_CHANGE;
+            this.endCondition = ReportAction.EndCondition.WORLD_CHANGE;
             this.endTargetDimension = "";
             break;
          case TELEPORT_PACKET:
-            this.endCondition = ReportAction.Inner_DataUtil.TELEPORT_PACKET;
+            this.endCondition = ReportAction.EndCondition.TELEPORT_PACKET;
             break;
          case POSITION_JUMP:
-            this.endCondition = ReportAction.Inner_DataUtil.POSITION_DELTA;
+            this.endCondition = ReportAction.EndCondition.POSITION_DELTA;
             this.endDistance = this.positionTolerance;
             this.endHorizontalOnly = false;
       }
@@ -272,24 +272,24 @@ public class ReportAction implements MacroAction {
       this.endConditionType = this.write_Str();
    }
 
-   private ReportAction.Inner_StreamUtil init_O_StreamUtil() {
-      ReportAction.Inner_StreamUtil var10000;
+   private ReportAction.EndEvent init_O_StreamUtil() {
+      ReportAction.EndEvent var10000;
       switch (this.endCondition) {
          case GUI_OPEN:
-            var10000 = ReportAction.Inner_StreamUtil.GUI_OPEN;
+            var10000 = ReportAction.EndEvent.GUI_OPEN;
             break;
          case GUI_CLOSE:
-            var10000 = ReportAction.Inner_StreamUtil.GUI_CLOSE;
+            var10000 = ReportAction.EndEvent.GUI_CLOSE;
             break;
          case TELEPORT_PACKET:
          case PACKET:
-            var10000 = ReportAction.Inner_StreamUtil.TELEPORT_PACKET;
+            var10000 = ReportAction.EndEvent.TELEPORT_PACKET;
             break;
          case WORLD_CHANGE:
-            var10000 = ReportAction.Inner_StreamUtil.WORLD_CHANGE;
+            var10000 = ReportAction.EndEvent.WORLD_CHANGE;
             break;
          case POSITION_DELTA:
-            var10000 = ReportAction.Inner_StreamUtil.POSITION_JUMP;
+            var10000 = ReportAction.EndEvent.POSITION_JUMP;
             break;
          default:
             throw new MatchException(null, null);
@@ -323,14 +323,14 @@ public class ReportAction implements MacroAction {
          : (
             this.startConditionType != null && !this.startConditionType.isBlank()
                ? this.startConditionType
-               : (this.startEvent == null ? ReportAction.Inner_CachePool.ACTION_START.name() : this.startEvent.name())
+               : (this.startEvent == null ? ReportAction.StartEvent.ACTION_START.name() : this.startEvent.name())
          );
    }
 
    private String read_Str() {
       return this.endConditionType != null && !this.endConditionType.isBlank()
          ? this.endConditionType
-         : (this.endCondition == null ? ReportAction.Inner_DataUtil.GUI_OPEN.name() : this.endCondition.name());
+         : (this.endCondition == null ? ReportAction.EndCondition.GUI_OPEN.name() : this.endCondition.name());
    }
 
    public MacroAction init_MacroAction_2() {
@@ -400,14 +400,14 @@ public class ReportAction implements MacroAction {
       return trimmed.startsWith("/") ? trimmed.substring(1).trim() : trimmed;
    }
 
-   public enum Inner_CachePool {
+   public enum StartEvent {
       ACTION_START,
       COMMAND_SENT,
       GUI_CLICK_SENT,
       MANUAL;
    }
 
-   public enum Inner_DataUtil {
+   public enum EndCondition {
       GUI_OPEN,
       GUI_CLOSE,
       TELEPORT_PACKET,
@@ -416,7 +416,7 @@ public class ReportAction implements MacroAction {
       PACKET;
    }
 
-   public enum Inner_StreamUtil {
+   public enum EndEvent {
       GUI_OPEN,
       GUI_CLOSE,
       WORLD_CHANGE,

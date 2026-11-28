@@ -117,9 +117,9 @@ public final class AiBlockDigger {
       return this.lastFailureReason;
    }
 
-   private AiBlockDigger.Inner_CacheHelper failWithReason(String var1) {
+   private AiBlockDigger.DigState failWithReason(String var1) {
       this.lastFailureReason = var1;
-      return AiBlockDigger.Inner_CacheHelper.readEx;
+      return AiBlockDigger.DigState.readEx;
    }
 
    public AiBlockDigger withRotationConsumer(Consumer<RotationMath.Rotation> var1) {
@@ -137,15 +137,15 @@ public final class AiBlockDigger {
       return this;
    }
 
-   public AiBlockDigger.Inner_CacheHelper dig(BlockPos var1) {
+   public AiBlockDigger.DigState dig(BlockPos var1) {
       return this.dig(var1, null);
    }
 
-   public AiBlockDigger.Inner_CacheHelper dig(BlockPos var1, Vec3 var2) {
+   public AiBlockDigger.DigState dig(BlockPos var1, Vec3 var2) {
       return this.dig(var1, var2, null);
    }
 
-   public AiBlockDigger.Inner_CacheHelper dig(BlockPos var1, Vec3 var2, Vec3 var3) {
+   public AiBlockDigger.DigState dig(BlockPos var1, Vec3 var2, Vec3 var3) {
       if (this.activelyDigging && !var1.equals(this.activeTarget)) {
          this.stop();
       }
@@ -161,14 +161,14 @@ public final class AiBlockDigger {
          && this.minecraft.gameMode != null
          && this.minecraft.level.getChunkSource().getChunk(var1.getX() >> 4, var1.getZ() >> 4, ChunkStatus.FULL, false) != null) {
          if (this.restock.isRunning()) {
-            AiRestock.Inner_BufferHelper var4 = this.restock.tick();
-            if (var4 == AiRestock.Inner_BufferHelper.FAILED) {
+            AiRestock.RestockState var4 = this.restock.tick();
+            if (var4 == AiRestock.RestockState.FAILED) {
                this.stop();
                return this.failWithReason("tool swap failed");
             }
 
-            if (var4 != AiRestock.Inner_BufferHelper.SUCCEEDED) {
-               return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+            if (var4 != AiRestock.RestockState.SUCCEEDED) {
+               return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
             }
 
             this.restock.reset();
@@ -192,7 +192,7 @@ public final class AiBlockDigger {
                } else {
                   AiEditLedger.init(this.activeTarget, this.activeTargetState);
                   this.stop();
-                  return AiBlockDigger.Inner_CacheHelper.fill;
+                  return AiBlockDigger.DigState.fill;
                }
             } else {
                if (var14.getDestroySpeed(this.minecraft.level, this.activeTarget) < 0.0F
@@ -213,7 +213,7 @@ public final class AiBlockDigger {
                }
 
                if (this.hasNearbyFallingEntity(this.activeTarget)) {
-                  return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+                  return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
                }
 
                BlockHitResult var15 = AiBlockInteraction.findReachableHit(this.minecraft, this.activeTarget);
@@ -250,7 +250,7 @@ public final class AiBlockDigger {
                      String var19 = BuiltInRegistries.ITEM.getKey(this.minecraft.player.getInventory().getItem(var17).getItem()).toString();
                      this.stop();
                      this.restock.startSwap(var17, this.minecraft.player.getInventory().getSelectedSlot(), var19);
-                     return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+                     return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
                   }
 
                   this.slotSelector.accept(var17);
@@ -291,7 +291,7 @@ public final class AiBlockDigger {
                         this.stop();
                         return this.failWithReason("crosshair left it mid-break");
                      } else {
-                        return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+                        return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
                      }
                   } else {
                      this.aimStallTicks = 0;
@@ -317,7 +317,7 @@ public final class AiBlockDigger {
                }
 
                this.lastStoppedTarget = null;
-               return AiBlockDigger.Inner_CacheHelper.fill;
+               return AiBlockDigger.DigState.fill;
             } else if (!(var13.getDestroySpeed(this.minecraft.level, var1) < 0.0F)
                && (!var13.hasBlockEntity() || this.allowBlockEntities)
                && var13.getFluidState().isEmpty()) {
@@ -360,7 +360,7 @@ public final class AiBlockDigger {
                         if (var5 >= 9) {
                            String var16 = BuiltInRegistries.ITEM.getKey(this.minecraft.player.getInventory().getItem(var5).getItem()).toString();
                            this.restock.startSwap(var5, this.minecraft.player.getInventory().getSelectedSlot(), var16);
-                           return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+                           return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
                         }
 
                         if (hasInsufficientUnderwaterAir(
@@ -386,7 +386,7 @@ public final class AiBlockDigger {
                            if (this.isWaitingDestroyDelay()) {
                               this.preAimDuringDelay(var1, var6);
                               tickDestroyDelay(this.minecraft);
-                              return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+                              return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
                            }
 
                            this.aimPointConsumer.accept(this.resolveAimPoint(var1, var6));
@@ -400,13 +400,13 @@ public final class AiBlockDigger {
                               this.lastAimYaw = var7;
                               this.lastAimPitch = var8;
                               if (var9) {
-                                 return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+                                 return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
                               }
 
                               if (this.minecraft.player.getDeltaMovement().lengthSqr() > 0.008
                                  && !this.minecraft.player.isInWater()
                                  && !this.minecraft.player.onClimbable()) {
-                                 return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+                                 return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
                               }
 
                               if (++this.aimStallTicks > 10) {
@@ -421,7 +421,7 @@ public final class AiBlockDigger {
                                     this.aimPointConsumer.accept(var6.getLocation());
                                  }
 
-                                 return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+                                 return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
                               }
                            } else {
                               this.aimStallTicks = 0;
@@ -460,15 +460,15 @@ public final class AiBlockDigger {
       return AiMotionSafety.isSafeToBreakSupport(var1);
    }
 
-   private AiBlockDigger.Inner_CacheHelper checkBreakComplete() {
+   private AiBlockDigger.DigState checkBreakComplete() {
       BlockState var1 = this.minecraft.level.getBlockState(this.activeTarget);
       if (var1.getBlock() == this.activeTargetState.getBlock() || !var1.isAir() && var1.getFluidState().isEmpty()) {
-         return AiBlockDigger.Inner_CacheHelper.putAt_JsonCache_CacheHel;
+         return AiBlockDigger.DigState.putAt_JsonCache_CacheHel;
       }
 
       AiEditLedger.init(this.activeTarget, this.activeTargetState);
       this.stop();
-      return AiBlockDigger.Inner_CacheHelper.fill;
+      return AiBlockDigger.DigState.fill;
    }
 
    public static boolean hasInsufficientUnderwaterAir(Minecraft var0, double var1) {
@@ -830,19 +830,19 @@ public final class AiBlockDigger {
       return this.activeTarget;
    }
 
-   public enum Inner_CacheHelper {
+   public enum DigState {
       putAt_JsonCache_CacheHel,
       fill,
       readEx;
    }
 
    // 5.3 external ABI bridges (replacing retired RefQueue.Inner_DataUtil)
-   public enum Inner_DataUtil_2 {
+   public enum DigOutcome {
       init,
       load,
       read;
 
-      static Inner_DataUtil_2 from(AiBlockDigger.Inner_CacheHelper s) {
+      static DigOutcome from(AiBlockDigger.DigState s) {
          return switch (s) {
             case putAt_JsonCache_CacheHel -> init;
             case fill -> load;
@@ -855,9 +855,9 @@ public final class AiBlockDigger {
    public AiBlockDigger withRotationConsumerCompat(Consumer<RotationMath.Rotation> aim) { return this.withRotationConsumer(aim); }
    public AiBlockDigger withAcceptedToolCompat(BiPredicate<BlockState, ItemStack> accept) { return this.withAcceptedTool(accept); }
    public AiBlockDigger withSealedWaterCompat(Set<BlockPos> sealedWater) { return this.withSealedWater(sealedWater); }
-   public Inner_DataUtil_2 digCompat(BlockPos target) { return Inner_DataUtil_2.from(this.dig(target)); }
-   public Inner_DataUtil_2 digCompat(BlockPos target, Vec3 stand) { return Inner_DataUtil_2.from(this.dig(target, stand)); }
-   public Inner_DataUtil_2 digCompat(BlockPos target, Vec3 stand, Vec3 look) { return Inner_DataUtil_2.from(this.dig(target, stand, look)); }
+   public DigOutcome digCompat(BlockPos target) { return DigOutcome.from(this.dig(target)); }
+   public DigOutcome digCompat(BlockPos target, Vec3 stand) { return DigOutcome.from(this.dig(target, stand)); }
+   public DigOutcome digCompat(BlockPos target, Vec3 stand, Vec3 look) { return DigOutcome.from(this.dig(target, stand, look)); }
    public static boolean hasInsufficientUnderwaterAirCompat(Minecraft mc, double ticks) { return hasInsufficientUnderwaterAir(mc, ticks); }
    public static int airTicksToSurfaceCompat(Minecraft mc) { return airTicksToSurface(mc); }
    public static boolean continueBreakingBlockCompat(Minecraft mc, BlockPos pos, Direction face) { return continueBreakingBlock(mc, pos, face); }

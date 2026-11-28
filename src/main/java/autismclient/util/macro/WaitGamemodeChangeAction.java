@@ -6,8 +6,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.GameType;
 
 public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroAction {
-   public WaitGamemodeChangeAction.Inner_DataUtil match = WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE;
-   public WaitGamemodeChangeAction.Inner_StreamUtil gameMode = WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL;
+   public WaitGamemodeChangeAction.MatchMode match = WaitGamemodeChangeAction.MatchMode.ANY_CHANGE;
+   public WaitGamemodeChangeAction.GameModeChoice gameMode = WaitGamemodeChangeAction.GameModeChoice.SURVIVAL;
    public boolean detectFake = false;
    public boolean listenDuringPreviousAction = false;
    public int timeoutMs = 0;
@@ -34,8 +34,8 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.match = MacroNbtCodecHelper.parseEnum(WaitGamemodeChangeAction.Inner_DataUtil.class, tag.getStringOr("match", WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE.name()), WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE);
-      this.gameMode = MacroNbtCodecHelper.parseEnum(WaitGamemodeChangeAction.Inner_StreamUtil.class, tag.getStringOr("gameMode", WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL.name()), WaitGamemodeChangeAction.Inner_StreamUtil.SURVIVAL);
+      this.match = MacroNbtCodecHelper.parseEnum(WaitGamemodeChangeAction.MatchMode.class, tag.getStringOr("match", WaitGamemodeChangeAction.MatchMode.ANY_CHANGE.name()), WaitGamemodeChangeAction.MatchMode.ANY_CHANGE);
+      this.gameMode = MacroNbtCodecHelper.parseEnum(WaitGamemodeChangeAction.GameModeChoice.class, tag.getStringOr("gameMode", WaitGamemodeChangeAction.GameModeChoice.SURVIVAL.name()), WaitGamemodeChangeAction.GameModeChoice.SURVIVAL);
       this.detectFake = tag.getBooleanOr("detectFake", false);
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {
@@ -53,7 +53,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
 
    @Override
    public String getDisplayName() {
-      String suffix = this.match == WaitGamemodeChangeAction.Inner_DataUtil.TO_MODE ? " -> " + this.init_Str_6() : " Change";
+      String suffix = this.match == WaitGamemodeChangeAction.MatchMode.TO_MODE ? " -> " + this.init_Str_6() : " Change";
       return "Wait Gamemode" + suffix + (this.detectFake ? " (fake ok)" : "");
    }
 
@@ -73,7 +73,7 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
    }
 
    public boolean init(GameType mode) {
-      return mode == null ? false : this.match == WaitGamemodeChangeAction.Inner_DataUtil.ANY_CHANGE || mode == this.targetGameType();
+      return mode == null ? false : this.match == WaitGamemodeChangeAction.MatchMode.ANY_CHANGE || mode == this.targetGameType();
    }
 
    public GameType targetGameType() {
@@ -113,12 +113,12 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
       this.saveAs = name == null ? "" : name;
    }
 
-   public enum Inner_DataUtil {
+   public enum MatchMode {
       ANY_CHANGE,
       TO_MODE;
    }
 
-   public enum Inner_StreamUtil {
+   public enum GameModeChoice {
       SURVIVAL,
       CREATIVE,
       ADVENTURE,

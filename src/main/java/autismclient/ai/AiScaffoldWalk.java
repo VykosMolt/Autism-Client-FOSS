@@ -24,7 +24,7 @@ final class AiScaffoldWalk {
    }
 
    static AiOperation init(JsonObject args) {
-      final AiScaffoldWalk.Inner_CachePool plan = AiScaffoldWalk.Inner_CachePool.parse(args);
+      final AiScaffoldWalk.ScaffoldPlan plan = AiScaffoldWalk.ScaffoldPlan.parse(args);
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          return new AiOperation() {
@@ -63,7 +63,7 @@ final class AiScaffoldWalk {
             int stuckTicks;
             String statusLabel = "Scaffolding";
 
-            AiScaffoldWalk.Inner_DataUtil currentLeg() {
+            AiScaffoldWalk.Leg currentLeg() {
                return plan.legs().get(this.legIndex);
             }
 
@@ -90,8 +90,8 @@ final class AiScaffoldWalk {
                return false;
             }
 
-            List<AiTelly.Inner_DataUtil> hotbarView() {
-               List<AiTelly.Inner_DataUtil> view = new ArrayList<>(9);
+            List<AiTelly.HotbarEntry> hotbarView() {
+               List<AiTelly.HotbarEntry> view = new ArrayList<>(9);
 
                for (int i = 0; i < 9; i++) {
                   ItemStack stack = mc.player.getInventory().getItem(i);
@@ -100,7 +100,7 @@ final class AiScaffoldWalk {
                      && block.getBlock().defaultBlockState().isCollisionShapeFullBlock(mc.level, mc.player.blockPosition())
                      && !block.getBlock().defaultBlockState().hasBlockEntity()
                      && autismclient.ai.engine.AiRestock.isConsumableBuildingBlock(stack, mc.player.getInventory());
-                  view.add(new AiTelly.Inner_DataUtil(construction, construction ? stack.getCount() : 0));
+                  view.add(new AiTelly.HotbarEntry(construction, construction ? stack.getCount() : 0));
                }
 
                return view;
@@ -109,7 +109,7 @@ final class AiScaffoldWalk {
             int buildBlockCount() {
                int total = 0;
 
-               for (AiTelly.Inner_DataUtil entry : this.hotbarView()) {
+               for (AiTelly.HotbarEntry entry : this.hotbarView()) {
                   total += entry.count();
                }
 
@@ -152,8 +152,8 @@ final class AiScaffoldWalk {
                return true;
             }
 
-            AiScaffoldWalk.Inner_StreamUtil effectiveMode() {
-               return mc.player.getFoodData().getFoodLevel() <= 6 ? AiScaffoldWalk.Inner_StreamUtil.WALK : plan.mode();
+            AiScaffoldWalk.BridgeMode effectiveMode() {
+               return mc.player.getFoodData().getFoodLevel() <= 6 ? AiScaffoldWalk.BridgeMode.WALK : plan.mode();
             }
 
             void advanceLeg(String reason) {
@@ -270,7 +270,7 @@ final class AiScaffoldWalk {
                   this.bridgeDriver = new autismclient.ai.engine.AiBridgeDriver(
                      cells,
                      autismclient.ai.engine.AiBridgeDriver.chooseStyle(
-                        this.effectiveMode() == AiScaffoldWalk.Inner_StreamUtil.TELLY, cells, mc.player, this.buildBlockCount()
+                        this.effectiveMode() == AiScaffoldWalk.BridgeMode.TELLY, cells, mc.player, this.buildBlockCount()
                      ),
                      this.aim
                   );
@@ -300,18 +300,18 @@ final class AiScaffoldWalk {
                               AiOperation.Status.RUNNING, "Out of blocks, stopping on the scaffold", AiJson.objectOf("placed", this.placedCount)
                            );
                      } else {
-                        autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil step = this.bridgeDriver.init(slot, this::selectSlot, cell -> {
+                        autismclient.ai.engine.AiBridgeDriver.BridgeStatus step = this.bridgeDriver.init(slot, this::selectSlot, cell -> {
                            this.placedCount++;
                            this.legPlaced++;
                            this.read_Z = true;
                         });
-                        if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING) {
+                        if (step == autismclient.ai.engine.AiBridgeDriver.BridgeStatus.INVALID_FOOTING) {
                            return this.finish(AiOperation.Status.FAILED, "Scaffold bridge needs footing at the support's top level");
-                        } else if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.FELL) {
+                        } else if (step == autismclient.ai.engine.AiBridgeDriver.BridgeStatus.FELL) {
                            return this.finish(AiOperation.Status.FAILED, "Fell off the scaffold");
                         } else {
                            String style = this.bridgeDriver.getBridger().getStyle().name().toLowerCase(Locale.ROOT);
-                           if (step == autismclient.ai.engine.AiBridgeDriver.Inner_DataUtil.DONE) {
+                           if (step == autismclient.ai.engine.AiBridgeDriver.BridgeStatus.DONE) {
                               this.legEndFeet = mc.player.blockPosition();
                               this.bridgeDriver = null;
                               return AiGameOperations.result(
@@ -446,8 +446,8 @@ final class AiScaffoldWalk {
       }
    }
 
-   record Inner_CachePool(List<AiScaffoldWalk.Inner_DataUtil> legs, boolean follow, int blocks, AiScaffoldWalk.Inner_StreamUtil mode, boolean verify, int timeoutSeconds) {
-      static AiScaffoldWalk.Inner_CachePool parse(JsonObject args) {
+   record ScaffoldPlan(List<AiScaffoldWalk.Leg> legs, boolean follow, int blocks, AiScaffoldWalk.BridgeMode mode, boolean verify, int timeoutSeconds) {
+      static AiScaffoldWalk.ScaffoldPlan parse(JsonObject args) {
          boolean hasDirection = args.has("direction");
          boolean follow = AiJson.getBoolean(args, "follow", false);
          boolean tower = AiJson.getBoolean(args, "tower", false);
@@ -458,7 +458,7 @@ final class AiScaffoldWalk {
          }
 
          int total = Math.max(1, Math.min(256, AiJson.getInt(args, "blocks", 32)));
-         List<AiScaffoldWalk.Inner_DataUtil> legs = new ArrayList<>();
+         List<AiScaffoldWalk.Leg> legs = new ArrayList<>();
          if (hasLegs) {
             JsonArray raw = args.getAsJsonArray("legs");
             if (raw == null || raw.isEmpty()) {
@@ -477,31 +477,31 @@ final class AiScaffoldWalk {
                   throw new IllegalArgumentException("a bridge leg needs direction (yaw degrees)");
                }
 
-               legs.add(new AiScaffoldWalk.Inner_DataUtil(legTower, legTower ? 0.0 : AiJson.getDouble(leg, "direction", 0.0), legBlocks));
+               legs.add(new AiScaffoldWalk.Leg(legTower, legTower ? 0.0 : AiJson.getDouble(leg, "direction", 0.0), legBlocks));
             }
          } else if (tower) {
-            legs.add(new AiScaffoldWalk.Inner_DataUtil(true, 0.0, total));
+            legs.add(new AiScaffoldWalk.Leg(true, 0.0, total));
          } else {
-            legs.add(new AiScaffoldWalk.Inner_DataUtil(false, hasDirection ? AiJson.getDouble(args, "direction", 0.0) : 0.0, total));
+            legs.add(new AiScaffoldWalk.Leg(false, hasDirection ? AiJson.getDouble(args, "direction", 0.0) : 0.0, total));
          }
 
-         AiScaffoldWalk.Inner_StreamUtil var10000;
+         AiScaffoldWalk.BridgeMode var10000;
          switch (AiJson.getString(args, "mode", "walk").toLowerCase(Locale.ROOT)) {
             case "walk":
-               var10000 = AiScaffoldWalk.Inner_StreamUtil.WALK;
+               var10000 = AiScaffoldWalk.BridgeMode.WALK;
                break;
             case "sprint":
-               var10000 = AiScaffoldWalk.Inner_StreamUtil.SPRINT;
+               var10000 = AiScaffoldWalk.BridgeMode.SPRINT;
                break;
             case "telly":
-               var10000 = AiScaffoldWalk.Inner_StreamUtil.TELLY;
+               var10000 = AiScaffoldWalk.BridgeMode.TELLY;
                break;
             default:
                throw new IllegalArgumentException("mode must be walk, sprint or telly");
          }
 
-         AiScaffoldWalk.Inner_StreamUtil mode = var10000;
-         return new AiScaffoldWalk.Inner_CachePool(
+         AiScaffoldWalk.BridgeMode mode = var10000;
+         return new AiScaffoldWalk.ScaffoldPlan(
             List.copyOf(legs),
             follow,
             total,
@@ -512,7 +512,7 @@ final class AiScaffoldWalk {
       }
    }
 
-   record Inner_DataUtil(boolean tower, double direction, int blocks) {
+   record Leg(boolean tower, double direction, int blocks) {
       double dirX() {
          return -Math.sin(Math.toRadians(this.direction));
       }
@@ -522,7 +522,7 @@ final class AiScaffoldWalk {
       }
    }
 
-   enum Inner_StreamUtil {
+   enum BridgeMode {
       WALK,
       SPRINT,
       TELLY;

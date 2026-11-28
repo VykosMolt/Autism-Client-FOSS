@@ -21,7 +21,7 @@ public final class PayloadSubscriptionManager {
    private static int update;
    private static String init_Str = "";
    private static long init_J;
-   private static PayloadSubscriptionManager.Inner_BufferHelper status = PayloadSubscriptionManager.Inner_BufferHelper.init(96);
+   private static PayloadSubscriptionManager.RegistrationStatus status = PayloadSubscriptionManager.RegistrationStatus.init(96);
    private static final LinkedHashSet<String> init_LinkedHashSet = new LinkedHashSet<>();
    private static final LinkedHashSet<String> load_LinkedHashSet = new LinkedHashSet<>();
    private static final LinkedHashSet<String> read_LinkedHashSet = new LinkedHashSet<>();
@@ -42,17 +42,17 @@ public final class PayloadSubscriptionManager {
       load_LinkedHashSet.clear();
       read_LinkedHashSet.clear();
       init_LinkedHashSet.clear();
-      status = PayloadSubscriptionManager.Inner_BufferHelper.init(96);
+      status = PayloadSubscriptionManager.RegistrationStatus.init(96);
    }
 
-   public static synchronized PayloadSubscriptionManager.Inner_BufferHelper status() {
+   public static synchronized PayloadSubscriptionManager.RegistrationStatus status() {
       if (autismclient.modules.aD.read_Z()) {
-         status = PayloadSubscriptionManager.Inner_BufferHelper.init(configuredLimit(), 0);
+         status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), 0);
          return status;
       }
 
       if (!isRegistrationUnlocked() && !status.locked()) {
-         status = PayloadSubscriptionManager.Inner_BufferHelper.init(configuredLimit(), status.write());
+         status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), status.write());
       }
 
       return status;
@@ -70,7 +70,7 @@ public final class PayloadSubscriptionManager {
          config.payloadRegistrationWarningAcceptedVersion = 1;
          config.save();
          requestSync();
-         status = PayloadSubscriptionManager.Inner_BufferHelper.init(configuredLimit());
+         status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit());
       }
    }
 
@@ -85,10 +85,10 @@ public final class PayloadSubscriptionManager {
             init_Str = "";
             init_J = 0L;
             init_LinkedHashSet.clear();
-            status = PayloadSubscriptionManager.Inner_BufferHelper.init(configuredLimit(), 0);
+            status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), 0);
          }
       } else {
-         PayloadSubscriptionManager.Inner_TaskQueue unregister = new PayloadSubscriptionManager.Inner_TaskQueue(0, true);
+         PayloadSubscriptionManager.UnregisterResult unregister = new PayloadSubscriptionManager.UnregisterResult(0, true);
          if (isConnected(mc)) {
             unregister = init_bD_TaskQueue(List.of());
          }
@@ -105,7 +105,7 @@ public final class PayloadSubscriptionManager {
                init_LinkedHashSet.clear();
             }
 
-            status = PayloadSubscriptionManager.Inner_BufferHelper.init(configuredLimit(), unregister.init_I());
+            status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), unregister.init_I());
          }
       }
    }
@@ -162,17 +162,17 @@ public final class PayloadSubscriptionManager {
                load_Z = false;
                init_Str = "";
                init_J = 0L;
-               status = PayloadSubscriptionManager.Inner_BufferHelper.init(configuredLimit(), 0);
+               status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), 0);
             }
          } else {
-            PayloadSubscriptionManager.Inner_ConfigStore plan = init(packetLoggerCapturing);
+            PayloadSubscriptionManager.RegistrationPlan plan = init(packetLoggerCapturing);
             if (plan.channels().isEmpty()) {
-               PayloadSubscriptionManager.Inner_TaskQueue unregister = init_bD_TaskQueue(List.of());
+               PayloadSubscriptionManager.UnregisterResult unregister = init_bD_TaskQueue(List.of());
                synchronized (PayloadSubscriptionManager.class) {
                   load_Z = false;
                   init_Str = "";
                   init_J = 0L;
-                  status = new PayloadSubscriptionManager.Inner_BufferHelper(
+                  status = new PayloadSubscriptionManager.RegistrationStatus(
                      0, plan.init_I(), plan.load_I(), unregister.init_Z(), System.currentTimeMillis(), List.of(), plan.load_List(), unregister.init_I(), false
                   );
                }
@@ -191,9 +191,9 @@ public final class PayloadSubscriptionManager {
 
                byte[] body = encodeChannels(plan.channels());
                if (body.length != 0) {
-                  PayloadSubscriptionManager.Inner_TaskQueue unregister = init_bD_TaskQueue(plan.channels());
+                  PayloadSubscriptionManager.UnregisterResult unregister = init_bD_TaskQueue(plan.channels());
                   boolean sent = AutismPayloadSupport.sendCustomPayloadSilent("minecraft:register", body, "play");
-                  PayloadSubscriptionManager.Inner_BufferHelper newStatus = new PayloadSubscriptionManager.Inner_BufferHelper(
+                  PayloadSubscriptionManager.RegistrationStatus newStatus = new PayloadSubscriptionManager.RegistrationStatus(
                      plan.channels().size(),
                      plan.init_I(),
                      plan.load_I(),
@@ -230,9 +230,9 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   public static PayloadSubscriptionManager.Inner_ConfigStore init(boolean packetLoggerCapturing) {
+   public static PayloadSubscriptionManager.RegistrationPlan init(boolean packetLoggerCapturing) {
       int limit = configuredLimit();
-      PayloadSubscriptionManager.Inner_DataUtil collector = new PayloadSubscriptionManager.Inner_DataUtil(limit);
+      PayloadSubscriptionManager.PlanCollector collector = new PayloadSubscriptionManager.PlanCollector(limit);
       PayloadRegistrationManager registrations = new PayloadRegistrationManager();
 
       for (String channel : registrations.enabledChannels()) {
@@ -242,11 +242,11 @@ public final class PayloadSubscriptionManager {
       return collector.init();
    }
 
-   private static PayloadSubscriptionManager.Inner_TaskQueue init_bD_TaskQueue(List<String> nextChannels) {
+   private static PayloadSubscriptionManager.UnregisterResult init_bD_TaskQueue(List<String> nextChannels) {
       LinkedHashSet<String> removed = new LinkedHashSet<>();
       synchronized (PayloadSubscriptionManager.class) {
          if (init_LinkedHashSet.isEmpty()) {
-            return new PayloadSubscriptionManager.Inner_TaskQueue(0, true);
+            return new PayloadSubscriptionManager.UnregisterResult(0, true);
          }
 
          Set<String> next = new LinkedHashSet<>(nextChannels == null ? List.of() : nextChannels);
@@ -259,7 +259,7 @@ public final class PayloadSubscriptionManager {
       }
 
       if (removed.isEmpty()) {
-         return new PayloadSubscriptionManager.Inner_TaskQueue(0, true);
+         return new PayloadSubscriptionManager.UnregisterResult(0, true);
       }
 
       boolean sent = AutismPayloadSupport.sendCustomPayloadSilent("minecraft:unregister", encodeChannels(List.copyOf(removed)), "play");
@@ -273,13 +273,13 @@ public final class PayloadSubscriptionManager {
          AutismClientAddon.LOG.info("[Autism Payload] unregistered {} plugin channels: sent={}, sample={}", removed.size(), sent, init(removed));
       }
 
-      return new PayloadSubscriptionManager.Inner_TaskQueue(removed.size(), sent);
+      return new PayloadSubscriptionManager.UnregisterResult(removed.size(), sent);
    }
 
-   public static PayloadSubscriptionManager.Inner_CachePool impactOf(String pattern) {
+   public static PayloadSubscriptionManager.PatternImpact impactOf(String pattern) {
       String normalized = PayloadChannelFilterManager.normalizePattern(pattern);
       if (normalized.isBlank()) {
-         return new PayloadSubscriptionManager.Inner_CachePool(false, false, 0, List.of());
+         return new PayloadSubscriptionManager.PatternImpact(false, false, 0, List.of());
       }
 
       LinkedHashSet<String> channels = new LinkedHashSet<>();
@@ -289,33 +289,33 @@ public final class PayloadSubscriptionManager {
             channels.add(normalized);
          }
 
-         return new PayloadSubscriptionManager.Inner_CachePool(false, !channels.isEmpty(), channels.size(), List.copyOf(channels));
+         return new PayloadSubscriptionManager.PatternImpact(false, !channels.isEmpty(), channels.size(), List.copyOf(channels));
       } else {
-         for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+         for (PayloadChannelFilterManager.ChannelPreset preset : PayloadChannelFilterManager.presets()) {
             String presetPattern = PayloadChannelFilterManager.normalizePattern(preset.read());
             if (presetPattern.indexOf(42) < 0 && PayloadChannelFilterManager.isRegisterableExactPreset(preset) && init(normalized, presetPattern)) {
                channels.add(presetPattern);
             }
          }
 
-         return new PayloadSubscriptionManager.Inner_CachePool(true, false, channels.size(), List.copyOf(channels));
+         return new PayloadSubscriptionManager.PatternImpact(true, false, channels.size(), List.copyOf(channels));
       }
    }
 
-   public static PayloadSubscriptionManager.Inner_StreamUtil init(Collection<String> patterns, boolean packetLoggerCapturing) {
-      PayloadSubscriptionManager.Inner_ConfigStore plan = init(packetLoggerCapturing);
+   public static PayloadSubscriptionManager.PatternProjection init(Collection<String> patterns, boolean packetLoggerCapturing) {
+      PayloadSubscriptionManager.RegistrationPlan plan = init(packetLoggerCapturing);
       LinkedHashSet<String> projected = new LinkedHashSet<>(plan.channels());
       int before = projected.size();
       if (patterns != null) {
          for (String pattern : patterns) {
-            PayloadSubscriptionManager.Inner_CachePool impact = impactOf(pattern);
+            PayloadSubscriptionManager.PatternImpact impact = impactOf(pattern);
             projected.addAll(impact.channels());
          }
       }
 
       int exactAdded = Math.max(0, projected.size() - before);
       int overflow = Math.max(0, projected.size() - plan.init_I());
-      return new PayloadSubscriptionManager.Inner_StreamUtil(projected.size(), plan.init_I(), exactAdded, overflow);
+      return new PayloadSubscriptionManager.PatternProjection(projected.size(), plan.init_I(), exactAdded, overflow);
    }
 
    private static int configuredLimit() {
@@ -440,15 +440,15 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   public record Inner_BufferHelper(
+   public record RegistrationStatus(
       int registered, int limit, int read, boolean sent, long init_J, List<String> applied, List<String> load_List, int write, boolean locked
    ) {
-      private static PayloadSubscriptionManager.Inner_BufferHelper init(int limit) {
-         return new PayloadSubscriptionManager.Inner_BufferHelper(0, limit, 0, false, 0L, List.of(), List.of(), 0, false);
+      private static PayloadSubscriptionManager.RegistrationStatus init(int limit) {
+         return new PayloadSubscriptionManager.RegistrationStatus(0, limit, 0, false, 0L, List.of(), List.of(), 0, false);
       }
 
-      private static PayloadSubscriptionManager.Inner_BufferHelper init(int limit, int lastUnregisteredCount) {
-         return new PayloadSubscriptionManager.Inner_BufferHelper(0, limit, 0, false, System.currentTimeMillis(), List.of(), List.of(), Math.max(0, lastUnregisteredCount), true);
+      private static PayloadSubscriptionManager.RegistrationStatus init(int limit, int lastUnregisteredCount) {
+         return new PayloadSubscriptionManager.RegistrationStatus(0, limit, 0, false, System.currentTimeMillis(), List.of(), List.of(), Math.max(0, lastUnregisteredCount), true);
       }
 
       public String describe() {
@@ -474,21 +474,21 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   public record Inner_CachePool(boolean init_Z, boolean load, int channelCount, List<String> channels) {
+   public record PatternImpact(boolean init_Z, boolean load, int channelCount, List<String> channels) {
       public String label() {
          return this.load ? "1ch" : this.channelCount + "ch";
       }
    }
 
-   public record Inner_ConfigStore(List<String> channels, int init_I, int load_I, List<String> load_List) {
+   public record RegistrationPlan(List<String> channels, int init_I, int load_I, List<String> load_List) {
    }
 
-   private static final class Inner_DataUtil {
+   private static final class PlanCollector {
       private final int init_I;
       private final LinkedHashMap<String, String> init_LinkedHashMap = new LinkedHashMap<>();
       private final LinkedHashSet<String> init_LinkedHashSet = new LinkedHashSet<>();
 
-      private Inner_DataUtil(int limit) {
+      private PlanCollector(int limit) {
          this.init_I = limit;
       }
 
@@ -503,14 +503,14 @@ public final class PayloadSubscriptionManager {
          }
       }
 
-      private PayloadSubscriptionManager.Inner_ConfigStore init() {
-         return new PayloadSubscriptionManager.Inner_ConfigStore(
+      private PayloadSubscriptionManager.RegistrationPlan init() {
+         return new PayloadSubscriptionManager.RegistrationPlan(
             List.copyOf(this.init_LinkedHashMap.values()), this.init_I, this.init_LinkedHashSet.size(), List.copyOf(this.init_LinkedHashSet)
          );
       }
    }
 
-   public record Inner_StreamUtil(int init, int load, int read, int write) {
+   public record PatternProjection(int init, int load, int read, int write) {
       public boolean init_Z() {
          return this.write > 0;
       }
@@ -520,6 +520,6 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   private record Inner_TaskQueue(int init_I, boolean init_Z) {
+   private record UnregisterResult(int init_I, boolean init_Z) {
    }
 }

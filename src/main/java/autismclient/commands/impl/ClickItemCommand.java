@@ -25,12 +25,12 @@ public final class ClickItemCommand extends Command {
       RequiredArgumentBuilder<AutismCommandSource, String> item = (RequiredArgumentBuilder<AutismCommandSource, String>)RequiredArgumentBuilder.<AutismCommandSource, String>argument(
             "item-name", autismclient.commands.arguments.ContainerItemNameArgumentType.init()
          )
-         .executes(context -> init(context, SlotClickCommandHelper.Inner_StreamUtil.init("Left", ContainerInput.PICKUP, 0), 1));
+         .executes(context -> init(context, SlotClickCommandHelper.ClickSpec.init("Left", ContainerInput.PICKUP, 0), 1));
       SlotClickCommandHelper.init(item, ClickItemCommand::init);
       root.then(item);
    }
 
-   private static int init(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.Inner_StreamUtil spec, int times) {
+   private static int init(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.ClickSpec spec, int times) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu != null) {
          String requestedName = autismclient.commands.arguments.ContainerItemNameArgumentType.init(context, "item-name");

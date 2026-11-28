@@ -30,7 +30,7 @@ public final class AiSeek {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));
-         return new AiSeek.Inner_ConfigStore(timeoutSeconds, AiPathfinder.RouteStrategy.parseCompat(AiJson.getString(args, "strategy", "fastest")));
+         return new AiSeek.SurfaceSeek(timeoutSeconds, AiPathfinder.RouteStrategy.parseCompat(AiJson.getString(args, "strategy", "fastest")));
       } else {
          throw new IllegalArgumentException("Surface travel requires a connected living player");
       }
@@ -41,13 +41,13 @@ public final class AiSeek {
       if (client.player != null && client.level != null) {
          int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 180)));
          Integer maxY = args.has("maxY") ? AiJson.getInt(args, "maxY", 0) : null;
-         return new AiSeek.Inner_StreamUtil(timeoutSeconds, AiPathfinder.RouteStrategy.parseCompat(AiJson.getString(args, "strategy", "fastest")), maxY);
+         return new AiSeek.CaveSeek(timeoutSeconds, AiPathfinder.RouteStrategy.parseCompat(AiJson.getString(args, "strategy", "fastest")), maxY);
       } else {
          throw new IllegalArgumentException("Cave travel requires a connected living player");
       }
    }
 
-   static int init(AiSeek.Inner_DataUtil air, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int sx, int sy, int sz, int cap) {
+   static int init(AiSeek.CellPredicate air, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int sx, int sy, int sz, int cap) {
       if (sx >= minX && sx <= maxX && sy >= minY && sy <= maxY && sz >= minZ && sz <= maxZ && air.test(sx, sy, sz)) {
          ArrayDeque<BlockPos> queue = new ArrayDeque<>();
          HashSet<Long> visited = new HashSet<>();
@@ -89,11 +89,11 @@ public final class AiSeek {
       );
    }
 
-   private abstract static class Inner_BufferHelper implements AiOperation {
+   private abstract static class ColumnSeekOperation implements AiOperation {
       final Minecraft client = Minecraft.getInstance();
       final long deadlineNanos;
       final AiPathfinder.RouteStrategy strategy;
-      final AiSeek.Inner_CachePool columnSearch;
+      final AiSeek.ColumnRingSearch columnSearch;
       final int columnsPerTick;
       BlockPos candidate;
       AiOperation travel;
@@ -102,10 +102,10 @@ public final class AiSeek {
       boolean init_Z;
       static final int write = 3;
 
-      Inner_BufferHelper(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, int maxRadius, int columnsPerTick) {
+      ColumnSeekOperation(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, int maxRadius, int columnsPerTick) {
          this.deadlineNanos = System.nanoTime() + timeoutSeconds * 1000000000L;
          this.strategy = strategy;
-         this.columnSearch = new AiSeek.Inner_CachePool(this.client.player.blockPosition(), maxRadius);
+         this.columnSearch = new AiSeek.ColumnRingSearch(this.client.player.blockPosition(), maxRadius);
          this.columnsPerTick = columnsPerTick;
       }
 
@@ -231,7 +231,7 @@ public final class AiSeek {
       }
    }
 
-   private static final class Inner_CachePool {
+   private static final class ColumnRingSearch {
       final BlockPos origin;
       private final int maxRadius;
       private List<BlockPos> ring = List.of();
@@ -239,7 +239,7 @@ public final class AiSeek {
       private int read = 24;
       private boolean first = true;
 
-      Inner_CachePool(BlockPos origin, int maxRadius) {
+      ColumnRingSearch(BlockPos origin, int maxRadius) {
          this.origin = origin;
          this.maxRadius = maxRadius;
       }
@@ -290,12 +290,12 @@ public final class AiSeek {
       }
    }
 
-   private static final class Inner_ConfigStore extends AiSeek.Inner_BufferHelper {
+   private static final class SurfaceSeek extends AiSeek.ColumnSeekOperation {
       static final int update = 12;
       static final int sync = 16;
       final boolean nearSurface;
 
-      Inner_ConfigStore(int timeoutSeconds, AiPathfinder.RouteStrategy strategy) {
+      SurfaceSeek(int timeoutSeconds, AiPathfinder.RouteStrategy strategy) {
          super(timeoutSeconds, strategy, 96, 256);
          BlockPos origin = this.columnSearch.origin;
          this.nearSurface = this.client.level.getHeight(Types.MOTION_BLOCKING, origin.getX(), origin.getZ()) - origin.getY() <= 12;
@@ -334,14 +334,14 @@ public final class AiSeek {
       }
    }
 
-   interface Inner_DataUtil {
+   interface CellPredicate {
       boolean test(int var1, int var2, int var3);
    }
 
-   private static final class Inner_StreamUtil extends AiSeek.Inner_BufferHelper {
+   private static final class CaveSeek extends AiSeek.ColumnSeekOperation {
       private final int update;
 
-      Inner_StreamUtil(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, Integer maxY) {
+      CaveSeek(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, Integer maxY) {
          super(timeoutSeconds, strategy, 64, 8);
          this.update = maxY != null ? maxY : this.columnSearch.origin.getY() + 8;
       }

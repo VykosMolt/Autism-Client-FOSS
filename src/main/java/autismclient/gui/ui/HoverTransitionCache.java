@@ -8,7 +8,7 @@ import autismclient.gui.f.NetHelper;
 public final class HoverTransitionCache {
    private static final long TRANSITION_DURATION_NANOS = 110000000L;
    private static final long ENTRY_TTL_NANOS = 30000000000L;
-   private static final Map<String, HoverTransitionCache.Inner_DataUtil> STATES = new HashMap<>();
+   private static final Map<String, HoverTransitionCache.HoverTransition> STATES = new HashMap<>();
    private static long lastPruneNanos;
 
    private HoverTransitionCache() {
@@ -16,9 +16,9 @@ public final class HoverTransitionCache {
 
    public static float sample(String key, boolean hovered) {
       long now = System.nanoTime();
-      HoverTransitionCache.Inner_DataUtil state = STATES.get(key);
+      HoverTransitionCache.HoverTransition state = STATES.get(key);
       if (state == null) {
-         state = new HoverTransitionCache.Inner_DataUtil(hovered ? 1.0F : 0.0F, hovered, now);
+         state = new HoverTransitionCache.HoverTransition(hovered ? 1.0F : 0.0F, hovered, now);
          STATES.put(key, state);
          return state.currentValue;
       }
@@ -32,7 +32,7 @@ public final class HoverTransitionCache {
       state.lastAccessNanos = now;
       if (now - lastPruneNanos > 30000000000L) {
          lastPruneNanos = now;
-         Iterator<HoverTransitionCache.Inner_DataUtil> it = STATES.values().iterator();
+         Iterator<HoverTransitionCache.HoverTransition> it = STATES.values().iterator();
 
          while (it.hasNext()) {
             if (now - it.next().lastAccessNanos > 30000000000L) {
@@ -48,14 +48,14 @@ public final class HoverTransitionCache {
       return bounds.read() + ":" + bounds.write() + ":" + bounds.update() + ":" + bounds.sync();
    }
 
-   private static final class Inner_DataUtil {
+   private static final class HoverTransition {
       float startValue;
       float currentValue;
       boolean targetHovered;
       long transitionStartNanos;
       long lastAccessNanos;
 
-      Inner_DataUtil(float value, boolean target, long now) {
+      HoverTransition(float value, boolean target, long now) {
          this.currentValue = value;
          this.startValue = value;
          this.targetHovered = target;

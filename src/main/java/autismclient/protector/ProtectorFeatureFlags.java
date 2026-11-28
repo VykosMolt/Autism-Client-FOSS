@@ -23,8 +23,8 @@ public final class ProtectorFeatureFlags {
    private static final int flush = 128;
    private static final int close = 256;
    private static final int open = 512;
-   private static final ProtectorFeatureFlags.Inner_DataUtil EMPTY_STATE = new ProtectorFeatureFlags.Inner_DataUtil(false, null, 0, 0);
-   private static volatile ProtectorFeatureFlags.Inner_DataUtil cachedState = EMPTY_STATE;
+   private static final ProtectorFeatureFlags.FlagState EMPTY_STATE = new ProtectorFeatureFlags.FlagState(false, null, 0, 0);
+   private static volatile ProtectorFeatureFlags.FlagState cachedState = EMPTY_STATE;
    private static final int poll = 1024;
    private static final Map<Object, Boolean> init_Map;
 
@@ -96,9 +96,9 @@ public final class ProtectorFeatureFlags {
          cachedState = EMPTY_STATE;
       } else {
          int sourceFlags = flagsOf(config);
-         ProtectorFeatureFlags.Inner_DataUtil current = cachedState;
+         ProtectorFeatureFlags.FlagState current = cachedState;
          if (!current.init_Z || current.config != config || current.flags != sourceFlags) {
-            cachedState = new ProtectorFeatureFlags.Inner_DataUtil(true, config, sourceFlags, init(sourceFlags, init_Z, read()));
+            cachedState = new ProtectorFeatureFlags.FlagState(true, config, sourceFlags, init(sourceFlags, init_Z, read()));
          }
       }
    }
@@ -107,8 +107,8 @@ public final class ProtectorFeatureFlags {
       return (currentState().load & flag) != 0;
    }
 
-   private static ProtectorFeatureFlags.Inner_DataUtil currentState() {
-      ProtectorFeatureFlags.Inner_DataUtil state = cachedState;
+   private static ProtectorFeatureFlags.FlagState currentState() {
+      ProtectorFeatureFlags.FlagState state = cachedState;
       if (state.init_Z) {
          return state;
       }
@@ -217,6 +217,6 @@ public final class ProtectorFeatureFlags {
       init_Map = Collections.synchronizedMap(new IdentityHashMap<>());
    }
 
-   private record Inner_DataUtil(boolean init_Z, AutismConfig config, int flags, int load) {
+   private record FlagState(boolean init_Z, AutismConfig config, int flags, int load) {
    }
 }

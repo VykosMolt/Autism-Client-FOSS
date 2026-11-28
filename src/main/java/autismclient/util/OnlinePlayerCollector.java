@@ -22,8 +22,8 @@ public final class OnlinePlayerCollector {
       LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
       final ClientPacketListener connection = mc == null ? null : mc.getConnection();
       if (probeHidden && connection != null) {
-         List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.discoverVectors(connection);
-         CommandTabNameProber.init(connection, names, self, vectors, new CommandTabNameProber.Inner_DataUtil() {
+         List<CommandTabNameProber.ProbeVector> vectors = CommandTabNameProber.discoverVectors(connection);
+         CommandTabNameProber.init(connection, names, self, vectors, new CommandTabNameProber.ProbeControl() {
             @Override
             public boolean isCancelled() {
                Minecraft m = Minecraft.getInstance();

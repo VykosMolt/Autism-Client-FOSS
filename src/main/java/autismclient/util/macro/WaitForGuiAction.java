@@ -10,7 +10,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 
 public class WaitForGuiAction implements MacroAction {
-   public WaitForGuiAction.Inner_DataUtil waitMode = WaitForGuiAction.Inner_DataUtil.OPEN;
+   public WaitForGuiAction.WaitMode waitMode = WaitForGuiAction.WaitMode.OPEN;
    public String guiType = "ANY";
    public String guiTitle = "";
    public PatternCaptureMatcher.MatchMode matchMode = PatternCaptureMatcher.MatchMode.MATCH;
@@ -30,7 +30,7 @@ public class WaitForGuiAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      String prefix = this.waitMode == WaitForGuiAction.Inner_DataUtil.CLOSE ? "Wait GUI Close: " : "Wait GUI Open: ";
+      String prefix = this.waitMode == WaitForGuiAction.WaitMode.CLOSE ? "Wait GUI Close: " : "Wait GUI Open: ";
       String type = this.guiType != null && !this.guiType.isBlank() && !"ANY".equals(this.guiType) ? this.guiType : "Any";
       return prefix + type + (this.guiTitle.isEmpty() ? "" : " \"" + this.guiTitle + "\"");
    }
@@ -167,9 +167,9 @@ public class WaitForGuiAction implements MacroAction {
    public void fromTag(CompoundTag tag) {
       if (tag.contains("waitMode")) {
          try {
-            this.waitMode = WaitForGuiAction.Inner_DataUtil.valueOf(tag.getStringOr("waitMode", "OPEN"));
+            this.waitMode = WaitForGuiAction.WaitMode.valueOf(tag.getStringOr("waitMode", "OPEN"));
          } catch (IllegalArgumentException ignored) {
-            this.waitMode = WaitForGuiAction.Inner_DataUtil.OPEN;
+            this.waitMode = WaitForGuiAction.WaitMode.OPEN;
          }
       }
 
@@ -207,7 +207,7 @@ public class WaitForGuiAction implements MacroAction {
       this.init = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum WaitMode {
       OPEN,
       CLOSE;
    }

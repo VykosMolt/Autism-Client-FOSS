@@ -24,8 +24,8 @@ public class PacketPresetManager {
    private static final String USER_PRESET_PREFIX = "User Preset ";
    private static final Map<String, String> PACKET_NAME_ALIASES = buildAliases();
    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-   private List<PacketPresetManager.Inner_DataUtil> cachedBuiltInPresets = null;
-   private List<PacketPresetManager.Inner_DataUtil> cachedUserPresets = null;
+   private List<PacketPresetManager.PresetEntry> cachedBuiltInPresets = null;
+   private List<PacketPresetManager.PresetEntry> cachedUserPresets = null;
    private String signature = "";
 
    private PacketPresetManager() {
@@ -96,7 +96,7 @@ public class PacketPresetManager {
    }
 
    public boolean loadPreset(String name) {
-      PacketPresetManager.Inner_DataUtil entry = this.findPreset(name);
+      PacketPresetManager.PresetEntry entry = this.findPreset(name);
       if (entry == null) {
          AutismClientMessaging.sendPrefixed("§cPreset not found: " + name);
          return false;
@@ -165,7 +165,7 @@ public class PacketPresetManager {
          return false;
       }
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.builtInPresets()) {
+      for (PacketPresetManager.PresetEntry entry : this.builtInPresets()) {
          if (this.normalizeKey(entry.name()).equals(normalized)) {
             return true;
          }
@@ -174,19 +174,19 @@ public class PacketPresetManager {
       return false;
    }
 
-   public PacketPresetManager.Inner_DataUtil findPreset(String name) {
+   public PacketPresetManager.PresetEntry findPreset(String name) {
       String normalized = this.normalizeKey(name);
       if (normalized.isEmpty()) {
          return null;
       }
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.builtInPresets()) {
+      for (PacketPresetManager.PresetEntry entry : this.builtInPresets()) {
          if (this.normalizeKey(entry.name()).equals(normalized)) {
             return entry;
          }
       }
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.userPresets()) {
+      for (PacketPresetManager.PresetEntry entry : this.userPresets()) {
          if (this.normalizeKey(entry.name()).equals(normalized)) {
             return entry;
          }
@@ -195,20 +195,20 @@ public class PacketPresetManager {
       return null;
    }
 
-   public List<PacketPresetManager.Inner_DataUtil> builtInPresets() {
+   public List<PacketPresetManager.PresetEntry> builtInPresets() {
       if (this.cachedBuiltInPresets != null) {
          return this.cachedBuiltInPresets;
       }
 
       autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
-      List<PacketPresetManager.Inner_DataUtil> entries = new ArrayList<>();
+      List<PacketPresetManager.PresetEntry> entries = new ArrayList<>();
       entries.add(
-         new PacketPresetManager.Inner_DataUtil(
+         new PacketPresetManager.PresetEntry(
             this.presetFromClasses("Default", (Collection<Class<? extends Packet<?>>>)module.getDefaultC2sPackets(), (Collection<Class<? extends Packet<?>>>)module.getDefaultS2cPackets()), true
          )
       );
       entries.add(
-         new PacketPresetManager.Inner_DataUtil(
+         new PacketPresetManager.PresetEntry(
             this.presetFromNames(
                "Movement & World",
                Set.of(
@@ -240,7 +240,7 @@ public class PacketPresetManager {
          )
       );
       entries.add(
-         new PacketPresetManager.Inner_DataUtil(
+         new PacketPresetManager.PresetEntry(
             this.presetFromNames(
                "Inventory, Chat & Commands",
                Set.of(
@@ -279,7 +279,7 @@ public class PacketPresetManager {
          )
       );
       entries.add(
-         new PacketPresetManager.Inner_DataUtil(
+         new PacketPresetManager.PresetEntry(
             this.presetFromNames(
                "Chunk Freeze & Blocks",
                Set.of(
@@ -313,13 +313,13 @@ public class PacketPresetManager {
       return this.cachedBuiltInPresets;
    }
 
-   public List<PacketPresetManager.Inner_DataUtil> userPresets() {
+   public List<PacketPresetManager.PresetEntry> userPresets() {
       String signature = this.directorySignature();
       if (this.cachedUserPresets != null && this.signature.equals(signature)) {
          return this.cachedUserPresets;
       }
 
-      List<PacketPresetManager.Inner_DataUtil> entries = new ArrayList<>();
+      List<PacketPresetManager.PresetEntry> entries = new ArrayList<>();
       File[] files = PRESET_DIR.listFiles((dir, fileName) -> fileName.endsWith(".json"));
       if (files == null) {
          this.signature = signature;
@@ -346,7 +346,7 @@ public class PacketPresetManager {
                      preset.s2cPackets = new LinkedHashSet<>();
                   }
 
-                  entries.add(new PacketPresetManager.Inner_DataUtil(preset, false));
+                  entries.add(new PacketPresetManager.PresetEntry(preset, false));
                }
             }
          } catch (IOException e) {
@@ -363,11 +363,11 @@ public class PacketPresetManager {
    public List<String> presetNames() {
       List<String> names = new ArrayList<>();
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.builtInPresets()) {
+      for (PacketPresetManager.PresetEntry entry : this.builtInPresets()) {
          names.add(entry.name());
       }
 
-      for (PacketPresetManager.Inner_DataUtil entry : this.userPresets()) {
+      for (PacketPresetManager.PresetEntry entry : this.userPresets()) {
          names.add(entry.name());
       }
 
@@ -576,7 +576,7 @@ public class PacketPresetManager {
       );
    }
 
-   public record Inner_DataUtil(AutismPacketPreset preset, boolean init_Z) {
+   public record PresetEntry(AutismPacketPreset preset, boolean init_Z) {
       public String name() {
          return this.preset != null && this.preset.name != null ? this.preset.name : "";
       }

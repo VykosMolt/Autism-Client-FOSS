@@ -11,21 +11,21 @@ final class AiNavigationSelection extends AiPlacementSession {
    private final Minecraft client = Minecraft.getInstance();
    private final Object boundLevel = this.client.level;
    private final boolean parkour;
-   private final AiToolCallParser.Inner_CachePool options;
-   private final autismclient.ai.engine.AiStandingTarget.Inner_DataUtil standingResolver = new autismclient.ai.engine.AiStandingTarget.Inner_DataUtil();
-   private final List<autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil> checkpoints = new ArrayList<>();
-   private autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil standingTarget;
+   private final AiToolCallParser.ParkourFlags options;
+   private final autismclient.ai.engine.AiStandingTarget.TargetCache standingResolver = new autismclient.ai.engine.AiStandingTarget.TargetCache();
+   private final List<autismclient.ai.engine.AiStandingTarget.StandingSpot> checkpoints = new ArrayList<>();
+   private autismclient.ai.engine.AiStandingTarget.StandingSpot standingTarget;
 
    AiNavigationSelection(boolean parkour, boolean assumeNoFallDamage) {
-      this(parkour, new AiToolCallParser.Inner_CachePool(assumeNoFallDamage, -1));
+      this(parkour, new AiToolCallParser.ParkourFlags(assumeNoFallDamage, -1));
    }
 
-   AiNavigationSelection(boolean parkour, AiToolCallParser.Inner_CachePool options) {
+   AiNavigationSelection(boolean parkour, AiToolCallParser.ParkourFlags options) {
       this.parkour = parkour;
-      this.options = options == null ? new AiToolCallParser.Inner_CachePool(false, -1) : options;
+      this.options = options == null ? new AiToolCallParser.ParkourFlags(false, -1) : options;
    }
 
-   autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil getTarget() {
+   autismclient.ai.engine.AiStandingTarget.StandingSpot getTarget() {
       return this.standingTarget;
    }
 
@@ -33,7 +33,7 @@ final class AiNavigationSelection extends AiPlacementSession {
       return this.parkour;
    }
 
-   List<autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil> checkpoints() {
+   List<autismclient.ai.engine.AiStandingTarget.StandingSpot> checkpoints() {
       return this.checkpoints;
    }
 

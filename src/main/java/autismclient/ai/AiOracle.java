@@ -84,7 +84,7 @@ final class AiOracle {
    };
    private static long hideVillagesBit = -1L;
    private static final AtomicInteger init_AtomicInteger = new AtomicInteger();
-   static final Map<String, AiOracle.Inner_StateCache> STRUCTURES = buildStructureSpecs();
+   static final Map<String, AiOracle.StructureSpec> STRUCTURES = buildStructureSpecs();
    private static final int poll = 64;
 
    private AiOracle() {
@@ -103,11 +103,11 @@ final class AiOracle {
    }
 
    static AiOperation create(JsonObject args) {
-      AiOracle.Inner_ConfigStore q = parseQuery(AiJson.getString(args, "query", ""));
+      AiOracle.OracleQuery q = parseQuery(AiJson.getString(args, "query", ""));
       int cap = clampCap(AiJson.getInt(args, "cap", 8));
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         if (!isActive() || q.subject() != AiOracle.Inner_SyncManager.ORE && q.subject() != AiOracle.Inner_SyncManager.STRUCTURE) {
+         if (!isActive() || q.subject() != AiOracle.QuerySubject.ORE && q.subject() != AiOracle.QuerySubject.STRUCTURE) {
             AiOperation var10000;
             switch (q.subject()) {
                case LAVA:
@@ -144,7 +144,7 @@ final class AiOracle {
       }
    }
 
-   static AiOracle.Inner_ConfigStore parseQuery(String raw) {
+   static AiOracle.OracleQuery parseQuery(String raw) {
       String q = raw == null ? "" : raw.strip().toLowerCase(Locale.ROOT);
       if (q.isEmpty()) {
          throw new IllegalArgumentException(
@@ -154,30 +154,30 @@ final class AiOracle {
 
       switch (q) {
          case "lava":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.LAVA, null, null, null);
+            return new AiOracle.OracleQuery(AiOracle.QuerySubject.LAVA, null, null, null);
          case "water":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.WATER, null, null, null);
+            return new AiOracle.OracleQuery(AiOracle.QuerySubject.WATER, null, null, null);
          case "village":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.VILLAGE, null, null, null);
+            return new AiOracle.OracleQuery(AiOracle.QuerySubject.VILLAGE, null, null, null);
          case "threats":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.THREATS, null, null, null);
+            return new AiOracle.OracleQuery(AiOracle.QuerySubject.THREATS, null, null, null);
          case "structure":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.STRUCTURE, null, null, structureSpec("stronghold"));
+            return new AiOracle.OracleQuery(AiOracle.QuerySubject.STRUCTURE, null, null, structureSpec("stronghold"));
          case "ancient_debris":
-            return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.ORE, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.DEBRIS, null, null);
+            return new AiOracle.OracleQuery(AiOracle.QuerySubject.ORE, autismclient.util.oresim.OreBlockCatalog.OreKind.DEBRIS, null, null);
          default:
             if (q.startsWith("structure:")) {
                return structureQuery(q.substring("structure:".length()));
             } else {
-               for (autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind : autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values()) {
+               for (autismclient.util.oresim.OreBlockCatalog.OreKind kind : autismclient.util.oresim.OreBlockCatalog.OreKind.values()) {
                   if (kind.init_Str.equals(q)) {
-                     return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.ORE, kind, null, null);
+                     return new AiOracle.OracleQuery(AiOracle.QuerySubject.ORE, kind, null, null);
                   }
                }
 
-               AiOracle.Inner_StateCache direct = structureSpec(q);
+               AiOracle.StructureSpec direct = structureSpec(q);
                if (direct != null) {
-                  return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.STRUCTURE, null, null, direct);
+                  return new AiOracle.OracleQuery(AiOracle.QuerySubject.STRUCTURE, null, null, direct);
                } else {
                   Identifier id = Identifier.tryParse(q);
                   if (id == null) {
@@ -191,23 +191,23 @@ final class AiOracle {
                         "Unknown block \"" + id + "\"; use an existing registry block id (e.g. minecraft:lava, minecraft:stone)"
                      );
                   } else {
-                     return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.BLOCK, null, id.toString(), null);
+                     return new AiOracle.OracleQuery(AiOracle.QuerySubject.BLOCK, null, id.toString(), null);
                   }
                }
             }
       }
    }
 
-   private static AiOracle.Inner_ConfigStore structureQuery(String name) {
-      AiOracle.Inner_StateCache spec = structureSpec(name);
+   private static AiOracle.OracleQuery structureQuery(String name) {
+      AiOracle.StructureSpec spec = structureSpec(name);
       if (spec == null) {
          throw new IllegalArgumentException("Unknown structure \"" + name + "\"; known structures: " + String.join(", ", STRUCTURES.keySet()));
       } else {
-         return new AiOracle.Inner_ConfigStore(AiOracle.Inner_SyncManager.STRUCTURE, null, null, spec);
+         return new AiOracle.OracleQuery(AiOracle.QuerySubject.STRUCTURE, null, null, spec);
       }
    }
 
-   static AiOracle.Inner_StateCache structureSpec(String name) {
+   static AiOracle.StructureSpec structureSpec(String name) {
       if (name == null) {
          return null;
       }
@@ -221,39 +221,39 @@ final class AiOracle {
       return STRUCTURES.get(key);
    }
 
-   private static Map<String, AiOracle.Inner_StateCache> buildStructureSpecs() {
+   private static Map<String, AiOracle.StructureSpec> buildStructureSpecs() {
       Set<String> ow = Set.of("overworld");
       Set<String> ne = Set.of("nether");
       Set<String> en = Set.of("end");
       Set<String> owNe = Set.of("overworld", "nether");
-      Map<String, AiOracle.Inner_StateCache> m = new LinkedHashMap<>();
-      m.put("stronghold", new AiOracle.Inner_StateCache("stronghold", List.of("minecraft:stronghold"), ow));
-      m.put("fortress", new AiOracle.Inner_StateCache("fortress", List.of("minecraft:fortress"), ne));
-      m.put("bastion_remnant", new AiOracle.Inner_StateCache("bastion_remnant", List.of("minecraft:bastion_remnant"), ne));
+      Map<String, AiOracle.StructureSpec> m = new LinkedHashMap<>();
+      m.put("stronghold", new AiOracle.StructureSpec("stronghold", List.of("minecraft:stronghold"), ow));
+      m.put("fortress", new AiOracle.StructureSpec("fortress", List.of("minecraft:fortress"), ne));
+      m.put("bastion_remnant", new AiOracle.StructureSpec("bastion_remnant", List.of("minecraft:bastion_remnant"), ne));
       m.put("bastion", m.get("bastion_remnant"));
-      m.put("nether_fossil", new AiOracle.Inner_StateCache("nether_fossil", List.of("minecraft:nether_fossil"), ne));
-      m.put("end_city", new AiOracle.Inner_StateCache("end_city", List.of("minecraft:end_city"), en));
+      m.put("nether_fossil", new AiOracle.StructureSpec("nether_fossil", List.of("minecraft:nether_fossil"), ne));
+      m.put("end_city", new AiOracle.StructureSpec("end_city", List.of("minecraft:end_city"), en));
       m.put("endcity", m.get("end_city"));
       m.put(
          "village",
-         new AiOracle.Inner_StateCache(
+         new AiOracle.StructureSpec(
             "village",
             List.of("minecraft:village_plains", "minecraft:village_desert", "minecraft:village_savanna", "minecraft:village_snowy", "minecraft:village_taiga"),
             ow
          )
       );
-      m.put("village_plains", new AiOracle.Inner_StateCache("village_plains", List.of("minecraft:village_plains"), ow));
-      m.put("village_desert", new AiOracle.Inner_StateCache("village_desert", List.of("minecraft:village_desert"), ow));
-      m.put("village_savanna", new AiOracle.Inner_StateCache("village_savanna", List.of("minecraft:village_savanna"), ow));
-      m.put("village_snowy", new AiOracle.Inner_StateCache("village_snowy", List.of("minecraft:village_snowy"), ow));
-      m.put("village_taiga", new AiOracle.Inner_StateCache("village_taiga", List.of("minecraft:village_taiga"), ow));
-      m.put("mansion", new AiOracle.Inner_StateCache("mansion", List.of("minecraft:mansion"), ow));
-      m.put("monument", new AiOracle.Inner_StateCache("monument", List.of("minecraft:monument"), ow));
-      m.put("pillager_outpost", new AiOracle.Inner_StateCache("pillager_outpost", List.of("minecraft:pillager_outpost"), ow));
+      m.put("village_plains", new AiOracle.StructureSpec("village_plains", List.of("minecraft:village_plains"), ow));
+      m.put("village_desert", new AiOracle.StructureSpec("village_desert", List.of("minecraft:village_desert"), ow));
+      m.put("village_savanna", new AiOracle.StructureSpec("village_savanna", List.of("minecraft:village_savanna"), ow));
+      m.put("village_snowy", new AiOracle.StructureSpec("village_snowy", List.of("minecraft:village_snowy"), ow));
+      m.put("village_taiga", new AiOracle.StructureSpec("village_taiga", List.of("minecraft:village_taiga"), ow));
+      m.put("mansion", new AiOracle.StructureSpec("mansion", List.of("minecraft:mansion"), ow));
+      m.put("monument", new AiOracle.StructureSpec("monument", List.of("minecraft:monument"), ow));
+      m.put("pillager_outpost", new AiOracle.StructureSpec("pillager_outpost", List.of("minecraft:pillager_outpost"), ow));
       m.put("outpost", m.get("pillager_outpost"));
       m.put(
          "ruined_portal",
-         new AiOracle.Inner_StateCache(
+         new AiOracle.StructureSpec(
             "ruined_portal",
             List.of(
                "minecraft:ruined_portal",
@@ -267,31 +267,31 @@ final class AiOracle {
             owNe
          )
       );
-      m.put("ruined_portal_desert", new AiOracle.Inner_StateCache("ruined_portal_desert", List.of("minecraft:ruined_portal_desert"), ow));
-      m.put("ruined_portal_jungle", new AiOracle.Inner_StateCache("ruined_portal_jungle", List.of("minecraft:ruined_portal_jungle"), ow));
-      m.put("ruined_portal_mountain", new AiOracle.Inner_StateCache("ruined_portal_mountain", List.of("minecraft:ruined_portal_mountain"), ow));
-      m.put("ruined_portal_ocean", new AiOracle.Inner_StateCache("ruined_portal_ocean", List.of("minecraft:ruined_portal_ocean"), ow));
-      m.put("ruined_portal_swamp", new AiOracle.Inner_StateCache("ruined_portal_swamp", List.of("minecraft:ruined_portal_swamp"), ow));
-      m.put("ruined_portal_nether", new AiOracle.Inner_StateCache("ruined_portal_nether", List.of("minecraft:ruined_portal_nether"), ne));
-      m.put("mineshaft", new AiOracle.Inner_StateCache("mineshaft", List.of("minecraft:mineshaft", "minecraft:mineshaft_mesa"), ow));
-      m.put("mineshaft_mesa", new AiOracle.Inner_StateCache("mineshaft_mesa", List.of("minecraft:mineshaft_mesa"), ow));
-      m.put("ancient_city", new AiOracle.Inner_StateCache("ancient_city", List.of("minecraft:ancient_city"), ow));
-      m.put("buried_treasure", new AiOracle.Inner_StateCache("buried_treasure", List.of("minecraft:buried_treasure"), ow));
-      m.put("desert_pyramid", new AiOracle.Inner_StateCache("desert_pyramid", List.of("minecraft:desert_pyramid"), ow));
-      m.put("jungle_pyramid", new AiOracle.Inner_StateCache("jungle_pyramid", List.of("minecraft:jungle_pyramid"), ow));
-      m.put("igloo", new AiOracle.Inner_StateCache("igloo", List.of("minecraft:igloo"), ow));
-      m.put("ocean_ruin", new AiOracle.Inner_StateCache("ocean_ruin", List.of("minecraft:ocean_ruin_cold", "minecraft:ocean_ruin_warm"), ow));
-      m.put("ocean_ruin_cold", new AiOracle.Inner_StateCache("ocean_ruin_cold", List.of("minecraft:ocean_ruin_cold"), ow));
-      m.put("ocean_ruin_warm", new AiOracle.Inner_StateCache("ocean_ruin_warm", List.of("minecraft:ocean_ruin_warm"), ow));
-      m.put("shipwreck", new AiOracle.Inner_StateCache("shipwreck", List.of("minecraft:shipwreck", "minecraft:shipwreck_beached"), ow));
-      m.put("shipwreck_beached", new AiOracle.Inner_StateCache("shipwreck_beached", List.of("minecraft:shipwreck_beached"), ow));
-      m.put("swamp_hut", new AiOracle.Inner_StateCache("swamp_hut", List.of("minecraft:swamp_hut"), ow));
-      m.put("trail_ruins", new AiOracle.Inner_StateCache("trail_ruins", List.of("minecraft:trail_ruins"), ow));
-      m.put("trial_chambers", new AiOracle.Inner_StateCache("trial_chambers", List.of("minecraft:trial_chambers"), ow));
+      m.put("ruined_portal_desert", new AiOracle.StructureSpec("ruined_portal_desert", List.of("minecraft:ruined_portal_desert"), ow));
+      m.put("ruined_portal_jungle", new AiOracle.StructureSpec("ruined_portal_jungle", List.of("minecraft:ruined_portal_jungle"), ow));
+      m.put("ruined_portal_mountain", new AiOracle.StructureSpec("ruined_portal_mountain", List.of("minecraft:ruined_portal_mountain"), ow));
+      m.put("ruined_portal_ocean", new AiOracle.StructureSpec("ruined_portal_ocean", List.of("minecraft:ruined_portal_ocean"), ow));
+      m.put("ruined_portal_swamp", new AiOracle.StructureSpec("ruined_portal_swamp", List.of("minecraft:ruined_portal_swamp"), ow));
+      m.put("ruined_portal_nether", new AiOracle.StructureSpec("ruined_portal_nether", List.of("minecraft:ruined_portal_nether"), ne));
+      m.put("mineshaft", new AiOracle.StructureSpec("mineshaft", List.of("minecraft:mineshaft", "minecraft:mineshaft_mesa"), ow));
+      m.put("mineshaft_mesa", new AiOracle.StructureSpec("mineshaft_mesa", List.of("minecraft:mineshaft_mesa"), ow));
+      m.put("ancient_city", new AiOracle.StructureSpec("ancient_city", List.of("minecraft:ancient_city"), ow));
+      m.put("buried_treasure", new AiOracle.StructureSpec("buried_treasure", List.of("minecraft:buried_treasure"), ow));
+      m.put("desert_pyramid", new AiOracle.StructureSpec("desert_pyramid", List.of("minecraft:desert_pyramid"), ow));
+      m.put("jungle_pyramid", new AiOracle.StructureSpec("jungle_pyramid", List.of("minecraft:jungle_pyramid"), ow));
+      m.put("igloo", new AiOracle.StructureSpec("igloo", List.of("minecraft:igloo"), ow));
+      m.put("ocean_ruin", new AiOracle.StructureSpec("ocean_ruin", List.of("minecraft:ocean_ruin_cold", "minecraft:ocean_ruin_warm"), ow));
+      m.put("ocean_ruin_cold", new AiOracle.StructureSpec("ocean_ruin_cold", List.of("minecraft:ocean_ruin_cold"), ow));
+      m.put("ocean_ruin_warm", new AiOracle.StructureSpec("ocean_ruin_warm", List.of("minecraft:ocean_ruin_warm"), ow));
+      m.put("shipwreck", new AiOracle.StructureSpec("shipwreck", List.of("minecraft:shipwreck", "minecraft:shipwreck_beached"), ow));
+      m.put("shipwreck_beached", new AiOracle.StructureSpec("shipwreck_beached", List.of("minecraft:shipwreck_beached"), ow));
+      m.put("swamp_hut", new AiOracle.StructureSpec("swamp_hut", List.of("minecraft:swamp_hut"), ow));
+      m.put("trail_ruins", new AiOracle.StructureSpec("trail_ruins", List.of("minecraft:trail_ruins"), ow));
+      m.put("trial_chambers", new AiOracle.StructureSpec("trial_chambers", List.of("minecraft:trial_chambers"), ow));
       return Collections.unmodifiableMap(m);
    }
 
-   static int oreKindMask(autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind) {
+   static int oreKindMask(autismclient.util.oresim.OreBlockCatalog.OreKind kind) {
       return 1 << kind.ordinal();
    }
 
@@ -303,9 +303,9 @@ final class AiOracle {
       return Math.max(2, Math.min(16, radiusChunks));
    }
 
-   static List<AiOracle.Inner_CachePool> sortByDistance(List<AiOracle.Inner_CachePool> found) {
-      List<AiOracle.Inner_CachePool> ordered = new ArrayList<>(found);
-      ordered.sort(Comparator.comparingDouble(AiOracle.Inner_CachePool::distanceSq));
+   static List<AiOracle.BlockHit> sortByDistance(List<AiOracle.BlockHit> found) {
+      List<AiOracle.BlockHit> ordered = new ArrayList<>(found);
+      ordered.sort(Comparator.comparingDouble(AiOracle.BlockHit::distanceSq));
       return ordered;
    }
 
@@ -326,23 +326,23 @@ final class AiOracle {
       return chunks;
    }
 
-   static AiOracle.Inner_NetHelper resolveSeed(String seedArg, AiOracle.Inner_TaskQueue probe) {
+   static AiOracle.ResolvedSeed resolveSeed(String seedArg, AiOracle.SeedProbe probe) {
       String raw = seedArg == null ? "" : seedArg.strip();
       if (!raw.isEmpty()) {
          autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.init(raw);
          if (!parsed.isValid()) {
             throw new IllegalArgumentException("seed must be a signed decimal long, got \"" + raw + "\"");
          } else {
-            return new AiOracle.Inner_NetHelper(parsed.seed(), "argument");
+            return new AiOracle.ResolvedSeed(parsed.seed(), "argument");
          }
       } else {
          Long local = probe.integratedSeed();
          if (local != null) {
-            return new AiOracle.Inner_NetHelper(local, "singleplayer");
+            return new AiOracle.ResolvedSeed(local, "singleplayer");
          } else {
             autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil stored = autismclient.util.oresim.OreSimSeedParser.init(probe.storedSeed());
             if (stored.isValid()) {
-               return new AiOracle.Inner_NetHelper(stored.seed(), "stored");
+               return new AiOracle.ResolvedSeed(stored.seed(), "stored");
             } else if (stored.status() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
                throw new IllegalArgumentException(
                   "The stored oresim-seed for this server is not a signed decimal long; fix the xray module's oresim-seed setting or pass the seed argument"
@@ -356,8 +356,8 @@ final class AiOracle {
       }
    }
 
-   private static AiOracle.Inner_TaskQueue seedProbe(final Minecraft mc) {
-      return new AiOracle.Inner_TaskQueue() {
+   private static AiOracle.SeedProbe seedProbe(final Minecraft mc) {
+      return new AiOracle.SeedProbe() {
          @Override
          public Long integratedSeed() {
             IntegratedServer server = mc.getSingleplayerServer();
@@ -399,9 +399,9 @@ final class AiOracle {
       return hideVillagesBit;
    }
 
-   private static AiOperation locateOre(final autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind, final int cap, String seedArg) {
+   private static AiOperation locateOre(final autismclient.util.oresim.OreBlockCatalog.OreKind kind, final int cap, String seedArg) {
       final Minecraft mc = Minecraft.getInstance();
-      final AiOracle.Inner_NetHelper seed = resolveSeed(seedArg, seedProbe(mc));
+      final AiOracle.ResolvedSeed seed = resolveSeed(seedArg, seedProbe(mc));
       final int mask = oreKindMask(kind);
       return new AiOperation() {
          final long deadlineNanos = System.nanoTime() + 60000000000L;
@@ -423,7 +423,7 @@ final class AiOracle {
                   );
                }
 
-               if (autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNSUPPORTED_DIMENSION) {
+               if (autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.EngineStatus.UNSUPPORTED_DIMENSION) {
                   return this.finish(
                      AiOperation.Status.FAILED,
                      "Ore simulation supports only the Overworld, Nether and End; the current dimension "
@@ -445,7 +445,7 @@ final class AiOracle {
                   return this.running("Loading vanilla worldgen context for seed simulation");
                }
 
-               autismclient.util.oresim.OreSimEngine.Inner_ConfigStore progress = autismclient.util.oresim.OreSimEngine.progress();
+               autismclient.util.oresim.OreSimEngine.GenerationProgress progress = autismclient.util.oresim.OreSimEngine.progress();
                if (!progress.isComplete() && ++this.init_I < 400) {
                   return this.running("Simulating ore generation (" + progress.done() + "/" + progress.load() + " chunks)");
                }
@@ -458,7 +458,7 @@ final class AiOracle {
                   eye.y,
                   eye.z,
                   8,
-                  stateId -> autismclient.util.oresim.OreBlockCatalog.Inner_StreamUtil.kindById(stateId) == kind,
+                  stateId -> autismclient.util.oresim.OreBlockCatalog.StateRegistry.kindById(stateId) == kind,
                   cap,
                   outPos,
                   outState
@@ -522,7 +522,7 @@ final class AiOracle {
          }
 
          JsonObject statusData() {
-            autismclient.util.oresim.OreSimEngine.Inner_ConfigStore p = autismclient.util.oresim.OreSimEngine.progress();
+            autismclient.util.oresim.OreSimEngine.GenerationProgress p = autismclient.util.oresim.OreSimEngine.progress();
             return AiJson.objectOf(
                "engineStatus", autismclient.util.oresim.OreSimEngine.status().name(), "simulatedChunks", p.done(), "totalChunks", p.load()
             );
@@ -543,9 +543,9 @@ final class AiOracle {
       };
    }
 
-   private static AiOperation locateStructureOp(final AiOracle.Inner_StateCache spec, final int cap, String seedArg) {
+   private static AiOperation locateStructureOp(final AiOracle.StructureSpec spec, final int cap, String seedArg) {
       final Minecraft mc = Minecraft.getInstance();
-      final AiOracle.Inner_NetHelper seed = resolveSeed(seedArg, seedProbe(mc));
+      final AiOracle.ResolvedSeed seed = resolveSeed(seedArg, seedProbe(mc));
       final ResourceKey<Level> dimension = mc.level.dimension();
       final String dim = dimensionName(dimension);
       if (dim == null) {
@@ -560,7 +560,7 @@ final class AiOracle {
             : new AiOperation() {
                final long deadlineNanos = System.nanoTime() + 60000000000L;
                final AtomicBoolean cancelled = new AtomicBoolean();
-               volatile CompletableFuture<AiOracle.Inner_BufferHelper> task;
+               volatile CompletableFuture<AiOracle.StructureSearchOutcome> task;
 
                @Override
                public AiOperation.Result tick() {
@@ -582,7 +582,7 @@ final class AiOracle {
                            );
                         }
                      } else {
-                        AiOracle.Inner_BufferHelper outcome;
+                        AiOracle.StructureSearchOutcome outcome;
                         try {
                            outcome = this.task.get();
                         } catch (Exception error) {
@@ -603,7 +603,7 @@ final class AiOracle {
 
                         JsonArray positions = new JsonArray();
 
-                        for (AiOracle.Inner_JsonUtil hit : outcome.hits()) {
+                        for (AiOracle.StructureHit hit : outcome.hits()) {
                            positions.add(
                               AiJson.objectOf(
                                  "x",
@@ -666,7 +666,7 @@ final class AiOracle {
                @Override
                public void cancel() {
                   this.cancelled.set(true);
-                  CompletableFuture<AiOracle.Inner_BufferHelper> running = this.task;
+                  CompletableFuture<AiOracle.StructureSearchOutcome> running = this.task;
                   if (running != null) {
                      running.cancel(true);
                   }
@@ -675,13 +675,13 @@ final class AiOracle {
       }
    }
 
-   private static AiOracle.Inner_BufferHelper locateStructure(
-      long seed, ResourceKey<Level> dimension, AiOracle.Inner_StateCache spec, BlockPos origin, int cap, AtomicBoolean cancelled
+   private static AiOracle.StructureSearchOutcome locateStructure(
+      long seed, ResourceKey<Level> dimension, AiOracle.StructureSpec spec, BlockPos origin, int cap, AtomicBoolean cancelled
    ) {
       try {
          autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context = worldGen(seed, dimension);
          if (cancelled.get()) {
-            return new AiOracle.Inner_BufferHelper(List.of(), null);
+            return new AiOracle.StructureSearchOutcome(List.of(), null);
          }
 
          RegistryLookup<Structure> registry = context.registries().lookupOrThrow(Registries.STRUCTURE);
@@ -692,22 +692,22 @@ final class AiOracle {
          }
 
          if (wanted.isEmpty()) {
-            return new AiOracle.Inner_BufferHelper(List.of(), "None of " + spec.ids() + " exists in the vanilla 26.2 structure registry");
+            return new AiOracle.StructureSearchOutcome(List.of(), "None of " + spec.ids() + " exists in the vanilla 26.2 structure registry");
          } else {
-            List<AiOracle.Inner_JsonUtil> hits = findStructures(context, wanted, origin, cap, cancelled);
+            List<AiOracle.StructureHit> hits = findStructures(context, wanted, origin, cap, cancelled);
             if (cancelled.get()) {
-               return new AiOracle.Inner_BufferHelper(List.of(), null);
+               return new AiOracle.StructureSearchOutcome(List.of(), null);
             } else {
                return hits.isEmpty()
-                  ? new AiOracle.Inner_BufferHelper(
+                  ? new AiOracle.StructureSearchOutcome(
                      List.of(),
                      "No " + spec.label() + " within 25 structure sectors of " + origin.toShortString() + "; seed simulation cannot reliably search further"
                   )
-                  : new AiOracle.Inner_BufferHelper(hits, null);
+                  : new AiOracle.StructureSearchOutcome(hits, null);
             }
          }
       } catch (Throwable error) {
-         return new AiOracle.Inner_BufferHelper(
+         return new AiOracle.StructureSearchOutcome(
             List.of(), "Structure location failed: " + error.getClass().getSimpleName() + (error.getMessage() == null ? "" : " - " + error.getMessage())
          );
       }
@@ -727,7 +727,7 @@ final class AiOracle {
       }
    }
 
-   private static List<AiOracle.Inner_JsonUtil> findStructures(
+   private static List<AiOracle.StructureHit> findStructures(
       autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, List<Holder<Structure>> wanted, BlockPos origin, int cap, AtomicBoolean cancelled
    ) {
       ChunkGeneratorStructureState state = context.structureState();
@@ -740,7 +740,7 @@ final class AiOracle {
          }
       }
 
-      List<AiOracle.Inner_JsonUtil> hits = new ArrayList<>();
+      List<AiOracle.StructureHit> hits = new ArrayList<>();
 
       for (Entry<StructurePlacement, Set<Holder<Structure>>> entry : scans.entrySet()) {
          if (cancelled.get() || hits.size() >= cap) {
@@ -790,7 +790,7 @@ final class AiOracle {
          }
       }
 
-      hits.sort(Comparator.comparingDouble(AiOracle.Inner_JsonUtil::distanceSq));
+      hits.sort(Comparator.comparingDouble(AiOracle.StructureHit::distanceSq));
       return hits.size() > cap ? new ArrayList<>(hits.subList(0, cap)) : hits;
    }
 
@@ -800,7 +800,7 @@ final class AiOracle {
       ChunkPos candidate,
       BlockPos origin,
       long seed,
-      List<AiOracle.Inner_JsonUtil> hits
+      List<AiOracle.StructureHit> hits
    ) {
       for (Holder<Structure> holder : structures) {
          Structure structure = holder.value();
@@ -819,7 +819,7 @@ final class AiOracle {
          Optional<GenerationStub> stub = structure.findValidGenerationPoint(generation);
          if (!stub.isEmpty()) {
             BlockPos pos = stub.get().position();
-            hits.add(new AiOracle.Inner_JsonUtil(pos.getX(), pos.getY(), pos.getZ(), structureId(holder), origin.distSqr(pos)));
+            hits.add(new AiOracle.StructureHit(pos.getX(), pos.getY(), pos.getZ(), structureId(holder), origin.distSqr(pos)));
             return;
          }
       }
@@ -851,7 +851,7 @@ final class AiOracle {
 
       final String biomeId = resolveBiomeId(AiJson.getString(args, "biome", ""), biomeIds(mc));
       final int radiusBlocks = Math.max(64, Math.min(16384, AiJson.getInt(args, "radiusBlocks", 4096)));
-      final AiOracle.Inner_NetHelper seed = resolveSeed(AiJson.getString(args, "seed", ""), seedProbe(mc));
+      final AiOracle.ResolvedSeed seed = resolveSeed(AiJson.getString(args, "seed", ""), seedProbe(mc));
       ResourceKey<Level> dimension = args.has("dimension") ? parseDimension(AiJson.getString(args, "dimension", "")) : mc.level.dimension();
       if (dimension == null) {
          throw new IllegalArgumentException("dimension must be overworld, nether or end");
@@ -862,7 +862,7 @@ final class AiOracle {
       return new AiOperation() {
          final long deadlineNanos = System.nanoTime() + timeoutSeconds * 1000000000L;
          final AtomicBoolean cancelled = new AtomicBoolean();
-         volatile CompletableFuture<AiOracle.Inner_StreamUtil> task;
+         volatile CompletableFuture<AiOracle.BiomeSearchOutcome> task;
 
          @Override
          public AiOperation.Result tick() {
@@ -887,7 +887,7 @@ final class AiOracle {
                      );
                   }
                } else {
-                  AiOracle.Inner_StreamUtil outcome;
+                  AiOracle.BiomeSearchOutcome outcome;
                   try {
                      outcome = this.task.get();
                   } catch (Exception error) {
@@ -902,7 +902,7 @@ final class AiOracle {
                         AiFailure.UNREACHABLE, outcome.error(), AiJson.objectOf("biome", biomeId, "predicted", true, "observed", false).toString()
                      );
                   } else {
-                     AiOracle.Inner_DataUtil hit = outcome.hit();
+                     AiOracle.BiomeHit hit = outcome.hit();
                      return this.finish(
                         AiOperation.Status.SUCCEEDED,
                         "Predicted "
@@ -955,7 +955,7 @@ final class AiOracle {
          @Override
          public void cancel() {
             this.cancelled.set(true);
-            CompletableFuture<AiOracle.Inner_StreamUtil> running = this.task;
+            CompletableFuture<AiOracle.BiomeSearchOutcome> running = this.task;
             if (running != null) {
                running.cancel(true);
             }
@@ -963,13 +963,13 @@ final class AiOracle {
       };
    }
 
-   private static AiOracle.Inner_StreamUtil locateBiome(
+   private static AiOracle.BiomeSearchOutcome locateBiome(
       long seed, ResourceKey<Level> dimension, String biomeId, BlockPos origin, int radiusBlocks, AtomicBoolean cancelled
    ) {
       try {
          autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context = worldGen(seed, dimension);
          if (cancelled.get()) {
-            return new AiOracle.Inner_StreamUtil(null, null);
+            return new AiOracle.BiomeSearchOutcome(null, null);
          }
 
          BiomeSource biomeSource = context.biomeSource();
@@ -980,7 +980,7 @@ final class AiOracle {
 
          for (int[] cell : cellsByRing(centerCellX, centerCellZ, radiusCells)) {
             if (cancelled.get()) {
-               return new AiOracle.Inner_StreamUtil(null, null);
+               return new AiOracle.BiomeSearchOutcome(null, null);
             }
 
             int x = cell[0] * 64 + 32;
@@ -990,15 +990,15 @@ final class AiOracle {
             if (biomeId.equals(sampled)) {
                double dx = x - origin.getX();
                double dz = z - origin.getZ();
-               return new AiOracle.Inner_StreamUtil(new AiOracle.Inner_DataUtil(x, origin.getY(), z, sampled, dx * dx + dz * dz), null);
+               return new AiOracle.BiomeSearchOutcome(new AiOracle.BiomeHit(x, origin.getY(), z, sampled, dx * dx + dz * dz), null);
             }
          }
 
-         return new AiOracle.Inner_StreamUtil(
+         return new AiOracle.BiomeSearchOutcome(
             null, "No " + biomeId + " within " + radiusBlocks + " blocks of " + origin.toShortString() + " (seed-simulated biome sampling at 64-block cells)"
          );
       } catch (Throwable error) {
-         return new AiOracle.Inner_StreamUtil(
+         return new AiOracle.BiomeSearchOutcome(
             null, "Biome location failed: " + error.getClass().getSimpleName() + (error.getMessage() == null ? "" : " - " + error.getMessage())
          );
       }
@@ -1122,7 +1122,7 @@ final class AiOracle {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          final long deadlineNanos = System.nanoTime() + 60000000000L;
-         final List<AiOracle.Inner_CachePool> found = new ArrayList<>();
+         final List<AiOracle.BlockHit> found = new ArrayList<>();
          List<int[]> chunkOrder;
          int init_I;
          boolean init_Z;
@@ -1154,11 +1154,11 @@ final class AiOracle {
                   );
                }
 
-               List<AiOracle.Inner_CachePool> ordered = AiOracle.sortByDistance(this.found);
+               List<AiOracle.BlockHit> ordered = AiOracle.sortByDistance(this.found);
                JsonArray positions = new JsonArray();
 
                for (int i = 0; i < ordered.size() && i < cap; i++) {
-                  AiOracle.Inner_CachePool f = ordered.get(i);
+                  AiOracle.BlockHit f = ordered.get(i);
                   positions.add(
                      AiJson.objectOf(
                         "x", f.x(), "y", f.y(), "z", f.z(), "distance", AiOracle.round1(Math.sqrt(f.distanceSq())), "block", label, "observed", true
@@ -1207,7 +1207,7 @@ final class AiOracle {
       };
    }
 
-   private static void collectMatches(ClientLevel level, LevelChunk chunk, Predicate<BlockState> target, Vec3 origin, List<AiOracle.Inner_CachePool> out) {
+   private static void collectMatches(ClientLevel level, LevelChunk chunk, Predicate<BlockState> target, Vec3 origin, List<AiOracle.BlockHit> out) {
       LevelChunkSection[] sections = chunk.getSections();
       int minX = chunk.getPos().getMinBlockX();
       int minZ = chunk.getPos().getMinBlockZ();
@@ -1226,7 +1226,7 @@ final class AiOracle {
                         if (target.test(state)) {
                            int x = minX + sx;
                            int z = minZ + sz;
-                           out.add(new AiOracle.Inner_CachePool(x, y, z, origin.distanceToSqr(x + 0.5, y + 0.5, z + 0.5)));
+                           out.add(new AiOracle.BlockHit(x, y, z, origin.distanceToSqr(x + 0.5, y + 0.5, z + 0.5)));
                         }
                      }
                   }
@@ -1241,7 +1241,7 @@ final class AiOracle {
       final long mask = hideVillagesMask();
       return new AiOperation() {
          final long deadlineNanos = System.nanoTime() + 60000000000L;
-         final List<AiOracle.Inner_CachePool> found = new ArrayList<>();
+         final List<AiOracle.BlockHit> found = new ArrayList<>();
          List<int[]> chunkOrder;
          int init_I;
          boolean init_Z;
@@ -1268,7 +1268,7 @@ final class AiOracle {
                      if (AiOracle.init(chunk, mask, centerX, centerZ)) {
                         double dx = centerX + 0.5 - eye.x;
                         double dz = centerZ + 0.5 - eye.z;
-                        this.found.add(new AiOracle.Inner_CachePool(centerX, 0, centerZ, dx * dx + dz * dz));
+                        this.found.add(new AiOracle.BlockHit(centerX, 0, centerZ, dx * dx + dz * dz));
                      }
                   }
                }
@@ -1279,11 +1279,11 @@ final class AiOracle {
                   );
                }
 
-               List<AiOracle.Inner_CachePool> ordered = AiOracle.sortByDistance(this.found);
+               List<AiOracle.BlockHit> ordered = AiOracle.sortByDistance(this.found);
                JsonArray centers = new JsonArray();
 
                for (int i = 0; i < ordered.size() && i < cap; i++) {
-                  AiOracle.Inner_CachePool f = ordered.get(i);
+                  AiOracle.BlockHit f = ordered.get(i);
                   centers.add(AiJson.objectOf("x", f.x(), "z", f.z(), "distance", AiOracle.round1(Math.sqrt(f.distanceSq())), "observed", true));
                }
 
@@ -1426,31 +1426,31 @@ final class AiOracle {
       return Math.round(value * 10.0) / 10.0;
    }
 
-   private record Inner_BufferHelper(List<AiOracle.Inner_JsonUtil> hits, String error) {
+   private record StructureSearchOutcome(List<AiOracle.StructureHit> hits, String error) {
    }
 
-   record Inner_CachePool(int x, int y, int z, double distanceSq) {
+   record BlockHit(int x, int y, int z, double distanceSq) {
    }
 
-   record Inner_ConfigStore(AiOracle.Inner_SyncManager subject, autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil ore, String blockId, AiOracle.Inner_StateCache structure) {
+   record OracleQuery(AiOracle.QuerySubject subject, autismclient.util.oresim.OreBlockCatalog.OreKind ore, String blockId, AiOracle.StructureSpec structure) {
    }
 
-   private record Inner_DataUtil(int x, int y, int z, String biomeId, double distanceSq) {
+   private record BiomeHit(int x, int y, int z, String biomeId, double distanceSq) {
    }
 
-   private record Inner_JsonUtil(int x, int y, int z, String structureId, double distanceSq) {
+   private record StructureHit(int x, int y, int z, String structureId, double distanceSq) {
    }
 
-   record Inner_NetHelper(long value, String source) {
+   record ResolvedSeed(long value, String source) {
    }
 
-   record Inner_StateCache(String label, List<String> ids, Set<String> dimensions) {
+   record StructureSpec(String label, List<String> ids, Set<String> dimensions) {
    }
 
-   private record Inner_StreamUtil(AiOracle.Inner_DataUtil hit, String error) {
+   private record BiomeSearchOutcome(AiOracle.BiomeHit hit, String error) {
    }
 
-   enum Inner_SyncManager {
+   enum QuerySubject {
       LAVA,
       WATER,
       VILLAGE,
@@ -1460,7 +1460,7 @@ final class AiOracle {
       STRUCTURE;
    }
 
-   interface Inner_TaskQueue {
+   interface SeedProbe {
       Long integratedSeed();
 
       String storedSeed();

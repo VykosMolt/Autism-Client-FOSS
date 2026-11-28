@@ -73,7 +73,7 @@ public final class AiJumpSolver {
                         break;
                      }
 
-                     AiJumpSolver.UiHelper var26 = solveTakeoffNoStrafe(var0, var23, var7.yaw(), true, var6.cell(), var6.surface());
+                     AiJumpSolver.TakeoffTiming var26 = solveTakeoffNoStrafe(var0, var23, var7.yaw(), true, var6.cell(), var6.surface());
                      if (var26.margin() < 0.07 || var26.runTicks() > 5) {
                         break;
                      }
@@ -117,7 +117,7 @@ public final class AiJumpSolver {
                   AiJumpSolver.ArcResult var21 = simulateJumpArc(var0, var1, var20, var20, 2147483647, var13, var4, var5);
                   double var22 = evaluateArcMargin(var0, var21, var4, var5);
                   if (var22 >= 0.065) {
-                     AiJumpSolver.UiHelper var24 = new AiJumpSolver.UiHelper(0, 0.0, 2147483647, var22, true, var21.ticks() + 1);
+                     AiJumpSolver.TakeoffTiming var24 = new AiJumpSolver.TakeoffTiming(0, 0.0, 2147483647, var22, true, var21.ticks() + 1);
                      if (var14 == null || var22 > var14.takeoff().margin()) {
                         var14 = new AiJumpSolver.TakeoffCandidate(var19, var24);
                      }
@@ -130,7 +130,7 @@ public final class AiJumpSolver {
                         AiJumpSolver.ArcResult var28 = simulateJumpArc(var0, var1, var20, var20, var27, var13, var4, var5);
                         var22 = evaluateArcMargin(var0, var28, var4, var5);
                         if (!(var22 < 0.08)) {
-                           var14 = new AiJumpSolver.TakeoffCandidate(var19, new AiJumpSolver.UiHelper(0, 0.0, var27, var22, true, var28.ticks() + 1));
+                           var14 = new AiJumpSolver.TakeoffCandidate(var19, new AiJumpSolver.TakeoffTiming(0, 0.0, var27, var22, true, var28.ticks() + 1));
                            break;
                         }
                      }
@@ -1200,13 +1200,13 @@ public final class AiJumpSolver {
       return Math.min(Math.min(var7, var9), Math.min(var11, var13));
    }
 
-   public static AiJumpSolver.UiHelper solveTakeoff(
+   public static AiJumpSolver.TakeoffTiming solveTakeoff(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5
    ) {
       return solveTakeoff(var0, var1, var2, var3, var4, var5, 40);
    }
 
-   static AiJumpSolver.UiHelper solveWallBlockedTakeoff(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
+   static AiJumpSolver.TakeoffTiming solveWallBlockedTakeoff(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
       if (var5 - var1.y() <= 0.6) {
          return null;
       }
@@ -1229,7 +1229,7 @@ public final class AiJumpSolver {
          if (!(var15.margin() < 0.14)
             || var1.horizontalCollision() && var1.speed() < 0.025 && isFullFlatSupport(var0, var4.getX(), var4.getZ(), var5)) {
             return canReachCellCenter(var0, var15.end(), var4, var5)
-               ? new AiJumpSolver.UiHelper(0, 0.0, 2147483647, var15.margin(), var3, var15.ticks() + 1)
+               ? new AiJumpSolver.TakeoffTiming(0, 0.0, 2147483647, var15.margin(), var3, var15.ticks() + 1)
                : null;
          } else {
             return null;
@@ -1240,13 +1240,13 @@ public final class AiJumpSolver {
    }
 
    static double verifyTakeoffMargin(
-      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3, BlockPos var4, double var5
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.TakeoffTiming var3, BlockPos var4, double var5
    ) {
       return verifyTakeoffMargin(var0, var1, var2, var3, var4, var5, false);
    }
 
    static double verifyTakeoffMargin(
-      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3, BlockPos var4, double var5, boolean var7
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.TakeoffTiming var3, BlockPos var4, double var5, boolean var7
    ) {
       double var8 = var4.getX() + 0.5 - var1.x();
       double var10 = var4.getZ() + 0.5 - var1.z();
@@ -1267,7 +1267,7 @@ public final class AiJumpSolver {
       }
    }
 
-   static boolean hitsAirborneWall(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3) {
+   static boolean hitsAirborneWall(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.TakeoffTiming var3) {
       AiPhysics.MoveInput var4 = AiPhysics.MoveInput.run(var2, var3.sprint());
       AiPhysics.MoveInput var5 = new AiPhysics.MoveInput(0.0, 0.0, false, false, false, var2);
       AiPhysics.MotionState var6 = AiPhysics.step(var1, var4.withStrafe(var3.strafe()).withJump(true), var0);
@@ -1288,7 +1288,7 @@ public final class AiJumpSolver {
    }
 
    static float findWallClearingYaw(
-      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3, BlockPos var4, double var5
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.TakeoffTiming var3, BlockPos var4, double var5
    ) {
       if (!hitsAirborneWall(var0, var1, var2, var3)) {
          return 0.0F / 0.0F;
@@ -1305,7 +1305,7 @@ public final class AiJumpSolver {
    }
 
    static double verifyDelayedTakeoffMargin(
-      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.UiHelper var3, int var4, BlockPos var5, double var6
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, AiJumpSolver.TakeoffTiming var3, int var4, BlockPos var5, double var6
    ) {
       AiPhysics.MotionState var8 = var1;
       AiPhysics.MoveInput var9 = AiPhysics.MoveInput.run(var2, var3.sprint()).withStrafe(var3.strafe());
@@ -1319,7 +1319,7 @@ public final class AiJumpSolver {
          var1 = var8;
       }
 
-      AiJumpSolver.UiHelper var11 = new AiJumpSolver.UiHelper(0, var3.strafe(), var3.coastAfter(), 0.0, var3.sprint(), var3.flightTicks());
+      AiJumpSolver.TakeoffTiming var11 = new AiJumpSolver.TakeoffTiming(0, var3.strafe(), var3.coastAfter(), 0.0, var3.sprint(), var3.flightTicks());
       return verifyTakeoffMargin(var0, var8, var2, var11, var5, var6);
    }
 
@@ -1343,7 +1343,7 @@ public final class AiJumpSolver {
       return true;
    }
 
-   static AiJumpSolver.UiHelper solveTakeoffNoStrafe(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
+   static AiJumpSolver.TakeoffTiming solveTakeoffNoStrafe(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5) {
       return solveTakeoff(var0, var1, var2, var3, var4, var5, 40, true);
    }
 
@@ -1935,7 +1935,7 @@ public final class AiJumpSolver {
       }
 
       AiPhysics.MoveInput var7 = AiPhysics.MoveInput.run(var6, true);
-      AiStride.Inner_TableCache var8 = AiStride.putAt(var0, var1, var7);
+      AiStride.FallResult var8 = AiStride.putAt(var0, var1, var7);
       if (var8 == null) {
          return null;
       }
@@ -1945,7 +1945,7 @@ public final class AiJumpSolver {
          return null;
       }
 
-      AiJumpSolver.UiHelper var10 = solveTakeoffNoStrafe(var0, var1, var6, true, var2, var3);
+      AiJumpSolver.TakeoffTiming var10 = solveTakeoffNoStrafe(var0, var1, var6, true, var2, var3);
       int var11 = var8.ticks() + var9.ticks();
       if (var10.margin() >= -0.12 && var11 >= var10.runTicks() + var10.flightTicks()) {
          return null;
@@ -2318,7 +2318,7 @@ public final class AiJumpSolver {
 
          for (float var19 : new float[]{0.0F, -5.0F, 5.0F, -10.0F, 10.0F, -15.0F, 15.0F}) {
             float var20 = var15 + var19;
-            AiJumpSolver.UiHelper var21 = solveTakeoff(var0, var1, var20, var5, var2, var3, 3);
+            AiJumpSolver.TakeoffTiming var21 = solveTakeoff(var0, var1, var20, var5, var2, var3, 3);
             if (!(var21.margin() < -0.04)) {
                AiPhysics.MoveInput var22 = AiPhysics.MoveInput.run(var20, var5);
                AiPhysics.MoveInput var23 = var22.withStrafe(var21.strafe());
@@ -2435,13 +2435,13 @@ public final class AiJumpSolver {
       }
    }
 
-   public static AiJumpSolver.UiHelper solveTakeoff(
+   public static AiJumpSolver.TakeoffTiming solveTakeoff(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5, int var7
    ) {
       return solveTakeoff(var0, var1, var2, var3, var4, var5, var7, false);
    }
 
-   private static AiJumpSolver.UiHelper solveTakeoff(
+   private static AiJumpSolver.TakeoffTiming solveTakeoff(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, boolean var3, BlockPos var4, double var5, int var7, boolean var8
    ) {
       double var9 = var4.getX() + 0.5;
@@ -2450,17 +2450,17 @@ public final class AiJumpSolver {
       double var15 = var11 - var1.z();
       double var17 = Math.hypot(var13, var15);
       if (var17 < 1.0E-6) {
-         return new AiJumpSolver.UiHelper(0, 0.0, 2147483647, -1.0, var3);
+         return new AiJumpSolver.TakeoffTiming(0, 0.0, 2147483647, -1.0, var3);
       }
 
       AiJumpSolver.JumpAxis var19 = new AiJumpSolver.JumpAxis(var1.x(), var1.z(), var13 / var17, var15 / var17, var17);
       AiPhysics.MoveInput var20 = AiPhysics.MoveInput.run(var2, var3);
       AiJumpSolver.ArcResult var21 = simulateJumpArc(var0, var1, var20, var20, 2147483647, var19, var4, var5);
       if (var21 != null && var21.settled() && !var21.bumped() && var21.margin() >= 0.08 && cellEdgeMargin(var21.end().x(), var21.end().z(), var4) >= 0.08) {
-         return new AiJumpSolver.UiHelper(0, 0.0, 2147483647, var21.margin(), var3, var21.ticks() + 1);
+         return new AiJumpSolver.TakeoffTiming(0, 0.0, 2147483647, var21.margin(), var3, var21.ticks() + 1);
       }
 
-      AiJumpSolver.UiHelper var22 = null;
+      AiJumpSolver.TakeoffTiming var22 = null;
       double var23 = -1.0 / 0.0;
 
       for (double var28 : var8 ? new double[]{0.0} : new double[]{0.0, 1.0, -1.0}) {
@@ -2473,7 +2473,7 @@ public final class AiJumpSolver {
          double var35 = var32 - 0.01 * var34 - (var28 == 0.0 ? 0.0 : 0.03);
          if (var35 > var23) {
             var23 = var35;
-            var22 = new AiJumpSolver.UiHelper(
+            var22 = new AiJumpSolver.TakeoffTiming(
                var34, var28, var31 == null ? 2147483647 : var31.arc().coastAfter(), var32, var3, var31 == null ? 0 : var31.arc().ticks() + 1
             );
          }
@@ -2722,8 +2722,8 @@ public final class AiJumpSolver {
    private record ChainNode(int cost, float yaw, AiPhysics.MotionState state, List<AiJumpSolver.JumpPlan> flights) {
    }
 
-   public record UiHelper(int runTicks, double strafe, int coastAfter, double margin, boolean sprint, int flightTicks) {
-      public UiHelper(int var1, double var2, int var4, double var5, boolean var7) {
+   public record TakeoffTiming(int runTicks, double strafe, int coastAfter, double margin, boolean sprint, int flightTicks) {
+      public TakeoffTiming(int var1, double var2, int var4, double var5, boolean var7) {
          this(var1, var2, var4, var5, var7, 0);
       }
    }
@@ -2733,7 +2733,7 @@ public final class AiJumpSolver {
    ) {
    }
 
-   record TakeoffCandidate(float yaw, AiJumpSolver.UiHelper takeoff) {
+   record TakeoffCandidate(float yaw, AiJumpSolver.TakeoffTiming takeoff) {
    }
 
    public record NextJump(BlockPos from, double fromSurface, float yaw, boolean sprint) {
@@ -2888,13 +2888,13 @@ public final class AiJumpSolver {
    }
 
    // 5.3 external ABI bridges for ai/b/TokenStore.java
-   public static AiJumpSolver.UiHelper solveTakeoffCompat(
+   public static AiJumpSolver.TakeoffTiming solveTakeoffCompat(
       AiPhysics.PhysicsWorld world, AiPhysics.MotionState state, float yaw, boolean sprint, BlockPos to, double toSurface
    ) {
       return solveTakeoff(world, state, yaw, sprint, to, toSurface);
    }
 
-   public static AiJumpSolver.UiHelper solveTakeoffCompat(
+   public static AiJumpSolver.TakeoffTiming solveTakeoffCompat(
       AiPhysics.PhysicsWorld world, AiPhysics.MotionState state, float yaw, boolean sprint, BlockPos to, double toSurface, int maxRunTicks
    ) {
       return solveTakeoff(world, state, yaw, sprint, to, toSurface, maxRunTicks);

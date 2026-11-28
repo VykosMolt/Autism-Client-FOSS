@@ -26,7 +26,7 @@ import net.minecraft.world.item.ItemStack;
 public final class RollbackAction implements MacroAction {
    private static final int init_I = 60;
    private boolean init_Z = true;
-   public RollbackAction.Inner_DataUtil scope = RollbackAction.Inner_DataUtil.ALL_CONTAINER;
+   public RollbackAction.RollbackScope scope = RollbackAction.RollbackScope.ALL_CONTAINER;
    public ArrayList<String> slots = new ArrayList<>();
    public int startSlot = 0;
    public int endSlot = 26;
@@ -53,7 +53,7 @@ public final class RollbackAction implements MacroAction {
             if (server == null) {
                AutismClientMessaging.sendPrefixed("§cRollback requires a singleplayer world or the LAN host.");
             } else {
-               RollbackAction.Inner_CachePool plan = init(mc, () -> this.init_R_CachePool_Minecraft(mc));
+               RollbackAction.RollbackPlan plan = init(mc, () -> this.init_R_CachePool_Minecraft(mc));
                if (plan != null) {
                   init();
                   init(server, () -> init(server, plan));
@@ -65,12 +65,12 @@ public final class RollbackAction implements MacroAction {
       }
    }
 
-   private RollbackAction.Inner_CachePool init_R_CachePool_Minecraft(Minecraft mc) {
+   private RollbackAction.RollbackPlan init_R_CachePool_Minecraft(Minecraft mc) {
       if (mc.player != null && mc.gameMode != null && mc.player.containerMenu != null) {
          AbstractContainerMenu menu = mc.player.containerMenu;
          if (menu != mc.player.inventoryMenu && menu.containerId != 0 && menu.getCarried().isEmpty()) {
             List<Integer> requested = this.init_List_I_2(menu.slots.size());
-            List<RollbackAction.Inner_StreamUtil> selected = new ArrayList<>();
+            List<RollbackAction.SlotSnapshot> selected = new ArrayList<>();
             IdentityHashMap<Container, Set<Integer>> capturedContainerSlots = new IdentityHashMap<>();
 
             for (int slotId : requested) {
@@ -79,7 +79,7 @@ public final class RollbackAction implements MacroAction {
                   if (slot.container != mc.player.getInventory() && slot.hasItem() && slot.mayPickup(mc.player) && slot.mayPlace(slot.getItem())) {
                      Set<Integer> indexes = capturedContainerSlots.computeIfAbsent(slot.container, ignored -> new LinkedHashSet<>());
                      if (indexes.add(slot.getContainerSlot())) {
-                        selected.add(new RollbackAction.Inner_StreamUtil(slotId, slot.getItem().copy()));
+                        selected.add(new RollbackAction.SlotSnapshot(slotId, slot.getItem().copy()));
                      }
                   }
                }
@@ -89,7 +89,7 @@ public final class RollbackAction implements MacroAction {
                AutismClientMessaging.sendPrefixed("§cRollback found no transferable container items.");
                return null;
             } else {
-               return new RollbackAction.Inner_CachePool(menu.containerId, selected, mc.player.getUUID());
+               return new RollbackAction.RollbackPlan(menu.containerId, selected, mc.player.getUUID());
             }
          } else {
             AutismClientMessaging.sendPrefixed("§cOpen a container and keep the cursor empty first.");
@@ -103,7 +103,7 @@ public final class RollbackAction implements MacroAction {
 
    private List<Integer> init_List_I_2(int menuSize) {
       LinkedHashSet<Integer> result = new LinkedHashSet<>();
-      switch (this.scope == null ? RollbackAction.Inner_DataUtil.ALL_CONTAINER : this.scope) {
+      switch (this.scope == null ? RollbackAction.RollbackScope.ALL_CONTAINER : this.scope) {
          case ALL_CONTAINER:
             for (int i = 0; i < menuSize; i++) {
                result.add(i);
@@ -129,12 +129,12 @@ public final class RollbackAction implements MacroAction {
       return List.copyOf(result);
    }
 
-   private static boolean init(IntegratedServer server, RollbackAction.Inner_CachePool plan) {
+   private static boolean init(IntegratedServer server, RollbackAction.RollbackPlan plan) {
       ServerPlayer player = server.getPlayerList().getPlayer(plan.init_UUID);
       if (player != null && player.containerMenu != null && player.containerMenu.containerId == plan.init_I && player.containerMenu.getCarried().isEmpty()) {
          AbstractContainerMenu menu = player.containerMenu;
 
-         for (RollbackAction.Inner_StreamUtil expected : plan.init_List) {
+         for (RollbackAction.SlotSnapshot expected : plan.init_List) {
             if (expected.init_I >= menu.slots.size()) {
                throw new IllegalStateException("container layout changed");
             }
@@ -152,7 +152,7 @@ public final class RollbackAction implements MacroAction {
             simulated.add(inventory.getItem(slot).copy());
          }
 
-         for (RollbackAction.Inner_StreamUtil source : plan.init_List) {
+         for (RollbackAction.SlotSnapshot source : plan.init_List) {
             if (!init(simulated, source.init_ItemStack.copy(), inventory.getMaxStackSize())) {
                throw new IllegalStateException("not enough inventory space for all selected items");
             }
@@ -179,8 +179,8 @@ public final class RollbackAction implements MacroAction {
       }
    }
 
-   private static boolean init(AbstractContainerMenu menu, RollbackAction.Inner_CachePool plan) {
-      for (RollbackAction.Inner_StreamUtil expected : plan.init_List) {
+   private static boolean init(AbstractContainerMenu menu, RollbackAction.RollbackPlan plan) {
+      for (RollbackAction.SlotSnapshot expected : plan.init_List) {
          if (expected.init_I >= menu.slots.size() || !ItemStack.matches(menu.slots.get(expected.init_I).getItem(), expected.init_ItemStack)) {
             return false;
          }
@@ -294,7 +294,7 @@ public final class RollbackAction implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.init_Z = tag.getBooleanOr("enabled", true);
-      this.scope = MacroNbtCodecHelper.parseEnum(RollbackAction.Inner_DataUtil.class, tag.getStringOr("scope", "ALL_CONTAINER"), RollbackAction.Inner_DataUtil.ALL_CONTAINER);
+      this.scope = MacroNbtCodecHelper.parseEnum(RollbackAction.RollbackScope.class, tag.getStringOr("scope", "ALL_CONTAINER"), RollbackAction.RollbackScope.ALL_CONTAINER);
       this.slots = MacroNbtCodecHelper.fromStringListTag(tag.getList("slots").orElse(new ListTag()));
       this.startSlot = tag.getIntOr("startSlot", 0);
       this.endSlot = tag.getIntOr("endSlot", 26);
@@ -325,15 +325,15 @@ public final class RollbackAction implements MacroAction {
       this.init_Z = enabled;
    }
 
-   private record Inner_CachePool(int init_I, List<RollbackAction.Inner_StreamUtil> init_List, UUID init_UUID) {
+   private record RollbackPlan(int init_I, List<RollbackAction.SlotSnapshot> init_List, UUID init_UUID) {
    }
 
-   public enum Inner_DataUtil {
+   public enum RollbackScope {
       ALL_CONTAINER,
       CAPTURED_SLOTS,
       SLOT_RANGE;
    }
 
-   private record Inner_StreamUtil(int init_I, ItemStack init_ItemStack) {
+   private record SlotSnapshot(int init_I, ItemStack init_ItemStack) {
    }
 }

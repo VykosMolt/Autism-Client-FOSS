@@ -33,7 +33,7 @@ public final class AiPlacer {
    private Item targetItem;
    private ItemStack exactStack = ItemStack.EMPTY;
    private int swapDestHotbarSlot = -1;
-   private AiContainerTransactions.Inner_DataUtil pendingContainerSwap;
+   private AiContainerTransactions.TransactionReceipt pendingContainerSwap;
    private BlockPlacementPlanner.PlacementPlan currentPlan;
    private int elapsedTicks;
    private int presentTicks;
@@ -120,12 +120,12 @@ public final class AiPlacer {
       }
 
       if (this.pendingContainerSwap != null) {
-         AiContainerTransactions.Inner_StreamUtil state = this.pendingContainerSwap.pollAndResync(mc.player.containerMenu, System.nanoTime());
-         if (state == AiContainerTransactions.Inner_StreamUtil.WAITING) {
+         AiContainerTransactions.ReceiptState state = this.pendingContainerSwap.pollAndResync(mc.player.containerMenu, System.nanoTime());
+         if (state == AiContainerTransactions.ReceiptState.WAITING) {
             return AiPlacer.PlaceStatus.WORKING;
          }
 
-         if (state == AiContainerTransactions.Inner_StreamUtil.UNCERTAIN) {
+         if (state == AiContainerTransactions.ReceiptState.UNCERTAIN) {
             return this.fail("The server did not confirm the portable container swap");
          }
 

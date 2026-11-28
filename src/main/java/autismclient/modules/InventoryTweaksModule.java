@@ -45,10 +45,10 @@ import net.minecraft.world.phys.HitResult;
 
 public final class InventoryTweaksModule extends Module {
    private static final Minecraft CLIENT = Minecraft.getInstance();
-   private InventoryTweaksModule.Inner_StreamUtil sortTask;
-   private InventoryTweaksModule.Inner_ConfigStore transferTask;
+   private InventoryTweaksModule.SortTask sortTask;
+   private InventoryTweaksModule.TransferTask transferTask;
    private boolean autoDumpTriggered;
-   private final Map<String, InventoryTweaksModule.Inner_DataUtil> itemSetCache = new HashMap<>();
+   private final Map<String, InventoryTweaksModule.CachedItemSet> itemSetCache = new HashMap<>();
    private static int cachedButtonsRevision = -2147483648;
    private static WeakReference<AbstractContainerMenu> cachedButtonsMenu = new WeakReference<>(null);
    private static boolean cachedButtonsResult;
@@ -303,12 +303,12 @@ public final class InventoryTweaksModule extends Module {
          if (slots.size() < 2) {
             return true;
          } else {
-            List<InventoryTweaksModule.Inner_CachePool> actions = this.planSortActions(slots);
+            List<InventoryTweaksModule.SortAction> actions = this.planSortActions(slots);
             if (actions.isEmpty()) {
                AutismClientMessaging.sendPrefixed("Inventory Tweaks: already sorted.");
                return true;
             } else {
-               this.sortTask = new InventoryTweaksModule.Inner_StreamUtil(handler.containerId, actions, Math.max(0, this.integer("sorting-delay")));
+               this.sortTask = new InventoryTweaksModule.SortTask(handler.containerId, actions, Math.max(0, this.integer("sorting-delay")));
                AutismClientMessaging.sendPrefixed("Inventory Tweaks: sorting " + slots.size() + " slots.");
                return true;
             }
@@ -345,7 +345,7 @@ public final class InventoryTweaksModule extends Module {
       return slots;
    }
 
-   private List<InventoryTweaksModule.Inner_CachePool> planSortActions(List<Slot> slots) {
+   private List<InventoryTweaksModule.SortAction> planSortActions(List<Slot> slots) {
       List<ItemStack> simulated = new ArrayList<>();
 
       for (Slot slot : slots) {
@@ -366,7 +366,7 @@ public final class InventoryTweaksModule extends Module {
          desired.add(ItemStack.EMPTY);
       }
 
-      List<InventoryTweaksModule.Inner_CachePool> actions = new ArrayList<>();
+      List<InventoryTweaksModule.SortAction> actions = new ArrayList<>();
 
       for (int i = 0; i < simulated.size(); i++) {
          if (!sameStack(simulated.get(i), desired.get(i))) {
@@ -380,7 +380,7 @@ public final class InventoryTweaksModule extends Module {
             }
 
             if (match >= 0) {
-               actions.add(new InventoryTweaksModule.Inner_CachePool(slots.get(i).index, slots.get(match).index));
+               actions.add(new InventoryTweaksModule.SortAction(slots.get(i).index, slots.get(match).index));
                ItemStack tmp = simulated.get(i);
                simulated.set(i, simulated.get(match));
                simulated.set(match, tmp);
@@ -418,13 +418,13 @@ public final class InventoryTweaksModule extends Module {
                AutismClientMessaging.sendPrefixed("Inventory Tweaks: this menu is not enabled for Steal/Dump.");
             }
          } else {
-            List<InventoryTweaksModule.Inner_BufferHelper> clicks = this.transferClicks(handler, steal);
+            List<InventoryTweaksModule.TransferClick> clicks = this.transferClicks(handler, steal);
             if (clicks.isEmpty()) {
                if (!automatic) {
                   AutismClientMessaging.sendPrefixed("Inventory Tweaks: nothing to " + (steal ? "steal." : "dump."));
                }
             } else {
-               this.transferTask = new InventoryTweaksModule.Inner_ConfigStore(
+               this.transferTask = new InventoryTweaksModule.TransferTask(
                   handler.containerId,
                   clicks,
                   steal,
@@ -441,18 +441,18 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   private List<InventoryTweaksModule.Inner_BufferHelper> transferClicks(AbstractContainerMenu handler, boolean steal) {
-      List<InventoryTweaksModule.Inner_BufferHelper> clicks = new ArrayList<>();
+   private List<InventoryTweaksModule.TransferClick> transferClicks(AbstractContainerMenu handler, boolean steal) {
+      List<InventoryTweaksModule.TransferClick> clicks = new ArrayList<>();
 
       for (Slot slot : handler.slots) {
          if (slot != null && !slot.getItem().isEmpty()) {
             int invSlot = inventoryIndex(slot);
             if (steal) {
                if (invSlot < 0 && this.passesFilter(slot.getItem(), "steal-filter", "steal-items")) {
-                  clicks.add(new InventoryTweaksModule.Inner_BufferHelper(slot.index, this.bool("steal-drop")));
+                  clicks.add(new InventoryTweaksModule.TransferClick(slot.index, this.bool("steal-drop")));
                }
             } else if (invSlot >= 0 && invSlot < 36 && this.passesFilter(slot.getItem(), "dump-filter", "dump-items")) {
-               clicks.add(new InventoryTweaksModule.Inner_BufferHelper(slot.index, false));
+               clicks.add(new InventoryTweaksModule.TransferClick(slot.index, false));
             }
          }
       }
@@ -529,7 +529,7 @@ public final class InventoryTweaksModule extends Module {
    private Set<String> itemSet(String optionId) {
       List<String> raw = this.list(optionId);
       String source = String.join("|", raw);
-      InventoryTweaksModule.Inner_DataUtil cached = this.itemSetCache.get(optionId);
+      InventoryTweaksModule.CachedItemSet cached = this.itemSetCache.get(optionId);
       if (cached != null && cached.source().equals(source)) {
          return cached.ids();
       }
@@ -549,7 +549,7 @@ public final class InventoryTweaksModule extends Module {
       }
 
       Set<String> immutable = Set.copyOf(values);
-      this.itemSetCache.put(optionId, new InventoryTweaksModule.Inner_DataUtil(source, immutable));
+      this.itemSetCache.put(optionId, new InventoryTweaksModule.CachedItemSet(source, immutable));
       return immutable;
    }
 
@@ -652,15 +652,15 @@ public final class InventoryTweaksModule extends Module {
       return -1;
    }
 
-   private record Inner_BufferHelper(int slotId, boolean drop) {
+   private record TransferClick(int slotId, boolean drop) {
    }
 
-   private record Inner_CachePool(int init, int load) {
+   private record SortAction(int init, int load) {
    }
 
-   private final class Inner_ConfigStore {
+   private final class TransferTask {
       private final int containerId;
-      private final List<InventoryTweaksModule.Inner_BufferHelper> clicks;
+      private final List<InventoryTweaksModule.TransferClick> clicks;
       private final boolean steal;
       private final boolean dropBackwards;
       private final int delayMs;
@@ -668,8 +668,8 @@ public final class InventoryTweaksModule extends Module {
       private int nextClick;
       private long nextClickAt;
 
-      private Inner_ConfigStore(
-         int containerId, List<InventoryTweaksModule.Inner_BufferHelper> clicks, boolean steal, boolean dropBackwards, int delayMs, int initialDelayMs, int randomMs
+      private TransferTask(
+         int containerId, List<InventoryTweaksModule.TransferClick> clicks, boolean steal, boolean dropBackwards, int delayMs, int initialDelayMs, int randomMs
       ) {
          this.containerId = containerId;
          this.clicks = clicks;
@@ -694,7 +694,7 @@ public final class InventoryTweaksModule extends Module {
          }
 
          while (this.nextClick < this.clicks.size()) {
-            InventoryTweaksModule.Inner_BufferHelper click = this.clicks.get(this.nextClick++);
+            InventoryTweaksModule.TransferClick click = this.clicks.get(this.nextClick++);
             if (click.slotId() >= 0 && click.slotId() < InventoryTweaksModule.CLIENT.player.containerMenu.slots.size()) {
                Slot slot = InventoryTweaksModule.CLIENT.player.containerMenu.slots.get(click.slotId());
                if (slot != null
@@ -730,17 +730,17 @@ public final class InventoryTweaksModule extends Module {
       }
    }
 
-   private record Inner_DataUtil(String source, Set<String> ids) {
+   private record CachedItemSet(String source, Set<String> ids) {
    }
 
-   private final class Inner_StreamUtil {
+   private final class SortTask {
       private final int containerId;
-      private final List<InventoryTweaksModule.Inner_CachePool> actions;
+      private final List<InventoryTweaksModule.SortAction> actions;
       private final int delayTicks;
       private int nextAction;
       private int waitTicks;
 
-      private Inner_StreamUtil(int containerId, List<InventoryTweaksModule.Inner_CachePool> actions, int delayTicks) {
+      private SortTask(int containerId, List<InventoryTweaksModule.SortAction> actions, int delayTicks) {
          this.containerId = containerId;
          this.actions = actions;
          this.delayTicks = delayTicks;
@@ -762,7 +762,7 @@ public final class InventoryTweaksModule extends Module {
             return false;
          }
 
-         InventoryTweaksModule.Inner_CachePool action = this.actions.get(this.nextAction++);
+         InventoryTweaksModule.SortAction action = this.actions.get(this.nextAction++);
          autismclient.util.InventorySlotHelper.swapScreenSlots(InventoryTweaksModule.CLIENT, action.init(), action.load());
          this.waitTicks = this.delayTicks;
          return this.nextAction < this.actions.size() || this.waitTicks > 0;

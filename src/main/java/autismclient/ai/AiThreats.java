@@ -80,71 +80,71 @@ final class AiThreats {
       return Boolean.getBoolean("autism.ai.combat.legacy");
    }
 
-   static AiThreats.Inner_DataUtil classify(Entity e) {
+   static AiThreats.ThreatKind classify(Entity e) {
       String type = BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getPath();
       if (!type.equals("guardian") && !type.equals("breeze") && !type.equals("vindicator")) {
          if (e instanceof LivingEntity rider) {
             AttackRange range = rider.getMainHandItem().get(DataComponents.ATTACK_RANGE);
             if (range != null && range.effectiveMaxRange(rider) > 3.5) {
-               return AiThreats.Inner_DataUtil.AVOID;
+               return AiThreats.ThreatKind.AVOID;
             }
          }
 
          if (e instanceof Warden || e instanceof Evoker || e instanceof Ravager || e instanceof ElderGuardian) {
-            return AiThreats.Inner_DataUtil.AVOID;
+            return AiThreats.ThreatKind.AVOID;
          } else if (e instanceof ZombifiedPiglin) {
-            return AiThreats.Inner_DataUtil.ZOMBIFIED_PIGLIN;
+            return AiThreats.ThreatKind.ZOMBIFIED_PIGLIN;
          } else if (e instanceof Zombie z) {
-            return z.isBaby() ? AiThreats.Inner_DataUtil.BABY_ZOMBIE : AiThreats.Inner_DataUtil.ZOMBIE;
+            return z.isBaby() ? AiThreats.ThreatKind.BABY_ZOMBIE : AiThreats.ThreatKind.ZOMBIE;
          } else if (e instanceof WitherSkeleton) {
-            return AiThreats.Inner_DataUtil.WITHER_SKELETON;
+            return AiThreats.ThreatKind.WITHER_SKELETON;
          } else if (e instanceof AbstractSkeleton s) {
-            return s.getMainHandItem().is(Items.BOW) ? AiThreats.Inner_DataUtil.SKELETON : AiThreats.Inner_DataUtil.ZOMBIE;
+            return s.getMainHandItem().is(Items.BOW) ? AiThreats.ThreatKind.SKELETON : AiThreats.ThreatKind.ZOMBIE;
          } else if (e instanceof Creeper) {
-            return AiThreats.Inner_DataUtil.CREEPER;
+            return AiThreats.ThreatKind.CREEPER;
          } else if (e instanceof Spider) {
-            return AiThreats.Inner_DataUtil.SPIDER;
+            return AiThreats.ThreatKind.SPIDER;
          } else if (e instanceof Enderman) {
-            return AiThreats.Inner_DataUtil.ENDERMAN;
+            return AiThreats.ThreatKind.ENDERMAN;
          } else if (e instanceof Blaze) {
-            return AiThreats.Inner_DataUtil.BLAZE;
+            return AiThreats.ThreatKind.BLAZE;
          } else if (e instanceof Ghast) {
-            return AiThreats.Inner_DataUtil.GHAST;
+            return AiThreats.ThreatKind.GHAST;
          } else if (e instanceof PiglinBrute) {
-            return AiThreats.Inner_DataUtil.BRUTE;
+            return AiThreats.ThreatKind.BRUTE;
          } else if (e instanceof Piglin p) {
-            return p.getMainHandItem().is(Items.CROSSBOW) ? AiThreats.Inner_DataUtil.CROSSBOW : AiThreats.Inner_DataUtil.PIGLIN;
+            return p.getMainHandItem().is(Items.CROSSBOW) ? AiThreats.ThreatKind.CROSSBOW : AiThreats.ThreatKind.PIGLIN;
          } else if (e instanceof Hoglin || e instanceof Zoglin) {
-            return AiThreats.Inner_DataUtil.HOGLIN;
+            return AiThreats.ThreatKind.HOGLIN;
          } else if (e instanceof AbstractCubeMob) {
-            return e instanceof Enemy ? AiThreats.Inner_DataUtil.CUBE : AiThreats.Inner_DataUtil.NEUTRAL;
+            return e instanceof Enemy ? AiThreats.ThreatKind.CUBE : AiThreats.ThreatKind.NEUTRAL;
          } else if (e instanceof Silverfish || e instanceof Endermite) {
-            return AiThreats.Inner_DataUtil.SMALL;
+            return AiThreats.ThreatKind.SMALL;
          } else if (e instanceof Witch) {
-            return AiThreats.Inner_DataUtil.WITCH;
+            return AiThreats.ThreatKind.WITCH;
          } else if (e instanceof Phantom) {
-            return AiThreats.Inner_DataUtil.PHANTOM;
+            return AiThreats.ThreatKind.PHANTOM;
          } else if (e instanceof Pillager) {
-            return AiThreats.Inner_DataUtil.CROSSBOW;
+            return AiThreats.ThreatKind.CROSSBOW;
          } else if (e instanceof Enemy) {
-            return AiThreats.Inner_DataUtil.OTHER_HOSTILE;
+            return AiThreats.ThreatKind.OTHER_HOSTILE;
          } else {
-            return e instanceof NeutralMob ? AiThreats.Inner_DataUtil.NEUTRAL : AiThreats.Inner_DataUtil.PASSIVE;
+            return e instanceof NeutralMob ? AiThreats.ThreatKind.NEUTRAL : AiThreats.ThreatKind.PASSIVE;
          }
       } else {
-         return AiThreats.Inner_DataUtil.AVOID;
+         return AiThreats.ThreatKind.AVOID;
       }
    }
 
-   static boolean isNormallyPassiveOrNeutral(AiThreats.Inner_DataUtil p) {
-      return p == AiThreats.Inner_DataUtil.ENDERMAN
-         || p == AiThreats.Inner_DataUtil.ZOMBIFIED_PIGLIN
-         || p == AiThreats.Inner_DataUtil.PIGLIN
-         || p == AiThreats.Inner_DataUtil.NEUTRAL
-         || p == AiThreats.Inner_DataUtil.PASSIVE;
+   static boolean isNormallyPassiveOrNeutral(AiThreats.ThreatKind p) {
+      return p == AiThreats.ThreatKind.ENDERMAN
+         || p == AiThreats.ThreatKind.ZOMBIFIED_PIGLIN
+         || p == AiThreats.ThreatKind.PIGLIN
+         || p == AiThreats.ThreatKind.NEUTRAL
+         || p == AiThreats.ThreatKind.PASSIVE;
    }
 
-   static boolean isMeleeThreat(AiThreats.Inner_DataUtil p) {
+   static boolean isMeleeThreat(AiThreats.ThreatKind p) {
       boolean var10000;
       switch (p) {
          case ZOMBIE:
@@ -392,7 +392,7 @@ final class AiThreats {
       } else if (e instanceof Mob mob && mob.getTarget() != null && mob.getTarget() != mc.player) {
          return false;
       } else {
-         AiThreats.Inner_DataUtil p = classify(e);
+         AiThreats.ThreatKind p = classify(e);
          double d = e.distanceTo(mc.player);
          boolean sight = d < 48.0 && mc.player.hasLineOfSight(e);
          boolean var10000;
@@ -439,7 +439,7 @@ final class AiThreats {
                break;
             case BRUTE:
             case HOGLIN:
-               var10000 = recentlyAggressive(e) || p == AiThreats.Inner_DataUtil.BRUTE && (d < 8.0 || sight && d < 12.0);
+               var10000 = recentlyAggressive(e) || p == AiThreats.ThreatKind.BRUTE && (d < 8.0 || sight && d < 12.0);
                break;
             case ZOMBIFIED_PIGLIN:
                var10000 = recentlyDamagedPlayer(e);
@@ -531,7 +531,7 @@ final class AiThreats {
       return l < 1.0E-6 ? Vec3.ZERO : new Vec3(v.x / l, 0.0, v.z / l);
    }
 
-   enum Inner_DataUtil {
+   enum ThreatKind {
       ZOMBIE,
       BABY_ZOMBIE,
       SKELETON,

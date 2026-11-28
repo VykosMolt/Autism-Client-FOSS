@@ -37,7 +37,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class PacketRegenerator {
-   private static final Map<Class<? extends Packet<?>>, PacketRegenerator.Inner_DataUtil<?>> init = new HashMap<>();
+   private static final Map<Class<? extends Packet<?>>, PacketRegenerator.Regenerator<?>> init = new HashMap<>();
 
    public static <T extends Packet<?>> T init(T original) {
       if (original == null) {
@@ -49,7 +49,7 @@ public class PacketRegenerator {
          return original;
       }
 
-      PacketRegenerator.Inner_DataUtil<T> handler = (PacketRegenerator.Inner_DataUtil<T>)init.get(original.getClass());
+      PacketRegenerator.Regenerator<T> handler = (PacketRegenerator.Regenerator<T>)init.get(original.getClass());
       if (handler != null) {
          try {
             return handler.regenerate(original, mc);
@@ -193,7 +193,7 @@ public class PacketRegenerator {
       });
    }
 
-   private static <T extends Packet<?>> void init(Class<T> clazz, PacketRegenerator.Inner_DataUtil<T> handler) {
+   private static <T extends Packet<?>> void init(Class<T> clazz, PacketRegenerator.Regenerator<T> handler) {
       init.put(clazz, handler);
    }
 
@@ -258,7 +258,7 @@ public class PacketRegenerator {
    }
 
    @FunctionalInterface
-   public interface Inner_DataUtil<T extends Packet<?>> {
+   public interface Regenerator<T extends Packet<?>> {
       T regenerate(T var1, Minecraft var2);
    }
 }

@@ -34,19 +34,19 @@ public final class ItemNbtInspector {
    private ItemNbtInspector() {
    }
 
-   public static ItemNbtInspector.Inner_ConfigStore inspect(ItemStack source) {
+   public static ItemNbtInspector.ItemInspection inspect(ItemStack source) {
       ItemStack stack = source == null ? ItemStack.EMPTY : source.copy();
       String title = stack.isEmpty() ? "Item NBT" : stack.getHoverName().getString();
-      ItemNbtInspector.Inner_CachePool nice = new ItemNbtInspector.Inner_CachePool(title);
-      ItemNbtInspector.Inner_CachePool raw = new ItemNbtInspector.Inner_CachePool(title + " Raw");
+      ItemNbtInspector.InspectLineBuilder nice = new ItemNbtInspector.InspectLineBuilder(title);
+      ItemNbtInspector.InspectLineBuilder raw = new ItemNbtInspector.InspectLineBuilder(title + " Raw");
       String rawSnbt = ItemSnbtCodec.load(stack);
       String giveCommand = ItemSnbtCodec.init(stack);
       init_V_ItemStack_az_CachePool(stack, nice);
       init_V_Str_az_CachePool(rawSnbt, raw);
-      return new ItemNbtInspector.Inner_ConfigStore(title, stack, nice.init_List(), raw.init_List(), nice.init_Str(), rawSnbt, giveCommand);
+      return new ItemNbtInspector.ItemInspection(title, stack, nice.init_List(), raw.init_List(), nice.init_Str(), rawSnbt, giveCommand);
    }
 
-   private static void init_V_ItemStack_az_CachePool(ItemStack stack, ItemNbtInspector.Inner_CachePool builder) {
+   private static void init_V_ItemStack_az_CachePool(ItemStack stack, ItemNbtInspector.InspectLineBuilder builder) {
       if (stack != null && !stack.isEmpty()) {
          builder.init("Identity", UiColorPalette.warmWhite());
          builder.load("Item: " + BuiltInRegistries.ITEM.getKey(stack.getItem()), UiColorPalette.softWhite());
@@ -321,7 +321,7 @@ public final class ItemNbtInspector {
       }
    }
 
-   private static void init_V_Str_az_CachePool(String rawSnbt, ItemNbtInspector.Inner_CachePool builder) {
+   private static void init_V_Str_az_CachePool(String rawSnbt, ItemNbtInspector.InspectLineBuilder builder) {
       builder.init("Raw ItemStack SNBT", UiColorPalette.warmWhite());
       boolean truncated = rawSnbt != null && rawSnbt.length() > 40000;
       String shown = truncated ? rawSnbt.substring(0, 40000) : rawSnbt;
@@ -335,7 +335,7 @@ public final class ItemNbtInspector {
       }
    }
 
-   private static void init_V_az_CachePool(ItemNbtInspector.Inner_CachePool builder, String title, ItemEnchantments enchantments) {
+   private static void init_V_az_CachePool(ItemNbtInspector.InspectLineBuilder builder, String title, ItemEnchantments enchantments) {
       if (enchantments != null && !enchantments.isEmpty()) {
          builder.init_V();
          builder.init(title, UiColorPalette.blue());
@@ -346,7 +346,7 @@ public final class ItemNbtInspector {
       }
    }
 
-   private static <T> void init_V_az_CachePool(ItemNbtInspector.Inner_CachePool builder, ItemStack stack, DataComponentType<T> type, String label) {
+   private static <T> void init_V_az_CachePool(ItemNbtInspector.InspectLineBuilder builder, ItemStack stack, DataComponentType<T> type, String label) {
       T value = stack.get(type);
       if (value != null) {
          builder.init(label + ": " + init_Str_Obj(value));
@@ -354,10 +354,10 @@ public final class ItemNbtInspector {
    }
 
    @SafeVarargs
-   private static void init_V_az_CachePool(ItemNbtInspector.Inner_CachePool builder, ItemStack stack, String title, int sectionColor, ItemNbtInspector.Inner_DataUtil<?>... summaries) {
+   private static void init_V_az_CachePool(ItemNbtInspector.InspectLineBuilder builder, ItemStack stack, String title, int sectionColor, ItemNbtInspector.ComponentSummary<?>... summaries) {
       boolean wroteTitle = false;
 
-      for (ItemNbtInspector.Inner_DataUtil<?> summary : summaries) {
+      for (ItemNbtInspector.ComponentSummary<?> summary : summaries) {
          Object value = init_Obj_ItemStack_DataComponentType(stack, summary.init_DataComponentType());
          if (value != null) {
             if (!wroteTitle) {
@@ -375,11 +375,11 @@ public final class ItemNbtInspector {
       return stack.get(type);
    }
 
-   private static <T> ItemNbtInspector.Inner_DataUtil<T> init_az_DataUtil_DataComponentType_Str(DataComponentType<T> type, String label) {
-      return new ItemNbtInspector.Inner_DataUtil<>(type, label);
+   private static <T> ItemNbtInspector.ComponentSummary<T> init_az_DataUtil_DataComponentType_Str(DataComponentType<T> type, String label) {
+      return new ItemNbtInspector.ComponentSummary<>(type, label);
    }
 
-   private static void init_V_az_CachePool_ItemStack(ItemNbtInspector.Inner_CachePool builder, ItemStack stack) {
+   private static void init_V_az_CachePool_ItemStack(ItemNbtInspector.InspectLineBuilder builder, ItemStack stack) {
       Map<String, String> ids = new LinkedHashMap<>();
       CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
       if (customData != null) {
@@ -641,9 +641,9 @@ public final class ItemNbtInspector {
       }
    }
 
-   public static List<ItemNbtInspector.Inner_TaskQueue> highlight(String text, int fallbackColor) {
+   public static List<ItemNbtInspector.HighlightToken> highlight(String text, int fallbackColor) {
       if (text != null && !text.isEmpty()) {
-         List<ItemNbtInspector.Inner_TaskQueue> tokens = new ArrayList<>();
+         List<ItemNbtInspector.HighlightToken> tokens = new ArrayList<>();
          int i = 0;
 
          while (i < text.length()) {
@@ -655,13 +655,13 @@ public final class ItemNbtInspector {
                   i++;
                }
 
-               tokens.add(new ItemNbtInspector.Inner_TaskQueue(text.substring(start, i), fallbackColor));
+               tokens.add(new ItemNbtInspector.HighlightToken(text.substring(start, i), fallbackColor));
             } else if (ch != '"' && ch != '\'') {
                if ("{}[](),:=".indexOf(ch) >= 0) {
-                  tokens.add(new ItemNbtInspector.Inner_TaskQueue(String.valueOf(ch), UiColorPalette.silver()));
+                  tokens.add(new ItemNbtInspector.HighlightToken(String.valueOf(ch), UiColorPalette.silver()));
                   i++;
                } else if (ch == '!') {
-                  tokens.add(new ItemNbtInspector.Inner_TaskQueue("!", UiColorPalette.errorText()));
+                  tokens.add(new ItemNbtInspector.HighlightToken("!", UiColorPalette.errorText()));
                   i++;
                } else {
                   int start = i++;
@@ -672,7 +672,7 @@ public final class ItemNbtInspector {
 
                   String word = text.substring(start, i);
                   int color = init_I_Str(text, i, word, fallbackColor);
-                  tokens.add(new ItemNbtInspector.Inner_TaskQueue(word, color));
+                  tokens.add(new ItemNbtInspector.HighlightToken(word, color));
                }
             } else {
                int start = i++;
@@ -696,7 +696,7 @@ public final class ItemNbtInspector {
                      }
                   }
 
-                  tokens.add(new ItemNbtInspector.Inner_TaskQueue(text.substring(start, i), UiColorPalette.mint()));
+                  tokens.add(new ItemNbtInspector.HighlightToken(text.substring(start, i), UiColorPalette.mint()));
                   break;
                }
             }
@@ -704,7 +704,7 @@ public final class ItemNbtInspector {
 
          return List.copyOf(tokens);
       } else {
-         return List.of(new ItemNbtInspector.Inner_TaskQueue("", fallbackColor));
+         return List.of(new ItemNbtInspector.HighlightToken("", fallbackColor));
       }
    }
 
@@ -731,17 +731,17 @@ public final class ItemNbtInspector {
       }
    }
 
-   public record Inner_BufferHelper(String text, int color, List<ItemNbtInspector.Inner_TaskQueue> tokens) {
-      public Inner_BufferHelper(String text, int color) {
+   public record InspectLine(String text, int color, List<ItemNbtInspector.HighlightToken> tokens) {
+      public InspectLine(String text, int color) {
          this(text, color, List.of());
       }
    }
 
-   private static final class Inner_CachePool {
+   private static final class InspectLineBuilder {
       private final String init_Str;
-      private final List<ItemNbtInspector.Inner_BufferHelper> init_List = new ArrayList<>();
+      private final List<ItemNbtInspector.InspectLine> init_List = new ArrayList<>();
 
-      private Inner_CachePool(String title) {
+      private InspectLineBuilder(String title) {
          this.init_Str = title != null && !title.isBlank() ? title : "Item NBT";
       }
 
@@ -750,26 +750,26 @@ public final class ItemNbtInspector {
       }
 
       private void load(String text, int color) {
-         this.init_List.add(new ItemNbtInspector.Inner_BufferHelper(text == null ? "" : text, color));
+         this.init_List.add(new ItemNbtInspector.InspectLine(text == null ? "" : text, color));
       }
 
       private void init(String text) {
          String safe = text == null ? "" : text;
-         this.init_List.add(new ItemNbtInspector.Inner_BufferHelper(safe, UiColorPalette.softWhite(), ItemNbtInspector.highlight(safe, UiColorPalette.softWhite())));
+         this.init_List.add(new ItemNbtInspector.InspectLine(safe, UiColorPalette.softWhite(), ItemNbtInspector.highlight(safe, UiColorPalette.softWhite())));
       }
 
       private void init_V() {
-         this.init_List.add(new ItemNbtInspector.Inner_BufferHelper("", UiColorPalette.textMuted()));
+         this.init_List.add(new ItemNbtInspector.InspectLine("", UiColorPalette.textMuted()));
       }
 
-      private List<ItemNbtInspector.Inner_BufferHelper> init_List() {
+      private List<ItemNbtInspector.InspectLine> init_List() {
          return List.copyOf(this.init_List);
       }
 
       private String init_Str() {
          StringBuilder out = new StringBuilder(this.init_Str);
 
-         for (ItemNbtInspector.Inner_BufferHelper line : this.init_List) {
+         for (ItemNbtInspector.InspectLine line : this.init_List) {
             out.append('\n').append(line.text());
          }
 
@@ -777,15 +777,15 @@ public final class ItemNbtInspector {
       }
    }
 
-   public record Inner_ConfigStore(
+   public record ItemInspection(
       String init_Str,
       ItemStack stack,
-      List<ItemNbtInspector.Inner_BufferHelper> lines,
-      List<ItemNbtInspector.Inner_BufferHelper> rawLines,
+      List<ItemNbtInspector.InspectLine> lines,
+      List<ItemNbtInspector.InspectLine> rawLines,
       String load_Str,
       String read,
       String write
-   ) implements ItemNbtInspector.Inner_StreamUtil {
+   ) implements ItemNbtInspector.NbtInspection {
       @Override
       public String init_Str() {
          return "Item NBT - " + this.init_Str;
@@ -816,10 +816,10 @@ public final class ItemNbtInspector {
       }
    }
 
-   private record Inner_DataUtil<T>(DataComponentType<T> init_DataComponentType, String init_Str) {
+   private record ComponentSummary<T>(DataComponentType<T> init_DataComponentType, String init_Str) {
    }
 
-   public interface Inner_StreamUtil {
+   public interface NbtInspection {
       String read();
 
       String init_Str();
@@ -828,15 +828,15 @@ public final class ItemNbtInspector {
 
       ItemStack stack();
 
-      List<ItemNbtInspector.Inner_BufferHelper> lines();
+      List<ItemNbtInspector.InspectLine> lines();
 
-      List<ItemNbtInspector.Inner_BufferHelper> rawLines();
+      List<ItemNbtInspector.InspectLine> rawLines();
 
       String write();
 
       String update();
    }
 
-   public record Inner_TaskQueue(String text, int color) {
+   public record HighlightToken(String text, int color) {
    }
 }

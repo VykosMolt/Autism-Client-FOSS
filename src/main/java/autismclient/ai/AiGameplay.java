@@ -469,7 +469,7 @@ final class AiGameplay {
             boolean tidied;
             boolean inventoryFullSeen;
             AiOperation mineOp;
-            AiGameplay.Inner_DataUtil capacityPrep = AiGameplay.prepareCapacity(ids, seconds, false);
+            AiGameplay.CapacityPreparation capacityPrep = AiGameplay.prepareCapacity(ids, seconds, false);
             final AiPreparationReceipt preparation = new AiPreparationReceipt();
             final AiFireControl fireControl = new AiFireControl();
 
@@ -590,15 +590,15 @@ final class AiGameplay {
       }
    }
 
-   static AiGameplay.Inner_DataUtil init(List<String> ids, int seconds) {
+   static AiGameplay.CapacityPreparation init(List<String> ids, int seconds) {
       return prepareCapacity(ids, seconds, true);
    }
 
-   private static AiGameplay.Inner_DataUtil prepareCapacity(List<String> ids, int seconds, boolean beforeBreak) {
+   private static AiGameplay.CapacityPreparation prepareCapacity(List<String> ids, int seconds, boolean beforeBreak) {
       Minecraft mc = Minecraft.getInstance();
       Object world = mc.level;
       Object player = mc.player;
-      return new AiGameplay.Inner_DataUtil(
+      return new AiGameplay.CapacityPreparation(
          () -> !beforeBreak && !matchingDropNearby(ids) || dropEntityObserved(ids),
          () -> mc.player == player && mc.level == world && mc.player != null && mc.player.isAlive() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && ensureInventoryMenu(mc),
          () -> AiTidy.init(
@@ -758,7 +758,7 @@ final class AiGameplay {
             final boolean loadOnly = AiJson.getBoolean(args, "loadOnly", false);
             final int batchSize = Math.max(1, AiJson.getInt(args, "batchSize", 64));
             final int cookTicksPerItem = Math.max(1, AiJson.getInt(args, "cookTicksPerItem", 200));
-            final AiGameplay.Inner_StreamUtil fuelPlan = new AiGameplay.Inner_StreamUtil(fuel, AiJson.getBoolean(args, "collect", false));
+            final AiGameplay.FuelPlan fuelPlan = new AiGameplay.FuelPlan(fuel, AiJson.getBoolean(args, "collect", false));
             final boolean fuelFlexible = AiJson.getBoolean(args, "fuelFlexible", false);
 
             @Override
@@ -1046,8 +1046,8 @@ final class AiGameplay {
             final int span = radius * 2 + 1;
             final int load_I = 49;
             final int totalCells = this.span * this.span * 49;
-            final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> scanHits = new ArrayList<>();
-            final List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> remembered = autismclient.ai.engine.AiChunkMemory.getInstance()
+            final List<autismclient.ai.engine.AiChunkMemory.RememberedBlock> scanHits = new ArrayList<>();
+            final List<autismclient.ai.engine.AiChunkMemory.RememberedBlock> remembered = autismclient.ai.engine.AiChunkMemory.getInstance()
                .findRemembered(this.origin, radius, wanted::contains);
             int scannedCells;
             boolean cancelled;
@@ -1070,7 +1070,7 @@ final class AiGameplay {
                         BlockState state = this.mc.level.getBlockState(p);
                         double distanceSqr = p.distSqr(this.origin);
                         if (target.matches(state) && distanceSqr <= (double)radius * radius && this.scanHits.size() < 256) {
-                           this.scanHits.add(new autismclient.ai.engine.AiChunkMemory.Inner_CachePool(p.immutable(), Math.sqrt(distanceSqr), false));
+                           this.scanHits.add(new autismclient.ai.engine.AiChunkMemory.RememberedBlock(p.immutable(), Math.sqrt(distanceSqr), false));
                         }
                      }
 
@@ -1087,10 +1087,10 @@ final class AiGameplay {
                      .removeIf(hitx -> !AiTerrain.isLoaded(this.mc.level, hitx.pos()) || !target.matches(this.mc.level.getBlockState(hitx.pos())));
                   this.remembered
                      .removeIf(hitx -> AiTerrain.isLoaded(this.mc.level, hitx.pos()) && !target.matches(this.mc.level.getBlockState(hitx.pos())));
-                  List<autismclient.ai.engine.AiChunkMemory.Inner_CachePool> merged = autismclient.ai.engine.AiChunkMemory.merge(this.scanHits, this.remembered, limit);
+                  List<autismclient.ai.engine.AiChunkMemory.RememberedBlock> merged = autismclient.ai.engine.AiChunkMemory.merge(this.scanHits, this.remembered, limit);
                   JsonArray results = new JsonArray();
 
-                  for (autismclient.ai.engine.AiChunkMemory.Inner_CachePool hit : merged) {
+                  for (autismclient.ai.engine.AiChunkMemory.RememberedBlock hit : merged) {
                      results.add(
                         AiJson.objectOf(
                            "x",
@@ -1266,7 +1266,7 @@ final class AiGameplay {
       }
    }
 
-   static final class Inner_DataUtil implements AiOperation {
+   static final class CapacityPreparation implements AiOperation {
       final BooleanSupplier hasRoom;
       final BooleanSupplier isSafe;
       final Supplier<AiOperation> tidying;
@@ -1278,7 +1278,7 @@ final class AiGameplay {
       boolean tidyingStarted;
       boolean cancelled;
 
-      Inner_DataUtil(BooleanSupplier room, BooleanSupplier safe, Supplier<AiOperation> tidying, long deadline, LongSupplier now) {
+      CapacityPreparation(BooleanSupplier room, BooleanSupplier safe, Supplier<AiOperation> tidying, long deadline, LongSupplier now) {
          this.hasRoom = room;
          this.isSafe = safe;
          this.tidying = tidying;
@@ -1356,11 +1356,11 @@ final class AiGameplay {
       }
    }
 
-   static final class Inner_StreamUtil {
+   static final class FuelPlan {
       private String selected;
       private final boolean collect;
 
-      Inner_StreamUtil(String selected, boolean collect) {
+      FuelPlan(String selected, boolean collect) {
          this.selected = selected;
          this.collect = collect;
       }

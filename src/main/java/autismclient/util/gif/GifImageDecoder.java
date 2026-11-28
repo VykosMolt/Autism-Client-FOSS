@@ -27,19 +27,19 @@ public final class GifImageDecoder {
    private GifImageDecoder() {
    }
 
-   public static GifImageDecoder.Inner_DataUtil decode(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
+   public static GifImageDecoder.DecodedImage decode(byte[] bytes) throws GifImageDecoder.DecodeException {
       if (bytes != null && bytes.length != 0) {
          if (bytes.length > 67108864) {
-            throw new GifImageDecoder.Inner_CachePool("file too large (max 25 MB)");
+            throw new GifImageDecoder.DecodeException("file too large (max 25 MB)");
          } else if (isGif(bytes)) {
             return decodeGif(bytes);
          } else if (!isPng(bytes) && !isJpeg(bytes)) {
-            throw new GifImageDecoder.Inner_CachePool("unsupported image format");
+            throw new GifImageDecoder.DecodeException("unsupported image format");
          } else {
             return decodeStatic(bytes);
          }
       } else {
-         throw new GifImageDecoder.Inner_CachePool("no image data");
+         throw new GifImageDecoder.DecodeException("no image data");
       }
    }
 
@@ -55,7 +55,7 @@ public final class GifImageDecoder {
       return b.length >= 2 && (b[0] & 255) == 255 && (b[1] & 255) == 216;
    }
 
-   private static GifImageDecoder.Inner_DataUtil decodeStatic(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
+   private static GifImageDecoder.DecodedImage decodeStatic(byte[] bytes) throws GifImageDecoder.DecodeException {
       if (isPng(bytes) && bytes.length >= 24) {
          int w = u32be(bytes, 16);
          int h = u32be(bytes, 20);
@@ -68,11 +68,11 @@ public final class GifImageDecoder {
       try {
          image = ImageIO.read(new ByteArrayInputStream(bytes));
       } catch (IOException | RuntimeException e) {
-         throw new GifImageDecoder.Inner_CachePool("could not decode image: " + describe(e));
+         throw new GifImageDecoder.DecodeException("could not decode image: " + describe(e));
       }
 
       if (image == null) {
-         throw new GifImageDecoder.Inner_CachePool("could not decode image");
+         throw new GifImageDecoder.DecodeException("could not decode image");
       } else {
          int w = image.getWidth();
          int h = image.getHeight();
@@ -88,11 +88,11 @@ public final class GifImageDecoder {
             g.dispose();
             int[] scaledArgb = new int[outW * outH];
             scaled.getRGB(0, 0, outW, outH, scaledArgb, 0, outW);
-            return new GifImageDecoder.Inner_DataUtil(outW, outH, new int[][]{scaledArgb}, new int[]{100}, 100);
+            return new GifImageDecoder.DecodedImage(outW, outH, new int[][]{scaledArgb}, new int[]{100}, 100);
          } else {
             int[] argb = new int[w * h];
             image.getRGB(0, 0, w, h, argb, 0, w);
-            return new GifImageDecoder.Inner_DataUtil(w, h, new int[][]{argb}, new int[]{100}, 100);
+            return new GifImageDecoder.DecodedImage(w, h, new int[][]{argb}, new int[]{100}, 100);
          }
       }
    }
@@ -112,9 +112,9 @@ public final class GifImageDecoder {
       return scale;
    }
 
-   private static GifImageDecoder.Inner_DataUtil decodeGif(byte[] bytes) throws GifImageDecoder.Inner_CachePool {
+   private static GifImageDecoder.DecodedImage decodeGif(byte[] bytes) throws GifImageDecoder.DecodeException {
       if (bytes.length < 13) {
-         throw new GifImageDecoder.Inner_CachePool("corrupt GIF header");
+         throw new GifImageDecoder.DecodeException("corrupt GIF header");
       }
 
       int screenW = u16le(bytes, 6);
@@ -127,18 +127,18 @@ public final class GifImageDecoder {
          try {
             Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("gif");
             if (!readers.hasNext()) {
-               throw new GifImageDecoder.Inner_CachePool("no GIF decoder available");
+               throw new GifImageDecoder.DecodeException("no GIF decoder available");
             }
 
             reader = readers.next();
             reader.setInput(input);
             int frames = reader.getNumImages(true);
             if (frames <= 0) {
-               throw new GifImageDecoder.Inner_CachePool("GIF has no frames");
+               throw new GifImageDecoder.DecodeException("GIF has no frames");
             }
 
             if (frames > 1000) {
-               throw new GifImageDecoder.Inner_CachePool("too many frames (max 1000)");
+               throw new GifImageDecoder.DecodeException("too many frames (max 1000)");
             }
 
             int outW = screenW;
@@ -165,7 +165,7 @@ public final class GifImageDecoder {
                graphics.setBackground(new Color(0, 0, 0, 0));
 
                for (int i = 0; i < frames; i++) {
-                  GifImageDecoder.Inner_StreamUtil info = frameInfo(reader.getImageMetadata(i), screenW, screenH);
+                  GifImageDecoder.FrameInfo info = frameInfo(reader.getImageMetadata(i), screenW, screenH);
                   int[] previous = info.restoreToPrevious ? canvas.getRGB(0, 0, screenW, screenH, null, 0, screenW) : null;
                   BufferedImage sub = reader.read(i);
                   if (sub != null) {
@@ -205,11 +205,11 @@ public final class GifImageDecoder {
             }
 
             int average = Math.max(1, (int)Math.round((double)total / delays.length));
-            return new GifImageDecoder.Inner_DataUtil(outW, outH, outFrames, delays, average);
-         } catch (GifImageDecoder.Inner_CachePool e) {
+            return new GifImageDecoder.DecodedImage(outW, outH, outFrames, delays, average);
+         } catch (GifImageDecoder.DecodeException e) {
             throw e;
          } catch (IOException | RuntimeException e) {
-            throw new GifImageDecoder.Inner_CachePool("could not decode GIF: " + describe(e));
+            throw new GifImageDecoder.DecodeException("could not decode GIF: " + describe(e));
          } finally {
             if (reader != null) {
                reader.dispose();
@@ -221,12 +221,12 @@ public final class GifImageDecoder {
             }
          }
       } else {
-         throw new GifImageDecoder.Inner_CachePool("corrupt GIF header");
+         throw new GifImageDecoder.DecodeException("corrupt GIF header");
       }
    }
 
-   private static GifImageDecoder.Inner_StreamUtil frameInfo(IIOMetadata metadata, int screenW, int screenH) throws GifImageDecoder.Inner_CachePool {
-      GifImageDecoder.Inner_StreamUtil info = new GifImageDecoder.Inner_StreamUtil();
+   private static GifImageDecoder.FrameInfo frameInfo(IIOMetadata metadata, int screenW, int screenH) throws GifImageDecoder.DecodeException {
+      GifImageDecoder.FrameInfo info = new GifImageDecoder.FrameInfo();
       Node root = null;
       if (metadata != null) {
          try {
@@ -275,7 +275,7 @@ public final class GifImageDecoder {
          info.height = Math.max(0, Math.min(info.height, screenH - info.y));
          return info;
       } else {
-         throw new GifImageDecoder.Inner_CachePool("GIF frame too large (max 4096×4096)");
+         throw new GifImageDecoder.DecodeException("GIF frame too large (max 4096×4096)");
       }
    }
 
@@ -296,11 +296,11 @@ public final class GifImageDecoder {
       }
    }
 
-   private static void checkDimensions(int w, int h) throws GifImageDecoder.Inner_CachePool {
+   private static void checkDimensions(int w, int h) throws GifImageDecoder.DecodeException {
       if (w <= 0 || h <= 0) {
-         throw new GifImageDecoder.Inner_CachePool("corrupt image (bad dimensions)");
+         throw new GifImageDecoder.DecodeException("corrupt image (bad dimensions)");
       } else if (w > 4096 || h > 4096) {
-         throw new GifImageDecoder.Inner_CachePool("image too large (max 4096×4096)");
+         throw new GifImageDecoder.DecodeException("image too large (max 4096×4096)");
       }
    }
 
@@ -322,16 +322,16 @@ public final class GifImageDecoder {
       }
    }
 
-   public static final class Inner_CachePool extends Exception {
-      public Inner_CachePool(String message) {
+   public static final class DecodeException extends Exception {
+      public DecodeException(String message) {
          super(message);
       }
    }
 
-   public record Inner_DataUtil(int width, int load, int[][] frames, int[] delays, int read) {
+   public record DecodedImage(int width, int load, int[][] frames, int[] delays, int read) {
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class FrameInfo {
       int x;
       int y;
       int width;

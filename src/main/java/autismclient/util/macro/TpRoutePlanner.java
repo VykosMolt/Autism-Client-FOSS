@@ -33,12 +33,12 @@ public final class TpRoutePlanner {
    private TpRoutePlanner() {
    }
 
-   public static TpRoutePlanner.Inner_StreamUtil entityView(final Entity entity) {
+   public static TpRoutePlanner.RouteView entityView(final Entity entity) {
       if (entity != null && entity.level() != null) {
          final Vec3 origin = entity.position();
          final AABB bounds = entity.getBoundingBox();
          final double height = bounds.getYsize();
-         return new TpRoutePlanner.Inner_StreamUtil() {
+         return new TpRoutePlanner.RouteView() {
             private final Map<Long, Boolean> init = new HashMap<>();
 
             @Override
@@ -248,8 +248,8 @@ public final class TpRoutePlanner {
       return (int)Math.ceil(value);
    }
 
-   public static TpRoutePlanner.Inner_BufferHelper planRoute(
-      TpRoutePlanner.Inner_StreamUtil view, Vec3 start, Vec3 target, int searchRadius, int verticalRange, int maxWaypoints, boolean allowPartial
+   public static TpRoutePlanner.RoutePlan planRoute(
+      TpRoutePlanner.RouteView view, Vec3 start, Vec3 target, int searchRadius, int verticalRange, int maxWaypoints, boolean allowPartial
    ) {
       if (view != null && start != null && target != null) {
          int radius = Math.max(1, Math.min(128, searchRadius));
@@ -260,7 +260,7 @@ public final class TpRoutePlanner {
             return init(init(start, List.of(horizontalTarget)), "direct");
          }
 
-         TpRoutePlanner.Inner_BufferHelper layered = init_F_BufferHelper_F_StreamUtil_2(view, start, horizontalTarget, escapeRange, routeCap);
+         TpRoutePlanner.RoutePlan layered = init_F_BufferHelper_F_StreamUtil_2(view, start, horizontalTarget, escapeRange, routeCap);
          if (layered.isComplete()) {
             return layered;
          }
@@ -329,7 +329,7 @@ public final class TpRoutePlanner {
          if (reached && !cleaned.isEmpty()) {
             return init(cleaned, "segmented");
          } else if (allowPartial && !cleaned.isEmpty()) {
-            return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.PARTIAL, cleaned, unloadedFrontier ? "loaded frontier" : "route stopped before target");
+            return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.PARTIAL, cleaned, unloadedFrontier ? "loaded frontier" : "route stopped before target");
          } else {
             return unloadedFrontier
                ? blocked("loaded frontier unavailable")
@@ -340,19 +340,19 @@ public final class TpRoutePlanner {
       }
    }
 
-   public static TpRoutePlanner.Inner_BufferHelper init_F_BufferHelper_F_StreamUtil(
-      TpRoutePlanner.Inner_StreamUtil view, Vec3 start, Vec3 target, int frontierRadius, int verticalRange, int maxWaypoints
+   public static TpRoutePlanner.RoutePlan init_F_BufferHelper_F_StreamUtil(
+      TpRoutePlanner.RouteView view, Vec3 start, Vec3 target, int frontierRadius, int verticalRange, int maxWaypoints
    ) {
       if (view != null && start != null && target != null) {
          if (start.distanceTo(target) <= 0.05) {
-            return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.COMPLETE, List.of(), "arrived");
+            return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.COMPLETE, List.of(), "arrived");
          }
 
          if (!(Math.hypot(target.x - start.x, target.z - start.z) <= 0.05)) {
-            TpRoutePlanner.Inner_BufferHelper horizontal = planRoute(
+            TpRoutePlanner.RoutePlan horizontal = planRoute(
                view, start, new Vec3(target.x, start.y, target.z), frontierRadius, verticalRange, maxWaypoints, true
             );
-            if (horizontal.status() == TpRoutePlanner.Inner_ConfigStore.BLOCKED) {
+            if (horizontal.status() == TpRoutePlanner.RouteStatus.BLOCKED) {
                return horizontal;
             }
 
@@ -360,11 +360,11 @@ public final class TpRoutePlanner {
             Vec3 end = route.isEmpty() ? start : route.getLast();
             boolean atTargetColumn = Math.hypot(end.x - target.x, end.z - target.z) <= 0.5;
             if (!atTargetColumn || !init(view, target)) {
-               return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.PARTIAL, init(start, route), horizontal.detail());
+               return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.PARTIAL, init(start, route), horizontal.detail());
             }
 
             if (!init(view, end, target)) {
-               return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.PARTIAL, init(start, route), "lava-safe target approach unavailable");
+               return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.PARTIAL, init(start, route), "lava-safe target approach unavailable");
             }
 
             if (!samePoint(end, target)) {
@@ -380,23 +380,23 @@ public final class TpRoutePlanner {
       }
    }
 
-   public static TpRoutePlanner.Inner_BufferHelper init_F_BufferHelper_F_StreamUtil(TpRoutePlanner.Inner_StreamUtil view, Vec3 start, Vec3 target, int maxWaypoints) {
+   public static TpRoutePlanner.RoutePlan init_F_BufferHelper_F_StreamUtil(TpRoutePlanner.RouteView view, Vec3 start, Vec3 target, int maxWaypoints) {
       return read(view, start, target, 128, 128, Math.min(3, Math.max(1, maxWaypoints)));
    }
 
-   public static TpRoutePlanner.Inner_BufferHelper load_F_BufferHelper_F_StreamUtil(
-      TpRoutePlanner.Inner_StreamUtil view, Vec3 start, Vec3 target, int frontierRadius, int verticalRange, int maxWaypoints
+   public static TpRoutePlanner.RoutePlan load_F_BufferHelper_F_StreamUtil(
+      TpRoutePlanner.RouteView view, Vec3 start, Vec3 target, int frontierRadius, int verticalRange, int maxWaypoints
    ) {
       return read(view, start, target, frontierRadius, verticalRange, maxWaypoints);
    }
 
-   public static TpRoutePlanner.Inner_BufferHelper read(TpRoutePlanner.Inner_StreamUtil view, Vec3 start, Vec3 target, int frontierRadius, int verticalRange, int maxWaypoints) {
+   public static TpRoutePlanner.RoutePlan read(TpRoutePlanner.RouteView view, Vec3 start, Vec3 target, int frontierRadius, int verticalRange, int maxWaypoints) {
       if (view != null && start != null && target != null) {
          if (start.distanceTo(target) <= 0.05) {
-            return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.COMPLETE, List.of(), "arrived");
+            return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.COMPLETE, List.of(), "arrived");
          }
 
-         TpRoutePlanner.Inner_CachePool probe = new TpRoutePlanner.Inner_CachePool(view, 1800);
+         TpRoutePlanner.BudgetedProbe probe = new TpRoutePlanner.BudgetedProbe(view, 1800);
          if (!(horizontalDistance(start, target) <= 0.05)) {
             double radius = Math.max(1.0, Math.min(128, frontierRadius));
             Vec3 frontier = init_Vec3_F_CachePool_2(probe, start, target, Math.min(horizontalDistance(start, target), radius));
@@ -407,13 +407,13 @@ public final class TpRoutePlanner {
                Vec3 anchor = init_Vec3_F_CachePool(probe, frontier.x, frontier.z, preferredY, Math.min(128.0, range), Math.min(64.0, range));
                if (anchor != null) {
                   List<Vec3> anchored = init_List_F_CachePool(probe, start, anchor, target.y, range, false);
-                  TpRoutePlanner.Inner_BufferHelper route = init_F_BufferHelper_F_CachePool(probe, start, target, anchored, targetColumn, "hybrid stable anchor");
+                  TpRoutePlanner.RoutePlan route = init_F_BufferHelper_F_CachePool(probe, start, target, anchored, targetColumn, "hybrid stable anchor");
                   if (route.load()) {
                      return route;
                   }
                }
 
-               TpRoutePlanner.Inner_CachePool topProbe = new TpRoutePlanner.Inner_CachePool(view, 1500);
+               TpRoutePlanner.BudgetedProbe topProbe = new TpRoutePlanner.BudgetedProbe(view, 1500);
                Vec3 topExit = init(topProbe, start, range);
                List<Vec3> topAdvance = init_List_F_CachePool(topProbe, start, frontier, topExit);
                if (!topAdvance.isEmpty()) {
@@ -422,19 +422,19 @@ public final class TpRoutePlanner {
                      topLanding.add(anchor);
                   }
 
-                  TpRoutePlanner.Inner_BufferHelper topRoute = init_F_BufferHelper_F_CachePool(topProbe, start, target, topLanding, targetColumn, "VClip Top escape");
+                  TpRoutePlanner.RoutePlan topRoute = init_F_BufferHelper_F_CachePool(topProbe, start, target, topLanding, targetColumn, "VClip Top escape");
                   if (topRoute.load()) {
                      return topRoute;
                   }
                }
 
                if (topExit != null && isPathClear(topProbe, start, topExit)) {
-                  return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.ESCAPE, init(start, List.of(topExit)), "VClip Top preparatory escape");
+                  return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.ESCAPE, init(start, List.of(topExit)), "VClip Top preparatory escape");
                }
 
                if (anchor != null) {
                   List<Vec3> layeredAnchor = init_List_F_CachePool(probe, start, anchor, target.y, range, true);
-                  TpRoutePlanner.Inner_BufferHelper layeredRoute = init_F_BufferHelper_F_CachePool(
+                  TpRoutePlanner.RoutePlan layeredRoute = init_F_BufferHelper_F_CachePool(
                      probe, start, target, layeredAnchor, targetColumn, "extended V/H/V anchor"
                   );
                   if (layeredRoute.load()) {
@@ -443,7 +443,7 @@ public final class TpRoutePlanner {
                }
 
                List<Vec3> airborne = init_List_F_CachePool_2(probe, start, frontier, target, targetColumn, range);
-               TpRoutePlanner.Inner_BufferHelper airRoute = init_F_BufferHelper_F_CachePool(probe, start, target, airborne, targetColumn, "air fallback");
+               TpRoutePlanner.RoutePlan airRoute = init_F_BufferHelper_F_CachePool(probe, start, target, airborne, targetColumn, "air fallback");
                if (airRoute.load()) {
                   return airRoute;
                }
@@ -454,11 +454,11 @@ public final class TpRoutePlanner {
                   if (localAnchor != null) {
                      List<Vec3> localRoute = init_List_F_CachePool_2(probe, start, localAnchor, target.y, Math.min(16.0, range));
                      if (!localRoute.isEmpty()) {
-                        return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.PARTIAL, localRoute, "stable obstacle frontier");
+                        return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.PARTIAL, localRoute, "stable obstacle frontier");
                      }
                   }
 
-                  return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.PARTIAL, init(start, List.of(advance)), "air obstacle frontier");
+                  return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.PARTIAL, init(start, List.of(advance)), "air obstacle frontier");
                } else {
                   return init_F_BufferHelper_F_StreamUtil(
                      view, start, target, radius, probe.init() ? "probe-budget unrestricted fallback" : "unrestricted clip fallback"
@@ -475,7 +475,7 @@ public final class TpRoutePlanner {
       }
    }
 
-   public static Vec3 init(TpRoutePlanner.Inner_StreamUtil view, Vec3 target, double radius) {
+   public static Vec3 init(TpRoutePlanner.RouteView view, Vec3 target, double radius) {
       if (view != null && target != null && view.isLoaded(target)) {
          if (init(view, target)) {
             return target;
@@ -506,7 +506,7 @@ public final class TpRoutePlanner {
       }
    }
 
-   public static Vec3 load(TpRoutePlanner.Inner_StreamUtil view, Vec3 target, double radius) {
+   public static Vec3 load(TpRoutePlanner.RouteView view, Vec3 target, double radius) {
       if (view != null && target != null && view.isLoaded(target)) {
          if (init(view, target) && view.sync(target)) {
             return target;
@@ -537,7 +537,7 @@ public final class TpRoutePlanner {
       }
    }
 
-   public static Vec3 read(TpRoutePlanner.Inner_StreamUtil view, Vec3 target, double radius) {
+   public static Vec3 read(TpRoutePlanner.RouteView view, Vec3 target, double radius) {
       if (view == null || target == null) {
          return null;
       }
@@ -623,20 +623,20 @@ public final class TpRoutePlanner {
       return yOrder != 0 ? yOrder < 0 : candidate.z < best.z;
    }
 
-   public static Vec3 write(TpRoutePlanner.Inner_StreamUtil view, Vec3 target, double verticalRange) {
+   public static Vec3 write(TpRoutePlanner.RouteView view, Vec3 target, double verticalRange) {
       if (view != null && target != null && view.isLoaded(target)) {
          double range = Math.max(0.0, Math.min(192.0, verticalRange));
-         return init_Vec3_F_CachePool(new TpRoutePlanner.Inner_CachePool(view, 1800), target.x, target.z, target.y, range, range);
+         return init_Vec3_F_CachePool(new TpRoutePlanner.BudgetedProbe(view, 1800), target.x, target.z, target.y, range, range);
       } else {
          return null;
       }
    }
 
-   public static Vec3 update(TpRoutePlanner.Inner_StreamUtil view, Vec3 start, double verticalRange) {
-      return view != null && start != null ? init(new TpRoutePlanner.Inner_CachePool(view, 1800), start, Math.max(0.0, Math.min(128.0, verticalRange))) : null;
+   public static Vec3 update(TpRoutePlanner.RouteView view, Vec3 start, double verticalRange) {
+      return view != null && start != null ? init(new TpRoutePlanner.BudgetedProbe(view, 1800), start, Math.max(0.0, Math.min(128.0, verticalRange))) : null;
    }
 
-   private static Vec3 init(TpRoutePlanner.Inner_CachePool probe, Vec3 start, double verticalRange) {
+   private static Vec3 init(TpRoutePlanner.BudgetedProbe probe, Vec3 start, double verticalRange) {
       if (probe != null && start != null) {
          boolean seenBlocked = false;
          double range = Math.max(0.0, Math.min(128.0, verticalRange));
@@ -662,7 +662,7 @@ public final class TpRoutePlanner {
       }
    }
 
-   private static List<Vec3> init_List_F_CachePool(TpRoutePlanner.Inner_CachePool probe, Vec3 start, Vec3 frontier, Vec3 topExit) {
+   private static List<Vec3> init_List_F_CachePool(TpRoutePlanner.BudgetedProbe probe, Vec3 start, Vec3 frontier, Vec3 topExit) {
       if (topExit != null && frontier != null) {
          Vec3 end = new Vec3(frontier.x, topExit.y, frontier.z);
          if (!isPathClear(probe, start, topExit)) {
@@ -677,14 +677,14 @@ public final class TpRoutePlanner {
       }
    }
 
-   private static TpRoutePlanner.Inner_BufferHelper init_F_BufferHelper_F_StreamUtil(TpRoutePlanner.Inner_StreamUtil view, Vec3 start, Vec3 target, double frontierRadius, String detail) {
+   private static TpRoutePlanner.RoutePlan init_F_BufferHelper_F_StreamUtil(TpRoutePlanner.RouteView view, Vec3 start, Vec3 target, double frontierRadius, String detail) {
       List<Vec3> route = frontierWaypoints(view, start, target, frontierRadius);
       return route.isEmpty()
          ? blocked("lava safety wait: " + detail)
-         : new TpRoutePlanner.Inner_BufferHelper(samePoint(route.getLast(), target) ? TpRoutePlanner.Inner_ConfigStore.COMPLETE : TpRoutePlanner.Inner_ConfigStore.PARTIAL, route, detail);
+         : new TpRoutePlanner.RoutePlan(samePoint(route.getLast(), target) ? TpRoutePlanner.RouteStatus.COMPLETE : TpRoutePlanner.RouteStatus.PARTIAL, route, detail);
    }
 
-   public static List<Vec3> frontierWaypoints(TpRoutePlanner.Inner_StreamUtil view, Vec3 start, Vec3 target, double frontierRadius) {
+   public static List<Vec3> frontierWaypoints(TpRoutePlanner.RouteView view, Vec3 start, Vec3 target, double frontierRadius) {
       if (view != null && start != null && target != null) {
          double horizontal = horizontalDistance(start, target);
          if (!(horizontal <= 0.05)) {
@@ -724,7 +724,7 @@ public final class TpRoutePlanner {
    }
 
    private static List<Vec3> init_List_F_StreamUtil(
-      TpRoutePlanner.Inner_StreamUtil view, Vec3 segmentStart, Vec3 horizontalEnd, Vec3 target, boolean targetColumn, List<Vec3> prefix
+      TpRoutePlanner.RouteView view, Vec3 segmentStart, Vec3 horizontalEnd, Vec3 target, boolean targetColumn, List<Vec3> prefix
    ) {
       if (!init(view, segmentStart, horizontalEnd)) {
          return List.of();
@@ -743,7 +743,7 @@ public final class TpRoutePlanner {
       return List.copyOf(route);
    }
 
-   private static boolean init(TpRoutePlanner.Inner_StreamUtil view, Vec3 from, Vec3 to) {
+   private static boolean init(TpRoutePlanner.RouteView view, Vec3 from, Vec3 to) {
       if (view != null && from != null && to != null) {
          double distance = from.distanceTo(to);
          int samples = Math.max(1, (int)Math.ceil(distance / 0.5));
@@ -761,7 +761,7 @@ public final class TpRoutePlanner {
       }
    }
 
-   private static boolean isPathClear(TpRoutePlanner.Inner_CachePool probe, Vec3 from, Vec3 to) {
+   private static boolean isPathClear(TpRoutePlanner.BudgetedProbe probe, Vec3 from, Vec3 to) {
       if (probe != null && from != null && to != null) {
          double distance = from.distanceTo(to);
          int samples = Math.max(1, (int)Math.ceil(distance / 0.5));
@@ -779,8 +779,8 @@ public final class TpRoutePlanner {
       }
    }
 
-   private static TpRoutePlanner.Inner_BufferHelper init_F_BufferHelper_F_CachePool(
-      TpRoutePlanner.Inner_CachePool probe, Vec3 start, Vec3 target, List<Vec3> route, boolean targetColumn, String detail
+   private static TpRoutePlanner.RoutePlan init_F_BufferHelper_F_CachePool(
+      TpRoutePlanner.BudgetedProbe probe, Vec3 start, Vec3 target, List<Vec3> route, boolean targetColumn, String detail
    ) {
       List<Vec3> cleaned = init(start, route);
       if (cleaned.size() > 3) {
@@ -798,17 +798,17 @@ public final class TpRoutePlanner {
             completed.add(target);
             return init(init(start, completed), detail + " then VClip target");
          } else {
-            return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.PARTIAL, cleaned, detail);
+            return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.PARTIAL, cleaned, detail);
          }
       }
    }
 
-   private static List<Vec3> init_List_F_CachePool_2(TpRoutePlanner.Inner_CachePool probe, Vec3 start, Vec3 anchor, double targetY, double verticalRange) {
+   private static List<Vec3> init_List_F_CachePool_2(TpRoutePlanner.BudgetedProbe probe, Vec3 start, Vec3 anchor, double targetY, double verticalRange) {
       return init_List_F_CachePool(probe, start, anchor, targetY, verticalRange, true);
    }
 
    private static List<Vec3> init_List_F_CachePool(
-      TpRoutePlanner.Inner_CachePool probe, Vec3 start, Vec3 anchor, double targetY, double verticalRange, boolean includeLayerScan
+      TpRoutePlanner.BudgetedProbe probe, Vec3 start, Vec3 anchor, double targetY, double verticalRange, boolean includeLayerScan
    ) {
       if (horizontalDistance(start, anchor) <= 0.05) {
          return init(start, List.of(anchor));
@@ -846,7 +846,7 @@ public final class TpRoutePlanner {
    }
 
    private static List<Vec3> init_List_F_CachePool_2(
-      TpRoutePlanner.Inner_CachePool probe, Vec3 start, Vec3 frontier, Vec3 target, boolean targetColumn, double verticalRange
+      TpRoutePlanner.BudgetedProbe probe, Vec3 start, Vec3 frontier, Vec3 target, boolean targetColumn, double verticalRange
    ) {
       Vec3 endAtStartY = new Vec3(frontier.x, start.y, frontier.z);
       if (probe.write(endAtStartY) && load(probe, start, endAtStartY)) {
@@ -879,7 +879,7 @@ public final class TpRoutePlanner {
       }
    }
 
-   private static Vec3 init_Vec3_F_CachePool_2(TpRoutePlanner.Inner_CachePool probe, Vec3 start, Vec3 target, double maxDistance) {
+   private static Vec3 init_Vec3_F_CachePool_2(TpRoutePlanner.BudgetedProbe probe, Vec3 start, Vec3 target, double maxDistance) {
       for (double distance = Math.max(0.0, maxDistance); distance >= 0.499999999 && !probe.init(); distance -= 2.0) {
          Vec3 candidate = stepToward(start, target, distance);
          if (probe.isLoaded(candidate)) {
@@ -890,7 +890,7 @@ public final class TpRoutePlanner {
       return null;
    }
 
-   private static Vec3 init_Vec3(TpRoutePlanner.Inner_CachePool probe, Vec3 start, Vec3 target) {
+   private static Vec3 init_Vec3(TpRoutePlanner.BudgetedProbe probe, Vec3 start, Vec3 target) {
       double distance = horizontalDistance(start, target);
       if (distance < 0.5) {
          return null;
@@ -910,7 +910,7 @@ public final class TpRoutePlanner {
       return best;
    }
 
-   private static boolean load(TpRoutePlanner.Inner_CachePool probe, Vec3 from, Vec3 to) {
+   private static boolean load(TpRoutePlanner.BudgetedProbe probe, Vec3 from, Vec3 to) {
       if (!init(from.y, to.y)) {
          return false;
       }
@@ -947,7 +947,7 @@ public final class TpRoutePlanner {
       return true;
    }
 
-   private static Vec3 init_Vec3_F_CachePool(TpRoutePlanner.Inner_CachePool probe, double x, double z, double preferredY, double downRange, double upRange) {
+   private static Vec3 init_Vec3_F_CachePool(TpRoutePlanner.BudgetedProbe probe, double x, double z, double preferredY, double downRange, double upRange) {
       double preferred = init(probe.view, preferredY);
       Vec3 exact = init_Vec3_F_CachePool(probe, x, z, preferred);
       if (exact != null) {
@@ -958,7 +958,7 @@ public final class TpRoutePlanner {
       return down != null ? down : load_Vec3_F_CachePool(probe, x, z, preferred, 1.0, Math.max(0.0, upRange));
    }
 
-   private static Vec3 load_Vec3_F_CachePool(TpRoutePlanner.Inner_CachePool probe, double x, double z, double preferredY, double direction, double range) {
+   private static Vec3 load_Vec3_F_CachePool(TpRoutePlanner.BudgetedProbe probe, double x, double z, double preferredY, double direction, double range) {
       double previousY = preferredY;
       Vec3 previous = new Vec3(x, previousY, z);
       boolean previousClear = probe.isLoaded(previous) && probe.load(previous);
@@ -970,7 +970,7 @@ public final class TpRoutePlanner {
          }
 
          Vec3 candidate = new Vec3(x, y, z);
-         TpRoutePlanner.Inner_DataUtil check = probe.init_F_DataUtil(candidate);
+         TpRoutePlanner.CellCheck check = probe.init_F_DataUtil(candidate);
          if (check.load()) {
             return candidate;
          }
@@ -991,7 +991,7 @@ public final class TpRoutePlanner {
    }
 
    private static Vec3 init_Vec3_F_CachePool(
-      TpRoutePlanner.Inner_CachePool probe, double x, double z, double firstY, boolean firstClear, double secondY, boolean secondClear
+      TpRoutePlanner.BudgetedProbe probe, double x, double z, double firstY, boolean firstClear, double secondY, boolean secondClear
    ) {
       if (firstClear == secondClear) {
          return null;
@@ -1013,7 +1013,7 @@ public final class TpRoutePlanner {
       return init_Vec3_F_CachePool(probe, x, z, clearY);
    }
 
-   private static Vec3 init_Vec3_F_CachePool(TpRoutePlanner.Inner_CachePool probe, double x, double z, double y) {
+   private static Vec3 init_Vec3_F_CachePool(TpRoutePlanner.BudgetedProbe probe, double x, double z, double y) {
       double clamped = init(probe.view, y);
       Vec3 candidate = new Vec3(x, clamped, z);
       if (probe.init_F_DataUtil(candidate).load()) {
@@ -1031,7 +1031,7 @@ public final class TpRoutePlanner {
       return null;
    }
 
-   private static List<Double> init_List_F_CachePool(TpRoutePlanner.Inner_CachePool probe, double startY, double anchorY, double targetY, double verticalRange) {
+   private static List<Double> init_List_F_CachePool(TpRoutePlanner.BudgetedProbe probe, double startY, double anchorY, double targetY, double verticalRange) {
       List<Double> heights = new ArrayList<>(32);
       init(heights, init(probe.view, startY));
       init(heights, init(probe.view, anchorY));
@@ -1072,7 +1072,7 @@ public final class TpRoutePlanner {
       return actual != null && target != null && actual.distanceTo(target) <= Math.max(0.0, tolerance);
    }
 
-   private static TpRoutePlanner.Inner_BufferHelper init_F_BufferHelper_F_StreamUtil_2(TpRoutePlanner.Inner_StreamUtil view, Vec3 start, Vec3 target, int escapeRange, int routeCap) {
+   private static TpRoutePlanner.RoutePlan init_F_BufferHelper_F_StreamUtil_2(TpRoutePlanner.RouteView view, Vec3 start, Vec3 target, int escapeRange, int routeCap) {
       if (!view.isLoaded(target)) {
          return blocked("target chunk unavailable");
       }
@@ -1102,7 +1102,7 @@ public final class TpRoutePlanner {
       return blocked("no clear layer");
    }
 
-   private static Vec3 init_Vec3_F_StreamUtil(TpRoutePlanner.Inner_StreamUtil view, double x, double z, double preferredY, double range) {
+   private static Vec3 init_Vec3_F_StreamUtil(TpRoutePlanner.RouteView view, double x, double z, double preferredY, double range) {
       for (double offset = 0.0; offset <= range; offset += 0.5) {
          int[] signs = offset == 0.0 ? new int[]{1} : new int[]{1, -1};
 
@@ -1117,7 +1117,7 @@ public final class TpRoutePlanner {
       return null;
    }
 
-   private static Vec3 init_Vec3_F_StreamUtil(TpRoutePlanner.Inner_StreamUtil view, Vec3 from, Vec3 target, int searchRadius) {
+   private static Vec3 init_Vec3_F_StreamUtil(TpRoutePlanner.RouteView view, Vec3 from, Vec3 target, int searchRadius) {
       double distance = horizontalDistance(from, target);
       if (distance < 1.0E-5) {
          return from;
@@ -1139,7 +1139,7 @@ public final class TpRoutePlanner {
       return best;
    }
 
-   private static boolean load(TpRoutePlanner.Inner_StreamUtil view, Vec3 from, Vec3 to) {
+   private static boolean load(TpRoutePlanner.RouteView view, Vec3 from, Vec3 to) {
       if (Math.abs(from.y - to.y) > 1.0E-5) {
          return false;
       }
@@ -1201,11 +1201,11 @@ public final class TpRoutePlanner {
       return List.copyOf(cleaned);
    }
 
-   private static boolean init(TpRoutePlanner.Inner_StreamUtil view, Vec3 position) {
+   private static boolean init(TpRoutePlanner.RouteView view, Vec3 position) {
       return load(view, position) && view.load(position);
    }
 
-   private static boolean load(TpRoutePlanner.Inner_StreamUtil view, Vec3 position) {
+   private static boolean load(TpRoutePlanner.RouteView view, Vec3 position) {
       return view != null && position != null && view.isLoaded(position) && view.update(position);
    }
 
@@ -1216,7 +1216,7 @@ public final class TpRoutePlanner {
          : new Vec3(from.x + (target.x - from.x) / horizontal * distance, from.y, from.z + (target.z - from.z) / horizontal * distance);
    }
 
-   private static double init(TpRoutePlanner.Inner_StreamUtil view, double y) {
+   private static double init(TpRoutePlanner.RouteView view, double y) {
       return Math.max(view.minY(), Math.min(view.load(), y));
    }
 
@@ -1228,23 +1228,23 @@ public final class TpRoutePlanner {
       return a.distanceToSqr(b) < 1.0E-10;
    }
 
-   private static TpRoutePlanner.Inner_BufferHelper init(List<Vec3> waypoints, String detail) {
-      return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.COMPLETE, waypoints, detail);
+   private static TpRoutePlanner.RoutePlan init(List<Vec3> waypoints, String detail) {
+      return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.COMPLETE, waypoints, detail);
    }
 
-   private static TpRoutePlanner.Inner_BufferHelper blocked(String detail) {
-      return new TpRoutePlanner.Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore.BLOCKED, List.of(), detail);
+   private static TpRoutePlanner.RoutePlan blocked(String detail) {
+      return new TpRoutePlanner.RoutePlan(TpRoutePlanner.RouteStatus.BLOCKED, List.of(), detail);
    }
 
-   public record Inner_BufferHelper(TpRoutePlanner.Inner_ConfigStore status, List<Vec3> waypoints, String detail) {
-      public Inner_BufferHelper {
-         status = status == null ? TpRoutePlanner.Inner_ConfigStore.BLOCKED : status;
+   public record RoutePlan(TpRoutePlanner.RouteStatus status, List<Vec3> waypoints, String detail) {
+      public RoutePlan {
+         status = status == null ? TpRoutePlanner.RouteStatus.BLOCKED : status;
          waypoints = waypoints == null ? List.of() : List.copyOf(waypoints);
          detail = detail == null ? "" : detail;
       }
 
       public boolean isComplete() {
-         return this.status == TpRoutePlanner.Inner_ConfigStore.COMPLETE;
+         return this.status == TpRoutePlanner.RouteStatus.COMPLETE;
       }
 
       public boolean load() {
@@ -1252,11 +1252,11 @@ public final class TpRoutePlanner {
       }
    }
 
-   private static final class Inner_CachePool {
-      final TpRoutePlanner.Inner_StreamUtil view;
+   private static final class BudgetedProbe {
+      final TpRoutePlanner.RouteView view;
       private int budget;
 
-      Inner_CachePool(TpRoutePlanner.Inner_StreamUtil view, int budget) {
+      BudgetedProbe(TpRoutePlanner.RouteView view, int budget) {
          this.view = view;
          this.budget = Math.max(1, budget);
       }
@@ -1281,17 +1281,17 @@ public final class TpRoutePlanner {
          return this.load() && this.view.read(position);
       }
 
-      TpRoutePlanner.Inner_DataUtil init_F_DataUtil(Vec3 position) {
+      TpRoutePlanner.CellCheck init_F_DataUtil(Vec3 position) {
          if (!this.isLoaded(position)) {
-            return new TpRoutePlanner.Inner_DataUtil(false, false);
+            return new TpRoutePlanner.CellCheck(false, false);
          }
 
          if (!this.read(position)) {
-            return new TpRoutePlanner.Inner_DataUtil(false, false);
+            return new TpRoutePlanner.CellCheck(false, false);
          }
 
          boolean clear = this.load(position);
-         return clear && this.load() ? new TpRoutePlanner.Inner_DataUtil(true, this.view.sync(position)) : new TpRoutePlanner.Inner_DataUtil(clear, false);
+         return clear && this.load() ? new TpRoutePlanner.CellCheck(true, this.view.sync(position)) : new TpRoutePlanner.CellCheck(clear, false);
       }
 
       boolean init() {
@@ -1308,17 +1308,17 @@ public final class TpRoutePlanner {
       }
    }
 
-   public enum Inner_ConfigStore {
+   public enum RouteStatus {
       COMPLETE,
       PARTIAL,
       ESCAPE,
       BLOCKED;
    }
 
-   private record Inner_DataUtil(boolean init, boolean load) {
+   private record CellCheck(boolean init, boolean load) {
    }
 
-   public interface Inner_StreamUtil {
+   public interface RouteView {
       boolean isLoaded(Vec3 var1);
 
       boolean load(Vec3 var1);

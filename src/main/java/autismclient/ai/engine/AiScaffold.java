@@ -40,21 +40,21 @@ public final class AiScaffold {
          return this.size() > 4096;
       }
    };
-   private static final Set<AiScaffold.Inner_StreamUtil> init_Set = Collections.newSetFromMap(new IdentityHashMap<>());
+   private static final Set<AiScaffold.JobScope> init_Set = Collections.newSetFromMap(new IdentityHashMap<>());
    private static final Map<Path, LinkedHashMap<Long, Block>> init_Map = new LinkedHashMap<>();
    private static final Map<Path, CompletableFuture<Void>> load_Map = new LinkedHashMap<>();
    private static final Map<Path, Map<Long, Block>> recordedBlocks = new LinkedHashMap<>();
    private static final ExecutorService init_ExecutorService = Executors.newSingleThreadExecutor(
       Thread.ofPlatform().daemon(true).name("AI scaffold journal").factory()
    );
-   private static final LinkedHashMap<Long, AiScaffold.Inner_DataUtil> load_LinkedHashMap = new LinkedHashMap<>();
+   private static final LinkedHashMap<Long, AiScaffold.ScaffoldRecord> load_LinkedHashMap = new LinkedHashMap<>();
 
-   public static AiScaffold.Inner_StreamUtil openJobScope() {
-      return new AiScaffold.Inner_StreamUtil();
+   public static AiScaffold.JobScope openJobScope() {
+      return new AiScaffold.JobScope();
    }
 
-   public static AiScaffold.Inner_StreamUtil init(Collection<BlockPos> existing) {
-      AiScaffold.Inner_StreamUtil scope = new AiScaffold.Inner_StreamUtil();
+   public static AiScaffold.JobScope init(Collection<BlockPos> existing) {
+      AiScaffold.JobScope scope = new AiScaffold.JobScope();
 
       for (BlockPos pos : existing) {
          Block block = recordedBlock(pos);
@@ -66,7 +66,7 @@ public final class AiScaffold {
       return scope;
    }
 
-   public static AiScaffold.Inner_StreamUtil init(Path journal, Collection<BlockPos> existing) {
+   public static AiScaffold.JobScope init(Path journal, Collection<BlockPos> existing) {
       Path key = journal.toAbsolutePath().normalize();
       LinkedHashMap<Long, Block> records = init_Map.get(key);
       if (records == null) {
@@ -115,14 +115,14 @@ public final class AiScaffold {
          }
       }
 
-      return new AiScaffold.Inner_StreamUtil(records, key);
+      return new AiScaffold.JobScope(records, key);
    }
 
    private AiScaffold() {
    }
 
    private static boolean auditInUse(Path journal) {
-      for (AiScaffold.Inner_StreamUtil scope : init_Set) {
+      for (AiScaffold.JobScope scope : init_Set) {
          if (journal.equals(scope.init_Path)) {
             return true;
          }
@@ -134,7 +134,7 @@ public final class AiScaffold {
    public static void init(BlockPos cell, Block block) {
       init_LinkedHashMap.put(cell.asLong(), block);
 
-      for (AiScaffold.Inner_StreamUtil scope : init_Set) {
+      for (AiScaffold.JobScope scope : init_Set) {
          if (scope.init_LinkedHashMap.put(cell.asLong(), block) != block) {
             scope.init_J++;
          }
@@ -144,9 +144,9 @@ public final class AiScaffold {
    public static void forget(BlockPos cell) {
       Block was = init_LinkedHashMap.remove(cell.asLong());
       if (was != null) {
-         ArrayList<AiScaffold.Inner_StreamUtil> holders = new ArrayList<>();
+         ArrayList<AiScaffold.JobScope> holders = new ArrayList<>();
 
-         for (AiScaffold.Inner_StreamUtil scope : init_Set) {
+         for (AiScaffold.JobScope scope : init_Set) {
             if (scope.init_LinkedHashMap.containsKey(cell.asLong())) {
                holders.add(scope);
             }
@@ -156,7 +156,7 @@ public final class AiScaffold {
             load_LinkedHashMap.remove(load_LinkedHashMap.keySet().iterator().next());
          }
 
-         load_LinkedHashMap.put(cell.asLong(), new AiScaffold.Inner_DataUtil(was, holders, System.nanoTime()));
+         load_LinkedHashMap.put(cell.asLong(), new AiScaffold.ScaffoldRecord(was, holders, System.nanoTime()));
       }
 
       Minecraft client = Minecraft.getInstance();
@@ -173,7 +173,7 @@ public final class AiScaffold {
          AutismClientAddon.LOG.info("[AI] scaffold record dropped while standing at {} by {}", cell.toShortString(), caller);
       }
 
-      for (AiScaffold.Inner_StreamUtil scope : init_Set) {
+      for (AiScaffold.JobScope scope : init_Set) {
          if (scope.init_LinkedHashMap.remove(cell.asLong()) != null) {
             scope.init_J++;
          }
@@ -186,11 +186,11 @@ public final class AiScaffold {
 
    public static void init(BlockPos pos, BlockState state) {
       if (!load_LinkedHashMap.isEmpty()) {
-         AiScaffold.Inner_DataUtil forgotten = load_LinkedHashMap.remove(pos.asLong());
+         AiScaffold.ScaffoldRecord forgotten = load_LinkedHashMap.remove(pos.asLong());
          if (forgotten != null && System.nanoTime() - forgotten.nanos() <= 10000000000L && init(forgotten.block(), state.getBlock())) {
             init_LinkedHashMap.put(pos.asLong(), forgotten.block());
 
-            for (AiScaffold.Inner_StreamUtil scope : forgotten.scopes()) {
+            for (AiScaffold.JobScope scope : forgotten.scopes()) {
                if (init_Set.contains(scope) && scope.init_LinkedHashMap.put(pos.asLong(), forgotten.block()) != forgotten.block()) {
                   scope.init_J++;
                }
@@ -210,7 +210,7 @@ public final class AiScaffold {
          return true;
       }
 
-      for (AiScaffold.Inner_StreamUtil scope : init_Set) {
+      for (AiScaffold.JobScope scope : init_Set) {
          if (scope.init_LinkedHashMap.containsKey(cell.asLong())) {
             return true;
          }
@@ -252,21 +252,21 @@ public final class AiScaffold {
       init_Map.clear();
    }
 
-   private record Inner_DataUtil(Block block, List<AiScaffold.Inner_StreamUtil> scopes, long nanos) {
+   private record ScaffoldRecord(Block block, List<AiScaffold.JobScope> scopes, long nanos) {
    }
 
-   public static final class Inner_StreamUtil implements AutoCloseable {
+   public static final class JobScope implements AutoCloseable {
       private final LinkedHashMap<Long, Block> init_LinkedHashMap;
       private final Path init_Path;
       private long init_J;
       private long savedRevision = -1L;
       private CompletableFuture<Void> init_CompletableFuture = CompletableFuture.completedFuture(null);
 
-      private Inner_StreamUtil() {
+      private JobScope() {
          this(new LinkedHashMap<>(), null);
       }
 
-      private Inner_StreamUtil(LinkedHashMap<Long, Block> records, Path journal) {
+      private JobScope(LinkedHashMap<Long, Block> records, Path journal) {
          this.init_LinkedHashMap = records;
          this.init_Path = journal;
          AiScaffold.init_Set.add(this);

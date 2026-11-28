@@ -1204,7 +1204,7 @@ public final class AiGoto {
             AiPathfinder.PathResult putAt_FileStore_StreamSt;
             AiParkourFallWarning putAt_BufferCore;
             boolean tick_Z;
-            ScopedToggleOverride.Inner_StreamUtil putAt_JsonWorker_TableCa;
+            ScopedToggleOverride.OverrideHandle putAt_JsonWorker_TableCa;
             static final int value_I = 60;
             final AiAim putAt_CacheHelper;
             boolean flushOf_Z;
@@ -2328,7 +2328,7 @@ public final class AiGoto {
                   }
                }
 
-               AiPathfinder.UiHelper var7x = this.putAt_RingCache.putAt_FileStore_PacketHe();
+               AiPathfinder.PathStep var7x = this.putAt_RingCache.putAt_FileStore_PacketHe();
                AutismClientAddon.LOG.info(
                      "[AI] travel {}: {}{} at {} (replans {}, stalls {}){}",
                      var13 ? "job" : "goto",
@@ -2364,7 +2364,7 @@ public final class AiGoto {
                   this.putAt_RingCache.closeOf_V();
                   return this.fill(var2 + "; sealed pocket: dig-enabled escape replan");
                } else {
-                  AiPathfinder.UiHelper var4x = this.putAt_RingCache.putAt_FileStore_PacketHe();
+                  AiPathfinder.PathStep var4x = this.putAt_RingCache.putAt_FileStore_PacketHe();
                   if (var14 && var4x != null) {
                      return this.putAt(var4x, var2);
                   }
@@ -2425,7 +2425,7 @@ public final class AiGoto {
                }
             }
 
-            private AiOperation.Result putAt(AiPathfinder.UiHelper var1, String var2) {
+            private AiOperation.Result putAt(AiPathfinder.PathStep var1, String var2) {
                BlockPos var3x = this.putAt_RingCache.putAt_BlockPos();
                String var4x = this.putAt_RingCache.putAt_Str();
                boolean var5x = var4x.contains("past its target") || var4x.contains("slid below") || var4x.contains("below the takeoff");
@@ -2481,7 +2481,7 @@ public final class AiGoto {
                }
 
                for (int var10 = 0; var10 < Math.min(16, var3x.size()); var10++) {
-                  AiPathfinder.UiHelper var12x = (AiPathfinder.UiHelper)var3x.get(var10);
+                  AiPathfinder.PathStep var12x = (AiPathfinder.PathStep)var3x.get(var10);
                   boolean var14x = this.putAt_FileStore_TokenCod.putAt_Z_BlockPos(var12x.to()) && !AiPathfinder.isGloballyBlacklisted(var12x);
 
                   for (BlockPos var9x : var12x.cellsToBreak()) {
@@ -2739,7 +2739,7 @@ public final class AiGoto {
                         return;
                      }
 
-                     BlockPos var3x = ((AiPathfinder.UiHelper)var2.getFirst()).to();
+                     BlockPos var3x = ((AiPathfinder.PathStep)var2.getFirst()).to();
                      this.fill_FileStore_TaskStat = new AiPathfinder.RouteBlacklist(this.putAt_FileStore_TextStor, true, this.putAt_D_I(var17), var20);
                      this.fill_FileStore_TaskStat.startSearch(var3x, this.putAt_FileStore_TokenCod, this.putAt_FileStore_CacheHel());
                      AiNavDebug.log("Finish loaded while moving; proving a route from " + var3x.toShortString());
@@ -2770,7 +2770,7 @@ public final class AiGoto {
 
             private AiOperation.Result pollOf_AiOperation_Result_3() {
                if (this.putAt_BufferCore == null && !OverlayScreenController.hasModalScreen()) {
-                  AiParkourFallWarning.Inner_DataUtil var1x = AiParkourFallWarning.putAt_BufferCore_CacheHe_Minecraft_List(
+                  AiParkourFallWarning.FallRisk var1x = AiParkourFallWarning.putAt_BufferCore_CacheHe_Minecraft_List(
                      this.putAt_Minecraft, this.putAt_FileStore_StreamSt.movements()
                   );
                   if (var1x.damage() == 0.0F) {
@@ -3007,13 +3007,13 @@ public final class AiGoto {
             }
 
             int value_I_5() {
-               ArrayList<AiRestock.Inner_CachePool> var1x = new ArrayList<>(27);
+               ArrayList<AiRestock.BackpackSlotView> var1x = new ArrayList<>(27);
 
                for (int var2 = 9; var2 < 36; var2++) {
                   ItemStack var3x = this.putAt_Minecraft.player.getInventory().getItem(var2);
                   if (var3x.getItem() instanceof BlockItem var4x && AiRestock.canSpendStack(var3x, this.putAt_Minecraft.player.getInventory())) {
                      var1x.add(
-                        new AiRestock.Inner_CachePool(
+                        new AiRestock.BackpackSlotView(
                            BuiltInRegistries.ITEM.getKey(var3x.getItem()).toString(),
                            var3x.getCount(),
                            var4x.getBlock() instanceof FallingBlock,
@@ -3024,7 +3024,7 @@ public final class AiGoto {
                         )
                      );
                   } else {
-                     var1x.add(new AiRestock.Inner_CachePool(null, 0, false, false, false));
+                     var1x.add(new AiRestock.BackpackSlotView(null, 0, false, false, false));
                   }
                }
 
@@ -3404,7 +3404,7 @@ public final class AiGoto {
                                           && (var23 || AiMotionSafety.isSegmentHazardFree(var1x.position(), var21x))) {
                                           if (var23) {
                                              float var24x = (float)(Math.toDegrees(Math.atan2(var22x.z, var22x.x)) - 90.0);
-                                             AiJumpSolver.UiHelper var25 = AiJumpSolver.solveTakeoff(
+                                             AiJumpSolver.TakeoffTiming var25 = AiJumpSolver.solveTakeoff(
                                                 var8x, AiPhysics.MotionState.of(var1x), var24x, false, var13x, var21x.y
                                              );
                                              if (var25.runTicks() != 0 || var25.margin() < 0.08) {
@@ -3508,7 +3508,7 @@ public final class AiGoto {
                      AiPhysics.MotionState var10 = AiPhysics.MotionState.of(var1x);
                      BlockPos var11x = BlockPos.containing(this.putAt_Vec3.x, Math.ceil(this.putAt_Vec3.y - 0.001), this.putAt_Vec3.z);
                      if (var1x.onGround() && this.putAt_Vec3.y - var1x.getY() > 0.6) {
-                        AiJumpSolver.UiHelper var15x = AiJumpSolver.solveTakeoff(
+                        AiJumpSolver.TakeoffTiming var15x = AiJumpSolver.solveTakeoff(
                            var9x, var10, var1x.getYRot(), false, var11x, this.putAt_Vec3.y
                         );
                         this.putAt_Minecraft.options.keyUp.setDown(var15x.runTicks() == 0 && var15x.margin() >= 0.08);
@@ -3728,7 +3728,7 @@ public final class AiGoto {
                   );
                }
 
-               AiPathfinder.UiHelper var9x = this.putAt_RingCache.putAt_FileStore_PacketHe();
+               AiPathfinder.PathStep var9x = this.putAt_RingCache.putAt_FileStore_PacketHe();
                if (var9x != null) {
                   var1x.addProperty("stalledMove", var9x.type().name());
                   var1x.addProperty("stalledFrom", var9x.from().toShortString());
@@ -4028,7 +4028,7 @@ public final class AiGoto {
       private final List<BlockPos> putAt_List;
       private final AiGoto.WaypointPlan.PlannedLeg[] putAt_HashEntry_TableCacArr;
       private boolean putAt_Z;
-      private ScopedToggleOverride.Inner_StreamUtil putAt_JsonWorker_TableCa;
+      private ScopedToggleOverride.OverrideHandle putAt_JsonWorker_TableCa;
       private AiPathfinder.RouteBlacklist putAt_FileStore_TaskStat;
       private int flowState;
       private BlockPos putAt_BlockPos;
@@ -4058,7 +4058,7 @@ public final class AiGoto {
             var var8 = var7.segment().movements();
 
             for (int var9 = 0; var9 < var8.size(); var9++) {
-               if (((AiPathfinder.UiHelper)var8.get(var9)).from().equals(var2)) {
+               if (((AiPathfinder.PathStep)var8.get(var9)).from().equals(var2)) {
                   return new AiGoto.WaypointPlan.PlannedLeg(
                      var2,
                      new AiPathfinder.PathResult(List.copyOf(var8.subList(var9, var8.size())), true, 0, false, false),
@@ -4073,7 +4073,7 @@ public final class AiGoto {
             if (var2.getY() == var7.from().getY() && Math.abs(var2.getX() - var7.from().getX()) + Math.abs(var2.getZ() - var7.from().getZ()) == 1) {
                ArrayList var10 = new ArrayList(var8.size() + 1);
                var10.add(
-                  new AiPathfinder.UiHelper(
+                  new AiPathfinder.PathStep(
                      var6 ? AiPathfinder.MoveType.SPRINT : AiPathfinder.MoveType.WALK,
                      var2,
                      var7.from(),

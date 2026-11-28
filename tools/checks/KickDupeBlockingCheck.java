@@ -12,7 +12,7 @@ public class KickDupeBlockingCheck {
       UseItemPhaseAction hold = new UseItemPhaseAction();
       hold.holdTicks = 5;
       DisconnectAction autoDisconnect = new DisconnectAction();
-      autoDisconnect.mode = DisconnectAction.Inner_StreamUtil.AUTO_DISCONNECT;
+      autoDisconnect.mode = DisconnectAction.DisconnectMode.AUTO_DISCONNECT;
       check(!DisconnectAction.blocksClientThread(instant), "use item without hold must run");
       check(DisconnectAction.blocksClientThread(hold), "use item with hold must be skipped");
       check(DisconnectAction.blocksClientThread(new BundleDupeV2Action()), "bundle dupe must be skipped");

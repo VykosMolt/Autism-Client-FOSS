@@ -187,7 +187,7 @@ public class bW {
    }
 
    public synchronized bW.Inner_DataUtil init_bW_DataUtil_I(int timeoutMs) {
-      ProxyConnectivityTester.Inner_DataUtil verified = ProxyConnectivityTester.init(this, "example.com", 80, timeoutMs);
+      ProxyConnectivityTester.TestResult verified = ProxyConnectivityTester.init(this, "example.com", 80, timeoutMs);
       if (!verified.success()) {
          return new bW.Inner_DataUtil(bW.Inner_CachePool.DEAD, 0L, 2);
       }

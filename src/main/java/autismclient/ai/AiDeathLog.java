@@ -11,7 +11,7 @@ import net.minecraft.world.item.ItemStack;
 
 final class AiDeathLog {
    static final long init_J = 300000L;
-   private static volatile AiDeathLog.Inner_DataUtil lastDeath;
+   private static volatile AiDeathLog.DeathRecord lastDeath;
    private static volatile boolean init_Z;
 
    private AiDeathLog() {
@@ -28,14 +28,14 @@ final class AiDeathLog {
             }
          }
 
-         lastDeath = new AiDeathLog.Inner_DataUtil(
+         lastDeath = new AiDeathLog.DeathRecord(
             System.currentTimeMillis(), mc.level.dimension().identifier().toString(), mc.player.blockPosition().immutable(), mc.player.experienceLevel, carried
          );
          init_Z = false;
       }
    }
 
-   static AiDeathLog.Inner_DataUtil lastDeath() {
+   static AiDeathLog.DeathRecord lastDeath() {
       return lastDeath;
    }
 
@@ -53,7 +53,7 @@ final class AiDeathLog {
    }
 
    static JsonObject statusJson() {
-      AiDeathLog.Inner_DataUtil death = lastDeath;
+      AiDeathLog.DeathRecord death = lastDeath;
       if (death == null) {
          return AiJson.objectOf("recorded", false);
       }
@@ -86,8 +86,8 @@ final class AiDeathLog {
       );
    }
 
-   record Inner_DataUtil(long at, String dimension, BlockPos position, int experienceLevel, Map<String, Integer> inventory) {
-      Inner_DataUtil {
+   record DeathRecord(long at, String dimension, BlockPos position, int experienceLevel, Map<String, Integer> inventory) {
+      DeathRecord {
          inventory = Map.copyOf(inventory);
       }
 

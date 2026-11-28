@@ -62,7 +62,7 @@ public final class PrintView implements SignalGetter {
    private final PrintEnv env;
    private final Long2ObjectOpenHashMap<BlockState> hypotheticalBlocks = new Long2ObjectOpenHashMap<>();
    private final Long2LongOpenHashMap hypotheticalColumnMasks = new Long2LongOpenHashMap();
-   private final Long2ObjectOpenHashMap<ArrayDeque<PrintView.Inner_DataUtil>> hypotheticalUndoStacks = new Long2ObjectOpenHashMap<>();
+   private final Long2ObjectOpenHashMap<ArrayDeque<PrintView.HypothesisUndo>> hypotheticalUndoStacks = new Long2ObjectOpenHashMap<>();
    private final LongOpenHashSet ownedTemporaryBlocks = new LongOpenHashSet();
    private final MutableBlockPos scratchPos = new MutableBlockPos();
    private final Long2ObjectOpenHashMap<BlockState> snapshotStateCache = new Long2ObjectOpenHashMap<>();
@@ -70,7 +70,7 @@ public final class PrintView implements SignalGetter {
    static final int MAX_SNAPSHOT_STATES = 32768;
    static final int MAX_STANDABLE_CACHE = 65536;
    static final int MAX_CLICK_POINTS_CACHE = 8192;
-   private final Long2ObjectLinkedOpenHashMap<PrintView.Inner_NetHelper> standableHeightCache = new Long2ObjectLinkedOpenHashMap<>();
+   private final Long2ObjectLinkedOpenHashMap<PrintView.StandableHeightEntry> standableHeightCache = new Long2ObjectLinkedOpenHashMap<>();
    static final int MAX_RECEIPT_CELLS = 512;
    static final int DEFAULT_RECEIPT_BUDGET = 1048576;
    private static final int MAX_FORWARDED_RECEIPTS = 256;
@@ -80,13 +80,13 @@ public final class PrintView implements SignalGetter {
    long standableCacheMisses;
    private long viewRevision;
    private long worldMutationRevision;
-   private final ArrayList<PrintView.Inner_TaskQueue> activeReadTrackers = new ArrayList<>();
-   private final ArrayList<PrintView.Inner_ConfigStore> activeNativeTrackers = new ArrayList<>();
-   private final ArrayList<PrintView.Inner_StreamUtil> activeDynamicShapeTrackers = new ArrayList<>();
+   private final ArrayList<PrintView.ReadTracker> activeReadTrackers = new ArrayList<>();
+   private final ArrayList<PrintView.NativeReadTracker> activeNativeTrackers = new ArrayList<>();
+   private final ArrayList<PrintView.DynamicShapeTracker> activeDynamicShapeTrackers = new ArrayList<>();
    private boolean suppressDynamicShapeTracking;
    private final IdentityHashMap<BlockState, List<AABB>> collisionBoxesCache = new IdentityHashMap<>();
    private long untrackedReadCount;
-   final Map<PrintNav.Inner_CachePool, List<PrintNav.Inner_BufferHelper>> diagonalJumpProofCache = new LinkedHashMap<>();
+   final Map<PrintNav.JumpKey, List<PrintNav.DiagonalJumpProof>> diagonalJumpProofCache = new LinkedHashMap<>();
    final Long2ObjectOpenHashMap<Direction> requiredInteractFaces = new Long2ObjectOpenHashMap<>();
    long diagonalJumpCacheMisses;
    long diagonalJumpCacheHits;
@@ -104,8 +104,8 @@ public final class PrintView implements SignalGetter {
    static final boolean FEET_CACHE_ENABLED = !"false".equals(System.getProperty("autism.ai.print.feetCache", "true"));
    private static final int CLICK_CACHE_XY_RADIUS = 1;
    private static final int CLICK_CACHE_Y_RADIUS = 3;
-   private final Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> coarseClickCache = new Long2ObjectLinkedOpenHashMap<>();
-   private final Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> detailedClickCache = new Long2ObjectLinkedOpenHashMap<>();
+   private final Long2ObjectLinkedOpenHashMap<PrintView.ClickPointsEntry> coarseClickCache = new Long2ObjectLinkedOpenHashMap<>();
+   private final Long2ObjectLinkedOpenHashMap<PrintView.ClickPointsEntry> detailedClickCache = new Long2ObjectLinkedOpenHashMap<>();
    long clickCacheHits;
    long clickCacheMisses;
    private long workUnits;
@@ -120,8 +120,8 @@ public final class PrintView implements SignalGetter {
    private final IdentityHashMap<BlockState, List<AABB>> outlineBoxesCache = new IdentityHashMap<>();
    private final IdentityHashMap<BlockState, List<AABB>> interactionBoxesCache = new IdentityHashMap<>();
 
-   PrintView.Inner_JsonUtil openSnapshotScope() {
-      return new PrintView.Inner_JsonUtil();
+   PrintView.SnapshotScope openSnapshotScope() {
+      return new PrintView.SnapshotScope();
    }
 
    long untrackedReadCount() {
@@ -386,8 +386,8 @@ public final class PrintView implements SignalGetter {
          return null;
       }
 
-      Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> map = detailed ? this.detailedClickCache : this.coarseClickCache;
-      PrintView.Inner_CachePool entry = map.getAndMoveToLast(key);
+      Long2ObjectLinkedOpenHashMap<PrintView.ClickPointsEntry> map = detailed ? this.detailedClickCache : this.coarseClickCache;
+      PrintView.ClickPointsEntry entry = map.getAndMoveToLast(key);
       boolean needsInputs = this.needsGeometryInputTracking();
       if (entry != null && entry.feetY() == feetY && entry.points() != null) {
          if (entry.inputs() == null && !needsInputs || entry.inputs() != null && this.validateAndForwardReceipt(entry.inputs())) {
@@ -413,7 +413,7 @@ public final class PrintView implements SignalGetter {
 
             return all;
          } else {
-            try (PrintView.Inner_ConfigStore reads = new PrintView.Inner_ConfigStore()) {
+            try (PrintView.NativeReadTracker reads = new PrintView.NativeReadTracker()) {
                List<Vec3> all = PrintClicks.computeCandidateFeetPositions(this, key, feetY, detailed);
                this.clickCacheMisses++;
                if (reads.isPure()) {
@@ -431,7 +431,7 @@ public final class PrintView implements SignalGetter {
          }
 
          this.evictClickEntry(map, key);
-         map.putAndMoveToLast(key, new PrintView.Inner_CachePool(feetY, null, null));
+         map.putAndMoveToLast(key, new PrintView.ClickPointsEntry(feetY, null, null));
          return null;
       }
    }
@@ -441,20 +441,20 @@ public final class PrintView implements SignalGetter {
    }
 
    private void putClickCacheEntry(
-      Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> map, long key, double feetY, List<Vec3> points, PrintView.@Nullable Inner_BufferHelper inputs
+      Long2ObjectLinkedOpenHashMap<PrintView.ClickPointsEntry> map, long key, double feetY, List<Vec3> points, PrintView.@Nullable ReadReceipt inputs
    ) {
       this.evictClickEntry(map, key);
       if (inputs != null && !this.ensureReceiptBudget(inputs.cells().length)) {
          inputs = null;
       }
 
-      map.putAndMoveToLast(key, new PrintView.Inner_CachePool(feetY, points, inputs));
+      map.putAndMoveToLast(key, new PrintView.ClickPointsEntry(feetY, points, inputs));
       if (inputs != null) {
          this.retainedReceiptCells = this.retainedReceiptCells + inputs.cells().length;
       }
    }
 
-   private void putStandableCacheEntry(long key, double height, PrintView.@Nullable Inner_BufferHelper inputs) {
+   private void putStandableCacheEntry(long key, double height, PrintView.@Nullable ReadReceipt inputs) {
       this.evictStandableEntry(key);
       if (this.standableHeightCache.size() >= 65536) {
          this.evictStandableEntry(this.standableHeightCache.firstLongKey());
@@ -464,21 +464,21 @@ public final class PrintView implements SignalGetter {
          inputs = null;
       }
 
-      this.standableHeightCache.putAndMoveToLast(key, new PrintView.Inner_NetHelper(height, inputs));
+      this.standableHeightCache.putAndMoveToLast(key, new PrintView.StandableHeightEntry(height, inputs));
       if (inputs != null) {
          this.retainedReceiptCells = this.retainedReceiptCells + inputs.cells().length;
       }
    }
 
    private void evictStandableEntry(long key) {
-      PrintView.Inner_NetHelper removed = this.standableHeightCache.remove(key);
+      PrintView.StandableHeightEntry removed = this.standableHeightCache.remove(key);
       if (removed != null && removed.inputs() != null) {
          this.retainedReceiptCells = this.retainedReceiptCells - removed.inputs().cells().length;
       }
    }
 
-   private void evictClickEntry(Long2ObjectLinkedOpenHashMap<PrintView.Inner_CachePool> map, long key) {
-      PrintView.Inner_CachePool removed = map.remove(key);
+   private void evictClickEntry(Long2ObjectLinkedOpenHashMap<PrintView.ClickPointsEntry> map, long key) {
+      PrintView.ClickPointsEntry removed = map.remove(key);
       if (removed != null && removed.inputs() != null) {
          this.retainedReceiptCells = this.retainedReceiptCells - removed.inputs().cells().length;
       }
@@ -506,17 +506,17 @@ public final class PrintView implements SignalGetter {
       return this.retainedReceiptCells + count <= this.geometryInputBudget;
    }
 
-   private PrintView.@Nullable Inner_BufferHelper buildReceiptFromTracker(PrintView.Inner_ConfigStore reads) {
+   private PrintView.@Nullable ReadReceipt buildReceiptFromTracker(PrintView.NativeReadTracker reads) {
       if (!reads.canBuildReceipt()) {
          return null;
       }
 
       long[] cells = reads.readCells.toLongArray();
       Arrays.sort(cells);
-      return new PrintView.Inner_BufferHelper(cells);
+      return new PrintView.ReadReceipt(cells);
    }
 
-   private boolean receiptOverlapsHypotheses(PrintView.Inner_BufferHelper inputs) {
+   private boolean receiptOverlapsHypotheses(PrintView.ReadReceipt inputs) {
       if (this.hypotheticalBlocks.isEmpty()) {
          return false;
       }
@@ -538,7 +538,7 @@ public final class PrintView implements SignalGetter {
       return false;
    }
 
-   private boolean validateAndForwardReceipt(PrintView.@Nullable Inner_BufferHelper inputs) {
+   private boolean validateAndForwardReceipt(PrintView.@Nullable ReadReceipt inputs) {
       if (inputs == null) {
          return false;
       }
@@ -577,7 +577,7 @@ public final class PrintView implements SignalGetter {
          boolean needed = false;
 
          for (int i = 0; i < this.activeReadTrackers.size(); i++) {
-            PrintView.Inner_TaskQueue reads = this.activeReadTrackers.get(i);
+            PrintView.ReadTracker reads = this.activeReadTrackers.get(i);
             if (!reads.hasForwarded(inputs) && !reads.recordedStates.containsKey(key)) {
                needed = true;
                break;
@@ -586,7 +586,7 @@ public final class PrintView implements SignalGetter {
 
          if (!needed) {
             for (int i = 0; i < this.activeNativeTrackers.size(); i++) {
-               PrintView.Inner_ConfigStore reads = this.activeNativeTrackers.get(i);
+               PrintView.NativeReadTracker reads = this.activeNativeTrackers.get(i);
                if (!reads.hasForwarded(inputs) && !reads.readCells.contains(key)) {
                   needed = true;
                   break;
@@ -606,14 +606,14 @@ public final class PrintView implements SignalGetter {
             }
 
             for (int i = 0; i < this.activeReadTrackers.size(); i++) {
-               PrintView.Inner_TaskQueue reads = this.activeReadTrackers.get(i);
+               PrintView.ReadTracker reads = this.activeReadTrackers.get(i);
                if (!reads.hasForwarded(inputs)) {
                   reads.recordPosWithLive(pos, live);
                }
             }
 
             for (int i = 0; i < this.activeNativeTrackers.size(); i++) {
-               PrintView.Inner_ConfigStore reads = this.activeNativeTrackers.get(i);
+               PrintView.NativeReadTracker reads = this.activeNativeTrackers.get(i);
                if (!reads.hasForwarded(inputs)) {
                   reads.recordRead(key);
                }
@@ -738,17 +738,17 @@ public final class PrintView implements SignalGetter {
       return state;
    }
 
-   PrintView.Inner_TaskQueue openReadTracker() {
-      PrintView.Inner_TaskQueue reads = new PrintView.Inner_TaskQueue(false);
+   PrintView.ReadTracker openReadTracker() {
+      PrintView.ReadTracker reads = new PrintView.ReadTracker(false);
       this.activeReadTrackers.add(reads);
       return reads;
    }
 
-   PrintView.Inner_TaskQueue createRetainedReadTracker() {
-      return new PrintView.Inner_TaskQueue(true);
+   PrintView.ReadTracker createRetainedReadTracker() {
+      return new PrintView.ReadTracker(true);
    }
 
-   void replayTrackedReads(PrintView.Inner_TaskQueue inputs) {
+   void replayTrackedReads(PrintView.ReadTracker inputs) {
       if (!this.activeReadTrackers.isEmpty() || !this.activeNativeTrackers.isEmpty()) {
          for (long key : inputs.recordedStates.keySet()) {
             this.getBlockState(BlockPos.of(key));
@@ -910,7 +910,7 @@ public final class PrintView implements SignalGetter {
       if (old != null) {
          this.hypotheticalUndoStacks
             .computeIfAbsent(key, ignored -> new ArrayDeque<>())
-            .push(new PrintView.Inner_DataUtil(old, this.ownedTemporaryBlocks.contains(key)));
+            .push(new PrintView.HypothesisUndo(old, this.ownedTemporaryBlocks.contains(key)));
       }
 
       if (ownedTemporary) {
@@ -941,7 +941,7 @@ public final class PrintView implements SignalGetter {
    public void popHypothesis(BlockPos pos) {
       this.viewRevision++;
       long key = pos.asLong();
-      ArrayDeque<PrintView.Inner_DataUtil> stack = this.hypotheticalUndoStacks.get(key);
+      ArrayDeque<PrintView.HypothesisUndo> stack = this.hypotheticalUndoStacks.get(key);
       if (stack == null) {
          if (this.hypotheticalBlocks.remove(key) != null) {
             this.updateHypothesisColumnMask(key, false);
@@ -949,7 +949,7 @@ public final class PrintView implements SignalGetter {
 
          this.ownedTemporaryBlocks.remove(key);
       } else {
-         PrintView.Inner_DataUtil old = stack.pop();
+         PrintView.HypothesisUndo old = stack.pop();
          this.hypotheticalBlocks.put(key, old.state());
          if (old.temporary()) {
             this.ownedTemporaryBlocks.add(key);
@@ -1125,7 +1125,7 @@ public final class PrintView implements SignalGetter {
       }
 
       long key = BlockPos.asLong(x, y, z);
-      PrintView.Inner_NetHelper cached = this.standableHeightCache.getAndMoveToLast(key);
+      PrintView.StandableHeightEntry cached = this.standableHeightCache.getAndMoveToLast(key);
       boolean needsInputs = this.needsGeometryInputTracking();
       if (cached != null) {
          if (cached.inputs() == null && !needsInputs || cached.inputs() != null && this.validateAndForwardReceipt(cached.inputs())) {
@@ -1148,7 +1148,7 @@ public final class PrintView implements SignalGetter {
 
          return height;
       } else {
-         try (PrintView.Inner_ConfigStore reads = new PrintView.Inner_ConfigStore()) {
+         try (PrintView.NativeReadTracker reads = new PrintView.NativeReadTracker()) {
             double h = this.computeStandingHeight(x, y, z);
             this.standableCacheMisses++;
             if (reads.isPure()) {
@@ -1616,20 +1616,20 @@ public final class PrintView implements SignalGetter {
       return new Vec3(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
    }
 
-   private record Inner_BufferHelper(long[] cells) {
+   private record ReadReceipt(long[] cells) {
    }
 
-   private record Inner_CachePool(double feetY, @Nullable List<Vec3> points, PrintView.@Nullable Inner_BufferHelper inputs) {
+   private record ClickPointsEntry(double feetY, @Nullable List<Vec3> points, PrintView.@Nullable ReadReceipt inputs) {
    }
 
-   private final class Inner_ConfigStore implements AutoCloseable {
+   private final class NativeReadTracker implements AutoCloseable {
       private final long startUntrackedCount = PrintView.this.untrackedReadCount;
       final LongOpenHashSet readCells = new LongOpenHashSet();
-      private @Nullable IdentityHashMap<PrintView.Inner_BufferHelper, Boolean> forwardedReceipts;
+      private @Nullable IdentityHashMap<PrintView.ReadReceipt, Boolean> forwardedReceipts;
       boolean overflowed;
       boolean touchedHypothesis;
 
-      Inner_ConfigStore() {
+      NativeReadTracker() {
          PrintView.this.activeNativeTrackers.add(this);
       }
 
@@ -1655,11 +1655,11 @@ public final class PrintView implements SignalGetter {
          return !this.overflowed && this.isPure();
       }
 
-      boolean hasForwarded(PrintView.Inner_BufferHelper inputs) {
+      boolean hasForwarded(PrintView.ReadReceipt inputs) {
          return this.overflowed || this.forwardedReceipts != null && this.forwardedReceipts.containsKey(inputs);
       }
 
-      void markForwarded(PrintView.Inner_BufferHelper inputs) {
+      void markForwarded(PrintView.ReadReceipt inputs) {
          if (!this.overflowed) {
             if (this.forwardedReceipts == null) {
                this.forwardedReceipts = new IdentityHashMap<>();
@@ -1677,11 +1677,11 @@ public final class PrintView implements SignalGetter {
       }
    }
 
-   private record Inner_DataUtil(BlockState state, boolean temporary) {
+   private record HypothesisUndo(BlockState state, boolean temporary) {
    }
 
-   final class Inner_JsonUtil implements AutoCloseable {
-      private Inner_JsonUtil() {
+   final class SnapshotScope implements AutoCloseable {
+      private SnapshotScope() {
          if (PrintView.this.snapshotCacheActive) {
             throw new IllegalStateException("Nested planner snapshot");
          }
@@ -1697,16 +1697,16 @@ public final class PrintView implements SignalGetter {
       }
    }
 
-   private record Inner_NetHelper(double height, PrintView.@Nullable Inner_BufferHelper inputs) {
+   private record StandableHeightEntry(double height, PrintView.@Nullable ReadReceipt inputs) {
    }
 
-   final class Inner_StreamUtil {
-      private final Long2ObjectOpenHashMap<PrintView.Inner_StreamUtil.Inner_DataUtil> verifiedDynamicShapes = new Long2ObjectOpenHashMap<>();
+   final class DynamicShapeTracker {
+      private final Long2ObjectOpenHashMap<PrintView.DynamicShapeTracker.ShapeSnapshot> verifiedDynamicShapes = new Long2ObjectOpenHashMap<>();
       private final LongOpenHashSet pendingDynamicCells = new LongOpenHashSet();
       private boolean invalidated;
 
-      PrintView.Inner_StreamUtil.Inner_StreamUtil_2 attach() {
-         return new PrintView.Inner_StreamUtil.Inner_StreamUtil_2();
+      PrintView.DynamicShapeTracker.ShapeAttachment attach() {
+         return new PrintView.DynamicShapeTracker.ShapeAttachment();
       }
 
       boolean verifyStillValid() {
@@ -1718,14 +1718,14 @@ public final class PrintView implements SignalGetter {
          PrintView.this.suppressDynamicShapeTracking = true;
 
          try {
-            for (Entry<PrintView.Inner_StreamUtil.Inner_DataUtil> entry : this.verifiedDynamicShapes.long2ObjectEntrySet()) {
+            for (Entry<PrintView.DynamicShapeTracker.ShapeSnapshot> entry : this.verifiedDynamicShapes.long2ObjectEntrySet()) {
                if (!entry.getValue().equals(this.snapshotDynamicCell(entry.getLongKey()))) {
                   return !(this.invalidated = true);
                }
             }
 
             for (long key : this.pendingDynamicCells) {
-               PrintView.Inner_StreamUtil.Inner_DataUtil now = this.snapshotDynamicCell(key);
+               PrintView.DynamicShapeTracker.ShapeSnapshot now = this.snapshotDynamicCell(key);
                if (now == null) {
                   return !(this.invalidated = true);
                }
@@ -1740,49 +1740,49 @@ public final class PrintView implements SignalGetter {
          }
       }
 
-      private PrintView.Inner_StreamUtil.Inner_DataUtil snapshotDynamicCell(long key) {
+      private PrintView.DynamicShapeTracker.ShapeSnapshot snapshotDynamicCell(long key) {
          BlockPos pos = BlockPos.of(key);
          BlockState state = PrintView.this.getBlockState(pos);
          return state == PrintView.UNLOADED_SENTINEL
             ? null
-            : new PrintView.Inner_StreamUtil.Inner_DataUtil(state, List.copyOf(state.getCollisionShape(PrintView.this, pos).toAabbs()));
+            : new PrintView.DynamicShapeTracker.ShapeSnapshot(state, List.copyOf(state.getCollisionShape(PrintView.this, pos).toAabbs()));
       }
 
-      private record Inner_DataUtil(BlockState state, List<AABB> boxes) {
+      private record ShapeSnapshot(BlockState state, List<AABB> boxes) {
       }
 
-      final class Inner_StreamUtil_2 implements AutoCloseable {
-         final boolean added = !PrintView.this.activeDynamicShapeTrackers.contains(Inner_StreamUtil.this);
+      final class ShapeAttachment implements AutoCloseable {
+         final boolean added = !PrintView.this.activeDynamicShapeTrackers.contains(DynamicShapeTracker.this);
 
-         Inner_StreamUtil_2() {
+         ShapeAttachment() {
             if (this.added) {
-               PrintView.this.activeDynamicShapeTrackers.add(Inner_StreamUtil.this);
+               PrintView.this.activeDynamicShapeTrackers.add(DynamicShapeTracker.this);
             }
          }
 
          @Override
          public void close() {
             if (this.added) {
-               PrintView.this.activeDynamicShapeTrackers.remove(Inner_StreamUtil.this);
+               PrintView.this.activeDynamicShapeTrackers.remove(DynamicShapeTracker.this);
             }
          }
       }
    }
 
-   final class Inner_TaskQueue implements AutoCloseable {
+   final class ReadTracker implements AutoCloseable {
       private final long startUntrackedCount = PrintView.this.untrackedReadCount;
       final Long2ObjectOpenHashMap<BlockState> recordedStates = new Long2ObjectOpenHashMap<>();
       final Long2ObjectOpenHashMap<BlockState> capturedHypotheses = new Long2ObjectOpenHashMap<>(PrintView.this.hypotheticalBlocks);
       private final @Nullable LongOpenHashSet capturedTemporaries;
-      private @Nullable IdentityHashMap<PrintView.Inner_BufferHelper, Boolean> forwardedReceipts;
+      private @Nullable IdentityHashMap<PrintView.ReadReceipt, Boolean> forwardedReceipts;
       boolean overflowed;
 
-      Inner_TaskQueue(boolean retained) {
+      ReadTracker(boolean retained) {
          this.capturedTemporaries = retained ? new LongOpenHashSet(PrintView.this.ownedTemporaryBlocks) : null;
       }
 
-      PrintView.Inner_TaskQueue.Inner_DataUtil attach() {
-         return new PrintView.Inner_TaskQueue.Inner_DataUtil();
+      PrintView.ReadTracker.TrackerAttachment attach() {
+         return new PrintView.ReadTracker.TrackerAttachment();
       }
 
       boolean isComplete() {
@@ -1805,11 +1805,11 @@ public final class PrintView implements SignalGetter {
          }
       }
 
-      boolean hasForwarded(PrintView.Inner_BufferHelper inputs) {
+      boolean hasForwarded(PrintView.ReadReceipt inputs) {
          return this.overflowed || this.forwardedReceipts != null && this.forwardedReceipts.containsKey(inputs);
       }
 
-      void markForwarded(PrintView.Inner_BufferHelper inputs) {
+      void markForwarded(PrintView.ReadReceipt inputs) {
          if (!this.overflowed) {
             if (this.forwardedReceipts == null) {
                this.forwardedReceipts = new IdentityHashMap<>();
@@ -1826,17 +1826,17 @@ public final class PrintView implements SignalGetter {
          PrintView.this.activeReadTrackers.remove(this);
       }
 
-      final class Inner_DataUtil implements AutoCloseable {
+      final class TrackerAttachment implements AutoCloseable {
          private final boolean added;
          private boolean closed;
 
-         private Inner_DataUtil() {
-            if (Inner_TaskQueue.this.capturedTemporaries != null
-               && PrintView.this.matchesHypotheses(Inner_TaskQueue.this.capturedHypotheses)
-               && PrintView.this.matchesOwnedTemporaries(Inner_TaskQueue.this.capturedTemporaries)) {
-               this.added = !PrintView.this.activeReadTrackers.contains(Inner_TaskQueue.this);
+         private TrackerAttachment() {
+            if (ReadTracker.this.capturedTemporaries != null
+               && PrintView.this.matchesHypotheses(ReadTracker.this.capturedHypotheses)
+               && PrintView.this.matchesOwnedTemporaries(ReadTracker.this.capturedTemporaries)) {
+               this.added = !PrintView.this.activeReadTrackers.contains(ReadTracker.this);
                if (this.added) {
-                  PrintView.this.activeReadTrackers.add(Inner_TaskQueue.this);
+                  PrintView.this.activeReadTrackers.add(ReadTracker.this);
                }
             } else {
                throw new IllegalStateException("A retained native receipt requires its original outer hypotheses");
@@ -1846,7 +1846,7 @@ public final class PrintView implements SignalGetter {
          @Override
          public void close() {
             if (!this.closed && this.added) {
-               PrintView.this.activeReadTrackers.remove(Inner_TaskQueue.this);
+               PrintView.this.activeReadTrackers.remove(ReadTracker.this);
             }
 
             this.closed = true;

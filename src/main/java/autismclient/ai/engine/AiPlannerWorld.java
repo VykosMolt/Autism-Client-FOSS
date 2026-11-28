@@ -61,7 +61,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    private final LongArrayList putAt_LongArrayList = new LongArrayList();
    private final IntArrayList putAt_IntArrayList = new IntArrayList();
    private final LongOpenHashSet putAt_LongOpenHashSet = new LongOpenHashSet();
-   private AiPathfinder.UiHelper seenIncomingMove;
+   private AiPathfinder.PathStep seenIncomingMove;
    private NavigationOpenSet.Inner_DataUtil seenActiveNode;
    private boolean readEx_Z;
    long putAt_J;
@@ -718,7 +718,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    private short fill_S(int var1, int var2, int var3) {
       if (this.cachedGrid != null && this.cachedGrid.incomingMove != null) {
-         AiPathfinder.UiHelper var4 = this.cachedGrid.incomingMove;
+         AiPathfinder.PathStep var4 = this.cachedGrid.incomingMove;
          BlockPos var5 = new BlockPos(var1, var2, var3);
          if (var4.cellsToBreak().contains(var5)) {
             return 0;

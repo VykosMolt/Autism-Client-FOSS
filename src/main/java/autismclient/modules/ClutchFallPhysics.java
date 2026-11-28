@@ -43,12 +43,12 @@ final class ClutchFallPhysics {
       return predictLeadBox(drawn, offset, motion, lead).minmax(drawn.inflate(radius, 0.0, radius));
    }
 
-   static boolean isAllowedCause(ClutchFallPhysics.Inner_TaskQueue hit, boolean ownAllowed, boolean melee, boolean projectiles, boolean explosions) {
+   static boolean isAllowedCause(ClutchFallPhysics.HitEvent hit, boolean ownAllowed, boolean melee, boolean projectiles, boolean explosions) {
       if (hit == null || !hit.confirmed) {
          return false;
       }
 
-      if (hit.own && hit.cause != ClutchFallPhysics.Inner_StreamUtil.FALL) {
+      if (hit.own && hit.cause != ClutchFallPhysics.HitCause.FALL) {
          return false;
       }
 
@@ -83,12 +83,12 @@ final class ClutchFallPhysics {
       return var10000;
    }
 
-   static boolean isSourceEnabled(ClutchFallPhysics.Inner_TaskQueue hit, boolean enemyEnabled, boolean ownEnabled) {
+   static boolean isSourceEnabled(ClutchFallPhysics.HitEvent hit, boolean enemyEnabled, boolean ownEnabled) {
       return isSelfOrGuardCause(hit) ? ownEnabled : enemyEnabled;
    }
 
-   static boolean isSelfOrGuardCause(ClutchFallPhysics.Inner_TaskQueue hit) {
-      return hit == null || hit.own() || hit.cause() == ClutchFallPhysics.Inner_StreamUtil.FALL || hit.cause() == ClutchFallPhysics.Inner_StreamUtil.GUARD;
+   static boolean isSelfOrGuardCause(ClutchFallPhysics.HitEvent hit) {
+      return hit == null || hit.own() || hit.cause() == ClutchFallPhysics.HitCause.FALL || hit.cause() == ClutchFallPhysics.HitCause.GUARD;
    }
 
    static int choosePlacementTick(int earliest, int latest, boolean enemyFlight) {
@@ -103,7 +103,7 @@ final class ClutchFallPhysics {
       return mode == 3 ? 0 : mode;
    }
 
-   static boolean isEnemyCause(ClutchFallPhysics.Inner_TaskQueue hit) {
+   static boolean isEnemyCause(ClutchFallPhysics.HitEvent hit) {
       return hit != null && !isSelfOrGuardCause(hit);
    }
 
@@ -128,37 +128,37 @@ final class ClutchFallPhysics {
       }
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateJumpTrajectory(
+   static ClutchFallPhysics.FallTrajectory simulateJumpTrajectory(
       autismclient.ai.engine.AiPhysics.MotionState start,
       autismclient.ai.engine.AiPhysics.MoveInput pressed,
       autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       double maxDrop,
       Boolean axis,
-      ClutchFallPhysics.Inner_JsonUtil medium
+      ClutchFallPhysics.FallMedium medium
    ) {
       return simulateMotionTrajectory(start, pressed, world, maxDrop, axis, medium, true);
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateWalkTrajectory(
+   static ClutchFallPhysics.FallTrajectory simulateWalkTrajectory(
       autismclient.ai.engine.AiPhysics.MotionState start,
       autismclient.ai.engine.AiPhysics.MoveInput pressed,
       autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       double maxDrop,
-      ClutchFallPhysics.Inner_JsonUtil medium
+      ClutchFallPhysics.FallMedium medium
    ) {
       return simulateMotionTrajectory(start, pressed, world, maxDrop, null, medium, false);
    }
 
-   private static ClutchFallPhysics.Inner_ConfigStore simulateMotionTrajectory(
+   private static ClutchFallPhysics.FallTrajectory simulateMotionTrajectory(
       autismclient.ai.engine.AiPhysics.MotionState start,
       autismclient.ai.engine.AiPhysics.MoveInput pressed,
       autismclient.ai.engine.AiPhysics.PhysicsWorld world,
       double maxDrop,
       Boolean axis,
-      ClutchFallPhysics.Inner_JsonUtil medium,
+      ClutchFallPhysics.FallMedium medium,
       boolean jump
    ) {
-      List<ClutchFallPhysics.Inner_UiHelper> steps = new ArrayList<>(32);
+      List<ClutchFallPhysics.TrajectoryStep> steps = new ArrayList<>(32);
       autismclient.ai.engine.AiPhysics.MotionState state = start;
       boolean airborne = false;
       double fallen = 0.0;
@@ -186,22 +186,22 @@ final class ClutchFallPhysics {
             }
          }
 
-         steps.add(new ClutchFallPhysics.Inner_UiHelper(body, new Vec3(state.vx(), state.vy(), state.vz()), tick, state.onGround()));
-         ClutchFallPhysics.Inner_BufferHelper contact = medium == null ? ClutchFallPhysics.Inner_BufferHelper.NONE : medium.at(body);
-         if (contact == ClutchFallPhysics.Inner_BufferHelper.CUSHION) {
-            return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge);
+         steps.add(new ClutchFallPhysics.TrajectoryStep(body, new Vec3(state.vx(), state.vy(), state.vz()), tick, state.onGround()));
+         ClutchFallPhysics.MediumContact contact = medium == null ? ClutchFallPhysics.MediumContact.NONE : medium.at(body);
+         if (contact == ClutchFallPhysics.MediumContact.CUSHION) {
+            return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), false, edge);
          }
 
          fallen += Math.max(0.0, beforeY - state.y());
-         if (contact == ClutchFallPhysics.Inner_BufferHelper.HAZARD || fallen > maxDrop && state.onGround()) {
-            return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), true, edge);
+         if (contact == ClutchFallPhysics.MediumContact.HAZARD || fallen > maxDrop && state.onGround()) {
+            return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), true, edge);
          }
 
          if (airborne
             && state.onGround()
             && world.collisionBoxes(body.move(0.0, -0.04, 0.0)).stream().anyMatch(block -> block.intersects(body.move(0.0, -0.04, 0.0)))
             && canMotionSettleSafely(state, world, maxDrop, medium)) {
-            return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge);
+            return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), false, edge);
          }
 
          if (state.onGround()) {
@@ -209,7 +209,7 @@ final class ClutchFallPhysics {
          }
       }
 
-      return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), jump || airborne, edge);
+      return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), jump || airborne, edge);
    }
 
    static autismclient.ai.engine.AiPhysics.MotionState withStandingPose(autismclient.ai.engine.AiPhysics.MotionState s) {
@@ -231,45 +231,45 @@ final class ClutchFallPhysics {
       );
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateMotionFall(
+   static ClutchFallPhysics.FallTrajectory simulateMotionFall(
       autismclient.ai.engine.AiPhysics.MotionState start,
       int sneakTicks,
       float yaw,
       double maxDrop,
       autismclient.ai.engine.AiPhysics.PhysicsWorld world,
-      ClutchFallPhysics.Inner_SyncManager steering,
-      ClutchFallPhysics.Inner_JsonUtil medium
+      ClutchFallPhysics.SteeringModel steering,
+      ClutchFallPhysics.FallMedium medium
    ) {
       return simulateMotionFall(start, sneakTicks, yaw, maxDrop, world, steering, medium, List.of(), 0);
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateMotionFall(
+   static ClutchFallPhysics.FallTrajectory simulateMotionFall(
       autismclient.ai.engine.AiPhysics.MotionState start,
       int sneakTicks,
       float yaw,
       double maxDrop,
       autismclient.ai.engine.AiPhysics.PhysicsWorld world,
-      ClutchFallPhysics.Inner_SyncManager steering,
-      ClutchFallPhysics.Inner_JsonUtil medium,
+      ClutchFallPhysics.SteeringModel steering,
+      ClutchFallPhysics.FallMedium medium,
       List<AABB> extra,
       int placementTick
    ) {
       return simulateMotionFall(start, sneakTicks, yaw, maxDrop, world, steering, medium, extra, placementTick, 0.0);
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateMotionFall(
+   static ClutchFallPhysics.FallTrajectory simulateMotionFall(
       autismclient.ai.engine.AiPhysics.MotionState start,
       int sneakTicks,
       float yaw,
       double maxDrop,
       final autismclient.ai.engine.AiPhysics.PhysicsWorld world,
-      ClutchFallPhysics.Inner_SyncManager steering,
-      ClutchFallPhysics.Inner_JsonUtil medium,
+      ClutchFallPhysics.SteeringModel steering,
+      ClutchFallPhysics.FallMedium medium,
       final List<AABB> extra,
       final int placementTick,
       double fallenSoFar
    ) {
-      List<ClutchFallPhysics.Inner_UiHelper> steps = new ArrayList<>(64);
+      List<ClutchFallPhysics.TrajectoryStep> steps = new ArrayList<>(64);
       List<Vec3> eyes = new ArrayList<>(65);
       autismclient.ai.engine.AiPhysics.MotionState state = start;
       eyes.add(eyePosition(state));
@@ -380,17 +380,17 @@ final class ClutchFallPhysics {
             edge = tick;
          }
 
-         steps.add(new ClutchFallPhysics.Inner_UiHelper(body, new Vec3(state.vx(), state.vy(), state.vz()), tick, state.onGround()));
+         steps.add(new ClutchFallPhysics.TrajectoryStep(body, new Vec3(state.vx(), state.vy(), state.vz()), tick, state.onGround()));
          eyes.add(eyePosition(state));
-         ClutchFallPhysics.Inner_BufferHelper contact = medium == null ? ClutchFallPhysics.Inner_BufferHelper.NONE : medium.at(body);
+         ClutchFallPhysics.MediumContact contact = medium == null ? ClutchFallPhysics.MediumContact.NONE : medium.at(body);
          fallen += Math.max(0.0, previousY - state.y());
          exceeded |= fallen > allowed;
-         if (contact == ClutchFallPhysics.Inner_BufferHelper.CUSHION) {
-            return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge, List.copyOf(eyes));
+         if (contact == ClutchFallPhysics.MediumContact.CUSHION) {
+            return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), false, edge, List.copyOf(eyes));
          }
 
-         if (contact == ClutchFallPhysics.Inner_BufferHelper.HAZARD || exceeded && state.onGround()) {
-            return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), true, edge, List.copyOf(eyes));
+         if (contact == ClutchFallPhysics.MediumContact.HAZARD || exceeded && state.onGround()) {
+            return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), true, edge, List.copyOf(eyes));
          }
 
          if (state.onGround()) {
@@ -398,14 +398,14 @@ final class ClutchFallPhysics {
             if (!exceeded
                && collisionWorld.collisionBoxes(feet).stream().anyMatch(feet::intersects)
                && canMotionSettleSafely(state, collisionWorld, allowed, medium)) {
-               return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge, List.copyOf(eyes));
+               return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), false, edge, List.copyOf(eyes));
             }
 
             fallen = 0.0;
          }
       }
 
-      return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), true, edge, List.copyOf(eyes));
+      return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), true, edge, List.copyOf(eyes));
    }
 
    private static Vec3 eyePosition(autismclient.ai.engine.AiPhysics.MotionState state) {
@@ -436,8 +436,8 @@ final class ClutchFallPhysics {
       return new Vec3(input.x, 0.0, input.y);
    }
 
-   static ClutchFallPhysics.Inner_DataUtil predictAirSweep(
-      AABB start, Vec3 velocity, double eyeHeight, float cameraYaw, float outgoingYaw, int lead, ClutchFallPhysics.Inner_SyncManager steering, ClutchFallPhysics.Inner_StateCache nativeInput
+   static ClutchFallPhysics.AirSweep predictAirSweep(
+      AABB start, Vec3 velocity, double eyeHeight, float cameraYaw, float outgoingYaw, int lead, ClutchFallPhysics.SteeringModel steering, ClutchFallPhysics.MovementInput nativeInput
    ) {
       if (lead >= 0 && lead <= 1) {
          AABB body = start;
@@ -460,7 +460,7 @@ final class ClutchFallPhysics {
             motion = new Vec3(moved.x * 0.9100000262260437, (moved.y - 0.08) * 0.9800000190734863, moved.z * 0.9100000262260437);
          }
 
-         return new ClutchFallPhysics.Inner_DataUtil(eye, eyePosition(body, eyeHeight), swept);
+         return new ClutchFallPhysics.AirSweep(eye, eyePosition(body, eyeHeight), swept);
       } else {
          return null;
       }
@@ -488,58 +488,58 @@ final class ClutchFallPhysics {
       }
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateBoxFallWithAccel(AABB start, Vec3 velocity, Vec3 acceleration, double maxDrop, ClutchFallPhysics.Inner_CachePool world) {
+   static ClutchFallPhysics.FallTrajectory simulateBoxFallWithAccel(AABB start, Vec3 velocity, Vec3 acceleration, double maxDrop, ClutchFallPhysics.CollisionWorld world) {
       return simulateBoxFallWithAccel(start, velocity, acceleration, maxDrop, world, null);
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateBoxFallWithAccel(AABB start, Vec3 velocity, Vec3 acceleration, double maxDrop, ClutchFallPhysics.Inner_CachePool world, ClutchFallPhysics.Inner_JsonUtil medium) {
+   static ClutchFallPhysics.FallTrajectory simulateBoxFallWithAccel(AABB start, Vec3 velocity, Vec3 acceleration, double maxDrop, ClutchFallPhysics.CollisionWorld world, ClutchFallPhysics.FallMedium medium) {
       return start != null && isFiniteVec(velocity) && isFiniteVec(acceleration) && world != null
          ? simulateBoxFall(start, velocity, maxDrop, world, (body, motion, supported) -> acceleration, medium)
-         : new ClutchFallPhysics.Inner_ConfigStore(List.of(), false, 2147483647);
+         : new ClutchFallPhysics.FallTrajectory(List.of(), false, 2147483647);
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateBoxFallWithAccel(
-      AABB start, Vec3 velocity, Vec3 acceleration, double maxDrop, ClutchFallPhysics.Inner_CachePool world, ClutchFallPhysics.Inner_JsonUtil medium, double fallenSoFar
+   static ClutchFallPhysics.FallTrajectory simulateBoxFallWithAccel(
+      AABB start, Vec3 velocity, Vec3 acceleration, double maxDrop, ClutchFallPhysics.CollisionWorld world, ClutchFallPhysics.FallMedium medium, double fallenSoFar
    ) {
       return !isFiniteVec(acceleration)
-         ? new ClutchFallPhysics.Inner_ConfigStore(List.of(), false, 2147483647)
+         ? new ClutchFallPhysics.FallTrajectory(List.of(), false, 2147483647)
          : simulateBoxFall(start, velocity, maxDrop, world, (body, motion, supported) -> acceleration, medium, world, 0, fallenSoFar);
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateBoxFall(AABB start, Vec3 velocity, double maxDrop, ClutchFallPhysics.Inner_CachePool world, ClutchFallPhysics.Inner_SyncManager steering) {
+   static ClutchFallPhysics.FallTrajectory simulateBoxFall(AABB start, Vec3 velocity, double maxDrop, ClutchFallPhysics.CollisionWorld world, ClutchFallPhysics.SteeringModel steering) {
       return simulateBoxFall(start, velocity, maxDrop, world, steering, null);
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateBoxFall(AABB start, Vec3 velocity, double maxDrop, ClutchFallPhysics.Inner_CachePool world, ClutchFallPhysics.Inner_SyncManager steering, ClutchFallPhysics.Inner_JsonUtil medium) {
+   static ClutchFallPhysics.FallTrajectory simulateBoxFall(AABB start, Vec3 velocity, double maxDrop, ClutchFallPhysics.CollisionWorld world, ClutchFallPhysics.SteeringModel steering, ClutchFallPhysics.FallMedium medium) {
       return simulateBoxFall(start, velocity, maxDrop, world, steering, medium, world, 0);
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateBoxFall(
+   static ClutchFallPhysics.FallTrajectory simulateBoxFall(
       AABB start,
       Vec3 velocity,
       double maxDrop,
-      ClutchFallPhysics.Inner_CachePool world,
-      ClutchFallPhysics.Inner_SyncManager steering,
-      ClutchFallPhysics.Inner_JsonUtil medium,
-      ClutchFallPhysics.Inner_CachePool afterPlacement,
+      ClutchFallPhysics.CollisionWorld world,
+      ClutchFallPhysics.SteeringModel steering,
+      ClutchFallPhysics.FallMedium medium,
+      ClutchFallPhysics.CollisionWorld afterPlacement,
       int placementTick
    ) {
       return simulateBoxFall(start, velocity, maxDrop, world, steering, medium, afterPlacement, placementTick, 0.0);
    }
 
-   static ClutchFallPhysics.Inner_ConfigStore simulateBoxFall(
+   static ClutchFallPhysics.FallTrajectory simulateBoxFall(
       AABB start,
       Vec3 velocity,
       double maxDrop,
-      ClutchFallPhysics.Inner_CachePool world,
-      ClutchFallPhysics.Inner_SyncManager steering,
-      ClutchFallPhysics.Inner_JsonUtil medium,
-      ClutchFallPhysics.Inner_CachePool afterPlacement,
+      ClutchFallPhysics.CollisionWorld world,
+      ClutchFallPhysics.SteeringModel steering,
+      ClutchFallPhysics.FallMedium medium,
+      ClutchFallPhysics.CollisionWorld afterPlacement,
       int placementTick,
       double fallenSoFar
    ) {
       if (start != null && isFiniteVec(velocity) && world != null && steering != null) {
-         List<ClutchFallPhysics.Inner_UiHelper> steps = new ArrayList<>(64);
+         List<ClutchFallPhysics.TrajectoryStep> steps = new ArrayList<>(64);
          AABB body = start;
          Vec3 motion = velocity;
          double fallen = Math.max(0.0, fallenSoFar);
@@ -552,7 +552,7 @@ final class ClutchFallPhysics {
          for (int t = 1; t <= 64; t++) {
             Vec3 acceleration = steering.acceleration(body, motion, grounded);
             if (!isFiniteVec(acceleration)) {
-               return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge);
+               return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), false, edge);
             }
 
             Vec3 wanted = motion.add(acceleration.x, 0.0, acceleration.z);
@@ -562,7 +562,7 @@ final class ClutchFallPhysics {
 
             Vec3 actual = (t > placementTick ? afterPlacement : world).clip(body, wanted);
             if (!isFiniteVec(actual)) {
-               return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge);
+               return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), false, edge);
             }
 
             supported = wanted.y < 0.0 && actual.y > wanted.y + 1.0E-7;
@@ -578,42 +578,42 @@ final class ClutchFallPhysics {
             );
             motion = new Vec3(var28.x * (grounded ? 0.546 : 0.91), (var28.y - 0.08) * 0.98, var28.z * (grounded ? 0.546 : 0.91));
             grounded = supported;
-            steps.add(new ClutchFallPhysics.Inner_UiHelper(body, motion, t, supported));
-            ClutchFallPhysics.Inner_BufferHelper contact = medium == null ? ClutchFallPhysics.Inner_BufferHelper.NONE : medium.at(body);
-            if (contact == ClutchFallPhysics.Inner_BufferHelper.HAZARD) {
-               return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), true, edge);
+            steps.add(new ClutchFallPhysics.TrajectoryStep(body, motion, t, supported));
+            ClutchFallPhysics.MediumContact contact = medium == null ? ClutchFallPhysics.MediumContact.NONE : medium.at(body);
+            if (contact == ClutchFallPhysics.MediumContact.HAZARD) {
+               return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), true, edge);
             }
 
-            if (contact == ClutchFallPhysics.Inner_BufferHelper.CUSHION) {
-               return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge);
+            if (contact == ClutchFallPhysics.MediumContact.CUSHION) {
+               return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), false, edge);
             }
 
             fallen += Math.max(0.0, -actual.y);
             if (fallen > allowed) {
                if (supported) {
-                  return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), true, edge);
+                  return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), true, edge);
                }
 
                exceeded = true;
             }
 
             if (supported) {
-               ClutchFallPhysics.Inner_CachePool landingWorld = t > placementTick ? afterPlacement : world;
+               ClutchFallPhysics.CollisionWorld landingWorld = t > placementTick ? afterPlacement : world;
                if (!exceeded && isSupported(body, landingWorld) && canBoxSettleSafely(body, motion, allowed, landingWorld, medium)) {
-                  return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), false, edge);
+                  return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), false, edge);
                }
 
                fallen = 0.0;
             }
          }
 
-         return new ClutchFallPhysics.Inner_ConfigStore(List.copyOf(steps), true, edge);
+         return new ClutchFallPhysics.FallTrajectory(List.copyOf(steps), true, edge);
       } else {
-         return new ClutchFallPhysics.Inner_ConfigStore(List.of(), false, 2147483647);
+         return new ClutchFallPhysics.FallTrajectory(List.of(), false, 2147483647);
       }
    }
 
-   private static boolean canBoxSettleSafely(AABB body, Vec3 motion, double allowed, ClutchFallPhysics.Inner_CachePool world, ClutchFallPhysics.Inner_JsonUtil medium) {
+   private static boolean canBoxSettleSafely(AABB body, Vec3 motion, double allowed, ClutchFallPhysics.CollisionWorld world, ClutchFallPhysics.FallMedium medium) {
       if (motion.horizontalDistanceSqr() < 9.0E-6) {
          return true;
       }
@@ -634,12 +634,12 @@ final class ClutchFallPhysics {
 
          boolean supported = wanted.y < 0.0 && actual.y > wanted.y + 1.0E-7;
          body = body.move(actual);
-         ClutchFallPhysics.Inner_BufferHelper contact = medium == null ? ClutchFallPhysics.Inner_BufferHelper.NONE : medium.at(body);
-         if (contact == ClutchFallPhysics.Inner_BufferHelper.HAZARD) {
+         ClutchFallPhysics.MediumContact contact = medium == null ? ClutchFallPhysics.MediumContact.NONE : medium.at(body);
+         if (contact == ClutchFallPhysics.MediumContact.HAZARD) {
             return false;
          }
 
-         if (contact == ClutchFallPhysics.Inner_BufferHelper.CUSHION) {
+         if (contact == ClutchFallPhysics.MediumContact.CUSHION) {
             return true;
          }
 
@@ -668,7 +668,7 @@ final class ClutchFallPhysics {
    }
 
    private static boolean canMotionSettleSafely(
-      autismclient.ai.engine.AiPhysics.MotionState start, autismclient.ai.engine.AiPhysics.PhysicsWorld world, double allowed, ClutchFallPhysics.Inner_JsonUtil medium
+      autismclient.ai.engine.AiPhysics.MotionState start, autismclient.ai.engine.AiPhysics.PhysicsWorld world, double allowed, ClutchFallPhysics.FallMedium medium
    ) {
       autismclient.ai.engine.AiPhysics.MotionState state = start;
       double fallen = 0.0;
@@ -677,12 +677,12 @@ final class ClutchFallPhysics {
          double before = state.y();
          state = autismclient.ai.engine.AiPhysics.stepUnclippedCompat(state, autismclient.ai.engine.AiPhysics.MoveInput.NONE, world);
          AABB body = state.box(false);
-         ClutchFallPhysics.Inner_BufferHelper contact = medium == null ? ClutchFallPhysics.Inner_BufferHelper.NONE : medium.at(body);
-         if (contact == ClutchFallPhysics.Inner_BufferHelper.HAZARD) {
+         ClutchFallPhysics.MediumContact contact = medium == null ? ClutchFallPhysics.MediumContact.NONE : medium.at(body);
+         if (contact == ClutchFallPhysics.MediumContact.HAZARD) {
             return false;
          }
 
-         if (contact == ClutchFallPhysics.Inner_BufferHelper.CUSHION) {
+         if (contact == ClutchFallPhysics.MediumContact.CUSHION) {
             return true;
          }
 
@@ -704,7 +704,7 @@ final class ClutchFallPhysics {
       return false;
    }
 
-   static boolean isSupported(AABB body, ClutchFallPhysics.Inner_CachePool world) {
+   static boolean isSupported(AABB body, ClutchFallPhysics.CollisionWorld world) {
       Vec3 probe = world.clip(body, new Vec3(0.0, -0.01, 0.0));
       return isFiniteVec(probe) && probe.y > -0.0099999;
    }
@@ -713,7 +713,7 @@ final class ClutchFallPhysics {
       return value != null && Double.isFinite(value.x) && Double.isFinite(value.y) && Double.isFinite(value.z);
    }
 
-   static boolean isGroundedSafe(AABB body, Vec3 velocity, boolean grounded, double maxDrop, ClutchFallPhysics.Inner_CachePool world, ClutchFallPhysics.Inner_JsonUtil medium) {
+   static boolean isGroundedSafe(AABB body, Vec3 velocity, boolean grounded, double maxDrop, ClutchFallPhysics.CollisionWorld world, ClutchFallPhysics.FallMedium medium) {
       if (!grounded || body == null || !isFiniteVec(velocity) || world == null) {
          return false;
       }
@@ -755,34 +755,34 @@ final class ClutchFallPhysics {
       }
    }
 
-   enum Inner_BufferHelper {
+   enum MediumContact {
       NONE,
       CUSHION,
       HAZARD;
    }
 
-   interface Inner_CachePool {
+   interface CollisionWorld {
       Vec3 clip(AABB var1, Vec3 var2);
    }
 
-   record Inner_ConfigStore(List<ClutchFallPhysics.Inner_UiHelper> steps, boolean unsafe, int edgeTick, List<Vec3> eyePositions) {
-      Inner_ConfigStore(List<ClutchFallPhysics.Inner_UiHelper> steps, boolean unsafe, int edgeTick) {
+   record FallTrajectory(List<ClutchFallPhysics.TrajectoryStep> steps, boolean unsafe, int edgeTick, List<Vec3> eyePositions) {
+      FallTrajectory(List<ClutchFallPhysics.TrajectoryStep> steps, boolean unsafe, int edgeTick) {
          this(steps, unsafe, edgeTick, List.of());
       }
    }
 
-   record Inner_DataUtil(Vec3 startEye, Vec3 endEye, AABB sweptBox) {
+   record AirSweep(Vec3 startEye, Vec3 endEye, AABB sweptBox) {
    }
 
-   interface Inner_JsonUtil {
-      ClutchFallPhysics.Inner_BufferHelper at(AABB var1);
+   interface FallMedium {
+      ClutchFallPhysics.MediumContact at(AABB var1);
    }
 
-   static final class Inner_NetHelper {
+   static final class TickWindowLatch {
       private final int lifetime;
       private int activeTick = -2147483648;
 
-      Inner_NetHelper(int lifetime) {
+      TickWindowLatch(int lifetime) {
          this.lifetime = lifetime;
       }
 
@@ -806,11 +806,11 @@ final class ClutchFallPhysics {
    }
 
    @FunctionalInterface
-   interface Inner_StateCache {
+   interface MovementInput {
       Vec3 movement(Vec3 var1, float var2, float var3);
    }
 
-   enum Inner_StreamUtil {
+   enum HitCause {
       MELEE,
       SERVER_PUSH,
       FIREBALL,
@@ -823,13 +823,13 @@ final class ClutchFallPhysics {
       OTHER;
    }
 
-   interface Inner_SyncManager {
+   interface SteeringModel {
       Vec3 acceleration(AABB var1, Vec3 var2, boolean var3);
    }
 
-   record Inner_TaskQueue(ClutchFallPhysics.Inner_StreamUtil cause, boolean own, boolean confirmed, int tick) {
+   record HitEvent(ClutchFallPhysics.HitCause cause, boolean own, boolean confirmed, int tick) {
    }
 
-   record Inner_UiHelper(AABB body, Vec3 velocity, int tick, boolean onGround) {
+   record TrajectoryStep(AABB body, Vec3 velocity, int tick, boolean onGround) {
    }
 }

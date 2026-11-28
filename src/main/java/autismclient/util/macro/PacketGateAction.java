@@ -6,12 +6,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 
 public class PacketGateAction implements MacroAction {
-   public PacketGateAction.Inner_CachePool mode = PacketGateAction.Inner_CachePool.CANCEL;
-   public PacketGateAction.Inner_BufferHelper scope = PacketGateAction.Inner_BufferHelper.END_MARKER;
-   public PacketGateAction.Inner_DataUtil direction = PacketGateAction.Inner_DataUtil.ANY;
+   public PacketGateAction.GateMode mode = PacketGateAction.GateMode.CANCEL;
+   public PacketGateAction.GateScope scope = PacketGateAction.GateScope.END_MARKER;
+   public PacketGateAction.GateDirection direction = PacketGateAction.GateDirection.ANY;
    public String gateId = "auto";
    public ArrayList<String> packetNames = new ArrayList<>();
-   public PacketGateAction.Inner_StreamUtil durationMode = PacketGateAction.Inner_StreamUtil.UNTIL_DISABLED;
+   public PacketGateAction.DurationMode durationMode = PacketGateAction.DurationMode.UNTIL_DISABLED;
    public int durationValue = 0;
    public String untilPacketName = "";
    public String untilPacketField = "";
@@ -19,7 +19,7 @@ public class PacketGateAction implements MacroAction {
    public String untilPacketValue = "";
    public String untilGuiType = "ANY";
    public String untilGuiTitle = "";
-   public String untilInventoryCondition = WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS.name();
+   public String untilInventoryCondition = WaitInventoryPredicateAction.InventoryCondition.ITEM_EXISTS.name();
    public String untilInventoryItem = "";
    public int untilInventoryCount = 1;
    public int untilInventorySlot = 0;
@@ -44,11 +44,11 @@ public class PacketGateAction implements MacroAction {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", "PACKET_GATE");
       tag.putString("mode", this.mode.name());
-      tag.putString("scope", this.scope == null ? PacketGateAction.Inner_BufferHelper.END_MARKER.name() : this.scope.name());
-      tag.putString("direction", PacketGateAction.Inner_DataUtil.ANY.name());
+      tag.putString("scope", this.scope == null ? PacketGateAction.GateScope.END_MARKER.name() : this.scope.name());
+      tag.putString("direction", PacketGateAction.GateDirection.ANY.name());
       tag.putString("gateId", this.gateId);
       tag.put("packetNames", MacroNbtCodecHelper.toStringListTag(this.packetNames));
-      tag.putString("durationMode", this.durationMode == null ? PacketGateAction.Inner_StreamUtil.UNTIL_DISABLED.name() : this.durationMode.name());
+      tag.putString("durationMode", this.durationMode == null ? PacketGateAction.DurationMode.UNTIL_DISABLED.name() : this.durationMode.name());
       tag.putInt("durationValue", Math.max(0, this.durationValue));
       tag.putString("untilPacketName", this.untilPacketName == null ? "" : this.untilPacketName);
       tag.putString("untilPacketField", this.untilPacketField == null ? "" : this.untilPacketField);
@@ -56,7 +56,7 @@ public class PacketGateAction implements MacroAction {
       tag.putString("untilPacketValue", this.untilPacketValue == null ? "" : this.untilPacketValue);
       tag.putString("untilGuiType", this.untilGuiType == null ? "ANY" : this.untilGuiType);
       tag.putString("untilGuiTitle", this.untilGuiTitle == null ? "" : this.untilGuiTitle);
-      tag.putString("untilInventoryCondition", this.untilInventoryCondition == null ? WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS.name() : this.untilInventoryCondition);
+      tag.putString("untilInventoryCondition", this.untilInventoryCondition == null ? WaitInventoryPredicateAction.InventoryCondition.ITEM_EXISTS.name() : this.untilInventoryCondition);
       tag.putString("untilInventoryItem", this.untilInventoryItem == null ? "" : this.untilInventoryItem);
       tag.putInt("untilInventoryCount", Math.max(1, this.untilInventoryCount));
       tag.putInt("untilInventorySlot", Math.max(0, this.untilInventorySlot));
@@ -66,17 +66,17 @@ public class PacketGateAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = MacroNbtCodecHelper.parseEnum(PacketGateAction.Inner_CachePool.class, tag.getStringOr("mode", "CANCEL"), PacketGateAction.Inner_CachePool.CANCEL);
+      this.mode = MacroNbtCodecHelper.parseEnum(PacketGateAction.GateMode.class, tag.getStringOr("mode", "CANCEL"), PacketGateAction.GateMode.CANCEL);
       String rawScope = tag.getStringOr("scope", "END_MARKER");
       if ("MACRO_RUN".equalsIgnoreCase(rawScope)) {
-         rawScope = PacketGateAction.Inner_BufferHelper.MACRO_PASS.name();
+         rawScope = PacketGateAction.GateScope.MACRO_PASS.name();
       }
 
-      this.scope = MacroNbtCodecHelper.parseEnum(PacketGateAction.Inner_BufferHelper.class, rawScope, PacketGateAction.Inner_BufferHelper.END_MARKER);
-      this.direction = PacketGateAction.Inner_DataUtil.ANY;
+      this.scope = MacroNbtCodecHelper.parseEnum(PacketGateAction.GateScope.class, rawScope, PacketGateAction.GateScope.END_MARKER);
+      this.direction = PacketGateAction.GateDirection.ANY;
       this.gateId = tag.getStringOr("gateId", "auto");
       this.packetNames = MacroNbtCodecHelper.fromStringListTag(tag.getList("packetNames").orElse(new ListTag()));
-      this.durationMode = MacroNbtCodecHelper.parseEnum(PacketGateAction.Inner_StreamUtil.class, tag.getStringOr("durationMode", "UNTIL_DISABLED"), PacketGateAction.Inner_StreamUtil.UNTIL_DISABLED);
+      this.durationMode = MacroNbtCodecHelper.parseEnum(PacketGateAction.DurationMode.class, tag.getStringOr("durationMode", "UNTIL_DISABLED"), PacketGateAction.DurationMode.UNTIL_DISABLED);
       this.durationValue = Math.max(0, tag.getIntOr("durationValue", 0));
       this.untilPacketName = tag.getStringOr("untilPacketName", "");
       this.untilPacketField = tag.getStringOr("untilPacketField", "");
@@ -84,7 +84,7 @@ public class PacketGateAction implements MacroAction {
       this.untilPacketValue = tag.getStringOr("untilPacketValue", "");
       this.untilGuiType = tag.getStringOr("untilGuiType", "ANY");
       this.untilGuiTitle = tag.getStringOr("untilGuiTitle", "");
-      this.untilInventoryCondition = tag.getStringOr("untilInventoryCondition", WaitInventoryPredicateAction.Inner_DataUtil.ITEM_EXISTS.name());
+      this.untilInventoryCondition = tag.getStringOr("untilInventoryCondition", WaitInventoryPredicateAction.InventoryCondition.ITEM_EXISTS.name());
       this.untilInventoryItem = tag.getStringOr("untilInventoryItem", "");
       this.untilInventoryCount = Math.max(1, tag.getIntOr("untilInventoryCount", 1));
       this.untilInventorySlot = Math.max(0, tag.getIntOr("untilInventorySlot", 0));
@@ -94,7 +94,7 @@ public class PacketGateAction implements MacroAction {
    @Override
    public String getDisplayName() {
       String target = this.packetNames.isEmpty() ? "packets" : String.join(", ", this.packetNames);
-      String suffix = this.scope == PacketGateAction.Inner_BufferHelper.MACRO_PASS ? " (pass)" : "";
+      String suffix = this.scope == PacketGateAction.GateScope.MACRO_PASS ? " (pass)" : "";
       String var10000;
       switch (this.mode) {
          case CANCEL:
@@ -121,25 +121,25 @@ public class PacketGateAction implements MacroAction {
       return "G";
    }
 
-   public enum Inner_BufferHelper {
+   public enum GateScope {
       END_MARKER,
       MACRO_PASS;
    }
 
-   public enum Inner_CachePool {
+   public enum GateMode {
       CANCEL,
       DELAY,
       ALLOW_ONLY,
       DISABLE_GATE;
    }
 
-   public enum Inner_DataUtil {
+   public enum GateDirection {
       C2S,
       S2C,
       ANY;
    }
 
-   public enum Inner_StreamUtil {
+   public enum DurationMode {
       UNTIL_DISABLED,
       TICKS,
       MS,

@@ -59,9 +59,9 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    private final Screen parent;
    private final Module module;
    private final Setting<?, ?> setting;
-   private final List<RegistrySelectorScreen.Inner_DataUtil> entries;
-   private final Map<String, RegistrySelectorScreen.Inner_DataUtil> entriesById = new HashMap<>();
-   private final List<RegistrySelectorScreen.Inner_StreamUtil> hitRegions = new ArrayList<>();
+   private final List<RegistrySelectorScreen.RegistryEntry> entries;
+   private final Map<String, RegistrySelectorScreen.RegistryEntry> entriesById = new HashMap<>();
+   private final List<RegistrySelectorScreen.HitRegion> hitRegions = new ArrayList<>();
    private ThemedTextInputBox searchField;
    private int availableScroll;
    private int selectedScroll;
@@ -71,8 +71,8 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    private String cachedRawValue;
    private String cachedNeedle;
    private Set<String> cachedSelectedIds = Set.of();
-   private List<RegistrySelectorScreen.Inner_ConfigStore> cachedSelectedRows = List.of();
-   private List<RegistrySelectorScreen.Inner_DataUtil> cachedAvailable = List.of();
+   private List<RegistrySelectorScreen.SelectedRow> cachedSelectedRows = List.of();
+   private List<RegistrySelectorScreen.RegistryEntry> cachedAvailable = List.of();
    private int contentHeightKey = -1;
    private int cachedContentHeight;
 
@@ -87,7 +87,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       this.setting = option;
       this.entries = this.buildEntries(option == null ? Kind.ITEM_LIST : option.kind());
 
-      for (RegistrySelectorScreen.Inner_DataUtil entry : this.entries) {
+      for (RegistrySelectorScreen.RegistryEntry entry : this.entries) {
          this.entriesById.put(entry.init_Str, entry);
       }
    }
@@ -118,7 +118,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
          this.ensureSearchField(x + 4, this.bodyTop(), panelW - 8, this.flush());
          this.searchField.render(graphics, mx, my, delta);
-         RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
+         RegistrySelectorScreen.PaneLayout pane = this.availablePane();
          this.init(graphics, pane, pane.init(), "Available", true, mx, my);
          this.init(graphics, pane, pane.load(), "Selected", false, mx, my);
       } finally {
@@ -126,7 +126,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, RegistrySelectorScreen.Inner_BufferHelper pane, int x, String title, boolean available, int mx, int my) {
+   private void init(GuiGraphicsExtractor graphics, RegistrySelectorScreen.PaneLayout pane, int x, String title, boolean available, int mx, int my) {
       int y = pane.read();
       int w = pane.write();
       int listTop = pane.sync();
@@ -150,7 +150,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private void drawAvailablePane(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
-      List<RegistrySelectorScreen.Inner_DataUtil> rows = this.availableEntries();
+      List<RegistrySelectorScreen.RegistryEntry> rows = this.availableEntries();
       int maxScroll = Math.max(0, this.contentHeight(rows) - h);
       this.availableScroll = this.clamp(this.availableScroll, 0, maxScroll);
       int rowY = y - this.availableScroll;
@@ -158,7 +158,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int groupH = this.push();
       String lastGroup = "";
 
-      for (RegistrySelectorScreen.Inner_DataUtil entry : rows) {
+      for (RegistrySelectorScreen.RegistryEntry entry : rows) {
          if (isGroupedKind(this.setting) && !entry.read.equals(lastGroup)) {
             if (rowY + groupH > y && rowY < y + h) {
                this.init(graphics, entry.read, x, rowY, w, groupH);
@@ -169,7 +169,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          }
 
          if (rowY + rowH > y && rowY < y + h) {
-            this.init(graphics, entry, x, rowY, w, RegistrySelectorScreen.Inner_CachePool.ADD, entry.init_Str, mx, my, false);
+            this.init(graphics, entry, x, rowY, w, RegistrySelectorScreen.RowAction.ADD, entry.init_Str, mx, my, false);
          }
 
          rowY += rowH;
@@ -177,7 +177,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private void drawSelectedPane(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
-      List<RegistrySelectorScreen.Inner_ConfigStore> rows = this.selectedRows();
+      List<RegistrySelectorScreen.SelectedRow> rows = this.selectedRows();
       int maxScroll = Math.max(0, this.selectedContentHeight() - h);
       this.selectedScroll = this.clamp(this.selectedScroll, 0, maxScroll);
       int rowH = this.rowHeight();
@@ -188,10 +188,10 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          int last = this.clamp((this.selectedScroll + h - 1) / rowH, 0, rows.size() - 1);
 
          for (int i = first; i <= last; i++) {
-            RegistrySelectorScreen.Inner_ConfigStore row = rows.get(i);
+            RegistrySelectorScreen.SelectedRow row = rows.get(i);
             int rowY = y - this.selectedScroll + i * rowH;
             if (rowY + rowH > y && rowY < y + h) {
-               this.init(graphics, row.entry(), x, rowY, w, RegistrySelectorScreen.Inner_CachePool.REMOVE, row.id, mx, my, row.init_Z);
+               this.init(graphics, row.entry(), x, rowY, w, RegistrySelectorScreen.RowAction.REMOVE, row.id, mx, my, row.init_Z);
             }
          }
       }
@@ -204,11 +204,11 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
 
    private void init(
       GuiGraphicsExtractor graphics,
-      RegistrySelectorScreen.Inner_DataUtil entry,
+      RegistrySelectorScreen.RegistryEntry entry,
       int x,
       int y,
       int w,
-      RegistrySelectorScreen.Inner_CachePool type,
+      RegistrySelectorScreen.RowAction type,
       String value,
       int mx,
       int my,
@@ -240,16 +240,16 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          }
       }
 
-      if (type == RegistrySelectorScreen.Inner_CachePool.ADD) {
+      if (type == RegistrySelectorScreen.RowAction.ADD) {
          autismclient.gui.ui.widgets.ListRowRenderer.drawSymbolButton(graphics, actionX, actionY, actionW, actionW, "+", over, false);
       } else {
          autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(graphics, actionX, actionY, actionW, actionW, over);
       }
 
-      this.hitRegions.add(new RegistrySelectorScreen.Inner_StreamUtil(type, x, y, w, rowH, value));
+      this.hitRegions.add(new RegistrySelectorScreen.HitRegion(type, x, y, w, rowH, value));
    }
 
-   private void init(GuiGraphicsExtractor graphics, RegistrySelectorScreen.Inner_DataUtil entry, int x, int y) {
+   private void init(GuiGraphicsExtractor graphics, RegistrySelectorScreen.RegistryEntry entry, int x, int y) {
       if (entry.init_Z()) {
          graphics.blit(EMPTY_SPAWN_EGG_TEXTURE, x, y, x + 16, y + 16, 0.0F, 1.0F, 0.0F, 1.0F);
       } else {
@@ -267,7 +267,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.init(bounds, headerH);
-      this.hitRegions.add(new RegistrySelectorScreen.Inner_StreamUtil(RegistrySelectorScreen.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
+      this.hitRegions.add(new RegistrySelectorScreen.HitRegion(RegistrySelectorScreen.RowAction.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
    @Override
@@ -299,10 +299,10 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
 
       for (int i = this.hitRegions.size() - 1; i >= 0; i--) {
-         RegistrySelectorScreen.Inner_StreamUtil hit = this.hitRegions.get(i);
+         RegistrySelectorScreen.HitRegion hit = this.hitRegions.get(i);
          if (hit.contains(mx, my)
-            && (hit.action != RegistrySelectorScreen.Inner_CachePool.ADD || this.isOverAvailablePane(mx, my))
-            && (hit.action != RegistrySelectorScreen.Inner_CachePool.REMOVE || this.load(mx, my))) {
+            && (hit.action != RegistrySelectorScreen.RowAction.ADD || this.isOverAvailablePane(mx, my))
+            && (hit.action != RegistrySelectorScreen.RowAction.REMOVE || this.load(mx, my))) {
             switch (hit.action) {
                case ADD:
                   this.init_V_Str_6(hit.value);
@@ -485,12 +485,12 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return this.blockFilter() != RegistryListSetting.BlockFilter.NONE;
    }
 
-   private List<RegistrySelectorScreen.Inner_DataUtil> availableEntries() {
+   private List<RegistrySelectorScreen.RegistryEntry> availableEntries() {
       this.refreshCache();
       return this.cachedAvailable;
    }
 
-   private List<RegistrySelectorScreen.Inner_ConfigStore> selectedRows() {
+   private List<RegistrySelectorScreen.SelectedRow> selectedRows() {
       this.refreshCache();
       return this.cachedSelectedRows;
    }
@@ -501,20 +501,20 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       if (!rawValue.equals(this.cachedRawValue) || !needle.equals(this.cachedNeedle)) {
          List<String> tokens = PipeDelimitedListUtil.init(this.module.value(this.setting.id()));
          LinkedHashSet<String> selected = this.validIds(tokens);
-         List<RegistrySelectorScreen.Inner_ConfigStore> selectedRows = new ArrayList<>();
+         List<RegistrySelectorScreen.SelectedRow> selectedRows = new ArrayList<>();
 
          for (String id : selected) {
-            RegistrySelectorScreen.Inner_DataUtil entry = this.entryById(id);
-            selectedRows.add(new RegistrySelectorScreen.Inner_ConfigStore(id, entry == null ? this.plainEntry(id) : entry, false));
+            RegistrySelectorScreen.RegistryEntry entry = this.entryById(id);
+            selectedRows.add(new RegistrySelectorScreen.SelectedRow(id, entry == null ? this.plainEntry(id) : entry, false));
          }
 
          for (String invalid : this.init_List_List_2(tokens)) {
-            selectedRows.add(new RegistrySelectorScreen.Inner_ConfigStore(invalid, this.labeledEntry("Invalid: " + invalid, invalid), true));
+            selectedRows.add(new RegistrySelectorScreen.SelectedRow(invalid, this.labeledEntry("Invalid: " + invalid, invalid), true));
          }
 
-         List<RegistrySelectorScreen.Inner_DataUtil> available = new ArrayList<>();
+         List<RegistrySelectorScreen.RegistryEntry> available = new ArrayList<>();
 
-         for (RegistrySelectorScreen.Inner_DataUtil entry : this.entries) {
+         for (RegistrySelectorScreen.RegistryEntry entry : this.entries) {
             if (!selected.contains(entry.init_Str) && (needle.isEmpty() || entry.init_Str_2().contains(needle) || entry.init_Str.contains(needle))) {
                available.add(entry);
             }
@@ -532,11 +532,11 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private RegistrySelectorScreen.Inner_DataUtil entryById(String id) {
+   private RegistrySelectorScreen.RegistryEntry entryById(String id) {
       return this.entriesById.get(id);
    }
 
-   private static int init_I_NodeWalker_DataUti_Str(RegistrySelectorScreen.Inner_DataUtil entry, String needle) {
+   private static int init_I_NodeWalker_DataUti_Str(RegistrySelectorScreen.RegistryEntry entry, String needle) {
       String path = entry.load();
       int colon = path.indexOf(58);
       if (colon >= 0 && colon + 1 < path.length()) {
@@ -559,8 +559,8 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private List<RegistrySelectorScreen.Inner_DataUtil> buildEntries(Kind type) {
-      List<RegistrySelectorScreen.Inner_DataUtil> out = new ArrayList<>();
+   private List<RegistrySelectorScreen.RegistryEntry> buildEntries(Kind type) {
+      List<RegistrySelectorScreen.RegistryEntry> out = new ArrayList<>();
       switch (type) {
          case ITEM_LIST:
             BuiltInRegistries.ITEM
@@ -568,7 +568,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                   item -> {
                      if (item != Items.AIR) {
                         out.add(
-                           new RegistrySelectorScreen.Inner_DataUtil(
+                           new RegistrySelectorScreen.RegistryEntry(
                               this.lowerId(BuiltInRegistries.ITEM.getKey(item)),
                               item.getName(item.getDefaultInstance()).getString(),
                               "",
@@ -606,7 +606,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                         throw new MatchException(null, null);
                   }
 
-                  out.add(new RegistrySelectorScreen.Inner_DataUtil(this.lowerId(id), block.getName().getString(), "", DisplayItemStackFactory.init(block), false));
+                  out.add(new RegistrySelectorScreen.RegistryEntry(this.lowerId(id), block.getName().getString(), "", DisplayItemStackFactory.init(block), false));
                }
             });
             break;
@@ -618,7 +618,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                      if (typeEntry != EntityTypes.ITEM) {
                         ItemStack iconx = spawnEggs.getOrDefault(typeEntry, ItemStack.EMPTY);
                         out.add(
-                           new RegistrySelectorScreen.Inner_DataUtil(
+                           new RegistrySelectorScreen.RegistryEntry(
                               this.lowerId(BuiltInRegistries.ENTITY_TYPE.getKey((EntityType<?>)typeEntry)),
                               typeEntry.getDescription().getString(),
                               this.entityGroup((EntityType<?>)typeEntry),
@@ -637,7 +637,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                      Identifier soundId = BuiltInRegistries.SOUND_EVENT.getKey(sound);
                      if (soundId != null) {
                         out.add(
-                           new RegistrySelectorScreen.Inner_DataUtil(
+                           new RegistrySelectorScreen.RegistryEntry(
                               this.lowerId(soundId),
                               this.displayName(soundId),
                               this.load(soundId),
@@ -650,13 +650,13 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
                );
             break;
          case STORAGE_LIST:
-            for (StorageEspCatalog.Inner_BufferHelper target : StorageEspCatalog.TARGETS) {
+            for (StorageEspCatalog.StorageTarget target : StorageEspCatalog.TARGETS) {
                ItemStack icon = target.icon();
-               out.add(new RegistrySelectorScreen.Inner_DataUtil(target.id, target.label, target.read, icon, icon.isEmpty()));
+               out.add(new RegistrySelectorScreen.RegistryEntry(target.id, target.label, target.read, icon, icon.isEmpty()));
             }
       }
 
-      out.sort(Comparator.<RegistrySelectorScreen.Inner_DataUtil, String>comparing(entry -> entry.read).thenComparing(RegistrySelectorScreen.Inner_DataUtil::init_Str_2));
+      out.sort(Comparator.<RegistrySelectorScreen.RegistryEntry, String>comparing(entry -> entry.read).thenComparing(RegistrySelectorScreen.RegistryEntry::init_Str_2));
       return out;
    }
 
@@ -918,12 +918,12 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return block != Blocks.AIR && block.asItem() != Items.AIR ? DisplayItemStackFactory.init(block) : ItemStack.EMPTY;
    }
 
-   private RegistrySelectorScreen.Inner_DataUtil plainEntry(String id) {
+   private RegistrySelectorScreen.RegistryEntry plainEntry(String id) {
       return this.labeledEntry(id, id);
    }
 
-   private RegistrySelectorScreen.Inner_DataUtil labeledEntry(String label, String id) {
-      return new RegistrySelectorScreen.Inner_DataUtil(id, label, "", ItemStack.EMPTY, false);
+   private RegistrySelectorScreen.RegistryEntry labeledEntry(String label, String id) {
+      return new RegistrySelectorScreen.RegistryEntry(id, label, "", ItemStack.EMPTY, false);
    }
 
    private String entityGroup(EntityType<?> type) {
@@ -1002,7 +1002,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics scrollbarMetrics(boolean available) {
-      RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
+      RegistrySelectorScreen.PaneLayout pane = this.availablePane();
       return this.scrollbarMetricsAt(available, available ? pane.init() : pane.load(), pane.sync(), pane.write(), pane.flush());
    }
 
@@ -1012,13 +1012,13 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.widgets.ScrollbarMetricsHelper.compute(contentH, Math.max(1, listH), paneX + paneW - 6, listTop, 4, Math.max(1, listH), scroll);
    }
 
-   private int contentHeight(List<RegistrySelectorScreen.Inner_DataUtil> rows) {
+   private int contentHeight(List<RegistrySelectorScreen.RegistryEntry> rows) {
       int rowH = this.rowHeight();
       int groupH = this.push();
       int height = 0;
       String lastGroup = "";
 
-      for (RegistrySelectorScreen.Inner_DataUtil entry : rows) {
+      for (RegistrySelectorScreen.RegistryEntry entry : rows) {
          if (this.setting != null && isGroupedKind(this.setting) && !entry.read.equals(lastGroup)) {
             height += groupH;
             lastGroup = entry.read;
@@ -1050,16 +1050,16 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
    }
 
    private boolean isOverAvailablePane(int mx, int my) {
-      RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
+      RegistrySelectorScreen.PaneLayout pane = this.availablePane();
       return mx >= pane.init() && mx < pane.init() + pane.write() && my >= pane.sync() && my < pane.sync() + pane.flush();
    }
 
    private boolean load(int mx, int my) {
-      RegistrySelectorScreen.Inner_BufferHelper pane = this.availablePane();
+      RegistrySelectorScreen.PaneLayout pane = this.availablePane();
       return mx >= pane.load() && mx < pane.load() + pane.write() && my >= pane.sync() && my < pane.sync() + pane.flush();
    }
 
-   private RegistrySelectorScreen.Inner_BufferHelper availablePane() {
+   private RegistrySelectorScreen.PaneLayout availablePane() {
       int panelX = this.panelX();
       int panelY = this.panelY();
       int paneY = this.bodyTop() + this.flush() + 2;
@@ -1069,7 +1069,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       int rightX = leftX + paneW + 4;
       int listTop = paneY + 2 + this.open();
       int listH = paneH - 4 - this.open();
-      return new RegistrySelectorScreen.Inner_BufferHelper(leftX, rightX, paneY, paneW, paneH, listTop, listH);
+      return new RegistrySelectorScreen.PaneLayout(leftX, rightX, paneY, paneW, paneH, listTop, listH);
    }
 
    private int headerHeight() {
@@ -1158,20 +1158,20 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       autismclient.gui.f.b.k.init(graphics, this.font, display, STYLE_THEME.init_Identifier_l(l.read), color, drawX, drawY, false);
    }
 
-   private record Inner_BufferHelper(int init, int load, int read, int write, int update, int sync, int flush) {
+   private record PaneLayout(int init, int load, int read, int write, int update, int sync, int flush) {
    }
 
-   private enum Inner_CachePool {
+   private enum RowAction {
       ADD,
       REMOVE,
       CLOSE;
    }
 
-   private record Inner_ConfigStore(String id, RegistrySelectorScreen.Inner_DataUtil entry, boolean init_Z) {
+   private record SelectedRow(String id, RegistrySelectorScreen.RegistryEntry entry, boolean init_Z) {
    }
 
-   private record Inner_DataUtil(String init_Str, String load, String read, ItemStack icon, boolean init_Z) {
-      private Inner_DataUtil {
+   private record RegistryEntry(String init_Str, String load, String read, ItemStack icon, boolean init_Z) {
+      private RegistryEntry {
          load = load != null && !load.isBlank() ? load : init_Str;
          read = read == null ? "" : read;
          icon = icon == null ? ItemStack.EMPTY : icon;
@@ -1194,7 +1194,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       }
    }
 
-   private record Inner_StreamUtil(RegistrySelectorScreen.Inner_CachePool action, int x, int load, int read, int write, String value) {
+   private record HitRegion(RegistrySelectorScreen.RowAction action, int x, int load, int read, int write, String value) {
       boolean contains(int mx, int my) {
          return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }

@@ -237,7 +237,7 @@ final class AiGuard {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && mc.level != null) {
          for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity.isAlive() && entity.distanceToSqr(mc.player) < 256.0 && AiThreats.classify(entity) == AiThreats.Inner_DataUtil.AVOID && AiThreats.isActiveThreat(mc, entity)) {
+            if (entity.isAlive() && entity.distanceToSqr(mc.player) < 256.0 && AiThreats.classify(entity) == AiThreats.ThreatKind.AVOID && AiThreats.isActiveThreat(mc, entity)) {
                return true;
             }
          }
@@ -585,7 +585,7 @@ final class AiGuard {
 
          for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity instanceof Mob mob && mob.isAlive() && !(mob.distanceToSqr(mc.player) > 256.0) && AiThreats.isActiveThreat(mc, mob)) {
-               AiThreats.Inner_DataUtil p = AiThreats.classify(mob);
+               AiThreats.ThreatKind p = AiThreats.classify(mob);
                double dx = mob.getX() - mc.player.getX();
                double dz = mob.getZ() - mc.player.getZ();
                double d = Math.hypot(dx, dz);
@@ -594,8 +594,8 @@ final class AiGuard {
                   return false;
                }
 
-               if (!autismclient.ai.engine.AiSight.init(mob) && p != AiThreats.Inner_DataUtil.CROSSBOW) {
-                  if (p == AiThreats.Inner_DataUtil.CREEPER) {
+               if (!autismclient.ai.engine.AiSight.init(mob) && p != AiThreats.ThreatKind.CROSSBOW) {
+                  if (p == AiThreats.ThreatKind.CREEPER) {
                      if (ahead || d < 5.0) {
                         return false;
                      }

@@ -126,7 +126,7 @@ public final class SelectableListBox<T> {
    }
 
    public void init_V_GuiGraphicsExtract(
-      GuiGraphicsExtractor ctx, Font textRenderer, double mouseX, double mouseY, SelectableListBox.Inner_DataUtil<T> customRenderer
+      GuiGraphicsExtractor ctx, Font textRenderer, double mouseX, double mouseY, SelectableListBox.RowRenderer<T> customRenderer
    ) {
       this.init_EventBus.beginFrame(ctx, this.border, this.background);
 
@@ -308,7 +308,7 @@ public final class SelectableListBox<T> {
    }
 
    @FunctionalInterface
-   public interface Inner_DataUtil<T> {
+   public interface RowRenderer<T> {
       void init(GuiGraphicsExtractor var1, Font var2, T var3, int var4, boolean var5, boolean var6, int var7, int var8, int var9, int var10, int var11);
    }
 }

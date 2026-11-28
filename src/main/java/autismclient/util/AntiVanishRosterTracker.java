@@ -22,22 +22,22 @@ public final class AntiVanishRosterTracker {
    public static final long close = 75000L;
    public static final long open = 5000L;
    private static final long poll = 250L;
-   private final Map<UUID, AntiVanishRosterTracker.Inner_CachePool> members = new HashMap<>();
-   private final Map<UUID, AntiVanishRosterTracker.Inner_BufferHelper> pendingRequests = new HashMap<>();
-   private final Map<UUID, AntiVanishRosterTracker.Inner_TaskQueue> lastSeen = new HashMap<>();
+   private final Map<UUID, AntiVanishRosterTracker.RosterMember> members = new HashMap<>();
+   private final Map<UUID, AntiVanishRosterTracker.PendingRequest> pendingRequests = new HashMap<>();
+   private final Map<UUID, AntiVanishRosterTracker.LastSeen> lastSeen = new HashMap<>();
    private final Map<UUID, Long> write_Map = new HashMap<>();
-   private Map<UUID, AntiVanishRosterTracker.Inner_ConfigStore> update_Map = Map.of();
+   private Map<UUID, AntiVanishRosterTracker.RosterProfile> update_Map = Map.of();
    private Map<String, UUID> sync_Map = Map.of();
 
-   public void init(Collection<AntiVanishRosterTracker.Inner_ConfigStore> profiles, long now) {
+   public void init(Collection<AntiVanishRosterTracker.RosterProfile> profiles, long now) {
       if (profiles.size() > 4096) {
          this.write();
       } else {
-         Map<UUID, AntiVanishRosterTracker.Inner_ConfigStore> live = new HashMap<>();
+         Map<UUID, AntiVanishRosterTracker.RosterProfile> live = new HashMap<>();
          Set<String> names = new HashSet<>();
          Set<String> duplicates = new HashSet<>();
 
-         for (AntiVanishRosterTracker.Inner_ConfigStore p : profiles) {
+         for (AntiVanishRosterTracker.RosterProfile p : profiles) {
             if (p.uuid != null && p.name != null) {
                live.put(p.uuid, p);
                if (!names.add(normalizeName(p.name))) {
@@ -49,7 +49,7 @@ public final class AntiVanishRosterTracker {
          this.update_Map = Map.copyOf(live);
          Map<String, UUID> byName = new HashMap<>();
 
-         for (AntiVanishRosterTracker.Inner_ConfigStore p : live.values()) {
+         for (AntiVanishRosterTracker.RosterProfile p : live.values()) {
             byName.put(normalizeName(p.name), p.uuid);
          }
 
@@ -59,7 +59,7 @@ public final class AntiVanishRosterTracker {
             .entrySet()
             .removeIf(
                entry -> {
-                  AntiVanishRosterTracker.Inner_ConfigStore px = live.get(entry.getKey());
+                  AntiVanishRosterTracker.RosterProfile px = live.get(entry.getKey());
                   String name = normalizeName(entry.getValue().name);
                   UUID client = byName.get(name);
                   return duplicates.contains(name)
@@ -69,18 +69,18 @@ public final class AntiVanishRosterTracker {
             );
          int departures = 0;
 
-         for (AntiVanishRosterTracker.Inner_CachePool m : this.members.values()) {
-            AntiVanishRosterTracker.Inner_ConfigStore p = live.get(m.id);
+         for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
+            AntiVanishRosterTracker.RosterProfile p = live.get(m.id);
             if (m.present && (p == null || !p.listed)) {
                departures++;
             }
          }
 
-         for (AntiVanishRosterTracker.Inner_ConfigStore p : live.values()) {
+         for (AntiVanishRosterTracker.RosterProfile p : live.values()) {
             if (p.load && !duplicates.contains(normalizeName(p.name)) && p.name.matches("[A-Za-z0-9_]{1,16}")) {
-               AntiVanishRosterTracker.Inner_CachePool m = this.members.get(p.uuid);
+               AntiVanishRosterTracker.RosterMember m = this.members.get(p.uuid);
                if (m == null || !m.name.equals(p.name)) {
-                  m = new AntiVanishRosterTracker.Inner_CachePool(p.uuid, p.name);
+                  m = new AntiVanishRosterTracker.RosterMember(p.uuid, p.name);
                   this.members.put(p.uuid, m);
                }
 
@@ -96,7 +96,7 @@ public final class AntiVanishRosterTracker {
             }
          }
 
-         for (AntiVanishRosterTracker.Inner_CachePool m : this.members.values()) {
+         for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
             if (!live.containsKey(m.id)) {
                m.write_Z = false;
                m.init(now, departures >= 4);
@@ -110,12 +110,12 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public void init(Collection<AntiVanishRosterTracker.Inner_ConfigStore> profiles, long requestedAt, long now) {
+   public void init(Collection<AntiVanishRosterTracker.RosterProfile> profiles, long requestedAt, long now) {
       if (requestedAt <= now && now - requestedAt <= 4000L && profiles.size() <= 4096) {
          Set<UUID> ids = new HashSet<>();
          Set<String> names = new HashSet<>();
 
-         for (AntiVanishRosterTracker.Inner_ConfigStore p : profiles) {
+         for (AntiVanishRosterTracker.RosterProfile p : profiles) {
             if (p.uuid == null || p.name == null || !ids.add(p.uuid) || !names.add(normalizeName(p.name))) {
                return;
             }
@@ -123,20 +123,20 @@ public final class AntiVanishRosterTracker {
 
          Set<UUID> seen = new HashSet<>();
 
-         for (AntiVanishRosterTracker.Inner_ConfigStore p : profiles) {
+         for (AntiVanishRosterTracker.RosterProfile p : profiles) {
             if (p.uuid != null && p.name != null && p.load && !p.listed && p.name.matches("[A-Za-z0-9_]{1,16}")) {
-               AntiVanishRosterTracker.Inner_ConfigStore client = this.update_Map.get(p.uuid);
+               AntiVanishRosterTracker.RosterProfile client = this.update_Map.get(p.uuid);
                if (client == null || !client.listed && client.load && client.name.equals(p.name)) {
                   UUID other = this.sync_Map.get(normalizeName(p.name));
                   if (other == null || other.equals(p.uuid)) {
                      if (!seen.add(p.uuid)) {
                         this.pendingRequests.remove(p.uuid);
                      } else {
-                        AntiVanishRosterTracker.Inner_BufferHelper fact = this.pendingRequests.get(p.uuid);
+                        AntiVanishRosterTracker.PendingRequest fact = this.pendingRequests.get(p.uuid);
                         if (fact == null || !fact.name.equals(p.name) || now - fact.load > 20000L) {
-                           this.pendingRequests.put(p.uuid, new AntiVanishRosterTracker.Inner_BufferHelper(p.name, requestedAt, now, 1));
+                           this.pendingRequests.put(p.uuid, new AntiVanishRosterTracker.PendingRequest(p.name, requestedAt, now, 1));
                         } else if (requestedAt - fact.requestedAt >= 1500L) {
-                           this.pendingRequests.put(p.uuid, new AntiVanishRosterTracker.Inner_BufferHelper(p.name, requestedAt, now, Math.min(2, fact.init_I + 1)));
+                           this.pendingRequests.put(p.uuid, new AntiVanishRosterTracker.PendingRequest(p.name, requestedAt, now, Math.min(2, fact.init_I + 1)));
                         }
                      }
                   }
@@ -155,11 +155,11 @@ public final class AntiVanishRosterTracker {
          for (UUID id : unknown) {
             if (id != null && id.variant() == 2 && id.version() >= 3 && id.version() <= 5 && !this.update_Map.containsKey(id)) {
                accepted.add(id);
-               AntiVanishRosterTracker.Inner_TaskQueue before = this.lastSeen.get(id);
+               AntiVanishRosterTracker.LastSeen before = this.lastSeen.get(id);
                if (before == null || now - before.seenAt > 75000L) {
-                  this.lastSeen.put(id, new AntiVanishRosterTracker.Inner_TaskQueue(now, 1));
+                  this.lastSeen.put(id, new AntiVanishRosterTracker.LastSeen(now, 1));
                } else if (now - before.seenAt >= 5000L) {
-                  this.lastSeen.put(id, new AntiVanishRosterTracker.Inner_TaskQueue(now, Math.min(2, before.init_I + 1)));
+                  this.lastSeen.put(id, new AntiVanishRosterTracker.LastSeen(now, Math.min(2, before.init_I + 1)));
                }
             }
          }
@@ -168,9 +168,9 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public void init(AntiVanishRosterTracker.Inner_DataUtil actor, String action, long now) {
+   public void init(AntiVanishRosterTracker.ActorInfo actor, String action, long now) {
       if (actor != null && actor.init_Z && !actor.load && action != null && !action.isBlank()) {
-         AntiVanishRosterTracker.Inner_CachePool m = this.members.get(actor.id);
+         AntiVanishRosterTracker.RosterMember m = this.members.get(actor.id);
          if (m != null && m.name.equals(actor.name) && m.init_Z(now)) {
             m.expireStale(now);
             if (m.update < 0L || now - m.update >= 250L) {
@@ -195,7 +195,7 @@ public final class AntiVanishRosterTracker {
             }
          }
 
-         for (AntiVanishRosterTracker.Inner_CachePool m : this.members.values()) {
+         for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
             if (m.init_Z(now) && requestedAt >= m.load_J + 2000L) {
                if (!offered.contains(normalizeName(m.name))) {
                   m.load_I = 0;
@@ -212,33 +212,33 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public List<AntiVanishRosterTracker.Inner_StreamUtil> collectAlerts(long now) {
-      List<AntiVanishRosterTracker.Inner_StreamUtil> out = new ArrayList<>();
+   public List<AntiVanishRosterTracker.VanishAlert> collectAlerts(long now) {
+      List<AntiVanishRosterTracker.VanishAlert> out = new ArrayList<>();
       this.pendingRequests.entrySet().removeIf(entry -> now - entry.getValue().load > 20000L);
 
-      for (Entry<UUID, AntiVanishRosterTracker.Inner_BufferHelper> entry : this.pendingRequests.entrySet()) {
-         AntiVanishRosterTracker.Inner_BufferHelper fact = entry.getValue();
+      for (Entry<UUID, AntiVanishRosterTracker.PendingRequest> entry : this.pendingRequests.entrySet()) {
+         AntiVanishRosterTracker.PendingRequest fact = entry.getValue();
          if (fact.init_I >= 2 && this.load(entry.getKey(), now)) {
-            out.add(new AntiVanishRosterTracker.Inner_StreamUtil(entry.getKey(), fact.name, "online outside TAB in two server roster checks"));
+            out.add(new AntiVanishRosterTracker.VanishAlert(entry.getKey(), fact.name, "online outside TAB in two server roster checks"));
          }
       }
 
       this.lastSeen.entrySet().removeIf(entry -> now - entry.getValue().seenAt > 75000L);
 
-      for (Entry<UUID, AntiVanishRosterTracker.Inner_TaskQueue> entry : this.lastSeen.entrySet()) {
+      for (Entry<UUID, AntiVanishRosterTracker.LastSeen> entry : this.lastSeen.entrySet()) {
          if (entry.getValue().init_I >= 2 && this.load(entry.getKey(), now)) {
             UUID id = entry.getKey();
             out.add(
-               new AntiVanishRosterTracker.Inner_StreamUtil(id, "UUID:" + id.toString().substring(0, 8), "unlisted UUID in two complete player-roster updates: " + id, true)
+               new AntiVanishRosterTracker.VanishAlert(id, "UUID:" + id.toString().substring(0, 8), "unlisted UUID in two complete player-roster updates: " + id, true)
             );
          }
       }
 
-      for (AntiVanishRosterTracker.Inner_CachePool m : this.members.values()) {
+      for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
          m.expireStale(now);
          if (m.load_Z(now) && this.load(m.id, now)) {
             out.add(
-               new AntiVanishRosterTracker.Inner_StreamUtil(
+               new AntiVanishRosterTracker.VanishAlert(
                   m.id, m.name, m.init_I >= 2 ? "repeated player actions outside TAB" : "player action + repeated online completion"
                )
             );
@@ -249,17 +249,17 @@ public final class AntiVanishRosterTracker {
    }
 
    public boolean init(UUID id, long now) {
-      AntiVanishRosterTracker.Inner_BufferHelper fact = this.pendingRequests.get(id);
+      AntiVanishRosterTracker.PendingRequest fact = this.pendingRequests.get(id);
       if (fact != null && fact.init_I >= 2 && now - fact.load <= 20000L) {
          return true;
       }
 
-      AntiVanishRosterTracker.Inner_TaskQueue pulse = this.lastSeen.get(id);
+      AntiVanishRosterTracker.LastSeen pulse = this.lastSeen.get(id);
       if (pulse != null && pulse.init_I >= 2 && now - pulse.seenAt <= 75000L) {
          return true;
       }
 
-      AntiVanishRosterTracker.Inner_CachePool m = this.members.get(id);
+      AntiVanishRosterTracker.RosterMember m = this.members.get(id);
       if (m != null) {
          m.expireStale(now);
       }
@@ -276,7 +276,7 @@ public final class AntiVanishRosterTracker {
    }
 
    public void init(String systemMessage, long now) {
-      for (AntiVanishRosterTracker.Inner_CachePool m : this.members.values()) {
+      for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
          if (NormalizedTextMatcher.load(systemMessage, m.name)) {
             m.init();
             if (!m.present) {
@@ -295,7 +295,7 @@ public final class AntiVanishRosterTracker {
    }
 
    public void resetProbes() {
-      this.members.values().forEach(AntiVanishRosterTracker.Inner_CachePool::init);
+      this.members.values().forEach(AntiVanishRosterTracker.RosterMember::init);
    }
 
    public void load() {
@@ -330,10 +330,10 @@ public final class AntiVanishRosterTracker {
       return true;
    }
 
-   private record Inner_BufferHelper(String name, long requestedAt, long load, int init_I) {
+   private record PendingRequest(String name, long requestedAt, long load, int init_I) {
    }
 
-   private static final class Inner_CachePool {
+   private static final class RosterMember {
       final UUID id;
       final String name;
       long presentSince = -1L;
@@ -349,7 +349,7 @@ public final class AntiVanishRosterTracker {
       int init_I;
       int load_I;
 
-      Inner_CachePool(UUID id, String name) {
+      RosterMember(UUID id, String name) {
          this.id = id;
          this.name = name;
       }
@@ -402,18 +402,18 @@ public final class AntiVanishRosterTracker {
       }
    }
 
-   public record Inner_ConfigStore(UUID uuid, String name, boolean listed, boolean load) {
+   public record RosterProfile(UUID uuid, String name, boolean listed, boolean load) {
    }
 
-   public record Inner_DataUtil(UUID id, String name, boolean init_Z, boolean load) {
+   public record ActorInfo(UUID id, String name, boolean init_Z, boolean load) {
    }
 
-   public record Inner_StreamUtil(UUID uuid, String name, String load, boolean uuidOnly) {
-      public Inner_StreamUtil(UUID id, String name, String evidence) {
+   public record VanishAlert(UUID uuid, String name, String load, boolean uuidOnly) {
+      public VanishAlert(UUID id, String name, String evidence) {
          this(id, name, evidence, false);
       }
    }
 
-   private record Inner_TaskQueue(long seenAt, int init_I) {
+   private record LastSeen(long seenAt, int init_I) {
    }
 }

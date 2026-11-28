@@ -16,8 +16,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
 import net.minecraft.resources.Identifier;
 
 public final class CustomPayloadFilter {
-   private static final CustomPayloadFilter.Inner_DataUtil init_IoWorker_DataUtil = new CustomPayloadFilter.Inner_DataUtil(CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2.PASS, null);
-   private static final CustomPayloadFilter.Inner_DataUtil load_IoWorker_DataUtil = new CustomPayloadFilter.Inner_DataUtil(CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2.DROP, null);
+   private static final CustomPayloadFilter.Verdict init_IoWorker_DataUtil = new CustomPayloadFilter.Verdict(CustomPayloadFilter.Verdict.VerdictKind.PASS, null);
+   private static final CustomPayloadFilter.Verdict load_IoWorker_DataUtil = new CustomPayloadFilter.Verdict(CustomPayloadFilter.Verdict.VerdictKind.DROP, null);
    private static final String init_Str = "minecraft";
    private static final String load_Str = "register";
    private static final String read = "unregister";
@@ -26,23 +26,23 @@ public final class CustomPayloadFilter {
    private CustomPayloadFilter() {
    }
 
-   public static CustomPayloadFilter.Inner_DataUtil init() {
+   public static CustomPayloadFilter.Verdict init() {
       return init_IoWorker_DataUtil;
    }
 
-   public static CustomPayloadFilter.Inner_DataUtil load() {
+   public static CustomPayloadFilter.Verdict load() {
       return load_IoWorker_DataUtil;
    }
 
-   public static CustomPayloadFilter.Inner_DataUtil init(Packet<?> packet) {
+   public static CustomPayloadFilter.Verdict init(Packet<?> packet) {
       return init(null, packet, ProtectorFeatureFlags.sync());
    }
 
-   static CustomPayloadFilter.Inner_DataUtil init(Packet<?> packet, boolean vanillaMode) {
+   static CustomPayloadFilter.Verdict init(Packet<?> packet, boolean vanillaMode) {
       return init(null, packet, vanillaMode);
    }
 
-   static CustomPayloadFilter.Inner_DataUtil init(Connection connection, Packet<?> packet, boolean vanillaMode) {
+   static CustomPayloadFilter.Verdict init(Connection connection, Packet<?> packet, boolean vanillaMode) {
       if (packet == null) {
          return init_IoWorker_DataUtil;
       }
@@ -91,8 +91,8 @@ public final class CustomPayloadFilter {
                return ModNamespaceCatalog.init(id) ? init_IoWorker_DataUtil : load_IoWorker_DataUtil;
             }
          } else {
-            CustomPayloadFilter.Inner_DataUtil verdict = init(connection, payload);
-            if ("register".equals(path) && verdict.kind != CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2.DROP) {
+            CustomPayloadFilter.Verdict verdict = init(connection, payload);
+            if ("register".equals(path) && verdict.kind != CustomPayloadFilter.Verdict.VerdictKind.DROP) {
                LateRegisterSynthesizer.init_V(connection);
             }
 
@@ -121,7 +121,7 @@ public final class CustomPayloadFilter {
       return null;
    }
 
-   private static CustomPayloadFilter.Inner_DataUtil init(Connection connection, CustomPacketPayload payload) {
+   private static CustomPayloadFilter.Verdict init(Connection connection, CustomPacketPayload payload) {
       if (payload instanceof RegistrationPayload registrationPayload) {
          List<Identifier> kept = init(registrationPayload.channels(), ModNamespaceCatalog::init);
          if (kept.size() == registrationPayload.channels().size()) {
@@ -129,8 +129,8 @@ public final class CustomPayloadFilter {
          } else {
             return kept.isEmpty()
                ? load_IoWorker_DataUtil
-               : new CustomPayloadFilter.Inner_DataUtil(
-                  CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2.REPLACE, new ServerboundCustomPayloadPacket(new RegistrationPayload(registrationPayload.type(), kept))
+               : new CustomPayloadFilter.Verdict(
+                  CustomPayloadFilter.Verdict.VerdictKind.REPLACE, new ServerboundCustomPayloadPacket(new RegistrationPayload(registrationPayload.type(), kept))
                );
          }
       } else {
@@ -192,16 +192,16 @@ public final class CustomPayloadFilter {
       return kept;
    }
 
-   public static final class Inner_DataUtil {
-      public final CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2 kind;
+   public static final class Verdict {
+      public final CustomPayloadFilter.Verdict.VerdictKind kind;
       public final Packet<?> replacement;
 
-      private Inner_DataUtil(CustomPayloadFilter.Inner_DataUtil.Inner_DataUtil_2 kind, Packet<?> replacement) {
+      private Verdict(CustomPayloadFilter.Verdict.VerdictKind kind, Packet<?> replacement) {
          this.kind = kind;
          this.replacement = replacement;
       }
 
-      public enum Inner_DataUtil_2 {
+      public enum VerdictKind {
          PASS,
          DROP,
          REPLACE;

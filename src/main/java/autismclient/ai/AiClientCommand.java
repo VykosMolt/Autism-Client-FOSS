@@ -30,8 +30,8 @@ final class AiClientCommand {
       });
       List<String> raw = new ArrayList<>();
 
-      autismclient.commands.CommandManager.Inner_DataUtil dispatch;
-      try (AutismClientMessaging.Inner_DataUtil ignored = AutismClientMessaging.capture(raw)) {
+      autismclient.commands.CommandManager.DispatchResult dispatch;
+      try (AutismClientMessaging.CaptureHandle ignored = AutismClientMessaging.capture(raw)) {
          dispatch = autismclient.commands.CommandManager.dispatch(line);
       }
 

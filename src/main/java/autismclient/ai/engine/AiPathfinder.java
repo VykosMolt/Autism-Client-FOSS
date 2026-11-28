@@ -96,7 +96,7 @@ public final class AiPathfinder {
    private AiPathfinder() {
    }
 
-   private static int headingBucket(AiPathfinder.UiHelper var0) {
+   private static int headingBucket(AiPathfinder.PathStep var0) {
       if (var0 == null) {
          return 4;
       }
@@ -106,7 +106,7 @@ public final class AiPathfinder {
       return 3 * (var1 + 1) + var2 + 1;
    }
 
-   private static double transitionPenalty(AiPathfinder.UiHelper var0, AiPathfinder.UiHelper var1) {
+   private static double transitionPenalty(AiPathfinder.PathStep var0, AiPathfinder.PathStep var1) {
       if (var0 == null) {
          return 0.0;
       }
@@ -126,9 +126,9 @@ public final class AiPathfinder {
 
    private static double scorePathDuration(AiPathfinder.PathResult var0) {
       double var1 = 0.0;
-      AiPathfinder.UiHelper var3 = null;
+      AiPathfinder.PathStep var3 = null;
 
-      for (AiPathfinder.UiHelper var5 : var0.movements()) {
+      for (AiPathfinder.PathStep var5 : var0.movements()) {
          var1 += effectiveMoveTicks(var5) + transitionPenalty(var3, var5);
          var3 = var5;
       }
@@ -136,7 +136,7 @@ public final class AiPathfinder {
       return var1;
    }
 
-   private static double effectiveMoveTicks(AiPathfinder.UiHelper var0) {
+   private static double effectiveMoveTicks(AiPathfinder.PathStep var0) {
       AiJumpSolver.JumpPlan var1 = var0.jump();
       return var0.type() == AiPathfinder.MoveType.JUMP && var1 != null && var1.maneuver() != null
          ? Math.max(var1.ticks() + 4, var0.costTicks() - 12.0)
@@ -167,7 +167,7 @@ public final class AiPathfinder {
             return var0;
          }
 
-         AiPathfinder.UiHelper var11 = (AiPathfinder.UiHelper)var7.get(var10);
+         AiPathfinder.PathStep var11 = (AiPathfinder.PathStep)var7.get(var10);
          ArrayList var12 = new ArrayList();
          var12.add(chainTrailNode(var11, var10 + 1, var8, 0.0));
          BlockPos var13 = var11.from();
@@ -179,10 +179,10 @@ public final class AiPathfinder {
                var9.probePos(var13), var9.probePos(var13.above()), var14
             )
             && AiJumpSolver.canStandAt(var9.plannerWorld(), var13.getX() + 0.5, var15, var13.getZ() + 0.5)) {
-            var9.incomingMove = var10 == 0 ? null : (AiPathfinder.UiHelper)var7.get(var10 - 1);
+            var9.incomingMove = var10 == 0 ? null : (AiPathfinder.PathStep)var7.get(var10 - 1);
 
             for (int var17 = var10 + 1; var17 < Math.min(var10 + 16, var7.size()); var17++) {
-               BlockPos var18 = ((AiPathfinder.UiHelper)var7.get(var17)).to();
+               BlockPos var18 = ((AiPathfinder.PathStep)var7.get(var17)).to();
                double var19 = Math.hypot(var18.getX() - var13.getX(), var18.getZ() - var13.getZ());
                AiPathfinder.CellInfo var21 = var9.probePos(var18.below());
                double var22 = AiPathfinder.MoveGenerator.surfaceY(var18.getY(), var21);
@@ -198,7 +198,7 @@ public final class AiPathfinder {
                   )) {
                   AiJumpSolver.JumpPlan var26 = var9.solveJumpCached(var13, var15, var18, var22, 0.0, var2.canSprint());
                   if (var26 != null && !(var26.margin() < 0.08) && !AiPathfinder.MoveGenerator.hasLavaUnderJump(var9, var13, var18)) {
-                     AiPathfinder.UiHelper var27 = AiPathfinder.UiHelper.jump(
+                     AiPathfinder.PathStep var27 = AiPathfinder.PathStep.jump(
                         var13, var18, AiPathfinder.MoveCosts.jumpPlanCost(var26), var26
                      );
                      if (!var6.contains(AiPathfinder.MoveKey.of(var27))) {
@@ -222,7 +222,7 @@ public final class AiPathfinder {
       return new AiPathfinder.PathResult(var29, true, var0.expanded(), false, false);
    }
 
-   private static AiPathfinder.TrailNode chainTrailNode(AiPathfinder.UiHelper var0, int var1, List<List<AiPathfinder.TrailNode>> var2, double var3) {
+   private static AiPathfinder.TrailNode chainTrailNode(AiPathfinder.PathStep var0, int var1, List<List<AiPathfinder.TrailNode>> var2, double var3) {
       AiPathfinder.TrailNode var5 = null;
       double var6 = 1.0 / 0.0;
       if (var1 < var2.size()) {
@@ -248,12 +248,12 @@ public final class AiPathfinder {
       AiPlannerWorld var7 = var6.plannerWorld();
 
       for (int var8 = 0; var8 + 1 < var5.size() && !Thread.currentThread().isInterrupted(); var8++) {
-         AiPathfinder.UiHelper var9 = (AiPathfinder.UiHelper)var5.get(var8);
+         AiPathfinder.PathStep var9 = (AiPathfinder.PathStep)var5.get(var8);
          ArrayList<AiJumpSolver.SurfaceCell> var10 = new ArrayList<>(4);
          int var11 = 0;
 
          for (int var12 = var8; var12 < Math.min(var8 + 4, var5.size()); var12++) {
-            AiPathfinder.UiHelper var13 = (AiPathfinder.UiHelper)var5.get(var12);
+            AiPathfinder.PathStep var13 = (AiPathfinder.PathStep)var5.get(var12);
             if (var13.type() != AiPathfinder.MoveType.JUMP
                || var13.jump() == null
                || !var13.jump().sprint()
@@ -293,7 +293,7 @@ public final class AiPathfinder {
             var var18 = AiJumpSolver.solveJumpChain(var7, var17, var20.yaw(), var10);
             if (var18.size() == var10.size() && var18.stream().mapToInt(AiJumpSolver.JumpPlan::ticks).sum() < var11 - 1) {
                for (int var19 = 0; var19 < var18.size(); var19++) {
-                  var5.set(var8 + var19, ((AiPathfinder.UiHelper)var5.get(var8 + var19)).withPaceJump((AiJumpSolver.JumpPlan)var18.get(var19)));
+                  var5.set(var8 + var19, ((AiPathfinder.PathStep)var5.get(var8 + var19)).withPaceJump((AiJumpSolver.JumpPlan)var18.get(var19)));
                }
 
                var8 += var18.size() - 1;
@@ -304,13 +304,13 @@ public final class AiPathfinder {
       return new AiPathfinder.PathResult(var5, true, var0.expanded(), false, false);
    }
 
-   public static List<AiPathfinder.UiHelper> concatSegments(List<AiPathfinder.UiHelper> var0, List<AiPathfinder.UiHelper> var1) {
+   public static List<AiPathfinder.PathStep> concatSegments(List<AiPathfinder.PathStep> var0, List<AiPathfinder.PathStep> var1) {
       if (!var0.isEmpty() && !var1.isEmpty()) {
-         if (!((AiPathfinder.UiHelper)var1.get(0)).from().equals(((AiPathfinder.UiHelper)var0.get(var0.size() - 1)).to())) {
+         if (!((AiPathfinder.PathStep)var1.get(0)).from().equals(((AiPathfinder.PathStep)var0.get(var0.size() - 1)).to())) {
             return null;
          }
 
-         ArrayList<AiPathfinder.UiHelper> var2 = new ArrayList<>(var0.size() + var1.size());
+         ArrayList<AiPathfinder.PathStep> var2 = new ArrayList<>(var0.size() + var1.size());
          var2.addAll(var0);
          var2.addAll(var1);
          return var2;
@@ -319,16 +319,16 @@ public final class AiPathfinder {
       }
    }
 
-   static List<AiPathfinder.UiHelper> spliceDetour(List<AiPathfinder.UiHelper> var0, List<AiPathfinder.UiHelper> var1) {
+   static List<AiPathfinder.PathStep> spliceDetour(List<AiPathfinder.PathStep> var0, List<AiPathfinder.PathStep> var1) {
       if (!var0.isEmpty() && !var1.isEmpty()) {
          HashMap var2 = new HashMap();
 
          for (int var3 = 0; var3 < var1.size(); var3++) {
-            var2.putIfAbsent(((AiPathfinder.UiHelper)var1.get(var3)).from(), var3);
+            var2.putIfAbsent(((AiPathfinder.PathStep)var1.get(var3)).from(), var3);
          }
 
          for (int var6 = 0; var6 < var0.size(); var6++) {
-            Integer var4 = (Integer)var2.get(((AiPathfinder.UiHelper)var0.get(var6)).to());
+            Integer var4 = (Integer)var2.get(((AiPathfinder.PathStep)var0.get(var6)).to());
             if (var4 != null) {
                ArrayList var5 = new ArrayList(var6 + 1 + var1.size() - var4);
                var5.addAll(var0.subList(0, var6 + 1));
@@ -351,13 +351,13 @@ public final class AiPathfinder {
       }
    }
 
-   public static void blacklistJumpTemporarily(AiPathfinder.UiHelper var0, long var1) {
+   public static void blacklistJumpTemporarily(AiPathfinder.PathStep var0, long var1) {
       if (var0 != null && var0.type() == AiPathfinder.MoveType.JUMP) {
          blacklistMoveTemporarily(var0, var1);
       }
    }
 
-   public static void blacklistMoveTemporarily(AiPathfinder.UiHelper var0, long var1) {
+   public static void blacklistMoveTemporarily(AiPathfinder.PathStep var0, long var1) {
       if (var0 != null) {
          long var3 = System.nanoTime();
          GLOBAL_MOVE_BLACKLIST.values().removeIf(var2 -> var2 - var3 < 0L);
@@ -365,7 +365,7 @@ public final class AiPathfinder {
       }
    }
 
-   public static void recordMoveFailure(AiPathfinder.UiHelper var0) {
+   public static void recordMoveFailure(AiPathfinder.PathStep var0) {
       if (var0 != null) {
          long var1 = System.nanoTime();
          GLOBAL_MOVE_FAILURE_COUNTS.values().removeIf(var2 -> var1 - var2[1] > 120000000000L);
@@ -379,7 +379,7 @@ public final class AiPathfinder {
       }
    }
 
-   static boolean isGloballyBlacklisted(AiPathfinder.UiHelper var0) {
+   static boolean isGloballyBlacklisted(AiPathfinder.PathStep var0) {
       if (GLOBAL_MOVE_BLACKLIST.isEmpty()) {
          return false;
       }
@@ -433,11 +433,11 @@ public final class AiPathfinder {
    }
 
    static AiPathfinder.GridView withSimulatedEdits(
-      final AiPathfinder.GridView var0, List<AiPathfinder.UiHelper> var1
+      final AiPathfinder.GridView var0, List<AiPathfinder.PathStep> var1
    ) {
       HashMap var2 = new HashMap();
 
-      for (AiPathfinder.UiHelper var4 : var1) {
+      for (AiPathfinder.PathStep var4 : var1) {
          for (BlockPos var6 : var4.cellsToBreak()) {
             var2.put(var6.asLong(), AiPathfinder.CellInfo.air());
          }
@@ -1138,7 +1138,7 @@ public final class AiPathfinder {
    }
 
    record MoveKey(AiPathfinder.MoveType type, long from, long to) {
-      static AiPathfinder.MoveKey of(AiPathfinder.UiHelper var0) {
+      static AiPathfinder.MoveKey of(AiPathfinder.PathStep var0) {
          return new AiPathfinder.MoveKey(var0.type(), var0.from().asLong(), var0.to().asLong());
       }
    }
@@ -1605,7 +1605,7 @@ public final class AiPathfinder {
       }
    }
 
-   public record SearchProgress(int expanded, List<AiPathfinder.UiHelper> trail) {
+   public record SearchProgress(int expanded, List<AiPathfinder.PathStep> trail) {
    }
 
    public enum ReplanAction {
@@ -1624,7 +1624,7 @@ public final class AiPathfinder {
          int var6 = var1.getZ();
          int var7 = var6;
 
-         for (AiPathfinder.UiHelper var9 : var0.movements()) {
+         for (AiPathfinder.PathStep var9 : var0.movements()) {
             BlockPos var10 = var9.to();
             var2 = Math.min(var2, var10.getX());
             var3 = Math.max(var3, var10.getX());
@@ -1800,7 +1800,7 @@ public final class AiPathfinder {
          BlockPos var3,
          double var4,
          boolean var6,
-         List<AiPathfinder.UiHelper> var7
+         List<AiPathfinder.PathStep> var7
       ) {
          int var8 = var6 ? 2 : 1;
 
@@ -1831,7 +1831,7 @@ public final class AiPathfinder {
                                     var1.canSprint() && var1.strategy() != AiPathfinder.RouteStrategy.SAVER
                                  );
                                  if (var17 != null) {
-                                    var7.add(AiPathfinder.UiHelper.jump(var3, var12, AiPathfinder.MoveCosts.jumpPlanCost(var17), var17));
+                                    var7.add(AiPathfinder.PathStep.jump(var3, var12, AiPathfinder.MoveCosts.jumpPlanCost(var17), var17));
                                  }
                               }
                            }
@@ -1874,7 +1874,7 @@ public final class AiPathfinder {
       }
 
       public static int generateMoves(
-         AiPathfinder.GridView var0, AiPathfinder.PathOptions var1, Set<Long> var2, BlockPos var3, List<AiPathfinder.UiHelper> var4
+         AiPathfinder.GridView var0, AiPathfinder.PathOptions var1, Set<Long> var2, BlockPos var3, List<AiPathfinder.PathStep> var4
       ) {
          return generateMovesCached(new AiPathfinder.MoveGenerator.CachedGrid(var0, 256), var1, var2, var3, var4);
       }
@@ -1884,7 +1884,7 @@ public final class AiPathfinder {
          AiPathfinder.PathOptions var1,
          Set<Long> var2,
          BlockPos var3,
-         List<AiPathfinder.UiHelper> var4
+         List<AiPathfinder.PathStep> var4
       ) {
          var0.queryFlags = 0;
          var0.fallPolicy = var1.fallPolicy();
@@ -1950,7 +1950,7 @@ public final class AiPathfinder {
                && !var14.lava()
                && (var0.probePos(var48.above()).passable() || var0.probePos(var48.above()).climbable())
                && !var14.hazardFeet()) {
-               var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.CLIMB_1, var3, var48, 5.5));
+               var4.add(AiPathfinder.PathStep.travel(AiPathfinder.MoveType.CLIMB_1, var3, var48, 5.5));
             }
 
             BlockPos var16 = var3.below();
@@ -1964,7 +1964,7 @@ public final class AiPathfinder {
                         var0.probePos(var16.below())
                      )
                )) {
-               var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.CLIMB_1, var3, var16, 5.5));
+               var4.add(AiPathfinder.PathStep.travel(AiPathfinder.MoveType.CLIMB_1, var3, var16, 5.5));
             }
 
             if (var5.climbable()
@@ -2021,7 +2021,7 @@ public final class AiPathfinder {
                      }
 
                      var4.add(
-                        new AiPathfinder.UiHelper(
+                        new AiPathfinder.PathStep(
                            AiPathfinder.MoveType.DIG_TUNNEL,
                            var3,
                            var64,
@@ -2071,7 +2071,7 @@ public final class AiPathfinder {
 
                      double var120 = var1.strategy() == AiPathfinder.RouteStrategy.SAFEST ? 1.0 : 0.0;
                      var4.add(
-                        new AiPathfinder.UiHelper(
+                        new AiPathfinder.PathStep(
                            AiPathfinder.MoveType.DIG_DESCEND, var3, var74, var93, List.of(), AiPathfinder.MoveCosts.descendCost(1) + var120 + var25, var27
                         )
                      );
@@ -2105,7 +2105,7 @@ public final class AiPathfinder {
 
                   if (var78 >= 0) {
                      double var87 = var1.strategy() == AiPathfinder.RouteStrategy.SAVER ? 9.0 : 4.5;
-                     AiPathfinder.UiHelper var98 = var0.incomingMove;
+                     AiPathfinder.PathStep var98 = var0.incomingMove;
                      boolean var105 = var98 != null
                         && var98.type() == AiPathfinder.MoveType.BRIDGE_CELL
                         && var98.to().getX() - var98.from().getX() == var64.getX() - var3.getX()
@@ -2122,7 +2122,7 @@ public final class AiPathfinder {
                         var87 += 1.125 * Math.min(var78 - 3, 20);
                      }
 
-                     var4.add(new AiPathfinder.UiHelper(AiPathfinder.MoveType.BRIDGE_CELL, var3, var64, List.of(), List.of(var64.below()), var87));
+                     var4.add(new AiPathfinder.PathStep(AiPathfinder.MoveType.BRIDGE_CELL, var3, var64, List.of(), List.of(var64.below()), var87));
                   }
                }
 
@@ -2154,7 +2154,7 @@ public final class AiPathfinder {
 
                      if (var99 >= 0) {
                         var4.add(
-                           new AiPathfinder.UiHelper(
+                           new AiPathfinder.PathStep(
                               AiPathfinder.MoveType.BRIDGE_CELL, var3, var79, List.of(), List.of(var88), 14.5 + AiPathfinder.MoveCosts.descendCost(1)
                            )
                         );
@@ -2176,7 +2176,7 @@ public final class AiPathfinder {
                      AiPathfinder.MoveType var131 = var95 ? AiPathfinder.MoveType.SPRINT : AiPathfinder.MoveType.WALK;
                      if (!isMoveTypeDisabled(var1, var131)) {
                         var4.add(
-                           AiPathfinder.UiHelper.travel(
+                           AiPathfinder.PathStep.travel(
                               var131,
                               var3,
                               var64,
@@ -2194,7 +2194,7 @@ public final class AiPathfinder {
                         && !var0.hasAdjacentContactHazard(var64)
                         && !var0.hasAdjacentContactHazard(var137)) {
                         var4.add(
-                           AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.SPRINT_JUMP, var3, var64, hasLowCeilingSprintJump(var0, var3, var64) ? 2.2 : 2.9000000000000004)
+                           AiPathfinder.PathStep.travel(AiPathfinder.MoveType.SPRINT_JUMP, var3, var64, hasLowCeilingSprintJump(var0, var3, var64) ? 2.2 : 2.9000000000000004)
                         );
                      }
                   } else if (var80 <= 1.250001
@@ -2209,7 +2209,7 @@ public final class AiPathfinder {
                      && !var19.web()
                      && !var0.probePos(var3.above(2)).web()
                      && var0.probePos(var3.above(2)).passable()) {
-                     var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.JUMP_UP_1, var3, var64, 9.0));
+                     var4.add(AiPathfinder.PathStep.travel(AiPathfinder.MoveType.JUMP_UP_1, var3, var64, 9.0));
                   }
                }
 
@@ -2239,7 +2239,7 @@ public final class AiPathfinder {
 
                   if (var81 != null && !var81.isEmpty()) {
                      var4.add(
-                        new AiPathfinder.UiHelper(
+                        new AiPathfinder.PathStep(
                            AiPathfinder.MoveType.DIG_TUNNEL,
                            var3,
                            var64,
@@ -2266,7 +2266,7 @@ public final class AiPathfinder {
                   && !var20.hazardFloor()
                   && !var20.lava()
                   && surfaceY(var64.getY(), var20) - var9 <= 0.5625) {
-                  var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.DOOR, var3, var64, 7.5));
+                  var4.add(AiPathfinder.PathStep.travel(AiPathfinder.MoveType.DOOR, var3, var64, 7.5));
                }
 
                BlockPos var82 = var64.above();
@@ -2288,7 +2288,7 @@ public final class AiPathfinder {
                               && !isMoveTypeDisabled(var1, AiPathfinder.MoveType.SPRINT);
                            double var138 = var123 > 0.0 && var123 <= 0.062501 ? 4.5 : (var133 ? 3.6 : 5.0);
                            var4.add(
-                              AiPathfinder.UiHelper.travel(
+                              AiPathfinder.PathStep.travel(
                                  AiPathfinder.MoveType.STEP_UP_1,
                                  var3,
                                  var102,
@@ -2308,7 +2308,7 @@ public final class AiPathfinder {
                         && !var0.probePos(var3.above(2)).web()
                         && (!var5.water() || checkOvershootColumn(var0, var82, var60[0], var60[1], 1, true))
                         && var0.probePos(var3.above(2)).passable()) {
-                        var4.add(AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.JUMP_UP_1, var3, var102, 9.0));
+                        var4.add(AiPathfinder.PathStep.travel(AiPathfinder.MoveType.JUMP_UP_1, var3, var102, 9.0));
                      }
                   }
                }
@@ -2358,7 +2358,7 @@ public final class AiPathfinder {
                         var134 *= 2.0;
                      }
 
-                     var4.add(new AiPathfinder.UiHelper(AiPathfinder.MoveType.DIG_ASCEND, var3, var82, var128, List.of(), 9.0 + var134, var142));
+                     var4.add(new AiPathfinder.PathStep(AiPathfinder.MoveType.DIG_ASCEND, var3, var82, var128, List.of(), 9.0 + var134, var142));
                   }
                }
 
@@ -2413,7 +2413,7 @@ public final class AiPathfinder {
                                     : AiPathfinder.MoveCosts.descendCost(3) + Math.ceil(Math.sqrt(var145) * 5.0 - 8.0)
                               );
                            var4.add(
-                              AiPathfinder.UiHelper.travel(
+                              AiPathfinder.PathStep.travel(
                                  var41,
                                  var3,
                                  var135,
@@ -2464,7 +2464,7 @@ public final class AiPathfinder {
                               double var46 = 255.0 * fallingWebOverlap(var0, var64.getX(), var64.getZ(), var9, var148.getY());
                               if (!isMoveTypeDisabled(var1, AiPathfinder.MoveType.DESCEND_SOFT)) {
                                  var4.add(
-                                    AiPathfinder.UiHelper.travel(
+                                    AiPathfinder.PathStep.travel(
                                        AiPathfinder.MoveType.DESCEND_SOFT,
                                        var3,
                                        var148,
@@ -2494,7 +2494,7 @@ public final class AiPathfinder {
                      int var136 = Math.max(1, var3.getY() - var130.getY());
                      double var140 = var1.strategy() == AiPathfinder.RouteStrategy.SAFEST ? var136 * 2.0 : 0.0;
                      var4.add(
-                        AiPathfinder.UiHelper.travel(AiPathfinder.MoveType.DESCEND_SOFT, var3, var130, AiPathfinder.MoveCosts.softDescendCost(var136) + var140)
+                        AiPathfinder.PathStep.travel(AiPathfinder.MoveType.DESCEND_SOFT, var3, var130, AiPathfinder.MoveCosts.softDescendCost(var136) + var140)
                      );
                   }
                }
@@ -2532,7 +2532,7 @@ public final class AiPathfinder {
                         AiPathfinder.MoveType var114 = var83 ? AiPathfinder.MoveType.SPRINT_DIAGONAL : AiPathfinder.MoveType.WALK_DIAGONAL;
                         if (!isMoveTypeDisabled(var1, var114)) {
                            var4.add(
-                              AiPathfinder.UiHelper.travel(
+                              AiPathfinder.PathStep.travel(
                                  var114,
                                  var3,
                                  var65,
@@ -2597,7 +2597,7 @@ public final class AiPathfinder {
                }
 
                var4.add(
-                  new AiPathfinder.UiHelper(
+                  new AiPathfinder.PathStep(
                      AiPathfinder.MoveType.PILLAR,
                      var3,
                      var3.above(),
@@ -2665,7 +2665,7 @@ public final class AiPathfinder {
                   }
 
                   var4.add(
-                     new AiPathfinder.UiHelper(
+                     new AiPathfinder.PathStep(
                         AiPathfinder.MoveType.DIG_DOWN_1,
                         var3,
                         var52,
@@ -2723,7 +2723,7 @@ public final class AiPathfinder {
       }
 
       private static void generateLadderSideJumps(
-         AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, BlockPos var2, boolean var3, List<AiPathfinder.UiHelper> var4
+         AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, BlockPos var2, boolean var3, List<AiPathfinder.PathStep> var4
       ) {
          boolean var5 = var0.probePos(var2.above()).climbable();
 
@@ -2749,7 +2749,7 @@ public final class AiPathfinder {
                            AiJumpSolver.JumpPlan var25 = AiLadderJump.putAt_IoUtil_TextState_TokenCore_TaskStat(var0.plannerWorld(), var24, var13, var15, var17);
                            if (var25 != null) {
                               var4.add(
-                                 new AiPathfinder.UiHelper(
+                                 new AiPathfinder.PathStep(
                                     AiPathfinder.MoveType.LADDER_JUMP, var2, var15, List.of(), List.of(), var25.ticks() + 5.5, -1.0, var25
                                  )
                               );
@@ -2785,7 +2785,7 @@ public final class AiPathfinder {
                            );
                            if (var37 != null) {
                               var4.add(
-                                 new AiPathfinder.UiHelper(
+                                 new AiPathfinder.PathStep(
                                     AiPathfinder.MoveType.LADDER_JUMP, var2, var34, List.of(), List.of(), var37.ticks() + 5.5, -1.0, var37
                                  )
                               );
@@ -2807,7 +2807,7 @@ public final class AiPathfinder {
          int var5,
          boolean var6,
          boolean var7,
-         List<AiPathfinder.UiHelper> var8
+         List<AiPathfinder.PathStep> var8
       ) {
          AiPlannerWorld var9 = var0.plannerWorld();
          AiPhysics.MotionState var10 = var6
@@ -2835,7 +2835,7 @@ public final class AiPathfinder {
                            BlockPos var24 = BlockPos.containing(var22.landX(), var22.landY(), var22.landZ());
                            if (!var1.contains(var24.asLong())) {
                               var8.add(
-                                 new AiPathfinder.UiHelper(
+                                 new AiPathfinder.PathStep(
                                     AiPathfinder.MoveType.LADDER_JUMP, var2, var24, List.of(), List.of(), var22.ticks() + 2.0, -1.0, var22
                                  )
                               );
@@ -2872,7 +2872,7 @@ public final class AiPathfinder {
          Set<Long> var2,
          BlockPos var3,
          double var4,
-         List<AiPathfinder.UiHelper> var6
+         List<AiPathfinder.PathStep> var6
       ) {
          boolean var7 = !var0.hasActiveEdits();
          List var8 = var7 ? var0.slimeBounceCache.get(var3) : null;
@@ -2885,17 +2885,17 @@ public final class AiPathfinder {
             }
          }
 
-         for (AiPathfinder.UiHelper var13 : (Iterable<AiPathfinder.UiHelper>)(Iterable<?>)(var8)) {
+         for (AiPathfinder.PathStep var13 : (Iterable<AiPathfinder.PathStep>)(Iterable<?>)(var8)) {
             if (!var2.contains(var13.to().asLong())) {
                var6.add(var13);
             }
          }
       }
 
-      private static List<AiPathfinder.UiHelper> solveSlimeBounces(
+      private static List<AiPathfinder.PathStep> solveSlimeBounces(
          AiPathfinder.MoveGenerator.CachedGrid var0, AiPathfinder.PathOptions var1, BlockPos var2, double var3
       ) {
-         ArrayList<AiPathfinder.UiHelper> var5 = new ArrayList<>();
+         ArrayList<AiPathfinder.PathStep> var5 = new ArrayList<>();
          boolean var6 = var1.canSprint() && var1.strategy() != AiPathfinder.RouteStrategy.SAVER;
 
          for (int[] var10 : EIGHT_DIRS) {
@@ -2919,7 +2919,7 @@ public final class AiPathfinder {
                            if (!var0.probePos(var21.cell().below()).farmland()) {
                               AiJumpSolver.JumpPlan var22 = var21.plan();
                               var5.add(
-                                 new AiPathfinder.UiHelper(
+                                 new AiPathfinder.PathStep(
                                     AiPathfinder.MoveType.SLIME_BOUNCE,
                                     var2,
                                     var21.cell(),
@@ -3025,7 +3025,7 @@ public final class AiPathfinder {
          BlockPos var3,
          AiPathfinder.CellInfo var4,
          double var5,
-         List<AiPathfinder.UiHelper> var7
+         List<AiPathfinder.PathStep> var7
       ) {
          boolean var8 = var0.isJumpBudgetExhausted();
          if (!var8 || !var0.isJumpBudgetExceededAt(var3)) {
@@ -3177,10 +3177,10 @@ public final class AiPathfinder {
                                  if (var0.deferredJumpSink != null) {
                                     var0.deferredJumpSink.accept(var69);
                                  } else {
-                                    AiPathfinder.UiHelper var70 = solveJumpCandidate(var0, var2, var69);
+                                    AiPathfinder.PathStep var70 = solveJumpCandidate(var0, var2, var69);
                                     if (var70 != null) {
                                        var7.add(var70);
-                                       AiPathfinder.UiHelper var71 = tryDoubleJumpChain(var0, var70, var2);
+                                       AiPathfinder.PathStep var71 = tryDoubleJumpChain(var0, var70, var2);
                                        if (var71 != null) {
                                           var7.add(var71);
                                        }
@@ -3206,7 +3206,7 @@ public final class AiPathfinder {
       }
 
       private static void generateWallJumpMoves(
-         AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, BlockPos var2, double var3, List<AiPathfinder.UiHelper> var5
+         AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, BlockPos var2, double var3, List<AiPathfinder.PathStep> var5
       ) {
          for (int[] var9 : CARDINAL_DIRS) {
             int var10 = var9[0];
@@ -3237,7 +3237,7 @@ public final class AiPathfinder {
                   if (var14.size() != 1) {
                      AiJumpSolver.JumpPlan var17 = AiWallJump.putAt(var0.plannerWorld(), var2, var3, var14);
                      if (var17 != null && !(var17.maneuver().replay(var0.plannerWorld(), var17.maneuver().start(), 0, var13, var3) < -0.04)) {
-                        var5.add(AiPathfinder.UiHelper.jump(var2, var13, AiPathfinder.MoveCosts.jumpPlanCost(var17), var17));
+                        var5.add(AiPathfinder.PathStep.jump(var2, var13, AiPathfinder.MoveCosts.jumpPlanCost(var17), var17));
                      }
                   }
                }
@@ -3274,7 +3274,7 @@ public final class AiPathfinder {
                && var0.putAt_S_I(var1.getX(), var1.getY(), var1.getZ()) != 1;
       }
 
-      private static AiPathfinder.UiHelper solveJumpCandidate(
+      private static AiPathfinder.PathStep solveJumpCandidate(
          AiPathfinder.MoveGenerator.CachedGrid var0, Set<Long> var1, AiPathfinder.MoveGenerator.JumpCandidate var2
       ) {
          BlockPos var3 = var2.from();
@@ -3286,7 +3286,7 @@ public final class AiPathfinder {
             && var3.distToCenterSqr(var4.getX() + 0.5, var3.getY() + 0.5, var4.getZ() + 0.5) >= 16.0) {
             AiJumpSolver.JumpPlan var7 = AiJumpSolver.solveIceRunupJump(var0.plannerWorld(), var3, var2.sourceY(), var4, var5, true);
             if (var7 != null && !hasLavaUnderJump(var0, var3, var4) && (!AiPathfinder.MoveCosts.isCautiousParkourActive() || !hasDeepDropUnderJump(var0, var3, var4))) {
-               return AiPathfinder.UiHelper.jump(var3, var4, AiPathfinder.MoveCosts.jumpPlanCost(var7), var7);
+               return AiPathfinder.PathStep.jump(var3, var4, AiPathfinder.MoveCosts.jumpPlanCost(var7), var7);
             }
          }
 
@@ -3492,7 +3492,7 @@ public final class AiPathfinder {
                var37 -= 10.0;
             }
 
-            return AiPathfinder.UiHelper.jump(
+            return AiPathfinder.PathStep.jump(
                var3, var4, var37 + var26 + (var0.probePos(var4).thorny() ? 25.0 : 0.0) + var21, var25
             );
          } else {
@@ -3519,8 +3519,8 @@ public final class AiPathfinder {
          }
       }
 
-      private static AiPathfinder.UiHelper tryDoubleJumpChain(
-         AiPathfinder.MoveGenerator.CachedGrid var0, AiPathfinder.UiHelper var1, Set<Long> var2
+      private static AiPathfinder.PathStep tryDoubleJumpChain(
+         AiPathfinder.MoveGenerator.CachedGrid var0, AiPathfinder.PathStep var1, Set<Long> var2
       ) {
          AiJumpSolver.JumpPlan var3 = var1.jump();
          if (var0.fullPhysicsParkour && !var3.running() && var3.maneuver() == null && var3.sprint() && var3.coastAfter() != 2147483647) {
@@ -3594,7 +3594,7 @@ public final class AiPathfinder {
                                        0.0,
                                        var26
                                     );
-                                    return AiPathfinder.UiHelper.jump(
+                                    return AiPathfinder.PathStep.jump(
                                        var4, var20, var1.costTicks() + AiPathfinder.MoveCosts.jumpPlanCost(var24), var27
                                     );
                                  }
@@ -3763,11 +3763,11 @@ public final class AiPathfinder {
          return var10000;
       }
 
-      static double exitSpeedOfMove(AiPathfinder.UiHelper var0) {
+      static double exitSpeedOfMove(AiPathfinder.PathStep var0) {
          return exitSpeedOfMove(var0, false);
       }
 
-      static double exitSpeedOfMove(AiPathfinder.UiHelper var0, boolean var1) {
+      static double exitSpeedOfMove(AiPathfinder.PathStep var0, boolean var1) {
          if (var0 == null) {
             return 0.0;
          }
@@ -3816,7 +3816,7 @@ public final class AiPathfinder {
          Set<Long> var2,
          BlockPos var3,
          AiPathfinder.CellInfo var4,
-         List<AiPathfinder.UiHelper> var5
+         List<AiPathfinder.PathStep> var5
       ) {
          for (int[] var9 : CARDINAL_DIRS) {
             BlockPos var10 = var3.offset(var9[0], 0, var9[1]);
@@ -3861,7 +3861,7 @@ public final class AiPathfinder {
                      }
 
                      var5.add(
-                        new AiPathfinder.UiHelper(
+                        new AiPathfinder.PathStep(
                            AiPathfinder.MoveType.DIG_TUNNEL, var3, var10, var16, List.of(), AiPathfinder.MoveCosts.digTunnelCost(var17), var19
                         )
                      );
@@ -4269,7 +4269,7 @@ public final class AiPathfinder {
          return false;
       }
 
-      static boolean hasBridgeSupportAnchor(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, AiPathfinder.UiHelper var3) {
+      static boolean hasBridgeSupportAnchor(Function<BlockPos, AiPathfinder.CellInfo> var0, BlockPos var1, BlockPos var2, AiPathfinder.PathStep var3) {
          BlockPos var4 = var2.below();
          AiPathfinder.CellInfo var5 = (AiPathfinder.CellInfo)var0.apply(var4.below());
          if (var5.loaded() && !var5.passable()) {
@@ -4317,7 +4317,7 @@ public final class AiPathfinder {
          private AiPathfinder.CellInfo[] cacheValues;
          private final int maxCacheCapacity;
          int queryFlags;
-         AiPathfinder.UiHelper incomingMove;
+         AiPathfinder.PathStep incomingMove;
          boolean allowDeepPlatformLanding;
          NavigationOpenSet.Inner_DataUtil activeNode;
          static final int EDIT_TRAIL_DEPTH = 6;
@@ -4325,7 +4325,7 @@ public final class AiPathfinder {
          private AiPlannerWorld plannerWorld;
          private Long2LongOpenHashMap columnOccupancyCache;
          Map<AiPathfinder.MoveGenerator.CachedGrid.JumpCacheKey, Object> localJumpCache = new HashMap<>();
-         private final Map<BlockPos, List<AiPathfinder.UiHelper>> slimeBounceCache = new HashMap<>();
+         private final Map<BlockPos, List<AiPathfinder.PathStep>> slimeBounceCache = new HashMap<>();
          int jumpSolves;
          int jumpCacheHits;
          long jumpSolveNanos;
@@ -4358,7 +4358,7 @@ public final class AiPathfinder {
          private long[] overlayKeys;
          private AiPathfinder.CellInfo[] overlayValues;
          private int overlayCount;
-         private AiPathfinder.UiHelper overlayIncomingMove;
+         private AiPathfinder.PathStep overlayIncomingMove;
          private NavigationOpenSet.Inner_DataUtil overlayNode;
          private boolean overlayValid;
          private long overlayBloomMask;
@@ -4928,7 +4928,7 @@ public final class AiPathfinder {
                   var9 != null && var9.move != null && var7 < 6;
                   var7++
                ) {
-                  AiPathfinder.UiHelper var3 = var9.move;
+                  AiPathfinder.PathStep var3 = var9.move;
 
                   for (BlockPos var5 : var3.cellsToPlace()) {
                      this.putOverlayCell(var5.asLong(), PLACED_SOLID_CELL);
@@ -5082,7 +5082,7 @@ public final class AiPathfinder {
       private final NavigationOpenSet openSet = new NavigationOpenSet();
       private final Long2ObjectOpenHashMap<NavigationOpenSet.Inner_DataUtil> nodeTable = new Long2ObjectOpenHashMap<>(256);
       private final AiPathfinder.MoveGenerator.CachedGrid cachedGrid;
-      private final List<AiPathfinder.UiHelper> scratchMoves = new ArrayList<>(16);
+      private final List<AiPathfinder.PathStep> scratchMoves = new ArrayList<>(16);
       private NavigationOpenSet.Inner_DataUtil bestNode;
       private final long gridRevision;
       private int expandedCount;
@@ -5411,11 +5411,11 @@ public final class AiPathfinder {
                this.cachedGrid.activeNode = var2;
                if (!this.isJumpDominated(var2, var1.candidate().to(), var3)
                   || var1.continuation() != null && !this.isJumpDominated(var2, var1.continuation(), var3)) {
-                  AiPathfinder.UiHelper var5 = this.resolveQueuedJump(var1);
+                  AiPathfinder.PathStep var5 = this.resolveQueuedJump(var1);
                   if (var5 != null) {
                      this.generatedCount++;
                      this.relaxEdge(var2, var5);
-                     AiPathfinder.UiHelper var6 = AiPathfinder.MoveGenerator.tryDoubleJumpChain(
+                     AiPathfinder.PathStep var6 = AiPathfinder.MoveGenerator.tryDoubleJumpChain(
                         this.cachedGrid, var5, this.blacklistedCells
                      );
                      if (var6 != null) {
@@ -5451,7 +5451,7 @@ public final class AiPathfinder {
             + (this.worldRecordMode || !this.cachedGrid.fastPassMode && !this.cachedGrid.reducedJumpMode ? 3.0 : this.optimisticJumpCost(var1.candidate()));
       }
 
-      private AiPathfinder.UiHelper resolveQueuedJump(AiPathfinder.SearchSession.QueuedJump var1) {
+      private AiPathfinder.PathStep resolveQueuedJump(AiPathfinder.SearchSession.QueuedJump var1) {
          if (this.asyncWorkerLimit >= 2 && !this.destinationUnknown && !this.cachedGrid.hasActiveEdits()) {
             var var2 = this.pendingJumpFutures.computeIfAbsent(var1, this::submitAsyncJumpSolve);
             if (this.pendingJumpFutures.size() < this.asyncWorkerLimit * 2) {
@@ -5500,7 +5500,7 @@ public final class AiPathfinder {
       }
 
       private Future<AiPathfinder.SearchSession.JumpSolveStats> submitAsyncJumpSolve(AiPathfinder.SearchSession.QueuedJump var1) {
-         AiPathfinder.UiHelper var2 = var1.source().move;
+         AiPathfinder.PathStep var2 = var1.source().move;
          return JUMP_PROOF_EXECUTOR.submit(
             () -> {
                AiPathfinder.MoveGenerator.CachedGrid var3 = this.workerGridPool.poll();
@@ -5522,7 +5522,7 @@ public final class AiPathfinder {
                var3.jumpSolveNanos = var3.blockQueries = 0L;
 
                try {
-                  AiPathfinder.UiHelper var4 = AiPathfinder.MoveGenerator.solveJumpCandidate(
+                  AiPathfinder.PathStep var4 = AiPathfinder.MoveGenerator.solveJumpCandidate(
                      var3, this.blacklistedCells, var1.candidate()
                   );
                   return new AiPathfinder.SearchSession.JumpSolveStats(var4, var3.queryFlags, var3.jumpSolves, var3.jumpCacheHits, var3.jumpSolveNanos, var3.blockQueries);
@@ -5632,7 +5632,7 @@ public final class AiPathfinder {
 
                   this.generatedCount = this.generatedCount + this.scratchMoves.size();
 
-                  for (AiPathfinder.UiHelper var8 : this.scratchMoves) {
+                  for (AiPathfinder.PathStep var8 : this.scratchMoves) {
                      this.relaxEdge(var4, var8);
                   }
                }
@@ -5662,7 +5662,7 @@ public final class AiPathfinder {
                < this.startPos.distToCenterSqr(var6.getX() + 0.5, var6.getY() + 0.5, var6.getZ() + 0.5);
       }
 
-      private void relaxEdge(NavigationOpenSet.Inner_DataUtil var1, AiPathfinder.UiHelper var2) {
+      private void relaxEdge(NavigationOpenSet.Inner_DataUtil var1, AiPathfinder.PathStep var2) {
          if ((this.blacklistedMoves.isEmpty() || !this.blacklistedMoves.contains(AiPathfinder.MoveKey.of(var2))) && (this.ignoreGlobalBlacklist || !AiPathfinder.isGloballyBlacklisted(var2))) {
             boolean var3 = false;
 
@@ -5887,7 +5887,7 @@ public final class AiPathfinder {
          }
       }
 
-      List<AiPathfinder.UiHelper> currentBestTrail() {
+      List<AiPathfinder.PathStep> currentBestTrail() {
          ArrayDeque var1 = new ArrayDeque();
 
          for (NavigationOpenSet.Inner_DataUtil var2 = this.bestNode;
@@ -5930,7 +5930,7 @@ public final class AiPathfinder {
          return this.cachedGrid.blockQueries;
       }
 
-      private record JumpSolveStats(AiPathfinder.UiHelper movement, int flags, int solves, int hits, long nanos, long queries) {
+      private record JumpSolveStats(AiPathfinder.PathStep movement, int flags, int solves, int hits, long nanos, long queries) {
       }
 
       private record QueuedJump(
@@ -6241,14 +6241,14 @@ public final class AiPathfinder {
          return 0;
       }
 
-      default List<AiPathfinder.UiHelper> putAt_List() {
+      default List<AiPathfinder.PathStep> putAt_List() {
          return List.of();
       }
 
       BlockPos putAt_BlockPos();
    }
 
-   public record UiHelper(
+   public record PathStep(
       AiPathfinder.MoveType type,
       BlockPos from,
       BlockPos to,
@@ -6260,7 +6260,7 @@ public final class AiPathfinder {
       boolean repairFarmland,
       AiJumpSolver.JumpPlan paceJump
    ) {
-      public UiHelper(
+      public PathStep(
          AiPathfinder.MoveType var1,
          BlockPos var2,
          BlockPos var3,
@@ -6274,7 +6274,7 @@ public final class AiPathfinder {
          this(var1, var2, var3, var4, var5, var6, var8, var10, var11, null);
       }
 
-      public UiHelper(
+      public PathStep(
          AiPathfinder.MoveType var1,
          BlockPos var2,
          BlockPos var3,
@@ -6287,7 +6287,7 @@ public final class AiPathfinder {
          this(var1, var2, var3, var4, var5, var6, var8, var10, false);
       }
 
-      public UiHelper(
+      public PathStep(
          AiPathfinder.MoveType type,
          BlockPos from,
          BlockPos to,
@@ -6313,24 +6313,24 @@ public final class AiPathfinder {
          this.paceJump = paceJump;
       }
 
-      public UiHelper(AiPathfinder.MoveType var1, BlockPos var2, BlockPos var3, List<BlockPos> var4, List<BlockPos> var5, double var6, double var8) {
+      public PathStep(AiPathfinder.MoveType var1, BlockPos var2, BlockPos var3, List<BlockPos> var4, List<BlockPos> var5, double var6, double var8) {
          this(var1, var2, var3, var4, var5, var6, var8, null);
       }
 
-      UiHelper(AiPathfinder.MoveType var1, BlockPos var2, BlockPos var3, List<BlockPos> var4, List<BlockPos> var5, double var6) {
+      PathStep(AiPathfinder.MoveType var1, BlockPos var2, BlockPos var3, List<BlockPos> var4, List<BlockPos> var5, double var6) {
          this(var1, var2, var3, var4, var5, var6, -1.0);
       }
 
-      static AiPathfinder.UiHelper travel(AiPathfinder.MoveType var0, BlockPos var1, BlockPos var2, double var3) {
-         return new AiPathfinder.UiHelper(var0, var1, var2, List.of(), List.of(), var3);
+      static AiPathfinder.PathStep travel(AiPathfinder.MoveType var0, BlockPos var1, BlockPos var2, double var3) {
+         return new AiPathfinder.PathStep(var0, var1, var2, List.of(), List.of(), var3);
       }
 
-      static AiPathfinder.UiHelper jump(BlockPos var0, BlockPos var1, double var2, AiJumpSolver.JumpPlan var4) {
-         return new AiPathfinder.UiHelper(AiPathfinder.MoveType.JUMP, var0, var1, List.of(), List.of(), var2, -1.0, var4);
+      static AiPathfinder.PathStep jump(BlockPos var0, BlockPos var1, double var2, AiJumpSolver.JumpPlan var4) {
+         return new AiPathfinder.PathStep(AiPathfinder.MoveType.JUMP, var0, var1, List.of(), List.of(), var2, -1.0, var4);
       }
 
-      AiPathfinder.UiHelper withPaceJump(AiJumpSolver.JumpPlan var1) {
-         return new AiPathfinder.UiHelper(
+      AiPathfinder.PathStep withPaceJump(AiJumpSolver.JumpPlan var1) {
+         return new AiPathfinder.PathStep(
             this.type, this.from, this.to, this.cellsToBreak, this.cellsToPlace, this.costTicks, this.plannedBreakTicks, this.jump, this.repairFarmland, var1
          );
       }
@@ -6356,7 +6356,7 @@ public final class AiPathfinder {
    }
 
    public record PathResult(
-      List<AiPathfinder.UiHelper> movements,
+      List<AiPathfinder.PathStep> movements,
       boolean reachesGoal,
       int expanded,
       boolean hitPending,
@@ -6365,20 +6365,20 @@ public final class AiPathfinder {
       boolean confinedStart,
       boolean awaitingTerrain
    ) {
-      public PathResult(List<AiPathfinder.UiHelper> var1, boolean var2, int var3, boolean var4, boolean var5, boolean var6, boolean var7) {
+      public PathResult(List<AiPathfinder.PathStep> var1, boolean var2, int var3, boolean var4, boolean var5, boolean var6, boolean var7) {
          this(var1, var2, var3, var4, var5, var6, var7, false);
       }
 
-      public PathResult(List<AiPathfinder.UiHelper> var1, boolean var2, int var3, boolean var4, boolean var5) {
+      public PathResult(List<AiPathfinder.PathStep> var1, boolean var2, int var3, boolean var4, boolean var5) {
          this(var1, var2, var3, var4, var5, false, false);
       }
 
-      public PathResult(List<AiPathfinder.UiHelper> var1, boolean var2, int var3, boolean var4, boolean var5, boolean var6) {
+      public PathResult(List<AiPathfinder.PathStep> var1, boolean var2, int var3, boolean var4, boolean var5, boolean var6) {
          this(var1, var2, var3, var4, var5, var6, false);
       }
 
       public PathResult(
-         List<AiPathfinder.UiHelper> movements,
+         List<AiPathfinder.PathStep> movements,
          boolean reachesGoal,
          int expanded,
          boolean hitPending,
@@ -6405,7 +6405,7 @@ public final class AiPathfinder {
       public double totalCostTicks() {
          double var1 = 0.0;
 
-         for (AiPathfinder.UiHelper var4 : this.movements) {
+         for (AiPathfinder.PathStep var4 : this.movements) {
             var1 += var4.costTicks();
          }
 
@@ -7799,7 +7799,7 @@ public final class AiPathfinder {
             );
       }
 
-      void blacklistMove(AiPathfinder.UiHelper var1, BlockPos var2) {
+      void blacklistMove(AiPathfinder.PathStep var1, BlockPos var2) {
          this.blacklistedMoves
             .put(
                AiPathfinder.MoveKey.of(var1),
@@ -7951,7 +7951,7 @@ public final class AiPathfinder {
                   this.precomputingNext = false;
                   var var3 = var2.segment().movements();
                   if (var2.from().equals(this.currentPath.destination())
-                     && (var3.isEmpty() || ((AiPathfinder.UiHelper)var3.get(0)).from().equals(this.currentPath.destination()))) {
+                     && (var3.isEmpty() || ((AiPathfinder.PathStep)var3.get(0)).from().equals(this.currentPath.destination()))) {
                      this.queuedNextPath = var2.segment();
                      if (this.queuedNextPath.awaitingTerrain()) {
                         this.awaitTerrainRetryNanos = System.nanoTime() + 250000000L;
@@ -8042,7 +8042,7 @@ public final class AiPathfinder {
          Set var9;
          if (var3 && this.currentPath != null && !this.currentPath.movements().isEmpty()) {
             var9 = new HashSet<>(this.blacklistedMoves.keySet());
-            AiPathfinder.UiHelper var10 = this.currentPath.movements().getLast();
+            AiPathfinder.PathStep var10 = this.currentPath.movements().getLast();
             var9.add(new AiPathfinder.MoveKey(var10.type(), var10.to().asLong(), var10.from().asLong()));
          } else {
             var9 = Set.copyOf(this.blacklistedMoves.keySet());
@@ -8416,7 +8416,7 @@ public final class AiPathfinder {
       }
    }
 
-   private record TrailNode(AiPathfinder.UiHelper first, AiPathfinder.TrailNode next, double ticks) {
+   private record TrailNode(AiPathfinder.PathStep first, AiPathfinder.TrailNode next, double ticks) {
    }
 
    public interface GridView {

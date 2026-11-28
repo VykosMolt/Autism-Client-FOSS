@@ -28,21 +28,21 @@ public class VClipCommand extends Command {
       });
       root.then(init("blocks", options -> options));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("top").executes(ctx -> {
-         VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(0.0);
-         options.mode = VClipAction.Inner_StreamUtil.TOP;
+         VClipAction.ClipOptions options = VClipAction.ClipOptions.init(0.0);
+         options.mode = VClipAction.ClipMode.TOP;
          init(options);
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("bottom").executes(ctx -> {
-         VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(0.0);
-         options.mode = VClipAction.Inner_StreamUtil.BOTTOM;
+         VClipAction.ClipOptions options = VClipAction.ClipOptions.init(0.0);
+         options.mode = VClipAction.ClipMode.BOTTOM;
          init(options);
          return 1;
       }));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("default").then(init("blocks", options -> options)));
       root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("paper").then(init("blocks", options -> options)));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("single").then(init("blocks", VClipAction.Inner_CachePool::init)));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("normal").then(init("blocks", VClipAction.Inner_CachePool::init)));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("single").then(init("blocks", VClipAction.ClipOptions::init)));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("normal").then(init("blocks", VClipAction.ClipOptions::init)));
       root.then(
          LiteralArgumentBuilder.<AutismCommandSource>literal("custom")
             .then(
@@ -52,7 +52,7 @@ public class VClipCommand extends Command {
                      ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("segment", IntegerArgumentType.integer(1, 50))
                            .suggests(autismclient.commands.CommandSuggestions::read)
                            .executes(ctx -> {
-                              VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, "blocks"));
+                              VClipAction.ClipOptions options = VClipAction.ClipOptions.init(DoubleArgumentType.getDouble(ctx, "blocks"));
                               options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
                               init(options);
                               return 1;
@@ -61,7 +61,7 @@ public class VClipCommand extends Command {
                            ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("maxPackets", IntegerArgumentType.integer(1, 100))
                                  .suggests(autismclient.commands.CommandSuggestions::write)
                                  .executes(ctx -> {
-                                    VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, "blocks"));
+                                    VClipAction.ClipOptions options = VClipAction.ClipOptions.init(DoubleArgumentType.getDouble(ctx, "blocks"));
                                     options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
                                     options.maxPackets = IntegerArgumentType.getInteger(ctx, "maxPackets");
                                     init(options);
@@ -71,7 +71,7 @@ public class VClipCommand extends Command {
                                  ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("updateLocal", BoolArgumentType.bool())
                                        .suggests(autismclient.commands.CommandSuggestions::flush)
                                        .executes(ctx -> {
-                                          VClipAction.Inner_CachePool options = init(ctx);
+                                          VClipAction.ClipOptions options = init(ctx);
                                           options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                           init(options);
                                           return 1;
@@ -80,7 +80,7 @@ public class VClipCommand extends Command {
                                        ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("vehicle", BoolArgumentType.bool())
                                              .suggests(autismclient.commands.CommandSuggestions::flush)
                                              .executes(ctx -> {
-                                                VClipAction.Inner_CachePool options = init(ctx);
+                                                VClipAction.ClipOptions options = init(ctx);
                                                 options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                                 options.read = BoolArgumentType.getBool(ctx, "vehicle");
                                                 init(options);
@@ -90,7 +90,7 @@ public class VClipCommand extends Command {
                                              RequiredArgumentBuilder.<AutismCommandSource, Boolean>argument("forceGround", BoolArgumentType.bool())
                                                 .suggests(autismclient.commands.CommandSuggestions::flush)
                                                 .executes(ctx -> {
-                                                   VClipAction.Inner_CachePool options = init(ctx);
+                                                   VClipAction.ClipOptions options = init(ctx);
                                                    options.updateLocalPosition = BoolArgumentType.getBool(ctx, "updateLocal");
                                                    options.read = BoolArgumentType.getBool(ctx, "vehicle");
                                                    options.write = BoolArgumentType.getBool(ctx, "forceGround");
@@ -106,33 +106,33 @@ public class VClipCommand extends Command {
       );
    }
 
-   private static RequiredArgumentBuilder<AutismCommandSource, Double> init(String name, VClipCommand.Inner_DataUtil customizer) {
+   private static RequiredArgumentBuilder<AutismCommandSource, Double> init(String name, VClipCommand.OptionsCustomizer customizer) {
       return (RequiredArgumentBuilder<AutismCommandSource, Double>)RequiredArgumentBuilder.<AutismCommandSource, Double>argument(name, DoubleArgumentType.doubleArg())
          .suggests(autismclient.commands.CommandSuggestions::load)
          .executes(ctx -> {
-            VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, name));
+            VClipAction.ClipOptions options = VClipAction.ClipOptions.init(DoubleArgumentType.getDouble(ctx, name));
             init(customizer.apply(options));
             return 1;
          });
    }
 
-   private static VClipAction.Inner_CachePool init(CommandContext<AutismCommandSource> ctx) {
-      VClipAction.Inner_CachePool options = VClipAction.Inner_CachePool.init(DoubleArgumentType.getDouble(ctx, "blocks"));
+   private static VClipAction.ClipOptions init(CommandContext<AutismCommandSource> ctx) {
+      VClipAction.ClipOptions options = VClipAction.ClipOptions.init(DoubleArgumentType.getDouble(ctx, "blocks"));
       options.segmentBlocks = IntegerArgumentType.getInteger(ctx, "segment");
       options.maxPackets = IntegerArgumentType.getInteger(ctx, "maxPackets");
       return options;
    }
 
    public static void init(double blocks) {
-      init(VClipAction.Inner_CachePool.init(blocks));
+      init(VClipAction.ClipOptions.init(blocks));
    }
 
-   private static void init(VClipAction.Inner_CachePool options) {
+   private static void init(VClipAction.ClipOptions options) {
       options.update = true;
       VClipAction.init(Minecraft.getInstance(), options);
    }
 
-   private interface Inner_DataUtil {
-      VClipAction.Inner_CachePool apply(VClipAction.Inner_CachePool var1);
+   private interface OptionsCustomizer {
+      VClipAction.ClipOptions apply(VClipAction.ClipOptions var1);
    }
 }

@@ -56,7 +56,7 @@ final class AiWorldReaders {
       JsonArray rows = new JsonArray();
 
       try {
-         for (autismclient.util.macro.CaptureValueAction.Inner_JsonUtil line : autismclient.util.macro.CaptureValueAction.sidebarLines(mc)) {
+         for (autismclient.util.macro.CaptureValueAction.SidebarLine line : autismclient.util.macro.CaptureValueAction.sidebarLines(mc)) {
             if (rows.size() >= 15) {
                break;
             }
@@ -114,8 +114,8 @@ final class AiWorldReaders {
          }
 
          PlayerTabOverlay overlay = mc.gui.hud.getTabList();
-         decoration.addProperty("header", init(init(AiWorldReaders.Inner_DataUtil.init == null ? null : AiWorldReaders.Inner_DataUtil.init.get(overlay)), 1024));
-         decoration.addProperty("footer", init(init(AiWorldReaders.Inner_DataUtil.load == null ? null : AiWorldReaders.Inner_DataUtil.load.get(overlay)), 1024));
+         decoration.addProperty("header", init(init(AiWorldReaders.OverlayFields.init == null ? null : AiWorldReaders.OverlayFields.init.get(overlay)), 1024));
+         decoration.addProperty("footer", init(init(AiWorldReaders.OverlayFields.load == null ? null : AiWorldReaders.OverlayFields.load.get(overlay)), 1024));
       } catch (Throwable var3) {
       }
 
@@ -130,7 +130,7 @@ final class AiWorldReaders {
             return bars;
          }
 
-         if ((AiWorldReaders.Inner_DataUtil.read == null ? null : AiWorldReaders.Inner_DataUtil.read.get(mc.gui.hud.getBossOverlay())) instanceof Map<?, ?> map) {
+         if ((AiWorldReaders.OverlayFields.read == null ? null : AiWorldReaders.OverlayFields.read.get(mc.gui.hud.getBossOverlay())) instanceof Map<?, ?> map) {
             for (Object value : map.values()) {
                if (bars.size() >= 8) {
                   break;
@@ -715,7 +715,7 @@ final class AiWorldReaders {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class OverlayFields {
       private static final Field init = init(PlayerTabOverlay.class, "header");
       private static final Field load = init(PlayerTabOverlay.class, "footer");
       private static final Field read = init(BossHealthOverlay.class, "events");

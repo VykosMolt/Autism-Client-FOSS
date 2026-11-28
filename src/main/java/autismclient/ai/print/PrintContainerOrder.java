@@ -21,7 +21,7 @@ public final class PrintContainerOrder {
    private final Function<BlockPos, BlockState> init_Function;
    private final Object init_Obj;
    private final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
-   private final Long2ObjectOpenHashMap<PrintContainerOrder.Inner_DataUtil> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
+   private final Long2ObjectOpenHashMap<PrintContainerOrder.OrderEntry> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
    private final Long2ObjectOpenHashMap<LongOpenHashSet> load = new Long2ObjectOpenHashMap<>();
    private final LongLinkedOpenHashSet init_LongLinkedOpenHash = new LongLinkedOpenHashSet();
    private final Long2ObjectLinkedOpenHashMap<PrintMachineJob> init_Long2ObjectLinkedO = new Long2ObjectLinkedOpenHashMap<>();
@@ -52,7 +52,7 @@ public final class PrintContainerOrder {
       if (!job.load_Z() || !this.init_EventBus.hasChunkAt(job.position()) || !job.matchesSource(this.init_EventBus.getBlockState(job.position()))) {
          this.init_V(job.position());
       } else if (this.read()) {
-         PrintContainerOrder.Inner_DataUtil previous = this.init_Long2ObjectOpenHas.get(key);
+         PrintContainerOrder.OrderEntry previous = this.init_Long2ObjectOpenHas.get(key);
          if (previous == null || !this.init(previous, this.init_EventBus.getBlockState(job.position()))) {
             this.init_V(job.position());
             if (this.read()) {
@@ -60,7 +60,7 @@ public final class PrintContainerOrder {
                if (this.init(job.position(), dependencies)) {
                   dependencies.remove(key);
                   this.init_Long2ObjectOpenHas
-                     .put(key, new PrintContainerOrder.Inner_DataUtil(this.init_EventBus.getBlockState(job.position()), dependencies.toLongArray(), job));
+                     .put(key, new PrintContainerOrder.OrderEntry(this.init_EventBus.getBlockState(job.position()), dependencies.toLongArray(), job));
 
                   for (long dependency : dependencies) {
                      this.load.computeIfAbsent(dependency, ignored -> new LongOpenHashSet()).add(key);
@@ -78,7 +78,7 @@ public final class PrintContainerOrder {
    }
 
    public void init(long key, BlockState before, BlockState after) {
-      PrintContainerOrder.Inner_DataUtil receipt = this.init_Long2ObjectOpenHas.get(key);
+      PrintContainerOrder.OrderEntry receipt = this.init_Long2ObjectOpenHas.get(key);
       if ((
             receipt == null
                || !this.init(receipt, after)
@@ -113,7 +113,7 @@ public final class PrintContainerOrder {
    }
 
    private boolean init(long key, boolean recheck) {
-      PrintContainerOrder.Inner_DataUtil receipt = this.init_Long2ObjectOpenHas.remove(key);
+      PrintContainerOrder.OrderEntry receipt = this.init_Long2ObjectOpenHas.remove(key);
       if (receipt == null) {
          return false;
       }
@@ -218,7 +218,7 @@ public final class PrintContainerOrder {
          dependencies.add(at.asLong());
       }
 
-      PrintContainerOrder.Inner_DataUtil receipt = this.init_Long2ObjectOpenHas.get(at.asLong());
+      PrintContainerOrder.OrderEntry receipt = this.init_Long2ObjectOpenHas.get(at.asLong());
       BlockState state;
       if (this.init_EventBus.hasChunkAt(at)) {
          state = this.init_EventBus.getBlockState(at);
@@ -244,7 +244,7 @@ public final class PrintContainerOrder {
             dependencies.add(partner.asLong());
          }
 
-         PrintContainerOrder.Inner_DataUtil other = this.init_Long2ObjectOpenHas.get(partner.asLong());
+         PrintContainerOrder.OrderEntry other = this.init_Long2ObjectOpenHas.get(partner.asLong());
          if (other == null || !this.init(other, this.init_EventBus.hasChunkAt(partner) ? this.init_EventBus.getBlockState(partner) : other.source())) {
             return false;
          }
@@ -253,13 +253,13 @@ public final class PrintContainerOrder {
       return true;
    }
 
-   private boolean init(PrintContainerOrder.Inner_DataUtil receipt, BlockState state) {
+   private boolean init(PrintContainerOrder.OrderEntry receipt, BlockState state) {
       return receipt != null
          && PrintRules.matchesLayout(receipt.source(), state)
          && (!(state.getBlock() instanceof CrafterBlock) || !state.getValue(CrafterBlock.TRIGGERED) && !state.getValue(CrafterBlock.CRAFTING))
          && (!(state.getBlock() instanceof DispenserBlock) || !state.getValue(DispenserBlock.TRIGGERED));
    }
 
-   private record Inner_DataUtil(BlockState source, long[] dependencies, PrintMachineJob job) {
+   private record OrderEntry(BlockState source, long[] dependencies, PrintMachineJob job) {
    }
 }

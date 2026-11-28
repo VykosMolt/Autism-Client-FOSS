@@ -22,17 +22,17 @@ final class BedCoverPathSolver {
    static final int update = 5;
    private static final Direction[] DIRECTIONS = Direction.values();
    private static final BitSet NO_REMOVED = new BitSet();
-   private static final BedCoverPathSolver.Inner_StreamUtil OUT_OF_BOUNDS_NODE = new BedCoverPathSolver.Inner_StreamUtil(1, 1.0 / 0.0, -1);
-   private static final BedCoverPathSolver.Inner_StreamUtil UNUSED_EMPTY_NODE = new BedCoverPathSolver.Inner_StreamUtil(0, 0.0, -1);
+   private static final BedCoverPathSolver.GridNode OUT_OF_BOUNDS_NODE = new BedCoverPathSolver.GridNode(1, 1.0 / 0.0, -1);
+   private static final BedCoverPathSolver.GridNode UNUSED_EMPTY_NODE = new BedCoverPathSolver.GridNode(0, 0.0, -1);
    private static final double[] EYE_HEIGHTS = new double[]{1.62, 1.27};
    private static final int[] STEP_DYS = new int[]{0, 1, -1};
 
-   static BedCoverPathSolver.Inner_NetHelper plan(BedCoverPathSolver.Inner_ConfigStore g, Vec3 observer, double reach) {
+   static BedCoverPathSolver.CoverPlan plan(BedCoverPathSolver.CellGrid g, Vec3 observer, double reach) {
       return plan(g, observer, reach, minimalCover(g));
    }
 
-   static BedCoverPathSolver.Inner_NetHelper plan(
-      BedCoverPathSolver.Inner_ConfigStore g, Vec3 observer, double reach, BedCoverPathSolver.Inner_CachePool cover
+   static BedCoverPathSolver.CoverPlan plan(
+      BedCoverPathSolver.CellGrid g, Vec3 observer, double reach, BedCoverPathSolver.MinimalCover cover
    ) {
       double[] distance = new double[g.write];
       Arrays.fill(distance, 1.0 / 0.0);
@@ -72,7 +72,7 @@ final class BedCoverPathSolver {
       }
 
       double best = 1.0 / 0.0;
-      BedCoverPathSolver.Inner_TaskQueue winner = null;
+      BedCoverPathSolver.BreakRoute winner = null;
       Vec3 winnerEye = null;
       Vec3 winnerAim = null;
 
@@ -98,7 +98,7 @@ final class BedCoverPathSolver {
                         }
 
                         if (!(cost >= best)) {
-                           BedCoverPathSolver.Inner_TaskQueue proof = planBreakRoute(g, parent, i, reach);
+                           BedCoverPathSolver.BreakRoute proof = planBreakRoute(g, parent, i, reach);
                            if (proof != null) {
                               List<Integer> remaining = traceRay(g, eye, target, -1, proof.removed);
                               if (remaining != null) {
@@ -155,27 +155,27 @@ final class BedCoverPathSolver {
       }
 
       if (winner == null) {
-         return new BedCoverPathSolver.Inner_NetHelper(cover.cells, List.of(), List.of(), 1.0 / 0.0, false, cover.init_I, null, null);
+         return new BedCoverPathSolver.CoverPlan(cover.cells, List.of(), List.of(), 1.0 / 0.0, false, cover.init_I, null, null);
       }
 
       double ticks = winner.breakBlocks.stream().mapToDouble(p -> g.nodeAt(g.indexOf(p)).breakCost).sum()
          + Math.max(0, winner.breakBlocks.size() - 1) * 5;
-      return new BedCoverPathSolver.Inner_NetHelper(
+      return new BedCoverPathSolver.CoverPlan(
          cover.cells, List.copyOf(winner.breakBlocks), List.copyOf(winner.route), ticks, true, cover.init_I, winnerEye, winnerAim
       );
    }
 
-   private static int stepUpHeadCell(BedCoverPathSolver.Inner_ConfigStore g, int from, int to) {
+   private static int stepUpHeadCell(BedCoverPathSolver.CellGrid g, int from, int to) {
       return g.yOf(to) > g.yOf(from)
          ? g.index(g.xOf(from), g.yOf(from) + 2, g.zOf(from))
          : (g.yOf(to) < g.yOf(from) ? g.index(g.xOf(to), g.yOf(from) + 1, g.zOf(to)) : -1);
    }
 
-   private static boolean isOpenCell(BedCoverPathSolver.Inner_ConfigStore g, int i, BitSet removed) {
+   private static boolean isOpenCell(BedCoverPathSolver.CellGrid g, int i, BitSet removed) {
       return i >= 0 && (g.nodeAt(i).kind == 0 || removed.get(i));
    }
 
-   private static boolean canStandAt(BedCoverPathSolver.Inner_ConfigStore g, int i, BitSet removed) {
+   private static boolean canStandAt(BedCoverPathSolver.CellGrid g, int i, BitSet removed) {
       int floor = g.neighbor(i, Direction.DOWN);
       return isOpenCell(g, i, removed)
          && isOpenCell(g, g.neighbor(i, Direction.UP), removed)
@@ -185,7 +185,7 @@ final class BedCoverPathSolver {
          && g.nodeAt(floor).kind != 3;
    }
 
-   private static BedCoverPathSolver.Inner_TaskQueue planBreakRoute(BedCoverPathSolver.Inner_ConfigStore g, int[] parent, int finish, double reach) {
+   private static BedCoverPathSolver.BreakRoute planBreakRoute(BedCoverPathSolver.CellGrid g, int[] parent, int finish, double reach) {
       ArrayList<Integer> route = new ArrayList<>();
       int i = finish;
 
@@ -195,7 +195,7 @@ final class BedCoverPathSolver {
       }
 
       Collections.reverse(route);
-      BedCoverPathSolver.Inner_TaskQueue proof = new BedCoverPathSolver.Inner_TaskQueue(new BitSet(g.write), new LinkedHashSet<>(), new ArrayList<>());
+      BedCoverPathSolver.BreakRoute proof = new BedCoverPathSolver.BreakRoute(new BitSet(g.write), new LinkedHashSet<>(), new ArrayList<>());
 
       for (int at = 0; at < route.size(); at++) {
          int ix = route.get(at);
@@ -239,7 +239,7 @@ final class BedCoverPathSolver {
       return proof;
    }
 
-   private static boolean canReachBlock(BedCoverPathSolver.Inner_ConfigStore g, int stance, int block, double reach, BitSet removed) {
+   private static boolean canReachBlock(BedCoverPathSolver.CellGrid g, int stance, int block, double reach, BitSet removed) {
       BlockPos feet = g.posAt(stance);
       BlockPos target = g.posAt(block);
 
@@ -269,11 +269,11 @@ final class BedCoverPathSolver {
       );
    }
 
-   static List<Integer> traceRay(BedCoverPathSolver.Inner_ConfigStore g, Vec3 start, Vec3 end) {
+   static List<Integer> traceRay(BedCoverPathSolver.CellGrid g, Vec3 start, Vec3 end) {
       return traceRay(g, start, end, -1, NO_REMOVED);
    }
 
-   private static List<Integer> traceRay(BedCoverPathSolver.Inner_ConfigStore g, Vec3 start, Vec3 end, int goal, BitSet removed) {
+   private static List<Integer> traceRay(BedCoverPathSolver.CellGrid g, Vec3 start, Vec3 end, int goal, BitSet removed) {
       Vec3 delta = end.subtract(start);
       int x = (int)Math.floor(start.x);
       int y = (int)Math.floor(start.y);
@@ -291,7 +291,7 @@ final class BedCoverPathSolver {
 
       for (int step = 0; step < 80; step++) {
          int i = g.index(x - g.origin.getX(), y - g.origin.getY(), z - g.origin.getZ());
-         BedCoverPathSolver.Inner_StreamUtil cell = g.nodeAt(i);
+         BedCoverPathSolver.GridNode cell = g.nodeAt(i);
          if (cell.kind == 1) {
             return null;
          }
@@ -325,7 +325,7 @@ final class BedCoverPathSolver {
                      y + ((subset & 2) != 0 ? dy : 0) - g.origin.getY(),
                      z + ((subset & 4) != 0 ? dz : 0) - g.origin.getZ()
                   );
-                  BedCoverPathSolver.Inner_StreamUtil edge = g.nodeAt(side);
+                  BedCoverPathSolver.GridNode edge = g.nodeAt(side);
                   if (edge.kind == 1) {
                      return null;
                   }
@@ -360,18 +360,18 @@ final class BedCoverPathSolver {
       return sign == 0 ? 1.0 / 0.0 : ((sign > 0 ? cell + 1 : cell) - start) / delta;
    }
 
-   static Set<BlockPos> coverCells(BedCoverPathSolver.Inner_ConfigStore g) {
+   static Set<BlockPos> coverCells(BedCoverPathSolver.CellGrid g) {
       return minimalCover(g).cells;
    }
 
-   static BedCoverPathSolver.Inner_CachePool minimalCover(BedCoverPathSolver.Inner_ConfigStore g) {
+   static BedCoverPathSolver.MinimalCover minimalCover(BedCoverPathSolver.CellGrid g) {
       BitSet removed = new BitSet(g.write);
       Set<BlockPos> result = new LinkedHashSet<>();
       int layers = 0;
       int infinity = 10000;
 
       for (int layer = 0; layer < 16; layer++) {
-         BedCoverPathSolver.Inner_BufferHelper flow = new BedCoverPathSolver.Inner_BufferHelper(g.write * 2 + 2);
+         BedCoverPathSolver.FlowNetwork flow = new BedCoverPathSolver.FlowNetwork(g.write * 2 + 2);
          int source = g.write * 2;
          int sink = source + 1;
 
@@ -418,10 +418,10 @@ final class BedCoverPathSolver {
          layers++;
       }
 
-      return new BedCoverPathSolver.Inner_CachePool(Collections.unmodifiableSet(result), layers);
+      return new BedCoverPathSolver.MinimalCover(Collections.unmodifiableSet(result), layers);
    }
 
-   private static final class Inner_BufferHelper {
+   private static final class FlowNetwork {
       final int[] head;
       final int[] level;
       final int[] currentArc;
@@ -431,7 +431,7 @@ final class BedCoverPathSolver {
       int[] capacity;
       int edgeCount;
 
-      Inner_BufferHelper(int size) {
+      FlowNetwork(int size) {
          this.head = new int[size];
          Arrays.fill(this.head, -1);
          this.level = new int[size];
@@ -536,25 +536,25 @@ final class BedCoverPathSolver {
       }
    }
 
-   record Inner_CachePool(Set<BlockPos> cells, int init_I) {
+   record MinimalCover(Set<BlockPos> cells, int init_I) {
    }
 
-   static final class Inner_ConfigStore {
+   static final class CellGrid {
       final BlockPos origin;
       final int sx;
       final int sizeY;
       final int sizeZ;
       final int write;
-      final BedCoverPathSolver.Inner_StreamUtil[] nodes;
+      final BedCoverPathSolver.GridNode[] nodes;
       final List<Integer> init_List = new ArrayList<>();
 
-      Inner_ConfigStore(BlockPos origin, int sx, int sy, int sz) {
+      CellGrid(BlockPos origin, int sx, int sy, int sz) {
          this.origin = origin;
          this.sx = sx;
          this.sizeY = sy;
          this.sizeZ = sz;
          this.write = sx * sy * sz;
-         this.nodes = new BedCoverPathSolver.Inner_StreamUtil[this.write];
+         this.nodes = new BedCoverPathSolver.GridNode[this.write];
          Arrays.fill(this.nodes, BedCoverPathSolver.OUT_OF_BOUNDS_NODE);
       }
 
@@ -595,7 +595,7 @@ final class BedCoverPathSolver {
             || this.yOf(i) == this.sizeY - 1;
       }
 
-      BedCoverPathSolver.Inner_StreamUtil nodeAt(int i) {
+      BedCoverPathSolver.GridNode nodeAt(int i) {
          return i < 0 ? BedCoverPathSolver.OUT_OF_BOUNDS_NODE : this.nodes[i];
       }
 
@@ -620,7 +620,7 @@ final class BedCoverPathSolver {
       }
    }
 
-   record Inner_NetHelper(
+   record CoverPlan(
       Set<BlockPos> init_Set, List<BlockPos> path, List<BlockPos> load_List, double breakTicks, boolean init_Z, int coverCut, Vec3 init_Vec3, Vec3 load_Vec3
    ) {
       boolean init_Z_2() {
@@ -632,9 +632,9 @@ final class BedCoverPathSolver {
       }
    }
 
-   record Inner_StreamUtil(int kind, double breakCost, int load) {
+   record GridNode(int kind, double breakCost, int load) {
    }
 
-   private record Inner_TaskQueue(BitSet removed, LinkedHashSet<BlockPos> breakBlocks, List<BlockPos> route) {
+   private record BreakRoute(BitSet removed, LinkedHashSet<BlockPos> breakBlocks, List<BlockPos> route) {
    }
 }

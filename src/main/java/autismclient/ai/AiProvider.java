@@ -219,18 +219,18 @@ public final class AiProvider implements AutoCloseable {
    }
 
    public JsonObject init_JsonObject_Str(String system, List<JsonObject> history, JsonArray functions) {
-      return this.buildRequest(AiContext.Inner_StreamUtil.of(system), history, functions, null);
+      return this.buildRequest(AiContext.PromptParts.of(system), history, functions, null);
    }
 
    public JsonObject init_JsonObject_Str(String system, List<JsonObject> history, JsonArray functions, String toolChoice) {
-      return this.buildRequest(AiContext.Inner_StreamUtil.of(system), history, functions, toolChoice);
+      return this.buildRequest(AiContext.PromptParts.of(system), history, functions, toolChoice);
    }
 
-   public JsonObject init_JsonObject_c_StreamUtil(AiContext.Inner_StreamUtil prompt, List<JsonObject> history, JsonArray functions) {
+   public JsonObject init_JsonObject_c_StreamUtil(AiContext.PromptParts prompt, List<JsonObject> history, JsonArray functions) {
       return this.buildRequest(prompt, history, functions, null);
    }
 
-   public synchronized JsonObject buildRequest(AiContext.Inner_StreamUtil prompt, List<JsonObject> history, JsonArray functions, String toolChoice) {
+   public synchronized JsonObject buildRequest(AiContext.PromptParts prompt, List<JsonObject> history, JsonArray functions, String toolChoice) {
       String effort = this.load();
       JsonObject body = AiJson.objectOf("model", this.settings.model, "stream", true);
       JsonArray wireTools = new JsonArray();
@@ -385,7 +385,7 @@ public final class AiProvider implements AutoCloseable {
       return body;
    }
 
-   static JsonArray systemBlocks(AiContext.Inner_StreamUtil prompt) {
+   static JsonArray systemBlocks(AiContext.PromptParts prompt) {
       JsonArray system = new JsonArray();
       JsonObject stable = AiJson.objectOf("type", "text", "text", prompt.stable().isEmpty() ? "." : prompt.stable());
       stable.add("cache_control", CACHE_CONTROL.deepCopy());
@@ -526,7 +526,7 @@ public final class AiProvider implements AutoCloseable {
    public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str(
       String system, List<JsonObject> history, JsonArray functions, Consumer<String> onText, BooleanSupplier cancelled
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-      return this.completeWithContext(AiContext.Inner_StreamUtil.of(system), history, functions, null, onText, cancelled, call -> {});
+      return this.completeWithContext(AiContext.PromptParts.of(system), history, functions, null, onText, cancelled, call -> {});
    }
 
    public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str_2(
@@ -537,13 +537,13 @@ public final class AiProvider implements AutoCloseable {
       BooleanSupplier cancelled,
       Consumer<AiProvider.Inner_CachePool> onCallReady
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-      return this.completeWithContext(AiContext.Inner_StreamUtil.of(system), history, functions, null, onText, cancelled, onCallReady);
+      return this.completeWithContext(AiContext.PromptParts.of(system), history, functions, null, onText, cancelled, onCallReady);
    }
 
    public AiProvider.Inner_BufferHelper complete(
       String system, List<JsonObject> history, JsonArray functions, String toolChoice, Consumer<String> onText, BooleanSupplier cancelled
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-      return this.completeWithContext(AiContext.Inner_StreamUtil.of(system), history, functions, toolChoice, onText, cancelled, call -> {});
+      return this.completeWithContext(AiContext.PromptParts.of(system), history, functions, toolChoice, onText, cancelled, call -> {});
    }
 
    public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str(
@@ -555,11 +555,11 @@ public final class AiProvider implements AutoCloseable {
       BooleanSupplier cancelled,
       Consumer<AiProvider.Inner_CachePool> onCallReady
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-      return this.completeWithContext(AiContext.Inner_StreamUtil.of(system), history, functions, toolChoice, onText, cancelled, onCallReady);
+      return this.completeWithContext(AiContext.PromptParts.of(system), history, functions, toolChoice, onText, cancelled, onCallReady);
    }
 
    public AiProvider.Inner_BufferHelper completeWithContext(
-      AiContext.Inner_StreamUtil prompt,
+      AiContext.PromptParts prompt,
       List<JsonObject> history,
       JsonArray functions,
       String toolChoice,

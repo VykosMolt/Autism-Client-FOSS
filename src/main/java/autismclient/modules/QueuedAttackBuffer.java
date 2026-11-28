@@ -7,22 +7,22 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 final class QueuedAttackBuffer {
-   private final ArrayDeque<QueuedAttackBuffer.Inner_DataUtil> init = new ArrayDeque<>();
+   private final ArrayDeque<QueuedAttackBuffer.QueuedAttack> init = new ArrayDeque<>();
 
    boolean init(Object target, Runnable attack, Runnable receipt) {
       if (this.init.size() >= 4) {
          return false;
       }
 
-      this.init.addLast(new QueuedAttackBuffer.Inner_DataUtil(target, Objects.requireNonNull(attack), receipt == null ? () -> {} : receipt, null));
+      this.init.addLast(new QueuedAttackBuffer.QueuedAttack(target, Objects.requireNonNull(attack), receipt == null ? () -> {} : receipt, null));
       return true;
    }
 
    boolean enqueue(Runnable swing) {
-      QueuedAttackBuffer.Inner_DataUtil last = this.init.peekLast();
+      QueuedAttackBuffer.QueuedAttack last = this.init.peekLast();
       if (last != null && last.read == null) {
          this.init.removeLast();
-         this.init.addLast(new QueuedAttackBuffer.Inner_DataUtil(last.target, last.action, last.load, swing));
+         this.init.addLast(new QueuedAttackBuffer.QueuedAttack(last.target, last.action, last.load, swing));
          return true;
       } else {
          return false;
@@ -42,11 +42,11 @@ final class QueuedAttackBuffer {
    }
 
    int init(Predicate<Object> valid, Consumer<Object> sent) {
-      ArrayList<QueuedAttackBuffer.Inner_DataUtil> hits = new ArrayList<>(this.init);
+      ArrayList<QueuedAttackBuffer.QueuedAttack> hits = new ArrayList<>(this.init);
       this.init.clear();
       int count = 0;
 
-      for (QueuedAttackBuffer.Inner_DataUtil hit : hits) {
+      for (QueuedAttackBuffer.QueuedAttack hit : hits) {
          if (valid.test(hit.target)) {
             hit.action.run();
             sent.accept(hit.target);
@@ -70,10 +70,10 @@ final class QueuedAttackBuffer {
       return owner == null || owner.isBlank() || "kill-aura".equals(owner) || "kb-displacement".equals(owner);
    }
 
-   private record Inner_DataUtil(Object target, Runnable action, Runnable load, Runnable read) {
+   private record QueuedAttack(Object target, Runnable action, Runnable load, Runnable read) {
    }
 
-   static final class Inner_StreamUtil {
+   static final class HoldWindow {
       private long init_J;
       private boolean init_Z;
 

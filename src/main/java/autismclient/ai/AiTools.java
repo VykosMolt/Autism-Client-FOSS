@@ -3031,18 +3031,18 @@ final class AiTools {
          case "memory_remember": {
             String kindText = AiJson.getString(args, "kind", "HYPOTHESIS").trim();
 
-            AiMemoryStore.Inner_DataUtil kind;
+            AiMemoryStore.MemoryKind kind;
             try {
-               kind = AiMemoryStore.Inner_DataUtil.valueOf(kindText.toUpperCase(Locale.ROOT));
+               kind = AiMemoryStore.MemoryKind.valueOf(kindText.toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
                throw new IllegalArgumentException("Unknown memory kind " + kindText + "; valid kinds: USER, WORLD, PROCEDURE, HYPOTHESIS");
             }
 
-            if (kind == AiMemoryStore.Inner_DataUtil.PROCEDURE) {
+            if (kind == AiMemoryStore.MemoryKind.PROCEDURE) {
                throw new IllegalArgumentException("Use procedure_save with successful operation evidence IDs to save executable procedures");
             }
 
-            String memoryScope = kind == AiMemoryStore.Inner_DataUtil.USER ? "user" : this.service.getDimensionId();
+            String memoryScope = kind == AiMemoryStore.MemoryKind.USER ? "user" : this.service.getDimensionId();
             String text = AiJson.getString(args, "text", "");
             String payload = AiJson.getString(args, "payload", "");
             String evidence = AiJson.getString(args, "evidenceId", "");
@@ -3051,9 +3051,9 @@ final class AiTools {
             try {
                memory = this.service.getMemoryStore().init(kind, memoryScope, text, evidence, this.service.getCatalogSnapshot().revision(), payload);
             } catch (IllegalArgumentException e) {
-               String fallback = !this.service.init_Z() && kind != AiMemoryStore.Inner_DataUtil.HYPOTHESIS
+               String fallback = !this.service.init_Z() && kind != AiMemoryStore.MemoryKind.HYPOTHESIS
                   ? (
-                     kind == AiMemoryStore.Inner_DataUtil.USER
+                     kind == AiMemoryStore.MemoryKind.USER
                         ? this.service.lastObservationId()
                         : (this.service.getLatestObservation() == null ? null : this.service.getLatestObservation().id())
                   )

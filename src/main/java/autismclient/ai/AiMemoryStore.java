@@ -216,7 +216,7 @@ public final class AiMemoryStore {
    }
 
    public synchronized AiMemoryStore.Memory init(
-      AiMemoryStore.Inner_DataUtil kind, String scope, String text, String evidenceId, String revision, String payload
+      AiMemoryStore.MemoryKind kind, String scope, String text, String evidenceId, String revision, String payload
    ) throws IOException {
       if (text == null || text.isBlank() || text.length() > 16000) {
          throw new IllegalArgumentException("Invalid memory text");
@@ -224,12 +224,12 @@ public final class AiMemoryStore {
 
       if (payload != null && payload.length() <= 256000 && scope != null && scope.length() <= 2048) {
          AiObservation proof = this.read_Map.get(evidenceId);
-         if (kind == AiMemoryStore.Inner_DataUtil.HYPOTHESIS || proof != null && (scope.equals("user") || scope.equals(proof.scope()))) {
-            if (kind == AiMemoryStore.Inner_DataUtil.USER && !"user".equals(proof.source())) {
+         if (kind == AiMemoryStore.MemoryKind.HYPOTHESIS || proof != null && (scope.equals("user") || scope.equals(proof.scope()))) {
+            if (kind == AiMemoryStore.MemoryKind.USER && !"user".equals(proof.source())) {
                throw new IllegalArgumentException("User preferences require a user statement");
             }
 
-            if (kind == AiMemoryStore.Inner_DataUtil.PROCEDURE && !"verified-operation".equals(proof.source())) {
+            if (kind == AiMemoryStore.MemoryKind.PROCEDURE && !"verified-operation".equals(proof.source())) {
                throw new IllegalArgumentException("Procedures require a verified operation");
             }
 
@@ -250,7 +250,7 @@ public final class AiMemoryStore {
                   AiMemoryStore.Memory oldest = this.init_Map
                      .values()
                      .stream()
-                     .filter(r -> r.kind() == AiMemoryStore.Inner_DataUtil.HYPOTHESIS)
+                     .filter(r -> r.kind() == AiMemoryStore.MemoryKind.HYPOTHESIS)
                      .min(Comparator.comparingLong(AiMemoryStore.Memory::timestamp))
                      .orElse(null);
                   if (oldest == null) {
@@ -302,7 +302,7 @@ public final class AiMemoryStore {
    public List<AiMemoryStore.Memory> recall(String scope, String query) {
       List<AiMemoryStore.Memory> all = this.init_List;
       List<AiMemoryStore.Memory> users = all.stream()
-         .filter(m -> m.kind() == AiMemoryStore.Inner_DataUtil.USER && "user".equals(m.scope()))
+         .filter(m -> m.kind() == AiMemoryStore.MemoryKind.USER && "user".equals(m.scope()))
          .sorted(Comparator.comparingLong(AiMemoryStore.Memory::timestamp).reversed())
          .limit(6L)
          .toList();
@@ -407,7 +407,7 @@ public final class AiMemoryStore {
       return this.init_Path;
    }
 
-   public enum Inner_DataUtil {
+   public enum MemoryKind {
       USER,
       WORLD,
       PROCEDURE,
@@ -415,7 +415,7 @@ public final class AiMemoryStore {
    }
 
    public record Memory(
-      String id, AiMemoryStore.Inner_DataUtil kind, String scope, String text, String evidenceId, long timestamp, String catalogRevision, String payload
+      String id, AiMemoryStore.MemoryKind kind, String scope, String text, String evidenceId, long timestamp, String catalogRevision, String payload
    ) {
    }
 }

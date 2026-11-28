@@ -223,10 +223,10 @@ final class AiIntents {
       );
    }
 
-   static AiIntents.Inner_CachePool plan(String objective, AiIntents.Inner_StreamUtil lookups) {
-      AiIntents.Inner_BufferHelper schematic = schematicIntent(objective);
+   static AiIntents.IntentPlan plan(String objective, AiIntents.NameLookups lookups) {
+      AiIntents.IntentStep schematic = schematicIntent(objective);
       if (schematic != null) {
-         return new AiIntents.Inner_CachePool(List.of(schematic), "");
+         return new AiIntents.IntentPlan(List.of(schematic), "");
       }
 
       if (objective != null && !objective.isBlank() && objective.length() <= 400) {
@@ -234,7 +234,7 @@ final class AiIntents {
          if (text.endsWith("?")) {
             String asked = text.replaceAll("\\?+$", "").trim();
             if (!POLITE_QUESTION.matcher(asked.toLowerCase(Locale.ROOT)).find()) {
-               return new AiIntents.Inner_CachePool(List.of(), text);
+               return new AiIntents.IntentPlan(List.of(), text);
             }
 
             text = asked;
@@ -254,13 +254,13 @@ final class AiIntents {
             spans.add(new int[]{at, text.length()});
          }
 
-         List<AiIntents.Inner_BufferHelper> steps = new ArrayList<>();
+         List<AiIntents.IntentStep> steps = new ArrayList<>();
          String lastVerb = null;
 
          for (int[] span : spans) {
             String clause = text.substring(span[0], span[1]);
             if (!STOP_PATTERN.matcher(normalizeClause(clause)).matches() || steps.isEmpty()) {
-               AiIntents.Inner_BufferHelper step = lastVerb != null && leadingVerb(normalizeClause(clause)) == null
+               AiIntents.IntentStep step = lastVerb != null && leadingVerb(normalizeClause(clause)) == null
                   ? parseClause(lastVerb + " " + normalizeClause(clause), lookups)
                   : null;
                if (step == null) {
@@ -268,7 +268,7 @@ final class AiIntents {
                }
 
                if (step == null) {
-                  return new AiIntents.Inner_CachePool(steps, text.substring(span[0]).trim());
+                  return new AiIntents.IntentPlan(steps, text.substring(span[0]).trim());
                }
 
                steps.add(step);
@@ -276,23 +276,23 @@ final class AiIntents {
             }
          }
 
-         return new AiIntents.Inner_CachePool(fillPlaceNearItem(inheritSmeltCount(linkFightToMeat(steps))), "");
+         return new AiIntents.IntentPlan(fillPlaceNearItem(inheritSmeltCount(linkFightToMeat(steps))), "");
       } else {
-         return new AiIntents.Inner_CachePool(List.of(), objective == null ? "" : objective.trim());
+         return new AiIntents.IntentPlan(List.of(), objective == null ? "" : objective.trim());
       }
    }
 
-   static List<AiIntents.Inner_BufferHelper> fillPlaceNearItem(List<AiIntents.Inner_BufferHelper> steps) {
-      List<AiIntents.Inner_BufferHelper> out = new ArrayList<>(steps);
+   static List<AiIntents.IntentStep> fillPlaceNearItem(List<AiIntents.IntentStep> steps) {
+      List<AiIntents.IntentStep> out = new ArrayList<>(steps);
 
       for (int i = 1; i < out.size(); i++) {
-         AiIntents.Inner_BufferHelper step = out.get(i);
+         AiIntents.IntentStep step = out.get(i);
          if (step.capability().equals("game:place_near") && AiJson.getString(step.arguments(), "item", "").isEmpty()) {
             String item = AiJson.getString(out.get(i - 1).arguments(), "item", "");
             if (!item.isEmpty() && !item.contains(",")) {
                out.set(
                   i,
-                  new AiIntents.Inner_BufferHelper(
+                  new AiIntents.IntentStep(
                      step.clause(),
                      step.capability(),
                      AiJson.objectOf("item", item),
@@ -307,12 +307,12 @@ final class AiIntents {
       return out;
    }
 
-   static List<AiIntents.Inner_BufferHelper> inheritSmeltCount(List<AiIntents.Inner_BufferHelper> steps) {
-      List<AiIntents.Inner_BufferHelper> out = new ArrayList<>(steps);
+   static List<AiIntents.IntentStep> inheritSmeltCount(List<AiIntents.IntentStep> steps) {
+      List<AiIntents.IntentStep> out = new ArrayList<>(steps);
 
       for (int i = 1; i < out.size(); i++) {
-         AiIntents.Inner_BufferHelper step = out.get(i);
-         AiIntents.Inner_BufferHelper before = out.get(i - 1);
+         AiIntents.IntentStep step = out.get(i);
+         AiIntents.IntentStep before = out.get(i - 1);
          if (!hasExplicitQuantity(step.clause()) && step.arguments().has("count")) {
             String output = AiJson.getString(step.arguments(), "item", "");
             String input = AiJson.getString(before.arguments(), "item", AiJson.getString(before.arguments(), "block", ""))
@@ -324,7 +324,7 @@ final class AiIntents {
                args.addProperty("count", count);
                out.set(
                   i,
-                  new AiIntents.Inner_BufferHelper(step.clause(), step.capability(), args, step.describe().replaceFirst("\\d+", String.valueOf(count)), step.asks())
+                  new AiIntents.IntentStep(step.clause(), step.capability(), args, step.describe().replaceFirst("\\d+", String.valueOf(count)), step.asks())
                );
             }
          }
@@ -348,15 +348,15 @@ final class AiIntents {
       return false;
    }
 
-   static List<AiIntents.Inner_BufferHelper> linkFightToMeat(List<AiIntents.Inner_BufferHelper> steps) {
-      List<AiIntents.Inner_BufferHelper> out = new ArrayList<>(steps);
+   static List<AiIntents.IntentStep> linkFightToMeat(List<AiIntents.IntentStep> steps) {
+      List<AiIntents.IntentStep> out = new ArrayList<>(steps);
 
       for (int i = 0; i < out.size(); i++) {
-         AiIntents.Inner_BufferHelper step = out.get(i);
+         AiIntents.IntentStep step = out.get(i);
          if (step.capability().equals("game:fight")) {
             boolean usedLater = false;
 
-            for (AiIntents.Inner_BufferHelper later : out.subList(i + 1, out.size())) {
+            for (AiIntents.IntentStep later : out.subList(i + 1, out.size())) {
                usedLater |= later.capability().equals("game:eat") || AiJson.getBoolean(later.arguments(), "cookHeld", false);
             }
 
@@ -379,7 +379,7 @@ final class AiIntents {
                   int kills = Math.max(1, AiJson.getInt(step.arguments(), "count", 1));
                   out.set(
                      i,
-                     new AiIntents.Inner_BufferHelper(
+                     new AiIntents.IntentStep(
                         step.clause(),
                         "game:obtain",
                         AiJson.objectOf("item", String.join(",", meats), "count", kills, "additional", true),
@@ -394,7 +394,7 @@ final class AiIntents {
       return out;
    }
 
-   static AiIntents.Inner_BufferHelper schematicIntent(String objective) {
+   static AiIntents.IntentStep schematicIntent(String objective) {
       if (objective == null) {
          return null;
       }
@@ -417,7 +417,7 @@ final class AiIntents {
             );
          }
 
-         return new AiIntents.Inner_BufferHelper(objective, "game:build", args, "build " + name);
+         return new AiIntents.IntentStep(objective, "game:build", args, "build " + name);
       } catch (IllegalArgumentException e) {
          return null;
       }
@@ -437,7 +437,7 @@ final class AiIntents {
       return Set.of("get", "collect", "gather", "craft", "make", "mine", "smelt", "cook", "obtain", "grab").contains(first) ? first : null;
    }
 
-   static AiIntents.Inner_BufferHelper parseClause(String raw, AiIntents.Inner_StreamUtil lookups) {
+   static AiIntents.IntentStep parseClause(String raw, AiIntents.NameLookups lookups) {
       String c = normalizeClause(raw);
       if (c.isEmpty()) {
          return null;
@@ -445,7 +445,7 @@ final class AiIntents {
 
       AiFastPath.Inner_DataUtil move = AiFastPath.init(c, lookups.waypoint());
       if (move != null) {
-         return new AiIntents.Inner_BufferHelper(raw, "game:goto", move.args(), move.describe());
+         return new AiIntents.IntentStep(raw, "game:goto", move.args(), move.describe());
       }
 
       Matcher m;
@@ -466,60 +466,60 @@ final class AiIntents {
          String id = lookups.moduleId().apply(name.trim());
          return id == null
             ? null
-            : new AiIntents.Inner_BufferHelper(raw, "module:" + id, AiJson.objectOf("enabled", on, "persistent", true), (on ? "turn on " : "turn off ") + id);
+            : new AiIntents.IntentStep(raw, "module:" + id, AiJson.objectOf("enabled", on, "persistent", true), (on ? "turn on " : "turn off ") + id);
       } else {
          if (DROP_ALL_PATTERN.matcher(c).matches()) {
-            return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.objectOf("body", "drop fullinventory"), "drop the whole inventory");
+            return new AiIntents.IntentStep(raw, "command:drop", AiJson.objectOf("body", "drop fullinventory"), "drop the whole inventory");
          }
 
          if (DROP_HELD_PATTERN.matcher(c).matches()) {
-            return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.objectOf("body", "drop hand"), "drop the held item");
+            return new AiIntents.IntentStep(raw, "command:drop", AiJson.objectOf("body", "drop hand"), "drop the held item");
          }
 
          if (SPEEDRUN_PATTERN.matcher(c).find()) {
-            return new AiIntents.Inner_BufferHelper(raw, "game:speedrun", new JsonObject(), "speedrun: beat the game");
+            return new AiIntents.IntentStep(raw, "game:speedrun", new JsonObject(), "speedrun: beat the game");
          }
 
          if (EAT_PATTERN.matcher(c).matches()) {
-            return new AiIntents.Inner_BufferHelper(raw, "game:eat", new JsonObject(), "eat");
+            return new AiIntents.IntentStep(raw, "game:eat", new JsonObject(), "eat");
          }
 
          if (SLEEP_PATTERN.matcher(c).matches()) {
-            return new AiIntents.Inner_BufferHelper(raw, "game:sleep", new JsonObject(), "sleep in a bed");
+            return new AiIntents.IntentStep(raw, "game:sleep", new JsonObject(), "sleep in a bed");
          }
 
          if (FISH_PATTERN.matcher(c).matches()) {
-            return new AiIntents.Inner_BufferHelper(raw, "game:fish", new JsonObject(), "fish");
+            return new AiIntents.IntentStep(raw, "game:fish", new JsonObject(), "fish");
          }
 
          if ((m = PLACE_PATTERN.matcher(c)).matches()) {
             if (m.group(1) != null) {
-               return new AiIntents.Inner_BufferHelper(raw, "game:place_near", AiJson.objectOf("item", ""), "put it down beside the player");
+               return new AiIntents.IntentStep(raw, "game:place_near", AiJson.objectOf("item", ""), "put it down beside the player");
             }
 
             String id = resolveItemId(cleanItemWords(m.group(2)));
             return id == null
                ? null
-               : new AiIntents.Inner_BufferHelper(
+               : new AiIntents.IntentStep(
                   raw, "game:place_near", AiJson.objectOf("item", id), "put " + id.replace("minecraft:", "") + " down beside the player"
                );
          } else {
             if (FILL_BUCKET_PATTERN.matcher(c).matches()) {
-               return new AiIntents.Inner_BufferHelper(
+               return new AiIntents.IntentStep(
                   raw, "game:obtain", AiJson.objectOf("item", "minecraft:water_bucket", "count", 1), "fill a bucket with water"
                );
             }
 
             if (SURFACE_PATTERN.matcher(c).matches()) {
-               return new AiIntents.Inner_BufferHelper(raw, "game:surface", new JsonObject(), "go to the surface");
+               return new AiIntents.IntentStep(raw, "game:surface", new JsonObject(), "go to the surface");
             }
 
             if (RECOVER_ITEMS_PATTERN.matcher(c).matches()) {
-               return new AiIntents.Inner_BufferHelper(raw, "game:recover", new JsonObject(), "recover the items from the last death");
+               return new AiIntents.IntentStep(raw, "game:recover", new JsonObject(), "recover the items from the last death");
             }
 
             if (TIDY_PATTERN.matcher(c).matches()) {
-               return new AiIntents.Inner_BufferHelper(
+               return new AiIntents.IntentStep(
                   raw,
                   "game:tidy",
                   AiJson.objectOf("action", "drop", "freeSlots", 9),
@@ -542,9 +542,9 @@ final class AiIntents {
                }
 
                String what = var10000;
-               return new AiIntents.Inner_BufferHelper(raw, "game:equip", AiJson.objectOf("what", what), "equip the best " + what);
+               return new AiIntents.IntentStep(raw, "game:equip", AiJson.objectOf("what", what), "equip the best " + what);
             } else {
-               AiIntents.Inner_BufferHelper field = farmBuildIntent(raw, c);
+               AiIntents.IntentStep field = farmBuildIntent(raw, c);
                if (field != null) {
                   return field;
                }
@@ -553,7 +553,7 @@ final class AiIntents {
                   String crop = update(m.group(1) != null ? m.group(1) : m.group(2));
                   return crop == null
                      ? null
-                     : new AiIntents.Inner_BufferHelper(raw, "game:farm", AiJson.objectOf("action", "plant", "crop", crop), "plant a " + crop + " field");
+                     : new AiIntents.IntentStep(raw, "game:farm", AiJson.objectOf("action", "plant", "crop", crop), "plant a " + crop + " field");
                }
 
                if ((m = CHOP_PATTERN.matcher(c)).matches()) {
@@ -575,7 +575,7 @@ final class AiIntents {
 
                   return trees && count != null && count > 1
                      ? null
-                     : new AiIntents.Inner_BufferHelper(
+                     : new AiIntents.IntentStep(
                         raw, "game:chop", args, "chop " + (species == null ? "the nearest tree" : species + " logs") + (args.has("count") ? " x" + count : "")
                      );
                } else if (!(m = KILL_PATTERN.matcher(c)).matches()) {
@@ -586,12 +586,12 @@ final class AiIntents {
                      }
 
                      Integer count = matchedCount(m);
-                     return new AiIntents.Inner_BufferHelper(
+                     return new AiIntents.IntentStep(
                         raw, "game:farm", AiJson.objectOf("action", "harvest", "crop", crop, "count", count == null ? 16 : count), "harvest " + crop
                      );
                   } else if ((m = SMELT_PATTERN.matcher(c)).matches()) {
                      if (GENERIC_FOOD_WORDS.contains(m.group(5).trim())) {
-                        return new AiIntents.Inner_BufferHelper(
+                        return new AiIntents.IntentStep(
                            raw, "game:smelt_auto", AiJson.objectOf("item", "cooked_food", "count", 1, "cookHeld", true), "cook the raw food held"
                         );
                      }
@@ -611,7 +611,7 @@ final class AiIntents {
                      }
 
                      int count = resolveCount(m, output, what);
-                     return new AiIntents.Inner_BufferHelper(
+                     return new AiIntents.IntentStep(
                         raw, "game:smelt_auto", AiJson.objectOf("item", output, "count", count), "smelt " + count + " " + output
                      );
                   } else if ((m = DROP_COUNT_PATTERN.matcher(c)).matches()) {
@@ -623,7 +623,7 @@ final class AiIntents {
 
                      Integer count = matchedCount(m);
                      String body = "drop " + (count == null ? "" : count + " ") + id.replace("minecraft:", "");
-                     return new AiIntents.Inner_BufferHelper(raw, "command:drop", AiJson.objectOf("body", body), body);
+                     return new AiIntents.IntentStep(raw, "command:drop", AiJson.objectOf("body", body), body);
                   } else if ((m = MINE_PATTERN.matcher(c)).matches()) {
                      String what = cleanItemWords(m.group(5));
                      String block = resolveBlockId(what);
@@ -634,12 +634,12 @@ final class AiIntents {
                         }
 
                         int count = resolveCount(m, id, what);
-                        return new AiIntents.Inner_BufferHelper(
+                        return new AiIntents.IntentStep(
                            raw, "game:obtain", AiJson.objectOf("item", id, "count", count, "additional", true), "get " + count + " " + id
                         );
                      } else {
                         int count = resolveCount(m, block, what);
-                        return new AiIntents.Inner_BufferHelper(
+                        return new AiIntents.IntentStep(
                            raw, "game:mine", AiJson.objectOf("block", block, "count", count), "mine " + count + " " + block
                         );
                      }
@@ -651,7 +651,7 @@ final class AiIntents {
                      }
 
                      int count = resolveCount(m, id, what);
-                     return new AiIntents.Inner_BufferHelper(raw, "game:craft", AiJson.objectOf("item", id, "count", count), "craft " + count + " " + id);
+                     return new AiIntents.IntentStep(raw, "game:craft", AiJson.objectOf("item", id, "count", count), "craft " + count + " " + id);
                   } else if ((m = GET_PATTERN.matcher(c)).matches()) {
                      String what = cleanItemWords(m.group(5));
                      String spec = itemOrFamilySpec(what);
@@ -660,7 +660,7 @@ final class AiIntents {
                      }
 
                      int count = resolveCount(m, spec, what);
-                     return new AiIntents.Inner_BufferHelper(
+                     return new AiIntents.IntentStep(
                         raw, "game:obtain", AiJson.objectOf("item", spec, "count", count, "additional", true), "get " + count + " " + spec
                      );
                   } else if ((m = BARE_QUANTITY_PATTERN.matcher(c)).matches()) {
@@ -671,7 +671,7 @@ final class AiIntents {
                      }
 
                      int count = resolveCount(m, spec, what);
-                     return new AiIntents.Inner_BufferHelper(
+                     return new AiIntents.IntentStep(
                         raw, "game:obtain", AiJson.objectOf("item", spec, "count", count, "additional", true), "get " + count + " " + spec
                      );
                   } else {
@@ -699,7 +699,7 @@ final class AiIntents {
                      args.addProperty("count", count);
                   }
 
-                  return new AiIntents.Inner_BufferHelper(raw, "game:fight", args, "fight " + target + (count != null && count > 1 ? " x" + count : ""));
+                  return new AiIntents.IntentStep(raw, "game:fight", args, "fight " + target + (count != null && count > 1 ? " x" + count : ""));
                }
             }
          }
@@ -850,7 +850,7 @@ final class AiIntents {
       }
    }
 
-   static AiIntents.Inner_BufferHelper farmBuildIntent(String raw, String c) {
+   static AiIntents.IntentStep farmBuildIntent(String raw, String c) {
       Matcher m = FARM_BUILD_PATTERN.matcher(c);
       if (!m.matches()) {
          return null;
@@ -919,18 +919,18 @@ final class AiIntents {
          return null;
       }
 
-      List<AiIntents.Inner_DataUtil> asks = new ArrayList<>();
+      List<AiIntents.ClarifyingQuestion> asks = new ArrayList<>();
       if (crop != null) {
          args.addProperty("crop", crop);
       } else {
-         asks.add(new AiIntents.Inner_DataUtil("crop", "Which crop should the farm grow?", CROPS));
+         asks.add(new AiIntents.ClarifyingQuestion("crop", "Which crop should the farm grow?", CROPS));
       }
 
       if (!args.has("count")) {
          args.addProperty("count", 80);
       }
 
-      return new AiIntents.Inner_BufferHelper(raw, "game:farm", args, init(args), asks);
+      return new AiIntents.IntentStep(raw, "game:farm", args, init(args), asks);
    }
 
    static String init(JsonObject args) {
@@ -947,7 +947,7 @@ final class AiIntents {
       }
    }
 
-   static boolean init(AiIntents.Inner_DataUtil ask, String answer, JsonObject args) {
+   static boolean init(AiIntents.ClarifyingQuestion ask, String answer, JsonObject args) {
       String a = answer == null ? "" : answer.trim().toLowerCase(Locale.ROOT);
       if (!ask.key().equals("crop")) {
          Matcher dims = DIMENSIONS_PATTERN.matcher(a);
@@ -1083,21 +1083,21 @@ final class AiIntents {
       }
    }
 
-   record Inner_BufferHelper(String clause, String capability, JsonObject arguments, String describe, List<AiIntents.Inner_DataUtil> asks) {
-      Inner_BufferHelper(String clause, String capability, JsonObject arguments, String describe) {
+   record IntentStep(String clause, String capability, JsonObject arguments, String describe, List<AiIntents.ClarifyingQuestion> asks) {
+      IntentStep(String clause, String capability, JsonObject arguments, String describe) {
          this(clause, capability, arguments, describe, List.of());
       }
    }
 
-   record Inner_CachePool(List<AiIntents.Inner_BufferHelper> steps, String remainder) {
+   record IntentPlan(List<AiIntents.IntentStep> steps, String remainder) {
       boolean handledAll() {
          return this.remainder.isBlank();
       }
    }
 
-   record Inner_DataUtil(String key, String question, List<String> options) {
+   record ClarifyingQuestion(String key, String question, List<String> options) {
    }
 
-   record Inner_StreamUtil(Function<String, int[]> waypoint, Function<String, String> moduleId, Function<String, String> entityId) {
+   record NameLookups(Function<String, int[]> waypoint, Function<String, String> moduleId, Function<String, String> entityId) {
    }
 }

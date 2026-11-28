@@ -26,7 +26,7 @@ public final class PackUrlValidator {
    private PackUrlValidator() {
    }
 
-   public static PackUrlValidator.Inner_ConfigStore parseUrl(URL url) throws MalformedURLException {
+   public static PackUrlValidator.ParsedTarget parseUrl(URL url) throws MalformedURLException {
       Objects.requireNonNull(url, "url");
 
       try {
@@ -36,7 +36,7 @@ public final class PackUrlValidator {
       }
    }
 
-   public static PackUrlValidator.Inner_ConfigStore parseUri(URI uri) throws MalformedURLException {
+   public static PackUrlValidator.ParsedTarget parseUri(URI uri) throws MalformedURLException {
       Objects.requireNonNull(uri, "uri");
       String text = uri.toASCIIString();
       if (text.equals(uri.toString()) && !hasUnsafeChars(text) && !uri.isOpaque()) {
@@ -90,7 +90,7 @@ public final class PackUrlValidator {
                      }
 
                      String authority = formatHostPort(host, port, scheme.equalsIgnoreCase("https") ? 443 : 80);
-                     return new PackUrlValidator.Inner_ConfigStore(uri, host, port, authority, requestTarget);
+                     return new PackUrlValidator.ParsedTarget(uri, host, port, authority, requestTarget);
                   } else {
                      throw malformed(text, null);
                   }
@@ -108,16 +108,16 @@ public final class PackUrlValidator {
       }
    }
 
-   public static PackUrlValidator.Inner_CachePool resolveUrlEndpoint(URL url, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_StreamUtil resolver) throws IOException {
+   public static PackUrlValidator.ResolvedEndpoint resolveUrlEndpoint(URL url, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.HostResolver resolver) throws IOException {
       return resolveEndpoint(parseUrl(url), snapshot, resolver);
    }
 
-   public static PackUrlValidator.Inner_CachePool resolveEndpoint(
-      PackUrlValidator.Inner_ConfigStore target, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_StreamUtil resolver
+   public static PackUrlValidator.ResolvedEndpoint resolveEndpoint(
+      PackUrlValidator.ParsedTarget target, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.HostResolver resolver
    ) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
       List<InetAddress> addresses = resolveHost(target.load(), resolver);
-      PackUrlValidator.Inner_DataUtil kind = classifyAddresses(addresses);
+      PackUrlValidator.AddressKind kind = classifyAddresses(addresses);
 
       for (InetAddress address : addresses) {
          if (!isAllowedAddress(address, target.port(), kind, snapshot)) {
@@ -125,21 +125,21 @@ public final class PackUrlValidator {
          }
       }
 
-      return new PackUrlValidator.Inner_CachePool(target.uri(), target.load(), target.port(), addresses);
+      return new PackUrlValidator.ResolvedEndpoint(target.uri(), target.load(), target.port(), addresses);
    }
 
-   public static PackUrlValidator.Inner_BufferHelper routeFor(Proxy proxy, PackUrlValidator.Inner_StreamUtil resolver) throws IOException {
+   public static PackUrlValidator.PackRoute routeFor(Proxy proxy, PackUrlValidator.HostResolver resolver) throws IOException {
       if (proxy != null && proxy.type() != Type.DIRECT) {
          if (proxy.address() instanceof InetSocketAddress socketAddress) {
-            PackUrlValidator.Inner_ConfigStore target = targetFromSocket(socketAddress);
+            PackUrlValidator.ParsedTarget target = targetFromSocket(socketAddress);
             List<InetAddress> addresses = resolveHost(target.load(), resolver);
-            PackUrlValidator.Inner_DataUtil kind = classifyAddresses(addresses);
-            if (kind == PackUrlValidator.Inner_DataUtil.SPECIAL) {
+            PackUrlValidator.AddressKind kind = classifyAddresses(addresses);
+            if (kind == PackUrlValidator.AddressKind.SPECIAL) {
                throw new IOException("The configured proxy address is not a unicast address");
             } else {
-               return new PackUrlValidator.Inner_BufferHelper(
+               return new PackUrlValidator.PackRoute(
                   proxy.type(),
-                  new PackUrlValidator.Inner_CachePool(target.uri(), target.load(), target.port(), addresses),
+                  new PackUrlValidator.ResolvedEndpoint(target.uri(), target.load(), target.port(), addresses),
                   proxy.type().name().toLowerCase(Locale.ROOT) + "://" + target.read(),
                   true
                );
@@ -152,8 +152,8 @@ public final class PackUrlValidator {
       }
    }
 
-   public static PackUrlValidator.Inner_BufferHelper routeForLocation(
-      String location, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.Inner_StreamUtil resolver
+   public static PackUrlValidator.PackRoute routeForLocation(
+      String location, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.HostResolver resolver
    ) throws IOException, MalformedURLException {
       if (location != null && !location.isBlank()) {
          URI uri;
@@ -163,7 +163,7 @@ public final class PackUrlValidator {
             throw malformed(location, e);
          }
 
-         PackUrlValidator.Inner_ConfigStore target = parseUri(uri);
+         PackUrlValidator.ParsedTarget target = parseUri(uri);
          if (!target.init_Str().equals("http")
             || uri.getRawQuery() != null
             || uri.getRawFragment() != null
@@ -171,8 +171,8 @@ public final class PackUrlValidator {
             throw new IOException("HTTP 305 requires an unambiguous HTTP proxy URI");
          }
 
-         PackUrlValidator.Inner_CachePool endpoint = resolveEndpoint(target, snapshot, resolver);
-         return new PackUrlValidator.Inner_BufferHelper(Type.HTTP, endpoint, "http://" + target.read(), false);
+         PackUrlValidator.ResolvedEndpoint endpoint = resolveEndpoint(target, snapshot, resolver);
+         return new PackUrlValidator.PackRoute(Type.HTTP, endpoint, "http://" + target.read(), false);
       } else {
          throw new IOException("HTTP 305 has no proxy URI");
       }
@@ -250,11 +250,11 @@ public final class PackUrlValidator {
       return formatHostPort(address.getHostAddress(), port, defaultPort);
    }
 
-   public static boolean sameAuthority(PackUrlValidator.Inner_ConfigStore first, PackUrlValidator.Inner_ConfigStore second) {
+   public static boolean sameAuthority(PackUrlValidator.ParsedTarget first, PackUrlValidator.ParsedTarget second) {
       return first.init_Str().equals(second.init_Str()) && first.load().equalsIgnoreCase(second.load()) && first.port() == second.port();
    }
 
-   private static PackUrlValidator.Inner_ConfigStore targetFromSocket(InetSocketAddress address) throws IOException {
+   private static PackUrlValidator.ParsedTarget targetFromSocket(InetSocketAddress address) throws IOException {
       String host = address.getHostString();
       int port = address.getPort();
       if (host != null && !host.isBlank() && port >= 1 && port <= 65535) {
@@ -270,7 +270,7 @@ public final class PackUrlValidator {
       }
    }
 
-   private static List<InetAddress> resolveHost(String host, PackUrlValidator.Inner_StreamUtil resolver) throws UnknownHostException {
+   private static List<InetAddress> resolveHost(String host, PackUrlValidator.HostResolver resolver) throws UnknownHostException {
       Objects.requireNonNull(resolver, "resolver");
       List<InetAddress> resolved = resolver.resolve(host);
       if (resolved != null && !resolved.isEmpty()) {
@@ -290,8 +290,8 @@ public final class PackUrlValidator {
       }
    }
 
-   private static PackUrlValidator.Inner_DataUtil classifyAddresses(List<InetAddress> addresses) throws IOException {
-      PackUrlValidator.Inner_DataUtil kind = classifyAddress(addresses.getFirst());
+   private static PackUrlValidator.AddressKind classifyAddresses(List<InetAddress> addresses) throws IOException {
+      PackUrlValidator.AddressKind kind = classifyAddress(addresses.getFirst());
 
       for (InetAddress address : addresses) {
          if (classifyAddress(address) != kind) {
@@ -299,20 +299,20 @@ public final class PackUrlValidator {
          }
       }
 
-      if (kind == PackUrlValidator.Inner_DataUtil.SPECIAL) {
+      if (kind == PackUrlValidator.AddressKind.SPECIAL) {
          throw new IOException("Special-use DNS addresses are not accepted");
       } else {
          return kind;
       }
    }
 
-   private static boolean isAllowedAddress(InetAddress address, int port, PackUrlValidator.Inner_DataUtil kind, ResourcePackDownloadScope.Inner_BufferHelper snapshot) {
-      if (kind == PackUrlValidator.Inner_DataUtil.PUBLIC) {
+   private static boolean isAllowedAddress(InetAddress address, int port, PackUrlValidator.AddressKind kind, ResourcePackDownloadScope.Inner_BufferHelper snapshot) {
+      if (kind == PackUrlValidator.AddressKind.PUBLIC) {
          return true;
       }
 
       if (snapshot.init_Z()) {
-         return kind == PackUrlValidator.Inner_DataUtil.LOOPBACK;
+         return kind == PackUrlValidator.AddressKind.LOOPBACK;
       }
 
       if (snapshot.peerAddress() instanceof InetSocketAddress peer && peer.getAddress() != null) {
@@ -321,28 +321,28 @@ public final class PackUrlValidator {
             return false;
          } else {
             return snapshot.serverType() == net.minecraft.client.multiplayer.ServerData.Type.LAN
-               ? kind == PackUrlValidator.Inner_DataUtil.PRIVATE || kind == PackUrlValidator.Inner_DataUtil.LINK_LOCAL
-               : kind == PackUrlValidator.Inner_DataUtil.PRIVATE && port == peer.getPort();
+               ? kind == PackUrlValidator.AddressKind.PRIVATE || kind == PackUrlValidator.AddressKind.LINK_LOCAL
+               : kind == PackUrlValidator.AddressKind.PRIVATE && port == peer.getPort();
          }
       } else {
          return false;
       }
    }
 
-   private static PackUrlValidator.Inner_DataUtil classifyAddress(InetAddress address) {
+   private static PackUrlValidator.AddressKind classifyAddress(InetAddress address) {
       byte[] bytes = address.getAddress();
       if (address.isAnyLocalAddress() || address.isMulticastAddress() || init_Z_BArr(bytes) || init_Z_InetAddress_BArr(address, bytes)) {
-         return PackUrlValidator.Inner_DataUtil.SPECIAL;
+         return PackUrlValidator.AddressKind.SPECIAL;
       } else if (address.isLoopbackAddress()) {
-         return PackUrlValidator.Inner_DataUtil.LOOPBACK;
+         return PackUrlValidator.AddressKind.LOOPBACK;
       } else if (address.isLinkLocalAddress()) {
-         return PackUrlValidator.Inner_DataUtil.LINK_LOCAL;
+         return PackUrlValidator.AddressKind.LINK_LOCAL;
       } else if (address.isSiteLocalAddress() || isCarrierGradeNat(bytes) || isUniqueLocalIpv6(bytes)) {
-         return PackUrlValidator.Inner_DataUtil.PRIVATE;
+         return PackUrlValidator.AddressKind.PRIVATE;
       } else if (address instanceof Inet4Address) {
-         return PackUrlValidator.Inner_DataUtil.PUBLIC;
+         return PackUrlValidator.AddressKind.PUBLIC;
       } else {
-         return address instanceof Inet6Address ? PackUrlValidator.Inner_DataUtil.PUBLIC : PackUrlValidator.Inner_DataUtil.SPECIAL;
+         return address instanceof Inet6Address ? PackUrlValidator.AddressKind.PUBLIC : PackUrlValidator.AddressKind.SPECIAL;
       }
    }
 
@@ -481,11 +481,11 @@ public final class PackUrlValidator {
       return exception;
    }
 
-   public record Inner_BufferHelper(Type proxyType, PackUrlValidator.Inner_CachePool endpoint, String init_Str, boolean init_Z) {
+   public record PackRoute(Type proxyType, PackUrlValidator.ResolvedEndpoint endpoint, String init_Str, boolean init_Z) {
    }
 
-   public record Inner_CachePool(URI uri, String init_Str, int port, List<InetAddress> addresses) {
-      public Inner_CachePool {
+   public record ResolvedEndpoint(URI uri, String init_Str, int port, List<InetAddress> addresses) {
+      public ResolvedEndpoint {
          addresses = List.copyOf(addresses);
       }
 
@@ -493,7 +493,7 @@ public final class PackUrlValidator {
          return this.uri.getScheme().toLowerCase(Locale.ROOT);
       }
 
-      public PackUrlValidator.Inner_ConfigStore parsedTarget() {
+      public PackUrlValidator.ParsedTarget parsedTarget() {
          try {
             return PackUrlValidator.parseUri(this.uri);
          } catch (IOException e) {
@@ -506,7 +506,7 @@ public final class PackUrlValidator {
       }
    }
 
-   public record Inner_ConfigStore(URI uri, String init_Str, int port, String load, String read) {
+   public record ParsedTarget(URI uri, String init_Str, int port, String load, String read) {
       public String init_Str() {
          return this.uri.getScheme().toLowerCase(Locale.ROOT);
       }
@@ -524,7 +524,7 @@ public final class PackUrlValidator {
       }
    }
 
-   private enum Inner_DataUtil {
+   private enum AddressKind {
       PUBLIC,
       PRIVATE,
       LOOPBACK,
@@ -533,7 +533,7 @@ public final class PackUrlValidator {
    }
 
    @FunctionalInterface
-   public interface Inner_StreamUtil {
+   public interface HostResolver {
       List<InetAddress> resolve(String var1) throws UnknownHostException;
    }
 }

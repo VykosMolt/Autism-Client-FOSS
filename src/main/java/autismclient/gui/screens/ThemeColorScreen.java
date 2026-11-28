@@ -42,11 +42,11 @@ public class ThemeColorScreen extends Screen {
    private ThemePaletteManager.CompiledPalette draftPalette;
    private final autismclient.gui.ui.UiTheme previewTheme = new autismclient.gui.ui.UiTheme();
    private final autismclient.gui.ui.UiTheme load_TableIndex = new autismclient.gui.ui.UiTheme();
-   private final ThemeColorScreen.Inner_CachePool picker = new ThemeColorScreen.Inner_CachePool();
+   private final ThemeColorScreen.ColorPicker picker = new ThemeColorScreen.ColorPicker();
    private int selectedRow;
-   private ThemeTextureRecolorer.Inner_CachePool logoTexture;
-   private ThemeTextureRecolorer.Inner_CachePool panoramaTexture;
-   private ThemeTextureRecolorer.Inner_CachePool tickTexture;
+   private ThemeTextureRecolorer.RecolorPreview logoTexture;
+   private ThemeTextureRecolorer.RecolorPreview panoramaTexture;
+   private ThemeTextureRecolorer.RecolorPreview tickTexture;
    private autismclient.gui.f.NetHelper simpleTab;
    private autismclient.gui.f.NetHelper advancedTab;
    private autismclient.gui.f.NetHelper resetButton;
@@ -61,7 +61,7 @@ public class ThemeColorScreen extends Screen {
    private autismclient.gui.ui.widgets.ScrollbarRenderer.ScrollbarBounds scrollbar;
    private boolean draggingScrollbar;
    private int scrollbarGrabOffset;
-   private List<ThemeColorScreen.Inner_DataUtil> cachedRows;
+   private List<ThemeColorScreen.ColorRow> cachedRows;
    private boolean cachedRowsAdvanced;
    private List<Module> read_List;
    private int cachedListRevision = -2147483648;
@@ -101,64 +101,64 @@ public class ThemeColorScreen extends Screen {
       return false;
    }
 
-   private List<ThemeColorScreen.Inner_DataUtil> colorRows() {
+   private List<ThemeColorScreen.ColorRow> colorRows() {
       if (this.cachedRows != null && this.cachedRowsAdvanced == this.draftColors.advanced) {
          return this.cachedRows;
       }
 
-      List<ThemeColorScreen.Inner_DataUtil> rows = new ArrayList<>();
+      List<ThemeColorScreen.ColorRow> rows = new ArrayList<>();
       if (!this.draftColors.advanced) {
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Theme Color", () -> this.draftColors.master, v -> this.draftColors.master = v, ThemePaletteManager.ColorRole.ACCENT
             )
          );
       } else {
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Accent", () -> this.draftColors.accent, v -> this.draftColors.accent = v, ThemePaletteManager.ColorRole.ACCENT
             )
          );
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Button Fill", () -> this.draftColors.button, v -> this.draftColors.button = v, ThemePaletteManager.ColorRole.BUTTON
             )
          );
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Outline / Border", () -> this.draftColors.outline, v -> this.draftColors.outline = v, ThemePaletteManager.ColorRole.OUTLINE
             )
          );
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Header", () -> this.draftColors.header, v -> this.draftColors.header = v, ThemePaletteManager.ColorRole.HEADER
             )
          );
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Toggle / Highlight", () -> this.draftColors.toggle, v -> this.draftColors.toggle = v, ThemePaletteManager.ColorRole.TOGGLE
             )
          );
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Hover / Glow", () -> this.draftColors.hover, v -> this.draftColors.hover = v, ThemePaletteManager.ColorRole.HOVER
             )
          );
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil("Text", () -> this.draftColors.text, v -> this.draftColors.text = v, ThemePaletteManager.ColorRole.TEXT)
+            new ThemeColorScreen.ColorRow("Text", () -> this.draftColors.text, v -> this.draftColors.text = v, ThemePaletteManager.ColorRole.TEXT)
          );
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Background / Panorama", () -> this.draftColors.backdrop, v -> this.draftColors.backdrop = v, ThemePaletteManager.ColorRole.BACKDROP
             )
          );
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Danger", () -> this.draftColors.danger, v -> this.draftColors.danger = v, ThemePaletteManager.ColorRole.DANGER
             )
          );
          rows.add(
-            new ThemeColorScreen.Inner_DataUtil(
+            new ThemeColorScreen.ColorRow(
                "Success", () -> this.draftColors.success, v -> this.draftColors.success = v, ThemePaletteManager.ColorRole.SUCCESS
             )
          );
@@ -192,7 +192,7 @@ public class ThemeColorScreen extends Screen {
    }
 
    private void loadSelectedRow() {
-      List<ThemeColorScreen.Inner_DataUtil> rows = this.colorRows();
+      List<ThemeColorScreen.ColorRow> rows = this.colorRows();
       if (this.selectedRow >= rows.size()) {
          this.selectedRow = 0;
       }
@@ -222,7 +222,7 @@ public class ThemeColorScreen extends Screen {
          int leftW = Math.max(224, Math.min(240, contentW - gap - 120));
          int rightW = Math.max(1, contentW - leftW - gap);
          int leftH = Math.min(contentH, this.leftColumnHeight());
-         ThemeColorScreen.Inner_BufferHelper preview = this.layoutFor(rightW, contentH);
+         ThemeColorScreen.PreviewLayout preview = this.layoutFor(rightW, contentH);
          int rightH = preview.write();
          if (Math.abs(leftH - rightH) <= 8) {
             leftH = rightH = Math.max(leftH, rightH);
@@ -254,7 +254,7 @@ public class ThemeColorScreen extends Screen {
    }
 
    private int pickerHeight() {
-      return ThemeColorScreen.Inner_CachePool.panelWidth(this.draftColors.advanced);
+      return ThemeColorScreen.ColorPicker.panelWidth(this.draftColors.advanced);
    }
 
    private int leftColumnHeight() {
@@ -286,10 +286,10 @@ public class ThemeColorScreen extends Screen {
       );
       y += this.lineHeight();
       this.init_List.clear();
-      List<ThemeColorScreen.Inner_DataUtil> rows = this.colorRows();
+      List<ThemeColorScreen.ColorRow> rows = this.colorRows();
       int rowH = this.defaultRowHeight();
       int footerY = area.load() - 4 - ctrlH;
-      int rowSpace = footerY - 4 - ThemeColorScreen.Inner_CachePool.panelHeight(this.draftColors.advanced) - 4 - y;
+      int rowSpace = footerY - 4 - ThemeColorScreen.ColorPicker.panelHeight(this.draftColors.advanced) - 4 - y;
       int visible = Math.min(rows.size(), Math.max(Math.min(3, rows.size()), rowSpace / rowH));
       int maxScroll = rows.size() - visible;
       this.scrollRow = Math.max(0, Math.min(this.scrollRow, maxScroll));
@@ -308,7 +308,7 @@ public class ThemeColorScreen extends Screen {
       }
 
       for (int i = this.scrollRow; i < this.scrollRow + visible; i++) {
-         ThemeColorScreen.Inner_DataUtil c = rows.get(i);
+         ThemeColorScreen.ColorRow c = rows.get(i);
          autismclient.gui.f.NetHelper rb = autismclient.gui.f.NetHelper.init(x, y, rowW, rowH - 2);
          this.init_List.add(rb);
          boolean sel = i == this.selectedRow;
@@ -336,7 +336,7 @@ public class ThemeColorScreen extends Screen {
       this.picker.showAlpha = this.draftColors.advanced;
       this.picker.palette = this.draftPalette;
       this.pickerArea = autismclient.gui.f.NetHelper.init(
-         x, y, innerW, Math.max(ThemeColorScreen.Inner_CachePool.panelHeight(this.draftColors.advanced), Math.min(this.pickerHeight(), footerY - 4 - y))
+         x, y, innerW, Math.max(ThemeColorScreen.ColorPicker.panelHeight(this.draftColors.advanced), Math.min(this.pickerHeight(), footerY - 4 - y))
       );
       this.picker.renderPicker(ctx, this.pickerArea);
       int bw = (innerW - 4) / 3;
@@ -348,7 +348,7 @@ public class ThemeColorScreen extends Screen {
       this.renderOutlinedButton(g, this.applyButton, "Apply", this.recolor(-39836, ThemePaletteManager.ColorRole.ACCENT), this.applyButton.init_Z(mx, my));
    }
 
-   private ThemeColorScreen.Inner_BufferHelper layoutFor(int panelW, int budget) {
+   private ThemeColorScreen.PreviewLayout layoutFor(int panelW, int budget) {
       int innerW = panelW - 8;
       int logoW = this.logoTexture != null ? Math.min(innerW, 340) : 0;
       int logoH = this.logoTexture != null && this.logoTexture.width() > 0
@@ -370,7 +370,7 @@ public class ThemeColorScreen extends Screen {
          }
       }
 
-      return new ThemeColorScreen.Inner_BufferHelper(logoW, logoH, showLogo, bannerH, Math.min(h, budget));
+      return new ThemeColorScreen.PreviewLayout(logoW, logoH, showLogo, bannerH, Math.min(h, budget));
    }
 
    private int previewBarHeight() {
@@ -381,7 +381,7 @@ public class ThemeColorScreen extends Screen {
       return 4 + this.init_I() + this.previewBarHeight() + 2 + 8;
    }
 
-   private void renderPreview(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area, ThemeColorScreen.Inner_BufferHelper layout) {
+   private void renderPreview(autismclient.gui.f.SyncManager ctx, autismclient.gui.f.NetHelper area, ThemeColorScreen.PreviewLayout layout) {
       GuiGraphicsExtractor g = ctx.init_GuiGraphicsExtract();
       autismclient.gui.f.PacketUtil.read(g, area, 8, ctx.init_TableIndex().colors().windowSurface, ctx.init_TableIndex().colors().borderSubtle);
       int x = area.read() + 4;
@@ -430,7 +430,7 @@ public class ThemeColorScreen extends Screen {
       }
    }
 
-   private void renderPreviewContents(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper area, int x, int y, int innerW, ThemeColorScreen.Inner_BufferHelper layout) {
+   private void renderPreviewContents(GuiGraphicsExtractor g, autismclient.gui.f.NetHelper area, int x, int y, int innerW, ThemeColorScreen.PreviewLayout layout) {
       int contentLimit = area.load() - 4;
       if (this.panoramaTexture != null) {
          this.panoramaTexture.applyPalette(this.draftPalette);
@@ -862,10 +862,10 @@ public class ThemeColorScreen extends Screen {
       to.hover = from.hover;
    }
 
-   private record Inner_BufferHelper(int logoWidth, int load, boolean showLogo, int read, int write) {
+   private record PreviewLayout(int logoWidth, int load, boolean showLogo, int read, int write) {
    }
 
-   private static final class Inner_CachePool {
+   private static final class ColorPicker {
       private static final int init_I = 130;
       private static final int load_I = 90;
       private static final int read_I = 14;
@@ -978,13 +978,13 @@ public class ThemeColorScreen extends Screen {
          int svH = Math.max(controlsHeight(), Math.min(90, area.sync() - 4 - slidersH));
          this.svArea = autismclient.gui.f.NetHelper.init(area.read(), area.write(), 130, svH);
          this.hueArea = autismclient.gui.f.NetHelper.init(this.svArea.init() + 6, area.write(), 14, svH);
-         ThemeColorScreen.Inner_StreamUtil.forHue(this.hue).blitTo(g2, this.svArea);
+         ThemeColorScreen.GradientTexture.forHue(this.hue).blitTo(g2, this.svArea);
          autismclient.gui.f.PacketUtil.load(g2, this.svArea, ctx.init_TableIndex().colors().borderSubtle);
          int cx = this.svArea.read() + Math.round(this.saturation * (this.svArea.update() - 1));
          int cy = this.svArea.write() + Math.round((1.0F - this.brightness) * (this.svArea.sync() - 1));
          autismclient.gui.f.PacketUtil.load(g2, autismclient.gui.f.NetHelper.init(cx - 4, cy - 4, 8, 8), 4, 0, -1342177280);
          autismclient.gui.f.PacketUtil.load(g2, autismclient.gui.f.NetHelper.init(cx - 3, cy - 3, 6, 6), 3, 0, -1);
-         ThemeColorScreen.Inner_StreamUtil.hueTexture().blitTo(g2, this.hueArea);
+         ThemeColorScreen.GradientTexture.hueTexture().blitTo(g2, this.hueArea);
          autismclient.gui.f.PacketUtil.load(g2, this.hueArea, ctx.init_TableIndex().colors().borderSubtle);
          int hy = this.hueArea.write() + Math.round((1.0F - this.hue) * (this.hueArea.sync() - 1));
          autismclient.gui.f.PacketUtil.load(
@@ -1207,20 +1207,20 @@ public class ThemeColorScreen extends Screen {
       }
    }
 
-   private record Inner_DataUtil(String label, IntSupplier getter, IntConsumer setter, ThemePaletteManager.ColorRole role) {
+   private record ColorRow(String label, IntSupplier getter, IntConsumer setter, ThemePaletteManager.ColorRole role) {
    }
 
-   private static final class Inner_StreamUtil extends AbstractTexture {
+   private static final class GradientTexture extends AbstractTexture {
       private static final int init_I = 360;
-      private static ThemeColorScreen.Inner_StreamUtil hueTexture;
-      private static ThemeColorScreen.Inner_StreamUtil svTexture;
+      private static ThemeColorScreen.GradientTexture hueTexture;
+      private static ThemeColorScreen.GradientTexture svTexture;
       private static int svTextureHueBucket = -2147483648;
       private final Identifier textureId;
       private final NativeImage image;
       private final int width;
       private final int height;
 
-      private Inner_StreamUtil(Identifier id, String label, int w, int h) {
+      private GradientTexture(Identifier id, String label, int w, int h) {
          this.textureId = id;
          this.width = w;
          this.height = h;
@@ -1231,9 +1231,9 @@ public class ThemeColorScreen extends Screen {
          Minecraft.getInstance().getTextureManager().register(id, this);
       }
 
-      static ThemeColorScreen.Inner_StreamUtil hueTexture() {
+      static ThemeColorScreen.GradientTexture hueTexture() {
          if (hueTexture == null) {
-            hueTexture = new ThemeColorScreen.Inner_StreamUtil(
+            hueTexture = new ThemeColorScreen.GradientTexture(
                Identifier.fromNamespaceAndPath("autismclient", "dynamic/theme/picker_hue"), "theme picker hue", 14, 96
             );
 
@@ -1251,10 +1251,10 @@ public class ThemeColorScreen extends Screen {
          return hueTexture;
       }
 
-      static ThemeColorScreen.Inner_StreamUtil forHue(float hue) {
-         int bucket = Math.round(ThemeColorScreen.Inner_CachePool.clamp01(hue) * 360.0F);
+      static ThemeColorScreen.GradientTexture forHue(float hue) {
+         int bucket = Math.round(ThemeColorScreen.ColorPicker.clamp01(hue) * 360.0F);
          if (svTexture == null) {
-            svTexture = new ThemeColorScreen.Inner_StreamUtil(
+            svTexture = new ThemeColorScreen.GradientTexture(
                Identifier.fromNamespaceAndPath("autismclient", "dynamic/theme/picker_sv"), "theme picker sv", 130, 96
             );
          }

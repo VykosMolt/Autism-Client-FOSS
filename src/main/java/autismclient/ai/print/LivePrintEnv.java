@@ -64,13 +64,13 @@ public final class LivePrintEnv implements PrintEnv {
    private boolean flightAllowedByConfig;
    private Item lastRequestedCreativeItem;
    private String creativeStockError;
-   private AiContainerTransactions.Inner_DataUtil pendingHandSwap;
+   private AiContainerTransactions.TransactionReceipt pendingHandSwap;
    private int pendingSwapSourceSlot;
    private int pendingSwapHotbarSlot;
    private int mismatchedSwapCount;
    private String handSwapError;
    private int recentClickUntilTick = -2147483648;
-   final LivePrintEnv.Inner_DataUtil recentPlacedSigns = new LivePrintEnv.Inner_DataUtil();
+   final LivePrintEnv.RecentSigns recentPlacedSigns = new LivePrintEnv.RecentSigns();
    static final int MAX_KNOWN_STATES = 65536;
    private final Long2ObjectLinkedOpenHashMap<BlockState> knownBlockStates = new Long2ObjectLinkedOpenHashMap<>();
    private int traceRefusalLogCount;
@@ -97,9 +97,9 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public PrintEnv.Inner_StreamUtil interactionReceiptState() {
+   public PrintEnv.ReceiptState interactionReceiptState() {
       return AiMenuClose.load()
-         ? PrintEnv.Inner_StreamUtil.PENDING
+         ? PrintEnv.ReceiptState.PENDING
          : this.interactionReceipt
             .init(
                this.mc.level,
@@ -125,7 +125,7 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public List<PrintItemFrame.Inner_DataUtil> itemFramesAt(BlockPos cell) {
+   public List<PrintItemFrame.ObservedFrame> itemFramesAt(BlockPos cell) {
       return this.mc != null
             && this.mc.level != null
             && this.mc.level.getChunkSource().hasChunk(cell.getX() >> 4, cell.getZ() >> 4)
@@ -135,7 +135,7 @@ public final class LivePrintEnv implements PrintEnv {
             .stream()
             .filter(frame -> !frame.isRemoved() && frame.getPos().equals(cell))
             .map(
-               frame -> new PrintItemFrame.Inner_DataUtil(
+               frame -> new PrintItemFrame.ObservedFrame(
                   frame.getUUID(),
                   BuiltInRegistries.ENTITY_TYPE.getKey(frame.getType()).toString(),
                   frame.getDirection(),
@@ -268,12 +268,12 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public void drainBlockChangesWithPrior(PrintEnv.Inner_DataUtil changed) {
+   public void drainBlockChangesWithPrior(PrintEnv.BlockChangeSink changed) {
       this.drainBlockChangesBudgeted(changed, 2147483647);
    }
 
    @Override
-   public boolean drainBlockChangesBudgeted(PrintEnv.Inner_DataUtil changed, int budget) {
+   public boolean drainBlockChangesBudgeted(PrintEnv.BlockChangeSink changed, int budget) {
       long[] drained;
       synchronized (this.pendingBlockChanges) {
          drained = new long[Math.min(this.pendingBlockChanges.size(), Math.max(0, budget))];
@@ -400,7 +400,7 @@ public final class LivePrintEnv implements PrintEnv {
       }
 
       LocalPlayer p = this.player();
-      AiContainerTransactions.Inner_StreamUtil state = this.pendingHandSwap.pollAndResync(p == null ? null : p.containerMenu, this.nanoTime());
+      AiContainerTransactions.ReceiptState state = this.pendingHandSwap.pollAndResync(p == null ? null : p.containerMenu, this.nanoTime());
       switch (state) {
          case WAITING:
             return false;
@@ -412,7 +412,7 @@ public final class LivePrintEnv implements PrintEnv {
             this.creativeStock.init(this.pendingSwapSourceSlot, this.pendingSwapHotbarSlot);
             p.getInventory().setSelectedSlot(this.pendingSwapHotbarSlot);
             this.pendingHandSwap = null;
-            this.mismatchedSwapCount = state == AiContainerTransactions.Inner_StreamUtil.CONFIRMED ? 0 : this.mismatchedSwapCount + 1;
+            this.mismatchedSwapCount = state == AiContainerTransactions.ReceiptState.CONFIRMED ? 0 : this.mismatchedSwapCount + 1;
             if (this.mismatchedSwapCount >= 3) {
                this.handSwapError = "The server repeatedly changed the requested hand stack. Check the inventory before resuming.";
                return false;
@@ -842,7 +842,7 @@ public final class LivePrintEnv implements PrintEnv {
       AutismClientAddon.LOG.info("[AI] print: {}", message);
    }
 
-   static final class Inner_DataUtil {
+   static final class RecentSigns {
       private final LinkedHashSet<Long> signPositions = new LinkedHashSet<>();
 
       void record(BlockPos pos) {

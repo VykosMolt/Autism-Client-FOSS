@@ -6,7 +6,7 @@ import net.minecraft.client.player.LocalPlayer;
 public final class CombatAimSpeedController {
    public static final String init_Str = "rotation-speed-multiplier";
    private static final int init_I = 2;
-   private final CombatAimEngine.Inner_CachePool aimState = new CombatAimEngine.Inner_CachePool();
+   private final CombatAimEngine.ArcStepper aimState = new CombatAimEngine.ArcStepper();
    private Object trackedEnemy;
    private int boostUntilTick;
 

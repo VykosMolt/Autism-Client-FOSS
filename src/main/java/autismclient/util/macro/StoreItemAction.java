@@ -11,7 +11,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class StoreItemAction implements MacroAction {
-   public StoreItemAction.Inner_DataUtil mode = StoreItemAction.Inner_DataUtil.STORE;
+   public StoreItemAction.TransferMode mode = StoreItemAction.TransferMode.STORE;
    public List<String> targetItems = new ArrayList<>();
    public List<MacroItemTarget> itemTargets = new ArrayList<>();
    public boolean persistent = false;
@@ -77,7 +77,7 @@ public class StoreItemAction implements MacroAction {
                Slot slot = h.slots.get(i);
                if (slot != null) {
                   boolean playerInventorySlot = autismclient.util.InventorySlotHelper.isPlayerInventorySlot(mc, slot);
-                  if ((this.mode != StoreItemAction.Inner_DataUtil.LOOT || !playerInventorySlot) && (this.mode != StoreItemAction.Inner_DataUtil.STORE || playerInventorySlot)) {
+                  if ((this.mode != StoreItemAction.TransferMode.LOOT || !playerInventorySlot) && (this.mode != StoreItemAction.TransferMode.STORE || playerInventorySlot)) {
                      ItemStack stack = slot.getItem();
                      if (!stack.isEmpty()) {
                         int visibleSlot = autismclient.util.InventorySlotHelper.toVisibleSlot(mc, i);
@@ -126,9 +126,9 @@ public class StoreItemAction implements MacroAction {
    public void fromTag(CompoundTag tag) {
       if (tag.contains("mode")) {
          try {
-            this.mode = StoreItemAction.Inner_DataUtil.valueOf(tag.getStringOr("mode", "LOOT"));
+            this.mode = StoreItemAction.TransferMode.valueOf(tag.getStringOr("mode", "LOOT"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = StoreItemAction.Inner_DataUtil.LOOT;
+            this.mode = StoreItemAction.TransferMode.LOOT;
          }
       }
 
@@ -167,7 +167,7 @@ public class StoreItemAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      String modeStr = this.mode == StoreItemAction.Inner_DataUtil.LOOT ? "Loot" : "Store";
+      String modeStr = this.mode == StoreItemAction.TransferMode.LOOT ? "Loot" : "Store";
       if (this.allItems) {
          return modeStr + " All" + (this.persistent ? " [Inf]" : "");
       }
@@ -271,7 +271,7 @@ public class StoreItemAction implements MacroAction {
 
    @Override
    public String getIcon() {
-      return this.mode == StoreItemAction.Inner_DataUtil.LOOT ? "LOT" : "STR";
+      return this.mode == StoreItemAction.TransferMode.LOOT ? "LOT" : "STR";
    }
 
    @Override
@@ -331,7 +331,7 @@ public class StoreItemAction implements MacroAction {
       return Math.max(0, Math.min(200, value));
    }
 
-   public enum Inner_DataUtil {
+   public enum TransferMode {
       LOOT,
       STORE;
    }

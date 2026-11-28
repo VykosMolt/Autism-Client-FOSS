@@ -16,7 +16,7 @@ import net.minecraft.world.phys.Vec3;
 public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
    public List<String> entityIds = new ArrayList<>();
    public boolean mustBeLookingAt = false;
-   public WaitForEntityAction.Inner_DataUtil checkMode = WaitForEntityAction.Inner_DataUtil.RADIUS;
+   public WaitForEntityAction.CheckMode checkMode = WaitForEntityAction.CheckMode.RADIUS;
    public boolean centerOnPlayer = true;
    public double radius = 6.0;
    public boolean containerEntitiesOnly = false;
@@ -86,12 +86,12 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       this.mustBeLookingAt = tag.getBooleanOr("mustBeLookingAt", false);
       if (tag.contains("checkMode")) {
          try {
-            this.checkMode = WaitForEntityAction.Inner_DataUtil.valueOf(tag.getStringOr("checkMode", "RADIUS"));
+            this.checkMode = WaitForEntityAction.CheckMode.valueOf(tag.getStringOr("checkMode", "RADIUS"));
          } catch (Exception e) {
-            this.checkMode = WaitForEntityAction.Inner_DataUtil.RADIUS;
+            this.checkMode = WaitForEntityAction.CheckMode.RADIUS;
          }
       } else {
-         this.checkMode = this.mustBeLookingAt ? WaitForEntityAction.Inner_DataUtil.LOOKING_AT : WaitForEntityAction.Inner_DataUtil.RADIUS;
+         this.checkMode = this.mustBeLookingAt ? WaitForEntityAction.CheckMode.LOOKING_AT : WaitForEntityAction.CheckMode.RADIUS;
       }
 
       this.centerOnPlayer = tag.getBooleanOr("centerOnPlayer", true);
@@ -117,19 +117,19 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       }
 
       String condition = tag.getStringOr("condition", "LOOKING_AT");
-      WaitForEntityAction.Inner_DataUtil var10001;
+      WaitForEntityAction.CheckMode var10001;
       switch (condition) {
          case "WITHIN_REACH":
-            var10001 = WaitForEntityAction.Inner_DataUtil.WITHIN_REACH;
+            var10001 = WaitForEntityAction.CheckMode.WITHIN_REACH;
             break;
          case "MOUNTED_IN":
-            var10001 = WaitForEntityAction.Inner_DataUtil.MOUNTED_IN;
+            var10001 = WaitForEntityAction.CheckMode.MOUNTED_IN;
             break;
          case "NEARBY":
-            var10001 = WaitForEntityAction.Inner_DataUtil.NEARBY;
+            var10001 = WaitForEntityAction.CheckMode.NEARBY;
             break;
          default:
-            var10001 = WaitForEntityAction.Inner_DataUtil.LOOKING_AT;
+            var10001 = WaitForEntityAction.CheckMode.LOOKING_AT;
       }
 
       this.checkMode = var10001;
@@ -229,16 +229,16 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
 
    public Entity findEntity(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
-         if (this.checkMode == WaitForEntityAction.Inner_DataUtil.LOOKING_AT) {
+         if (this.checkMode == WaitForEntityAction.CheckMode.LOOKING_AT) {
             return this.init(mc.crosshairPickEntity) ? mc.crosshairPickEntity : null;
          }
 
-         if (this.checkMode == WaitForEntityAction.Inner_DataUtil.MOUNTED_IN) {
+         if (this.checkMode == WaitForEntityAction.CheckMode.MOUNTED_IN) {
             return this.init(mc.player.getVehicle()) ? mc.player.getVehicle() : null;
          }
 
          Vec3 center = this.centerOnPlayer ? mc.player.position() : new Vec3(this.f_x_D, this.f_y_D, this.f_z_D);
-         double maxDistance = this.checkMode == WaitForEntityAction.Inner_DataUtil.WITHIN_REACH ? mc.player.blockInteractionRange() : this.radius;
+         double maxDistance = this.checkMode == WaitForEntityAction.CheckMode.WITHIN_REACH ? mc.player.blockInteractionRange() : this.radius;
          double maxDistanceSq = maxDistance * maxDistance;
          Entity nearest = null;
          double nearestDistance = 1.7976931348623157E308;
@@ -335,7 +335,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       this.saveAs = name == null ? "" : name;
    }
 
-   public enum Inner_DataUtil {
+   public enum CheckMode {
       RADIUS,
       LOOKING_AT,
       WITHIN_REACH,

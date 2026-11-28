@@ -42,9 +42,9 @@ final class AiWorldMemory {
    private static final int init_I = 256;
    private static final int load_I = 32;
    private static final int read_I = 4096;
-   private static final LinkedHashMap<Long, AiWorldMemory.Inner_DataUtil> init_LinkedHashMap = new LinkedHashMap<>(64, 0.75F, true);
+   private static final LinkedHashMap<Long, AiWorldMemory.ChunkScan> init_LinkedHashMap = new LinkedHashMap<>(64, 0.75F, true);
    private static final Map<Long, Long> init_Map = new HashMap<>();
-   private static final Map<Long, AiWorldMemory.Inner_StreamUtil> load_Map = new LinkedHashMap<>();
+   private static final Map<Long, AiWorldMemory.Landmark> load_Map = new LinkedHashMap<>();
    private static Object init_Obj;
    private static Object load_Obj;
    private static String init_Str = "";
@@ -80,10 +80,10 @@ final class AiWorldMemory {
                LevelChunk live = mc.level.getChunkSource().getChunk(x, z, ChunkStatus.FULL, false);
                if (live != null) {
                   long key = autismclient.ai.engine.AiGridRevisions.chunkKey(x, z);
-                  AiWorldMemory.Inner_DataUtil remembered = init_LinkedHashMap.get(key);
+                  AiWorldMemory.ChunkScan remembered = init_LinkedHashMap.get(key);
                   int revision = autismclient.ai.engine.AiGridRevisions.init(key);
                   if (remembered == null) {
-                     init_LinkedHashMap.put(key, new AiWorldMemory.Inner_DataUtil(live, revision));
+                     init_LinkedHashMap.put(key, new AiWorldMemory.ChunkScan(live, revision));
                   } else if (remembered.init_WeakReference.get() != live || remembered.read != revision || remembered.init_Z && now - remembered.init_J > 600L) {
                      remembered.init(live, revision);
                   }
@@ -97,11 +97,11 @@ final class AiWorldMemory {
 
          long stop = System.nanoTime() + 750000L;
          int budget = 4096;
-         ArrayList<Entry<Long, AiWorldMemory.Inner_DataUtil>> entries = new ArrayList<>(init_LinkedHashMap.entrySet());
+         ArrayList<Entry<Long, AiWorldMemory.ChunkScan>> entries = new ArrayList<>(init_LinkedHashMap.entrySet());
 
          for (int examined = 0; examined < entries.size(); examined++) {
-            Entry<Long, AiWorldMemory.Inner_DataUtil> entry = entries.get(Math.floorMod(write_I++, entries.size()));
-            AiWorldMemory.Inner_DataUtil chunk = entry.getValue();
+            Entry<Long, AiWorldMemory.ChunkScan> entry = entries.get(Math.floorMod(write_I++, entries.size()));
+            AiWorldMemory.ChunkScan chunk = entry.getValue();
             if (!chunk.init_Z) {
                int cx = (int)(entry.getKey() >> 32);
                int cz = (int)entry.getKey().longValue();
@@ -160,7 +160,7 @@ final class AiWorldMemory {
    static void init(BlockPos pos) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == init_Obj && mc.getConnection() == load_Obj && AiTerrain.isLoaded(mc.level, pos)) {
-         AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
+         AiWorldMemory.ChunkScan chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
          if (load_Map.remove(pos.asLong()) != null) {
             load_J++;
          }
@@ -214,10 +214,10 @@ final class AiWorldMemory {
                               if (!block.isEmpty() && !category.isEmpty() && block.length() <= 256 && category.length() <= 64) {
                                  long observed = saved.has("observedAtMs") ? saved.get("observedAtMs").getAsLong() : 0L;
                                  if (observed >= 0L && observed <= System.currentTimeMillis()) {
-                                    AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
+                                    AiWorldMemory.ChunkScan indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
                                     if ((indexed == null || !indexed.init_Map.containsKey(pos.asLong()))
                                        && (!AiTerrain.isLoaded(client.level, pos) || block.equals(AiWorldScan.blockId(client.level.getBlockState(pos))))) {
-                                       load_Map.put(pos.asLong(), new AiWorldMemory.Inner_StreamUtil(pos, category, block, -1L, -1L, observed));
+                                       load_Map.put(pos.asLong(), new AiWorldMemory.Landmark(pos, category, block, -1L, -1L, observed));
                                     }
                                  }
                               }
@@ -260,12 +260,12 @@ final class AiWorldMemory {
    private static void load() {
       AiService service = AiService.getExistingInstance();
       if (service != null && init_Obj != null && load_Z) {
-         Map<Long, AiWorldMemory.Inner_StreamUtil> sampled = new LinkedHashMap<>();
+         Map<Long, AiWorldMemory.Landmark> sampled = new LinkedHashMap<>();
          int examined = 0;
 
          label49:
-         for (AiWorldMemory.Inner_DataUtil chunk : init_LinkedHashMap.values()) {
-            for (AiWorldMemory.Inner_StreamUtil fact : chunk.init_Map.values()) {
+         for (AiWorldMemory.ChunkScan chunk : init_LinkedHashMap.values()) {
+            for (AiWorldMemory.Landmark fact : chunk.init_Map.values()) {
                sampled.put(fact.pos.asLong(), fact);
                if (++examined >= 4096) {
                   break label49;
@@ -273,16 +273,16 @@ final class AiWorldMemory {
             }
          }
 
-         for (AiWorldMemory.Inner_StreamUtil fact : load_Map.values()) {
+         for (AiWorldMemory.Landmark fact : load_Map.values()) {
             sampled.putIfAbsent(fact.pos.asLong(), fact);
          }
 
-         ArrayList<AiWorldMemory.Inner_StreamUtil> ordered = new ArrayList<>(sampled.values());
-         ordered.sort(Comparator.comparingLong(AiWorldMemory.Inner_StreamUtil::observedAtMillis).reversed());
+         ArrayList<AiWorldMemory.Landmark> ordered = new ArrayList<>(sampled.values());
+         ordered.sort(Comparator.comparingLong(AiWorldMemory.Landmark::observedAtMillis).reversed());
          JsonArray saved = new JsonArray();
          Map<String, Integer> counts = new HashMap<>();
 
-         for (AiWorldMemory.Inner_StreamUtil fact : ordered) {
+         for (AiWorldMemory.Landmark fact : ordered) {
             if (counts.getOrDefault(fact.category, 0) < 32) {
                saved.add(
                   AiJson.objectOf(
@@ -404,14 +404,14 @@ final class AiWorldMemory {
 
          label41:
          for (int[] offset : AiWorldScan.sortedChunkOffsets(radiusChunks)) {
-            AiWorldMemory.Inner_DataUtil chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(cx + offset[0], cz + offset[1]));
+            AiWorldMemory.ChunkScan chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(cx + offset[0], cz + offset[1]));
             if (chunk != null) {
                int found = 0;
                Iterator var12 = chunk.init_Map.values().iterator();
 
                while (true) {
                   if (var12.hasNext()) {
-                     AiWorldMemory.Inner_StreamUtil fact = (AiWorldMemory.Inner_StreamUtil)var12.next();
+                     AiWorldMemory.Landmark fact = (AiWorldMemory.Landmark)var12.next();
                      if (!AiTerrain.isLoaded(mc.level, fact.pos) || !target.test(mc.level.getBlockState(fact.pos))) {
                         continue;
                      }
@@ -445,11 +445,11 @@ final class AiWorldMemory {
          int limit = Math.max(1, Math.min(32, AiJson.getInt(args, "limit", 12)));
          int radius = Math.max(16, Math.min(192, AiJson.getInt(args, "radius", 96)));
          BlockPos origin = mc.player.blockPosition();
-         List<AiWorldMemory.Inner_StreamUtil> found = new ArrayList<>();
+         List<AiWorldMemory.Landmark> found = new ArrayList<>();
          int available = 0;
          int complete = 0;
 
-         for (Entry<Long, AiWorldMemory.Inner_DataUtil> entry : init_LinkedHashMap.entrySet()) {
+         for (Entry<Long, AiWorldMemory.ChunkScan> entry : init_LinkedHashMap.entrySet()) {
             int cx = (int)(entry.getKey() >> 32);
             int cz = (int)entry.getKey().longValue();
             boolean loaded = mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false) != null;
@@ -461,7 +461,7 @@ final class AiWorldMemory {
                complete++;
             }
 
-            for (AiWorldMemory.Inner_StreamUtil fact : entry.getValue().init_Map.values()) {
+            for (AiWorldMemory.Landmark fact : entry.getValue().init_Map.values()) {
                if ((requested.isEmpty() || requested.equals(fact.category))
                   && !(fact.pos.distSqr(origin) > (double)radius * radius)
                   && (!loaded || fact.block.equals(AiWorldScan.blockId(mc.level.getBlockState(fact.pos))))) {
@@ -470,9 +470,9 @@ final class AiWorldMemory {
             }
          }
 
-         for (AiWorldMemory.Inner_StreamUtil fact : load_Map.values()) {
+         for (AiWorldMemory.Landmark fact : load_Map.values()) {
             if ((requested.isEmpty() || requested.equals(fact.category)) && !(fact.pos.distSqr(origin) > (double)radius * radius)) {
-               AiWorldMemory.Inner_DataUtil indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
+               AiWorldMemory.ChunkScan indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
                if ((indexed == null || !indexed.init_Map.containsKey(fact.pos.asLong()))
                   && (!AiTerrain.isLoaded(mc.level, fact.pos) || fact.block.equals(AiWorldScan.blockId(mc.level.getBlockState(fact.pos))))) {
                   found.add(fact);
@@ -483,7 +483,7 @@ final class AiWorldMemory {
          found.sort(Comparator.comparingDouble(factx -> factx.pos.distSqr(origin) + (AiTerrain.isLoaded(mc.level, factx.pos) ? 0 : 4096)));
          JsonArray candidates = new JsonArray();
 
-         for (AiWorldMemory.Inner_StreamUtil fact : found.subList(0, Math.min(limit, found.size()))) {
+         for (AiWorldMemory.Landmark fact : found.subList(0, Math.min(limit, found.size()))) {
             candidates.add(init(mc, fact));
          }
 
@@ -574,7 +574,7 @@ final class AiWorldMemory {
       }
    }
 
-   private static JsonObject init(Minecraft mc, AiWorldMemory.Inner_StreamUtil fact) {
+   private static JsonObject init(Minecraft mc, AiWorldMemory.Landmark fact) {
       boolean live = AiTerrain.isLoaded(mc.level, fact.pos);
       JsonObject out = AiJson.objectOf(
          "world",
@@ -685,7 +685,7 @@ final class AiWorldMemory {
       return out;
    }
 
-   private static JsonObject load(Minecraft mc, AiWorldMemory.Inner_StreamUtil anchor) {
+   private static JsonObject load(Minecraft mc, AiWorldMemory.Landmark anchor) {
       ArrayDeque<BlockPos> pending = new ArrayDeque<>();
       HashSet<BlockPos> examined = new HashSet<>();
       JsonArray cells = new JsonArray();
@@ -745,7 +745,7 @@ final class AiWorldMemory {
       JsonArray result = new JsonArray();
       List<BlockPos> borders = new ArrayList<>();
 
-      for (Entry<Long, AiWorldMemory.Inner_DataUtil> entry : init_LinkedHashMap.entrySet()) {
+      for (Entry<Long, AiWorldMemory.ChunkScan> entry : init_LinkedHashMap.entrySet()) {
          if (entry.getValue().init_Z) {
             int cx = (int)(entry.getKey() >> 32);
             int cz = (int)entry.getKey().longValue();
@@ -775,9 +775,9 @@ final class AiWorldMemory {
       return result;
    }
 
-   private static final class Inner_DataUtil {
+   private static final class ChunkScan {
       WeakReference<LevelChunk> init_WeakReference;
-      final Map<Long, AiWorldMemory.Inner_StreamUtil> init_Map = new LinkedHashMap<>();
+      final Map<Long, AiWorldMemory.Landmark> init_Map = new LinkedHashMap<>();
       final Map<String, Integer> load_Map = new HashMap<>();
       int init_I;
       int load_I;
@@ -785,7 +785,7 @@ final class AiWorldMemory {
       long init_J;
       boolean init_Z;
 
-      Inner_DataUtil(LevelChunk source, int revision) {
+      ChunkScan(LevelChunk source, int revision) {
          this.init_WeakReference = new WeakReference<>(source);
          this.read = revision;
       }
@@ -801,7 +801,7 @@ final class AiWorldMemory {
 
       void init(BlockPos pos, BlockState state) {
          AiWorldMemory.load_Map.remove(pos.asLong());
-         AiWorldMemory.Inner_StreamUtil old = this.init_Map.remove(pos.asLong());
+         AiWorldMemory.Landmark old = this.init_Map.remove(pos.asLong());
          if (old != null) {
             this.load_Map.computeIfPresent(old.category, (key, count) -> Math.max(0, count - 1));
             AiWorldMemory.load_J++;
@@ -812,7 +812,7 @@ final class AiWorldMemory {
             this.init_Map
                .put(
                   pos.asLong(),
-                  new AiWorldMemory.Inner_StreamUtil(
+                  new AiWorldMemory.Landmark(
                      pos.immutable(), category, AiWorldScan.blockId(state), AiThreats.currentClientTick(), autismclient.ai.engine.AiGridRevisions.globalRevision(), System.currentTimeMillis()
                   )
                );
@@ -822,6 +822,6 @@ final class AiWorldMemory {
       }
    }
 
-   private record Inner_StreamUtil(BlockPos pos, String category, String block, long tick, long revision, long observedAtMillis) {
+   private record Landmark(BlockPos pos, String category, String block, long tick, long revision, long observedAtMillis) {
    }
 }

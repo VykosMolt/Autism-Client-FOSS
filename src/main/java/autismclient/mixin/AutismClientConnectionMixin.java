@@ -308,8 +308,8 @@ public abstract class AutismClientConnectionMixin {
 
          PacketListener packetListener = ((Connection)(Object)this).getPacketListener();
          ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
-         ModuleRuntimeManager.Inner_DataUtil hooks = module == null
-            ? ModuleRuntimeManager.Inner_DataUtil.none()
+         ModuleRuntimeManager.CapturePlan hooks = module == null
+            ? ModuleRuntimeManager.CapturePlan.none()
             : module.getPacketCapturePlan(this.isPlayConnectionActive());
          boolean normalLoggerPath = hooks.normalPath();
          String protocolHint = !hooks.loggerCapture() && !hooks.serverInfoObservation() ? "" : this.autism$protocolHint(packetListener);
@@ -540,8 +540,8 @@ public abstract class AutismClientConnectionMixin {
    private void yang$onReceivePacket(ChannelHandlerContext ctx, Packet<?> packet, CallbackInfo ci) {
          PacketListener listener = ((Connection)(Object)this).getPacketListener();
          ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
-         ModuleRuntimeManager.Inner_DataUtil hooks = module == null
-            ? ModuleRuntimeManager.Inner_DataUtil.none()
+         ModuleRuntimeManager.CapturePlan hooks = module == null
+            ? ModuleRuntimeManager.CapturePlan.none()
             : module.getPacketCapturePlan(isPlayReceiveListener(listener));
          boolean normalLoggerPath = hooks.normalPath();
          boolean vanillaDialogPacket = packet instanceof ClientboundShowDialogPacket || packet instanceof ClientboundClearDialogPacket;

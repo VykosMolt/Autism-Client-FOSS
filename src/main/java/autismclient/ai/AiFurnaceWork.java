@@ -305,14 +305,14 @@ final class AiFurnaceWork implements AiOperation {
                this.read_BlockPos = null;
                this.init_RefQueue_DataUtil.stopCompat();
             } else if (this.update(this.read_BlockPos) && autismclient.ai.engine.AiBlockInteraction.findReachableHit(this.mc, this.read_BlockPos) != null) {
-               autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2 r = this.init_RefQueue_DataUtil.digCompat(this.read_BlockPos);
+               autismclient.ai.engine.AiBlockDigger.DigOutcome r = this.init_RefQueue_DataUtil.digCompat(this.read_BlockPos);
                this.aim.tick();
-               if (r == autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2.init) {
+               if (r == autismclient.ai.engine.AiBlockDigger.DigOutcome.init) {
                   return this.running("Mining needed " + this.init_Str_BlockPos(this.read_BlockPos) + " while the furnace cooks");
                }
 
                this.init_RefQueue_DataUtil.stopCompat();
-               if (r == autismclient.ai.engine.AiBlockDigger.Inner_DataUtil_2.load) {
+               if (r == autismclient.ai.engine.AiBlockDigger.DigOutcome.load) {
                   this.read_I++;
                }
 

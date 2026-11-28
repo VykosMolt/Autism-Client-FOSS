@@ -201,7 +201,7 @@ final class AiHttp {
 
    static HttpResponse<byte[]> init(HttpRequest request, int limit, Runnable checkpoint) throws InterruptedException, TimeoutException, ExecutionException {
       checkpoint.run();
-      CompletableFuture<HttpResponse<byte[]>> future = init_HttpClient.sendAsync(request, info -> new AiHttp.Inner_DataUtil(limit));
+      CompletableFuture<HttpResponse<byte[]>> future = init_HttpClient.sendAsync(request, info -> new AiHttp.LimitedBodySubscriber(limit));
       long deadline = System.nanoTime() + request.timeout().orElse(Duration.ofSeconds(60L)).toNanos();
 
       try {
@@ -223,13 +223,13 @@ final class AiHttp {
       }
    }
 
-   private static final class Inner_DataUtil implements BodySubscriber<byte[]> {
+   private static final class LimitedBodySubscriber implements BodySubscriber<byte[]> {
       private final BodySubscriber<byte[]> init_HttpResponse_BodyS = BodySubscribers.ofByteArray();
       private final int limit;
       private long init_J;
       private Subscription subscription;
 
-      Inner_DataUtil(int limit) {
+      LimitedBodySubscriber(int limit) {
          this.limit = limit;
       }
 

@@ -33,7 +33,7 @@ import java.util.function.BooleanSupplier;
 final class AiScriptHost implements AutoCloseable {
    private static final Set<Process> LIVE_PROCESSES = ConcurrentHashMap.newKeySet();
    private final Path directory;
-   private final AiScriptHost.Inner_DataUtil tools;
+   private final AiScriptHost.ToolInvoker tools;
    private volatile Process process;
    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
       Thread t = new Thread(r, "autism-ai-script-pipe");
@@ -41,7 +41,7 @@ final class AiScriptHost implements AutoCloseable {
       return t;
    });
 
-   AiScriptHost(Path directory, AiScriptHost.Inner_DataUtil tools) {
+   AiScriptHost(Path directory, AiScriptHost.ToolInvoker tools) {
       this.directory = directory;
       this.tools = tools;
    }
@@ -280,7 +280,7 @@ final class AiScriptHost implements AutoCloseable {
       }), "autism-ai-script-cleanup"));
    }
 
-   interface Inner_DataUtil {
+   interface ToolInvoker {
       JsonObject call(String var1, JsonObject var2) throws Exception;
    }
 }

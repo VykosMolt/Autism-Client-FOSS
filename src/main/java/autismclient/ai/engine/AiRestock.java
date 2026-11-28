@@ -63,10 +63,10 @@ public final class AiRestock {
       "minecraft:bricks",
       "minecraft:nether_bricks"
    );
-   private final AiRestock.Inner_StreamUtil slotOps;
+   private final AiRestock.SlotOps slotOps;
    private final LongSupplier inventoryRevisionSupplier;
    private final LongSupplier clockNanos;
-   private AiRestock.Inner_BufferHelper state = AiRestock.Inner_BufferHelper.IDLE;
+   private AiRestock.RestockState state = AiRestock.RestockState.IDLE;
    private String expectedItemId;
    private int backpackSlot = -1;
    private int hotbarSlot = -1;
@@ -282,7 +282,7 @@ public final class AiRestock {
    }
 
    public AiRestock(final Minecraft mc) {
-      this(new AiRestock.Inner_StreamUtil() {
+      this(new AiRestock.SlotOps() {
          @Override
          public boolean init() {
             return mc.player != null && mc.player.containerMenu.getCarried().isEmpty();
@@ -315,22 +315,22 @@ public final class AiRestock {
       }, () -> mc.player == null ? -1L : AiServerEvidence.containerRevision(mc.player.containerMenu.containerId), System::nanoTime);
    }
 
-   public AiRestock(AiRestock.Inner_StreamUtil slots, LongSupplier inventoryRevision, LongSupplier clock) {
+   public AiRestock(AiRestock.SlotOps slots, LongSupplier inventoryRevision, LongSupplier clock) {
       this.slotOps = slots;
       this.inventoryRevisionSupplier = inventoryRevision;
       this.clockNanos = clock;
    }
 
-   public AiRestock.Inner_BufferHelper state() {
+   public AiRestock.RestockState state() {
       return this.state;
    }
 
    public boolean isRunning() {
-      return this.state == AiRestock.Inner_BufferHelper.RUNNING;
+      return this.state == AiRestock.RestockState.RUNNING;
    }
 
    public boolean needsReconciliation() {
-      return this.state != AiRestock.Inner_BufferHelper.SUCCEEDED
+      return this.state != AiRestock.RestockState.SUCCEEDED
          && this.sentRevision >= 0L
          && (!this.slotOps.init(this.hotbarSlot, this.expectedItemId) || this.inventoryRevisionSupplier.getAsLong() <= this.sentRevision);
    }
@@ -346,25 +346,25 @@ public final class AiRestock {
       this.attemptCount = 0;
       this.waitTicks = 0;
       this.sentRevision = -1L;
-      this.state = AiRestock.Inner_BufferHelper.RUNNING;
+      this.state = AiRestock.RestockState.RUNNING;
    }
 
    public void reset() {
-      this.state = AiRestock.Inner_BufferHelper.IDLE;
+      this.state = AiRestock.RestockState.IDLE;
       this.expectedItemId = null;
       this.backpackSlot = -1;
       this.hotbarSlot = -1;
       this.sentRevision = -1L;
    }
 
-   public AiRestock.Inner_BufferHelper tick() {
-      if (this.state != AiRestock.Inner_BufferHelper.RUNNING) {
+   public AiRestock.RestockState tick() {
+      if (this.state != AiRestock.RestockState.RUNNING) {
          return this.state;
       }
 
       if (this.sentRevision < 0L) {
          if (this.attemptCount >= 2) {
-            this.state = AiRestock.Inner_BufferHelper.FAILED;
+            this.state = AiRestock.RestockState.FAILED;
             return this.state;
          } else if (this.clockNanos.getAsLong() < this.nextAttemptAfterNanos) {
             return this.state;
@@ -387,25 +387,25 @@ public final class AiRestock {
       } else {
          if (this.slotOps.init(this.hotbarSlot, this.expectedItemId) && this.inventoryRevisionSupplier.getAsLong() > this.sentRevision) {
             this.completedSwapCount++;
-            this.state = AiRestock.Inner_BufferHelper.SUCCEEDED;
+            this.state = AiRestock.RestockState.SUCCEEDED;
             return this.state;
          }
 
          if (++this.waitTicks > 40) {
-            this.state = AiRestock.Inner_BufferHelper.FAILED;
+            this.state = AiRestock.RestockState.FAILED;
          }
 
          return this.state;
       }
    }
 
-   public static int pickBestBackpackSlot(List<AiRestock.Inner_CachePool> backpack, String lastUsedId) {
+   public static int pickBestBackpackSlot(List<AiRestock.BackpackSlotView> backpack, String lastUsedId) {
       int best = -1;
       int bestRank = 2147483647;
       int bestCount = -1;
 
       for (int i = 0; i < backpack.size(); i++) {
-         AiRestock.Inner_CachePool view = backpack.get(i);
+         AiRestock.BackpackSlotView view = backpack.get(i);
          if (view != null && view.itemId() != null && view.count() > 0 && !view.falling() && view.fullBlock() && !view.blockEntity()) {
             int rank;
             if (lastUsedId != null && view.itemId().equals(lastUsedId)) {
@@ -430,7 +430,7 @@ public final class AiRestock {
       return best;
    }
 
-   public static int pickTargetHotbarSlot(List<AiRestock.Inner_DataUtil> hotbar) {
+   public static int pickTargetHotbarSlot(List<AiRestock.HotbarSlotView> hotbar) {
       for (int i = 0; i < hotbar.size(); i++) {
          if (hotbar.get(i).empty()) {
             return i;
@@ -441,7 +441,7 @@ public final class AiRestock {
       int bestScore = 2147483647;
 
       for (int i = 0; i < hotbar.size(); i++) {
-         AiRestock.Inner_DataUtil view = hotbar.get(i);
+         AiRestock.HotbarSlotView view = hotbar.get(i);
          int score = view.damageable() ? 60 : (view.food() ? 40 : (view.block() ? 20 : 30));
          if (score < bestScore) {
             best = i;
@@ -452,20 +452,20 @@ public final class AiRestock {
       return best;
    }
 
-   public enum Inner_BufferHelper {
+   public enum RestockState {
       IDLE,
       RUNNING,
       SUCCEEDED,
       FAILED;
    }
 
-   public record Inner_CachePool(String itemId, int count, boolean falling, boolean fullBlock, boolean blockEntity) {
+   public record BackpackSlotView(String itemId, int count, boolean falling, boolean fullBlock, boolean blockEntity) {
    }
 
-   public record Inner_DataUtil(boolean empty, boolean block, boolean food, boolean damageable) {
+   public record HotbarSlotView(boolean empty, boolean block, boolean food, boolean damageable) {
    }
 
-   public interface Inner_StreamUtil {
+   public interface SlotOps {
       boolean init();
 
       boolean init(int var1, int var2);

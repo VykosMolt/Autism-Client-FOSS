@@ -30,8 +30,8 @@ public final class ColorPickerPopup {
    private static final int run = 360;
    private static final int BACKDROP_COLOR = -1728053248;
    private static final Minecraft MINECRAFT = Minecraft.getInstance();
-   private static ColorPickerPopup.Inner_StreamUtil init_NetHelper_StreamUt;
-   private static ColorPickerPopup.Inner_StreamUtil load_NetHelper_StreamUt;
+   private static ColorPickerPopup.PickerTexture init_NetHelper_StreamUt;
+   private static ColorPickerPopup.PickerTexture load_NetHelper_StreamUt;
    private static int svTextureHueBucket = -2147483648;
    private final Consumer<Integer> onSave;
    private final int initialArgb;
@@ -51,7 +51,7 @@ public final class ColorPickerPopup {
    private int red;
    private int green;
    private int blue;
-   private ColorPickerPopup.Inner_DataUtil dragTarget = ColorPickerPopup.Inner_DataUtil.NONE;
+   private ColorPickerPopup.DragTarget dragTarget = ColorPickerPopup.DragTarget.NONE;
 
    public ColorPickerPopup(autismclient.gui.f.NetHelper anchor, int initialArgb, int defaultArgb, int screenWidth, int screenHeight, Consumer<Integer> onSave) {
       this.onSave = onSave;
@@ -174,27 +174,27 @@ public final class ColorPickerPopup {
          if (this.hexFocused) {
             this.hexCursor = this.cursorIndexAt(mouseX, hex);
             this.hexSelectionAnchor = this.hexCursor;
-            this.dragTarget = ColorPickerPopup.Inner_DataUtil.HEX;
+            this.dragTarget = ColorPickerPopup.DragTarget.HEX;
             return true;
          }
 
          if (this.saturationValueArea().init_Z(mouseX, mouseY)) {
-            this.dragTarget = ColorPickerPopup.Inner_DataUtil.SV;
+            this.dragTarget = ColorPickerPopup.DragTarget.SV;
             this.dragSaturationValue(mouseX, mouseY);
          } else if (this.hueStrip().init_Z(mouseX, mouseY)) {
-            this.dragTarget = ColorPickerPopup.Inner_DataUtil.HUE;
+            this.dragTarget = ColorPickerPopup.DragTarget.HUE;
             this.dragHue(mouseY);
          } else if (this.redSlider().init_Z(mouseX, mouseY)) {
-            this.dragTarget = ColorPickerPopup.Inner_DataUtil.RED;
+            this.dragTarget = ColorPickerPopup.DragTarget.RED;
             this.dragChannel(mouseX, this.redSlider(), 0);
          } else if (this.greenSlider().init_Z(mouseX, mouseY)) {
-            this.dragTarget = ColorPickerPopup.Inner_DataUtil.GREEN;
+            this.dragTarget = ColorPickerPopup.DragTarget.GREEN;
             this.dragChannel(mouseX, this.greenSlider(), 1);
          } else if (this.blueSlider().init_Z(mouseX, mouseY)) {
-            this.dragTarget = ColorPickerPopup.Inner_DataUtil.BLUE;
+            this.dragTarget = ColorPickerPopup.DragTarget.BLUE;
             this.dragChannel(mouseX, this.blueSlider(), 2);
          } else {
-            this.dragTarget = ColorPickerPopup.Inner_DataUtil.NONE;
+            this.dragTarget = ColorPickerPopup.DragTarget.NONE;
          }
 
          return true;
@@ -203,7 +203,7 @@ public final class ColorPickerPopup {
 
    public boolean load(int mouseX, int mouseY, int button) {
       if (button == 0) {
-         this.dragTarget = ColorPickerPopup.Inner_DataUtil.NONE;
+         this.dragTarget = ColorPickerPopup.DragTarget.NONE;
       }
 
       return this.shown;
@@ -663,19 +663,19 @@ public final class ColorPickerPopup {
       return Math.max(0.0F, Math.min(1.0F, value));
    }
 
-   private static ColorPickerPopup.Inner_StreamUtil init_NetHelper_StreamUt() {
+   private static ColorPickerPopup.PickerTexture init_NetHelper_StreamUt() {
       if (init_NetHelper_StreamUt == null) {
-         init_NetHelper_StreamUt = ColorPickerPopup.Inner_StreamUtil.create("color_picker_hue", 13, 82);
+         init_NetHelper_StreamUt = ColorPickerPopup.PickerTexture.create("color_picker_hue", 13, 82);
          init_NetHelper_StreamUt.paintHue();
       }
 
       return init_NetHelper_StreamUt;
    }
 
-   private static ColorPickerPopup.Inner_StreamUtil init_NetHelper_StreamUt_F(float hue) {
+   private static ColorPickerPopup.PickerTexture init_NetHelper_StreamUt_F(float hue) {
       int bucket = Math.round(clamp01(hue) * 360.0F);
       if (load_NetHelper_StreamUt == null) {
-         load_NetHelper_StreamUt = ColorPickerPopup.Inner_StreamUtil.create("color_picker_sv", 102, 82);
+         load_NetHelper_StreamUt = ColorPickerPopup.PickerTexture.create("color_picker_sv", 102, 82);
          svTextureHueBucket = -2147483648;
       }
 
@@ -687,7 +687,7 @@ public final class ColorPickerPopup {
       return load_NetHelper_StreamUt;
    }
 
-   private enum Inner_DataUtil {
+   private enum DragTarget {
       NONE,
       SV,
       HUE,
@@ -697,20 +697,20 @@ public final class ColorPickerPopup {
       HEX;
    }
 
-   private static final class Inner_StreamUtil extends AbstractTexture {
+   private static final class PickerTexture extends AbstractTexture {
       private final Identifier id;
       private final NativeImage image;
       private final int width;
       private final int height;
 
-      private static ColorPickerPopup.Inner_StreamUtil create(String name, int width, int height) {
+      private static ColorPickerPopup.PickerTexture create(String name, int width, int height) {
          Identifier id = Identifier.fromNamespaceAndPath("autismclient", "dynamic/ui/" + name);
-         ColorPickerPopup.Inner_StreamUtil texture = new ColorPickerPopup.Inner_StreamUtil(id, name, width, height);
+         ColorPickerPopup.PickerTexture texture = new ColorPickerPopup.PickerTexture(id, name, width, height);
          ColorPickerPopup.MINECRAFT.getTextureManager().register(id, texture);
          return texture;
       }
 
-      private Inner_StreamUtil(Identifier id, String name, int width, int height) {
+      private PickerTexture(Identifier id, String name, int width, int height) {
          this.id = id;
          this.width = width;
          this.height = height;

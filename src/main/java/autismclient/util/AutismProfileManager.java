@@ -424,7 +424,7 @@ public final class AutismProfileManager {
 
    public synchronized AutismProfile read(String address) {
       if (address != null && !address.isBlank()) {
-         AutismProfileManager.Inner_DataUtil server = init_bV_DataUtil_Str(address, 25565);
+         AutismProfileManager.HostPort server = init_bV_DataUtil_Str(address, 25565);
          AutismProfile best = null;
          int bestScore = 0;
          long bestCreated = 9223372036854775807L;
@@ -450,7 +450,7 @@ public final class AutismProfileManager {
 
    public static boolean matchesAddress(String address, String pattern) {
       if (address != null && !address.isBlank()) {
-         AutismProfileManager.Inner_DataUtil server = init_bV_DataUtil_Str(address, 25565);
+         AutismProfileManager.HostPort server = init_bV_DataUtil_Str(address, 25565);
          return auditScore(server.init_Str(), server.init_I(), pattern) > 0;
       } else {
          return false;
@@ -458,7 +458,7 @@ public final class AutismProfileManager {
    }
 
    // Bracketed or bare IPv6 hosts; a single trailing dot is dropped from the host.
-   static AutismProfileManager.Inner_DataUtil init_bV_DataUtil_Str(String address, int defaultPort) {
+   static AutismProfileManager.HostPort init_bV_DataUtil_Str(String address, int defaultPort) {
       String host = address.strip().toLowerCase(Locale.ROOT);
       int port = defaultPort;
       int close = host.indexOf(']');
@@ -481,7 +481,7 @@ public final class AutismProfileManager {
          host = host.substring(0, host.length() - 1);
       }
 
-      return new AutismProfileManager.Inner_DataUtil(host, port);
+      return new AutismProfileManager.HostPort(host, port);
    }
 
    // 0 = no match. Exact hosts beat wildcards, longer wildcard suffixes beat shorter ones, an explicit port breaks ties.
@@ -490,7 +490,7 @@ public final class AutismProfileManager {
          return 0;
       }
 
-      AutismProfileManager.Inner_DataUtil pat = init_bV_DataUtil_Str(pattern, -1);
+      AutismProfileManager.HostPort pat = init_bV_DataUtil_Str(pattern, -1);
       String patHost = pat.init_Str();
       if (pat.init_I() != -1 && pat.init_I() != port) {
          return 0;
@@ -844,6 +844,6 @@ public final class AutismProfileManager {
       }
    }
 
-   record Inner_DataUtil(String init_Str, int init_I) {
+   record HostPort(String init_Str, int init_I) {
    }
 }

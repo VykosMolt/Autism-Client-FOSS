@@ -199,7 +199,7 @@ public class AutismHudEditorScreen extends Screen {
       );
    }
 
-   private AutismHudEditorScreen.Inner_DataUtil pickerLayout() {
+   private AutismHudEditorScreen.PickerLayout pickerLayout() {
       int pad = 4;
       int gap = 4;
       int titleH = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
@@ -228,11 +228,11 @@ public class AutismHudEditorScreen extends Screen {
       int h = titleH + catH + maxRows * rowH + pad;
       int x = this.clamp(this.pickerX, 4, Math.max(4, sw - w - 4));
       int y = this.clamp(this.pickerY, 4, Math.max(4, sh - h - 4));
-      return new AutismHudEditorScreen.Inner_DataUtil(x, y, w, h, colW, titleH, catH, rowH, gap, pad);
+      return new AutismHudEditorScreen.PickerLayout(x, y, w, h, colW, titleH, catH, rowH, gap, pad);
    }
 
    private void drawPicker(GuiGraphicsExtractor graphics, int mx, int my) {
-      AutismHudEditorScreen.Inner_DataUtil p = this.pickerLayout();
+      AutismHudEditorScreen.PickerLayout p = this.pickerLayout();
       autismclient.gui.ui.widgets.WindowFrameRenderer.init(
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my),
          autismclient.gui.f.NetHelper.init(p.init, p.load, p.read, p.write),
@@ -406,8 +406,8 @@ public class AutismHudEditorScreen extends Screen {
       int maxY = Math.max(0, sh - bounds.sync());
       this.guideX = null;
       this.guideY = null;
-      AutismHudEditorScreen.Inner_StreamUtil snappedX = this.bestSnap(id, x, bounds.update(), sw, true);
-      AutismHudEditorScreen.Inner_StreamUtil snappedY = this.bestSnap(id, y, bounds.sync(), sh, false);
+      AutismHudEditorScreen.SnapResult snappedX = this.bestSnap(id, x, bounds.update(), sw, true);
+      AutismHudEditorScreen.SnapResult snappedY = this.bestSnap(id, y, bounds.sync(), sh, false);
       if (snappedX.snapped()) {
          outX = snappedX.candidatePosition();
          this.guideX = snappedX.load();
@@ -423,9 +423,9 @@ public class AutismHudEditorScreen extends Screen {
       return new int[]{outX, outY};
    }
 
-   private AutismHudEditorScreen.Inner_StreamUtil bestSnap(String id, int value, int size, int screenSize, boolean horizontal) {
+   private AutismHudEditorScreen.SnapResult bestSnap(String id, int value, int size, int screenSize, boolean horizontal) {
       int max = Math.max(0, screenSize - size);
-      AutismHudEditorScreen.Inner_StreamUtil best = AutismHudEditorScreen.Inner_StreamUtil.none();
+      AutismHudEditorScreen.SnapResult best = AutismHudEditorScreen.SnapResult.none();
       best = this.closerSnap(best, value, 0, 0);
       best = this.closerSnap(best, value, max, screenSize);
       best = this.closerSnap(best, value, (screenSize - size) / 2, screenSize / 2);
@@ -448,12 +448,12 @@ public class AutismHudEditorScreen extends Screen {
       return best;
    }
 
-   private AutismHudEditorScreen.Inner_StreamUtil closerSnap(AutismHudEditorScreen.Inner_StreamUtil current, int value, int candidatePosition, int guide) {
+   private AutismHudEditorScreen.SnapResult closerSnap(AutismHudEditorScreen.SnapResult current, int value, int candidatePosition, int guide) {
       int distance = Math.abs(value - candidatePosition);
       if (distance > 6) {
          return current;
       } else {
-         return current.snapped() && distance >= current.read() ? current : new AutismHudEditorScreen.Inner_StreamUtil(candidatePosition, guide, distance, true);
+         return current.snapped() && distance >= current.read() ? current : new AutismHudEditorScreen.SnapResult(candidatePosition, guide, distance, true);
       }
    }
 
@@ -462,7 +462,7 @@ public class AutismHudEditorScreen extends Screen {
    }
 
    private String pickerElementAt(int mx, int my) {
-      AutismHudEditorScreen.Inner_DataUtil p = this.pickerLayout();
+      AutismHudEditorScreen.PickerLayout p = this.pickerLayout();
 
       for (int col = 0; col < CATEGORY_ELEMENTS.length; col++) {
          int colX = p.init + p.poll + col * (p.update + p.open);
@@ -605,12 +605,12 @@ public class AutismHudEditorScreen extends Screen {
       k.init(graphics, this.font, trimmed, THEME.init_Identifier_l(l.read), color, x, y, false);
    }
 
-   private record Inner_DataUtil(int init, int load, int read, int write, int update, int sync, int flush, int close, int open, int poll) {
+   private record PickerLayout(int init, int load, int read, int write, int update, int sync, int flush, int close, int open, int poll) {
    }
 
-   private record Inner_StreamUtil(int candidatePosition, int load, int read, boolean snapped) {
-      static AutismHudEditorScreen.Inner_StreamUtil none() {
-         return new AutismHudEditorScreen.Inner_StreamUtil(0, 0, 2147483647, false);
+   private record SnapResult(int candidatePosition, int load, int read, boolean snapped) {
+      static AutismHudEditorScreen.SnapResult none() {
+         return new AutismHudEditorScreen.SnapResult(0, 0, 2147483647, false);
       }
    }
 }

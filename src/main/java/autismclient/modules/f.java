@@ -361,7 +361,7 @@ public final class f {
          this.add(new ColorSetting("crafter-color", "Crafter", -858214805).group("Colors").description("Crafter, pot, bookshelf"));
          this.add(new ColorSetting("other-color", "Other", -7566196).group("Colors").description("Fallback."));
 
-         for (StructureStorageFilter.Inner_DataUtil structure : StructureStorageFilter.init) {
+         for (StructureStorageFilter.StructureFilter structure : StructureStorageFilter.init) {
             this.add(new BoolSetting(structure.id(), structure.load(), false).group("Ignore Structures"));
          }
       }
@@ -804,7 +804,7 @@ public final class f {
       private Set<String> init_Set = Set.of();
       private final AutoFishStateMachine init_BitSetUtil = new AutoFishStateMachine();
       private Object init_Obj;
-      private AutoFishStateMachine.Inner_CachePool init_BitSetUtil_CachePo;
+      private AutoFishStateMachine.PendingAction init_BitSetUtil_CachePo;
       private InteractionHand init_InteractionHand;
       private ItemStack init_ItemStack = ItemStack.EMPTY;
       private int init_I = -1;
@@ -981,7 +981,7 @@ public final class f {
                      } else if (!this.init_f_BufferHelper_Buf().init_Z()) {
                         this.read_V_17();
                      } else {
-                        AutoFishStateMachine.Inner_CachePool use = this.init_BitSetUtil
+                        AutoFishStateMachine.PendingAction use = this.init_BitSetUtil
                            .init(
                               this.init_I_25(),
                               this.bool("auto-cast"),
@@ -1234,7 +1234,7 @@ public final class f {
             && ItemStack.isSameItemSameComponents(this.init_ItemStack, MC.player.getItemInHand(this.init_InteractionHand));
       }
 
-      private boolean init_Z_BitSetUtil_CachePo(AutoFishStateMachine.Inner_CachePool use) {
+      private boolean init_Z_BitSetUtil_CachePo(AutoFishStateMachine.PendingAction use) {
          if (!this.load_Z_17()) {
             return false;
          }
@@ -1274,7 +1274,7 @@ public final class f {
          }
       }
 
-      private void init(AutoFishStateMachine.Inner_CachePool use, boolean dispatched) {
+      private void init(AutoFishStateMachine.PendingAction use, boolean dispatched) {
          this.init_BitSetUtil.init(use, dispatched, this.init_I_25());
          if (!dispatched && !this.load_Z_17()) {
             this.init_BitSetUtil.load_V();
@@ -1395,7 +1395,7 @@ public final class f {
                this.init_cM = new HumanizedTurnPlanner(autismclient.util.HumanHandProfile.shared().forSession(this.init_Random), this.init_Random);
             }
 
-            autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH);
+            autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.MovementSource.AUTO_FISH);
             this.init_cM
                .start(
                   MC.player.getYRot(),
@@ -1424,11 +1424,11 @@ public final class f {
 
       private void init_V_D(double elapsedTicks) {
          if (this.read_Z && this.init_cM != null && MC.player != null) {
-            HumanizedTurnPlanner.Inner_DataUtil step = this.init_cM.step(elapsedTicks, MC.player.getYRot(), MC.player.getXRot(), RotationMath.mouseGcd());
+            HumanizedTurnPlanner.TurnStep step = this.init_cM.step(elapsedTicks, MC.player.getYRot(), MC.player.getXRot(), RotationMath.mouseGcd());
             if (step.done()) {
                this.init_V_Z_9(false);
             } else {
-               autismclient.util.MouseMovementRouter.submitCounts(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH, step.yawCounts(), step.load());
+               autismclient.util.MouseMovementRouter.submitCounts(autismclient.util.MouseMovementRouter.MovementSource.AUTO_FISH, step.yawCounts(), step.load());
             }
          }
       }
@@ -1440,7 +1440,7 @@ public final class f {
             this.init_cM.reset();
          }
 
-         autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AUTO_FISH);
+         autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.MovementSource.AUTO_FISH);
          if (newAnchor) {
             this.write_Z = false;
             this.read_I = 0;
@@ -1644,16 +1644,16 @@ public final class f {
       private void push() {
          if (!this.bool("stop-macro-enabled") && this.value("stop-macro").trim().isEmpty()) {
             if (Boolean.parseBoolean(this.value("stop-inv-slots"))) {
-               autismclient.util.AutismMacro macro = AutoFishMacroPresets.init(AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS);
+               autismclient.util.AutismMacro macro = AutoFishMacroPresets.init(AutoFishMacroPresets.Preset.FREE_SLOTS);
                if (macro != null) {
-                  this.init(macro, AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS);
+                  this.init(macro, AutoFishMacroPresets.Preset.FREE_SLOTS);
                   this.setValue("stop-macro-enabled", "true");
                   this.setValue("stop-macro", macro.name);
                }
             } else if (Boolean.parseBoolean(this.value("stop-out-of-rods"))) {
-               autismclient.util.AutismMacro macro = AutoFishMacroPresets.init(AutoFishMacroPresets.Inner_DataUtil.DURABILITY);
+               autismclient.util.AutismMacro macro = AutoFishMacroPresets.init(AutoFishMacroPresets.Preset.DURABILITY);
                if (macro != null) {
-                  this.init(macro, AutoFishMacroPresets.Inner_DataUtil.DURABILITY);
+                  this.init(macro, AutoFishMacroPresets.Preset.DURABILITY);
                   this.setValue("stop-macro-enabled", "true");
                   this.setValue("stop-macro", macro.name);
                }
@@ -1661,9 +1661,9 @@ public final class f {
          }
       }
 
-      private void init(autismclient.util.AutismMacro macro, AutoFishMacroPresets.Inner_DataUtil preset) {
+      private void init(autismclient.util.AutismMacro macro, AutoFishMacroPresets.Preset preset) {
          if (macro != null && macro.actions != null && !macro.actions.isEmpty() && preset != null) {
-            if (preset == AutoFishMacroPresets.Inner_DataUtil.FREE_SLOTS && macro.actions.get(0) instanceof autismclient.util.macro.WaitFreeSlotsAction wait) {
+            if (preset == AutoFishMacroPresets.Preset.FREE_SLOTS && macro.actions.get(0) instanceof autismclient.util.macro.WaitFreeSlotsAction wait) {
                int slots = AuditClientFixes.autoFishMinFreeSlots(this, wait.slots);
                boolean changed = wait.countMode != autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS
                   || wait.comparison != autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST
@@ -1674,18 +1674,18 @@ public final class f {
                if (changed) {
                   autismclient.util.MacroLibraryManager.getInstance().scheduleSave();
                }
-            } else if (preset == AutoFishMacroPresets.Inner_DataUtil.DURABILITY && macro.actions.get(0) instanceof autismclient.util.macro.WaitDurabilityAction wait) {
+            } else if (preset == AutoFishMacroPresets.Preset.DURABILITY && macro.actions.get(0) instanceof autismclient.util.macro.WaitDurabilityAction wait) {
                int value = Math.max(1, this.integer("min-durability"));
-               boolean changed = wait.targetMode != autismclient.util.macro.WaitDurabilityAction.Inner_CachePool.ITEM
+               boolean changed = wait.targetMode != autismclient.util.macro.WaitDurabilityAction.TargetMode.ITEM
                   || !"minecraft:fishing_rod".equals(wait.itemName)
-                  || wait.measurement != autismclient.util.macro.WaitDurabilityAction.Inner_StreamUtil.REMAINING
-                  || wait.comparison != autismclient.util.macro.WaitDurabilityAction.Inner_DataUtil.AT_MOST
+                  || wait.measurement != autismclient.util.macro.WaitDurabilityAction.Measurement.REMAINING
+                  || wait.comparison != autismclient.util.macro.WaitDurabilityAction.Comparison.AT_MOST
                   || wait.value != value
                   || !wait.useNext;
-               wait.targetMode = autismclient.util.macro.WaitDurabilityAction.Inner_CachePool.ITEM;
+               wait.targetMode = autismclient.util.macro.WaitDurabilityAction.TargetMode.ITEM;
                wait.itemName = "minecraft:fishing_rod";
-               wait.measurement = autismclient.util.macro.WaitDurabilityAction.Inner_StreamUtil.REMAINING;
-               wait.comparison = autismclient.util.macro.WaitDurabilityAction.Inner_DataUtil.AT_MOST;
+               wait.measurement = autismclient.util.macro.WaitDurabilityAction.Measurement.REMAINING;
+               wait.comparison = autismclient.util.macro.WaitDurabilityAction.Comparison.AT_MOST;
                wait.value = value;
                wait.useNext = true;
                if (changed) {
@@ -1726,7 +1726,7 @@ public final class f {
 
       private void run() {
          String macroName = this.value("stop-macro").trim();
-         AutoFishMacroPresets.Inner_DataUtil preset = AutoFishMacroPresets.presetFor(macroName);
+         AutoFishMacroPresets.Preset preset = AutoFishMacroPresets.presetFor(macroName);
          if (preset != null) {
             autismclient.util.AutismMacro macro = autismclient.util.MacroLibraryManager.getInstance().findByName(macroName);
             if (macro != null) {
@@ -5548,7 +5548,7 @@ public final class f {
          this.add(new BoolSetting("exposed-only", "Exposed Only", false).description("Only exposed ores.").visibleWhen(this::init_Z_43).build());
          this.add(new BoolSetting("fill", "Fill", true).description("Shade box interiors.").visibleWhen(this::load).build());
 
-         for (autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil kind : autismclient.util.oresim.OreBlockCatalog.Inner_DataUtil.values()) {
+         for (autismclient.util.oresim.OreBlockCatalog.OreKind kind : autismclient.util.oresim.OreBlockCatalog.OreKind.values()) {
             this.add(new ColorSetting(kind.init(), kind.load_Str, kind.init_I).group("Colors").visibleWhen(() -> this.load() && OreSimEspScanner.init_Z(this, kind)).build());
          }
 
@@ -7126,8 +7126,8 @@ public final class f {
       static final double write_D = 0.15;
       static final double update_D = 0.1;
       private autismclient.util.CombatAimEngine init_q;
-      private final autismclient.util.CombatAimEngine.Inner_DataUtil init_q_DataUtil = new autismclient.util.CombatAimEngine.Inner_DataUtil();
-      private autismclient.util.RotationStreamPlanner.Inner_TaskQueue init_ap_TaskQueue;
+      private final autismclient.util.CombatAimEngine.AimFrame init_q_DataUtil = new autismclient.util.CombatAimEngine.AimFrame();
+      private autismclient.util.RotationStreamPlanner.StreamState init_ap_TaskQueue;
       private double sync_D;
       private double flush_D;
       private int write_I = -1;
@@ -7235,7 +7235,7 @@ public final class f {
                      this.close_I = target.getId();
                      this.open_I = -2147483648;
                      this.poll = 0;
-                     autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
+                     autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.MovementSource.AIM_ASSIST);
                   }
 
                   String axis = this.init_Str_14();
@@ -7246,12 +7246,12 @@ public final class f {
                      if (init_Z_Module_2(this)) {
                         this.init_V_LivingEntity(target, eyes, point, current, axis, safe);
                      } else if (safe) {
-                        autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
+                        autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.MovementSource.AIM_ASSIST);
                      } else {
                         RotationMath.Rotation applied = new RotationMath.Rotation(
                            "Vertical".equals(axis) ? current.yaw() : wanted.yaw(), "Horizontal".equals(axis) ? current.pitch() : wanted.pitch()
                         );
-                        autismclient.util.MouseMovementRouter.submitRotation(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST, current, applied);
+                        autismclient.util.MouseMovementRouter.submitRotation(autismclient.util.MouseMovementRouter.MovementSource.AIM_ASSIST, current, applied);
                      }
                   }
                }
@@ -7264,7 +7264,7 @@ public final class f {
       private void init_V_LivingEntity(LivingEntity target, Vec3 eyes, Vec3 point, RotationMath.Rotation current, String axis, boolean inSafeZone) {
          autismclient.util.CombatAimEngine hand = this.init_q_2();
          if (this.init_ap_TaskQueue == null) {
-            this.init_ap_TaskQueue = new autismclient.util.RotationStreamPlanner.Inner_TaskQueue(new Random());
+            this.init_ap_TaskQueue = new autismclient.util.RotationStreamPlanner.StreamState(new Random());
          }
 
          int ticker = ((AutismLivingEntityAccessor)MC.player).autism$getAttackStrengthTicker();
@@ -7279,7 +7279,7 @@ public final class f {
          this.load_Z = true;
          double gcd = RotationMath.gcdStep();
          boolean noCooldown = autismclient.util.LegacyCombatDetector.init(MC.player);
-         this.init_q_DataUtil.setTarget(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.Inner_DataUtil.computeAnchorAtHeight(target.getBoundingBox(), point.y));
+         this.init_q_DataUtil.setTarget(eyes, target.getBoundingBox(), autismclient.util.CombatAimEngine.AimFrame.computeAnchorAtHeight(target.getBoundingBox(), point.y));
          this.init_q_DataUtil.clampInsideBox = true;
          this.init_q_DataUtil.strafeYawBias = target instanceof Player && this.init_cj.isTracking(target)
             ? this.init_cj.init(eyes, this.init_q_DataUtil.targetYaw, AutismSessionState.getInstance().getClientTick())
@@ -7325,7 +7325,7 @@ public final class f {
             double emitYaw = RotationMath.angleDelta(out.yaw(), current.yaw());
             double emitPitch = out.pitch() - current.pitch();
             if (Math.abs(emitYaw) > 1.0E-6 || Math.abs(emitPitch) > 1.0E-6) {
-               autismclient.util.MouseMovementRouter.submitDegrees(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST, (float)emitYaw, (float)emitPitch);
+               autismclient.util.MouseMovementRouter.submitDegrees(autismclient.util.MouseMovementRouter.MovementSource.AIM_ASSIST, (float)emitYaw, (float)emitPitch);
                this.sync_D = emitYaw;
                this.flush_D = emitPitch;
                this.init(hand, target, out);
@@ -7336,7 +7336,7 @@ public final class f {
          this.sync_D = 0.0;
          this.flush_D = 0.0;
          this.init(hand, target, current);
-         autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
+         autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.MovementSource.AIM_ASSIST);
       }
 
       static double[] init_DArr_D(double yaw, double pitch, double ownYaw, double ownPitch, double horizontal, double vertical) {
@@ -7359,7 +7359,7 @@ public final class f {
          }
       }
 
-      static double init_D_D(double want, double share, double yaw, double realized, double atPitch, autismclient.util.CombatAimEngine.Inner_DataUtil frame) {
+      static double init_D_D(double want, double share, double yaw, double realized, double atPitch, autismclient.util.CombatAimEngine.AimFrame frame) {
          if (share <= 0.0) {
             return 0.0;
          }
@@ -7432,7 +7432,7 @@ public final class f {
          this.close_I = -2147483648;
          this.open_I = -2147483648;
          this.poll = 0;
-         autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.Inner_StreamUtil.AIM_ASSIST);
+         autismclient.util.MouseMovementRouter.release(autismclient.util.MouseMovementRouter.MovementSource.AIM_ASSIST);
       }
 
       private LivingEntity init_LivingEntity_4() {
@@ -8398,7 +8398,7 @@ public final class f {
          );
          this.add(new BoolSetting("empty-frames", "Empty Frames", false).group("Items").description("Also highlight empty frames."));
 
-         for (FrameEspCatalog.Inner_StreamUtil target : FrameEspCatalog.TARGETS) {
+         for (FrameEspCatalog.FrameTarget target : FrameEspCatalog.TARGETS) {
             String id = target.id();
             this.add(new ColorSetting("color-" + id, target.load(), target.defaultColor()).group("Colors").visibleWhen(() -> FrameEspCatalog.isSelected(this, id)));
          }
@@ -8532,9 +8532,9 @@ public final class f {
 
       @Override
       public void onEnable() {
-         autismclient.util.CoordinateSpoofer.Inner_DataUtil m = this.init_V_DataUtil();
+         autismclient.util.CoordinateSpoofer.SpoofMode m = this.init_V_DataUtil();
          autismclient.util.CoordinateSpoofer.init(m, this.bool("fake-y"));
-         if (m == autismclient.util.CoordinateSpoofer.Inner_DataUtil.CUSTOM) {
+         if (m == autismclient.util.CoordinateSpoofer.SpoofMode.CUSTOM) {
             this.init_V_48();
          }
       }
@@ -8546,10 +8546,10 @@ public final class f {
 
       @Override
       public void tick() {
-         autismclient.util.CoordinateSpoofer.Inner_DataUtil m = this.init_V_DataUtil();
+         autismclient.util.CoordinateSpoofer.SpoofMode m = this.init_V_DataUtil();
          autismclient.util.CoordinateSpoofer.init(m);
          autismclient.util.CoordinateSpoofer.init(this.bool("fake-y"));
-         if (m == autismclient.util.CoordinateSpoofer.Inner_DataUtil.CUSTOM) {
+         if (m == autismclient.util.CoordinateSpoofer.SpoofMode.CUSTOM) {
             this.init_V_48();
          }
       }
@@ -8567,26 +8567,26 @@ public final class f {
          }
       }
 
-      private autismclient.util.CoordinateSpoofer.Inner_DataUtil init_V_DataUtil() {
-         autismclient.util.CoordinateSpoofer.Inner_DataUtil var10000;
+      private autismclient.util.CoordinateSpoofer.SpoofMode init_V_DataUtil() {
+         autismclient.util.CoordinateSpoofer.SpoofMode var10000;
          switch (this.choice("mode")) {
             case "Scaled":
-               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.SCALED;
+               var10000 = autismclient.util.CoordinateSpoofer.SpoofMode.SCALED;
                break;
             case "Rotated":
-               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.ROTATED;
+               var10000 = autismclient.util.CoordinateSpoofer.SpoofMode.ROTATED;
                break;
             case "Scrambled":
-               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.SCRAMBLED;
+               var10000 = autismclient.util.CoordinateSpoofer.SpoofMode.SCRAMBLED;
                break;
             case "Frozen":
-               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.FROZEN;
+               var10000 = autismclient.util.CoordinateSpoofer.SpoofMode.FROZEN;
                break;
             case "Custom":
-               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.CUSTOM;
+               var10000 = autismclient.util.CoordinateSpoofer.SpoofMode.CUSTOM;
                break;
             default:
-               var10000 = autismclient.util.CoordinateSpoofer.Inner_DataUtil.OFFSET;
+               var10000 = autismclient.util.CoordinateSpoofer.SpoofMode.OFFSET;
          }
 
          return var10000;

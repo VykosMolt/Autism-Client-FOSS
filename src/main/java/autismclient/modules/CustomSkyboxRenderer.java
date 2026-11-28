@@ -10,7 +10,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public final class CustomSkyboxRenderer {
-   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(786432);
+   private static final AutismBufferSource.LazySource init_c_DataUtil = new AutismBufferSource.LazySource(786432);
    private static final float[][] init_FArr2 = new float[][]{
       {-1.0F, -1.0F, 1.0F, -1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, -1.0F, 1.0F},
       {1.0F, -1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, -1.0F, 1.0F, -1.0F, -1.0F},

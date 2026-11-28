@@ -77,7 +77,7 @@ final class AiOreRoute {
          return new AiOperation() {
             final long deadline = System.nanoTime() + Math.max(30, seconds) * 1000000000L;
             final Direction heading = Direction.fromYRot(mc.player.getYRot());
-            AiOreRoute.Inner_DataUtil init_aH_DataUtil = !nearOnly && AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY + 12) ? AiOreRoute.Inner_DataUtil.DESCEND : AiOreRoute.Inner_DataUtil.NEAR;
+            AiOreRoute.RouteMode init_aH_DataUtil = !nearOnly && AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY + 12) ? AiOreRoute.RouteMode.DESCEND : AiOreRoute.RouteMode.NEAR;
             AiOperation child;
             int init_I;
             int branchIndex;
@@ -153,12 +153,12 @@ final class AiOreRoute {
                            "count",
                            missingBlocks,
                            "radius",
-                           this.init_aH_DataUtil == AiOreRoute.Inner_DataUtil.MINE_BRANCH ? 32 : 48,
+                           this.init_aH_DataUtil == AiOreRoute.RouteMode.MINE_BRANCH ? 32 : 48,
                            "timeoutSeconds",
                            Math.min(120, legSeconds)
                         )
                      );
-                     return this.running("Mining " + family + (this.init_aH_DataUtil == AiOreRoute.Inner_DataUtil.NEAR ? " nearby" : " at y " + mc.player.getBlockY()));
+                     return this.running("Mining " + family + (this.init_aH_DataUtil == AiOreRoute.RouteMode.NEAR ? " nearby" : " at y " + mc.player.getBlockY()));
                   case DESCEND: {
                      this.descentStartY = mc.player.getBlockY();
                      Direction d = AiOreRoute.rotateClockwise(this.heading, this.branchIndex);
@@ -188,24 +188,24 @@ final class AiOreRoute {
                         return this.finish(AiOperation.Status.FAILED, "No " + family + " in loaded terrain nearby (" + r.message() + ")");
                      }
 
-                     this.init_aH_DataUtil = AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY) ? AiOreRoute.Inner_DataUtil.DESCEND : AiOreRoute.Inner_DataUtil.DEEP;
+                     this.init_aH_DataUtil = AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY) ? AiOreRoute.RouteMode.DESCEND : AiOreRoute.RouteMode.DEEP;
                      break;
                   case DESCEND:
                      boolean arrived = !AiOreRoute.aboveBestY(mc.player.getBlockY(), bestY);
                      boolean progressed = this.descentStartY - mc.player.getBlockY() >= 6;
                      if (!arrived && (!progressed || ++this.branchIndex < 4)) {
                         if (!progressed && ++this.branchIndex >= 4) {
-                           this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.DEEP;
+                           this.init_aH_DataUtil = AiOreRoute.RouteMode.DEEP;
                         }
                      } else {
-                        this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.DEEP;
+                        this.init_aH_DataUtil = AiOreRoute.RouteMode.DEEP;
                      }
                      break;
                   case DEEP:
-                     this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.BRANCH;
+                     this.init_aH_DataUtil = AiOreRoute.RouteMode.BRANCH;
                      break;
                   case BRANCH:
-                     this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.MINE_BRANCH;
+                     this.init_aH_DataUtil = AiOreRoute.RouteMode.MINE_BRANCH;
                      break;
                   case MINE_BRANCH:
                      if (++this.init_I >= 8) {
@@ -215,7 +215,7 @@ final class AiOreRoute {
                         );
                      }
 
-                     this.init_aH_DataUtil = AiOreRoute.Inner_DataUtil.BRANCH;
+                     this.init_aH_DataUtil = AiOreRoute.RouteMode.BRANCH;
                }
 
                return this.running("Next: " + this.init_aH_DataUtil.name().toLowerCase(Locale.ROOT).replace('_', ' '));
@@ -288,7 +288,7 @@ final class AiOreRoute {
       }
    }
 
-   enum Inner_DataUtil {
+   enum RouteMode {
       NEAR,
       DESCEND,
       DEEP,

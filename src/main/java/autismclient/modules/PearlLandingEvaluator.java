@@ -24,19 +24,19 @@ final class PearlLandingEvaluator {
    private PearlLandingEvaluator() {
    }
 
-   static PearlLandingEvaluator.Inner_StreamUtil simulateFall(PearlLandingEvaluator.Inner_CachePool world, AABB body, Vec3 velocity, double gravity) {
+   static PearlLandingEvaluator.LandingResult simulateFall(PearlLandingEvaluator.FallWorld world, AABB body, Vec3 velocity, double gravity) {
       double fallen = 0.0;
       int settled = 0;
       int impactTick = 2147483647;
 
       for (int tick = 0; tick < 240; tick++) {
          if (!world.isClear(body.expandTowards(velocity))) {
-            return new PearlLandingEvaluator.Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil.UNKNOWN, fallen, 1.0F);
+            return new PearlLandingEvaluator.LandingResult(PearlLandingEvaluator.LandingKind.UNKNOWN, fallen, 1.0F);
          }
 
-         PearlLandingEvaluator.Inner_DataUtil contact = world.contactAt(body);
+         PearlLandingEvaluator.LandingKind contact = world.contactAt(body);
          if (contact != null) {
-            return new PearlLandingEvaluator.Inner_StreamUtil(contact, fallen, 0.0F);
+            return new PearlLandingEvaluator.LandingResult(contact, fallen, 0.0F);
          }
 
          Vec3 moved = world.collide(body, velocity);
@@ -44,7 +44,7 @@ final class PearlLandingEvaluator {
          fallen += Math.max(0.0, -moved.y);
          contact = world.contactAt(body);
          if (contact != null) {
-            return new PearlLandingEvaluator.Inner_StreamUtil(contact, fallen, 0.0F);
+            return new PearlLandingEvaluator.LandingResult(contact, fallen, 0.0F);
          }
 
          boolean grounded = velocity.y < 0.0 && moved.y > velocity.y + 1.0E-7;
@@ -53,7 +53,7 @@ final class PearlLandingEvaluator {
          }
 
          if (grounded && velocity.horizontalDistance() < 1.0E-4) {
-            return new PearlLandingEvaluator.Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil.LAND, fallen, world.init_F(body), impactTick);
+            return new PearlLandingEvaluator.LandingResult(PearlLandingEvaluator.LandingKind.LAND, fallen, world.init_F(body), impactTick);
          }
 
          if (!grounded) {
@@ -61,7 +61,7 @@ final class PearlLandingEvaluator {
          }
 
          if (body.maxY < world.minY() - 16) {
-            return new PearlLandingEvaluator.Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil.VOID, fallen, 1.0F);
+            return new PearlLandingEvaluator.LandingResult(PearlLandingEvaluator.LandingKind.VOID, fallen, 1.0F);
          }
 
          double drag = grounded ? world.groundDrag(body) : 0.91;
@@ -76,29 +76,29 @@ final class PearlLandingEvaluator {
          Vec3 down = new Vec3(0.0, world.minY() - 17 - body.maxY, 0.0);
          if (down.y < 0.0 && world.isClear(body.expandTowards(down))) {
             Vec3 moved = world.collide(body, down);
-            PearlLandingEvaluator.Inner_DataUtil medium = world.contactAt(body.expandTowards(moved));
+            PearlLandingEvaluator.LandingKind medium = world.contactAt(body.expandTowards(moved));
             if (medium != null) {
-               return new PearlLandingEvaluator.Inner_StreamUtil(medium, fallen - moved.y, 0.0F);
+               return new PearlLandingEvaluator.LandingResult(medium, fallen - moved.y, 0.0F);
             }
 
             if (moved.y <= down.y + 1.0E-7) {
-               return new PearlLandingEvaluator.Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil.VOID, fallen - moved.y, 1.0F);
+               return new PearlLandingEvaluator.LandingResult(PearlLandingEvaluator.LandingKind.VOID, fallen - moved.y, 1.0F);
             }
 
-            return new PearlLandingEvaluator.Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil.LAND, fallen - moved.y, world.init_F(body.move(moved)), 241);
+            return new PearlLandingEvaluator.LandingResult(PearlLandingEvaluator.LandingKind.LAND, fallen - moved.y, world.init_F(body.move(moved)), 241);
          }
       }
 
-      return new PearlLandingEvaluator.Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil.UNKNOWN, fallen, 1.0F);
+      return new PearlLandingEvaluator.LandingResult(PearlLandingEvaluator.LandingKind.UNKNOWN, fallen, 1.0F);
    }
 
    static int init(int rawDamage, int ticks, boolean bypassCooldown) {
       return ticks < 10 && !bypassCooldown ? Math.max(0, rawDamage - 5) : rawDamage;
    }
 
-   static int tintFor(PearlLandingEvaluator.Inner_DataUtil end, double damage, double health, double maxHealth, double thresholdPercent) {
-      if (end != PearlLandingEvaluator.Inner_DataUtil.VOID && end != PearlLandingEvaluator.Inner_DataUtil.HAZARD && !(damage >= health)) {
-         return end != PearlLandingEvaluator.Inner_DataUtil.UNKNOWN && Double.isFinite(damage) && !(damage >= maxHealth * Math.clamp(thresholdPercent, 1.0, 100.0) / 100.0)
+   static int tintFor(PearlLandingEvaluator.LandingKind end, double damage, double health, double maxHealth, double thresholdPercent) {
+      if (end != PearlLandingEvaluator.LandingKind.VOID && end != PearlLandingEvaluator.LandingKind.HAZARD && !(damage >= health)) {
+         return end != PearlLandingEvaluator.LandingKind.UNKNOWN && Double.isFinite(damage) && !(damage >= maxHealth * Math.clamp(thresholdPercent, 1.0, 100.0) / 100.0)
             ? -10099317
             : -12971;
       } else {
@@ -111,7 +111,7 @@ final class PearlLandingEvaluator {
          final LocalPlayer player = mc.player;
          if (!player.getAbilities().invulnerable && !player.getAbilities().flying) {
             AABB body = player.getBoundingBox().move(destination.subtract(player.position()));
-            PearlLandingEvaluator.Inner_CachePool world = new PearlLandingEvaluator.Inner_CachePool() {
+            PearlLandingEvaluator.FallWorld world = new PearlLandingEvaluator.FallWorld() {
                @Override
                public int minY() {
                   return mc.level.getMinY();
@@ -136,7 +136,7 @@ final class PearlLandingEvaluator {
                }
 
                @Override
-               public PearlLandingEvaluator.Inner_DataUtil contactAt(AABB box) {
+               public PearlLandingEvaluator.LandingKind contactAt(AABB box) {
                   boolean water = false;
 
                   for (BlockPos at : BlockPos.betweenClosed(
@@ -150,13 +150,13 @@ final class PearlLandingEvaluator {
                         || state.is(Blocks.SOUL_FIRE)
                         || state.is(Blocks.CACTUS)
                         || state.is(Blocks.SWEET_BERRY_BUSH)) {
-                        return PearlLandingEvaluator.Inner_DataUtil.HAZARD;
+                        return PearlLandingEvaluator.LandingKind.HAZARD;
                      }
 
                      water |= fluid.is(FluidTags.WATER) && at.getY() + fluid.getHeight(mc.level, at) > box.minY;
                   }
 
-                  return water ? PearlLandingEvaluator.Inner_DataUtil.WATER : null;
+                  return water ? PearlLandingEvaluator.LandingKind.WATER : null;
                }
 
                @Override
@@ -176,7 +176,7 @@ final class PearlLandingEvaluator {
                   return mc.level.getBlockState(BlockPos.containing(box.getCenter().x, box.minY - 0.01, box.getCenter().z)).getBlock().getFriction() * 0.91;
                }
             };
-            PearlLandingEvaluator.Inner_StreamUtil fall = simulateFall(
+            PearlLandingEvaluator.LandingResult fall = simulateFall(
                world, body, player.getDeltaMovement(), player.hasEffect(MobEffects.SLOW_FALLING) ? Math.min(0.01, player.getGravity()) : player.getGravity()
             );
             AutismLivingEntityAccessor access = (AutismLivingEntityAccessor)player;
@@ -198,12 +198,12 @@ final class PearlLandingEvaluator {
       }
    }
 
-   interface Inner_CachePool {
+   interface FallWorld {
       boolean isClear(AABB var1);
 
       Vec3 collide(AABB var1, Vec3 var2);
 
-      PearlLandingEvaluator.Inner_DataUtil contactAt(AABB var1);
+      PearlLandingEvaluator.LandingKind contactAt(AABB var1);
 
       float init_F(AABB var1);
 
@@ -214,7 +214,7 @@ final class PearlLandingEvaluator {
       int minY();
    }
 
-   enum Inner_DataUtil {
+   enum LandingKind {
       LAND,
       WATER,
       HAZARD,
@@ -222,8 +222,8 @@ final class PearlLandingEvaluator {
       UNKNOWN;
    }
 
-   record Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil init_aU_DataUtil, double init_D, float init_F, int init_I) {
-      Inner_StreamUtil(PearlLandingEvaluator.Inner_DataUtil end, double distance, float multiplier) {
+   record LandingResult(PearlLandingEvaluator.LandingKind init_aU_DataUtil, double init_D, float init_F, int init_I) {
+      LandingResult(PearlLandingEvaluator.LandingKind end, double distance, float multiplier) {
          this(end, distance, multiplier, 2147483647);
       }
    }

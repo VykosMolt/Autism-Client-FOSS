@@ -23,18 +23,18 @@ import org.joml.Vector4f;
 
 public final class BedEspOverlayRenderer {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
-   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(65536);
+   private static final AutismBufferSource.LazySource init_c_DataUtil = new AutismBufferSource.LazySource(65536);
 
    private BedEspOverlayRenderer() {
    }
 
-   private static List<BedEspModule.Inner_DataUtil> init_List() {
+   private static List<BedEspModule.BedInfo> init_List() {
       BedEspModule esp = BedEspModule.active();
       if (esp != null) {
          return esp.beds();
       }
 
-      BedEspModule.Inner_DataUtil target = BedNukerModule.init_ClassCache_DataUti();
+      BedEspModule.BedInfo target = BedNukerModule.init_ClassCache_DataUti();
       return target == null ? List.of() : List.of(target);
    }
 
@@ -53,11 +53,11 @@ public final class BedEspOverlayRenderer {
       if (isActive()) {
          Vec3 camera = WorldProjectionHelper.init();
          AutismBufferSource source = init_c_DataUtil.init();
-         List<BedEspModule.Inner_DataUtil> beds = init_List();
+         List<BedEspModule.BedInfo> beds = init_List();
          boolean path = BedEspModule.policy().load();
          VertexConsumer fill = source.init(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
-         for (BedEspModule.Inner_DataUtil bed : beds) {
+         for (BedEspModule.BedInfo bed : beds) {
             int rgb = bed.color().getTextureDiffuseColor();
             WorldLineRenderer.init(matrices.last(), fill, bed.box().move(camera.scale(-1.0)), init(rgb, 32));
             if (path && bed.init_Z()) {
@@ -69,7 +69,7 @@ public final class BedEspOverlayRenderer {
 
          VertexConsumer lines = source.init(autismclient.render.AutismRenderTypes.tracerEspLines());
 
-         for (BedEspModule.Inner_DataUtil bed : beds) {
+         for (BedEspModule.BedInfo bed : beds) {
             WorldLineRenderer.init(
                matrices.last(), lines, bed.box().inflate(0.004).move(camera.scale(-1.0)), init(bed.color().getTextureDiffuseColor(), 204), 1.5F
             );
@@ -104,7 +104,7 @@ public final class BedEspOverlayRenderer {
             );
             int iconSize = Math.min(12, rowHeight - 2);
 
-            for (BedEspModule.Inner_DataUtil bed : init_List()) {
+            for (BedEspModule.BedInfo bed : init_List()) {
                double distance = Math.sqrt(bed.box().distanceToSqr(camera));
                float alpha = DistanceFadeCurve.init(distance);
                if (!(alpha < 0.005F)) {
@@ -118,7 +118,7 @@ public final class BedEspOverlayRenderer {
                      widths[0] = width + 4;
 
                      for (int i = 0; i < bed.materials().size(); i++) {
-                        BedEspModule.Inner_StreamUtil material = bed.materials().get(i);
+                        BedEspModule.CoverMaterial material = bed.materials().get(i);
                         widths[i + 1] = ui.init_PoolEntry().measureWidth(material.name())
                            + 3
                            + ui.init_PoolEntry().measureWidth("x" + material.count())
@@ -167,7 +167,7 @@ public final class BedEspOverlayRenderer {
                         }
                         int row = rowHeight;
 
-                        for (BedEspModule.Inner_StreamUtil material : bed.materials()) {
+                        for (BedEspModule.CoverMaterial material : bed.materials()) {
                            String amount = "x" + material.count();
                            int rowWidth = ui.init_PoolEntry().measureWidth(material.name())
                               + 3

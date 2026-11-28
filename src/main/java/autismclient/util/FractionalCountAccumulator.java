@@ -21,7 +21,7 @@ public final class FractionalCountAccumulator {
       this.load = Double.isFinite(y) ? y : 0.0;
    }
 
-   public FractionalCountAccumulator.Inner_DataUtil takeWhole() {
+   public FractionalCountAccumulator.WholeCounts takeWhole() {
       double totalX = this.init + this.read;
       double totalY = this.load + this.write;
       long wholeX = init(totalX);
@@ -30,7 +30,7 @@ public final class FractionalCountAccumulator {
       this.write = totalY - wholeY;
       this.init = 0.0;
       this.load = 0.0;
-      return new FractionalCountAccumulator.Inner_DataUtil(wholeX, wholeY);
+      return new FractionalCountAccumulator.WholeCounts(wholeX, wholeY);
    }
 
    public void reset() {
@@ -48,6 +48,6 @@ public final class FractionalCountAccumulator {
       }
    }
 
-   public record Inner_DataUtil(long init, long load) {
+   public record WholeCounts(long init, long load) {
    }
 }

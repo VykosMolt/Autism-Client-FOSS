@@ -22,7 +22,7 @@ final class AiParallelSmelt implements AiOperation {
    private final Object startLevel = this.mc.level;
    private final Object startConnection = this.mc.getConnection();
    private final Object startPlayer = this.mc.player;
-   private final AiSmelt.Inner_CachePool recipe;
+   private final AiSmelt.SmeltRecipe recipe;
    private final String outputId;
    private final String inputId;
    private final String label;
@@ -92,7 +92,7 @@ final class AiParallelSmelt implements AiOperation {
       return total;
    }
 
-   AiParallelSmelt(AiSmelt.Inner_CachePool recipe, int target, int cookTicks, int seconds) {
+   AiParallelSmelt(AiSmelt.SmeltRecipe recipe, int target, int cookTicks, int seconds) {
       this.recipe = recipe;
       this.target = target;
       this.cookTicks = cookTicks;

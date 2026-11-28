@@ -24,7 +24,7 @@ final class PlayerDisplayNameParser {
          return false;
       }
 
-      PlayerDisplayNameParser.Inner_DataUtil text = flatten(display);
+      PlayerDisplayNameParser.FlatText text = flatten(display);
       return text != null && indexOfName(text.text.toString(), accountName) >= 0;
    }
 
@@ -54,7 +54,7 @@ final class PlayerDisplayNameParser {
          return Component.empty();
       }
 
-      PlayerDisplayNameParser.Inner_DataUtil display = flatten(serverDisplay);
+      PlayerDisplayNameParser.FlatText display = flatten(serverDisplay);
       int start = display == null ? -1 : indexOfName(display.text.toString(), accountName);
       MutableComponent result = Component.empty();
       int runStart = 0;
@@ -113,12 +113,12 @@ final class PlayerDisplayNameParser {
       return Character.isLetterOrDigit(codepoint) || codepoint == 95 || codepoint == 46;
    }
 
-   private static PlayerDisplayNameParser.Inner_DataUtil flatten(Component component) {
+   private static PlayerDisplayNameParser.FlatText flatten(Component component) {
       if (component == null) {
          return null;
       }
 
-      PlayerDisplayNameParser.Inner_DataUtil out = new PlayerDisplayNameParser.Inner_DataUtil();
+      PlayerDisplayNameParser.FlatText out = new PlayerDisplayNameParser.FlatText();
 
       try {
          return appendComponent(component, Style.EMPTY, 0, out) ? out : null;
@@ -127,7 +127,7 @@ final class PlayerDisplayNameParser {
       }
    }
 
-   private static boolean appendComponent(Component component, Style inherited, int depth, PlayerDisplayNameParser.Inner_DataUtil out) {
+   private static boolean appendComponent(Component component, Style inherited, int depth, PlayerDisplayNameParser.FlatText out) {
       if (depth <= 32 && ++out.nodeCount <= 256) {
          if (component.getContents() instanceof PlainTextContents plain) {
             String var9 = plain.text();
@@ -153,7 +153,7 @@ final class PlayerDisplayNameParser {
       }
    }
 
-   private static void appendLegacyText(String text, TextColor inherited, PlayerDisplayNameParser.Inner_DataUtil out) {
+   private static void appendLegacyText(String text, TextColor inherited, PlayerDisplayNameParser.FlatText out) {
       TextColor color = inherited;
       int i = 0;
 
@@ -209,7 +209,7 @@ final class PlayerDisplayNameParser {
       return rgb;
    }
 
-   private static final class Inner_DataUtil {
+   private static final class FlatText {
       final StringBuilder text = new StringBuilder();
       final List<TextColor> colors = new ArrayList<>();
       int length;

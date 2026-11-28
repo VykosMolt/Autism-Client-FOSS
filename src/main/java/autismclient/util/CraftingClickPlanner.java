@@ -25,42 +25,42 @@ final class CraftingClickPlanner {
    private CraftingClickPlanner() {
    }
 
-   static CraftingClickPlanner.Inner_BufferHelper planNextPhase(
-      CraftingClickPlanner.Inner_CachePool layout, ItemStack[] slots, ItemStack carried, CraftingClickPlanner.Inner_NetHelper spec, int wantCrafts, int selectedHotbar
+   static CraftingClickPlanner.PhaseResult planNextPhase(
+      CraftingClickPlanner.GridLayout layout, ItemStack[] slots, ItemStack carried, CraftingClickPlanner.RecipeSpec spec, int wantCrafts, int selectedHotbar
    ) {
       if (spec != null && spec.result() != null && !spec.result().isEmpty()) {
          if (!spec.fits(layout)) {
-            return new CraftingClickPlanner.Inner_BufferHelper(null, "This recipe needs a 3x3 crafting table.");
+            return new CraftingClickPlanner.PhaseResult(null, "This recipe needs a 3x3 crafting table.");
          }
 
          int upper = Math.max(0, Math.min(wantCrafts, 64));
          if (upper <= 0) {
-            return new CraftingClickPlanner.Inner_BufferHelper(null, "Nothing to craft.");
+            return new CraftingClickPlanner.PhaseResult(null, "Nothing to craft.");
          }
 
-         CraftingClickPlanner.Inner_DataUtil first = simulateCrafts(layout, slots, carried, spec, upper, selectedHotbar);
+         CraftingClickPlanner.SimulationResult first = simulateCrafts(layout, slots, carried, spec, upper, selectedHotbar);
          if (first.plan != null) {
-            return new CraftingClickPlanner.Inner_BufferHelper(first.plan, null);
+            return new CraftingClickPlanner.PhaseResult(first.plan, null);
          }
 
          if (first.fatal) {
-            return new CraftingClickPlanner.Inner_BufferHelper(null, first.error);
+            return new CraftingClickPlanner.PhaseResult(null, first.error);
          }
 
-         CraftingClickPlanner.Inner_ConfigStore best = null;
+         CraftingClickPlanner.ClickPhase best = null;
          String reason = first.error;
          int lo = 1;
          int hi = upper - 1;
 
          while (lo <= hi) {
             int mid = lo + hi >>> 1;
-            CraftingClickPlanner.Inner_DataUtil attempt = simulateCrafts(layout, slots, carried, spec, mid, selectedHotbar);
+            CraftingClickPlanner.SimulationResult attempt = simulateCrafts(layout, slots, carried, spec, mid, selectedHotbar);
             if (attempt.plan != null) {
                best = attempt.plan;
                lo = mid + 1;
             } else {
                if (attempt.fatal) {
-                  return new CraftingClickPlanner.Inner_BufferHelper(null, attempt.error);
+                  return new CraftingClickPlanner.PhaseResult(null, attempt.error);
                }
 
                if (mid == 1 || best == null) {
@@ -71,27 +71,27 @@ final class CraftingClickPlanner {
             }
          }
 
-         return best != null ? new CraftingClickPlanner.Inner_BufferHelper(best, null) : new CraftingClickPlanner.Inner_BufferHelper(null, reason);
+         return best != null ? new CraftingClickPlanner.PhaseResult(best, null) : new CraftingClickPlanner.PhaseResult(null, reason);
       } else {
-         return new CraftingClickPlanner.Inner_BufferHelper(null, "Unknown recipe.");
+         return new CraftingClickPlanner.PhaseResult(null, "Unknown recipe.");
       }
    }
 
-   static List<CraftingClickPlanner.Inner_ConfigStore> planPhases(
-      CraftingClickPlanner.Inner_CachePool layout, ItemStack[] slots, ItemStack carried, CraftingClickPlanner.Inner_NetHelper spec, int wantCrafts, int selectedHotbar
+   static List<CraftingClickPlanner.ClickPhase> planPhases(
+      CraftingClickPlanner.GridLayout layout, ItemStack[] slots, ItemStack carried, CraftingClickPlanner.RecipeSpec spec, int wantCrafts, int selectedHotbar
    ) {
-      List<CraftingClickPlanner.Inner_ConfigStore> phases = new ArrayList<>();
+      List<CraftingClickPlanner.ClickPhase> phases = new ArrayList<>();
       ItemStack[] state = copySlots(slots);
       ItemStack hand = carried == null ? ItemStack.EMPTY : carried.copy();
       int left = wantCrafts;
 
       while (left > 0 && phases.size() < 64) {
-         CraftingClickPlanner.Inner_BufferHelper outcome = planNextPhase(layout, state, hand, spec, left, selectedHotbar);
+         CraftingClickPlanner.PhaseResult outcome = planNextPhase(layout, state, hand, spec, left, selectedHotbar);
          if (outcome.phase() == null) {
             break;
          }
 
-         CraftingClickPlanner.Inner_ConfigStore phase = outcome.phase();
+         CraftingClickPlanner.ClickPhase phase = outcome.phase();
          phases.add(phase);
          left -= phase.load_I();
          state = copySlots(phase.finalSlots());
@@ -101,34 +101,34 @@ final class CraftingClickPlanner {
       return phases;
    }
 
-   static CraftingClickPlanner.Inner_ConfigStore init(CraftingClickPlanner.Inner_CachePool layout, ItemStack[] slots, ItemStack carried) {
-      CraftingClickPlanner.Inner_TaskQueue sim = new CraftingClickPlanner.Inner_TaskQueue(layout, null, slots, carried);
+   static CraftingClickPlanner.ClickPhase init(CraftingClickPlanner.GridLayout layout, ItemStack[] slots, ItemStack carried) {
+      CraftingClickPlanner.ClickSimulator sim = new CraftingClickPlanner.ClickSimulator(layout, null, slots, carried);
       sim.stowCarried();
       sim.clearGrid();
       return sim.clicks.isEmpty() ? null : sim.toPhase(0);
    }
 
-   private static CraftingClickPlanner.Inner_DataUtil simulateCrafts(
-      CraftingClickPlanner.Inner_CachePool layout, ItemStack[] slots, ItemStack carried, CraftingClickPlanner.Inner_NetHelper spec, int crafts, int selectedHotbar
+   private static CraftingClickPlanner.SimulationResult simulateCrafts(
+      CraftingClickPlanner.GridLayout layout, ItemStack[] slots, ItemStack carried, CraftingClickPlanner.RecipeSpec spec, int crafts, int selectedHotbar
    ) {
-      CraftingClickPlanner.Inner_TaskQueue sim = new CraftingClickPlanner.Inner_TaskQueue(layout, spec, slots, carried);
+      CraftingClickPlanner.ClickSimulator sim = new CraftingClickPlanner.ClickSimulator(layout, spec, slots, carried);
       if (!sim.stowCarried()) {
-         return CraftingClickPlanner.Inner_DataUtil.fatalFailure("The cursor holds an item and the inventory has no room for it.");
+         return CraftingClickPlanner.SimulationResult.fatalFailure("The cursor holds an item and the inventory has no room for it.");
       }
 
       if (!sim.clearGrid()) {
-         return CraftingClickPlanner.Inner_DataUtil.fatalFailure("No room to clear the crafting grid.");
+         return CraftingClickPlanner.SimulationResult.fatalFailure("No room to clear the crafting grid.");
       }
 
       Map<Integer, ItemStack> assignment = assignIngredients(sim, crafts);
       if (assignment == null) {
-         return CraftingClickPlanner.Inner_DataUtil.failure("Missing materials for " + spec.result().getHoverName().getString() + ".");
+         return CraftingClickPlanner.SimulationResult.failure("Missing materials for " + spec.result().getHoverName().getString() + ".");
       }
 
       if (crafts > 1) {
          for (ItemStack key : assignment.values()) {
             if (!craftingRemainder(key).isEmpty()) {
-               return CraftingClickPlanner.Inner_DataUtil.failure("one craft at a time");
+               return CraftingClickPlanner.SimulationResult.failure("one craft at a time");
             }
          }
       }
@@ -150,12 +150,12 @@ final class CraftingClickPlanner {
 
       for (Entry<ItemStack, List<Integer>> group : groups.entrySet()) {
          if (!fillCells(sim, group.getKey(), group.getValue(), crafts, selectedHotbar)) {
-            return CraftingClickPlanner.Inner_DataUtil.failure("Missing materials for " + spec.result().getHoverName().getString() + ".");
+            return CraftingClickPlanner.SimulationResult.failure("Missing materials for " + spec.result().getHoverName().getString() + ".");
          }
       }
 
       if (!sim.gridMatchesRecipe()) {
-         return CraftingClickPlanner.Inner_DataUtil.fatalFailure("The planned grid does not match the recipe.");
+         return CraftingClickPlanner.SimulationResult.fatalFailure("The planned grid does not match the recipe.");
       }
 
       sim.takeAllResults();
@@ -163,17 +163,17 @@ final class CraftingClickPlanner {
          sim.clearGrid();
          if (sim.carried.isEmpty() && !sim.simulationInvalid) {
             return crafts > 1 && sim.clicks.size() > 96
-               ? CraftingClickPlanner.Inner_DataUtil.failure("too many clicks")
-               : new CraftingClickPlanner.Inner_DataUtil(sim.toPhase(crafts), null, false);
+               ? CraftingClickPlanner.SimulationResult.failure("too many clicks")
+               : new CraftingClickPlanner.SimulationResult(sim.toPhase(crafts), null, false);
          } else {
-            return CraftingClickPlanner.Inner_DataUtil.failure("No room in the inventory for the result.");
+            return CraftingClickPlanner.SimulationResult.failure("No room in the inventory for the result.");
          }
       } else {
-         return CraftingClickPlanner.Inner_DataUtil.failure("No room in the inventory for the result.");
+         return CraftingClickPlanner.SimulationResult.failure("No room in the inventory for the result.");
       }
    }
 
-   private static Map<Integer, ItemStack> assignIngredients(CraftingClickPlanner.Inner_TaskQueue sim, int crafts) {
+   private static Map<Integer, ItemStack> assignIngredients(CraftingClickPlanner.ClickSimulator sim, int crafts) {
       Ingredient[] cells = sim.cells;
       List<ItemStack> keys = new ArrayList<>();
       List<Integer> avail = new ArrayList<>();
@@ -252,7 +252,7 @@ final class CraftingClickPlanner {
       return chosen;
    }
 
-   private static boolean fillCells(CraftingClickPlanner.Inner_TaskQueue sim, ItemStack key, List<Integer> cells, int crafts, int selectedHotbar) {
+   private static boolean fillCells(CraftingClickPlanner.ClickSimulator sim, ItemStack key, List<Integer> cells, int crafts, int selectedHotbar) {
       Map<Integer, Integer> need = new LinkedHashMap<>();
 
       for (int cell : cells) {
@@ -290,7 +290,7 @@ final class CraftingClickPlanner {
       return need.values().stream().allMatch(value -> value == 0);
    }
 
-   private static void distributeCarried(CraftingClickPlanner.Inner_TaskQueue sim, int source, Map<Integer, Integer> need) {
+   private static void distributeCarried(CraftingClickPlanner.ClickSimulator sim, int source, Map<Integer, Integer> need) {
       int guard = 0;
 
       while (!sim.carried.isEmpty() && guard++ < 512) {
@@ -377,7 +377,7 @@ final class CraftingClickPlanner {
       }
    }
 
-   private static void spreadCarried(CraftingClickPlanner.Inner_TaskQueue sim, List<Integer> open, Map<Integer, Integer> need, int each) {
+   private static void spreadCarried(CraftingClickPlanner.ClickSimulator sim, List<Integer> open, Map<Integer, Integer> need, int each) {
       if (open.size() == 1) {
          sim.click(open.get(0));
       } else {
@@ -389,7 +389,7 @@ final class CraftingClickPlanner {
       }
    }
 
-   private static List<Integer> sourceSlots(CraftingClickPlanner.Inner_TaskQueue sim, ItemStack key, int total, int selectedHotbar) {
+   private static List<Integer> sourceSlots(CraftingClickPlanner.ClickSimulator sim, ItemStack key, int total, int selectedHotbar) {
       List<Integer> sources = new ArrayList<>();
 
       for (int slot = sim.layout.write(); slot < sim.layout.update(); slot++) {
@@ -471,14 +471,14 @@ final class CraftingClickPlanner {
       return out;
    }
 
-   static String describePhase(CraftingClickPlanner.Inner_ConfigStore phase) {
+   static String describePhase(CraftingClickPlanner.ClickPhase phase) {
       if (phase == null) {
          return "none";
       }
 
       StringBuilder out = new StringBuilder();
 
-      for (CraftingClickPlanner.Inner_StreamUtil click : phase.clicks()) {
+      for (CraftingClickPlanner.SlotClick click : phase.clicks()) {
          if (out.length() > 0) {
             out.append(' ');
          }
@@ -507,16 +507,16 @@ final class CraftingClickPlanner {
       return out + " (" + phase.load_I() + " crafts)";
    }
 
-   record Inner_BufferHelper(CraftingClickPlanner.Inner_ConfigStore phase, String error) {
+   record PhaseResult(CraftingClickPlanner.ClickPhase phase, String error) {
    }
 
-   record Inner_CachePool(int resultSlot, int load, int read, int[] inputSlots, int write, int update, int sync) {
-      static CraftingClickPlanner.Inner_CachePool craftingTable() {
-         return new CraftingClickPlanner.Inner_CachePool(0, 3, 3, new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 46, 37);
+   record GridLayout(int resultSlot, int load, int read, int[] inputSlots, int write, int update, int sync) {
+      static CraftingClickPlanner.GridLayout craftingTable() {
+         return new CraftingClickPlanner.GridLayout(0, 3, 3, new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 46, 37);
       }
 
-      static CraftingClickPlanner.Inner_CachePool inventoryGrid() {
-         return new CraftingClickPlanner.Inner_CachePool(0, 2, 2, new int[]{1, 2, 3, 4}, 9, 45, 36);
+      static CraftingClickPlanner.GridLayout inventoryGrid() {
+         return new CraftingClickPlanner.GridLayout(0, 2, 2, new int[]{1, 2, 3, 4}, 9, 45, 36);
       }
 
       boolean init(int slot) {
@@ -528,8 +528,8 @@ final class CraftingClickPlanner {
       }
    }
 
-   record Inner_ConfigStore(
-      List<CraftingClickPlanner.Inner_StreamUtil> clicks, int init_I, List<ItemStack[]> predictedSlots, List<ItemStack> read, List<ItemStack> write, int load_I
+   record ClickPhase(
+      List<CraftingClickPlanner.SlotClick> clicks, int init_I, List<ItemStack[]> predictedSlots, List<ItemStack> read, List<ItemStack> write, int load_I
    ) {
       ItemStack[] finalSlots() {
          return this.predictedSlots.get(this.predictedSlots.size() - 1);
@@ -556,28 +556,28 @@ final class CraftingClickPlanner {
       }
    }
 
-   private record Inner_DataUtil(CraftingClickPlanner.Inner_ConfigStore plan, String error, boolean fatal) {
-      static CraftingClickPlanner.Inner_DataUtil failure(String reason) {
-         return new CraftingClickPlanner.Inner_DataUtil(null, reason, false);
+   private record SimulationResult(CraftingClickPlanner.ClickPhase plan, String error, boolean fatal) {
+      static CraftingClickPlanner.SimulationResult failure(String reason) {
+         return new CraftingClickPlanner.SimulationResult(null, reason, false);
       }
 
-      static CraftingClickPlanner.Inner_DataUtil fatalFailure(String reason) {
-         return new CraftingClickPlanner.Inner_DataUtil(null, reason, true);
+      static CraftingClickPlanner.SimulationResult fatalFailure(String reason) {
+         return new CraftingClickPlanner.SimulationResult(null, reason, true);
       }
    }
 
-   record Inner_NetHelper(String id, ItemStack result, int width, int load, boolean shaped, List<Ingredient> ingredients) {
-      static CraftingClickPlanner.Inner_NetHelper fromRecipe(RecipeCatalogLoader.Inner_StreamUtil recipe) {
-         return new CraftingClickPlanner.Inner_NetHelper(
+   record RecipeSpec(String id, ItemStack result, int width, int load, boolean shaped, List<Ingredient> ingredients) {
+      static CraftingClickPlanner.RecipeSpec fromRecipe(RecipeCatalogLoader.CraftingEntry recipe) {
+         return new CraftingClickPlanner.RecipeSpec(
             recipe.recipeKey, recipe.result, recipe.width, recipe.height, recipe.shaped, recipe.shaped ? recipe.gridIngredients : recipe.requirements
          );
       }
 
-      boolean fits(CraftingClickPlanner.Inner_CachePool layout) {
+      boolean fits(CraftingClickPlanner.GridLayout layout) {
          return !this.shaped ? this.ingredients.size() <= layout.inputSlots().length : this.width <= layout.gridWidth() && this.load <= layout.read();
       }
 
-      Ingredient[] placeIngredients(CraftingClickPlanner.Inner_CachePool layout) {
+      Ingredient[] placeIngredients(CraftingClickPlanner.GridLayout layout) {
          Ingredient[] cells = new Ingredient[layout.inputSlots().length];
          if (this.shaped) {
             for (int row = 0; row < this.load; row++) {
@@ -598,29 +598,29 @@ final class CraftingClickPlanner {
       }
    }
 
-   record Inner_StreamUtil(int slot, int load, ContainerInput input) {
-      static CraftingClickPlanner.Inner_StreamUtil leftClick(int slot) {
-         return new CraftingClickPlanner.Inner_StreamUtil(slot, 0, ContainerInput.PICKUP);
+   record SlotClick(int slot, int load, ContainerInput input) {
+      static CraftingClickPlanner.SlotClick leftClick(int slot) {
+         return new CraftingClickPlanner.SlotClick(slot, 0, ContainerInput.PICKUP);
       }
 
-      static CraftingClickPlanner.Inner_StreamUtil rightClick(int slot) {
-         return new CraftingClickPlanner.Inner_StreamUtil(slot, 1, ContainerInput.PICKUP);
+      static CraftingClickPlanner.SlotClick rightClick(int slot) {
+         return new CraftingClickPlanner.SlotClick(slot, 1, ContainerInput.PICKUP);
       }
 
-      static CraftingClickPlanner.Inner_StreamUtil shiftClick(int slot) {
-         return new CraftingClickPlanner.Inner_StreamUtil(slot, 0, ContainerInput.QUICK_MOVE);
+      static CraftingClickPlanner.SlotClick shiftClick(int slot) {
+         return new CraftingClickPlanner.SlotClick(slot, 0, ContainerInput.QUICK_MOVE);
       }
 
-      static CraftingClickPlanner.Inner_StreamUtil quickCraftStart() {
-         return new CraftingClickPlanner.Inner_StreamUtil(-999, AbstractContainerMenu.getQuickcraftMask(0, 0), ContainerInput.QUICK_CRAFT);
+      static CraftingClickPlanner.SlotClick quickCraftStart() {
+         return new CraftingClickPlanner.SlotClick(-999, AbstractContainerMenu.getQuickcraftMask(0, 0), ContainerInput.QUICK_CRAFT);
       }
 
-      static CraftingClickPlanner.Inner_StreamUtil dragAdd(int slot) {
-         return new CraftingClickPlanner.Inner_StreamUtil(slot, AbstractContainerMenu.getQuickcraftMask(1, 0), ContainerInput.QUICK_CRAFT);
+      static CraftingClickPlanner.SlotClick dragAdd(int slot) {
+         return new CraftingClickPlanner.SlotClick(slot, AbstractContainerMenu.getQuickcraftMask(1, 0), ContainerInput.QUICK_CRAFT);
       }
 
-      static CraftingClickPlanner.Inner_StreamUtil quickCraftEnd() {
-         return new CraftingClickPlanner.Inner_StreamUtil(-999, AbstractContainerMenu.getQuickcraftMask(2, 0), ContainerInput.QUICK_CRAFT);
+      static CraftingClickPlanner.SlotClick quickCraftEnd() {
+         return new CraftingClickPlanner.SlotClick(-999, AbstractContainerMenu.getQuickcraftMask(2, 0), ContainerInput.QUICK_CRAFT);
       }
 
       public int button() {
@@ -628,13 +628,13 @@ final class CraftingClickPlanner {
       }
    }
 
-   static final class Inner_TaskQueue {
-      final CraftingClickPlanner.Inner_CachePool layout;
-      final CraftingClickPlanner.Inner_NetHelper spec;
+   static final class ClickSimulator {
+      final CraftingClickPlanner.GridLayout layout;
+      final CraftingClickPlanner.RecipeSpec spec;
       final Ingredient[] cells;
       final ItemStack[] slots;
       ItemStack carried;
-      final List<CraftingClickPlanner.Inner_StreamUtil> clicks = new ArrayList<>();
+      final List<CraftingClickPlanner.SlotClick> clicks = new ArrayList<>();
       final List<ItemStack[]> gridSnapshots = new ArrayList<>();
       final List<ItemStack> carriedSnapshots = new ArrayList<>();
       final List<ItemStack> resultSnapshots = new ArrayList<>();
@@ -642,7 +642,7 @@ final class CraftingClickPlanner {
       boolean simulationInvalid;
       int craftsTaken;
 
-      Inner_TaskQueue(CraftingClickPlanner.Inner_CachePool layout, CraftingClickPlanner.Inner_NetHelper spec, ItemStack[] slots, ItemStack carried) {
+      ClickSimulator(CraftingClickPlanner.GridLayout layout, CraftingClickPlanner.RecipeSpec spec, ItemStack[] slots, ItemStack carried) {
          this.layout = layout;
          this.spec = spec;
          this.cells = spec == null ? new Ingredient[layout.inputSlots().length] : spec.placeIngredients(layout);
@@ -650,8 +650,8 @@ final class CraftingClickPlanner {
          this.carried = carried != null && !carried.isEmpty() ? carried.copy() : ItemStack.EMPTY;
       }
 
-      CraftingClickPlanner.Inner_ConfigStore toPhase(int crafts) {
-         return new CraftingClickPlanner.Inner_ConfigStore(
+      CraftingClickPlanner.ClickPhase toPhase(int crafts) {
+         return new CraftingClickPlanner.ClickPhase(
             List.copyOf(this.clicks), crafts, List.copyOf(this.gridSnapshots), List.copyOf(this.carriedSnapshots), List.copyOf(this.resultSnapshots), this.firstTakeIndex
          );
       }
@@ -666,7 +666,7 @@ final class CraftingClickPlanner {
          return grid;
       }
 
-      private void recordClick(CraftingClickPlanner.Inner_StreamUtil click, Runnable action) {
+      private void recordClick(CraftingClickPlanner.SlotClick click, Runnable action) {
          ItemStack[] gridBefore = this.gridSnapshot();
          this.resultSnapshots.add(this.slots[this.layout.resultSlot()].copy());
          action.run();
@@ -692,29 +692,29 @@ final class CraftingClickPlanner {
       }
 
       void click(int slot) {
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.leftClick(slot), () -> this.simulateClick(slot, true));
+         this.recordClick(CraftingClickPlanner.SlotClick.leftClick(slot), () -> this.simulateClick(slot, true));
       }
 
       void rightClick(int slot) {
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.rightClick(slot), () -> this.simulateClick(slot, false));
+         this.recordClick(CraftingClickPlanner.SlotClick.rightClick(slot), () -> this.simulateClick(slot, false));
       }
 
       void shiftClick(int slot) {
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.shiftClick(slot), () -> this.simulateShiftClick(slot));
+         this.recordClick(CraftingClickPlanner.SlotClick.shiftClick(slot), () -> this.simulateShiftClick(slot));
       }
 
       void takeAllResults() {
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.shiftClick(this.layout.resultSlot()), this::simulateResultTakes);
+         this.recordClick(CraftingClickPlanner.SlotClick.shiftClick(this.layout.resultSlot()), this::simulateResultTakes);
       }
 
       void dragSplit(List<Integer> targets) {
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.quickCraftStart(), () -> {});
+         this.recordClick(CraftingClickPlanner.SlotClick.quickCraftStart(), () -> {});
 
          for (int target : targets) {
-            this.recordClick(CraftingClickPlanner.Inner_StreamUtil.dragAdd(target), () -> {});
+            this.recordClick(CraftingClickPlanner.SlotClick.dragAdd(target), () -> {});
          }
 
-         this.recordClick(CraftingClickPlanner.Inner_StreamUtil.quickCraftEnd(), () -> this.simulateDragEnd(targets));
+         this.recordClick(CraftingClickPlanner.SlotClick.quickCraftEnd(), () -> this.simulateDragEnd(targets));
       }
 
       boolean stowCarried() {

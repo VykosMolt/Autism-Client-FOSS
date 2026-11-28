@@ -32,8 +32,8 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    private final autismclient.gui.f.b.CharEncoder theme = new autismclient.gui.f.b.CharEncoder();
    private final autismclient.gui.ui.widgets.ScrollOffsetController scroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
    private List<AutismSessionState.DelayedPacket> displayedQueue = new ArrayList<>();
-   private final List<AutismQueueEditorOverlay.Inner_DataUtil> buttonRegions = new ArrayList<>();
-   private final List<AutismQueueEditorOverlay.Inner_StreamUtil> removeRegions = new ArrayList<>();
+   private final List<AutismQueueEditorOverlay.ButtonRegion> buttonRegions = new ArrayList<>();
+   private final List<AutismQueueEditorOverlay.PacketRowRegion> removeRegions = new ArrayList<>();
    private String hoverTooltip = null;
    private int tooltipX = 0;
    private int tooltipY = 0;
@@ -302,7 +302,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    private int unusedAutoToggleButton(GuiGraphicsExtractor context, int x, int y, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action) {
       int width = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.theme, autismclient.gui.f.b.l.read, label, 5, 24, 96);
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, width, h, label, active, "queue:auto:" + label + ":" + x + ":" + y, mouseX, mouseY);
-      this.buttonRegions.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, width, h, action));
+      this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, width, h, action));
       this.setTooltipIfHovered(x, y, width, h, mouseX, mouseY, tip);
       return x + width;
    }
@@ -312,7 +312,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(
          context, this.font, x, y, width, h, label, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.GHOST, true, mouseX, mouseY
       );
-      this.buttonRegions.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, width, h, action));
+      this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, width, h, action));
       this.setTooltipIfHovered(x, y, width, h, mouseX, mouseY, tip);
       return x + width;
    }
@@ -320,7 +320,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    private int unusedStatusToggleButton(GuiGraphicsExtractor context, int x, int y, int h, String label, boolean active, int mouseX, int mouseY, String tip, Runnable action) {
       int width = autismclient.gui.ui.layout.PanelLayoutMath.measureLabelWidth(this.font, this.theme, autismclient.gui.f.b.l.read, label, 5, 24, 112);
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, width, h, label, active, "queue:status:" + label + ":" + x + ":" + y, mouseX, mouseY);
-      this.buttonRegions.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, width, h, action));
+      this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, width, h, action));
       this.setTooltipIfHovered(x, y, width, h, mouseX, mouseY, tip);
       return x + width;
    }
@@ -347,7 +347,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    ) {
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, w, h, label, variant, active, mouseX, mouseY);
       if (active) {
-         this.buttonRegions.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, w, h, action));
+         this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, w, h, action));
       }
 
       this.setTooltipIfHovered(x, y, w, h, mouseX, mouseY, tip);
@@ -361,7 +361,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       GuiGraphicsExtractor context, int x, int y, int w, int h, String label, boolean enabled, int mouseX, int mouseY, String tip, Runnable action
    ) {
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(context, this.font, x, y, w, h, label, enabled, "queue:state:" + label + ":" + x + ":" + y, mouseX, mouseY);
-      this.buttonRegions.add(new AutismQueueEditorOverlay.Inner_DataUtil(x, y, w, h, action));
+      this.buttonRegions.add(new AutismQueueEditorOverlay.ButtonRegion(x, y, w, h, action));
       this.setTooltipIfHovered(x, y, w, h, mouseX, mouseY, tip);
    }
 
@@ -917,7 +917,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                         autismclient.gui.ui.widgets.ListRowRenderer.drawRowSeparator(context, rowX, rowY + this.rowHeight(), rowW);
                         this.removeRegions
                            .add(
-                              new AutismQueueEditorOverlay.Inner_StreamUtil(
+                              new AutismQueueEditorOverlay.PacketRowRegion(
                                  packet, rowX, rowY, rowW, this.rowHeight(), delayBtnX, delayBtnWidth, removeBtnX, this.removeButtonSize(), modeBtnX, modeBtnW
                               )
                            );
@@ -971,7 +971,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
          }
 
          if (button == 0) {
-            for (AutismQueueEditorOverlay.Inner_DataUtil region : this.buttonRegions) {
+            for (AutismQueueEditorOverlay.ButtonRegion region : this.buttonRegions) {
                if (region.contains(mouseX, mouseY)) {
                   region.action.run();
                   return true;
@@ -988,7 +988,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
             return true;
          }
 
-         for (AutismQueueEditorOverlay.Inner_StreamUtil region : this.removeRegions) {
+         for (AutismQueueEditorOverlay.PacketRowRegion region : this.removeRegions) {
             if (region.contains(mouseX, mouseY)) {
                if (region.inRemove(mouseX, mouseY) && button == 0) {
                   shared.removeDelayedPacket(region.packet);
@@ -1209,14 +1209,14 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       return 6;
    }
 
-   private static class Inner_DataUtil {
+   private static class ButtonRegion {
       final int x;
       final int y;
       final int width;
       final int height;
       final Runnable action;
 
-      private Inner_DataUtil(int x, int y, int width, int height, Runnable action) {
+      private ButtonRegion(int x, int y, int width, int height, Runnable action) {
          this.x = x;
          this.y = y;
          this.width = width;
@@ -1229,7 +1229,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static class Inner_StreamUtil {
+   private static class PacketRowRegion {
       final AutismSessionState.DelayedPacket packet;
       final int x;
       final int y;
@@ -1242,7 +1242,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
       final int modeX;
       final int modeWidth;
 
-      private Inner_StreamUtil(
+      private PacketRowRegion(
          AutismSessionState.DelayedPacket packet, int x, int y, int width, int height, int delayX, int delayWidth, int removeX, int removeWidth, int modeX, int modeWidth
       ) {
          this.packet = packet;

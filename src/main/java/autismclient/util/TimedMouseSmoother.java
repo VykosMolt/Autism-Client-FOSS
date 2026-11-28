@@ -22,7 +22,7 @@ public final class TimedMouseSmoother {
       }
    }
 
-   public FractionalCountAccumulator.Inner_DataUtil drain(double elapsedSeconds) {
+   public FractionalCountAccumulator.WholeCounts drain(double elapsedSeconds) {
       if (Double.isFinite(elapsedSeconds) && !(elapsedSeconds <= 0.0) && !(this.sync <= 0.0)) {
          double fraction = elapsedSeconds + 1.0E-9 >= this.sync ? 1.0 : Math.min(1.0, elapsedSeconds / this.sync);
          double sliceX = this.load_D * fraction;
@@ -55,9 +55,9 @@ public final class TimedMouseSmoother {
          this.update = totalY - wholeY;
          this.init_J = wholeX;
          this.load_J = wholeY;
-         return new FractionalCountAccumulator.Inner_DataUtil(wholeX, wholeY);
+         return new FractionalCountAccumulator.WholeCounts(wholeX, wholeY);
       } else {
-         return new FractionalCountAccumulator.Inner_DataUtil(0L, 0L);
+         return new FractionalCountAccumulator.WholeCounts(0L, 0L);
       }
    }
 

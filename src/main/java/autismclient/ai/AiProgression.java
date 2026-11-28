@@ -1062,7 +1062,7 @@ final class AiProgression {
                );
             }
 
-            AiDeathLog.Inner_DataUtil death = AiDeathLog.lastDeath();
+            AiDeathLog.DeathRecord death = AiDeathLog.lastDeath();
             if (death != null
                && !AiDeathLog.init_Z()
                && death.remainingMillis() > 20000L

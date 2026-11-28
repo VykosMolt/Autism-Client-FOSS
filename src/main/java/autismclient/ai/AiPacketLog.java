@@ -271,7 +271,7 @@ public final class AiPacketLog {
          }
 
          out.add("decoded", AiJson.objectOf("status", view.status(), "complete", view.read(), "fields", decoded));
-         PacketWireCaptureStore.Inner_StreamUtil snapshot = PacketWireCaptureStore.init(entry.packet);
+         PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.init(entry.packet);
          if (snapshot != null) {
             byte[] plaintext = snapshot.plaintext();
             out.add(

@@ -12,14 +12,14 @@ public final class VirtualInputDispatcher {
    private static boolean useQueued;
    private static GuardedInputTicket pendingTicket;
    private static GuardedInputTicket activeTicket;
-   private static VirtualInputDispatcher.Inner_DataUtil requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+   private static VirtualInputDispatcher.InputOwner requestedOwner = VirtualInputDispatcher.InputOwner.NONE;
    private static long requestedGeneration;
    private static int pendingSlot = -1;
    private static int pendingSlotFrom = -1;
    private static boolean attackPressed;
    private static boolean usePressed;
-   private static VirtualInputDispatcher.Inner_DataUtil dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
-   private static VirtualInputDispatcher.Inner_DataUtil consumedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+   private static VirtualInputDispatcher.InputOwner dispatchedOwner = VirtualInputDispatcher.InputOwner.NONE;
+   private static VirtualInputDispatcher.InputOwner consumedOwner = VirtualInputDispatcher.InputOwner.NONE;
    private static long dispatchedGeneration;
    private static long consumedGeneration;
    private static KeyMapping mapping;
@@ -87,24 +87,24 @@ public final class VirtualInputDispatcher {
    public static void requestScaffold(long generation) {
       if (generation > 0L && !autismclient.modules.aD.read_Z()) {
          requestedGeneration = generation;
-         requestOwner(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
+         requestOwner(VirtualInputDispatcher.InputOwner.SCAFFOLD);
       }
    }
 
    public static void requestFastExp() {
-      requestOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
+      requestOwner(VirtualInputDispatcher.InputOwner.FAST_EXP);
    }
 
    public static void requestFastBlock() {
-      requestOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
+      requestOwner(VirtualInputDispatcher.InputOwner.FAST_BLOCK);
    }
 
    public static boolean consumeFastExp() {
-      return consumeOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
+      return consumeOwner(VirtualInputDispatcher.InputOwner.FAST_EXP);
    }
 
    public static boolean consumeFastBlock() {
-      return consumeOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
+      return consumeOwner(VirtualInputDispatcher.InputOwner.FAST_BLOCK);
    }
 
    public static boolean consumeScaffold(long generation) {
@@ -112,7 +112,7 @@ public final class VirtualInputDispatcher {
          return false;
       }
 
-      if (!consumeOwner(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD)) {
+      if (!consumeOwner(VirtualInputDispatcher.InputOwner.SCAFFOLD)) {
          return false;
       }
 
@@ -122,7 +122,7 @@ public final class VirtualInputDispatcher {
    }
 
    public static boolean isScaffoldConsumed() {
-      return consumedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD;
+      return consumedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD;
    }
 
    public static long init_J() {
@@ -130,13 +130,13 @@ public final class VirtualInputDispatcher {
    }
 
    public static void update_V() {
-      if (requestedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD
-         || dispatchedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD
-         || consumedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD
+      if (requestedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD
+         || dispatchedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD
+         || consumedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD
          || requestedGeneration != 0L
          || dispatchedGeneration != 0L
          || consumedGeneration != 0L) {
-         releaseOwner(VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
+         releaseOwner(VirtualInputDispatcher.InputOwner.SCAFFOLD);
          requestedGeneration = 0L;
          dispatchedGeneration = 0L;
          consumedGeneration = 0L;
@@ -144,23 +144,23 @@ public final class VirtualInputDispatcher {
    }
 
    public static boolean isFastExpConsumed() {
-      return consumedOwner == VirtualInputDispatcher.Inner_DataUtil.FAST_EXP;
+      return consumedOwner == VirtualInputDispatcher.InputOwner.FAST_EXP;
    }
 
    public static boolean hasFastRequest() {
-      return dispatchedOwner == VirtualInputDispatcher.Inner_DataUtil.FAST_EXP || dispatchedOwner == VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK;
+      return dispatchedOwner == VirtualInputDispatcher.InputOwner.FAST_EXP || dispatchedOwner == VirtualInputDispatcher.InputOwner.FAST_BLOCK;
    }
 
    public static void releaseFastExp() {
-      releaseOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_EXP);
+      releaseOwner(VirtualInputDispatcher.InputOwner.FAST_EXP);
    }
 
    public static void releaseFastBlock() {
-      releaseOwner(VirtualInputDispatcher.Inner_DataUtil.FAST_BLOCK);
+      releaseOwner(VirtualInputDispatcher.InputOwner.FAST_BLOCK);
    }
 
-   private static void requestOwner(VirtualInputDispatcher.Inner_DataUtil owner) {
-      if (!autismclient.modules.aD.read_Z() && owner != null && owner != VirtualInputDispatcher.Inner_DataUtil.NONE) {
+   private static void requestOwner(VirtualInputDispatcher.InputOwner owner) {
+      if (!autismclient.modules.aD.read_Z() && owner != null && owner != VirtualInputDispatcher.InputOwner.NONE) {
          requestedOwner = owner;
       }
    }
@@ -169,19 +169,19 @@ public final class VirtualInputDispatcher {
       return plainQueued && !scaffoldQueued;
    }
 
-   private static boolean consumeOwner(VirtualInputDispatcher.Inner_DataUtil owner) {
+   private static boolean consumeOwner(VirtualInputDispatcher.InputOwner owner) {
       if (dispatchedOwner != owner) {
          return false;
       }
 
-      dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+      dispatchedOwner = VirtualInputDispatcher.InputOwner.NONE;
       consumedOwner = owner;
       return true;
    }
 
-   private static void releaseOwner(VirtualInputDispatcher.Inner_DataUtil owner) {
+   private static void releaseOwner(VirtualInputDispatcher.InputOwner owner) {
       if (requestedOwner == owner) {
-         requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+         requestedOwner = VirtualInputDispatcher.InputOwner.NONE;
       }
 
       if (dispatchedOwner == owner && MC != null && MC.options != null) {
@@ -190,14 +190,14 @@ public final class VirtualInputDispatcher {
       }
 
       if (dispatchedOwner == owner) {
-         dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+         dispatchedOwner = VirtualInputDispatcher.InputOwner.NONE;
       }
 
       if (consumedOwner == owner) {
-         consumedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+         consumedOwner = VirtualInputDispatcher.InputOwner.NONE;
       }
 
-      if (owner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD) {
+      if (owner == VirtualInputDispatcher.InputOwner.SCAFFOLD) {
          requestedGeneration = 0L;
          dispatchedGeneration = 0L;
          consumedGeneration = 0L;
@@ -282,7 +282,7 @@ public final class VirtualInputDispatcher {
             attackQueued = false;
          }
 
-         if (pendingTicket != null && !combatOwnsUse && !useQueued && requestedOwner == VirtualInputDispatcher.Inner_DataUtil.NONE) {
+         if (pendingTicket != null && !combatOwnsUse && !useQueued && requestedOwner == VirtualInputDispatcher.InputOwner.NONE) {
             boolean physicalUse = MC.options.keyUse.isDown() || ((AutismKeyMappingAccessor)MC.options.keyUse).autism$clickCount() > 0;
             if (physicalUse) {
                dropPendingTicket();
@@ -294,11 +294,11 @@ public final class VirtualInputDispatcher {
             }
          }
 
-         if (!combatOwnsUse && (useQueued || requestedOwner != VirtualInputDispatcher.Inner_DataUtil.NONE)) {
-            boolean plainWinsTick = requestedOwner != VirtualInputDispatcher.Inner_DataUtil.NONE && plainWins(useQueued, requestedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD);
-            dispatchedOwner = plainWinsTick ? VirtualInputDispatcher.Inner_DataUtil.NONE : requestedOwner;
-            dispatchedGeneration = dispatchedOwner == VirtualInputDispatcher.Inner_DataUtil.SCAFFOLD ? requestedGeneration : 0L;
-            if (dispatchedOwner != VirtualInputDispatcher.Inner_DataUtil.NONE) {
+         if (!combatOwnsUse && (useQueued || requestedOwner != VirtualInputDispatcher.InputOwner.NONE)) {
+            boolean plainWinsTick = requestedOwner != VirtualInputDispatcher.InputOwner.NONE && plainWins(useQueued, requestedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD);
+            dispatchedOwner = plainWinsTick ? VirtualInputDispatcher.InputOwner.NONE : requestedOwner;
+            dispatchedGeneration = dispatchedOwner == VirtualInputDispatcher.InputOwner.SCAFFOLD ? requestedGeneration : 0L;
+            if (dispatchedOwner != VirtualInputDispatcher.InputOwner.NONE) {
                while (MC.options.keyUse.consumeClick()) {
                }
             }
@@ -322,8 +322,8 @@ public final class VirtualInputDispatcher {
 
          if (!combatOwnsUse) {
             useQueued = false;
-            if (dispatchedOwner != VirtualInputDispatcher.Inner_DataUtil.NONE || requestedOwner == VirtualInputDispatcher.Inner_DataUtil.NONE) {
-               requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+            if (dispatchedOwner != VirtualInputDispatcher.InputOwner.NONE || requestedOwner == VirtualInputDispatcher.InputOwner.NONE) {
+               requestedOwner = VirtualInputDispatcher.InputOwner.NONE;
                requestedGeneration = 0L;
             }
          }
@@ -352,8 +352,8 @@ public final class VirtualInputDispatcher {
             usePressed = false;
          }
 
-         dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
-         consumedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+         dispatchedOwner = VirtualInputDispatcher.InputOwner.NONE;
+         consumedOwner = VirtualInputDispatcher.InputOwner.NONE;
          dispatchedGeneration = 0L;
          consumedGeneration = 0L;
          if (mapping != null) {
@@ -363,8 +363,8 @@ public final class VirtualInputDispatcher {
       } else {
          attackPressed = false;
          usePressed = false;
-         dispatchedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
-         consumedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+         dispatchedOwner = VirtualInputDispatcher.InputOwner.NONE;
+         consumedOwner = VirtualInputDispatcher.InputOwner.NONE;
          dispatchedGeneration = 0L;
          consumedGeneration = 0L;
       }
@@ -392,7 +392,7 @@ public final class VirtualInputDispatcher {
       dropPendingTicket();
       attackQueued = false;
       useQueued = false;
-      requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+      requestedOwner = VirtualInputDispatcher.InputOwner.NONE;
       requestedGeneration = 0L;
       dispatchedGeneration = 0L;
       consumedGeneration = 0L;
@@ -406,7 +406,7 @@ public final class VirtualInputDispatcher {
       dropPendingTicket();
       attackQueued = false;
       useQueued = false;
-      requestedOwner = VirtualInputDispatcher.Inner_DataUtil.NONE;
+      requestedOwner = VirtualInputDispatcher.InputOwner.NONE;
       requestedGeneration = 0L;
       dispatchedGeneration = 0L;
       consumedGeneration = 0L;
@@ -450,7 +450,7 @@ public final class VirtualInputDispatcher {
       }
    }
 
-   private enum Inner_DataUtil {
+   private enum InputOwner {
       NONE,
       FAST_BLOCK,
       FAST_EXP,

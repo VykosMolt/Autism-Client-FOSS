@@ -5,7 +5,7 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 
 public final class PendingCrystalAttackCache {
-   private final Map<Object, PendingCrystalAttackCache.Inner_DataUtil> init = new IdentityHashMap<>();
+   private final Map<Object, PendingCrystalAttackCache.PendingAttack> init = new IdentityHashMap<>();
 
    public void init(Object crystal, BlockPos cell, int tick, int latencyMs) {
       this.init(tick);
@@ -13,16 +13,16 @@ public final class PendingCrystalAttackCache {
          this.init.clear();
       }
 
-      this.init.put(crystal, new PendingCrystalAttackCache.Inner_DataUtil(cell.immutable(), tick + LatencyTickWindow.windowTicks(latencyMs), false));
+      this.init.put(crystal, new PendingCrystalAttackCache.PendingAttack(cell.immutable(), tick + LatencyTickWindow.windowTicks(latencyMs), false));
    }
 
    public boolean init(Object crystal, int tick) {
-      PendingCrystalAttackCache.Inner_DataUtil entry = this.init.get(crystal);
+      PendingCrystalAttackCache.PendingAttack entry = this.init.get(crystal);
       return entry != null && tick - entry.init_I() < 0;
    }
 
    public boolean init(Object crystal, BlockPos cell, int tick) {
-      PendingCrystalAttackCache.Inner_DataUtil entry = this.init.get(crystal);
+      PendingCrystalAttackCache.PendingAttack entry = this.init.get(crystal);
       return entry != null && !entry.init_Z() && entry.init_BlockPos().equals(cell) && tick - entry.init_I() < 0;
    }
 
@@ -30,7 +30,7 @@ public final class PendingCrystalAttackCache {
       this.init(tick);
       this.init
          .replaceAll(
-            (crystal, entry) -> entry.init_BlockPos().equals(cell) ? new PendingCrystalAttackCache.Inner_DataUtil(entry.init_BlockPos(), entry.init_I(), true) : entry
+            (crystal, entry) -> entry.init_BlockPos().equals(cell) ? new PendingCrystalAttackCache.PendingAttack(entry.init_BlockPos(), entry.init_I(), true) : entry
          );
    }
 
@@ -42,6 +42,6 @@ public final class PendingCrystalAttackCache {
       this.init.clear();
    }
 
-   private record Inner_DataUtil(BlockPos init_BlockPos, int init_I, boolean init_Z) {
+   private record PendingAttack(BlockPos init_BlockPos, int init_I, boolean init_Z) {
    }
 }

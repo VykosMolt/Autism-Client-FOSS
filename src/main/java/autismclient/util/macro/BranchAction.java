@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class BranchAction implements MacroAction {
-   public BranchAction.Inner_DataUtil conditionKind = BranchAction.Inner_DataUtil.ALWAYS;
+   public BranchAction.ConditionKind conditionKind = BranchAction.ConditionKind.ALWAYS;
    public String value = "";
    public int thenSteps = 1;
    public int elseSteps = 0;
@@ -67,7 +67,7 @@ public class BranchAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.conditionKind = MacroNbtCodecHelper.parseEnum(BranchAction.Inner_DataUtil.class, tag.getStringOr("conditionKind", "ALWAYS"), BranchAction.Inner_DataUtil.ALWAYS);
+      this.conditionKind = MacroNbtCodecHelper.parseEnum(BranchAction.ConditionKind.class, tag.getStringOr("conditionKind", "ALWAYS"), BranchAction.ConditionKind.ALWAYS);
       this.value = tag.getStringOr("value", "");
       this.thenSteps = tag.getIntOr("thenSteps", 1);
       this.elseSteps = tag.getIntOr("elseSteps", 0);
@@ -83,7 +83,7 @@ public class BranchAction implements MacroAction {
       return "?";
    }
 
-   public enum Inner_DataUtil {
+   public enum ConditionKind {
       ALWAYS,
       GUI_TYPE,
       INVENTORY_ITEM,

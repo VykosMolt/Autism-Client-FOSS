@@ -40,7 +40,7 @@ final class AiCombatPriority {
       return hostiles > 0 || ranged > 0;
    }
 
-   static boolean init(AiThreats.Inner_DataUtil profile) {
+   static boolean init(AiThreats.ThreatKind profile) {
       boolean var10000;
       switch (profile) {
          case ZOMBIE:
@@ -85,9 +85,9 @@ final class AiCombatPriority {
          }
 
          double anchor = shots.getFirst().floatValue();
-         List<AiCombatPriority.Inner_DataUtil> edges = new ArrayList<>(shots.size() * 2 + 2);
-         edges.add(new AiCombatPriority.Inner_DataUtil(-halfCone, 0, 0));
-         edges.add(new AiCombatPriority.Inner_DataUtil(halfCone, 0, 0));
+         List<AiCombatPriority.ConeEdge> edges = new ArrayList<>(shots.size() * 2 + 2);
+         edges.add(new AiCombatPriority.ConeEdge(-halfCone, 0, 0));
+         edges.add(new AiCombatPriority.ConeEdge(halfCone, 0, 0));
 
          for (float shot : shots) {
             double relative = init(shot - anchor);
@@ -96,13 +96,13 @@ final class AiCombatPriority {
                double low = Math.max(-halfCone, relative + turn * 360 - halfCone);
                double high = Math.min(halfCone, relative + turn * 360 + halfCone);
                if (low <= high) {
-                  edges.add(new AiCombatPriority.Inner_DataUtil(low, 1, 0));
-                  edges.add(new AiCombatPriority.Inner_DataUtil(high, 0, 1));
+                  edges.add(new AiCombatPriority.ConeEdge(low, 1, 0));
+                  edges.add(new AiCombatPriority.ConeEdge(high, 0, 1));
                }
             }
          }
 
-         edges.sort(Comparator.comparingDouble(AiCombatPriority.Inner_DataUtil::at));
+         edges.sort(Comparator.comparingDouble(AiCombatPriority.ConeEdge::at));
          double best = 0.0;
          double bestTurn = 1.7976931348623157E308;
          int active = 0;
@@ -165,6 +165,6 @@ final class AiCombatPriority {
       return angle >= 180.0 ? angle - 360.0 : (angle < -180.0 ? angle + 360.0 : angle);
    }
 
-   private record Inner_DataUtil(double at, int starts, int ends) {
+   private record ConeEdge(double at, int starts, int ends) {
    }
 }

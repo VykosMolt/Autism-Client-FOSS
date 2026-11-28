@@ -22,15 +22,15 @@ final class FaceVisibilitySolver {
       return init(eye, face, side, List.of()).init(blockers, preferred);
    }
 
-   static FaceVisibilitySolver.Inner_StreamUtil init(Vec3 eye, AABB face, Direction side, List<AABB> hard) {
-      return new FaceVisibilitySolver.Inner_StreamUtil(eye, face, side, hard);
+   static FaceVisibilitySolver.FaceProjection init(Vec3 eye, AABB face, Direction side, List<AABB> hard) {
+      return new FaceVisibilitySolver.FaceProjection(eye, face, side, hard);
    }
 
-   private static List<FaceVisibilitySolver.Inner_CachePool> init(List<FaceVisibilitySolver.Inner_CachePool> points) {
-      points.sort(Comparator.comparingDouble(FaceVisibilitySolver.Inner_CachePool::init).thenComparingDouble(FaceVisibilitySolver.Inner_CachePool::load));
-      ArrayList<FaceVisibilitySolver.Inner_CachePool> out = new ArrayList<>();
+   private static List<FaceVisibilitySolver.Point2> init(List<FaceVisibilitySolver.Point2> points) {
+      points.sort(Comparator.comparingDouble(FaceVisibilitySolver.Point2::init).thenComparingDouble(FaceVisibilitySolver.Point2::load));
+      ArrayList<FaceVisibilitySolver.Point2> out = new ArrayList<>();
 
-      for (FaceVisibilitySolver.Inner_CachePool p : points) {
+      for (FaceVisibilitySolver.Point2 p : points) {
          while (out.size() > 1 && init(out.get(out.size() - 2), out.getLast(), p) <= 0.0) {
             out.removeLast();
          }
@@ -41,7 +41,7 @@ final class FaceVisibilitySolver {
       int lower = out.size();
 
       for (int i = points.size() - 2; i >= 0; i--) {
-         FaceVisibilitySolver.Inner_CachePool p = points.get(i);
+         FaceVisibilitySolver.Point2 p = points.get(i);
 
          while (out.size() > lower && init(out.get(out.size() - 2), out.getLast(), p) <= 0.0) {
             out.removeLast();
@@ -57,7 +57,7 @@ final class FaceVisibilitySolver {
       return out;
    }
 
-   private static double init(FaceVisibilitySolver.Inner_CachePool a, FaceVisibilitySolver.Inner_CachePool b, FaceVisibilitySolver.Inner_CachePool c) {
+   private static double init(FaceVisibilitySolver.Point2 a, FaceVisibilitySolver.Point2 b, FaceVisibilitySolver.Point2 c) {
       return (b.init - a.init) * (c.load - a.load) - (b.load - a.load) * (c.init - a.init);
    }
 
@@ -88,13 +88,13 @@ final class FaceVisibilitySolver {
       return new Vec3(xyz[0], xyz[1], xyz[2]);
    }
 
-   private record Inner_CachePool(double init, double load) {
+   private record Point2(double init, double load) {
    }
 
-   private record Inner_DataUtil(FaceVisibilitySolver.Inner_CachePool init, FaceVisibilitySolver.Inner_CachePool load) {
+   private record Edge(FaceVisibilitySolver.Point2 init, FaceVisibilitySolver.Point2 load) {
    }
 
-   static final class Inner_StreamUtil {
+   static final class FaceProjection {
       private final Vec3 eye;
       private final AABB face;
       private final Axis normalAxis;
@@ -108,7 +108,7 @@ final class FaceVisibilitySolver {
       private final double sync;
       private final Area visibleArea;
 
-      private Inner_StreamUtil(Vec3 eye, AABB face, Direction side, List<AABB> hard) {
+      private FaceProjection(Vec3 eye, AABB face, Direction side, List<AABB> hard) {
          this.eye = eye;
          this.face = face;
          this.normalAxis = side.getAxis();
@@ -137,13 +137,13 @@ final class FaceVisibilitySolver {
                double near = Math.max(1.0E-7, Math.min(a, b));
                double far = Math.min(this.write - 1.0E-7, Math.max(a, b));
                if (!(near >= far)) {
-                  ArrayList<FaceVisibilitySolver.Inner_CachePool> projected = new ArrayList<>(8);
+                  ArrayList<FaceVisibilitySolver.Point2> projected = new ArrayList<>(8);
 
                   for (double n : new double[]{near, far}) {
                      for (double x : new double[]{box.min(this.uAxis), box.max(this.uAxis)}) {
                         for (double y : new double[]{box.min(this.vAxis), box.max(this.vAxis)}) {
                            projected.add(
-                              new FaceVisibilitySolver.Inner_CachePool(
+                              new FaceVisibilitySolver.Point2(
                                  this.update + (x - FaceVisibilitySolver.init(this.eye, this.uAxis)) * this.write / n,
                                  this.sync + (y - FaceVisibilitySolver.init(this.eye, this.vAxis)) * this.write / n
                               )
@@ -152,7 +152,7 @@ final class FaceVisibilitySolver {
                      }
                   }
 
-                  List<FaceVisibilitySolver.Inner_CachePool> hull = FaceVisibilitySolver.init(projected);
+                  List<FaceVisibilitySolver.Point2> hull = FaceVisibilitySolver.init(projected);
                   if (hull.size() >= 3) {
                      java.awt.geom.Path2D.Double path = new java.awt.geom.Path2D.Double();
                      path.moveTo(hull.getFirst().init, hull.getFirst().load);
@@ -185,24 +185,24 @@ final class FaceVisibilitySolver {
             return List.of();
          }
 
-         ArrayList<FaceVisibilitySolver.Inner_DataUtil> edges = new ArrayList<>();
+         ArrayList<FaceVisibilitySolver.Edge> edges = new ArrayList<>();
          TreeSet<Double> levels = new TreeSet<>();
          double[] c = new double[6];
-         FaceVisibilitySolver.Inner_CachePool first = null;
-         FaceVisibilitySolver.Inner_CachePool last = null;
+         FaceVisibilitySolver.Point2 first = null;
+         FaceVisibilitySolver.Point2 last = null;
 
          for (PathIterator it = open.getPathIterator(null); !it.isDone(); it.next()) {
             int kind = it.currentSegment(c);
             if (kind == 0) {
-               first = last = new FaceVisibilitySolver.Inner_CachePool(c[0], c[1]);
+               first = last = new FaceVisibilitySolver.Point2(c[0], c[1]);
                levels.add(last.load);
             } else if (kind == 1) {
-               FaceVisibilitySolver.Inner_CachePool next = new FaceVisibilitySolver.Inner_CachePool(c[0], c[1]);
-               edges.add(new FaceVisibilitySolver.Inner_DataUtil(last, next));
+               FaceVisibilitySolver.Point2 next = new FaceVisibilitySolver.Point2(c[0], c[1]);
+               edges.add(new FaceVisibilitySolver.Edge(last, next));
                levels.add(next.load);
                last = next;
             } else if (kind == 4 && last != null) {
-               edges.add(new FaceVisibilitySolver.Inner_DataUtil(last, first));
+               edges.add(new FaceVisibilitySolver.Edge(last, first));
             }
          }
 
@@ -218,7 +218,7 @@ final class FaceVisibilitySolver {
                double y = (low + high) / 2.0;
                TreeSet<Double> xs = new TreeSet<>();
 
-               for (FaceVisibilitySolver.Inner_DataUtil edge : edges) {
+               for (FaceVisibilitySolver.Edge edge : edges) {
                   if (!(y <= Math.min(edge.init.load, edge.load.load)) && !(y >= Math.max(edge.init.load, edge.load.load))) {
                      xs.add(edge.init.init + (edge.load.init - edge.init.init) * (y - edge.init.load) / (edge.load.load - edge.init.load));
                   }

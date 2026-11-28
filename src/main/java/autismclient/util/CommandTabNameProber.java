@@ -149,8 +149,8 @@ public final class CommandTabNameProber {
       }
    }
 
-   public static List<CommandTabNameProber.Inner_StreamUtil> discoverVectors(ClientPacketListener connection) {
-      Map<String, CommandTabNameProber.Inner_StreamUtil> byPrefix = new LinkedHashMap<>();
+   public static List<CommandTabNameProber.ProbeVector> discoverVectors(ClientPacketListener connection) {
+      Map<String, CommandTabNameProber.ProbeVector> byPrefix = new LinkedHashMap<>();
       if (connection != null) {
          CommandDispatcher<ClientSuggestionProvider> dispatcher = null;
 
@@ -167,22 +167,22 @@ public final class CommandTabNameProber {
          }
       }
 
-      List<CommandTabNameProber.Inner_StreamUtil> out = new ArrayList<>(byPrefix.values());
-      out.sort(Comparator.comparingInt(CommandTabNameProber.Inner_StreamUtil::init_I));
+      List<CommandTabNameProber.ProbeVector> out = new ArrayList<>(byPrefix.values());
+      out.sort(Comparator.comparingInt(CommandTabNameProber.ProbeVector::init_I));
       if (out.size() > 6) {
          out = new ArrayList<>(out.subList(0, 6));
       }
 
       if (out.isEmpty()) {
          for (String prefix : init_StrArr) {
-            out.add(new CommandTabNameProber.Inner_StreamUtil(prefix, 0, prefix.trim()));
+            out.add(new CommandTabNameProber.ProbeVector(prefix, 0, prefix.trim()));
          }
       }
 
       return out;
    }
 
-   private static void init(CommandNode<ClientSuggestionProvider> node, String path, Map<String, CommandTabNameProber.Inner_StreamUtil> byPrefix, int depth) {
+   private static void init(CommandNode<ClientSuggestionProvider> node, String path, Map<String, CommandTabNameProber.ProbeVector> byPrefix, int depth) {
       if (node != null && depth <= 6) {
          Collection<CommandNode<ClientSuggestionProvider>> children = node.getChildren();
          if ((children == null || children.isEmpty()) && node.getRedirect() != null) {
@@ -198,8 +198,8 @@ public final class CommandTabNameProber {
                      if (child instanceof ArgumentCommandNode<?, ?> arg) {
                         if (!path.isEmpty() && init_Z_ArgumentCommandNod(arg)) {
                            String prefix = path + " ";
-                           CommandTabNameProber.Inner_StreamUtil candidate = new CommandTabNameProber.Inner_StreamUtil(prefix, init(path, arg), path);
-                           byPrefix.merge(prefix, candidate, (a, b) -> (CommandTabNameProber.Inner_StreamUtil)(a.init_I() <= b.init_I() ? a : b));
+                           CommandTabNameProber.ProbeVector candidate = new CommandTabNameProber.ProbeVector(prefix, init(path, arg), path);
+                           byPrefix.merge(prefix, candidate, (a, b) -> (CommandTabNameProber.ProbeVector)(a.init_I() <= b.init_I() ? a : b));
                         }
                      } else {
                         String childPath = path.isEmpty() ? name : path + " " + name;
@@ -254,7 +254,7 @@ public final class CommandTabNameProber {
    }
 
    public static void init(
-      ClientPacketListener connection, Map<String, String> names, String self, List<CommandTabNameProber.Inner_StreamUtil> vectors, CommandTabNameProber.Inner_DataUtil control
+      ClientPacketListener connection, Map<String, String> names, String self, List<CommandTabNameProber.ProbeVector> vectors, CommandTabNameProber.ProbeControl control
    ) {
       if (connection != null && vectors != null && control != null) {
          int[] queries = new int[]{0};
@@ -265,12 +265,12 @@ public final class CommandTabNameProber {
          control.init(names.size(), queries[0], control.maxQueries(), "Probing " + vectors.size() + " commands");
          List<String> baseTexts = new ArrayList<>(vectors.size());
 
-         for (CommandTabNameProber.Inner_StreamUtil vector : vectors) {
+         for (CommandTabNameProber.ProbeVector vector : vectors) {
             baseTexts.add(vector.init_Str());
          }
 
          List<List<String>> bases = init(connection, baseTexts, control, queries, names, self, "Probing commands", 2500L, 0, gap, conc, stall, stallLimit);
-         List<CommandTabNameProber.Inner_StreamUtil> productive = new ArrayList<>();
+         List<CommandTabNameProber.ProbeVector> productive = new ArrayList<>();
 
          for (int i = 0; i < vectors.size() && i < bases.size(); i++) {
             if (init(bases.get(i), control.read())) {
@@ -278,11 +278,11 @@ public final class CommandTabNameProber {
             }
          }
 
-         productive.sort(Comparator.comparingInt(CommandTabNameProber.Inner_StreamUtil::init_I));
+         productive.sort(Comparator.comparingInt(CommandTabNameProber.ProbeVector::init_I));
          int maxDepth = control.write() ? 2147483647 : 1;
          int dry = 0;
 
-         for (CommandTabNameProber.Inner_StreamUtil vector : productive) {
+         for (CommandTabNameProber.ProbeVector vector : productive) {
             if (control.isCancelled() || names.size() >= control.maxNames() || queries[0] >= control.maxQueries() || stall[0] >= stallLimit) {
                break;
             }
@@ -302,10 +302,10 @@ public final class CommandTabNameProber {
       }
    }
 
-   public static List<String> init(ClientPacketListener connection, String query, CommandTabNameProber.Inner_DataUtil control) {
+   public static List<String> init(ClientPacketListener connection, String query, CommandTabNameProber.ProbeControl control) {
       LinkedHashMap<String, String> names = new LinkedHashMap<>();
       if (connection != null && query != null && !query.isBlank() && control != null) {
-         init(connection, names, "", List.of(new CommandTabNameProber.Inner_StreamUtil(query, 0, query.trim())), control);
+         init(connection, names, "", List.of(new CommandTabNameProber.ProbeVector(query, 0, query.trim())), control);
       }
 
       return new ArrayList<>(names.values());
@@ -315,8 +315,8 @@ public final class CommandTabNameProber {
       ClientPacketListener connection,
       Map<String, String> names,
       String self,
-      CommandTabNameProber.Inner_StreamUtil vector,
-      CommandTabNameProber.Inner_DataUtil control,
+      CommandTabNameProber.ProbeVector vector,
+      CommandTabNameProber.ProbeControl control,
       int[] queries,
       long[] gap,
       int[] conc,
@@ -381,7 +381,7 @@ public final class CommandTabNameProber {
    private static List<List<String>> init(
       ClientPacketListener connection,
       List<String> texts,
-      CommandTabNameProber.Inner_DataUtil control,
+      CommandTabNameProber.ProbeControl control,
       int[] queries,
       Map<String, String> names,
       String self,
@@ -612,7 +612,7 @@ public final class CommandTabNameProber {
       return !trimmed.equalsIgnoreCase(self) && TabPlayerListParser.isRealPlayerName(trimmed) ? names.putIfAbsent(trimmed.toLowerCase(Locale.ROOT), trimmed) == null : false;
    }
 
-   private static void init_V_be_DataUtil(CommandTabNameProber.Inner_DataUtil control) {
+   private static void init_V_be_DataUtil(CommandTabNameProber.ProbeControl control) {
       while (control.isPaused() && !control.isCancelled()) {
          init_V_J(120L);
       }
@@ -626,7 +626,7 @@ public final class CommandTabNameProber {
       }
    }
 
-   public interface Inner_DataUtil {
+   public interface ProbeControl {
       boolean isCancelled();
 
       boolean isPaused();
@@ -647,6 +647,6 @@ public final class CommandTabNameProber {
       }
    }
 
-   public record Inner_StreamUtil(String init_Str, int init_I, String load) {
+   public record ProbeVector(String init_Str, int init_I, String load) {
    }
 }

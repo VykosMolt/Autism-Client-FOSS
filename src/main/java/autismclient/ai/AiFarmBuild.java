@@ -57,11 +57,11 @@ final class AiFarmBuild {
    private AiFarmBuild() {
    }
 
-   static AiFarmBuild.Inner_StreamUtil layoutFor(int plots, int width, int length) {
+   static AiFarmBuild.FarmLayout layoutFor(int plots, int width, int length) {
       if (width > 0 && length > 0) {
          int w = Math.max(1, Math.min(27, width));
          int l = Math.max(1, Math.min(27, length));
-         return new AiFarmBuild.Inner_StreamUtil(w, l, init(w, l));
+         return new AiFarmBuild.FarmLayout(w, l, init(w, l));
       }
 
       int n = Math.max(1, Math.min(320, plots));
@@ -69,7 +69,7 @@ final class AiFarmBuild {
          int tiles = (n + 81 - 2) / 80;
          int w = tiles >= 4 ? 18 : 9;
          int l = tiles >= 4 ? 18 : tiles * 9;
-         return new AiFarmBuild.Inner_StreamUtil(w, l, init(w, l));
+         return new AiFarmBuild.FarmLayout(w, l, init(w, l));
       }
 
       int bestW = 9;
@@ -89,7 +89,7 @@ final class AiFarmBuild {
          }
       }
 
-      return new AiFarmBuild.Inner_StreamUtil(bestW, bestL, init(bestW, bestL));
+      return new AiFarmBuild.FarmLayout(bestW, bestL, init(bestW, bestL));
    }
 
    static List<int[]> init(int width, int length) {
@@ -106,7 +106,7 @@ final class AiFarmBuild {
       return List.copyOf(out);
    }
 
-   static boolean allPlotsWatered(AiFarmBuild.Inner_StreamUtil layout) {
+   static boolean allPlotsWatered(AiFarmBuild.FarmLayout layout) {
       for (int x = 0; x < layout.width(); x++) {
          for (int z = 0; z < layout.length(); z++) {
             boolean wet = false;
@@ -157,7 +157,7 @@ final class AiFarmBuild {
       return !AiFarmArea.isSoulSand(substrate) && !infiniteSource && (automaticSite || waterHeld < sourceCount);
    }
 
-   static AiFarmBuild.Inner_DataUtil scanColumn(Function<BlockPos, BlockState> at, int x, int z, int fromY, int toY) {
+   static AiFarmBuild.ColumnScan scanColumn(Function<BlockPos, BlockState> at, int x, int z, int fromY, int toY) {
       boolean obstacle = false;
       MutableBlockPos p = new MutableBlockPos();
 
@@ -166,7 +166,7 @@ final class AiFarmBuild {
          if (!state.isAir()) {
             if (!state.getFluidState().isEmpty()) {
                boolean lava = !state.getFluidState().getType().isSame(Fluids.WATER);
-               return new AiFarmBuild.Inner_DataUtil(y, false, false, true, lava, obstacle);
+               return new AiFarmBuild.ColumnScan(y, false, false, true, lava, obstacle);
             }
 
             if (!state.is(BlockTags.LEAVES) && !state.is(BlockTags.LOGS)) {
@@ -189,7 +189,7 @@ final class AiFarmBuild {
                      || state.is(Blocks.PACKED_ICE)
                      || state.is(Blocks.ICE)
                      || state.is(Blocks.SOUL_SAND);
-                  return new AiFarmBuild.Inner_DataUtil(y, natural && !state.hasBlockEntity(), tillable, false, false, obstacle);
+                  return new AiFarmBuild.ColumnScan(y, natural && !state.hasBlockEntity(), tillable, false, false, obstacle);
                }
             } else {
                obstacle = true;
@@ -197,18 +197,18 @@ final class AiFarmBuild {
          }
       }
 
-      return AiFarmBuild.Inner_DataUtil.NONE;
+      return AiFarmBuild.ColumnScan.NONE;
    }
 
-   static AiFarmBuild.Inner_ConfigStore planAt(
-      AiFarmBuild.Inner_StreamUtil layout, BlockPos origin, Direction gate, boolean pool, BiFunction<Integer, Integer, AiFarmBuild.Inner_DataUtil> columns
+   static AiFarmBuild.FarmSite planAt(
+      AiFarmBuild.FarmLayout layout, BlockPos origin, Direction gate, boolean pool, BiFunction<Integer, Integer, AiFarmBuild.ColumnScan> columns
    ) {
       int[] tops = new int[layout.width() * layout.length()];
       int i = 0;
 
       for (int x = 0; x < layout.width(); x++) {
          for (int z = 0; z < layout.length(); z++) {
-            AiFarmBuild.Inner_DataUtil c = columns.apply(origin.getX() + x, origin.getZ() + z);
+            AiFarmBuild.ColumnScan c = columns.apply(origin.getX() + x, origin.getZ() + z);
             if (c.top() == -2147483648 || c.lava() || !c.natural() && !c.fluid()) {
                return null;
             }
@@ -219,7 +219,7 @@ final class AiFarmBuild {
 
       Arrays.sort(tops);
       int ground = tops[tops.length / 2];
-      AiFarmBuild.Inner_ConfigStore site = new AiFarmBuild.Inner_ConfigStore(new BlockPos(origin.getX(), ground, origin.getZ()), layout, gate, pool, 0.0);
+      AiFarmBuild.FarmSite site = new AiFarmBuild.FarmSite(new BlockPos(origin.getX(), ground, origin.getZ()), layout, gate, pool, 0.0);
       double cost = 0.0;
       Set<Long> seen = new HashSet<>();
       List<BlockPos> cells = new ArrayList<>(site.interior());
@@ -230,7 +230,7 @@ final class AiFarmBuild {
 
       for (BlockPos cell : cells) {
          if (seen.add(BlockPos.asLong(cell.getX(), 0, cell.getZ()))) {
-            AiFarmBuild.Inner_DataUtil c = columns.apply(cell.getX(), cell.getZ());
+            AiFarmBuild.ColumnScan c = columns.apply(cell.getX(), cell.getZ());
             if (c.top() == -2147483648 || c.lava() || !c.natural() && !c.fluid() || Math.abs(c.top() - ground) > 3) {
                return null;
             }
@@ -250,13 +250,13 @@ final class AiFarmBuild {
          }
       }
 
-      return new AiFarmBuild.Inner_ConfigStore(site.origin(), layout, gate, pool, cost);
+      return new AiFarmBuild.FarmSite(site.origin(), layout, gate, pool, cost);
    }
 
-   static AiFarmBuild.Inner_ConfigStore planNear(AiFarmBuild.Inner_StreamUtil layout, BlockPos player, boolean pool, BiFunction<Integer, Integer, AiFarmBuild.Inner_DataUtil> columns) {
+   static AiFarmBuild.FarmSite planNear(AiFarmBuild.FarmLayout layout, BlockPos player, boolean pool, BiFunction<Integer, Integer, AiFarmBuild.ColumnScan> columns) {
       int w = layout.width();
       int l = layout.length();
-      AiFarmBuild.Inner_ConfigStore best = null;
+      AiFarmBuild.FarmSite best = null;
 
       for (int ox = player.getX() - 20 - w; ox <= player.getX() + 20; ox++) {
          for (int oz = player.getZ() - 20 - l; oz <= player.getZ() + 20; oz++) {
@@ -266,7 +266,7 @@ final class AiFarmBuild {
 
             for (int x = 0; x < w && ok; x++) {
                for (int z = 0; z < l && ok; z++) {
-                  AiFarmBuild.Inner_DataUtil c = columns.apply(ox + x, oz + z);
+                  AiFarmBuild.ColumnScan c = columns.apply(ox + x, oz + z);
                   if (c.top() == -2147483648 || c.lava() || !c.natural() && !c.fluid()) {
                      ok = false;
                   } else {
@@ -279,7 +279,7 @@ final class AiFarmBuild {
                Arrays.sort(tops);
                int ground = tops[tops.length / 2];
                Direction side = gateFacing(ox, oz, w, l, player);
-               AiFarmBuild.Inner_ConfigStore site = new AiFarmBuild.Inner_ConfigStore(new BlockPos(ox, ground, oz), layout, side, pool, 0.0);
+               AiFarmBuild.FarmSite site = new AiFarmBuild.FarmSite(new BlockPos(ox, ground, oz), layout, side, pool, 0.0);
                double cost = 0.0;
                Set<Long> seen = new HashSet<>();
                List<BlockPos> cells = new ArrayList<>(site.interior());
@@ -290,7 +290,7 @@ final class AiFarmBuild {
 
                for (BlockPos cell : cells) {
                   if (seen.add(BlockPos.asLong(cell.getX(), 0, cell.getZ()))) {
-                     AiFarmBuild.Inner_DataUtil c = columns.apply(cell.getX(), cell.getZ());
+                     AiFarmBuild.ColumnScan c = columns.apply(cell.getX(), cell.getZ());
                      if (c.top() == -2147483648 || c.lava() || !c.natural() && !c.fluid() || Math.abs(c.top() - ground) > 3) {
                         ok = false;
                         break;
@@ -320,7 +320,7 @@ final class AiFarmBuild {
                   }
 
                   if (best == null || cost < best.cost()) {
-                     best = new AiFarmBuild.Inner_ConfigStore(site.origin(), layout, side, pool, cost);
+                     best = new AiFarmBuild.FarmSite(site.origin(), layout, side, pool, cost);
                   }
                }
             }
@@ -386,12 +386,12 @@ final class AiFarmBuild {
          throw new IllegalArgumentException(cropBlock + " is not planted from a seed item; build a wheat, carrot, potato, beetroot or nether-wart farm");
       }
 
-      final AiFarmArea.Inner_DataUtil selectedArea = AiFarmArea.fromArgs(args);
+      final AiFarmArea.Area selectedArea = AiFarmArea.fromArgs(args);
       final String substrate = AiFarmArea.substrateFor(args, cropBlock);
-      AiFarmBuild.Inner_StreamUtil sized = layoutFor(AiJson.getInt(args, "count", 80), AiJson.getInt(args, "width", 0), AiJson.getInt(args, "length", 0));
-      final AiFarmBuild.Inner_StreamUtil layout = selectedArea != null
+      AiFarmBuild.FarmLayout sized = layoutFor(AiJson.getInt(args, "count", 80), AiJson.getInt(args, "width", 0), AiJson.getInt(args, "length", 0));
+      final AiFarmBuild.FarmLayout layout = selectedArea != null
          ? selectedArea.layout(substrate)
-         : (AiFarmArea.isSoulSand(substrate) ? new AiFarmBuild.Inner_StreamUtil(sized.width(), sized.length(), List.of()) : sized);
+         : (AiFarmArea.isSoulSand(substrate) ? new AiFarmBuild.FarmLayout(sized.width(), sized.length(), List.of()) : sized);
       if (selectedArea != null) {
          String issue = selectedArea.validate(substrate);
          if (!issue.isEmpty()) {
@@ -409,13 +409,13 @@ final class AiFarmBuild {
          final JsonArray progressLog = new JsonArray();
          final String substrateId = substrate;
          final boolean soulSandFarm = AiFarmArea.isSoulSand(substrate);
-         final AiFarmArea.Inner_DataUtil chosenArea = selectedArea;
+         final AiFarmArea.Area chosenArea = selectedArea;
          final BlockPos siteOrigin = this.chosenArea == null ? autismclient.ai.engine.AiStance.init(mc) : this.chosenArea.origin();
          boolean siteTravelStarted;
          boolean seedExploreStarted;
-         AiFarmBuild.Inner_CachePool phase = AiFarmBuild.Inner_CachePool.SEEDS;
+         AiFarmBuild.BuildPhase phase = AiFarmBuild.BuildPhase.SEEDS;
          AiOperation stepOp;
-         AiFarmBuild.Inner_ConfigStore farmPlan;
+         AiFarmBuild.FarmSite farmPlan;
          String slabWood;
          String waterSourceLabel = "";
          BlockPos waterSourcePos;
@@ -432,7 +432,7 @@ final class AiFarmBuild {
          long fieldConfirmAt;
          long centerConfirmAt;
          long poolFloorConfirmAt;
-         AiFarmBuild.Inner_CachePool lastLoggedPhase;
+         AiFarmBuild.BuildPhase lastLoggedPhase;
          boolean refillPending;
          boolean update_Z;
          boolean cancelled;
@@ -613,14 +613,14 @@ final class AiFarmBuild {
                      return this.finish(AiOperation.Status.FAILED, "No " + seedItem + " to plant: " + r.message());
                   }
 
-                  this.phase = this.soulSandFarm ? AiFarmBuild.Inner_CachePool.SITE : AiFarmBuild.Inner_CachePool.HOE;
+                  this.phase = this.soulSandFarm ? AiFarmBuild.BuildPhase.SITE : AiFarmBuild.BuildPhase.HOE;
                   break;
                case HOE:
                   if (!AiFarmPlant.init(mc)) {
                      return this.finish(AiOperation.Status.FAILED, "No hoe to till with: " + r.message());
                   }
 
-                  this.phase = AiFarmBuild.Inner_CachePool.SITE;
+                  this.phase = AiFarmBuild.BuildPhase.SITE;
                   break;
                case SITE:
                   if (!ok) {
@@ -638,7 +638,7 @@ final class AiFarmBuild {
                      return this.finish(r.status(), "Could not get " + AiFarmArea.load(this.substrateId) + " to level the field: " + r.message());
                   }
 
-                  this.phase = this.soulSandFarm ? AiFarmBuild.Inner_CachePool.FOUNDATION : AiFarmBuild.Inner_CachePool.BUCKETS;
+                  this.phase = this.soulSandFarm ? AiFarmBuild.BuildPhase.FOUNDATION : AiFarmBuild.BuildPhase.BUCKETS;
                   break;
                case BUCKETS:
                   if (!ok) {
@@ -657,7 +657,7 @@ final class AiFarmBuild {
                case FIELD:
                   if (!ok) {
                      String missing = AiFarmBuild.missingMaterial(r.message());
-                     if (missing == null && this.phase == AiFarmBuild.Inner_CachePool.FIELD && r.dataJson().contains("Missing hoe") && this.missingRefillRetries++ < 3) {
+                     if (missing == null && this.phase == AiFarmBuild.BuildPhase.FIELD && r.dataJson().contains("Missing hoe") && this.missingRefillRetries++ < 3) {
                         return this.running("The hoe wore out; making another");
                      }
 
@@ -668,17 +668,17 @@ final class AiFarmBuild {
                         return this.running("Getting more " + missing);
                      }
 
-                     if (this.phase == AiFarmBuild.Inner_CachePool.FIELD && this.load_Z_2()) {
-                        this.phase = AiFarmBuild.Inner_CachePool.VERIFY;
+                     if (this.phase == AiFarmBuild.BuildPhase.FIELD && this.load_Z_2()) {
+                        this.phase = AiFarmBuild.BuildPhase.VERIFY;
                         return this.running("Field done");
                      }
 
-                     return this.finish(r.status(), (this.phase == AiFarmBuild.Inner_CachePool.FIELD ? "The field" : "The foundation") + " failed: " + r.message());
+                     return this.finish(r.status(), (this.phase == AiFarmBuild.BuildPhase.FIELD ? "The field" : "The foundation") + " failed: " + r.message());
                   }
 
-                  this.phase = this.phase == AiFarmBuild.Inner_CachePool.FOUNDATION
-                     ? (this.soulSandFarm ? AiFarmBuild.Inner_CachePool.FIELD : (this.farmPlan.pool() ? AiFarmBuild.Inner_CachePool.POOL_FILL : AiFarmBuild.Inner_CachePool.CENTER_FILL))
-                     : AiFarmBuild.Inner_CachePool.VERIFY;
+                  this.phase = this.phase == AiFarmBuild.BuildPhase.FOUNDATION
+                     ? (this.soulSandFarm ? AiFarmBuild.BuildPhase.FIELD : (this.farmPlan.pool() ? AiFarmBuild.BuildPhase.POOL_FILL : AiFarmBuild.BuildPhase.CENTER_FILL))
+                     : AiFarmBuild.BuildPhase.VERIFY;
                   break;
                case POOL_FILL:
                   if (!ok) {
@@ -711,14 +711,14 @@ final class AiFarmBuild {
                      return this.finish(r.status(), "Could not open the water hole: " + r.message());
                   }
 
-                  this.phase = AiFarmBuild.Inner_CachePool.CENTER_POUR;
+                  this.phase = AiFarmBuild.BuildPhase.CENTER_POUR;
                   break;
                case CENTER_POUR:
                   if (!ok && !this.isWaterSourceAt(this.farmPlan.waterCells().get(this.centerIndex))) {
                      return this.finish(r.status(), "Could not pour the field's water: " + r.message());
                   }
 
-                  this.phase = AiFarmBuild.Inner_CachePool.CENTER_COVER;
+                  this.phase = AiFarmBuild.BuildPhase.CENTER_COVER;
                   break;
                case CENTER_COVER:
                   if (!ok && !this.isWaterloggedSlabAt(this.farmPlan.waterCells().get(this.centerIndex))) {
@@ -726,7 +726,7 @@ final class AiFarmBuild {
                   }
 
                   this.centerIndex++;
-                  this.phase = AiFarmBuild.Inner_CachePool.CENTER_FILL;
+                  this.phase = AiFarmBuild.BuildPhase.CENTER_FILL;
             }
 
             return this.running(r.message());
@@ -740,7 +740,7 @@ final class AiFarmBuild {
             }
 
             if (held >= want) {
-               this.phase = this.soulSandFarm ? AiFarmBuild.Inner_CachePool.SITE : AiFarmBuild.Inner_CachePool.HOE;
+               this.phase = this.soulSandFarm ? AiFarmBuild.BuildPhase.SITE : AiFarmBuild.BuildPhase.HOE;
                return this.running("Holding " + held + " " + seedItem);
             } else {
                this.stepOp = this.init(seedItem, want, held > 0 ? 180 : 600);
@@ -750,7 +750,7 @@ final class AiFarmBuild {
 
          AiOperation.Result tickHoePhase() {
             if (AiFarmPlant.init(mc)) {
-               this.phase = AiFarmBuild.Inner_CachePool.SITE;
+               this.phase = AiFarmBuild.BuildPhase.SITE;
                return this.running("Hoe in the bag");
             } else {
                this.stepOp = this.init("minecraft:wooden_hoe", 1, 600);
@@ -771,12 +771,12 @@ final class AiFarmBuild {
             this.waterSourcePos = this.soulSandFarm ? null : this.nearestWaterSource(feet);
             int waterHeld = this.soulSandFarm ? 0 : AiCraft.countItem("minecraft:water_bucket");
             boolean pool = AiFarmBuild.needsPoolForSite(this.substrateId, layout.water().size(), waterHeld, this.waterSourcePos != null, this.chosenArea == null);
-            HashMap<Long, AiFarmBuild.Inner_DataUtil> cache = new HashMap<>();
+            HashMap<Long, AiFarmBuild.ColumnScan> cache = new HashMap<>();
             int fromY = (this.chosenArea == null ? feet.getY() : this.chosenArea.maxY()) + 8;
             int toY = (this.chosenArea == null ? feet.getY() : this.chosenArea.minY()) - 12;
-            BiFunction<Integer, Integer, AiFarmBuild.Inner_DataUtil> columns = (x, z) -> cache.computeIfAbsent(
+            BiFunction<Integer, Integer, AiFarmBuild.ColumnScan> columns = (x, z) -> cache.computeIfAbsent(
                BlockPos.asLong(x, 0, z),
-               k -> AiTerrain.isLoaded(mc.level, new BlockPos(x, feet.getY(), z)) ? AiFarmBuild.scanColumn(mc.level::getBlockState, x, z, fromY, toY) : AiFarmBuild.Inner_DataUtil.NONE
+               k -> AiTerrain.isLoaded(mc.level, new BlockPos(x, feet.getY(), z)) ? AiFarmBuild.scanColumn(mc.level::getBlockState, x, z, fromY, toY) : AiFarmBuild.ColumnScan.NONE
             );
             this.farmPlan = this.chosenArea == null
                ? AiFarmBuild.planNear(layout, feet, pool, columns)
@@ -821,7 +821,7 @@ final class AiFarmBuild {
                   + this.waterSourceLabel
             );
             this.slabWood = this.soulSandFarm ? "oak" : AiFarmBuild.pickWood(this.woodInBag(), this.nearestLogWood());
-            this.phase = this.soulSandFarm ? AiFarmBuild.Inner_CachePool.DIRT : AiFarmBuild.Inner_CachePool.WOOD;
+            this.phase = this.soulSandFarm ? AiFarmBuild.BuildPhase.DIRT : AiFarmBuild.BuildPhase.WOOD;
             return this.running("Field site chosen at " + this.farmPlan.origin().toShortString());
          }
 
@@ -835,7 +835,7 @@ final class AiFarmBuild {
                this.stepOp = this.init(this.hoeToMake(), AiCraft.countItem(this.hoeToMake()) + 1, 600);
                return this.running("Making another hoe: " + this.hoeUsesLeft() + " uses for " + this.plotsToTill() + " plots");
             } else {
-               this.phase = AiFarmBuild.Inner_CachePool.DIRT;
+               this.phase = AiFarmBuild.BuildPhase.DIRT;
                return this.running("Slabs and hoes in the bag");
             }
          }
@@ -844,7 +844,7 @@ final class AiFarmBuild {
             int need = this.substrateNeeded();
             String base = AiFarmArea.load(this.substrateId);
             if (AiCraft.countItem(base) >= need) {
-               this.phase = this.soulSandFarm ? AiFarmBuild.Inner_CachePool.FOUNDATION : AiFarmBuild.Inner_CachePool.BUCKETS;
+               this.phase = this.soulSandFarm ? AiFarmBuild.BuildPhase.FOUNDATION : AiFarmBuild.BuildPhase.BUCKETS;
                return this.running(base + " in the bag");
             } else if (this.soulSandFarm) {
                this.stepOp = this.init(base, AiCraft.countItem(base) + need, 900);
@@ -877,7 +877,7 @@ final class AiFarmBuild {
             int water = AiCraft.countItem("minecraft:water_bucket");
             int empty = AiCraft.countItem("minecraft:bucket");
             if (!this.farmPlan.pool() && water >= need) {
-               this.phase = AiFarmBuild.Inner_CachePool.CLEAR;
+               this.phase = AiFarmBuild.BuildPhase.CLEAR;
                return this.running("Water in the bag");
             } else {
                int buckets = this.farmPlan.pool() ? 2 : 1;
@@ -885,7 +885,7 @@ final class AiFarmBuild {
                   this.stepOp = this.init("minecraft:bucket", empty + buckets - water - empty, 1800);
                   return this.running("Making " + (buckets - water - empty) + " bucket(s)");
                } else {
-                  this.phase = AiFarmBuild.Inner_CachePool.CLEAR;
+                  this.phase = AiFarmBuild.BuildPhase.CLEAR;
                   return this.running("Buckets ready");
                }
             }
@@ -907,7 +907,7 @@ final class AiFarmBuild {
                this.clearIndex++;
             }
 
-            this.phase = AiFarmBuild.Inner_CachePool.FOUNDATION;
+            this.phase = AiFarmBuild.BuildPhase.FOUNDATION;
             return this.running("Site cleared");
          }
 
@@ -940,7 +940,7 @@ final class AiFarmBuild {
          AiOperation.Result tickFoundationPhase() {
             List<AiBuilder.CellSpec> cells = this.foundationCells();
             if (cells.isEmpty()) {
-               this.phase = this.soulSandFarm ? AiFarmBuild.Inner_CachePool.FIELD : (this.farmPlan.pool() ? AiFarmBuild.Inner_CachePool.POOL_FILL : AiFarmBuild.Inner_CachePool.CENTER_FILL);
+               this.phase = this.soulSandFarm ? AiFarmBuild.BuildPhase.FIELD : (this.farmPlan.pool() ? AiFarmBuild.BuildPhase.POOL_FILL : AiFarmBuild.BuildPhase.CENTER_FILL);
                return this.running("Ground already level");
             } else {
                this.stepOp = AiBuilder.buildSchematic(new AiBuilder.Blueprint(BlockPos.ZERO, cells), 900);
@@ -1058,7 +1058,7 @@ final class AiFarmBuild {
                this.stepOp = this.fetchWaterOp(sources);
                return this.running("Filling a bucket for the infinite pool");
             } else {
-               this.phase = AiFarmBuild.Inner_CachePool.POOL_DIG;
+               this.phase = AiFarmBuild.BuildPhase.POOL_DIG;
                this.poolIndex = 0;
                return this.running("Two bucketfuls for the pool");
             }
@@ -1073,7 +1073,7 @@ final class AiFarmBuild {
                }
             }
 
-            this.phase = AiFarmBuild.Inner_CachePool.POOL_POUR;
+            this.phase = AiFarmBuild.BuildPhase.POOL_POUR;
             this.poolIndex = 0;
             return this.running("Pool dug");
          }
@@ -1101,14 +1101,14 @@ final class AiFarmBuild {
                }
             }
 
-            this.phase = AiFarmBuild.Inner_CachePool.POOL_SETTLE;
+            this.phase = AiFarmBuild.BuildPhase.POOL_SETTLE;
             this.settleTicks = 0;
             return this.running("Pool poured");
          }
 
          AiOperation.Result tickPoolSettlePhase() {
             if (this.poolCellsAllSources()) {
-               this.phase = AiFarmBuild.Inner_CachePool.CENTER_FILL;
+               this.phase = AiFarmBuild.BuildPhase.CENTER_FILL;
                return this.running("The pool is an infinite source");
             } else {
                return ++this.settleTicks > 60
@@ -1135,17 +1135,17 @@ final class AiFarmBuild {
             }
 
             if (this.centerIndex >= centers.size()) {
-               this.phase = AiFarmBuild.Inner_CachePool.FIELD;
+               this.phase = AiFarmBuild.BuildPhase.FIELD;
                return this.running("Every source in place");
             }
 
             if (this.isWaterSourceAt(centers.get(this.centerIndex))) {
-               this.phase = AiFarmBuild.Inner_CachePool.CENTER_COVER;
+               this.phase = AiFarmBuild.BuildPhase.CENTER_COVER;
                return this.running("Covering the source");
             }
 
             if (AiCraft.countItem("minecraft:water_bucket") > 0) {
-               this.phase = AiFarmBuild.Inner_CachePool.CENTER_DIG;
+               this.phase = AiFarmBuild.BuildPhase.CENTER_DIG;
                return this.running("Water in hand");
             }
 
@@ -1173,7 +1173,7 @@ final class AiFarmBuild {
                }
 
                this.centerConfirmAt = 0L;
-               this.phase = AiFarmBuild.Inner_CachePool.CENTER_POUR;
+               this.phase = AiFarmBuild.BuildPhase.CENTER_POUR;
                return this.running("Water hole open");
             } else {
                this.stepOp = autismclient.ai.engine.AiBreakBlock.breakBlock(c, 30, false, this.init_Set(c));
@@ -1184,7 +1184,7 @@ final class AiFarmBuild {
          AiOperation.Result tickCenterPourPhase() {
             BlockPos c = this.farmPlan.waterCells().get(this.centerIndex);
             if (this.isWaterSourceAt(c)) {
-               this.phase = AiFarmBuild.Inner_CachePool.CENTER_COVER;
+               this.phase = AiFarmBuild.BuildPhase.CENTER_COVER;
                return this.running("Source in place");
             }
 
@@ -1207,14 +1207,14 @@ final class AiFarmBuild {
             BlockPos c = this.farmPlan.waterCells().get(this.centerIndex);
             if (this.isWaterloggedSlabAt(c)) {
                this.centerIndex++;
-               this.phase = AiFarmBuild.Inner_CachePool.CENTER_FILL;
+               this.phase = AiFarmBuild.BuildPhase.CENTER_FILL;
                return this.running("Source covered");
             } else {
                String slab = this.firstSlabId();
                if (slab == null) {
                   this.logProgress("no slab to cover the water at " + c.toShortString());
                   this.centerIndex++;
-                  this.phase = AiFarmBuild.Inner_CachePool.CENTER_FILL;
+                  this.phase = AiFarmBuild.BuildPhase.CENTER_FILL;
                   return this.running("No slab");
                } else {
                   this.stepOp = AiBuilder.buildSchematic(
@@ -1238,7 +1238,7 @@ final class AiFarmBuild {
                this.update_Z = false;
                this.clearCells.clear();
                this.clearIndex = 0;
-               this.phase = AiFarmBuild.Inner_CachePool.CLEAR;
+               this.phase = AiFarmBuild.BuildPhase.CLEAR;
                return this.running("Checking the site after the refill");
             } else {
                List<BlockPos> plots = new ArrayList<>(this.farmPlan.interior());
@@ -1736,10 +1736,10 @@ final class AiFarmBuild {
       return id.substring(id.indexOf(58) + 1).replace('_', ' ');
    }
 
-   record Inner_BufferHelper(Direction out, int length) {
+   record EdgeRun(Direction out, int length) {
    }
 
-   enum Inner_CachePool {
+   enum BuildPhase {
       SEEDS,
       HOE,
       SITE,
@@ -1760,7 +1760,7 @@ final class AiFarmBuild {
       VERIFY;
    }
 
-   record Inner_ConfigStore(BlockPos origin, AiFarmBuild.Inner_StreamUtil layout, Direction gateSide, boolean pool, double cost) {
+   record FarmSite(BlockPos origin, AiFarmBuild.FarmLayout layout, Direction gateSide, boolean pool, double cost) {
       int ground() {
          return this.origin.getY();
       }
@@ -1883,11 +1883,11 @@ final class AiFarmBuild {
       }
    }
 
-   record Inner_DataUtil(int top, boolean natural, boolean tillable, boolean fluid, boolean lava, boolean obstacle) {
-      static final AiFarmBuild.Inner_DataUtil NONE = new AiFarmBuild.Inner_DataUtil(-2147483648, false, false, false, false, true);
+   record ColumnScan(int top, boolean natural, boolean tillable, boolean fluid, boolean lava, boolean obstacle) {
+      static final AiFarmBuild.ColumnScan NONE = new AiFarmBuild.ColumnScan(-2147483648, false, false, false, false, true);
    }
 
-   record Inner_StreamUtil(int width, int length, List<int[]> water) {
+   record FarmLayout(int width, int length, List<int[]> water) {
       int plots() {
          return this.width * this.length - this.water.size();
       }

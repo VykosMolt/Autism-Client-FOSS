@@ -11,7 +11,7 @@ public final class AnimatedToggleButtonRenderer {
    private static final long load_J = 128000000L;
    private static final long read = 200000000L;
    private static final long write = 30000000000L;
-   private static final Map<String, AnimatedToggleButtonRenderer.Inner_DataUtil> init_Map = new HashMap<>();
+   private static final Map<String, AnimatedToggleButtonRenderer.ToggleAnimation> init_Map = new HashMap<>();
    private static long update;
 
    private AnimatedToggleButtonRenderer() {
@@ -21,9 +21,9 @@ public final class AnimatedToggleButtonRenderer {
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean enabled, boolean hovered, String animationKey
    ) {
       long now = System.nanoTime();
-      AnimatedToggleButtonRenderer.Inner_DataUtil state = init_Map.get(animationKey);
+      AnimatedToggleButtonRenderer.ToggleAnimation state = init_Map.get(animationKey);
       if (state == null) {
-         state = new AnimatedToggleButtonRenderer.Inner_DataUtil(enabled ? 1.0F : 0.0F, enabled, now);
+         state = new AnimatedToggleButtonRenderer.ToggleAnimation(enabled ? 1.0F : 0.0F, enabled, now);
          init_Map.put(animationKey, state);
       } else if (state.targetEnabled != enabled) {
          state.startProgress = state.init(now, 200000000L);
@@ -58,7 +58,7 @@ public final class AnimatedToggleButtonRenderer {
    private static void pruneStale(long now) {
       if (now - update >= 30000000000L) {
          update = now;
-         Iterator<AnimatedToggleButtonRenderer.Inner_DataUtil> iterator = init_Map.values().iterator();
+         Iterator<AnimatedToggleButtonRenderer.ToggleAnimation> iterator = init_Map.values().iterator();
 
          while (iterator.hasNext()) {
             if (now - iterator.next().load > 30000000000L) {
@@ -72,13 +72,13 @@ public final class AnimatedToggleButtonRenderer {
       return Math.max(0.0F, Math.min(1.0F, value));
    }
 
-   private static final class Inner_DataUtil {
+   private static final class ToggleAnimation {
       private float startProgress;
       private boolean targetEnabled;
       private long init_J;
       private long load;
 
-      private Inner_DataUtil(float startProgress, boolean targetEnabled, long now) {
+      private ToggleAnimation(float startProgress, boolean targetEnabled, long now) {
          this.startProgress = startProgress;
          this.targetEnabled = targetEnabled;
          this.init_J = now;

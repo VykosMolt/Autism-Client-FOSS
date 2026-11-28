@@ -167,7 +167,7 @@ public class MacroClipboardCodec {
       }
    }
 
-   public static MacroClipboardCodec.Inner_StreamUtil pasteMacros() {
+   public static MacroClipboardCodec.PastedMacros pasteMacros() {
       String clipboard;
       try {
          clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
@@ -188,28 +188,28 @@ public class MacroClipboardCodec {
          }
 
          clipboardIsCut = false;
-         return new MacroClipboardCodec.Inner_StreamUtil(out, true);
+         return new MacroClipboardCodec.PastedMacros(out, true);
       } else {
          List<AutismMacro> list = init_List();
          if (!list.isEmpty()) {
-            return new MacroClipboardCodec.Inner_StreamUtil(list, false);
+            return new MacroClipboardCodec.PastedMacros(list, false);
          }
 
          AutismMacro single = pasteMacro();
-         return new MacroClipboardCodec.Inner_StreamUtil(single == null ? List.of() : List.of(single), false);
+         return new MacroClipboardCodec.PastedMacros(single == null ? List.of() : List.of(single), false);
       }
    }
 
-   public static MacroClipboardCodec.Inner_DataUtil clipboardKind() {
+   public static MacroClipboardCodec.ClipboardKind clipboardKind() {
       CompoundTag rootTag = readClipboardTag();
       if (rootTag == null) {
-         return MacroClipboardCodec.Inner_DataUtil.NONE;
+         return MacroClipboardCodec.ClipboardKind.NONE;
       } else {
          String type = rootTag.getStringOr("type", "");
          if (!"autism_macro".equals(type) && !"autism_macro_list".equals(type)) {
-            return "autism_macro_steps".equals(type) ? MacroClipboardCodec.Inner_DataUtil.STEPS : MacroClipboardCodec.Inner_DataUtil.NONE;
+            return "autism_macro_steps".equals(type) ? MacroClipboardCodec.ClipboardKind.STEPS : MacroClipboardCodec.ClipboardKind.NONE;
          } else {
-            return MacroClipboardCodec.Inner_DataUtil.MACROS;
+            return MacroClipboardCodec.ClipboardKind.MACROS;
          }
       }
    }
@@ -1137,8 +1137,8 @@ public class MacroClipboardCodec {
       }
    }
 
-   private static MacroClipboardCodec.Inner_CachePool unsafe() {
-      return MacroClipboardCodec.Inner_CachePool.INSTANCE;
+   private static MacroClipboardCodec.UnsafeAccess unsafe() {
+      return MacroClipboardCodec.UnsafeAccess.INSTANCE;
    }
 
    private static Object init(Class<?> recordClass, CompoundTag fieldsTag) throws InstantiationException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
@@ -1323,8 +1323,8 @@ public class MacroClipboardCodec {
       }
    }
 
-   private static final class Inner_CachePool {
-      private static final MacroClipboardCodec.Inner_CachePool INSTANCE = create();
+   private static final class UnsafeAccess {
+      private static final MacroClipboardCodec.UnsafeAccess INSTANCE = create();
       private final Object unsafe;
       private final Method objectFieldOffset;
       private final Method load;
@@ -1338,7 +1338,7 @@ public class MacroClipboardCodec {
       private final Method poll;
       private final Method push;
 
-      private Inner_CachePool(Object unsafe, Class<?> type) throws NoSuchMethodException {
+      private UnsafeAccess(Object unsafe, Class<?> type) throws NoSuchMethodException {
          this.unsafe = unsafe;
          this.objectFieldOffset = type.getMethod("objectFieldOffset", Field.class);
          this.load = type.getMethod("putInt", Object.class, long.class, int.class);
@@ -1353,12 +1353,12 @@ public class MacroClipboardCodec {
          this.push = type.getMethod("allocateInstance", Class.class);
       }
 
-      private static MacroClipboardCodec.Inner_CachePool create() {
+      private static MacroClipboardCodec.UnsafeAccess create() {
          try {
             Class<?> type = Class.forName("sun.misc.Unsafe");
             Field f = type.getDeclaredField("theUnsafe");
             f.setAccessible(true);
-            return new MacroClipboardCodec.Inner_CachePool(f.get(null), type);
+            return new MacroClipboardCodec.UnsafeAccess(f.get(null), type);
          } catch (Exception e) {
             throw new RuntimeException("Cannot access Unsafe", e);
          }
@@ -1433,12 +1433,12 @@ public class MacroClipboardCodec {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum ClipboardKind {
       NONE,
       MACROS,
       STEPS;
    }
 
-   public record Inner_StreamUtil(List<AutismMacro> macros, boolean fromInternalCopy) {
+   public record PastedMacros(List<AutismMacro> macros, boolean fromInternalCopy) {
    }
 }

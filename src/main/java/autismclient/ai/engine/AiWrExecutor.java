@@ -80,14 +80,14 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private final AiBlockDigger putAt_JsonCache = new AiBlockDigger(
       this.client, this::fill, this::putAt_V_Vec3, false, false, this.putAt_CacheHelper::tick, () -> !this.putAt_CacheHelper.isSilent()
    );
-   private List<AiPathfinder.UiHelper> moves = List.of();
+   private List<AiPathfinder.PathStep> moves = List.of();
    private int moveIndex;
    private boolean fill_Z = true;
    private AiWrExecutor.Inner_TableCache putAt_RingCache_TableCac;
    private AiWrExecutor.Inner_TaskState putAt_RingCache_TaskStat;
    private AiWrExecutor.Inner_JsonCache putAt_RingCache_JsonCach;
-   private AiPathfinder.UiHelper currentMove;
-   private AiPathfinder.UiHelper fill_FileStore_PacketHe;
+   private AiPathfinder.PathStep currentMove;
+   private AiPathfinder.PathStep fill_FileStore_PacketHe;
    private int pollOf_I;
    private int tick_I;
    private int flushOf_I;
@@ -113,9 +113,9 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private final Set<BlockPos> putAt_Set;
    private AiDigLine.Inner_DataUtil putAt_EventBus_CacheHelp;
    private AiDigLine.Inner_DataUtil fill_EventBus_CacheHelp;
-   private AiPathfinder.UiHelper readEx_FileStore_PacketHe;
-   private AiPathfinder.UiHelper value_FileStore_PacketHe;
-   private AiPathfinder.UiHelper prevEx_FileStore_PacketHe;
+   private AiPathfinder.PathStep readEx_FileStore_PacketHe;
+   private AiPathfinder.PathStep value_FileStore_PacketHe;
+   private AiPathfinder.PathStep prevEx_FileStore_PacketHe;
    private Set<BlockPos> fill_Set;
    private Set<BlockPos> readEx_Set;
    private boolean chunkAt_Z;
@@ -149,7 +149,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private boolean dataEx_Z;
    private static final Predicate<BlockPos> putAt_Predicate = var0 -> true;
    private Predicate<BlockPos> fill_Predicate;
-   private AiPathfinder.UiHelper prev_FileStore_PacketHe;
+   private AiPathfinder.PathStep prev_FileStore_PacketHe;
    private boolean frameOf_Z;
    private Predicate<BlockPos> readEx_Predicate;
    private Function<BlockPos, Vec3> putAt_Function;
@@ -161,7 +161,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private final AiRoutePolicy.Inner_CacheHelper putAt_ValueSink_CacheHel;
    private boolean syncAt_Z;
    private BlockPos prev_BlockPos;
-   private AiPathfinder.UiHelper chunkAt_FileStore_PacketHe;
+   private AiPathfinder.PathStep chunkAt_FileStore_PacketHe;
    private String lastFailureReason;
    private int writeAt;
    private int reset;
@@ -199,12 +199,12 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       AiMotionSafety.applyEmergencyBrake();
    }
 
-   public static int putAt_I_List(List<AiPathfinder.UiHelper> var0) {
+   public static int putAt_I_List(List<AiPathfinder.PathStep> var0) {
       return AiRoutePolicy.putAt(var0);
    }
 
    static boolean putAt_Z_FileStore_PacketHe(
-      AiPathfinder.UiHelper var0, Function<BlockPos, AiPathfinder.CellInfo> var1, Predicate<BlockPos> var2, Predicate<BlockPos> var3
+      AiPathfinder.PathStep var0, Function<BlockPos, AiPathfinder.CellInfo> var1, Predicate<BlockPos> var2, Predicate<BlockPos> var3
    ) {
       if (var0 != null && var0.cellsToBreak().isEmpty() && var0.cellsToPlace().isEmpty()) {
          AiPathfinder.CellInfo var4 = (AiPathfinder.CellInfo)var1.apply(var0.from());
@@ -249,19 +249,19 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    static int putAt_I_List(
-      List<AiPathfinder.UiHelper> var0, int var1, Function<BlockPos, AiPathfinder.CellInfo> var2, Predicate<BlockPos> var3, Predicate<BlockPos> var4
+      List<AiPathfinder.PathStep> var0, int var1, Function<BlockPos, AiPathfinder.CellInfo> var2, Predicate<BlockPos> var3, Predicate<BlockPos> var4
    ) {
       int var5 = var1;
 
-      while (var5 < var0.size() && putAt_Z_FileStore_PacketHe((AiPathfinder.UiHelper)var0.get(var5), var2, var3, var4)) {
+      while (var5 < var0.size() && putAt_Z_FileStore_PacketHe((AiPathfinder.PathStep)var0.get(var5), var2, var3, var4)) {
          var5++;
       }
 
       return var5;
    }
 
-   static boolean putAt_Z_List_Function(List<AiPathfinder.UiHelper> var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
-      for (AiPathfinder.UiHelper var3 : var0) {
+   static boolean putAt_Z_List_Function(List<AiPathfinder.PathStep> var0, Function<BlockPos, AiPathfinder.CellInfo> var1) {
+      for (AiPathfinder.PathStep var3 : var0) {
          if (((AiPathfinder.CellInfo)var1.apply(var3.from().below())).farmland() || ((AiPathfinder.CellInfo)var1.apply(var3.to().below())).farmland()) {
             return true;
          }
@@ -274,11 +274,11 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return var0 && var1 && var2 && !var3 && var4 * var4 + var6 * var6 > 4.0E-4;
    }
 
-   public void putAt_V_List(List<AiPathfinder.UiHelper> var1) {
+   public void putAt_V_List(List<AiPathfinder.PathStep> var1) {
       this.putAt_V_List_Z(var1, true);
    }
 
-   public void putAt_V_List_Z(List<AiPathfinder.UiHelper> var1, boolean var2) {
+   public void putAt_V_List_Z(List<AiPathfinder.PathStep> var1, boolean var2) {
       this.fill_FileStore_PacketHe = this.putAt_RingCache_TableCac == AiWrExecutor.Inner_TableCache.fill
          ? (
             this.currentMove != null
@@ -295,9 +295,9 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       this.putAt_RingCache_TableCac = AiWrExecutor.Inner_TableCache.fill;
    }
 
-   public boolean putAt_Z_List_Z(List<AiPathfinder.UiHelper> var1, boolean var2) {
+   public boolean putAt_Z_List_Z(List<AiPathfinder.PathStep> var1, boolean var2) {
       if (this.putAt_RingCache_TableCac == AiWrExecutor.Inner_TableCache.fill && !this.moves.isEmpty() && !var1.isEmpty()) {
-         if (!((AiPathfinder.UiHelper)var1.get(0)).from().equals(this.moves.get(this.moves.size() - 1).to())) {
+         if (!((AiPathfinder.PathStep)var1.get(0)).from().equals(this.moves.get(this.moves.size() - 1).to())) {
             return false;
          }
 
@@ -322,7 +322,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   boolean putAt_Z_List(List<AiPathfinder.UiHelper> var1) {
+   boolean putAt_Z_List(List<AiPathfinder.PathStep> var1) {
       if (this.putAt_RingCache_TableCac != AiWrExecutor.Inner_TableCache.fill) {
          return false;
       }
@@ -370,7 +370,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return this.prev_BlockPos;
    }
 
-   public AiPathfinder.UiHelper putAt_FileStore_PacketHe() {
+   public AiPathfinder.PathStep putAt_FileStore_PacketHe() {
       return this.chunkAt_FileStore_PacketHe;
    }
 
@@ -429,7 +429,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       this.putAt_D = var1;
    }
 
-   void putAt_V_FileStore_PacketHe(AiPathfinder.UiHelper var1) {
+   void putAt_V_FileStore_PacketHe(AiPathfinder.PathStep var1) {
       this.prev_FileStore_PacketHe = var1;
    }
 
@@ -561,7 +561,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          HashSet<BlockPos> var1 = new HashSet<>();
 
          for (int var2 = Math.max(0, this.moveIndex); var2 < this.moves.size(); var2++) {
-            AiPathfinder.UiHelper var3 = this.moves.get(var2);
+            AiPathfinder.PathStep var3 = this.moves.get(var2);
             var1.add(var3.from().below());
             var1.add(var3.to().below());
             int var4 = var3.to().getX() - var3.from().getX();
@@ -715,7 +715,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    @Override
-   public List<AiPathfinder.UiHelper> putAt_List() {
+   public List<AiPathfinder.PathStep> putAt_List() {
       return this.putAt_RingCache_TableCac == AiWrExecutor.Inner_TableCache.fill
          ? List.copyOf(this.moves.subList(this.moveIndex, this.moves.size()))
          : List.of();
@@ -823,7 +823,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                         return;
                      }
 
-                     AiPathfinder.UiHelper var10 = this.moves.get(this.moveIndex);
+                     AiPathfinder.PathStep var10 = this.moves.get(this.moveIndex);
                      if (!putAt_Z_FileStore_PacketHe_FileStore_PacketHe(var10, this.fill_FileStore_PacketHe)
                         && this.putAt_ValueSink_CacheHel.putAt(var10, System.nanoTime())) {
                         this.syncAt_Z = true;
@@ -1380,7 +1380,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
 
       this.tick_V();
-      AiPathfinder.UiHelper var15 = this.moveIndex < this.moves.size()
+      AiPathfinder.PathStep var15 = this.moveIndex < this.moves.size()
          ? this.moves.get(this.moveIndex)
          : (this.moves.isEmpty() ? null : this.moves.get(this.moves.size() - 1));
       this.lastFailureReason = var3;
@@ -1388,14 +1388,14 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return true;
    }
 
-   static int putAt_I_List_2(List<AiPathfinder.UiHelper> var0, Vec3 var1, int var2, int var3, int var4) {
+   static int putAt_I_List_2(List<AiPathfinder.PathStep> var0, Vec3 var1, int var2, int var3, int var4) {
       int var5 = Math.max(Math.max(0, var2), var3 - 6);
       int var6 = Math.min(var0.size(), Math.min(var4, var3 + 8));
       int var7 = Math.min(var3, Math.max(0, var6 - 1));
       double var8 = 1.7976931348623157E308;
 
       for (int var10 = var5; var10 < var6; var10++) {
-         BlockPos var11 = ((AiPathfinder.UiHelper)var0.get(var10)).from();
+         BlockPos var11 = ((AiPathfinder.PathStep)var0.get(var10)).from();
          double var12 = var1.distanceToSqr(var11.getX() + 0.5, var11.getY(), var11.getZ() + 0.5);
          if (var12 < var8) {
             var8 = var12;
@@ -1429,7 +1429,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void fill_V(AiPathfinder.UiHelper var1) {
+   private void fill_V(AiPathfinder.PathStep var1) {
       this.pollOf_I = 0;
       this.tick_I = 0;
       this.flushOf_I = 0;
@@ -1466,11 +1466,11 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private static boolean putAt_Z_FileStore_PacketHe_FileStore_PacketHe(AiPathfinder.UiHelper var0, AiPathfinder.UiHelper var1) {
+   private static boolean putAt_Z_FileStore_PacketHe_FileStore_PacketHe(AiPathfinder.PathStep var0, AiPathfinder.PathStep var1) {
       return var0 != null && var1 != null && var0.type() == var1.type() && var0.from().equals(var1.from()) && var0.to().equals(var1.to());
    }
 
-   private void putAt_V_LocalPlayer_FileStore_PacketHe(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void putAt_V_LocalPlayer_FileStore_PacketHe(LocalPlayer var1, AiPathfinder.PathStep var2) {
       switch (var2.type()) {
          case CLIMB_1:
             this.tick(var1, var2);
@@ -1518,7 +1518,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void fill(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void fill(LocalPlayer var1, AiPathfinder.PathStep var2) {
       if (!this.putAt_Z_LocalPlayer_FileStore_PacketHe(var1, var2)) {
          this.releaseDirectionKeys();
          BlockPos var3 = var2.cellsToBreak().get(0);
@@ -1583,7 +1583,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private boolean putAt_Z_LocalPlayer_FileStore_PacketHe(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private boolean putAt_Z_LocalPlayer_FileStore_PacketHe(LocalPlayer var1, AiPathfinder.PathStep var2) {
       if (var2.from().getX() != this.getTo || var2.from().getZ() != this.tableEx || var2.from().getY() > this.levelOf) {
          this.getTo = var2.from().getX();
          this.tableEx = var2.from().getZ();
@@ -1644,7 +1644,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       int var3 = 0;
 
       for (int var4 = this.moveIndex; var4 < this.moves.size(); var4++) {
-         AiPathfinder.UiHelper var5 = this.moves.get(var4);
+         AiPathfinder.PathStep var5 = this.moves.get(var4);
          if (var5.type() != AiPathfinder.MoveType.DIG_DOWN_1 || var5.to().getX() != this.getTo || var5.to().getZ() != this.tableEx) {
             break;
          }
@@ -1697,7 +1697,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void readEx(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void readEx(LocalPlayer var1, AiPathfinder.PathStep var2) {
       if (!this.putAt_Z_LocalPlayer(var1, var2, true)) {
          Vec3 var3 = this.putAt_Vec3_LocalPlayer(var1);
          if (var3 == null && this.putAt_Function != null && this.moveIndex == this.moves.size() - 1) {
@@ -1711,7 +1711,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void value(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void value(LocalPlayer var1, AiPathfinder.PathStep var2) {
       if (!this.putAt_Z_LocalPlayer(var1, var2, true)) {
          AiBlockDigger.tickDestroyDelay(this.client);
          Vec3 var3 = this.putAt_Vec3_LocalPlayer(var1);
@@ -1729,7 +1729,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void prevEx(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void prevEx(LocalPlayer var1, AiPathfinder.PathStep var2) {
       boolean var3 = false;
 
       for (BlockPos var5 : var2.cellsToBreak()) {
@@ -1747,7 +1747,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private boolean putAt_Z_LocalPlayer(LocalPlayer var1, AiPathfinder.UiHelper var2, boolean var3) {
+   private boolean putAt_Z_LocalPlayer(LocalPlayer var1, AiPathfinder.PathStep var2, boolean var3) {
       var var4 = var2.cellsToBreak();
       ArrayList var5 = new ArrayList(var4.size());
 
@@ -1905,7 +1905,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private AiDigLine.Inner_DataUtil putAt_EventBus_CacheHelp_FileStore_PacketHe(
-      AiPathfinder.UiHelper var1, List<BlockPos> var2, Vec3 var3, LocalPlayer var4, AiDigLine.Inner_CachePool var5, double var6
+      AiPathfinder.PathStep var1, List<BlockPos> var2, Vec3 var3, LocalPlayer var4, AiDigLine.Inner_CachePool var5, double var6
    ) {
       var var8 = new ArrayList<>(var2);
       var8.addAll(this.putAt_List_List(var2));
@@ -1948,7 +1948,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
 
       if (var2 >= 0 && var2 + 1 < this.moves.size()) {
-         AiPathfinder.UiHelper var7 = this.moves.get(var2 + 1);
+         AiPathfinder.PathStep var7 = this.moves.get(var2 + 1);
          if (var7.type() != AiPathfinder.MoveType.DIG_TUNNEL && var7.type() != AiPathfinder.MoveType.DIG_ASCEND && var7.type() != AiPathfinder.MoveType.DIG_DESCEND) {
             return List.of();
          }
@@ -1983,7 +1983,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
 
    private Vec3 putAt_Vec3_LocalPlayer(LocalPlayer var1) {
       if (!this.putAt_CacheHelper.isSilent() && this.moveIndex + 1 < this.moves.size()) {
-         AiPathfinder.UiHelper var2 = this.moves.get(this.moveIndex + 1);
+         AiPathfinder.PathStep var2 = this.moves.get(this.moveIndex + 1);
          if (var2.cellsToBreak().isEmpty()) {
             return null;
          }
@@ -2056,7 +2056,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return false;
    }
 
-   private void prev(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void prev(LocalPlayer var1, AiPathfinder.PathStep var2) {
       BlockPos var3 = var2.cellsToPlace().get(0);
       if (this.prev_Z || var2.cellsToBreak().isEmpty() || !var1.onGround() || !this.putAt_Z_LocalPlayer(var1, var2, false)) {
          if (!this.prev_Z) {
@@ -2204,13 +2204,13 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    }
 
    private void putAt_V_LocalPlayer(LocalPlayer var1) {
-      AiPathfinder.UiHelper var2 = this.currentMove;
+      AiPathfinder.PathStep var2 = this.currentMove;
       int var3 = var2.to().getX() - var2.from().getX();
       int var4 = var2.to().getZ() - var2.from().getZ();
 
       int var5;
       for (var5 = this.moveIndex; var5 + 1 < this.moves.size(); var5++) {
-         AiPathfinder.UiHelper var6 = this.moves.get(var5 + 1);
+         AiPathfinder.PathStep var6 = this.moves.get(var5 + 1);
          if (var6.type() != AiPathfinder.MoveType.BRIDGE_CELL
             || !var6.from().equals(this.moves.get(var5).to())
             || var6.to().getX() - var6.from().getX() != var3
@@ -2249,13 +2249,13 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       AutismClientAddon.LOG.info("[AI] bridge {} cells {} from {} toward {},{}", var9.length(), var10.name().toLowerCase(Locale.ROOT), var2.from().toShortString(), var3, var4);
    }
 
-   private static boolean putAt_Z_FileStore_PacketHe(AiPathfinder.UiHelper var0, int var1, int var2) {
+   private static boolean putAt_Z_FileStore_PacketHe(AiPathfinder.PathStep var0, int var1, int var2) {
       int var3 = Integer.signum(var0.to().getX() - var0.from().getX());
       int var4 = Integer.signum(var0.to().getZ() - var0.from().getZ());
       return var3 != var1 || var4 != var2;
    }
 
-   private int putAt_I_FileStore_PacketHe(AiPathfinder.UiHelper var1, BlockPos var2, int var3, int var4, int var5) {
+   private int putAt_I_FileStore_PacketHe(AiPathfinder.PathStep var1, BlockPos var2, int var3, int var4, int var5) {
       if (AiRoutePolicy.fill(var1.type()) && var1.to().getY() == var2.getY()) {
          int var6 = var1.to().getX() - var2.getX();
          int var7 = var1.to().getZ() - var2.getZ();
@@ -2318,7 +2318,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             return true;
          }
       } else {
-         AiBridgeDriver.Inner_DataUtil var4 = this.putAt_TokenCodec.init(var3, this::fill, var3x -> {
+         AiBridgeDriver.BridgeStatus var4 = this.putAt_TokenCodec.init(var3, this::fill, var3x -> {
             this.readBy++;
             ItemStack var4x = var1.getInventory().getItem(var3);
             this.putAt_Str = BuiltInRegistries.ITEM.getKey(var4x.getItem()).toString();
@@ -2326,12 +2326,12 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             AiRoutePolicy.putAt_V_BlockPos_Block(var3x, var5x);
             AiEditLedger.recordPlacement(var3x);
          });
-         if (var4 == AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING) {
+         if (var4 == AiBridgeDriver.BridgeStatus.INVALID_FOOTING) {
             this.putAt_V_Str("bridge footing below the planned support level");
             return true;
          }
 
-         if (var4 == AiBridgeDriver.Inner_DataUtil.FELL) {
+         if (var4 == AiBridgeDriver.BridgeStatus.FELL) {
             this.putAt_V_Str("fell off the bridge");
             return true;
          }
@@ -2347,7 +2347,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          }
 
          this.currentMove = this.moves.get(this.moveIndex);
-         if (var4 != AiBridgeDriver.Inner_DataUtil.DONE) {
+         if (var4 != AiBridgeDriver.BridgeStatus.DONE) {
             return true;
          }
 
@@ -2364,7 +2364,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private static boolean putAt_Z_FileStore_PacketHe_LocalPlayer(AiPathfinder.UiHelper var0, LocalPlayer var1) {
+   private static boolean putAt_Z_FileStore_PacketHe_LocalPlayer(AiPathfinder.PathStep var0, LocalPlayer var1) {
       if (AiRoutePolicy.putAt_Z(var0) && !(Math.abs(var1.getY() - var0.to().getY()) > 0.6)) {
          double var2 = var0.to().getX() - var0.from().getX();
          double var4 = var0.to().getZ() - var0.from().getZ();
@@ -2381,7 +2381,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void chunkAt(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void chunkAt(LocalPlayer var1, AiPathfinder.PathStep var2) {
       BlockPos var3 = var2.cellsToPlace().get(0);
       if (!this.putAt_FileStore_BitCache_BlockPos(var3).passable()) {
          if (!this.value_Z) {
@@ -2443,7 +2443,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private static double putAt_D_LocalPlayer_FileStore_PacketHe(LocalPlayer var0, AiPathfinder.UiHelper var1) {
+   private static double putAt_D_LocalPlayer_FileStore_PacketHe(LocalPlayer var0, AiPathfinder.PathStep var1) {
       int var2 = Integer.signum(var1.to().getX() - var1.from().getX());
       int var3 = Integer.signum(var1.to().getZ() - var1.from().getZ());
       if (var2 > 0) {
@@ -2457,7 +2457,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void state(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void state(LocalPlayer var1, AiPathfinder.PathStep var2) {
       BlockPos var3 = var2.to();
       boolean var4 = this.isClosedDoorAt(var3);
       int var5 = Integer.signum(var2.to().getX() - var2.from().getX());
@@ -2498,7 +2498,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private boolean putAt_Z_FileStore_PacketHe(AiPathfinder.UiHelper var1) {
+   private boolean putAt_Z_FileStore_PacketHe(AiPathfinder.PathStep var1) {
       if (this.isClosedDoorAt(var1.to())) {
          this.state(this.client.player, var1);
          return false;
@@ -2586,7 +2586,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return isDoorOrGate(var2) && var2.hasProperty(BlockStateProperties.OPEN) && var2.getValue(BlockStateProperties.OPEN);
    }
 
-   private void closeOf(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void closeOf(LocalPlayer var1, AiPathfinder.PathStep var2) {
       if (!var1.onGround() && !var1.isInWater() && !var1.onClimbable()) {
          this.pollAt(var1, var2);
       } else if (var1.onGround() && !var1.isInWater() && !this.putAt_Z_TokenCore_TableCac_FileStore_PacketHe(putAt_TokenCore_TableCac_LocalPlayer(var1), var2)) {
@@ -2596,7 +2596,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void pollAt(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void pollAt(LocalPlayer var1, AiPathfinder.PathStep var2) {
       Vec3 var3 = new Vec3(var2.to().getX() + 0.5, var1.getEyePosition().y, var2.to().getZ() + 0.5);
       this.putAt_V_Vec3(var3);
       double var4 = var2.to().getX() + 0.5;
@@ -2616,7 +2616,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       double var17 = 1.7976931348623157E308;
 
       for (int var19 = 0; var19 < var12.length; var19++) {
-         AiStride.Inner_TableCache var20 = AiStride.putAt(var9, var12[var19], false, var10);
+         AiStride.FallResult var20 = AiStride.putAt(var9, var12[var19], false, var10);
          if (var20.down()) {
             double var21 = Math.hypot(var20.at().x() - var4, var20.at().z() - var6);
             if (var21 < var17) {
@@ -2648,7 +2648,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private boolean putAt_Z_TokenCore_TableCac_FileStore_PacketHe(AiPhysics.MotionState var1, AiPathfinder.UiHelper var2) {
+   private boolean putAt_Z_TokenCore_TableCac_FileStore_PacketHe(AiPhysics.MotionState var1, AiPathfinder.PathStep var2) {
       AiLiveWorld var3 = this.putAt_NetEntry();
       double var4 = var2.to().getX() + 0.5;
       double var6 = var2.to().getZ() + 0.5;
@@ -2707,7 +2707,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       return false;
    }
 
-   private void pollOf(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void pollOf(LocalPlayer var1, AiPathfinder.PathStep var2) {
       double var3 = var2.from().getX() + 0.5;
       double var5 = var2.from().getZ() + 0.5;
       double var7 = var3 - var1.getX();
@@ -2726,7 +2726,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void tick(LocalPlayer var1, AiPathfinder.UiHelper var2) {
+   private void tick(LocalPlayer var1, AiPathfinder.PathStep var2) {
       boolean var3 = var2.to().getY() > var2.from().getY();
       if (var1.isInWater()) {
          this.putAt_CacheHelper.clear();
@@ -2739,7 +2739,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private void putAt_V_LocalPlayer_2(LocalPlayer var1, AiPathfinder.UiHelper var2, boolean var3, boolean var4, Vec3 var5) {
+   private void putAt_V_LocalPlayer_2(LocalPlayer var1, AiPathfinder.PathStep var2, boolean var3, boolean var4, Vec3 var5) {
       Vec3 var6 = var5 != null ? var5 : AiRoutePolicy.putAt_Vec3_FileStore_PacketHe_D(var2, var1.getEyePosition().y);
       this.putAt_V_Vec3(var6);
       float var7 = AiPhysics.yawBetween(var1.getX(), var1.getZ(), var2.to().getX() + 0.5, var2.to().getZ() + 0.5);
@@ -2755,7 +2755,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       this.client.options.keyShift.setDown(false);
    }
 
-   private boolean fill_Z(AiPathfinder.UiHelper var1) {
+   private boolean fill_Z(AiPathfinder.PathStep var1) {
       LocalPlayer var2 = this.client.player;
       if (!var1.cellsToPlace().isEmpty()
          && !this.value_Z
@@ -2816,11 +2816,11 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          || AiRoutePolicy.putAt_Z_FileStore_SyncPool(this.currentMove.type(), this.prev_Z, this.putAt_BlockPos != null || this.value_Z);
    }
 
-   private boolean readEx(AiPathfinder.UiHelper var1) {
+   private boolean readEx(AiPathfinder.PathStep var1) {
       return AiRoutePolicy.putAt_Z_FileStore_PacketHe(var1, this.putAt_Function(), this.dataEx_Z);
    }
 
-   private boolean value(AiPathfinder.UiHelper var1) {
+   private boolean value(AiPathfinder.PathStep var1) {
       return this.readEx_Predicate != null
          && var1.cellsToBreak().isEmpty()
          && var1.cellsToPlace().isEmpty()
@@ -3011,12 +3011,12 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             return false;
          }
 
-         ArrayList<AiRestock.Inner_DataUtil> var8 = new ArrayList<>(9);
+         ArrayList<AiRestock.HotbarSlotView> var8 = new ArrayList<>(9);
 
          for (int var5 = 0; var5 < 9; var5++) {
             ItemStack var6 = this.client.player.getInventory().getItem(var5);
             var8.add(
-               new AiRestock.Inner_DataUtil(var6.isEmpty(), var6.getItem() instanceof BlockItem, var6.has(DataComponents.FOOD), var6.isDamageableItem())
+               new AiRestock.HotbarSlotView(var6.isEmpty(), var6.getItem() instanceof BlockItem, var6.has(DataComponents.FOOD), var6.isDamageableItem())
             );
          }
 
@@ -3025,7 +3025,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             return false;
          }
 
-         String var10 = var1 != null ? BuiltInRegistries.ITEM.getKey(var1).toString() : ((AiRestock.Inner_CachePool)var2.get(var7)).itemId();
+         String var10 = var1 != null ? BuiltInRegistries.ITEM.getKey(var1).toString() : ((AiRestock.BackpackSlotView)var2.get(var7)).itemId();
          this.restock.startSwap(9 + var7, var9, var10);
          return true;
       } else {
@@ -3069,7 +3069,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
             || var2.requiresCorrectToolForDrops()
                && AiPathfinder.LiveGridView.isOreBlock(var2)
                && !this.client.player.getInventory().getItem(var3).isCorrectToolForDrops(var2)) {
-            if (ToolUpkeep.init(this.putAt_List_BlockState(var2)) instanceof ToolUpkeep.Inner_DataUtil.Inner_CachePool var4) {
+            if (ToolUpkeep.init(this.putAt_List_BlockState(var2)) instanceof ToolUpkeep.UpkeepDecision.SwapFromBackpack var4) {
                int var6 = var4.backpackSlot();
                this.restock.startSwap(
                      var6,
@@ -3088,26 +3088,26 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private AiRestock.Inner_CachePool putAt_SyncCore_JsonCache_ItemStack(ItemStack var1) {
+   private AiRestock.BackpackSlotView putAt_SyncCore_JsonCache_ItemStack(ItemStack var1) {
       return var1.getItem() instanceof BlockItem var2 && AiRestock.canSpendStack(var1, this.client.player.getInventory())
-         ? new AiRestock.Inner_CachePool(
+         ? new AiRestock.BackpackSlotView(
             BuiltInRegistries.ITEM.getKey(var1.getItem()).toString(),
             var1.getCount(),
             var2.getBlock() instanceof FallingBlock,
             var2.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.client.level, this.client.player.blockPosition()),
             var2.getBlock().defaultBlockState().hasBlockEntity()
          )
-         : new AiRestock.Inner_CachePool(null, 0, false, false, false);
+         : new AiRestock.BackpackSlotView(null, 0, false, false, false);
    }
 
-   private List<ToolUpkeep.Inner_StreamUtil> putAt_List_BlockState(BlockState var1) {
+   private List<ToolUpkeep.ToolSlot> putAt_List_BlockState(BlockState var1) {
       boolean var2 = !var1.requiresCorrectToolForDrops();
-      ArrayList<ToolUpkeep.Inner_StreamUtil> var3 = new ArrayList<>(36);
+      ArrayList<ToolUpkeep.ToolSlot> var3 = new ArrayList<>(36);
 
       for (int var4 = 0; var4 < 36; var4++) {
          ItemStack var5 = this.client.player.getInventory().getItem(var4);
          var3.add(
-            new ToolUpkeep.Inner_StreamUtil(
+            new ToolUpkeep.ToolSlot(
                var4,
                var5.isDamageableItem() ? var5.getMaxDamage() - var5.getDamageValue() : -1,
                var2 || var5.isCorrectToolForDrops(var1),
@@ -3344,7 +3344,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       this.releaseDirectionKeys();
    }
 
-   private String putAt_Str_FileStore_PacketHe(AiPathfinder.UiHelper var1) {
+   private String putAt_Str_FileStore_PacketHe(AiPathfinder.PathStep var1) {
       if (var1 != null && this.client.level != null) {
          BlockPos var2 = var1.to();
          Function var3 = var1x -> BuiltInRegistries.BLOCK.getKey(this.client.level.getBlockState(((BlockPos)var1x)).getBlock()).getPath();
@@ -3367,7 +3367,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       );
    }
 
-   private void putAt_V_BlockPos_FileStore_PacketHe(BlockPos var1, AiPathfinder.UiHelper var2) {
+   private void putAt_V_BlockPos_FileStore_PacketHe(BlockPos var1, AiPathfinder.PathStep var2) {
       if (navigationDebug && this.client.player != null) {
          AiNavDebug.log("wr stall move=" + var2 + " reason=" + this.lastFailureReason + " pos=" + this.client.player.position());
       }

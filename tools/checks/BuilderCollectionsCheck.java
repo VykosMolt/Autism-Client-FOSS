@@ -21,17 +21,17 @@ public class BuilderCollectionsCheck {
    }
 
    public static void main(String[] args) throws Exception {
-      Map<Long, String> map = new AiPrintSupply.Inner_ConfigStore<>();
+      Map<Long, String> map = new AiPrintSupply.SectionedCellMap<>();
       check(map.put(5L, "a") == null && "a".equals(map.put(5L, "b")) && "b".equals(map.get(5L)) && map.size() == 1, "Map.put");
       check("c".equals(map.computeIfAbsent(7L, k -> "c")) && map.size() == 2, "Map.computeIfAbsent");
 
-      List<BlockPos> list = new AiPrintSupply.Inner_JsonUtil();
+      List<BlockPos> list = new AiPrintSupply.PagedPosList();
       for (int i = 0; i < 1500; i++) {
          check(list.add(new BlockPos(i, 0, 0)), "List.add");
       }
       check(list.size() == 1500 && list.get(1234).getX() == 1234, "List.get after add");
 
-      Set<Long> set = Collections.newSetFromMap(new AiPrintSupply.Inner_ConfigStore<>());
+      Set<Long> set = Collections.newSetFromMap(new AiPrintSupply.SectionedCellMap<>());
       check(set.add(1L) && !set.add(1L) && set.contains(1L) && set.size() == 1, "newSetFromMap.add");
 
       SharedConstants.tryDetectVersion();
@@ -48,7 +48,7 @@ public class BuilderCollectionsCheck {
             throw new UnsupportedOperationException(method.getName());
          }
       });
-      AiPrintSupply.Inner_CachePool prep = new AiPrintSupply.Inner_CachePool(new AiBuilder.Blueprint(BlockPos.ZERO, List.of()), world, p -> true, BlockPos.ZERO, false);
+      AiPrintSupply.SupplyPreparation prep = new AiPrintSupply.SupplyPreparation(new AiBuilder.Blueprint(BlockPos.ZERO, List.of()), world, p -> true, BlockPos.ZERO, false);
       BlockPos candidate = new BlockPos(3, 64, 3);
       prep.cells.put(candidate.above().asLong(), new AiBuilder.CellSpec(3, 65, 3, "minecraft:torch"));
       boolean[] result = new boolean[]{true};

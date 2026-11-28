@@ -128,14 +128,14 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       }
    });
    private final Map<Integer, Integer> init_Map = new HashMap<>();
-   private final Map<Integer, KBDisplacementModule.Inner_BufferHelper> targetTracks = new HashMap<>();
+   private final Map<Integer, KBDisplacementModule.TargetTrack> targetTracks = new HashMap<>();
    private ClientLevel read_ClientLevel;
 
    private void recordReason(String why) {
       this.reasonCounts.merge(why, 1, Integer::sum);
    }
 
-   private void recordPlanTiming(long nanos, KnockbackThrowPlanner.Inner_NetHelper plan) {
+   private void recordPlanTiming(long nanos, KnockbackThrowPlanner.ThrowPlan plan) {
       this.profileSamples++;
       this.profileNanos += nanos;
       this.flush = Math.max(this.flush, nanos);
@@ -195,7 +195,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
             .visibleWhen(() -> !this.bool("void-only"))
       );
       this.add(
-         new EnumSetting<>("side", "Side", KBDisplacementModule.Inner_DataUtil.Auto, KBDisplacementModule.Inner_DataUtil.values(), Enum::name)
+         new EnumSetting<>("side", "Side", KBDisplacementModule.PushSide.Auto, KBDisplacementModule.PushSide.values(), Enum::name)
             .description("Choose either side automatically, or restrict the displacement side.")
       );
       this.add(new IntSetting("max-turn", "Max Turn", 100, 15, 180, 5).description("Largest temporary turn from the attack's existing server direction."));
@@ -238,24 +238,24 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                      Packet<?> packet = new ServerboundAttackPacket(target.getId());
                      if (init_Z_Packet_Packet(new Rot(yaw, pitch, player.onGround(), player.horizontalCollision), packet)
                         && init_Z_Packet_Packet(new PosRot(player.position(), yaw, pitch, player.onGround(), player.horizontalCollision), packet)) {
-                        KnockbackThrowPlanner.Inner_NetHelper plan;
-                        KBDisplacementModule.Inner_CachePool terrain;
+                        KnockbackThrowPlanner.ThrowPlan plan;
+                        KBDisplacementModule.TerrainSampler terrain;
                         try {
                            double extra = m.init_D_7();
-                           terrain = new KBDisplacementModule.Inner_CachePool(level, target, pitch);
+                           terrain = new KBDisplacementModule.TerrainSampler(level, target, pitch);
                            Vec3 nextEye = terrain.init_Vec3_F(yaw).add(0.0, MC.player.getEyeHeight(), 0.0);
                            AABB nextBody = target.getBoundingBox().move(targetMotion(target));
                            terrain.pitch = AimHitboxHelper.init(pitch, nextEye, nextBody, nextEye, nextBody);
                            terrain.init_Z = AimHitboxHelper.init(nextBody, nextEye, yaw, pitch, autismclient.util.AttackReachHelper.maxReach(MC.player));
                            terrain.load_Z = SprintStateTracker.effectiveSprinting(MC.player.isSprinting()) && MC.player.getAttackStrengthScale(0.5F) > 0.9F
                               || autismclient.util.LegacyCombatDetector.init(MC.player);
-                           KBDisplacementModule.Inner_StreamUtil struck = m.init_X_StreamUtil_LivingEntity(target, terrain, tick, m.hurtWindow.init_I(fallback));
+                           KBDisplacementModule.DisplacementResult struck = m.init_X_StreamUtil_LivingEntity(target, terrain, tick, m.hurtWindow.init_I(fallback));
                            terrain.init_Vec3 = struck.horizontalShift();
                            boolean grounded = struck.grounded();
                            AABB body = struck.body();
                            double reference = grounded ? body.minY : terrain.load_D_AABB(body);
                            Vec3 server = m.init(target, grounded, body, reference, struck.extraAir());
-                           KnockbackThrowPlanner.Inner_ConfigStore input = new KnockbackThrowPlanner.Inner_ConfigStore(
+                           KnockbackThrowPlanner.ThrowInput input = new KnockbackThrowPlanner.ThrowInput(
                               body,
                               player.position().add(struck.horizontalShift()),
                               server,
@@ -278,7 +278,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                            }
 
                            int side = var10000;
-                           KnockbackThrowPlanner.Inner_StateCache settings = new KnockbackThrowPlanner.Inner_StateCache(
+                           KnockbackThrowPlanner.PlanSettings settings = new KnockbackThrowPlanner.PlanSettings(
                               m.integer("max-turn"), m.integer("fall-height"), m.bool("void-only"), side, m.integer("radius")
                            );
                            long started = System.nanoTime();
@@ -364,29 +364,29 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       return Math.round(Math.max(0, info == null ? 0 : info.getLatency()) / 50.0F) + 1;
    }
 
-   private KBDisplacementModule.Inner_StreamUtil init_X_StreamUtil_LivingEntity(LivingEntity target, KBDisplacementModule.Inner_CachePool terrain, int tick, int roundTrip) {
+   private KBDisplacementModule.DisplacementResult init_X_StreamUtil_LivingEntity(LivingEntity target, KBDisplacementModule.TerrainSampler terrain, int tick, int roundTrip) {
       Vec3 latest = EntityMotionTracker.observedPosition(target);
       AABB body = target.getBoundingBox().move(latest.subtract(target.position()));
       boolean grounded = target.onGround();
       if (!(target instanceof Player)) {
-         return new KBDisplacementModule.Inner_StreamUtil(body, grounded, 0, Vec3.ZERO);
+         return new KBDisplacementModule.DisplacementResult(body, grounded, 0, Vec3.ZERO);
       }
 
-      KBDisplacementModule.Inner_BufferHelper track = this.targetTracks.get(target.getId());
+      KBDisplacementModule.TargetTrack track = this.targetTracks.get(target.getId());
       Vec3 motion = track == null ? Vec3.ZERO : track.load();
       this.clientServerOffset = Vec3.ZERO;
       if (motion.lengthSqr() < 1.0E-8) {
-         return new KBDisplacementModule.Inner_StreamUtil(body, grounded, 0, Vec3.ZERO);
+         return new KBDisplacementModule.DisplacementResult(body, grounded, 0, Vec3.ZERO);
       }
 
       int age = Math.max(0, Math.min(4, tick - track.tick()));
       int toServer = Math.max(0, Math.min(12, roundTrip + 1 + age));
       int toClient = Math.max(0, Math.min(12 - toServer, Math.round(init_I_LivingEntity(target) / 50.0F)));
-      KnockbackThrowPlanner.Inner_DataUtil atServer = KnockbackThrowPlanner.simulate(body, motion, grounded, toServer, terrain);
-      KnockbackThrowPlanner.Inner_DataUtil atClient = KnockbackThrowPlanner.simulate(atServer.body(), atServer.motion(), atServer.init_Z(), toClient, terrain);
+      KnockbackThrowPlanner.SimulatedMotion atServer = KnockbackThrowPlanner.simulate(body, motion, grounded, toServer, terrain);
+      KnockbackThrowPlanner.SimulatedMotion atClient = KnockbackThrowPlanner.simulate(atServer.body(), atServer.motion(), atServer.init_Z(), toClient, terrain);
       Vec3 shift = atClient.body().getCenter().subtract(atServer.body().getCenter());
       this.clientServerOffset = atClient.body().getCenter().subtract(body.getCenter());
-      return new KBDisplacementModule.Inner_StreamUtil(atClient.body(), atServer.init_Z(), grounded ? atServer.ticks() : toServer, new Vec3(shift.x, 0.0, shift.z));
+      return new KBDisplacementModule.DisplacementResult(atClient.body(), atServer.init_Z(), grounded ? atServer.ticks() : toServer, new Vec3(shift.x, 0.0, shift.z));
    }
 
    private static int init_I_LivingEntity(LivingEntity target) {
@@ -419,22 +419,22 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       return new Vec3(0.0, vy, 0.0);
    }
 
-   private KnockbackThrowPlanner.Inner_BufferHelper init_W_BufferHelper_LivingEntity(LivingEntity target, boolean grounded, Vec3 server) {
+   private KnockbackThrowPlanner.CounterHypotheses init_W_BufferHelper_LivingEntity(LivingEntity target, boolean grounded, Vec3 server) {
       Vec3[] alternatives = new Vec3[0];
       if (!grounded && target instanceof Player) {
          Vec3 seen = targetMotion(target);
          alternatives = new Vec3[]{new Vec3(server.x, Math.max(-3.0, Math.min(3.0, seen.y)), server.z), new Vec3(server.x, -0.0784, server.z)};
       }
 
-      KnockbackThrowPlanner.Inner_SyncManager counter = KnockbackThrowPlanner.Inner_SyncManager.NONE;
+      KnockbackThrowPlanner.CounterSteer counter = KnockbackThrowPlanner.CounterSteer.NONE;
       double strafe = 0.0;
       if (target instanceof Player) {
          double speed = target.getAttributeValue(Attributes.MOVEMENT_SPEED);
-         counter = KnockbackThrowPlanner.Inner_SyncManager.init(target.getYRot(), speed, target.isSprinting() ? 0.026 : 0.02);
+         counter = KnockbackThrowPlanner.CounterSteer.init(target.getYRot(), speed, target.isSprinting() ? 0.026 : 0.02);
          strafe = target.isSprinting() ? speed * 1.3 : speed;
       }
 
-      return new KnockbackThrowPlanner.Inner_BufferHelper(counter, alternatives, strafe);
+      return new KnockbackThrowPlanner.CounterHypotheses(counter, alternatives, strafe);
    }
 
    private int load(LivingEntity target) {
@@ -455,12 +455,12 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                }
 
                Vec3 latest = EntityMotionTracker.observedPosition(other);
-               KBDisplacementModule.Inner_BufferHelper old = this.targetTracks.get(other.getId());
+               KBDisplacementModule.TargetTrack old = this.targetTracks.get(other.getId());
                if (old == null) {
-                  this.targetTracks.put(other.getId(), new KBDisplacementModule.Inner_BufferHelper(latest, tick, Vec3.ZERO));
+                  this.targetTracks.put(other.getId(), new KBDisplacementModule.TargetTrack(latest, tick, Vec3.ZERO));
                } else if (latest.equals(old.latest())) {
                   if (tick - old.tick() > 3 && old.load().lengthSqr() > 0.0) {
-                     this.targetTracks.put(other.getId(), new KBDisplacementModule.Inner_BufferHelper(old.latest(), old.tick(), Vec3.ZERO));
+                     this.targetTracks.put(other.getId(), new KBDisplacementModule.TargetTrack(old.latest(), old.tick(), Vec3.ZERO));
                   }
                } else {
                   Vec3 motion = latest.subtract(old.latest()).scale(1.0 / Math.max(1, Math.min(4, tick - old.tick())));
@@ -468,7 +468,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                      motion = Vec3.ZERO;
                   }
 
-                  this.targetTracks.put(other.getId(), new KBDisplacementModule.Inner_BufferHelper(latest, tick, motion));
+                  this.targetTracks.put(other.getId(), new KBDisplacementModule.TargetTrack(latest, tick, motion));
                }
             }
          }
@@ -704,19 +704,19 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
          try {
             AABB body = MC.player.getBoundingBox();
-            KnockbackThrowPlanner.Inner_ConfigStore input = new KnockbackThrowPlanner.Inner_ConfigStore(
+            KnockbackThrowPlanner.ThrowInput input = new KnockbackThrowPlanner.ThrowInput(
                body, MC.player.position().add(0.0, 0.0, -1.0), new Vec3(0.0, -0.0784, 0.0), true, 0.0, 0.5, body.minY, false
             );
-            KnockbackThrowPlanner.Inner_SyncManager counter = KnockbackThrowPlanner.Inner_SyncManager.init(180.0F, 0.13, 0.026);
+            KnockbackThrowPlanner.CounterSteer counter = KnockbackThrowPlanner.CounterSteer.init(180.0F, 0.13, 0.026);
 
             for (int radius : new int[]{3, 10}) {
                KnockbackThrowPlanner.init(
                   input,
                   MC.player.getYRot(),
                   RotationMath.gcdStep(),
-                  new KnockbackThrowPlanner.Inner_StateCache(100.0, 3.0, false, 0, radius),
-                  new KnockbackThrowPlanner.Inner_BufferHelper(counter, new Vec3[0]),
-                  new KBDisplacementModule.Inner_CachePool(MC.level, MC.player, MC.player.getXRot())
+                  new KnockbackThrowPlanner.PlanSettings(100.0, 3.0, false, 0, radius),
+                  new KnockbackThrowPlanner.CounterHypotheses(counter, new Vec3[0]),
+                  new KBDisplacementModule.TerrainSampler(MC.level, MC.player, MC.player.getXRot())
                );
             }
          } catch (RuntimeException var8) {
@@ -905,10 +905,10 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       return recent == 0 ? "" : (recent == 1 ? "1 redirect" : recent + " redirects");
    }
 
-   private record Inner_BufferHelper(Vec3 latest, int tick, Vec3 load) {
+   private record TargetTrack(Vec3 latest, int tick, Vec3 load) {
    }
 
-   private static final class Inner_CachePool implements KnockbackThrowPlanner.Inner_UiHelper {
+   private static final class TerrainSampler implements KnockbackThrowPlanner.ThrowWorld {
       private static final byte init_B = 1;
       private static final byte load_B = 2;
       private static final byte read_B = 3;
@@ -929,7 +929,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       final int minY;
       final int maxY;
 
-      Inner_CachePool(ClientLevel level, LivingEntity target, float pitch) {
+      TerrainSampler(ClientLevel level, LivingEntity target, float pitch) {
          this.level = level;
          this.target = target;
          this.pitch = pitch;
@@ -994,7 +994,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       }
 
       @Override
-      public KnockbackThrowPlanner.Inner_ConfigStore init_W_ConfigStore_W_ConfigStore_F(KnockbackThrowPlanner.Inner_ConfigStore input, float yaw) {
+      public KnockbackThrowPlanner.ThrowInput init_W_ConfigStore_W_ConfigStore_F(KnockbackThrowPlanner.ThrowInput input, float yaw) {
          return input.init(this.init_Vec3_F(yaw).add(this.init_Vec3));
       }
 
@@ -1131,12 +1131,12 @@ public final class KBDisplacementModule extends Module implements SilentMovement
 
       @Override
       public boolean load_Z_AABB(AABB body) {
-         return this.init_Z_AABB_Predicate(body, KBDisplacementModule.Inner_CachePool::init_Z_BlockState);
+         return this.init_Z_AABB_Predicate(body, KBDisplacementModule.TerrainSampler::init_Z_BlockState);
       }
 
       @Override
       public boolean read(AABB body) {
-         return this.init_Z_AABB_Predicate(body, KBDisplacementModule.Inner_CachePool::isLava);
+         return this.init_Z_AABB_Predicate(body, KBDisplacementModule.TerrainSampler::isLava);
       }
 
       private static long init(int base, double lo, double hi) {
@@ -1144,7 +1144,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       }
 
       @Override
-      public TerrainDropGrid.Inner_StreamUtil init_V_StreamUtil_I(int x, int z, int base, double stepTop) {
+      public TerrainDropGrid.Column init_V_StreamUtil_I(int x, int z, int base, double stepTop) {
          WorldBorder border = this.level.getWorldBorder();
          if (!(x < border.getMinX()) && !(x + 1 > border.getMaxX()) && !(z < border.getMinZ()) && !(z + 1 > border.getMaxZ())) {
             ChunkAccess chunk = this.chunkAt(x >> 4, z >> 4);
@@ -1176,14 +1176,14 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                }
             }
 
-            KBDisplacementModule.Inner_CachePool.Inner_DataUtil hit = this.init(chunk, x, z, stepTop, 0.0, 1.0, 0.0, 1.0);
-            return new TerrainDropGrid.Inner_StreamUtil(walls, caught, hit.init_B == 1 ? hit.top : -1.0 / 0.0, hit.init_B, hit.friction);
+            KBDisplacementModule.TerrainSampler.SurfaceHit hit = this.init(chunk, x, z, stepTop, 0.0, 1.0, 0.0, 1.0);
+            return new TerrainDropGrid.Column(walls, caught, hit.init_B == 1 ? hit.top : -1.0 / 0.0, hit.init_B, hit.friction);
          } else {
             return null;
          }
       }
 
-      private KBDisplacementModule.Inner_CachePool.Inner_DataUtil init(ChunkAccess chunk, int x, int z, double startTop, double fx0, double fx1, double fz0, double fz1) {
+      private KBDisplacementModule.TerrainSampler.SurfaceHit init(ChunkAccess chunk, int x, int z, double startTop, double fx0, double fx1, double fz0, double fz1) {
          int y = Math.min(this.maxY, Mth.floor(startTop - 0.001));
          LevelChunkSection[] sections = chunk.getSections();
 
@@ -1201,7 +1201,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                   BlockState state = section.getBlockState(x & 15, y & 15, z & 15);
                   if (!state.isAir()) {
                      if (init_Z_BlockState(state)) {
-                        return new KBDisplacementModule.Inner_CachePool.Inner_DataUtil(y, y + 1, (byte)3, 0.6F);
+                        return new KBDisplacementModule.TerrainSampler.SurfaceHit(y, y + 1, (byte)3, 0.6F);
                      }
 
                      double top = this.init(state, x, y, z, startTop, fx0, fx1, fz0, fz1);
@@ -1216,11 +1216,11 @@ public final class KBDisplacementModule extends Module implements SilentMovement
                            }
                         }
 
-                        return new KBDisplacementModule.Inner_CachePool.Inner_DataUtil(y, top, (byte)1, friction);
+                        return new KBDisplacementModule.TerrainSampler.SurfaceHit(y, top, (byte)1, friction);
                      }
 
                      if (isLava(state)) {
-                        return new KBDisplacementModule.Inner_CachePool.Inner_DataUtil(y, y + 1, (byte)4, 0.6F);
+                        return new KBDisplacementModule.TerrainSampler.SurfaceHit(y, y + 1, (byte)4, 0.6F);
                      }
                   }
 
@@ -1231,7 +1231,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
             }
          }
 
-         return new KBDisplacementModule.Inner_CachePool.Inner_DataUtil(this.minY - 1, -1.0 / 0.0, (byte)2, 0.6F);
+         return new KBDisplacementModule.TerrainSampler.SurfaceHit(this.minY - 1, -1.0 / 0.0, (byte)2, 0.6F);
       }
 
       private double init(BlockState state, int x, int y, int z, double startTop, double fx0, double fx1, double fz0, double fz1) {
@@ -1253,9 +1253,9 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       }
 
       @Override
-      public KnockbackThrowPlanner.Inner_CachePool init_W_CachePool_AABB(AABB body) {
+      public KnockbackThrowPlanner.FloorProbe init_W_CachePool_AABB(AABB body) {
          if (!this.init_Z_AABB(body)) {
-            return new KnockbackThrowPlanner.Inner_CachePool(0.0, false, false, false);
+            return new KnockbackThrowPlanner.FloorProbe(0.0, false, false, false);
          }
 
          int x0 = Mth.floor(body.minX + 0.001);
@@ -1270,10 +1270,10 @@ public final class KBDisplacementModule extends Module implements SilentMovement
             for (int z = z0; z <= z1; z++) {
                ChunkAccess chunk = this.chunkAt(x >> 4, z >> 4);
                if (chunk == null) {
-                  return new KnockbackThrowPlanner.Inner_CachePool(0.0, false, false, false);
+                  return new KnockbackThrowPlanner.FloorProbe(0.0, false, false, false);
                }
 
-               KBDisplacementModule.Inner_CachePool.Inner_DataUtil hit = this.init(
+               KBDisplacementModule.TerrainSampler.SurfaceHit hit = this.init(
                   chunk,
                   x,
                   z,
@@ -1294,33 +1294,33 @@ public final class KBDisplacementModule extends Module implements SilentMovement
          }
 
          if (catchTop > -1.0 / 0.0 && catchTop >= floorTop - 1.0E-9 && catchTop >= lavaTop - 1.0E-9) {
-            return new KnockbackThrowPlanner.Inner_CachePool(catchTop - 1.0, false, true, true);
+            return new KnockbackThrowPlanner.FloorProbe(catchTop - 1.0, false, true, true);
          } else if (floorTop > -1.0 / 0.0 && floorTop >= lavaTop - 1.0E-9) {
-            return new KnockbackThrowPlanner.Inner_CachePool(floorTop, false, false, true);
+            return new KnockbackThrowPlanner.FloorProbe(floorTop, false, false, true);
          } else {
             return lavaTop > -1.0 / 0.0
-               ? new KnockbackThrowPlanner.Inner_CachePool(lavaTop, false, false, true, true)
-               : new KnockbackThrowPlanner.Inner_CachePool(this.level.getMinY(), true, false, true);
+               ? new KnockbackThrowPlanner.FloorProbe(lavaTop, false, false, true, true)
+               : new KnockbackThrowPlanner.FloorProbe(this.level.getMinY(), true, false, true);
          }
       }
 
       double load_D_AABB(AABB body) {
-         KnockbackThrowPlanner.Inner_CachePool below = this.init_W_CachePool_AABB(body);
+         KnockbackThrowPlanner.FloorProbe below = this.init_W_CachePool_AABB(body);
          return below.read() && !below.init_Z() && !below.load() && !below.write() && below.floorY() >= body.minY - 3.0 && below.floorY() <= body.minY + 1.0E-6
             ? below.floorY()
             : body.minY;
       }
 
-      private record Inner_DataUtil(int y, double top, byte init_B, float friction) {
+      private record SurfaceHit(int y, double top, byte init_B, float friction) {
       }
    }
 
-   private enum Inner_DataUtil {
+   private enum PushSide {
       Auto,
       Left,
       Right;
    }
 
-   private record Inner_StreamUtil(AABB body, boolean grounded, int extraAir, Vec3 horizontalShift) {
+   private record DisplacementResult(AABB body, boolean grounded, int extraAir, Vec3 horizontalShift) {
    }
 }

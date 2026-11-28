@@ -14,14 +14,14 @@ public final class ClipCollisionHelper {
    private ClipCollisionHelper() {
    }
 
-   public static List<ClipCollisionHelper.Inner_DataUtil> init(Vec3 from, Vec3 to, boolean finalOnGround) {
+   public static List<ClipCollisionHelper.ClipStep> init(Vec3 from, Vec3 to, boolean finalOnGround) {
       if (from != null && to != null) {
          if (to.y - from.y >= -3.0) {
-            return List.of(new ClipCollisionHelper.Inner_DataUtil(to, finalOnGround));
+            return List.of(new ClipCollisionHelper.ClipStep(to, finalOnGround));
          }
 
          Vec3 reset = new Vec3(to.x, to.y + 0.0625, to.z);
-         return List.of(new ClipCollisionHelper.Inner_DataUtil(to, false), new ClipCollisionHelper.Inner_DataUtil(reset, false), new ClipCollisionHelper.Inner_DataUtil(to, finalOnGround));
+         return List.of(new ClipCollisionHelper.ClipStep(to, false), new ClipCollisionHelper.ClipStep(reset, false), new ClipCollisionHelper.ClipStep(to, finalOnGround));
       } else {
          return List.of();
       }
@@ -56,8 +56,8 @@ public final class ClipCollisionHelper {
       }
    }
 
-   public record Inner_DataUtil(Vec3 position, boolean onGround) {
-      public Inner_DataUtil {
+   public record ClipStep(Vec3 position, boolean onGround) {
+      public ClipStep {
          if (position == null) {
             position = Vec3.ZERO;
          }

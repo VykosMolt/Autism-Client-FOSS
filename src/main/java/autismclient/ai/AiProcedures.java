@@ -84,7 +84,7 @@ final class AiProcedures {
             AiMemoryStore.Memory record = this.service
                .getMemoryStore()
                .init(
-                  AiMemoryStore.Inner_DataUtil.PROCEDURE,
+                  AiMemoryStore.MemoryKind.PROCEDURE,
                   this.service.getDimensionId(),
                   name,
                   first,
@@ -144,7 +144,7 @@ final class AiProcedures {
             .resolve(AiJson.sha256Hex(this.service.read_Str() + this.service.getDimensionId() + id) + ".json");
          JsonArray steps = payload.getAsJsonArray("steps");
          String fingerprint = AiJson.sha256Hex(record.payload());
-         AiProcedures.Inner_DataUtil resume = init_bw_DataUtil_Path(checkpoint, fingerprint, steps.size());
+         AiProcedures.ResumePoint resume = init_bw_DataUtil_Path(checkpoint, fingerprint, steps.size());
 
          for (int index = resume.nextStep(); index < steps.size(); index++) {
             JsonElement raw = steps.get(index);
@@ -195,9 +195,9 @@ final class AiProcedures {
       }
    }
 
-   static AiProcedures.Inner_DataUtil init_bw_DataUtil_Path(Path checkpoint, String fingerprint, int stepCount) throws IOException {
+   static AiProcedures.ResumePoint init_bw_DataUtil_Path(Path checkpoint, String fingerprint, int stepCount) throws IOException {
       if (!Files.exists(checkpoint)) {
-         return new AiProcedures.Inner_DataUtil(0, "");
+         return new AiProcedures.ResumePoint(0, "");
       }
 
       JsonObject saved;
@@ -205,13 +205,13 @@ final class AiProcedures {
          saved = AiJson.parseObject(Files.readString(checkpoint));
       } catch (RuntimeException e) {
          deleteQuietly(checkpoint);
-         return new AiProcedures.Inner_DataUtil(0, "Discarded an unreadable previous checkpoint; starting fresh. ");
+         return new AiProcedures.ResumePoint(0, "Discarded an unreadable previous checkpoint; starting fresh. ");
       }
 
       int next = AiJson.getInt(saved, "nextStep", 0);
       if (next >= stepCount) {
          deleteQuietly(checkpoint);
-         return new AiProcedures.Inner_DataUtil(0, "");
+         return new AiProcedures.ResumePoint(0, "");
       } else if (!AiJson.getString(saved, "procedureFingerprint", "").equals(fingerprint)) {
          throw new IllegalStateException("Procedure changed during a prior run");
       } else if (AiJson.getBoolean(saved, "inFlight", false)) {
@@ -219,7 +219,7 @@ final class AiProcedures {
             "Previous procedure step has an uncertain outcome; inspect and repair that step individually before reusing the procedure"
          );
       } else {
-         return new AiProcedures.Inner_DataUtil(next, "");
+         return new AiProcedures.ResumePoint(next, "");
       }
    }
 
@@ -239,7 +239,7 @@ final class AiProcedures {
          .getMemoryStore()
          .memories()
          .stream()
-         .filter(m -> m.id().equals(id) && m.scope().equals(this.service.getDimensionId()) && m.kind() == AiMemoryStore.Inner_DataUtil.PROCEDURE)
+         .filter(m -> m.id().equals(id) && m.scope().equals(this.service.getDimensionId()) && m.kind() == AiMemoryStore.MemoryKind.PROCEDURE)
          .findFirst()
          .orElseThrow(() -> new IllegalArgumentException("No reusable procedure in this world scope"));
    }
@@ -252,6 +252,6 @@ final class AiProcedures {
       }
    }
 
-   record Inner_DataUtil(int nextStep, String note) {
+   record ResumePoint(int nextStep, String note) {
    }
 }

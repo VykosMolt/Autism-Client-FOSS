@@ -91,7 +91,7 @@ final class AiStronghold {
             final JsonArray steps = new JsonArray();
             final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
             final AiEyeNavigation navigation = AiStronghold.navigationFor(mc);
-            final AiStrongholdSearch.Inner_DataUtil search = new AiStrongholdSearch.Inner_DataUtil();
+            final AiStrongholdSearch.SearchMemory search = new AiStrongholdSearch.SearchMemory();
             final String worldKey = AiWorldIdentity.currentWorldKey(mc);
             final Object startConnection = mc.getConnection();
             final UUID playerId = mc.player.getUUID();
@@ -107,13 +107,13 @@ final class AiStronghold {
             int load_I;
             int read_I;
             AiOperation activeChild;
-            final AiStronghold.Inner_DataUtil childRunner = new AiStronghold.Inner_DataUtil();
+            final AiStronghold.ChildRunner childRunner = new AiStronghold.ChildRunner();
             AiOperation.Result init_AiOperation_Result;
             String load_Str = "";
             Vec3 bearing;
             Vec3 read_Vec3;
             EyeOfEnder init_EyeOfEnder;
-            AiStronghold.Inner_StreamUtil init_co_StreamUtil = new AiStronghold.Inner_StreamUtil();
+            AiStronghold.EyeThrowReceipt init_co_StreamUtil = new AiStronghold.EyeThrowReceipt();
             Vec3 write_Vec3;
             AiEyeNavigation.Inner_StreamUtil init_z_StreamUtil;
             int write_I;
@@ -129,7 +129,7 @@ final class AiStronghold {
             long write_J;
             long update_J;
             BlockPos load_BlockPos;
-            final AiStronghold.Inner_CachePool pearlSearch = new AiStronghold.Inner_CachePool();
+            final AiStronghold.DarkSearchTimer pearlSearch = new AiStronghold.DarkSearchTimer();
             boolean write_Z;
             BlockPos read_BlockPos;
             long sync_J;
@@ -611,7 +611,7 @@ final class AiStronghold {
                               autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                               true,
                               2.0,
-                              new AiNetherRun.Inner_NetHelper(x, z, 6),
+                              new AiNetherRun.RadiusGoal(x, z, 6),
                               AiGoto.GotoOptions.DEFAULT
                            )
                         );
@@ -748,7 +748,7 @@ final class AiStronghold {
                                     autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                                     true,
                                     2.0,
-                                    new AiNetherRun.Inner_NetHelper(x, z, 6),
+                                    new AiNetherRun.RadiusGoal(x, z, 6),
                                     AiGoto.GotoOptions.DEFAULT
                                  )
                               );
@@ -906,7 +906,7 @@ final class AiStronghold {
                                              autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                                              true,
                                              2.0,
-                                             new AiNetherRun.Inner_NetHelper(x, z, 6),
+                                             new AiNetherRun.RadiusGoal(x, z, 6),
                                              AiGoto.GotoOptions.DEFAULT
                                           )
                                        );
@@ -934,7 +934,7 @@ final class AiStronghold {
                                  int tz = (int)Math.floor(at.z + this.bearing.z * 12.0);
                                  return this.startChild(
                                     "step out from under the trees",
-                                    AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.Inner_NetHelper(tx, tz, 3), 30))
+                                    AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.RadiusGoal(tx, tz, 3), 30))
                                  );
                               } else {
                                  return !this.isHolding("minecraft:ender_eye")
@@ -958,7 +958,7 @@ final class AiStronghold {
                                  int sz = (int)Math.floor(side.z);
                                  return this.startChild(
                                     "establish a lateral Eye baseline",
-                                    AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(sx, (int)at.y, sz), new AiNetherRun.Inner_NetHelper(sx, sz, 8), 90))
+                                    AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(sx, (int)at.y, sz), new AiNetherRun.RadiusGoal(sx, sz, 8), 90))
                                  );
                               }
                            }
@@ -990,7 +990,7 @@ final class AiStronghold {
                            this.read_Z = false;
                            return this.startChild(
                               "follow the bearing toward " + tx + ", " + tz,
-                              AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.Inner_NetHelper(tx, tz, 12), 120, dry))
+                              AiNetherRun.init(AiGoto.createPersistentOpCompat(new BlockPos(tx, (int)at.y, tz), new AiNetherRun.RadiusGoal(tx, tz, 12), 120, dry))
                            );
                         }
                      }
@@ -1007,7 +1007,7 @@ final class AiStronghold {
                   return this.finish(AiOperation.Status.UNCERTAIN, "The previous Eye throw still needs a server receipt");
                }
 
-               this.init_co_StreamUtil = new AiStronghold.Inner_StreamUtil();
+               this.init_co_StreamUtil = new AiStronghold.EyeThrowReceipt();
                this.sync_Z = true;
                this.flush_Z = false;
                this.update_I = 0;
@@ -1099,13 +1099,13 @@ final class AiStronghold {
                      candidates.add(this.init_EyeOfEnder);
                   }
 
-                  AiStronghold.Inner_BufferHelper outcome = this.checkThrowReceipt(candidates.isEmpty() ? null : candidates.getFirst().getUUID());
+                  AiStronghold.ThrowOutcome outcome = this.checkThrowReceipt(candidates.isEmpty() ? null : candidates.getFirst().getUUID());
 
                   for (int i = 1; i < candidates.size(); i++) {
                      outcome = this.checkThrowReceipt(candidates.get(i).getUUID());
                   }
 
-                  if (outcome == AiStronghold.Inner_BufferHelper.AMBIGUOUS) {
+                  if (outcome == AiStronghold.ThrowOutcome.AMBIGUOUS) {
                      return this.finish(AiOperation.Status.UNCERTAIN, "The Eye throw has ambiguous inventory or entity evidence; reobserve before another throw");
                   }
 
@@ -1120,12 +1120,12 @@ final class AiStronghold {
                               return this.finish(AiOperation.Status.UNCERTAIN, "The sent Eye throw lacks a server receipt; reobserve before spending another Eye");
                            }
 
-                           if (outcome == AiStronghold.Inner_BufferHelper.CONSUMED) {
+                           if (outcome == AiStronghold.ThrowOutcome.CONSUMED) {
                               this.flush_I++;
                            }
 
                            return this.init_AiOperation_Result_14(
-                              outcome == AiStronghold.Inner_BufferHelper.CONSUMED
+                              outcome == AiStronghold.ThrowOutcome.CONSUMED
                                  ? "One Eye was consumed, but no usable flight was observed; retry navigation from the receipt"
                                  : "The server acknowledged an unchanged Eye inventory after the use; retry navigation from the receipt"
                            );
@@ -1197,9 +1197,9 @@ final class AiStronghold {
                }
             }
 
-            AiStronghold.Inner_BufferHelper checkThrowReceipt(UUID identity) {
+            AiStronghold.ThrowOutcome checkThrowReceipt(UUID identity) {
                int container = mc.player.inventoryMenu.containerId;
-               AiStronghold.Inner_BufferHelper outcome = this.init_co_StreamUtil
+               AiStronghold.ThrowOutcome outcome = this.init_co_StreamUtil
                   .observe(
                      AiCraft.countItem("minecraft:ender_eye"),
                      AiServerEvidence.inventoryRevision(),
@@ -1209,7 +1209,7 @@ final class AiStronghold {
                      identity,
                      this.update_I - 6
                   );
-               return outcome == AiStronghold.Inner_BufferHelper.WAITING && this.init_co_StreamUtil.repliesAtAcknowledgement >= 0L
+               return outcome == AiStronghold.ThrowOutcome.WAITING && this.init_co_StreamUtil.repliesAtAcknowledgement >= 0L
                   ? this.init_co_StreamUtil.classifyAfterAcknowledgement(AiServerEvidence.minItemCountAfterReply(container, this.init_co_StreamUtil.repliesAtAcknowledgement, "minecraft:ender_eye"), this.update_I - 6)
                   : outcome;
             }
@@ -1459,14 +1459,14 @@ final class AiStronghold {
       }
    }
 
-   enum Inner_BufferHelper {
+   enum ThrowOutcome {
       WAITING,
       CONSUMED,
       REJECTED,
       AMBIGUOUS;
    }
 
-   static final class Inner_CachePool {
+   static final class DarkSearchTimer {
       private long init_J = -9223372036854775808L;
       private long darkSearchNanos;
       private boolean darkSearch;
@@ -1491,7 +1491,7 @@ final class AiStronghold {
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class ChildRunner {
       private AiOperation child;
       private AiOperation.Result lastResult;
       private AiOperation.Result pendingResult;
@@ -1563,7 +1563,7 @@ final class AiStronghold {
       }
    }
 
-   static final class Inner_StreamUtil {
+   static final class EyeThrowReceipt {
       int beforeEyes;
       int heldEyes;
       int sequenceBefore;
@@ -1601,9 +1601,9 @@ final class AiStronghold {
          }
       }
 
-      AiStronghold.Inner_BufferHelper observe(int eyes, long inventory, OptionalInt snapshot, long replies, boolean acknowledged, UUID identity, int elapsedTicks) {
+      AiStronghold.ThrowOutcome observe(int eyes, long inventory, OptionalInt snapshot, long replies, boolean acknowledged, UUID identity, int elapsedTicks) {
          if (!this.sent) {
-            return AiStronghold.Inner_BufferHelper.WAITING;
+            return AiStronghold.ThrowOutcome.WAITING;
          }
 
          this.observedEyes = eyes;
@@ -1625,34 +1625,34 @@ final class AiStronghold {
          }
 
          if (this.write_Z) {
-            return AiStronghold.Inner_BufferHelper.AMBIGUOUS;
+            return AiStronghold.ThrowOutcome.AMBIGUOUS;
          } else if (this.load_Z) {
-            return AiStronghold.Inner_BufferHelper.CONSUMED;
+            return AiStronghold.ThrowOutcome.CONSUMED;
          } else if (this.read_Z) {
-            return AiStronghold.Inner_BufferHelper.REJECTED;
+            return AiStronghold.ThrowOutcome.REJECTED;
          } else {
             int serverEyes = freshSnapshot ? Math.min(eyes, snapshot.getAsInt()) : eyes;
             if (this.beforeEyes - serverEyes > 1) {
                this.write_Z = true;
-               return AiStronghold.Inner_BufferHelper.AMBIGUOUS;
+               return AiStronghold.ThrowOutcome.AMBIGUOUS;
             } else if (this.beforeEyes > 0
                && this.heldEyes > 0
                && (eyes == this.beforeEyes - 1 && inventory > this.inventoryBefore || freshSnapshot && snapshot.getAsInt() == this.beforeEyes - 1)) {
                this.load_Z = true;
-               return AiStronghold.Inner_BufferHelper.CONSUMED;
+               return AiStronghold.ThrowOutcome.CONSUMED;
             } else {
-               return AiStronghold.Inner_BufferHelper.WAITING;
+               return AiStronghold.ThrowOutcome.WAITING;
             }
          }
       }
 
-      AiStronghold.Inner_BufferHelper classifyAfterAcknowledgement(OptionalInt snapshotAfterAcknowledgement, int elapsedTicks) {
+      AiStronghold.ThrowOutcome classifyAfterAcknowledgement(OptionalInt snapshotAfterAcknowledgement, int elapsedTicks) {
          if (this.write_Z) {
-            return AiStronghold.Inner_BufferHelper.AMBIGUOUS;
+            return AiStronghold.ThrowOutcome.AMBIGUOUS;
          } else if (this.load_Z) {
-            return AiStronghold.Inner_BufferHelper.CONSUMED;
+            return AiStronghold.ThrowOutcome.CONSUMED;
          } else if (this.read_Z) {
-            return AiStronghold.Inner_BufferHelper.REJECTED;
+            return AiStronghold.ThrowOutcome.REJECTED;
          } else if (this.sent
             && elapsedTicks > 120
             && this.acknowledged
@@ -1663,9 +1663,9 @@ final class AiStronghold {
             && this.observedEyes == this.beforeEyes
             && this.identity == null) {
             this.read_Z = true;
-            return AiStronghold.Inner_BufferHelper.REJECTED;
+            return AiStronghold.ThrowOutcome.REJECTED;
          } else {
-            return AiStronghold.Inner_BufferHelper.WAITING;
+            return AiStronghold.ThrowOutcome.WAITING;
          }
       }
 

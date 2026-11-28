@@ -9,12 +9,12 @@ import net.minecraft.world.phys.Vec3;
 public final class BacktrackTrailHistory {
    public static final int init_I = 24;
    public static final long init_J = 450000000L;
-   private final ArrayDeque<BacktrackTrailHistory.Inner_StreamUtil> init_ArrayDeque = new ArrayDeque<>();
+   private final ArrayDeque<BacktrackTrailHistory.TrailPoint> init_ArrayDeque = new ArrayDeque<>();
    private Object target;
    private Vec3 position;
    private long load;
    private long read;
-   private BacktrackTrailHistory.Inner_DataUtil init_cP_DataUtil;
+   private BacktrackTrailHistory.TrailFrame init_cP_DataUtil;
 
    public void init() {
       this.target = null;
@@ -37,10 +37,10 @@ public final class BacktrackTrailHistory {
             this.load = now;
          }
 
-         this.init_cP_DataUtil = new BacktrackTrailHistory.Inner_DataUtil(drawn, received, position);
+         this.init_cP_DataUtil = new BacktrackTrailHistory.TrailFrame(drawn, received, position);
          this.read = now;
          if (this.init_ArrayDeque.isEmpty() || this.init_ArrayDeque.peekLast().init_Vec3().distanceToSqr(position) > 1.0E-4) {
-            this.init_ArrayDeque.addLast(new BacktrackTrailHistory.Inner_StreamUtil(position, now));
+            this.init_ArrayDeque.addLast(new BacktrackTrailHistory.TrailPoint(position, now));
 
             while (this.init_ArrayDeque.size() > 24) {
                this.init_ArrayDeque.removeFirst();
@@ -114,9 +114,9 @@ public final class BacktrackTrailHistory {
             }
 
             if (history) {
-               BacktrackTrailHistory.Inner_StreamUtil last = null;
+               BacktrackTrailHistory.TrailPoint last = null;
 
-               for (BacktrackTrailHistory.Inner_StreamUtil sample : this.init_ArrayDeque) {
+               for (BacktrackTrailHistory.TrailPoint sample : this.init_ArrayDeque) {
                   if (last != null) {
                      double ageFade = Math.max(0.0, 1.0 - (now - sample.init_J()) / 6.5E8);
                      boxes.add(
@@ -181,9 +181,9 @@ public final class BacktrackTrailHistory {
       return Double.isFinite(p.x) && Double.isFinite(p.y) && Double.isFinite(p.z);
    }
 
-   private record Inner_DataUtil(AABB drawn, AABB load, Vec3 init_Vec3) {
+   private record TrailFrame(AABB drawn, AABB load, Vec3 init_Vec3) {
    }
 
-   private record Inner_StreamUtil(Vec3 init_Vec3, long init_J) {
+   private record TrailPoint(Vec3 init_Vec3, long init_J) {
    }
 }

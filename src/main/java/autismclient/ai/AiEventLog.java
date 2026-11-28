@@ -11,7 +11,7 @@ import java.util.Set;
 final class AiEventLog {
    static final int init_I = 256;
    private static final AiEventLog INSTANCE = new AiEventLog();
-   private final ArrayDeque<AiEventLog.Inner_DataUtil> events = new ArrayDeque<>(256);
+   private final ArrayDeque<AiEventLog.LoggedEvent> events = new ArrayDeque<>(256);
    private long sequence;
    private long load;
    private long read;
@@ -45,13 +45,13 @@ final class AiEventLog {
          this.load++;
       }
 
-      this.events.addLast(new AiEventLog.Inner_DataUtil(++this.sequence, load(), kind, data));
+      this.events.addLast(new AiEventLog.LoggedEvent(++this.sequence, load(), kind, data));
    }
 
-   synchronized List<AiEventLog.Inner_DataUtil> read(long since, Set<String> kinds, int limit) {
-      List<AiEventLog.Inner_DataUtil> out = new ArrayList<>(Math.min(limit, this.events.size()));
+   synchronized List<AiEventLog.LoggedEvent> read(long since, Set<String> kinds, int limit) {
+      List<AiEventLog.LoggedEvent> out = new ArrayList<>(Math.min(limit, this.events.size()));
 
-      for (AiEventLog.Inner_DataUtil event : this.events) {
+      for (AiEventLog.LoggedEvent event : this.events) {
          if (event.seq() > since && (kinds == null || kinds.isEmpty() || kinds.contains(event.kind()))) {
             if (out.size() >= limit) {
                break;
@@ -76,7 +76,7 @@ final class AiEventLog {
    synchronized int pendingCount() {
       int pending = 0;
 
-      for (AiEventLog.Inner_DataUtil event : this.events) {
+      for (AiEventLog.LoggedEvent event : this.events) {
          if (event.seq() > this.read) {
             pending++;
          }
@@ -88,7 +88,7 @@ final class AiEventLog {
    synchronized JsonObject toJson(long since, Set<String> kinds, int limit) {
       JsonArray array = new JsonArray();
 
-      for (AiEventLog.Inner_DataUtil event : this.read(since, kinds, limit)) {
+      for (AiEventLog.LoggedEvent event : this.read(since, kinds, limit)) {
          array.add(AiJson.objectOf("seq", event.seq(), "tick", event.tick(), "kind", event.kind(), "data", event.data()));
       }
 
@@ -113,6 +113,6 @@ final class AiEventLog {
       return INSTANCE.toJson(since, kinds, limit);
    }
 
-   record Inner_DataUtil(long seq, long tick, String kind, JsonObject data) {
+   record LoggedEvent(long seq, long tick, String kind, JsonObject data) {
    }
 }

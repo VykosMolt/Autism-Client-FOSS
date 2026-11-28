@@ -16,8 +16,8 @@ import net.minecraft.network.protocol.configuration.ConfigurationProtocols;
 import net.minecraft.network.protocol.game.GameProtocols;
 
 public final class PacketWireCaptureStore {
-   private static final Map<Packet<?>, PacketWireCaptureStore.Inner_StreamUtil> packetCaptures = Collections.synchronizedMap(new WeakHashMap<>());
-   private static final Map<Channel, PacketWireCaptureStore.Inner_DataUtil> channelStates = Collections.synchronizedMap(new WeakHashMap<>());
+   private static final Map<Packet<?>, PacketWireCaptureStore.PacketCapture> packetCaptures = Collections.synchronizedMap(new WeakHashMap<>());
+   private static final Map<Channel, PacketWireCaptureStore.ChannelCapture> channelStates = Collections.synchronizedMap(new WeakHashMap<>());
    private static final Map<String, Map<String, Integer>> packetIdsByPhase = new ConcurrentHashMap<>();
 
    private PacketWireCaptureStore() {
@@ -38,7 +38,7 @@ public final class PacketWireCaptureStore {
 
          packetCaptures.put(
             packet,
-            new PacketWireCaptureStore.Inner_StreamUtil(
+            new PacketWireCaptureStore.PacketCapture(
                direction,
                protocolPhase,
                packet.getClass().getName(),
@@ -51,29 +51,29 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   public static PacketWireCaptureStore.Inner_StreamUtil init(Packet<?> packet) {
+   public static PacketWireCaptureStore.PacketCapture init(Packet<?> packet) {
       return packet == null ? null : packetCaptures.get(packet);
    }
 
    public static void markEncrypted(Channel channel) {
       if (channel != null) {
-         PacketWireCaptureStore.Inner_DataUtil previous = channelStates.get(channel);
-         channelStates.put(channel, previous == null ? PacketWireCaptureStore.Inner_DataUtil.init_bn_DataUtil() : previous.withEnabled(true));
+         PacketWireCaptureStore.ChannelCapture previous = channelStates.get(channel);
+         channelStates.put(channel, previous == null ? PacketWireCaptureStore.ChannelCapture.init_bn_DataUtil() : previous.withEnabled(true));
       }
    }
 
    public static void init(Channel channel, String direction, ByteBuf source) {
       if (channel != null && source != null) {
-         PacketWireCaptureStore.Inner_DataUtil previous = channelStates.get(channel);
+         PacketWireCaptureStore.ChannelCapture previous = channelStates.get(channel);
          if (previous == null) {
-            previous = PacketWireCaptureStore.Inner_DataUtil.init_bn_DataUtil();
+            previous = PacketWireCaptureStore.ChannelCapture.init_bn_DataUtil();
          }
 
          channelStates.put(channel, previous.withCapture(direction, init(source)));
       }
    }
 
-   public static PacketWireCaptureStore.Inner_DataUtil init_bn_DataUtil(Channel channel) {
+   public static PacketWireCaptureStore.ChannelCapture init_bn_DataUtil(Channel channel) {
       return channel == null ? null : channelStates.get(channel);
    }
 
@@ -191,22 +191,22 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   public record Inner_DataUtil(boolean init_Z, long init_J, byte[] init_BArr, byte[] load_BArr, long load_J, long read) {
-      static PacketWireCaptureStore.Inner_DataUtil init_bn_DataUtil() {
-         return new PacketWireCaptureStore.Inner_DataUtil(true, System.currentTimeMillis(), new byte[0], new byte[0], 0L, 0L);
+   public record ChannelCapture(boolean init_Z, long init_J, byte[] init_BArr, byte[] load_BArr, long load_J, long read) {
+      static PacketWireCaptureStore.ChannelCapture init_bn_DataUtil() {
+         return new PacketWireCaptureStore.ChannelCapture(true, System.currentTimeMillis(), new byte[0], new byte[0], 0L, 0L);
       }
 
-      PacketWireCaptureStore.Inner_DataUtil withEnabled(boolean value) {
-         return new PacketWireCaptureStore.Inner_DataUtil(
+      PacketWireCaptureStore.ChannelCapture withEnabled(boolean value) {
+         return new PacketWireCaptureStore.ChannelCapture(
             value, value && this.init_J == 0L ? System.currentTimeMillis() : this.init_J, this.init_BArr, this.load_BArr, this.load_J, this.read
          );
       }
 
-      PacketWireCaptureStore.Inner_DataUtil withCapture(String direction, byte[] bytes) {
+      PacketWireCaptureStore.ChannelCapture withCapture(String direction, byte[] bytes) {
          long now = System.currentTimeMillis();
          return !"C2S".equalsIgnoreCase(direction) && !"OUT".equalsIgnoreCase(direction)
-            ? new PacketWireCaptureStore.Inner_DataUtil(this.init_Z, this.init_J, bytes == null ? new byte[0] : (byte[])bytes.clone(), this.load_BArr, now, this.read)
-            : new PacketWireCaptureStore.Inner_DataUtil(this.init_Z, this.init_J, this.init_BArr, bytes == null ? new byte[0] : (byte[])bytes.clone(), this.load_J, now);
+            ? new PacketWireCaptureStore.ChannelCapture(this.init_Z, this.init_J, bytes == null ? new byte[0] : (byte[])bytes.clone(), this.load_BArr, now, this.read)
+            : new PacketWireCaptureStore.ChannelCapture(this.init_Z, this.init_J, this.init_BArr, bytes == null ? new byte[0] : (byte[])bytes.clone(), this.load_J, now);
       }
 
       public byte[] init_BArr() {
@@ -218,7 +218,7 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   public record Inner_StreamUtil(String direction, String load, String read, String write, int packetId, byte[] plaintext, long init_J) {
+   public record PacketCapture(String direction, String load, String read, String write, int packetId, byte[] plaintext, long init_J) {
       public byte[] plaintext() {
          return this.plaintext == null ? new byte[0] : (byte[])this.plaintext.clone();
       }

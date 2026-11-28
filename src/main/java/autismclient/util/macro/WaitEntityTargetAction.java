@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 
 public class WaitEntityTargetAction implements MacroAction {
-   public WaitEntityTargetAction.Inner_DataUtil condition = WaitEntityTargetAction.Inner_DataUtil.LOOKING_AT;
+   public WaitEntityTargetAction.TargetCondition condition = WaitEntityTargetAction.TargetCondition.LOOKING_AT;
    public String entityId = "";
    public double range = 5.0;
    public boolean containerEntitiesOnly = false;
@@ -93,7 +93,7 @@ public class WaitEntityTargetAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.condition = MacroNbtCodecHelper.parseEnum(WaitEntityTargetAction.Inner_DataUtil.class, tag.getStringOr("condition", "LOOKING_AT"), WaitEntityTargetAction.Inner_DataUtil.LOOKING_AT);
+      this.condition = MacroNbtCodecHelper.parseEnum(WaitEntityTargetAction.TargetCondition.class, tag.getStringOr("condition", "LOOKING_AT"), WaitEntityTargetAction.TargetCondition.LOOKING_AT);
       this.entityId = tag.getStringOr("entityId", "");
       this.range = tag.getDoubleOr("range", 5.0);
       this.containerEntitiesOnly = tag.getBooleanOr("containerEntitiesOnly", false);
@@ -111,7 +111,7 @@ public class WaitEntityTargetAction implements MacroAction {
       return "E";
    }
 
-   public enum Inner_DataUtil {
+   public enum TargetCondition {
       LOOKING_AT,
       WITHIN_REACH,
       MOUNTED_IN,

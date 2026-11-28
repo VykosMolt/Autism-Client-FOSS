@@ -68,7 +68,7 @@ final class AiFish {
             int bestCount = held;
             boolean started;
             boolean cancelled;
-            autismclient.modules.ScopedToggleOverride.Inner_StreamUtil moduleOverride;
+            autismclient.modules.ScopedToggleOverride.OverrideHandle moduleOverride;
 
             @Override
             public AiOperation.Result tick() {

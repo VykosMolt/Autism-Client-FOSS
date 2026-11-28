@@ -302,7 +302,7 @@ public final class AiStaircase {
 
    public static AiOperation digDownOperation(final BlockPos top, final int bottomY, final int timeoutSeconds, final BooleanSupplier enough) {
       final Minecraft mc = Minecraft.getInstance();
-      final AiStaircase.Inner_DataUtil goal = new AiStaircase.Inner_DataUtil(top, bottomY);
+      final AiStaircase.ShaftGoal goal = new AiStaircase.ShaftGoal(top, bottomY);
       final long deadline = System.nanoTime() + Math.max(10, timeoutSeconds) * 1000000000L;
       return new AiOperation() {
          AiOperation init_AiOperation = mc.player.blockPosition().equals(top)
@@ -579,7 +579,7 @@ public final class AiStaircase {
 
    public static AiOperation followStepsOperation(final List<BlockPos> steps, final int timeoutSeconds, final BooleanSupplier enough, final BlockPos approach) {
       final Minecraft mc = Minecraft.getInstance();
-      final AiStaircase.Inner_StreamUtil goal = new AiStaircase.Inner_StreamUtil(steps);
+      final AiStaircase.StaircaseGoal goal = new AiStaircase.StaircaseGoal(steps);
       final long deadline = System.nanoTime() + Math.max(10, timeoutSeconds) * 1000000000L;
       return new AiOperation() {
          AiOperation init_AiOperation = approach != null && !mc.player.blockPosition().equals(approach)
@@ -683,13 +683,13 @@ public final class AiStaircase {
       return start;
    }
 
-   public static final class Inner_DataUtil implements AiPathfinder.PathGoal {
+   public static final class ShaftGoal implements AiPathfinder.PathGoal {
       final int init;
       final int load;
       final int read;
       final int write;
 
-      public Inner_DataUtil(BlockPos top, int bottomY) {
+      public ShaftGoal(BlockPos top, int bottomY) {
          this.init = top.getX();
          this.load = top.getZ();
          this.read = top.getY();
@@ -736,12 +736,12 @@ public final class AiStaircase {
       }
    }
 
-   public static final class Inner_StreamUtil implements AiPathfinder.PathGoal {
+   public static final class StaircaseGoal implements AiPathfinder.PathGoal {
       final Set<Long> init_Set;
       final Set<Long> load = new HashSet<>();
       final BlockPos init_BlockPos;
 
-      public Inner_StreamUtil(List<BlockPos> steps) {
+      public StaircaseGoal(List<BlockPos> steps) {
          this.init_Set = AiStaircase.init(steps);
 
          for (BlockPos f : steps) {

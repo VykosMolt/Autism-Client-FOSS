@@ -100,7 +100,7 @@ final class AiHopperClockPlan {
    private static autismclient.ai.print.PrintClockSpec init(
       Map<BlockPos, BlockState> states, BlockPos a, BlockPos b, Direction dir, Direction side, ItemStack material, int total, int slots
    ) {
-      AiHopperClockPlan.Inner_DataUtil world = new AiHopperClockPlan.Inner_DataUtil(states);
+      AiHopperClockPlan.SnapshotWorld world = new AiHopperClockPlan.SnapshotWorld(states);
       BlockPos ca = a.relative(dir.getOpposite());
       BlockPos cb = b.relative(dir);
       BlockPos first = a.relative(side);
@@ -230,11 +230,11 @@ final class AiHopperClockPlan {
       return s.is(Blocks.STICKY_PISTON) && s.getValue(PistonBaseBlock.FACING) == d;
    }
 
-   private static final class Inner_DataUtil implements BlockGetter {
+   private static final class SnapshotWorld implements BlockGetter {
       final Map<BlockPos, BlockState> init;
       final Map<BlockPos, BlockState> load = new HashMap<>();
 
-      Inner_DataUtil(Map<BlockPos, BlockState> source) {
+      SnapshotWorld(Map<BlockPos, BlockState> source) {
          this.init = source;
       }
 

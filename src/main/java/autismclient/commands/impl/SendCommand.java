@@ -48,7 +48,7 @@ public class SendCommand extends Command {
          return 1;
       }
 
-      PacketCommandBuilder.Inner_DataUtil prepared;
+      PacketCommandBuilder.PreparedArgs prepared;
       try {
          prepared = PacketCommandBuilder.prepareArgs(args);
       } catch (IllegalArgumentException e) {
@@ -56,7 +56,7 @@ public class SendCommand extends Command {
          return 1;
       }
 
-      PacketCommandBuilder.Inner_StreamUtil result = PacketCommandBuilder.build(cls, prepared.args());
+      PacketCommandBuilder.BuildResult result = PacketCommandBuilder.build(cls, prepared.args());
       if (result.infoOnly()) {
          init_V_Str_Str("§e", result.message());
          return 1;

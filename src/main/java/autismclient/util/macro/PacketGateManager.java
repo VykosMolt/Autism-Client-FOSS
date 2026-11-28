@@ -36,7 +36,7 @@ public final class PacketGateManager {
       if (action != null) {
          ownerRunId = Math.max(0L, ownerRunId);
          String id = action.gateId != null && !action.gateId.isBlank() ? action.gateId.trim() : "auto";
-         if (action.mode == PacketGateAction.Inner_CachePool.DISABLE_GATE) {
+         if (action.mode == PacketGateAction.GateMode.DISABLE_GATE) {
             init(id, ownerRunId);
          } else {
             String key = init(ownerRunId, id);
@@ -139,7 +139,7 @@ public final class PacketGateManager {
       if (autismclient.modules.aD.read_Z()) {
          clearAll();
       } else {
-         boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.mode == PacketGateAction.Inner_CachePool.DELAY && g.flushOnDisable);
+         boolean flush = init_ConcurrentHashMap.values().stream().anyMatch(g -> g.mode == PacketGateAction.GateMode.DELAY && g.flushOnDisable);
          clearAll();
          if (flush) {
             AutismSessionState.getInstance().flushDelayedPackets(connection);
@@ -154,7 +154,7 @@ public final class PacketGateManager {
    }
 
    private static boolean hasDelayGate() {
-      return init_ConcurrentHashMap.values().stream().anyMatch(g -> g.mode == PacketGateAction.Inner_CachePool.DELAY);
+      return init_ConcurrentHashMap.values().stream().anyMatch(g -> g.mode == PacketGateAction.GateMode.DELAY);
    }
 
    private static String init_Str() {
@@ -297,14 +297,14 @@ public final class PacketGateManager {
    public static final class Inner_DataUtil {
       public final long ownerRunId;
       public final String id;
-      public final PacketGateAction.Inner_CachePool mode;
+      public final PacketGateAction.GateMode mode;
       public final ArrayList<String> packets;
       public final boolean flushOnDisable;
       final String[] normalized;
       final boolean load;
       final ClientPacketListener connection;
 
-      Inner_DataUtil(long ownerRunId, String id, PacketGateAction.Inner_CachePool mode, ArrayList<String> packets, boolean flushOnDisable) {
+      Inner_DataUtil(long ownerRunId, String id, PacketGateAction.GateMode mode, ArrayList<String> packets, boolean flushOnDisable) {
          this.connection = Minecraft.getInstance().getConnection();
          this.ownerRunId = ownerRunId;
          this.id = id;

@@ -204,7 +204,7 @@ final class FireballInterceptMath {
       return -1.0;
    }
 
-   static FireballInterceptMath.Inner_DataUtil init(Vec3 eye, Vec3 bodyMotion, AABB box, Vec3 velocity, Vec3 wantedDirection, double reach) {
+   static FireballInterceptMath.AimSolution init(Vec3 eye, Vec3 bodyMotion, AABB box, Vec3 velocity, Vec3 wantedDirection, double reach) {
       Vec3 nextEye = eye.add(bodyMotion);
       AABB nextBox = box.move(velocity);
       if (init(bodyMotion) && init(velocity) && box.distanceToSqr(eye) > reach * reach && nextBox.distanceToSqr(nextEye) <= reach * reach) {
@@ -216,7 +216,7 @@ final class FireballInterceptMath {
          box = box.deflate(Math.min(0.2, Math.min(box.getXsize(), Math.min(box.getYsize(), box.getZsize())) * 0.2));
       }
 
-      return new FireballInterceptMath.Inner_DataUtil(eye, init(eye, box, wantedDirection));
+      return new FireballInterceptMath.AimSolution(eye, init(eye, box, wantedDirection));
    }
 
    static Vec3 init(Vec3 eye, AABB box, Vec3 wantedDirection) {
@@ -251,6 +251,6 @@ final class FireballInterceptMath {
       return Double.isFinite(vector.x) && Double.isFinite(vector.y) && Double.isFinite(vector.z);
    }
 
-   record Inner_DataUtil(Vec3 init, Vec3 load) {
+   record AimSolution(Vec3 init, Vec3 load) {
    }
 }

@@ -8,9 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class AiGoal {
    static final long init_J = 1500000000L;
    static final long load = 3000000000L;
-   private static final Map<Object, AiGoal.Inner_DataUtil> init_Map = new ConcurrentHashMap<>();
+   private static final Map<Object, AiGoal.GoalEntry> init_Map = new ConcurrentHashMap<>();
    private static final Object init_Obj = new Object();
-   private static final AiGoal.Inner_StreamUtil init_W_StreamUtil = new AiGoal.Inner_StreamUtil();
+   private static final AiGoal.StableLabel init_W_StreamUtil = new AiGoal.StableLabel();
    private static volatile AiTaskStatus.Inner_StreamUtil init_cs_StreamUtil = AiTaskStatus.Inner_StreamUtil.EMPTY;
    private static volatile long read;
    private static String init_Str = "";
@@ -20,14 +20,14 @@ public final class AiGoal {
 
    static void init(Object owner, int depth, String objective, String goal, String detail) {
       long now = System.nanoTime();
-      AiGoal.Inner_DataUtil old = init_Map.get(owner);
+      AiGoal.GoalEntry old = init_Map.get(owner);
       String g = update(goal);
       if (g.isEmpty()) {
          g = old == null ? "" : old.goal;
       }
 
       if (!g.isEmpty()) {
-         init_Map.put(owner, new AiGoal.Inner_DataUtil(depth, update(objective), g, update(detail), now));
+         init_Map.put(owner, new AiGoal.GoalEntry(depth, update(objective), g, update(detail), now));
          init(now);
       }
    }
@@ -49,10 +49,10 @@ public final class AiGoal {
 
    private static synchronized void init(long now) {
       init_Map.values().removeIf(e -> now - e.touched > 1500000000L);
-      AiGoal.Inner_DataUtil deepest = null;
-      AiGoal.Inner_DataUtil shallowest = null;
+      AiGoal.GoalEntry deepest = null;
+      AiGoal.GoalEntry shallowest = null;
 
-      for (AiGoal.Inner_DataUtil e : init_Map.values()) {
+      for (AiGoal.GoalEntry e : init_Map.values()) {
          if (deepest == null || e.depth > deepest.depth || e.depth == deepest.depth && e.touched > deepest.touched) {
             deepest = e;
          }
@@ -287,10 +287,10 @@ public final class AiGoal {
       return value == null ? "" : value.strip().replaceAll("[\\r\\n\\t]+", " ");
    }
 
-   private record Inner_DataUtil(int depth, String objective, String goal, String detail, long touched) {
+   private record GoalEntry(int depth, String objective, String goal, String detail, long touched) {
    }
 
-   static final class Inner_StreamUtil {
+   static final class StableLabel {
       private String init_Str = "";
       private String load = "";
       private long init_J;

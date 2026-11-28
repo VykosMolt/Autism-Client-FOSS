@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 public final class PluginSignatureCatalog {
    private static final int init_I = 512;
    private static final Pattern CHANNEL_PATTERN = Pattern.compile("(?i)\\b[a-z0-9_.-]{2,64}:[a-z0-9_./-]{1,128}\\b");
-   private static final Map<String, PluginSignatureCatalog.Inner_ConfigStore> serverStates = new HashMap<>();
+   private static final Map<String, PluginSignatureCatalog.ServerChannelState> serverStates = new HashMap<>();
    private static final Map<String, String> NAMESPACE_ALIASES = Map.ofEntries(
       Map.entry("vv", "ViaVersion"),
       Map.entry("viaversion", "ViaVersion"),
@@ -224,7 +224,7 @@ public final class PluginSignatureCatalog {
          return false;
       }
 
-      PluginSignatureCatalog.Inner_ConfigStore state = serverStates.computeIfAbsent(addressKey, unused -> new PluginSignatureCatalog.Inner_ConfigStore());
+      PluginSignatureCatalog.ServerChannelState state = serverStates.computeIfAbsent(addressKey, unused -> new PluginSignatureCatalog.ServerChannelState());
       state.brand = sync(brand);
       boolean changed = false;
       String channel = write(snapshot.channel());
@@ -253,19 +253,19 @@ public final class PluginSignatureCatalog {
       return changed;
    }
 
-   public static synchronized List<PluginSignatureCatalog.Inner_CachePool> fingerprints(String serverAddress, String brand) {
-      PluginSignatureCatalog.Inner_ConfigStore state = serverStates.get(update(serverAddress));
+   public static synchronized List<PluginSignatureCatalog.PluginFingerprint> fingerprints(String serverAddress, String brand) {
+      PluginSignatureCatalog.ServerChannelState state = serverStates.get(update(serverAddress));
       if (state == null) {
          return List.of();
       }
 
-      Map<String, PluginSignatureCatalog.Inner_StreamUtil> byPlugin = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      Map<String, PluginSignatureCatalog.PluginAccumulator> byPlugin = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
-      for (PluginSignatureCatalog.Inner_DataUtil stats : state.channelStats()) {
+      for (PluginSignatureCatalog.ChannelStats stats : state.channelStats()) {
          if (stats.seenS2C()) {
-            PluginSignatureCatalog.Inner_BufferHelper identity = identify(stats.channel);
+            PluginSignatureCatalog.PluginIdentity identity = identify(stats.channel);
             if (identity != null && !identity.init().isBlank() && !identity.load().isBlank()) {
-               PluginSignatureCatalog.Inner_StreamUtil acc = byPlugin.computeIfAbsent(identity.load(), unused -> new PluginSignatureCatalog.Inner_StreamUtil(identity.init(), identity.load()));
+               PluginSignatureCatalog.PluginAccumulator acc = byPlugin.computeIfAbsent(identity.load(), unused -> new PluginSignatureCatalog.PluginAccumulator(identity.init(), identity.load()));
                acc.init(stats);
             }
          }
@@ -275,9 +275,9 @@ public final class PluginSignatureCatalog {
          return List.of();
       }
 
-      List<PluginSignatureCatalog.Inner_CachePool> out = new ArrayList<>();
+      List<PluginSignatureCatalog.PluginFingerprint> out = new ArrayList<>();
 
-      for (PluginSignatureCatalog.Inner_StreamUtil acc : byPlugin.values()) {
+      for (PluginSignatureCatalog.PluginAccumulator acc : byPlugin.values()) {
          out.add(acc.init());
       }
 
@@ -285,12 +285,12 @@ public final class PluginSignatureCatalog {
    }
 
    public static synchronized long revision(String serverAddress, String brand) {
-      PluginSignatureCatalog.Inner_ConfigStore state = serverStates.get(update(serverAddress));
+      PluginSignatureCatalog.ServerChannelState state = serverStates.get(update(serverAddress));
       return state == null ? 0L : state.revision;
    }
 
    public static synchronized String init_Str(String serverAddress, String brand) {
-      PluginSignatureCatalog.Inner_ConfigStore state = serverStates.get(update(serverAddress));
+      PluginSignatureCatalog.ServerChannelState state = serverStates.get(update(serverAddress));
       if (state == null) {
          return "";
       }
@@ -363,14 +363,14 @@ public final class PluginSignatureCatalog {
       }
    }
 
-   private static PluginSignatureCatalog.Inner_BufferHelper identify(String channel) {
+   private static PluginSignatureCatalog.PluginIdentity identify(String channel) {
       String normalized = write(channel);
       if (normalized.isBlank()) {
          return null;
       }
 
       if ("bungeecord".equals(normalized) || "bungeecord:main".equals(normalized)) {
-         return new PluginSignatureCatalog.Inner_BufferHelper("BungeeCord", "bungeecord");
+         return new PluginSignatureCatalog.PluginIdentity("BungeeCord", "bungeecord");
       }
 
       if (!"register".equals(normalized) && !"unregister".equals(normalized)) {
@@ -386,20 +386,20 @@ public final class PluginSignatureCatalog {
 
          String alias = NAMESPACE_ALIASES.get(namespace);
          if (alias != null) {
-            return new PluginSignatureCatalog.Inner_BufferHelper(alias, namespace);
+            return new PluginSignatureCatalog.PluginIdentity(alias, namespace);
          }
 
          String presetLabel = presetName(normalized);
          return presetLabel != null && !presetLabel.isBlank()
-            ? new PluginSignatureCatalog.Inner_BufferHelper(presetLabel, namespace)
-            : new PluginSignatureCatalog.Inner_BufferHelper(prettyNamespace(namespace), namespace);
+            ? new PluginSignatureCatalog.PluginIdentity(presetLabel, namespace)
+            : new PluginSignatureCatalog.PluginIdentity(prettyNamespace(namespace), namespace);
       } else {
          return null;
       }
    }
 
    private static String presetName(String channel) {
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : PayloadChannelFilterManager.presets()) {
          if (PayloadChannelFilterManager.isExactPluginChannel(preset) && PayloadChannelFilterManager.matchesPreset(preset, channel)) {
             return preset.load();
          }
@@ -541,23 +541,23 @@ public final class PluginSignatureCatalog {
       return sb.toString();
    }
 
-   private record Inner_BufferHelper(String init, String load) {
-      Inner_BufferHelper {
+   private record PluginIdentity(String init, String load) {
+      PluginIdentity {
          init = init == null ? "" : init.trim();
          load = PluginSignatureCatalog.canonicalName(load != null && !load.isBlank() ? load : init);
       }
    }
 
-   public record Inner_CachePool(String plugin, String load, List<String> channels, int score, String read) {
+   public record PluginFingerprint(String plugin, String load, List<String> channels, int score, String read) {
    }
 
-   private static final class Inner_ConfigStore {
+   private static final class ServerChannelState {
       String brand = "";
       long revision;
       final Set<String> liveChannels = new LinkedHashSet<>();
       final Set<String> load = new LinkedHashSet<>();
       final Set<String> read = new LinkedHashSet<>();
-      final Map<String, PluginSignatureCatalog.Inner_DataUtil> statsByChannel = new LinkedHashMap<>();
+      final Map<String, PluginSignatureCatalog.ChannelStats> statsByChannel = new LinkedHashMap<>();
 
       boolean init(String channel, String direction) {
          return this.init(this.liveChannels, channel, "live", direction);
@@ -579,7 +579,7 @@ public final class PluginSignatureCatalog {
          return Collections.unmodifiableSet(out);
       }
 
-      List<PluginSignatureCatalog.Inner_DataUtil> channelStats() {
+      List<PluginSignatureCatalog.ChannelStats> channelStats() {
          return List.copyOf(this.statsByChannel.values());
       }
 
@@ -596,21 +596,21 @@ public final class PluginSignatureCatalog {
             return false;
          }
 
-         PluginSignatureCatalog.Inner_DataUtil stats = this.statsByChannel.computeIfAbsent(normalized, PluginSignatureCatalog.Inner_DataUtil::new);
+         PluginSignatureCatalog.ChannelStats stats = this.statsByChannel.computeIfAbsent(normalized, PluginSignatureCatalog.ChannelStats::new);
          int beforeScore = stats.score();
          stats.init(source, direction);
          return set.add(normalized) || stats.score() != beforeScore;
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class ChannelStats {
       final String channel;
       int liveCount;
       int load;
       int read;
       final Set<String> directions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
-      Inner_DataUtil(String channel) {
+      ChannelStats(String channel) {
          this.channel = PluginSignatureCatalog.write(channel);
       }
 
@@ -671,19 +671,19 @@ public final class PluginSignatureCatalog {
       }
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class PluginAccumulator {
       final String key;
       String load;
       int totalScore;
       String read = "";
       final Set<String> descriptions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
-      Inner_StreamUtil(String displayName, String key) {
+      PluginAccumulator(String displayName, String key) {
          this.load = displayName == null ? "" : displayName;
          this.key = key == null ? "" : key;
       }
 
-      void init(PluginSignatureCatalog.Inner_DataUtil stats) {
+      void init(PluginSignatureCatalog.ChannelStats stats) {
          if (stats != null && stats.channel != null && !stats.channel.isBlank()) {
             this.totalScore = this.totalScore + stats.score();
             if (this.read.isBlank() || stats.confidence() > this.init(this.read)) {
@@ -694,8 +694,8 @@ public final class PluginSignatureCatalog {
          }
       }
 
-      PluginSignatureCatalog.Inner_CachePool init() {
-         return new PluginSignatureCatalog.Inner_CachePool(this.load, this.key, List.copyOf(this.descriptions), this.totalScore, this.read);
+      PluginSignatureCatalog.PluginFingerprint init() {
+         return new PluginSignatureCatalog.PluginFingerprint(this.load, this.key, List.copyOf(this.descriptions), this.totalScore, this.read);
       }
 
       private int init(String source) {

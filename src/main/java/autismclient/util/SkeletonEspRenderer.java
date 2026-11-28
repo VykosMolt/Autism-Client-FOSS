@@ -27,8 +27,8 @@ public final class SkeletonEspRenderer {
    private static final double close = 0.3;
    private static final double open = 0.3;
    private static final double poll = 48.0;
-   private static final AutismBufferSource.Inner_DataUtil init_c_DataUtil = new AutismBufferSource.Inner_DataUtil(786432);
-   private static volatile List<SkeletonEspRenderer.Inner_DataUtil> init_List = List.of();
+   private static final AutismBufferSource.LazySource init_c_DataUtil = new AutismBufferSource.LazySource(786432);
+   private static volatile List<SkeletonEspRenderer.Bone> init_List = List.of();
 
    private SkeletonEspRenderer() {
    }
@@ -45,7 +45,7 @@ public final class SkeletonEspRenderer {
                float width = (float)Math.max(0.5, Math.min(6.0, init(esp.value("skeleton-width"), 2.0)));
                Vec3 camera = context.levelState().cameraRenderState.pos;
                float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-               List<SkeletonEspRenderer.Inner_DataUtil> bones = new ArrayList<>();
+               List<SkeletonEspRenderer.Bone> bones = new ArrayList<>();
 
                for (Entity entity : mc.level.entitiesForRendering()) {
                   if (entity instanceof LivingEntity living && !living.isRemoved() && living != mc.player && autismclient.modules.am.load_Z(entity)) {
@@ -67,14 +67,14 @@ public final class SkeletonEspRenderer {
    }
 
    public static void init(PoseStack matrices) {
-      List<SkeletonEspRenderer.Inner_DataUtil> bones = init_List;
+      List<SkeletonEspRenderer.Bone> bones = init_List;
       if (!bones.isEmpty()) {
          init_List = List.of();
          AutismBufferSource bufferSource = init_c_DataUtil.init();
          VertexConsumer buffer = bufferSource.init(autismclient.render.AutismRenderTypes.tracerEspLines());
          Pose pose = matrices.last();
 
-         for (SkeletonEspRenderer.Inner_DataUtil bone : bones) {
+         for (SkeletonEspRenderer.Bone bone : bones) {
             init_V_PoseStack_Pose(pose, buffer, bone.init_Vec3, bone.load, bone.init_I, bone.init_F);
          }
 
@@ -82,7 +82,7 @@ public final class SkeletonEspRenderer {
       }
    }
 
-   private static void init_V_List(List<SkeletonEspRenderer.Inner_DataUtil> bones, LivingEntity e, float partial, Vec3 cam, int color, float width) {
+   private static void init_V_List(List<SkeletonEspRenderer.Bone> bones, LivingEntity e, float partial, Vec3 cam, int color, float width) {
       double px = Mth.lerp(partial, e.xOld, e.getX());
       double py = Mth.lerp(partial, e.yOld, e.getY());
       double pz = Mth.lerp(partial, e.zOld, e.getZ());
@@ -227,8 +227,8 @@ public final class SkeletonEspRenderer {
       }
    }
 
-   private static void init(List<SkeletonEspRenderer.Inner_DataUtil> bones, Vec3 a, Vec3 b, int color, float width) {
-      bones.add(new SkeletonEspRenderer.Inner_DataUtil(a, b, color, width));
+   private static void init(List<SkeletonEspRenderer.Bone> bones, Vec3 a, Vec3 b, int color, float width) {
+      bones.add(new SkeletonEspRenderer.Bone(a, b, color, width));
    }
 
    private static double init(String value, double fallback) {
@@ -250,6 +250,6 @@ public final class SkeletonEspRenderer {
       return autismclient.modules.am.init_I_D_D(Math.sqrt(dx * dx + dy * dy + dz * dz), 48.0);
    }
 
-   private record Inner_DataUtil(Vec3 init_Vec3, Vec3 load, int init_I, float init_F) {
+   private record Bone(Vec3 init_Vec3, Vec3 load, int init_I, float init_F) {
    }
 }

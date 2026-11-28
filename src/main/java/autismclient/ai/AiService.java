@@ -211,8 +211,8 @@ public final class AiService {
       return s.objective.isBlank() && s.queue.isEmpty() && s.messages.stream().noneMatch(m -> "user".equals(m.role()));
    }
 
-   static String pickFallbackSessionId(List<AiSessions.Inner_StreamUtil> newestFirst, String deleted, Predicate<String> empty) {
-      for (AiSessions.Inner_StreamUtil m : newestFirst) {
+   static String pickFallbackSessionId(List<AiSessions.SessionMeta> newestFirst, String deleted, Predicate<String> empty) {
+      for (AiSessions.SessionMeta m : newestFirst) {
          if (!m.id().equals(deleted) && !empty.test(m.id())) {
             return m.id();
          }
@@ -264,7 +264,7 @@ public final class AiService {
       return state == AiService.RunState.CHATTING && current.hostParked();
    }
 
-   JsonObject auditRunStep(long g, AiService.SessionState s, AiIntents.Inner_BufferHelper step, String occurrence)
+   JsonObject auditRunStep(long g, AiService.SessionState s, AiIntents.IntentStep step, String occurrence)
       throws InterruptedException, ExecutionException {
       return this.performIntentStep(g, s, step, occurrence);
    }
@@ -530,7 +530,7 @@ public final class AiService {
                      Path task = this.memoryStore.directory().resolve("task.json");
                      if (Files.exists(task)) {
                         try {
-                           AiSessions.Inner_DataUtil migrated = AiSessions.init(
+                           AiSessions.SessionData migrated = AiSessions.init(
                               AiJson.parseObject(Files.readString(task)),
                               UUID.randomUUID().toString(),
                               System.currentTimeMillis(),
@@ -545,7 +545,7 @@ public final class AiService {
                      }
 
                      AiService.SessionState preliminary = this.currentSession();
-                     List<AiSessions.Inner_StreamUtil> metas = this.sessionStore.load();
+                     List<AiSessions.SessionMeta> metas = this.sessionStore.load();
                      if (!metas.isEmpty()) {
                         boolean keepPreliminary = !isSessionEmpty(preliminary);
                         if (keepPreliminary) {
@@ -811,11 +811,11 @@ public final class AiService {
       }
    }
 
-   public List<AiSessions.Inner_StreamUtil> listSessions() {
+   public List<AiSessions.SessionMeta> listSessions() {
       AiSessions storeRef = this.sessionStore;
-      List<AiSessions.Inner_StreamUtil> metas = new ArrayList<>();
+      List<AiSessions.SessionMeta> metas = new ArrayList<>();
       if (storeRef != null) {
-         for (AiSessions.Inner_StreamUtil m : storeRef.load()) {
+         for (AiSessions.SessionMeta m : storeRef.load()) {
             if (!storeRef.init_Z_Str(m.id()) || m.id().equals(this.currentSessionId)) {
                metas.add(m);
             }
@@ -824,7 +824,7 @@ public final class AiService {
 
       AiService.SessionState s = this.currentSession();
       if (s != null) {
-         AiSessions.Inner_StreamUtil live = new AiSessions.Inner_StreamUtil(
+         AiSessions.SessionMeta live = new AiSessions.SessionMeta(
             s.id, s.title, s.createdAt, s.lastActiveAt, s.parentId, this.runState.name(), s.messages.size()
          );
          boolean replaced = false;
@@ -2006,7 +2006,7 @@ public final class AiService {
                            }
                         }
 
-                        AiDanger.Inner_DataUtil danger = AiDanger.assess(mc);
+                        AiDanger.Assessment danger = AiDanger.assess(mc);
                         boolean lethalImminent = wouldExplosionKill(danger.worstSource());
                         boolean projectileThreat = AiProjectiles.init(mc).stream().anyMatch(AiProjectiles::init);
                         boolean unsafeMeal = threatPending.id().equals("game:eat") && (AiCombatPriority.init(hostiles, ranged) || AiSurvival.nearestThreat(mc) != null);
@@ -2588,7 +2588,7 @@ public final class AiService {
          health, armed, this.settings.planMode, interrupted != null && interrupted.hostParked() && !interrupted.id().equals("game:eat")
       );
       Entity mealThreat = interrupted != null && interrupted.id().equals("game:eat") ? AiSurvival.nearestThreat(mc) : null;
-      if (mealThreat != null && AiThreats.classify(mealThreat) == AiThreats.Inner_DataUtil.AVOID && !reflex.isEmpty()) {
+      if (mealThreat != null && AiThreats.classify(mealThreat) == AiThreats.ThreatKind.AVOID && !reflex.isEmpty()) {
          reflex = "game:flee";
       }
 
@@ -2908,7 +2908,7 @@ public final class AiService {
          try {
             this.memoryStore
                .init(
-                  AiMemoryStore.Inner_DataUtil.WORLD,
+                  AiMemoryStore.MemoryKind.WORLD,
                   this.observationScope,
                   "Observed successful capability " + id + ": " + result.message(),
                   evidence.id(),
@@ -3131,7 +3131,7 @@ public final class AiService {
          if (text.toLowerCase(Locale.ROOT).matches("(?s).*\\b(i prefer|remember that|from now on|always use|never use)\\b.*")) {
             this.memoryStore
                .init(
-                  AiMemoryStore.Inner_DataUtil.USER,
+                  AiMemoryStore.MemoryKind.USER,
                   "user",
                   text,
                   this.lastUserObservation.id(),
@@ -3187,7 +3187,7 @@ public final class AiService {
       AiCatalog.Snapshot contracts = this.getCatalogSnapshot();
       List<AiMemoryStore.Memory> memories = this.memoryStore.recall(this.observationScope, s.objective + " " + String.join(" ", s.updates));
       int systemChars = (int)Math.min(2147483647L, (long)(promptBudget * 3.5 * 0.6));
-      AiContext.Inner_StreamUtil prompt = AiContext.init(
+      AiContext.PromptParts prompt = AiContext.init(
          contracts,
          s.objective,
          List.copyOf(s.updates),
@@ -3199,7 +3199,7 @@ public final class AiService {
          System.currentTimeMillis(),
          systemChars
       );
-      return new AiService.PromptContextBundle(prompt, new AiContext.Inner_DataUtil(), contracts.revision());
+      return new AiService.PromptContextBundle(prompt, new AiContext.ObservationTracker(), contracts.revision());
    }
 
    static long historyCharBudget(long systemChars, int promptBudget) {
@@ -3722,25 +3722,25 @@ public final class AiService {
          }
       }
 
-      AiIntents.Inner_CachePool plan = builtIn && s.structuredTask.has("builtInAction")
+      AiIntents.IntentPlan plan = builtIn && s.structuredTask.has("builtInAction")
          ? AiLocalRequest.init(s.structuredTask.getAsJsonObject("builtInAction"))
          : AiIntents.plan(s.objective, createWaypointResolver());
       if (plan.steps().isEmpty()) {
          return new AiService.CompletionNote(false, null);
       }
 
-      List<AiIntents.Inner_BufferHelper> steps = new ArrayList<>(plan.steps());
+      List<AiIntents.IntentStep> steps = new ArrayList<>(plan.steps());
       List<String> done = new ArrayList<>();
 
       try {
          s.attemptedAction = true;
 
          for (int i = 0; i < steps.size(); i++) {
-            AiIntents.Inner_BufferHelper step = steps.get(i);
+            AiIntents.IntentStep step = steps.get(i);
             if (!step.asks().isEmpty()) {
                JsonObject args = step.arguments().deepCopy();
 
-               for (AiIntents.Inner_DataUtil ask : step.asks()) {
+               for (AiIntents.ClarifyingQuestion ask : step.asks()) {
                   JsonObject reply = this.write(AiJson.objectOf("question", ask.question(), "options", ask.options()), g);
                   String said = AiJson.getString(reply, "answer", "");
                   if (!AiIntents.init(ask, said, args)) {
@@ -3761,17 +3761,17 @@ public final class AiService {
                   }
                }
 
-               steps.set(i, new AiIntents.Inner_BufferHelper(step.clause(), step.capability(), args, describeFarmRequest(args)));
+               steps.set(i, new AiIntents.IntentStep(step.clause(), step.capability(), args, describeFarmRequest(args)));
             }
          }
 
          for (int i = 0; i < steps.size(); i++) {
             this.checkGeneration(g);
-            AiIntents.Inner_BufferHelper step = steps.get(i);
+            AiIntents.IntentStep step = steps.get(i);
             String failure = null;
             int prerequisiteIndex = 0;
 
-            for (AiIntents.Inner_BufferHelper before : this.farmPrerequisiteSteps(g, step)) {
+            for (AiIntents.IntentStep before : this.farmPrerequisiteSteps(g, step)) {
                JsonObject r = this.performIntentStep(g, s, before, i + "/prerequisite/" + prerequisiteIndex++);
                done.add(describeStepResult(before, r));
                if (!isSucceededResult(r) && !this.hasPlantableAlready(g, before)) {
@@ -3782,7 +3782,7 @@ public final class AiService {
 
             if (failure == null) {
                if ("game:craft".equals(step.capability()) && !this.init_Z_J_ad_BufferHelper(g, step)) {
-                  AiIntents.Inner_BufferHelper gather = gatherForCraftStep(step, true);
+                  AiIntents.IntentStep gather = gatherForCraftStep(step, true);
                   if (gather != null) {
                      step = gather;
                   }
@@ -3794,7 +3794,7 @@ public final class AiService {
 
                JsonObject r = this.performIntentStep(g, s, step, i + "/requested");
                done.add(describeStepResult(step, r));
-               AiIntents.Inner_BufferHelper gather = isSucceededResult(r) ? null : craftMissingInputsStep(step, r);
+               AiIntents.IntentStep gather = isSucceededResult(r) ? null : craftMissingInputsStep(step, r);
                if (gather != null) {
                   this.checkGeneration(g);
                   r = this.performIntentStep(g, s, gather, i + "/fallback");
@@ -3802,7 +3802,7 @@ public final class AiService {
                }
 
                for (int retool = 0; retool < 3; retool++) {
-                  AiIntents.Inner_BufferHelper tool = isSucceededResult(r) ? null : missingToolStep(step, r);
+                  AiIntents.IntentStep tool = isSucceededResult(r) ? null : missingToolStep(step, r);
                   if (tool == null) {
                      break;
                   }
@@ -3832,7 +3832,7 @@ public final class AiService {
 
                List<String> rest = new ArrayList<>();
 
-               for (AiIntents.Inner_BufferHelper left : steps.subList(i, steps.size())) {
+               for (AiIntents.IntentStep left : steps.subList(i, steps.size())) {
                   rest.add(left.clause().trim());
                }
 
@@ -3851,7 +3851,7 @@ public final class AiService {
             this.stateReason = "Done without an AI turn";
             List<String> what = new ArrayList<>();
 
-            for (AiIntents.Inner_BufferHelper step : steps) {
+            for (AiIntents.IntentStep step : steps) {
                what.add(step.describe());
             }
 
@@ -3871,7 +3871,7 @@ public final class AiService {
 
             List<String> what = new ArrayList<>();
 
-            for (AiIntents.Inner_BufferHelper step : steps) {
+            for (AiIntents.IntentStep step : steps) {
                what.add(step.describe());
             }
 
@@ -3892,7 +3892,7 @@ public final class AiService {
       }
    }
 
-   private JsonObject performIntentStep(long g, AiService.SessionState s, AiIntents.Inner_BufferHelper step, String occurrence) throws InterruptedException, ExecutionException {
+   private JsonObject performIntentStep(long g, AiService.SessionState s, AiIntents.IntentStep step, String occurrence) throws InterruptedException, ExecutionException {
       JsonObject stocked = AuditBuilderShulkerStock.before(this, g, s, step, occurrence);
       if (stocked != null) {
          return stocked;
@@ -3968,7 +3968,7 @@ public final class AiService {
       return "SUCCEEDED".equals(AiJson.getString(r, "status", ""));
    }
 
-   static AiIntents.Inner_BufferHelper craftMissingInputsStep(AiIntents.Inner_BufferHelper step, JsonObject result) {
+   static AiIntents.IntentStep craftMissingInputsStep(AiIntents.IntentStep step, JsonObject result) {
       if (!"game:craft".equals(step.capability())) {
          return null;
       }
@@ -3977,7 +3977,7 @@ public final class AiService {
       return !reason.contains("missing") ? null : gatherForCraftStep(step, false);
    }
 
-   private AiIntents.Inner_BufferHelper cookRawFoodStep(long g, AiIntents.Inner_BufferHelper step) throws InterruptedException, ExecutionException {
+   private AiIntents.IntentStep cookRawFoodStep(long g, AiIntents.IntentStep step) throws InterruptedException, ExecutionException {
       JsonObject args = step.arguments().deepCopy();
       args.remove("cookHeld");
       String spec = AiJson.getString(args, "item", "cooked_food");
@@ -4003,10 +4003,10 @@ public final class AiService {
       });
       args.addProperty("count", Math.max(1, raw));
       args.addProperty("additional", true);
-      return new AiIntents.Inner_BufferHelper(step.clause(), step.capability(), args, "cook " + Math.max(1, raw) + " raw food");
+      return new AiIntents.IntentStep(step.clause(), step.capability(), args, "cook " + Math.max(1, raw) + " raw food");
    }
 
-   static AiIntents.Inner_BufferHelper gatherForCraftStep(AiIntents.Inner_BufferHelper step, boolean additional) {
+   static AiIntents.IntentStep gatherForCraftStep(AiIntents.IntentStep step, boolean additional) {
       if (!"game:craft".equals(step.capability())) {
          return null;
       }
@@ -4018,10 +4018,10 @@ public final class AiService {
          args.addProperty("additional", true);
       }
 
-      return new AiIntents.Inner_BufferHelper(step.clause(), "game:obtain", args, "gather what " + step.describe() + " needs, then craft it");
+      return new AiIntents.IntentStep(step.clause(), "game:obtain", args, "gather what " + step.describe() + " needs, then craft it");
    }
 
-   private boolean init_Z_J_ad_BufferHelper(long gen, AiIntents.Inner_BufferHelper step) {
+   private boolean init_Z_J_ad_BufferHelper(long gen, AiIntents.IntentStep step) {
       try {
          String item = AiJson.getString(step.arguments(), "item", "").trim();
          if (item.isEmpty()) {
@@ -4042,7 +4042,7 @@ public final class AiService {
       }
    }
 
-   static AiIntents.Inner_BufferHelper missingToolStep(AiIntents.Inner_BufferHelper step, JsonObject result) {
+   static AiIntents.IntentStep missingToolStep(AiIntents.IntentStep step, JsonObject result) {
       if (!step.capability().equals("game:mine")) {
          return null;
       }
@@ -4067,12 +4067,12 @@ public final class AiService {
       }
 
       String name = tool.replace("minecraft:", "").replace('_', ' ');
-      return new AiIntents.Inner_BufferHelper(
+      return new AiIntents.IntentStep(
          step.clause(), "game:obtain", AiJson.objectOf("item", tool, "count", 1, "additional", true), "get a " + name + " for " + step.describe()
       );
    }
 
-   static AiIntents.Inner_BufferHelper remainingMineStep(AiIntents.Inner_BufferHelper step, JsonObject result) {
+   static AiIntents.IntentStep remainingMineStep(AiIntents.IntentStep step, JsonObject result) {
       JsonObject data = result.has("data") && result.get("data").isJsonObject() ? result.getAsJsonObject("data") : new JsonObject();
       if (!step.arguments().has("counts")
          && !AiJson.getString(step.arguments(), "block", "").contains(",")
@@ -4081,13 +4081,13 @@ public final class AiService {
          if (broken > 0 && step.arguments().has("count")) {
             JsonObject args = step.arguments().deepCopy();
             args.addProperty("count", Math.max(1, AiJson.getInt(args, "count", 1) - broken));
-            return new AiIntents.Inner_BufferHelper(step.clause(), step.capability(), args, step.describe(), step.asks());
+            return new AiIntents.IntentStep(step.clause(), step.capability(), args, step.describe(), step.asks());
          } else {
             return step;
          }
       } else {
          JsonObject remaining = AiMiningQuota.init(step.arguments(), data);
-         return new AiIntents.Inner_BufferHelper(step.clause(), step.capability(), remaining, step.describe(), step.asks());
+         return new AiIntents.IntentStep(step.clause(), step.capability(), remaining, step.describe(), step.asks());
       }
    }
 
@@ -4125,7 +4125,7 @@ public final class AiService {
       return t.length() > 600 ? t.substring(0, 600) : t;
    }
 
-   private static String describeStepResult(AiIntents.Inner_BufferHelper step, JsonObject r) {
+   private static String describeStepResult(AiIntents.IntentStep step, JsonObject r) {
       return step.describe() + " -> " + AiJson.getString(r, "status", "?") + ": " + resultMessageOf(r);
    }
 
@@ -4148,21 +4148,21 @@ public final class AiService {
       return out.toString();
    }
 
-   private List<AiIntents.Inner_BufferHelper> farmPrerequisiteSteps(long g, AiIntents.Inner_BufferHelper step) throws InterruptedException, ExecutionException {
+   private List<AiIntents.IntentStep> farmPrerequisiteSteps(long g, AiIntents.IntentStep step) throws InterruptedException, ExecutionException {
       if (step.capability().equals("game:farm") && "plant".equals(AiJson.getString(step.arguments(), "action", ""))) {
          String seed = AiFarm.load(AiJson.getString(step.arguments(), "crop", "minecraft:wheat"));
          int want = Math.max(1, AiJson.getInt(step.arguments(), "count", 9));
          int[] have = this.onClientThread(g, () -> new int[]{AiFarmPlant.init(Minecraft.getInstance()) ? 1 : 0, seed == null ? 0 : AiGameState.countInventoryItem(seed)});
-         List<AiIntents.Inner_BufferHelper> out = new ArrayList<>();
+         List<AiIntents.IntentStep> out = new ArrayList<>();
          if (have[0] == 0) {
             out.add(
-               new AiIntents.Inner_BufferHelper("get a hoe", "game:obtain", AiJson.objectOf("item", "minecraft:wooden_hoe", "count", 1), "get a wooden hoe")
+               new AiIntents.IntentStep("get a hoe", "game:obtain", AiJson.objectOf("item", "minecraft:wooden_hoe", "count", 1), "get a wooden hoe")
             );
          }
 
          if (seed != null && have[1] < want) {
             out.add(
-               new AiIntents.Inner_BufferHelper(
+               new AiIntents.IntentStep(
                   "get seeds",
                   "game:obtain",
                   AiJson.objectOf("item", seed, "count", want, "timeoutSeconds", Math.min(900, 120 + want * 6)),
@@ -4177,7 +4177,7 @@ public final class AiService {
       }
    }
 
-   private boolean hasPlantableAlready(long g, AiIntents.Inner_BufferHelper before) throws InterruptedException, ExecutionException {
+   private boolean hasPlantableAlready(long g, AiIntents.IntentStep before) throws InterruptedException, ExecutionException {
       if (!"game:obtain".equals(before.capability())) {
          return false;
       }
@@ -4210,8 +4210,8 @@ public final class AiService {
       }
    }
 
-   static AiIntents.Inner_StreamUtil createWaypointResolver() {
-      return new AiIntents.Inner_StreamUtil(name -> {
+   static AiIntents.NameLookups createWaypointResolver() {
+      return new AiIntents.NameLookups(name -> {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null && mc.level != null) {
             AutismWaypoints.Waypoint wp = AutismWaypoints.getInstance().find(AuditWaypointScope.current(mc), name);
@@ -4771,8 +4771,8 @@ public final class AiService {
       s.structuredTask = stored;
    }
 
-   private AiSessions.Inner_DataUtil toStoredSession(AiService.SessionState s) {
-      AiSessions.Inner_DataUtil d = new AiSessions.Inner_DataUtil();
+   private AiSessions.SessionData toStoredSession(AiService.SessionState s) {
+      AiSessions.SessionData d = new AiSessions.SessionData();
       d.id = s.id;
       d.title = s.title;
       d.parentId = s.parentId;
@@ -4808,7 +4808,7 @@ public final class AiService {
       return d;
    }
 
-   private AiService.SessionState fromStoredSession(AiSessions.Inner_DataUtil d) {
+   private AiService.SessionState fromStoredSession(AiSessions.SessionData d) {
       AiService.SessionState s = new AiService.SessionState(d.id, d.createdAt == 0L ? System.currentTimeMillis() : d.createdAt);
       s.title = d.title;
       s.parentId = d.parentId;
@@ -4851,7 +4851,7 @@ public final class AiService {
          }
 
          if (!isSessionEmpty(s)) {
-            AiSessions.Inner_DataUtil data = this.toStoredSession(s);
+            AiSessions.SessionData data = this.toStoredSession(s);
             this.storageExecutor.execute(() -> {
                if (!this.deletedSessionIds.contains(data.id)) {
                   try {
@@ -5317,7 +5317,7 @@ public final class AiService {
                   this.memoryStore.init(proof);
                   AiMemoryStore.Memory saved = this.memoryStore
                      .init(
-                        old.kind() == AiMemoryStore.Inner_DataUtil.USER ? AiMemoryStore.Inner_DataUtil.USER : AiMemoryStore.Inner_DataUtil.HYPOTHESIS,
+                        old.kind() == AiMemoryStore.MemoryKind.USER ? AiMemoryStore.MemoryKind.USER : AiMemoryStore.MemoryKind.HYPOTHESIS,
                         old.scope(),
                         text,
                         proof.id(),
@@ -5695,7 +5695,7 @@ public final class AiService {
    public record TranscriptEntry(long at, String role, String text, String detail) {
    }
 
-   private record PromptContextBundle(AiContext.Inner_StreamUtil prompt, AiContext.Inner_DataUtil host, String catalogRevision) {
+   private record PromptContextBundle(AiContext.PromptParts prompt, AiContext.ObservationTracker host, String catalogRevision) {
    }
 
    static final class SessionState {

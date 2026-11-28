@@ -37,7 +37,7 @@ public interface PrintRules {
       return true;
    }
 
-   PrintRules.Inner_CachePool nextInteraction(PrintTarget var1, BlockState var2);
+   PrintRules.Interaction nextInteraction(PrintTarget var1, BlockState var2);
 
    default boolean isSafeToClick(PrintTarget target, SignalGetter world) {
       return true;
@@ -69,11 +69,11 @@ public interface PrintRules {
       return true;
    }
 
-   default PrintRules.Inner_StreamUtil traceSignals(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
-      return new PrintRules.Inner_StreamUtil(this.signalPaths(world, source, targets), PrintRules.Inner_DataUtil.NO_PATH);
+   default PrintRules.SignalTrace traceSignals(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+      return new PrintRules.SignalTrace(this.signalPaths(world, source, targets), PrintRules.SignalReach.NO_PATH);
    }
 
-   default PrintRules.Inner_StreamUtil traceSignalsWithConfiguration(
+   default PrintRules.SignalTrace traceSignalsWithConfiguration(
       BlockGetter world, BlockPos source, Set<BlockPos> targets, Set<BlockPos> configurationTargets
    ) {
       return this.traceSignals(world, source, targets);
@@ -83,11 +83,11 @@ public interface PrintRules {
       return Set.of();
    }
 
-   default Map<BlockPos, PrintRules.Inner_DataUtil> signalPaths(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
-      HashMap<BlockPos, PrintRules.Inner_DataUtil> result = new HashMap<>();
+   default Map<BlockPos, PrintRules.SignalReach> signalPaths(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+      HashMap<BlockPos, PrintRules.SignalReach> result = new HashMap<>();
 
       for (BlockPos at : targets) {
-         result.put(at, PrintRules.Inner_DataUtil.UNKNOWN);
+         result.put(at, PrintRules.SignalReach.UNKNOWN);
       }
 
       return result;
@@ -95,15 +95,15 @@ public interface PrintRules {
 
    boolean isWaterlogMissing(PrintTarget var1, BlockState var2);
 
-   record Inner_CachePool(Item item, String property) {
+   record Interaction(Item item, String property) {
    }
 
-   enum Inner_DataUtil {
+   enum SignalReach {
       REACHES,
       NO_PATH,
       UNKNOWN;
    }
 
-   record Inner_StreamUtil(Map<BlockPos, PrintRules.Inner_DataUtil> reached, PrintRules.Inner_DataUtil unseen) {
+   record SignalTrace(Map<BlockPos, PrintRules.SignalReach> reached, PrintRules.SignalReach unseen) {
    }
 }

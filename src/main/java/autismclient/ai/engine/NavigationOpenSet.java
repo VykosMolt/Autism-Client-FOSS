@@ -106,7 +106,7 @@ final class NavigationOpenSet {
       final double heuristic;
       double cost = 1.0 / 0.0;
       NavigationOpenSet.Inner_DataUtil parent;
-      AiPathfinder.UiHelper move;
+      AiPathfinder.PathStep move;
       int init_I = -1;
       int load_I;
       NavigationOpenSet.Inner_DataUtil nextInCell;

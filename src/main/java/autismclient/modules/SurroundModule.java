@@ -73,7 +73,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private int previousSlot = -1;
    private int open = -1;
    private int poll;
-   private final KillAuraModule.Inner_JsonUtil init_aa_JsonUtil = new KillAuraModule.Inner_JsonUtil();
+   private final KillAuraModule.TickCachedFlag init_aa_JsonUtil = new KillAuraModule.TickCachedFlag();
    private String raw;
    private Set<Block> allowedBlocks = Set.of();
    private BlockPos init_BlockPos;
@@ -528,23 +528,23 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return true;
    }
 
-   private static autismclient.util.RotationStreamPlanner.Inner_StreamUtil profileForSpeed(int speed) {
-      autismclient.util.RotationStreamPlanner.Inner_StreamUtil var10000;
+   private static autismclient.util.RotationStreamPlanner.MotionProfile profileForSpeed(int speed) {
+      autismclient.util.RotationStreamPlanner.MotionProfile var10000;
       switch (speed) {
          case 2:
-            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.SURROUND_FAST_2;
+            var10000 = autismclient.util.RotationStreamPlanner.MotionProfile.SURROUND_FAST_2;
             break;
          case 3:
-            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.SURROUND_FAST_3;
+            var10000 = autismclient.util.RotationStreamPlanner.MotionProfile.SURROUND_FAST_3;
             break;
          case 4:
-            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.SURROUND_FAST_4;
+            var10000 = autismclient.util.RotationStreamPlanner.MotionProfile.SURROUND_FAST_4;
             break;
          case 5:
-            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.SURROUND_FAST_5;
+            var10000 = autismclient.util.RotationStreamPlanner.MotionProfile.SURROUND_FAST_5;
             break;
          default:
-            var10000 = autismclient.util.RotationStreamPlanner.Inner_StreamUtil.STANDARD;
+            var10000 = autismclient.util.RotationStreamPlanner.MotionProfile.STANDARD;
       }
 
       return var10000;

@@ -32,7 +32,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    private int panelHeight = 173;
    private PacketInspectorEngine.InspectionReport report;
    private AutismPacketLoggerOverlay.LoggedPacketEntry entry;
-   private List<AutismPacketInspectOverlay.Inner_BufferHelper> lines = Collections.emptyList();
+   private List<AutismPacketInspectOverlay.InspectLine> lines = Collections.emptyList();
    private boolean linesDirty = true;
    private int linesWidth = -1;
    private autismclient.gui.ui.layout.ScrollableListView listView = null;
@@ -263,7 +263,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                            context,
                            this.lines.size(),
                            (idx, bnd) -> {
-                              AutismPacketInspectOverlay.Inner_BufferHelper ln = this.lines.get(idx);
+                              AutismPacketInspectOverlay.InspectLine ln = this.lines.get(idx);
                               this.drawLine(
                                  context,
                                  ln,
@@ -291,7 +291,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                   false
                );
 
-               for (AutismPacketInspectOverlay.Inner_CachePool button : this.footerButtons(footerY)) {
+               for (AutismPacketInspectOverlay.FooterButton button : this.footerButtons(footerY)) {
                   autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone var10000;
                   switch (button.action()) {
                      case WAIT:
@@ -335,7 +335,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             this.linesDirty = false;
             this.linesWidth = innerWidth;
          } else {
-            List<AutismPacketInspectOverlay.Inner_BufferHelper> wrapped = new ArrayList<>();
+            List<AutismPacketInspectOverlay.InspectLine> wrapped = new ArrayList<>();
 
             for (PacketInspectorEngine.ColoredLine line : this.report.lines()) {
                this.wrapLine(line, innerWidth, wrapped);
@@ -348,10 +348,10 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void wrapLine(PacketInspectorEngine.ColoredLine line, int maxWidth, List<AutismPacketInspectOverlay.Inner_BufferHelper> target) {
+   private void wrapLine(PacketInspectorEngine.ColoredLine line, int maxWidth, List<AutismPacketInspectOverlay.InspectLine> target) {
       String text = line.text();
       if (text == null || text.isEmpty()) {
-         target.add(AutismPacketInspectOverlay.Inner_BufferHelper.of("", 0, line.color()));
+         target.add(AutismPacketInspectOverlay.InspectLine.of("", 0, line.color()));
       } else if (this.isSectionHeader(text)) {
          this.wrapText(text, 0, line.color(), maxWidth, target);
       } else {
@@ -379,7 +379,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       int prefixWidth,
       int continuationOffset,
       int maxWidth,
-      List<AutismPacketInspectOverlay.Inner_BufferHelper> target
+      List<AutismPacketInspectOverlay.InspectLine> target
    ) {
       int safeContinuationOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, continuationOffset);
       if (prefixWidth >= maxWidth) {
@@ -396,18 +396,18 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
             );
             String part = remaining.substring(0, split).stripTrailing();
-            target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(firstLine ? prefix : null, UiColorPalette.silver(), part, valueColor, offset));
+            target.add(new AutismPacketInspectOverlay.InspectLine(firstLine ? prefix : null, UiColorPalette.silver(), part, valueColor, offset));
             remaining = remaining.substring(split).stripLeading();
          }
       } else {
-         target.add(new AutismPacketInspectOverlay.Inner_BufferHelper(prefix, UiColorPalette.silver(), "", valueColor, prefixWidth));
+         target.add(new AutismPacketInspectOverlay.InspectLine(prefix, UiColorPalette.silver(), "", valueColor, prefixWidth));
       }
    }
 
-   private void wrapText(String text, int offset, int color, int maxWidth, List<AutismPacketInspectOverlay.Inner_BufferHelper> target) {
+   private void wrapText(String text, int offset, int color, int maxWidth, List<AutismPacketInspectOverlay.InspectLine> target) {
       if (text != null) {
          if (text.isEmpty()) {
-            target.add(AutismPacketInspectOverlay.Inner_BufferHelper.of("", offset, color));
+            target.add(AutismPacketInspectOverlay.InspectLine.of("", offset, color));
          } else {
             int safeOffset = autismclient.gui.ui.widgets.ScrollbarContentMath.load(maxWidth, offset);
             String remaining = text;
@@ -419,14 +419,14 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
                   current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
                );
                String part = remaining.substring(0, split).stripTrailing();
-               target.add(AutismPacketInspectOverlay.Inner_BufferHelper.of(part, safeOffset, color));
+               target.add(AutismPacketInspectOverlay.InspectLine.of(part, safeOffset, color));
                remaining = remaining.substring(split).stripLeading();
             }
          }
       }
    }
 
-   private void drawLine(GuiGraphicsExtractor context, AutismPacketInspectOverlay.Inner_BufferHelper line, int x, int y) {
+   private void drawLine(GuiGraphicsExtractor context, AutismPacketInspectOverlay.InspectLine line, int x, int y) {
       if (line != null && line.value() != null) {
          if (line.label() != null && !line.label().isEmpty()) {
             autismclient.gui.f.b.k.init(
@@ -525,7 +525,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
          int footerY = this.panelY + this.panelHeight - this.set_I_14() + this.queue();
          if (button == 0) {
-            for (AutismPacketInspectOverlay.Inner_CachePool footerButton : this.footerButtons(footerY)) {
+            for (AutismPacketInspectOverlay.FooterButton footerButton : this.footerButtons(footerY)) {
                if (mouseX >= footerButton.x()
                   && mouseX < footerButton.x() + footerButton.read()
                   && mouseY >= footerButton.load()
@@ -706,7 +706,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       return this.tick_I_16();
    }
 
-   private void runAction(AutismPacketInspectOverlay.Inner_StreamUtil action) {
+   private void runAction(AutismPacketInspectOverlay.PacketAction action) {
       if (action != null) {
          switch (action) {
             case WAIT:
@@ -752,7 +752,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       }
 
       AutismPayloadSupport.PayloadEntry payload = AutismPayloadSupport.resolveEntryPayload(entry);
-      PacketWireCaptureStore.Inner_StreamUtil packet = PacketWireCaptureStore.init(entry.packet);
+      PacketWireCaptureStore.PacketCapture packet = PacketWireCaptureStore.init(entry.packet);
       byte[] payloadBytes = payload == null ? new byte[0] : payload.rawBytes();
       byte[] packetBytes = packet == null ? new byte[0] : packet.plaintext();
       if (payloadBytes.length == 0 && packetBytes.length == 0) {
@@ -902,7 +902,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       int maxWidth = Math.max(minWidth, Math.min(this.stop(), screenWidth - 12));
       int maxHeight = Math.max(this.tick_I_16(), Math.min(this.next(), screenHeight - 12));
       int desiredWidth = this.bestPanelWidth(minWidth, maxWidth);
-      AutismPacketInspectOverlay.Inner_DataUtil fit = this.fitWidth(desiredWidth);
+      AutismPacketInspectOverlay.PanelFit fit = this.fitWidth(desiredWidth);
       int desiredVisibleLines = Math.max(3, Math.min(fit.load(), this.prev()));
       int desiredListHeight = Math.max(this.task(), desiredVisibleLines * lineHeight + this.add_I_12() * 2 + 2);
       int desiredHeight = 14 + this.size() + this.value() + this.progressHeight() + desiredListHeight + this.set_I_14() + this.buffer();
@@ -951,16 +951,16 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    private long layoutScore(int panelWidthCandidate, int rawLineCount) {
-      AutismPacketInspectOverlay.Inner_DataUtil fit = this.fitWidth(panelWidthCandidate);
+      AutismPacketInspectOverlay.PanelFit fit = this.fitWidth(panelWidthCandidate);
       int extraLines = Math.max(0, fit.load() - rawLineCount);
       int wastedPixels = Math.max(0, fit.init() - fit.read());
       return panelWidthCandidate / 6L + extraLines * 52L + wastedPixels * 4L;
    }
 
-   private AutismPacketInspectOverlay.Inner_DataUtil fitWidth(int panelWidthCandidate) {
+   private AutismPacketInspectOverlay.PanelFit fitWidth(int panelWidthCandidate) {
       int listWidth = Math.max(32, panelWidthCandidate - this.contentPadding() * 2);
       int contentWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.init(listWidth, this.add_I_12());
-      List<AutismPacketInspectOverlay.Inner_BufferHelper> measured = new ArrayList<>();
+      List<AutismPacketInspectOverlay.InspectLine> measured = new ArrayList<>();
       if (this.report != null) {
          for (PacketInspectorEngine.ColoredLine line : this.report.lines()) {
             this.wrapLine(line, contentWidth, measured);
@@ -969,49 +969,49 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
       int longestWrappedLineWidth = 0;
 
-      for (AutismPacketInspectOverlay.Inner_BufferHelper line : measured) {
+      for (AutismPacketInspectOverlay.InspectLine line : measured) {
          longestWrappedLineWidth = Math.max(longestWrappedLineWidth, line.width(this.font));
       }
 
-      return new AutismPacketInspectOverlay.Inner_DataUtil(contentWidth, measured.size(), longestWrappedLineWidth);
+      return new AutismPacketInspectOverlay.PanelFit(contentWidth, measured.size(), longestWrappedLineWidth);
    }
 
-   private List<AutismPacketInspectOverlay.Inner_CachePool> footerButtons(int footerY) {
-      List<AutismPacketInspectOverlay.Inner_CachePool> buttons = new ArrayList<>();
+   private List<AutismPacketInspectOverlay.FooterButton> footerButtons(int footerY) {
+      List<AutismPacketInspectOverlay.FooterButton> buttons = new ArrayList<>();
       int cursorX = this.panelX + this.panelWidth - this.contentPadding();
 
-      for (AutismPacketInspectOverlay.Inner_StreamUtil action : this.availableActions()) {
+      for (AutismPacketInspectOverlay.PacketAction action : this.availableActions()) {
          cursorX = this.addActionButton(buttons, cursorX, footerY, action);
       }
 
       return buttons;
    }
 
-   private List<AutismPacketInspectOverlay.Inner_StreamUtil> availableActions() {
-      List<AutismPacketInspectOverlay.Inner_StreamUtil> actions = new ArrayList<>();
-      actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.COPY);
+   private List<AutismPacketInspectOverlay.PacketAction> availableActions() {
+      List<AutismPacketInspectOverlay.PacketAction> actions = new ArrayList<>();
+      actions.add(AutismPacketInspectOverlay.PacketAction.COPY);
       if (this.hasRawPayload(this.entry)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.COPY_RAW);
+         actions.add(AutismPacketInspectOverlay.PacketAction.COPY_RAW);
       }
 
       if (LoggedPacketActions.init(this.entry)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.QUEUE);
+         actions.add(AutismPacketInspectOverlay.PacketAction.QUEUE);
       }
 
       if (LoggedPacketActions.sync(this.entry)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.EDIT_PAYLOAD);
+         actions.add(AutismPacketInspectOverlay.PacketAction.EDIT_PAYLOAD);
       }
 
       if (LoggedPacketActions.flush(this.entry)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.ADD_PAYLOAD);
+         actions.add(AutismPacketInspectOverlay.PacketAction.ADD_PAYLOAD);
       }
 
       if (LoggedPacketActions.write(this.entry)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.SEND);
+         actions.add(AutismPacketInspectOverlay.PacketAction.SEND);
       }
 
       if (LoggedPacketActions.update(this.entry)) {
-         actions.add(AutismPacketInspectOverlay.Inner_StreamUtil.WAIT);
+         actions.add(AutismPacketInspectOverlay.PacketAction.WAIT);
       }
 
       return actions;
@@ -1027,14 +1027,14 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      PacketWireCaptureStore.Inner_StreamUtil packet = PacketWireCaptureStore.init(entry.packet);
+      PacketWireCaptureStore.PacketCapture packet = PacketWireCaptureStore.init(entry.packet);
       return packet != null && packet.plaintext().length > 0;
    }
 
    private int actionsWidth() {
       int width = 0;
 
-      for (AutismPacketInspectOverlay.Inner_StreamUtil action : this.availableActions()) {
+      for (AutismPacketInspectOverlay.PacketAction action : this.availableActions()) {
          if (width > 0) {
             width += this.clear();
          }
@@ -1046,15 +1046,15 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
    }
 
    private int addActionButton(
-      List<AutismPacketInspectOverlay.Inner_CachePool> buttons, int cursorX, int footerY, AutismPacketInspectOverlay.Inner_StreamUtil action
+      List<AutismPacketInspectOverlay.FooterButton> buttons, int cursorX, int footerY, AutismPacketInspectOverlay.PacketAction action
    ) {
       int width = this.actionButtonWidth(action);
       int x = cursorX - width;
-      buttons.add(new AutismPacketInspectOverlay.Inner_CachePool(action, x, footerY, width));
+      buttons.add(new AutismPacketInspectOverlay.FooterButton(action, x, footerY, width));
       return x - this.clear();
    }
 
-   private int actionButtonWidth(AutismPacketInspectOverlay.Inner_StreamUtil action) {
+   private int actionButtonWidth(AutismPacketInspectOverlay.PacketAction action) {
       return Math.min(
          68,
          autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(
@@ -1169,9 +1169,9 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       return 3 * this.lineHeight() + this.add_I_12() * 2 + 2;
    }
 
-   private record Inner_BufferHelper(String label, int labelColor, String value, int valueColor, int read) {
-      static AutismPacketInspectOverlay.Inner_BufferHelper of(String text, int offset, int color) {
-         return new AutismPacketInspectOverlay.Inner_BufferHelper(null, color, text, color, offset);
+   private record InspectLine(String label, int labelColor, String value, int valueColor, int read) {
+      static AutismPacketInspectOverlay.InspectLine of(String text, int offset, int color) {
+         return new AutismPacketInspectOverlay.InspectLine(null, color, text, color, offset);
       }
 
       int width(Font textRenderer) {
@@ -1192,16 +1192,16 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private record Inner_CachePool(AutismPacketInspectOverlay.Inner_StreamUtil action, int x, int load, int read) {
+   private record FooterButton(AutismPacketInspectOverlay.PacketAction action, int x, int load, int read) {
       private String label() {
          return this.action.init_Str;
       }
    }
 
-   private record Inner_DataUtil(int init, int load, int read) {
+   private record PanelFit(int init, int load, int read) {
    }
 
-   private enum Inner_StreamUtil {
+   private enum PacketAction {
       WAIT("Wait"),
       SEND("Send"),
       QUEUE("Queue"),
@@ -1212,7 +1212,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
 
       private final String init_Str;
 
-      Inner_StreamUtil(String label) {
+      PacketAction(String label) {
          this.init_Str = label;
       }
    }

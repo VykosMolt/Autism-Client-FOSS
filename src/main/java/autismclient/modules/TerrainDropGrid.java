@@ -13,7 +13,7 @@ final class TerrainDropGrid {
    static final double init_D = 0.6;
    static final int load_I = 48;
    private static final double close_D = 1.0E-6;
-   final KnockbackThrowPlanner.Inner_UiHelper world;
+   final KnockbackThrowPlanner.ThrowWorld world;
    final double refY;
    final double minDrop;
    final double radius;
@@ -26,14 +26,14 @@ final class TerrainDropGrid {
    final int originZ;
    final int halfSpan;
    final int span;
-   private final TerrainDropGrid.Inner_StreamUtil[] columns;
+   private final TerrainDropGrid.Column[] columns;
    private byte[] init_BArr;
    private byte[] load_BArr;
    private int[] init_IArr;
    private int open;
    int columnFetches;
 
-   TerrainDropGrid(KnockbackThrowPlanner.Inner_UiHelper world, AABB body, double ref, double radius, double minimum, boolean voidOnly) {
+   TerrainDropGrid(KnockbackThrowPlanner.ThrowWorld world, AABB body, double ref, double radius, double minimum, boolean voidOnly) {
       this.world = world;
       this.refY = ref;
       this.radius = Math.max(0.5, Math.min(16.0, radius));
@@ -47,7 +47,7 @@ final class TerrainDropGrid {
       this.originZ = (int)Math.floor(this.centerZ);
       this.halfSpan = (int)Math.ceil(this.radius) + 8;
       this.span = 2 * this.halfSpan + 1;
-      this.columns = new TerrainDropGrid.Inner_StreamUtil[this.span * this.span];
+      this.columns = new TerrainDropGrid.Column[this.span * this.span];
    }
 
    private int columnIndex(int x, int z) {
@@ -56,17 +56,17 @@ final class TerrainDropGrid {
       return i >= 0 && k >= 0 && i < this.span && k < this.span ? i * this.span + k : -1;
    }
 
-   TerrainDropGrid.Inner_StreamUtil columnAt(int x, int z) {
+   TerrainDropGrid.Column columnAt(int x, int z) {
       int index = this.columnIndex(x, z);
       if (index < 0) {
          return null;
       }
 
-      TerrainDropGrid.Inner_StreamUtil column = this.columns[index];
+      TerrainDropGrid.Column column = this.columns[index];
       if (column == null) {
          column = this.world.init_V_StreamUtil_I(x, z, this.baseY, this.refY + 0.6);
          if (column == null) {
-            column = TerrainDropGrid.Inner_StreamUtil.EMPTY_COLUMN;
+            column = TerrainDropGrid.Column.EMPTY_COLUMN;
          }
 
          this.columns[index] = column;
@@ -103,7 +103,7 @@ final class TerrainDropGrid {
       return upper & -1L << from;
    }
 
-   double init_D_V_StreamUtil_D(TerrainDropGrid.Inner_StreamUtil column, double y) {
+   double init_D_V_StreamUtil_D(TerrainDropGrid.Column column, double y) {
       int limit = (int)Math.floor((y - this.baseY) * 8.0 + 1.0E-6);
       if (limit > 0) {
          long tops = column.solidMask & ~(column.solidMask >>> 1);
@@ -116,13 +116,13 @@ final class TerrainDropGrid {
       return column.init_D <= y + 1.0E-6 ? column.init_D : -1.0 / 0.0;
    }
 
-   boolean init(TerrainDropGrid.Inner_StreamUtil column) {
+   boolean init(TerrainDropGrid.Column column) {
       return column.state != 0
          && (column.solidMask & this.occupancyMask(this.refY + 0.6, this.refY + this.bodyHeight)) == 0L
          && (column.load & this.occupancyMask(this.refY, this.refY + this.bodyHeight)) == 0L;
    }
 
-   boolean load(TerrainDropGrid.Inner_StreamUtil column) {
+   boolean load(TerrainDropGrid.Column column) {
       if (!this.init(column)) {
          return false;
       } else if (column.state == 2) {
@@ -152,7 +152,7 @@ final class TerrainDropGrid {
 
       byte state = this.init_BArr[index];
       if (state == 0) {
-         TerrainDropGrid.Inner_StreamUtil column = this.columnAt(x, z);
+         TerrainDropGrid.Column column = this.columnAt(x, z);
          state = (byte)(!this.load(column) ? 3 : (this.distanceToCell(x, z) <= this.radius + 1.0E-6 ? 1 : 2));
          this.init_BArr[index] = state;
       }
@@ -160,7 +160,7 @@ final class TerrainDropGrid {
       return state;
    }
 
-   TerrainDropGrid.Inner_CachePool simulateFlight(AABB body, Vec3 motion, boolean grounded, KnockbackThrowPlanner.Inner_SyncManager steer) {
+   TerrainDropGrid.FlightResult simulateFlight(AABB body, Vec3 motion, boolean grounded, KnockbackThrowPlanner.CounterSteer steer) {
       double hw = body.getXsize() / 2.0;
       double hd = body.getZsize() / 2.0;
       double h = body.getYsize();
@@ -177,10 +177,10 @@ final class TerrainDropGrid {
       int crossTick = -1;
       double crossSpeed = 0.0;
       if (steer == null) {
-         steer = KnockbackThrowPlanner.Inner_SyncManager.NONE;
+         steer = KnockbackThrowPlanner.CounterSteer.NONE;
       }
 
-      boolean countering = steer != KnockbackThrowPlanner.Inner_SyncManager.NONE;
+      boolean countering = steer != KnockbackThrowPlanner.CounterSteer.NONE;
 
       for (int tick = 1; tick <= 48; tick++) {
          double block = this.init_D_D(x, z, hw, hd);
@@ -241,7 +241,7 @@ final class TerrainDropGrid {
                }
 
                if (moved == -1.0 / 0.0) {
-                  return new TerrainDropGrid.Inner_CachePool(KnockbackThrowPlanner.Inner_TaskQueue.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
+                  return new TerrainDropGrid.FlightResult(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
                }
 
                if (Math.abs(moved - d) > 1.0E-9) {
@@ -280,7 +280,7 @@ final class TerrainDropGrid {
          }
 
          if ((caught & this.occupancyMask(y, y + h)) != 0L) {
-            return new TerrainDropGrid.Inner_CachePool(KnockbackThrowPlanner.Inner_TaskQueue.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
+            return new TerrainDropGrid.FlightResult(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
          }
 
          if (crossTick < 0 && !landed && this.init_Z_D(x, z, hw, hd)) {
@@ -289,7 +289,7 @@ final class TerrainDropGrid {
          }
 
          if (!landed && wantY < 0.0 && y < this.refY - 0.5) {
-            TerrainDropGrid.Inner_CachePool settled = this.init(x, z, hw, hd, vx, vz, y, tick, crossTick, crossSpeed, blocked, grazed);
+            TerrainDropGrid.FlightResult settled = this.init(x, z, hw, hd, vx, vz, y, tick, crossTick, crossSpeed, blocked, grazed);
             if (settled != null) {
                return settled;
             }
@@ -312,18 +312,18 @@ final class TerrainDropGrid {
       return this.init(x, z, y, 48, crossTick, crossSpeed, blocked, grazed);
    }
 
-   private TerrainDropGrid.Inner_CachePool init_V_CachePool_I(int tick, double x, double z) {
-      return new TerrainDropGrid.Inner_CachePool(KnockbackThrowPlanner.Inner_TaskQueue.UNKNOWN, 0.0, tick, x, z, false, -1, 0.0, false, false);
+   private TerrainDropGrid.FlightResult init_V_CachePool_I(int tick, double x, double z) {
+      return new TerrainDropGrid.FlightResult(KnockbackThrowPlanner.LandingOutcome.UNKNOWN, 0.0, tick, x, z, false, -1, 0.0, false, false);
    }
 
-   private TerrainDropGrid.Inner_CachePool init(double x, double z, double y, int tick, int crossTick, double crossSpeed, boolean blocked, boolean grazed) {
+   private TerrainDropGrid.FlightResult init(double x, double z, double y, int tick, int crossTick, double crossSpeed, boolean blocked, boolean grazed) {
       double drop = Math.max(0.0, this.refY - y);
-      KnockbackThrowPlanner.Inner_TaskQueue kind = drop > 1.0E-6 ? KnockbackThrowPlanner.Inner_TaskQueue.DROP : KnockbackThrowPlanner.Inner_TaskQueue.SAFE;
-      boolean edge = crossTick >= 0 && kind == KnockbackThrowPlanner.Inner_TaskQueue.DROP && !this.voidOnly && drop + 1.0E-6 >= this.minDrop;
-      return new TerrainDropGrid.Inner_CachePool(kind, drop, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed);
+      KnockbackThrowPlanner.LandingOutcome kind = drop > 1.0E-6 ? KnockbackThrowPlanner.LandingOutcome.DROP : KnockbackThrowPlanner.LandingOutcome.SAFE;
+      boolean edge = crossTick >= 0 && kind == KnockbackThrowPlanner.LandingOutcome.DROP && !this.voidOnly && drop + 1.0E-6 >= this.minDrop;
+      return new TerrainDropGrid.FlightResult(kind, drop, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed);
    }
 
-   private TerrainDropGrid.Inner_CachePool init(
+   private TerrainDropGrid.FlightResult init(
       double x, double z, double hw, double hd, double vx, double vz, double y, int tick, int crossTick, double crossSpeed, boolean blocked, boolean grazed
    ) {
       double speed = Math.hypot(vx, vz);
@@ -340,7 +340,7 @@ final class TerrainDropGrid {
 
       for (int cx = x0; cx <= x1; cx++) {
          for (int cz = z0; cz <= z1; cz++) {
-            TerrainDropGrid.Inner_StreamUtil column = this.columnAt(cx, cz);
+            TerrainDropGrid.Column column = this.columnAt(cx, cz);
             if (column == null) {
                return null;
             }
@@ -360,18 +360,18 @@ final class TerrainDropGrid {
 
       boolean edge = crossTick >= 0;
       if (caught) {
-         return new TerrainDropGrid.Inner_CachePool(KnockbackThrowPlanner.Inner_TaskQueue.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
+         return new TerrainDropGrid.FlightResult(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick, x, z, false, crossTick, crossSpeed, blocked, grazed);
       }
 
       if (top == -1.0 / 0.0) {
-         return new TerrainDropGrid.Inner_CachePool(
-            lava ? KnockbackThrowPlanner.Inner_TaskQueue.LAVA : KnockbackThrowPlanner.Inner_TaskQueue.VOID, 1.0 / 0.0, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed
+         return new TerrainDropGrid.FlightResult(
+            lava ? KnockbackThrowPlanner.LandingOutcome.LAVA : KnockbackThrowPlanner.LandingOutcome.VOID, 1.0 / 0.0, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed
          );
       }
 
       double drop = this.refY - top;
       return !this.voidOnly && drop + 1.0E-6 >= this.minDrop
-         ? new TerrainDropGrid.Inner_CachePool(KnockbackThrowPlanner.Inner_TaskQueue.DROP, drop, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed)
+         ? new TerrainDropGrid.FlightResult(KnockbackThrowPlanner.LandingOutcome.DROP, drop, tick, x, z, edge, crossTick, crossSpeed, blocked, grazed)
          : null;
    }
 
@@ -387,7 +387,7 @@ final class TerrainDropGrid {
 
       for (int cell = from; d > 0.0 ? cell <= to : cell >= to; cell += step) {
          for (int c = c0; c <= c1; c++) {
-            TerrainDropGrid.Inner_StreamUtil column = alongX ? this.columnAt(cell, c) : this.columnAt(c, cell);
+            TerrainDropGrid.Column column = alongX ? this.columnAt(cell, c) : this.columnAt(c, cell);
             if (column == null) {
                return -1.0 / 0.0;
             }
@@ -407,7 +407,7 @@ final class TerrainDropGrid {
       return d;
    }
 
-   private boolean init(double x, double z, double hw, double hd, TerrainDropGrid.Inner_DataUtil visitor) {
+   private boolean init(double x, double z, double hw, double hd, TerrainDropGrid.ColumnVisitor visitor) {
       int x0 = (int)Math.floor(x - hw + 0.001);
       int x1 = (int)Math.floor(x + hw - 0.001);
       int z0 = (int)Math.floor(z - hd + 0.001);
@@ -415,7 +415,7 @@ final class TerrainDropGrid {
 
       for (int cx = x0; cx <= x1; cx++) {
          for (int cz = z0; cz <= z1; cz++) {
-            TerrainDropGrid.Inner_StreamUtil column = this.columnAt(cx, cz);
+            TerrainDropGrid.Column column = this.columnAt(cx, cz);
             if (column == null || column.state == 0 || !visitor.visit(column)) {
                return false;
             }
@@ -450,7 +450,7 @@ final class TerrainDropGrid {
    }
 
    private double init_D_D(double x, double z, double hw, double hd) {
-      TerrainDropGrid.Inner_StreamUtil column = this.columnAt((int)Math.floor(x), (int)Math.floor(z));
+      TerrainDropGrid.Column column = this.columnAt((int)Math.floor(x), (int)Math.floor(z));
       return column != null && column.state != 0 ? column.init_F : 0.0 / 0.0;
    }
 
@@ -579,8 +579,8 @@ final class TerrainDropGrid {
       return false;
    }
 
-   record Inner_CachePool(
-      KnockbackThrowPlanner.Inner_TaskQueue outcome,
+   record FlightResult(
+      KnockbackThrowPlanner.LandingOutcome outcome,
       double init_D,
       int init_I,
       double load_D,
@@ -592,17 +592,17 @@ final class TerrainDropGrid {
       boolean read_Z
    ) {
       boolean init(double minimum, boolean voidOnly) {
-         return this.outcome == KnockbackThrowPlanner.Inner_TaskQueue.VOID
+         return this.outcome == KnockbackThrowPlanner.LandingOutcome.VOID
             || !voidOnly
-               && (this.outcome == KnockbackThrowPlanner.Inner_TaskQueue.LAVA || this.outcome == KnockbackThrowPlanner.Inner_TaskQueue.DROP && this.init_D + 1.0E-6 >= minimum);
+               && (this.outcome == KnockbackThrowPlanner.LandingOutcome.LAVA || this.outcome == KnockbackThrowPlanner.LandingOutcome.DROP && this.init_D + 1.0E-6 >= minimum);
       }
    }
 
-   private interface Inner_DataUtil {
-      boolean visit(TerrainDropGrid.Inner_StreamUtil var1);
+   private interface ColumnVisitor {
+      boolean visit(TerrainDropGrid.Column var1);
    }
 
-   record Inner_StreamUtil(long solidMask, long load, double init_D, byte state, float init_F) {
-      static final TerrainDropGrid.Inner_StreamUtil EMPTY_COLUMN = new TerrainDropGrid.Inner_StreamUtil(-1L, -1L, -1.0 / 0.0, (byte)0, 0.6F);
+   record Column(long solidMask, long load, double init_D, byte state, float init_F) {
+      static final TerrainDropGrid.Column EMPTY_COLUMN = new TerrainDropGrid.Column(-1L, -1L, -1.0 / 0.0, (byte)0, 0.6F);
    }
 }

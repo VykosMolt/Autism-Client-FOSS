@@ -14,8 +14,8 @@ import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.phys.HitResult.Type;
 
 public class AssertAction implements MacroAction {
-   public AssertAction.Inner_DataUtil check = AssertAction.Inner_DataUtil.CONNECTION;
-   public AssertAction.Inner_StreamUtil failureBehavior = AssertAction.Inner_StreamUtil.STOP_MACRO;
+   public AssertAction.CheckKind check = AssertAction.CheckKind.CONNECTION;
+   public AssertAction.FailureBehavior failureBehavior = AssertAction.FailureBehavior.STOP_MACRO;
    public String itemName = "";
    public String guiType = "ANY";
    public String entityId = "";
@@ -37,7 +37,7 @@ public class AssertAction implements MacroAction {
          }
 
          AutismClientMessaging.sendPrefixed("§c" + out);
-         if (this.failureBehavior == AssertAction.Inner_StreamUtil.STOP_MACRO) {
+         if (this.failureBehavior == AssertAction.FailureBehavior.STOP_MACRO) {
             MacroExecutor.stopCurrentRun();
          }
       }
@@ -159,8 +159,8 @@ public class AssertAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.check = MacroNbtCodecHelper.parseEnum(AssertAction.Inner_DataUtil.class, tag.getStringOr("check", "CONNECTION"), AssertAction.Inner_DataUtil.CONNECTION);
-      this.failureBehavior = MacroNbtCodecHelper.parseEnum(AssertAction.Inner_StreamUtil.class, tag.getStringOr("failureBehavior", "STOP_MACRO"), AssertAction.Inner_StreamUtil.STOP_MACRO);
+      this.check = MacroNbtCodecHelper.parseEnum(AssertAction.CheckKind.class, tag.getStringOr("check", "CONNECTION"), AssertAction.CheckKind.CONNECTION);
+      this.failureBehavior = MacroNbtCodecHelper.parseEnum(AssertAction.FailureBehavior.class, tag.getStringOr("failureBehavior", "STOP_MACRO"), AssertAction.FailureBehavior.STOP_MACRO);
       this.itemName = tag.getStringOr("itemName", "");
       this.guiType = tag.getStringOr("guiType", "ANY");
       this.entityId = tag.getStringOr("entityId", "");
@@ -177,7 +177,7 @@ public class AssertAction implements MacroAction {
       return "!";
    }
 
-   public enum Inner_DataUtil {
+   public enum CheckKind {
       HELD_ITEM,
       INVENTORY_ITEM,
       GUI_TYPE,
@@ -191,7 +191,7 @@ public class AssertAction implements MacroAction {
       LOOKING_AT_BLOCK;
    }
 
-   public enum Inner_StreamUtil {
+   public enum FailureBehavior {
       STOP_MACRO,
       WARN_ONLY;
    }

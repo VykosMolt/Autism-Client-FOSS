@@ -16,7 +16,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult.Type;
 
 public class UseItemPhaseAction implements MacroAction {
-   public UseItemPhaseAction.Inner_DataUtil phase = UseItemPhaseAction.Inner_DataUtil.USE_ONCE;
+   public UseItemPhaseAction.UsePhase phase = UseItemPhaseAction.UsePhase.USE_ONCE;
    public String itemName = "";
    public String hand = "MAIN_HAND";
    public int holdTicks = 0;
@@ -131,7 +131,7 @@ public class UseItemPhaseAction implements MacroAction {
 
       PacketGateAction gate = new PacketGateAction();
       gate.gateId = this.gateId;
-      gate.mode = PacketGateAction.Inner_CachePool.CANCEL;
+      gate.mode = PacketGateAction.GateMode.CANCEL;
       if (this.gatePlayerActions) {
          gate.packetNames.add("ServerboundPlayerActionPacket");
       }
@@ -200,7 +200,7 @@ public class UseItemPhaseAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.phase = MacroNbtCodecHelper.parseEnum(UseItemPhaseAction.Inner_DataUtil.class, tag.getStringOr("phase", "USE_ONCE"), UseItemPhaseAction.Inner_DataUtil.USE_ONCE);
+      this.phase = MacroNbtCodecHelper.parseEnum(UseItemPhaseAction.UsePhase.class, tag.getStringOr("phase", "USE_ONCE"), UseItemPhaseAction.UsePhase.USE_ONCE);
       this.itemName = tag.getStringOr("itemName", "");
       this.hand = tag.getStringOr("hand", "MAIN_HAND");
       this.holdTicks = tag.getIntOr("holdTicks", 0);
@@ -227,7 +227,7 @@ public class UseItemPhaseAction implements MacroAction {
       return "U";
    }
 
-   public enum Inner_DataUtil {
+   public enum UsePhase {
       USE_ONCE,
       START_USE,
       RELEASE_USE,

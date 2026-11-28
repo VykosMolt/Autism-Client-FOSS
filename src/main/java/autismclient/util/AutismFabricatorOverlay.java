@@ -65,7 +65,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private ThemedTextInputBox timesField;
    private ThemedTextInputBox searchField;
    private int actionIndex = 0;
-   private final AutismFabricatorOverlay.Inner_DataUtil[] actions = AutismFabricatorOverlay.Inner_DataUtil.values();
+   private final AutismFabricatorOverlay.FabricatorAction[] actions = AutismFabricatorOverlay.FabricatorAction.values();
    private final List<String> actionLabels = Arrays.stream(this.actions).map(action -> action.init_Str).toList();
    private static final List<String> CLICK_OPTIONS = List.of("Left Click", "Right Click");
    private static final List<String> PACKET_CLICK_OPTIONS = List.of("Left Click", "Right Click", "Quick Move");
@@ -89,7 +89,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private final autismclient.gui.ui.widgets.ScrollOffsetController craftListScroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
    private AutoCraftingEngine.CraftOption selectedOption = null;
    private ItemStack selectedOutput = ItemStack.EMPTY;
-   private final List<autismclient.util.macro.CraftAction.Inner_DataUtil> craftPlan = new ArrayList<>();
+   private final List<autismclient.util.macro.CraftAction.CraftEntry> craftPlan = new ArrayList<>();
    private int selectedCraftIndex = -1;
    private int craftScrollOffset = 0;
    private final autismclient.gui.ui.widgets.ScrollOffsetController planScroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
@@ -98,7 +98,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       t.setDaemon(true);
       return t;
    });
-   private final AtomicReference<AutismFabricatorOverlay.Inner_StreamUtil> pendingRecipeResult = new AtomicReference<>();
+   private final AtomicReference<AutismFabricatorOverlay.RecipeResult> pendingRecipeResult = new AtomicReference<>();
    private final AtomicLong recipeRequestId = new AtomicLong();
    private volatile boolean recipeScanRunning;
    private int recipeScanFingerprint;
@@ -117,7 +117,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private String recipeSearch = "";
    private int selectedRecipeId = -1;
    private String selectedRecipeKey = "";
-   private AutismFabricatorOverlay.Inner_DataUtil action;
+   private AutismFabricatorOverlay.FabricatorAction action;
 
    private static int fieldHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
@@ -350,7 +350,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    public AutismFabricatorOverlay(AbstractContainerScreen<?> parentScreen) {
-      this.action = AutismFabricatorOverlay.Inner_DataUtil.CLICK;
+      this.action = AutismFabricatorOverlay.FabricatorAction.CLICK;
       this.parentScreen = parentScreen;
       this.resetLayout();
       this.panelWidth = this.defaultWidth;
@@ -1014,7 +1014,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private void pollRecipeResults() {
       if (this.isCraftMode() && MINECRAFT.player != null && MINECRAFT.level != null) {
-         AutismFabricatorOverlay.Inner_StreamUtil result = this.pendingRecipeResult.getAndSet(null);
+         AutismFabricatorOverlay.RecipeResult result = this.pendingRecipeResult.getAndSet(null);
          if (result != null && result.requestId == this.recipeRequestId.get() && result.connection == MINECRAFT.getConnection()) {
             this.applyCraftOptions(result.options);
          }
@@ -1040,7 +1040,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          RECIPE_EXECUTOR.execute(() -> {
             try {
                List<AutoCraftingEngine.CraftOption> options = AutoCraftingEngine.scanOptions(snapshot);
-               this.pendingRecipeResult.set(new AutismFabricatorOverlay.Inner_StreamUtil(generation, snapshot.connection, options));
+               this.pendingRecipeResult.set(new AutismFabricatorOverlay.RecipeResult(generation, snapshot.connection, options));
             } catch (Throwable t) {
                AutismClientAddon.LOG.warn("[Autism] craft recipe scan failed", t);
             } finally {
@@ -1239,27 +1239,27 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       this.selectedRecipeKey = "";
    }
 
-   private AutoCraftingEngine.CraftOption optionFor(autismclient.util.macro.CraftAction.Inner_DataUtil entry) {
+   private AutoCraftingEngine.CraftOption optionFor(autismclient.util.macro.CraftAction.CraftEntry entry) {
       return entry == null ? null : AutoCraftingEngine.matchOptionInList(this.craftOptions, entry.recipeKey, entry.recipeId);
    }
 
-   private autismclient.util.macro.CraftAction.Inner_DataUtil draftEntry() {
+   private autismclient.util.macro.CraftAction.CraftEntry draftEntry() {
       if (this.selectedOption != null && !this.selectedOutput.isEmpty()) {
          int configuredAmount = this.enteredAmount();
-         return configuredAmount <= 0 ? null : autismclient.util.macro.CraftAction.Inner_DataUtil.init(this.selectedOption, configuredAmount, this.useMaxAmount);
+         return configuredAmount <= 0 ? null : autismclient.util.macro.CraftAction.CraftEntry.init(this.selectedOption, configuredAmount, this.useMaxAmount);
       } else {
          return null;
       }
    }
 
-   private autismclient.util.macro.CraftAction.Inner_DataUtil selectedPlanEntry() {
+   private autismclient.util.macro.CraftAction.CraftEntry selectedPlanEntry() {
       return this.selectedCraftIndex >= 0 && this.selectedCraftIndex < this.craftPlan.size() ? this.craftPlan.get(this.selectedCraftIndex) : null;
    }
 
    private void selectPlanEntry(int index) {
       if (index >= 0 && index < this.craftPlan.size()) {
          this.selectedCraftIndex = index;
-         autismclient.util.macro.CraftAction.Inner_DataUtil entry = this.craftPlan.get(index);
+         autismclient.util.macro.CraftAction.CraftEntry entry = this.craftPlan.get(index);
          if (entry != null) {
             this.useMaxAmount = entry.useMaxAmount;
             this.countInput = String.valueOf(Math.max(1, entry.amount));
@@ -1291,14 +1291,14 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private void addDraftToPlan() {
-      autismclient.util.macro.CraftAction.Inner_DataUtil draft = this.draftEntry();
+      autismclient.util.macro.CraftAction.CraftEntry draft = this.draftEntry();
       if (draft == null) {
          this.showStatus("Select a recipe and amount first", ChatFormatting.RED);
       } else {
          int existingIndex = -1;
 
          for (int i = 0; i < this.craftPlan.size(); i++) {
-            autismclient.util.macro.CraftAction.Inner_DataUtil existing = this.craftPlan.get(i);
+            autismclient.util.macro.CraftAction.CraftEntry existing = this.craftPlan.get(i);
             if (existing != null
                && (!draft.recipeKey.isBlank() && draft.recipeKey.equalsIgnoreCase(existing.recipeKey) || draft.recipeId >= 0 && draft.recipeId == existing.recipeId)) {
                existingIndex = i;
@@ -1336,11 +1336,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private List<autismclient.util.macro.CraftAction.Inner_DataUtil> activeEntries() {
+   private List<autismclient.util.macro.CraftAction.CraftEntry> activeEntries() {
       if (!this.craftPlan.isEmpty()) {
-         List<autismclient.util.macro.CraftAction.Inner_DataUtil> copies = new ArrayList<>(this.craftPlan.size());
+         List<autismclient.util.macro.CraftAction.CraftEntry> copies = new ArrayList<>(this.craftPlan.size());
 
-         for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : this.craftPlan) {
+         for (autismclient.util.macro.CraftAction.CraftEntry entry : this.craftPlan) {
             if (entry != null && entry.isValid()) {
                copies.add(entry.copy());
             }
@@ -1348,13 +1348,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
          return copies;
       } else {
-         autismclient.util.macro.CraftAction.Inner_DataUtil draft = this.draftEntry();
+         autismclient.util.macro.CraftAction.CraftEntry draft = this.draftEntry();
          return draft == null ? List.of() : List.of(draft);
       }
    }
 
    private autismclient.util.macro.CraftAction buildCraftAction() {
-      List<autismclient.util.macro.CraftAction.Inner_DataUtil> activeEntries = this.activeEntries();
+      List<autismclient.util.macro.CraftAction.CraftEntry> activeEntries = this.activeEntries();
       if (activeEntries.isEmpty()) {
          return null;
       }
@@ -1364,7 +1364,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       return action;
    }
 
-   private Component entryLabel(autismclient.util.macro.CraftAction.Inner_DataUtil entry) {
+   private Component entryLabel(autismclient.util.macro.CraftAction.CraftEntry entry) {
       if (entry != null && entry.isValid()) {
          AutoCraftingEngine.CraftOption option = this.optionFor(entry);
          String amount = entry.useMaxAmount ? "Max" : "x" + Math.max(1, entry.amount);
@@ -1926,7 +1926,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             return;
          }
 
-         if (this.action == AutismFabricatorOverlay.Inner_DataUtil.DROP) {
+         if (this.action == AutismFabricatorOverlay.FabricatorAction.DROP) {
             autismclient.util.macro.DropAction dropAction = new autismclient.util.macro.DropAction();
             dropAction.useHandlerSlots = true;
             dropAction.mode = this.dropWholeStack ? autismclient.util.macro.DropAction.Inner_DataUtil.ALL : autismclient.util.macro.DropAction.Inner_DataUtil.TIMES;
@@ -2033,7 +2033,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                return;
             }
 
-            if (this.action == AutismFabricatorOverlay.Inner_DataUtil.DROP && !queue) {
+            if (this.action == AutismFabricatorOverlay.FabricatorAction.DROP && !queue) {
                int queuedCount = AutismSessionState.getInstance().flushDelayedPackets(handler);
                int sent = InventoryDropHelper.init(MINECRAFT, slot, this.dropWholeStack ? 0 : repeats);
                if (sent <= 0) {
@@ -2117,7 +2117,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private void sendCraftAction(boolean queue) {
-      List<autismclient.util.macro.CraftAction.Inner_DataUtil> entries = this.activeEntries();
+      List<autismclient.util.macro.CraftAction.CraftEntry> entries = this.activeEntries();
       if (entries.isEmpty()) {
          this.showStatus("Select a recipe or add a craft entry first", ChatFormatting.RED);
       } else if (!queue) {
@@ -2128,7 +2128,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             Thread craftThread = new Thread(() -> {
                AutoCraftingEngine.CraftResult result = null;
 
-               for (autismclient.util.macro.CraftAction.Inner_DataUtil entryx : entries) {
+               for (autismclient.util.macro.CraftAction.CraftEntry entryx : entries) {
                   AutoCraftingEngine.CraftOption optionx = AutoCraftingEngine.findOptionByKey(MINECRAFT, entryx.recipeKey);
                   if (optionx == null) {
                      optionx = AutoCraftingEngine.findOptionById(MINECRAFT, entryx.recipeId);
@@ -2166,7 +2166,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       } else {
          int queuedClicks = 0;
 
-         for (autismclient.util.macro.CraftAction.Inner_DataUtil entry : entries) {
+         for (autismclient.util.macro.CraftAction.CraftEntry entry : entries) {
             AutoCraftingEngine.CraftOption option = AutoCraftingEngine.findOptionByKey(MINECRAFT, entry.recipeKey);
             if (option == null) {
                option = AutoCraftingEngine.findOptionById(MINECRAFT, entry.recipeId);
@@ -2535,7 +2535,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private enum Inner_DataUtil {
+   private enum FabricatorAction {
       CLICK("Click", "Use Left or Right on the resolved slot.") {
          @Override
          boolean hasClickChoice() {
@@ -2606,7 +2606,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       final String init_Str;
       final String load_Str;
 
-      Inner_DataUtil(String displayName, String description) {
+      FabricatorAction(String displayName, String description) {
          this.init_Str = displayName;
          this.load_Str = description;
       }
@@ -2634,12 +2634,12 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       abstract ContainerClickType clickType(boolean var1);
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class RecipeResult {
       final long requestId;
       final Object connection;
       final List<AutoCraftingEngine.CraftOption> options;
 
-      Inner_StreamUtil(long generation, Object connection, List<AutoCraftingEngine.CraftOption> options) {
+      RecipeResult(long generation, Object connection, List<AutoCraftingEngine.CraftOption> options) {
          this.requestId = generation;
          this.connection = connection;
          this.options = options;

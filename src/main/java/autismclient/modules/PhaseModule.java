@@ -32,13 +32,13 @@ public final class PhaseModule extends Module {
    private static final int init_I = 0;
    private static final int load = 1;
    private static final int read = 2;
-   private static final PhaseModule.Inner_StreamUtil CLIP_MODE = new PhaseModule.Inner_StreamUtil();
-   private static final PhaseModule.Inner_CachePool INTAVE_MODE = new PhaseModule.Inner_CachePool();
-   private static final PhaseModule.Inner_DataUtil BLINK_MODE = new PhaseModule.Inner_DataUtil();
-   private static final PhaseModule.Inner_ConfigStore SPIDER_MODE = new PhaseModule.Inner_ConfigStore();
+   private static final PhaseModule.ClipMode CLIP_MODE = new PhaseModule.ClipMode();
+   private static final PhaseModule.IntaveMode INTAVE_MODE = new PhaseModule.IntaveMode();
+   private static final PhaseModule.BlinkMode BLINK_MODE = new PhaseModule.BlinkMode();
+   private static final PhaseModule.SpiderMode SPIDER_MODE = new PhaseModule.SpiderMode();
    private static volatile PhaseModule INSTANCE;
    private static volatile int activeModeKind;
-   private volatile PhaseModule.Inner_BufferHelper mode;
+   private volatile PhaseModule.PhaseMode mode;
 
    public PhaseModule() {
       super("phase", "Phase", ae.load_ae, "Phase through blocks.");
@@ -56,7 +56,7 @@ public final class PhaseModule extends Module {
    @Override
    public String info() {
       String mode = this.choice("mode");
-      PhaseModule.Inner_BufferHelper current = this.mode;
+      PhaseModule.PhaseMode current = this.mode;
       if (current == null) {
          return mode;
       }
@@ -104,7 +104,7 @@ public final class PhaseModule extends Module {
    @Override
    public void preMovementTick() {
       if (!AutismLiteVariant.enabled()) {
-         PhaseModule.Inner_BufferHelper mode = this.mode;
+         PhaseModule.PhaseMode mode = this.mode;
          if (mode != null) {
             mode.modePreMovementTick();
          }
@@ -113,7 +113,7 @@ public final class PhaseModule extends Module {
 
    @Override
    public void onNetworkMovementTickPre() {
-      PhaseModule.Inner_BufferHelper mode = this.mode;
+      PhaseModule.PhaseMode mode = this.mode;
       if (mode != null) {
          mode.modeNetworkTickPre();
       }
@@ -121,7 +121,7 @@ public final class PhaseModule extends Module {
 
    @Override
    public void onPacketProcessFrame() {
-      PhaseModule.Inner_BufferHelper mode = this.mode;
+      PhaseModule.PhaseMode mode = this.mode;
       if (mode != null) {
          mode.modePacketFrame();
       }
@@ -129,13 +129,13 @@ public final class PhaseModule extends Module {
 
    @Override
    public boolean shouldCancelPlayerTick() {
-      PhaseModule.Inner_BufferHelper mode = this.mode;
+      PhaseModule.PhaseMode mode = this.mode;
       return mode != null && mode.modeCancelsPlayerTick();
    }
 
    @Override
    public boolean onPacketReceive(Packet<?> packet) {
-      PhaseModule.Inner_BufferHelper mode = this.mode;
+      PhaseModule.PhaseMode mode = this.mode;
       if (mode != null && packet instanceof ClientboundPlayerPositionPacket) {
          mode.modeOnSetback();
       }
@@ -158,21 +158,21 @@ public final class PhaseModule extends Module {
    }
 
    private void refreshMode() {
-      PhaseModule.Inner_BufferHelper next = modeByName(this.choice("mode"));
+      PhaseModule.PhaseMode next = modeByName(this.choice("mode"));
       if (next != this.mode) {
          this.deactivateMode();
          this.activateMode(next);
       }
    }
 
-   private void activateMode(PhaseModule.Inner_BufferHelper mode) {
+   private void activateMode(PhaseModule.PhaseMode mode) {
       this.mode = mode;
       this.updateActiveModeKind();
       mode.onModeStart();
    }
 
    private void deactivateMode() {
-      PhaseModule.Inner_BufferHelper mode = this.mode;
+      PhaseModule.PhaseMode mode = this.mode;
       this.mode = null;
       this.updateActiveModeKind();
       if (mode != null) {
@@ -181,7 +181,7 @@ public final class PhaseModule extends Module {
    }
 
    private void updateActiveModeKind() {
-      PhaseModule.Inner_BufferHelper mode = this.mode;
+      PhaseModule.PhaseMode mode = this.mode;
       if (mode == SPIDER_MODE) {
          activeModeKind = 1;
       } else if (mode == BLINK_MODE) {
@@ -191,8 +191,8 @@ public final class PhaseModule extends Module {
       }
    }
 
-   private static PhaseModule.Inner_BufferHelper modeByName(String name) {
-      PhaseModule.Inner_BufferHelper var10000;
+   private static PhaseModule.PhaseMode modeByName(String name) {
+      PhaseModule.PhaseMode var10000;
       switch (name) {
          case "Intave":
             var10000 = INTAVE_MODE;
@@ -238,7 +238,7 @@ public final class PhaseModule extends Module {
       return false;
    }
 
-   private interface Inner_BufferHelper {
+   private interface PhaseMode {
       default void onModeStart() {
       }
 
@@ -266,7 +266,7 @@ public final class PhaseModule extends Module {
       }
    }
 
-   private static final class Inner_CachePool implements PhaseModule.Inner_BufferHelper {
+   private static final class IntaveMode implements PhaseModule.PhaseMode {
       private boolean sinking;
 
       @Override
@@ -323,7 +323,7 @@ public final class PhaseModule extends Module {
       }
    }
 
-   private static final class Inner_ConfigStore implements PhaseModule.Inner_BufferHelper {
+   private static final class SpiderMode implements PhaseModule.PhaseMode {
       private int init = 1;
 
       @Override
@@ -384,10 +384,10 @@ public final class PhaseModule extends Module {
       }
    }
 
-   private static final class Inner_DataUtil implements PhaseModule.Inner_BufferHelper {
+   private static final class BlinkMode implements PhaseModule.PhaseMode {
       private static final int init_I = 3;
-      private final BlinkPacketManager.Inner_StreamUtil blinkPolicy = this::blinkDecision;
-      private volatile PhaseModule.Inner_DataUtil.Inner_DataUtil_2 state;
+      private final BlinkPacketManager.BlinkPolicy blinkPolicy = this::blinkDecision;
+      private volatile PhaseModule.BlinkMode.BlinkState state;
       private volatile boolean probingCollision;
       private volatile String pendingDisableReason;
       private volatile boolean exceededMaximum;
@@ -395,13 +395,13 @@ public final class PhaseModule extends Module {
       private boolean walking;
       private int failedClearCount;
 
-      private Inner_DataUtil() {
-         this.state = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING;
+      private BlinkMode() {
+         this.state = PhaseModule.BlinkMode.BlinkState.WAITING;
       }
 
       @Override
       public void onModeStart() {
-         this.state = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING;
+         this.state = PhaseModule.BlinkMode.BlinkState.WAITING;
          this.heldTicks = 0;
          this.pendingDisableReason = null;
          this.exceededMaximum = false;
@@ -412,9 +412,9 @@ public final class PhaseModule extends Module {
 
       @Override
       public void onModeStop() {
-         this.state = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.FLUSHING;
+         this.state = PhaseModule.BlinkMode.BlinkState.FLUSHING;
          BlinkPacketManager.flushIncoming();
-         this.state = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING;
+         this.state = PhaseModule.BlinkMode.BlinkState.WAITING;
          BlinkPacketManager.unregisterPolicy(this.blinkPolicy);
          BlinkPacketManager.requestPolicyFlush(true, true);
          this.heldTicks = 0;
@@ -431,12 +431,12 @@ public final class PhaseModule extends Module {
             this.probingCollision = true;
 
             try {
-               if (this.state == PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
+               if (this.state == PhaseModule.BlinkMode.BlinkState.WAITING) {
                   if (PhaseModule.collidesAt(player, player.position())) {
-                     this.state = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.PHASING;
+                     this.state = PhaseModule.BlinkMode.BlinkState.PHASING;
                   }
-               } else if (this.state == PhaseModule.Inner_DataUtil.Inner_DataUtil_2.PHASING && !PhaseModule.collidesAt(player, player.position())) {
-                  this.state = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WALKING;
+               } else if (this.state == PhaseModule.BlinkMode.BlinkState.PHASING && !PhaseModule.collidesAt(player, player.position())) {
+                  this.state = PhaseModule.BlinkMode.BlinkState.WALKING;
                   this.walking = true;
                }
             } finally {
@@ -454,7 +454,7 @@ public final class PhaseModule extends Module {
          } else if (this.exceededMaximum) {
             this.exceededMaximum = false;
             this.flushHeldPackets();
-         } else if (this.state == PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WALKING) {
+         } else if (this.state == PhaseModule.BlinkMode.BlinkState.WALKING) {
             LocalPlayer player = Module.MC.player;
             if (player != null) {
                boolean collides = false;
@@ -485,7 +485,7 @@ public final class PhaseModule extends Module {
             return true;
          }
 
-         if (this.state == PhaseModule.Inner_DataUtil.Inner_DataUtil_2.PHASING || this.state == PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WALKING
+         if (this.state == PhaseModule.BlinkMode.BlinkState.PHASING || this.state == PhaseModule.BlinkMode.BlinkState.WALKING
             )
           {
             this.heldTicks++;
@@ -495,9 +495,9 @@ public final class PhaseModule extends Module {
       }
 
       private void flushHeldPackets() {
-         this.state = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.FLUSHING;
+         this.state = PhaseModule.BlinkMode.BlinkState.FLUSHING;
          BlinkPacketManager.flushIncoming();
-         this.state = PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING;
+         this.state = PhaseModule.BlinkMode.BlinkState.WAITING;
          BlinkPacketManager.requestPolicyFlush(false, true);
          this.heldTicks = 0;
          if (this.walking) {
@@ -514,24 +514,24 @@ public final class PhaseModule extends Module {
          this.pendingDisableReason = "Phase disabled: server set you back.";
       }
 
-      private BlinkPacketManager.Inner_DataUtil blinkDecision(Packet<?> packet, boolean incoming) {
+      private BlinkPacketManager.PacketDecision blinkDecision(Packet<?> packet, boolean incoming) {
          if (aD.read_Z()) {
-            return BlinkPacketManager.Inner_DataUtil.FLUSH;
+            return BlinkPacketManager.PacketDecision.FLUSH;
          } else {
-            PhaseModule.Inner_DataUtil.Inner_DataUtil_2 current = this.state;
-            if (current == PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
-               return BlinkPacketManager.Inner_DataUtil.FLUSH;
+            PhaseModule.BlinkMode.BlinkState current = this.state;
+            if (current == PhaseModule.BlinkMode.BlinkState.WAITING) {
+               return BlinkPacketManager.PacketDecision.FLUSH;
             } else if (!(packet instanceof ClientboundBlockUpdatePacket)
                && !(packet instanceof ClientboundBlockEventPacket)
                && !(packet instanceof ClientboundSectionBlocksUpdatePacket)
                && !(packet instanceof ClientboundLevelChunkWithLightPacket)
                && !(packet instanceof ClientboundChunkBatchFinishedPacket)
                && !(packet instanceof ClientboundSetTitleTextPacket)) {
-               return current != PhaseModule.Inner_DataUtil.Inner_DataUtil_2.PHASING && current != PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WALKING
-                  ? BlinkPacketManager.Inner_DataUtil.PASS
-                  : BlinkPacketManager.Inner_DataUtil.QUEUE;
+               return current != PhaseModule.BlinkMode.BlinkState.PHASING && current != PhaseModule.BlinkMode.BlinkState.WALKING
+                  ? BlinkPacketManager.PacketDecision.PASS
+                  : BlinkPacketManager.PacketDecision.QUEUE;
             } else {
-               return BlinkPacketManager.Inner_DataUtil.PASS;
+               return BlinkPacketManager.PacketDecision.PASS;
             }
          }
       }
@@ -546,11 +546,11 @@ public final class PhaseModule extends Module {
 
       @Override
       public String modeStatus() {
-         PhaseModule.Inner_DataUtil.Inner_DataUtil_2 current = this.state;
-         return current == PhaseModule.Inner_DataUtil.Inner_DataUtil_2.WAITING ? "" : current.name().toLowerCase(Locale.ROOT);
+         PhaseModule.BlinkMode.BlinkState current = this.state;
+         return current == PhaseModule.BlinkMode.BlinkState.WAITING ? "" : current.name().toLowerCase(Locale.ROOT);
       }
 
-      private enum Inner_DataUtil_2 {
+      private enum BlinkState {
          WAITING(false),
          PHASING(false),
          WALKING(true),
@@ -558,13 +558,13 @@ public final class PhaseModule extends Module {
 
          final boolean init_Z;
 
-         Inner_DataUtil_2(boolean boxCollisions) {
+         BlinkState(boolean boxCollisions) {
             this.init_Z = boxCollisions;
          }
       }
    }
 
-   private static final class Inner_StreamUtil implements PhaseModule.Inner_BufferHelper {
+   private static final class ClipMode implements PhaseModule.PhaseMode {
       private static final double init = 0.07840000152;
 
       @Override

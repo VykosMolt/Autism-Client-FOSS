@@ -39,15 +39,15 @@ public final class PickItemScreen extends VirtualScaledScreen {
    private static final int SELECTED_TEXT_COLOR = -50373;
    private final Screen parent;
    private final Consumer<String> onPick;
-   private final List<PickItemScreen.Inner_DataUtil> allItems;
-   private final List<PickItemScreen.Inner_StreamUtil> rowHits = new ArrayList<>();
+   private final List<PickItemScreen.ItemEntry> allItems;
+   private final List<PickItemScreen.RowHit> rowHits = new ArrayList<>();
    private String selectedId;
    private ThemedTextInputBox searchBox;
    private int scrollOffset;
    private boolean init_Z;
    private int scrollGrabOffset;
    private String cachedNeedle;
-   private List<PickItemScreen.Inner_DataUtil> cachedMatches = List.of();
+   private List<PickItemScreen.ItemEntry> cachedMatches = List.of();
 
    private static int mutedColor() {
       return ThemePaletteManager.recolor(-4743522, ThemePaletteManager.ColorRole.TEXT);
@@ -110,7 +110,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
    }
 
    private void drawList(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int mx, int my) {
-      List<PickItemScreen.Inner_DataUtil> rows = this.filteredItems();
+      List<PickItemScreen.ItemEntry> rows = this.filteredItems();
       int rowH = this.rowHeight();
       int maxScroll = Math.max(0, this.contentHeight() - h);
       this.scrollOffset = clamp(this.scrollOffset, 0, maxScroll);
@@ -121,7 +121,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          int last = clamp((this.scrollOffset + h - 1) / rowH + 1, 0, rows.size() - 1);
 
          for (int i = first; i <= last; i++) {
-            PickItemScreen.Inner_DataUtil entry = rows.get(i);
+            PickItemScreen.ItemEntry entry = rows.get(i);
             int rowY = y - this.scrollOffset + i * rowH;
             if (rowY + rowH > y && rowY < y + h) {
                this.drawRow(graphics, entry, x, rowY, w, mx, my);
@@ -130,7 +130,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
       }
    }
 
-   private void drawRow(GuiGraphicsExtractor graphics, PickItemScreen.Inner_DataUtil entry, int x, int y, int w, int mx, int my) {
+   private void drawRow(GuiGraphicsExtractor graphics, PickItemScreen.ItemEntry entry, int x, int y, int w, int mx, int my) {
       boolean selected = entry.id.equals(this.selectedId);
       int rowH = this.rowHeight();
       boolean over = mx >= x && mx < x + w && my >= y && my < y + rowH;
@@ -149,7 +149,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          }
       }
 
-      this.rowHits.add(new PickItemScreen.Inner_StreamUtil(PickItemScreen.Inner_CachePool.ITEM, x, y, w, rowH, entry.id));
+      this.rowHits.add(new PickItemScreen.RowHit(PickItemScreen.HitKind.ITEM, x, y, w, rowH, entry.id));
    }
 
    private void drawItem(GuiGraphicsExtractor graphics, ItemStack stack, int x, int y) {
@@ -165,7 +165,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, "Pick Item", mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.init(bounds, headerH);
-      this.rowHits.add(new PickItemScreen.Inner_StreamUtil(PickItemScreen.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
+      this.rowHits.add(new PickItemScreen.RowHit(PickItemScreen.HitKind.CLOSE, close.read(), close.write(), close.update(), close.sync(), ""));
    }
 
    @Override
@@ -189,8 +189,8 @@ public final class PickItemScreen extends VirtualScaledScreen {
       }
 
       for (int i = this.rowHits.size() - 1; i >= 0; i--) {
-         PickItemScreen.Inner_StreamUtil hit = this.rowHits.get(i);
-         if (hit.contains(mx, my) && (hit.kind != PickItemScreen.Inner_CachePool.ITEM || this.listBounds().init_Z(mx, my))) {
+         PickItemScreen.RowHit hit = this.rowHits.get(i);
+         if (hit.contains(mx, my) && (hit.kind != PickItemScreen.HitKind.ITEM || this.listBounds().init_Z(mx, my))) {
             switch (hit.kind) {
                case CLOSE:
                   this.onClose();
@@ -260,7 +260,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
          this.searchBox.setPlaceholder(Component.literal("Search item id or name"));
          this.searchBox.setChangedListener(value -> this.scrollOffset = 0);
          this.searchBox.setSubmitHandler(value -> {
-            List<PickItemScreen.Inner_DataUtil> rows = this.filteredItems();
+            List<PickItemScreen.ItemEntry> rows = this.filteredItems();
             if (!rows.isEmpty()) {
                this.pick(rows.get(0).id);
             }
@@ -293,7 +293,7 @@ public final class PickItemScreen extends VirtualScaledScreen {
       this.onClose();
    }
 
-   private List<PickItemScreen.Inner_DataUtil> filteredItems() {
+   private List<PickItemScreen.ItemEntry> filteredItems() {
       String needle = this.searchText().trim().toLowerCase(Locale.ROOT);
       if (needle.equals(this.cachedNeedle)) {
          return this.cachedMatches;
@@ -305,9 +305,9 @@ public final class PickItemScreen extends VirtualScaledScreen {
          return this.cachedMatches;
       }
 
-      List<PickItemScreen.Inner_DataUtil> out = new ArrayList<>();
+      List<PickItemScreen.ItemEntry> out = new ArrayList<>();
 
-      for (PickItemScreen.Inner_DataUtil entry : this.allItems) {
+      for (PickItemScreen.ItemEntry entry : this.allItems) {
          if (entry.id.contains(needle) || entry.read.contains(needle)) {
             out.add(entry);
          }
@@ -317,19 +317,19 @@ public final class PickItemScreen extends VirtualScaledScreen {
       return this.cachedMatches;
    }
 
-   private List<PickItemScreen.Inner_DataUtil> loadItems() {
-      List<PickItemScreen.Inner_DataUtil> out = new ArrayList<>();
+   private List<PickItemScreen.ItemEntry> loadItems() {
+      List<PickItemScreen.ItemEntry> out = new ArrayList<>();
       BuiltInRegistries.ITEM.forEach(item -> {
          if (item != Items.AIR) {
             Identifier id = BuiltInRegistries.ITEM.getKey(item);
             if (id != null) {
                ItemStack stack = DisplayItemStackFactory.displayStack(item);
                String itemId = id.toString().toLowerCase(Locale.ROOT);
-               out.add(new PickItemScreen.Inner_DataUtil(itemId, item.getName(item.getDefaultInstance()).getString(), stack));
+               out.add(new PickItemScreen.ItemEntry(itemId, item.getName(item.getDefaultInstance()).getString(), stack));
             }
          }
       });
-      out.sort(Comparator.comparing(PickItemScreen.Inner_DataUtil::read).thenComparing(entry -> entry.id));
+      out.sort(Comparator.comparing(PickItemScreen.ItemEntry::read).thenComparing(entry -> entry.id));
       return List.copyOf(out);
    }
 
@@ -409,18 +409,18 @@ public final class PickItemScreen extends VirtualScaledScreen {
       return Math.max(min, Math.min(max, value));
    }
 
-   private enum Inner_CachePool {
+   private enum HitKind {
       CLOSE,
       ITEM;
    }
 
-   private record Inner_DataUtil(String id, String load, String read, ItemStack stack) {
-      private Inner_DataUtil(String id, String label, ItemStack icon) {
+   private record ItemEntry(String id, String load, String read, ItemStack stack) {
+      private ItemEntry(String id, String label, ItemStack icon) {
          this(id, label != null && !label.isBlank() ? label : id, (label == null ? id : label).toLowerCase(Locale.ROOT), icon == null ? ItemStack.EMPTY : icon);
       }
    }
 
-   private record Inner_StreamUtil(PickItemScreen.Inner_CachePool kind, int x, int load, int read, int write, String id) {
+   private record RowHit(PickItemScreen.HitKind kind, int x, int load, int read, int write, String id) {
       boolean contains(int mx, int my) {
          return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }

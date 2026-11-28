@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class MoveAction implements MacroAction {
-   public MoveAction.Inner_DataUtil direction = MoveAction.Inner_DataUtil.FORWARD;
+   public MoveAction.MoveDirection direction = MoveAction.MoveDirection.FORWARD;
    public int durationTicks = 20;
    public boolean nonBlocking = false;
    private boolean enabled = true;
@@ -13,7 +13,7 @@ public class MoveAction implements MacroAction {
    public MoveAction() {
    }
 
-   public MoveAction(MoveAction.Inner_DataUtil direction, int durationTicks) {
+   public MoveAction(MoveAction.MoveDirection direction, int durationTicks) {
       this.direction = direction;
       this.durationTicks = durationTicks;
    }
@@ -74,9 +74,9 @@ public class MoveAction implements MacroAction {
    public void fromTag(CompoundTag tag) {
       if (tag.contains("direction")) {
          try {
-            this.direction = MoveAction.Inner_DataUtil.valueOf(tag.getStringOr("direction", "FORWARD"));
+            this.direction = MoveAction.MoveDirection.valueOf(tag.getStringOr("direction", "FORWARD"));
          } catch (Exception e) {
-            this.direction = MoveAction.Inner_DataUtil.FORWARD;
+            this.direction = MoveAction.MoveDirection.FORWARD;
          }
       }
 
@@ -118,7 +118,7 @@ public class MoveAction implements MacroAction {
       this.enabled = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum MoveDirection {
       FORWARD,
       BACKWARD,
       LEFT,
@@ -128,8 +128,8 @@ public class MoveAction implements MacroAction {
          return this.name().charAt(0) + this.name().substring(1).toLowerCase();
       }
 
-      public MoveAction.Inner_DataUtil init_s_DataUtil() {
-         MoveAction.Inner_DataUtil[] vals = values();
+      public MoveAction.MoveDirection init_s_DataUtil() {
+         MoveAction.MoveDirection[] vals = values();
          return vals[(this.ordinal() + 1) % vals.length];
       }
    }

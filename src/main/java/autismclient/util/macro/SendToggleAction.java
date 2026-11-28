@@ -5,21 +5,21 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class SendToggleAction implements MacroAction {
-   public SendToggleAction.Inner_DataUtil mode = SendToggleAction.Inner_DataUtil.ENABLE;
+   public SendToggleAction.ToggleMode mode = SendToggleAction.ToggleMode.ENABLE;
    private boolean enabled = true;
 
    public void init() {
-      this.mode = SendToggleAction.Inner_DataUtil.values()[(this.mode.ordinal() + 1) % SendToggleAction.Inner_DataUtil.values().length];
+      this.mode = SendToggleAction.ToggleMode.values()[(this.mode.ordinal() + 1) % SendToggleAction.ToggleMode.values().length];
    }
 
    public void load() {
-      this.mode = SendToggleAction.Inner_DataUtil.values()[(this.mode.ordinal() - 1 + SendToggleAction.Inner_DataUtil.values().length) % SendToggleAction.Inner_DataUtil.values().length];
+      this.mode = SendToggleAction.ToggleMode.values()[(this.mode.ordinal() - 1 + SendToggleAction.ToggleMode.values().length) % SendToggleAction.ToggleMode.values().length];
    }
 
    @Override
    public void execute(Minecraft mc) {
       AutismSessionState shared = AutismSessionState.getInstance();
-      shared.setSendPacketsEnabled(this.mode == SendToggleAction.Inner_DataUtil.ENABLE);
+      shared.setSendPacketsEnabled(this.mode == SendToggleAction.ToggleMode.ENABLE);
    }
 
    @Override
@@ -40,9 +40,9 @@ public class SendToggleAction implements MacroAction {
    public void fromTag(CompoundTag tag) {
       if (tag.contains("mode")) {
          try {
-            this.mode = SendToggleAction.Inner_DataUtil.valueOf(tag.getStringOr("mode", "ENABLE"));
+            this.mode = SendToggleAction.ToggleMode.valueOf(tag.getStringOr("mode", "ENABLE"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = SendToggleAction.Inner_DataUtil.ENABLE;
+            this.mode = SendToggleAction.ToggleMode.ENABLE;
          }
       }
 
@@ -53,7 +53,7 @@ public class SendToggleAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return this.mode == SendToggleAction.Inner_DataUtil.ENABLE ? "Send Pkts: ON" : "Send Pkts: OFF";
+      return this.mode == SendToggleAction.ToggleMode.ENABLE ? "Send Pkts: ON" : "Send Pkts: OFF";
    }
 
    @Override
@@ -71,7 +71,7 @@ public class SendToggleAction implements MacroAction {
       this.enabled = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum ToggleMode {
       ENABLE,
       DISABLE;
    }

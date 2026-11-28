@@ -11,7 +11,7 @@ final class TrajectoryStateCache {
    private static final FireballBlastPredictor BLAST_PREDICTOR = new FireballBlastPredictor();
    private static final ThrownPearlTracker PEARL_TRACKER = new ThrownPearlTracker();
    private static List<TrajectoriesModule.Inner_CachePool> init_List = List.of();
-   private static List<FireballBlastPredictor.Inner_DataUtil> blastPredictions = List.of();
+   private static List<FireballBlastPredictor.DestroyedBlock> blastPredictions = List.of();
    private static Level init_Level;
    private static Object init_Obj;
    private static final Map<Vec3, Integer> init_Map = new HashMap<>();
@@ -62,7 +62,7 @@ final class TrajectoryStateCache {
       }
    }
 
-   static List<FireballBlastPredictor.Inner_DataUtil> init(List<TrajectoriesModule.Inner_CachePool> paths) {
+   static List<FireballBlastPredictor.DestroyedBlock> init(List<TrajectoriesModule.Inner_CachePool> paths) {
       return init_List == paths ? blastPredictions : List.of();
    }
 

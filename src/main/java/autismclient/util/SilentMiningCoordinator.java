@@ -8,7 +8,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 public final class SilentMiningCoordinator {
    private static String owner;
-   private static SilentMiningCoordinator.Inner_DataUtil pendingStop;
+   private static SilentMiningCoordinator.PendingStop pendingStop;
 
    private SilentMiningCoordinator() {
    }
@@ -49,7 +49,7 @@ public final class SilentMiningCoordinator {
       return "bed-nuker".equals(requester) && current != null && target != null && RotationMath.angularDistance(current, target) <= 0.05F;
    }
 
-   public static boolean init(String requester, RotationMath.Rotation current, RotationMath.Rotation target, RotationStreamPlanner.Inner_TaskQueue stream) {
+   public static boolean init(String requester, RotationMath.Rotation current, RotationMath.Rotation target, RotationStreamPlanner.StreamState stream) {
       if (!init(requester, current, target)) {
          return false;
       }
@@ -72,12 +72,12 @@ public final class SilentMiningCoordinator {
    public static void load(BlockPos block) {
       Minecraft mc = Minecraft.getInstance();
       if (block != null && mc.player != null && mc.gameMode != null) {
-         pendingStop = new SilentMiningCoordinator.Inner_DataUtil(mc.player, mc.level, mc.gameMode, block.immutable());
+         pendingStop = new SilentMiningCoordinator.PendingStop(mc.player, mc.level, mc.gameMode, block.immutable());
       }
    }
 
    public static void load() {
-      SilentMiningCoordinator.Inner_DataUtil stop = pendingStop;
+      SilentMiningCoordinator.PendingStop stop = pendingStop;
       pendingStop = null;
       Minecraft mc = Minecraft.getInstance();
       if (stop != null && mc.player == stop.player && mc.level == stop.load && mc.gameMode == stop.read) {
@@ -85,6 +85,6 @@ public final class SilentMiningCoordinator {
       }
    }
 
-   private record Inner_DataUtil(Object player, Object load, Object read, BlockPos pos) {
+   private record PendingStop(Object player, Object load, Object read, BlockPos pos) {
    }
 }

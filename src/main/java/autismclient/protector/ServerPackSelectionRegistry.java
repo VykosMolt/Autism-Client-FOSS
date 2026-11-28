@@ -95,8 +95,8 @@ public final class ServerPackSelectionRegistry {
                      return null;
                   }
 
-                  if (resources instanceof IsolatedPackDownloader.Inner_BufferHelper isolated) {
-                     IsolatedPackDownloader.Inner_ConfigStore binding = isolated.init();
+                  if (resources instanceof IsolatedPackDownloader.IsolationAware isolated) {
+                     IsolatedPackDownloader.PackIsolation binding = isolated.init();
                      if (policy != ResourcePackSessionTracker.PackPolicy.ISOLATED
                         || binding.session() != session
                         || !packId.equals(binding.packId())
@@ -129,8 +129,8 @@ public final class ServerPackSelectionRegistry {
    public static ServerPackSelectionRegistry.Inner_StreamUtil provenanceOf(ResourcePackSessionTracker.PackSession session, PackResources resources) {
       if (resources != null && resources.location() != null) {
          ServerPackSelectionRegistry.Inner_StreamUtil provenance = init_CharEncoder_Stream(session, resources.location().id());
-         if (provenance != null && resources instanceof IsolatedPackDownloader.Inner_BufferHelper isolated) {
-            IsolatedPackDownloader.Inner_ConfigStore binding = isolated.init();
+         if (provenance != null && resources instanceof IsolatedPackDownloader.IsolationAware isolated) {
+            IsolatedPackDownloader.PackIsolation binding = isolated.init();
             if (provenance.policy() != ResourcePackSessionTracker.PackPolicy.ISOLATED
                || binding.session() != session
                || !provenance.packId().equals(binding.packId())

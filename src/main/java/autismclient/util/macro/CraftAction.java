@@ -10,20 +10,20 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 
 public class CraftAction implements MacroAction {
-   public final List<CraftAction.Inner_DataUtil> entries = new ArrayList<>();
+   public final List<CraftAction.CraftEntry> entries = new ArrayList<>();
 
    public void clearEntries() {
       this.entries.clear();
    }
 
    public boolean hasValidEntry() {
-      return this.entries.stream().anyMatch(CraftAction.Inner_DataUtil::isValid);
+      return this.entries.stream().anyMatch(CraftAction.CraftEntry::isValid);
    }
 
-   public List<CraftAction.Inner_DataUtil> copyEntries() {
-      List<CraftAction.Inner_DataUtil> copies = new ArrayList<>(this.entries.size());
+   public List<CraftAction.CraftEntry> copyEntries() {
+      List<CraftAction.CraftEntry> copies = new ArrayList<>(this.entries.size());
 
-      for (CraftAction.Inner_DataUtil entry : this.entries) {
+      for (CraftAction.CraftEntry entry : this.entries) {
          if (entry != null) {
             copies.add(entry.copy());
          }
@@ -32,10 +32,10 @@ public class CraftAction implements MacroAction {
       return copies;
    }
 
-   public void init(List<CraftAction.Inner_DataUtil> values) {
+   public void init(List<CraftAction.CraftEntry> values) {
       this.entries.clear();
       if (values != null) {
-         for (CraftAction.Inner_DataUtil entry : values) {
+         for (CraftAction.CraftEntry entry : values) {
             if (entry != null) {
                this.entries.add(entry.copy());
             }
@@ -50,7 +50,7 @@ public class CraftAction implements MacroAction {
       } else if (!this.hasValidEntry()) {
          AutismClientMessaging.sendPrefixed("No craft recipe selected!");
       } else {
-         for (CraftAction.Inner_DataUtil entry : this.entries) {
+         for (CraftAction.CraftEntry entry : this.entries) {
             if (entry != null && entry.isValid()) {
                autismclient.util.AutoCraftingEngine.CraftOption option = autismclient.util.AutoCraftingEngine.findOptionByKey(mc, entry.recipeKey);
                if (option == null) {
@@ -84,7 +84,7 @@ public class CraftAction implements MacroAction {
       tag.putString("type", "CRAFT");
       ListTag entryTags = new ListTag();
 
-      for (CraftAction.Inner_DataUtil entry : this.entries) {
+      for (CraftAction.CraftEntry entry : this.entries) {
          if (entry != null && entry.isValid()) {
             entryTags.add(entry.toTag());
          }
@@ -101,7 +101,7 @@ public class CraftAction implements MacroAction {
          if (tag.contains("entries")) {
             for (Tag element : tag.getList("entries").orElse(new ListTag())) {
                if (element instanceof CompoundTag entryTag) {
-                  CraftAction.Inner_DataUtil entry = CraftAction.Inner_DataUtil.fromTag(entryTag);
+                  CraftAction.CraftEntry entry = CraftAction.CraftEntry.fromTag(entryTag);
                   if (entry.isValid()) {
                      this.entries.add(entry);
                   }
@@ -110,7 +110,7 @@ public class CraftAction implements MacroAction {
          }
 
          if (this.entries.isEmpty()) {
-            CraftAction.Inner_DataUtil legacyEntry = CraftAction.Inner_DataUtil.fromTag(tag);
+            CraftAction.CraftEntry legacyEntry = CraftAction.CraftEntry.fromTag(tag);
             if (legacyEntry.isValid()) {
                this.entries.add(legacyEntry);
             }
@@ -129,7 +129,7 @@ public class CraftAction implements MacroAction {
          return "Craft (empty)";
       }
 
-      CraftAction.Inner_DataUtil first = this.entries.get(0);
+      CraftAction.CraftEntry first = this.entries.get(0);
       if (this.entries.size() == 1) {
          return "Craft " + first.label();
       }
@@ -143,7 +143,7 @@ public class CraftAction implements MacroAction {
       return "C";
    }
 
-   public static final class Inner_DataUtil {
+   public static final class CraftEntry {
       public int recipeId = -1;
       public String recipeKey = "";
       public String resultName = "";
@@ -152,8 +152,8 @@ public class CraftAction implements MacroAction {
       public int amount = 1;
       public boolean useMaxAmount = false;
 
-      public CraftAction.Inner_DataUtil copy() {
-         CraftAction.Inner_DataUtil copy = new CraftAction.Inner_DataUtil();
+      public CraftAction.CraftEntry copy() {
+         CraftAction.CraftEntry copy = new CraftAction.CraftEntry();
          copy.recipeId = this.recipeId;
          copy.recipeKey = this.recipeKey;
          copy.resultName = this.resultName;
@@ -196,8 +196,8 @@ public class CraftAction implements MacroAction {
          return tag;
       }
 
-      public static CraftAction.Inner_DataUtil fromTag(CompoundTag tag) {
-         CraftAction.Inner_DataUtil entry = new CraftAction.Inner_DataUtil();
+      public static CraftAction.CraftEntry fromTag(CompoundTag tag) {
+         CraftAction.CraftEntry entry = new CraftAction.CraftEntry();
          if (tag == null) {
             return entry;
          }
@@ -212,8 +212,8 @@ public class CraftAction implements MacroAction {
          return entry;
       }
 
-      public static CraftAction.Inner_DataUtil init(autismclient.util.AutoCraftingEngine.CraftOption option, int amount, boolean useMaxAmount) {
-         CraftAction.Inner_DataUtil entry = new CraftAction.Inner_DataUtil();
+      public static CraftAction.CraftEntry init(autismclient.util.AutoCraftingEngine.CraftOption option, int amount, boolean useMaxAmount) {
+         CraftAction.CraftEntry entry = new CraftAction.CraftEntry();
          if (option == null) {
             return entry;
          }

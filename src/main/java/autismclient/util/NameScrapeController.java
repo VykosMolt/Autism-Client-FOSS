@@ -25,7 +25,7 @@ public final class NameScrapeController {
    private static volatile int onlineCount;
    private static volatile String statusText = "";
    private static volatile ClientPacketListener activeConnection;
-   private static final CommandTabNameProber.Inner_DataUtil init_be_DataUtil = new CommandTabNameProber.Inner_DataUtil() {
+   private static final CommandTabNameProber.ProbeControl init_be_DataUtil = new CommandTabNameProber.ProbeControl() {
       @Override
       public boolean isCancelled() {
          return NameScrapeController.read_Z();
@@ -96,7 +96,7 @@ public final class NameScrapeController {
          String self = mc.player.getName().getString();
          LinkedHashMap<String, String> names = CommandTabNameProber.init(mc, self);
          namesFound = names.size();
-         List<CommandTabNameProber.Inner_StreamUtil> vectors = CommandTabNameProber.discoverVectors(connection);
+         List<CommandTabNameProber.ProbeVector> vectors = CommandTabNameProber.discoverVectors(connection);
          BackgroundTaskExecutor.submit("namescrape", () -> runProbe(names, connection, self, vectors));
       }
    }
@@ -130,7 +130,7 @@ public final class NameScrapeController {
       }
    }
 
-   private static void runProbe(LinkedHashMap<String, String> names, ClientPacketListener connection, String self, List<CommandTabNameProber.Inner_StreamUtil> vectors) {
+   private static void runProbe(LinkedHashMap<String, String> names, ClientPacketListener connection, String self, List<CommandTabNameProber.ProbeVector> vectors) {
       try {
          CommandTabNameProber.init(connection, names, self, vectors, init_be_DataUtil);
          List<String> result = new ArrayList<>(names.values());

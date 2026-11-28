@@ -40,11 +40,11 @@ public final class EndPortalModule extends Module {
    static final int init_I = -11279164;
    private final ColorSetting init_ColorSetting;
    private final DoubleSetting init_DoubleSetting;
-   private final EnumSetting<EndPortalModule.Inner_DataUtil> init_EnumSetting;
+   private final EnumSetting<EndPortalModule.DisplayMode> init_EnumSetting;
    private final EndPortalMemoryCache init_cR = new EndPortalMemoryCache();
    private final EndPortalSessionTracker init_cU = new EndPortalSessionTracker(this.init_cR);
-   private final Map<Integer, EndPortalModule.Inner_StreamUtil> init_Map = new LinkedHashMap<>();
-   private EndPortalMemoryCache.Inner_DataUtil init_cR_DataUtil;
+   private final Map<Integer, EndPortalModule.TrackedEye> init_Map = new LinkedHashMap<>();
+   private EndPortalMemoryCache.DimensionMemory init_cR_DataUtil;
    private List<int[]> offsets = List.of();
    private int load_I = -1;
    private int cx;
@@ -54,7 +54,7 @@ public final class EndPortalModule extends Module {
    private long init_J = -1L;
    private Vec3 init_Vec3;
    private Vec3 load_Vec3;
-   private Map<Long, StrongholdTriangulator.Inner_CachePool> load_Map = Map.of();
+   private Map<Long, StrongholdTriangulator.PortalFrame> load_Map = Map.of();
    private List<Vec3> load_List = List.of();
    private volatile List<BlockPos> read_List = List.of();
 
@@ -67,7 +67,7 @@ public final class EndPortalModule extends Module {
       this.init_ColorSetting = this.add(new ColorSetting("color", "Color", -11279164).description("Color of the frame ESP, arrow, tracer and light column."));
       this.init_DoubleSetting = this.add(new DoubleSetting("scale", "Scale", 1.0, 0.5, 2.0, 0.05).description("Size of the direction icon, prompt and label."));
       this.init_EnumSetting = this.add(
-         new EnumSetting<>("display", "Display", EndPortalModule.Inner_DataUtil.DISTANCE, EndPortalModule.Inner_DataUtil.values()).description("Show distance or target coordinates.")
+         new EnumSetting<>("display", "Display", EndPortalModule.DisplayMode.DISTANCE, EndPortalModule.DisplayMode.values()).description("Show distance or target coordinates.")
       );
       this.add(new BoolSetting("frames", "Frame ESP", true).description("Highlight portal frames."));
       this.add(new BoolSetting("tracer", "Tracers", true).description("Show one tracer to the destination."));
@@ -209,25 +209,25 @@ public final class EndPortalModule extends Module {
             && !(eye.position().distanceToSqr(MC.player.position()) > 4096.0)
             && !(eye.getDeltaMovement().horizontalDistance() > 0.09)
             && module.init_Map.size() < 4) {
-            module.init_Map.put(eye.getId(), new EndPortalModule.Inner_StreamUtil(eye.getUUID(), MC.level.getGameTime(), new StrongholdTriangulator.Inner_StreamUtil(eye.position())));
+            module.init_Map.put(eye.getId(), new EndPortalModule.TrackedEye(eye.getUUID(), MC.level.getGameTime(), new StrongholdTriangulator.ThrowTracker(eye.position())));
          }
       }
    }
 
    private void read_V_2() {
-      Iterator<Entry<Integer, EndPortalModule.Inner_StreamUtil>> iterator = this.init_Map.entrySet().iterator();
+      Iterator<Entry<Integer, EndPortalModule.TrackedEye>> iterator = this.init_Map.entrySet().iterator();
 
       while (iterator.hasNext()) {
-         Entry<Integer, EndPortalModule.Inner_StreamUtil> entry = iterator.next();
-         EndPortalModule.Inner_StreamUtil tracked = entry.getValue();
+         Entry<Integer, EndPortalModule.TrackedEye> entry = iterator.next();
+         EndPortalModule.TrackedEye tracked = entry.getValue();
          Entity eye = MC.level.getEntity(entry.getKey());
          int age = (int)(MC.level.getGameTime() - tracked.init_J);
          if (eye instanceof EyeOfEnder && eye.isAlive() && eye.getUUID().equals(tracked.init_UUID) && age >= 0 && age <= 60) {
-            StrongholdTriangulator.Inner_BufferHelper ray = tracked.init_cS_StreamUtil.init(eye.position(), age);
+            StrongholdTriangulator.ThrowSample ray = tracked.init_cS_StreamUtil.init(eye.position(), age);
             if (ray != null) {
                boolean added = this.init_cR_DataUtil.triangulator.addThrow(ray.init(), ray.load().scale(8.0));
                if (added) {
-                  StrongholdRingEstimator.Inner_StreamUtil prediction = this.init_cR_DataUtil.triangulator.ringEstimate();
+                  StrongholdRingEstimator.RingEstimate prediction = this.init_cR_DataUtil.triangulator.ringEstimate();
                   autismclient.util.bi.read(
                      prediction != null
                         ? "EndPortal: stronghold location estimated."
@@ -291,7 +291,7 @@ public final class EndPortalModule extends Module {
                current.add(pos.asLong());
                BlockState state = chunk.getBlockState(pos);
                if (state.is(Blocks.END_PORTAL_FRAME)) {
-                  this.init_cR_DataUtil.init(new StrongholdTriangulator.Inner_CachePool(pos, state.getValue(EndPortalFrameBlock.FACING)));
+                  this.init_cR_DataUtil.init(new StrongholdTriangulator.PortalFrame(pos, state.getValue(EndPortalFrameBlock.FACING)));
                }
             }
 
@@ -330,11 +330,11 @@ public final class EndPortalModule extends Module {
 
    private void update_V() {
       List<BlockPos> shown = new ArrayList<>();
-      Iterator<Entry<Long, StrongholdTriangulator.Inner_CachePool>> iterator = this.init_cR_DataUtil.frames.entrySet().iterator();
+      Iterator<Entry<Long, StrongholdTriangulator.PortalFrame>> iterator = this.init_cR_DataUtil.frames.entrySet().iterator();
       int view = am.init_I();
 
       while (iterator.hasNext()) {
-         StrongholdTriangulator.Inner_CachePool f = iterator.next().getValue();
+         StrongholdTriangulator.PortalFrame f = iterator.next().getValue();
          BlockPos pos = f.pos();
          if (MC.level.getChunkSource().getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.FULL, false) != null) {
             BlockState state = MC.level.getBlockState(pos);
@@ -342,7 +342,7 @@ public final class EndPortalModule extends Module {
                iterator.remove();
             } else {
                if (state.getValue(EndPortalFrameBlock.FACING) != f.facing()) {
-                  this.init_cR_DataUtil.init(new StrongholdTriangulator.Inner_CachePool(pos, state.getValue(EndPortalFrameBlock.FACING)));
+                  this.init_cR_DataUtil.init(new StrongholdTriangulator.PortalFrame(pos, state.getValue(EndPortalFrameBlock.FACING)));
                }
 
                if (EndPortalDisplayHelper.init(MC.player.position(), Vec3.atCenterOf(pos), view)) {
@@ -384,7 +384,7 @@ public final class EndPortalModule extends Module {
    }
 
    boolean showsCoordinates() {
-      return this.init_EnumSetting.get() == EndPortalModule.Inner_DataUtil.COORDINATES;
+      return this.init_EnumSetting.get() == EndPortalModule.DisplayMode.COORDINATES;
    }
 
    boolean showsTracer() {
@@ -448,11 +448,11 @@ public final class EndPortalModule extends Module {
       return this.statusText();
    }
 
-   private enum Inner_DataUtil {
+   private enum DisplayMode {
       DISTANCE,
       COORDINATES;
    }
 
-   private record Inner_StreamUtil(UUID init_UUID, long init_J, StrongholdTriangulator.Inner_StreamUtil init_cS_StreamUtil) {
+   private record TrackedEye(UUID init_UUID, long init_J, StrongholdTriangulator.ThrowTracker init_cS_StreamUtil) {
    }
 }

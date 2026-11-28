@@ -1289,7 +1289,7 @@ final class AiCarriedShulker implements AiOperation {
          this.load = now + 10000000000L;
       }
 
-      AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 init(boolean loaded, AiServerEvidence.Inner_DataUtil update, long now) {
+      AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 init(boolean loaded, AiServerEvidence.BlockUpdate update, long now) {
          if (loaded && update != null && update.revision() > this.init) {
             return update.state().isAir() ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.CONFIRMED : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.REJECTED;
          } else {

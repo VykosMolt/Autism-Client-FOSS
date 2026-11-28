@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class WaitMovementAction implements MacroAction {
-   public WaitMovementAction.Inner_DataUtil mode = WaitMovementAction.Inner_DataUtil.POSITION;
+   public WaitMovementAction.MovementMode mode = WaitMovementAction.MovementMode.POSITION;
    public double f_x_D = 0.0;
    public double f_y_D = 0.0;
    public double f_z_D = 0.0;
@@ -113,7 +113,7 @@ public class WaitMovementAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = MacroNbtCodecHelper.parseEnum(WaitMovementAction.Inner_DataUtil.class, tag.getStringOr("mode", "POSITION"), WaitMovementAction.Inner_DataUtil.POSITION);
+      this.mode = MacroNbtCodecHelper.parseEnum(WaitMovementAction.MovementMode.class, tag.getStringOr("mode", "POSITION"), WaitMovementAction.MovementMode.POSITION);
       this.f_x_D = tag.getDoubleOr("x", 0.0);
       this.f_y_D = tag.getDoubleOr("y", 0.0);
       this.f_z_D = tag.getDoubleOr("z", 0.0);
@@ -171,7 +171,7 @@ public class WaitMovementAction implements MacroAction {
       this.init = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum MovementMode {
       POSITION,
       POSITION_DELTA,
       WORLD_CHANGE,

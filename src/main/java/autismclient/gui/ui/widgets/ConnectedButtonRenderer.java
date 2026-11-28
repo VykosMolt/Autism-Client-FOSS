@@ -6,13 +6,13 @@ import net.minecraft.resources.Identifier;
 import autismclient.gui.f.b.CachePool;
 
 public final class ConnectedButtonRenderer {
-   public static final ConnectedButtonRenderer.Inner_DataUtil init = new ConnectedButtonRenderer.Inner_DataUtil(true, true, true, true);
-   public static final ConnectedButtonRenderer.Inner_DataUtil load = new ConnectedButtonRenderer.Inner_DataUtil(true, true, false, true);
-   public static final ConnectedButtonRenderer.Inner_DataUtil read = new ConnectedButtonRenderer.Inner_DataUtil(false, true, true, true);
-   public static final ConnectedButtonRenderer.Inner_DataUtil write = new ConnectedButtonRenderer.Inner_DataUtil(false, false, false, false, true);
+   public static final ConnectedButtonRenderer.ConnectedEdges init = new ConnectedButtonRenderer.ConnectedEdges(true, true, true, true);
+   public static final ConnectedButtonRenderer.ConnectedEdges load = new ConnectedButtonRenderer.ConnectedEdges(true, true, false, true);
+   public static final ConnectedButtonRenderer.ConnectedEdges read = new ConnectedButtonRenderer.ConnectedEdges(false, true, true, true);
+   public static final ConnectedButtonRenderer.ConnectedEdges write = new ConnectedButtonRenderer.ConnectedEdges(false, false, false, false, true);
 
-   public static ConnectedButtonRenderer.Inner_DataUtil init(boolean left, boolean right) {
-      return new ConnectedButtonRenderer.Inner_DataUtil(left, false, right, true, true);
+   public static ConnectedButtonRenderer.ConnectedEdges init(boolean left, boolean right) {
+      return new ConnectedButtonRenderer.ConnectedEdges(left, false, right, true, true);
    }
 
    private ConnectedButtonRenderer() {
@@ -25,7 +25,7 @@ public final class ConnectedButtonRenderer {
       Identifier icon,
       CachePool.Inner_DataUtil tone,
       boolean hovered,
-      ConnectedButtonRenderer.Inner_DataUtil edges
+      ConnectedButtonRenderer.ConnectedEdges edges
    ) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       int var10000;
@@ -77,7 +77,7 @@ public final class ConnectedButtonRenderer {
       Identifier icon,
       boolean hovered,
       float enabledProgress,
-      ConnectedButtonRenderer.Inner_DataUtil edges
+      ConnectedButtonRenderer.ConnectedEdges edges
    ) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       float progress = init(enabledProgress);
@@ -132,14 +132,14 @@ public final class ConnectedButtonRenderer {
       boolean hovered,
       int fill,
       int border,
-      ConnectedButtonRenderer.Inner_DataUtil edges
+      ConnectedButtonRenderer.ConnectedEdges edges
    ) {
       init(context, bounds, fill, border, edges);
       init(context, bounds, hovered, edges);
       load(context, bounds, label, icon);
    }
 
-   private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int fill, int border, ConnectedButtonRenderer.Inner_DataUtil edges) {
+   private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, int fill, int border, ConnectedButtonRenderer.ConnectedEdges edges) {
       int radius = edges.update ? Math.max(1, 7) : 3;
       if (edges.init_Z()) {
          if (edges.update) {
@@ -169,7 +169,7 @@ public final class ConnectedButtonRenderer {
       }
    }
 
-   private static autismclient.gui.f.NetHelper init_NetHelper_NetHelper(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.Inner_DataUtil edges, int by) {
+   private static autismclient.gui.f.NetHelper init_NetHelper_NetHelper(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges, int by) {
       int left = edges.init ? 0 : by;
       int top = edges.load ? 0 : by;
       int right = edges.read ? 0 : by;
@@ -177,7 +177,7 @@ public final class ConnectedButtonRenderer {
       return autismclient.gui.f.NetHelper.init(bounds.read() - left, bounds.write() - top, bounds.update() + left + right, bounds.sync() + top + bottom);
    }
 
-   private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean hovered, ConnectedButtonRenderer.Inner_DataUtil edges) {
+   private static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean hovered, ConnectedButtonRenderer.ConnectedEdges edges) {
       float hoverT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(bounds), hovered);
       if (!(hoverT <= 0.001F)) {
          int color = Math.round(20.0F * hoverT) << 24 | 16777215;
@@ -236,7 +236,7 @@ public final class ConnectedButtonRenderer {
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), x, y, Math.max(0, height - 1), color);
    }
 
-   private static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.Inner_DataUtil edges) {
+   private static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds, ConnectedButtonRenderer.ConnectedEdges edges) {
       return bounds.load(edges.init ? 1 : 0, edges.load ? 1 : 0, edges.read ? 1 : 0, edges.write ? 1 : 0);
    }
 
@@ -244,8 +244,8 @@ public final class ConnectedButtonRenderer {
       return Math.max(0.0F, Math.min(1.0F, value));
    }
 
-   public record Inner_DataUtil(boolean init, boolean load, boolean read, boolean write, boolean update) {
-      public Inner_DataUtil(boolean left, boolean top, boolean right, boolean bottom) {
+   public record ConnectedEdges(boolean init, boolean load, boolean read, boolean write, boolean update) {
+      public ConnectedEdges(boolean left, boolean top, boolean right, boolean bottom) {
          this(left, top, right, bottom, false);
       }
 

@@ -18,7 +18,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public final class AiContainerTransactions {
-   private static AiContainerTransactions.Inner_DataUtil activeReceipt;
+   private static AiContainerTransactions.TransactionReceipt activeReceipt;
    private static boolean ignoreNextSwapUpdatesForTest;
 
    private AiContainerTransactions() {
@@ -28,7 +28,7 @@ public final class AiContainerTransactions {
       return (applied ^ 16384) & 32767;
    }
 
-   public static AiContainerTransactions.Inner_DataUtil sendVerifiedSwap(AbstractContainerMenu menu, int source, int destination, int hotbar) {
+   public static AiContainerTransactions.TransactionReceipt sendVerifiedSwap(AbstractContainerMenu menu, int source, int destination, int hotbar) {
       ItemStack from = menu.getSlot(source).getItem();
       ItemStack to = menu.getSlot(destination).getItem();
       return menu.getCarried().isEmpty() && !ItemStack.matches(from, to)
@@ -36,11 +36,11 @@ public final class AiContainerTransactions {
          : null;
    }
 
-   static AiContainerTransactions.Inner_DataUtil sendVerifiedPickup(AbstractContainerMenu menu, int slot, int button, Map<Integer, ItemStack> expected, ItemStack cursor) {
+   static AiContainerTransactions.TransactionReceipt sendVerifiedPickup(AbstractContainerMenu menu, int slot, int button, Map<Integer, ItemStack> expected, ItemStack cursor) {
       return sendVerifiedClick(menu, slot, button, ContainerInput.PICKUP, expected, cursor, false);
    }
 
-   private static AiContainerTransactions.Inner_DataUtil sendVerifiedClick(
+   private static AiContainerTransactions.TransactionReceipt sendVerifiedClick(
       AbstractContainerMenu menu, int slot, int button, ContainerInput type, Map<Integer, ItemStack> expected, ItemStack cursor, boolean swap
    ) {
       Minecraft mc = Minecraft.getInstance();
@@ -54,7 +54,7 @@ public final class AiContainerTransactions {
          return null;
       }
 
-      AiContainerTransactions.Inner_DataUtil receipt = new AiContainerTransactions.Inner_DataUtil(menu, expected, cursor, swap, now);
+      AiContainerTransactions.TransactionReceipt receipt = new AiContainerTransactions.TransactionReceipt(menu, expected, cursor, swap, now);
       if (swap) {
          receipt.swapHotbarButton = button;
          receipt.ignoreUpdates = ignoreNextSwapUpdatesForTest;
@@ -77,7 +77,7 @@ public final class AiContainerTransactions {
    }
 
    public static void onContainerSetSlot(int id, int slot, ItemStack stack) {
-      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      AiContainerTransactions.TransactionReceipt receipt = currentActiveReceipt();
       if (receipt != null && !receipt.ignoreUpdates) {
          if (receipt.menu.containerId == id) {
             receipt.recordSlotUpdate(slot, stack);
@@ -94,7 +94,7 @@ public final class AiContainerTransactions {
    }
 
    public static void onPlayerInventorySlot(int slot, ItemStack stack) {
-      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      AiContainerTransactions.TransactionReceipt receipt = currentActiveReceipt();
       if (receipt != null && !receipt.ignoreUpdates) {
          Inventory inventory = Minecraft.getInstance().player.getInventory();
 
@@ -108,7 +108,7 @@ public final class AiContainerTransactions {
    }
 
    public static void onCarriedSlot(ItemStack stack) {
-      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      AiContainerTransactions.TransactionReceipt receipt = currentActiveReceipt();
       if (receipt != null) {
          receipt.recordCursorUpdate(stack);
       }
@@ -116,13 +116,13 @@ public final class AiContainerTransactions {
 
    public static void onContainerSetContent(int id, List<ItemStack> stacks, ItemStack carried) {
       AiMenuClose.init(id, carried.isEmpty());
-      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      AiContainerTransactions.TransactionReceipt receipt = currentActiveReceipt();
       if (receipt != null && receipt.menu.containerId == id) {
          receipt.recordFullSync(stacks, carried);
       }
    }
 
-   private static AiContainerTransactions.Inner_DataUtil currentActiveReceipt() {
+   private static AiContainerTransactions.TransactionReceipt currentActiveReceipt() {
       if (activeReceipt == null) {
          return null;
       }
@@ -136,14 +136,14 @@ public final class AiContainerTransactions {
    }
 
    public static void tickActiveSwap() {
-      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      AiContainerTransactions.TransactionReceipt receipt = currentActiveReceipt();
       if (receipt != null && receipt.isSwap) {
          receipt.pollAndResync(Minecraft.getInstance().player.containerMenu, System.nanoTime());
       }
    }
 
    static boolean hasActiveSwap() {
-      AiContainerTransactions.Inner_DataUtil receipt = currentActiveReceipt();
+      AiContainerTransactions.TransactionReceipt receipt = currentActiveReceipt();
       return receipt != null && receipt.isSwap;
    }
 
@@ -203,7 +203,7 @@ public final class AiContainerTransactions {
       }
    }
 
-   public static final class Inner_DataUtil {
+   public static final class TransactionReceipt {
       private static final long TIMEOUT_NANOS = 8000000000L;
       private static final long RESYNC_DELAY_NANOS = 750000000L;
       private final AbstractContainerMenu menu;
@@ -215,12 +215,12 @@ public final class AiContainerTransactions {
       private final boolean isSwap;
       private final long startedAtNanos;
       private ItemStack confirmedCursorUpdate;
-      private AiContainerTransactions.Inner_StreamUtil terminalState;
+      private AiContainerTransactions.ReceiptState terminalState;
       private int swapHotbarButton = -1;
       private boolean resyncRequested;
       private boolean ignoreUpdates;
 
-      Inner_DataUtil(AbstractContainerMenu menu, Map<Integer, ItemStack> expected, ItemStack cursor, boolean swap, long started) {
+      TransactionReceipt(AbstractContainerMenu menu, Map<Integer, ItemStack> expected, ItemStack cursor, boolean swap, long started) {
          this.menu = menu;
          expected.forEach((slot, stack) -> {
             this.initialSlots.put(slot, menu.getSlot(slot).getItem().copy());
@@ -249,13 +249,13 @@ public final class AiContainerTransactions {
          }
       }
 
-      public AiContainerTransactions.Inner_StreamUtil checkStatus(AbstractContainerMenu current, long now) {
+      public AiContainerTransactions.ReceiptState checkStatus(AbstractContainerMenu current, long now) {
          if (this.terminalState != null) {
             return this.terminalState;
          }
 
          if (current != this.menu) {
-            return this.complete(AiContainerTransactions.Inner_StreamUtil.UNCERTAIN);
+            return this.complete(AiContainerTransactions.ReceiptState.UNCERTAIN);
          }
 
          if (ItemStack.matches(this.expectedCursor, this.menu.getCarried())
@@ -277,20 +277,20 @@ public final class AiContainerTransactions {
             }
 
             if (confirmed) {
-               return this.complete(AiContainerTransactions.Inner_StreamUtil.CONFIRMED);
+               return this.complete(AiContainerTransactions.ReceiptState.CONFIRMED);
             }
 
             if (exchanged && preserved) {
-               return this.complete(AiContainerTransactions.Inner_StreamUtil.SWAPPED_DIFFERENT_STACK);
+               return this.complete(AiContainerTransactions.ReceiptState.SWAPPED_DIFFERENT_STACK);
             }
          }
 
-         return this.isTimedOut(now) ? this.complete(AiContainerTransactions.Inner_StreamUtil.UNCERTAIN) : AiContainerTransactions.Inner_StreamUtil.WAITING;
+         return this.isTimedOut(now) ? this.complete(AiContainerTransactions.ReceiptState.UNCERTAIN) : AiContainerTransactions.ReceiptState.WAITING;
       }
 
-      public AiContainerTransactions.Inner_StreamUtil pollAndResync(AbstractContainerMenu current, long now) {
-         AiContainerTransactions.Inner_StreamUtil state = this.checkStatus(current, now);
-         if (state == AiContainerTransactions.Inner_StreamUtil.WAITING && this.swapHotbarButton >= 0 && this.shouldSendSwapResync(now)) {
+      public AiContainerTransactions.ReceiptState pollAndResync(AbstractContainerMenu current, long now) {
+         AiContainerTransactions.ReceiptState state = this.checkStatus(current, now);
+         if (state == AiContainerTransactions.ReceiptState.WAITING && this.swapHotbarButton >= 0 && this.shouldSendSwapResync(now)) {
             Minecraft mc = Minecraft.getInstance();
             LocalPlayer player = mc.player;
             ClientPacketListener connection = mc.getConnection();
@@ -334,7 +334,7 @@ public final class AiContainerTransactions {
          return now - this.startedAtNanos >= 8000000000L;
       }
 
-      private AiContainerTransactions.Inner_StreamUtil complete(AiContainerTransactions.Inner_StreamUtil state) {
+      private AiContainerTransactions.ReceiptState complete(AiContainerTransactions.ReceiptState state) {
          if (AiContainerTransactions.activeReceipt == this) {
             AiContainerTransactions.activeReceipt = null;
          }
@@ -344,7 +344,7 @@ public final class AiContainerTransactions {
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum ReceiptState {
       WAITING,
       CONFIRMED,
       SWAPPED_DIFFERENT_STACK,

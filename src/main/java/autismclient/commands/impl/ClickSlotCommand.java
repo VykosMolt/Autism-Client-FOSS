@@ -24,12 +24,12 @@ public final class ClickSlotCommand extends Command {
       RequiredArgumentBuilder<AutismCommandSource, Integer> slot = (RequiredArgumentBuilder<AutismCommandSource, Integer>)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument(
             "slot", autismclient.commands.arguments.SlotArgumentType.init()
          )
-         .executes(context -> init(context, SlotClickCommandHelper.Inner_StreamUtil.init("Left", ContainerInput.PICKUP, 0), 1));
+         .executes(context -> init(context, SlotClickCommandHelper.ClickSpec.init("Left", ContainerInput.PICKUP, 0), 1));
       SlotClickCommandHelper.init(slot, ClickSlotCommand::init);
       root.then(slot);
    }
 
-   private static int init(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.Inner_StreamUtil spec, int times) {
+   private static int init(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.ClickSpec spec, int times) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu != null) {
          int visibleSlot = autismclient.commands.arguments.SlotArgumentType.init(context, "slot");

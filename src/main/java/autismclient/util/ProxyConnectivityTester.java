@@ -14,32 +14,32 @@ public final class ProxyConnectivityTester {
    private ProxyConnectivityTester() {
    }
 
-   public static ProxyConnectivityTester.Inner_DataUtil init(bW proxy, String destHost, int destPort, int timeoutMs) {
+   public static ProxyConnectivityTester.TestResult init(bW proxy, String destHost, int destPort, int timeoutMs) {
       if (proxy != null && proxy.init_bZ != null && proxy.init_Z()) {
          String host = destHost == null ? "" : destHost.trim();
          if (!host.isBlank() && destPort > 0 && destPort <= 65535 && host.getBytes(StandardCharsets.UTF_8).length <= 255 && !init(proxy)) {
             int timeout = Math.max(1, timeoutMs);
             ProxyProtocolType primary = proxy.init_bZ == ProxyProtocolType.Socks4 ? ProxyProtocolType.Socks4 : ProxyProtocolType.Socks5;
             ProxyProtocolType secondary = primary == ProxyProtocolType.Socks4 ? ProxyProtocolType.Socks5 : ProxyProtocolType.Socks4;
-            ProxyConnectivityTester.Inner_DataUtil first = init(proxy, primary, host, destPort, timeout);
+            ProxyConnectivityTester.TestResult first = init(proxy, primary, host, destPort, timeout);
             if (first.success()) {
                return first;
             } else {
-               ProxyConnectivityTester.Inner_DataUtil second = init(proxy, secondary, host, destPort, timeout);
+               ProxyConnectivityTester.TestResult second = init(proxy, secondary, host, destPort, timeout);
                if (second.success()) {
                   return second;
                } else {
-                  return (first.outcome() == ProxyConnectivityTester.Inner_StreamUtil.REFUSED || first.outcome() == ProxyConnectivityTester.Inner_StreamUtil.TIMEOUT)
-                        && second.outcome() == ProxyConnectivityTester.Inner_StreamUtil.OFFLINE
+                  return (first.outcome() == ProxyConnectivityTester.TestOutcome.REFUSED || first.outcome() == ProxyConnectivityTester.TestOutcome.TIMEOUT)
+                        && second.outcome() == ProxyConnectivityTester.TestOutcome.OFFLINE
                      ? first
                      : second;
                }
             }
          } else {
-            return ProxyConnectivityTester.Inner_DataUtil.init(ProxyConnectivityTester.Inner_StreamUtil.INVALID);
+            return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.INVALID);
          }
       } else {
-         return ProxyConnectivityTester.Inner_DataUtil.init(ProxyConnectivityTester.Inner_StreamUtil.INVALID);
+         return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.INVALID);
       }
    }
 
@@ -53,7 +53,7 @@ public final class ProxyConnectivityTester {
       }
    }
 
-   private static ProxyConnectivityTester.Inner_DataUtil init(bW proxy, ProxyProtocolType type, String host, int port, int timeout) {
+   private static ProxyConnectivityTester.TestResult init(bW proxy, ProxyProtocolType type, String host, int port, int timeout) {
       long started = System.nanoTime();
 
       try (Socket socket = new Socket()) {
@@ -61,23 +61,23 @@ public final class ProxyConnectivityTester {
          socket.connect(new InetSocketAddress(proxy.read, proxy.init_I), timeout);
          OutputStream out = socket.getOutputStream();
          InputStream in = socket.getInputStream();
-         ProxyConnectivityTester.Inner_StreamUtil state = type == ProxyProtocolType.Socks4 ? load(out, in, proxy, host, port) : init(out, in, proxy, host, port);
-         if (state != ProxyConnectivityTester.Inner_StreamUtil.VERIFIED) {
-            return ProxyConnectivityTester.Inner_DataUtil.init(state);
+         ProxyConnectivityTester.TestOutcome state = type == ProxyProtocolType.Socks4 ? load(out, in, proxy, host, port) : init(out, in, proxy, host, port);
+         if (state != ProxyConnectivityTester.TestOutcome.VERIFIED) {
+            return ProxyConnectivityTester.TestResult.init(state);
          }
 
          long latency = Math.max(0L, (System.nanoTime() - started) / 1000000L);
-         return new ProxyConnectivityTester.Inner_DataUtil(true, latency, type, ProxyConnectivityTester.Inner_StreamUtil.VERIFIED);
+         return new ProxyConnectivityTester.TestResult(true, latency, type, ProxyConnectivityTester.TestOutcome.VERIFIED);
       } catch (SocketTimeoutException ignored) {
-         return ProxyConnectivityTester.Inner_DataUtil.init(ProxyConnectivityTester.Inner_StreamUtil.TIMEOUT);
+         return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.TIMEOUT);
       } catch (ConnectException ignored) {
-         return ProxyConnectivityTester.Inner_DataUtil.init(ProxyConnectivityTester.Inner_StreamUtil.REFUSED);
+         return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.REFUSED);
       } catch (IOException | RuntimeException ignored) {
-         return ProxyConnectivityTester.Inner_DataUtil.init(ProxyConnectivityTester.Inner_StreamUtil.OFFLINE);
+         return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.OFFLINE);
       }
    }
 
-   private static ProxyConnectivityTester.Inner_StreamUtil init(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
+   private static ProxyConnectivityTester.TestOutcome init(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
       boolean hasAuth = proxy.write != null && !proxy.write.isBlank();
       if (hasAuth) {
          out.write(new byte[]{5, 2, 0, 2});
@@ -90,20 +90,20 @@ public final class ProxyConnectivityTester {
       if (method.length >= 2 && method[0] == 5) {
          int chosen = method[1] & 255;
          if (chosen == 255) {
-            return ProxyConnectivityTester.Inner_StreamUtil.REFUSED;
+            return ProxyConnectivityTester.TestOutcome.REFUSED;
          }
 
          if (chosen == 2) {
             if (!hasAuth) {
-               return ProxyConnectivityTester.Inner_StreamUtil.OFFLINE;
+               return ProxyConnectivityTester.TestOutcome.OFFLINE;
             }
 
-            ProxyConnectivityTester.Inner_StreamUtil authenticated = init(out, in, proxy);
-            if (authenticated != ProxyConnectivityTester.Inner_StreamUtil.VERIFIED) {
+            ProxyConnectivityTester.TestOutcome authenticated = init(out, in, proxy);
+            if (authenticated != ProxyConnectivityTester.TestOutcome.VERIFIED) {
                return authenticated;
             }
          } else if (chosen != 0) {
-            return ProxyConnectivityTester.Inner_StreamUtil.OFFLINE;
+            return ProxyConnectivityTester.TestOutcome.OFFLINE;
          }
 
          byte[] domain = host.getBytes(StandardCharsets.UTF_8);
@@ -139,19 +139,19 @@ public final class ProxyConnectivityTester {
 
             int addressLength = var10000;
             if (addressLength >= 0 && init(in, addressLength + 2).length >= addressLength + 2) {
-               return reply[1] == 0 ? ProxyConnectivityTester.Inner_StreamUtil.VERIFIED : ProxyConnectivityTester.Inner_StreamUtil.REFUSED;
+               return reply[1] == 0 ? ProxyConnectivityTester.TestOutcome.VERIFIED : ProxyConnectivityTester.TestOutcome.REFUSED;
             } else {
-               return ProxyConnectivityTester.Inner_StreamUtil.OFFLINE;
+               return ProxyConnectivityTester.TestOutcome.OFFLINE;
             }
          } else {
-            return ProxyConnectivityTester.Inner_StreamUtil.OFFLINE;
+            return ProxyConnectivityTester.TestOutcome.OFFLINE;
          }
       } else {
-         return ProxyConnectivityTester.Inner_StreamUtil.OFFLINE;
+         return ProxyConnectivityTester.TestOutcome.OFFLINE;
       }
    }
 
-   private static ProxyConnectivityTester.Inner_StreamUtil init(OutputStream out, InputStream in, bW proxy) throws IOException {
+   private static ProxyConnectivityTester.TestOutcome init(OutputStream out, InputStream in, bW proxy) throws IOException {
       byte[] user = (proxy.write == null ? "" : proxy.write).getBytes(StandardCharsets.UTF_8);
       byte[] pass = (proxy.update == null ? "" : proxy.update).getBytes(StandardCharsets.UTF_8);
       ByteArrayOutputStream auth = new ByteArrayOutputStream(3 + user.length + pass.length);
@@ -164,13 +164,13 @@ public final class ProxyConnectivityTester {
       out.flush();
       byte[] reply = init(in, 2);
       if (reply.length >= 2 && reply[0] == 1) {
-         return reply[1] == 0 ? ProxyConnectivityTester.Inner_StreamUtil.VERIFIED : ProxyConnectivityTester.Inner_StreamUtil.REFUSED;
+         return reply[1] == 0 ? ProxyConnectivityTester.TestOutcome.VERIFIED : ProxyConnectivityTester.TestOutcome.REFUSED;
       } else {
-         return ProxyConnectivityTester.Inner_StreamUtil.OFFLINE;
+         return ProxyConnectivityTester.TestOutcome.OFFLINE;
       }
    }
 
-   private static ProxyConnectivityTester.Inner_StreamUtil load(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
+   private static ProxyConnectivityTester.TestOutcome load(OutputStream out, InputStream in, bW proxy, String host, int port) throws IOException {
       byte[] user = (proxy.write == null ? "" : proxy.write).getBytes(StandardCharsets.UTF_8);
       ByteArrayOutputStream request = new ByteArrayOutputStream();
       request.write(4);
@@ -195,9 +195,9 @@ public final class ProxyConnectivityTester {
       out.flush();
       byte[] reply = init(in, 8);
       if (reply.length >= 8 && reply[0] == 0) {
-         return reply[1] == 90 ? ProxyConnectivityTester.Inner_StreamUtil.VERIFIED : ProxyConnectivityTester.Inner_StreamUtil.REFUSED;
+         return reply[1] == 90 ? ProxyConnectivityTester.TestOutcome.VERIFIED : ProxyConnectivityTester.TestOutcome.REFUSED;
       } else {
-         return ProxyConnectivityTester.Inner_StreamUtil.OFFLINE;
+         return ProxyConnectivityTester.TestOutcome.OFFLINE;
       }
    }
 
@@ -233,21 +233,21 @@ public final class ProxyConnectivityTester {
       return out;
    }
 
-   public record Inner_DataUtil(boolean success, long latencyMs, ProxyProtocolType protocol, ProxyConnectivityTester.Inner_StreamUtil outcome) {
-      public Inner_DataUtil(boolean ok, long latencyMs, ProxyProtocolType workingType) {
-         this(ok, latencyMs, workingType, ok ? ProxyConnectivityTester.Inner_StreamUtil.VERIFIED : ProxyConnectivityTester.Inner_StreamUtil.OFFLINE);
+   public record TestResult(boolean success, long latencyMs, ProxyProtocolType protocol, ProxyConnectivityTester.TestOutcome outcome) {
+      public TestResult(boolean ok, long latencyMs, ProxyProtocolType workingType) {
+         this(ok, latencyMs, workingType, ok ? ProxyConnectivityTester.TestOutcome.VERIFIED : ProxyConnectivityTester.TestOutcome.OFFLINE);
       }
 
-      public Inner_DataUtil(boolean ok, long latencyMs) {
+      public TestResult(boolean ok, long latencyMs) {
          this(ok, latencyMs, null);
       }
 
-      static ProxyConnectivityTester.Inner_DataUtil init(ProxyConnectivityTester.Inner_StreamUtil state) {
-         return new ProxyConnectivityTester.Inner_DataUtil(false, 0L, null, state);
+      static ProxyConnectivityTester.TestResult init(ProxyConnectivityTester.TestOutcome state) {
+         return new ProxyConnectivityTester.TestResult(false, 0L, null, state);
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum TestOutcome {
       INVALID,
       OFFLINE,
       TIMEOUT,

@@ -1290,7 +1290,7 @@ public final class AutismHudManager {
    }
 
    private static void addAntiVanishLines(List<AutismHudManager.ColoredTextLine> lines) {
-      for (autismclient.modules.AntiVanishModule.Inner_StreamUtil entry : autismclient.modules.AntiVanishModule.entries()) {
+      for (autismclient.modules.AntiVanishModule.HudRow entry : autismclient.modules.AntiVanishModule.entries()) {
          lines.add(
             labeledLine(
                "anti_vanish",

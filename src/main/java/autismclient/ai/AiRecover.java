@@ -27,7 +27,7 @@ final class AiRecover {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiDeathLog.Inner_DataUtil death = AiDeathLog.lastDeath();
+         final AiDeathLog.DeathRecord death = AiDeathLog.lastDeath();
          if (death == null) {
             return AiGameOperations.immediate(AiOperation.Status.FAILED, "No death has been recorded this session; there is nothing to recover", AiDeathLog.statusJson());
          }
@@ -303,7 +303,7 @@ final class AiRecover {
    }
 
    static AiOperation create() {
-      AiDeathLog.Inner_DataUtil death = AiDeathLog.lastDeath();
+      AiDeathLog.DeathRecord death = AiDeathLog.lastDeath();
       return AiGameOperations.immediate(
          AiOperation.Status.SUCCEEDED,
          death == null
@@ -320,7 +320,7 @@ final class AiRecover {
    }
 
    static BlockPos init_BlockPos() {
-      AiDeathLog.Inner_DataUtil death = AiDeathLog.lastDeath();
+      AiDeathLog.DeathRecord death = AiDeathLog.lastDeath();
       return death == null ? null : death.position();
    }
 }

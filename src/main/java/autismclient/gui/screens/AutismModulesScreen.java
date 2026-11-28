@@ -45,7 +45,7 @@ import net.minecraft.network.protocol.Packet;
 public class AutismModulesScreen extends VirtualScaledScreen implements autismclient.gui.ui.RetainedForegroundScreen {
    private static final Set<String> hiddenOverlayIds = new LinkedHashSet<>();
    private final Screen parent;
-   private final AutismModulesScreen.Inner_DataUtil mode;
+   private final AutismModulesScreen.ScreenMode mode;
    private autismclient.gui.ui.menu.ModulesMenuController menuController;
    private AutismPacketSelectorOverlay packetSelectorOverlay;
    private AutismMacroListOverlay macroListOverlay;
@@ -61,17 +61,17 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
    private long init_J;
 
    public AutismModulesScreen(Screen parent) {
-      this(parent, AutismModulesScreen.Inner_DataUtil.IN_GAME);
+      this(parent, AutismModulesScreen.ScreenMode.IN_GAME);
    }
 
-   public AutismModulesScreen(Screen parent, AutismModulesScreen.Inner_DataUtil mode) {
+   public AutismModulesScreen(Screen parent, AutismModulesScreen.ScreenMode mode) {
       super(Component.literal("Autism Modules"));
       this.parent = parent;
-      this.mode = mode == null ? AutismModulesScreen.Inner_DataUtil.IN_GAME : mode;
+      this.mode = mode == null ? AutismModulesScreen.ScreenMode.IN_GAME : mode;
    }
 
    public boolean isTitleSetup() {
-      return this.mode == AutismModulesScreen.Inner_DataUtil.TITLE_SETUP;
+      return this.mode == AutismModulesScreen.ScreenMode.TITLE_SETUP;
    }
 
    public autismclient.gui.ui.menu.ModulesMenuController menuController() {
@@ -100,7 +100,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
 
       if (this.menuController == null) {
-         this.menuController = new autismclient.gui.ui.menu.ModulesMenuController(new AutismModulesScreen.Inner_StreamUtil());
+         this.menuController = new autismclient.gui.ui.menu.ModulesMenuController(new AutismModulesScreen.MenuHost());
       }
 
       this.menuController.restoreState();
@@ -125,7 +125,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          this.closeToParent();
       } else {
          if (this.menuController == null) {
-            this.menuController = new autismclient.gui.ui.menu.ModulesMenuController(new AutismModulesScreen.Inner_StreamUtil());
+            this.menuController = new autismclient.gui.ui.menu.ModulesMenuController(new AutismModulesScreen.MenuHost());
             this.menuController.restoreState();
          }
 
@@ -908,12 +908,12 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum ScreenMode {
       IN_GAME,
       TITLE_SETUP;
    }
 
-   private final class Inner_StreamUtil implements autismclient.gui.ui.menu.ModulesMenuController.Inner_BufferHelper {
+   private final class MenuHost implements autismclient.gui.ui.menu.ModulesMenuController.ControllerHost {
       @Override
       public boolean isTitleSetup() {
          return AutismModulesScreen.this.isTitleSetup();

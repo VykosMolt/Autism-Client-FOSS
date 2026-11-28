@@ -39,7 +39,7 @@ final class AiEntityQuery {
    private AiEntityQuery() {
    }
 
-   static String init(AiEntityQuery.Inner_StreamUtil facts) {
+   static String init(AiEntityQuery.EntityFacts facts) {
       if (init_Set.contains(facts.typeId())) {
          return "boss";
       } else if (facts.enemy()) {
@@ -135,7 +135,7 @@ final class AiEntityQuery {
                   : !(distanceSqr > radius * radius)) {
                   String typeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
                   if (spec.isBlank() || load(typeId, spec)) {
-                     AiEntityQuery.Inner_StreamUtil facts = init(entity, typeId);
+                     AiEntityQuery.EntityFacts facts = init(entity, typeId);
                      String assigned = init(facts);
                      if (init(category, assigned)) {
                         matched++;
@@ -192,8 +192,8 @@ final class AiEntityQuery {
       }
    }
 
-   static AiEntityQuery.Inner_StreamUtil init(Entity entity, String typeId) {
-      return new AiEntityQuery.Inner_StreamUtil(
+   static AiEntityQuery.EntityFacts init(Entity entity, String typeId) {
+      return new AiEntityQuery.EntityFacts(
          typeId,
          entity instanceof Enemy,
          entity instanceof LivingEntity,
@@ -237,6 +237,6 @@ final class AiEntityQuery {
       return Math.round(value * 100.0) / 100.0;
    }
 
-   record Inner_StreamUtil(String typeId, boolean enemy, boolean living, boolean player, boolean villager, boolean item, boolean projectile, boolean vehicle) {
+   record EntityFacts(String typeId, boolean enemy, boolean living, boolean player, boolean villager, boolean item, boolean projectile, boolean vehicle) {
    }
 }

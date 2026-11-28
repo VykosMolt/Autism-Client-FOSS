@@ -11,7 +11,7 @@ final class StrafeInputCorrector {
    private int load = -2147483648;
    private int read;
 
-   Input init(Input raw, Vec3 position, float cameraYaw, float aimYaw, double drag, int now, StrafeInputCorrector.Inner_DataUtil step) {
+   Input init(Input raw, Vec3 position, float cameraYaw, float aimYaw, double drag, int now, StrafeInputCorrector.MovementModel step) {
       double f = (raw.forward() ? 1 : 0) - (raw.backward() ? 1 : 0);
       double s = (raw.left() ? 1 : 0) - (raw.right() ? 1 : 0);
       if (f == 0.0 && s == 0.0) {
@@ -75,7 +75,7 @@ final class StrafeInputCorrector {
       this.read = 0;
    }
 
-   interface Inner_DataUtil {
+   interface MovementModel {
       Vec3 movement(Input var1);
    }
 }

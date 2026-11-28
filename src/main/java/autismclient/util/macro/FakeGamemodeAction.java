@@ -7,16 +7,16 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.GameType;
 
 public class FakeGamemodeAction implements MacroAction {
-   public FakeGamemodeAction.Inner_StreamUtil mode = FakeGamemodeAction.Inner_StreamUtil.RESET;
-   public FakeGamemodeAction.Inner_DataUtil method = FakeGamemodeAction.Inner_DataUtil.FAKE;
+   public FakeGamemodeAction.GameModeChoice mode = FakeGamemodeAction.GameModeChoice.RESET;
+   public FakeGamemodeAction.ApplyMethod method = FakeGamemodeAction.ApplyMethod.FAKE;
    private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
-      autismclient.util.FakeGamemodeManager.Inner_DataUtil result;
-      if (this.mode == FakeGamemodeAction.Inner_StreamUtil.RESET) {
+      autismclient.util.FakeGamemodeManager.ApplyResult result;
+      if (this.mode == FakeGamemodeAction.GameModeChoice.RESET) {
          result = autismclient.util.FakeGamemodeManager.clearFake();
-      } else if (this.method == FakeGamemodeAction.Inner_DataUtil.REAL) {
+      } else if (this.method == FakeGamemodeAction.ApplyMethod.REAL) {
          result = autismclient.util.RealGamemodeSender.init(gameTypeOf(this.mode));
       } else {
          result = autismclient.util.FakeGamemodeManager.applyFake(gameTypeOf(this.mode));
@@ -39,16 +39,16 @@ public class FakeGamemodeAction implements MacroAction {
    public void fromTag(CompoundTag tag) {
       if (tag.contains("mode")) {
          try {
-            this.mode = FakeGamemodeAction.Inner_StreamUtil.valueOf(tag.getStringOr("mode", "RESET"));
+            this.mode = FakeGamemodeAction.GameModeChoice.valueOf(tag.getStringOr("mode", "RESET"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = FakeGamemodeAction.Inner_StreamUtil.RESET;
+            this.mode = FakeGamemodeAction.GameModeChoice.RESET;
          }
       }
 
       try {
-         this.method = FakeGamemodeAction.Inner_DataUtil.valueOf(tag.getStringOr("method", "FAKE"));
+         this.method = FakeGamemodeAction.ApplyMethod.valueOf(tag.getStringOr("method", "FAKE"));
       } catch (IllegalArgumentException ignored) {
-         this.method = FakeGamemodeAction.Inner_DataUtil.FAKE;
+         this.method = FakeGamemodeAction.ApplyMethod.FAKE;
       }
 
       this.enabled = tag.getBooleanOr("enabled", true);
@@ -61,9 +61,9 @@ public class FakeGamemodeAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return this.mode == FakeGamemodeAction.Inner_StreamUtil.RESET
+      return this.mode == FakeGamemodeAction.GameModeChoice.RESET
          ? "GM: Reset"
-         : "GM: " + labelOf(this.mode) + (this.method == FakeGamemodeAction.Inner_DataUtil.REAL ? " (Real)" : " (Fake)");
+         : "GM: " + labelOf(this.mode) + (this.method == FakeGamemodeAction.ApplyMethod.REAL ? " (Real)" : " (Fake)");
    }
 
    @Override
@@ -81,7 +81,7 @@ public class FakeGamemodeAction implements MacroAction {
       this.enabled = enabled;
    }
 
-   private static GameType gameTypeOf(FakeGamemodeAction.Inner_StreamUtil mode) {
+   private static GameType gameTypeOf(FakeGamemodeAction.GameModeChoice mode) {
       GameType var10000;
       switch (mode) {
          case SURVIVAL:
@@ -104,7 +104,7 @@ public class FakeGamemodeAction implements MacroAction {
       return var10000;
    }
 
-   private static String labelOf(FakeGamemodeAction.Inner_StreamUtil mode) {
+   private static String labelOf(FakeGamemodeAction.GameModeChoice mode) {
       if (mode == null) {
          return "Reset";
       }
@@ -113,12 +113,12 @@ public class FakeGamemodeAction implements MacroAction {
       return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
    }
 
-   public enum Inner_DataUtil {
+   public enum ApplyMethod {
       REAL,
       FAKE;
    }
 
-   public enum Inner_StreamUtil {
+   public enum GameModeChoice {
       SURVIVAL,
       CREATIVE,
       ADVENTURE,

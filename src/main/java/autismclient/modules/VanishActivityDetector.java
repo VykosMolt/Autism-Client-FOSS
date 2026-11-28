@@ -77,9 +77,9 @@ final class VanishActivityDetector {
    private static final Minecraft MINECRAFT = Minecraft.getInstance();
    private final autismclient.util.UnexplainedBlockTracker tracker = new autismclient.util.UnexplainedBlockTracker();
    private final Map<Long, Long> suppressedUntil = new HashMap<>();
-   private final Map<Long, VanishActivityDetector.Inner_CachePool> pendingChanges = new LinkedHashMap<>();
-   private final ArrayDeque<VanishActivityDetector.Inner_DataUtil> actors = new ArrayDeque<>();
-   private final ArrayDeque<VanishActivityDetector.Inner_StreamUtil> hazards = new ArrayDeque<>();
+   private final Map<Long, VanishActivityDetector.PendingChange> pendingChanges = new LinkedHashMap<>();
+   private final ArrayDeque<VanishActivityDetector.ActorZone> actors = new ArrayDeque<>();
+   private final ArrayDeque<VanishActivityDetector.Hazard> hazards = new ArrayDeque<>();
    private long lastExpire = -1L;
    private long quietUntil;
 
@@ -132,13 +132,13 @@ final class VanishActivityDetector {
       }
    }
 
-   static autismclient.util.UnexplainedBlockTracker.Inner_CachePool classifyChange(BlockState before, BlockState after) {
+   static autismclient.util.UnexplainedBlockTracker.ChangeKind classifyChange(BlockState before, BlockState after) {
       if (before.getBlock() == after.getBlock()) {
          return null;
       } else if (before.isAir() && isTrackableBlock(after, true)) {
-         return autismclient.util.UnexplainedBlockTracker.Inner_CachePool.PLACE;
+         return autismclient.util.UnexplainedBlockTracker.ChangeKind.PLACE;
       } else {
-         return after.isAir() && isTrackableBlock(before, false) ? autismclient.util.UnexplainedBlockTracker.Inner_CachePool.BREAK : null;
+         return after.isAir() && isTrackableBlock(before, false) ? autismclient.util.UnexplainedBlockTracker.ChangeKind.BREAK : null;
       }
    }
 
@@ -152,18 +152,18 @@ final class VanishActivityDetector {
 
          this.load(pos, before, at);
          this.load(pos, after, at);
-         autismclient.util.UnexplainedBlockTracker.Inner_CachePool kind = classifyChange(before, after);
+         autismclient.util.UnexplainedBlockTracker.ChangeKind kind = classifyChange(before, after);
          if (kind != null) {
             if (this.pendingChanges.size() >= 256) {
                this.pendingChanges.remove(this.pendingChanges.keySet().iterator().next());
             }
 
             this.pendingChanges
-               .put(pos.asLong(), new VanishActivityDetector.Inner_CachePool(kind == autismclient.util.UnexplainedBlockTracker.Inner_CachePool.PLACE ? after : before, kind, at + 10000L));
+               .put(pos.asLong(), new VanishActivityDetector.PendingChange(kind == autismclient.util.UnexplainedBlockTracker.ChangeKind.PLACE ? after : before, kind, at + 10000L));
             if (this.suppressedUntil.getOrDefault(pos.asLong(), 0L) <= at && at >= this.quietUntil && !this.isExplained(pos, at)) {
                this.tracker
                   .onChange(
-                     new autismclient.util.UnexplainedBlockTracker.Inner_StreamUtil(pos.immutable(), blockId(before), blockId(after), kind, at)
+                     new autismclient.util.UnexplainedBlockTracker.BlockChange(pos.immutable(), blockId(before), blockId(after), kind, at)
                   );
             } else {
                this.tracker.init(pos, 1.5, at + 2000L);
@@ -234,7 +234,7 @@ final class VanishActivityDetector {
             BlockState source = MINECRAFT.level.getBlockState(event.getPos());
             if (source.getBlock() instanceof DispenserBlock && source.hasProperty(BlockStateProperties.FACING)) {
                this.addHazard(
-                  new VanishActivityDetector.Inner_StreamUtil(event.getPos().relative(source.getValue(BlockStateProperties.FACING)), false, false, true, at + 3000L)
+                  new VanishActivityDetector.Hazard(event.getPos().relative(source.getValue(BlockStateProperties.FACING)), false, false, true, at + 3000L)
                );
             }
          }
@@ -331,7 +331,7 @@ final class VanishActivityDetector {
                   if (kind != 0) {
                      this.actors
                         .addLast(
-                           new VanishActivityDetector.Inner_DataUtil(pos.immutable(), kind, kind == 2 ? 24.0 : (kind == 3 ? 6.0 : (kind == 4 ? 12.0 : 6.0)), at + 2500L)
+                           new VanishActivityDetector.ActorZone(pos.immutable(), kind, kind == 2 ? 24.0 : (kind == 3 ? 6.0 : (kind == 4 ? 12.0 : 6.0)), at + 2500L)
                         );
                   }
 
@@ -343,7 +343,7 @@ final class VanishActivityDetector {
          }
       }
 
-      for (Entry<Long, VanishActivityDetector.Inner_CachePool> entry : this.pendingChanges.entrySet()) {
+      for (Entry<Long, VanishActivityDetector.PendingChange> entry : this.pendingChanges.entrySet()) {
          BlockPos pos = BlockPos.of(entry.getKey());
          if (this.load(pos, at) || this.read(pos, at)) {
             this.tracker.init(pos, 0.0, at + 1000L);
@@ -371,7 +371,7 @@ final class VanishActivityDetector {
          return true;
       }
 
-      VanishActivityDetector.Inner_CachePool focus = this.pendingChanges.get(pos.asLong());
+      VanishActivityDetector.PendingChange focus = this.pendingChanges.get(pos.asLong());
       // Only the fluid/heat test can match beyond distSqr 4; skip the outer cells when no fluid/heat state can explain this block.
       int r = focus != null
             && (
@@ -393,7 +393,7 @@ final class VanishActivityDetector {
                   }
 
                   if (focus != null
-                     && focus.change == autismclient.util.UnexplainedBlockTracker.Inner_CachePool.PLACE
+                     && focus.change == autismclient.util.UnexplainedBlockTracker.ChangeKind.PLACE
                      && p.distManhattan(pos) == 1
                      && (focus.state.getBlock() == Blocks.MELON || focus.state.getBlock() == Blocks.PUMPKIN)
                      && (state.getBlock() instanceof StemBlock || state.getBlock() instanceof AttachedStemBlock)) {
@@ -427,9 +427,9 @@ final class VanishActivityDetector {
    }
 
    private boolean load(BlockPos pos, long at) {
-      VanishActivityDetector.Inner_CachePool focus = this.pendingChanges.get(pos.asLong());
+      VanishActivityDetector.PendingChange focus = this.pendingChanges.get(pos.asLong());
 
-      for (VanishActivityDetector.Inner_DataUtil actor : this.actors) {
+      for (VanishActivityDetector.ActorZone actor : this.actors) {
          if (actor.expiresAt > at
             && !(actor.pos.distSqr(pos) > actor.radius * actor.radius)
             && (actor.kind != 1 || focus == null || isEndermanBlock(focus.state))
@@ -464,11 +464,11 @@ final class VanishActivityDetector {
       boolean fluid = !state.getFluidState().isEmpty();
       boolean heat = state.getBlock() instanceof BaseFireBlock || state.getFluidState().is(FluidTags.LAVA);
       if (fluid || heat) {
-         this.addHazard(new VanishActivityDetector.Inner_StreamUtil(pos.immutable(), fluid, heat, false, at + 4000L));
+         this.addHazard(new VanishActivityDetector.Hazard(pos.immutable(), fluid, heat, false, at + 4000L));
       }
    }
 
-   private void addHazard(VanishActivityDetector.Inner_StreamUtil hazard) {
+   private void addHazard(VanishActivityDetector.Hazard hazard) {
       if (this.hazards.size() >= 1024) {
          this.hazards.removeFirst();
       }
@@ -477,12 +477,12 @@ final class VanishActivityDetector {
    }
 
    private boolean read(BlockPos pos, long at) {
-      VanishActivityDetector.Inner_CachePool focus = this.pendingChanges.get(pos.asLong());
+      VanishActivityDetector.PendingChange focus = this.pendingChanges.get(pos.asLong());
       if (focus == null) {
          return false;
       }
 
-      for (VanishActivityDetector.Inner_StreamUtil h : this.hazards) {
+      for (VanishActivityDetector.Hazard h : this.hazards) {
          if (h.expiresAt > at
             && h.pos.distSqr(pos) <= (h.read ? 0 : 12)
             && (h.read ? load(focus.state) : init(focus.state, focus.change, h.init_Z, h.load))) {
@@ -497,8 +497,8 @@ final class VanishActivityDetector {
       return state.getBlock() instanceof CarvedPumpkinBlock || state.getBlock() instanceof ShulkerBoxBlock || state.getBlock() instanceof TntBlock;
    }
 
-   static boolean init(BlockState state, autismclient.util.UnexplainedBlockTracker.Inner_CachePool kind, boolean fluid, boolean heat) {
-      if (kind == autismclient.util.UnexplainedBlockTracker.Inner_CachePool.BREAK) {
+   static boolean init(BlockState state, autismclient.util.UnexplainedBlockTracker.ChangeKind kind, boolean fluid, boolean heat) {
+      if (kind == autismclient.util.UnexplainedBlockTracker.ChangeKind.BREAK) {
          return heat && state.ignitedByLava();
       }
 
@@ -520,7 +520,7 @@ final class VanishActivityDetector {
       return BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
    }
 
-   List<autismclient.util.UnexplainedBlockTracker.Inner_BufferHelper> unexplained(long at) {
+   List<autismclient.util.UnexplainedBlockTracker.ActivityReading> unexplained(long at) {
       return this.tracker.activeReadings(at);
    }
 
@@ -534,12 +534,12 @@ final class VanishActivityDetector {
       this.quietUntil = 0L;
    }
 
-   private record Inner_CachePool(BlockState state, autismclient.util.UnexplainedBlockTracker.Inner_CachePool change, long expiresAt) {
+   private record PendingChange(BlockState state, autismclient.util.UnexplainedBlockTracker.ChangeKind change, long expiresAt) {
    }
 
-   private record Inner_DataUtil(BlockPos pos, int kind, double radius, long expiresAt) {
+   private record ActorZone(BlockPos pos, int kind, double radius, long expiresAt) {
    }
 
-   private record Inner_StreamUtil(BlockPos pos, boolean init_Z, boolean load, boolean read, long expiresAt) {
+   private record Hazard(BlockPos pos, boolean init_Z, boolean load, boolean read, long expiresAt) {
    }
 }

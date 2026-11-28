@@ -69,7 +69,7 @@ public class OreSimCommand extends Command {
             );
          AutismClientMessaging.sendPrefixed("§7local Minecraft 26.2 worldgen: " + worldgen);
          if (autismclient.util.oresim.OreSimEngine.hasError()
-            || autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.Inner_BufferHelper.UNVERIFIED_WORLDGEN) {
+            || autismclient.util.oresim.OreSimEngine.status() == autismclient.util.oresim.OreSimEngine.EngineStatus.UNVERIFIED_WORLDGEN) {
             AutismClientMessaging.sendPrefixed("§c" + autismclient.util.oresim.OreSimEngine.errorMessage());
          }
 

@@ -20,21 +20,21 @@ public final class PacedTpJobManager {
       try {
          result = autismclient.util.g.PkgCls_a.init_a_StateCache_w_bl_StreamUtil(action, handle);
       } catch (RuntimeException | Error error) {
-         init_dc.init(id, AsyncJobRegistry.Inner_DataUtil.FAILED);
+         init_dc.init(id, AsyncJobRegistry.JobStatus.FAILED);
          throw error;
       }
 
       if (result != null && result.init_Z()) {
          init_dc.requestCancel(id);
       } else {
-         init_dc.init(id, AsyncJobRegistry.Inner_DataUtil.FAILED);
+         init_dc.init(id, AsyncJobRegistry.JobStatus.FAILED);
       }
 
       return handle;
    }
 
    public static PacedTpJobManager.Inner_CachePool status(long id) {
-      AsyncJobRegistry.Inner_StreamUtil state = init_dc.state(id);
+      AsyncJobRegistry.JobState state = init_dc.state(id);
       return new PacedTpJobManager.Inner_CachePool(state.id(), state.label(), init(state.status()), state.load_Z(), state.read(), state.deadline());
    }
 
@@ -45,14 +45,14 @@ public final class PacedTpJobManager {
    public static void init(long id, String reason) {
       if (init_bl_DataUtil(id) == PacedTpJobManager.Inner_DataUtil.PENDING) {
          autismclient.util.g.PkgCls_a.init_V_J_Str(id, reason);
-         init_dc.init(id, AsyncJobRegistry.Inner_DataUtil.CANCELLED);
+         init_dc.init(id, AsyncJobRegistry.JobStatus.CANCELLED);
       }
    }
 
    public static void init(Minecraft client) {
       for (long id : init_dc.expireOverdue()) {
          autismclient.util.g.PkgCls_a.load(id, "timeout");
-         init_dc.init(id, AsyncJobRegistry.Inner_DataUtil.FAILED);
+         init_dc.init(id, AsyncJobRegistry.JobStatus.FAILED);
       }
 
       autismclient.util.g.PkgCls_a.init_V_Minecraft(client);
@@ -62,7 +62,7 @@ public final class PacedTpJobManager {
       autismclient.util.g.PkgCls_a.init_V_Str(reason);
 
       for (long id : init_dc.load()) {
-         init_dc.init(id, AsyncJobRegistry.Inner_DataUtil.CANCELLED);
+         init_dc.init(id, AsyncJobRegistry.JobStatus.CANCELLED);
       }
    }
 
@@ -70,11 +70,11 @@ public final class PacedTpJobManager {
       init_dc.init(id, init(completion));
    }
 
-   private static AsyncJobRegistry.Inner_DataUtil init(PacedTpJobManager.Inner_DataUtil completion) {
-      return completion == null ? null : AsyncJobRegistry.Inner_DataUtil.valueOf(completion.name());
+   private static AsyncJobRegistry.JobStatus init(PacedTpJobManager.Inner_DataUtil completion) {
+      return completion == null ? null : AsyncJobRegistry.JobStatus.valueOf(completion.name());
    }
 
-   private static PacedTpJobManager.Inner_DataUtil init(AsyncJobRegistry.Inner_DataUtil completion) {
+   private static PacedTpJobManager.Inner_DataUtil init(AsyncJobRegistry.JobStatus completion) {
       return PacedTpJobManager.Inner_DataUtil.valueOf(completion.name());
    }
 

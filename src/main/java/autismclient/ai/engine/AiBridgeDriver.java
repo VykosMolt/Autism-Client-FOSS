@@ -85,7 +85,7 @@ public final class AiBridgeDriver {
       return Math.abs(x) >= Math.abs(z) ? new int[]{(int)Math.signum(x), 0} : new int[]{0, (int)Math.signum(z)};
    }
 
-   public AiBridgeDriver.Inner_DataUtil init(int slot, IntConsumer select, Consumer<BlockPos> onPlaced) {
+   public AiBridgeDriver.BridgeStatus init(int slot, IntConsumer select, Consumer<BlockPos> onPlaced) {
       LocalPlayer player = this.mc.player;
       AiBridger.Inner_CachePool lane = this.bridger.getLane();
       this.init_I++;
@@ -93,16 +93,16 @@ public final class AiBridgeDriver {
          BlockPos footing = new BlockPos(lane.cellX(0), lane.floorY(), lane.cellZ(0));
          BlockState state = this.mc.level.getBlockState(footing);
          if (!Block.isShapeFullBlock(state.getCollisionShape(this.mc.level, footing))) {
-            return AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING;
+            return AiBridgeDriver.BridgeStatus.INVALID_FOOTING;
          }
       }
 
       if (player.onGround() && player.getY() < lane.floorY() + 1 - 0.01) {
-         return AiBridgeDriver.Inner_DataUtil.INVALID_FOOTING;
+         return AiBridgeDriver.BridgeStatus.INVALID_FOOTING;
       }
 
       if (player.getY() < lane.floorY() + 0.4) {
-         return AiBridgeDriver.Inner_DataUtil.FELL;
+         return AiBridgeDriver.BridgeStatus.FELL;
       }
 
       if (this.liveWorld == null || this.liveWorld.getLevel() != this.mc.level) {
@@ -125,7 +125,7 @@ public final class AiBridgeDriver {
             slot >= 0
          );
       if (cmd.done()) {
-         return AiBridgeDriver.Inner_DataUtil.DONE;
+         return AiBridgeDriver.BridgeStatus.DONE;
       }
 
       this.aim.setProfile(AiAim.AimProfile.TELLY);
@@ -181,7 +181,7 @@ public final class AiBridgeDriver {
          );
       }
 
-      return AiBridgeDriver.Inner_DataUtil.RUNNING;
+      return AiBridgeDriver.BridgeStatus.RUNNING;
    }
 
    private boolean init_Z_LocalPlayer(LocalPlayer player, BlockPos cell, int slot, IntConsumer select) {
@@ -221,7 +221,7 @@ public final class AiBridgeDriver {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum BridgeStatus {
       RUNNING,
       DONE,
       FELL,

@@ -84,37 +84,37 @@ final class AiDragon {
          : 0;
    }
 
-   static AiDragon.Inner_CachePool stateFromPhase(String phaseName) {
-      AiDragon.Inner_CachePool var10000;
+   static AiDragon.DragonState stateFromPhase(String phaseName) {
+      AiDragon.DragonState var10000;
       switch (phaseName) {
          case "Landing":
          case "SittingScanning":
          case "SittingFlaming":
          case "SittingAttacking":
-            var10000 = AiDragon.Inner_CachePool.PERCHED;
+            var10000 = AiDragon.DragonState.PERCHED;
             break;
          case "LandingApproach":
-            var10000 = AiDragon.Inner_CachePool.APPROACHING;
+            var10000 = AiDragon.DragonState.APPROACHING;
             break;
          case "Dying":
-            var10000 = AiDragon.Inner_CachePool.DYING;
+            var10000 = AiDragon.DragonState.DYING;
             break;
          default:
-            var10000 = AiDragon.Inner_CachePool.FLYING;
+            var10000 = AiDragon.DragonState.FLYING;
       }
 
       return var10000;
    }
 
-   static AiDragon.Inner_CachePool stateFromMotion(double horizontal, double dy, double speed) {
+   static AiDragon.DragonState stateFromMotion(double horizontal, double dy, double speed) {
       if (horizontal <= 8.0 && dy >= -2.0 && dy <= 10.0 && speed < 2.0) {
-         return AiDragon.Inner_CachePool.PERCHED;
+         return AiDragon.DragonState.PERCHED;
       } else {
-         return horizontal <= 18.0 && dy >= -2.0 && dy <= 25.0 && speed < 8.0 ? AiDragon.Inner_CachePool.APPROACHING : AiDragon.Inner_CachePool.FLYING;
+         return horizontal <= 18.0 && dy >= -2.0 && dy <= 25.0 && speed < 8.0 ? AiDragon.DragonState.APPROACHING : AiDragon.DragonState.FLYING;
       }
    }
 
-   static String pickAttack(boolean crystalsRemain, AiDragon.Inner_CachePool perch, boolean armed, boolean window, boolean canBed, boolean meleeOk, boolean bowOk) {
+   static String pickAttack(boolean crystalsRemain, AiDragon.DragonState perch, boolean armed, boolean window, boolean canBed, boolean meleeOk, boolean bowOk) {
       if (crystalsRemain && !canBed) {
          return "crystals";
       }
@@ -123,17 +123,17 @@ final class AiDragon {
          return window ? "detonate" : "arm_wait";
       }
 
-      if (perch == AiDragon.Inner_CachePool.DYING) {
+      if (perch == AiDragon.DragonState.DYING) {
          return "wait";
       }
 
-      if (!canBed || perch != AiDragon.Inner_CachePool.PERCHED && perch != AiDragon.Inner_CachePool.APPROACHING) {
-         if (perch == AiDragon.Inner_CachePool.PERCHED && meleeOk) {
+      if (!canBed || perch != AiDragon.DragonState.PERCHED && perch != AiDragon.DragonState.APPROACHING) {
+         if (perch == AiDragon.DragonState.PERCHED && meleeOk) {
             return "melee";
          } else if (crystalsRemain && canBed) {
             return "wait";
          } else {
-            return perch == AiDragon.Inner_CachePool.FLYING && bowOk ? "bow" : "wait";
+            return perch == AiDragon.DragonState.FLYING && bowOk ? "bow" : "wait";
          }
       } else {
          return "bed";
@@ -189,7 +189,7 @@ final class AiDragon {
 
    static AiOperation planBreathEscape(Minecraft mc, double extra) {
       List<double[]> clouds = breathClouds(mc);
-      AiDragonZones.Inner_DataUtil zones = AiDragonZones.isDragonPerched(mc) ? AiDragonZones.zones(mc) : AiDragonZones.Inner_DataUtil.NONE;
+      AiDragonZones.DangerZones zones = AiDragonZones.isDragonPerched(mc) ? AiDragonZones.zones(mc) : AiDragonZones.DangerZones.NONE;
       if (clouds.isEmpty()) {
          return null;
       }
@@ -293,7 +293,7 @@ final class AiDragon {
             final UUID playerId = mc.player.getUUID();
             final long startDeathRevision = AiServerEvidence.deathRevision();
             final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
-            final AiDragon.Inner_StreamUtil children = new AiDragon.Inner_StreamUtil();
+            final AiDragon.ChildRegistry children = new AiDragon.ChildRegistry();
             final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard().withoutFlee();
             boolean init_Z;
             AiOperation currentLeg;
@@ -309,8 +309,8 @@ final class AiDragon {
             BlockPos bestFoot;
             BlockPos sync_BlockPos;
             EnderDragon dragon;
-            AiDragon.Inner_CachePool dragonState = AiDragon.Inner_CachePool.FLYING;
-            AiDragon.Inner_CachePool load_q_CachePool = AiDragon.Inner_CachePool.FLYING;
+            AiDragon.DragonState dragonState = AiDragon.DragonState.FLYING;
+            AiDragon.DragonState load_q_CachePool = AiDragon.DragonState.FLYING;
             Inner_DataUtil phase = Inner_DataUtil.SELECT;
             String dragonPhase = "";
             String guardReason = "";
@@ -546,7 +546,7 @@ final class AiDragon {
 
             AiOperation.Result tickChargeDodge(EnderDragon dragon) {
                if (this.chargeDodgeOperation != null) {
-                  AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.CHARGE_DODGE, this.chargeDodgeOperation);
+                  AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.CHARGE_DODGE, this.chargeDodgeOperation);
                   if (r.status() == AiOperation.Status.UNCERTAIN) {
                      return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                   }
@@ -555,7 +555,7 @@ final class AiDragon {
                      return this.running("Out of the dragon's charge - " + r.message());
                   }
 
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.CHARGE_DODGE, this.chargeDodgeOperation);
+                  this.children.cancelChild(AiDragon.ChildRole.CHARGE_DODGE, this.chargeDodgeOperation);
                   this.chargeDodgeOperation = null;
                   return this.running("Clear of the charge");
                } else if (!AiThreats.isLegacyCombatEnabled() && "ChargingPlayer".equals(this.dragonPhase)) {
@@ -606,7 +606,7 @@ final class AiDragon {
                      }
 
                      if (this.guardOperation != null) {
-                        this.children.cancelChild(AiDragon.Inner_DataUtil.GUARD, this.guardOperation);
+                        this.children.cancelChild(AiDragon.ChildRole.GUARD, this.guardOperation);
                         this.guardOperation = null;
                      }
 
@@ -627,7 +627,7 @@ final class AiDragon {
             AiOperation.Result tickZoneLeave() {
                if (this.zoneLeaveOperation != null) {
                   AiOperation.Result result = this.children
-                     .tickChild(AiDragon.Inner_DataUtil.ZONE_LEAVE, this.zoneLeaveOperation);
+                     .tickChild(AiDragon.ChildRole.ZONE_LEAVE, this.zoneLeaveOperation);
                   if (result.status() == AiOperation.Status.UNCERTAIN) {
                      return this.finish(AiOperation.Status.UNCERTAIN, null, result.message());
                   }
@@ -636,7 +636,7 @@ final class AiDragon {
                      return this.running("Out of the wing push - " + result.message());
                   }
 
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.ZONE_LEAVE, this.zoneLeaveOperation);
+                  this.children.cancelChild(AiDragon.ChildRole.ZONE_LEAVE, this.zoneLeaveOperation);
                   this.zoneLeaveOperation = null;
                   return this.running("Clear of the dragon's body");
                } else {
@@ -677,12 +677,12 @@ final class AiDragon {
                   }
 
                   if (this.guardOperation != null) {
-                     this.children.cancelChild(AiDragon.Inner_DataUtil.GUARD, this.guardOperation);
+                     this.children.cancelChild(AiDragon.ChildRole.GUARD, this.guardOperation);
                      this.guardOperation = null;
                   }
 
                   if (this.douseOperation != null) {
-                     this.children.cancelChild(AiDragon.Inner_DataUtil.DOUSE, this.douseOperation);
+                     this.children.cancelChild(AiDragon.ChildRole.DOUSE, this.douseOperation);
                      this.douseOperation = null;
                   }
 
@@ -704,7 +704,7 @@ final class AiDragon {
             AiOperation.Result tickGuard() {
                if (this.guardOperation != null) {
                   AiOperation.Result result = this.children
-                     .tickChild(AiDragon.Inner_DataUtil.GUARD, this.guardOperation);
+                     .tickChild(AiDragon.ChildRole.GUARD, this.guardOperation);
                   if (result.status() == AiOperation.Status.UNCERTAIN) {
                      return this.finish(AiOperation.Status.UNCERTAIN, null, result.message());
                   }
@@ -713,7 +713,7 @@ final class AiDragon {
                      return this.running("Interrupted: " + this.guardReason + " - " + result.message());
                   }
 
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.GUARD, this.guardOperation);
+                  this.children.cancelChild(AiDragon.ChildRole.GUARD, this.guardOperation);
                   this.guardOperation = null;
                   return this.running("Resuming after " + this.guardReason);
                } else {
@@ -738,7 +738,7 @@ final class AiDragon {
             AiOperation.Result tickDouse() {
                if (this.douseOperation != null) {
                   AiOperation.Result result = this.children
-                     .tickChild(AiDragon.Inner_DataUtil.DOUSE, this.douseOperation);
+                     .tickChild(AiDragon.ChildRole.DOUSE, this.douseOperation);
                   if (result.status() == AiOperation.Status.UNCERTAIN) {
                      return this.finish(AiOperation.Status.UNCERTAIN, null, result.message());
                   }
@@ -747,7 +747,7 @@ final class AiDragon {
                      return this.running("Putting the fire out - " + result.message());
                   }
 
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.DOUSE, this.douseOperation);
+                  this.children.cancelChild(AiDragon.ChildRole.DOUSE, this.douseOperation);
                   this.douseOperation = null;
                   return this.running("Fire handled");
                } else if (this.phase != Inner_DataUtil.DETONATE && !mc.player.isInWater()) {
@@ -785,7 +785,7 @@ final class AiDragon {
             AiOperation.Result tickDodge() {
                if (this.dodgeOperation != null) {
                   AiOperation.Result result = this.children
-                     .tickChild(AiDragon.Inner_DataUtil.DODGE, this.dodgeOperation);
+                     .tickChild(AiDragon.ChildRole.DODGE, this.dodgeOperation);
                   if (result.status() == AiOperation.Status.UNCERTAIN) {
                      return this.finish(AiOperation.Status.UNCERTAIN, null, result.message());
                   }
@@ -794,7 +794,7 @@ final class AiDragon {
                      return this.running("Dodging a fireball - " + result.message());
                   }
 
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.DODGE, this.dodgeOperation);
+                  this.children.cancelChild(AiDragon.ChildRole.DODGE, this.dodgeOperation);
                   this.dodgeOperation = null;
                   return this.running("Resuming after the dodge");
                } else {
@@ -871,7 +871,7 @@ final class AiDragon {
                   case "bed":
                      this.phase = Inner_DataUtil.PLACE_BED;
                      var10000 = this.running(
-                        this.dragonState == AiDragon.Inner_CachePool.APPROACHING ? "Landing approach; pre-placing a bed" : "Perch window; placing a bed"
+                        this.dragonState == AiDragon.DragonState.APPROACHING ? "Landing approach; pre-placing a bed" : "Perch window; placing a bed"
                      );
                      break;
                   case "melee":
@@ -893,7 +893,7 @@ final class AiDragon {
 
             AiOperation.Result flush_AiOperation_Result_3() {
                if (!this.crystalsFirst
-                  || this.dragonState != AiDragon.Inner_CachePool.PERCHED
+                  || this.dragonState != AiDragon.DragonState.PERCHED
                   || !this.bedsUsable
                   || this.bedCount() <= 0
                   || this.dragon == null
@@ -907,7 +907,7 @@ final class AiDragon {
                      this.currentLeg = AiCrystals.init(AiJson.objectOf("timeoutSeconds", this.clampSeconds(600), "skipCaged", !AiThreats.isLegacyCombatEnabled()));
                   }
 
-                  AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                  AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                   if (r.status() == AiOperation.Status.UNCERTAIN) {
                      return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                   }
@@ -916,7 +916,7 @@ final class AiDragon {
                      return this.running("Clearing crystals: " + r.message());
                   }
 
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                  this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                   this.currentLeg = null;
                   if (r.status() == AiOperation.Status.CANCELLED) {
                      return this.finish(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Dragon fight cancelled");
@@ -987,7 +987,7 @@ final class AiDragon {
                   );
                }
 
-               AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+               AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                if (!r.terminal()) {
                   return this.running("Gathering nearby crystal construction blocks: " + r.message());
                } else {
@@ -1008,7 +1008,7 @@ final class AiDragon {
             }
 
             AiOperation.Result tickPlaceBed() {
-               if (this.dragonState != AiDragon.Inner_CachePool.PERCHED && this.dragonState != AiDragon.Inner_CachePool.APPROACHING) {
+               if (this.dragonState != AiDragon.DragonState.PERCHED && this.dragonState != AiDragon.DragonState.APPROACHING) {
                   this.phase = Inner_DataUtil.SELECT;
                   return this.running("The perch window closed; re-planning");
                }
@@ -1034,7 +1034,7 @@ final class AiDragon {
                   }
 
                   if (this.currentLeg != null && this.sync_Z) {
-                     AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                     AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                      if (r.status() == AiOperation.Status.UNCERTAIN) {
                         return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                      }
@@ -1043,7 +1043,7 @@ final class AiDragon {
                         return this.running("Closing in on the perch");
                      }
 
-                     this.children.cancelChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                     this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                      this.currentLeg = null;
                      this.sync_Z = false;
                   }
@@ -1136,12 +1136,12 @@ final class AiDragon {
                      }
                   }
 
-                  AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                  AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                   if (!r.terminal()) {
                      return this.running(this.update_Z ? "To the bed stance clear of the dragon" : "Placing the bed beside the fountain");
                   }
 
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                  this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                   this.currentLeg = null;
                   if (r.status() == AiOperation.Status.UNCERTAIN) {
                      if (this.bestFoot != null && this.isBedAt(this.bestFoot)) {
@@ -1230,7 +1230,7 @@ final class AiDragon {
                   if (bedState.hasProperty(BedBlock.FACING)) {
                      Direction back = bedState.getValue(BedBlock.FACING).getOpposite();
                      Direction side = back.getClockWise();
-                     AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
+                     AiDragonZones.DangerZones zones = AiDragonZones.zones(mc);
                      double[] breath = AiDragonZones.breath(mc);
                      List<double[]> lying = this.nearbyBreathClouds();
                      if (this.open_BlockPos != null
@@ -1291,7 +1291,7 @@ final class AiDragon {
                   );
                }
 
-               AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+               AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                if (r.status() == AiOperation.Status.UNCERTAIN) {
                   return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                }
@@ -1300,7 +1300,7 @@ final class AiDragon {
                   return this.running("Backing out of the blast radius");
                }
 
-               this.children.cancelChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+               this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                this.currentLeg = null;
                this.read_BlockPos = null;
                if (AiDanger.assess(mc).lethal()) {
@@ -1353,7 +1353,7 @@ final class AiDragon {
                   );
                }
 
-               AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+               AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                if (r.status() == AiOperation.Status.UNCERTAIN) {
                   return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                }
@@ -1362,7 +1362,7 @@ final class AiDragon {
                   return this.running("Setting a block between the bed and the body");
                }
 
-               this.children.cancelChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+               this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                this.currentLeg = null;
                AiSpeedrun.log("[AI] dragon: cover block in {}: {} ({})", this.sync_BlockPos.toShortString(), r.status(), AiSpeedrun.clip(r.message()));
                if (r.status() != AiOperation.Status.SUCCEEDED && ++this.coverRetries < 2 && mc.level.getBlockState(this.sync_BlockPos).canBeReplaced()) {
@@ -1443,13 +1443,13 @@ final class AiDragon {
                   );
                }
 
-               AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+               AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                if (r.status() == AiOperation.Status.UNCERTAIN) {
                   return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                } else if (!r.terminal()) {
                   return this.running("Holding at stand-off for the head");
                } else {
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                  this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                   this.currentLeg = null;
                   if (AiDanger.assess(mc).lethal()) {
                      this.standing = null;
@@ -1634,7 +1634,7 @@ final class AiDragon {
             }
 
             AiOperation.Result tickMelee() {
-               if (this.dragonState != AiDragon.Inner_CachePool.PERCHED) {
+               if (this.dragonState != AiDragon.DragonState.PERCHED) {
                   this.releaseLeg();
                   this.stand = null;
                   this.phase = Inner_DataUtil.SELECT;
@@ -1650,7 +1650,7 @@ final class AiDragon {
 
                EnderDragonPhase<?> dragonPhase = this.dragon.getPhaseManager().getCurrentPhase().getPhase();
                List<double[]> clouds = this.nearbyBreathClouds();
-               AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
+               AiDragonZones.DangerZones zones = AiDragonZones.zones(mc);
                boolean window = dragonPhase == EnderDragonPhase.SITTING_SCANNING || dragonPhase == EnderDragonPhase.SITTING_ATTACKING;
                if (!window) {
                   this.stand = null;
@@ -1685,7 +1685,7 @@ final class AiDragon {
                   }
 
                   if (this.currentLeg != null) {
-                     AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                     AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                      if (r.status() == AiOperation.Status.UNCERTAIN) {
                         return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                      }
@@ -1734,7 +1734,7 @@ final class AiDragon {
                         this.get = 1;
                      }
 
-                     AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                     AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                      if (r.status() == AiOperation.Status.UNCERTAIN) {
                         return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                      }
@@ -1770,7 +1770,7 @@ final class AiDragon {
                }
             }
 
-            BlockPos init(AiDragonZones.Inner_DataUtil zones, List<double[]> clouds) {
+            BlockPos init(AiDragonZones.DangerZones zones, List<double[]> clouds) {
                AABB headBox = this.dragon.head.getBoundingBox();
                double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE)) - 0.4;
                BlockPos h = this.dragon.head.blockPosition();
@@ -1801,7 +1801,7 @@ final class AiDragon {
                return best;
             }
 
-            BlockPos init(List<double[]> danger, AiDragonZones.Inner_DataUtil zones) {
+            BlockPos init(List<double[]> danger, AiDragonZones.DangerZones zones) {
                BlockPos feet = mc.player.blockPosition();
                BlockPos best = null;
                double bestD = 1.7976931348623157E308;
@@ -1826,7 +1826,7 @@ final class AiDragon {
             }
 
             AiOperation.Result tickBow() {
-               if (this.dragonState == AiDragon.Inner_CachePool.PERCHED) {
+               if (this.dragonState == AiDragon.DragonState.PERCHED) {
                   this.releaseLeg();
                   this.phase = Inner_DataUtil.SELECT;
                   return this.running("The dragon perched; switching plans");
@@ -1844,7 +1844,7 @@ final class AiDragon {
                   );
                }
 
-               AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+               AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                if (r.status() == AiOperation.Status.UNCERTAIN) {
                   return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                }
@@ -1853,7 +1853,7 @@ final class AiDragon {
                   return this.running("Shooting the circling dragon");
                }
 
-               this.children.cancelChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+               this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                this.currentLeg = null;
                this.bowShots = this.bowShots + this.firedCount(r);
                if (r.status() == AiOperation.Status.CANCELLED) {
@@ -1880,7 +1880,7 @@ final class AiDragon {
             }
 
             AiOperation.Result tickHold() {
-               if (this.dragonState != AiDragon.Inner_CachePool.PERCHED && this.dragonState != AiDragon.Inner_CachePool.APPROACHING && this.standing == null) {
+               if (this.dragonState != AiDragon.DragonState.PERCHED && this.dragonState != AiDragon.DragonState.APPROACHING && this.standing == null) {
                   if (this.currentLeg == null) {
                      int fx = this.fountain != null ? this.fountain.getX() : 0;
                      int fz = this.fountain != null ? this.fountain.getZ() : 0;
@@ -1900,7 +1900,7 @@ final class AiDragon {
                      );
                   }
 
-                  AiOperation.Result r = this.children.tickChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                  AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                   if (r.status() == AiOperation.Status.UNCERTAIN) {
                      return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
                   }
@@ -1909,7 +1909,7 @@ final class AiDragon {
                      return this.running("Repositioning toward the fountain");
                   }
 
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                  this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                   this.currentLeg = null;
                   this.phase = Inner_DataUtil.SELECT;
                   return this.running("Re-evaluating");
@@ -1999,7 +1999,7 @@ final class AiDragon {
                }
             }
 
-            AiDragon.Inner_CachePool classifyDragonState(EnderDragon dragon, String phaseName) {
+            AiDragon.DragonState classifyDragonState(EnderDragon dragon, String phaseName) {
                if (!phaseName.isEmpty()) {
                   return AiDragon.stateFromPhase(phaseName);
                }
@@ -2011,8 +2011,8 @@ final class AiDragon {
                return AiDragon.stateFromMotion(horizontal, dragon.getY() - fy, dragon.getDeltaMovement().length() * 20.0);
             }
 
-            void notePerchState(AiDragon.Inner_CachePool perch) {
-               if (perch == AiDragon.Inner_CachePool.PERCHED && this.load_q_CachePool != AiDragon.Inner_CachePool.PERCHED) {
+            void notePerchState(AiDragon.DragonState perch) {
+               if (perch == AiDragon.DragonState.PERCHED && this.load_q_CachePool != AiDragon.DragonState.PERCHED) {
                   this.perchCount++;
                   if (this.read_Z) {
                      this.read_Z = false;
@@ -2035,7 +2035,7 @@ final class AiDragon {
                   }
                }
 
-               if (perch != AiDragon.Inner_CachePool.PERCHED && this.load_q_CachePool == AiDragon.Inner_CachePool.PERCHED && this.dragon != null) {
+               if (perch != AiDragon.DragonState.PERCHED && this.load_q_CachePool == AiDragon.DragonState.PERCHED && this.dragon != null) {
                   this.init_F = this.dragon.getHealth();
                }
 
@@ -2112,7 +2112,7 @@ final class AiDragon {
                }
 
                dirs.add(new double[]{ux, uz});
-               AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
+               AiDragonZones.DangerZones zones = AiDragonZones.zones(mc);
                BlockPos fallback = null;
                List<double[]> clouds = this.nearbyBreathClouds();
 
@@ -2156,7 +2156,7 @@ final class AiDragon {
                   return null;
                }
 
-               AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
+               AiDragonZones.DangerZones zones = AiDragonZones.zones(mc);
                double[] breath = AiDragonZones.breath(mc);
                List<double[]> clouds = this.nearbyBreathClouds();
                Vec3 h = head.getBoundingBox().getCenter();
@@ -2252,7 +2252,7 @@ final class AiDragon {
                }
             }
 
-            boolean init(double cx, double cz, double[] dir, double radius, int feetY, AiDragonZones.Inner_DataUtil zones) {
+            boolean init(double cx, double cz, double[] dir, double radius, int feetY, AiDragonZones.DangerZones zones) {
                for (double k = 2.0; k <= 4.0; k += 0.25) {
                   double x = cx + dir[0] * (radius + k);
                   double z = cz + dir[1] * (radius + k);
@@ -2293,7 +2293,7 @@ final class AiDragon {
                double len = Math.hypot(dx, dz);
                double ux = len < 1.0 ? 1.0 : dx / len;
                double uz = len < 1.0 ? 0.0 : dz / len;
-               AiDragonZones.Inner_DataUtil zones = AiDragonZones.zones(mc);
+               AiDragonZones.DangerZones zones = AiDragonZones.zones(mc);
                double[] breath = AiDragonZones.breath(mc);
                List<double[]> lying = this.nearbyBreathClouds();
 
@@ -2355,9 +2355,9 @@ final class AiDragon {
             boolean write_Z_9() {
                if (this.standing != null && this.dragon != null && this.dragon.isAlive()) {
                   BlockPos head = this.standingBedHead();
-                  if (head != null && this.dragonState != AiDragon.Inner_CachePool.DYING && this.dragonState != AiDragon.Inner_CachePool.FLYING) {
+                  if (head != null && this.dragonState != AiDragon.DragonState.DYING && this.dragonState != AiDragon.DragonState.FLYING) {
                      double headDistance = Math.sqrt(this.dragon.head.getBoundingBox().distanceToSqr(Vec3.atCenterOf(head)));
-                     return AiDragon.isHeadInBedRange(this.dragonState == AiDragon.Inner_CachePool.PERCHED, headDistance);
+                     return AiDragon.isHeadInBedRange(this.dragonState == AiDragon.DragonState.PERCHED, headDistance);
                   } else {
                      return false;
                   }
@@ -2471,18 +2471,18 @@ final class AiDragon {
 
             void releaseLeg() {
                if (this.currentLeg != null) {
-                  this.children.cancelChild(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
+                  this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                   this.currentLeg = null;
                }
             }
 
             void read_V_10() {
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.Inner_DataUtil.LEG, this.currentLeg);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.Inner_DataUtil.GUARD, this.guardOperation);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.Inner_DataUtil.DODGE, this.dodgeOperation);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.Inner_DataUtil.DOUSE, this.douseOperation);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.Inner_DataUtil.ZONE_LEAVE, this.zoneLeaveOperation);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.Inner_DataUtil.CHARGE_DODGE, this.chargeDodgeOperation);
+               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.LEG, this.currentLeg);
+               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.GUARD, this.guardOperation);
+               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.DODGE, this.dodgeOperation);
+               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.DOUSE, this.douseOperation);
+               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.ZONE_LEAVE, this.zoneLeaveOperation);
+               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.CHARGE_DODGE, this.chargeDodgeOperation);
             }
 
             JsonObject statsJson() {
@@ -2600,27 +2600,27 @@ final class AiDragon {
                   this.tick_Z = true;
                   this.releaseLeg();
                   if (this.guardOperation != null) {
-                     this.children.cancelChild(AiDragon.Inner_DataUtil.GUARD, this.guardOperation);
+                     this.children.cancelChild(AiDragon.ChildRole.GUARD, this.guardOperation);
                      this.guardOperation = null;
                   }
 
                   if (this.dodgeOperation != null) {
-                     this.children.cancelChild(AiDragon.Inner_DataUtil.DODGE, this.dodgeOperation);
+                     this.children.cancelChild(AiDragon.ChildRole.DODGE, this.dodgeOperation);
                      this.dodgeOperation = null;
                   }
 
                   if (this.douseOperation != null) {
-                     this.children.cancelChild(AiDragon.Inner_DataUtil.DOUSE, this.douseOperation);
+                     this.children.cancelChild(AiDragon.ChildRole.DOUSE, this.douseOperation);
                      this.douseOperation = null;
                   }
 
                   if (this.zoneLeaveOperation != null) {
-                     this.children.cancelChild(AiDragon.Inner_DataUtil.ZONE_LEAVE, this.zoneLeaveOperation);
+                     this.children.cancelChild(AiDragon.ChildRole.ZONE_LEAVE, this.zoneLeaveOperation);
                      this.zoneLeaveOperation = null;
                   }
 
                   if (this.chargeDodgeOperation != null) {
-                     this.children.cancelChild(AiDragon.Inner_DataUtil.CHARGE_DODGE, this.chargeDodgeOperation);
+                     this.children.cancelChild(AiDragon.ChildRole.CHARGE_DODGE, this.chargeDodgeOperation);
                      this.chargeDodgeOperation = null;
                   }
 
@@ -2647,14 +2647,14 @@ final class AiDragon {
       }
    }
 
-   enum Inner_CachePool {
+   enum DragonState {
       PERCHED,
       APPROACHING,
       FLYING,
       DYING;
    }
 
-   enum Inner_DataUtil {
+   enum ChildRole {
       LEG,
       GUARD,
       DODGE,
@@ -2663,14 +2663,14 @@ final class AiDragon {
       CHARGE_DODGE;
    }
 
-   static final class Inner_StreamUtil {
-      private final EnumMap<AiDragon.Inner_DataUtil, AiDragon.Inner_StreamUtil.Inner_DataUtil> lastByRole = new EnumMap<>(AiDragon.Inner_DataUtil.class);
+   static final class ChildRegistry {
+      private final EnumMap<AiDragon.ChildRole, AiDragon.ChildRegistry.LastChildResult> lastByRole = new EnumMap<>(AiDragon.ChildRole.class);
       private final JsonObject init_JsonObject = new JsonObject();
       private boolean init_Z;
 
-      AiOperation.Result tickChild(AiDragon.Inner_DataUtil role, AiOperation child) {
+      AiOperation.Result tickChild(AiDragon.ChildRole role, AiOperation child) {
          AiOperation.Result result = child.tick();
-         this.lastByRole.put(role, new AiDragon.Inner_StreamUtil.Inner_DataUtil(child, result));
+         this.lastByRole.put(role, new AiDragon.ChildRegistry.LastChildResult(child, result));
          if (result.terminal()) {
             result = AiGuardLayer.wrapPendingTermination(needsReconciliation(child, result), result);
          }
@@ -2678,9 +2678,9 @@ final class AiDragon {
          return result;
       }
 
-      void init_V_q_DataUtil_AiOperation(AiDragon.Inner_DataUtil role, AiOperation child) {
+      void init_V_q_DataUtil_AiOperation(AiDragon.ChildRole role, AiOperation child) {
          if (child != null) {
-            AiDragon.Inner_StreamUtil.Inner_DataUtil last = this.lastByRole.get(role);
+            AiDragon.ChildRegistry.LastChildResult last = this.lastByRole.get(role);
             AiOperation.Result result = last != null && last.child() == child ? last.result() : null;
             if (needsReconciliation(child, result)) {
                this.init_Z = true;
@@ -2695,7 +2695,7 @@ final class AiDragon {
          }
       }
 
-      void cancelChild(AiDragon.Inner_DataUtil role, AiOperation child) {
+      void cancelChild(AiDragon.ChildRole role, AiOperation child) {
          if (child != null) {
             this.init_V_q_DataUtil_AiOperation(role, child);
             child.cancel();
@@ -2722,7 +2722,7 @@ final class AiDragon {
             || AiJson.getBoolean(evidence, "reobserveBeforeResuming", false);
       }
 
-      private record Inner_DataUtil(AiOperation child, AiOperation.Result result) {
+      private record LastChildResult(AiOperation child, AiOperation.Result result) {
       }
    }
 }

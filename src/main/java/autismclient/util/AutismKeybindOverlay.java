@@ -30,8 +30,8 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
    private final autismclient.gui.f.b.CharEncoder theme = new autismclient.gui.f.b.CharEncoder();
    private final autismclient.gui.ui.layout.CollapsibleWindowNode settingsWindow = new autismclient.gui.ui.layout.CollapsibleWindowNode("Settings").setScrollable(true);
    private final autismclient.gui.ui.layout.LayoutTreeHost layoutHost = new autismclient.gui.ui.layout.LayoutTreeHost(this.theme, this.settingsWindow);
-   private final List<AutismKeybindOverlay.Inner_CachePool> keybindEntries = new ArrayList<>();
-   private final List<AutismKeybindOverlay.Inner_BufferHelper> keybindRows = new ArrayList<>();
+   private final List<AutismKeybindOverlay.KeybindEntry> keybindEntries = new ArrayList<>();
+   private final List<AutismKeybindOverlay.KeybindRow> keybindRows = new ArrayList<>();
    private boolean draggingWindow = false;
    private float dragOffsetX;
    private float dragOffsetY;
@@ -58,7 +58,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       if (!AutismLiteVariant.enabled()) {
          this.keybindEntries
             .add(
-               new AutismKeybindOverlay.Inner_CachePool(
+               new AutismKeybindOverlay.KeybindEntry(
                   "Module Menu",
                   "Opens the Autism module click GUI",
                   () -> this.globalConfig().keybindModuleMenu,
@@ -67,7 +67,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             );
          this.keybindEntries
             .add(
-               new AutismKeybindOverlay.Inner_CachePool(
+               new AutismKeybindOverlay.KeybindEntry(
                   "AI Assistant",
                   "Opens the AI Assistant utility window",
                   () -> this.globalConfig().keybindAiAssistant,
@@ -78,7 +78,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
       this.keybindEntries
          .add(
-            new AutismKeybindOverlay.Inner_CachePool(
+            new AutismKeybindOverlay.KeybindEntry(
                "Load GUI",
                "Restores the last saved GUI screen and handler",
                () -> this.globalConfig().keybindLoadGui,
@@ -87,7 +87,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          );
       this.keybindEntries
          .add(
-            new AutismKeybindOverlay.Inner_CachePool(
+            new AutismKeybindOverlay.KeybindEntry(
                "Flush Queue",
                "Sends all queued packets to the server",
                () -> this.globalConfig().keybindFlushQueue,
@@ -96,7 +96,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          );
       this.keybindEntries
          .add(
-            new AutismKeybindOverlay.Inner_CachePool(
+            new AutismKeybindOverlay.KeybindEntry(
                "Clear Queue",
                "Discards all queued packets",
                () -> this.globalConfig().keybindClearQueue,
@@ -105,7 +105,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          );
       this.keybindEntries
          .add(
-            new AutismKeybindOverlay.Inner_CachePool(
+            new AutismKeybindOverlay.KeybindEntry(
                "Toggle Logger",
                "Shows or hides the packet logger overlay",
                () -> this.globalConfig().keybindToggleLogger,
@@ -114,7 +114,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          );
       this.keybindEntries
          .add(
-            new AutismKeybindOverlay.Inner_CachePool(
+            new AutismKeybindOverlay.KeybindEntry(
                "Toggle Send",
                "Turns packet sending on or off",
                () -> this.globalConfig().keybindToggleSend,
@@ -123,7 +123,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          );
       this.keybindEntries
          .add(
-            new AutismKeybindOverlay.Inner_CachePool(
+            new AutismKeybindOverlay.KeybindEntry(
                "Toggle Delay",
                "Turns packet delay on or off",
                () -> this.globalConfig().keybindToggleDelay,
@@ -143,7 +143,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       this.settingsWindow
          .body()
          .addChild(
-            new AutismKeybindOverlay.Inner_JsonUtil(
+            new AutismKeybindOverlay.ToggleRow(
                "Inside GUI",
                "Fire keybinds while a container screen is open. Blocked in chat/sign/book editors and focused text fields.",
                () -> this.globalConfig().keybindInsideGui,
@@ -154,7 +154,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
          this.settingsWindow
             .body()
             .addChild(
-               new AutismKeybindOverlay.Inner_JsonUtil(
+               new AutismKeybindOverlay.ToggleRow(
                   "Custom Menu",
                   "Use our custom main menu. Turn off for the normal vanilla/Fabric title screen (mods stay visible).",
                   () -> this.globalConfig().customMainMenu,
@@ -167,16 +167,16 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
             );
       }
 
-      this.settingsWindow.body().addChild(new AutismKeybindOverlay.Inner_NetHelper());
-      this.settingsWindow.body().addChild(new AutismKeybindOverlay.Inner_DataUtil());
+      this.settingsWindow.body().addChild(new AutismKeybindOverlay.OverlayScaleRow());
+      this.settingsWindow.body().addChild(new AutismKeybindOverlay.FontScaleRow());
       if (!AutismLiteVariant.enabled()) {
-         this.settingsWindow.body().addChild(new AutismKeybindOverlay.Inner_ConfigStore());
+         this.settingsWindow.body().addChild(new AutismKeybindOverlay.MenuStyleRow());
       }
 
       this.settingsWindow
          .body()
          .addChild(
-            new AutismKeybindOverlay.Inner_JsonUtil("Auto Probe", "Auto-Scans on join.", () -> this.globalConfig().autoProbePlugins, v -> {
+            new AutismKeybindOverlay.ToggleRow("Auto Probe", "Auto-Scans on join.", () -> this.globalConfig().autoProbePlugins, v -> {
                AutismConfig config = this.globalConfig();
                config.autoProbePlugins = v;
                config.save();
@@ -185,7 +185,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       this.settingsWindow
          .body()
          .addChild(
-            new AutismKeybindOverlay.Inner_JsonUtil("InfiniChat", "Remove chat length limit.", () -> this.globalConfig().infiniChat, v -> {
+            new AutismKeybindOverlay.ToggleRow("InfiniChat", "Remove chat length limit.", () -> this.globalConfig().infiniChat, v -> {
                AutismConfig config = this.globalConfig();
                config.infiniChat = v;
                config.save();
@@ -194,7 +194,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       this.settingsWindow
          .body()
          .addChild(
-            new AutismKeybindOverlay.Inner_JsonUtil(
+            new AutismKeybindOverlay.ToggleRow(
                "Chat Feedback", "Show module enable/disable messages in chat.", () -> this.globalConfig().chatFeedback, v -> {
                   AutismConfig config = this.globalConfig();
                   config.chatFeedback = v;
@@ -205,17 +205,17 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       this.settingsWindow
          .body()
          .addChild(
-            new AutismKeybindOverlay.Inner_JsonUtil("Stop On Leave", "Stop macros on disconnect.", () -> this.globalConfig().stopMacroOnLeave, v -> {
+            new AutismKeybindOverlay.ToggleRow("Stop On Leave", "Stop macros on disconnect.", () -> this.globalConfig().stopMacroOnLeave, v -> {
                AutismConfig config = this.globalConfig();
                config.stopMacroOnLeave = v;
                config.save();
             })
          );
-      this.settingsWindow.body().addChild(new AutismKeybindOverlay.Inner_TaskQueue());
+      this.settingsWindow.body().addChild(new AutismKeybindOverlay.CommandPrefixRow());
       this.keybindRows.clear();
 
       for (int i = 0; i < this.keybindEntries.size(); i++) {
-         AutismKeybindOverlay.Inner_BufferHelper row = new AutismKeybindOverlay.Inner_BufferHelper(i, this.keybindEntries.get(i));
+         AutismKeybindOverlay.KeybindRow row = new AutismKeybindOverlay.KeybindRow(i, this.keybindEntries.get(i));
          this.keybindRows.add(row);
          this.settingsWindow.body().addChild(row);
       }
@@ -673,7 +673,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       labels.add("Stop On Leave");
       labels.add("Command Prefix");
 
-      for (AutismKeybindOverlay.Inner_CachePool entry : this.keybindEntries) {
+      for (AutismKeybindOverlay.KeybindEntry entry : this.keybindEntries) {
          labels.add(entry.label);
       }
 
@@ -842,15 +842,15 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   private final class Inner_BufferHelper extends autismclient.gui.ui.layout.LabeledControlRow {
+   private final class KeybindRow extends autismclient.gui.ui.layout.LabeledControlRow {
       private final int rowIndex;
-      private final AutismKeybindOverlay.Inner_CachePool entry;
+      private final AutismKeybindOverlay.KeybindEntry entry;
       private final autismclient.gui.ui.layout.LabelNode labelNode;
 
-      private Inner_BufferHelper(int index, AutismKeybindOverlay.Inner_CachePool entry) {
+      private KeybindRow(int index, AutismKeybindOverlay.KeybindEntry entry) {
          super(
             new autismclient.gui.ui.layout.LabelNode(entry.label, autismclient.gui.f.b.l.read).setTrimToBounds(true),
-            new AutismKeybindOverlay.Inner_StreamUtil(
+            new AutismKeybindOverlay.BindButton(
                entry.getter,
                () -> AutismKeybindOverlay.this.listeningEntryIndex == index,
                () -> AutismKeybindOverlay.this.listeningEntryIndex = AutismKeybindOverlay.this.listeningEntryIndex == index ? -1 : index
@@ -894,13 +894,13 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static class Inner_CachePool {
+   private static class KeybindEntry {
       final String label;
       final String tooltip;
       final IntSupplier getter;
       final IntConsumer setter;
 
-      Inner_CachePool(String label, String tooltip, IntSupplier getter, IntConsumer setter) {
+      KeybindEntry(String label, String tooltip, IntSupplier getter, IntConsumer setter) {
          this.label = label;
          this.tooltip = tooltip;
          this.getter = getter;
@@ -908,11 +908,11 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private final class Inner_ConfigStore extends autismclient.gui.ui.layout.LabeledControlRow {
+   private final class MenuStyleRow extends autismclient.gui.ui.layout.LabeledControlRow {
       private final autismclient.gui.ui.layout.ButtonNode defaultStyleButton;
       private final autismclient.gui.ui.layout.ButtonNode csgoStyleButton;
 
-      private Inner_ConfigStore() {
+      private MenuStyleRow() {
          super(
             new autismclient.gui.ui.layout.LabelNode("Menu Style", autismclient.gui.f.b.l.read).setTrimToBounds(true),
             new autismclient.gui.ui.layout.RowLayout().init(2).init(autismclient.gui.ui.layout.EdgeInsets.ZERO)
@@ -962,13 +962,13 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private final class Inner_DataUtil extends autismclient.gui.ui.layout.LabeledControlRow {
+   private final class FontScaleRow extends autismclient.gui.ui.layout.LabeledControlRow {
       private static final double[] FONT_SCALES = new double[]{0.75, 0.85, 1.0, 1.15, 1.3};
       private final autismclient.gui.ui.layout.LabelNode labelNode;
       private final autismclient.gui.ui.layout.ButtonNode valueButton;
       private final String tooltip = "Scales the custom UI font only (layout stays on Overlay Scale). Left-click increases, right-click decreases.";
 
-      private Inner_DataUtil() {
+      private FontScaleRow() {
          super(
             new autismclient.gui.ui.layout.LabelNode("Font Scale", autismclient.gui.f.b.l.read).setTrimToBounds(true),
             new autismclient.gui.ui.layout.ButtonNode("1x", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, null)
@@ -1047,14 +1047,14 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private final class Inner_JsonUtil extends autismclient.gui.ui.layout.LabeledControlRow {
+   private final class ToggleRow extends autismclient.gui.ui.layout.LabeledControlRow {
       private final BooleanSupplier getter;
       private final Consumer<Boolean> setter;
       private final String tooltip;
       private final autismclient.gui.ui.layout.LabelNode labelNode;
       private final autismclient.gui.ui.layout.ButtonNode toggleButton;
 
-      private Inner_JsonUtil(String label, String tooltip, BooleanSupplier getter, Consumer<Boolean> setter) {
+      private ToggleRow(String label, String tooltip, BooleanSupplier getter, Consumer<Boolean> setter) {
          super(
             new autismclient.gui.ui.layout.LabelNode(label, autismclient.gui.f.b.l.read).setTrimToBounds(true),
             new autismclient.gui.ui.layout.ButtonNode("OFF", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, null)
@@ -1116,12 +1116,12 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private final class Inner_NetHelper extends autismclient.gui.ui.layout.LabeledControlRow {
+   private final class OverlayScaleRow extends autismclient.gui.ui.layout.LabeledControlRow {
       private final autismclient.gui.ui.layout.LabelNode labelNode;
       private final autismclient.gui.ui.layout.ButtonNode valueButton;
       private final String tooltip = "Scales every Autism overlay/window. Left-click increases, right-click decreases. 1x is default; 1.5x/2x are for 4K/high-DPI screens.";
 
-      private Inner_NetHelper() {
+      private OverlayScaleRow() {
          super(
             new autismclient.gui.ui.layout.LabelNode("Overlay Scale", autismclient.gui.f.b.l.read).setTrimToBounds(true),
             new autismclient.gui.ui.layout.ButtonNode("1x", autismclient.gui.ui.layout.ButtonNode.Variant.SECONDARY, null)
@@ -1185,12 +1185,12 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private static final class Inner_StreamUtil extends autismclient.gui.ui.layout.LayoutNode {
+   private static final class BindButton extends autismclient.gui.ui.layout.LayoutNode {
       private final IntSupplier bindCode;
       private final BooleanSupplier capturing;
       private final Runnable onPress;
 
-      private Inner_StreamUtil(IntSupplier bindCode, BooleanSupplier capturing, Runnable onPress) {
+      private BindButton(IntSupplier bindCode, BooleanSupplier capturing, Runnable onPress) {
          this.bindCode = bindCode;
          this.capturing = capturing;
          this.onPress = onPress;
@@ -1241,10 +1241,10 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private final class Inner_TaskQueue extends autismclient.gui.ui.layout.LayoutNode {
+   private final class CommandPrefixRow extends autismclient.gui.ui.layout.LayoutNode {
       private autismclient.gui.f.NetHelper controlBounds = autismclient.gui.f.NetHelper.init(0, 0, 1, 1);
 
-      private Inner_TaskQueue() {
+      private CommandPrefixRow() {
          this.nodeHeight = 14.0F;
          this.nodeGrowX = true;
       }

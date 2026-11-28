@@ -16,20 +16,20 @@ public final class UnexplainedBlockTracker {
    public static final long init_J = 750L;
    public static final long load_J = 6000L;
    public static final long ALERT_DURATION_MS = 8000L;
-   private final Map<Long, UnexplainedBlockTracker.Inner_StreamUtil> changes = new LinkedHashMap<>();
-   private final Map<Long, Deque<UnexplainedBlockTracker.Inner_StreamUtil>> bursts = new HashMap<>();
+   private final Map<Long, UnexplainedBlockTracker.BlockChange> changes = new LinkedHashMap<>();
+   private final Map<Long, Deque<UnexplainedBlockTracker.BlockChange>> bursts = new HashMap<>();
    private final Map<Long, Long> read_Map = new HashMap<>();
-   private final List<UnexplainedBlockTracker.Inner_DataUtil> explanations = new ArrayList<>();
-   private final List<UnexplainedBlockTracker.Inner_ConfigStore> streaks = new ArrayList<>();
+   private final List<UnexplainedBlockTracker.Explanation> explanations = new ArrayList<>();
+   private final List<UnexplainedBlockTracker.ChangeStreak> streaks = new ArrayList<>();
 
    public void init(BlockPos pos, String after) {
-      UnexplainedBlockTracker.Inner_StreamUtil old = this.changes.get(pos.asLong());
+      UnexplainedBlockTracker.BlockChange old = this.changes.get(pos.asLong());
       if (old != null && !old.load.equals(after)) {
          this.changes.remove(pos.asLong());
       }
 
-      for (UnexplainedBlockTracker.Inner_ConfigStore streak : this.streaks) {
-         UnexplainedBlockTracker.Inner_StreamUtil settled = streak.changes.get(pos.asLong());
+      for (UnexplainedBlockTracker.ChangeStreak streak : this.streaks) {
+         UnexplainedBlockTracker.BlockChange settled = streak.changes.get(pos.asLong());
          if (settled != null && !settled.load.equals(after)) {
             streak.changes.remove(pos.asLong());
             streak.init_DataUtil_BufferHel = null;
@@ -37,10 +37,10 @@ public final class UnexplainedBlockTracker {
       }
    }
 
-   public void onChange(UnexplainedBlockTracker.Inner_StreamUtil change) {
+   public void onChange(UnexplainedBlockTracker.BlockChange change) {
       if (change != null && change.pos != null && !change.init_Str.equals(change.load)) {
          long chunk = chunkKey(change.pos);
-         Deque<UnexplainedBlockTracker.Inner_StreamUtil> burst = this.bursts.computeIfAbsent(chunk, k -> new ArrayDeque<>());
+         Deque<UnexplainedBlockTracker.BlockChange> burst = this.bursts.computeIfAbsent(chunk, k -> new ArrayDeque<>());
          burst.addLast(change);
 
          while (!burst.isEmpty() && change.time - burst.peekFirst().time > 150L) {
@@ -67,7 +67,7 @@ public final class UnexplainedBlockTracker {
    }
 
    public void init(BlockPos pos, double radius, long until) {
-      this.explanations.add(new UnexplainedBlockTracker.Inner_DataUtil(pos.immutable(), radius * radius, until));
+      this.explanations.add(new UnexplainedBlockTracker.Explanation(pos.immutable(), radius * radius, until));
       this.changes.values().removeIf(c -> c.pos.distSqr(pos) <= radius * radius);
       this.streaks
          .removeIf(
@@ -93,7 +93,7 @@ public final class UnexplainedBlockTracker {
          return q.isEmpty();
       });
 
-      for (UnexplainedBlockTracker.Inner_StreamUtil c : new ArrayList<>(this.changes.values())) {
+      for (UnexplainedBlockTracker.BlockChange c : new ArrayList<>(this.changes.values())) {
          if (now - c.time >= 750L) {
             this.changes.remove(c.pos.asLong());
             if (now - c.time <= 3000L
@@ -101,7 +101,7 @@ public final class UnexplainedBlockTracker {
                && !this.isExplained(c.pos, now)
                && unchanged.test(c.pos, c.load)
                && !worldCause.test(c.pos)) {
-               UnexplainedBlockTracker.Inner_ConfigStore streak = this.streaks
+               UnexplainedBlockTracker.ChangeStreak streak = this.streaks
                   .stream()
                   .filter(s -> s.origin.distSqr(c.pos) <= 64.0 && now - s.init_J <= 6000L)
                   .findFirst()
@@ -111,7 +111,7 @@ public final class UnexplainedBlockTracker {
                      this.streaks.removeFirst();
                   }
 
-                  streak = new UnexplainedBlockTracker.Inner_ConfigStore(c.pos);
+                  streak = new UnexplainedBlockTracker.ChangeStreak(c.pos);
                   this.streaks.add(streak);
                }
 
@@ -123,12 +123,12 @@ public final class UnexplainedBlockTracker {
       this.streaks.removeIf(s -> now - s.init_J > 14000L);
    }
 
-   public List<UnexplainedBlockTracker.Inner_BufferHelper> activeReadings(long now) {
+   public List<UnexplainedBlockTracker.ActivityReading> activeReadings(long now) {
       return this.streaks
          .stream()
          .map(s -> s.init_DataUtil_BufferHel)
          .filter(r -> r != null && r.until > now)
-         .sorted(Comparator.comparingLong(UnexplainedBlockTracker.Inner_BufferHelper::until).reversed())
+         .sorted(Comparator.comparingLong(UnexplainedBlockTracker.ActivityReading::until).reversed())
          .limit(2L)
          .toList();
    }
@@ -149,28 +149,28 @@ public final class UnexplainedBlockTracker {
       return (long)(p.getX() >> 4) << 32 ^ p.getZ() >> 4 & 4294967295L;
    }
 
-   public record Inner_BufferHelper(BlockPos pos, int init_I, int load, long until) {
+   public record ActivityReading(BlockPos pos, int init_I, int load, long until) {
       public String label() {
          return this.init_I > 0 && this.load > 0 ? "Unexplained block changes" : (this.init_I > 0 ? "Unexplained placements" : "Unexplained breaks");
       }
    }
 
-   public enum Inner_CachePool {
+   public enum ChangeKind {
       PLACE,
       BREAK;
    }
 
-   private static final class Inner_ConfigStore {
+   private static final class ChangeStreak {
       final BlockPos origin;
-      final Map<Long, UnexplainedBlockTracker.Inner_StreamUtil> changes = new LinkedHashMap<>();
+      final Map<Long, UnexplainedBlockTracker.BlockChange> changes = new LinkedHashMap<>();
       long init_J = -1L;
-      UnexplainedBlockTracker.Inner_BufferHelper init_DataUtil_BufferHel;
+      UnexplainedBlockTracker.ActivityReading init_DataUtil_BufferHel;
 
-      Inner_ConfigStore(BlockPos anchor) {
+      ChangeStreak(BlockPos anchor) {
          this.origin = anchor;
       }
 
-      void recordChange(UnexplainedBlockTracker.Inner_StreamUtil c) {
+      void recordChange(UnexplainedBlockTracker.BlockChange c) {
          this.changes.values().removeIf(old -> c.time - old.time > 6000L);
          if (this.init_J < 0L || c.time - this.init_J >= 140L) {
             this.init_J = c.time;
@@ -180,10 +180,10 @@ public final class UnexplainedBlockTracker {
             }
 
             if (this.changes.size() >= 4) {
-               long first = this.changes.values().stream().mapToLong(UnexplainedBlockTracker.Inner_StreamUtil::time).min().orElse(c.time);
+               long first = this.changes.values().stream().mapToLong(UnexplainedBlockTracker.BlockChange::time).min().orElse(c.time);
                if (c.time - first >= 450L) {
-                  int placements = (int)this.changes.values().stream().filter(e -> e.init_DataUtil_CachePool == UnexplainedBlockTracker.Inner_CachePool.PLACE).count();
-                  this.init_DataUtil_BufferHel = new UnexplainedBlockTracker.Inner_BufferHelper(
+                  int placements = (int)this.changes.values().stream().filter(e -> e.init_DataUtil_CachePool == UnexplainedBlockTracker.ChangeKind.PLACE).count();
+                  this.init_DataUtil_BufferHel = new UnexplainedBlockTracker.ActivityReading(
                      c.pos, placements, this.changes.size() - placements, c.time + 8000L
                   );
                }
@@ -192,9 +192,9 @@ public final class UnexplainedBlockTracker {
       }
    }
 
-   private record Inner_DataUtil(BlockPos pos, double radius, long until) {
+   private record Explanation(BlockPos pos, double radius, long until) {
    }
 
-   public record Inner_StreamUtil(BlockPos pos, String init_Str, String load, UnexplainedBlockTracker.Inner_CachePool init_DataUtil_CachePool, long time) {
+   public record BlockChange(BlockPos pos, String init_Str, String load, UnexplainedBlockTracker.ChangeKind init_DataUtil_CachePool, long time) {
    }
 }

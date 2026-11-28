@@ -14,27 +14,27 @@ public final class ResourcePackPushValidator {
       return serializedBypass ? ResourcePackSessionTracker.PackPolicy.ISOLATED : ResourcePackSessionTracker.PackPolicy.FULL;
    }
 
-   public static ResourcePackPushValidator.Inner_StreamUtil init(ClientboundResourcePackPushPacket packet, boolean forceDeny, boolean bypass) {
+   public static ResourcePackPushValidator.Outcome init(ClientboundResourcePackPushPacket packet, boolean forceDeny, boolean bypass) {
       if (packet != null && packet.id() != null) {
          try {
             URL url = new URL(packet.url());
             String protocol = url.getProtocol();
             if (!"http".equals(protocol) && !"https".equals(protocol)) {
-               return ResourcePackPushValidator.Inner_StreamUtil.init(ResourcePackPushValidator.Inner_DataUtil.INVALID_URL, "unsupported resource pack URL scheme");
+               return ResourcePackPushValidator.Outcome.init(ResourcePackPushValidator.OutcomeKind.INVALID_URL, "unsupported resource pack URL scheme");
             }
          } catch (MalformedURLException e) {
-            return ResourcePackPushValidator.Inner_StreamUtil.init(ResourcePackPushValidator.Inner_DataUtil.INVALID_URL, "malformed resource pack URL");
+            return ResourcePackPushValidator.Outcome.init(ResourcePackPushValidator.OutcomeKind.INVALID_URL, "malformed resource pack URL");
          }
 
          if (forceDeny) {
-            return ResourcePackPushValidator.Inner_StreamUtil.init(ResourcePackPushValidator.Inner_DataUtil.DECLINE, "resource pack auto-deny");
+            return ResourcePackPushValidator.Outcome.init(ResourcePackPushValidator.OutcomeKind.DECLINE, "resource pack auto-deny");
          } else {
             return bypass
-               ? ResourcePackPushValidator.Inner_StreamUtil.init(ResourcePackPushValidator.Inner_DataUtil.BYPASS_SUCCESS, "resource pack bypass compatibility response")
-               : ResourcePackPushValidator.Inner_StreamUtil.init_RefQueue_StreamUti();
+               ? ResourcePackPushValidator.Outcome.init(ResourcePackPushValidator.OutcomeKind.BYPASS_SUCCESS, "resource pack bypass compatibility response")
+               : ResourcePackPushValidator.Outcome.init_RefQueue_StreamUti();
          }
       } else {
-         return ResourcePackPushValidator.Inner_StreamUtil.init_RefQueue_StreamUti();
+         return ResourcePackPushValidator.Outcome.init_RefQueue_StreamUti();
       }
    }
 
@@ -48,7 +48,7 @@ public final class ResourcePackPushValidator {
    public static void init() {
    }
 
-   public enum Inner_DataUtil {
+   public enum OutcomeKind {
       PASS,
       BYPASS_SUCCESS,
       DECLINE,
@@ -56,25 +56,25 @@ public final class ResourcePackPushValidator {
       INVALID_URL;
    }
 
-   public static final class Inner_StreamUtil {
-      private static final ResourcePackPushValidator.Inner_StreamUtil init_RefQueue_StreamUti = new ResourcePackPushValidator.Inner_StreamUtil(ResourcePackPushValidator.Inner_DataUtil.PASS, "");
-      private final ResourcePackPushValidator.Inner_DataUtil kind;
+   public static final class Outcome {
+      private static final ResourcePackPushValidator.Outcome init_RefQueue_StreamUti = new ResourcePackPushValidator.Outcome(ResourcePackPushValidator.OutcomeKind.PASS, "");
+      private final ResourcePackPushValidator.OutcomeKind kind;
       private final String init_Str;
 
-      private Inner_StreamUtil(ResourcePackPushValidator.Inner_DataUtil kind, String reason) {
+      private Outcome(ResourcePackPushValidator.OutcomeKind kind, String reason) {
          this.kind = kind;
          this.init_Str = reason == null ? "" : reason;
       }
 
-      public static ResourcePackPushValidator.Inner_StreamUtil init_RefQueue_StreamUti() {
+      public static ResourcePackPushValidator.Outcome init_RefQueue_StreamUti() {
          return init_RefQueue_StreamUti;
       }
 
-      public static ResourcePackPushValidator.Inner_StreamUtil init(ResourcePackPushValidator.Inner_DataUtil kind, String reason) {
-         return kind == ResourcePackPushValidator.Inner_DataUtil.PASS ? init_RefQueue_StreamUti : new ResourcePackPushValidator.Inner_StreamUtil(kind, reason);
+      public static ResourcePackPushValidator.Outcome init(ResourcePackPushValidator.OutcomeKind kind, String reason) {
+         return kind == ResourcePackPushValidator.OutcomeKind.PASS ? init_RefQueue_StreamUti : new ResourcePackPushValidator.Outcome(kind, reason);
       }
 
-      public ResourcePackPushValidator.Inner_DataUtil verdict() {
+      public ResourcePackPushValidator.OutcomeKind verdict() {
          return this.kind;
       }
 
@@ -83,7 +83,7 @@ public final class ResourcePackPushValidator {
       }
 
       public boolean init_Z() {
-         return this.kind != ResourcePackPushValidator.Inner_DataUtil.PASS;
+         return this.kind != ResourcePackPushValidator.OutcomeKind.PASS;
       }
    }
 }

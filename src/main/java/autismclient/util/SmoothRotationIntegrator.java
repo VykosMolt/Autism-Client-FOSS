@@ -35,7 +35,7 @@ public final class SmoothRotationIntegrator {
       this.preferYawNext = false;
    }
 
-   public SmoothRotationIntegrator.Inner_DataUtil stepBySpeed(
+   public SmoothRotationIntegrator.CountStep stepBySpeed(
       float yawErrorDegrees,
       float pitchErrorDegrees,
       double degreesPerCount,
@@ -60,7 +60,7 @@ public final class SmoothRotationIntegrator {
       );
    }
 
-   public SmoothRotationIntegrator.Inner_DataUtil stepByDegrees(
+   public SmoothRotationIntegrator.CountStep stepByDegrees(
       float yawErrorDegrees,
       float pitchErrorDegrees,
       double degreesPerCount,
@@ -87,7 +87,7 @@ public final class SmoothRotationIntegrator {
          : this.idleResult();
    }
 
-   public SmoothRotationIntegrator.Inner_DataUtil step(
+   public SmoothRotationIntegrator.CountStep step(
       float yawErrorDegrees,
       float pitchErrorDegrees,
       double degreesPerCount,
@@ -119,7 +119,7 @@ public final class SmoothRotationIntegrator {
       }
    }
 
-   private SmoothRotationIntegrator.Inner_DataUtil integrate(
+   private SmoothRotationIntegrator.CountStep integrate(
       float yawErrorDegrees,
       float pitchErrorDegrees,
       double degreesPerCount,
@@ -163,7 +163,7 @@ public final class SmoothRotationIntegrator {
          pitchCandidate += this.pitchWander * noiseScale * 0.83;
          long yawCounts = toCounts(yawCandidate, yawError);
          long pitchCounts = toCounts(pitchCandidate, pitchError);
-         SmoothRotationIntegrator.Inner_DataUtil varied = this.varyCounts(yawCounts, pitchCounts, yawError, pitchError);
+         SmoothRotationIntegrator.CountStep varied = this.varyCounts(yawCounts, pitchCounts, yawError, pitchError);
          this.lastYawCounts = varied.init;
          this.lastPitchCounts = varied.load;
          this.hasLastCounts = true;
@@ -173,13 +173,13 @@ public final class SmoothRotationIntegrator {
       }
    }
 
-   private SmoothRotationIntegrator.Inner_DataUtil idleResult() {
+   private SmoothRotationIntegrator.CountStep idleResult() {
       this.yawVelocity = 0.0;
       this.pitchVelocity = 0.0;
       this.lastYawCounts = 0L;
       this.lastPitchCounts = 0L;
       this.hasLastCounts = false;
-      return new SmoothRotationIntegrator.Inner_DataUtil(0L, 0L);
+      return new SmoothRotationIntegrator.CountStep(0L, 0L);
    }
 
    private double updateVelocity(double velocity, long error, double speedLimit, double directionChange, double midpoint, double responseScale) {
@@ -194,7 +194,7 @@ public final class SmoothRotationIntegrator {
       return approach(velocity, desired, acceleration);
    }
 
-   private SmoothRotationIntegrator.Inner_DataUtil varyCounts(long yaw, long pitch, long yawError, long pitchError) {
+   private SmoothRotationIntegrator.CountStep varyCounts(long yaw, long pitch, long yawError, long pitchError) {
       if (this.hasLastCounts && (yaw != 0L || pitch != 0L) && yaw == this.lastYawCounts && pitch == this.lastPitchCounts) {
          boolean preferYaw = Math.abs(yawError) - Math.abs(yaw) >= Math.abs(pitchError) - Math.abs(pitch);
          long variedYaw = yaw;
@@ -208,9 +208,9 @@ public final class SmoothRotationIntegrator {
          }
 
          this.preferYawNext = !this.preferYawNext;
-         return new SmoothRotationIntegrator.Inner_DataUtil(variedYaw, variedPitch);
+         return new SmoothRotationIntegrator.CountStep(variedYaw, variedPitch);
       } else {
-         return new SmoothRotationIntegrator.Inner_DataUtil(yaw, pitch);
+         return new SmoothRotationIntegrator.CountStep(yaw, pitch);
       }
    }
 
@@ -287,7 +287,7 @@ public final class SmoothRotationIntegrator {
       return Math.max(min, Math.min(max, value));
    }
 
-   public record Inner_DataUtil(long init, long load) {
+   public record CountStep(long init, long load) {
       public RotationMath.Rotation init(double degreesPerCount) {
          return Double.isFinite(degreesPerCount) && !(degreesPerCount <= 0.0)
             ? new RotationMath.Rotation((float)(this.init * degreesPerCount), (float)(this.load * degreesPerCount))

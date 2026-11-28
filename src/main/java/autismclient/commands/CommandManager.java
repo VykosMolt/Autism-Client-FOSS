@@ -379,45 +379,45 @@ public final class CommandManager {
       return dispatch(body).isHandled();
    }
 
-   public static CommandManager.Inner_DataUtil dispatch(String body) {
+   public static CommandManager.DispatchResult dispatch(String body) {
       if (isHiddenMode()) {
-         return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.BLOCKED, "Client commands are blocked while the client is hidden (panic mode)");
+         return new CommandManager.DispatchResult(CommandManager.DispatchStatus.BLOCKED, "Client commands are blocked while the client is hidden (panic mode)");
       }
 
       if (!AutismLiteVariant.enabled() && !autismclient.e.RingBuffer.init()) {
          AutismClientMessaging.sendPrefixed("§cAutism is locked: early access requires the donator role. Sign in to unlock.");
-         return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.BLOCKED, "Autism is locked: early access requires the donator role");
+         return new CommandManager.DispatchResult(CommandManager.DispatchStatus.BLOCKED, "Autism is locked: early access requires the donator role");
       }
 
       if (body == null) {
-         return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.EMPTY, "");
+         return new CommandManager.DispatchResult(CommandManager.DispatchStatus.EMPTY, "");
       }
 
       String trimmed = body.trim();
       if (trimmed.isEmpty()) {
-         return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.EMPTY, "");
+         return new CommandManager.DispatchResult(CommandManager.DispatchStatus.EMPTY, "");
       }
 
       if (REMOVED_ADDON_NAMES.contains(extractFirstToken(trimmed).toLowerCase(Locale.ROOT))) {
          reportSyntaxError(trimmed, CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().create());
-         return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.UNKNOWN_COMMAND, "Unknown command: " + extractFirstToken(trimmed) + " (its add-on is disabled)");
+         return new CommandManager.DispatchResult(CommandManager.DispatchStatus.UNKNOWN_COMMAND, "Unknown command: " + extractFirstToken(trimmed) + " (its add-on is disabled)");
       }
 
       try {
          DISPATCHER.execute(trimmed, AutismCommandSource.INSTANCE);
-         return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.EXECUTED, "");
+         return new CommandManager.DispatchResult(CommandManager.DispatchStatus.EXECUTED, "");
       } catch (CommandSyntaxException e) {
          reportSyntaxError(trimmed, e);
          String message = e.getMessage() != null && !e.getMessage().isBlank() ? e.getMessage() : "Incomplete or invalid command";
          boolean unknown = getCommand(extractFirstToken(trimmed)) == null;
-         return new CommandManager.Inner_DataUtil(
-            unknown ? CommandManager.Inner_StreamUtil.UNKNOWN_COMMAND : CommandManager.Inner_StreamUtil.SYNTAX_ERROR, unknown ? "Unknown command: " + extractFirstToken(trimmed) : message
+         return new CommandManager.DispatchResult(
+            unknown ? CommandManager.DispatchStatus.UNKNOWN_COMMAND : CommandManager.DispatchStatus.SYNTAX_ERROR, unknown ? "Unknown command: " + extractFirstToken(trimmed) : message
          );
       } catch (Throwable t) {
          AutismClientAddon.LOG.warn("[Commands] dispatch failed for '{}'", trimmed, t);
          String message = t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
          AutismClientMessaging.sendPrefixed("§cCommand error: " + message);
-         return new CommandManager.Inner_DataUtil(CommandManager.Inner_StreamUtil.ERROR, message);
+         return new CommandManager.DispatchResult(CommandManager.DispatchStatus.ERROR, message);
       }
    }
 
@@ -453,13 +453,13 @@ public final class CommandManager {
       return space < 0 ? trimmed : trimmed.substring(0, space);
    }
 
-   public record Inner_DataUtil(CommandManager.Inner_StreamUtil status, String message) {
+   public record DispatchResult(CommandManager.DispatchStatus status, String message) {
       public boolean isHandled() {
-         return this.status != CommandManager.Inner_StreamUtil.EMPTY;
+         return this.status != CommandManager.DispatchStatus.EMPTY;
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum DispatchStatus {
       EXECUTED,
       SYNTAX_ERROR,
       UNKNOWN_COMMAND,

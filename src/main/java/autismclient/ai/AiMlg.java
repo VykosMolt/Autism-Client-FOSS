@@ -176,7 +176,7 @@ final class AiMlg {
             BlockPos placedCell;
             BlockPos redirectTarget;
             BlockPos forecastSupport;
-            AiMlg.Inner_DataUtil forecast;
+            AiMlg.LandingForecast forecast;
             int close;
 
             @Override
@@ -250,7 +250,7 @@ final class AiMlg {
                   return this.running("Landed; measuring the applied fall damage");
                }
 
-               AiMlg.Inner_DataUtil forecast = AiMlg.forecastFall(player, level);
+               AiMlg.LandingForecast forecast = AiMlg.forecastFall(player, level);
                this.forecast = forecast;
                if (forecast.ticksToLand() >= 0) {
                   if (AiMlg.isSafeMultiplier(forecast.multiplier())) {
@@ -309,7 +309,7 @@ final class AiMlg {
                }
             }
 
-            AiOperation.Result init(LocalPlayer player, ClientLevel level, AiMlg.Inner_DataUtil forecast) {
+            AiOperation.Result init(LocalPlayer player, ClientLevel level, AiMlg.LandingForecast forecast) {
                List<String> hotbar = AiMlg.hotbarItemPaths(player);
                if (waterUsable
                   && !"cobweb".equals(requested)
@@ -345,7 +345,7 @@ final class AiMlg {
                }
             }
 
-            AiOperation.Result load(LocalPlayer player, ClientLevel level, AiMlg.Inner_DataUtil forecast) {
+            AiOperation.Result load(LocalPlayer player, ClientLevel level, AiMlg.LandingForecast forecast) {
                List<String> hotbar = AiMlg.hotbarItemPaths(player);
                String item = "water".equals(this.clutchMethod) ? "water_bucket" : "cobweb";
                int slot = AiMlg.hotbarSlotOf(hotbar, item);
@@ -616,7 +616,7 @@ final class AiMlg {
       }
    }
 
-   static AiMlg.Inner_DataUtil forecastFall(LocalPlayer player, ClientLevel level) {
+   static AiMlg.LandingForecast forecastFall(LocalPlayer player, ClientLevel level) {
       Vec3 delta = player.getDeltaMovement();
       double x = player.getX();
       double y = player.getY();
@@ -646,12 +646,12 @@ final class AiMlg {
             String id = blockPathAt(level, support.get());
             float multiplier = landingDamageMultiplier(id, player.isSuppressingBounce());
             float damage = multiplier <= 0.0F ? 0.0F : ((AutismLivingEntityAccessor)player).autism$calculateFallDamage(fall, multiplier);
-            return new AiMlg.Inner_DataUtil(support.get().immutable(), id, multiplier, damage, tick, false);
+            return new AiMlg.LandingForecast(support.get().immutable(), id, multiplier, damage, tick, false);
          }
       }
 
       float damage = ((AutismLivingEntityAccessor)player).autism$calculateFallDamage(fall, 1.0F);
-      return new AiMlg.Inner_DataUtil(null, "", 1.0F, damage, -1, y < level.getMinY());
+      return new AiMlg.LandingForecast(null, "", 1.0F, damage, -1, y < level.getMinY());
    }
 
    private static int currentPingMillis() {
@@ -709,6 +709,6 @@ final class AiMlg {
       return out;
    }
 
-   record Inner_DataUtil(BlockPos support, String landingId, float multiplier, float damage, int ticksToLand, boolean voidFall) {
+   record LandingForecast(BlockPos support, String landingId, float multiplier, float damage, int ticksToLand, boolean voidFall) {
    }
 }

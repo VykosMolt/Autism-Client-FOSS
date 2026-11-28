@@ -196,7 +196,7 @@ public final class AiBackfill {
    }
 
    private int read_I() {
-      List<AiRestock.Inner_CachePool> hotbar = new ArrayList<>(9);
+      List<AiRestock.BackpackSlotView> hotbar = new ArrayList<>(9);
 
       for (int slot = 0; slot < 9; slot++) {
          hotbar.add(this.init(this.client.player.getInventory().getItem(slot)));
@@ -205,16 +205,16 @@ public final class AiBackfill {
       return AiRestock.pickBestBackpackSlot(hotbar, null);
    }
 
-   private AiRestock.Inner_CachePool init(ItemStack stack) {
+   private AiRestock.BackpackSlotView init(ItemStack stack) {
       return stack.getItem() instanceof BlockItem block && AiRestock.canSpendStack(stack, this.client.player.getInventory())
-         ? new AiRestock.Inner_CachePool(
+         ? new AiRestock.BackpackSlotView(
             BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
             stack.getCount(),
             block.getBlock() instanceof FallingBlock,
             block.getBlock().defaultBlockState().isCollisionShapeFullBlock(this.client.level, this.client.player.blockPosition()),
             block.getBlock().defaultBlockState().hasBlockEntity()
          )
-         : new AiRestock.Inner_CachePool(null, 0, false, false, false);
+         : new AiRestock.BackpackSlotView(null, 0, false, false, false);
    }
 
    private boolean init_Z(BlockPos cell) {

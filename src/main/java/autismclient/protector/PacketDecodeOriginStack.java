@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 
 public final class PacketDecodeOriginStack {
-   private static final ThreadLocal<PacketDecodeOriginStack.Inner_DataUtil> init = ThreadLocal.withInitial(PacketDecodeOriginStack.Inner_DataUtil::new);
+   private static final ThreadLocal<PacketDecodeOriginStack.OriginStack> init = ThreadLocal.withInitial(PacketDecodeOriginStack.OriginStack::new);
 
    private PacketDecodeOriginStack() {
    }
@@ -23,7 +23,7 @@ public final class PacketDecodeOriginStack {
    }
 
    public static void init(ConnectionPrivacyRegistry.ConnectionSession context) {
-      PacketDecodeOriginStack.Inner_DataUtil state = init.get();
+      PacketDecodeOriginStack.OriginStack state = init.get();
       if (state.init_I == state.init_BufferHelper_StreaArr.length) {
          state.init_BufferHelper_StreaArr = Arrays.copyOf(state.init_BufferHelper_StreaArr, state.init_I * 2);
       }
@@ -32,7 +32,7 @@ public final class PacketDecodeOriginStack {
    }
 
    public static ConnectionPrivacyRegistry.ConnectionSession current() {
-      PacketDecodeOriginStack.Inner_DataUtil state = init.get();
+      PacketDecodeOriginStack.OriginStack state = init.get();
       return state.init_I == 0 ? null : state.init_BufferHelper_StreaArr[state.init_I - 1];
    }
 
@@ -40,14 +40,14 @@ public final class PacketDecodeOriginStack {
       if (value) {
          init(current());
       } else {
-         PacketDecodeOriginStack.Inner_DataUtil state = init.get();
+         PacketDecodeOriginStack.OriginStack state = init.get();
          if (state.init_I > 0) {
             state.init_BufferHelper_StreaArr[--state.init_I] = null;
          }
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class OriginStack {
       private int init_I;
       private ConnectionPrivacyRegistry.ConnectionSession[] init_BufferHelper_StreaArr = new ConnectionPrivacyRegistry.ConnectionSession[4];
    }

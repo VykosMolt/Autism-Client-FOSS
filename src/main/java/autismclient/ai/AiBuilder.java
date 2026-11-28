@@ -2115,15 +2115,15 @@ final class AiBuilder {
          }
       }
 
-      ArrayList<AiCellMaterials.Inner_CachePool> plans = new ArrayList<>(required.size());
+      ArrayList<AiCellMaterials.MaterialRequirement> plans = new ArrayList<>(required.size());
       Map<String, Set<String>> alternatives = new TreeMap<>();
 
       for (Entry<String, Integer> entry : required.entrySet()) {
          if (entry.getValue() != 0) {
             List<Item> candidates = pooled.get(entry.getKey());
             plans.add(
-               new AiCellMaterials.Inner_CachePool(
-                  AiCellMaterials.Inner_DataUtil.PLACE, entry.getKey(), candidates.getFirst(), entry.getValue(), AiCellMaterials.Inner_BufferHelper.CONSUME
+               new AiCellMaterials.MaterialRequirement(
+                  AiCellMaterials.CellAction.PLACE, entry.getKey(), candidates.getFirst(), entry.getValue(), AiCellMaterials.MaterialUse.CONSUME
                )
             );
             Set<String> specs = alternatives.computeIfAbsent(entry.getKey(), k -> new TreeSet<>());
@@ -2141,19 +2141,19 @@ final class AiBuilder {
 
    static AiOperation checkSchematicReadiness(AiBuilder.Blueprint blueprint) {
       int reportLimit = 16;
-      AiSchematicReadiness.Inner_TaskQueue audit = AiSchematicReadiness.init(blueprint, reportLimit);
+      AiSchematicReadiness.ReadinessReport audit = AiSchematicReadiness.init(blueprint, reportLimit);
       return readinessFailureOp(blueprint, audit);
    }
 
-   static AiOperation readinessFailureOp(AiBuilder.Blueprint blueprint, AiSchematicReadiness.Inner_TaskQueue audit) {
+   static AiOperation readinessFailureOp(AiBuilder.Blueprint blueprint, AiSchematicReadiness.ReadinessReport audit) {
       if (audit.ready()) {
          return null;
       }
 
-      List<AiSchematicReadiness.Inner_StreamUtil> issues = audit.issues();
+      List<AiSchematicReadiness.ReadinessIssue> issues = audit.issues();
       JsonArray reported = new JsonArray();
 
-      for (AiSchematicReadiness.Inner_StreamUtil issue : issues) {
+      for (AiSchematicReadiness.ReadinessIssue issue : issues) {
          AiBuilder.CellSpec cell = issue.cell();
          JsonObject properties = new JsonObject();
          cell.properties().forEach(properties::addProperty);
@@ -2177,9 +2177,9 @@ final class AiBuilder {
          );
       }
 
-      AiSchematicReadiness.Inner_StreamUtil first = issues.getFirst();
+      AiSchematicReadiness.ReadinessIssue first = issues.getFirst();
       AiBuilder.CellSpec cell = first.cell();
-      boolean contextOnly = audit.issues().stream().allMatch(issue -> issue.kind() == AiSchematicReadiness.Inner_CachePool.MISSING_CONTEXT);
+      boolean contextOnly = audit.issues().stream().allMatch(issue -> issue.kind() == AiSchematicReadiness.IssueKind.MISSING_CONTEXT);
       String message = (contextOnly ? "Cannot build here: " : "Cannot build this schematic as saved: ")
          + "schematic readiness audit found "
          + audit.issueCount()
@@ -2221,11 +2221,11 @@ final class AiBuilder {
    }
 
    static JsonObject missingSchematicMaterials(AiBuilder.Blueprint blueprint, Inventory inventory, Map<String, List<String>> substitutes) {
-      ArrayList<AiCellMaterials.Inner_CachePool> plans = new ArrayList<>();
+      ArrayList<AiCellMaterials.MaterialRequirement> plans = new ArrayList<>();
       Map<String, Set<String>> alternatives = new TreeMap<>();
 
       for (AiBuilder.CellSpec cell : blueprint.cells()) {
-         List<AiCellMaterials.Inner_CachePool> cellPlans = AiSchematicActions.materialPlans(cell);
+         List<AiCellMaterials.MaterialRequirement> cellPlans = AiSchematicActions.materialPlans(cell);
          plans.addAll(cellPlans);
          collectSubstituteAlternatives(cell, cellPlans, substitutes, alternatives);
       }
@@ -2250,7 +2250,7 @@ final class AiBuilder {
          }
       }
 
-      List<AiCellMaterials.Inner_CachePool> plans = AiCellMaterials.init(auditCells, blueprint.origin(), world);
+      List<AiCellMaterials.MaterialRequirement> plans = AiCellMaterials.init(auditCells, blueprint.origin(), world);
       return missingMaterialsForInventory(plans, inventory, alternatives);
    }
 
@@ -2262,12 +2262,12 @@ final class AiBuilder {
 
    private static void collectSubstituteAlternatives(
       AiBuilder.CellSpec cell,
-      Iterable<AiCellMaterials.Inner_CachePool> plans,
+      Iterable<AiCellMaterials.MaterialRequirement> plans,
       Map<String, List<String>> substitutes,
       Map<String, Set<String>> alternatives
    ) {
-      for (AiCellMaterials.Inner_CachePool requirement : plans) {
-         if (requirement.action() == AiCellMaterials.Inner_DataUtil.PLACE || requirement.action() == AiCellMaterials.Inner_DataUtil.ADD) {
+      for (AiCellMaterials.MaterialRequirement requirement : plans) {
+         if (requirement.action() == AiCellMaterials.CellAction.PLACE || requirement.action() == AiCellMaterials.CellAction.ADD) {
             for (String candidateId : substitutes.getOrDefault(cell.block(), List.of())) {
                Item alternative = BuiltInRegistries.BLOCK.getOptional(Identifier.parse(candidateId)).map(Block::asItem).orElse(Items.AIR);
                if (alternative != Items.AIR) {
@@ -2281,22 +2281,22 @@ final class AiBuilder {
       }
    }
 
-   static JsonObject missingMaterialsForInventory(Iterable<AiCellMaterials.Inner_CachePool> plans, Inventory inventory, Map<String, Set<String>> alternatives) {
+   static JsonObject missingMaterialsForInventory(Iterable<AiCellMaterials.MaterialRequirement> plans, Inventory inventory, Map<String, Set<String>> alternatives) {
       return solveMissingMaterialsFlow(plans, alternatives, spec -> AiSchematicPlacement.countItem(inventory, spec));
    }
 
-   static JsonObject missingMaterialsForContainer(Iterable<AiCellMaterials.Inner_CachePool> plans, Container inventory, boolean carriedStock) {
+   static JsonObject missingMaterialsForContainer(Iterable<AiCellMaterials.MaterialRequirement> plans, Container inventory, boolean carriedStock) {
       Map<Item, Integer> counts = AiCarriedShulker.countItems(inventory, carriedStock);
       return solveMissingMaterialsFlow(plans, Map.of(), spec -> AiItems.resolveItem(spec).items().stream().mapToInt(item -> counts.getOrDefault(item, 0)).sum());
    }
 
    private static JsonObject solveMissingMaterialsFlow(
-      Iterable<AiCellMaterials.Inner_CachePool> plans, Map<String, ? extends Iterable<String>> alternatives, ToIntFunction<String> stockCount
+      Iterable<AiCellMaterials.MaterialRequirement> plans, Map<String, ? extends Iterable<String>> alternatives, ToIntFunction<String> stockCount
    ) {
       Map<String, Integer> required = new TreeMap<>();
       Map<String, Set<String>> pools = new TreeMap<>();
 
-      for (AiCellMaterials.Inner_CachePool requirement : AiCellMaterials.combine(plans)) {
+      for (AiCellMaterials.MaterialRequirement requirement : AiCellMaterials.combine(plans)) {
          required.merge(requirement.itemSpec(), requirement.count(), Integer::sum);
          Set<String> pool = pools.computeIfAbsent(requirement.itemSpec(), k -> new TreeSet<>());
          pool.add(requirement.itemSpec());
@@ -2639,7 +2639,7 @@ final class AiBuilder {
             return new AiPrintPreparation(args, power);
          }
 
-         AiSchematic.Inner_BufferHelper decodedSchematic = null;
+         AiSchematic.LoadedSchematic decodedSchematic = null;
          AiBuilder.Blueprint blueprint;
          if (args.has("schematic") && !args.get("schematic").isJsonNull()) {
             if (args.has("blocks") || args.has("blueprint")) {
@@ -2647,7 +2647,7 @@ final class AiBuilder {
             }
 
             BlockPos origin = auditOrigin(args, mc.player.blockPosition());
-            AiSchematic.Inner_BufferHelper loaded = AiSchematic.load(
+            AiSchematic.LoadedSchematic loaded = AiSchematic.load(
                AiSchematic.resolveFile(AiSchematic.init(), AiJson.getString(args, "schematic", "")),
                origin,
                power.rotation(),
@@ -3171,7 +3171,7 @@ final class AiBuilder {
             AiOperation terrainBreakOp;
             boolean terrainCleared;
             boolean includeCheckpointSupports;
-            final AiScaffold.Inner_StreamUtil scaffoldTracker;
+            final AiScaffold.JobScope scaffoldTracker;
             final List<BlockPos> outerScaffoldCells;
             final List<BlockPos> drainSupports;
             boolean pop_Z;

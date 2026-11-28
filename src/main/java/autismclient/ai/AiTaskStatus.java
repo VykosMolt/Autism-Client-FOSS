@@ -10,8 +10,8 @@ public final class AiTaskStatus {
    private static final Pattern init_Pattern = Pattern.compile("\\bfurnace\\s+(\\d+)\\s*/\\s*(\\d+)", 2);
    static final int init_I = 200;
    static final long init_J = 1500000000L;
-   private static final AiGoal.Inner_StreamUtil init_W_StreamUtil = new AiGoal.Inner_StreamUtil();
-   private static final AiGoal.Inner_StreamUtil load = new AiGoal.Inner_StreamUtil();
+   private static final AiGoal.StableLabel init_W_StreamUtil = new AiGoal.StableLabel();
+   private static final AiGoal.StableLabel load = new AiGoal.StableLabel();
 
    private AiTaskStatus() {
    }

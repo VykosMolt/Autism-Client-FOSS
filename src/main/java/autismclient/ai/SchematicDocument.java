@@ -32,14 +32,14 @@ final class SchematicDocument {
    static final long init_J = 134217728L;
    static final long load_J = 268435456L;
    static final int init_I = 2097152;
-   final List<SchematicDocument.Inner_CachePool> regions;
-   final List<SchematicDocument.Inner_DataUtil> blockEntities;
-   final List<SchematicDocument.Inner_BufferHelper> entities;
+   final List<SchematicDocument.Region> regions;
+   final List<SchematicDocument.BlockEntityData> blockEntities;
+   final List<SchematicDocument.EntityData> entities;
    final int sizeX;
    final int sizeY;
    final int sizeZ;
    final long volume;
-   private final Long2ObjectOpenHashMap<SchematicDocument.Inner_CachePool[]> regionsBySection = new Long2ObjectOpenHashMap<>();
+   private final Long2ObjectOpenHashMap<SchematicDocument.Region[]> regionsBySection = new Long2ObjectOpenHashMap<>();
    private volatile long write_J = -1L;
 
    static int bitsForPaletteSize(int size) {
@@ -56,7 +56,7 @@ final class SchematicDocument {
       }
    }
 
-   SchematicDocument(List<SchematicDocument.Inner_CachePool> raw, List<SchematicDocument.Inner_DataUtil> bes, List<SchematicDocument.Inner_BufferHelper> entities) {
+   SchematicDocument(List<SchematicDocument.Region> raw, List<SchematicDocument.BlockEntityData> bes, List<SchematicDocument.EntityData> entities) {
       if (!raw.isEmpty() && raw.size() <= 8192) {
          int minX = 2147483647;
          int minY = minX;
@@ -66,7 +66,7 @@ final class SchematicDocument {
          int maxZ = maxX;
          long volume = 0L;
 
-         for (SchematicDocument.Inner_CachePool r : raw) {
+         for (SchematicDocument.Region r : raw) {
             volume += r.flush;
             if (volume > 134217728L) {
                throw new IllegalArgumentException("Schematic exceeds the 128 million voxel limit");
@@ -85,34 +85,34 @@ final class SchematicDocument {
          this.sizeZ = Math.subtractExact(maxZ, minZ);
          if (this.sizeX <= 4096 && this.sizeY <= 4096 && this.sizeZ <= 4096) {
             this.volume = volume;
-            ArrayList<SchematicDocument.Inner_CachePool> normalized = new ArrayList<>();
+            ArrayList<SchematicDocument.Region> normalized = new ArrayList<>();
 
-            for (SchematicDocument.Inner_CachePool r : raw) {
+            for (SchematicDocument.Region r : raw) {
                normalized.add(
-                  new SchematicDocument.Inner_CachePool(
+                  new SchematicDocument.Region(
                      r.originX - minX, r.load - minY, r.read - minZ, r.write, r.update, r.sync, r.palette, r.packed, r.values
                   )
                );
             }
 
             this.regions = List.copyOf(normalized);
-            ArrayList<SchematicDocument.Inner_DataUtil> normalizedBes = new ArrayList<>();
+            ArrayList<SchematicDocument.BlockEntityData> normalizedBes = new ArrayList<>();
 
-            for (SchematicDocument.Inner_DataUtil be : bes) {
-               normalizedBes.add(new SchematicDocument.Inner_DataUtil(be.position.offset(-minX, -minY, -minZ), be.data));
+            for (SchematicDocument.BlockEntityData be : bes) {
+               normalizedBes.add(new SchematicDocument.BlockEntityData(be.position.offset(-minX, -minY, -minZ), be.data));
             }
 
             this.blockEntities = List.copyOf(normalizedBes);
-            ArrayList<SchematicDocument.Inner_BufferHelper> normalizedEntities = new ArrayList<>();
+            ArrayList<SchematicDocument.EntityData> normalizedEntities = new ArrayList<>();
 
-            for (SchematicDocument.Inner_BufferHelper e : entities) {
-               normalizedEntities.add(new SchematicDocument.Inner_BufferHelper(e.x - minX, e.y - minY, e.z - minZ, e.data));
+            for (SchematicDocument.EntityData e : entities) {
+               normalizedEntities.add(new SchematicDocument.EntityData(e.x - minX, e.y - minY, e.z - minZ, e.data));
             }
 
             this.entities = List.copyOf(normalizedEntities);
-            Long2ObjectOpenHashMap<ArrayList<SchematicDocument.Inner_CachePool>> build = new Long2ObjectOpenHashMap<>();
+            Long2ObjectOpenHashMap<ArrayList<SchematicDocument.Region>> build = new Long2ObjectOpenHashMap<>();
 
-            for (SchematicDocument.Inner_CachePool r : this.regions) {
+            for (SchematicDocument.Region r : this.regions) {
                for (int sx = r.originX >> 4; sx <= r.originX + r.write - 1 >> 4; sx++) {
                   for (int sy = r.load >> 4; sy <= r.load + r.update - 1 >> 4; sy++) {
                      for (int sz = r.read >> 4; sz <= r.read + r.sync - 1 >> 4; sz++) {
@@ -126,7 +126,7 @@ final class SchematicDocument {
                }
             }
 
-            build.forEach((keyx, value) -> this.regionsBySection.put(keyx, value.toArray(SchematicDocument.Inner_CachePool[]::new)));
+            build.forEach((keyx, value) -> this.regionsBySection.put(keyx, value.toArray(SchematicDocument.Region[]::new)));
          } else {
             throw new IllegalArgumentException("Schematic span exceeds 4096 blocks");
          }
@@ -135,8 +135,8 @@ final class SchematicDocument {
       }
    }
 
-   SchematicDocument.Inner_CachePool regionAt(int x, int y, int z) {
-      SchematicDocument.Inner_CachePool[] candidates = this.regionsBySection.get(BlockPos.asLong(x >> 4, y >> 4, z >> 4));
+   SchematicDocument.Region regionAt(int x, int y, int z) {
+      SchematicDocument.Region[] candidates = this.regionsBySection.get(BlockPos.asLong(x >> 4, y >> 4, z >> 4));
       if (candidates != null) {
          for (int i = candidates.length - 1; i >= 0; i--) {
             if (candidates[i].contains(x, y, z)) {
@@ -149,7 +149,7 @@ final class SchematicDocument {
    }
 
    BlockState init_BlockState_I(int x, int y, int z) {
-      SchematicDocument.Inner_CachePool r = this.regionAt(x, y, z);
+      SchematicDocument.Region r = this.regionAt(x, y, z);
       return r == null ? Blocks.AIR.defaultBlockState() : r.stateAt(x, y, z);
    }
 
@@ -165,7 +165,7 @@ final class SchematicDocument {
       long count = 0L;
       long done = 0L;
 
-      for (SchematicDocument.Inner_CachePool r : this.regions) {
+      for (SchematicDocument.Region r : this.regions) {
          for (int i = 0; i < r.flush; i++) {
             if ((i & 4095) == 0) {
                init();
@@ -189,7 +189,7 @@ final class SchematicDocument {
       return count;
    }
 
-   SchematicDocument.Inner_StreamUtil buildPreview(int rotation, String mirror, IntConsumer progress) {
+   SchematicDocument.Preview buildPreview(int rotation, String mirror, IntConsumer progress) {
       ArrayList<AiBuilder.CellSpec> cells = new ArrayList<>();
       long count = 0L;
       long done = 0L;
@@ -198,7 +198,7 @@ final class SchematicDocument {
       int minZ = minX;
       IdentityHashMap<BlockState, AiBuilder.CellSpec> cache = new IdentityHashMap<>();
 
-      for (SchematicDocument.Inner_CachePool r : this.regions) {
+      for (SchematicDocument.Region r : this.regions) {
          for (int i = 0; i < r.flush; i++) {
             if ((i & 4095) == 0) {
                init();
@@ -241,7 +241,7 @@ final class SchematicDocument {
 
       this.write_J = count;
       progress.accept(100);
-      return new SchematicDocument.Inner_StreamUtil(List.copyOf(cells), count == 0L ? BlockPos.ZERO : new BlockPos(minX, minY, minZ), count);
+      return new SchematicDocument.Preview(List.copyOf(cells), count == 0L ? BlockPos.ZERO : new BlockPos(minX, minY, minZ), count);
    }
 
    boolean isSolidAt(BlockPos at, int rotation, String mirror) {
@@ -367,7 +367,7 @@ final class SchematicDocument {
 
       CompoundTag body = root.getCompound("Schematic").orElse(root);
       if (!body.getCompound("Palette").isPresent() && !body.getCompound("Blocks").flatMap(b -> b.getCompound("Palette")).isPresent()) {
-         AiSchematic.Inner_DataUtil decoded = AiSchematic.decodeSponge(body, false);
+         AiSchematic.DecodedFile decoded = AiSchematic.decodeSponge(body, false);
          int minX = body.getIntOr("WEOffsetX", 0);
          int minY = body.getIntOr("WEOffsetY", 0);
          int minZ = body.getIntOr("WEOffsetZ", 0);
@@ -393,7 +393,7 @@ final class SchematicDocument {
             ids[((c.dy() - minY) * l + c.dz() - minZ) * w + c.dx() - minX] = id;
          }
 
-         return new SchematicDocument(List.of(new SchematicDocument.Inner_CachePool(minX, minY, minZ, w, h, l, palette.toArray(BlockState[]::new), null, ids)), List.of(), List.of());
+         return new SchematicDocument(List.of(new SchematicDocument.Region(minX, minY, minZ, w, h, l, palette.toArray(BlockState[]::new), null, ids)), List.of(), List.of());
       } else {
          return parseSponge(body);
       }
@@ -404,9 +404,9 @@ final class SchematicDocument {
       if (version >= 1 && version <= 7) {
          int dataVersion = root.getIntOr("MinecraftDataVersion", 1631);
          CompoundTag data = root.getCompoundOrEmpty("Regions");
-         ArrayList<SchematicDocument.Inner_CachePool> regions = new ArrayList<>();
-         ArrayList<SchematicDocument.Inner_DataUtil> bes = new ArrayList<>();
-         ArrayList<SchematicDocument.Inner_BufferHelper> entities = new ArrayList<>();
+         ArrayList<SchematicDocument.Region> regions = new ArrayList<>();
+         ArrayList<SchematicDocument.BlockEntityData> bes = new ArrayList<>();
+         ArrayList<SchematicDocument.EntityData> entities = new ArrayList<>();
 
          for (String name : data.keySet()) {
             init();
@@ -431,12 +431,12 @@ final class SchematicDocument {
                BlockState[] palette = new BlockState[entries.size()];
 
                for (int i = 0; i < palette.length; i++) {
-                  AiSchematic.Inner_ConfigStore parsed = AiSchematic.init(entries.getCompoundOrEmpty(i), dataVersion, version < 4 || dataVersion < 1631, "region " + name);
+                  AiSchematic.PaletteState parsed = AiSchematic.init(entries.getCompoundOrEmpty(i), dataVersion, version < 4 || dataVersion < 1631, "region " + name);
                   palette[i] = AiBuilder.toBlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties()));
                }
 
                regions.add(
-                  new SchematicDocument.Inner_CachePool(
+                  new SchematicDocument.Region(
                      x,
                      y,
                      z,
@@ -454,7 +454,7 @@ final class SchematicDocument {
                      BlockPos at = new BlockPos(
                         Math.addExact(x, be.getIntOr("x", 0)), Math.addExact(y, be.getIntOr("y", 0)), Math.addExact(z, be.getIntOr("z", 0))
                      );
-                     bes.add(new SchematicDocument.Inner_DataUtil(at, init_CompoundTag_CompoundTag(be, dataVersion, References.BLOCK_ENTITY)));
+                     bes.add(new SchematicDocument.BlockEntityData(at, init_CompoundTag_CompoundTag(be, dataVersion, References.BLOCK_ENTITY)));
                   }
                }
 
@@ -488,7 +488,7 @@ final class SchematicDocument {
                   throw new IllegalArgumentException("Invalid Sponge palette id");
                }
 
-               AiSchematic.Inner_ConfigStore parsed = AiSchematic.parseState(state, dataVersion);
+               AiSchematic.PaletteState parsed = AiSchematic.parseState(state, dataVersion);
                ids.put(id, palette.size());
                palette.add(AiBuilder.toBlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties())));
             }
@@ -535,7 +535,7 @@ final class SchematicDocument {
                   throw new IllegalArgumentException("Unexpected Sponge block data");
                }
 
-               ArrayList<SchematicDocument.Inner_DataUtil> bes = new ArrayList<>();
+               ArrayList<SchematicDocument.BlockEntityData> bes = new ArrayList<>();
                ListTag tags = blockData.getListOrEmpty("BlockEntities");
                if (tags.isEmpty()) {
                   tags = body.getListOrEmpty("BlockEntities");
@@ -551,14 +551,14 @@ final class SchematicDocument {
                            be.putString("id", id);
                         }
 
-                        bes.add(new SchematicDocument.Inner_DataUtil(new BlockPos(p[0], p[1], p[2]), init_CompoundTag_CompoundTag(be, dataVersion, References.BLOCK_ENTITY)));
+                        bes.add(new SchematicDocument.BlockEntityData(new BlockPos(p[0], p[1], p[2]), init_CompoundTag_CompoundTag(be, dataVersion, References.BLOCK_ENTITY)));
                      }
                   }
                }
 
-               ArrayList<SchematicDocument.Inner_BufferHelper> entities = new ArrayList<>();
+               ArrayList<SchematicDocument.EntityData> entities = new ArrayList<>();
                init(body.getListOrEmpty("Entities"), 0.0, 0.0, 0.0, dataVersion, entities);
-               return new SchematicDocument(List.of(new SchematicDocument.Inner_CachePool(0, 0, 0, w, h, l, palette.toArray(BlockState[]::new), packed, null)), bes, entities);
+               return new SchematicDocument(List.of(new SchematicDocument.Region(0, 0, 0, w, h, l, palette.toArray(BlockState[]::new), packed, null)), bes, entities);
             } else {
                throw new IllegalArgumentException("Invalid Sponge palette size");
             }
@@ -580,7 +580,7 @@ final class SchematicDocument {
       }
    }
 
-   static void init(ListTag entries, double ox, double oy, double oz, int dataVersion, List<SchematicDocument.Inner_BufferHelper> out) {
+   static void init(ListTag entries, double ox, double oy, double oz, int dataVersion, List<SchematicDocument.EntityData> out) {
       for (Tag tag : entries) {
          if (tag instanceof CompoundTag outer) {
             CompoundTag entity = outer.getCompound("Data").orElse(outer).copy();
@@ -601,7 +601,7 @@ final class SchematicDocument {
                   }
 
                   entity.put("Pos", pos.copy());
-                  out.add(new SchematicDocument.Inner_BufferHelper(ox + x, oy + y, oz + z, init_CompoundTag_CompoundTag(entity, dataVersion, References.ENTITY_TREE)));
+                  out.add(new SchematicDocument.EntityData(ox + x, oy + y, oz + z, init_CompoundTag_CompoundTag(entity, dataVersion, References.ENTITY_TREE)));
                   if (out.size() > 16384) {
                      throw new IllegalArgumentException("Too many saved entities");
                   }
@@ -611,10 +611,10 @@ final class SchematicDocument {
       }
    }
 
-   record Inner_BufferHelper(double x, double y, double z, CompoundTag data) {
+   record EntityData(double x, double y, double z, CompoundTag data) {
    }
 
-   static final class Inner_CachePool {
+   static final class Region {
       final int originX;
       final int load;
       final int read;
@@ -627,7 +627,7 @@ final class SchematicDocument {
       final int[] values;
       final int close;
 
-      Inner_CachePool(int x, int y, int z, int width, int height, int length, BlockState[] palette, long[] packed, int[] values) {
+      Region(int x, int y, int z, int width, int height, int length, BlockState[] palette, long[] packed, int[] values) {
          this.originX = x;
          this.load = y;
          this.read = z;
@@ -693,9 +693,9 @@ final class SchematicDocument {
       }
    }
 
-   record Inner_DataUtil(BlockPos position, CompoundTag data) {
+   record BlockEntityData(BlockPos position, CompoundTag data) {
    }
 
-   record Inner_StreamUtil(List<AiBuilder.CellSpec> cells, BlockPos nonAirMinimum, long blocks) {
+   record Preview(List<AiBuilder.CellSpec> cells, BlockPos nonAirMinimum, long blocks) {
    }
 }

@@ -33,15 +33,15 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private static final int pop = 2;
    private static final int tick = 14;
    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());
-   private static final Comparator<SchematicLibrary.Inner_DataUtil> ENTRY_ORDER = Comparator.comparing(SchematicLibrary.Inner_DataUtil::name, String.CASE_INSENSITIVE_ORDER)
+   private static final Comparator<SchematicLibrary.SchematicEntry> ENTRY_ORDER = Comparator.comparing(SchematicLibrary.SchematicEntry::name, String.CASE_INSENSITIVE_ORDER)
       .thenComparing(entry -> entry.file().toString());
    private final SchematicWorkspace workspace;
    private final Minecraft mc = Minecraft.getInstance();
    private final Font font = this.mc.font;
-   private final List<SchematicLibraryOverlay.Inner_BufferHelper> init_List = new ArrayList<>();
+   private final List<SchematicLibraryOverlay.ClickRegion> init_List = new ArrayList<>();
    private final autismclient.gui.ui.widgets.ScrollOffsetController scroll = new autismclient.gui.ui.widgets.ScrollOffsetController();
    private final NumberFormat numberFormat = NumberFormat.getIntegerInstance();
-   private SchematicLibraryOverlay.Inner_ConfigStore tab = SchematicLibraryOverlay.Inner_ConfigStore.FILES;
+   private SchematicLibraryOverlay.LibraryTab tab = SchematicLibraryOverlay.LibraryTab.FILES;
    private autismclient.util.ThemedTextInputBox textInput;
    private autismclient.gui.f.NetHelper windowRect;
    private autismclient.gui.f.NetHelper listRect;
@@ -55,25 +55,25 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private int run;
    private String query = "";
    private Path directory;
-   private List<SchematicLibrary.Inner_DataUtil> cachedSource = List.of();
-   private List<SchematicLibrary.Inner_DataUtil> cachedEntries = List.of();
+   private List<SchematicLibrary.SchematicEntry> cachedSource = List.of();
+   private List<SchematicLibrary.SchematicEntry> cachedEntries = List.of();
    private String cachedQuery;
-   private SchematicLibraryOverlay.Inner_CachePool sort;
-   private SchematicLibraryOverlay.Inner_CachePool cachedSort;
-   private SchematicLibraryOverlay.Inner_StreamUtil filter;
-   private SchematicLibraryOverlay.Inner_StreamUtil cachedFilter;
+   private SchematicLibraryOverlay.SortOrder sort;
+   private SchematicLibraryOverlay.SortOrder cachedSort;
+   private SchematicLibraryOverlay.LibraryFilter filter;
+   private SchematicLibraryOverlay.LibraryFilter cachedFilter;
    private Set<String> loaded;
    private final autismclient.gui.ui.widgets.DropdownMenu sortMenu;
    private final autismclient.gui.ui.widgets.DropdownMenu filterMenu;
 
    SchematicLibraryOverlay(SchematicWorkspace workspace) {
       super("schematic-library", 270, 132);
-      this.sort = SchematicLibraryOverlay.Inner_CachePool.EDITED;
-      this.filter = SchematicLibraryOverlay.Inner_StreamUtil.ALL;
+      this.sort = SchematicLibraryOverlay.SortOrder.EDITED;
+      this.filter = SchematicLibraryOverlay.LibraryFilter.ALL;
       this.loaded = Set.of();
       this.sortMenu = new autismclient.gui.ui.widgets.DropdownMenu(
-         null, Arrays.stream(SchematicLibraryOverlay.Inner_CachePool.values()).map(v -> v.init_Str).toList(), this.sort.init_Str, label -> {
-            for (SchematicLibraryOverlay.Inner_CachePool value : SchematicLibraryOverlay.Inner_CachePool.values()) {
+         null, Arrays.stream(SchematicLibraryOverlay.SortOrder.values()).map(v -> v.init_Str).toList(), this.sort.init_Str, label -> {
+            for (SchematicLibraryOverlay.SortOrder value : SchematicLibraryOverlay.SortOrder.values()) {
                if (value.init_Str.equals(label)) {
                   this.sort = value;
                }
@@ -84,10 +84,10 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       );
       this.filterMenu = new autismclient.gui.ui.widgets.DropdownMenu(
          null,
-         Arrays.stream(SchematicLibraryOverlay.Inner_StreamUtil.values()).map(v -> v.init_Str).toList(),
+         Arrays.stream(SchematicLibraryOverlay.LibraryFilter.values()).map(v -> v.init_Str).toList(),
          this.filter.init_Str,
          label -> {
-            for (SchematicLibraryOverlay.Inner_StreamUtil value : SchematicLibraryOverlay.Inner_StreamUtil.values()) {
+            for (SchematicLibraryOverlay.LibraryFilter value : SchematicLibraryOverlay.LibraryFilter.values()) {
                if (value.init_Str.equals(label)) {
                   this.filter = value;
                }
@@ -106,9 +106,9 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    void init_V_Str(String name) {
       this.closeMenus();
       if (!name.equals("SORT") && !name.equals("FILTER")) {
-         this.init_V_SchematicLibraryOv(SchematicLibraryOverlay.Inner_ConfigStore.valueOf(name));
+         this.init_V_SchematicLibraryOv(SchematicLibraryOverlay.LibraryTab.valueOf(name));
       } else {
-         this.init_V_SchematicLibraryOv(SchematicLibraryOverlay.Inner_ConfigStore.FILES);
+         this.init_V_SchematicLibraryOv(SchematicLibraryOverlay.LibraryTab.FILES);
          (name.equals("SORT") ? this.sortMenu : this.filterMenu).open();
       }
    }
@@ -177,7 +177,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
    private int heightForRows(int rows) {
       int bodyTop = 34;
-      if (this.tab == SchematicLibraryOverlay.Inner_ConfigStore.CAPTURE) {
+      if (this.tab == SchematicLibraryOverlay.LibraryTab.CAPTURE) {
          return this.captureHeight();
       }
 
@@ -224,19 +224,19 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       if (this.mc != null) {
          autismclient.gui.ui.widgets.TextInputWidget.clearGlobalFocus();
          this.textInput = null;
-         if (this.tab == SchematicLibraryOverlay.Inner_ConfigStore.FILES
-            || this.tab == SchematicLibraryOverlay.Inner_ConfigStore.CAPTURE) {
+         if (this.tab == SchematicLibraryOverlay.LibraryTab.FILES
+            || this.tab == SchematicLibraryOverlay.LibraryTab.CAPTURE) {
             this.textInput = new autismclient.util.ThemedTextInputBox(this.mc, this.font, 0, 0, 100, 13, false);
             this.textInput.setMaxLength(100);
             this.textInput
                .setPlaceholder(
                   Component.literal(
-                     this.tab == SchematicLibraryOverlay.Inner_ConfigStore.FILES ? "Search schematics" : "File name (optional)"
+                     this.tab == SchematicLibraryOverlay.LibraryTab.FILES ? "Search schematics" : "File name (optional)"
                   )
                );
-            this.textInput.setValue(this.tab == SchematicLibraryOverlay.Inner_ConfigStore.FILES ? this.query : this.workspace.captureName);
+            this.textInput.setValue(this.tab == SchematicLibraryOverlay.LibraryTab.FILES ? this.query : this.workspace.captureName);
             this.textInput.setChangedListener(value -> {
-               if (this.tab == SchematicLibraryOverlay.Inner_ConfigStore.FILES) {
+               if (this.tab == SchematicLibraryOverlay.LibraryTab.FILES) {
                   this.query = value;
                   this.scroll.setOffsetUnclamped(0);
                } else {
@@ -247,7 +247,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       }
    }
 
-   private void init_V_SchematicLibraryOv(SchematicLibraryOverlay.Inner_ConfigStore value) {
+   private void init_V_SchematicLibraryOv(SchematicLibraryOverlay.LibraryTab value) {
       if (this.tab != value) {
          this.tab = value;
          this.closeMenus();
@@ -265,7 +265,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.listRect = null;
          int auto = this.heightForRows(Math.clamp(this.rowCount(), 1, 5));
          this.windowWidth = this.resolveWindowWidth(270, this.getMinWidth());
-         this.windowHeight = this.tab == SchematicLibraryOverlay.Inner_ConfigStore.CAPTURE
+         this.windowHeight = this.tab == SchematicLibraryOverlay.LibraryTab.CAPTURE
             ? Math.min(auto, getMaxScreenWindowHeight())
             : this.resolveWindowHeight(auto, this.getResizeMinHeight());
          OverlayBounds clamped = this.clampCurrentBounds(this);
@@ -287,12 +287,12 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                String[] names = new String[]{"Files", "Placements", "Capture", "Folders"};
                int tabX = tabs.read();
 
-               for (SchematicLibraryOverlay.Inner_ConfigStore value : SchematicLibraryOverlay.Inner_ConfigStore.values()) {
+               for (SchematicLibraryOverlay.LibraryTab value : SchematicLibraryOverlay.LibraryTab.values()) {
                   String label = names[value.ordinal()];
                   int tabWidth = Math.min((tabs.update() - 9) / 4, ui.init_PoolEntry().measureWidth(label) + 12);
                   autismclient.gui.f.NetHelper at = autismclient.gui.f.NetHelper.init(tabX, tabs.write(), tabWidth, 13);
                   autismclient.gui.ui.widgets.TabStripRenderer.init(ui, at, label, value == this.tab);
-                  this.init_List.add(new SchematicLibraryOverlay.Inner_BufferHelper(at, () -> this.init_V_SchematicLibraryOv(value)));
+                  this.init_List.add(new SchematicLibraryOverlay.ClickRegion(at, () -> this.init_V_SchematicLibraryOv(value)));
                   tabX = at.init() + 3;
                }
 
@@ -348,7 +348,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             }
 
             autismclient.gui.ui.widgets.DropdownMenu var231 = this.openDropdown();
-            if (this.tab == SchematicLibraryOverlay.Inner_ConfigStore.FILES && var231 != null) {
+            if (this.tab == SchematicLibraryOverlay.LibraryTab.FILES && var231 != null) {
                graphics.nextStratum();
                var231.render(autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my));
             }
@@ -374,7 +374,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.workspace.isLibraryReady(),
          this.workspace::refresh
       );
-      List<SchematicLibrary.Inner_DataUtil> entries = this.visibleEntries();
+      List<SchematicLibrary.SchematicEntry> entries = this.visibleEntries();
       this.init(
          ui,
          x,
@@ -383,11 +383,11 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          Math.max(4, bottom - y - 13 - 3),
          entries.size(),
          (index, row) -> {
-            SchematicLibrary.Inner_DataUtil e = entries.get(index);
+            SchematicLibrary.SchematicEntry e = entries.get(index);
             String blocks = e.blocks() >= 0L
                ? this.numberFormat.format(e.blocks()) + " blocks"
                : (e.error().isEmpty() ? "Counting blocks…" : "Unreadable");
-            boolean added = this.sort == SchematicLibraryOverlay.Inner_CachePool.ADDED && e.added() > 0L;
+            boolean added = this.sort == SchematicLibraryOverlay.SortOrder.ADDED && e.added() > 0L;
             String date = (added ? "Added " : "Edited ") + DATE_FORMAT.format(Instant.ofEpochMilli(added ? e.added() : e.modified()));
             this.drawRow(
                ui,
@@ -403,15 +403,15 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          this.drawEmptyPlaceholder(ui, "No schematic files", x, y + 13 + 12, width);
       }
 
-      SchematicLibrary.Inner_DataUtil file = entries.stream().filter(e -> e.id().equals(this.workspace.selectedFileId)).findFirst().orElse(null);
-      SchematicLibrary.Inner_StreamUtil active = this.workspace.placementForFile(file);
+      SchematicLibrary.SchematicEntry file = entries.stream().filter(e -> e.id().equals(this.workspace.selectedFileId)).findFirst().orElse(null);
+      SchematicLibrary.Placement active = this.workspace.placementForFile(file);
       this.drawActions(
          ui,
          x,
          bottom + 3,
          width,
          List.of(
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                active == null ? "Load" : "Unload",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
                this.workspace.isLibraryReady()
@@ -420,19 +420,19 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                () -> {
                   if (active == null) {
                      this.workspace.placeFile(file);
-                     this.init_V_SchematicLibraryOv(SchematicLibraryOverlay.Inner_ConfigStore.PLACEMENTS);
+                     this.init_V_SchematicLibraryOv(SchematicLibraryOverlay.LibraryTab.PLACEMENTS);
                   } else {
                      this.workspace.toggleShown(active);
                   }
                }
             ),
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Rename",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
                file != null && !this.workspace.isBusy(),
                () -> this.workspace.renameFile(file)
             ),
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Open folder",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
                this.workspace.isLibraryReady(),
@@ -442,14 +442,14 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       );
    }
 
-   private List<SchematicLibrary.Inner_DataUtil> visibleEntries() {
-      List<SchematicLibrary.Inner_DataUtil> current = this.workspace.library.entries;
+   private List<SchematicLibrary.SchematicEntry> visibleEntries() {
+      List<SchematicLibrary.SchematicEntry> current = this.workspace.library.entries;
       Set<String> loaded = Set.of();
-      if (this.filter == SchematicLibraryOverlay.Inner_StreamUtil.LOADED
-         || this.filter == SchematicLibraryOverlay.Inner_StreamUtil.UNLOADED) {
+      if (this.filter == SchematicLibraryOverlay.LibraryFilter.LOADED
+         || this.filter == SchematicLibraryOverlay.LibraryFilter.UNLOADED) {
          loaded = new HashSet<>();
 
-         for (SchematicLibrary.Inner_StreamUtil placement : this.workspace.placements()) {
+         for (SchematicLibrary.Placement placement : this.workspace.placements()) {
             if (placement.visible()) {
                loaded.add(placement.file());
             }
@@ -512,12 +512,12 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    }
 
    private void drawPlacements(autismclient.gui.f.SyncManager ui, int x, int y, int width, int bottom) {
-      List<SchematicLibrary.Inner_StreamUtil> placements = this.workspace.placements();
-      SchematicLibrary.Inner_StreamUtil picked = this.workspace.placementById(this.workspace.selectedPlacementId);
+      List<SchematicLibrary.Placement> placements = this.workspace.placements();
+      SchematicLibrary.Placement picked = this.workspace.placementById(this.workspace.selectedPlacementId);
       boolean local = this.workspace.isLocalWorld();
       int listBottom = bottom - (local ? 17 : 0);
       this.init(ui, x, y, width, Math.max(4, listBottom - y), placements.size(), (index, row) -> {
-         SchematicLibrary.Inner_StreamUtil p = placements.get(index);
+         SchematicLibrary.Placement p = placements.get(index);
          String detail = p.x() + ", " + p.y() + ", " + p.z() + "  ·  " + p.rotation() + "°  ·  " + this.workspace.placementStatus(p);
          this.drawRow(ui, row, SchematicWorkspace.displayName(p), detail, p.id().equals(this.workspace.selectedPlacementId), () -> this.workspace.selectedPlacementId = p.id());
       });
@@ -549,9 +549,9 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       if (!this.workspace.isBusy() || this.workspace.canModify(picked)) {
          boolean available = this.workspace.isLoaded(picked);
          boolean paused = picked != null && !picked.paste().isEmpty();
-         ArrayList<SchematicLibraryOverlay.Inner_DataUtil> actions = new ArrayList<>();
+         ArrayList<SchematicLibraryOverlay.ActionButton> actions = new ArrayList<>();
          actions.add(
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                picked != null && picked.visible() ? "Unload" : "Show",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
                this.workspace.canModify(picked) && !paused,
@@ -559,12 +559,12 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             )
          );
          actions.add(
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Move", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.workspace.canMove(picked), () -> this.workspace.write(picked)
             )
          );
          actions.add(
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Build",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
                available && !paused && !this.workspace.hasActiveBuild() && !this.workspace.isBusy(),
@@ -573,7 +573,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          );
          if (local) {
             actions.add(
-               new SchematicLibraryOverlay.Inner_DataUtil(
+               new SchematicLibraryOverlay.ActionButton(
                   paused ? "Resume" : "Paste",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
                   available && !this.workspace.hasActiveBuild() && !this.workspace.isBusy(),
@@ -583,7 +583,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          }
 
          actions.add(
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Rename",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
                picked != null && !this.workspace.isBusy(),
@@ -591,7 +591,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             )
          );
          actions.add(
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Remove", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, this.workspace.canModify(picked), () -> this.workspace.removePlacement(picked)
             )
          );
@@ -603,7 +603,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             bottom + 3,
             width,
             List.of(
-               new SchematicLibraryOverlay.Inner_DataUtil(
+               new SchematicLibraryOverlay.ActionButton(
                   this.workspace.isPasting() ? "Terminate" : "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.workspace::cancelOperation
                )
             )
@@ -622,13 +622,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          rowY,
          width,
          List.of(
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Select corners",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
                this.workspace.isInWorld() && !busy,
                this.workspace::selectArea
             ),
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Save area",
                autismclient.gui.f.b.CachePool.Inner_DataUtil.read,
                this.workspace.isLibraryReady() && this.workspace.isInWorld() && this.workspace.selectedArea != null && !busy,
@@ -645,10 +645,10 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             row2Y,
             width,
             List.of(
-               new SchematicLibraryOverlay.Inner_DataUtil(
+               new SchematicLibraryOverlay.ActionButton(
                   "Stop & save", autismclient.gui.f.b.CachePool.Inner_DataUtil.update, true, this.workspace::stopAndSaveRecording
                ),
-               new SchematicLibraryOverlay.Inner_DataUtil(
+               new SchematicLibraryOverlay.ActionButton(
                   "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.workspace::cancelOperation
                )
             )
@@ -660,7 +660,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             row2Y,
             width,
             List.of(
-               new SchematicLibraryOverlay.Inner_DataUtil(
+               new SchematicLibraryOverlay.ActionButton(
                   this.workspace.isPasting() ? "Terminate" : "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, true, this.workspace::cancelOperation
                )
             )
@@ -672,13 +672,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             row2Y,
             width,
             List.of(
-               new SchematicLibraryOverlay.Inner_DataUtil(
+               new SchematicLibraryOverlay.ActionButton(
                   "Record chunks",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
                   this.workspace.isLibraryReady() && this.workspace.isInWorld(),
                   () -> this.workspace.startRecording(this.flush_Z)
                ),
-               new SchematicLibraryOverlay.Inner_DataUtil(
+               new SchematicLibraryOverlay.ActionButton(
                   "Save loaded chunks",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.write,
                   this.workspace.isLibraryReady() && this.workspace.isInWorld(),
@@ -727,13 +727,13 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          bottom + 3,
          width,
          List.of(
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Add folder", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, this.workspace.isLibraryReady(), this.workspace::addFolder
             ),
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Open", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, selected, () -> this.workspace.openPath(this.directory)
             ),
-            new SchematicLibraryOverlay.Inner_DataUtil(
+            new SchematicLibraryOverlay.ActionButton(
                "Remove", autismclient.gui.f.b.CachePool.Inner_DataUtil.load, selected && !this.directory.equals(this.workspace.library.defaultRoot), () -> {
                   this.workspace.removeFolder(this.directory);
                   this.directory = null;
@@ -743,11 +743,11 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       );
    }
 
-   private void drawActions(autismclient.gui.f.SyncManager ui, int x, int y, int width, List<SchematicLibraryOverlay.Inner_DataUtil> actions) {
+   private void drawActions(autismclient.gui.f.SyncManager ui, int x, int y, int width, List<SchematicLibraryOverlay.ActionButton> actions) {
       int available = width - (actions.size() - 1) * 3;
       int total = actions.stream().mapToInt(actionx -> ui.init_PoolEntry().measureWidth(actionx.label()) + 10).sum();
 
-      for (SchematicLibraryOverlay.Inner_DataUtil action : actions) {
+      for (SchematicLibraryOverlay.ActionButton action : actions) {
          int natural = ui.init_PoolEntry().measureWidth(action.label()) + 10;
          int buttonWidth = Math.max(1, total <= available ? natural : natural * available / total);
          this.drawButton(ui, autismclient.gui.f.NetHelper.init(x, y, buttonWidth, 13), action.label(), action.tone(), action.enabled(), action.run());
@@ -767,7 +767,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          ui, bounds, label, enabled ? tone : autismclient.gui.f.b.CachePool.Inner_DataUtil.load, enabled && bounds.init_Z(ui.read(), ui.write()), false
       );
       if (enabled) {
-         this.init_List.add(new SchematicLibraryOverlay.Inner_BufferHelper(bounds, run));
+         this.init_List.add(new SchematicLibraryOverlay.ClickRegion(bounds, run));
       }
    }
 
@@ -776,7 +776,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    ) {
       autismclient.gui.ui.widgets.ToggleSwitchRenderer.init(ui, bounds, text, value, enabled && bounds.init_Z(ui.read(), ui.write()), "schematic/" + text);
       if (enabled) {
-         this.init_List.add(new SchematicLibraryOverlay.Inner_BufferHelper(bounds, run));
+         this.init_List.add(new SchematicLibraryOverlay.ClickRegion(bounds, run));
       }
    }
 
@@ -829,7 +829,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       int end = Math.min(bounds.load(), this.listLayout.y() + this.listLayout.contentInset() + this.listLayout.viewHeight());
       if (end > top) {
          this.init_List
-            .add(new SchematicLibraryOverlay.Inner_BufferHelper(autismclient.gui.f.NetHelper.init(bounds.read(), top, bounds.update(), end - top), run));
+            .add(new SchematicLibraryOverlay.ClickRegion(autismclient.gui.f.NetHelper.init(bounds.read(), top, bounds.update(), end - top), run));
       }
    }
 
@@ -878,7 +878,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
          int x = (int)mx;
          int y = (int)my;
-         if (this.tab == SchematicLibraryOverlay.Inner_ConfigStore.FILES) {
+         if (this.tab == SchematicLibraryOverlay.LibraryTab.FILES) {
             autismclient.gui.ui.widgets.DropdownMenu menu = this.openDropdown();
             if (menu != null) {
                menu.onMouseClicked(x, y, button);
@@ -908,7 +908,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          }
 
          for (int i = this.init_List.size() - 1; i >= 0; i--) {
-            SchematicLibraryOverlay.Inner_BufferHelper hit = this.init_List.get(i);
+            SchematicLibraryOverlay.ClickRegion hit = this.init_List.get(i);
             if (hit.bounds().init_Z(x, y)) {
                hit.action().run();
                return true;
@@ -991,38 +991,38 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       return this.windowVisible && !this.windowCollapsed && this.textInput != null && this.textInput.charTyped(new CharacterEvent(value));
    }
 
-   private record Inner_BufferHelper(autismclient.gui.f.NetHelper bounds, Runnable action) {
+   private record ClickRegion(autismclient.gui.f.NetHelper bounds, Runnable action) {
    }
 
-   private enum Inner_CachePool {
-      EDITED("Last edited", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::modified).reversed()),
-      ADDED("Date added", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::added).reversed()),
+   private enum SortOrder {
+      EDITED("Last edited", Comparator.comparingLong(SchematicLibrary.SchematicEntry::modified).reversed()),
+      ADDED("Date added", Comparator.comparingLong(SchematicLibrary.SchematicEntry::added).reversed()),
       NAME_ASC("Name A–Z", SchematicLibraryOverlay.ENTRY_ORDER),
       NAME_DESC("Name Z–A", SchematicLibraryOverlay.ENTRY_ORDER.reversed()),
-      LARGE("Largest", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::bytes).reversed()),
-      SMALL("Smallest", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::bytes)),
-      BLOCKS("Most blocks", Comparator.comparingLong(SchematicLibrary.Inner_DataUtil::blocks).reversed());
+      LARGE("Largest", Comparator.comparingLong(SchematicLibrary.SchematicEntry::bytes).reversed()),
+      SMALL("Smallest", Comparator.comparingLong(SchematicLibrary.SchematicEntry::bytes)),
+      BLOCKS("Most blocks", Comparator.comparingLong(SchematicLibrary.SchematicEntry::blocks).reversed());
 
       final String init_Str;
-      final Comparator<SchematicLibrary.Inner_DataUtil> init_Comparator;
+      final Comparator<SchematicLibrary.SchematicEntry> init_Comparator;
 
-      Inner_CachePool(String label, Comparator<SchematicLibrary.Inner_DataUtil> order) {
+      SortOrder(String label, Comparator<SchematicLibrary.SchematicEntry> order) {
          this.init_Str = label;
          this.init_Comparator = order.thenComparing(SchematicLibraryOverlay.ENTRY_ORDER);
       }
    }
 
-   private enum Inner_ConfigStore {
+   private enum LibraryTab {
       FILES,
       PLACEMENTS,
       CAPTURE,
       FOLDERS;
    }
 
-   private record Inner_DataUtil(String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, boolean enabled, Runnable run) {
+   private record ActionButton(String label, autismclient.gui.f.b.CachePool.Inner_DataUtil tone, boolean enabled, Runnable run) {
    }
 
-   private enum Inner_StreamUtil {
+   private enum LibraryFilter {
       ALL("All files"),
       LOADED("Loaded"),
       UNLOADED("Unloaded"),
@@ -1031,11 +1031,11 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
 
       final String init_Str;
 
-      Inner_StreamUtil(String label) {
+      LibraryFilter(String label) {
          this.init_Str = label;
       }
 
-      boolean init(SchematicLibrary.Inner_DataUtil file, Set<String> loaded) {
+      boolean init(SchematicLibrary.SchematicEntry file, Set<String> loaded) {
          boolean var10000;
          switch (this) {
             case ALL:

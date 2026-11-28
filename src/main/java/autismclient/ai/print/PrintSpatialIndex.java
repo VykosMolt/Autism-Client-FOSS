@@ -19,14 +19,14 @@ final class PrintSpatialIndex {
    private final int[] write;
    private final int[] update;
    private final Int2IntOpenHashMap sparseIndex;
-   private PrintSpatialIndex.Inner_TaskQueue root;
+   private PrintSpatialIndex.Node root;
    private final boolean[] eligible;
-   private final PrintSpatialIndex.Inner_TaskQueue[] leafOf;
+   private final PrintSpatialIndex.Node[] leafOf;
    private long revision;
 
    PrintSpatialIndex(int size, IntFunction<BlockPos> positions) {
       this(size, false);
-      PrintSpatialIndex.Inner_DataUtil build = new PrintSpatialIndex.Inner_DataUtil(this, null, positions, i -> true);
+      PrintSpatialIndex.IndexBuild build = new PrintSpatialIndex.IndexBuild(this, null, positions, i -> true);
 
       while (!build.done) {
          build.init(2147483647);
@@ -35,7 +35,7 @@ final class PrintSpatialIndex {
 
    PrintSpatialIndex(IntArrayList source, IntFunction<BlockPos> positions) {
       this(source.size(), true);
-      PrintSpatialIndex.Inner_DataUtil build = new PrintSpatialIndex.Inner_DataUtil(this, source, positions, i -> true);
+      PrintSpatialIndex.IndexBuild build = new PrintSpatialIndex.IndexBuild(this, source, positions, i -> true);
 
       while (!build.done) {
          build.init(2147483647);
@@ -49,7 +49,7 @@ final class PrintSpatialIndex {
       this.write = new int[size];
       this.update = new int[size];
       this.eligible = new boolean[size];
-      this.leafOf = new PrintSpatialIndex.Inner_TaskQueue[size];
+      this.leafOf = new PrintSpatialIndex.Node[size];
       this.sparseIndex = sparse ? new Int2IntOpenHashMap(size) : null;
       if (this.sparseIndex != null) {
          this.sparseIndex.defaultReturnValue(-1);
@@ -78,7 +78,7 @@ final class PrintSpatialIndex {
             this.eligible[point] = value;
             this.revision++;
 
-            for (PrintSpatialIndex.Inner_TaskQueue node = this.leafOf[point]; node != null; node = node.parent) {
+            for (PrintSpatialIndex.Node node = this.leafOf[point]; node != null; node = node.parent) {
                this.init(node);
             }
          }
@@ -87,7 +87,7 @@ final class PrintSpatialIndex {
       }
    }
 
-   private void init(PrintSpatialIndex.Inner_TaskQueue node) {
+   private void init(PrintSpatialIndex.Node node) {
       node.open = 0;
       node.minX = node.write = node.update = 2147483647;
       node.sync = node.flush = node.close = -2147483648;
@@ -110,7 +110,7 @@ final class PrintSpatialIndex {
       }
    }
 
-   private static void mergeBounds(PrintSpatialIndex.Inner_TaskQueue node, PrintSpatialIndex.Inner_TaskQueue child) {
+   private static void mergeBounds(PrintSpatialIndex.Node node, PrintSpatialIndex.Node child) {
       if (child.open != 0) {
          node.open = node.open + child.open;
          node.minX = Math.min(node.minX, child.minX);
@@ -123,7 +123,7 @@ final class PrintSpatialIndex {
    }
 
    IntArrayList nearest(Vec3 from, int top, int limit, IntPredicate eligible) {
-      PrintSpatialIndex.Inner_ConfigStore search = this.startSearch(from, top, limit, eligible);
+      PrintSpatialIndex.NearestSearch search = this.startSearch(from, top, limit, eligible);
 
       while (!search.done) {
          search.init(2147483647);
@@ -132,17 +132,17 @@ final class PrintSpatialIndex {
       return search.results;
    }
 
-   PrintSpatialIndex.Inner_ConfigStore startSearch(Vec3 from, int top, int limit, IntPredicate eligible) {
-      return new PrintSpatialIndex.Inner_ConfigStore(from, top, limit, eligible);
+   PrintSpatialIndex.NearestSearch startSearch(Vec3 from, int top, int limit, IntPredicate eligible) {
+      return new PrintSpatialIndex.NearestSearch(from, top, limit, eligible);
    }
 
-   double init(int x, int y, int z, PrintSpatialIndex.Inner_StreamUtil cost) {
+   double init(int x, int y, int z, PrintSpatialIndex.CostFunction cost) {
       return this.root != null && this.root.open != 0
          ? this.init(this.root, x, y, z, cost, 1.0 / 0.0)
          : 1.0 / 0.0;
    }
 
-   private double init(PrintSpatialIndex.Inner_TaskQueue node, int x, int y, int z, PrintSpatialIndex.Inner_StreamUtil cost, double best) {
+   private double init(PrintSpatialIndex.Node node, int x, int y, int z, PrintSpatialIndex.CostFunction cost, double best) {
       if (node.open == 0 || init(node, x, y, z, cost) >= best) {
          return best;
       }
@@ -157,8 +157,8 @@ final class PrintSpatialIndex {
 
          return best;
       } else {
-         PrintSpatialIndex.Inner_TaskQueue first = node.left;
-         PrintSpatialIndex.Inner_TaskQueue second = node.right;
+         PrintSpatialIndex.Node first = node.left;
+         PrintSpatialIndex.Node second = node.right;
          if (first.open == 0 || second.open > 0 && init(first, x, y, z, cost) > init(second, x, y, z, cost)) {
             first = node.right;
             second = node.left;
@@ -169,18 +169,18 @@ final class PrintSpatialIndex {
       }
    }
 
-   private static double init(PrintSpatialIndex.Inner_TaskQueue n, int x, int y, int z, PrintSpatialIndex.Inner_StreamUtil cost) {
+   private static double init(PrintSpatialIndex.Node n, int x, int y, int z, PrintSpatialIndex.CostFunction cost) {
       return cost.at(Math.clamp(x, n.minX, n.sync) - x, Math.clamp(y, n.write, n.flush) - y, Math.clamp(z, n.update, n.close) - z);
    }
 
-   private final class Inner_BufferHelper {
+   private final class HeapSortTask {
       final int init;
       final int load;
       int read;
       int write;
       int update = -1;
 
-      Inner_BufferHelper(int start, int end, int axis) {
+      HeapSortTask(int start, int end, int axis) {
          this.init = start;
          this.load = axis;
          this.read = end - start;
@@ -225,27 +225,27 @@ final class PrintSpatialIndex {
       }
    }
 
-   private record Inner_CachePool(double distance, PrintSpatialIndex.Inner_TaskQueue node, int id) {
+   private record FrontierEntry(double distance, PrintSpatialIndex.Node node, int id) {
    }
 
-   final class Inner_ConfigStore {
+   final class NearestSearch {
       final IntArrayList results = new IntArrayList();
       private final Vec3 origin;
       private final int top;
       private final int limit;
       private final IntPredicate eligible;
       private final long revision;
-      private final PriorityQueue<PrintSpatialIndex.Inner_CachePool> frontier;
-      private PrintSpatialIndex.Inner_TaskQueue currentNode;
+      private final PriorityQueue<PrintSpatialIndex.FrontierEntry> frontier;
+      private PrintSpatialIndex.Node currentNode;
       private int read;
       long init_J;
       boolean done;
       boolean exhausted;
 
-      private Inner_ConfigStore(Vec3 from, int top, int limit, IntPredicate eligible) {
+      private NearestSearch(Vec3 from, int top, int limit, IntPredicate eligible) {
          this.revision = PrintSpatialIndex.this.revision;
          this.frontier = new PriorityQueue<>(
-            Comparator.comparingDouble(PrintSpatialIndex.Inner_CachePool::distance).thenComparingInt(e -> e.node != null ? -2147483648 : PrintSpatialIndex.this.load[e.id])
+            Comparator.comparingDouble(PrintSpatialIndex.FrontierEntry::distance).thenComparingInt(e -> e.node != null ? -2147483648 : PrintSpatialIndex.this.load[e.id])
          );
          this.origin = from;
          this.top = top;
@@ -256,7 +256,7 @@ final class PrintSpatialIndex {
             && limit > 0
             && PrintSpatialIndex.this.root.write < top) {
             this.frontier
-               .add(new PrintSpatialIndex.Inner_CachePool(PrintSpatialIndex.this.root.init(from), PrintSpatialIndex.this.root, -1));
+               .add(new PrintSpatialIndex.FrontierEntry(PrintSpatialIndex.this.root.init(from), PrintSpatialIndex.this.root, -1));
          } else {
             this.done = true;
          }
@@ -280,15 +280,15 @@ final class PrintSpatialIndex {
                      double dx = PrintSpatialIndex.this.read[point] + 0.5 - this.origin.x;
                      double dy = PrintSpatialIndex.this.write[point] + 0.5 - this.origin.y;
                      double dz = PrintSpatialIndex.this.update[point] + 0.5 - this.origin.z;
-                     this.frontier.add(new PrintSpatialIndex.Inner_CachePool(dx * dx + dy * dy + dz * dz, null, point));
+                     this.frontier.add(new PrintSpatialIndex.FrontierEntry(dx * dx + dy * dy + dz * dz, null, point));
                   }
 
                   if (this.read == this.currentNode.end) {
                      this.currentNode = null;
                   }
                } else {
-                  PrintSpatialIndex.Inner_CachePool entry = this.frontier.poll();
-                  PrintSpatialIndex.Inner_TaskQueue node = entry.node;
+                  PrintSpatialIndex.FrontierEntry entry = this.frontier.poll();
+                  PrintSpatialIndex.Node node = entry.node;
                   if (node == null) {
                      boolean accepted = this.eligible.test(PrintSpatialIndex.this.load[entry.id]);
                      if (!this.init()) {
@@ -301,12 +301,12 @@ final class PrintSpatialIndex {
                   } else if (node.left != null) {
                      if (node.left.open > 0 && node.left.write < this.top) {
                         this.frontier
-                           .add(new PrintSpatialIndex.Inner_CachePool(node.left.init(this.origin), node.left, -1));
+                           .add(new PrintSpatialIndex.FrontierEntry(node.left.init(this.origin), node.left, -1));
                      }
 
                      if (node.right.open > 0 && node.right.write < this.top) {
                         this.frontier
-                           .add(new PrintSpatialIndex.Inner_CachePool(node.right.init(this.origin), node.right, -1));
+                           .add(new PrintSpatialIndex.FrontierEntry(node.right.init(this.origin), node.right, -1));
                      }
                   } else {
                      this.currentNode = node;
@@ -336,21 +336,21 @@ final class PrintSpatialIndex {
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class IndexBuild {
       final PrintSpatialIndex result;
       private final IntArrayList source;
       private final IntFunction<BlockPos> positions;
       private final IntPredicate initiallyActive;
-      private final ArrayDeque<PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2> stack = new ArrayDeque<>();
+      private final ArrayDeque<PrintSpatialIndex.IndexBuild.BuildFrame> stack = new ArrayDeque<>();
       private int cursor;
       long init_J;
       boolean done;
 
-      Inner_DataUtil(int size, IntFunction<BlockPos> positions, IntPredicate initiallyActive) {
+      IndexBuild(int size, IntFunction<BlockPos> positions, IntPredicate initiallyActive) {
          this(new PrintSpatialIndex(size, false), null, positions, initiallyActive);
       }
 
-      private Inner_DataUtil(PrintSpatialIndex result, IntArrayList source, IntFunction<BlockPos> positions, IntPredicate initiallyActive) {
+      private IndexBuild(PrintSpatialIndex result, IntArrayList source, IntFunction<BlockPos> positions, IntPredicate initiallyActive) {
          this.result = result;
          this.source = source;
          this.positions = positions;
@@ -378,14 +378,14 @@ final class PrintSpatialIndex {
                }
 
                if (this.cursor == this.result.order.length) {
-                  this.result.root = new PrintSpatialIndex.Inner_TaskQueue(0, this.cursor, 0, 0, 0, 0, 0, 0);
-                  this.stack.push(new PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2(this.result.root));
+                  this.result.root = new PrintSpatialIndex.Node(0, this.cursor, 0, 0, 0, 0, 0, 0);
+                  this.stack.push(new PrintSpatialIndex.IndexBuild.BuildFrame(this.result.root));
                }
             } else if (this.stack.isEmpty()) {
                this.done = true;
             } else {
-               PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2 frame = this.stack.peek();
-               PrintSpatialIndex.Inner_TaskQueue node = frame.node;
+               PrintSpatialIndex.IndexBuild.BuildFrame frame = this.stack.peek();
+               PrintSpatialIndex.Node node = frame.node;
                if (frame.load == 0) {
                   if (frame.cursor < node.end) {
                      int point = this.result.order[frame.cursor++];
@@ -406,23 +406,23 @@ final class PrintSpatialIndex {
                      int axis = node.sync - node.minX >= node.flush - node.write && node.sync - node.minX >= node.close - node.update
                         ? 0
                         : (node.flush - node.write >= node.close - node.update ? 1 : 2);
-                     frame.partition = this.result.new Inner_NetHelper(node.start, node.end, node.start + node.end >>> 1, axis);
+                     frame.partition = this.result.new Partition(node.start, node.end, node.start + node.end >>> 1, axis);
                      frame.load = 1;
                   }
                } else if (frame.load == 1) {
                   if (frame.partition.init()) {
                      int middle = node.start + node.end >>> 1;
-                     node.left = new PrintSpatialIndex.Inner_TaskQueue(node.start, middle, 0, 0, 0, 0, 0, 0);
+                     node.left = new PrintSpatialIndex.Node(node.start, middle, 0, 0, 0, 0, 0, 0);
                      node.left.parent = node;
-                     node.right = new PrintSpatialIndex.Inner_TaskQueue(middle, node.end, 0, 0, 0, 0, 0, 0);
+                     node.right = new PrintSpatialIndex.Node(middle, node.end, 0, 0, 0, 0, 0, 0);
                      node.right.parent = node;
                      frame.partition = null;
                      frame.load = 2;
-                     this.stack.push(new PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2(node.left));
+                     this.stack.push(new PrintSpatialIndex.IndexBuild.BuildFrame(node.left));
                   }
                } else if (frame.load == 2) {
                   frame.load = 3;
-                  this.stack.push(new PrintSpatialIndex.Inner_DataUtil.Inner_DataUtil_2(node.right));
+                  this.stack.push(new PrintSpatialIndex.IndexBuild.BuildFrame(node.right));
                } else {
                   this.result.init(node);
                   this.stack.pop();
@@ -433,13 +433,13 @@ final class PrintSpatialIndex {
          return used;
       }
 
-      private static final class Inner_DataUtil_2 {
-         final PrintSpatialIndex.Inner_TaskQueue node;
+      private static final class BuildFrame {
+         final PrintSpatialIndex.Node node;
          int cursor;
          int load;
-         PrintSpatialIndex.Inner_NetHelper partition;
+         PrintSpatialIndex.Partition partition;
 
-         Inner_DataUtil_2(PrintSpatialIndex.Inner_TaskQueue node) {
+         BuildFrame(PrintSpatialIndex.Node node) {
             this.node = node;
             this.cursor = node.start;
             node.minX = node.write = node.update = 2147483647;
@@ -448,7 +448,7 @@ final class PrintSpatialIndex {
       }
    }
 
-   private final class Inner_NetHelper {
+   private final class Partition {
       int start;
       int load;
       int read;
@@ -459,9 +459,9 @@ final class PrintSpatialIndex {
       final int close;
       int open;
       boolean init_Z;
-      PrintSpatialIndex.Inner_BufferHelper init_RefQueue_BufferHel;
+      PrintSpatialIndex.HeapSortTask init_RefQueue_BufferHel;
 
-      Inner_NetHelper(int start, int end, int middle, int axis) {
+      Partition(int start, int end, int middle, int axis) {
          this.start = start;
          this.load = end;
          this.flush = middle;
@@ -480,7 +480,7 @@ final class PrintSpatialIndex {
 
          if (!this.init_Z) {
             if (--this.read < 0) {
-               this.init_RefQueue_BufferHel = PrintSpatialIndex.this.new Inner_BufferHelper(this.start, this.load, this.close);
+               this.init_RefQueue_BufferHel = PrintSpatialIndex.this.new HeapSortTask(this.start, this.load, this.close);
                return false;
             } else {
                int a = PrintSpatialIndex.this.order[this.start];
@@ -523,11 +523,11 @@ final class PrintSpatialIndex {
    }
 
    @FunctionalInterface
-   interface Inner_StreamUtil {
+   interface CostFunction {
       double at(int var1, int var2, int var3);
    }
 
-   private static final class Inner_TaskQueue {
+   private static final class Node {
       final int start;
       final int end;
       int minX;
@@ -537,11 +537,11 @@ final class PrintSpatialIndex {
       int flush;
       int close;
       int open;
-      PrintSpatialIndex.Inner_TaskQueue left;
-      PrintSpatialIndex.Inner_TaskQueue right;
-      PrintSpatialIndex.Inner_TaskQueue parent;
+      PrintSpatialIndex.Node left;
+      PrintSpatialIndex.Node right;
+      PrintSpatialIndex.Node parent;
 
-      Inner_TaskQueue(int start, int end, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+      Node(int start, int end, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
          this.start = start;
          this.end = end;
          this.open = end - start;

@@ -65,8 +65,8 @@ public class PayloadAction implements MacroAction {
                   : (this.sourceProtocol == null ? "" : this.sourceProtocol);
                byte[] rawBytes;
                if (hasStructuredPayload) {
-                  PayloadFieldCodec.Inner_JsonUtil template = PayloadFieldCodec.fromAction(this);
-                  PayloadFieldCodec.Inner_DataUtil built = template.encode();
+                  PayloadFieldCodec.PayloadTemplate template = PayloadFieldCodec.fromAction(this);
+                  PayloadFieldCodec.EncodeResult built = template.encode();
                   if (!built.isValid()) {
                      throw new IllegalArgumentException(String.join("; ", built.errors()));
                   }
@@ -80,7 +80,7 @@ public class PayloadAction implements MacroAction {
                      sendProtocol = template.phase().name();
                   }
                } else if (useJsonModel) {
-                  PayloadJsonCodec.Inner_DataUtil encoded = PayloadJsonCodec.encode(this);
+                  PayloadJsonCodec.EncodedPayload encoded = PayloadJsonCodec.encode(this);
                   if (!MacroTemplateResolver.containsPlaceholder(this.channel)) {
                      targetChannel = encoded.channel();
                   }
@@ -98,10 +98,10 @@ public class PayloadAction implements MacroAction {
                   rawBytes = AutismPayloadSupport.withLeadingBigEndianInt(rawBytes, this.commandApiValue);
                }
 
-               PayloadScriptRunner.Inner_DataUtil context = new PayloadScriptRunner.Inner_DataUtil(
+               PayloadScriptRunner.ScriptContext context = new PayloadScriptRunner.ScriptContext(
                   targetChannel, rawBytes, this.commandApiRecognized && this.commandApiOverride ? this.commandApiValue : null
                );
-               PayloadScriptRunner.Inner_StreamUtil result = PayloadScriptRunner.init(this.payloadScriptEnabled ? this.javaSource : "", context);
+               PayloadScriptRunner.ScriptOutput result = PayloadScriptRunner.init(this.payloadScriptEnabled ? this.javaSource : "", context);
                if (AutismPayloadSupport.sendCustomPayload(result.channel(), result.bytes(), sendProtocol)) {
                   AutismClientMessaging.sendPrefixed("Sent payload: " + result.channel());
                }

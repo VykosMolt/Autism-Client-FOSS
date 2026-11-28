@@ -52,9 +52,9 @@ public class HudElementSettingsScreen extends Screen {
    private final Map<String, autismclient.gui.ui.widgets.DropdownWidget> dropdownsByKey = new HashMap<>();
    private boolean load_Z;
    private int pickerScroll;
-   private HudElementSettingsScreen.Inner_StreamUtil row;
-   private static final Map<String, HudElementSettingsScreen.Inner_DataUtil> rowsCache = new HashMap<>();
-   private List<HudElementSettingsScreen.Inner_StreamUtil> rows;
+   private HudElementSettingsScreen.SettingRow row;
+   private static final Map<String, HudElementSettingsScreen.CachedRows> rowsCache = new HashMap<>();
+   private List<HudElementSettingsScreen.SettingRow> rows;
    private int labelWidthScaleKey = -1;
    private int cachedLabelColumnWidth;
 
@@ -100,7 +100,7 @@ public class HudElementSettingsScreen extends Screen {
          int bodyTop = this.bodyTop(panel);
          int bodyBottom = this.bodyBottom(panel);
          int viewH = this.viewHeight(panel);
-         List<HudElementSettingsScreen.Inner_StreamUtil> rows = this.settingRows();
+         List<HudElementSettingsScreen.SettingRow> rows = this.settingRows();
          int contentH = this.rowsHeight(rows);
          this.scrollOffset = this.clamp(this.scrollOffset, 0, Math.max(0, contentH - viewH));
          boolean menuOpen = autismclient.gui.ui.widgets.DropdownWidget.hasOpenMenu(this.dropdowns);
@@ -149,12 +149,12 @@ public class HudElementSettingsScreen extends Screen {
       }
    }
 
-   private void drawRows(GuiGraphicsExtractor graphics, List<HudElementSettingsScreen.Inner_StreamUtil> rows, int x, int y, int w, int mx, int my, int clipTop, int clipBottom) {
+   private void drawRows(GuiGraphicsExtractor graphics, List<HudElementSettingsScreen.SettingRow> rows, int x, int y, int w, int mx, int my, int clipTop, int clipBottom) {
       int cy = y;
       int rowStep = this.rowStep();
       int sectionStep = this.sectionStep();
 
-      for (HudElementSettingsScreen.Inner_StreamUtil row : rows) {
+      for (HudElementSettingsScreen.SettingRow row : rows) {
          if (row.isSectionRow()) {
             if (this.isRowVisible(cy, sectionStep, clipTop, clipBottom)) {
                this.drawSectionHeader(graphics, row.label, x, cy, w);
@@ -180,7 +180,7 @@ public class HudElementSettingsScreen extends Screen {
       this.drawTrimmedText(graphics, label, x + 4, this.centeredTextY(boxY, boxH), labelTextColor(), w - 8);
    }
 
-   private void drawRow(GuiGraphicsExtractor graphics, HudElementSettingsScreen.Inner_StreamUtil row, int x, int y, int w, int mx, int my) {
+   private void drawRow(GuiGraphicsExtractor graphics, HudElementSettingsScreen.SettingRow row, int x, int y, int w, int mx, int my) {
       int rowH = this.rowHeight();
       int ctrlH = this.inputHeight();
       int ctrlY = y + (rowH - ctrlH) / 2;
@@ -191,12 +191,12 @@ public class HudElementSettingsScreen extends Screen {
       this.drawTrimmedText(graphics, row.label, x + 4, textY, -791321, labelColW - 8);
       int valueX = x + labelColW;
       int valueW = this.valueWidth(w);
-      if (row.type == HudElementSettingsScreen.Inner_CachePool.BOOL) {
+      if (row.type == HudElementSettingsScreen.RowType.BOOL) {
          boolean on = this.isSettingEnabled(row.key);
          this.drawToggle(graphics, on, x + w - 4 - 20, y, rowH, "hud-elem-settings:" + this.id + ":" + row.key);
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.ENUM) {
+      } else if (row.type == HudElementSettingsScreen.RowType.ENUM) {
          this.init(row, valueX, ctrlY, valueW, ctrlH);
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.COLOR) {
+      } else if (row.type == HudElementSettingsScreen.RowType.COLOR) {
          int pickW = this.textButtonWidth("Pick");
          int color = AutismHudManager.parseColor(AutismHudManager.setting(this.id, row.key), this.defaultColor(row.key));
          int swatchX = valueX;
@@ -207,11 +207,11 @@ public class HudElementSettingsScreen extends Screen {
          int hexX = swatchX + swatchW + 4;
          this.drawTrimmedText(graphics, "#" + String.format(Locale.ROOT, "%06X", color & 16777215), hexX, textY, -791321, Math.max(1, valueX + valueW - pickW - 4 - hexX));
          this.drawButton(graphics, "Pick", valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY);
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.MODULE_LIST) {
+      } else if (row.type == HudElementSettingsScreen.RowType.MODULE_LIST) {
          String editLabel = "Edit (" + this.hiddenModuleIds().size() + ")";
          int editW = this.textButtonWidth(editLabel);
          this.drawButton(graphics, editLabel, valueX + valueW - editW, ctrlY, editW, ctrlH, mx, my, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY);
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.NUMBER) {
+      } else if (row.type == HudElementSettingsScreen.RowType.NUMBER) {
          double value = AutismHudManager.doubleSetting(this.id, row.key, row.min);
          this.drawSlider(
             graphics,
@@ -225,13 +225,13 @@ public class HudElementSettingsScreen extends Screen {
             mx,
             my
          );
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.ITEM) {
+      } else if (row.type == HudElementSettingsScreen.RowType.ITEM) {
          int pickW = this.textButtonWidth("Pick");
          String raw = AutismHudManager.setting(this.id, row.key);
          String itemName = raw != null && !raw.isBlank() ? RegistryDisplayNameCache.init(raw.contains(":") ? raw : "minecraft:" + raw) : "None";
          this.drawTrimmedText(graphics, itemName, valueX, textY, -791321, Math.max(1, valueW - pickW - 4));
          this.drawButton(graphics, "Pick", valueX + valueW - pickW, ctrlY, pickW, ctrlH, mx, my, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY);
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.PICK) {
+      } else if (row.type == HudElementSettingsScreen.RowType.PICK) {
          String buttonLabel = row.choices.isEmpty() ? "Pick…" : row.choices.get(0);
          int pickW = this.textButtonWidth(buttonLabel);
          this.drawTrimmedText(graphics, fileNameOf(AutismHudManager.setting(this.id, row.key)), valueX, textY, -791321, Math.max(1, valueW - pickW - 4));
@@ -239,7 +239,7 @@ public class HudElementSettingsScreen extends Screen {
       }
    }
 
-   private void init(HudElementSettingsScreen.Inner_StreamUtil row, int x, int y, int w, int h) {
+   private void init(HudElementSettingsScreen.SettingRow row, int x, int y, int w, int h) {
       List<String> choices = row.choices;
       String current = AutismHudManager.setting(this.id, row.key);
       int selected = Math.max(0, choices.indexOf(current));
@@ -260,7 +260,7 @@ public class HudElementSettingsScreen extends Screen {
       this.dropdowns.add(dropdown);
    }
 
-   private void drawSlider(GuiGraphicsExtractor graphics, HudElementSettingsScreen.Inner_StreamUtil row, int x, int y, int w, int h, double value, boolean editing, int mx, int my) {
+   private void drawSlider(GuiGraphicsExtractor graphics, HudElementSettingsScreen.SettingRow row, int x, int y, int w, int h, double value, boolean editing, int mx, int my) {
       int fieldW = 40;
       int sliderW = this.sliderWidth(w);
       int fieldX = x + sliderW + 4;
@@ -454,9 +454,9 @@ public class HudElementSettingsScreen extends Screen {
          if (my >= bodyTop && my < bodyBottom) {
             int rowsX = this.rowsX(panel);
             int rowsW = this.rowsWidth(panel);
-            HudElementSettingsScreen.Inner_StreamUtil row = this.rowAt(mx, my, rowsX, bodyTop - this.scrollOffset, rowsW, bodyTop, bodyBottom);
+            HudElementSettingsScreen.SettingRow row = this.rowAt(mx, my, rowsX, bodyTop - this.scrollOffset, rowsW, bodyTop, bodyBottom);
             if (row != null && !row.isSectionRow()) {
-               if (row.type != HudElementSettingsScreen.Inner_CachePool.ENUM) {
+               if (row.type != HudElementSettingsScreen.RowType.ENUM) {
                   this.handleRowClick(row, Compat263.mouseEventGlfwButton(event), mx, my, rowsX + this.labelColumnWidth(), this.valueWidth(rowsW));
                }
 
@@ -619,19 +619,19 @@ public class HudElementSettingsScreen extends Screen {
       }
    }
 
-   private void handleRowClick(HudElementSettingsScreen.Inner_StreamUtil row, int button, int mx, int my, int valueX, int valueW) {
+   private void handleRowClick(HudElementSettingsScreen.SettingRow row, int button, int mx, int my, int valueX, int valueW) {
       int dir = button == 1 ? -1 : 1;
-      if (row.type == HudElementSettingsScreen.Inner_CachePool.BOOL) {
+      if (row.type == HudElementSettingsScreen.RowType.BOOL) {
          AutismHudManager.setSetting(this.id, row.key, Boolean.toString(!this.isSettingEnabled(row.key)));
          this.cancelTextEdit();
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.COLOR) {
+      } else if (row.type == HudElementSettingsScreen.RowType.COLOR) {
          this.openColorPickerFor(row.key, autismclient.gui.f.NetHelper.init(valueX, Math.max(0, my - this.rowHeight() / 2), valueW, this.rowHeight()));
          this.cancelTextEdit();
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.MODULE_LIST) {
+      } else if (row.type == HudElementSettingsScreen.RowType.MODULE_LIST) {
          this.load_Z = true;
          this.pickerScroll = 0;
          this.cancelTextEdit();
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.NUMBER) {
+      } else if (row.type == HudElementSettingsScreen.RowType.NUMBER) {
          int fieldX = valueX + this.sliderWidth(valueW) + 4;
          if (mx >= fieldX && mx < fieldX + 40) {
             this.beginTextEdit(row.key, AutismHudManager.setting(this.id, row.key));
@@ -642,12 +642,12 @@ public class HudElementSettingsScreen extends Screen {
          this.setSliderValue(row, value);
          this.row = row;
          this.cancelTextEdit();
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.ITEM) {
+      } else if (row.type == HudElementSettingsScreen.RowType.ITEM) {
          this.cancelTextEdit();
          this.minecraft
             .gui
             .setScreen(new PickItemScreen(this, AutismHudManager.setting(this.id, row.key), valuex -> AutismHudManager.setSetting(this.id, row.key, valuex)));
-      } else if (row.type == HudElementSettingsScreen.Inner_CachePool.PICK) {
+      } else if (row.type == HudElementSettingsScreen.RowType.PICK) {
          this.cancelTextEdit();
          String elementId = this.id;
          String settingId = row.key;
@@ -686,18 +686,18 @@ public class HudElementSettingsScreen extends Screen {
       return AutismHudManager.parseColor(AutismHudManager.defaultSetting(this.id, key), -1);
    }
 
-   private void setSliderValue(HudElementSettingsScreen.Inner_StreamUtil row, double value) {
+   private void setSliderValue(HudElementSettingsScreen.SettingRow row, double value) {
       double clamped = Math.max(row.min, Math.min(row.max, value));
       AutismHudManager.setSetting(this.id, row.key, this.formatSliderValue(clamped, row.read));
    }
 
    private void commitTextEdit() {
-      HudElementSettingsScreen.Inner_StreamUtil row = this.rowForKey(this.load_Str);
+      HudElementSettingsScreen.SettingRow row = this.rowForKey(this.load_Str);
       if (row == null) {
          this.cancelTextEdit();
       } else {
          String editingText = this.textInput == null ? "" : this.textInput.getValue();
-         if (row.type == HudElementSettingsScreen.Inner_CachePool.NUMBER) {
+         if (row.type == HudElementSettingsScreen.RowType.NUMBER) {
             try {
                this.setSliderValue(row, Double.parseDouble(editingText.trim()));
             } catch (NumberFormatException var4) {
@@ -716,11 +716,11 @@ public class HudElementSettingsScreen extends Screen {
       }
    }
 
-   private HudElementSettingsScreen.Inner_StreamUtil rowAt(int mx, int my, int x, int y, int w, int clipTop, int clipBottom) {
+   private HudElementSettingsScreen.SettingRow rowAt(int mx, int my, int x, int y, int w, int clipTop, int clipBottom) {
       int cy = y;
       int rowH = this.rowHeight();
 
-      for (HudElementSettingsScreen.Inner_StreamUtil row : this.settingRows()) {
+      for (HudElementSettingsScreen.SettingRow row : this.settingRows()) {
          int h = row.isSectionRow() ? this.sectionStep() : this.rowStep();
          if (!row.isSectionRow() && my >= clipTop && my < clipBottom && this.inside(mx, my, x, cy, w, rowH)) {
             return row;
@@ -732,12 +732,12 @@ public class HudElementSettingsScreen extends Screen {
       return null;
    }
 
-   private HudElementSettingsScreen.Inner_StreamUtil rowForKey(String key) {
+   private HudElementSettingsScreen.SettingRow rowForKey(String key) {
       if (key == null) {
          return null;
       }
 
-      for (HudElementSettingsScreen.Inner_StreamUtil row : this.settingRows()) {
+      for (HudElementSettingsScreen.SettingRow row : this.settingRows()) {
          if (key.equals(row.key)) {
             return row;
          }
@@ -746,17 +746,17 @@ public class HudElementSettingsScreen extends Screen {
       return null;
    }
 
-   private List<HudElementSettingsScreen.Inner_StreamUtil> settingRows() {
+   private List<HudElementSettingsScreen.SettingRow> settingRows() {
       long rev = settingsRevision();
-      HudElementSettingsScreen.Inner_DataUtil cached = rowsCache.get(this.id);
+      HudElementSettingsScreen.CachedRows cached = rowsCache.get(this.id);
       if (cached != null && cached.rev == rev) {
          return cached.rows;
       }
 
-      List<HudElementSettingsScreen.Inner_StreamUtil> rows = new ArrayList<>();
+      List<HudElementSettingsScreen.SettingRow> rows = new ArrayList<>();
       if ("bed_danger".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Drag Bed Danger in the HUD Editor to position it."));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Distance and size: Danger > Bed Danger."));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Drag Bed Danger in the HUD Editor to position it."));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Distance and size: Danger > Bed Danger."));
          return List.copyOf(rows);
       }
 
@@ -768,9 +768,9 @@ public class HudElementSettingsScreen extends Screen {
       boolean background = AutismHudManager.boolSetting(this.id, "background");
       boolean outline = AutismHudManager.boolSetting(this.id, "outline");
       if (("tps".equals(this.id) || "ping".equals(this.id)) && AutismHudManager.getState("fps").enabled) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Shown in the FPS element while it is on"));
-         List<HudElementSettingsScreen.Inner_StreamUtil> merged = List.copyOf(rows);
-         rowsCache.put(this.id, new HudElementSettingsScreen.Inner_DataUtil(rev, merged));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Shown in the FPS element while it is on"));
+         List<HudElementSettingsScreen.SettingRow> merged = List.copyOf(rows);
+         rowsCache.put(this.id, new HudElementSettingsScreen.CachedRows(rev, merged));
          return merged;
       }
 
@@ -790,223 +790,223 @@ public class HudElementSettingsScreen extends Screen {
       }
 
       boolean customColors = isArrayList || AutismHudManager.boolSetting(this.id, "use-custom-colors");
-      rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Visibility"));
+      rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Visibility"));
       if (!this.init_Z() && !"breaking_progress".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.enumRow("alignment", "Alignment", "Left", "Center", "Right"));
+         rows.add(HudElementSettingsScreen.SettingRow.enumRow("alignment", "Alignment", "Left", "Center", "Right"));
       }
 
       if (customMatters) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("use-custom-colors", "Custom Colors"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("use-custom-colors", "Custom Colors"));
       }
 
       if ("watermark".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Logo"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("logo-width", "Width", HudElementSettingsScreen.Inner_CachePool.NUMBER, 48.0, 420.0, 1.0));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Logo"));
+         rows.add(HudElementSettingsScreen.SettingRow.sliderRow("logo-width", "Width", HudElementSettingsScreen.RowType.NUMBER, 48.0, 420.0, 1.0));
       } else if ("gif".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("GIF"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.buttonRow("gif-path", "Image", "Pick…"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("gif-width", "Width", HudElementSettingsScreen.Inner_CachePool.NUMBER, 16.0, 512.0, 1.0));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("gif-height", "Height", HudElementSettingsScreen.Inner_CachePool.NUMBER, 16.0, 512.0, 1.0));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("GIF"));
+         rows.add(HudElementSettingsScreen.SettingRow.buttonRow("gif-path", "Image", "Pick…"));
+         rows.add(HudElementSettingsScreen.SettingRow.sliderRow("gif-width", "Width", HudElementSettingsScreen.RowType.NUMBER, 16.0, 512.0, 1.0));
+         rows.add(HudElementSettingsScreen.SettingRow.sliderRow("gif-height", "Height", HudElementSettingsScreen.RowType.NUMBER, 16.0, 512.0, 1.0));
          if (!AutismHudManager.setting(this.id, "gif-path").isBlank()) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("gif-fps", "Framerate (FPS)", HudElementSettingsScreen.Inner_CachePool.NUMBER, 0.0, 60.0, 1.0));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.enumRow("gif-quality", "Quality", "Low", "Medium", "High", "Original"));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("gif-natural", "Match File Aspect"));
+            rows.add(HudElementSettingsScreen.SettingRow.sliderRow("gif-fps", "Framerate (FPS)", HudElementSettingsScreen.RowType.NUMBER, 0.0, 60.0, 1.0));
+            rows.add(HudElementSettingsScreen.SettingRow.enumRow("gif-quality", "Quality", "Low", "Medium", "High", "Original"));
+            rows.add(HudElementSettingsScreen.SettingRow.boolRow("gif-natural", "Match File Aspect"));
          }
 
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("gif-keep-aspect", "Lock Ratio When Resizing"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("gif-keep-aspect", "Lock Ratio When Resizing"));
       } else if (customColors && customMatters) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Text"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Text"));
          if (isCompass) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("label-color", "Letter Color"));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("accent-color", "Facing Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("label-color", "Letter Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("accent-color", "Facing Color"));
          } else if (isAddon) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("label-color", "Label Color"));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("value-color", "Value Color"));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("accent-color", "Accent Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("label-color", "Label Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("value-color", "Value Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("accent-color", "Accent Color"));
          } else if ("fps_graph".equals(this.id)) {
             if (AutismHudManager.boolSetting(this.id, "show-current-fps")) {
-               rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("value-color", "Value Color"));
+               rows.add(HudElementSettingsScreen.SettingRow.color("value-color", "Value Color"));
             }
          } else if (!isKeystrokes && !isSlots) {
             boolean labelShown = !"item_counter".equals(this.id) || AutismHudManager.boolSetting(this.id, "item-show-name");
             boolean valueOverridden = "tps".equals(this.id) && AutismHudManager.boolSetting(this.id, "tps-color-threshold")
                || "ping".equals(this.id) && AutismHudManager.boolSetting(this.id, "ping-color-threshold");
             if (labelShown) {
-               rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("label-color", "Label Color"));
+               rows.add(HudElementSettingsScreen.SettingRow.color("label-color", "Label Color"));
             }
 
             if (!valueOverridden) {
-               rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("value-color", "Value Color"));
+               rows.add(HudElementSettingsScreen.SettingRow.color("value-color", "Value Color"));
             }
          }
       }
 
-      rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Background"));
-      rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("background", "Background"));
+      rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Background"));
+      rows.add(HudElementSettingsScreen.SettingRow.boolRow("background", "Background"));
       if (customColors && background) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("background-color", "Background Color"));
+         rows.add(HudElementSettingsScreen.SettingRow.color("background-color", "Background Color"));
       }
 
-      rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Outline"));
-      rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("outline", "Outline"));
+      rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Outline"));
+      rows.add(HudElementSettingsScreen.SettingRow.boolRow("outline", "Outline"));
       if (outline) {
          if (customColors) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("outline-color", "Outline Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("outline-color", "Outline Color"));
          }
 
          boolean flatSlots = isSlots && "Flat".equals(AutismHudManager.setting(this.id, "slot-style"));
          if (!flatSlots) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("outline-width", "Outline Width", HudElementSettingsScreen.Inner_CachePool.NUMBER, 1.0, 6.0, 1.0));
+            rows.add(HudElementSettingsScreen.SettingRow.sliderRow("outline-width", "Outline Width", HudElementSettingsScreen.RowType.NUMBER, 1.0, 6.0, 1.0));
          }
       }
 
       if (isSlots) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Slots"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.enumRow("slot-style", "Slot Style", "Textured", "Flat"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Slots"));
+         rows.add(HudElementSettingsScreen.SettingRow.enumRow("slot-style", "Slot Style", "Textured", "Flat"));
       }
 
       if (isArrayList) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Active Modules"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("module-info", "Module Info"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-keybind", "Show Keybind"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.enumRow("sort", "Sort", "Width", "Name", "Category"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.enumRow("color-mode", "Color Mode", "Flat", "Random", "Rainbow", "Gradient"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Active Modules"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("module-info", "Module Info"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-keybind", "Show Keybind"));
+         rows.add(HudElementSettingsScreen.SettingRow.enumRow("sort", "Sort", "Width", "Name", "Category"));
+         rows.add(HudElementSettingsScreen.SettingRow.enumRow("color-mode", "Color Mode", "Flat", "Random", "Rainbow", "Gradient"));
          String mode = AutismHudManager.setting(this.id, "color-mode");
          if ("Flat".equals(mode)) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("flat-color", "Flat Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("flat-color", "Flat Color"));
          }
 
          if ("Gradient".equals(mode)) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("gradient-start-color", "Gradient Start"));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("gradient-end-color", "Gradient End"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("gradient-start-color", "Gradient Start"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("gradient-end-color", "Gradient End"));
          }
 
          if ("Rainbow".equals(mode)) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("value-color", "Rainbow Tint"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("value-color", "Rainbow Tint"));
          }
 
          if (AutismHudManager.boolSetting(this.id, "module-info") || AutismHudManager.boolSetting(this.id, "show-keybind")) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("module-info-color", "Info Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("module-info-color", "Info Color"));
          }
 
          if ("Rainbow".equals(mode) || "Gradient".equals(mode)) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("rainbow-speed", "Animation Speed", HudElementSettingsScreen.Inner_CachePool.NUMBER, 0.1, 2.0, 0.05));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("rainbow-spread", "Row Spread", HudElementSettingsScreen.Inner_CachePool.NUMBER, 0.001, 0.12, 0.001));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.enumRow("rainbow-direction", "Direction", "Forward", "Reverse"));
+            rows.add(HudElementSettingsScreen.SettingRow.sliderRow("rainbow-speed", "Animation Speed", HudElementSettingsScreen.RowType.NUMBER, 0.1, 2.0, 0.05));
+            rows.add(HudElementSettingsScreen.SettingRow.sliderRow("rainbow-spread", "Row Spread", HudElementSettingsScreen.RowType.NUMBER, 0.001, 0.12, 0.001));
+            rows.add(HudElementSettingsScreen.SettingRow.enumRow("rainbow-direction", "Direction", "Forward", "Reverse"));
          }
 
          if ("Rainbow".equals(mode)) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("rainbow-saturation", "Saturation", HudElementSettingsScreen.Inner_CachePool.NUMBER, 0.0, 0.35, 0.05));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("rainbow-brightness", "Brightness", HudElementSettingsScreen.Inner_CachePool.NUMBER, 0.0, 1.0, 0.05));
+            rows.add(HudElementSettingsScreen.SettingRow.sliderRow("rainbow-saturation", "Saturation", HudElementSettingsScreen.RowType.NUMBER, 0.0, 0.35, 0.05));
+            rows.add(HudElementSettingsScreen.SettingRow.sliderRow("rainbow-brightness", "Brightness", HudElementSettingsScreen.RowType.NUMBER, 0.0, 1.0, 0.05));
          }
 
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("stair-snap", "Stair Snap", HudElementSettingsScreen.Inner_CachePool.NUMBER, 0.0, 24.0, 1.0));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.moduleList("hidden-modules", "Hidden Modules"));
+         rows.add(HudElementSettingsScreen.SettingRow.sliderRow("stair-snap", "Stair Snap", HudElementSettingsScreen.RowType.NUMBER, 0.0, 24.0, 1.0));
+         rows.add(HudElementSettingsScreen.SettingRow.moduleList("hidden-modules", "Hidden Modules"));
       }
 
       if ("tps".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("TPS"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("tps-precise", "Precise"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("tps-color-threshold", "Color Thresholds"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("tps-show-jitter", "Show Min"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("TPS"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("tps-precise", "Precise"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("tps-color-threshold", "Color Thresholds"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("tps-show-jitter", "Show Min"));
       }
 
       if ("ping".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Ping"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("ping-color-threshold", "Color Thresholds"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("ping-show-jitter", "Show Jitter"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Ping"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("ping-color-threshold", "Color Thresholds"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("ping-show-jitter", "Show Jitter"));
       }
 
       if ("cps".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("CPS"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-total", "Show Total"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("CPS"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-total", "Show Total"));
       }
 
       if ("durability".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Durability"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-item-name", "Show Item Name"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("low-durability-warn", "Low Durability Warning"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Durability"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-item-name", "Show Item Name"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("low-durability-warn", "Low Durability Warning"));
       }
 
       if ("looking_at".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Looking At"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-distance", "Show Distance"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-block-id", "Show Block ID"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Looking At"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-distance", "Show Distance"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-block-id", "Show Block ID"));
       }
 
       if ("breaking_progress".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Breaking Progress"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-block-name", "Show Block Name"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Breaking Progress"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-block-name", "Show Block Name"));
       }
 
       if ("weather".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Weather"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-temperature", "Show Temperature"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Weather"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-temperature", "Show Temperature"));
       }
 
       if ("world_time".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("World Time"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.enumRow("world-time-format", "Format", "24h", "ticks"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-day", "Show Day"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("World Time"));
+         rows.add(HudElementSettingsScreen.SettingRow.enumRow("world-time-format", "Format", "24h", "ticks"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-day", "Show Day"));
       }
 
       if ("real_time".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Real Time"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.enumRow("real-time-format", "Format", "12h", "24h"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-date", "Show Date"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Real Time"));
+         rows.add(HudElementSettingsScreen.SettingRow.enumRow("real-time-format", "Format", "12h", "24h"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-date", "Show Date"));
       }
 
       if ("memory".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Memory"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.enumRow("memory-format", "Format", "used/max", "used%"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-bar", "Show Bar"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Memory"));
+         rows.add(HudElementSettingsScreen.SettingRow.enumRow("memory-format", "Format", "used/max", "used%"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-bar", "Show Bar"));
          if ("used/max".equals(AutismHudManager.setting(this.id, "memory-format"))) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-percent", "Show Percentage"));
+            rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-percent", "Show Percentage"));
          }
       }
 
       if ("server_ip".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Server IP"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-port", "Show Port"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Server IP"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-port", "Show Port"));
       }
 
       if ("fps_graph".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("FPS Graph"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("graph-samples", "Samples", HudElementSettingsScreen.Inner_CachePool.NUMBER, 50.0, 200.0, 10.0));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("show-current-fps", "Show Current FPS"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("FPS Graph"));
+         rows.add(HudElementSettingsScreen.SettingRow.sliderRow("graph-samples", "Samples", HudElementSettingsScreen.RowType.NUMBER, 50.0, 200.0, 10.0));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("show-current-fps", "Show Current FPS"));
       }
 
       if ("item_counter".equals(this.id)) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Item Counter"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("item-count-held", "Count Held Item"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("item-show-name", "Show Item Name"));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Item Counter"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("item-count-held", "Count Held Item"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("item-show-name", "Show Item Name"));
          if (!AutismHudManager.boolSetting(this.id, "item-count-held")) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.item("item-id", "Item"));
+            rows.add(HudElementSettingsScreen.SettingRow.item("item-id", "Item"));
          }
       }
 
       if (isKeystrokes) {
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sectionRow("Keystrokes"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.sliderRow("keystroke-size", "Key Size", HudElementSettingsScreen.Inner_CachePool.NUMBER, 12.0, 40.0, 1.0));
+         rows.add(HudElementSettingsScreen.SettingRow.sectionRow("Keystrokes"));
+         rows.add(HudElementSettingsScreen.SettingRow.sliderRow("keystroke-size", "Key Size", HudElementSettingsScreen.RowType.NUMBER, 12.0, 40.0, 1.0));
          if (customColors) {
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("keystroke-active-color", "Fill Color"));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("keystroke-idle-color", "Key Color"));
-            rows.add(HudElementSettingsScreen.Inner_StreamUtil.color("keystroke-text-color", "Text Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("keystroke-active-color", "Fill Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("keystroke-idle-color", "Key Color"));
+            rows.add(HudElementSettingsScreen.SettingRow.color("keystroke-text-color", "Text Color"));
          }
 
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("keystroke-show-space", "Show Space"));
-         rows.add(HudElementSettingsScreen.Inner_StreamUtil.boolRow("keystroke-show-mouse", "Show Mouse"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("keystroke-show-space", "Show Space"));
+         rows.add(HudElementSettingsScreen.SettingRow.boolRow("keystroke-show-mouse", "Show Mouse"));
       }
 
       for (int i = rows.size() - 1; i >= 0; i--) {
-         if (rows.get(i).type == HudElementSettingsScreen.Inner_CachePool.SECTION
-            && (i == rows.size() - 1 || rows.get(i + 1).type == HudElementSettingsScreen.Inner_CachePool.SECTION)) {
+         if (rows.get(i).type == HudElementSettingsScreen.RowType.SECTION
+            && (i == rows.size() - 1 || rows.get(i + 1).type == HudElementSettingsScreen.RowType.SECTION)) {
             rows.remove(i);
          }
       }
 
-      List<HudElementSettingsScreen.Inner_StreamUtil> frozen = List.copyOf(rows);
-      rowsCache.put(this.id, new HudElementSettingsScreen.Inner_DataUtil(rev, frozen));
+      List<HudElementSettingsScreen.SettingRow> frozen = List.copyOf(rows);
+      rowsCache.put(this.id, new HudElementSettingsScreen.CachedRows(rev, frozen));
       return frozen;
    }
 
@@ -1121,12 +1121,12 @@ public class HudElementSettingsScreen extends Screen {
       return this.headerHeight() + 4 + body + this.footerHeight();
    }
 
-   private int rowsHeight(List<HudElementSettingsScreen.Inner_StreamUtil> rows) {
+   private int rowsHeight(List<HudElementSettingsScreen.SettingRow> rows) {
       int h = 0;
       int rowStep = this.rowStep();
       int sectionStep = this.sectionStep();
 
-      for (HudElementSettingsScreen.Inner_StreamUtil row : rows) {
+      for (HudElementSettingsScreen.SettingRow row : rows) {
          h += row.isSectionRow() ? sectionStep : rowStep;
       }
 
@@ -1200,12 +1200,12 @@ public class HudElementSettingsScreen extends Screen {
    }
 
    private int labelColumnWidth() {
-      List<HudElementSettingsScreen.Inner_StreamUtil> rows = this.settingRows();
+      List<HudElementSettingsScreen.SettingRow> rows = this.settingRows();
       int scaleKey = Math.round(autismclient.gui.sdf.MsdfTextRenderer.fontScale() * 100.0F);
       if (rows != this.rows || scaleKey != this.labelWidthScaleKey) {
          int widest = 0;
 
-         for (HudElementSettingsScreen.Inner_StreamUtil row : rows) {
+         for (HudElementSettingsScreen.SettingRow row : rows) {
             if (!row.isSectionRow()) {
                widest = Math.max(widest, autismclient.gui.f.b.k.init(this.font, row.label, THEME.init_Identifier_l(l.read), 0));
             }
@@ -1239,7 +1239,7 @@ public class HudElementSettingsScreen extends Screen {
       return step >= 1.0 ? Integer.toString((int)Math.round(value)) : String.format(Locale.ROOT, step < 0.01 ? "%.3f" : "%.2f", value);
    }
 
-   private String sliderValueText(HudElementSettingsScreen.Inner_StreamUtil row, double value) {
+   private String sliderValueText(HudElementSettingsScreen.SettingRow row, double value) {
       return "gif-fps".equals(row.key) && value <= 0.0 ? "Original" : this.formatSliderValue(value, row.read);
    }
 
@@ -1272,7 +1272,7 @@ public class HudElementSettingsScreen extends Screen {
       );
    }
 
-   private enum Inner_CachePool {
+   private enum RowType {
       BOOL,
       ENUM,
       COLOR,
@@ -1283,46 +1283,46 @@ public class HudElementSettingsScreen extends Screen {
       SECTION;
    }
 
-   private record Inner_DataUtil(long rev, List<HudElementSettingsScreen.Inner_StreamUtil> rows) {
+   private record CachedRows(long rev, List<HudElementSettingsScreen.SettingRow> rows) {
    }
 
-   private record Inner_StreamUtil(
-      String key, String label, HudElementSettingsScreen.Inner_CachePool type, double min, double max, double read, List<String> choices
+   private record SettingRow(
+      String key, String label, HudElementSettingsScreen.RowType type, double min, double max, double read, List<String> choices
    ) {
-      static HudElementSettingsScreen.Inner_StreamUtil sectionRow(String label) {
-         return new HudElementSettingsScreen.Inner_StreamUtil("", label, HudElementSettingsScreen.Inner_CachePool.SECTION, 0.0, 0.0, 1.0, List.of());
+      static HudElementSettingsScreen.SettingRow sectionRow(String label) {
+         return new HudElementSettingsScreen.SettingRow("", label, HudElementSettingsScreen.RowType.SECTION, 0.0, 0.0, 1.0, List.of());
       }
 
-      static HudElementSettingsScreen.Inner_StreamUtil boolRow(String key, String label) {
-         return new HudElementSettingsScreen.Inner_StreamUtil(key, label, HudElementSettingsScreen.Inner_CachePool.BOOL, 0.0, 1.0, 1.0, List.of());
+      static HudElementSettingsScreen.SettingRow boolRow(String key, String label) {
+         return new HudElementSettingsScreen.SettingRow(key, label, HudElementSettingsScreen.RowType.BOOL, 0.0, 1.0, 1.0, List.of());
       }
 
-      static HudElementSettingsScreen.Inner_StreamUtil enumRow(String key, String label, String... choices) {
-         return new HudElementSettingsScreen.Inner_StreamUtil(key, label, HudElementSettingsScreen.Inner_CachePool.ENUM, 0.0, 1.0, 1.0, List.of(choices));
+      static HudElementSettingsScreen.SettingRow enumRow(String key, String label, String... choices) {
+         return new HudElementSettingsScreen.SettingRow(key, label, HudElementSettingsScreen.RowType.ENUM, 0.0, 1.0, 1.0, List.of(choices));
       }
 
-      static HudElementSettingsScreen.Inner_StreamUtil color(String key, String label) {
-         return new HudElementSettingsScreen.Inner_StreamUtil(key, label, HudElementSettingsScreen.Inner_CachePool.COLOR, 0.0, 1.0, 1.0, List.of());
+      static HudElementSettingsScreen.SettingRow color(String key, String label) {
+         return new HudElementSettingsScreen.SettingRow(key, label, HudElementSettingsScreen.RowType.COLOR, 0.0, 1.0, 1.0, List.of());
       }
 
-      static HudElementSettingsScreen.Inner_StreamUtil sliderRow(String key, String label, HudElementSettingsScreen.Inner_CachePool type, double min, double max, double step) {
-         return new HudElementSettingsScreen.Inner_StreamUtil(key, label, type, min, max, step, List.of());
+      static HudElementSettingsScreen.SettingRow sliderRow(String key, String label, HudElementSettingsScreen.RowType type, double min, double max, double step) {
+         return new HudElementSettingsScreen.SettingRow(key, label, type, min, max, step, List.of());
       }
 
-      static HudElementSettingsScreen.Inner_StreamUtil item(String key, String label) {
-         return new HudElementSettingsScreen.Inner_StreamUtil(key, label, HudElementSettingsScreen.Inner_CachePool.ITEM, 0.0, 1.0, 1.0, List.of());
+      static HudElementSettingsScreen.SettingRow item(String key, String label) {
+         return new HudElementSettingsScreen.SettingRow(key, label, HudElementSettingsScreen.RowType.ITEM, 0.0, 1.0, 1.0, List.of());
       }
 
-      static HudElementSettingsScreen.Inner_StreamUtil buttonRow(String key, String label, String buttonLabel) {
-         return new HudElementSettingsScreen.Inner_StreamUtil(key, label, HudElementSettingsScreen.Inner_CachePool.PICK, 0.0, 1.0, 1.0, List.of(buttonLabel));
+      static HudElementSettingsScreen.SettingRow buttonRow(String key, String label, String buttonLabel) {
+         return new HudElementSettingsScreen.SettingRow(key, label, HudElementSettingsScreen.RowType.PICK, 0.0, 1.0, 1.0, List.of(buttonLabel));
       }
 
-      static HudElementSettingsScreen.Inner_StreamUtil moduleList(String key, String label) {
-         return new HudElementSettingsScreen.Inner_StreamUtil(key, label, HudElementSettingsScreen.Inner_CachePool.MODULE_LIST, 0.0, 1.0, 1.0, List.of());
+      static HudElementSettingsScreen.SettingRow moduleList(String key, String label) {
+         return new HudElementSettingsScreen.SettingRow(key, label, HudElementSettingsScreen.RowType.MODULE_LIST, 0.0, 1.0, 1.0, List.of());
       }
 
       boolean isSectionRow() {
-         return this.type == HudElementSettingsScreen.Inner_CachePool.SECTION;
+         return this.type == HudElementSettingsScreen.RowType.SECTION;
       }
    }
 }

@@ -68,7 +68,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    private boolean creativeAtDispatch;
    private boolean flush;
    private AbstractContainerMenu menu;
-   private AiSavedContents.Inner_DataUtil slotLayout;
+   private AiSavedContents.SlotMapping slotLayout;
    private AiInventoryController inventory;
    private Map<Item, Integer> removed = Map.of();
    private boolean isChest;
@@ -678,11 +678,11 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   );
                }
 
-               AiSavedContents.Inner_CachePool plan = AiSavedContents.init(
+               AiSavedContents.FillPlan plan = AiSavedContents.init(
                   this.menu, this.mc.player.getInventory(), this.mc.player, this.savedSlots, this.slotLayout
                );
                if (this.poll && !this.removed.isEmpty() && this.menu.getCarried().isEmpty()) {
-                  AiSavedContents.Inner_CachePool recovery = AiSavedContents.init(
+                  AiSavedContents.FillPlan recovery = AiSavedContents.init(
                      this.menu,
                      this.mc.player.getInventory(),
                      this.mc.player,
@@ -727,7 +727,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                this.verifiedSlotCount = plan.satisfiedSlots();
                if (!plan.missing().isEmpty()) {
                   if (this.optional && !this.creativeAtDispatch) {
-                     for (AiSavedContents.Inner_StreamUtil missing : plan.missing()) {
+                     for (AiSavedContents.MissingItem missing : plan.missing()) {
                         ItemStack wanted = missing.wanted();
                         if (!this.unavailableSupplies.stream().anyMatch(value -> ItemStack.isSameItemSameComponents(value, wanted))
                            && !AiCarriedShulker.init(this.mc.player.getInventory(), wanted, List.of()).isEmpty()) {
@@ -741,7 +741,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                      }
                   }
 
-                  this.skipReasons = plan.missing().stream().map(AiSavedContents.Inner_StreamUtil::message).toList();
+                  this.skipReasons = plan.missing().stream().map(AiSavedContents.MissingItem::message).toList();
                   if (!this.optional) {
                      this.closeOwnMenu();
                      return this.setStatus(

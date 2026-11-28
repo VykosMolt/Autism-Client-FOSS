@@ -33,12 +33,12 @@ public final class SdfShapeRenderer {
    private static final int update = 64 * TILE_RADII.length;
    private static final int sync = 128;
    private static final Identifier ATLAS_ID = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_shapes");
-   private static volatile SdfShapeRenderer.Inner_StreamUtil atlasInstance;
+   private static volatile SdfShapeRenderer.ShapeAtlas atlasInstance;
    private static volatile boolean init_Z;
    private static final int flush = 512;
    private static final int close = 10;
-   private static final LinkedHashMap<SdfShapeRenderer.Inner_DataUtil, SdfShapeRenderer.Inner_StreamUtil> shapeCache = new LinkedHashMap<>(16, 0.75F, true);
-   private static final ArrayDeque<SdfShapeRenderer.Inner_StreamUtil> retiredAtlases = new ArrayDeque<>();
+   private static final LinkedHashMap<SdfShapeRenderer.ShapeKey, SdfShapeRenderer.ShapeAtlas> shapeCache = new LinkedHashMap<>(16, 0.75F, true);
+   private static final ArrayDeque<SdfShapeRenderer.ShapeAtlas> retiredAtlases = new ArrayDeque<>();
    private static boolean load_Z;
    private static boolean read_Z;
    private static int open;
@@ -194,7 +194,7 @@ public final class SdfShapeRenderer {
             } else if (r <= 0.0F) {
                init(graphics, centerX, y, values, heights, color);
             } else if (!read_Z && isAvailable()) {
-               SdfShapeRenderer.Inner_DataUtil key = new SdfShapeRenderer.Inner_DataUtil(values, List.copyOf(sizes), r);
+               SdfShapeRenderer.ShapeKey key = new SdfShapeRenderer.ShapeKey(values, List.copyOf(sizes), r);
                if (!load_Z) {
                   ClientTickEvents.END_CLIENT_TICK.register(mc -> {
                      while (!retiredAtlases.isEmpty()) {
@@ -204,13 +204,13 @@ public final class SdfShapeRenderer {
                   load_Z = true;
                }
 
-               SdfShapeRenderer.Inner_StreamUtil shape = shapeCache.get(key);
+               SdfShapeRenderer.ShapeAtlas shape = shapeCache.get(key);
                if (shape == null) {
                   NativeImage pixels = null;
 
                   try {
                      pixels = init(new SteppedRowContour(key.init_List, key.load, r));
-                     shape = new SdfShapeRenderer.Inner_StreamUtil(pixels);
+                     shape = new SdfShapeRenderer.ShapeAtlas(pixels);
                   } catch (Throwable error) {
                      if (pixels != null) {
                         pixels.close();
@@ -225,8 +225,8 @@ public final class SdfShapeRenderer {
                   open = open + shape.init;
 
                   while (shapeCache.size() > 1 && (shapeCache.size() > 512 || open > 4194304)) {
-                     Iterator<SdfShapeRenderer.Inner_StreamUtil> iterator = shapeCache.values().iterator();
-                     SdfShapeRenderer.Inner_StreamUtil retired = iterator.next();
+                     Iterator<SdfShapeRenderer.ShapeAtlas> iterator = shapeCache.values().iterator();
+                     SdfShapeRenderer.ShapeAtlas retired = iterator.next();
                      open = open - retired.init;
                      retiredAtlases.add(retired);
                      iterator.remove();
@@ -323,7 +323,7 @@ public final class SdfShapeRenderer {
          retiredAtlases.removeFirst().close();
       }
 
-      SdfShapeRenderer.Inner_StreamUtil old = atlasInstance;
+      SdfShapeRenderer.ShapeAtlas old = atlasInstance;
       if (old != null) {
          try {
             Minecraft.getInstance().getTextureManager().release(ATLAS_ID);
@@ -367,7 +367,7 @@ public final class SdfShapeRenderer {
    private static void init(
       GuiGraphicsExtractor graphics, int tile, float x, float y, float w, float h, float r, int topColor, int bottomColor, boolean outline, boolean topOnly
    ) {
-      SdfShapeRenderer.Inner_StreamUtil atlas = atlas();
+      SdfShapeRenderer.ShapeAtlas atlas = atlas();
       if (atlas != null) {
          int rTile = TILE_RADII[tile];
          float corner = Math.min(r, Math.min(w, h) * 0.5F);
@@ -468,8 +468,8 @@ public final class SdfShapeRenderer {
       }
    }
 
-   private static SdfShapeRenderer.Inner_StreamUtil atlas() {
-      SdfShapeRenderer.Inner_StreamUtil current = atlasInstance;
+   private static SdfShapeRenderer.ShapeAtlas atlas() {
+      SdfShapeRenderer.ShapeAtlas current = atlasInstance;
       if (current == null && !init_Z) {
          synchronized (SdfShapeRenderer.class) {
             current = atlasInstance;
@@ -481,7 +481,7 @@ public final class SdfShapeRenderer {
                      pixels = buildAtlasImage();
                   }
 
-                  current = new SdfShapeRenderer.Inner_StreamUtil(pixels);
+                  current = new SdfShapeRenderer.ShapeAtlas(pixels);
                   Minecraft.getInstance().getTextureManager().register(ATLAS_ID, current);
                   atlasInstance = current;
                } catch (Throwable t) {
@@ -532,13 +532,13 @@ public final class SdfShapeRenderer {
       return outside + inside - r;
    }
 
-   private record Inner_DataUtil(List<Float> init_List, List<Float> load, float init_F) {
+   private record ShapeKey(List<Float> init_List, List<Float> load, float init_F) {
    }
 
-   private static final class Inner_StreamUtil extends AbstractTexture {
+   private static final class ShapeAtlas extends AbstractTexture {
       final int init;
 
-      Inner_StreamUtil(NativeImage pixels) {
+      ShapeAtlas(NativeImage pixels) {
          this.init = pixels.getWidth() * pixels.getHeight();
          this.texture = RenderSystem.getDevice().createTexture("autismclient sdf shapes", 15, GpuFormat.R8_UNORM, pixels.getWidth(), pixels.getHeight(), 1, 1);
          this.sampler = RenderSystem.getSamplerCache()

@@ -154,31 +154,31 @@ final class AiNetherEntry {
       }
    }
 
-   static AiNetherEntry.Inner_CachePool pickNextPhase(
+   static AiNetherEntry.EntryPhase pickNextPhase(
       boolean inNether, boolean openingDone, boolean foodNeeded, boolean villageWanted, boolean ironFireDone, boolean portalNearby, boolean lavaNearby
    ) {
       if (inNether) {
          return null;
       } else if (villageWanted) {
-         return AiNetherEntry.Inner_CachePool.VILLAGE;
+         return AiNetherEntry.EntryPhase.VILLAGE;
       } else if (!openingDone) {
-         return AiNetherEntry.Inner_CachePool.OPENING;
+         return AiNetherEntry.EntryPhase.OPENING;
       } else if (foodNeeded) {
-         return AiNetherEntry.Inner_CachePool.FOOD;
+         return AiNetherEntry.EntryPhase.FOOD;
       } else if (!ironFireDone) {
-         return AiNetherEntry.Inner_CachePool.IRON_FIRE;
+         return AiNetherEntry.EntryPhase.IRON_FIRE;
       } else if (portalNearby) {
-         return AiNetherEntry.Inner_CachePool.ENTER;
+         return AiNetherEntry.EntryPhase.ENTER;
       } else {
-         return lavaNearby ? AiNetherEntry.Inner_CachePool.PORTAL : AiNetherEntry.Inner_CachePool.LAVA;
+         return lavaNearby ? AiNetherEntry.EntryPhase.PORTAL : AiNetherEntry.EntryPhase.LAVA;
       }
    }
 
-   static boolean isRequiredPhase(AiNetherEntry.Inner_CachePool phase) {
-      return phase != AiNetherEntry.Inner_CachePool.FOOD && phase != AiNetherEntry.Inner_CachePool.VILLAGE;
+   static boolean isRequiredPhase(AiNetherEntry.EntryPhase phase) {
+      return phase != AiNetherEntry.EntryPhase.FOOD && phase != AiNetherEntry.EntryPhase.VILLAGE;
    }
 
-   static int maxAttempts(AiNetherEntry.Inner_CachePool phase) {
+   static int maxAttempts(AiNetherEntry.EntryPhase phase) {
       byte var10000;
       switch (phase) {
          case OPENING:
@@ -197,12 +197,12 @@ final class AiNetherEntry {
       return var10000;
    }
 
-   static boolean canRetryPhase(AiNetherEntry.Inner_CachePool phase, AiFailure failure) {
+   static boolean canRetryPhase(AiNetherEntry.EntryPhase phase, AiFailure failure) {
       if (failure == AiFailure.MISSING_MATERIALS) {
          return false;
       }
 
-      if (phase == AiNetherEntry.Inner_CachePool.FOOD) {
+      if (phase == AiNetherEntry.EntryPhase.FOOD) {
          return true;
       }
 
@@ -421,7 +421,7 @@ final class AiNetherEntry {
             final JsonArray phaseHistory = new JsonArray();
             final List<Entry<String, Integer>> missingMaterials = new ArrayList<>();
             final JsonArray legEvents = new JsonArray();
-            AiNetherEntry.Inner_CachePool phase;
+            AiNetherEntry.EntryPhase phase;
             long phaseStartedMillis = this.startMillis;
             int step;
             int lootDelayTicks;
@@ -487,8 +487,8 @@ final class AiNetherEntry {
             JsonObject lastLegEvent;
             String entryWarning;
             AiOperation.Result uncertainLegResult;
-            final AiNetherEntry.Inner_DataUtil childTracker = new AiNetherEntry.Inner_DataUtil();
-            final AiNetherEntry.Inner_StreamUtil entryTimer = new AiNetherEntry.Inner_StreamUtil();
+            final AiNetherEntry.ChildTracker childTracker = new AiNetherEntry.ChildTracker();
+            final AiNetherEntry.EntryTimer entryTimer = new AiNetherEntry.EntryTimer();
             int obsidianBeforeMining;
             int obsidianShortfallRetries;
 
@@ -536,7 +536,7 @@ final class AiNetherEntry {
                   }
 
                   if (this.inNether()) {
-                     if (this.phase == AiNetherEntry.Inner_CachePool.ENTER && this.child != null && "game:dimension".equals(this.legId)) {
+                     if (this.phase == AiNetherEntry.EntryPhase.ENTER && this.child != null && "game:dimension".equals(this.legId)) {
                         AiOperation.Result arrival = this.pollChild();
                         if (arrival == null) {
                            return this.running("Verifying Nether arrival");
@@ -576,10 +576,10 @@ final class AiNetherEntry {
                      }
 
                      if (this.phase == null) {
-                        AiNetherEntry.Inner_CachePool next = AiNetherEntry.pickNextPhase(
+                        AiNetherEntry.EntryPhase next = AiNetherEntry.pickNextPhase(
                            false, this.hasStoneTier(), this.needsFood(), this.needsVillage(), this.hasIronFireGear(), this.portalNearby(), this.lavaNearby()
                         );
-                        if ((next == AiNetherEntry.Inner_CachePool.LAVA || next == AiNetherEntry.Inner_CachePool.PORTAL) && !this.portalHistoryChecked) {
+                        if ((next == AiNetherEntry.EntryPhase.LAVA || next == AiNetherEntry.EntryPhase.PORTAL) && !this.portalHistoryChecked) {
                            this.knownPortal = AiPortalLinks.init(192);
                            if (this.knownPortal == null && this.portalLookupRetries-- > 0) {
                               return this.running("Checking observed portal history before making another frame");
@@ -588,7 +588,7 @@ final class AiNetherEntry {
                            this.portalHistoryChecked = true;
                            if (this.knownPortal != null) {
                               this.rememberedPortalDeadline = System.nanoTime() + 120000000000L;
-                              this.enterPhase(AiNetherEntry.Inner_CachePool.LAVA);
+                              this.enterPhase(AiNetherEntry.EntryPhase.LAVA);
                               this.step = this.knownPortal.getY() - mc.player.blockPosition().getY() > 16 && !this.skyVisibleWithin(3) ? 89 : 90;
                               return this.running("Rechecking the remembered portal at " + this.knownPortal.toShortString());
                            }
@@ -967,10 +967,10 @@ final class AiNetherEntry {
                   } else if (r.status() == AiOperation.Status.SUCCEEDED) {
                      this.foodDone = true;
                      return this.finishPhase("succeeded", "food " + this.foodBefore + " -> " + this.safeFoodCount());
-                  } else if (this.attempt < AiNetherEntry.maxAttempts(AiNetherEntry.Inner_CachePool.FOOD) && AiNetherEntry.canRetryPhase(AiNetherEntry.Inner_CachePool.FOOD, r.failure())) {
+                  } else if (this.attempt < AiNetherEntry.maxAttempts(AiNetherEntry.EntryPhase.FOOD) && AiNetherEntry.canRetryPhase(AiNetherEntry.EntryPhase.FOOD, r.failure())) {
                      this.attempt++;
                      this.step = 0;
-                     return this.running("The hunt came up short; hunting again (attempt " + this.attempt + "/" + AiNetherEntry.maxAttempts(AiNetherEntry.Inner_CachePool.FOOD) + ")");
+                     return this.running("The hunt came up short; hunting again (attempt " + this.attempt + "/" + AiNetherEntry.maxAttempts(AiNetherEntry.EntryPhase.FOOD) + ")");
                   } else {
                      this.foodDone = true;
                      return this.finishPhase("failed", "food " + this.foodBefore + " -> " + this.safeFoodCount() + " (" + r.message() + ")");
@@ -1335,7 +1335,7 @@ final class AiNetherEntry {
                   }
 
                   if (this.step == 0 && AiDimension.framedObsidian() > 0 && this.canBuildPortalFrame()) {
-                     this.enterPhase(AiNetherEntry.Inner_CachePool.PORTAL);
+                     this.enterPhase(AiNetherEntry.EntryPhase.PORTAL);
                      return this.startPortalBuild("the frame begun at " + AiDimension.frameOrigin.toShortString() + " holds " + AiDimension.framedObsidian() + " obsidian");
                   }
 
@@ -1343,7 +1343,7 @@ final class AiNetherEntry {
                      if (this.buildFromUncastablePool) {
                         this.buildFromUncastablePool = false;
                         this.drainChild();
-                        this.enterPhase(AiNetherEntry.Inner_CachePool.PORTAL);
+                        this.enterPhase(AiNetherEntry.EntryPhase.PORTAL);
                         return this.startPortalBuild("no pool in loaded terrain takes a cast");
                      }
 
@@ -1467,7 +1467,7 @@ final class AiNetherEntry {
                         this.step = 4;
                         if (this.buildFromUncastablePool) {
                            this.buildFromUncastablePool = false;
-                           this.enterPhase(AiNetherEntry.Inner_CachePool.PORTAL);
+                           this.enterPhase(AiNetherEntry.EntryPhase.PORTAL);
                            return this.startPortalBuild("no pool in loaded terrain takes a cast");
                         }
                      }
@@ -1490,7 +1490,7 @@ final class AiNetherEntry {
                               autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                               true,
                               2.0,
-                              new AiNetherRun.Inner_NetHelper(this.explorationTarget.getX(), this.explorationTarget.getZ(), 8)
+                              new AiNetherRun.RadiusGoal(this.explorationTarget.getX(), this.explorationTarget.getZ(), 8)
                            );
                         }
 
@@ -1528,7 +1528,7 @@ final class AiNetherEntry {
                   && this.surfaceForWaterAttempts == 0
                   && this.count("minecraft:water_bucket") == 0
                   && this.count("minecraft:bucket") > 0) {
-                  this.enterPhase(AiNetherEntry.Inner_CachePool.LAVA);
+                  this.enterPhase(AiNetherEntry.EntryPhase.LAVA);
                   this.step = 30;
                   return this.running("Filling a water bucket before the cast");
                }
@@ -2224,7 +2224,7 @@ final class AiNetherEntry {
                      this.castAttempts = 0;
                      this.poolFailures = 0;
                      AutismClientAddon.LOG.info("[AI] nether entry: no obsidian ({}); looking for a castable pool from the surface", r.message());
-                     this.enterPhase(AiNetherEntry.Inner_CachePool.LAVA);
+                     this.enterPhase(AiNetherEntry.EntryPhase.LAVA);
                      this.step = 40;
                      return this.running("No obsidian (" + r.message() + "); up to the surface for a castable pool");
                   }
@@ -2545,7 +2545,7 @@ final class AiNetherEntry {
                }
             }
 
-            void enterPhase(AiNetherEntry.Inner_CachePool next) {
+            void enterPhase(AiNetherEntry.EntryPhase next) {
                this.phase = next;
                this.phaseStartedMillis = System.currentTimeMillis();
                this.step = 0;
@@ -2562,13 +2562,13 @@ final class AiNetherEntry {
                AiRunTrace.recordGlobalSplit("nether_entry_phase", next.name().toLowerCase(Locale.ROOT));
             }
 
-            void tracePhaseFailure(AiNetherEntry.Inner_CachePool p, String reason) {
+            void tracePhaseFailure(AiNetherEntry.EntryPhase p, String reason) {
                AiRunTrace.recordGlobalSplit(
                   "nether_entry_phase", "FAILED " + p.name().toLowerCase(Locale.ROOT) + ": " + (reason.length() > 80 ? reason.substring(0, 80) : reason)
                );
             }
 
-            JsonObject phaseEntry(AiNetherEntry.Inner_CachePool p, String status, String detail) {
+            JsonObject phaseEntry(AiNetherEntry.EntryPhase p, String status, String detail) {
                JsonObject out = AiJson.objectOf(
                   "name",
                   p.name().toLowerCase(Locale.ROOT),
@@ -2599,7 +2599,7 @@ final class AiNetherEntry {
                   this.tracePhaseFailure(this.phase, detail);
                }
 
-               AiNetherEntry.Inner_CachePool finished = this.phase;
+               AiNetherEntry.EntryPhase finished = this.phase;
                this.phase = null;
                return this.running("Phase " + finished.name().toLowerCase(Locale.ROOT) + " " + status + ": " + detail);
             }
@@ -2625,7 +2625,7 @@ final class AiNetherEntry {
 
             void restartPhase() {
                this.step = 0;
-               if (this.phase == AiNetherEntry.Inner_CachePool.OPENING) {
+               if (this.phase == AiNetherEntry.EntryPhase.OPENING) {
                   this.openingSiteIndex++;
                }
             }
@@ -2647,7 +2647,7 @@ final class AiNetherEntry {
                }
 
                if (!AiNetherEntry.isRequiredPhase(this.phase)) {
-                  AiNetherEntry.Inner_CachePool failedPhase = this.phase;
+                  AiNetherEntry.EntryPhase failedPhase = this.phase;
                   this.phase = null;
                   return this.running("Optional phase " + failedPhase.name().toLowerCase(Locale.ROOT) + " failed: " + reason);
                } else {
@@ -2853,7 +2853,7 @@ final class AiNetherEntry {
       }
    }
 
-   enum Inner_CachePool {
+   enum EntryPhase {
       OPENING,
       FOOD,
       VILLAGE,
@@ -2863,7 +2863,7 @@ final class AiNetherEntry {
       ENTER;
    }
 
-   static final class Inner_DataUtil {
+   static final class ChildTracker {
       private final IdentityHashMap<AiOperation, AiOperation.Result> results = new IdentityHashMap<>();
       private AiOperation owner;
       private AiOperation.Result ownerResult;
@@ -2956,18 +2956,18 @@ final class AiNetherEntry {
       }
    }
 
-   static final class Inner_StreamUtil {
+   static final class EntryTimer {
       static final int ENTRY_WINDOW_SECONDS = 90;
       static final int MIN_REPORTED_SECONDS = 10;
       private final LongSupplier clock;
       private long deadline;
       private boolean started;
 
-      Inner_StreamUtil() {
+      EntryTimer() {
          this(System::nanoTime);
       }
 
-      Inner_StreamUtil(LongSupplier now) {
+      EntryTimer(LongSupplier now) {
          this.clock = now;
       }
 

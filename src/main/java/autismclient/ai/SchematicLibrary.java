@@ -49,12 +49,12 @@ final class SchematicLibrary {
    final Path defaultRoot;
    final Path read;
    volatile List<Path> roots = List.of();
-   volatile List<SchematicLibrary.Inner_DataUtil> entries = List.of();
+   volatile List<SchematicLibrary.SchematicEntry> entries = List.of();
    volatile String status = "";
    volatile int percent;
    private Future<?> init_Future;
    private long init_J;
-   private final Map<String, SchematicLibrary.Inner_DataUtil> init_Map = new HashMap<>();
+   private final Map<String, SchematicLibrary.SchematicEntry> init_Map = new HashMap<>();
    private final Gson init_Gson = new GsonBuilder().setPrettyPrinting().create();
 
    SchematicLibrary(Path game) {
@@ -67,7 +67,7 @@ final class SchematicLibrary {
 
    static Path resolveToken(String token) {
       if (init_cR != null && token.matches("sc_[0-9a-f]{24}")) {
-         for (SchematicLibrary.Inner_DataUtil entry : init_cR.entries) {
+         for (SchematicLibrary.SchematicEntry entry : init_cR.entries) {
             if (token.equals("sc_" + entry.id) && init_cR.isInRoots(entry.file)) {
                return entry.file;
             }
@@ -79,11 +79,11 @@ final class SchematicLibrary {
       }
    }
 
-   SchematicLibrary.Inner_CachePool init() throws IOException {
+   SchematicLibrary.LibraryState init() throws IOException {
       Files.createDirectories(this.defaultRoot);
       LinkedHashSet<String> roots = new LinkedHashSet<>();
       roots.add(this.defaultRoot.toString());
-      ArrayList<SchematicLibrary.Inner_StreamUtil> placed = new ArrayList<>();
+      ArrayList<SchematicLibrary.Placement> placed = new ArrayList<>();
       Path legacy = this.game.resolve("schematics").toAbsolutePath().normalize();
       if (!Files.exists(this.read) && Files.isDirectory(legacy)) {
          roots.add(legacy.toString());
@@ -116,7 +116,7 @@ final class SchematicLibrary {
                   }
 
                   placed.add(
-                     new SchematicLibrary.Inner_StreamUtil(
+                     new SchematicLibrary.Placement(
                         getString(v, "id", UUID.randomUUID().toString()),
                         getString(v, "scope", ""),
                         getString(v, "dimension", ""),
@@ -139,14 +139,14 @@ final class SchematicLibrary {
          }
       }
 
-      return new SchematicLibrary.Inner_CachePool(List.copyOf(roots), List.copyOf(placed));
+      return new SchematicLibrary.LibraryState(List.copyOf(roots), List.copyOf(placed));
    }
 
-   void applyState(SchematicLibrary.Inner_CachePool state) {
+   void applyState(SchematicLibrary.LibraryState state) {
       this.roots = state.folders.stream().map(x$0 -> Path.of(x$0)).toList();
    }
 
-   void saveState(SchematicLibrary.Inner_CachePool state) throws IOException {
+   void saveState(SchematicLibrary.LibraryState state) throws IOException {
       JsonObject root = new JsonObject();
       root.addProperty("version", 1);
       JsonArray folders = new JsonArray();
@@ -154,7 +154,7 @@ final class SchematicLibrary {
       root.add("folders", folders);
       JsonArray placements = new JsonArray();
 
-      for (SchematicLibrary.Inner_StreamUtil p : state.placements) {
+      for (SchematicLibrary.Placement p : state.placements) {
          JsonObject row = new JsonObject();
          row.addProperty("id", p.id);
          row.addProperty("scope", p.scope);
@@ -200,10 +200,10 @@ final class SchematicLibrary {
       List<Path> roots = List.copyOf(this.roots);
       this.status = "Finding files";
       this.percent = 0;
-      Map<String, SchematicLibrary.Inner_DataUtil> cached = new HashMap<>(this.init_Map);
+      Map<String, SchematicLibrary.SchematicEntry> cached = new HashMap<>(this.init_Map);
       this.init_Future = EXECUTOR.submit(
          () -> {
-            LinkedHashMap<Path, SchematicLibrary.Inner_DataUtil> found = new LinkedHashMap<>();
+            LinkedHashMap<Path, SchematicLibrary.SchematicEntry> found = new LinkedHashMap<>();
 
             try {
                for (Path folder : roots) {
@@ -221,7 +221,7 @@ final class SchematicLibrary {
                               Path real = file.toRealPath();
                               if (real.startsWith(base)) {
                                  BasicFileAttributes a = Files.readAttributes(real, BasicFileAttributes.class);
-                                 SchematicLibrary.Inner_DataUtil entry = new SchematicLibrary.Inner_DataUtil(
+                                 SchematicLibrary.SchematicEntry entry = new SchematicLibrary.SchematicEntry(
                                     idOf(real),
                                     real,
                                     folder.getFileName() == null ? folder.toString() : folder.getFileName().toString(),
@@ -232,7 +232,7 @@ final class SchematicLibrary {
                                     -1L,
                                     ""
                                  );
-                                 SchematicLibrary.Inner_DataUtil old = cached.get(entry.id);
+                                 SchematicLibrary.SchematicEntry old = cached.get(entry.id);
                                  if (old != null && old.bytes == entry.bytes && old.modified == entry.modified && old.added == entry.added) {
                                     entry = old;
                                  }
@@ -248,13 +248,13 @@ final class SchematicLibrary {
                   }
                }
 
-               ArrayList<SchematicLibrary.Inner_DataUtil> rows = new ArrayList<>(found.values());
-               rows.sort(Comparator.comparing(SchematicLibrary.Inner_DataUtil::name, String.CASE_INSENSITIVE_ORDER).thenComparing(ex -> ex.file.toString()));
+               ArrayList<SchematicLibrary.SchematicEntry> rows = new ArrayList<>(found.values());
+               rows.sort(Comparator.comparing(SchematicLibrary.SchematicEntry::name, String.CASE_INSENSITIVE_ORDER).thenComparing(ex -> ex.file.toString()));
                this.init(client, token, rows, "Reading block counts", 0);
 
                for (int i = 0; i < rows.size(); i++) {
                   SchematicDocument.init();
-                  SchematicLibrary.Inner_DataUtil entry = rows.get(i);
+                  SchematicLibrary.SchematicEntry entry = rows.get(i);
                   if (entry.blocks < 0L && entry.error.isEmpty()) {
                      try {
                         SchematicDocument d = SchematicDocument.loadFile(entry.file);
@@ -287,8 +287,8 @@ final class SchematicLibrary {
       );
    }
 
-   private void init(Consumer<Runnable> client, long token, List<SchematicLibrary.Inner_DataUtil> rows, String status, int percent) {
-      List<SchematicLibrary.Inner_DataUtil> snapshot = List.copyOf(rows);
+   private void init(Consumer<Runnable> client, long token, List<SchematicLibrary.SchematicEntry> rows, String status, int percent) {
+      List<SchematicLibrary.SchematicEntry> snapshot = List.copyOf(rows);
       client.accept(() -> {
          synchronized (this) {
             if (token == this.init_J) {
@@ -296,7 +296,7 @@ final class SchematicLibrary {
                if (status.isEmpty()) {
                   this.init_Map.clear();
 
-                  for (SchematicLibrary.Inner_DataUtil e : snapshot) {
+                  for (SchematicLibrary.SchematicEntry e : snapshot) {
                      this.init_Map.put(e.id, e);
                   }
                }
@@ -320,7 +320,7 @@ final class SchematicLibrary {
       return false;
    }
 
-   SchematicLibrary.Inner_DataUtil rename(SchematicLibrary.Inner_DataUtil entry, String name) throws IOException {
+   SchematicLibrary.SchematicEntry rename(SchematicLibrary.SchematicEntry entry, String name) throws IOException {
       Path source = entry.file();
       if (this.isInRoots(source) && source.toRealPath().equals(source)) {
          BasicFileAttributes attributes = Files.readAttributes(source, BasicFileAttributes.class);
@@ -362,7 +362,7 @@ final class SchematicLibrary {
                   }
                }
 
-               return new SchematicLibrary.Inner_DataUtil(
+               return new SchematicLibrary.SchematicEntry(
                   idOf(target),
                   target,
                   entry.folder(),
@@ -384,7 +384,7 @@ final class SchematicLibrary {
       }
    }
 
-   synchronized void replaceEntry(SchematicLibrary.Inner_DataUtil old, SchematicLibrary.Inner_DataUtil updated, Consumer<Runnable> client) {
+   synchronized void replaceEntry(SchematicLibrary.SchematicEntry old, SchematicLibrary.SchematicEntry updated, Consumer<Runnable> client) {
       this.entries = this.entries.stream().map(row -> row.id().equals(old.id()) ? updated : row).toList();
       this.init_Map.remove(old.id());
       this.init_Map.put(updated.id(), updated);
@@ -433,16 +433,16 @@ final class SchematicLibrary {
       }
    }
 
-   record Inner_CachePool(List<String> folders, List<SchematicLibrary.Inner_StreamUtil> placements) {
+   record LibraryState(List<String> folders, List<SchematicLibrary.Placement> placements) {
    }
 
-   record Inner_DataUtil(String id, Path file, String folder, String name, long bytes, long modified, long added, long blocks, String error) {
-      SchematicLibrary.Inner_DataUtil metadata(long count, String problem) {
-         return new SchematicLibrary.Inner_DataUtil(this.id, this.file, this.folder, this.name, this.bytes, this.modified, this.added, count, problem);
+   record SchematicEntry(String id, Path file, String folder, String name, long bytes, long modified, long added, long blocks, String error) {
+      SchematicLibrary.SchematicEntry metadata(long count, String problem) {
+         return new SchematicLibrary.SchematicEntry(this.id, this.file, this.folder, this.name, this.bytes, this.modified, this.added, count, problem);
       }
    }
 
-   record Inner_StreamUtil(
+   record Placement(
       String id,
       String scope,
       String dimension,
@@ -458,8 +458,8 @@ final class SchematicLibrary {
       String name,
       JsonObject paste
    ) {
-      SchematicLibrary.Inner_StreamUtil named(String value) {
-         return new SchematicLibrary.Inner_StreamUtil(
+      SchematicLibrary.Placement named(String value) {
+         return new SchematicLibrary.Placement(
             this.id,
             this.scope,
             this.dimension,
@@ -477,8 +477,8 @@ final class SchematicLibrary {
          );
       }
 
-      SchematicLibrary.Inner_StreamUtil movedTo(SchematicLibrary.Inner_DataUtil entry) {
-         return new SchematicLibrary.Inner_StreamUtil(
+      SchematicLibrary.Placement movedTo(SchematicLibrary.SchematicEntry entry) {
+         return new SchematicLibrary.Placement(
             this.id,
             this.scope,
             this.dimension,
@@ -496,14 +496,14 @@ final class SchematicLibrary {
          );
       }
 
-      SchematicLibrary.Inner_StreamUtil at(int x, int y, int z, int rotation, String mirror) {
-         return new SchematicLibrary.Inner_StreamUtil(
+      SchematicLibrary.Placement at(int x, int y, int z, int rotation, String mirror) {
+         return new SchematicLibrary.Placement(
             this.id, this.scope, this.dimension, this.file, this.bytes, this.modified, x, y, z, rotation, mirror, this.visible, this.name, this.paste
          );
       }
 
-      SchematicLibrary.Inner_StreamUtil shown(boolean value) {
-         return new SchematicLibrary.Inner_StreamUtil(
+      SchematicLibrary.Placement shown(boolean value) {
+         return new SchematicLibrary.Placement(
             this.id,
             this.scope,
             this.dimension,
@@ -521,8 +521,8 @@ final class SchematicLibrary {
          );
       }
 
-      SchematicLibrary.Inner_StreamUtil checkpoint(JsonObject value) {
-         return new SchematicLibrary.Inner_StreamUtil(
+      SchematicLibrary.Placement checkpoint(JsonObject value) {
+         return new SchematicLibrary.Placement(
             this.id,
             this.scope,
             this.dimension,

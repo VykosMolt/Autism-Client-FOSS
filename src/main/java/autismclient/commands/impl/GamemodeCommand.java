@@ -27,7 +27,7 @@ public class GamemodeCommand extends Command {
          String mode = StringArgumentType.getString(ctx, "mode").toLowerCase(Locale.ROOT);
          GameType resolved = FakeGamemodeManager.init(mode);
          if (resolved != null) {
-            FakeGamemodeManager.Inner_DataUtil result = RealGamemodeSender.init(resolved);
+            FakeGamemodeManager.ApplyResult result = RealGamemodeSender.init(resolved);
             AutismClientMessaging.sendPrefixed((result.success() ? "§a" : "§c") + result.message());
             return 1;
          }

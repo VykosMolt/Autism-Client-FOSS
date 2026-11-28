@@ -11,7 +11,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class InteractionTargetRef {
-   private final InteractionTargetRef.Inner_DataUtil kind;
+   private final InteractionTargetRef.TargetKind kind;
    private final BlockPos blockPos;
    private final String entityRef;
    private final InteractionHand hand;
@@ -19,7 +19,7 @@ public final class InteractionTargetRef {
    private final Direction blockSide;
    private final boolean insideBlock;
 
-   private InteractionTargetRef(InteractionTargetRef.Inner_DataUtil kind, BlockPos blockPos, String entityRef, InteractionHand hand, Vec3 hitPos, Direction blockSide, boolean insideBlock) {
+   private InteractionTargetRef(InteractionTargetRef.TargetKind kind, BlockPos blockPos, String entityRef, InteractionHand hand, Vec3 hitPos, Direction blockSide, boolean insideBlock) {
       this.kind = kind;
       this.blockPos = blockPos == null ? null : blockPos.immutable();
       this.entityRef = entityRef == null ? "" : entityRef;
@@ -30,26 +30,26 @@ public final class InteractionTargetRef {
    }
 
    public static InteractionTargetRef ofBlock(BlockPos pos) {
-      return pos == null ? null : new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.BLOCK, pos, "", InteractionHand.MAIN_HAND, null, null, false);
+      return pos == null ? null : new InteractionTargetRef(InteractionTargetRef.TargetKind.BLOCK, pos, "", InteractionHand.MAIN_HAND, null, null, false);
    }
 
    public static InteractionTargetRef init(BlockHitResult hitResult, InteractionHand hand) {
       return hitResult != null && hitResult.getBlockPos() != null
-         ? new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.BLOCK, hitResult.getBlockPos(), "", hand, hitResult.getLocation(), hitResult.getDirection(), hitResult.isInside())
+         ? new InteractionTargetRef(InteractionTargetRef.TargetKind.BLOCK, hitResult.getBlockPos(), "", hand, hitResult.getLocation(), hitResult.getDirection(), hitResult.isInside())
          : null;
    }
 
    public static InteractionTargetRef init(Entity entity, InteractionHand hand) {
-      return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT, null, refFor(entity), hand, null, null, false);
+      return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.TargetKind.ENTITY_INTERACT, null, refFor(entity), hand, null, null, false);
    }
 
    public static InteractionTargetRef init(Entity entity, InteractionHand hand, Vec3 hitPos) {
-      return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT_AT, null, refFor(entity), hand, hitPos, null, false);
+      return entity == null ? null : new InteractionTargetRef(InteractionTargetRef.TargetKind.ENTITY_INTERACT_AT, null, refFor(entity), hand, hitPos, null, false);
    }
 
    public static InteractionTargetRef ofEntityRef(String entityRef) {
       return entityRef != null && !entityRef.isBlank()
-         ? new InteractionTargetRef(InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT, null, entityRef.trim(), InteractionHand.MAIN_HAND, null, null, false)
+         ? new InteractionTargetRef(InteractionTargetRef.TargetKind.ENTITY_INTERACT, null, entityRef.trim(), InteractionHand.MAIN_HAND, null, null, false)
          : null;
    }
 
@@ -64,7 +64,7 @@ public final class InteractionTargetRef {
       return "~" + uuid + "~" + typeId + "~" + displayName;
    }
 
-   public InteractionTargetRef.Inner_DataUtil kind() {
+   public InteractionTargetRef.TargetKind kind() {
       return this.kind;
    }
 
@@ -77,7 +77,7 @@ public final class InteractionTargetRef {
    }
 
    public boolean isBlock() {
-      return this.kind == InteractionTargetRef.Inner_DataUtil.BLOCK;
+      return this.kind == InteractionTargetRef.TargetKind.BLOCK;
    }
 
    public boolean interact(Minecraft mc) {
@@ -89,11 +89,11 @@ public final class InteractionTargetRef {
          return false;
       }
 
-      if (this.kind != InteractionTargetRef.Inner_DataUtil.BLOCK) {
+      if (this.kind != InteractionTargetRef.TargetKind.BLOCK) {
          Entity entity = this.lookupEntity(mc);
          if (entity == null) {
             return false;
-         } else if (this.kind == InteractionTargetRef.Inner_DataUtil.ENTITY_INTERACT_AT && this.hitPos != null) {
+         } else if (this.kind == InteractionTargetRef.TargetKind.ENTITY_INTERACT_AT && this.hitPos != null) {
             mc.getConnection().send(new ServerboundInteractPacket(entity.getId(), this.hand, this.hitPos, mc.player.isShiftKeyDown()));
             return true;
          } else {
@@ -122,7 +122,7 @@ public final class InteractionTargetRef {
    public boolean isPresent(Minecraft mc) {
       if (mc == null || mc.player == null) {
          return false;
-      } else if (this.kind != InteractionTargetRef.Inner_DataUtil.BLOCK) {
+      } else if (this.kind != InteractionTargetRef.TargetKind.BLOCK) {
          Entity entity = this.lookupEntity(mc);
          return init(mc, entity);
       } else {
@@ -131,7 +131,7 @@ public final class InteractionTargetRef {
    }
 
    public Entity resolveEntity(Minecraft mc) {
-      return this.kind == InteractionTargetRef.Inner_DataUtil.BLOCK ? null : this.lookupEntity(mc);
+      return this.kind == InteractionTargetRef.TargetKind.BLOCK ? null : this.lookupEntity(mc);
    }
 
    private BlockHitResult blockHit(Minecraft mc) {
@@ -222,7 +222,7 @@ public final class InteractionTargetRef {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum TargetKind {
       BLOCK,
       ENTITY_INTERACT,
       ENTITY_INTERACT_AT;

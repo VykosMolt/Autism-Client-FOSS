@@ -357,12 +357,12 @@ final class AiBurrow {
                         }
 
                         if (this.restock.isRunning()) {
-                           autismclient.ai.engine.AiRestock.Inner_BufferHelper status = this.restock.tick();
-                           if (status == autismclient.ai.engine.AiRestock.Inner_BufferHelper.FAILED) {
+                           autismclient.ai.engine.AiRestock.RestockState status = this.restock.tick();
+                           if (status == autismclient.ai.engine.AiRestock.RestockState.FAILED) {
                               return this.finish(AiOperation.Status.FAILED, "Construction stock swap was not confirmed");
                            }
 
-                           if (status == autismclient.ai.engine.AiRestock.Inner_BufferHelper.SUCCEEDED) {
+                           if (status == autismclient.ai.engine.AiRestock.RestockState.SUCCEEDED) {
                               this.restock.reset();
                            }
 

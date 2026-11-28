@@ -25,19 +25,19 @@ final class PrintInteractionReceipt {
       }
    }
 
-   PrintEnv.Inner_StreamUtil init(Object currentWorld, Object currentPlayer, boolean acknowledged, long now) {
+   PrintEnv.ReceiptState init(Object currentWorld, Object currentPlayer, boolean acknowledged, long now) {
       if (this.init_Z) {
-         return PrintEnv.Inner_StreamUtil.UNCERTAIN;
+         return PrintEnv.ReceiptState.UNCERTAIN;
       } else if (this.after < 0) {
-         return PrintEnv.Inner_StreamUtil.NONE;
+         return PrintEnv.ReceiptState.NONE;
       } else if (this.world != currentWorld || this.player != currentPlayer) {
-         return PrintEnv.Inner_StreamUtil.UNCERTAIN;
+         return PrintEnv.ReceiptState.UNCERTAIN;
       } else if (acknowledged) {
          this.after = -1;
          this.world = this.player = null;
-         return PrintEnv.Inner_StreamUtil.NONE;
+         return PrintEnv.ReceiptState.NONE;
       } else {
-         return now - this.load_J >= 10000000000L ? PrintEnv.Inner_StreamUtil.UNCERTAIN : PrintEnv.Inner_StreamUtil.PENDING;
+         return now - this.load_J >= 10000000000L ? PrintEnv.ReceiptState.UNCERTAIN : PrintEnv.ReceiptState.PENDING;
       }
    }
 }

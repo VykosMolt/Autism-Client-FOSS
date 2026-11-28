@@ -219,7 +219,7 @@ public final class AutoArmorModule extends Module {
             && !BlinkPacketManager.isHoldingActionsOnly()
             && (!this.bool("not-using-item") || !MC.player.isUsingItem())) {
             if (this.read_Z) {
-               AutoArmorModule.Inner_DataUtil rest = this.findBestMove();
+               AutoArmorModule.ArmorMove rest = this.findBestMove();
                if (rest == null) {
                   if (this.sync > 0) {
                      this.closeInventory();
@@ -232,7 +232,7 @@ public final class AutoArmorModule extends Module {
                this.read_Z = false;
             }
 
-            AutoArmorModule.Inner_DataUtil move = this.findBestMove();
+            AutoArmorModule.ArmorMove move = this.findBestMove();
             if (move == null) {
                this.read_Z = true;
                this.flush = now + this.randomDelay("close-delay", 3, 5);
@@ -264,24 +264,24 @@ public final class AutoArmorModule extends Module {
       this.close = AutismSessionState.getInstance().getClientTick() + this.randomDelay("operation-delay", 3, 5);
    }
 
-   private AutoArmorModule.Inner_DataUtil findBestMove() {
+   private AutoArmorModule.ArmorMove findBestMove() {
       int threshold = this.bool("save-armor") ? this.integer("durability-threshold") : -2147483648;
-      Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> best = this.init(threshold);
+      Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> best = this.init(threshold);
       if (this.bool("prefer-elytra")) {
-         autismclient.util.ArmorEvaluationHelper.Inner_DataUtil elytra = this.init_TaskTimer_DataUtil();
+         autismclient.util.ArmorEvaluationHelper.ArmorCandidate elytra = this.init_TaskTimer_DataUtil();
          if (elytra != null) {
             best.put(EquipmentSlot.CHEST, elytra);
          }
       }
 
       for (EquipmentSlot slot : ARMOR_SLOTS) {
-         autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate = best.get(slot);
+         autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate = best.get(slot);
          if (candidate != null
-            && candidate.kind() != autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR
+            && candidate.kind() != autismclient.util.ArmorEvaluationHelper.SourceKind.ARMOR
             && (candidate.inventorySlot() < 0 || !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(candidate.inventorySlot(), this.id()))) {
             ItemStack worn = MC.player.getItemBySlot(slot);
             if (worn.isEmpty() || !worn.is(Items.ELYTRA) && !autismclient.util.ArmorEvaluationHelper.hasBindingCurse(worn)) {
-               return new AutoArmorModule.Inner_DataUtil(slot, candidate, worn);
+               return new AutoArmorModule.ArmorMove(slot, candidate, worn);
             }
          }
       }
@@ -299,7 +299,7 @@ public final class AutoArmorModule extends Module {
    }
 
    private void tryEquipBest() {
-      AutoArmorModule.Inner_DataUtil move = this.findBestMove();
+      AutoArmorModule.ArmorMove move = this.findBestMove();
       if (move != null && this.init(move.slot(), move.candidate(), move.stack())) {
          this.cooldownTicks = 1;
       } else {
@@ -311,10 +311,10 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private boolean init(EquipmentSlot slot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate, ItemStack worn) {
+   private boolean init(EquipmentSlot slot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate, ItemStack worn) {
       boolean occupied = !worn.isEmpty();
       int armorMenuSlot = ARMOR_MENU_SLOTS.get(slot);
-      boolean hotbarFast = candidate.kind() == autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR && this.bool("hotbar");
+      boolean hotbarFast = candidate.kind() == autismclient.util.ArmorEvaluationHelper.SourceKind.HOTBAR && this.bool("hotbar");
       if (!occupied) {
          return hotbarFast ? this.init(armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP) : this.init(this.init(candidate), 0, ContainerInput.QUICK_MOVE);
       } else if (hotbarFast && this.bool("can-swap-armor")) {
@@ -427,21 +427,21 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private int init(autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate) {
+   private int init(autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate) {
       return autismclient.util.InventorySlotHelper.toScreenSlot(MC, candidate.inventorySlot());
    }
 
-   private autismclient.util.ArmorEvaluationHelper.Inner_DataUtil init_TaskTimer_DataUtil() {
+   private autismclient.util.ArmorEvaluationHelper.ArmorCandidate init_TaskTimer_DataUtil() {
       ItemStack worn = MC.player.getItemBySlot(EquipmentSlot.CHEST);
       if (worn.is(Items.ELYTRA)) {
-         return new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(worn, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.ARMOR, -1);
+         return new autismclient.util.ArmorEvaluationHelper.ArmorCandidate(worn, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.SourceKind.ARMOR, -1);
       }
 
       for (int inv = 0; inv < 36; inv++) {
          ItemStack stack = MC.player.getInventory().getItem(inv);
          if (stack.is(Items.ELYTRA)) {
-            return new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(
-               stack, EquipmentSlot.CHEST, inv < 9 ? autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.HOTBAR : autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY, inv
+            return new autismclient.util.ArmorEvaluationHelper.ArmorCandidate(
+               stack, EquipmentSlot.CHEST, inv < 9 ? autismclient.util.ArmorEvaluationHelper.SourceKind.HOTBAR : autismclient.util.ArmorEvaluationHelper.SourceKind.INVENTORY, inv
             );
          }
       }
@@ -449,7 +449,7 @@ public final class AutoArmorModule extends Module {
       if (!autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id())) {
          ItemStack offhand = MC.player.getItemBySlot(EquipmentSlot.OFFHAND);
          if (offhand.is(Items.ELYTRA)) {
-            return new autismclient.util.ArmorEvaluationHelper.Inner_DataUtil(offhand, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.Inner_StreamUtil.INVENTORY, 40);
+            return new autismclient.util.ArmorEvaluationHelper.ArmorCandidate(offhand, EquipmentSlot.CHEST, autismclient.util.ArmorEvaluationHelper.SourceKind.INVENTORY, 40);
          }
       }
 
@@ -517,12 +517,12 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil> init(int threshold) {
+   private Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> init(int threshold) {
       return autismclient.util.ArmorEvaluationHelper.bestBySlot(this.armorCandidates(), threshold);
    }
 
-   private Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.Inner_DataUtil>> armorCandidates() {
-      return autismclient.util.ArmorEvaluationHelper.candidatesBySlot(new autismclient.util.ArmorEvaluationHelper.Inner_BufferHelper() {
+   private Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.ArmorCandidate>> armorCandidates() {
+      return autismclient.util.ArmorEvaluationHelper.candidatesBySlot(new autismclient.util.ArmorEvaluationHelper.StackSource() {
          @Override
          public ItemStack init(int index) {
             return Module.MC.player.getInventory().getItem(index);
@@ -547,6 +547,6 @@ public final class AutoArmorModule extends Module {
       ARMOR_MENU_SLOTS.put(EquipmentSlot.FEET, 8);
    }
 
-   private record Inner_DataUtil(EquipmentSlot slot, autismclient.util.ArmorEvaluationHelper.Inner_DataUtil candidate, ItemStack stack) {
+   private record ArmorMove(EquipmentSlot slot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate, ItemStack stack) {
    }
 }

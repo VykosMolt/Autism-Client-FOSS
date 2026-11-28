@@ -15,10 +15,10 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public final class PrintItemFrame implements PrintMachineJob {
    private final PrintEnv env;
-   private final PrintItemFrame.Inner_StreamUtil spec;
+   private final PrintItemFrame.FrameSpec spec;
    private final Object worldToken;
    private final Item frameItem;
-   private PrintItemFrame.Inner_CachePool stage = PrintItemFrame.Inner_CachePool.HANG;
+   private PrintItemFrame.FrameStage stage = PrintItemFrame.FrameStage.HANG;
    private PrintMachineJob.JobStatus status = PrintMachineJob.JobStatus.PREPARING;
    private UUID frameId;
    private Set<UUID> init_Set = Set.of();
@@ -27,19 +27,19 @@ public final class PrintItemFrame implements PrintMachineJob {
    private long init_J;
    private String message = "Waiting for the frame's block and loaded entities";
 
-   public PrintItemFrame(PrintEnv env, PrintItemFrame.Inner_StreamUtil spec) {
+   public PrintItemFrame(PrintEnv env, PrintItemFrame.FrameSpec spec) {
       this.env = env;
       this.spec = spec;
       this.worldToken = env.worldToken();
       this.frameItem = spec.entityId().equals("minecraft:glow_item_frame") ? Items.GLOW_ITEM_FRAME : Items.ITEM_FRAME;
    }
 
-   public PrintItemFrame.Inner_StreamUtil getSpec() {
+   public PrintItemFrame.FrameSpec getSpec() {
       return this.spec;
    }
 
    public UUID frameEntityUuid() {
-      return this.stage == PrintItemFrame.Inner_CachePool.HANG ? null : this.frameId;
+      return this.stage == PrintItemFrame.FrameStage.HANG ? null : this.frameId;
    }
 
    @Override
@@ -49,9 +49,9 @@ public final class PrintItemFrame implements PrintMachineJob {
 
    @Override
    public Item item() {
-      return this.stage == PrintItemFrame.Inner_CachePool.HANG
+      return this.stage == PrintItemFrame.FrameStage.HANG
          ? this.frameItem
-         : (this.stage == PrintItemFrame.Inner_CachePool.FILL ? this.spec.item().getItem() : Items.AIR);
+         : (this.stage == PrintItemFrame.FrameStage.FILL ? this.spec.item().getItem() : Items.AIR);
    }
 
    @Override
@@ -91,10 +91,10 @@ public final class PrintItemFrame implements PrintMachineJob {
       return a.isEmpty() ? b.isEmpty() : !b.isEmpty() && ItemStack.isSameItemSameComponents(a, b);
    }
 
-   private PrintItemFrame.Inner_DataUtil findOurs(List<PrintItemFrame.Inner_DataUtil> seen) {
-      PrintItemFrame.Inner_DataUtil found = null;
+   private PrintItemFrame.ObservedFrame findOurs(List<PrintItemFrame.ObservedFrame> seen) {
+      PrintItemFrame.ObservedFrame found = null;
 
-      for (PrintItemFrame.Inner_DataUtil o : seen) {
+      for (PrintItemFrame.ObservedFrame o : seen) {
          if (o.facing() == this.spec.facing()) {
             if (found != null) {
                this.message = "Two frames face the same way in " + this.spec.cell().toShortString();
@@ -128,12 +128,12 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.status = PrintMachineJob.JobStatus.CONFLICT;
       }
 
-      List<PrintItemFrame.Inner_DataUtil> seen = this.env.itemFramesAt(this.spec.cell());
+      List<PrintItemFrame.ObservedFrame> seen = this.env.itemFramesAt(this.spec.cell());
       if (seen == null) {
          return this.status = PrintMachineJob.JobStatus.PREPARING;
       }
 
-      PrintItemFrame.Inner_DataUtil ours = this.findOurs(seen);
+      PrintItemFrame.ObservedFrame ours = this.findOurs(seen);
       if (ours == null && seen.stream().filter(o -> o.facing() == this.spec.facing()).count() > 1L) {
          return this.status = PrintMachineJob.JobStatus.CONFLICT;
       }
@@ -143,7 +143,7 @@ public final class PrintItemFrame implements PrintMachineJob {
             this.message = "A block fills the frame's cell " + this.spec.cell().toShortString();
             return this.status = PrintMachineJob.JobStatus.CONFLICT;
          } else {
-            this.stage = PrintItemFrame.Inner_CachePool.HANG;
+            this.stage = PrintItemFrame.FrameStage.HANG;
             this.frameId = null;
             this.message = "The frame is ready to hang";
             return this.status = PrintMachineJob.JobStatus.READY;
@@ -157,14 +157,14 @@ public final class PrintItemFrame implements PrintMachineJob {
             this.message = this.spec.undecodable() ? "Frame hung; its saved item cannot be decoded in this world" : "Empty frame verified";
             return this.status = PrintMachineJob.JobStatus.SUCCEEDED;
          } else if (ours.item().isEmpty()) {
-            this.stage = PrintItemFrame.Inner_CachePool.FILL;
+            this.stage = PrintItemFrame.FrameStage.FILL;
             this.message = "The frame is ready for its item";
             return this.status = PrintMachineJob.JobStatus.READY;
          } else if (!sameItem(ours.item(), this.spec.item())) {
             this.message = "The frame at " + this.spec.cell().toShortString() + " holds a different item";
             return this.status = PrintMachineJob.JobStatus.CONFLICT;
          } else if (ours.rotation() != this.spec.rotation()) {
-            this.stage = PrintItemFrame.Inner_CachePool.TURN;
+            this.stage = PrintItemFrame.FrameStage.TURN;
             this.message = "Turning the frame's item";
             return this.status = PrintMachineJob.JobStatus.READY;
          } else {
@@ -181,18 +181,18 @@ public final class PrintItemFrame implements PrintMachineJob {
       }
 
       ItemStack held = this.env.getInventoryItem(this.env.getSelectedHotbarSlot());
-      if (this.stage == PrintItemFrame.Inner_CachePool.HANG && !held.is(this.frameItem)) {
+      if (this.stage == PrintItemFrame.FrameStage.HANG && !held.is(this.frameItem)) {
          this.message = "The frame item is not held";
          return false;
       }
 
-      if (this.stage == PrintItemFrame.Inner_CachePool.FILL
+      if (this.stage == PrintItemFrame.FrameStage.FILL
          && !sameItem(held.copyWithCount(1), this.spec.item().copyWithCount(1))) {
          this.message = "The frame's item is not held";
          return false;
       }
 
-      List<PrintItemFrame.Inner_DataUtil> seen = this.env.itemFramesAt(this.spec.cell());
+      List<PrintItemFrame.ObservedFrame> seen = this.env.itemFramesAt(this.spec.cell());
       if (seen == null) {
          return false;
       }
@@ -200,7 +200,7 @@ public final class PrintItemFrame implements PrintMachineJob {
       HashSet<UUID> ids = new HashSet<>();
       int rotation = 0;
 
-      for (PrintItemFrame.Inner_DataUtil o : seen) {
+      for (PrintItemFrame.ObservedFrame o : seen) {
          ids.add(o.uuid());
          if (o.uuid().equals(this.frameId)) {
             rotation = o.rotation();
@@ -211,9 +211,9 @@ public final class PrintItemFrame implements PrintMachineJob {
       this.rotation = rotation;
       this.init_ItemStack = held.copy();
       this.init_J = this.env.nanoTime();
-      this.message = this.stage == PrintItemFrame.Inner_CachePool.HANG
+      this.message = this.stage == PrintItemFrame.FrameStage.HANG
          ? "Waiting for the hung frame"
-         : (this.stage == PrintItemFrame.Inner_CachePool.FILL ? "Waiting for the frame to take its item" : "Waiting for the frame's item to turn");
+         : (this.stage == PrintItemFrame.FrameStage.FILL ? "Waiting for the frame to take its item" : "Waiting for the frame's item to turn");
       this.status = PrintMachineJob.JobStatus.SENT;
       return true;
    }
@@ -229,9 +229,9 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.status = PrintMachineJob.JobStatus.UNCERTAIN;
       }
 
-      List<PrintItemFrame.Inner_DataUtil> seen = this.env.itemFramesAt(this.spec.cell());
+      List<PrintItemFrame.ObservedFrame> seen = this.env.itemFramesAt(this.spec.cell());
       if (seen != null) {
-         PrintItemFrame.Inner_DataUtil ours = this.findOurs(seen);
+         PrintItemFrame.ObservedFrame ours = this.findOurs(seen);
          boolean var10000;
          switch (this.stage) {
             case HANG:
@@ -249,13 +249,13 @@ public final class PrintItemFrame implements PrintMachineJob {
 
          boolean done = var10000;
          if (done) {
-            if (this.stage == PrintItemFrame.Inner_CachePool.HANG) {
+            if (this.stage == PrintItemFrame.FrameStage.HANG) {
                this.frameId = ours.uuid();
             }
 
-            this.message = this.stage == PrintItemFrame.Inner_CachePool.HANG
+            this.message = this.stage == PrintItemFrame.FrameStage.HANG
                ? "Frame hung"
-               : (this.stage == PrintItemFrame.Inner_CachePool.FILL ? "Item set in the frame" : "Item turned");
+               : (this.stage == PrintItemFrame.FrameStage.FILL ? "Item set in the frame" : "Item turned");
             return this.status = PrintMachineJob.JobStatus.PREPARING;
          }
       }
@@ -279,12 +279,12 @@ public final class PrintItemFrame implements PrintMachineJob {
          return this.status = PrintMachineJob.JobStatus.UNCERTAIN;
       }
 
-      List<PrintItemFrame.Inner_DataUtil> seen = this.env.itemFramesAt(this.spec.cell());
+      List<PrintItemFrame.ObservedFrame> seen = this.env.itemFramesAt(this.spec.cell());
       if (seen == null) {
          return PrintMachineJob.JobStatus.PREPARING;
       }
 
-      PrintItemFrame.Inner_DataUtil ours = this.findOurs(seen);
+      PrintItemFrame.ObservedFrame ours = this.findOurs(seen);
       if (ours != null && ours.uuid().equals(this.frameId)) {
          return PrintMachineJob.JobStatus.SUCCEEDED;
       }
@@ -322,19 +322,19 @@ public final class PrintItemFrame implements PrintMachineJob {
       return out;
    }
 
-   enum Inner_CachePool {
+   enum FrameStage {
       HANG,
       FILL,
       TURN;
    }
 
-   public record Inner_DataUtil(UUID uuid, String entityId, Direction facing, ItemStack item, int rotation) {
+   public record ObservedFrame(UUID uuid, String entityId, Direction facing, ItemStack item, int rotation) {
    }
 
-   public record Inner_StreamUtil(
+   public record FrameSpec(
       String entityId, BlockPos cell, Direction facing, ItemStack item, int rotation, boolean invisible, boolean fixed, boolean undecodable
    ) {
-      public Inner_StreamUtil(
+      public FrameSpec(
          String entityId, BlockPos cell, Direction facing, ItemStack item, int rotation, boolean invisible, boolean fixed, boolean undecodable
       ) {
          if (entityId != null && cell != null && facing != null) {

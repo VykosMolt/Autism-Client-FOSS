@@ -21,7 +21,7 @@ public final class ClickProfile {
    public final boolean freeSpin;
    public final double tick;
 
-   private ClickProfile(ClickProfile.Inner_DataUtil b) {
+   private ClickProfile(ClickProfile.ProfileBuilder b) {
       this.technique = b.technique == null ? ClickTechnique.NORMAL : b.technique;
       double ceiling = Math.min(this.technique.load_D, 30.0);
       if (this.technique == ClickTechnique.RAGE) {
@@ -76,8 +76,8 @@ public final class ClickProfile {
       this.tick = clamp(finiteOr(b.freeSpinDecayPerSecond, 1.0), 0.1, 20.0);
    }
 
-   public static ClickProfile.Inner_DataUtil builder(ClickTechnique technique) {
-      return new ClickProfile.Inner_DataUtil(technique);
+   public static ClickProfile.ProfileBuilder builder(ClickTechnique technique) {
+      return new ClickProfile.ProfileBuilder(technique);
    }
 
    public static ClickProfile forTechnique(ClickTechnique technique) {
@@ -92,7 +92,7 @@ public final class ClickProfile {
       return Math.max(lo, Math.min(hi, value));
    }
 
-   public static final class Inner_DataUtil {
+   public static final class ProfileBuilder {
       private final ClickTechnique technique;
       private double cpsLow;
       private double cpsHigh;
@@ -110,7 +110,7 @@ public final class ClickProfile {
       private boolean freeSpin;
       private double freeSpinDecayPerSecond = 1.0;
 
-      private Inner_DataUtil(ClickTechnique technique) {
+      private ProfileBuilder(ClickTechnique technique) {
          this.technique = technique == null ? ClickTechnique.NORMAL : technique;
          this.cpsLow = this.technique.read_D;
          this.cpsHigh = this.technique.write_D;
@@ -134,56 +134,56 @@ public final class ClickProfile {
          }
       }
 
-      public ClickProfile.Inner_DataUtil cpsRange(double low, double high) {
+      public ClickProfile.ProfileBuilder cpsRange(double low, double high) {
          this.cpsLow = low;
          this.cpsHigh = high;
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil load(double lowMs, double highMs) {
+      public ClickProfile.ProfileBuilder load(double lowMs, double highMs) {
          this.holdLowMs = lowMs;
          this.holdHighMs = highMs;
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil init(double share) {
+      public ClickProfile.ProfileBuilder init(double share) {
          this.update = share;
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil load(double share) {
+      public ClickProfile.ProfileBuilder load(double share) {
          this.sync = share;
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil read(double scale) {
+      public ClickProfile.ProfileBuilder read(double scale) {
          this.flush = scale;
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil write(double scale) {
+      public ClickProfile.ProfileBuilder write(double scale) {
          this.close = scale;
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil init_CachePool_DataUtil_I_I(int min, int max) {
+      public ClickProfile.ProfileBuilder init_CachePool_DataUtil_I_I(int min, int max) {
          this.init_I = min;
          this.load_I = max;
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil read(double lowMs, double highMs) {
+      public ClickProfile.ProfileBuilder read(double lowMs, double highMs) {
          this.open = lowMs;
          this.poll = highMs;
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil update(double ms) {
+      public ClickProfile.ProfileBuilder update(double ms) {
          this.push = ms;
          return this;
       }
 
-      public ClickProfile.Inner_DataUtil freeSpin(boolean freeSpin, double decayPerSecond) {
+      public ClickProfile.ProfileBuilder freeSpin(boolean freeSpin, double decayPerSecond) {
          this.freeSpin = freeSpin;
          this.freeSpinDecayPerSecond = decayPerSecond;
          return this;

@@ -28,8 +28,8 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    private static final int load_I = 3;
    private static final String[] ACTION_BUTTON_LABELS = new String[]{"Edit", "Create", "Password"};
    private final Screen parent;
-   private final List<JoinMacroScreen.Inner_StreamUtil> rows = new ArrayList<>();
-   private final List<JoinMacroScreen.Inner_DataUtil> buttons = new ArrayList<>();
+   private final List<JoinMacroScreen.MacroRow> rows = new ArrayList<>();
+   private final List<JoinMacroScreen.ScreenButton> buttons = new ArrayList<>();
    private ThemedTextInputBox searchField;
    private int scrollRow;
    private String lastQuery = "";
@@ -161,10 +161,10 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       int y = this.methodRowY();
       int ctl = this.controlHeight();
       autismclient.gui.f.b.k.init(graphics, this.font, "Execution Method", autismclient.gui.f.a.DataUtil.init, -1054492, x, this.centeredTextY(y, ctl), false);
-      JoinMacroController.Inner_StreamUtil[] timings = JoinMacroController.Inner_StreamUtil.values();
+      JoinMacroController.JoinTiming[] timings = JoinMacroController.JoinTiming.values();
       List<String> methodOptions = new ArrayList<>();
 
-      for (JoinMacroController.Inner_StreamUtil t : timings) {
+      for (JoinMacroController.JoinTiming t : timings) {
          methodOptions.add(t.load());
       }
 
@@ -190,7 +190,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       autismclient.gui.f.b.k.init(
          graphics, this.font, keep ? "Repeat On" : "Run On", autismclient.gui.f.a.DataUtil.init, -1054492, x, this.centeredTextY(triggerRowY, ctl), false
       );
-      JoinMacroController.Inner_CachePool[] triggerOpts = this.init_aA_CachePoolArr();
+      JoinMacroController.JoinTrigger[] triggerOpts = this.init_aA_CachePoolArr();
       List<String> triggerLabels = new ArrayList<>();
       int triggerSel = 0;
 
@@ -315,7 +315,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          int max = Math.min(this.rows.size(), this.scrollRow + visibleRows);
 
          for (int i = this.scrollRow; i < max; i++) {
-            JoinMacroScreen.Inner_StreamUtil row = this.rows.get(i);
+            JoinMacroScreen.MacroRow row = this.rows.get(i);
             int rowY = this.listBodyY() + (i - this.scrollRow) * pitch;
             autismclient.gui.f.NetHelper rowBounds = autismclient.gui.f.NetHelper.init(rowX, rowY, rowRight - rowX, rowH);
             boolean hovered = rowBounds.init_Z(mouseX, mouseY);
@@ -357,7 +357,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
    }
 
    private void renderButtons(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-      for (JoinMacroScreen.Inner_DataUtil button : this.buttons) {
+      for (JoinMacroScreen.ScreenButton button : this.buttons) {
          autismclient.gui.ui.widgets.ButtonDrawHelper.init(
             graphics,
             this.font,
@@ -379,7 +379,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          w = this.buttonWidth(label);
       }
 
-      this.buttons.add(new JoinMacroScreen.Inner_DataUtil(x, y, w, h, label, variant, enabled, action));
+      this.buttons.add(new JoinMacroScreen.ScreenButton(x, y, w, h, label, variant, enabled, action));
    }
 
    private void renderMacroRow(GuiGraphicsExtractor graphics, autismclient.gui.f.NetHelper bounds, String key, boolean selected, boolean hovered) {
@@ -425,7 +425,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
             return true;
          }
 
-         for (JoinMacroScreen.Inner_DataUtil button : this.buttons) {
+         for (JoinMacroScreen.ScreenButton button : this.buttons) {
             if (button.contains(event.x(), event.y())) {
                if (button.enabled && button.action != null) {
                   button.action.run();
@@ -437,7 +437,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
 
          int rowIndex = this.init_I_D_D(event.x(), event.y());
          if (rowIndex >= 0) {
-            JoinMacroScreen.Inner_StreamUtil row = this.rows.get(rowIndex);
+            JoinMacroScreen.MacroRow row = this.rows.get(rowIndex);
             if (row.folderRow.init_Z()) {
                MacroLibraryManager.getInstance().toggleFolderCollapsed(row.folderRow.folderName());
                this.rebuildRows();
@@ -559,7 +559,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       for (MacroFolderLayout.Inner_DataUtil item : MacroLibraryManager.getInstance().getFolderEntries(query)) {
          this.rows
             .add(
-               new JoinMacroScreen.Inner_StreamUtil(item.init_Str(), !item.init_Z() && item.macro().actions != null ? item.macro().actions.size() : 0, item)
+               new JoinMacroScreen.MacroRow(item.init_Str(), !item.init_Z() && item.macro().actions != null ? item.macro().actions.size() : 0, item)
             );
       }
 
@@ -765,31 +765,31 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       this.scrollRow = Math.max(0, Math.min(maxScrollRows, Math.round((float)scrollPixels / this.rowPitch())));
    }
 
-   private JoinMacroController.Inner_CachePool[] init_aA_CachePoolArr() {
+   private JoinMacroController.JoinTrigger[] init_aA_CachePoolArr() {
       return JoinMacroController.keepEnabled()
-         ? new JoinMacroController.Inner_CachePool[]{
-            JoinMacroController.Inner_CachePool.ANY,
-            JoinMacroController.Inner_CachePool.SECOND,
-            JoinMacroController.Inner_CachePool.THIRD,
-            JoinMacroController.Inner_CachePool.FOURTH,
-            JoinMacroController.Inner_CachePool.FIFTH,
-            JoinMacroController.Inner_CachePool.SIXTH_PLUS
+         ? new JoinMacroController.JoinTrigger[]{
+            JoinMacroController.JoinTrigger.ANY,
+            JoinMacroController.JoinTrigger.SECOND,
+            JoinMacroController.JoinTrigger.THIRD,
+            JoinMacroController.JoinTrigger.FOURTH,
+            JoinMacroController.JoinTrigger.FIFTH,
+            JoinMacroController.JoinTrigger.SIXTH_PLUS
          }
-         : new JoinMacroController.Inner_CachePool[]{
-            JoinMacroController.Inner_CachePool.FIRST,
-            JoinMacroController.Inner_CachePool.SECOND,
-            JoinMacroController.Inner_CachePool.THIRD,
-            JoinMacroController.Inner_CachePool.FOURTH,
-            JoinMacroController.Inner_CachePool.FIFTH,
-            JoinMacroController.Inner_CachePool.SIXTH_PLUS
+         : new JoinMacroController.JoinTrigger[]{
+            JoinMacroController.JoinTrigger.FIRST,
+            JoinMacroController.JoinTrigger.SECOND,
+            JoinMacroController.JoinTrigger.THIRD,
+            JoinMacroController.JoinTrigger.FOURTH,
+            JoinMacroController.JoinTrigger.FIFTH,
+            JoinMacroController.JoinTrigger.SIXTH_PLUS
          };
    }
 
-   private String init_Str_aA_CachePool(JoinMacroController.Inner_CachePool triggerJoin) {
+   private String init_Str_aA_CachePool(JoinMacroController.JoinTrigger triggerJoin) {
       return triggerJoin.label(JoinMacroController.keepEnabled());
    }
 
-   private record Inner_DataUtil(
+   private record ScreenButton(
       int x,
       int load,
       int read,
@@ -804,6 +804,6 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
    }
 
-   private record Inner_StreamUtil(String name, int steps, MacroFolderLayout.Inner_DataUtil folderRow) {
+   private record MacroRow(String name, int steps, MacroFolderLayout.Inner_DataUtil folderRow) {
    }
 }

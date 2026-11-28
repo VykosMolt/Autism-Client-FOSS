@@ -25,23 +25,23 @@ public final class AiParkourFallWarning {
    private final Minecraft mc;
    private final autismclient.gui.screens.PromptDialogScreen putAt_RingBuffer;
 
-   public AiParkourFallWarning(Minecraft var1, AiParkourFallWarning.Inner_DataUtil var2, Consumer<Boolean> var3, Runnable var4) {
+   public AiParkourFallWarning(Minecraft var1, AiParkourFallWarning.FallRisk var2, Consumer<Boolean> var3, Runnable var4) {
       this.mc = var1;
       ArrayList var5 = new ArrayList();
       var5.add(
-         new autismclient.gui.screens.PromptDialogScreen.Inner_DataUtil(
+         new autismclient.gui.screens.PromptDialogScreen.Choice(
             "Cancel", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::putAt_V
          )
       );
       var5.add(
-         new autismclient.gui.screens.PromptDialogScreen.Inner_DataUtil(
+         new autismclient.gui.screens.PromptDialogScreen.Choice(
             "Go", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, () -> this.putAt_V_Consumer_Z(var3, false)
          )
       );
       Module var6 = al.init_Module_Str("no-fall");
       if (var6 != null && !var6.isEnabled()) {
          var5.add(
-            new autismclient.gui.screens.PromptDialogScreen.Inner_DataUtil(
+            new autismclient.gui.screens.PromptDialogScreen.Choice(
                "NoFall & Go", autismclient.gui.f.b.CachePool.Inner_DataUtil.update, () -> this.putAt_V_Consumer_Z(var3, true)
             )
          );
@@ -60,7 +60,7 @@ public final class AiParkourFallWarning {
       );
    }
 
-   static String putAt_Str_BufferCore_CacheHe(AiParkourFallWarning.Inner_DataUtil var0) {
+   static String putAt_Str_BufferCore_CacheHe(AiParkourFallWarning.FallRisk var0) {
       return String.format(Locale.ROOT, "About %s HP of damage · %s HP available", putAt_Str_F(var0.damage()), putAt_Str_F(var0.health()));
    }
 
@@ -86,7 +86,7 @@ public final class AiParkourFallWarning {
       this.putAt_RingBuffer.onClose();
    }
 
-   public static AiParkourFallWarning.Inner_DataUtil putAt_BufferCore_CacheHe_Minecraft_List(Minecraft var0, List<AiPathfinder.UiHelper> var1) {
+   public static AiParkourFallWarning.FallRisk putAt_BufferCore_CacheHe_Minecraft_List(Minecraft var0, List<AiPathfinder.PathStep> var1) {
       LocalPlayer var2 = var0.player;
       double var3 = var2.getHealth() + var2.getAbsorptionAmount();
       if (!var2.getAbilities().invulnerable && !var2.hasEffect(MobEffects.SLOW_FALLING)) {
@@ -95,7 +95,7 @@ public final class AiParkourFallWarning {
          AiLiveWorld var7 = new AiLiveWorld(var6, var2);
          float var8 = 0.0F;
 
-         for (AiPathfinder.UiHelper var10 : var1) {
+         for (AiPathfinder.PathStep var10 : var1) {
             if (var10.type() != AiPathfinder.MoveType.CLIMB_1) {
                BlockState var11 = var0.level.getBlockState(var10.to().below());
                BlockState var12 = var0.level.getBlockState(var10.to());
@@ -164,9 +164,9 @@ public final class AiParkourFallWarning {
             }
          }
 
-         return new AiParkourFallWarning.Inner_DataUtil(var8, (float)var3);
+         return new AiParkourFallWarning.FallRisk(var8, (float)var3);
       } else {
-         return new AiParkourFallWarning.Inner_DataUtil(0.0F, (float)var3);
+         return new AiParkourFallWarning.FallRisk(0.0F, (float)var3);
       }
    }
 
@@ -176,7 +176,7 @@ public final class AiParkourFallWarning {
       return var3.isEmpty() ? var1.getY() : var2.getY() + var3.max(Axis.Y);
    }
 
-   public record Inner_DataUtil(float damage, float health) {
+   public record FallRisk(float damage, float health) {
       public boolean lethal() {
          return this.damage >= this.health;
       }

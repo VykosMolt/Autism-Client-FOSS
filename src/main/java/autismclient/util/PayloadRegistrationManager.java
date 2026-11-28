@@ -265,7 +265,7 @@ public final class PayloadRegistrationManager {
       boolean changed = false;
       Set<String> defaults = new LinkedHashSet<>();
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : PayloadChannelFilterManager.presets()) {
          if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
             String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
             if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
@@ -284,7 +284,7 @@ public final class PayloadRegistrationManager {
          }
       }
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : PayloadChannelFilterManager.presets()) {
          if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
             String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
             if (PayloadChannelFilterManager.isRegisterableExactPreset(preset) && this.read(preset.load(), pattern, "preset")) {
@@ -301,7 +301,7 @@ public final class PayloadRegistrationManager {
    public void update() {
       Set<String> defaults = new LinkedHashSet<>();
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : PayloadChannelFilterManager.presets()) {
          if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
             String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
             if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
@@ -316,7 +316,7 @@ public final class PayloadRegistrationManager {
          }
       }
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PayloadChannelFilterManager.presets()) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : PayloadChannelFilterManager.presets()) {
          if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
             String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
             if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {

@@ -638,7 +638,7 @@ final class AiChatMode {
       public AiChatMode.Inner_DataUtil init(String system, String user, BooleanSupplier cancelled) throws IOException, InterruptedException, ExecutionException, TimeoutException {
          AiProvider.Inner_BufferHelper reply = this.init
             .completeWithContext(
-               AiContext.Inner_StreamUtil.of(system), List.of(this.init.userMessage(user)), new JsonArray(), "none", delta -> {}, cancelled, call -> {}
+               AiContext.PromptParts.of(system), List.of(this.init.userMessage(user)), new JsonArray(), "none", delta -> {}, cancelled, call -> {}
             );
          AiProvider.Inner_TaskQueue usage = reply.usage();
          String text = reply.text();

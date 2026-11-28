@@ -37,8 +37,8 @@ public final class aP {
    private int load_I;
    private Vec3 init_Vec3;
    private boolean write;
-   private autismclient.modules.ScopedToggleOverride.Inner_StreamUtil init_aP_StreamUtil;
-   private autismclient.modules.ScopedToggleOverride.Inner_StreamUtil load_aP_StreamUtil;
+   private autismclient.modules.ScopedToggleOverride.OverrideHandle init_aP_StreamUtil;
+   private autismclient.modules.ScopedToggleOverride.OverrideHandle load_aP_StreamUtil;
 
    private static boolean init_Z_aR(AiPlacementSession placement) {
       return placement instanceof SchematicSelection || placement instanceof SchematicWorkspace.Inner_CachePool || placement instanceof AiNavigationSelection;
@@ -128,10 +128,10 @@ public final class aP {
    }
 
    public static boolean init_Z_Z_Z(boolean parkour, boolean assumeNoFallDamage) {
-      return init_Z_Z_cy_CachePool(parkour, new AiToolCallParser.Inner_CachePool(assumeNoFallDamage, -1));
+      return init_Z_Z_cy_CachePool(parkour, new AiToolCallParser.ParkourFlags(assumeNoFallDamage, -1));
    }
 
-   public static boolean init_Z_Z_cy_CachePool(boolean parkour, AiToolCallParser.Inner_CachePool options) {
+   public static boolean init_Z_Z_cy_CachePool(boolean parkour, AiToolCallParser.ParkourFlags options) {
       if (!autismclient.modules.aD.init_Z() && autismclient.e.MethodUtil.init()) {
          AiNavigationSelection selection = new AiNavigationSelection(parkour, options);
          init_V_aR_Runnable(selection, selection::write);
@@ -141,7 +141,7 @@ public final class aP {
       }
    }
 
-   public static autismclient.ai.engine.AiStandingTarget.Inner_StreamUtil init_j_StreamUtil() {
+   public static autismclient.ai.engine.AiStandingTarget.StandingSpot init_j_StreamUtil() {
       return init_aP != null && init_aP.init_aR instanceof AiNavigationSelection navigation ? navigation.getTarget() : null;
    }
 

@@ -100,7 +100,7 @@ public abstract class Module implements SettingOwner {
       return this.state().enabled;
    }
 
-   public final ScopedToggleOverride.Inner_StreamUtil borrowEnabled(boolean enabled) {
+   public final ScopedToggleOverride.OverrideHandle borrowEnabled(boolean enabled) {
       return enabled && aD.load_Z(this) ? () -> {} : this.temporaryActivation.push(enabled);
    }
 

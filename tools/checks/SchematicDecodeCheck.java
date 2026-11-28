@@ -66,7 +66,7 @@ public final class SchematicDecodeCheck {
          build.add(c.dx() + "," + c.dy() + "," + c.dz() + "=" + c.block());
       }
 
-      SchematicDocument.Inner_StreamUtil shown = SchematicDocument.loadFile(overlapFile).buildPreview(0, "none", v -> {});
+      SchematicDocument.Preview shown = SchematicDocument.loadFile(overlapFile).buildPreview(0, "none", v -> {});
       Set<String> preview = new TreeSet<>();
       BlockPos min = shown.nonAirMinimum();
       for (AiBuilder.CellSpec c : shown.cells()) {
@@ -87,7 +87,7 @@ public final class SchematicDecodeCheck {
       check(throwsOn(() -> SchematicCapture.init(new int[1], 65537)), "S9 capture writer refuses 65537 block states");
       BlockState[] states = new BlockState[65536];
       java.util.Arrays.fill(states, Blocks.AIR.defaultBlockState());
-      check(!throwsOn(() -> new SchematicDocument.Inner_CachePool(0, 0, 0, 1, 1, 1, states, SchematicCapture.init(new int[1], 65536), null)), "S9 65536 states round-trip");
+      check(!throwsOn(() -> new SchematicDocument.Region(0, 0, 0, 1, 1, 1, states, SchematicCapture.init(new int[1], 65536), null)), "S9 65536 states round-trip");
 
       if (!failures.isEmpty()) {
          failures.forEach(f -> System.out.println("FAIL SchematicDecodeCheck: " + f));

@@ -149,8 +149,8 @@ public final class AiWallJump {
       AiJumpSolver.JumpPlan var15 = null;
 
       for (int var19 : new int[]{-1, 1}) {
-         AiWallJump.Inner_CacheHelper var20 = new AiWallJump.Inner_CacheHelper(var2.getX() + 0.5, var2.getZ() + 0.5, var10, var12, var14, var19);
-         List var21 = List.of(new AiWallJump.Inner_TableCache(var1, null, null, 0.0));
+         AiWallJump.WallFrame var20 = new AiWallJump.WallFrame(var2.getX() + 0.5, var2.getZ() + 0.5, var10, var12, var14, var19);
+         List var21 = List.of(new AiWallJump.SearchNode(var1, null, null, 0.0));
          int var22 = 0;
 
          for (BlockPos var24 : var3) {
@@ -162,7 +162,7 @@ public final class AiWallJump {
             }
 
             if (var25) {
-               AiJumpSolver.JumpPlan var26 = putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var1, (AiWallJump.Inner_TableCache)var21.getFirst(), var24, var14);
+               AiJumpSolver.JumpPlan var26 = putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var1, (AiWallJump.SearchNode)var21.getFirst(), var24, var14);
                if (var15 == null || var26.ticks() < var15.ticks() || var26.ticks() == var15.ticks() && var26.margin() > var15.margin()) {
                   var15 = var26;
                }
@@ -173,11 +173,11 @@ public final class AiWallJump {
       return var15;
    }
 
-   private static List<AiWallJump.Inner_TableCache> putAt(
+   private static List<AiWallJump.SearchNode> putAt(
       AiPhysics.PhysicsWorld var0,
       double var1,
-      AiWallJump.Inner_CacheHelper var3,
-      List<AiWallJump.Inner_TableCache> var4,
+      AiWallJump.WallFrame var3,
+      List<AiWallJump.SearchNode> var4,
       BlockPos var5,
       int var6,
       boolean var7,
@@ -193,7 +193,7 @@ public final class AiWallJump {
       boolean[] var17 = var16 ? new boolean[]{true, false} : new boolean[]{true};
       boolean var18 = var8 && var1 != Math.floor(var1);
 
-      for (AiWallJump.Inner_TableCache var20 : var4) {
+      for (AiWallJump.SearchNode var20 : var4) {
          putAt(var0, var1, var3, var20, var15, var9, !Float.isNaN(var11), var10 && var6 == 1, var18, var11, var12);
          if (var8) {
             putAt(var0, var1, var3, var20, var15, var9);
@@ -207,7 +207,7 @@ public final class AiWallJump {
                for (float var77 : var56) {
                   float var79 = var3.yaw() + var77 * var3.side();
                   float var81 = var11;
-                  AiWallJump.Inner_TableCache var83 = var20;
+                  AiWallJump.SearchNode var83 = var20;
 
                   for (int var85 = 0; var85 < var58; var85++) {
                      var81 = Float.isNaN(var81) ? var79 : var81 + Math.clamp(putAt(var79 - var81), -var12, var12);
@@ -229,11 +229,11 @@ public final class AiWallJump {
                for (boolean var30 : var26 > 0 ? var17 : new boolean[]{false}) {
                   for (int var34 : var22) {
                      AiPhysics.MoveInput var35 = new AiPhysics.MoveInput(var26, var34, false, var30, false, var3.yaw());
-                     AiWallJump.Inner_TableCache var36 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var20, var35, var9);
+                     AiWallJump.SearchNode var36 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var20, var35, var9);
                      if (var36 != null && var36.body().onGround()) {
                         putAt(var0, var1, var3, var36, var15, var9, false, var10, false);
                         if (var10) {
-                           AiWallJump.Inner_TableCache var37 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var36, var35, var9);
+                           AiWallJump.SearchNode var37 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var36, var35, var9);
                            if (var37 != null && var37.body().onGround()) {
                               putAt(var0, var1, var3, var37, var15, var9, false, true, false);
                            }
@@ -246,16 +246,16 @@ public final class AiWallJump {
       }
 
       List var54 = var15;
-      ArrayList<AiWallJump.Inner_TableCache> var55 = new ArrayList<>();
+      ArrayList<AiWallJump.SearchNode> var55 = new ArrayList<>();
 
       for (int var57 = 1; var57 <= 18 && !var54.isEmpty(); var57++) {
          if (Thread.currentThread().isInterrupted()) {
             return List.of();
          }
 
-         ArrayList<AiWallJump.Inner_TableCache> var59 = new ArrayList<>();
+         ArrayList<AiWallJump.SearchNode> var59 = new ArrayList<>();
 
-         for (AiWallJump.Inner_TableCache var63 : (Iterable<AiWallJump.Inner_TableCache>)(Iterable<?>)(var54)) {
+         for (AiWallJump.SearchNode var63 : (Iterable<AiWallJump.SearchNode>)(Iterable<?>)(var54)) {
             AiPhysics.MotionState var65 = var63.body();
             if (var65.onGround()) {
                if (Math.abs(var3.along(var65) - var13) > 1.0) {
@@ -265,14 +265,14 @@ public final class AiWallJump {
                if (var7) {
                   double var67 = AiJumpSolver.settledLandingMargin(var0, var65, var5, var1, var3.yaw());
                   if (var67 >= 0.01) {
-                     var55.add(new AiWallJump.Inner_TableCache(var65, var63.input(), var63.parent(), -var67));
+                     var55.add(new AiWallJump.SearchNode(var65, var63.input(), var63.parent(), -var67));
                      continue;
                   }
                } else {
                   double var68 = putAt(var3, var13, var65, var9);
                   double var73 = var10 && var6 == 1 ? 0.5 : 0.6;
                   if (var3.advance(var65) >= 0.17 && var3.across(var65) >= var73) {
-                     var55.add(new AiWallJump.Inner_TableCache(var65, var63.input(), var63.parent(), var68));
+                     var55.add(new AiWallJump.SearchNode(var65, var63.input(), var63.parent(), var68));
                      continue;
                   }
 
@@ -288,7 +288,7 @@ public final class AiWallJump {
                for (int var80 = -1; var80 <= 1; var80++) {
                   for (boolean var88 : var69 ? new boolean[]{true, false} : new boolean[]{false}) {
                      AiPhysics.MoveInput var89 = new AiPhysics.MoveInput(var78, var80, false, var78 > 0 && !var69 && !var88, var88, var3.yaw());
-                     AiWallJump.Inner_TableCache var90 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var63, var89, var9);
+                     AiWallJump.SearchNode var90 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var63, var89, var9);
                      if (var90 != null && (var90.body().onGround() || var57 < 12)) {
                         AiPhysics.MotionState var38 = var90.body();
                         double var39 = var3.along(var38);
@@ -332,7 +332,7 @@ public final class AiWallJump {
                            }
                         }
 
-                        var59.add(new AiWallJump.Inner_TableCache(var38, var89, var63, var52));
+                        var59.add(new AiWallJump.SearchNode(var38, var89, var63, var52));
                      }
                   }
                }
@@ -352,10 +352,10 @@ public final class AiWallJump {
    private static void putAt(
       AiPhysics.PhysicsWorld var0,
       double var1,
-      AiWallJump.Inner_CacheHelper var3,
+      AiWallJump.WallFrame var3,
       double var4,
-      AiWallJump.Inner_TableCache var6,
-      List<AiWallJump.Inner_TableCache> var7,
+      AiWallJump.SearchNode var6,
+      List<AiWallJump.SearchNode> var7,
       boolean[] var8,
       boolean var9
    ) {
@@ -363,9 +363,9 @@ public final class AiWallJump {
       List var11 = List.of(var6);
 
       for (int var12 = 0; var12 < 7 && !var11.isEmpty(); var12++) {
-         ArrayList<AiWallJump.Inner_TableCache> var13 = new ArrayList<>();
+         ArrayList<AiWallJump.SearchNode> var13 = new ArrayList<>();
 
-         for (AiWallJump.Inner_TableCache var15 : (Iterable<AiWallJump.Inner_TableCache>)(Iterable<?>)(var11)) {
+         for (AiWallJump.SearchNode var15 : (Iterable<AiWallJump.SearchNode>)(Iterable<?>)(var11)) {
             float var16 = var15.input() != null ? var15.input().yaw() : 0.0F / 0.0F;
 
             for (boolean var20 : var8) {
@@ -373,7 +373,7 @@ public final class AiWallJump {
                   float var25 = var3.yaw() + var24 * var3.side();
                   if (Float.isNaN(var16) || !(Math.abs(putAt(var25 - var16)) > 30.01F)) {
                      AiPhysics.MoveInput var26 = AiPhysics.MoveInput.run(var25, var20);
-                     AiWallJump.Inner_TableCache var27 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var15, var26, var9);
+                     AiWallJump.SearchNode var27 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var15, var26, var9);
                      if (var27 != null && var27.body().onGround()) {
                         AiPhysics.MotionState var28 = var27.body();
                         double var29 = var3.along(var28);
@@ -381,7 +381,7 @@ public final class AiWallJump {
                         double var33 = var3.advance(var28);
                         double var35 = 0.18;
                         double var37 = 0.4 * Math.abs(var4 - 1.2 - var29) + 1.8 * Math.abs(var31 - var35) - 1.2 * var33;
-                        var13.add(new AiWallJump.Inner_TableCache(var28, var26, var15, var37));
+                        var13.add(new AiWallJump.SearchNode(var28, var26, var15, var37));
                         putAt(var0, var1, var3, var27, var7, var9, true);
                      }
                   }
@@ -396,9 +396,9 @@ public final class AiWallJump {
    private static void putAt(
       AiPhysics.PhysicsWorld var0,
       double var1,
-      AiWallJump.Inner_CacheHelper var3,
-      AiWallJump.Inner_TableCache var4,
-      List<AiWallJump.Inner_TableCache> var5,
+      AiWallJump.WallFrame var3,
+      AiWallJump.SearchNode var4,
+      List<AiWallJump.SearchNode> var5,
       boolean var6
    ) {
       List var7 = List.of(var4);
@@ -406,20 +406,20 @@ public final class AiWallJump {
       boolean[] var9 = var8 ? new boolean[]{true, false} : new boolean[]{true};
 
       for (int var10 = 0; var10 < 7 && !var7.isEmpty(); var10++) {
-         ArrayList<AiWallJump.Inner_TableCache> var11 = new ArrayList<>();
+         ArrayList<AiWallJump.SearchNode> var11 = new ArrayList<>();
 
-         for (AiWallJump.Inner_TableCache var13 : (Iterable<AiWallJump.Inner_TableCache>)(Iterable<?>)(var7)) {
+         for (AiWallJump.SearchNode var13 : (Iterable<AiWallJump.SearchNode>)(Iterable<?>)(var7)) {
             for (boolean var17 : var9) {
                for (float var21 : new float[]{0.0F, -30.0F, -45.0F, -60.0F, -80.0F, -100.0F, -120.0F, 30.0F}) {
                   AiPhysics.MoveInput var22 = AiPhysics.MoveInput.run(var3.yaw() + var21 * var3.side(), var17);
-                  AiWallJump.Inner_TableCache var23 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var13, var22, var6);
+                  AiWallJump.SearchNode var23 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var13, var22, var6);
                   if (var23 != null && var23.body().onGround()) {
                      AiPhysics.MotionState var24 = var23.body();
                      double var25 = var3.advance(var24);
                      double var27 = Math.abs(0.15 - var3.along(var24) - 0.7 * var25)
                         + 1.7 * Math.abs(0.67 - var3.across(var24) - 0.7 * var3.drift(var24))
                         - 0.3 * var25;
-                     var11.add(new AiWallJump.Inner_TableCache(var24, var22, var13, var27));
+                     var11.add(new AiWallJump.SearchNode(var24, var22, var13, var27));
                      putAt(var0, var1, var3, var23, var5, var6, false, false, var8);
                   }
                }
@@ -430,7 +430,7 @@ public final class AiWallJump {
       }
    }
 
-   private static double putAt(AiWallJump.Inner_CacheHelper var0, double var1, AiPhysics.MotionState var3, boolean var4) {
+   private static double putAt(AiWallJump.WallFrame var0, double var1, AiPhysics.MotionState var3, boolean var4) {
       double var5 = var0.across(var3);
       double var7 = var4 ? 8.0 * Math.max(0.0, 0.8045 - var5) : 0.0;
       return 1.7 * Math.abs(var0.along(var3) - var1 - 0.14)
@@ -443,9 +443,9 @@ public final class AiWallJump {
    private static void fill(
       AiPhysics.PhysicsWorld var0,
       double var1,
-      AiWallJump.Inner_CacheHelper var3,
-      AiWallJump.Inner_TableCache var4,
-      List<AiWallJump.Inner_TableCache> var5,
+      AiWallJump.WallFrame var3,
+      AiWallJump.SearchNode var4,
+      List<AiWallJump.SearchNode> var5,
       boolean var6
    ) {
       putAt(var0, var1, var3, var4, var5, var6, false, false, false);
@@ -454,9 +454,9 @@ public final class AiWallJump {
    private static void putAt(
       AiPhysics.PhysicsWorld var0,
       double var1,
-      AiWallJump.Inner_CacheHelper var3,
-      AiWallJump.Inner_TableCache var4,
-      List<AiWallJump.Inner_TableCache> var5,
+      AiWallJump.WallFrame var3,
+      AiWallJump.SearchNode var4,
+      List<AiWallJump.SearchNode> var5,
       boolean var6,
       boolean var7
    ) {
@@ -466,9 +466,9 @@ public final class AiWallJump {
    private static void putAt(
       AiPhysics.PhysicsWorld var0,
       double var1,
-      AiWallJump.Inner_CacheHelper var3,
-      AiWallJump.Inner_TableCache var4,
-      List<AiWallJump.Inner_TableCache> var5,
+      AiWallJump.WallFrame var3,
+      AiWallJump.SearchNode var4,
+      List<AiWallJump.SearchNode> var5,
       boolean var6,
       boolean var7,
       boolean var8
@@ -479,9 +479,9 @@ public final class AiWallJump {
    private static void putAt(
       AiPhysics.PhysicsWorld var0,
       double var1,
-      AiWallJump.Inner_CacheHelper var3,
-      AiWallJump.Inner_TableCache var4,
-      List<AiWallJump.Inner_TableCache> var5,
+      AiWallJump.WallFrame var3,
+      AiWallJump.SearchNode var4,
+      List<AiWallJump.SearchNode> var5,
       boolean var6,
       boolean var7,
       boolean var8,
@@ -493,9 +493,9 @@ public final class AiWallJump {
    private static void putAt(
       AiPhysics.PhysicsWorld var0,
       double var1,
-      AiWallJump.Inner_CacheHelper var3,
-      AiWallJump.Inner_TableCache var4,
-      List<AiWallJump.Inner_TableCache> var5,
+      AiWallJump.WallFrame var3,
+      AiWallJump.SearchNode var4,
+      List<AiWallJump.SearchNode> var5,
       boolean var6,
       boolean var7,
       boolean var8,
@@ -518,14 +518,14 @@ public final class AiWallJump {
          float var20 = var3.yaw() + var19 * var3.side();
          if (Float.isNaN(var14) || !(Math.abs(putAt(var20 - var14)) > var15)) {
             AiPhysics.MoveInput var21 = AiPhysics.MoveInput.jump(var20, true);
-            AiWallJump.Inner_TableCache var22 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var4, var21, var6);
+            AiWallJump.SearchNode var22 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var4, var21, var6);
             if (var22 != null && !var22.body().onGround() && var22.body().y() > var1 + 0.2) {
                var5.add(var22);
             }
 
             if (var12 || var9) {
                AiPhysics.MoveInput var23 = AiPhysics.MoveInput.jump(var20, false);
-               AiWallJump.Inner_TableCache var24 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var4, var23, var6);
+               AiWallJump.SearchNode var24 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var4, var23, var6);
                if (var24 != null && !var24.body().onGround() && var24.body().y() > var1 + 0.2) {
                   var5.add(var24);
                }
@@ -534,8 +534,8 @@ public final class AiWallJump {
       }
    }
 
-   private static AiWallJump.Inner_TableCache putAt_RingCodec_TableCac_TokenCore_TaskStat(
-      AiPhysics.PhysicsWorld var0, double var1, AiWallJump.Inner_TableCache var3, AiPhysics.MoveInput var4, boolean var5
+   private static AiWallJump.SearchNode putAt_RingCodec_TableCac_TokenCore_TaskStat(
+      AiPhysics.PhysicsWorld var0, double var1, AiWallJump.SearchNode var3, AiPhysics.MoveInput var4, boolean var5
    ) {
       AiPhysics.MotionState var6 = var3.body();
       AiPhysics.MotionState var7 = AiPhysics.step(var6, var4, var0);
@@ -545,19 +545,19 @@ public final class AiWallJump {
          && !AiPhysics.hitsStrictHazard(var0, var6, var7)
          && !AiJumpSolver.isInFluid(var0, var7)) {
          return !var5 || !AiPaceScript.value(var0, var7) && !AiPaceScript.readEx(var0, var6, var7) && !AiPaceScript.value(var0, var6, var7)
-            ? new AiWallJump.Inner_TableCache(var7, var4, var3, 0.0)
+            ? new AiWallJump.SearchNode(var7, var4, var3, 0.0)
             : null;
       } else {
          return null;
       }
    }
 
-   private static List<AiWallJump.Inner_TableCache> putAt(List<AiWallJump.Inner_TableCache> var0, int var1) {
-      var0.sort(Comparator.comparingDouble(AiWallJump.Inner_TableCache::score));
+   private static List<AiWallJump.SearchNode> putAt(List<AiWallJump.SearchNode> var0, int var1) {
+      var0.sort(Comparator.comparingDouble(AiWallJump.SearchNode::score));
       ArrayList var2 = new ArrayList(var1);
       HashSet<Long> var3 = new HashSet<>();
 
-      for (AiWallJump.Inner_TableCache var5 : var0) {
+      for (AiWallJump.SearchNode var5 : var0) {
          AiPhysics.MotionState var6 = var5.body();
          long var7 = (Math.round(var6.x() * 64.0) & 2047L) << 23
             | (Math.round(var6.z() * 64.0) & 2047L) << 12
@@ -612,14 +612,14 @@ public final class AiWallJump {
             new AiPhysics.MoveInput(0.0, 1.0, false, false, true, var14),
             new AiPhysics.MoveInput(0.0, -1.0, false, false, true, var14)
          };
-         List var16 = List.of(new AiWallJump.Inner_TableCache(var1, null, null, Math.hypot(var1.x() - var5, var1.z() - var7)));
-         ArrayList<AiWallJump.Inner_TableCache> var17 = new ArrayList<>(16);
+         List var16 = List.of(new AiWallJump.SearchNode(var1, null, null, Math.hypot(var1.x() - var5, var1.z() - var7)));
+         ArrayList<AiWallJump.SearchNode> var17 = new ArrayList<>(16);
          HashSet<Long> var18 = new HashSet<>();
 
          for (int var19 = 0; var19 < 24 && var17.size() < 14 && !var16.isEmpty(); var19++) {
-            ArrayList<AiWallJump.Inner_TableCache> var20 = new ArrayList<>();
+            ArrayList<AiWallJump.SearchNode> var20 = new ArrayList<>();
 
-            for (AiWallJump.Inner_TableCache var22 : (Iterable<AiWallJump.Inner_TableCache>)(Iterable<?>)(var16)) {
+            for (AiWallJump.SearchNode var22 : (Iterable<AiWallJump.SearchNode>)(Iterable<?>)(var16)) {
                AiPhysics.MotionState var23 = var22.body();
 
                for (AiPhysics.MoveInput var27 : var15) {
@@ -633,7 +633,7 @@ public final class AiWallJump {
                      double var29 = Math.hypot(var28.x() - var5, var28.z() - var7);
                      double var31 = var28.speed();
                      double var33 = Math.hypot(var28.x() + var28.vx() * 1.2026 - var5, var28.z() + var28.vz() * 1.2026 - var7);
-                     AiWallJump.Inner_TableCache var35 = new AiWallJump.Inner_TableCache(
+                     AiWallJump.SearchNode var35 = new AiWallJump.SearchNode(
                         var28, var27, var22, var33 + 0.12 * var31 + (var28.pose() == 0 ? 0.0 : 0.004)
                      );
                      if (var29 <= 0.035 && var31 <= 0.005 && var28.pose() == 0) {
@@ -648,14 +648,14 @@ public final class AiWallJump {
                }
             }
 
-            var20.sort(Comparator.comparingDouble(AiWallJump.Inner_TableCache::score));
+            var20.sort(Comparator.comparingDouble(AiWallJump.SearchNode::score));
             HashSet<Long> var41 = new HashSet<>();
-            ArrayList<AiWallJump.Inner_TableCache> var43 = new ArrayList<>(32);
+            ArrayList<AiWallJump.SearchNode> var43 = new ArrayList<>(32);
             var var45 = var20.iterator();
 
             while (true) {
                if (var45.hasNext()) {
-                  AiWallJump.Inner_TableCache var47 = (AiWallJump.Inner_TableCache)var45.next();
+                  AiWallJump.SearchNode var47 = (AiWallJump.SearchNode)var45.next();
                   AiPhysics.MotionState var49 = var47.body();
                   long var51 = (Math.round((var49.x() - var5) * 250.0) & 2047L) << 33
                      | (Math.round((var49.z() - var7) * 250.0) & 2047L) << 22
@@ -688,11 +688,11 @@ public final class AiWallJump {
             int var42 = var40 ? Math.min(var17.size(), 2) : Math.min(var17.size(), 8);
 
             for (int var44 = 0; var44 < var42; var44++) {
-               AiWallJump.Inner_TableCache var46 = (AiWallJump.Inner_TableCache)var17.get(var44);
+               AiWallJump.SearchNode var46 = (AiWallJump.SearchNode)var17.get(var44);
                ArrayList<AiPhysics.MoveInput> var48 = new ArrayList<>(28);
                ArrayDeque var50 = new ArrayDeque();
 
-               for (AiWallJump.Inner_TableCache var52 = var46; var52.input() != null; var52 = var52.parent()) {
+               for (AiWallJump.SearchNode var52 = var46; var52.input() != null; var52 = var52.parent()) {
                   var50.addFirst(var52.input());
                }
 
@@ -808,11 +808,11 @@ public final class AiWallJump {
    }
 
    private static AiJumpSolver.JumpPlan putAt_IoUtil_TextState_TokenCore_TaskStat(
-      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiWallJump.Inner_TableCache var2, BlockPos var3, float var4
+      AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiWallJump.SearchNode var2, BlockPos var3, float var4
    ) {
       ArrayDeque var5 = new ArrayDeque();
 
-      for (AiWallJump.Inner_TableCache var6 = var2; var6.input() != null; var6 = var6.parent()) {
+      for (AiWallJump.SearchNode var6 = var2; var6.input() != null; var6 = var6.parent()) {
          var5.addFirst(var6.input());
       }
 
@@ -831,7 +831,7 @@ public final class AiWallJump {
       );
    }
 
-   private record Inner_CacheHelper(double x, double z, double ux, double uz, float yaw, int side) {
+   private record WallFrame(double x, double z, double ux, double uz, float yaw, int side) {
       double along(AiPhysics.MotionState var1) {
          return (var1.x() - this.x) * this.ux + (var1.z() - this.z) * this.uz;
       }
@@ -849,6 +849,6 @@ public final class AiWallJump {
       }
    }
 
-   private record Inner_TableCache(AiPhysics.MotionState body, AiPhysics.MoveInput input, AiWallJump.Inner_TableCache parent, double score) {
+   private record SearchNode(AiPhysics.MotionState body, AiPhysics.MoveInput input, AiWallJump.SearchNode parent, double score) {
    }
 }

@@ -13,7 +13,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    public String itemName = "";
    public MacroItemTarget itemTarget = new MacroItemTarget();
    public int slot = -1;
-   public UseItemAction.Inner_DataUtil useMode = UseItemAction.Inner_DataUtil.AUTOMATIC;
+   public UseItemAction.UseMode useMode = UseItemAction.UseMode.AUTOMATIC;
    public boolean waitForFinish = true;
    public int holdTicks = 20;
    public int useCount = 1;
@@ -93,9 +93,9 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
          }
 
          try {
-            this.useMode = UseItemAction.Inner_DataUtil.valueOf(modeName);
+            this.useMode = UseItemAction.UseMode.valueOf(modeName);
          } catch (IllegalArgumentException ignored) {
-            this.useMode = UseItemAction.Inner_DataUtil.AUTOMATIC;
+            this.useMode = UseItemAction.UseMode.AUTOMATIC;
          }
       }
 
@@ -159,7 +159,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
       String count = this.useCount > 1 ? " x" + this.useCount : "";
       String wait = this.waitForFinish ? ", wait" : "";
       String sneakLabel = this.sneak ? ", sneak" : "";
-      String base = this.useMode == UseItemAction.Inner_DataUtil.CUSTOM_HOLD
+      String base = this.useMode == UseItemAction.UseMode.CUSTOM_HOLD
          ? "Use Item (" + item + ", hold " + this.holdTicks + "t" + wait + sneakLabel + ")"
          : "Use Item (" + item + count + wait + sneakLabel + ")";
       return base + GuiWaitAware.waitSuffix(this);
@@ -190,7 +190,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
       return target;
    }
 
-   public enum Inner_DataUtil {
+   public enum UseMode {
       AUTOMATIC,
       CUSTOM_HOLD;
    }

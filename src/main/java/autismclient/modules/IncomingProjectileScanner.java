@@ -30,48 +30,48 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class IncomingProjectileScanner {
-   static IncomingProjectileScanner.Inner_StreamUtil init(Entity entity) {
+   static IncomingProjectileScanner.ProjectileKind init(Entity entity) {
       if (entity instanceof Fireball) {
-         return IncomingProjectileScanner.Inner_StreamUtil.FIREBALL;
+         return IncomingProjectileScanner.ProjectileKind.FIREBALL;
       } else if (entity instanceof AbstractArrow) {
-         return IncomingProjectileScanner.Inner_StreamUtil.ARROW;
+         return IncomingProjectileScanner.ProjectileKind.ARROW;
       } else if (entity instanceof Snowball) {
-         return IncomingProjectileScanner.Inner_StreamUtil.SNOWBALL;
+         return IncomingProjectileScanner.ProjectileKind.SNOWBALL;
       } else {
-         return entity instanceof ThrownEnderpearl ? IncomingProjectileScanner.Inner_StreamUtil.PEARL : null;
+         return entity instanceof ThrownEnderpearl ? IncomingProjectileScanner.ProjectileKind.PEARL : null;
       }
    }
 
-   static IncomingProjectileScanner.Inner_StreamUtil init(ItemStack stack) {
+   static IncomingProjectileScanner.ProjectileKind init(ItemStack stack) {
       if (stack.is(Items.BOW) || stack.is(Items.CROSSBOW)) {
-         return IncomingProjectileScanner.Inner_StreamUtil.ARROW;
+         return IncomingProjectileScanner.ProjectileKind.ARROW;
       } else if (stack.is(Items.SNOWBALL)) {
-         return IncomingProjectileScanner.Inner_StreamUtil.SNOWBALL;
+         return IncomingProjectileScanner.ProjectileKind.SNOWBALL;
       } else if (stack.is(Items.ENDER_PEARL)) {
-         return IncomingProjectileScanner.Inner_StreamUtil.PEARL;
+         return IncomingProjectileScanner.ProjectileKind.PEARL;
       } else {
-         return stack.is(Items.FIRE_CHARGE) ? IncomingProjectileScanner.Inner_StreamUtil.FIREBALL : null;
+         return stack.is(Items.FIRE_CHARGE) ? IncomingProjectileScanner.ProjectileKind.FIREBALL : null;
       }
    }
 
-   static IncomingProjectileScanner.Inner_CachePool init(Projectile projectile, IncomingProjectileScanner.Inner_StreamUtil kind) {
+   static IncomingProjectileScanner.BallisticParams init(Projectile projectile, IncomingProjectileScanner.ProjectileKind kind) {
       boolean gravity = !projectile.isNoGravity();
-      IncomingProjectileScanner.Inner_CachePool var10000;
+      IncomingProjectileScanner.BallisticParams var10000;
       switch (kind) {
          case FIREBALL:
-            var10000 = new IncomingProjectileScanner.Inner_CachePool(0.0, 0.949999988079071, 0.800000011920929, ((Fireball)projectile).accelerationPower, true);
+            var10000 = new IncomingProjectileScanner.BallisticParams(0.0, 0.949999988079071, 0.800000011920929, ((Fireball)projectile).accelerationPower, true);
             break;
          case ARROW:
-            var10000 = new IncomingProjectileScanner.Inner_CachePool(gravity ? 0.05 : 0.0, 0.9900000095367432, 0.6000000238418579, 0.0, false);
+            var10000 = new IncomingProjectileScanner.BallisticParams(gravity ? 0.05 : 0.0, 0.9900000095367432, 0.6000000238418579, 0.0, false);
             break;
          default:
-            var10000 = new IncomingProjectileScanner.Inner_CachePool(gravity ? 0.03 : 0.0, 0.9900000095367432, 0.800000011920929, 0.0, true);
+            var10000 = new IncomingProjectileScanner.BallisticParams(gravity ? 0.03 : 0.0, 0.9900000095367432, 0.800000011920929, 0.0, true);
       }
 
       return var10000;
    }
 
-   static IncomingProjectileScanner.Inner_DataUtil init(Level level, Projectile projectile, IncomingProjectileScanner.Inner_StreamUtil kind) {
+   static IncomingProjectileScanner.ProjectilePath init(Level level, Projectile projectile, IncomingProjectileScanner.ProjectileKind kind) {
       return init_A_DataUtil_A_ConfigStore(
          init_A_ConfigStore_Level(level, projectile, projectile.getOwner(), projectile.tickCount, projectile.getBbWidth()),
          projectile.position(),
@@ -81,8 +81,8 @@ public final class IncomingProjectileScanner {
       );
    }
 
-   static IncomingProjectileScanner.Inner_DataUtil init(Level level, Player owner, IncomingProjectileScanner.Inner_StreamUtil kind, ProjectileBallistics.Inner_BufferHelper shot) {
-      ProjectileBallistics.Inner_DataUtil info = shot.info();
+   static IncomingProjectileScanner.ProjectilePath init(Level level, Player owner, IncomingProjectileScanner.ProjectileKind kind, ProjectileBallistics.ProjectileShot shot) {
+      ProjectileBallistics.ProjectileInfo info = shot.info();
       Vec3 velocity = ProjectileBallistics.init(owner.getYRot(), owner.getXRot(), shot);
       if (info.init_Z()) {
          Vec3 inherited = ProjectileBallistics.init(owner);
@@ -96,11 +96,11 @@ public final class IncomingProjectileScanner {
          velocity = velocity.add(inherited);
       }
 
-      IncomingProjectileScanner.Inner_CachePool physics = kind == IncomingProjectileScanner.Inner_StreamUtil.FIREBALL
-         ? new IncomingProjectileScanner.Inner_CachePool(0.0, 0.949999988079071, 0.800000011920929, 0.1, true)
-         : new IncomingProjectileScanner.Inner_CachePool(info.init_D(), info.write(), info.update(), 0.0, kind != IncomingProjectileScanner.Inner_StreamUtil.ARROW);
+      IncomingProjectileScanner.BallisticParams physics = kind == IncomingProjectileScanner.ProjectileKind.FIREBALL
+         ? new IncomingProjectileScanner.BallisticParams(0.0, 0.949999988079071, 0.800000011920929, 0.1, true)
+         : new IncomingProjectileScanner.BallisticParams(info.init_D(), info.write(), info.update(), 0.0, kind != IncomingProjectileScanner.ProjectileKind.ARROW);
       return init_A_DataUtil_A_ConfigStore(
-         init_A_ConfigStore_Level(level, owner, owner, 0, kind == IncomingProjectileScanner.Inner_StreamUtil.FIREBALL ? 1.0 : 0.25),
+         init_A_ConfigStore_Level(level, owner, owner, 0, kind == IncomingProjectileScanner.ProjectileKind.FIREBALL ? 1.0 : 0.25),
          new Vec3(owner.getX(), owner.getEyeY() - 0.1, owner.getZ()),
          velocity,
          physics,
@@ -108,11 +108,11 @@ public final class IncomingProjectileScanner {
       );
    }
 
-   private static IncomingProjectileScanner.Inner_ConfigStore init_A_ConfigStore_Level(final Level level, final Entity source, final Entity owner, final int age, final double width) {
+   private static IncomingProjectileScanner.TraceWorld init_A_ConfigStore_Level(final Level level, final Entity source, final Entity owner, final int age, final double width) {
       final MutableBlockPos cursor = new MutableBlockPos();
       final Set<Entity> pierced = new HashSet<>();
       final int pierce = source instanceof AbstractArrow arrow ? arrow.getPierceLevel() : 0;
-      return new IncomingProjectileScanner.Inner_ConfigStore() {
+      return new IncomingProjectileScanner.TraceWorld() {
          @Override
          public boolean init(Vec3 at) {
             cursor.set(at.x, at.y, at.z);
@@ -166,7 +166,7 @@ public final class IncomingProjectileScanner {
       };
    }
 
-   static IncomingProjectileScanner.Inner_DataUtil init_A_DataUtil_A_ConfigStore(IncomingProjectileScanner.Inner_ConfigStore world, Vec3 position, Vec3 velocity, IncomingProjectileScanner.Inner_CachePool physics, int maxTicks) {
+   static IncomingProjectileScanner.ProjectilePath init_A_DataUtil_A_ConfigStore(IncomingProjectileScanner.TraceWorld world, Vec3 position, Vec3 velocity, IncomingProjectileScanner.BallisticParams physics, int maxTicks) {
       if (init(position) && init(velocity)) {
          List<Vec3> points = new ArrayList<>(Math.min(maxTicks + 1, 121));
          points.add(position);
@@ -188,7 +188,7 @@ public final class IncomingProjectileScanner {
             if (hit != null) {
                points.add(hit.getLocation());
                double fraction = velocity.lengthSqr() < 1.0E-10 ? 0.0 : Math.min(1.0, position.distanceTo(hit.getLocation()) / velocity.length());
-               return new IncomingProjectileScanner.Inner_DataUtil(List.copyOf(points), hit, position, tick + fraction);
+               return new IncomingProjectileScanner.ProjectilePath(List.copyOf(points), hit, position, tick + fraction);
             }
 
             points.add(next);
@@ -202,13 +202,13 @@ public final class IncomingProjectileScanner {
             }
          }
 
-         return new IncomingProjectileScanner.Inner_DataUtil(List.copyOf(points), null, null, points.size() - 1);
+         return new IncomingProjectileScanner.ProjectilePath(List.copyOf(points), null, null, points.size() - 1);
       } else {
-         return new IncomingProjectileScanner.Inner_DataUtil(List.of(), null, null, 0.0);
+         return new IncomingProjectileScanner.ProjectilePath(List.of(), null, null, 0.0);
       }
    }
 
-   static Vec3 init(Vec3 velocity, IncomingProjectileScanner.Inner_CachePool physics, boolean water) {
+   static Vec3 init(Vec3 velocity, IncomingProjectileScanner.BallisticParams physics, boolean water) {
       if (physics.write() != 0.0) {
          velocity = velocity.add(velocity.normalize().scale(physics.write()));
       }
@@ -216,14 +216,14 @@ public final class IncomingProjectileScanner {
       return velocity.add(0.0, -physics.init_D(), 0.0).scale(water ? physics.read() : physics.load());
    }
 
-   static boolean init(IncomingProjectileScanner.Inner_DataUtil flight, IncomingProjectileScanner.Inner_StreamUtil kind, Vec3 player, double radius) {
+   static boolean init(IncomingProjectileScanner.ProjectilePath flight, IncomingProjectileScanner.ProjectileKind kind, Vec3 player, double radius) {
       double range = radius;
-      Vec3 landing = kind == IncomingProjectileScanner.Inner_StreamUtil.PEARL ? flight.load() : flight.init_Vec3();
+      Vec3 landing = kind == IncomingProjectileScanner.ProjectileKind.PEARL ? flight.load() : flight.init_Vec3();
       if (landing != null && landing.distanceToSqr(player) <= range * range) {
          return true;
       }
 
-      if (kind != IncomingProjectileScanner.Inner_StreamUtil.PEARL && flight.points().size() >= 2) {
+      if (kind != IncomingProjectileScanner.ProjectileKind.PEARL && flight.points().size() >= 2) {
          List<Vec3> points = flight.points();
          double initial = points.getFirst().distanceToSqr(player);
 
@@ -243,16 +243,16 @@ public final class IncomingProjectileScanner {
       }
    }
 
-   static boolean init(IncomingProjectileScanner.Inner_BufferHelper warning) {
+   static boolean init(IncomingProjectileScanner.ProjectileWarning warning) {
       return warning != null
-         && warning.kind() == IncomingProjectileScanner.Inner_StreamUtil.PEARL
+         && warning.kind() == IncomingProjectileScanner.ProjectileKind.PEARL
          && init(warning.init_A_DataUtil())
          && warning.shooter() != null
          && warning.shooter().isAlive()
          && !warning.entity().isRemoved();
    }
 
-   static boolean init(IncomingProjectileScanner.Inner_DataUtil flight) {
+   static boolean init(IncomingProjectileScanner.ProjectilePath flight) {
       return flight != null && flight.init_Vec3() != null && flight.load() != null && init(flight.load());
    }
 
@@ -260,18 +260,18 @@ public final class IncomingProjectileScanner {
       return Double.isFinite(v.x) && Double.isFinite(v.y) && Double.isFinite(v.z);
    }
 
-   public record Inner_BufferHelper(
-      Entity entity, Player shooter, IncomingProjectileScanner.Inner_StreamUtil kind, boolean init_Z, IncomingProjectileScanner.Inner_DataUtil init_A_DataUtil, int init_I
+   public record ProjectileWarning(
+      Entity entity, Player shooter, IncomingProjectileScanner.ProjectileKind kind, boolean init_Z, IncomingProjectileScanner.ProjectilePath init_A_DataUtil, int init_I
    ) {
       Vec3 init_Vec3() {
          return this.entity.position().add(0.0, this.init_Z ? this.entity.getEyeHeight() : this.entity.getBbHeight() * 0.5, 0.0);
       }
    }
 
-   record Inner_CachePool(double init_D, double load, double read, double write, boolean init_Z) {
+   record BallisticParams(double init_D, double load, double read, double write, boolean init_Z) {
    }
 
-   interface Inner_ConfigStore {
+   interface TraceWorld {
       boolean init(Vec3 var1);
 
       boolean load(Vec3 var1);
@@ -279,7 +279,7 @@ public final class IncomingProjectileScanner {
       HitResult init(Vec3 var1, Vec3 var2, int var3);
    }
 
-   public record Inner_DataUtil(List<Vec3> points, HitResult hit, Vec3 init_Vec3, double init_D) {
+   public record ProjectilePath(List<Vec3> points, HitResult hit, Vec3 init_Vec3, double init_D) {
       public Vec3 init_Vec3() {
          return this.hit == null ? null : this.hit.getLocation();
       }
@@ -289,7 +289,7 @@ public final class IncomingProjectileScanner {
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum ProjectileKind {
       FIREBALL("fireball", "Fireballs"),
       ARROW("arrow", "Arrows"),
       SNOWBALL("snowball", "Snowballs"),
@@ -299,7 +299,7 @@ public final class IncomingProjectileScanner {
       private final String load_Str;
       private ItemStack init_ItemStack;
 
-      Inner_StreamUtil(String key, String group) {
+      ProjectileKind(String key, String group) {
          this.init_Str = key;
          this.load_Str = group;
       }

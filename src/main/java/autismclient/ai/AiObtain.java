@@ -109,7 +109,7 @@ final class AiObtain {
                final Object startLevel = mc.level;
                final Object startConnection = mc.getConnection();
                final LocalPlayer startPlayer = mc.player;
-               final List<AiObtain.Inner_DataUtil> triedStrategies = new ArrayList<>();
+               final List<AiObtain.ObtainStrategy> triedStrategies = new ArrayList<>();
                final JsonArray attemptLog = new JsonArray();
                final Set<String> targetItemIds = new LinkedHashSet<>(target.itemIds());
                final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard().keeping(this.targetItemIds);
@@ -117,7 +117,7 @@ final class AiObtain {
                AiOperation survivalOp;
                String survivalReason = "";
                int survivalInterruptions;
-               AiObtain.Inner_DataUtil currentStrategy;
+               AiObtain.ObtainStrategy currentStrategy;
                String strategyDetail = "";
                Set<Item> craftableItemsCache;
                Set<Item> smeltableItemsCache;
@@ -136,7 +136,7 @@ final class AiObtain {
                String fallbackFamily;
                boolean cancelled;
                int countAtStrategyStart;
-               final EnumMap<AiObtain.Inner_DataUtil, Integer> progressRepeats = new EnumMap<>(AiObtain.Inner_DataUtil.class);
+               final EnumMap<AiObtain.ObtainStrategy, Integer> progressRepeats = new EnumMap<>(AiObtain.ObtainStrategy.class);
 
                @Override
                public AiOperation.Result tick() {
@@ -170,7 +170,7 @@ final class AiObtain {
                      }
 
                      if (this.strategyOp == null) {
-                        AiObtain.Inner_DataUtil next = this.nextStrategy();
+                        AiObtain.ObtainStrategy next = this.nextStrategy();
                         if (next == null) {
                            String why = this.triedStrategies.isEmpty()
                               ? AiObtain.unavailableReason(
@@ -223,13 +223,13 @@ final class AiObtain {
                            if (detour != null) {
                               this.strategyOp = AiRunDiagnostics.trace("obtain", "station detour for " + spec, detour);
                               return this.running(
-                                 this.furnaceDetourTried && this.currentStrategy == AiObtain.Inner_DataUtil.SMELT
+                                 this.furnaceDetourTried && this.currentStrategy == AiObtain.ObtainStrategy.SMELT
                                     ? "Smelting needs a furnace; making one first"
                                     : "Craft needs a crafting table; obtaining one first"
                               );
                            }
 
-                           if ((this.currentStrategy == AiObtain.Inner_DataUtil.MINE || this.currentStrategy == AiObtain.Inner_DataUtil.GATHER)
+                           if ((this.currentStrategy == AiObtain.ObtainStrategy.MINE || this.currentStrategy == AiObtain.ObtainStrategy.GATHER)
                               && !this.read_Z
                               && AiObtain.init_Str(result.dataJson()) != null) {
                               this.read_Z = true;
@@ -237,7 +237,7 @@ final class AiObtain {
                               return this.running("Mining tool broke; re-tooling before one more attempt");
                            }
 
-                           if (this.currentStrategy == AiObtain.Inner_DataUtil.GATHER && !this.familyFallbackUsed && AiObtain.isSourcesExhausted(result)) {
+                           if (this.currentStrategy == AiObtain.ObtainStrategy.GATHER && !this.familyFallbackUsed && AiObtain.isSourcesExhausted(result)) {
                               String family = this.familyFallbackSpec();
                               if (family != null && !this.isSourceNearby()) {
                                  this.familyFallbackUsed = true;
@@ -259,7 +259,7 @@ final class AiObtain {
                               }
                            }
 
-                           if (this.currentStrategy == AiObtain.Inner_DataUtil.CRAFT && this.craftMissingRetries < 2 && result.dataJson().contains("\"missing\"")) {
+                           if (this.currentStrategy == AiObtain.ObtainStrategy.CRAFT && this.craftMissingRetries < 2 && result.dataJson().contains("\"missing\"")) {
                               this.craftMissingRetries++;
                               this.currentStrategy = null;
                               return this.running("Craft still short on materials; fetching the rest");
@@ -315,18 +315,18 @@ final class AiObtain {
                   }
                }
 
-               AiObtain.Inner_DataUtil nextStrategy() {
-                  if (!this.triedStrategies.contains(AiObtain.Inner_DataUtil.CRAFT) && !this.craftableItems().isEmpty()) {
+               AiObtain.ObtainStrategy nextStrategy() {
+                  if (!this.triedStrategies.contains(AiObtain.ObtainStrategy.CRAFT) && !this.craftableItems().isEmpty()) {
                      AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
                      if (this.craftableItems().stream().anyMatch(item -> {
                         AiCraftPlanner.CraftPlan plan = AiCraftPlanner.init(graph, BuiltInRegistries.ITEM.getKey(item).toString(), goal);
                         return plan.complete() && !plan.steps().isEmpty();
                      })) {
-                        return AiObtain.Inner_DataUtil.CRAFT;
+                        return AiObtain.ObtainStrategy.CRAFT;
                      }
                   }
 
-                  if (!this.triedStrategies.contains(AiObtain.Inner_DataUtil.SMELT)
+                  if (!this.triedStrategies.contains(AiObtain.ObtainStrategy.SMELT)
                      && this.smeltableItems()
                         .stream()
                         .anyMatch(
@@ -337,11 +337,11 @@ final class AiObtain {
                                     >= goal - AiItems.countInInventory(this.init_af_DataUtil)
                               )
                         )) {
-                     return AiObtain.Inner_DataUtil.SMELT;
+                     return AiObtain.ObtainStrategy.SMELT;
                   }
 
                   if (allowMining
-                     && !this.triedStrategies.contains(AiObtain.Inner_DataUtil.GATHER)
+                     && !this.triedStrategies.contains(AiObtain.ObtainStrategy.GATHER)
                      && this.init_af_DataUtil
                         .items()
                         .stream()
@@ -352,18 +352,18 @@ final class AiObtain {
                               && this.canHarvestWithHeldTools(form.getBlock().defaultBlockState())
                               && AiTerrain.nearestBlockDistSqr(mc, List.of(form.getBlock()), 8) <= 64.0
                         )) {
-                     return AiObtain.Inner_DataUtil.GATHER;
+                     return AiObtain.ObtainStrategy.GATHER;
                   }
 
                   if (!allowCombat
-                     || this.triedStrategies.contains(AiObtain.Inner_DataUtil.HUNT)
+                     || this.triedStrategies.contains(AiObtain.ObtainStrategy.HUNT)
                      || this.sourceMobs().isEmpty()
                      || this.isSourceNearby()
                      || this.nearestLivingOf(this.sourceMobs(), 160.0) == null && !AiObtain.allPassive(this.sourceMobs())) {
-                     for (AiObtain.Inner_DataUtil strategy : AiObtain.Inner_DataUtil.values()) {
+                     for (AiObtain.ObtainStrategy strategy : AiObtain.ObtainStrategy.values()) {
                         if (!this.triedStrategies.contains(strategy)
-                           && (strategy != AiObtain.Inner_DataUtil.HUNT || allowCombat)
-                           && (strategy != AiObtain.Inner_DataUtil.GATHER && strategy != AiObtain.Inner_DataUtil.MINE || allowMining)
+                           && (strategy != AiObtain.ObtainStrategy.HUNT || allowCombat)
+                           && (strategy != AiObtain.ObtainStrategy.GATHER && strategy != AiObtain.ObtainStrategy.MINE || allowMining)
                            && this.isStrategyAvailable(strategy)) {
                            return strategy;
                         }
@@ -371,11 +371,11 @@ final class AiObtain {
 
                      return null;
                   } else {
-                     return AiObtain.Inner_DataUtil.HUNT;
+                     return AiObtain.ObtainStrategy.HUNT;
                   }
                }
 
-               boolean isStrategyAvailable(AiObtain.Inner_DataUtil strategy) {
+               boolean isStrategyAvailable(AiObtain.ObtainStrategy strategy) {
                   boolean var10000;
                   switch (strategy) {
                      case INVENTORY:
@@ -430,7 +430,7 @@ final class AiObtain {
                   return autismclient.ai.engine.MiningCost.bestToolSlot(mc, state, true, (block, tool) -> AiItems.canDropWantedItem(mc, block, tool, this.init_af_DataUtil.items())) >= 0;
                }
 
-               AiOperation operationFor(AiObtain.Inner_DataUtil strategy) {
+               AiOperation operationFor(AiObtain.ObtainStrategy strategy) {
                   int missing = goal - AiItems.countInInventory(this.init_af_DataUtil);
                   int legSeconds = Math.max(15, this.init_I_19());
                   switch (strategy) {
@@ -879,7 +879,7 @@ final class AiObtain {
                }
 
                AiOperation recoveryOperationFor(AiOperation.Result result) {
-                  if (this.currentStrategy == AiObtain.Inner_DataUtil.SMELT
+                  if (this.currentStrategy == AiObtain.ObtainStrategy.SMELT
                      && !this.furnaceDetourTried
                      && depth < 5
                      && result.dataJson().contains("\"minecraft:furnace\"")
@@ -911,7 +911,7 @@ final class AiObtain {
                      );
                   }
 
-                  if (this.currentStrategy != AiObtain.Inner_DataUtil.CRAFT || this.init_Z || depth >= 5) {
+                  if (this.currentStrategy != AiObtain.ObtainStrategy.CRAFT || this.init_Z || depth >= 5) {
                      return null;
                   }
 
@@ -1178,7 +1178,7 @@ final class AiObtain {
                      return false;
                   }
 
-                  if (this.mineDeferred || this.triedStrategies.contains(AiObtain.Inner_DataUtil.MINE) || this.mineableSourceId() == null) {
+                  if (this.mineDeferred || this.triedStrategies.contains(AiObtain.ObtainStrategy.MINE) || this.mineableSourceId() == null) {
                      return false;
                   }
 
@@ -1303,7 +1303,7 @@ final class AiObtain {
 
                   JsonArray spent = new JsonArray();
 
-                  for (AiObtain.Inner_DataUtil strategy : this.triedStrategies) {
+                  for (AiObtain.ObtainStrategy strategy : this.triedStrategies) {
                      spent.add(strategy.name().toLowerCase(Locale.ROOT));
                   }
 
@@ -1963,7 +1963,7 @@ final class AiObtain {
       return entry;
    }
 
-   enum Inner_DataUtil {
+   enum ObtainStrategy {
       INVENTORY,
       TOOL,
       CRAFT,

@@ -111,7 +111,7 @@ public final class TrajectoryWorldRenderer {
          Vec3 forward = new Vec3(state.orientation.transform(new Vector3f(0.0F, 0.0F, -1.0F)));
          float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
          double near = mc.options.getCameraType().isFirstPerson() && camera.distanceToSqr(mc.player.getEyePosition(partial)) < 0.25 ? 0.75 : 0.06;
-         List<FireballBlastPredictor.Inner_DataUtil> blocks = TrajectoryStateCache.init(paths);
+         List<FireballBlastPredictor.DestroyedBlock> blocks = TrajectoryStateCache.init(paths);
          blastBlockCount = blocks.size();
          ThrownPearlTracker.Inner_DataUtil remembered = TrajectoryStateCache.rememberedPearl();
          if (remembered != null) {

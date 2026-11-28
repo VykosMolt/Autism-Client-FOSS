@@ -72,7 +72,7 @@ public final class BlinkPacketManager {
    private static final AtomicInteger reinjectingOutgoingCount = new AtomicInteger();
    private static volatile boolean flushIncomingNextTick;
    private static int heldTickCount;
-   private static final List<BlinkPacketManager.Inner_StreamUtil> policies = new CopyOnWriteArrayList<>();
+   private static final List<BlinkPacketManager.BlinkPolicy> policies = new CopyOnWriteArrayList<>();
    private static volatile boolean policyFlushIncomingRequested;
    private static volatile boolean policyFlushOutgoingRequested;
    private static volatile long lastErrorLogMs;
@@ -81,13 +81,13 @@ public final class BlinkPacketManager {
    private BlinkPacketManager() {
    }
 
-   public static void registerPolicy(BlinkPacketManager.Inner_StreamUtil policy) {
+   public static void registerPolicy(BlinkPacketManager.BlinkPolicy policy) {
       if (policy != null && !policies.contains(policy)) {
          policies.add(policy);
       }
    }
 
-   public static void unregisterPolicy(BlinkPacketManager.Inner_StreamUtil policy) {
+   public static void unregisterPolicy(BlinkPacketManager.BlinkPolicy policy) {
       if (policy != null) {
          policies.remove(policy);
       }
@@ -115,11 +115,11 @@ public final class BlinkPacketManager {
       return positions;
    }
 
-   private static BlinkPacketManager.Inner_DataUtil classifyWithPolicies(Packet<?> packet, boolean incoming) {
-      BlinkPacketManager.Inner_DataUtil merged = BlinkPacketManager.Inner_DataUtil.FLUSH;
+   private static BlinkPacketManager.PacketDecision classifyWithPolicies(Packet<?> packet, boolean incoming) {
+      BlinkPacketManager.PacketDecision merged = BlinkPacketManager.PacketDecision.FLUSH;
 
-      for (BlinkPacketManager.Inner_StreamUtil policy : policies) {
-         BlinkPacketManager.Inner_DataUtil hold;
+      for (BlinkPacketManager.BlinkPolicy policy : policies) {
+         BlinkPacketManager.PacketDecision hold;
          try {
             hold = policy.classify(packet, incoming);
          } catch (Throwable t) {
@@ -139,11 +139,11 @@ public final class BlinkPacketManager {
       boolean wasOutgoing = holdOutgoing;
       holdIncoming = incoming;
       holdOutgoing = outgoing;
-      if (wasIncoming && !incoming && !incomingQueue.isEmpty() && (policies.isEmpty() || classifyWithPolicies(null, true) != BlinkPacketManager.Inner_DataUtil.QUEUE)) {
+      if (wasIncoming && !incoming && !incomingQueue.isEmpty() && (policies.isEmpty() || classifyWithPolicies(null, true) != BlinkPacketManager.PacketDecision.QUEUE)) {
          flushIncoming();
       }
 
-      if (wasOutgoing && !outgoing && !outgoingQueue.isEmpty() && (policies.isEmpty() || classifyWithPolicies(null, false) != BlinkPacketManager.Inner_DataUtil.QUEUE)) {
+      if (wasOutgoing && !outgoing && !outgoingQueue.isEmpty() && (policies.isEmpty() || classifyWithPolicies(null, false) != BlinkPacketManager.PacketDecision.QUEUE)) {
          flushOutgoing();
       }
    }
@@ -164,7 +164,7 @@ public final class BlinkPacketManager {
       holdActions = actions;
       if (((wasMovement && !movement) || (wasActions && !actions))
          && !outgoingQueue.isEmpty()
-         && (policies.isEmpty() || classifyWithPolicies(null, false) != BlinkPacketManager.Inner_DataUtil.QUEUE)) {
+         && (policies.isEmpty() || classifyWithPolicies(null, false) != BlinkPacketManager.PacketDecision.QUEUE)) {
          flushOutgoing();
       }
    }
@@ -302,7 +302,7 @@ public final class BlinkPacketManager {
          clearQueues();
          auditDiscardClone();
          return false;
-      } else if (!policies.isEmpty() && classifyWithPolicies(packet, true) == BlinkPacketManager.Inner_DataUtil.QUEUE) {
+      } else if (!policies.isEmpty() && classifyWithPolicies(packet, true) == BlinkPacketManager.PacketDecision.QUEUE) {
          if (isExemptIncomingChatOrHurt(packet) || isExemptIncomingKeepAlivePacket(packet)) {
             return false;
          } else if (triggersIncomingFlush(packet)) {
@@ -335,7 +335,7 @@ public final class BlinkPacketManager {
          return false;
       }
 
-      if (!policies.isEmpty() && classifyWithPolicies(packet, false) == BlinkPacketManager.Inner_DataUtil.QUEUE) {
+      if (!policies.isEmpty() && classifyWithPolicies(packet, false) == BlinkPacketManager.PacketDecision.QUEUE) {
          if (!isExemptOutgoingChatPacket(packet) && !isExemptOutgoingControlPacket(packet)) {
             outgoingQueue.add(packet);
             return true;
@@ -377,11 +377,11 @@ public final class BlinkPacketManager {
    public static void processPolicyFlushes() {
       if ((!policies.isEmpty() || policyFlushIncomingRequested || policyFlushOutgoingRequested) && MC != null && MC.getConnection() != null) {
          if (!policies.isEmpty()) {
-            if (!holdIncoming && classifyWithPolicies(null, true) == BlinkPacketManager.Inner_DataUtil.FLUSH) {
+            if (!holdIncoming && classifyWithPolicies(null, true) == BlinkPacketManager.PacketDecision.FLUSH) {
                policyFlushIncomingRequested = true;
             }
 
-            if (!holdOutgoing && classifyWithPolicies(null, false) == BlinkPacketManager.Inner_DataUtil.FLUSH) {
+            if (!holdOutgoing && classifyWithPolicies(null, false) == BlinkPacketManager.PacketDecision.FLUSH) {
                policyFlushOutgoingRequested = true;
             }
          }
@@ -584,19 +584,19 @@ public final class BlinkPacketManager {
       return packet instanceof ServerboundKeepAlivePacket || packet instanceof ServerboundPongPacket || packet instanceof ServerboundResourcePackPacket;
    }
 
-   public enum Inner_DataUtil {
+   public enum PacketDecision {
       FLUSH(0),
       PASS(1),
       QUEUE(2);
 
       private final int priority;
 
-      Inner_DataUtil(int priority) {
+      PacketDecision(int priority) {
          this.priority = priority;
       }
    }
 
-   public interface Inner_StreamUtil {
-      BlinkPacketManager.Inner_DataUtil classify(Packet<?> var1, boolean var2);
+   public interface BlinkPolicy {
+      BlinkPacketManager.PacketDecision classify(Packet<?> var1, boolean var2);
    }
 }

@@ -311,7 +311,7 @@ final class AiPlan {
             String sub = tokens.remove(0).toLowerCase(Locale.ROOT);
 
             try {
-               AiToolCallParser.Inner_StreamUtil call = AiToolCallParser.init(
+               AiToolCallParser.ToolCall call = AiToolCallParser.init(
                   sub, tokens, player == null ? 0.0 : player.getX(), player == null ? 0.0 : player.getY(), player == null ? 0.0 : player.getZ()
                );
                return AiJson.objectOf("id", "step" + index, "capability", call.id(), "arguments", call.arguments());

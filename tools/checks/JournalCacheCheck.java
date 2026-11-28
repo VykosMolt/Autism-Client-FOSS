@@ -22,7 +22,7 @@ public class JournalCacheCheck {
       Path dir = Files.createTempDirectory("journals");
       AiScaffold.reset();
       Path live = dir.resolve("live.json");
-      AiScaffold.Inner_StreamUtil open = AiScaffold.init(live, List.of());
+      AiScaffold.JobScope open = AiScaffold.init(live, List.of());
       BlockPos pos = new BlockPos(1, 2, 3);
       AiScaffold.init(pos, Blocks.DIRT);
       check(open.init(pos) == Blocks.DIRT, "live scope records the scaffold");
@@ -35,7 +35,7 @@ public class JournalCacheCheck {
 
       // The live journal was never written, so a re-read would come back empty.
       check(!Files.exists(live), "live journal is still unsaved");
-      AiScaffold.Inner_StreamUtil again = AiScaffold.init(live, List.of());
+      AiScaffold.JobScope again = AiScaffold.init(live, List.of());
       check(again.init(pos) == Blocks.DIRT, "cache must not evict a journal a live scope still uses");
       System.out.println("PASS JournalCacheCheck");
    }

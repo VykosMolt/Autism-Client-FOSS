@@ -164,7 +164,7 @@ public final class ScrollableListView {
       return Math.max(0, maxBottom - y);
    }
 
-   public ScrollableListView.Inner_DataUtil getRowBounds(int rowY) {
+   public ScrollableListView.RowBounds getRowBounds(int rowY) {
       if (!this.isRowVisible(rowY)) {
          return null;
       }
@@ -172,7 +172,7 @@ public final class ScrollableListView {
       int drawY = Math.max(rowY, this.clipTop);
       int drawBottom = Math.min(rowY + this.rowHeight, this.getEffectiveClipBottom());
       int drawHeight = drawBottom - drawY;
-      return drawHeight <= 0 ? null : new ScrollableListView.Inner_DataUtil(this.clipLeft, drawY, this.clipRight - this.clipLeft, drawHeight);
+      return drawHeight <= 0 ? null : new ScrollableListView.RowBounds(this.clipLeft, drawY, this.clipRight - this.clipLeft, drawHeight);
    }
 
    public void beginFrame(GuiGraphicsExtractor ctx, int borderColor, int fillColor) {
@@ -181,27 +181,27 @@ public final class ScrollableListView {
       autismclient.gui.ui.UiClipStack.getInstance().push(ctx, autismclient.gui.f.NetHelper.init(this.clipLeft, this.clipTop, this.clipRight - this.clipLeft, this.clipBottom - this.clipTop));
    }
 
-   public void renderRows(GuiGraphicsExtractor ctx, Font textRenderer, List<? extends ScrollableListView.Inner_CachePool> rows, ScrollableListView.Inner_StreamUtil renderer) {
+   public void renderRows(GuiGraphicsExtractor ctx, Font textRenderer, List<? extends ScrollableListView.ListRow> rows, ScrollableListView.RowRenderer renderer) {
       int startRow = Math.max(0, this.getFirstVisibleRow() - 1);
       int endRow = Math.min(rows.size(), startRow + this.getVisibleRowCount() + 2);
 
       for (int i = startRow; i < endRow; i++) {
          int rowY = this.getRowY(i);
-         ScrollableListView.Inner_DataUtil bounds = this.getRowBounds(rowY);
+         ScrollableListView.RowBounds bounds = this.getRowBounds(rowY);
          if (bounds != null) {
-            ScrollableListView.Inner_CachePool row = rows.get(i);
+            ScrollableListView.ListRow row = rows.get(i);
             renderer.renderRow(ctx, textRenderer, row, i, bounds.x, bounds.y, bounds.width, bounds.height, rowY);
          }
       }
    }
 
-   public void forEachVisibleRow(GuiGraphicsExtractor ctx, int totalRows, BiConsumer<Integer, ScrollableListView.Inner_DataUtil> rowRenderer) {
+   public void forEachVisibleRow(GuiGraphicsExtractor ctx, int totalRows, BiConsumer<Integer, ScrollableListView.RowBounds> rowRenderer) {
       int startRow = Math.max(0, this.getFirstVisibleRow() - 1);
       int endRow = Math.min(totalRows, startRow + this.getVisibleRowCount() + 2);
 
       for (int i = startRow; i < endRow; i++) {
          int rowY = this.getRowY(i);
-         ScrollableListView.Inner_DataUtil bounds = this.getRowBounds(rowY);
+         ScrollableListView.RowBounds bounds = this.getRowBounds(rowY);
          if (bounds != null) {
             rowRenderer.accept(i, bounds);
          }
@@ -304,7 +304,7 @@ public final class ScrollableListView {
       return metrics != null && metrics.containsTrack(mouseX, mouseY);
    }
 
-   public interface Inner_CachePool {
+   public interface ListRow {
       String label();
 
       boolean isSelected();
@@ -312,13 +312,13 @@ public final class ScrollableListView {
       boolean isEnabled();
    }
 
-   public static class Inner_DataUtil {
+   public static class RowBounds {
       public final int x;
       public final int y;
       public final int width;
       public final int height;
 
-      public Inner_DataUtil(int x, int y, int width, int height) {
+      public RowBounds(int x, int y, int width, int height) {
          this.x = x;
          this.y = y;
          this.width = width;
@@ -327,7 +327,7 @@ public final class ScrollableListView {
    }
 
    @FunctionalInterface
-   public interface Inner_StreamUtil {
-      void renderRow(GuiGraphicsExtractor var1, Font var2, ScrollableListView.Inner_CachePool var3, int var4, int var5, int var6, int var7, int var8, int var9);
+   public interface RowRenderer {
+      void renderRow(GuiGraphicsExtractor var1, Font var2, ScrollableListView.ListRow var3, int var4, int var5, int var6, int var7, int var8, int var9);
    }
 }

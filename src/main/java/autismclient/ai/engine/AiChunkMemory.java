@@ -73,9 +73,9 @@ public final class AiChunkMemory {
       "gold_block"
    );
    private final Object init_Obj = new Object();
-   private final LinkedHashMap<Long, AiChunkMemory.Inner_DataUtil> init_LinkedHashMap = new LinkedHashMap<Long, AiChunkMemory.Inner_DataUtil>(256, 0.75F, true) {
+   private final LinkedHashMap<Long, AiChunkMemory.ChunkRecord> init_LinkedHashMap = new LinkedHashMap<Long, AiChunkMemory.ChunkRecord>(256, 0.75F, true) {
       @Override
-      protected boolean removeEldestEntry(Entry<Long, AiChunkMemory.Inner_DataUtil> eldest) {
+      protected boolean removeEldestEntry(Entry<Long, AiChunkMemory.ChunkRecord> eldest) {
          return this.size() > 4096;
       }
    };
@@ -158,9 +158,9 @@ public final class AiChunkMemory {
          Map<Integer, String> freshNotables = notables == null ? Map.of() : notables;
          long key = AiGridRevisions.chunkKey(cx, cz);
          synchronized (this.init_Obj) {
-            AiChunkMemory.Inner_DataUtil old = this.init_LinkedHashMap.get(key);
-            AiChunkMemory.Inner_DataUtil merged = old == null
-               ? new AiChunkMemory.Inner_DataUtil(yLo, height, fresh, init(freshNotables))
+            AiChunkMemory.ChunkRecord old = this.init_LinkedHashMap.get(key);
+            AiChunkMemory.ChunkRecord merged = old == null
+               ? new AiChunkMemory.ChunkRecord(yLo, height, fresh, init(freshNotables))
                : init_StateCache_DataUti_StateCache_DataUti(old, yLo, height, fresh, freshNotables);
             this.init_LinkedHashMap.put(key, merged);
             this.load_Set.add(key);
@@ -186,8 +186,8 @@ public final class AiChunkMemory {
       return capped;
    }
 
-   private static AiChunkMemory.Inner_DataUtil init_StateCache_DataUti_StateCache_DataUti(
-      AiChunkMemory.Inner_DataUtil old, int freshYLo, int freshHeight, byte[] fresh, Map<Integer, String> freshNotables
+   private static AiChunkMemory.ChunkRecord init_StateCache_DataUti_StateCache_DataUti(
+      AiChunkMemory.ChunkRecord old, int freshYLo, int freshHeight, byte[] fresh, Map<Integer, String> freshNotables
    ) {
       int newLo = Math.min(old.yLo, freshYLo);
       int newHi = Math.max(old.yLo + old.load, freshYLo + freshHeight);
@@ -232,11 +232,11 @@ public final class AiChunkMemory {
          }
       }
 
-      return new AiChunkMemory.Inner_DataUtil(newLo, newHeight, merged, notables, observed);
+      return new AiChunkMemory.ChunkRecord(newLo, newHeight, merged, notables, observed);
    }
 
    public AiPathfinder.CellInfo probeCell(int x, int y, int z) {
-      AiChunkMemory.Inner_DataUtil mem = this.init_StateCache_DataUti_I_I(x >> 4, z >> 4);
+      AiChunkMemory.ChunkRecord mem = this.init_StateCache_DataUti_I_I(x >> 4, z >> 4);
       if (mem == null) {
          return AiPathfinder.CellInfo.UNLOADED;
       }
@@ -265,7 +265,7 @@ public final class AiChunkMemory {
    }
 
    public AiPathfinder.LiveGridView.SectionSlice sectionSlice(int cx, int cz, int yLo, int height, int revision) {
-      AiChunkMemory.Inner_DataUtil mem = this.init_StateCache_DataUti_I_I(cx, cz);
+      AiChunkMemory.ChunkRecord mem = this.init_StateCache_DataUti_I_I(cx, cz);
       if (mem == null) {
          return null;
       }
@@ -310,9 +310,9 @@ public final class AiChunkMemory {
       return new AiPathfinder.LiveGridView.SectionSlice(flags, top16, digX4, mult10, revision);
    }
 
-   private AiChunkMemory.Inner_DataUtil init_StateCache_DataUti_I_I(int cx, int cz) {
+   private AiChunkMemory.ChunkRecord init_StateCache_DataUti_I_I(int cx, int cz) {
       long key = AiGridRevisions.chunkKey(cx, cz);
-      AiChunkMemory.Inner_DataUtil mem;
+      AiChunkMemory.ChunkRecord mem;
       synchronized (this.init_Obj) {
          mem = this.init_LinkedHashMap.get(key);
       }
@@ -324,17 +324,17 @@ public final class AiChunkMemory {
       return mem;
    }
 
-   public List<AiChunkMemory.Inner_CachePool> findRemembered(BlockPos origin, int radius, Predicate<String> idMatch) {
-      List<Entry<Long, AiChunkMemory.Inner_DataUtil>> snapshot;
+   public List<AiChunkMemory.RememberedBlock> findRemembered(BlockPos origin, int radius, Predicate<String> idMatch) {
+      List<Entry<Long, AiChunkMemory.ChunkRecord>> snapshot;
       synchronized (this.init_Obj) {
          snapshot = new ArrayList<>(this.init_LinkedHashMap.entrySet());
       }
 
       double radiusSqr = (double)radius * radius;
-      List<AiChunkMemory.Inner_CachePool> out = new ArrayList<>();
+      List<AiChunkMemory.RememberedBlock> out = new ArrayList<>();
 
-      for (Entry<Long, AiChunkMemory.Inner_DataUtil> entry : snapshot) {
-         AiChunkMemory.Inner_DataUtil mem = entry.getValue();
+      for (Entry<Long, AiChunkMemory.ChunkRecord> entry : snapshot) {
+         AiChunkMemory.ChunkRecord mem = entry.getValue();
          if (!mem.notables.isEmpty()) {
             int cx = (int)(entry.getKey() >> 32);
             int cz = (int)entry.getKey().longValue();
@@ -349,7 +349,7 @@ public final class AiChunkMemory {
                      BlockPos pos = new BlockPos((cx << 4) + (index & 15), mem.yLo + (index >> 8), (cz << 4) + (index >> 4 & 15));
                      double distanceSqr = pos.distSqr(origin);
                      if (distanceSqr <= radiusSqr) {
-                        out.add(new AiChunkMemory.Inner_CachePool(pos, Math.sqrt(distanceSqr), true, mem.observed[index >> 8]));
+                        out.add(new AiChunkMemory.RememberedBlock(pos, Math.sqrt(distanceSqr), true, mem.observed[index >> 8]));
                      }
                   }
                }
@@ -360,19 +360,19 @@ public final class AiChunkMemory {
       return out;
    }
 
-   public static List<AiChunkMemory.Inner_CachePool> merge(List<AiChunkMemory.Inner_CachePool> live, List<AiChunkMemory.Inner_CachePool> cached, int limit) {
-      Map<Long, AiChunkMemory.Inner_CachePool> byCell = new LinkedHashMap<>();
+   public static List<AiChunkMemory.RememberedBlock> merge(List<AiChunkMemory.RememberedBlock> live, List<AiChunkMemory.RememberedBlock> cached, int limit) {
+      Map<Long, AiChunkMemory.RememberedBlock> byCell = new LinkedHashMap<>();
 
-      for (AiChunkMemory.Inner_CachePool hit : live) {
+      for (AiChunkMemory.RememberedBlock hit : live) {
          byCell.putIfAbsent(hit.pos().asLong(), hit);
       }
 
-      for (AiChunkMemory.Inner_CachePool hit : cached) {
+      for (AiChunkMemory.RememberedBlock hit : cached) {
          byCell.putIfAbsent(hit.pos().asLong(), hit);
       }
 
-      List<AiChunkMemory.Inner_CachePool> merged = new ArrayList<>(byCell.values());
-      merged.sort(Comparator.comparingDouble(AiChunkMemory.Inner_CachePool::distance));
+      List<AiChunkMemory.RememberedBlock> merged = new ArrayList<>(byCell.values());
+      merged.sort(Comparator.comparingDouble(AiChunkMemory.RememberedBlock::distance));
       return merged.size() <= limit ? merged : merged.subList(0, limit);
    }
 
@@ -403,7 +403,7 @@ public final class AiChunkMemory {
    private void init_V() {
       Path dir = this.init_Path;
       long generation = this.generation;
-      Map<Long, AiChunkMemory.Inner_DataUtil> saving;
+      Map<Long, AiChunkMemory.ChunkRecord> saving;
       synchronized (this.init_Obj) {
          if (this.load_Set.isEmpty()) {
             return;
@@ -412,7 +412,7 @@ public final class AiChunkMemory {
          saving = new HashMap<>();
 
          for (Long key : this.load_Set) {
-            AiChunkMemory.Inner_DataUtil mem = this.init_LinkedHashMap.get(key);
+            AiChunkMemory.ChunkRecord mem = this.init_LinkedHashMap.get(key);
             if (mem != null) {
                saving.put(key, mem);
             }
@@ -426,11 +426,11 @@ public final class AiChunkMemory {
       }
    }
 
-   private void init_V_Path(Path dir, Map<Long, AiChunkMemory.Inner_DataUtil> saving, long generation) {
+   private void init_V_Path(Path dir, Map<Long, AiChunkMemory.ChunkRecord> saving, long generation) {
       try {
-         Map<Long, Map<Long, AiChunkMemory.Inner_DataUtil>> byRegion = new HashMap<>();
+         Map<Long, Map<Long, AiChunkMemory.ChunkRecord>> byRegion = new HashMap<>();
 
-         for (Entry<Long, AiChunkMemory.Inner_DataUtil> entry : saving.entrySet()) {
+         for (Entry<Long, AiChunkMemory.ChunkRecord> entry : saving.entrySet()) {
             int cx = (int)(entry.getKey() >> 32);
             int cz = (int)entry.getKey().longValue();
             byRegion.computeIfAbsent(AiGridRevisions.chunkKey(cx >> 5, cz >> 5), k -> new HashMap<>()).put(entry.getKey(), entry.getValue());
@@ -438,10 +438,10 @@ public final class AiChunkMemory {
 
          Files.createDirectories(dir);
 
-         for (Entry<Long, Map<Long, AiChunkMemory.Inner_DataUtil>> region : byRegion.entrySet()) {
+         for (Entry<Long, Map<Long, AiChunkMemory.ChunkRecord>> region : byRegion.entrySet()) {
             int rx = (int)(region.getKey() >> 32);
             int rz = (int)region.getKey().longValue();
-            Map<Long, AiChunkMemory.Inner_DataUtil> merged = new HashMap<>();
+            Map<Long, AiChunkMemory.ChunkRecord> merged = new HashMap<>();
             Path file = init_Path_Path(dir, rx, rz);
             if (Files.exists(file)) {
                try {
@@ -486,7 +486,7 @@ public final class AiChunkMemory {
                   Path file = init_Path_Path(dir, cx >> 5, cz >> 5);
                   if (Files.isRegularFile(file) && Files.size(file) <= 64000000L) {
                      byte[] bytes = Files.readAllBytes(file);
-                     AiChunkMemory.Inner_StreamUtil region = null;
+                     AiChunkMemory.RegionFile region = null;
                      try {
                         region = init(bytes);
                      } catch (Exception corrupt) {
@@ -540,10 +540,10 @@ public final class AiChunkMemory {
       return dir.resolve("r." + rx + "." + rz + ".bin.gz");
    }
 
-   static byte[] init_BArr_I(int regionX, int regionZ, Map<Long, AiChunkMemory.Inner_DataUtil> chunks) throws IOException {
+   static byte[] init_BArr_I(int regionX, int regionZ, Map<Long, AiChunkMemory.ChunkRecord> chunks) throws IOException {
       Map<String, Integer> palette = new LinkedHashMap<>();
 
-      for (AiChunkMemory.Inner_DataUtil mem : chunks.values()) {
+      for (AiChunkMemory.ChunkRecord mem : chunks.values()) {
          for (String id : mem.notables.values()) {
             palette.putIfAbsent(id, palette.size());
          }
@@ -564,10 +564,10 @@ public final class AiChunkMemory {
 
          out.writeInt(chunks.size());
 
-         for (Entry<Long, AiChunkMemory.Inner_DataUtil> entry : chunks.entrySet()) {
+         for (Entry<Long, AiChunkMemory.ChunkRecord> entry : chunks.entrySet()) {
             int cx = (int)(entry.getKey() >> 32);
             int cz = (int)entry.getKey().longValue();
-            AiChunkMemory.Inner_DataUtil mem = entry.getValue();
+            AiChunkMemory.ChunkRecord mem = entry.getValue();
             out.writeByte(cx - regionX * 32);
             out.writeByte(cz - regionZ * 32);
             out.writeShort(mem.yLo);
@@ -590,7 +590,7 @@ public final class AiChunkMemory {
       return raw.toByteArray();
    }
 
-   static AiChunkMemory.Inner_StreamUtil init(byte[] data) throws IOException {
+   static AiChunkMemory.RegionFile init(byte[] data) throws IOException {
       try (DataInputStream in = new DataInputStream(new GZIPInputStream(new ByteArrayInputStream(data)))) {
          if (in.readInt() != 1094929713 || in.readInt() != 2) {
             throw new IOException("Unsupported chunk-memory region");
@@ -614,7 +614,7 @@ public final class AiChunkMemory {
             throw new IOException("Bad chunk count");
          }
 
-         Map<Long, AiChunkMemory.Inner_DataUtil> chunks = new HashMap<>();
+         Map<Long, AiChunkMemory.ChunkRecord> chunks = new HashMap<>();
 
          for (int c = 0; c < chunkCount; c++) {
             int cx = regionX * 32 + in.readUnsignedByte();
@@ -653,31 +653,31 @@ public final class AiChunkMemory {
                notables.put(index, palette.get(paletteIndex));
             }
 
-            chunks.put(AiGridRevisions.chunkKey(cx, cz), new AiChunkMemory.Inner_DataUtil(yLo, height, packed, notables, observed));
+            chunks.put(AiGridRevisions.chunkKey(cx, cz), new AiChunkMemory.ChunkRecord(yLo, height, packed, notables, observed));
          }
 
-         return new AiChunkMemory.Inner_StreamUtil(regionX, regionZ, chunks);
+         return new AiChunkMemory.RegionFile(regionX, regionZ, chunks);
       }
    }
 
-   public record Inner_CachePool(BlockPos pos, double distance, boolean cached, long observedAtMillis) {
-      public Inner_CachePool(BlockPos pos, double distance, boolean cached) {
+   public record RememberedBlock(BlockPos pos, double distance, boolean cached, long observedAtMillis) {
+      public RememberedBlock(BlockPos pos, double distance, boolean cached) {
          this(pos, distance, cached, cached ? 0L : System.currentTimeMillis());
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class ChunkRecord {
       final int yLo;
       final int load;
       final byte[] packed;
       final Map<Integer, String> notables;
       final long[] observed;
 
-      Inner_DataUtil(int yLo, int height, byte[] packed, Map<Integer, String> notables) {
+      ChunkRecord(int yLo, int height, byte[] packed, Map<Integer, String> notables) {
          this(yLo, height, packed, notables, AiChunkMemory.init_JArr(height));
       }
 
-      Inner_DataUtil(int yLo, int height, byte[] packed, Map<Integer, String> notables, long[] observed) {
+      ChunkRecord(int yLo, int height, byte[] packed, Map<Integer, String> notables, long[] observed) {
          this.yLo = yLo;
          this.load = height;
          this.packed = packed;
@@ -686,6 +686,6 @@ public final class AiChunkMemory {
       }
    }
 
-   record Inner_StreamUtil(int regionX, int regionZ, Map<Long, AiChunkMemory.Inner_DataUtil> chunks) {
+   record RegionFile(int regionX, int regionZ, Map<Long, AiChunkMemory.ChunkRecord> chunks) {
    }
 }

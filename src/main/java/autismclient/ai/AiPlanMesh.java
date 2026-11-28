@@ -49,7 +49,7 @@ final class AiPlanMesh implements AutoCloseable {
    private final long[] colorRevisions;
    private long colorRevision = 1L;
    private final Map<Long, Integer> cellIndexByPos;
-   private final List<AiPlanMesh.Inner_BufferHelper> sections = new ArrayList<>();
+   private final List<AiPlanMesh.MeshSection> sections = new ArrayList<>();
    private int scanCursor;
    private int lastAlpha = -1;
    int write_I;
@@ -58,9 +58,9 @@ final class AiPlanMesh implements AutoCloseable {
    int flush;
    int close;
    private boolean closed;
-   private AiPlanMesh.Inner_CachePool pendingBuild;
+   private AiPlanMesh.SectionBuild pendingBuild;
    private long queryRevision;
-   private AiPlanMesh.Inner_StreamUtil nearestQuery;
+   private AiPlanMesh.NearestCellQuery nearestQuery;
    private List<Integer> nearestCellsSnapshot = List.of();
    private Vec3 nearestEye;
    private long nearestRevision = -1L;
@@ -81,8 +81,8 @@ final class AiPlanMesh implements AutoCloseable {
       this.colors = new int[n];
       this.colorRevisions = new long[n];
       this.update = n;
-      this.cellIndexByPos = new AiPrintSupply.Inner_ConfigStore<>();
-      this.pendingBuild = new AiPlanMesh.Inner_CachePool();
+      this.cellIndexByPos = new AiPrintSupply.SectionedCellMap<>();
+      this.pendingBuild = new AiPlanMesh.SectionBuild();
    }
 
    boolean isReady() {
@@ -109,7 +109,7 @@ final class AiPlanMesh implements AutoCloseable {
    int memberCount() {
       int count = 0;
 
-      for (AiPlanMesh.Inner_BufferHelper section : this.sections) {
+      for (AiPlanMesh.MeshSection section : this.sections) {
          count += section.members.size();
       }
 
@@ -200,7 +200,7 @@ final class AiPlanMesh implements AutoCloseable {
                return this.nearestCellsSnapshot;
             }
 
-            this.nearestQuery = new AiPlanMesh.Inner_StreamUtil(eye, limit);
+            this.nearestQuery = new AiPlanMesh.NearestCellQuery(eye, limit);
          }
 
          this.nearestQuery.advance(budget, deadline);
@@ -259,7 +259,7 @@ final class AiPlanMesh implements AutoCloseable {
             }
 
             if (!dirtySections.isEmpty()) {
-               for (AiPlanMesh.Inner_BufferHelper section : this.sections) {
+               for (AiPlanMesh.MeshSection section : this.sections) {
                   if (dirtySections.contains(
                      BlockPos.asLong(section.anchor.getX() >> 4, section.anchor.getY() >> 4, section.anchor.getZ() >> 4)
                   )) {
@@ -276,7 +276,7 @@ final class AiPlanMesh implements AutoCloseable {
          this.buildSlice();
          if (this.isReady()) {
             if (alpha != this.lastAlpha) {
-               for (AiPlanMesh.Inner_BufferHelper section : this.sections) {
+               for (AiPlanMesh.MeshSection section : this.sections) {
                   section.dirty = true;
                }
 
@@ -284,9 +284,9 @@ final class AiPlanMesh implements AutoCloseable {
             }
 
             double reach = range + 28.0;
-            ArrayList<AiPlanMesh.Inner_BufferHelper> visible = new ArrayList<>();
+            ArrayList<AiPlanMesh.MeshSection> visible = new ArrayList<>();
 
-            for (AiPlanMesh.Inner_BufferHelper section : this.sections) {
+            for (AiPlanMesh.MeshSection section : this.sections) {
                double dx = this.origin.getX() + section.anchor.getX() + 8 - camera.x;
                double dy = this.origin.getY() + section.anchor.getY() + 8 - camera.y;
                double dz = this.origin.getZ() + section.anchor.getZ() + 8 - camera.z;
@@ -304,7 +304,7 @@ final class AiPlanMesh implements AutoCloseable {
             this.flush = this.close = 0;
             RenderType type = autismclient.render.AutismRenderTypes.aiPlanGhost();
 
-            for (AiPlanMesh.Inner_BufferHelper section : visible) {
+            for (AiPlanMesh.MeshSection section : visible) {
                if (section.colorRevision != this.colorRevision) {
                   section.dirty = true;
                }
@@ -330,7 +330,7 @@ final class AiPlanMesh implements AutoCloseable {
       }
    }
 
-   private void rebuildSection(AiPlanMesh.Inner_BufferHelper section, int alpha, ClientLevel world) {
+   private void rebuildSection(AiPlanMesh.MeshSection section, int alpha, ClientLevel world) {
       section.dirty = false;
       section.colorRevision = this.colorRevision;
       Minecraft mc = Minecraft.getInstance();
@@ -507,12 +507,12 @@ final class AiPlanMesh implements AutoCloseable {
       this.nearestQuery = null;
       this.nearestCellsSnapshot = List.of();
 
-      for (AiPlanMesh.Inner_BufferHelper section : this.sections) {
+      for (AiPlanMesh.MeshSection section : this.sections) {
          section.mesh.release();
       }
    }
 
-   private static final class Inner_BufferHelper {
+   private static final class MeshSection {
       final BlockPos anchor;
       final IntArrayList members;
       final autismclient.util.CachedGpuMeshBuffer mesh = new autismclient.util.CachedGpuMeshBuffer("autism_ai_plan_section");
@@ -522,13 +522,13 @@ final class AiPlanMesh implements AutoCloseable {
       int drawnCount;
       long colorRevision;
 
-      Inner_BufferHelper(BlockPos anchor, IntArrayList members) {
+      MeshSection(BlockPos anchor, IntArrayList members) {
          this.anchor = anchor;
          this.members = members;
       }
    }
 
-   private final class Inner_CachePool {
+   private final class SectionBuild {
       final Map<AiBuilder.CellSpec, BlockState> stateByCell = new HashMap<>();
       final TreeMap<Long, IntArrayList> sectionMembers = new TreeMap<>();
       Iterator<Entry<Long, IntArrayList>> sectionIterator;
@@ -559,26 +559,26 @@ final class AiPlanMesh implements AutoCloseable {
 
             Entry<Long, IntArrayList> entry = this.sectionIterator.next();
             BlockPos key = BlockPos.of(entry.getKey());
-            AiPlanMesh.this.sections.add(new AiPlanMesh.Inner_BufferHelper(new BlockPos(key.getX() << 4, key.getY() << 4, key.getZ() << 4), entry.getValue()));
+            AiPlanMesh.this.sections.add(new AiPlanMesh.MeshSection(new BlockPos(key.getX() << 4, key.getY() << 4, key.getZ() << 4), entry.getValue()));
          }
       }
    }
 
-   private record Inner_DataUtil(AiPlanMesh.Inner_BufferHelper section, double distance) {
+   private record QueuedSection(AiPlanMesh.MeshSection section, double distance) {
    }
 
-   private final class Inner_StreamUtil {
+   private final class NearestCellQuery {
       final Vec3 eye;
       final int limit;
       final long revision = AiPlanMesh.this.queryRevision;
-      final PriorityQueue<AiPlanMesh.Inner_DataUtil> sectionQueue = new PriorityQueue<>(Comparator.comparingDouble(AiPlanMesh.Inner_DataUtil::distance));
+      final PriorityQueue<AiPlanMesh.QueuedSection> sectionQueue = new PriorityQueue<>(Comparator.comparingDouble(AiPlanMesh.QueuedSection::distance));
       final PriorityQueue<Integer> nearestCells;
       int nextSection;
       int memberIndex;
-      AiPlanMesh.Inner_BufferHelper currentSection;
+      AiPlanMesh.MeshSection currentSection;
       boolean finished;
 
-      Inner_StreamUtil(Vec3 eye, int limit) {
+      NearestCellQuery(Vec3 eye, int limit) {
          this.eye = eye;
          this.limit = limit;
          this.nearestCells = new PriorityQueue<>(Comparator.<Integer>comparingDouble(i -> this.cellDistance(i)).thenComparingInt(Integer::intValue).reversed());
@@ -592,7 +592,7 @@ final class AiPlanMesh implements AutoCloseable {
          return dx * dx + dy * dy + dz * dz;
       }
 
-      double sectionDistance(AiPlanMesh.Inner_BufferHelper section) {
+      double sectionDistance(AiPlanMesh.MeshSection section) {
          double dx = this.axisGap(this.eye.x, AiPlanMesh.this.origin.getX() + section.anchor.getX() + 0.5);
          double dy = this.axisGap(this.eye.y, AiPlanMesh.this.origin.getY() + section.anchor.getY() + 0.5);
          double dz = this.axisGap(this.eye.z, AiPlanMesh.this.origin.getZ() + section.anchor.getZ() + 0.5);
@@ -610,8 +610,8 @@ final class AiPlanMesh implements AutoCloseable {
             }
 
             if (this.nextSection < AiPlanMesh.this.sections.size()) {
-               AiPlanMesh.Inner_BufferHelper section = AiPlanMesh.this.sections.get(this.nextSection++);
-               this.sectionQueue.add(new AiPlanMesh.Inner_DataUtil(section, this.sectionDistance(section)));
+               AiPlanMesh.MeshSection section = AiPlanMesh.this.sections.get(this.nextSection++);
+               this.sectionQueue.add(new AiPlanMesh.QueuedSection(section, this.sectionDistance(section)));
             } else if (this.currentSection != null && this.memberIndex < this.currentSection.members.size()) {
                int i = this.currentSection.members.getInt(this.memberIndex++);
                if (AiPlanMesh.this.colorAt(i) != -12067963) {

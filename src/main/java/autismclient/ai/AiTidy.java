@@ -138,7 +138,7 @@ final class AiTidy {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         AiTidy.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "inspect"));
+         AiTidy.TidyAction action = parseAction(AiJson.getString(args, "action", "inspect"));
          final int wantFree = Math.max(1, Math.min(36, AiJson.getInt(args, "freeSlots", 4)));
          final int maxDrops = Math.max(1, Math.min(36, AiJson.getInt(args, "maxDrops", 9)));
          final int timeoutSeconds = Math.max(5, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 60)));
@@ -155,7 +155,7 @@ final class AiTidy {
             }
          }
 
-         return action == AiTidy.Inner_DataUtil.INSPECT
+         return action == AiTidy.TidyAction.INSPECT
             ? AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Ranked " + AiItems.countFreeSlots() + " free slot(s) and the current inventory", init(mc, keep, wantFree))
             : new AiOperation() {
                final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -168,7 +168,7 @@ final class AiTidy {
                int read_I;
                long load_J;
                int write;
-               AiTidy.Inner_StreamUtil worst;
+               AiTidy.SlotRank worst;
                int update;
                boolean init_Z;
 
@@ -236,7 +236,7 @@ final class AiTidy {
                            );
                         }
 
-                        AiTidy.Inner_StreamUtil worst = AiTidy.init_cx_StreamUtil(mc, keep);
+                        AiTidy.SlotRank worst = AiTidy.init_cx_StreamUtil(mc, keep);
                         if (worst == null) {
                            return this.load("Nothing left is safe to drop; everything remaining is kept, equipped or high value");
                         }
@@ -321,13 +321,13 @@ final class AiTidy {
    static JsonObject init(Minecraft mc, List<AiItems.ItemSpec> keep, int wantFree) {
       JsonArray ranked = new JsonArray();
 
-      for (AiTidy.Inner_StreamUtil entry : init_List(mc, keep)) {
+      for (AiTidy.SlotRank entry : init_List(mc, keep)) {
          ranked.add(
             AiJson.objectOf("slot", entry.slot(), "item", entry.item(), "count", entry.count(), "rank", entry.rank(), "tier", init(entry.rank()))
          );
       }
 
-      AiTidy.Inner_StreamUtil worst = init_cx_StreamUtil(mc, keep);
+      AiTidy.SlotRank worst = init_cx_StreamUtil(mc, keep);
       JsonObject out = AiJson.objectOf("freeSlots", AiItems.countFreeSlots(), "wanted", wantFree, "wouldDropFirst", worst == null ? null : worst.item());
       out.add("inventory", ranked);
       out.addProperty(
@@ -337,8 +337,8 @@ final class AiTidy {
       return out;
    }
 
-   static List<AiTidy.Inner_StreamUtil> init_List(Minecraft mc, List<AiItems.ItemSpec> keep) {
-      List<AiTidy.Inner_StreamUtil> ranked = new ArrayList<>();
+   static List<AiTidy.SlotRank> init_List(Minecraft mc, List<AiItems.ItemSpec> keep) {
+      List<AiTidy.SlotRank> ranked = new ArrayList<>();
       if (mc.player == null) {
          return ranked;
       }
@@ -383,7 +383,7 @@ final class AiTidy {
                   && (!stack.is(Items.STICK) || sticks - stack.getCount() >= 2)
                   && (!autismclient.ai.engine.AiRestock.isStoneBlock(stack) || stone - stack.getCount() >= autismclient.ai.engine.AiRestock.baseStoneReserve())) {
                   int rank = init_I(stack, held);
-                  ranked.add(new AiTidy.Inner_StreamUtil(slot, itemId(stack), stack.getCount(), rank));
+                  ranked.add(new AiTidy.SlotRank(slot, itemId(stack), stack.getCount(), rank));
                }
             }
          }
@@ -396,13 +396,13 @@ final class AiTidy {
       return ranked;
    }
 
-   static AiTidy.Inner_StreamUtil init_cx_StreamUtil(Minecraft mc, List<AiItems.ItemSpec> keep) {
-      List<AiTidy.Inner_StreamUtil> ranked = init_List(mc, keep);
+   static AiTidy.SlotRank init_cx_StreamUtil(Minecraft mc, List<AiItems.ItemSpec> keep) {
+      List<AiTidy.SlotRank> ranked = init_List(mc, keep);
       if (ranked.isEmpty()) {
          return null;
       }
 
-      AiTidy.Inner_StreamUtil worst = ranked.get(0);
+      AiTidy.SlotRank worst = ranked.get(0);
       return worst.rank() >= 80 ? null : worst;
    }
 
@@ -602,19 +602,19 @@ final class AiTidy {
       }
    }
 
-   private static AiTidy.Inner_DataUtil parseAction(String text) {
+   private static AiTidy.TidyAction parseAction(String text) {
       try {
-         return AiTidy.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
+         return AiTidy.TidyAction.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("action must be inspect or drop");
       }
    }
 
-   enum Inner_DataUtil {
+   enum TidyAction {
       INSPECT,
       DROP;
    }
 
-   record Inner_StreamUtil(int slot, String item, int count, int rank) {
+   record SlotRank(int slot, String item, int count, int rank) {
    }
 }

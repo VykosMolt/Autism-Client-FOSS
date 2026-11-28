@@ -30,7 +30,7 @@ public final class AntiKnockbackModule extends Module {
 
    public AntiKnockbackModule() {
       super("anti-knockback", "AntiKnockback", ae.init_ae, "Jump reset and briefly counter enemy knockback");
-      this.add(new EnumSetting<>("mode", "Mode", AntiKnockbackModule.Inner_DataUtil.JumpReset, AntiKnockbackModule.Inner_DataUtil.values(), Enum::name));
+      this.add(new EnumSetting<>("mode", "Mode", AntiKnockbackModule.KnockbackMode.JumpReset, AntiKnockbackModule.KnockbackMode.values(), Enum::name));
       this.add(
          new IntSetting("chance", "Chance", 100, 0, 100, 1)
             .description("Jump reset activation chance")
@@ -215,7 +215,7 @@ public final class AntiKnockbackModule extends Module {
       this.resetState();
    }
 
-   private enum Inner_DataUtil {
+   private enum KnockbackMode {
       JumpReset,
       CounterMovement;
    }

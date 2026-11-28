@@ -313,17 +313,17 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       return this.refreshRunning.get();
    }
 
-   public ProxyListManager.Inner_TaskQueue getRefreshStatus() {
+   public ProxyListManager.RefreshStatus getRefreshStatus() {
       boolean running = this.refreshRunning.get();
       boolean canceling = !running && System.currentTimeMillis() < this.refreshCancelNoticeUntilMs;
-      return new ProxyListManager.Inner_TaskQueue(running, canceling, this.refreshCheckedCount.get(), this.refreshTotalCount.get(), this.refreshGeneration, this.refreshRevision);
+      return new ProxyListManager.RefreshStatus(running, canceling, this.refreshCheckedCount.get(), this.refreshTotalCount.get(), this.refreshGeneration, this.refreshRevision);
    }
 
-   public ProxyListManager.Inner_BufferHelper getImportStatus() {
+   public ProxyListManager.ImportStatus getImportStatus() {
       boolean running = this.importRunning.get();
       boolean canceling = !running && System.currentTimeMillis() < this.importCancelNoticeUntilMs;
       boolean canceled = !running && this.importGeneration == this.canceledImportGeneration;
-      return new ProxyListManager.Inner_BufferHelper(
+      return new ProxyListManager.ImportStatus(
          running,
          canceling,
          this.importScannedCount.get(),
@@ -441,7 +441,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
          return false;
       }
 
-      List<ProxyListManager.Inner_StreamUtil> targets;
+      List<ProxyListManager.GeoTarget> targets;
       long generation;
       synchronized (this) {
          targets = this.collectGeoTargets(force);
@@ -454,7 +454,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
          this.geoLookupGeneration = generation;
          long now = System.currentTimeMillis();
 
-         for (ProxyListManager.Inner_StreamUtil target : targets) {
+         for (ProxyListManager.GeoTarget target : targets) {
             target.proxy().init_V_J(now);
          }
 
@@ -477,7 +477,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
    }
 
    private boolean beginRefresh(boolean all, String destinationHost, int destinationPort) {
-      List<ProxyListManager.Inner_NetHelper> targets = new ArrayList<>();
+      List<ProxyListManager.CheckTarget> targets = new ArrayList<>();
       List<bW> active = new ArrayList<>();
       ExecutorService executor;
       long generation;
@@ -491,7 +491,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
 
          for (bW proxy : this.items) {
             if (proxy != null && proxy.init_Z() && (all || proxy.init_bW_CachePool == bW.Inner_CachePool.UNCHECKED)) {
-               targets.add(new ProxyListManager.Inner_NetHelper(proxy, buildIdentityKey(proxy)));
+               targets.add(new ProxyListManager.CheckTarget(proxy, buildIdentityKey(proxy)));
                active.add(proxy);
             }
          }
@@ -580,7 +580,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       return text != null && !text.isBlank() ? this.startImportAsync(() -> new BufferedReader(new StringReader(text))) : false;
    }
 
-   private boolean startImportAsync(ProxyListManager.Inner_CachePool source) {
+   private boolean startImportAsync(ProxyListManager.ImportSource source) {
       long generation;
       synchronized (this) {
          if (this.importRunning.get() || this.refreshRunning.get()) {
@@ -629,7 +629,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       return true;
    }
 
-   private void runImportWorker(long generation, ProxyListManager.Inner_CachePool source) {
+   private void runImportWorker(long generation, ProxyListManager.ImportSource source) {
       List<bW> parsed = new ArrayList<>();
       Set<String> knownKeys;
       synchronized (this) {
@@ -709,7 +709,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
    private void runRefreshPool(
       long generation,
       ExecutorService executor,
-      List<ProxyListManager.Inner_NetHelper> targets,
+      List<ProxyListManager.CheckTarget> targets,
       int timeout,
       int retryCount,
       int workerCount,
@@ -764,9 +764,9 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   private void checkRefreshTarget(long generation, ProxyListManager.Inner_NetHelper target, int timeout, int retryCount, String destinationHost, int destinationPort) {
+   private void checkRefreshTarget(long generation, ProxyListManager.CheckTarget target, int timeout, int retryCount, String destinationHost, int destinationPort) {
       if (this.isRefreshActive(generation)) {
-         ProxyListManager.Inner_ConfigStore probe = probeProxy(target.proxy(), timeout, destinationHost, destinationPort);
+         ProxyListManager.ProbeOutcome probe = probeProxy(target.proxy(), timeout, destinationHost, destinationPort);
 
          for (int attempts = 0;
             probe.checkResult().init_bW_CachePool() != bW.Inner_CachePool.ALIVE && attempts < retryCount && this.isRefreshActive(generation);
@@ -779,15 +779,15 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   private static ProxyListManager.Inner_ConfigStore probeProxy(bW proxy, int timeout, String destinationHost, int destinationPort) {
+   private static ProxyListManager.ProbeOutcome probeProxy(bW proxy, int timeout, String destinationHost, int destinationPort) {
       if (destinationHost != null && !destinationHost.isBlank() && destinationPort > 0) {
-         ProxyConnectivityTester.Inner_DataUtil verified = ProxyConnectivityTester.init(proxy, destinationHost, destinationPort, timeout);
+         ProxyConnectivityTester.TestResult verified = ProxyConnectivityTester.init(proxy, destinationHost, destinationPort, timeout);
          bW.Inner_DataUtil result = verified.success()
             ? new bW.Inner_DataUtil(bW.Inner_CachePool.ALIVE, verified.latencyMs(), 1)
             : new bW.Inner_DataUtil(bW.Inner_CachePool.DEAD, 0L, 2);
-         return new ProxyListManager.Inner_ConfigStore(result, verified.protocol());
+         return new ProxyListManager.ProbeOutcome(result, verified.protocol());
       } else {
-         return new ProxyListManager.Inner_ConfigStore(proxy.init_bW_DataUtil_I(timeout), null);
+         return new ProxyListManager.ProbeOutcome(proxy.init_bW_DataUtil_I(timeout), null);
       }
    }
 
@@ -807,7 +807,7 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   private synchronized void applyRefreshProbeResult(long generation, ProxyListManager.Inner_NetHelper target, ProxyListManager.Inner_ConfigStore probe) {
+   private synchronized void applyRefreshProbeResult(long generation, ProxyListManager.CheckTarget target, ProxyListManager.ProbeOutcome probe) {
       if (this.refreshGeneration == generation && this.refreshRunning.get() && !this.refreshCancelRequested.get()) {
          bW proxy = target.proxy();
          if (this.items.contains(proxy) && target.identityKey().equals(buildIdentityKey(proxy))) {
@@ -850,33 +850,33 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       return this.refreshRunning.get() && this.refreshGeneration == generation && !this.refreshCancelRequested.get();
    }
 
-   private synchronized List<ProxyListManager.Inner_StreamUtil> collectGeoTargets(boolean force) {
+   private synchronized List<ProxyListManager.GeoTarget> collectGeoTargets(boolean force) {
       long now = System.currentTimeMillis();
-      List<ProxyListManager.Inner_StreamUtil> targets = new ArrayList<>();
+      List<ProxyListManager.GeoTarget> targets = new ArrayList<>();
 
       for (bW proxy : this.items) {
          if (proxy != null && proxy.init_Z_J_Z(now, force)) {
-            targets.add(new ProxyListManager.Inner_StreamUtil(proxy, buildIdentityKey(proxy)));
+            targets.add(new ProxyListManager.GeoTarget(proxy, buildIdentityKey(proxy)));
          }
       }
 
       return targets;
    }
 
-   private void runGeoLookupWorker(long generation, List<ProxyListManager.Inner_StreamUtil> targets) {
+   private void runGeoLookupWorker(long generation, List<ProxyListManager.GeoTarget> targets) {
       if (!AutismLiteVariant.enabled()) {
          try {
-            Map<String, List<ProxyListManager.Inner_StreamUtil>> byIp = new LinkedHashMap<>();
-            List<ProxyListManager.Inner_DataUtil> immediate = new ArrayList<>();
+            Map<String, List<ProxyListManager.GeoTarget>> byIp = new LinkedHashMap<>();
+            List<ProxyListManager.GeoApplication> immediate = new ArrayList<>();
 
-            for (ProxyListManager.Inner_StreamUtil target : targets) {
+            for (ProxyListManager.GeoTarget target : targets) {
                if (!this.isGeoLookupActive(generation)) {
                   return;
                }
 
                bX.Inner_StreamUtil resolved = bX.init_bX_StreamUtil_Str(target.proxy().read);
                if (resolved.init_bX_DataUtil() != null) {
-                  immediate.add(new ProxyListManager.Inner_DataUtil(target, resolved.init_bX_DataUtil()));
+                  immediate.add(new ProxyListManager.GeoApplication(target, resolved.init_bX_DataUtil()));
                   if (immediate.size() >= 100) {
                      this.applyGeoResults(generation, immediate);
                      immediate.clear();
@@ -914,16 +914,16 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       }
    }
 
-   private void fetchGeoBatch(long generation, List<String> batch, Map<String, List<ProxyListManager.Inner_StreamUtil>> byIp) {
+   private void fetchGeoBatch(long generation, List<String> batch, Map<String, List<ProxyListManager.GeoTarget>> byIp) {
       Map<String, bX.Inner_DataUtil> results = bX.init_Map_List(List.copyOf(batch));
-      List<ProxyListManager.Inner_DataUtil> applications = new ArrayList<>();
+      List<ProxyListManager.GeoApplication> applications = new ArrayList<>();
 
       for (String ip : batch) {
          bX.Inner_DataUtil result = results.getOrDefault(ip, bX.Inner_DataUtil.init(ip, System.currentTimeMillis()));
-         List<ProxyListManager.Inner_StreamUtil> targets = byIp.get(ip);
+         List<ProxyListManager.GeoTarget> targets = byIp.get(ip);
          if (targets != null) {
-            for (ProxyListManager.Inner_StreamUtil target : targets) {
-               applications.add(new ProxyListManager.Inner_DataUtil(target, result));
+            for (ProxyListManager.GeoTarget target : targets) {
+               applications.add(new ProxyListManager.GeoApplication(target, result));
             }
          }
       }
@@ -931,12 +931,12 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       this.applyGeoResults(generation, applications);
    }
 
-   private synchronized void applyGeoResults(long generation, List<ProxyListManager.Inner_DataUtil> applications) {
+   private synchronized void applyGeoResults(long generation, List<ProxyListManager.GeoApplication> applications) {
       if (this.geoLookupGeneration == generation && applications != null && !applications.isEmpty()) {
          int changed = 0;
 
-         for (ProxyListManager.Inner_DataUtil application : applications) {
-            ProxyListManager.Inner_StreamUtil target = application.target();
+         for (ProxyListManager.GeoApplication application : applications) {
+            ProxyListManager.GeoTarget target = application.target();
             bW proxy = target.proxy();
             if (this.items.contains(proxy) && target.identityKey().equals(buildIdentityKey(proxy))) {
                proxy.init_V_bX_DataUtil(application.geoResult());
@@ -1178,25 +1178,25 @@ public final class ProxyListManager extends AtomicNbtListStore<bW> implements It
       return this.getItems().iterator();
    }
 
-   public record Inner_BufferHelper(boolean running, boolean canceling, int scannedCount, int parsedCount, int addedCount, long generation, long revision, boolean canceled) {
+   public record ImportStatus(boolean running, boolean canceling, int scannedCount, int parsedCount, int addedCount, long generation, long revision, boolean canceled) {
    }
 
-   private interface Inner_CachePool {
+   private interface ImportSource {
       BufferedReader open() throws IOException;
    }
 
-   private record Inner_ConfigStore(bW.Inner_DataUtil checkResult, ProxyProtocolType detectedProtocol) {
+   private record ProbeOutcome(bW.Inner_DataUtil checkResult, ProxyProtocolType detectedProtocol) {
    }
 
-   private record Inner_DataUtil(ProxyListManager.Inner_StreamUtil target, bX.Inner_DataUtil geoResult) {
+   private record GeoApplication(ProxyListManager.GeoTarget target, bX.Inner_DataUtil geoResult) {
    }
 
-   private record Inner_NetHelper(bW proxy, String identityKey) {
+   private record CheckTarget(bW proxy, String identityKey) {
    }
 
-   private record Inner_StreamUtil(bW proxy, String identityKey) {
+   private record GeoTarget(bW proxy, String identityKey) {
    }
 
-   public record Inner_TaskQueue(boolean running, boolean canceling, int checkedCount, int totalCount, long generation, long revision) {
+   public record RefreshStatus(boolean running, boolean canceling, int checkedCount, int totalCount, long generation, long revision) {
    }
 }

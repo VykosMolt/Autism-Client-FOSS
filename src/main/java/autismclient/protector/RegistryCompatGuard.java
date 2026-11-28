@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceKey;
 
 public final class RegistryCompatGuard {
    private static final int MAX_WARNINGS = 64;
-   private static final ThreadLocal<RegistryCompatGuard.Inner_DataUtil> STATE = new ThreadLocal<>();
+   private static final ThreadLocal<RegistryCompatGuard.GuardState> STATE = new ThreadLocal<>();
    private static final ThreadLocal<ConnectionPrivacyRegistry.ConnectionSession> currentSession = new ThreadLocal<>();
 
    private RegistryCompatGuard() {
@@ -38,9 +38,9 @@ public final class RegistryCompatGuard {
 
    public static void load(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (init_Z(context)) {
-         RegistryCompatGuard.Inner_DataUtil state = STATE.get();
+         RegistryCompatGuard.GuardState state = STATE.get();
          if (state == null) {
-            state = new RegistryCompatGuard.Inner_DataUtil();
+            state = new RegistryCompatGuard.GuardState();
             STATE.set(state);
          }
 
@@ -56,7 +56,7 @@ public final class RegistryCompatGuard {
    }
 
    public static void load() {
-      RegistryCompatGuard.Inner_DataUtil state = STATE.get();
+      RegistryCompatGuard.GuardState state = STATE.get();
       if (state != null) {
          state.init_I--;
          if (state.init_I <= 0) {
@@ -79,7 +79,7 @@ public final class RegistryCompatGuard {
    }
 
    public static void init(ResourceKey<?> valueKey) {
-      RegistryCompatGuard.Inner_DataUtil state = init_TaskTimer_DataUtil();
+      RegistryCompatGuard.GuardState state = init_TaskTimer_DataUtil();
       if (valueKey != null && state != null) {
          String id = valueKey.identifier().toString();
          if (addWarning(state.init_Set, id)) {
@@ -103,7 +103,7 @@ public final class RegistryCompatGuard {
    }
 
    public static void init_V(Throwable error) {
-      RegistryCompatGuard.Inner_DataUtil state = init_TaskTimer_DataUtil();
+      RegistryCompatGuard.GuardState state = init_TaskTimer_DataUtil();
       if (state != null) {
          String message = error != null && error.getMessage() != null ? error.getMessage() : "unknown";
          if (addWarning(state.load, message)) {
@@ -116,12 +116,12 @@ public final class RegistryCompatGuard {
    }
 
    static int init_I() {
-      RegistryCompatGuard.Inner_DataUtil state = init_TaskTimer_DataUtil();
+      RegistryCompatGuard.GuardState state = init_TaskTimer_DataUtil();
       return state == null ? 0 : state.init_Set.size() + state.load.size();
    }
 
-   private static RegistryCompatGuard.Inner_DataUtil init_TaskTimer_DataUtil() {
-      RegistryCompatGuard.Inner_DataUtil state = STATE.get();
+   private static RegistryCompatGuard.GuardState init_TaskTimer_DataUtil() {
+      RegistryCompatGuard.GuardState state = STATE.get();
       return state != null && state.init_I > 0 ? state : null;
    }
 
@@ -134,7 +134,7 @@ public final class RegistryCompatGuard {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class GuardState {
       private int init_I;
       private final Set<String> init_Set = new HashSet<>();
       private final Set<String> load = new HashSet<>();

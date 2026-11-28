@@ -17,8 +17,8 @@ import org.joml.Vector4f;
 public final class EntityEsp2DRenderer {
    private static final Minecraft init_Minecraft = Minecraft.getInstance();
    private static final Matrix4f init_Matrix4f = new Matrix4f();
-   private static final EntityEsp2DRenderer.Inner_DataUtil init_an_DataUtil = new EntityEsp2DRenderer.Inner_DataUtil();
-   private static final Int2ObjectOpenHashMap<EntityEsp2DRenderer.Inner_StreamUtil> init_Int2ObjectOpenHash = new Int2ObjectOpenHashMap<>();
+   private static final EntityEsp2DRenderer.ScreenBounds init_an_DataUtil = new EntityEsp2DRenderer.ScreenBounds();
+   private static final Int2ObjectOpenHashMap<EntityEsp2DRenderer.SmoothedHealth> init_Int2ObjectOpenHash = new Int2ObjectOpenHashMap<>();
    private static final float init_F = 0.12F;
    private static final double init_D = 0.06;
    private static final double load_D = 0.08;
@@ -114,7 +114,7 @@ public final class EntityEsp2DRenderer {
       double sideZ = ux * radius;
       double alongX = ux * radius;
       double alongZ = uz * radius;
-      EntityEsp2DRenderer.Inner_DataUtil box = init_an_DataUtil;
+      EntityEsp2DRenderer.ScreenBounds box = init_an_DataUtil;
       box.init(screenW, screenH);
       return box.init(cx + sideX, bottom, cz + sideZ)
          && box.init(cx - sideX, bottom, cz - sideZ)
@@ -148,9 +148,9 @@ public final class EntityEsp2DRenderer {
 
    private static void init_V_GuiGraphicsExtract_2(GuiGraphicsExtractor context, LivingEntity entity, float fade, float px, float healthLerp, long frame) {
       float health = Mth.clamp(entity.getHealth() / Math.max(1.0F, entity.getMaxHealth()), 0.0F, 1.0F);
-      EntityEsp2DRenderer.Inner_StreamUtil shown = init_Int2ObjectOpenHash.get(entity.getId());
+      EntityEsp2DRenderer.SmoothedHealth shown = init_Int2ObjectOpenHash.get(entity.getId());
       if (shown == null) {
-         shown = new EntityEsp2DRenderer.Inner_StreamUtil(health);
+         shown = new EntityEsp2DRenderer.SmoothedHealth(health);
          init_Int2ObjectOpenHash.put(entity.getId(), shown);
       } else {
          shown.init_F = shown.init_F + (health - shown.init_F) * healthLerp;
@@ -193,7 +193,7 @@ public final class EntityEsp2DRenderer {
       }
    }
 
-   private static final class Inner_DataUtil {
+   private static final class ScreenBounds {
       private final Vector4f init_Vector4f = new Vector4f();
       float sx;
       float load;
@@ -242,11 +242,11 @@ public final class EntityEsp2DRenderer {
       }
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class SmoothedHealth {
       float init_F;
       long frame;
 
-      Inner_StreamUtil(float value) {
+      SmoothedHealth(float value) {
          this.init_F = value;
       }
    }

@@ -5,11 +5,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
 public class WaitDurabilityAction implements MacroAction {
-   public WaitDurabilityAction.Inner_CachePool targetMode = WaitDurabilityAction.Inner_CachePool.HELD;
+   public WaitDurabilityAction.TargetMode targetMode = WaitDurabilityAction.TargetMode.HELD;
    public String itemName = "";
    public int slot = 0;
-   public WaitDurabilityAction.Inner_StreamUtil measurement = WaitDurabilityAction.Inner_StreamUtil.REMAINING;
-   public WaitDurabilityAction.Inner_DataUtil comparison = WaitDurabilityAction.Inner_DataUtil.AT_MOST;
+   public WaitDurabilityAction.Measurement measurement = WaitDurabilityAction.Measurement.REMAINING;
+   public WaitDurabilityAction.Comparison comparison = WaitDurabilityAction.Comparison.AT_MOST;
    public int value = 2;
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
@@ -120,7 +120,7 @@ public class WaitDurabilityAction implements MacroAction {
    }
 
    private int load(ItemStack stack) {
-      int max = this.measurement == WaitDurabilityAction.Inner_StreamUtil.PERCENT_REMAINING ? 100 : Math.max(0, stack == null ? 2048 : stack.getMaxDamage());
+      int max = this.measurement == WaitDurabilityAction.Measurement.PERCENT_REMAINING ? 100 : Math.max(0, stack == null ? 2048 : stack.getMaxDamage());
       return Math.max(0, Math.min(max, this.value));
    }
 
@@ -168,11 +168,11 @@ public class WaitDurabilityAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.targetMode = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Inner_CachePool.class, tag.getStringOr("targetMode", WaitDurabilityAction.Inner_CachePool.HELD.name()), WaitDurabilityAction.Inner_CachePool.HELD);
+      this.targetMode = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.TargetMode.class, tag.getStringOr("targetMode", WaitDurabilityAction.TargetMode.HELD.name()), WaitDurabilityAction.TargetMode.HELD);
       this.itemName = tag.getStringOr("itemName", "");
       this.slot = Math.max(0, Math.min(40, tag.getIntOr("slot", 0)));
-      this.measurement = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Inner_StreamUtil.class, tag.getStringOr("measurement", WaitDurabilityAction.Inner_StreamUtil.REMAINING.name()), WaitDurabilityAction.Inner_StreamUtil.REMAINING);
-      this.comparison = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitDurabilityAction.Inner_DataUtil.AT_MOST.name()), WaitDurabilityAction.Inner_DataUtil.AT_MOST);
+      this.measurement = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Measurement.class, tag.getStringOr("measurement", WaitDurabilityAction.Measurement.REMAINING.name()), WaitDurabilityAction.Measurement.REMAINING);
+      this.comparison = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Comparison.class, tag.getStringOr("comparison", WaitDurabilityAction.Comparison.AT_MOST.name()), WaitDurabilityAction.Comparison.AT_MOST);
       this.value = Math.max(0, tag.getIntOr("value", 2));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       this.useNext = tag.getBooleanOr("useNext", false);
@@ -266,13 +266,13 @@ public class WaitDurabilityAction implements MacroAction {
       this.init = e;
    }
 
-   public enum Inner_CachePool {
+   public enum TargetMode {
       HELD,
       ITEM,
       SLOT;
    }
 
-   public enum Inner_DataUtil {
+   public enum Comparison {
       BELOW,
       AT_MOST,
       EXACT,
@@ -280,7 +280,7 @@ public class WaitDurabilityAction implements MacroAction {
       ABOVE;
    }
 
-   public enum Inner_StreamUtil {
+   public enum Measurement {
       REMAINING,
       DAMAGE_USED,
       PERCENT_REMAINING;

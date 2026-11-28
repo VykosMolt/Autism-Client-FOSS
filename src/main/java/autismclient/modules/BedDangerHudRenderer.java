@@ -23,7 +23,7 @@ public final class BedDangerHudRenderer {
       }
    }
 
-   private static BedDangerHudRenderer.Inner_DataUtil init_u_DataUtil(Font font) {
+   private static BedDangerHudRenderer.HudLayout init_u_DataUtil(Font font) {
       DangerModule module = DangerModule.instance();
       List<Component> lines = init()
          ? module.bedProximity().stream().map(group -> group.init(module.bool("bed-distances"))).toList()
@@ -33,17 +33,17 @@ public final class BedDangerHudRenderer {
       int width = Math.min(available, Math.max(140, lines.stream().mapToInt(font::width).max().orElse(0) + 16));
       int height = 25 + lines.size() * 13;
       scale = Math.min(scale, Math.max(1.0F, cA.load_I() - 8.0F) / height);
-      return new BedDangerHudRenderer.Inner_DataUtil(lines, width, height, scale);
+      return new BedDangerHudRenderer.HudLayout(lines, width, height, scale);
    }
 
    public static int[] size(Font font) {
-      BedDangerHudRenderer.Inner_DataUtil layout = init_u_DataUtil(font);
+      BedDangerHudRenderer.HudLayout layout = init_u_DataUtil(font);
       return new int[]{Math.max(1, (int)Math.ceil(layout.init_I * layout.init_F)), Math.max(1, (int)Math.ceil(layout.load * layout.init_F))};
    }
 
    public static void init(GuiGraphicsExtractor graphics, Font font, int x, int y, boolean editor) {
       if (editor || init()) {
-         BedDangerHudRenderer.Inner_DataUtil layout = init_u_DataUtil(font);
+         BedDangerHudRenderer.HudLayout layout = init_u_DataUtil(font);
          autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, font, 0, 0);
          graphics.pose().pushMatrix();
 
@@ -71,6 +71,6 @@ public final class BedDangerHudRenderer {
       }
    }
 
-   private record Inner_DataUtil(List<Component> init_List, int init_I, int load, float init_F) {
+   private record HudLayout(List<Component> init_List, int init_I, int load, float init_F) {
    }
 }

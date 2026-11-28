@@ -576,7 +576,7 @@ final class AiEndRun {
                         autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST,
                         true,
                         2.0,
-                        new AiNetherRun.Inner_NetHelper(fx, fz, 24),
+                        new AiNetherRun.RadiusGoal(fx, fz, 24),
                         AiGoto.GotoOptions.DEFAULT
                      )
                   );

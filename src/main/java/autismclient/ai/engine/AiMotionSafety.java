@@ -125,7 +125,7 @@ public final class AiMotionSafety {
             for (AiPhysics.MoveInput var10 : new AiPhysics.MoveInput[]{
                AiPhysics.MoveInput.run(var3, var2.sprint()), AiPhysics.MoveInput.NONE, AiPhysics.MoveInput.run(var3 + 180.0F, false)
             }) {
-               AiStride.Inner_TableCache var11 = AiStride.putAt(var1, var10, false, var0);
+               AiStride.FallResult var11 = AiStride.putAt(var1, var10, false, var0);
                if (var11.down() && var4.test(AiStride.putAt_J_D_D(var11.at().x(), var11.at().z())) && AiStride.putAt(var11.at(), var4, var0)) {
                   return true;
                }
@@ -379,7 +379,7 @@ public final class AiMotionSafety {
 
             if (!var13.onGround()) {
                for (AiPhysics.MoveInput var17 : var7) {
-                  AiStride.Inner_TableCache var18 = AiStride.putAt(var13, var17, false, var0);
+                  AiStride.FallResult var18 = AiStride.putAt(var13, var17, false, var0);
                   if (var18.down() && isSafeLandingState(var0, var18.at(), var3, var5)) {
                      return var10;
                   }

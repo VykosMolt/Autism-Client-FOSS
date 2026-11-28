@@ -44,7 +44,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
    private final Screen parent;
    private final Module module;
    private final Setting<?, ?> setting;
-   private final List<StringListEditorScreen.Inner_StreamUtil> hitBoxes = new ArrayList<>();
+   private final List<StringListEditorScreen.HitBox> hitBoxes = new ArrayList<>();
    private ThemedTextInputBox entryInput;
    private ThemedTextInputBox searchInput;
    private int poll;
@@ -117,7 +117,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             addW,
             fieldH,
             autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SUCCESS,
-            StringListEditorScreen.Inner_CachePool.ADD,
+            StringListEditorScreen.HitKind.ADD,
             -1,
             mx,
             my
@@ -135,7 +135,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
             clearW,
             fieldH,
             autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.DANGER,
-            StringListEditorScreen.Inner_CachePool.CLEAR,
+            StringListEditorScreen.HitKind.CLEAR,
             -1,
             mx,
             my
@@ -152,7 +152,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                importW,
                fieldH,
                autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY,
-               StringListEditorScreen.Inner_CachePool.IMPORT,
+               StringListEditorScreen.HitKind.IMPORT,
                -1,
                mx,
                my
@@ -170,7 +170,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                scanW,
                fieldH,
                autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.PRIMARY,
-               StringListEditorScreen.Inner_CachePool.SCAN,
+               StringListEditorScreen.HitKind.SCAN,
                -1,
                mx,
                my
@@ -226,15 +226,15 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                this.init(graphics, value, x + 4, this.centeredTextY(rowY, rowH - 1), -791321, textW - 4);
                autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(graphics, delX, delY, delW, delH, over);
                int index = this.init(rows, allValues, i);
-               this.hitBoxes.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.EDIT_ENTRY, x, rowY, Math.max(1, textW), rowH, index));
-               this.hitBoxes.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.REMOVE, delX, delY, delW, delH, index));
+               this.hitBoxes.add(new StringListEditorScreen.HitBox(StringListEditorScreen.HitKind.EDIT_ENTRY, x, rowY, Math.max(1, textW), rowH, index));
+               this.hitBoxes.add(new StringListEditorScreen.HitBox(StringListEditorScreen.HitKind.REMOVE, delX, delY, delW, delH, index));
             });
          }
       }
    }
 
    private void load(GuiGraphicsExtractor graphics, autismclient.gui.ui.widgets.ScrollListLayout.ListLayout layout, int mx, int my) {
-      List<StringListEditorScreen.Inner_DataUtil> rows = this.rankRows();
+      List<StringListEditorScreen.RankRow> rows = this.rankRows();
       this.poll = this.init(this.poll, 0, layout.maxScroll());
       int x = layout.x() + layout.contentInset();
       int w = layout.contentWidth();
@@ -243,7 +243,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          this.init(graphics, "No players found.", x + 4, this.centeredTextY(layout.y() + layout.contentInset(), rowH), mutedTextColor(), w - 8);
       } else {
          layout.forEachVisibleRow(rows.size(), (i, rowY) -> {
-            StringListEditorScreen.Inner_DataUtil row = rows.get(i);
+            StringListEditorScreen.RankRow row = rows.get(i);
             boolean over = mx >= x && mx < x + w && my >= rowY && my < rowY + rowH;
             int ty = this.centeredTextY(rowY, rowH - 1);
             if (row.name() == null) {
@@ -252,12 +252,12 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                int countW = autismclient.gui.f.b.k.init(this.font, count, theme.init_Identifier_l(l.read), 0);
                this.init(graphics, row.rank(), x + 4, ty, -791321, w - countW - 12);
                this.init(graphics, count, x + w - 4 - countW, ty, mutedTextColor(), countW + 1);
-               this.hitBoxes.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.TOGGLE_RANK, x, rowY, w, rowH, i));
+               this.hitBoxes.add(new StringListEditorScreen.HitBox(StringListEditorScreen.HitKind.TOGGLE_RANK, x, rowY, w, rowH, i));
             } else {
                boolean picked = row.picked() > 0;
                autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, x, rowY, w, rowH - 1, over ? -1441000940 : -1441722092);
                this.init(graphics, (picked ? "[x] " : "[ ] ") + row.name(), x + 8, ty, picked ? -791321 : mutedTextColor(), w - 12);
-               this.hitBoxes.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.TOGGLE_PLAYER, x, rowY, w, rowH, i));
+               this.hitBoxes.add(new StringListEditorScreen.HitBox(StringListEditorScreen.HitKind.TOGGLE_PLAYER, x, rowY, w, rowH, i));
             }
          });
       }
@@ -284,7 +284,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                boolean over = mx >= popupX && mx < popupX + popupW && my >= y && my < y + rowH;
                autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(graphics, popupX + 1, y, popupW - 2, rowH - 1, !selected && !over ? -1441722092 : -1441000940);
                this.init(graphics, suggestion, popupX + 4, this.centeredTextY(y, rowH - 1), -791321, popupW - 8);
-               this.hitBoxes.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.SUGGESTION, popupX + 1, y, popupW - 2, rowH, idx));
+               this.hitBoxes.add(new StringListEditorScreen.HitBox(StringListEditorScreen.HitKind.SUGGESTION, popupX + 1, y, popupW - 2, rowH, idx));
             }
          }
       }
@@ -298,13 +298,13 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       int w,
       int h,
       autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone variant,
-      StringListEditorScreen.Inner_CachePool type,
+      StringListEditorScreen.HitKind type,
       int index,
       int mx,
       int my
    ) {
       autismclient.gui.ui.widgets.ButtonDrawHelper.init(graphics, this.font, x, y, w, h, label, variant, true, mx, my);
-      this.hitBoxes.add(new StringListEditorScreen.Inner_StreamUtil(type, x, y, w, h, index));
+      this.hitBoxes.add(new StringListEditorScreen.HitBox(type, x, y, w, h, index));
    }
 
    private void init(GuiGraphicsExtractor graphics, int x, int y, int width, int height, String title, int mx, int my) {
@@ -314,7 +314,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          autismclient.gui.f.UiHelper.init(graphics, this.font, mx, my), bounds, headerH, title, mx >= x && mx < x + width && my >= y && my < y + headerH
       );
       autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.DialogFrameRenderer.init(bounds, headerH);
-      this.hitBoxes.add(new StringListEditorScreen.Inner_StreamUtil(StringListEditorScreen.Inner_CachePool.CLOSE, close.read(), close.write(), close.update(), close.sync(), -1));
+      this.hitBoxes.add(new StringListEditorScreen.HitBox(StringListEditorScreen.HitKind.CLOSE, close.read(), close.write(), close.update(), close.sync(), -1));
    }
 
    @Override
@@ -345,8 +345,8 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       }
 
       for (int i = this.hitBoxes.size() - 1; i >= 0; i--) {
-         StringListEditorScreen.Inner_StreamUtil hit = this.hitBoxes.get(i);
-         if (hit.init(mx, my) && (hit.kind != StringListEditorScreen.Inner_CachePool.REMOVE || this.isOverList(mx, my))) {
+         StringListEditorScreen.HitBox hit = this.hitBoxes.get(i);
+         if (hit.init(mx, my) && (hit.kind != StringListEditorScreen.HitKind.REMOVE || this.isOverList(mx, my))) {
             switch (hit.kind) {
                case ADD:
                   this.commitEntry();
@@ -373,13 +373,13 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                   }
                   break;
                case TOGGLE_PLAYER:
-                  List<StringListEditorScreen.Inner_DataUtil> rowsx = this.rankRows();
+                  List<StringListEditorScreen.RankRow> rowsx = this.rankRows();
                   if (hit.update >= 0 && hit.update < rowsx.size()) {
                      this.toggleName(rowsx.get(hit.update).name());
                   }
                   break;
                case TOGGLE_RANK:
-                  List<StringListEditorScreen.Inner_DataUtil> rows = this.rankRows();
+                  List<StringListEditorScreen.RankRow> rows = this.rankRows();
                   if (hit.update >= 0 && hit.update < rows.size()) {
                      this.toggleRankMembers(rows.get(hit.update).rank());
                   }
@@ -698,7 +698,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       return rank != null && !rank.isBlank() ? rank : "No rank";
    }
 
-   private List<StringListEditorScreen.Inner_DataUtil> rankRows() {
+   private List<StringListEditorScreen.RankRow> rankRows() {
       String needle = this.searchText().trim().toLowerCase(Locale.ROOT);
       List<String> selected = this.currentValues();
       LinkedHashMap<String, List<String>> groups = new LinkedHashMap<>();
@@ -726,7 +726,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
          groups.put("No rank", rankless);
       }
 
-      List<StringListEditorScreen.Inner_DataUtil> rows = new ArrayList<>();
+      List<StringListEditorScreen.RankRow> rows = new ArrayList<>();
       groups.forEach((rank, members) -> {
          List<String> shown = new ArrayList<>();
 
@@ -745,10 +745,10 @@ public class StringListEditorScreen extends VirtualScaledScreen {
                }
             }
 
-            rows.add(new StringListEditorScreen.Inner_DataUtil(rank, null, picked, shown.size()));
+            rows.add(new StringListEditorScreen.RankRow(rank, null, picked, shown.size()));
 
             for (String name : shown) {
-               rows.add(new StringListEditorScreen.Inner_DataUtil(rank, name, load(selected, name) ? 1 : 0, 1));
+               rows.add(new StringListEditorScreen.RankRow(rank, name, load(selected, name) ? 1 : 0, 1));
             }
          }
       });
@@ -770,7 +770,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       if (rank != null) {
          List<String> members = new ArrayList<>();
 
-         for (StringListEditorScreen.Inner_DataUtil row : this.rankRows()) {
+         for (StringListEditorScreen.RankRow row : this.rankRows()) {
             if (row.name() != null && row.rank().equals(rank)) {
                members.add(row.name());
             }
@@ -1171,7 +1171,7 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       autismclient.gui.f.b.k.init(graphics, this.font, display, theme.init_Identifier_l(l.read), color, drawX, drawY, false);
    }
 
-   private enum Inner_CachePool {
+   private enum HitKind {
       ADD,
       EDIT_ENTRY,
       REMOVE,
@@ -1184,10 +1184,10 @@ public class StringListEditorScreen extends VirtualScaledScreen {
       CLOSE;
    }
 
-   private record Inner_DataUtil(String rank, String name, int picked, int total) {
+   private record RankRow(String rank, String name, int picked, int total) {
    }
 
-   private record Inner_StreamUtil(StringListEditorScreen.Inner_CachePool kind, int x, int load, int read, int write, int update) {
+   private record HitBox(StringListEditorScreen.HitKind kind, int x, int load, int read, int write, int update) {
       boolean init(int mx, int my) {
          return mx >= this.x && mx < this.x + this.read && my >= this.load && my < this.load + this.write;
       }

@@ -44,8 +44,8 @@ final class AiRedstone {
    static AiOperation init(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiRedstone.Inner_DataUtil action = init(AiJson.getString(args, "action", "inspect"));
-         if (action == AiRedstone.Inner_DataUtil.INSPECT) {
+         final AiRedstone.RedstoneAction action = init(AiJson.getString(args, "action", "inspect"));
+         if (action == AiRedstone.RedstoneAction.INSPECT) {
             int radius = Math.max(1, Math.min(24, AiJson.getInt(args, "radius", 8)));
             return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Read redstone components within " + radius + " blocks", init(mc, radius));
          } else {
@@ -84,7 +84,7 @@ final class AiRedstone {
                         );
                      }
 
-                     if (action == AiRedstone.Inner_DataUtil.SET && state.getValue(property) == desired && !this.init_Z) {
+                     if (action == AiRedstone.RedstoneAction.SET && state.getValue(property) == desired && !this.init_Z) {
                         return this.init(AiOperation.Status.SUCCEEDED, "Already " + property.getName() + "=" + desired + "; nothing to do");
                      }
 
@@ -138,7 +138,7 @@ final class AiRedstone {
                         }
                      } else if (this.init_BlockState != null && !state.equals(this.init_BlockState)) {
                         boolean now = state.getValue(property);
-                        return action == AiRedstone.Inner_DataUtil.SET && now != desired
+                        return action == AiRedstone.RedstoneAction.SET && now != desired
                            ? this.init(
                               AiOperation.Status.UNCERTAIN,
                               "The component changed to " + property.getName() + "=" + now + " rather than the requested " + desired
@@ -166,7 +166,7 @@ final class AiRedstone {
                      out.add("component", AiRedstone.init_JsonObject(mc, pos));
                   }
 
-                  if (action == AiRedstone.Inner_DataUtil.SET) {
+                  if (action == AiRedstone.RedstoneAction.SET) {
                      out.addProperty("requested", desired);
                   }
 
@@ -295,15 +295,15 @@ final class AiRedstone {
       return false;
    }
 
-   private static AiRedstone.Inner_DataUtil init(String text) {
+   private static AiRedstone.RedstoneAction init(String text) {
       try {
-         return AiRedstone.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
+         return AiRedstone.RedstoneAction.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("action must be inspect, toggle or set");
       }
    }
 
-   enum Inner_DataUtil {
+   enum RedstoneAction {
       INSPECT,
       TOGGLE,
       SET;

@@ -38,7 +38,7 @@ public final class MovementInputFixer {
       return this.init(input, cameraYaw, silentYaw, clientTick, null);
    }
 
-   public Input init(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.Inner_DataUtil footing) {
+   public Input init(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.FootingModel footing) {
       MovementInputFixer copy = new MovementInputFixer();
       copy.write_I = this.write_I;
       copy.chosen = this.chosen;
@@ -58,7 +58,7 @@ public final class MovementInputFixer {
       return this.load(input, cameraYaw, silentYaw, clientTick, null);
    }
 
-   public Input load(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.Inner_DataUtil footing) {
+   public Input load(Input input, float cameraYaw, float silentYaw, int clientTick, MovementInputFixer.FootingModel footing) {
       if (input == null) {
          return null;
       }
@@ -118,7 +118,7 @@ public final class MovementInputFixer {
       return silentYaw - k * 45.0F;
    }
 
-   private static int init(int chosen, float wanted, float pressed, float cameraYaw, float silentYaw, MovementInputFixer.Inner_DataUtil footing) {
+   private static int init(int chosen, float wanted, float pressed, float cameraYaw, float silentYaw, MovementInputFixer.FootingModel footing) {
       int chosenTicks = footing.ticks(init_F_F_I(silentYaw, chosen));
       if (chosenTicks >= 3) {
          return chosen;
@@ -244,7 +244,7 @@ public final class MovementInputFixer {
       this.pressed = 0.0F / 0.0F;
    }
 
-   public interface Inner_DataUtil {
+   public interface FootingModel {
       int ticks(float var1);
    }
 }

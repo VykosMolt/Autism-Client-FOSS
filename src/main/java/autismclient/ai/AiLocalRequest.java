@@ -58,12 +58,12 @@ final class AiLocalRequest {
       }
    }
 
-   static AiIntents.Inner_CachePool init(JsonObject stored) {
+   static AiIntents.IntentPlan init(JsonObject stored) {
       String label = AiJson.getString(stored, "label", "");
       String capability = AiJson.getString(stored, "capability", "");
       if (stored.has("arguments") && stored.get("arguments").isJsonObject()) {
          JsonObject checked = init(label, capability, stored.getAsJsonObject("arguments"));
-         return new AiIntents.Inner_CachePool(List.of(new AiIntents.Inner_BufferHelper(label, capability, checked.getAsJsonObject("arguments"), label)), "");
+         return new AiIntents.IntentPlan(List.of(new AiIntents.IntentStep(label, capability, checked.getAsJsonObject("arguments"), label)), "");
       } else {
          throw new IllegalArgumentException("Local action has no arguments");
       }

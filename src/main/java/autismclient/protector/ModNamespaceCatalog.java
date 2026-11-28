@@ -24,7 +24,7 @@ public final class ModNamespaceCatalog {
    private static final Set<String> flush = ConcurrentHashMap.newKeySet();
    private static final Map<String, Set<String>> read_Map = new ConcurrentHashMap<>();
    private static final int init_I = 8192;
-   private static final Map<String, ModNamespaceCatalog.Inner_DataUtil> decisionCache = new ConcurrentHashMap<>();
+   private static final Map<String, ModNamespaceCatalog.Decision> decisionCache = new ConcurrentHashMap<>();
    private static final Map<String, Boolean> blockedCache = new ConcurrentHashMap<>();
    private static final Map<String, Boolean> sync_Map = new ConcurrentHashMap<>();
    private static final AtomicBoolean initialized = new AtomicBoolean(false);
@@ -152,7 +152,7 @@ public final class ModNamespaceCatalog {
 
    public static String translationFor(String key, String defaultValue) {
       if (key != null && !key.isEmpty()) {
-         ModNamespaceCatalog.Inner_DataUtil decision = decisionCache.get(key);
+         ModNamespaceCatalog.Decision decision = decisionCache.get(key);
          if (decision == null) {
             decision = decide(key);
             init(decisionCache, key, decision);
@@ -250,27 +250,27 @@ public final class ModNamespaceCatalog {
       return normalized != null && foreignModIds.contains(normalized);
    }
 
-   private static ModNamespaceCatalog.Inner_DataUtil decide(String key) {
+   private static ModNamespaceCatalog.Decision decide(String key) {
       if (!sync_Set.contains(key) && !VanillaTranslationKeyLoader.init(key)) {
          String serverValue = serverTranslations.get(key);
          if (serverValue != null) {
-            return ModNamespaceCatalog.Inner_DataUtil.init(serverValue);
+            return ModNamespaceCatalog.Decision.init(serverValue);
          }
 
          Set<String> owners = load_Map.get(key);
          if (owners != null && !owners.isEmpty()) {
             for (String owner : owners) {
                if (update(owner)) {
-                  return ModNamespaceCatalog.Inner_DataUtil.PASS;
+                  return ModNamespaceCatalog.Decision.PASS;
                }
             }
 
-            return ModNamespaceCatalog.Inner_DataUtil.BLOCK;
+            return ModNamespaceCatalog.Decision.BLOCK;
          } else {
-            return write(key) ? ModNamespaceCatalog.Inner_DataUtil.BLOCK : ModNamespaceCatalog.Inner_DataUtil.PASS;
+            return write(key) ? ModNamespaceCatalog.Decision.BLOCK : ModNamespaceCatalog.Decision.PASS;
          }
       } else {
-         return ModNamespaceCatalog.Inner_DataUtil.PASS;
+         return ModNamespaceCatalog.Decision.PASS;
       }
    }
 
@@ -315,15 +315,15 @@ public final class ModNamespaceCatalog {
       return new HashSet<>(foreignModIds);
    }
 
-   private record Inner_DataUtil(int write, String value) {
+   private record Decision(int write, String value) {
       static final int init_I = 0;
       static final int load_I = 1;
       static final int read = 2;
-      static final ModNamespaceCatalog.Inner_DataUtil PASS = new ModNamespaceCatalog.Inner_DataUtil(0, null);
-      static final ModNamespaceCatalog.Inner_DataUtil BLOCK = new ModNamespaceCatalog.Inner_DataUtil(1, null);
+      static final ModNamespaceCatalog.Decision PASS = new ModNamespaceCatalog.Decision(0, null);
+      static final ModNamespaceCatalog.Decision BLOCK = new ModNamespaceCatalog.Decision(1, null);
 
-      static ModNamespaceCatalog.Inner_DataUtil init(String value) {
-         return new ModNamespaceCatalog.Inner_DataUtil(2, value);
+      static ModNamespaceCatalog.Decision init(String value) {
+         return new ModNamespaceCatalog.Decision(2, value);
       }
 
       public int init_I() {

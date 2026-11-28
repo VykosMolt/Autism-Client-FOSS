@@ -24,8 +24,8 @@ public final class MacroCondition {
    public int amount = 0;
    public int slot = 0;
    public double range = 5.0;
-   public WaitDurabilityAction.Inner_CachePool durMode = WaitDurabilityAction.Inner_CachePool.HELD;
-   public WaitDurabilityAction.Inner_StreamUtil durMeasure = WaitDurabilityAction.Inner_StreamUtil.PERCENT_REMAINING;
+   public WaitDurabilityAction.TargetMode durMode = WaitDurabilityAction.TargetMode.HELD;
+   public WaitDurabilityAction.Measurement durMeasure = WaitDurabilityAction.Measurement.PERCENT_REMAINING;
    public WaitFreeSlotsAction.Inner_StreamUtil freeMode = WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS;
 
    public static MacroCondition group(MacroCondition.Inner_StreamUtil c) {
@@ -177,37 +177,37 @@ public final class MacroCondition {
                var10000 = true;
                break;
             case HELD_ITEM:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.HELD_ITEM);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.HELD_ITEM);
                break;
             case INVENTORY_ITEM:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.INVENTORY_ITEM);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.INVENTORY_ITEM);
                break;
             case ITEM_COUNT:
                var10000 = this.compare(this.countItem(mc), this.amount);
                break;
             case SLOT_EMPTY:
-               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.Inner_DataUtil.SLOT_EMPTY);
+               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.InventoryCondition.SLOT_EMPTY);
                break;
             case SLOT_FILLED:
-               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.Inner_DataUtil.SLOT_FILLED);
+               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.InventoryCondition.SLOT_FILLED);
                break;
             case INVENTORY_FULL:
-               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.Inner_DataUtil.INVENTORY_FULL);
+               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.InventoryCondition.INVENTORY_FULL);
                break;
             case INVENTORY_EMPTY:
-               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.Inner_DataUtil.INVENTORY_EMPTY);
+               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.InventoryCondition.INVENTORY_EMPTY);
                break;
             case CURSOR_EMPTY:
-               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.Inner_DataUtil.CURSOR_EMPTY);
+               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.InventoryCondition.CURSOR_EMPTY);
                break;
             case CURSOR_FILLED:
-               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.Inner_DataUtil.CURSOR_FILLED);
+               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.InventoryCondition.CURSOR_FILLED);
                break;
             case CURSOR_MATCHES:
-               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.Inner_DataUtil.CURSOR_MATCHES);
+               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.InventoryCondition.CURSOR_MATCHES);
                break;
             case SELECTED_SLOT:
-               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.Inner_DataUtil.SELECTED_SLOT);
+               var10000 = this.checkInventoryPredicate(mc, WaitInventoryPredicateAction.InventoryCondition.SELECTED_SLOT);
                break;
             case FREE_SLOTS:
                var10000 = this.checkFreeSlots(mc);
@@ -216,22 +216,22 @@ public final class MacroCondition {
                var10000 = this.checkDurability(mc);
                break;
             case GUI_OPEN:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.GUI_TYPE);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.GUI_TYPE);
                break;
             case LOOKING_AT_ENTITY:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.LOOKING_AT_ENTITY);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.LOOKING_AT_ENTITY);
                break;
             case LOOKING_AT_CONTAINER_ENTITY:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.LOOKING_AT_CONTAINER_ENTITY);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.LOOKING_AT_CONTAINER_ENTITY);
                break;
             case MOUNTED_ENTITY:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.MOUNTED_ENTITY);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.MOUNTED_ENTITY);
                break;
             case ENTITY_NEARBY:
                var10000 = this.checkEntityNearby(mc);
                break;
             case LOOKING_AT_BLOCK:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.LOOKING_AT_BLOCK);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.LOOKING_AT_BLOCK);
                break;
             case ENTITY_TARGET:
                var10000 = mc.crosshairPickEntity != null;
@@ -242,16 +242,16 @@ public final class MacroCondition {
                );
                break;
             case CONNECTION:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.CONNECTION);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.CONNECTION);
                break;
             case HAS_BUNDLE:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.HAS_BUNDLE);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.HAS_BUNDLE);
                break;
             case BUNDLE_V2_READY:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.BUNDLE_V2_READY);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.BUNDLE_V2_READY);
                break;
             case HAS_WRITABLE_BOOK:
-               var10000 = this.checkAssert(mc, AssertAction.Inner_DataUtil.HAS_WRITABLE_BOOK);
+               var10000 = this.checkAssert(mc, AssertAction.CheckKind.HAS_WRITABLE_BOOK);
                break;
             case HEALTH:
                var10000 = mc.player != null && this.compare(mc.player.getHealth(), this.amount);
@@ -272,7 +272,7 @@ public final class MacroCondition {
       }
    }
 
-   private boolean checkAssert(Minecraft mc, AssertAction.Inner_DataUtil type) {
+   private boolean checkAssert(Minecraft mc, AssertAction.CheckKind type) {
       AssertAction a = new AssertAction();
       a.check = type;
       a.itemName = this.item == null ? "" : this.item;
@@ -281,7 +281,7 @@ public final class MacroCondition {
       return a.init(mc);
    }
 
-   private boolean checkInventoryPredicate(Minecraft mc, WaitInventoryPredicateAction.Inner_DataUtil cond) {
+   private boolean checkInventoryPredicate(Minecraft mc, WaitInventoryPredicateAction.InventoryCondition cond) {
       WaitInventoryPredicateAction w = new WaitInventoryPredicateAction();
       w.condition = cond;
       w.itemName = this.item == null ? "" : this.item;
@@ -316,7 +316,7 @@ public final class MacroCondition {
 
    private boolean checkEntityNearby(Minecraft mc) {
       WaitEntityTargetAction w = new WaitEntityTargetAction();
-      w.condition = WaitEntityTargetAction.Inner_DataUtil.NEARBY;
+      w.condition = WaitEntityTargetAction.TargetCondition.NEARBY;
       w.entityId = this.item == null ? "" : this.item;
       w.range = this.range;
       return w.init(mc);
@@ -441,23 +441,23 @@ public final class MacroCondition {
       return var10000;
    }
 
-   private WaitDurabilityAction.Inner_DataUtil durabilityComparison() {
-      WaitDurabilityAction.Inner_DataUtil var10000;
+   private WaitDurabilityAction.Comparison durabilityComparison() {
+      WaitDurabilityAction.Comparison var10000;
       switch (this.cmp) {
          case BELOW:
-            var10000 = WaitDurabilityAction.Inner_DataUtil.BELOW;
+            var10000 = WaitDurabilityAction.Comparison.BELOW;
             break;
          case AT_MOST:
-            var10000 = WaitDurabilityAction.Inner_DataUtil.AT_MOST;
+            var10000 = WaitDurabilityAction.Comparison.AT_MOST;
             break;
          case EXACT:
-            var10000 = WaitDurabilityAction.Inner_DataUtil.EXACT;
+            var10000 = WaitDurabilityAction.Comparison.EXACT;
             break;
          case AT_LEAST:
-            var10000 = WaitDurabilityAction.Inner_DataUtil.AT_LEAST;
+            var10000 = WaitDurabilityAction.Comparison.AT_LEAST;
             break;
          case ABOVE:
-            var10000 = WaitDurabilityAction.Inner_DataUtil.ABOVE;
+            var10000 = WaitDurabilityAction.Comparison.ABOVE;
             break;
          default:
             throw new MatchException(null, null);
@@ -764,8 +764,8 @@ public final class MacroCondition {
          m.toolState = t.getStringOr("toolState", "SUCCEEDED");
          m.toolFilter = t.getStringOr("toolFilter", "");
          m.range = t.getDoubleOr("range", 5.0);
-         m.durMode = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Inner_CachePool.class, t.getStringOr("durMode", "HELD"), WaitDurabilityAction.Inner_CachePool.HELD);
-         m.durMeasure = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Inner_StreamUtil.class, t.getStringOr("durMeasure", "PERCENT_REMAINING"), WaitDurabilityAction.Inner_StreamUtil.PERCENT_REMAINING);
+         m.durMode = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.TargetMode.class, t.getStringOr("durMode", "HELD"), WaitDurabilityAction.TargetMode.HELD);
+         m.durMeasure = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Measurement.class, t.getStringOr("durMeasure", "PERCENT_REMAINING"), WaitDurabilityAction.Measurement.PERCENT_REMAINING);
          m.freeMode = MacroNbtCodecHelper.parseEnum(WaitFreeSlotsAction.Inner_StreamUtil.class, t.getStringOr("freeMode", "FREE_SLOTS"), WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS);
       }
 

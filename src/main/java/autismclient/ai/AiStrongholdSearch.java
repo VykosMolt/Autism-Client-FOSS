@@ -33,10 +33,10 @@ final class AiStrongholdSearch {
    }
 
    static AiOperation init(Vec3 lead, int seconds) {
-      return init(lead, seconds, new AiStrongholdSearch.Inner_DataUtil());
+      return init(lead, seconds, new AiStrongholdSearch.SearchMemory());
    }
 
-   static AiOperation init(final Vec3 lead, final int seconds, final AiStrongholdSearch.Inner_DataUtil memory) {
+   static AiOperation init(final Vec3 lead, final int seconds, final AiStrongholdSearch.SearchMemory memory) {
       final Minecraft mc = Minecraft.getInstance();
       memory.init(mc.level, mc.getConnection(), lead);
       return new AiOperation() {
@@ -292,7 +292,7 @@ final class AiStrongholdSearch {
       return AiGuardLayer.wrapPendingTermination(pending, AiOperation.Result.failed(AiFailure.TARGET_NOT_FOUND, message, data.toString()));
    }
 
-   static final class Inner_DataUtil {
+   static final class SearchMemory {
       private Object init_Obj;
       private Object load_Obj;
       private Vec3 init_Vec3;

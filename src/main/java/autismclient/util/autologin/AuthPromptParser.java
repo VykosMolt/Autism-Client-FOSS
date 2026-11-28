@@ -12,23 +12,23 @@ public final class AuthPromptParser {
    private AuthPromptParser() {
    }
 
-   public static AuthPromptParser.Inner_DataUtil init(String rawLine) {
+   public static AuthPromptParser.AuthPrompt init(String rawLine) {
       if (rawLine == null) {
-         return AuthPromptParser.Inner_DataUtil.NONE;
+         return AuthPromptParser.AuthPrompt.NONE;
       } else {
          String line = rawLine.trim();
          if (line.isEmpty()) {
-            return AuthPromptParser.Inner_DataUtil.NONE;
+            return AuthPromptParser.AuthPrompt.NONE;
          } else {
             Matcher reg = init.matcher(line);
             if (reg.find()) {
                String command = line.substring(reg.start(), reg.end()).toLowerCase(Locale.ROOT);
-               return new AuthPromptParser.Inner_DataUtil(AuthPromptParser.Inner_StreamUtil.REGISTER, command, init(line, reg.end()));
+               return new AuthPromptParser.AuthPrompt(AuthPromptParser.PromptKind.REGISTER, command, init(line, reg.end()));
             } else {
                Matcher log = load.matcher(line);
                return log.find()
-                  ? new AuthPromptParser.Inner_DataUtil(AuthPromptParser.Inner_StreamUtil.LOGIN, line.substring(log.start(), log.end()).toLowerCase(Locale.ROOT), 1)
-                  : AuthPromptParser.Inner_DataUtil.NONE;
+                  ? new AuthPromptParser.AuthPrompt(AuthPromptParser.PromptKind.LOGIN, line.substring(log.start(), log.end()).toLowerCase(Locale.ROOT), 1)
+                  : AuthPromptParser.AuthPrompt.NONE;
             }
          }
       }
@@ -63,8 +63,8 @@ public final class AuthPromptParser {
       }
    }
 
-   public record Inner_DataUtil(AuthPromptParser.Inner_StreamUtil kind, String command, int init_I) {
-      public static final AuthPromptParser.Inner_DataUtil NONE = new AuthPromptParser.Inner_DataUtil(AuthPromptParser.Inner_StreamUtil.NONE, "", 0);
+   public record AuthPrompt(AuthPromptParser.PromptKind kind, String command, int init_I) {
+      public static final AuthPromptParser.AuthPrompt NONE = new AuthPromptParser.AuthPrompt(AuthPromptParser.PromptKind.NONE, "", 0);
 
       public String init(String password) {
          String line = this.command + " " + password;
@@ -72,7 +72,7 @@ public final class AuthPromptParser {
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum PromptKind {
       NONE,
       REGISTER,
       LOGIN;

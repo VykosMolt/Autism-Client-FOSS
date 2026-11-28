@@ -42,7 +42,7 @@ public final class AiPlannerWarmup {
          for (int var6 = 0; var6 < 3 && System.nanoTime() - var0 < 12000000000L; var6++) {
             double var7 = 0.1 * (1.0 + 0.2 * var6);
             AiPathfinder.SearchSession var9 = AiPathfinder.SearchSession.createProofSession(
-               new AiPlannerWarmup.Inner_CacheHelper(var2, var7),
+               new AiPlannerWarmup.SpeedGridView(var2, var7),
                var4,
                AiPathfinder.PathGoal.near(var5, 0.6, true),
                var3,
@@ -69,7 +69,7 @@ public final class AiPlannerWarmup {
       int var3 = 0;
 
       for (int var4 = 0; var4 < 3; var4++) {
-         AiPlannerWorld var5 = new AiPlannerWorld(new AiPlannerWarmup.Inner_CacheHelper(var0, 0.1 * (1.0 + 0.2 * var4)), null);
+         AiPlannerWorld var5 = new AiPlannerWorld(new AiPlannerWarmup.SpeedGridView(var0, 0.1 * (1.0 + 0.2 * var4)), null);
 
          for (byte var6 = 0; var6 <= 24; var6 += 3) {
             for (byte var7 = 0; var7 <= 24; var7 += 3) {
@@ -124,7 +124,7 @@ public final class AiPlannerWarmup {
          : AiPathfinder.CellInfo.UNLOADED;
    }
 
-   private record Inner_CacheHelper(AiPathfinder.GridView grid, double speed) implements AiPathfinder.GridView {
+   private record SpeedGridView(AiPathfinder.GridView grid, double speed) implements AiPathfinder.GridView {
       @Override
       public AiPathfinder.CellInfo probe(int var1, int var2, int var3) {
          return this.grid.probe(var1, var2, var3);

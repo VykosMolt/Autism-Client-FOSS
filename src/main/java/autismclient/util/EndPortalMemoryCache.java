@@ -5,12 +5,12 @@ import java.util.Map;
 
 public final class EndPortalMemoryCache {
    public static final long init_J = 360000L;
-   private final Map<String, EndPortalMemoryCache.Inner_DataUtil> init_Map = new LinkedHashMap<>(8, 0.75F, true);
+   private final Map<String, EndPortalMemoryCache.DimensionMemory> init_Map = new LinkedHashMap<>(8, 0.75F, true);
    private long load = -1L;
 
-   public EndPortalMemoryCache.Inner_DataUtil init(String server, String dimension) {
+   public EndPortalMemoryCache.DimensionMemory init(String server, String dimension) {
       String key = server + "\n" + dimension;
-      EndPortalMemoryCache.Inner_DataUtil current = this.init_Map.get(key);
+      EndPortalMemoryCache.DimensionMemory current = this.init_Map.get(key);
       if (current != null) {
          return current;
       }
@@ -19,7 +19,7 @@ public final class EndPortalMemoryCache {
          this.init_Map.remove(this.init_Map.keySet().iterator().next());
       }
 
-      current = new EndPortalMemoryCache.Inner_DataUtil();
+      current = new EndPortalMemoryCache.DimensionMemory();
       this.init_Map.put(key, current);
       return current;
    }
@@ -49,11 +49,11 @@ public final class EndPortalMemoryCache {
       return this.init_Map.size();
    }
 
-   public static final class Inner_DataUtil {
+   public static final class DimensionMemory {
       public final StrongholdTriangulator triangulator = new StrongholdTriangulator();
-      public final Map<Long, StrongholdTriangulator.Inner_CachePool> frames = new LinkedHashMap<>();
+      public final Map<Long, StrongholdTriangulator.PortalFrame> frames = new LinkedHashMap<>();
 
-      public void init(StrongholdTriangulator.Inner_CachePool frame) {
+      public void init(StrongholdTriangulator.PortalFrame frame) {
          if (this.frames.size() >= 512 && !this.frames.containsKey(frame.pos().asLong())) {
             this.frames.remove(this.frames.keySet().iterator().next());
          }

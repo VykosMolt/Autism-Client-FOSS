@@ -9,9 +9,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.MerchantMenu;
 
 public final class TradeAction implements ContextMacroAction {
-   public TradeAction.Inner_StreamUtil target = TradeAction.Inner_StreamUtil.OPEN_SCREEN;
+   public TradeAction.MerchantTarget target = TradeAction.MerchantTarget.OPEN_SCREEN;
    public double range = 4.0;
-   public TradeAction.Inner_DataUtil selection = TradeAction.Inner_DataUtil.OFFER;
+   public TradeAction.TradeSelection selection = TradeAction.TradeSelection.OFFER;
    public int offerNumber = 1;
    public String resultItem = "minecraft:emerald";
    public String enchantment = "minecraft:mending";
@@ -29,10 +29,10 @@ public final class TradeAction implements ContextMacroAction {
 
    public autismclient.util.villager.TradeOfferFilter init() {
       return new autismclient.util.villager.TradeOfferFilter(
-         this.selection == TradeAction.Inner_DataUtil.OFFER ? clamp(this.offerNumber, 1, 512) : 0,
-         this.selection == TradeAction.Inner_DataUtil.ITEM ? List.of(autismclient.util.villager.TradeOfferFilter.init(this.resultItem)) : List.of(),
+         this.selection == TradeAction.TradeSelection.OFFER ? clamp(this.offerNumber, 1, 512) : 0,
+         this.selection == TradeAction.TradeSelection.ITEM ? List.of(autismclient.util.villager.TradeOfferFilter.init(this.resultItem)) : List.of(),
          List.of(),
-         this.selection == TradeAction.Inner_DataUtil.BOOK
+         this.selection == TradeAction.TradeSelection.BOOK
             ? List.of(new autismclient.util.villager.TradeOfferFilter.Inner_DataUtil(this.enchantment, clamp(this.minLevel, 1, 255), 0))
             : List.of(),
          this.exactLevel,
@@ -42,7 +42,7 @@ public final class TradeAction implements ContextMacroAction {
 
    @Override
    public void run(MacroExecutionContext ctx) {
-      if (this.selection != TradeAction.Inner_DataUtil.ITEM || this.resultItem != null && !this.resultItem.isBlank()) {
+      if (this.selection != TradeAction.TradeSelection.ITEM || this.resultItem != null && !this.resultItem.isBlank()) {
          autismclient.util.villager.VillagerTradeSession session = new autismclient.util.villager.VillagerTradeSession(
             this.init(), this.untilUnavailable ? 10000 : clamp(this.amount, 1, 10000), this.delayTicks, this.timeoutTicks, this.emeraldBudget, this.keepEmeralds
          );
@@ -57,7 +57,7 @@ public final class TradeAction implements ContextMacroAction {
                return;
             }
 
-            if (this.target == TradeAction.Inner_StreamUtil.OPEN_SCREEN || this.init(ctx)) {
+            if (this.target == TradeAction.MerchantTarget.OPEN_SCREEN || this.init(ctx)) {
                while (ctx.isActive()) {
                   autismclient.util.villager.VillagerTradeSession.Inner_CachePool state = ctx.callOnClientThread(
                      () -> ctx.isActive() ? session.tick(ctx.mc()) : autismclient.util.villager.VillagerTradeSession.Inner_CachePool.CANCELLED
@@ -115,7 +115,7 @@ public final class TradeAction implements ContextMacroAction {
          return false;
       }
 
-      Entity entity = ctx.callOnClientThread(() -> autismclient.util.villager.MerchantInteractHelper.init(ctx.mc(), this.target == TradeAction.Inner_StreamUtil.AIMED, this.range));
+      Entity entity = ctx.callOnClientThread(() -> autismclient.util.villager.MerchantInteractHelper.init(ctx.mc(), this.target == TradeAction.MerchantTarget.AIMED, this.range));
       if (entity == null) {
          return false;
       }
@@ -165,18 +165,18 @@ public final class TradeAction implements ContextMacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       try {
-         this.target = TradeAction.Inner_StreamUtil.valueOf(tag.getStringOr("target", "OPEN_SCREEN"));
+         this.target = TradeAction.MerchantTarget.valueOf(tag.getStringOr("target", "OPEN_SCREEN"));
       } catch (IllegalArgumentException e) {
-         this.target = TradeAction.Inner_StreamUtil.OPEN_SCREEN;
+         this.target = TradeAction.MerchantTarget.OPEN_SCREEN;
       }
 
       this.range = tag.getDoubleOr("range", 4.0);
       this.range = Double.isFinite(this.range) ? Math.clamp(this.range, 1.0, 6.0) : 4.0;
 
       try {
-         this.selection = TradeAction.Inner_DataUtil.valueOf(tag.getStringOr("selection", "OFFER"));
+         this.selection = TradeAction.TradeSelection.valueOf(tag.getStringOr("selection", "OFFER"));
       } catch (IllegalArgumentException e) {
-         this.selection = TradeAction.Inner_DataUtil.OFFER;
+         this.selection = TradeAction.TradeSelection.OFFER;
       }
 
       this.offerNumber = clamp(tag.getIntOr("offerNumber", 1), 1, 512);
@@ -239,13 +239,13 @@ public final class TradeAction implements ContextMacroAction {
       return Math.max(min, Math.min(max, n));
    }
 
-   public enum Inner_DataUtil {
+   public enum TradeSelection {
       OFFER,
       ITEM,
       BOOK;
    }
 
-   public enum Inner_StreamUtil {
+   public enum MerchantTarget {
       OPEN_SCREEN,
       AIMED,
       NEAREST;

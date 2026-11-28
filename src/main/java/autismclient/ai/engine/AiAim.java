@@ -526,25 +526,25 @@ public final class AiAim {
    }
 
    public enum AimProfile {
-      CALM(28.0F, 28.0F, 22.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
-      FLOW(54.0F, 54.0F, 38.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
-      NORMAL(45.0F, 45.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
-      FAST(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD),
-      FLICK(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.TELLY_FLICK),
-      EXACT(72.0F, 72.0F, 180.0F, RotationStreamPlanner.Inner_StreamUtil.STANDARD, true),
-      TELLY(72.0F, 72.0F, 100.0F, RotationStreamPlanner.Inner_StreamUtil.TELLY_FLICK, true);
+      CALM(28.0F, 28.0F, 22.0F, RotationStreamPlanner.MotionProfile.STANDARD),
+      FLOW(54.0F, 54.0F, 38.0F, RotationStreamPlanner.MotionProfile.STANDARD),
+      NORMAL(45.0F, 45.0F, 180.0F, RotationStreamPlanner.MotionProfile.STANDARD),
+      FAST(72.0F, 72.0F, 180.0F, RotationStreamPlanner.MotionProfile.STANDARD),
+      FLICK(72.0F, 72.0F, 180.0F, RotationStreamPlanner.MotionProfile.TELLY_FLICK),
+      EXACT(72.0F, 72.0F, 180.0F, RotationStreamPlanner.MotionProfile.STANDARD, true),
+      TELLY(72.0F, 72.0F, 100.0F, RotationStreamPlanner.MotionProfile.TELLY_FLICK, true);
 
       final float yawCap;
       final float pitchCap;
       final float cameraCap;
-      final RotationStreamPlanner.Inner_StreamUtil streamProfile;
+      final RotationStreamPlanner.MotionProfile streamProfile;
       final boolean linear;
 
-      AimProfile(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile) {
+      AimProfile(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.MotionProfile profile) {
          this(yawCap, pitchCap, cameraCap, profile, false);
       }
 
-      AimProfile(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.Inner_StreamUtil profile, boolean linear) {
+      AimProfile(float yawCap, float pitchCap, float cameraCap, RotationStreamPlanner.MotionProfile profile, boolean linear) {
          this.yawCap = yawCap;
          this.pitchCap = pitchCap;
          this.cameraCap = cameraCap;

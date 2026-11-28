@@ -37,14 +37,14 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
    private final Screen parent;
    private final Module module;
    private final Setting<?, ?> setting;
-   private final EnchantmentAttributeEditorScreen.Inner_DataUtil mode;
+   private final EnchantmentAttributeEditorScreen.EditorMode mode;
    private final autismclient.gui.ui.widgets.TextInputWidget searchInput = newInput("Search registry");
    private final autismclient.gui.ui.widgets.TextInputWidget load_BitSetUtil = newInput("1").setValue("1");
    private final autismclient.gui.ui.widgets.TextInputWidget amountInput = newInput("1").setValue("1");
    private final autismclient.gui.ui.widgets.TextInputWidget modifierIdInput = newInput("autism:modifier").setValue("autism:modifier");
    private final List<String> entries = new ArrayList<>();
    private autismclient.gui.ui.layout.LayoutContext layoutContext;
-   private List<EnchantmentAttributeEditorScreen.Inner_StreamUtil> availableRows = List.of();
+   private List<EnchantmentAttributeEditorScreen.AvailableRow> availableRows = List.of();
    private String lastFilter = null;
    private int availableScroll;
    private int entryScroll;
@@ -60,10 +60,10 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
    private autismclient.gui.f.NetHelper flush = emptyRect();
    private autismclient.gui.f.NetHelper close = emptyRect();
    private autismclient.gui.f.NetHelper open = emptyRect();
-   private final List<EnchantmentAttributeEditorScreen.Inner_CachePool> availableHits = new ArrayList<>();
-   private final List<EnchantmentAttributeEditorScreen.Inner_CachePool> entryHits = new ArrayList<>();
+   private final List<EnchantmentAttributeEditorScreen.RowHit> availableHits = new ArrayList<>();
+   private final List<EnchantmentAttributeEditorScreen.RowHit> entryHits = new ArrayList<>();
 
-   public EnchantmentAttributeEditorScreen(Screen parent, Module module, Setting<?, ?> option, EnchantmentAttributeEditorScreen.Inner_DataUtil mode) {
+   public EnchantmentAttributeEditorScreen(Screen parent, Module module, Setting<?, ?> option, EnchantmentAttributeEditorScreen.EditorMode mode) {
       super(Component.literal("Edit " + mode.init_Str));
       this.parent = parent;
       this.module = module;
@@ -188,7 +188,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
             break;
          }
 
-         EnchantmentAttributeEditorScreen.Inner_StreamUtil entry = this.availableRows.get(index);
+         EnchantmentAttributeEditorScreen.AvailableRow entry = this.availableRows.get(index);
          autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(
             this.close.read() + 1, this.close.write() + headerH + row * rowH, this.close.update() - 2, rowH
          );
@@ -204,7 +204,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
                bounds.update() - pad * 2,
                ui.init_TableIndex().colors().textPrimary
             );
-         this.availableHits.add(new EnchantmentAttributeEditorScreen.Inner_CachePool(bounds, index));
+         this.availableHits.add(new EnchantmentAttributeEditorScreen.RowHit(bounds, index));
       }
    }
 
@@ -220,7 +220,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       int w = this.open.update() - pad * 2;
       int top = this.open.write() + pad;
       int controlsH;
-      if (this.mode == EnchantmentAttributeEditorScreen.Inner_DataUtil.ENCHANTMENTS) {
+      if (this.mode == EnchantmentAttributeEditorScreen.EditorMode.ENCHANTMENTS) {
          int labelW = ui.init_PoolEntry().measureWidth("Level");
          ui.init_PoolEntry()
             .drawFitted(
@@ -321,7 +321,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
                ui.init_TableIndex().colors().textPrimary
             );
          autismclient.gui.ui.widgets.ListRowRenderer.drawDeleteButton(ui.init_GuiGraphicsExtract(), remove.read(), remove.write(), remove.update(), remove.sync(), remove.init_Z(mx, my));
-         this.entryHits.add(new EnchantmentAttributeEditorScreen.Inner_CachePool(bounds, index, remove));
+         this.entryHits.add(new EnchantmentAttributeEditorScreen.RowHit(bounds, index, remove));
       }
    }
 
@@ -329,8 +329,8 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       String filter = this.searchInput.getValue().trim().toLowerCase(Locale.ROOT);
       if (!filter.equals(this.lastFilter)) {
          this.lastFilter = filter;
-         List<EnchantmentAttributeEditorScreen.Inner_StreamUtil> rows = new ArrayList<>();
-         if (this.mode == EnchantmentAttributeEditorScreen.Inner_DataUtil.ATTRIBUTES) {
+         List<EnchantmentAttributeEditorScreen.AvailableRow> rows = new ArrayList<>();
+         if (this.mode == EnchantmentAttributeEditorScreen.EditorMode.ATTRIBUTES) {
             for (Entry<ResourceKey<Attribute>, Attribute> entry : BuiltInRegistries.ATTRIBUTE.entrySet()) {
                Identifier id = entry.getKey().identifier();
                Attribute attribute = entry.getValue();
@@ -349,17 +349,17 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
             }
          }
 
-         rows.sort(Comparator.comparing(EnchantmentAttributeEditorScreen.Inner_StreamUtil::load, String.CASE_INSENSITIVE_ORDER).thenComparing(EnchantmentAttributeEditorScreen.Inner_StreamUtil::init));
+         rows.sort(Comparator.comparing(EnchantmentAttributeEditorScreen.AvailableRow::load, String.CASE_INSENSITIVE_ORDER).thenComparing(EnchantmentAttributeEditorScreen.AvailableRow::init));
          this.availableRows = List.copyOf(rows);
          this.availableScroll = 0;
       }
    }
 
-   private void init(List<EnchantmentAttributeEditorScreen.Inner_StreamUtil> rows, String filter, String id, String label) {
+   private void init(List<EnchantmentAttributeEditorScreen.AvailableRow> rows, String filter, String id, String label) {
       String resolved = label != null && !label.isBlank() ? label : RegistryDisplayNameCache.update(id);
       String searchable = (id + " " + resolved).toLowerCase(Locale.ROOT);
       if (filter.isEmpty() || searchable.contains(filter)) {
-         rows.add(new EnchantmentAttributeEditorScreen.Inner_StreamUtil(id, resolved));
+         rows.add(new EnchantmentAttributeEditorScreen.AvailableRow(id, resolved));
       }
    }
 
@@ -410,7 +410,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
                      this.parent,
                      this.module,
                      this.setting,
-                     this.mode == EnchantmentAttributeEditorScreen.Inner_DataUtil.ENCHANTMENTS
+                     this.mode == EnchantmentAttributeEditorScreen.EditorMode.ENCHANTMENTS
                         ? NbtTextEditorScreen.Inner_DataUtil.ENCHANTMENTS
                         : NbtTextEditorScreen.Inner_DataUtil.ATTRIBUTES
                   )
@@ -434,7 +434,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
             return true;
          }
 
-         for (EnchantmentAttributeEditorScreen.Inner_CachePool hit : this.entryHits) {
+         for (EnchantmentAttributeEditorScreen.RowHit hit : this.entryHits) {
             if (Compat263.mouseEventGlfwButton(event) == 0 && hit.load.init_Z(mx, my)) {
                this.entries.remove(hit.index);
                if (this.selectedEntry == hit.index) {
@@ -452,7 +452,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
             }
          }
 
-         for (EnchantmentAttributeEditorScreen.Inner_CachePool hit : this.availableHits) {
+         for (EnchantmentAttributeEditorScreen.RowHit hit : this.availableHits) {
             if (Compat263.mouseEventGlfwButton(event) == 0 && hit.bounds.init_Z(mx, my)) {
                this.entries.add(this.load(this.availableRows.get(hit.index).init));
                this.selectedEntry = this.entries.size() - 1;
@@ -575,7 +575,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       if (index >= 0 && index < this.entries.size()) {
          this.selectedEntry = index;
          String entry = this.entries.get(index);
-         if (this.mode == EnchantmentAttributeEditorScreen.Inner_DataUtil.ENCHANTMENTS) {
+         if (this.mode == EnchantmentAttributeEditorScreen.EditorMode.ENCHANTMENTS) {
             int split = entry.lastIndexOf(58);
             this.load_BitSetUtil.setValue(split > 0 && split < entry.length() - 1 ? entry.substring(split + 1) : "1");
          } else {
@@ -588,13 +588,13 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
    }
 
    private String load(String id) {
-      return this.mode == EnchantmentAttributeEditorScreen.Inner_DataUtil.ENCHANTMENTS
+      return this.mode == EnchantmentAttributeEditorScreen.EditorMode.ENCHANTMENTS
          ? write(id) + ":" + clamp(parseIntOr(this.load_BitSetUtil.getValue(), 1), 1, 255)
          : this.init_Str_Str_Str(id, null);
    }
 
    private String read(String existing) {
-      if (this.mode == EnchantmentAttributeEditorScreen.Inner_DataUtil.ENCHANTMENTS) {
+      if (this.mode == EnchantmentAttributeEditorScreen.EditorMode.ENCHANTMENTS) {
          int split = existing.lastIndexOf(58);
          String id = split > 0 ? existing.substring(0, split) : existing;
          return write(id) + ":" + clamp(parseIntOr(this.load_BitSetUtil.getValue(), 1), 1, 255);
@@ -848,25 +848,25 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       return Math.max(min, Math.min(value, max));
    }
 
-   private record Inner_CachePool(autismclient.gui.f.NetHelper bounds, int index, autismclient.gui.f.NetHelper load) {
-      private Inner_CachePool(autismclient.gui.f.NetHelper bounds, int index) {
+   private record RowHit(autismclient.gui.f.NetHelper bounds, int index, autismclient.gui.f.NetHelper load) {
+      private RowHit(autismclient.gui.f.NetHelper bounds, int index) {
          this(bounds, index, EnchantmentAttributeEditorScreen.emptyRect());
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum EditorMode {
       ENCHANTMENTS("Enchantments", "Pick an enchantment, set its level, then add it."),
       ATTRIBUTES("Attributes", "Pick an attribute and keep the exact modifier controls editable.");
 
       private final String init_Str;
       private final String load_Str;
 
-      Inner_DataUtil(String title, String tip) {
+      EditorMode(String title, String tip) {
          this.init_Str = title;
          this.load_Str = tip;
       }
    }
 
-   private record Inner_StreamUtil(String init, String load) {
+   private record AvailableRow(String init, String load) {
    }
 }

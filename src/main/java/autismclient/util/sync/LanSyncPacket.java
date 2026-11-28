@@ -47,72 +47,72 @@ public abstract class LanSyncPacket {
    public static LanSyncPacket create(LanSyncPacketType type, String sessionId) {
       switch (type) {
          case SEARCH_REQUEST:
-            return new LanSyncPacket.CharEncoder(sessionId);
+            return new LanSyncPacket.SearchRequestPacket(sessionId);
          case SESSION:
-            return new LanSyncPacket.TokenStore(sessionId, 0L, "");
+            return new LanSyncPacket.SessionPacket(sessionId, 0L, "");
          case JOIN:
-            return new LanSyncPacket.JsonUtil(sessionId, "");
+            return new LanSyncPacket.JoinPacket(sessionId, "");
          case REQUEST_CLIENT_LIST:
-            return new LanSyncPacket.TableIndex(sessionId);
+            return new LanSyncPacket.RequestClientListPacket(sessionId);
          case CLIENT_LIST:
-            return new LanSyncPacket.Inner_StreamUtil(sessionId, new ArrayList<>());
+            return new LanSyncPacket.ClientListPacket(sessionId, new ArrayList<>());
          case LEAVE:
-            return new LanSyncPacket.StateCache(sessionId, "");
+            return new LanSyncPacket.LeavePacket(sessionId, "");
          case REQUEST_MACRO:
-            return new LanSyncPacket.RingBuffer(sessionId, "");
+            return new LanSyncPacket.RequestMacroPacket(sessionId, "");
          case MACRO_DATA:
-            return new LanSyncPacket.RenderState(sessionId, "", "", "", (byte)0);
+            return new LanSyncPacket.MacroDataPacket(sessionId, "", "", "", (byte)0);
          case MACRO_DELETE:
-            return new LanSyncPacket.EventBus(sessionId, "", "");
+            return new LanSyncPacket.MacroDeletePacket(sessionId, "", "");
          case MACRO_LIST:
-            return new LanSyncPacket.FileCache(sessionId, "", new ArrayList<>());
+            return new LanSyncPacket.MacroListPacket(sessionId, "", new ArrayList<>());
          case QUEUE_SYNC:
-            return new LanSyncPacket.PoolEntry(sessionId, "", "");
+            return new LanSyncPacket.QueueSyncPacket(sessionId, "", "");
          case PRESET_DATA:
-            return new LanSyncPacket.IoWorker(sessionId, "", "", "");
+            return new LanSyncPacket.PresetDataPacket(sessionId, "", "", "");
          case CHAT_MESSAGE:
-            return new LanSyncPacket.Inner_DataUtil(sessionId, "", "");
+            return new LanSyncPacket.ChatMessagePacket(sessionId, "", "");
          case TCP_COMMAND_ACK:
-            return new LanSyncPacket.MethodUtil(sessionId, "", 0L);
+            return new LanSyncPacket.CommandAckPacket(sessionId, "", 0L);
          case PLAYER_OFFSETS:
-            return new LanSyncPacket.PacketUtil(sessionId, new HashMap<>());
+            return new LanSyncPacket.PlayerOffsetsPacket(sessionId, new HashMap<>());
          case CLIENT_OFFSET_UPDATE:
-            return new LanSyncPacket.CachePool(sessionId, "", "", 0);
+            return new LanSyncPacket.ClientOffsetUpdatePacket(sessionId, "", "", 0);
          case PREPARE_EXECUTION:
-            return new LanSyncPacket.HashUtil(sessionId, 0L, false, "", "", "");
+            return new LanSyncPacket.PrepareExecutionPacket(sessionId, 0L, false, "", "", "");
          case CLIENT_READY:
-            return new LanSyncPacket.BufferHelper(sessionId, 0L, "");
+            return new LanSyncPacket.ClientReadyPacket(sessionId, 0L, "");
          case EXECUTE_NOW:
-            return new LanSyncPacket.ConfigStore(sessionId, 0L, 0L);
+            return new LanSyncPacket.ExecuteNowPacket(sessionId, 0L, 0L);
          case GO:
-            return new LanSyncPacket.TaskQueue(sessionId, 0L);
+            return new LanSyncPacket.GoPacket(sessionId, 0L);
          case HEARTBEAT:
-            return new LanSyncPacket.NetHelper(sessionId, "", 0L);
+            return new LanSyncPacket.HeartbeatPacket(sessionId, "", 0L);
          case SYNC_STATE_UPDATE:
-            return new LanSyncPacket.FieldCache(sessionId, 0, "");
+            return new LanSyncPacket.SyncStateUpdatePacket(sessionId, 0, "");
          case REQUEST_SYNC:
-            return new LanSyncPacket.BitSetUtil(sessionId, "", false, "", "");
+            return new LanSyncPacket.RequestSyncPacket(sessionId, "", false, "", "");
          case OFFSET_SYNC:
-            return new LanSyncPacket.ByteReader(sessionId, "", "", 0);
+            return new LanSyncPacket.OffsetSyncPacket(sessionId, "", "", 0);
          case MACRO_STEP_PROGRESS:
-            return new LanSyncPacket.TextFormat(sessionId, "", 0, 0, "");
+            return new LanSyncPacket.MacroStepProgressPacket(sessionId, "", 0, 0, "");
          case MACRO_DATA_CHUNK:
-            return new LanSyncPacket.UiHelper(sessionId, "", "", (byte)0, 0, 0, new byte[0]);
+            return new LanSyncPacket.MacroDataChunkPacket(sessionId, "", "", (byte)0, 0, 0, new byte[0]);
          case MACRO_ASSIGNMENT_SYNC:
-            return new LanSyncPacket.SyncManager(sessionId, "", "");
+            return new LanSyncPacket.MacroAssignmentSyncPacket(sessionId, "", "");
          default:
             return null;
       }
    }
 
-   public static class BitSetUtil extends LanSyncPacket {
+   public static class RequestSyncPacket extends LanSyncPacket {
       public String senderUsername;
       public boolean isMacro;
       public String macroName;
       public String command;
       public int executionMethod = 0;
 
-      public BitSetUtil(String sessionId, String senderUsername, boolean isMacro, String macroName, String command) {
+      public RequestSyncPacket(String sessionId, String senderUsername, boolean isMacro, String macroName, String command) {
          super(LanSyncPacketType.REQUEST_SYNC, sessionId);
          this.senderUsername = senderUsername != null ? senderUsername : "";
          this.isMacro = isMacro;
@@ -120,7 +120,7 @@ public abstract class LanSyncPacket {
          this.command = command != null ? command : "";
       }
 
-      public BitSetUtil() {
+      public RequestSyncPacket() {
          super(LanSyncPacketType.REQUEST_SYNC, "");
       }
 
@@ -148,17 +148,17 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class BufferHelper extends LanSyncPacket {
+   public static class ClientReadyPacket extends LanSyncPacket {
       public long executionId;
       public String senderUsername;
 
-      public BufferHelper(String sessionId, long executionId, String senderUsername) {
+      public ClientReadyPacket(String sessionId, long executionId, String senderUsername) {
          super(LanSyncPacketType.CLIENT_READY, sessionId);
          this.executionId = executionId;
          this.senderUsername = senderUsername;
       }
 
-      public BufferHelper() {
+      public ClientReadyPacket() {
          super(LanSyncPacketType.CLIENT_READY, "");
       }
 
@@ -175,19 +175,19 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class ByteReader extends LanSyncPacket {
+   public static class OffsetSyncPacket extends LanSyncPacket {
       public String senderUsername;
       public String targetUsername;
       public int offsetMs;
 
-      public ByteReader(String sessionId, String senderUsername, String targetUsername, int offsetMs) {
+      public OffsetSyncPacket(String sessionId, String senderUsername, String targetUsername, int offsetMs) {
          super(LanSyncPacketType.OFFSET_SYNC, sessionId);
          this.senderUsername = senderUsername != null ? senderUsername : "";
          this.targetUsername = targetUsername != null ? targetUsername : "";
          this.offsetMs = offsetMs;
       }
 
-      public ByteReader() {
+      public OffsetSyncPacket() {
          super(LanSyncPacketType.OFFSET_SYNC, "");
       }
 
@@ -206,19 +206,19 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class CachePool extends LanSyncPacket {
+   public static class ClientOffsetUpdatePacket extends LanSyncPacket {
       public String senderUsername;
       public String targetUsername;
       public int offsetMs;
 
-      public CachePool(String sessionId, String senderUsername, String targetUsername, int offsetMs) {
+      public ClientOffsetUpdatePacket(String sessionId, String senderUsername, String targetUsername, int offsetMs) {
          super(LanSyncPacketType.CLIENT_OFFSET_UPDATE, sessionId);
          this.senderUsername = senderUsername;
          this.targetUsername = targetUsername;
          this.offsetMs = offsetMs;
       }
 
-      public CachePool() {
+      public ClientOffsetUpdatePacket() {
          super(LanSyncPacketType.CLIENT_OFFSET_UPDATE, "");
       }
 
@@ -237,12 +237,12 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class CharEncoder extends LanSyncPacket {
-      public CharEncoder(String sessionId) {
+   public static class SearchRequestPacket extends LanSyncPacket {
+      public SearchRequestPacket(String sessionId) {
          super(LanSyncPacketType.SEARCH_REQUEST, sessionId);
       }
 
-      public CharEncoder() {
+      public SearchRequestPacket() {
          super(LanSyncPacketType.SEARCH_REQUEST, "");
       }
 
@@ -255,17 +255,17 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class ConfigStore extends LanSyncPacket {
+   public static class ExecuteNowPacket extends LanSyncPacket {
       public long executionId;
       public long targetTime;
 
-      public ConfigStore(String sessionId, long executionId, long targetTime) {
+      public ExecuteNowPacket(String sessionId, long executionId, long targetTime) {
          super(LanSyncPacketType.EXECUTE_NOW, sessionId);
          this.executionId = executionId;
          this.targetTime = targetTime;
       }
 
-      public ConfigStore() {
+      public ExecuteNowPacket() {
          super(LanSyncPacketType.EXECUTE_NOW, "");
       }
 
@@ -282,17 +282,17 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class EventBus extends LanSyncPacket {
+   public static class MacroDeletePacket extends LanSyncPacket {
       public String senderUsername;
       public String macroName;
 
-      public EventBus(String sessionId, String senderUsername, String macroName) {
+      public MacroDeletePacket(String sessionId, String senderUsername, String macroName) {
          super(LanSyncPacketType.MACRO_DELETE, sessionId);
          this.senderUsername = senderUsername;
          this.macroName = macroName;
       }
 
-      public EventBus() {
+      public MacroDeletePacket() {
          super(LanSyncPacketType.MACRO_DELETE, "");
       }
 
@@ -309,17 +309,17 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class FieldCache extends LanSyncPacket {
+   public static class SyncStateUpdatePacket extends LanSyncPacket {
       public int stateOrdinal;
       public String detail;
 
-      public FieldCache(String sessionId, int stateOrdinal, String detail) {
+      public SyncStateUpdatePacket(String sessionId, int stateOrdinal, String detail) {
          super(LanSyncPacketType.SYNC_STATE_UPDATE, sessionId);
          this.stateOrdinal = stateOrdinal;
          this.detail = detail != null ? detail : "";
       }
 
-      public FieldCache() {
+      public SyncStateUpdatePacket() {
          super(LanSyncPacketType.SYNC_STATE_UPDATE, "");
       }
 
@@ -336,17 +336,17 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class FileCache extends LanSyncPacket {
+   public static class MacroListPacket extends LanSyncPacket {
       public String senderUsername;
       public List<String> macroNames = new ArrayList<>();
 
-      public FileCache(String sessionId, String senderUsername, List<String> macroNames) {
+      public MacroListPacket(String sessionId, String senderUsername, List<String> macroNames) {
          super(LanSyncPacketType.MACRO_LIST, sessionId);
          this.senderUsername = senderUsername;
          this.macroNames = macroNames;
       }
 
-      public FileCache() {
+      public MacroListPacket() {
          super(LanSyncPacketType.MACRO_LIST, "");
       }
 
@@ -372,7 +372,7 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class HashUtil extends LanSyncPacket {
+   public static class PrepareExecutionPacket extends LanSyncPacket {
       public long executionId;
       public boolean isMacro;
       public String targetName;
@@ -382,7 +382,7 @@ public abstract class LanSyncPacket {
       public int executionMethod = 0;
       public long targetTick = -1L;
 
-      public HashUtil(String sessionId, long executionId, boolean isMacro, String targetName, String queueData, String senderUsername) {
+      public PrepareExecutionPacket(String sessionId, long executionId, boolean isMacro, String targetName, String queueData, String senderUsername) {
          super(LanSyncPacketType.PREPARE_EXECUTION, sessionId);
          this.executionId = executionId;
          this.isMacro = isMacro;
@@ -391,7 +391,7 @@ public abstract class LanSyncPacket {
          this.senderUsername = senderUsername;
       }
 
-      public HashUtil(
+      public PrepareExecutionPacket(
          String sessionId, long executionId, boolean isMacro, String targetName, String queueData, String senderUsername, int executionMethod, long targetTick
       ) {
          this(sessionId, executionId, isMacro, targetName, queueData, senderUsername);
@@ -399,7 +399,7 @@ public abstract class LanSyncPacket {
          this.targetTick = targetTick;
       }
 
-      public HashUtil() {
+      public PrepareExecutionPacket() {
          super(LanSyncPacketType.PREPARE_EXECUTION, "");
       }
 
@@ -446,17 +446,17 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class Inner_DataUtil extends LanSyncPacket {
+   public static class ChatMessagePacket extends LanSyncPacket {
       public String senderUsername;
       public String message;
 
-      public Inner_DataUtil(String sessionId, String senderUsername, String message) {
+      public ChatMessagePacket(String sessionId, String senderUsername, String message) {
          super(LanSyncPacketType.CHAT_MESSAGE, sessionId);
          this.senderUsername = senderUsername != null ? senderUsername : "";
          this.message = message != null ? message : "";
       }
 
-      public Inner_DataUtil() {
+      public ChatMessagePacket() {
          super(LanSyncPacketType.CHAT_MESSAGE, "");
       }
 
@@ -473,21 +473,21 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class Inner_StreamUtil extends LanSyncPacket {
-      public List<LanSyncPacket.Inner_StreamUtil.Inner_DataUtil> clients = new ArrayList<>();
+   public static class ClientListPacket extends LanSyncPacket {
+      public List<LanSyncPacket.ClientListPacket.ClientEntry> clients = new ArrayList<>();
       public int executionMethod = 0;
 
-      public Inner_StreamUtil(String sessionId, List<LanSyncPacket.Inner_StreamUtil.Inner_DataUtil> clients) {
+      public ClientListPacket(String sessionId, List<LanSyncPacket.ClientListPacket.ClientEntry> clients) {
          super(LanSyncPacketType.CLIENT_LIST, sessionId);
          this.clients = clients;
       }
 
-      public Inner_StreamUtil(String sessionId, List<LanSyncPacket.Inner_StreamUtil.Inner_DataUtil> clients, int executionMethod) {
+      public ClientListPacket(String sessionId, List<LanSyncPacket.ClientListPacket.ClientEntry> clients, int executionMethod) {
          this(sessionId, clients);
          this.executionMethod = executionMethod;
       }
 
-      public Inner_StreamUtil() {
+      public ClientListPacket() {
          super(LanSyncPacketType.CLIENT_LIST, "");
       }
 
@@ -495,7 +495,7 @@ public abstract class LanSyncPacket {
       public void write(DataOutputStream out) throws IOException {
          out.writeInt(this.clients.size());
 
-         for (LanSyncPacket.Inner_StreamUtil.Inner_DataUtil client : this.clients) {
+         for (LanSyncPacket.ClientListPacket.ClientEntry client : this.clients) {
             out.writeUTF(client.name);
             out.writeBoolean(client.isHost);
          }
@@ -509,7 +509,7 @@ public abstract class LanSyncPacket {
          this.clients.clear();
 
          for (int i = 0; i < size; i++) {
-            this.clients.add(new LanSyncPacket.Inner_StreamUtil.Inner_DataUtil(in.readUTF(), in.readBoolean()));
+            this.clients.add(new LanSyncPacket.ClientListPacket.ClientEntry(in.readUTF(), in.readBoolean()));
          }
 
          try {
@@ -519,30 +519,30 @@ public abstract class LanSyncPacket {
          }
       }
 
-      public static class Inner_DataUtil {
+      public static class ClientEntry {
          public String name;
          public boolean isHost;
 
-         public Inner_DataUtil(String name, boolean isHost) {
+         public ClientEntry(String name, boolean isHost) {
             this.name = name;
             this.isHost = isHost;
          }
       }
    }
 
-   public static class IoWorker extends LanSyncPacket {
+   public static class PresetDataPacket extends LanSyncPacket {
       public String senderUsername;
       public String presetName;
       public String presetJson;
 
-      public IoWorker(String sessionId, String senderUsername, String presetName, String presetJson) {
+      public PresetDataPacket(String sessionId, String senderUsername, String presetName, String presetJson) {
          super(LanSyncPacketType.PRESET_DATA, sessionId);
          this.senderUsername = senderUsername;
          this.presetName = presetName;
          this.presetJson = presetJson;
       }
 
-      public IoWorker() {
+      public PresetDataPacket() {
          super(LanSyncPacketType.PRESET_DATA, "");
       }
 
@@ -561,15 +561,15 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class JsonUtil extends LanSyncPacket {
+   public static class JoinPacket extends LanSyncPacket {
       public String username;
 
-      public JsonUtil(String sessionId, String username) {
+      public JoinPacket(String sessionId, String username) {
          super(LanSyncPacketType.JOIN, sessionId);
          this.username = username;
       }
 
-      public JsonUtil() {
+      public JoinPacket() {
          super(LanSyncPacketType.JOIN, "");
       }
 
@@ -584,7 +584,7 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class MethodUtil extends LanSyncPacket {
+   public static class CommandAckPacket extends LanSyncPacket {
       public String senderUsername;
       public long executeTimestamp;
       public int executionMethod = 0;
@@ -592,13 +592,13 @@ public abstract class LanSyncPacket {
       public long actualTick = -1L;
       public boolean late = false;
 
-      public MethodUtil(String sessionId, String senderUsername, long executeNanoTime) {
+      public CommandAckPacket(String sessionId, String senderUsername, long executeNanoTime) {
          super(LanSyncPacketType.TCP_COMMAND_ACK, sessionId);
          this.senderUsername = senderUsername != null ? senderUsername : "";
          this.executeTimestamp = executeNanoTime;
       }
 
-      public MethodUtil(String sessionId, String senderUsername, long executeNanoTime, int executionMethod, long targetTick, long actualTick, boolean late) {
+      public CommandAckPacket(String sessionId, String senderUsername, long executeNanoTime, int executionMethod, long targetTick, long actualTick, boolean late) {
          this(sessionId, senderUsername, executeNanoTime);
          this.executionMethod = executionMethod;
          this.targetTick = targetTick;
@@ -606,7 +606,7 @@ public abstract class LanSyncPacket {
          this.late = late;
       }
 
-      public MethodUtil() {
+      public CommandAckPacket() {
          super(LanSyncPacketType.TCP_COMMAND_ACK, "");
       }
 
@@ -639,17 +639,17 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class NetHelper extends LanSyncPacket {
+   public static class HeartbeatPacket extends LanSyncPacket {
       public String senderUsername;
       public long timestamp;
 
-      public NetHelper(String sessionId, String senderUsername, long timestamp) {
+      public HeartbeatPacket(String sessionId, String senderUsername, long timestamp) {
          super(LanSyncPacketType.HEARTBEAT, sessionId);
          this.senderUsername = senderUsername != null ? senderUsername : "";
          this.timestamp = timestamp;
       }
 
-      public NetHelper() {
+      public HeartbeatPacket() {
          super(LanSyncPacketType.HEARTBEAT, "");
       }
 
@@ -666,15 +666,15 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class PacketUtil extends LanSyncPacket {
+   public static class PlayerOffsetsPacket extends LanSyncPacket {
       public Map<String, Integer> offsets = new HashMap<>();
 
-      public PacketUtil(String sessionId, Map<String, Integer> offsets) {
+      public PlayerOffsetsPacket(String sessionId, Map<String, Integer> offsets) {
          super(LanSyncPacketType.PLAYER_OFFSETS, sessionId);
          this.offsets = offsets != null ? new HashMap<>(offsets) : new HashMap<>();
       }
 
-      public PacketUtil() {
+      public PlayerOffsetsPacket() {
          super(LanSyncPacketType.PLAYER_OFFSETS, "");
       }
 
@@ -701,17 +701,17 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class PoolEntry extends LanSyncPacket {
+   public static class QueueSyncPacket extends LanSyncPacket {
       public String queueData;
       public String senderUsername;
 
-      public PoolEntry(String sessionId, String queueData, String senderUsername) {
+      public QueueSyncPacket(String sessionId, String queueData, String senderUsername) {
          super(LanSyncPacketType.QUEUE_SYNC, sessionId);
          this.queueData = queueData;
          this.senderUsername = senderUsername;
       }
 
-      public PoolEntry() {
+      public QueueSyncPacket() {
          super(LanSyncPacketType.QUEUE_SYNC, "");
       }
 
@@ -728,13 +728,13 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class RenderState extends LanSyncPacket {
+   public static class MacroDataPacket extends LanSyncPacket {
       public String senderUsername;
       public String macroName;
       public String nbtData;
       public byte sourceType;
 
-      public RenderState(String sessionId, String senderUsername, String macroName, String nbtData, byte sourceType) {
+      public MacroDataPacket(String sessionId, String senderUsername, String macroName, String nbtData, byte sourceType) {
          super(LanSyncPacketType.MACRO_DATA, sessionId);
          this.senderUsername = senderUsername;
          this.macroName = macroName;
@@ -742,7 +742,7 @@ public abstract class LanSyncPacket {
          this.sourceType = sourceType;
       }
 
-      public RenderState() {
+      public MacroDataPacket() {
          super(LanSyncPacketType.MACRO_DATA, "");
       }
 
@@ -768,15 +768,15 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class RingBuffer extends LanSyncPacket {
+   public static class RequestMacroPacket extends LanSyncPacket {
       public String macroName;
 
-      public RingBuffer(String sessionId, String macroName) {
+      public RequestMacroPacket(String sessionId, String macroName) {
          super(LanSyncPacketType.REQUEST_MACRO, sessionId);
          this.macroName = macroName;
       }
 
-      public RingBuffer() {
+      public RequestMacroPacket() {
          super(LanSyncPacketType.REQUEST_MACRO, "");
       }
 
@@ -791,15 +791,15 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class StateCache extends LanSyncPacket {
+   public static class LeavePacket extends LanSyncPacket {
       public String username;
 
-      public StateCache(String sessionId, String username) {
+      public LeavePacket(String sessionId, String username) {
          super(LanSyncPacketType.LEAVE, sessionId);
          this.username = username;
       }
 
-      public StateCache() {
+      public LeavePacket() {
          super(LanSyncPacketType.LEAVE, "");
       }
 
@@ -814,17 +814,17 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class SyncManager extends LanSyncPacket {
+   public static class MacroAssignmentSyncPacket extends LanSyncPacket {
       public String senderUsername = "";
       public String assignments = "";
 
-      public SyncManager(String sessionId, String senderUsername, String assignments) {
+      public MacroAssignmentSyncPacket(String sessionId, String senderUsername, String assignments) {
          super(LanSyncPacketType.MACRO_ASSIGNMENT_SYNC, sessionId);
          this.senderUsername = senderUsername != null ? senderUsername : "";
          this.assignments = assignments != null ? assignments : "";
       }
 
-      public SyncManager() {
+      public MacroAssignmentSyncPacket() {
          super(LanSyncPacketType.MACRO_ASSIGNMENT_SYNC, "");
       }
 
@@ -841,12 +841,12 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class TableIndex extends LanSyncPacket {
-      public TableIndex(String sessionId) {
+   public static class RequestClientListPacket extends LanSyncPacket {
+      public RequestClientListPacket(String sessionId) {
          super(LanSyncPacketType.REQUEST_CLIENT_LIST, sessionId);
       }
 
-      public TableIndex() {
+      public RequestClientListPacket() {
          super(LanSyncPacketType.REQUEST_CLIENT_LIST, "");
       }
 
@@ -859,23 +859,23 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class TaskQueue extends LanSyncPacket {
+   public static class GoPacket extends LanSyncPacket {
       public long executionId;
       public int executionMethod = 0;
       public long targetTick = -1L;
 
-      public TaskQueue(String sessionId, long executionId) {
+      public GoPacket(String sessionId, long executionId) {
          super(LanSyncPacketType.GO, sessionId);
          this.executionId = executionId;
       }
 
-      public TaskQueue(String sessionId, long executionId, int executionMethod, long targetTick) {
+      public GoPacket(String sessionId, long executionId, int executionMethod, long targetTick) {
          this(sessionId, executionId);
          this.executionMethod = executionMethod;
          this.targetTick = targetTick;
       }
 
-      public TaskQueue() {
+      public GoPacket() {
          super(LanSyncPacketType.GO, "");
       }
 
@@ -900,13 +900,13 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class TextFormat extends LanSyncPacket {
+   public static class MacroStepProgressPacket extends LanSyncPacket {
       public String senderUsername;
       public int completedStep;
       public int totalSteps;
       public String macroName;
 
-      public TextFormat(String sessionId, String senderUsername, int completedStep, int totalSteps, String macroName) {
+      public MacroStepProgressPacket(String sessionId, String senderUsername, int completedStep, int totalSteps, String macroName) {
          super(LanSyncPacketType.MACRO_STEP_PROGRESS, sessionId);
          this.senderUsername = senderUsername != null ? senderUsername : "";
          this.completedStep = completedStep;
@@ -914,7 +914,7 @@ public abstract class LanSyncPacket {
          this.macroName = macroName != null ? macroName : "";
       }
 
-      public TextFormat() {
+      public MacroStepProgressPacket() {
          super(LanSyncPacketType.MACRO_STEP_PROGRESS, "");
       }
 
@@ -935,23 +935,23 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class TokenStore extends LanSyncPacket {
+   public static class SessionPacket extends LanSyncPacket {
       public long startTime;
       public String hostName;
       public byte transportType;
 
-      public TokenStore(String sessionId, long startTime, String hostName, byte transportType) {
+      public SessionPacket(String sessionId, long startTime, String hostName, byte transportType) {
          super(LanSyncPacketType.SESSION, sessionId);
          this.startTime = startTime;
          this.hostName = hostName;
          this.transportType = transportType;
       }
 
-      public TokenStore(String sessionId, long startTime, String hostName) {
+      public SessionPacket(String sessionId, long startTime, String hostName) {
          this(sessionId, startTime, hostName, (byte)1);
       }
 
-      public TokenStore() {
+      public SessionPacket() {
          super(LanSyncPacketType.SESSION, "");
       }
 
@@ -975,7 +975,7 @@ public abstract class LanSyncPacket {
       }
    }
 
-   public static class UiHelper extends LanSyncPacket {
+   public static class MacroDataChunkPacket extends LanSyncPacket {
       public String senderUsername;
       public static final int MAX_CHUNK_BYTES = 64000;
       public String macroName;
@@ -984,7 +984,7 @@ public abstract class LanSyncPacket {
       public int totalChunks;
       public byte[] chunkData;
 
-      public UiHelper(String sessionId, String senderUsername, String macroName, byte sourceType, int chunkIndex, int totalChunks, byte[] chunkData) {
+      public MacroDataChunkPacket(String sessionId, String senderUsername, String macroName, byte sourceType, int chunkIndex, int totalChunks, byte[] chunkData) {
          super(LanSyncPacketType.MACRO_DATA_CHUNK, sessionId);
          this.senderUsername = senderUsername != null ? senderUsername : "";
          this.macroName = macroName != null ? macroName : "";
@@ -994,7 +994,7 @@ public abstract class LanSyncPacket {
          this.chunkData = chunkData != null ? chunkData : new byte[0];
       }
 
-      public UiHelper() {
+      public MacroDataChunkPacket() {
          super(LanSyncPacketType.MACRO_DATA_CHUNK, "");
       }
 

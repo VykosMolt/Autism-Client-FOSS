@@ -69,29 +69,29 @@ public final class ModulesMenuController {
    private static final long init_J = 350L;
    private static final int pop_I = -536870912;
    private static final List<String> init_List = new ArrayList<>();
-   private static final ModulesMenuController.Inner_ConfigStore MACROS_TOOL = new ModulesMenuController.Inner_ConfigStore(
+   private static final ModulesMenuController.ToolEntry MACROS_TOOL = new ModulesMenuController.ToolEntry(
       "macros", "Macros", autismclient.gui.f.a.DataUtil.sync
    );
-   private static final ModulesMenuController.Inner_ConfigStore ADMIN_TOOL = new ModulesMenuController.Inner_ConfigStore(
+   private static final ModulesMenuController.ToolEntry ADMIN_TOOL = new ModulesMenuController.ToolEntry(
       "admin", "Admin Tools", autismclient.gui.f.a.DataUtil.flush
    );
-   private static final ModulesMenuController.Inner_ConfigStore AI_TOOL = new ModulesMenuController.Inner_ConfigStore(
+   private static final ModulesMenuController.ToolEntry AI_TOOL = new ModulesMenuController.ToolEntry(
       "ai", "AI Assistant", autismclient.gui.f.a.DataUtil.get
    );
-   private static final ModulesMenuController.Inner_ConfigStore SCHEMATICS_TOOL = new ModulesMenuController.Inner_ConfigStore(
+   private static final ModulesMenuController.ToolEntry SCHEMATICS_TOOL = new ModulesMenuController.ToolEntry(
       "schematics", "Schematics", autismclient.gui.f.a.DataUtil.clear
    );
-   private static final List<ModulesMenuController.Inner_ConfigStore> UTILITY_TOOLS = List.of(
-      new ModulesMenuController.Inner_ConfigStore("lan", "LAN Sync", autismclient.gui.f.a.DataUtil.update),
-      new ModulesMenuController.Inner_ConfigStore("queue", "Queue", autismclient.gui.f.a.DataUtil.poll),
-      new ModulesMenuController.Inner_ConfigStore("logger", "Logger", autismclient.gui.f.a.DataUtil.open),
-      new ModulesMenuController.Inner_ConfigStore("packets", "Packets", autismclient.gui.f.a.DataUtil.close),
-      new ModulesMenuController.Inner_ConfigStore("server", "Server Info", autismclient.gui.f.a.DataUtil.push),
-      new ModulesMenuController.Inner_ConfigStore("keys", "Settings", autismclient.gui.f.a.DataUtil.write)
+   private static final List<ModulesMenuController.ToolEntry> UTILITY_TOOLS = List.of(
+      new ModulesMenuController.ToolEntry("lan", "LAN Sync", autismclient.gui.f.a.DataUtil.update),
+      new ModulesMenuController.ToolEntry("queue", "Queue", autismclient.gui.f.a.DataUtil.poll),
+      new ModulesMenuController.ToolEntry("logger", "Logger", autismclient.gui.f.a.DataUtil.open),
+      new ModulesMenuController.ToolEntry("packets", "Packets", autismclient.gui.f.a.DataUtil.close),
+      new ModulesMenuController.ToolEntry("server", "Server Info", autismclient.gui.f.a.DataUtil.push),
+      new ModulesMenuController.ToolEntry("keys", "Settings", autismclient.gui.f.a.DataUtil.write)
    );
-   private static final ModulesMenuController.Inner_DataUtil[] ACTION_BUTTONS = new ModulesMenuController.Inner_DataUtil[]{
-      new ModulesMenuController.Inner_DataUtil("flush", "Flush", autismclient.gui.f.b.CachePool.Inner_DataUtil.init),
-      new ModulesMenuController.Inner_DataUtil("clear", "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.init)
+   private static final ModulesMenuController.ActionButton[] ACTION_BUTTONS = new ModulesMenuController.ActionButton[]{
+      new ModulesMenuController.ActionButton("flush", "Flush", autismclient.gui.f.b.CachePool.Inner_DataUtil.init),
+      new ModulesMenuController.ActionButton("clear", "Clear", autismclient.gui.f.b.CachePool.Inner_DataUtil.init)
    };
    private static final Map<String, Float> scrollTargets = new HashMap<>();
    private static final Map<String, int[]> load_Map = new HashMap<>();
@@ -99,9 +99,9 @@ public final class ModulesMenuController {
    private static String selectedCategoryKey = null;
    private static int savedPanelX = -1;
    private static int savedPanelY = -1;
-   private final ModulesMenuController.Inner_BufferHelper host;
+   private final ModulesMenuController.ControllerHost host;
    private final ModuleSettingsView settingsView;
-   private final List<ModulesMenuController.Inner_StreamUtil> hits = new ArrayList<>();
+   private final List<ModulesMenuController.HitRegion> hits = new ArrayList<>();
    private final Deque<NetHelper> init_Deque = new ArrayDeque<>();
    private final Map<String, Float> write_Map = new HashMap<>();
    private int panelX;
@@ -170,7 +170,7 @@ public final class ModulesMenuController {
    private Map<String, Integer> savedVisibleRows;
    private boolean savedLayoutCustom;
 
-   public ModulesMenuController(ModulesMenuController.Inner_BufferHelper host) {
+   public ModulesMenuController(ModulesMenuController.ControllerHost host) {
       this.host = host;
       this.settingsView = new ModuleSettingsView(this);
       this.openedAtNanos = System.nanoTime();
@@ -272,8 +272,8 @@ public final class ModulesMenuController {
    public Map<String, NetHelper> init_Map() {
       Map<String, NetHelper> out = new LinkedHashMap<>();
 
-      for (ModulesMenuController.Inner_StreamUtil hit : this.hits) {
-         if (hit.type == ModulesMenuController.Inner_CachePool.WINDOW_HEADER) {
+      for (ModulesMenuController.HitRegion hit : this.hits) {
+         if (hit.type == ModulesMenuController.HitType.WINDOW_HEADER) {
             out.putIfAbsent(hit.id == null ? "" : hit.id, hit.bounds);
          }
       }
@@ -290,9 +290,9 @@ public final class ModulesMenuController {
    }
 
    public void write_V() {
-      ModulesMenuController.Inner_StreamUtil hit = this.hits
+      ModulesMenuController.HitRegion hit = this.hits
          .stream()
-         .filter(candidate -> candidate.type == ModulesMenuController.Inner_CachePool.RAIL_ITEM && "\u0000profiles".equals(candidate.id))
+         .filter(candidate -> candidate.type == ModulesMenuController.HitType.RAIL_ITEM && "\u0000profiles".equals(candidate.id))
          .findFirst()
          .orElseThrow();
       int x = hit.bounds.read() + hit.bounds.update() / 2;
@@ -317,10 +317,10 @@ public final class ModulesMenuController {
    }
 
    public NetHelper dropdownBounds(String optionId) {
-      ModulesMenuController.Inner_StreamUtil hit = this.hits
+      ModulesMenuController.HitRegion hit = this.hits
          .stream()
          .filter(
-            candidate -> candidate.type == ModulesMenuController.Inner_CachePool.DROPDOWN
+            candidate -> candidate.type == ModulesMenuController.HitType.DROPDOWN
                && candidate.setting != null
                && candidate.setting.id().equals(optionId)
          )
@@ -338,10 +338,10 @@ public final class ModulesMenuController {
    }
 
    public void setSliderFraction(String optionId, double fraction) {
-      ModulesMenuController.Inner_StreamUtil hit = this.hits
+      ModulesMenuController.HitRegion hit = this.hits
          .stream()
          .filter(
-            candidate -> candidate.type == ModulesMenuController.Inner_CachePool.SLIDER
+            candidate -> candidate.type == ModulesMenuController.HitType.SLIDER
                && candidate.setting != null
                && candidate.setting.id().equals(optionId)
          )
@@ -393,9 +393,9 @@ public final class ModulesMenuController {
          }
 
          this.searchEdit = null;
-         ModulesMenuController.Inner_StreamUtil header = this.hits
+         ModulesMenuController.HitRegion header = this.hits
             .stream()
-            .filter(hit -> hit.type == ModulesMenuController.Inner_CachePool.WINDOW_HEADER && "main-menu".equals(hit.id))
+            .filter(hit -> hit.type == ModulesMenuController.HitType.WINDOW_HEADER && "main-menu".equals(hit.id))
             .findFirst()
             .orElseThrow();
          int hx = header.bounds.read() + 32;
@@ -491,7 +491,7 @@ public final class ModulesMenuController {
          NetHelper header = WindowHeaderHelper.init(window, this.headerHeight);
          TitleBarRenderer.init(context, header, h <= this.headerHeight + 1, this.headerPressed);
          this.addHit(
-            ModulesMenuController.Inner_CachePool.WINDOW_HEADER, NetHelper.init(window.read(), window.write(), window.update(), this.headerHeight), null, null, "", -1
+            ModulesMenuController.HitType.WINDOW_HEADER, NetHelper.init(window.read(), window.write(), window.update(), this.headerHeight), null, null, "", -1
          );
          this.load_V_SyncManager_NetHelper(context, window);
          if (h <= this.headerHeight) {
@@ -569,8 +569,8 @@ public final class ModulesMenuController {
          return true;
       }
 
-      ModulesMenuController.Inner_StreamUtil hit = this.hitAt(mouseX, mouseY);
-      return hit != null && hit.type == ModulesMenuController.Inner_CachePool.CLASSIC_RESIZE;
+      ModulesMenuController.HitRegion hit = this.hitAt(mouseX, mouseY);
+      return hit != null && hit.type == ModulesMenuController.HitType.CLASSIC_RESIZE;
    }
 
    private void load_V_SyncManager_NetHelper(SyncManager context, NetHelper window) {
@@ -600,7 +600,7 @@ public final class ModulesMenuController {
       context.init_PoolEntry().drawEllipsized(context.init_GuiGraphicsExtract(), title, titleX, titleY, titleEnd - titleX, colors.textPrimary);
       float closeT = autismclient.gui.ui.HoverTransitionCache.sample(autismclient.gui.ui.HoverTransitionCache.boundsKey(close), close.init_Z(context.read(), context.write()));
       PacketUtil.read(context.init_GuiGraphicsExtract(), close.init(2), lerpColor(colors.textSecondary, colors.danger, closeT));
-      this.addHit(ModulesMenuController.Inner_CachePool.CLOSE, close, null, null, "", -1);
+      this.addHit(ModulesMenuController.HitType.CLOSE, close, null, null, "", -1);
    }
 
    private void renderRail(SyncManager context, NetHelper rail) {
@@ -650,7 +650,7 @@ public final class ModulesMenuController {
       GuiIconAtlas.draw(context.init_GuiGraphicsExtract(), categoryIcon(key), iconX, iconY, iconSize, textColor);
       int labelX = iconX + iconSize + 5;
       context.init_PoolEntry().drawEllipsized(context.init_GuiGraphicsExtract(), label, labelX, context.init_PoolEntry().centerTextY(row), row.init() - 5 - labelX, textColor);
-      this.addHit(ModulesMenuController.Inner_CachePool.RAIL_ITEM, row, null, null, key, -1);
+      this.addHit(ModulesMenuController.HitType.RAIL_ITEM, row, null, null, key, -1);
    }
 
    private static Identifier categoryIcon(String key) {
@@ -772,12 +772,12 @@ public final class ModulesMenuController {
             descriptionLine.update(),
             theme.colors().textSecondary
          );
-      this.addHit(ModulesMenuController.Inner_CachePool.MODULE, card, module, null, "", -1);
+      this.addHit(ModulesMenuController.HitType.MODULE, card, module, null, "", -1);
       KeybindButtonRenderer.init(context, bindButton, module.keybind(), this.bindingModule == module, bindButton.init_Z(context.read(), context.write()));
-      this.addHit(ModulesMenuController.Inner_CachePool.MODULE_BIND, bindButton, module, null, "", -1);
+      this.addHit(ModulesMenuController.HitType.MODULE_BIND, bindButton, module, null, "", -1);
       if (module.hasActivationToggle()) {
          ToggleSwitchRenderer.init(context, pill, module.isEnabled(), pill.init_Z(context.read(), context.write()), "module-toggle:" + module.id());
-         this.addHit(ModulesMenuController.Inner_CachePool.TOGGLE_MODULE, pill, module, null, "", -1);
+         this.addHit(ModulesMenuController.HitType.TOGGLE_MODULE, pill, module, null, "", -1);
       }
 
       if (hasSettings) {
@@ -790,7 +790,7 @@ public final class ModulesMenuController {
             true,
             false
          );
-         this.addHit(ModulesMenuController.Inner_CachePool.MODULE_SETTINGS, settings, module, null, "", -1);
+         this.addHit(ModulesMenuController.HitType.MODULE_SETTINGS, settings, module, null, "", -1);
       }
 
       if (hovered && description != null && context.init_PoolEntry().measureWidth(description) > card.update() - 10) {
@@ -842,7 +842,7 @@ public final class ModulesMenuController {
       return y - top + 1;
    }
 
-   private int renderToolPair(SyncManager context, ModulesMenuController.Inner_ConfigStore left, ModulesMenuController.Inner_ConfigStore right, int x, int y, int w) {
+   private int renderToolPair(SyncManager context, ModulesMenuController.ToolEntry left, ModulesMenuController.ToolEntry right, int x, int y, int w) {
       if (context != null) {
          NetHelper[] cells = splitCells(x, y, w, this.settingsRowHeight);
          autismclient.gui.f.b.CachePool.Inner_DataUtil leftTone = entryTone(left);
@@ -855,7 +855,7 @@ public final class ModulesMenuController {
       return y + this.settingsRowHeight;
    }
 
-   private int renderToolEntry(SyncManager context, ModulesMenuController.Inner_ConfigStore entry, int x, int y, int w, boolean bottom) {
+   private int renderToolEntry(SyncManager context, ModulesMenuController.ToolEntry entry, int x, int y, int w, boolean bottom) {
       if (context != null) {
          this.renderToolButton(
             context,
@@ -869,7 +869,7 @@ public final class ModulesMenuController {
       return y + this.settingsRowHeight;
    }
 
-   private int renderActionRow(SyncManager context, ModulesMenuController.Inner_DataUtil[] row, int x, int y, int w) {
+   private int renderActionRow(SyncManager context, ModulesMenuController.ActionButton[] row, int x, int y, int w) {
       if (context != null) {
          NetHelper[] cells = splitCells(x, y, w, this.settingsRowHeight);
          this.renderActionButton(context, row[0], cells[0], ConnectedButtonRenderer.init(true, false));
@@ -894,9 +894,9 @@ public final class ModulesMenuController {
       float sendT = autismclient.gui.ui.ToggleTransitionCache.init("packet:send", AutismSessionState.getInstance().isSendPacketsEnabled());
       float delayT = autismclient.gui.ui.ToggleTransitionCache.init("packet:delay", AutismSessionState.getInstance().isDelayPacketsEnabled());
       ConnectedButtonRenderer.init(context, toggles[0], "Send", null, toggles[0].init_Z(context.read(), context.write()), sendT, ConnectedButtonRenderer.write);
-      this.addHit(ModulesMenuController.Inner_CachePool.UTILITY, toggles[0], null, null, "send", -1);
+      this.addHit(ModulesMenuController.HitType.UTILITY, toggles[0], null, null, "send", -1);
       ConnectedButtonRenderer.init(context, toggles[1], "Delay", null, toggles[1].init_Z(context.read(), context.write()), delayT, ConnectedButtonRenderer.write);
-      this.addHit(ModulesMenuController.Inner_CachePool.UTILITY, toggles[1], null, null, "delay", -1);
+      this.addHit(ModulesMenuController.HitType.UTILITY, toggles[1], null, null, "delay", -1);
       ConnectedButtonRenderer.init(
          context,
          toggles[1].read(),
@@ -935,32 +935,32 @@ public final class ModulesMenuController {
 
    private void renderToolButton(
       SyncManager context,
-      ModulesMenuController.Inner_ConfigStore entry,
+      ModulesMenuController.ToolEntry entry,
       autismclient.gui.f.b.CachePool.Inner_DataUtil tone,
       NetHelper cell,
-      ConnectedButtonRenderer.Inner_DataUtil edges
+      ConnectedButtonRenderer.ConnectedEdges edges
    ) {
       ConnectedButtonRenderer.init(context, cell, entryLabel(entry), entry.icon(), tone, cell.init_Z(context.read(), context.write()), edges);
-      this.addHit(ModulesMenuController.Inner_CachePool.UTILITY, cell, null, null, entry.id(), -1);
+      this.addHit(ModulesMenuController.HitType.UTILITY, cell, null, null, entry.id(), -1);
    }
 
-   private void renderActionButton(SyncManager context, ModulesMenuController.Inner_DataUtil action, NetHelper cell, ConnectedButtonRenderer.Inner_DataUtil edges) {
+   private void renderActionButton(SyncManager context, ModulesMenuController.ActionButton action, NetHelper cell, ConnectedButtonRenderer.ConnectedEdges edges) {
       ConnectedButtonRenderer.init(context, cell, action.load(), null, action.style(), cell.init_Z(context.read(), context.write()), edges);
-      this.addHit(ModulesMenuController.Inner_CachePool.UTILITY, cell, null, null, action.id(), -1);
+      this.addHit(ModulesMenuController.HitType.UTILITY, cell, null, null, action.id(), -1);
    }
 
-   private static String entryLabel(ModulesMenuController.Inner_ConfigStore entry) {
+   private static String entryLabel(ModulesMenuController.ToolEntry entry) {
       return entry.load();
    }
 
-   private static autismclient.gui.f.b.CachePool.Inner_DataUtil entryTone(ModulesMenuController.Inner_ConfigStore entry) {
+   private static autismclient.gui.f.b.CachePool.Inner_DataUtil entryTone(ModulesMenuController.ToolEntry entry) {
       return autismclient.gui.f.b.CachePool.Inner_DataUtil.init;
    }
 
    private int init_I_SyncManager(SyncManager context) {
       boolean inWorld = !this.host.isTitleSetup();
       int pair = 54;
-      List<ModulesMenuController.Inner_ConfigStore> iconCells = new ArrayList<>(UTILITY_TOOLS);
+      List<ModulesMenuController.ToolEntry> iconCells = new ArrayList<>(UTILITY_TOOLS);
       iconCells.add(MACROS_TOOL);
       iconCells.add(AI_TOOL);
       iconCells.add(SCHEMATICS_TOOL);
@@ -968,7 +968,7 @@ public final class ModulesMenuController {
          iconCells.add(ADMIN_TOOL);
       }
 
-      for (ModulesMenuController.Inner_ConfigStore entry : iconCells) {
+      for (ModulesMenuController.ToolEntry entry : iconCells) {
          pair = Math.max(pair, buttonWidth(context, entry.load(), true));
       }
 
@@ -977,7 +977,7 @@ public final class ModulesMenuController {
             pair = Math.max(pair, buttonWidth(context, label, false));
          }
 
-         for (ModulesMenuController.Inner_DataUtil cell : ACTION_BUTTONS) {
+         for (ModulesMenuController.ActionButton cell : ACTION_BUTTONS) {
             pair = Math.max(pair, buttonWidth(context, cell.load(), false));
          }
       }
@@ -1037,10 +1037,10 @@ public final class ModulesMenuController {
 
          return true;
       } else {
-         ModulesMenuController.Inner_StreamUtil clicked = this.hitAt(mx, my);
+         ModulesMenuController.HitRegion clicked = this.hitAt(mx, my);
          boolean sameField = this.textEdit != null
             && clicked != null
-            && clicked.type == ModulesMenuController.Inner_CachePool.TEXT_FIELD
+            && clicked.type == ModulesMenuController.HitType.TEXT_FIELD
             && clicked.setting == this.textEdit.owner;
          if (!sameField) {
             this.endTextEdit(true);
@@ -1049,16 +1049,16 @@ public final class ModulesMenuController {
          this.close_Z = false;
          this.open_Z = false;
          if (this.searchEdit != null
-            && (clicked == null || clicked.type != ModulesMenuController.Inner_CachePool.TEXT_FIELD || !"search".equals(clicked.id))) {
+            && (clicked == null || clicked.type != ModulesMenuController.HitType.TEXT_FIELD || !"search".equals(clicked.id))) {
             this.commitSearchEdit();
          }
 
          for (int i = this.hits.size() - 1; i >= 0; i--) {
-            ModulesMenuController.Inner_StreamUtil hit = this.hits.get(i);
+            ModulesMenuController.HitRegion hit = this.hits.get(i);
             if (hit.bounds.init_Z(mx, my) && (hit.load == null || hit.load.init_Z(mx, my))) {
                if (button != 0
-                  && hit.type != ModulesMenuController.Inner_CachePool.MODULE
-                  && hit.type != ModulesMenuController.Inner_CachePool.WINDOW_HEADER) {
+                  && hit.type != ModulesMenuController.HitType.MODULE
+                  && hit.type != ModulesMenuController.HitType.WINDOW_HEADER) {
                   return true;
                }
 
@@ -1405,7 +1405,7 @@ public final class ModulesMenuController {
                savedPanelY = this.panelY = my - this.dragOffsetY;
                return true;
             } else if (this.sliderModule != null && this.sliderSetting != null) {
-               ModulesMenuController.Inner_StreamUtil hit = this.hitFor(this.sliderModule, this.sliderSetting);
+               ModulesMenuController.HitRegion hit = this.hitFor(this.sliderModule, this.sliderSetting);
                if (hit != null) {
                   this.settingsView.init_V_ConfigStore_Stream_I(hit, mx);
                }
@@ -1627,13 +1627,13 @@ public final class ModulesMenuController {
       }
    }
 
-   void addHit(ModulesMenuController.Inner_CachePool type, NetHelper bounds, Module module, Setting<?, ?> option, String id, int index) {
-      this.hits.add(new ModulesMenuController.Inner_StreamUtil(type, bounds, module, option, id == null ? "" : id, index, this.init_Deque.peek()));
+   void addHit(ModulesMenuController.HitType type, NetHelper bounds, Module module, Setting<?, ?> option, String id, int index) {
+      this.hits.add(new ModulesMenuController.HitRegion(type, bounds, module, option, id == null ? "" : id, index, this.init_Deque.peek()));
    }
 
-   private ModulesMenuController.Inner_StreamUtil hitAt(int mx, int my) {
+   private ModulesMenuController.HitRegion hitAt(int mx, int my) {
       for (int i = this.hits.size() - 1; i >= 0; i--) {
-         ModulesMenuController.Inner_StreamUtil hit = this.hits.get(i);
+         ModulesMenuController.HitRegion hit = this.hits.get(i);
          if (hit.bounds.init_Z(mx, my) && (hit.load == null || hit.load.init_Z(mx, my))) {
             return hit;
          }
@@ -1659,9 +1659,9 @@ public final class ModulesMenuController {
       this.init_Deque.pop();
    }
 
-   private ModulesMenuController.Inner_StreamUtil hitFor(Module module, Setting<?, ?> option) {
-      for (ModulesMenuController.Inner_StreamUtil hit : this.hits) {
-         if ((hit.type == ModulesMenuController.Inner_CachePool.SLIDER || hit.type == ModulesMenuController.Inner_CachePool.RANGE_SLIDER)
+   private ModulesMenuController.HitRegion hitFor(Module module, Setting<?, ?> option) {
+      for (ModulesMenuController.HitRegion hit : this.hits) {
+         if ((hit.type == ModulesMenuController.HitType.SLIDER || hit.type == ModulesMenuController.HitType.RANGE_SLIDER)
             && hit.module == module
             && hit.setting == option) {
             return hit;
@@ -1738,7 +1738,7 @@ public final class ModulesMenuController {
       }
    }
 
-   ModulesMenuController.Inner_BufferHelper getHost() {
+   ModulesMenuController.ControllerHost getHost() {
       return this.host;
    }
 
@@ -1878,7 +1878,7 @@ public final class ModulesMenuController {
       }
    }
 
-   private void init_V_ConfigStore_Stream(ModulesMenuController.Inner_StreamUtil hit) {
+   private void init_V_ConfigStore_Stream(ModulesMenuController.HitRegion hit) {
       Module module = hit.module;
       Setting<?, ?> option = hit.setting;
       if (module != null && option != null) {
@@ -2042,7 +2042,7 @@ public final class ModulesMenuController {
          this.recordScrollbar(key, m);
          boolean hovered = m.init(context.read(), context.write());
          ScrollbarRenderer.init(context, m, hovered, key.equals(this.pop_Str));
-         this.addHit(ModulesMenuController.Inner_CachePool.SCROLLBAR, track, null, null, key, -1);
+         this.addHit(ModulesMenuController.HitType.SCROLLBAR, track, null, null, key, -1);
       }
    }
 
@@ -2170,10 +2170,10 @@ public final class ModulesMenuController {
          context.init_GuiGraphicsExtract().requestCursor(CursorTypes.RESIZE_NS);
       }
 
-      this.addHit(ModulesMenuController.Inner_CachePool.CLASSIC_RESIZE, grip, null, null, id, shownRows);
+      this.addHit(ModulesMenuController.HitType.CLASSIC_RESIZE, grip, null, null, id, shownRows);
    }
 
-   private void handleHeaderClick(ModulesMenuController.Inner_StreamUtil hit, int mx, int my) {
+   private void handleHeaderClick(ModulesMenuController.HitRegion hit, int mx, int my) {
       String id = hit.id;
       this.bringToFront(id);
       long now = System.currentTimeMillis();
@@ -2342,10 +2342,10 @@ public final class ModulesMenuController {
          context.init_PoolEntry().drawFitted(context.init_GuiGraphicsExtract(), label, row.read() + 6, context.init_PoolEntry().centerTextY(row), labelMax, nameColor);
       }
 
-      this.addHit(ModulesMenuController.Inner_CachePool.MODULE, row, module, null, "", -1);
+      this.addHit(ModulesMenuController.HitType.MODULE, row, module, null, "", -1);
       if (showBind) {
          KeybindButtonRenderer.init(context, bindButton, module.keybind(), this.bindingModule == module, bindButton.init_Z(context.read(), context.write()));
-         this.addHit(ModulesMenuController.Inner_CachePool.MODULE_BIND, bindButton, module, null, "", -1);
+         this.addHit(ModulesMenuController.HitType.MODULE_BIND, bindButton, module, null, "", -1);
       }
 
       if (settings != null) {
@@ -2358,7 +2358,7 @@ public final class ModulesMenuController {
             true,
             false
          );
-         this.addHit(ModulesMenuController.Inner_CachePool.MODULE_SETTINGS, settings, module, null, "", -1);
+         this.addHit(ModulesMenuController.HitType.MODULE_SETTINGS, settings, module, null, "", -1);
       }
 
       if (hovered) {
@@ -2437,14 +2437,14 @@ public final class ModulesMenuController {
       int header = this.headerHeight;
       boolean headerHovered = WindowHeaderHelper.read(bounds, header, context.read(), context.write());
       WindowFrameRenderer.init(context, bounds, title, collapsed, collapse, close, headerHovered, true, 4, 4, header);
-      this.addHit(ModulesMenuController.Inner_CachePool.WINDOW_BODY, bounds, null, null, id, -1);
-      this.addHit(ModulesMenuController.Inner_CachePool.WINDOW_HEADER, WindowHeaderHelper.init(bounds, header), null, null, id, -1);
+      this.addHit(ModulesMenuController.HitType.WINDOW_BODY, bounds, null, null, id, -1);
+      this.addHit(ModulesMenuController.HitType.WINDOW_HEADER, WindowHeaderHelper.init(bounds, header), null, null, id, -1);
       if (collapse) {
-         this.addHit(ModulesMenuController.Inner_CachePool.COLLAPSE, WindowHeaderHelper.read(bounds, header), null, null, id, -1);
+         this.addHit(ModulesMenuController.HitType.COLLAPSE, WindowHeaderHelper.read(bounds, header), null, null, id, -1);
       }
 
       if (close) {
-         this.addHit(ModulesMenuController.Inner_CachePool.CLOSE, WindowHeaderHelper.load(bounds, header), null, null, id, -1);
+         this.addHit(ModulesMenuController.HitType.CLOSE, WindowHeaderHelper.load(bounds, header), null, null, id, -1);
       }
    }
 
@@ -2485,7 +2485,7 @@ public final class ModulesMenuController {
             ? this.searchEdit.init(Math.max(1, this.searchBounds.update() - 8), fragment -> context.init_PoolEntry().measureFragmentWidth(shown, fragment))
             : 0
       );
-      this.addHit(ModulesMenuController.Inner_CachePool.TEXT_FIELD, this.searchBounds, null, null, "search", -1);
+      this.addHit(ModulesMenuController.HitType.TEXT_FIELD, this.searchBounds, null, null, "search", -1);
    }
 
    private void ensureClassicLayout() {
@@ -2882,7 +2882,7 @@ public final class ModulesMenuController {
       return Math.max(min, Math.min(max, value));
    }
 
-   public interface Inner_BufferHelper {
+   public interface ControllerHost {
       boolean isTitleSetup();
 
       Screen screen();
@@ -2908,7 +2908,7 @@ public final class ModulesMenuController {
       void init(Module var1);
    }
 
-   enum Inner_CachePool {
+   enum HitType {
       WINDOW_HEADER,
       WINDOW_BODY,
       COLLAPSE,
@@ -2940,14 +2940,14 @@ public final class ModulesMenuController {
       CLASSIC_RESIZE;
    }
 
-   private record Inner_ConfigStore(String id, String load, Identifier icon) {
+   private record ToolEntry(String id, String load, Identifier icon) {
    }
 
-   private record Inner_DataUtil(String id, String load, autismclient.gui.f.b.CachePool.Inner_DataUtil style) {
+   private record ActionButton(String id, String load, autismclient.gui.f.b.CachePool.Inner_DataUtil style) {
    }
 
-   record Inner_StreamUtil(
-      ModulesMenuController.Inner_CachePool type,
+   record HitRegion(
+      ModulesMenuController.HitType type,
       NetHelper bounds,
       Module module,
       Setting<?, ?> setting,

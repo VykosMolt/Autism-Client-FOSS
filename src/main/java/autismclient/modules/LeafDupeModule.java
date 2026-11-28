@@ -68,9 +68,9 @@ public final class LeafDupeModule extends Module {
    private static boolean rotationOverrideActive;
    private static float appliedYaw;
    private static float appliedPitch;
-   private final EnumSetting<LeafDupeModule.Inner_BufferHelper> leafMode;
-   private final EnumSetting<LeafDupeModule.Inner_BufferHelper> targetMode;
-   private final EnumSetting<LeafDupeModule.Inner_BufferHelper> resetMode;
+   private final EnumSetting<LeafDupeModule.SelectionMode> leafMode;
+   private final EnumSetting<LeafDupeModule.SelectionMode> targetMode;
+   private final EnumSetting<LeafDupeModule.SelectionMode> resetMode;
    private final RegistryListSetting targetBlocks;
    private final StringSetting leafPosition;
    private final StringSetting targetPosition;
@@ -87,7 +87,7 @@ public final class LeafDupeModule extends Module {
    private ClientLevel sessionLevel;
    private LocalPlayer sessionPlayer;
    private String status = "";
-   private volatile LeafDupeModule.Inner_DataUtil breakAttempt;
+   private volatile LeafDupeModule.BreakAttempt breakAttempt;
    private boolean breakStartPending;
    private autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil cycleReceipt;
    private int cycleDelayTicks;
@@ -96,12 +96,12 @@ public final class LeafDupeModule extends Module {
    private boolean boneMealPending;
    private boolean cycleLimitReached;
    private long lastDebugMillis;
-   private LeafDupeModule.Inner_CachePool pendingResetClick;
+   private LeafDupeModule.PendingResetClick pendingResetClick;
 
    public LeafDupeModule() {
       super("leaf-dupe", "Leaf Dupe", ae.sync, "Automatically bone meals a small dripleaf and re-breaks a whitelisted block.");
       this.leafMode = this.add(
-         new EnumSetting<>("leaf-selection", "Find Dripleaf", LeafDupeModule.Inner_BufferHelper.Automatic, LeafDupeModule.Inner_BufferHelper.values())
+         new EnumSetting<>("leaf-selection", "Find Dripleaf", LeafDupeModule.SelectionMode.Automatic, LeafDupeModule.SelectionMode.values())
             .description("Finds a reachable upper half without its lower half. Custom fixes one position.")
             .group("Dripleaf")
       );
@@ -109,7 +109,7 @@ public final class LeafDupeModule extends Module {
          new StringSetting("leaf-position", "Position", "")
             .description("Block coordinates: X, Y, Z.")
             .group("Dripleaf")
-            .visibleWhen(() -> this.leafMode.get() == LeafDupeModule.Inner_BufferHelper.Custom)
+            .visibleWhen(() -> this.leafMode.get() == LeafDupeModule.SelectionMode.Custom)
       );
       this.add(
          new ActionSetting(
@@ -117,10 +117,10 @@ public final class LeafDupeModule extends Module {
             )
             .buttonLabel("Set Looked-At")
             .group("Dripleaf")
-            .visibleWhen(() -> this.leafMode.get() == LeafDupeModule.Inner_BufferHelper.Custom)
+            .visibleWhen(() -> this.leafMode.get() == LeafDupeModule.SelectionMode.Custom)
       );
       this.targetMode = this.add(
-         new EnumSetting<>("dupe-selection", "Find Target", LeafDupeModule.Inner_BufferHelper.Automatic, LeafDupeModule.Inner_BufferHelper.values())
+         new EnumSetting<>("dupe-selection", "Find Target", LeafDupeModule.SelectionMode.Automatic, LeafDupeModule.SelectionMode.values())
             .description("Finds a visible whitelisted block and starts it automatically with a suitable hotbar tool.")
             .group("Target")
       );
@@ -134,7 +134,7 @@ public final class LeafDupeModule extends Module {
          new StringSetting("dupe-block-position", "Position", "")
             .description("Block coordinates: X, Y, Z.")
             .group("Target")
-            .visibleWhen(() -> this.targetMode.get() == LeafDupeModule.Inner_BufferHelper.Custom)
+            .visibleWhen(() -> this.targetMode.get() == LeafDupeModule.SelectionMode.Custom)
       );
       this.add(
          new ActionSetting(
@@ -142,10 +142,10 @@ public final class LeafDupeModule extends Module {
             )
             .buttonLabel("Set Looked-At")
             .group("Target")
-            .visibleWhen(() -> this.targetMode.get() == LeafDupeModule.Inner_BufferHelper.Custom)
+            .visibleWhen(() -> this.targetMode.get() == LeafDupeModule.SelectionMode.Custom)
       );
       this.resetMode = this.add(
-         new EnumSetting<>("reset-selection", "Find Reset Block", LeafDupeModule.Inner_BufferHelper.Automatic, LeafDupeModule.Inner_BufferHelper.values())
+         new EnumSetting<>("reset-selection", "Find Reset Block", LeafDupeModule.SelectionMode.Automatic, LeafDupeModule.SelectionMode.values())
             .description("Finds a reachable plain block to click, preferring the block under you.")
             .group("Reset Block")
       );
@@ -153,7 +153,7 @@ public final class LeafDupeModule extends Module {
          new StringSetting("reset-block-position", "Position", "")
             .description("Block coordinates: X, Y, Z.")
             .group("Reset Block")
-            .visibleWhen(() -> this.resetMode.get() == LeafDupeModule.Inner_BufferHelper.Custom)
+            .visibleWhen(() -> this.resetMode.get() == LeafDupeModule.SelectionMode.Custom)
       );
       this.add(
          new ActionSetting(
@@ -163,7 +163,7 @@ public final class LeafDupeModule extends Module {
             )
             .buttonLabel("Set Looked-At")
             .group("Reset Block")
-            .visibleWhen(() -> this.resetMode.get() == LeafDupeModule.Inner_BufferHelper.Custom)
+            .visibleWhen(() -> this.resetMode.get() == LeafDupeModule.SelectionMode.Custom)
       );
       this.cycleDelay = this.add(
          new IntSetting("delay", "Cycle Delay", 0, 0, 200, 1).sliderRange(0.0, 20.0).unit("ticks").description("Extra wait between cycles.").group("Timing")
@@ -277,7 +277,7 @@ public final class LeafDupeModule extends Module {
          if (reset != null && this.resetProblem(reset) == null) {
             int slot = this.boneMealSlot();
             if (slot >= 0) {
-               this.pendingResetClick = new LeafDupeModule.Inner_CachePool(slot);
+               this.pendingResetClick = new LeafDupeModule.PendingResetClick(slot);
             }
          }
       }
@@ -477,7 +477,7 @@ public final class LeafDupeModule extends Module {
 
    private boolean prepareTargetBreak() {
       BlockState state = MC.level.getBlockState(this.targetPos);
-      LeafDupeModule.Inner_DataUtil current = this.breakAttempt;
+      LeafDupeModule.BreakAttempt current = this.breakAttempt;
       if (current != null
          && current.pos.equals(this.targetPos)
          && current.state == state
@@ -503,7 +503,7 @@ public final class LeafDupeModule extends Module {
             return false;
          }
 
-         current = new LeafDupeModule.Inner_DataUtil(this.targetPos, state, toolSlot);
+         current = new LeafDupeModule.BreakAttempt(this.targetPos, state, toolSlot);
          this.breakAttempt = current;
       }
 
@@ -545,7 +545,7 @@ public final class LeafDupeModule extends Module {
 
    private void sendBreakStart() {
       this.breakStartPending = false;
-      LeafDupeModule.Inner_DataUtil current = this.breakAttempt;
+      LeafDupeModule.BreakAttempt current = this.breakAttempt;
       if (current != null && current.breakReceipt == null && this.computeStatus() == null) {
          if (autismclient.util.leafdupe.LeafDupePacketTracker.trackedSlot() == current.slot) {
             if (MC.player.getInventory().getSelectedSlot() == current.slot
@@ -626,7 +626,7 @@ public final class LeafDupeModule extends Module {
          && (!stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() > 2);
    }
 
-   private boolean selectSlotTracked(int slot, LeafDupeModule.Inner_DataUtil owner, autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil previous) {
+   private boolean selectSlotTracked(int slot, LeafDupeModule.BreakAttempt owner, autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil previous) {
       if (slot >= 0 && slot <= 8 && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, "leaf-dupe")) {
          MC.player.getInventory().setSelectedSlot(slot);
          ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$setCarriedIndex(slot);
@@ -667,7 +667,7 @@ public final class LeafDupeModule extends Module {
 
    private void cancelBreakAttempt() {
       this.breakStartPending = false;
-      LeafDupeModule.Inner_DataUtil current = this.breakAttempt;
+      LeafDupeModule.BreakAttempt current = this.breakAttempt;
       if (current != null) {
          current.cancelled = true;
       }
@@ -706,7 +706,7 @@ public final class LeafDupeModule extends Module {
       }
    }
 
-   private autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proofFor(LeafDupeModule.Inner_DataUtil owner) {
+   private autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proofFor(LeafDupeModule.BreakAttempt owner) {
       return new autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool(owner, MC.player.getEyePosition(), this.eyePosition());
    }
 
@@ -718,7 +718,7 @@ public final class LeafDupeModule extends Module {
 
       LeafDupeModule module = instance;
       autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proof = receipt.proof() instanceof autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool value ? value : null;
-      LeafDupeModule.Inner_DataUtil owner = proof != null && proof.init() instanceof LeafDupeModule.Inner_DataUtil value ? value : null;
+      LeafDupeModule.BreakAttempt owner = proof != null && proof.init() instanceof LeafDupeModule.BreakAttempt value ? value : null;
       boolean valid = module != null
          && owner != null
          && !owner.cancelled
@@ -829,8 +829,8 @@ public final class LeafDupeModule extends Module {
       }
    }
 
-   private String describeSelection(EnumSetting<LeafDupeModule.Inner_BufferHelper> selection, StringSetting setting, String label) {
-      if (selection.get() == LeafDupeModule.Inner_BufferHelper.Automatic) {
+   private String describeSelection(EnumSetting<LeafDupeModule.SelectionMode> selection, StringSetting setting, String label) {
+      if (selection.get() == LeafDupeModule.SelectionMode.Automatic) {
          return "No " + label;
       } else {
          BlockPos custom = parsePosition(setting);
@@ -849,24 +849,24 @@ public final class LeafDupeModule extends Module {
    }
 
    private void refreshPositions(boolean force) {
-      if (this.leafMode.get() == LeafDupeModule.Inner_BufferHelper.Custom) {
+      if (this.leafMode.get() == LeafDupeModule.SelectionMode.Custom) {
          this.leafPos = parsePosition(this.leafPosition);
       }
 
-      if (this.targetMode.get() == LeafDupeModule.Inner_BufferHelper.Custom) {
+      if (this.targetMode.get() == LeafDupeModule.SelectionMode.Custom) {
          this.targetPos = parsePosition(this.targetPosition);
       }
 
-      if (this.resetMode.get() == LeafDupeModule.Inner_BufferHelper.Custom) {
+      if (this.resetMode.get() == LeafDupeModule.SelectionMode.Custom) {
          this.resetPos = parsePosition(this.resetPosition);
       }
 
       if (force || --this.flush <= 0) {
          this.flush = 5;
          Vec3 eye = this.eyePosition();
-         boolean leaf = this.leafMode.get() == LeafDupeModule.Inner_BufferHelper.Automatic && !this.isUsableLeaf(this.leafPos, eye);
-         boolean target = this.targetMode.get() == LeafDupeModule.Inner_BufferHelper.Automatic && !this.isUsableTarget(this.targetPos, eye);
-         boolean reset = this.resetMode.get() == LeafDupeModule.Inner_BufferHelper.Automatic && !this.isUsableReset(this.resetPos, eye);
+         boolean leaf = this.leafMode.get() == LeafDupeModule.SelectionMode.Automatic && !this.isUsableLeaf(this.leafPos, eye);
+         boolean target = this.targetMode.get() == LeafDupeModule.SelectionMode.Automatic && !this.isUsableTarget(this.targetPos, eye);
+         boolean reset = this.resetMode.get() == LeafDupeModule.SelectionMode.Automatic && !this.isUsableReset(this.resetPos, eye);
          if (leaf || target || reset) {
             this.autoSelect(eye, leaf, target, reset);
          }
@@ -874,9 +874,9 @@ public final class LeafDupeModule extends Module {
    }
 
    private void autoSelect(Vec3 eye, boolean seekLeaf, boolean seekTarget, boolean seekReset) {
-      List<LeafDupeModule.Inner_StreamUtil> leaves = new ArrayList<>();
-      List<LeafDupeModule.Inner_StreamUtil> targets = new ArrayList<>();
-      List<LeafDupeModule.Inner_StreamUtil> resets = new ArrayList<>();
+      List<LeafDupeModule.RankedPos> leaves = new ArrayList<>();
+      List<LeafDupeModule.RankedPos> targets = new ArrayList<>();
+      List<LeafDupeModule.RankedPos> resets = new ArrayList<>();
       Set<String> allowed = new HashSet<>(this.targetBlocks.get());
       double reach = MC.player.blockInteractionRange();
       double maxDistance = (reach + 1.0) * (reach + 1.0);
@@ -887,11 +887,11 @@ public final class LeafDupeModule extends Module {
             if (!(distance > maxDistance)) {
                BlockState state = MC.level.getBlockState(pos);
                if (seekLeaf && state.is(Blocks.SMALL_DRIPLEAF) && this.leafProblem(pos) == null) {
-                  leaves.add(new LeafDupeModule.Inner_StreamUtil(pos.immutable(), distance));
+                  leaves.add(new LeafDupeModule.RankedPos(pos.immutable(), distance));
                }
 
                if (seekTarget && allowed.contains(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString())) {
-                  targets.add(new LeafDupeModule.Inner_StreamUtil(pos.immutable(), distance));
+                  targets.add(new LeafDupeModule.RankedPos(pos.immutable(), distance));
                }
 
                if (seekReset
@@ -901,15 +901,15 @@ public final class LeafDupeModule extends Module {
                   && !state.hasBlockEntity()
                   && !(state.getBlock() instanceof BonemealableBlock)
                   && autismclient.util.leafdupe.LeafDupeValidator.targetProblem(state, true, false) == null) {
-                  resets.add(new LeafDupeModule.Inner_StreamUtil(pos.immutable(), distance));
+                  resets.add(new LeafDupeModule.RankedPos(pos.immutable(), distance));
                }
             }
          }
       }
 
-      leaves.sort(Comparator.comparingDouble(LeafDupeModule.Inner_StreamUtil::distance));
-      targets.sort(Comparator.comparingDouble(LeafDupeModule.Inner_StreamUtil::distance));
-      resets.sort(Comparator.comparingDouble(LeafDupeModule.Inner_StreamUtil::distance));
+      leaves.sort(Comparator.comparingDouble(LeafDupeModule.RankedPos::distance));
+      targets.sort(Comparator.comparingDouble(LeafDupeModule.RankedPos::distance));
+      resets.sort(Comparator.comparingDouble(LeafDupeModule.RankedPos::distance));
       this.debugLog("Scan: %d leaf, %d target, %d reset candidates; whitelist=%s", leaves.size(), targets.size(), resets.size(), allowed);
       if (seekLeaf) {
          BlockPos found = this.firstVisible(leaves, eye);
@@ -926,9 +926,9 @@ public final class LeafDupeModule extends Module {
       }
 
       if (seekReset) {
-         List<LeafDupeModule.Inner_StreamUtil> visible = new ArrayList<>();
+         List<LeafDupeModule.RankedPos> visible = new ArrayList<>();
 
-         for (LeafDupeModule.Inner_StreamUtil candidate : this.candidatePageOf(resets)) {
+         for (LeafDupeModule.RankedPos candidate : this.candidatePageOf(resets)) {
             if (this.isUsableReset(candidate.pos(), eye)) {
                visible.add(candidate);
             }
@@ -940,7 +940,7 @@ public final class LeafDupeModule extends Module {
          } else if (!visible.isEmpty()) {
             BlockPos found = visible.getFirst().pos();
 
-            for (LeafDupeModule.Inner_StreamUtil candidate : visible) {
+            for (LeafDupeModule.RankedPos candidate : visible) {
                if (autismclient.util.leafdupe.LeafDupeValidator.init(eye, 0.0F, 0.0F, candidate.pos(), this.leafPos, reach) != null) {
                   found = candidate.pos();
                   break;
@@ -954,8 +954,8 @@ public final class LeafDupeModule extends Module {
       this.candidatePage++;
    }
 
-   private BlockPos firstVisible(List<LeafDupeModule.Inner_StreamUtil> candidates, Vec3 eye) {
-      for (LeafDupeModule.Inner_StreamUtil candidate : this.candidatePageOf(candidates)) {
+   private BlockPos firstVisible(List<LeafDupeModule.RankedPos> candidates, Vec3 eye) {
+      for (LeafDupeModule.RankedPos candidate : this.candidatePageOf(candidates)) {
          if (autismclient.ai.engine.AiBlockInteraction.findReachableHitFrom(MC, candidate.pos(), eye) != null) {
             return candidate.pos();
          }
@@ -964,7 +964,7 @@ public final class LeafDupeModule extends Module {
       return null;
    }
 
-   private List<LeafDupeModule.Inner_StreamUtil> candidatePageOf(List<LeafDupeModule.Inner_StreamUtil> candidates) {
+   private List<LeafDupeModule.RankedPos> candidatePageOf(List<LeafDupeModule.RankedPos> candidates) {
       return autismclient.util.leafdupe.LeafDupeValidator.page(candidates, this.candidatePage, 6);
    }
 
@@ -1008,7 +1008,7 @@ public final class LeafDupeModule extends Module {
    }
 
    private boolean sendUseSequence(InteractionHand hand, Vec3 eye) {
-      LeafDupeModule.Inner_DataUtil current = this.breakAttempt;
+      LeafDupeModule.BreakAttempt current = this.breakAttempt;
       if (current != null
          && autismclient.util.leafdupe.LeafDupePacketTracker.init(current.breakReceipt, this.targetPos)
          && isFasterTool(MC.player.getInventory().getItem(current.slot), current.state)) {
@@ -1141,7 +1141,7 @@ public final class LeafDupeModule extends Module {
    }
 
    private autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil sendTrackedUse(
-      InteractionHand hand, BlockHitResult hit, int slot, LeafDupeModule.Inner_DataUtil owner, autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil previous
+      InteractionHand hand, BlockHitResult hit, int slot, LeafDupeModule.BreakAttempt owner, autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil previous
    ) {
       this.rateLimiter.recordUse(this.packetWindowMs.get(), System.currentTimeMillis());
 
@@ -1386,12 +1386,12 @@ public final class LeafDupeModule extends Module {
       this.rateLimiter.init();
    }
 
-   private enum Inner_BufferHelper {
+   private enum SelectionMode {
       Automatic,
       Custom;
    }
 
-   private final class Inner_CachePool {
+   private final class PendingResetClick {
       private final InteractionHand hand;
       private final int mealSlot;
       private final ClientLevel level = Module.MC.level;
@@ -1401,7 +1401,7 @@ public final class LeafDupeModule extends Module {
       private final int originalSlot = Module.MC.player.getInventory().getSelectedSlot();
       private int retriesLeft = 20;
 
-      private Inner_CachePool(int mealSlot) {
+      private PendingResetClick(int mealSlot) {
          this.mealSlot = mealSlot;
          this.hand = LeafDupeModule.this.handForSlot(mealSlot);
       }
@@ -1493,7 +1493,7 @@ public final class LeafDupeModule extends Module {
       }
    }
 
-   private final class Inner_DataUtil {
+   private final class BreakAttempt {
       final ClientLevel level = Module.MC.level;
       final LocalPlayer player = Module.MC.player;
       final Connection connection = Module.MC.getConnection().getConnection();
@@ -1507,7 +1507,7 @@ public final class LeafDupeModule extends Module {
       int sentSlot = -1;
       volatile boolean cancelled;
 
-      Inner_DataUtil(BlockPos target, BlockState state, int slot) {
+      BreakAttempt(BlockPos target, BlockState state, int slot) {
          this.pos = target.immutable();
          this.state = state;
          this.slot = slot;
@@ -1515,6 +1515,6 @@ public final class LeafDupeModule extends Module {
       }
    }
 
-   private record Inner_StreamUtil(BlockPos pos, double distance) {
+   private record RankedPos(BlockPos pos, double distance) {
    }
 }

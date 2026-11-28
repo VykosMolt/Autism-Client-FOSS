@@ -26,7 +26,7 @@ public final class BlockInspectionService {
    static final String FORMAT_ID = "autism:block_data/v1";
    private static final long PENDING_TIMEOUT_NANOS = 1500000000L;
    private static boolean init_Z;
-   private static BlockInspectionService.Inner_DataUtil pendingInspection;
+   private static BlockInspectionService.PendingInspection pendingInspection;
 
    private BlockInspectionService() {
    }
@@ -40,7 +40,7 @@ public final class BlockInspectionService {
          init_Z = false;
       }
 
-      BlockInspectionService.Inner_DataUtil pending = pendingInspection;
+      BlockInspectionService.PendingInspection pending = pendingInspection;
       if (pending != null && mc != null) {
          if (mc.player != null) {
             AbstractContainerMenu menu = mc.player.containerMenu;
@@ -91,7 +91,7 @@ public final class BlockInspectionService {
             localEntity = blockEntity.saveWithFullMetadata(mc.level.registryAccess());
          }
 
-         BlockInspectionService.Inner_StreamUtil snapshot = new BlockInspectionService.Inner_StreamUtil(
+         BlockInspectionService.BlockSnapshot snapshot = new BlockInspectionService.BlockSnapshot(
             mc.level.dimension().identifier().toString(), pos, BlockStateParser.serialize(state), encodeState(state)
          );
          CompoundTag localPayload = buildPayload(snapshot, localEntity, "client");
@@ -113,7 +113,7 @@ public final class BlockInspectionService {
 
          if (hasContainer(mc, pos, state, blockEntity)) {
             int containerId = mc.player != null && mc.player.containerMenu != null ? mc.player.containerMenu.containerId : -1;
-            pendingInspection = new BlockInspectionService.Inner_DataUtil(localPayload, false, -1L, containerId, System.nanoTime());
+            pendingInspection = new BlockInspectionService.PendingInspection(localPayload, false, -1L, containerId, System.nanoTime());
             bi.init("Reading block contents...", UiColorPalette.cyan());
             return false;
          }
@@ -135,7 +135,7 @@ public final class BlockInspectionService {
       return module != null && module.isEnabled() && Boolean.parseBoolean(module.value("block-nbt-inspect"));
    }
 
-   static CompoundTag buildPayload(BlockInspectionService.Inner_StreamUtil snapshot, CompoundTag blockEntity, String source) {
+   static CompoundTag buildPayload(BlockInspectionService.BlockSnapshot snapshot, CompoundTag blockEntity, String source) {
       CompoundTag root = new CompoundTag();
       root.putString("format", "autism:block_data/v1");
       root.putString("source", source == null ? "client" : source);
@@ -325,14 +325,14 @@ public final class BlockInspectionService {
       }
    }
 
-   private record Inner_DataUtil(CompoundTag init_CompoundTag, boolean init_Z, long init_J, int containerId, long load) {
-      private Inner_DataUtil {
+   private record PendingInspection(CompoundTag init_CompoundTag, boolean init_Z, long init_J, int containerId, long load) {
+      private PendingInspection {
          init_CompoundTag = init_CompoundTag == null ? new CompoundTag() : init_CompoundTag.copy();
       }
    }
 
-   record Inner_StreamUtil(String dimension, BlockPos pos, String load, CompoundTag state) {
-      Inner_StreamUtil {
+   record BlockSnapshot(String dimension, BlockPos pos, String load, CompoundTag state) {
+      BlockSnapshot {
          dimension = dimension == null ? "" : dimension;
          pos = pos == null ? BlockPos.ZERO : pos.immutable();
          load = load == null ? "minecraft:air" : load;

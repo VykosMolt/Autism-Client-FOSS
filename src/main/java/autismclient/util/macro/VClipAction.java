@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 public class VClipAction implements MacroAction {
    private static final double init_D = 0.5;
    private static final double load = 128.0;
-   public VClipAction.Inner_StreamUtil mode = VClipAction.Inner_StreamUtil.MANUAL;
+   public VClipAction.ClipMode mode = VClipAction.ClipMode.MANUAL;
    public double deltaY = 0.0;
    public boolean useSegmented = true;
    public int segmentBlocks = 10;
@@ -31,7 +31,7 @@ public class VClipAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      VClipAction.Inner_CachePool options = new VClipAction.Inner_CachePool();
+      VClipAction.ClipOptions options = new VClipAction.ClipOptions();
       options.mode = this.mode;
       options.deltaY = this.deltaY;
       options.segmented = this.useSegmented;
@@ -43,22 +43,22 @@ public class VClipAction implements MacroAction {
       init(mc, options);
    }
 
-   public static VClipAction.Inner_BufferHelper init(Minecraft mc, VClipAction.Inner_CachePool options) {
+   public static VClipAction.ClipResult init(Minecraft mc, VClipAction.ClipOptions options) {
       if (options == null) {
-         options = new VClipAction.Inner_CachePool();
+         options = new VClipAction.ClipOptions();
       }
 
       if (mc != null && mc.player != null && mc.getConnection() != null) {
          LocalPlayer player = mc.player;
          double blocks = options.deltaY;
-         if (options.mode != VClipAction.Inner_StreamUtil.MANUAL) {
-            VClipAction.Inner_DataUtil target = init(player, options.mode);
+         if (options.mode != VClipAction.ClipMode.MANUAL) {
+            VClipAction.ClipTarget target = init(player, options.mode);
             if (!target.found()) {
                if (options.update) {
                   AutismClientMessaging.sendPrefixed("§cVClip: " + target.message());
                }
 
-               return new VClipAction.Inner_BufferHelper(false, 0, target.message());
+               return new VClipAction.ClipResult(false, 0, target.message());
             }
 
             blocks = target.blocks();
@@ -90,7 +90,7 @@ public class VClipAction implements MacroAction {
                   AutismClientMessaging.sendPrefixed("§c" + message);
                }
 
-               return new VClipAction.Inner_BufferHelper(false, packetsRequired, message);
+               return new VClipAction.ClipResult(false, packetsRequired, message);
             }
          } else {
             double x = player.getX();
@@ -116,7 +116,7 @@ public class VClipAction implements MacroAction {
             }
          }
 
-         String prefix = options.mode == VClipAction.Inner_StreamUtil.MANUAL
+         String prefix = options.mode == VClipAction.ClipMode.MANUAL
             ? "vclip " + blocks
             : "vclip " + options.mode.name().toLowerCase(Locale.ROOT) + " -> " + String.format(Locale.ROOT, "%.2f", blocks);
          String message = prefix + " (" + packetsRequired + " packet" + (packetsRequired == 1 ? "" : "s") + ")";
@@ -124,41 +124,41 @@ public class VClipAction implements MacroAction {
             AutismClientMessaging.sendPrefixed("§a" + message);
          }
 
-         return new VClipAction.Inner_BufferHelper(true, packetsRequired, message);
+         return new VClipAction.ClipResult(true, packetsRequired, message);
       } else {
          if (options.update) {
             AutismClientMessaging.sendPrefixed("§cVClip: no world / connection.");
          }
 
-         return new VClipAction.Inner_BufferHelper(false, 0, "No world / connection");
+         return new VClipAction.ClipResult(false, 0, "No world / connection");
       }
    }
 
-   private static VClipAction.Inner_DataUtil init(LocalPlayer player, VClipAction.Inner_StreamUtil mode) {
-      if (mode == VClipAction.Inner_StreamUtil.TOP) {
+   private static VClipAction.ClipTarget init(LocalPlayer player, VClipAction.ClipMode mode) {
+      if (mode == VClipAction.ClipMode.TOP) {
          return findTarget(player);
       } else {
-         return mode == VClipAction.Inner_StreamUtil.BOTTOM ? load(player) : new VClipAction.Inner_DataUtil(true, 0.0, "manual");
+         return mode == VClipAction.ClipMode.BOTTOM ? load(player) : new VClipAction.ClipTarget(true, 0.0, "manual");
       }
    }
 
-   private static VClipAction.Inner_DataUtil findTarget(LocalPlayer player) {
+   private static VClipAction.ClipTarget findTarget(LocalPlayer player) {
       Vec3 start = player.position();
       Vec3 candidate = TpRoutePlanner.update(TpRoutePlanner.entityView(player), start, 128.0);
-      return candidate != null ? new VClipAction.Inner_DataUtil(true, candidate.y - start.y, "top") : new VClipAction.Inner_DataUtil(false, 0.0, "no direct safe top target");
+      return candidate != null ? new VClipAction.ClipTarget(true, candidate.y - start.y, "top") : new VClipAction.ClipTarget(false, 0.0, "no direct safe top target");
    }
 
-   private static VClipAction.Inner_DataUtil load(LocalPlayer player) {
+   private static VClipAction.ClipTarget load(LocalPlayer player) {
       Vec3 start = player.position();
 
       for (double offset = 0.5; offset <= 128.0; offset += 0.5) {
          Vec3 candidate = new Vec3(start.x, start.y - offset, start.z);
          if (init(player, candidate) && load(player, candidate) && read(player, candidate)) {
-            return new VClipAction.Inner_DataUtil(true, candidate.y - start.y, "bottom");
+            return new VClipAction.ClipTarget(true, candidate.y - start.y, "bottom");
          }
       }
 
-      return new VClipAction.Inner_DataUtil(false, 0.0, "no direct safe bottom target");
+      return new VClipAction.ClipTarget(false, 0.0, "no direct safe bottom target");
    }
 
    private static boolean init(LocalPlayer player, Vec3 pos) {
@@ -191,7 +191,7 @@ public class VClipAction implements MacroAction {
       Vec3 from = new Vec3(x, y, z);
       Vec3 target = new Vec3(x, targetY, z);
 
-      for (ClipCollisionHelper.Inner_DataUtil step : ClipCollisionHelper.init(from, target, true)) {
+      for (ClipCollisionHelper.ClipStep step : ClipCollisionHelper.init(from, target, true)) {
          init(mc, new Pos(step.position(), step.onGround(), false));
          sent++;
       }
@@ -238,7 +238,7 @@ public class VClipAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = init(tag.getStringOr("mode", VClipAction.Inner_StreamUtil.MANUAL.name()));
+      this.mode = init(tag.getStringOr("mode", VClipAction.ClipMode.MANUAL.name()));
       this.deltaY = tag.getDoubleOr("deltaY", 0.0);
       this.useSegmented = tag.getBooleanOr("useSegmented", true);
       this.segmentBlocks = Math.max(1, tag.getIntOr("segmentBlocks", 10));
@@ -258,10 +258,10 @@ public class VClipAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      if (this.mode == VClipAction.Inner_StreamUtil.TOP) {
+      if (this.mode == VClipAction.ClipMode.TOP) {
          return "VClip Top";
       } else {
-         return this.mode == VClipAction.Inner_StreamUtil.BOTTOM ? "VClip Bottom" : "VClip Y=" + String.format(Locale.ROOT, "%.2f", this.deltaY);
+         return this.mode == VClipAction.ClipMode.BOTTOM ? "VClip Bottom" : "VClip Y=" + String.format(Locale.ROOT, "%.2f", this.deltaY);
       }
    }
 
@@ -280,19 +280,19 @@ public class VClipAction implements MacroAction {
       this.enabled = e;
    }
 
-   private static VClipAction.Inner_StreamUtil init(String value) {
+   private static VClipAction.ClipMode init(String value) {
       try {
-         return VClipAction.Inner_StreamUtil.valueOf(value == null ? VClipAction.Inner_StreamUtil.MANUAL.name() : value.toUpperCase(Locale.ROOT));
+         return VClipAction.ClipMode.valueOf(value == null ? VClipAction.ClipMode.MANUAL.name() : value.toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException ignored) {
-         return VClipAction.Inner_StreamUtil.MANUAL;
+         return VClipAction.ClipMode.MANUAL;
       }
    }
 
-   public record Inner_BufferHelper(boolean success, int init_I, String message) {
+   public record ClipResult(boolean success, int init_I, String message) {
    }
 
-   public static final class Inner_CachePool {
-      public VClipAction.Inner_StreamUtil mode = VClipAction.Inner_StreamUtil.MANUAL;
+   public static final class ClipOptions {
+      public VClipAction.ClipMode mode = VClipAction.ClipMode.MANUAL;
       public double deltaY = 0.0;
       public boolean segmented = true;
       public int segmentBlocks = 10;
@@ -302,22 +302,22 @@ public class VClipAction implements MacroAction {
       public boolean write = true;
       public boolean update = false;
 
-      public static VClipAction.Inner_CachePool init(double blocks) {
-         VClipAction.Inner_CachePool options = new VClipAction.Inner_CachePool();
+      public static VClipAction.ClipOptions init(double blocks) {
+         VClipAction.ClipOptions options = new VClipAction.ClipOptions();
          options.deltaY = blocks;
          return options;
       }
 
-      public VClipAction.Inner_CachePool init() {
+      public VClipAction.ClipOptions init() {
          this.segmented = false;
          return this;
       }
    }
 
-   private record Inner_DataUtil(boolean found, double blocks, String message) {
+   private record ClipTarget(boolean found, double blocks, String message) {
    }
 
-   public enum Inner_StreamUtil {
+   public enum ClipMode {
       MANUAL,
       TOP,
       BOTTOM;

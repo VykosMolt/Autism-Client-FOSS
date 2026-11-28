@@ -16,13 +16,13 @@ public final class StrongholdRingEstimator {
    private StrongholdRingEstimator() {
    }
 
-   public static StrongholdRingEstimator.Inner_StreamUtil init(StrongholdTriangulator.Inner_BufferHelper ray, boolean legacyTargets) {
+   public static StrongholdRingEstimator.RingEstimate init(StrongholdTriangulator.ThrowSample ray, boolean legacyTargets) {
       return ray == null ? null : init(List.of(ray), legacyTargets);
    }
 
-   public static StrongholdRingEstimator.Inner_StreamUtil init(List<StrongholdTriangulator.Inner_BufferHelper> observations, boolean legacyTargets) {
+   public static StrongholdRingEstimator.RingEstimate init(List<StrongholdTriangulator.ThrowSample> observations, boolean legacyTargets) {
       if (observations != null && !observations.isEmpty() && observations.size() <= 8) {
-         StrongholdTriangulator.Inner_BufferHelper ray = observations.getLast();
+         StrongholdTriangulator.ThrowSample ray = observations.getLast();
          if (ray != null
             && StrongholdTriangulator.isValidPoint(ray.init())
             && StrongholdTriangulator.isValidPoint(ray.load())
@@ -44,7 +44,7 @@ public final class StrongholdRingEstimator {
             int first = (int)Math.ceil((Math.max(-24373.0, originPrimary - nearestBound) - offset) / 16.0);
             int last = (int)Math.floor((Math.min(24373.0, originPrimary + nearestBound) - offset) / 16.0);
             double[][] distances = sampleRingDistances(origin);
-            List<StrongholdRingEstimator.Inner_CachePool> candidates = new ArrayList<>();
+            List<StrongholdRingEstimator.WeightedCandidate> candidates = new ArrayList<>();
             double maxLog = -1.0 / 0.0;
 
             for (int chunk = first; chunk <= last; chunk++) {
@@ -76,7 +76,7 @@ public final class StrongholdRingEstimator {
                                  double likelihood = 0.0;
                                  boolean consistent = true;
 
-                                 for (StrongholdTriangulator.Inner_BufferHelper observation : observations) {
+                                 for (StrongholdTriangulator.ThrowSample observation : observations) {
                                     if (observation != null && StrongholdTriangulator.isValidPoint(observation.init()) && StrongholdTriangulator.isValidPoint(observation.load())) {
                                        double ox = x - observation.init().x;
                                        double oz = z - observation.init().z;
@@ -97,7 +97,7 @@ public final class StrongholdRingEstimator {
 
                                  if (consistent) {
                                     double weight = Math.log(prior) + likelihood + init(distances, distance, ring);
-                                    candidates.add(new StrongholdRingEstimator.Inner_CachePool(new Vec3(x, 0.0, z), weight));
+                                    candidates.add(new StrongholdRingEstimator.WeightedCandidate(new Vec3(x, 0.0, z), weight));
                                     maxLog = Math.max(maxLog, weight);
                                     if (candidates.size() > 8192) {
                                        return null;
@@ -116,27 +116,27 @@ public final class StrongholdRingEstimator {
             }
 
             candidates.sort(
-               Comparator.comparingDouble(StrongholdRingEstimator.Inner_CachePool::init_D)
+               Comparator.comparingDouble(StrongholdRingEstimator.WeightedCandidate::init_D)
                   .reversed()
                   .thenComparingDouble(cx -> cx.init_Vec3.x)
                   .thenComparingDouble(cx -> cx.init_Vec3.z)
             );
             double total = 0.0;
 
-            for (StrongholdRingEstimator.Inner_CachePool c : candidates) {
+            for (StrongholdRingEstimator.WeightedCandidate c : candidates) {
                total += Math.exp(c.init_D - maxLog);
             }
 
             if (Double.isFinite(total) && !(total <= 0.0)) {
-               StrongholdRingEstimator.Inner_CachePool best = candidates.getFirst();
+               StrongholdRingEstimator.WeightedCandidate best = candidates.getFirst();
                double mass = 0.0;
                double uncertainty = 32.0;
-               List<StrongholdRingEstimator.Inner_DataUtil> top = new ArrayList<>();
+               List<StrongholdRingEstimator.RankedCandidate> top = new ArrayList<>();
 
-               for (StrongholdRingEstimator.Inner_CachePool c : candidates) {
+               for (StrongholdRingEstimator.WeightedCandidate c : candidates) {
                   double probability = Math.exp(c.init_D - maxLog) / total;
                   if (top.size() < 5) {
-                     top.add(new StrongholdRingEstimator.Inner_DataUtil(c.init_Vec3, probability));
+                     top.add(new StrongholdRingEstimator.RankedCandidate(c.init_Vec3, probability));
                   }
 
                   if (mass < 0.999) {
@@ -146,7 +146,7 @@ public final class StrongholdRingEstimator {
                   mass += probability;
                }
 
-               return new StrongholdRingEstimator.Inner_StreamUtil(best.init_Vec3, uncertainty, Math.exp(best.init_D - maxLog) / total, candidates.size(), List.copyOf(top));
+               return new StrongholdRingEstimator.RingEstimate(best.init_Vec3, uncertainty, Math.exp(best.init_D - maxLog) / total, candidates.size(), List.copyOf(top));
             } else {
                return null;
             }
@@ -219,12 +219,12 @@ public final class StrongholdRingEstimator {
       return log;
    }
 
-   private record Inner_CachePool(Vec3 init_Vec3, double init_D) {
+   private record WeightedCandidate(Vec3 init_Vec3, double init_D) {
    }
 
-   public record Inner_DataUtil(Vec3 init_Vec3, double init_D) {
+   public record RankedCandidate(Vec3 init_Vec3, double init_D) {
    }
 
-   public record Inner_StreamUtil(Vec3 center, double uncertainty, double load, int init_I, List<StrongholdRingEstimator.Inner_DataUtil> init_List) {
+   public record RingEstimate(Vec3 center, double uncertainty, double load, int init_I, List<StrongholdRingEstimator.RankedCandidate> init_List) {
    }
 }

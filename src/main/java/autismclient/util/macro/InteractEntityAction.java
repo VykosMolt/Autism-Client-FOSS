@@ -12,7 +12,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.EntityHitResult;
 
 public class InteractEntityAction implements PacketOrderAware, AimTargetAction, MacroAction, GuiWaitAware {
-   public InteractEntityAction.Inner_DataUtil targetMode = InteractEntityAction.Inner_DataUtil.ENTITY;
+   public InteractEntityAction.TargetMode targetMode = InteractEntityAction.TargetMode.ENTITY;
    public List<String> entityTargets = new ArrayList<>();
    public boolean waitForTarget = true;
    public boolean waitForGuiBefore = false;
@@ -43,7 +43,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    }
 
    private autismclient.util.InteractionTargetRef resolveTarget() {
-      if (this.targetMode == InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
+      if (this.targetMode == InteractEntityAction.TargetMode.LAST_TARGET) {
          return AutismSessionState.getInstance().getLastInteractionTarget();
       }
 
@@ -66,7 +66,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
    public boolean interact(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         if (this.targetMode != InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
+         if (this.targetMode != InteractEntityAction.TargetMode.LAST_TARGET) {
             boolean sentAny = false;
 
             for (String ref : this.entityTargets) {
@@ -97,7 +97,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
          return false;
       }
 
-      if (this.targetMode == InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
+      if (this.targetMode == InteractEntityAction.TargetMode.LAST_TARGET) {
          autismclient.util.InteractionTargetRef target = AutismSessionState.getInstance().getLastInteractionTarget();
          return target != null && target.isPresent(mc);
       }
@@ -120,7 +120,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
    public void captureCrosshairTarget(Minecraft mc) {
       if (mc != null && mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
-         this.targetMode = InteractEntityAction.Inner_DataUtil.ENTITY;
+         this.targetMode = InteractEntityAction.TargetMode.ENTITY;
          String ref = autismclient.util.InteractionTargetRef.refFor(entityHit.getEntity());
          if (!ref.isBlank() && !this.entityTargets.contains(ref)) {
             this.entityTargets.add(ref);
@@ -199,7 +199,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    @Override
    public String getDisplayName() {
       String targetLabel;
-      if (this.targetMode == InteractEntityAction.Inner_DataUtil.LAST_TARGET) {
+      if (this.targetMode == InteractEntityAction.TargetMode.LAST_TARGET) {
          targetLabel = "Last Target";
       } else if (this.entityTargets.isEmpty()) {
          targetLabel = "(none)";
@@ -245,9 +245,9 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       }
 
       try {
-         this.targetMode = InteractEntityAction.Inner_DataUtil.valueOf(mode);
+         this.targetMode = InteractEntityAction.TargetMode.valueOf(mode);
       } catch (IllegalArgumentException ignored) {
-         this.targetMode = InteractEntityAction.Inner_DataUtil.ENTITY;
+         this.targetMode = InteractEntityAction.TargetMode.ENTITY;
       }
 
       this.entityTargets.clear();
@@ -276,7 +276,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 
-   public enum Inner_DataUtil {
+   public enum TargetMode {
       ENTITY,
       LAST_TARGET;
    }

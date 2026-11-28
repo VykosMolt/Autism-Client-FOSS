@@ -36,7 +36,7 @@ final class AiFarmPlacement extends AiPlacementSession {
       this(cropBlock, substrate, null);
    }
 
-   AiFarmPlacement(String cropBlock, String substrate, AiFarmArea.Inner_DataUtil previous) {
+   AiFarmPlacement(String cropBlock, String substrate, AiFarmArea.Area previous) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          this.level = mc.level;
@@ -66,13 +66,13 @@ final class AiFarmPlacement extends AiPlacementSession {
       return this.load_Z;
    }
 
-   AiFarmArea.Inner_DataUtil getArea() {
-      return this.load_Z ? new AiFarmArea.Inner_DataUtil(this.read_BlockPos, this.write) : null;
+   AiFarmArea.Area getArea() {
+      return this.load_Z ? new AiFarmArea.Area(this.read_BlockPos, this.write) : null;
    }
 
    @Override
    public boolean isReadyToConfirm() {
-      AiFarmArea.Inner_DataUtil area = this.getArea();
+      AiFarmArea.Area area = this.getArea();
       return area != null && area.validate(this.load_Str).isEmpty() && this.isActive();
    }
 
@@ -122,7 +122,7 @@ final class AiFarmPlacement extends AiPlacementSession {
          return "Choose the first corner";
       }
 
-      AiFarmArea.Inner_DataUtil area = this.getArea();
+      AiFarmArea.Area area = this.getArea();
       String issue = area.validate(this.load_Str);
       return !issue.isEmpty()
          ? issue
@@ -140,7 +140,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    }
 
    JsonObject areaJson() {
-      AiFarmArea.Inner_DataUtil area = this.getArea();
+      AiFarmArea.Area area = this.getArea();
       if (area == null) {
          throw new IllegalArgumentException("Choose both farm corners first");
       } else {
@@ -154,7 +154,7 @@ final class AiFarmPlacement extends AiPlacementSession {
    }
 
    JsonObject statusJson() {
-      AiFarmArea.Inner_DataUtil area = this.getArea();
+      AiFarmArea.Area area = this.getArea();
       return AiJson.objectOf(
          "crop",
          this.init_Str,
@@ -271,7 +271,7 @@ final class AiFarmPlacement extends AiPlacementSession {
          origin = this.write;
          cells = List.of(new AiBuilder.CellSpec(0, 0, 0, AiFarmArea.read(this.load_Str)));
       } else {
-         AiFarmArea.Inner_DataUtil area = this.getArea();
+         AiFarmArea.Area area = this.getArea();
          origin = area.origin();
          cells = new ArrayList<>();
          if (!area.validate(this.load_Str).isEmpty()) {
@@ -281,7 +281,7 @@ final class AiFarmPlacement extends AiPlacementSession {
             return;
          }
 
-         AiFarmBuild.Inner_StreamUtil layout = area.layout(this.load_Str);
+         AiFarmBuild.FarmLayout layout = area.layout(this.load_Str);
 
          for (int x = 0; x < area.width(); x++) {
             for (int z = 0; z < area.length(); z++) {

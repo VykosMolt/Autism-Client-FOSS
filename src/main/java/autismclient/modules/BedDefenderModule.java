@@ -120,7 +120,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private int reset = -1;
    private int start = -1;
    private int stop;
-   private final KillAuraModule.Inner_JsonUtil init_aa_JsonUtil = new KillAuraModule.Inner_JsonUtil();
+   private final KillAuraModule.TickCachedFlag init_aa_JsonUtil = new KillAuraModule.TickCachedFlag();
    private final List<autismclient.util.BlockPlacementPlanner.SupportCandidate> supportCandidates = new ArrayList<>();
    private int[] candidateRanks = new int[0];
    private int next;
@@ -1180,7 +1180,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          return false;
       }
 
-      autismclient.util.SilentRotationManager.tick(this.id(), MC.player, 55.0F, holdPitch ? 0.0F : 55.0F, autismclient.util.RotationStreamPlanner.Inner_StreamUtil.BED_SHELL);
+      autismclient.util.SilentRotationManager.tick(this.id(), MC.player, 55.0F, holdPitch ? 0.0F : 55.0F, autismclient.util.RotationStreamPlanner.MotionProfile.BED_SHELL);
       return true;
    }
 

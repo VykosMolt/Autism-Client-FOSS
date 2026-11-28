@@ -5,7 +5,7 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.nbt.CompoundTag;
 
 public class InventoryAction implements MacroAction, GuiWaitAware {
-   public InventoryAction.Inner_DataUtil mode = InventoryAction.Inner_DataUtil.OPEN;
+   public InventoryAction.InventoryMode mode = InventoryAction.InventoryMode.OPEN;
    public boolean waitForGuiBefore = false;
    public boolean waitForGuiAfter = true;
    public String guiName = "";
@@ -14,7 +14,7 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
    @Override
    public void execute(Minecraft mc) {
       if (mc.player != null) {
-         if (this.mode == InventoryAction.Inner_DataUtil.OPEN) {
+         if (this.mode == InventoryAction.InventoryMode.OPEN) {
             mc.execute(() -> mc.gui.setScreen(new InventoryScreen(mc.player)));
          } else {
             mc.execute(() -> autismclient.util.GuiDesyncHelper.init(mc, this.sendPacket, false));
@@ -24,7 +24,7 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
 
    @Override
    public boolean waitsForGuiBefore() {
-      return this.mode == InventoryAction.Inner_DataUtil.OPEN && this.waitForGuiBefore;
+      return this.mode == InventoryAction.InventoryMode.OPEN && this.waitForGuiBefore;
    }
 
    @Override
@@ -34,7 +34,7 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
 
    @Override
    public boolean waitsForGuiAfter() {
-      return this.mode == InventoryAction.Inner_DataUtil.OPEN && this.waitForGuiAfter;
+      return this.mode == InventoryAction.InventoryMode.OPEN && this.waitForGuiAfter;
    }
 
    @Override
@@ -73,9 +73,9 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
    public void fromTag(CompoundTag tag) {
       if (tag.contains("mode")) {
          try {
-            this.mode = InventoryAction.Inner_DataUtil.valueOf(tag.getStringOr("mode", "OPEN"));
+            this.mode = InventoryAction.InventoryMode.valueOf(tag.getStringOr("mode", "OPEN"));
          } catch (IllegalArgumentException ignored) {
-            this.mode = InventoryAction.Inner_DataUtil.OPEN;
+            this.mode = InventoryAction.InventoryMode.OPEN;
          }
       }
 
@@ -92,7 +92,7 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
 
    @Override
    public String getDisplayName() {
-      if (this.mode == InventoryAction.Inner_DataUtil.OPEN) {
+      if (this.mode == InventoryAction.InventoryMode.OPEN) {
          return "Inv Open" + GuiWaitAware.waitSuffix(this);
       } else {
          return this.sendPacket ? "Inv Close" : "Inv Close (no pkt)";
@@ -104,7 +104,7 @@ public class InventoryAction implements MacroAction, GuiWaitAware {
       return "I";
    }
 
-   public enum Inner_DataUtil {
+   public enum InventoryMode {
       OPEN,
       CLOSE;
    }

@@ -48,8 +48,8 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
    private final AiChunkMemory chunkMemory;
    private final int minY;
    private final int maxY;
-   private volatile AiLiveGrid.Inner_DataUtil putAt_PoolStore_CacheHel;
-   private static final AtomicReferenceArray<AiLiveGrid.Inner_StreamUtil> putAt_AtomicReferenceArr = new AtomicReferenceArray<>(
+   private volatile AiLiveGrid.ToolContext putAt_PoolStore_CacheHel;
+   private static final AtomicReferenceArray<AiLiveGrid.CellTraits> putAt_AtomicReferenceArr = new AtomicReferenceArray<>(
       Math.max(1, Block.BLOCK_STATE_REGISTRY.size())
    );
    private static final long CHUNK_RESCAN_NANOS = 30000000000L;
@@ -65,7 +65,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       this.minY = this.level.getMinY();
       this.maxY = this.level.getMaxY() - 1;
       this.nether = this.level.dimension() == Level.NETHER;
-      this.putAt_PoolStore_CacheHel = new AiLiveGrid.Inner_DataUtil(putAt_ItemStackArr_ItemStackArr(var2), MiningCost.Inner_DataUtil.of(var1), 0L);
+      this.putAt_PoolStore_CacheHel = new AiLiveGrid.ToolContext(putAt_ItemStackArr_ItemStackArr(var2), MiningCost.Inner_DataUtil.of(var1), 0L);
    }
 
    public ClientLevel putAt_ClientLevel() {
@@ -78,17 +78,17 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
    }
 
    public void putAt_V_ItemStackArr_2(ItemStack[] var1) {
-      AiLiveGrid.Inner_DataUtil var2 = this.putAt_PoolStore_CacheHel;
+      AiLiveGrid.ToolContext var2 = this.putAt_PoolStore_CacheHel;
       MiningCost.Inner_DataUtil var3 = MiningCost.Inner_DataUtil.of(this.mc);
       if (!sameHotbar(var2.hotbar, var1) || !var3.equals(var2.putAt_ByteWorker_CacheHe)) {
-         this.putAt_PoolStore_CacheHel = new AiLiveGrid.Inner_DataUtil(putAt_ItemStackArr_ItemStackArr(var1), var3, var2.revision + 1L, var2.toolPredicate);
+         this.putAt_PoolStore_CacheHel = new AiLiveGrid.ToolContext(putAt_ItemStackArr_ItemStackArr(var1), var3, var2.revision + 1L, var2.toolPredicate);
       }
    }
 
    public void putAt_V_BiPredicate_2(BiPredicate<BlockState, ItemStack> var1) {
-      AiLiveGrid.Inner_DataUtil var2 = this.putAt_PoolStore_CacheHel;
+      AiLiveGrid.ToolContext var2 = this.putAt_PoolStore_CacheHel;
       if (var2.toolPredicate != var1) {
-         this.putAt_PoolStore_CacheHel = new AiLiveGrid.Inner_DataUtil(var2.hotbar, var2.putAt_ByteWorker_CacheHe, var2.revision + 1L, var1);
+         this.putAt_PoolStore_CacheHel = new AiLiveGrid.ToolContext(var2.hotbar, var2.putAt_ByteWorker_CacheHe, var2.revision + 1L, var1);
       }
    }
 
@@ -112,7 +112,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          return this.memoryCell(var1, var2, var3);
       }
 
-      AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+      AiLiveGrid.CellTraits var5 = putAt_PoolStore_TableCac_BlockState(var4);
       if (var5 == null) {
          return AiPathfinder.CellInfo.UNLOADED;
       }
@@ -155,7 +155,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
                   for (; var14 <= var16; var14++) {
                      BlockState var17 = var15.getBlockState(var12, var14 & 15, var13);
                      if (!var17.isAir()) {
-                        AiLiveGrid.Inner_StreamUtil var18 = putAt_PoolStore_TableCac_BlockState(var17);
+                        AiLiveGrid.CellTraits var18 = putAt_PoolStore_TableCac_BlockState(var17);
                         if (var18 != null && !var18.probe().passable()) {
                            var7 |= 1L << var14 - var2;
                         }
@@ -248,7 +248,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          if (var4 == null) {
             return AiShapes.shapeIdOf(this.memoryCell(var1, var2, var3));
          } else {
-            AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+            AiLiveGrid.CellTraits var5 = putAt_PoolStore_TableCac_BlockState(var4);
             if (var5 == null) {
                return 1;
             } else {
@@ -266,7 +266,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
             return AiSurface.NORMAL.init();
          }
 
-         AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+         AiLiveGrid.CellTraits var5 = putAt_PoolStore_TableCac_BlockState(var4);
          return var5 == null ? AiSurface.NORMAL.init() : var5.surface();
       } else {
          return AiSurface.NORMAL.init();
@@ -288,7 +288,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          return AiShapes.shapeIdOf(this.memoryCell(var1, var2, var3));
       }
 
-      AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+      AiLiveGrid.CellTraits var5 = putAt_PoolStore_TableCac_BlockState(var4);
       if (var5 == null) {
          return 1;
       }
@@ -331,8 +331,8 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       return this.chunkMemory == null ? AiPathfinder.CellInfo.UNLOADED : this.chunkMemory.probeCell(var1, var2, var3);
    }
 
-   private double digCost(BlockState var1, AiLiveGrid.Inner_StreamUtil var2, int var3, int var4, int var5) {
-      AiLiveGrid.Inner_DataUtil var6 = this.putAt_PoolStore_CacheHel;
+   private double digCost(BlockState var1, AiLiveGrid.CellTraits var2, int var3, int var4, int var5) {
+      AiLiveGrid.ToolContext var6 = this.putAt_PoolStore_CacheHel;
       if (var2.requiresTool()
          && !var6.putAt_ByteWorker_CacheHe.creative()
          && !var6.correctToolCache.computeIfAbsent(var1, var1x -> AiPathfinder.LiveGridView.hasCorrectToolInHotbar(var1x, var6.hotbar))) {
@@ -364,7 +364,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
                      return 1.0 / 0.0;
                   }
 
-                  AiLiveGrid.Inner_StreamUtil var12 = putAt_PoolStore_TableCac_BlockState(var11);
+                  AiLiveGrid.CellTraits var12 = putAt_PoolStore_TableCac_BlockState(var11);
                   if (var12 != null && var12.falling()) {
                      if (++var9 <= 6 && var12.diggableKind()) {
                         if (this.nextToWater(var3, var10, var5)) {
@@ -393,7 +393,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
    }
 
-   private double cachedBreakCost(AiLiveGrid.Inner_DataUtil var1, BlockState var2, AiLiveGrid.Inner_StreamUtil var3) {
+   private double cachedBreakCost(AiLiveGrid.ToolContext var1, BlockState var2, AiLiveGrid.CellTraits var3) {
       return var1.breakCosts
          .computeIfAbsent(
             var2,
@@ -464,7 +464,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          return false;
       }
 
-      AiLiveGrid.Inner_StreamUtil var5 = putAt_PoolStore_TableCac_BlockState(var4);
+      AiLiveGrid.CellTraits var5 = putAt_PoolStore_TableCac_BlockState(var4);
       return var5 != null && var5.falling();
    }
 
@@ -496,15 +496,15 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       );
    }
 
-   static AiLiveGrid.Inner_StreamUtil putAt_PoolStore_TableCac_BlockState(BlockState var0) {
+   static AiLiveGrid.CellTraits putAt_PoolStore_TableCac_BlockState(BlockState var0) {
       int var1 = Block.getId(var0);
       if (var1 >= 0 && var1 < putAt_AtomicReferenceArr.length()) {
-         AiLiveGrid.Inner_StreamUtil var2 = putAt_AtomicReferenceArr.get(var1);
+         AiLiveGrid.CellTraits var2 = putAt_AtomicReferenceArr.get(var1);
          if (var2 != null) {
             return var2;
          }
 
-         AiLiveGrid.Inner_StreamUtil var3 = classify(var0);
+         AiLiveGrid.CellTraits var3 = classify(var0);
          if (var3 != null) {
             putAt_AtomicReferenceArr.compareAndSet(var1, null, var3);
          }
@@ -515,10 +515,10 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
    }
 
-   private static AiLiveGrid.Inner_StreamUtil classify(BlockState var0) {
+   private static AiLiveGrid.CellTraits classify(BlockState var0) {
       try {
          if (var0.isAir()) {
-            return new AiLiveGrid.Inner_StreamUtil(
+            return new AiLiveGrid.CellTraits(
                AiPathfinder.CellInfo.air(), (short)0, (short)0, AiSurface.NORMAL.init(), 0.0F, false, false, false, false, false, false
             );
          }
@@ -598,7 +598,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          double var29 = var4 instanceof SlimeBlock ? 1.0 : (var4 instanceof BedBlock ? 0.75 : 0.0);
          byte var31 = AiSurface.init(var4.getFriction(), var4.getSpeedFactor(), var4.getJumpFactor(), var29).init();
          short var32 = AiShapes.shapeId(var0.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).toAabbs());
-         return new AiLiveGrid.Inner_StreamUtil(
+         return new AiLiveGrid.CellTraits(
             var27,
             var28,
             var32,
@@ -733,7 +733,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
                for (int var14 = var6; var14 <= var7; var14++) {
                   var11.set((var3 << 4) + var12, var14, (var4 << 4) + var13);
                   BlockState var15 = var2.getBlockState(var11);
-                  AiLiveGrid.Inner_StreamUtil var16 = putAt_PoolStore_TableCac_BlockState(var15);
+                  AiLiveGrid.CellTraits var16 = putAt_PoolStore_TableCac_BlockState(var15);
                   if (var16 != null) {
                      AiPathfinder.CellInfo var17 = var16.probe();
                      byte var18 = 1;
@@ -774,7 +774,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class ToolContext {
       final ItemStack[] hotbar;
       final MiningCost.Inner_DataUtil putAt_ByteWorker_CacheHe;
       final long revision;
@@ -782,11 +782,11 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       final ConcurrentHashMap<BlockState, Double> breakCosts = new ConcurrentHashMap<>();
       final ConcurrentHashMap<BlockState, Boolean> correctToolCache = new ConcurrentHashMap<>();
 
-      Inner_DataUtil(ItemStack[] var1, MiningCost.Inner_DataUtil var2, long var3) {
+      ToolContext(ItemStack[] var1, MiningCost.Inner_DataUtil var2, long var3) {
          this(var1, var2, var3, null);
       }
 
-      Inner_DataUtil(ItemStack[] var1, MiningCost.Inner_DataUtil var2, long var3, BiPredicate<BlockState, ItemStack> var5) {
+      ToolContext(ItemStack[] var1, MiningCost.Inner_DataUtil var2, long var3, BiPredicate<BlockState, ItemStack> var5) {
          this.hotbar = var1;
          this.putAt_ByteWorker_CacheHe = var2;
          this.revision = var3;
@@ -794,7 +794,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       }
    }
 
-   record Inner_StreamUtil(
+   record CellTraits(
       AiPathfinder.CellInfo probe,
       short shape,
       short outlineShape,

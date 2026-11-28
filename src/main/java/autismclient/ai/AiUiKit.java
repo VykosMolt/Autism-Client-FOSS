@@ -17,11 +17,11 @@ final class AiUiKit {
    static final int STATUS_WARN_COLOR = -14249;
    static final int WHEEL_SCROLL_STEP_PX = 24;
    final autismclient.gui.f.b.CharEncoder theme = new autismclient.gui.f.b.CharEncoder();
-   private final List<AiUiKit.Inner_DataUtil> hitRegions = new ArrayList<>();
-   private final List<AiUiKit.Inner_CachePool> scrollRegions = new ArrayList<>();
-   private final List<AiUiKit.Inner_StreamUtil> activeScrollbars = new ArrayList<>();
+   private final List<AiUiKit.HitRegion> hitRegions = new ArrayList<>();
+   private final List<AiUiKit.ScrollRegion> scrollRegions = new ArrayList<>();
+   private final List<AiUiKit.ScrollPane> activeScrollbars = new ArrayList<>();
    private final ArrayDeque<autismclient.gui.f.NetHelper> clipStack = new ArrayDeque<>();
-   private AiUiKit.Inner_StreamUtil draggingScroll;
+   private AiUiKit.ScrollPane draggingScroll;
    GuiGraphicsExtractor graphics;
    autismclient.gui.f.SyncManager renderContext;
    autismclient.gui.ui.UiColorScheme colors;
@@ -118,7 +118,7 @@ final class AiUiKit {
    void addInteractiveRegion(autismclient.gui.f.NetHelper bounds, Runnable left, Runnable right, String tip) {
       autismclient.gui.f.NetHelper c = this.clipBounds(bounds);
       if (c.update() > 0 && c.sync() > 0) {
-         this.hitRegions.add(new AiUiKit.Inner_DataUtil(c, left, right, tip, null));
+         this.hitRegions.add(new AiUiKit.HitRegion(c, left, right, tip, null));
       }
    }
 
@@ -130,18 +130,18 @@ final class AiUiKit {
       this.addInteractiveRegion(bounds, null, null, tip);
    }
 
-   void registerScrollPane(AiUiKit.Inner_StreamUtil scroll) {
-      this.scrollRegions.add(new AiUiKit.Inner_CachePool(scroll.viewportBounds(), scroll));
+   void registerScrollPane(AiUiKit.ScrollPane scroll) {
+      this.scrollRegions.add(new AiUiKit.ScrollRegion(scroll.viewportBounds(), scroll));
       if (scroll.metrics != null && scroll.metrics.isScrollable()) {
          this.activeScrollbars.add(scroll);
       }
    }
 
    void blockScroll(autismclient.gui.f.NetHelper bounds) {
-      this.scrollRegions.add(new AiUiKit.Inner_CachePool(bounds, null));
+      this.scrollRegions.add(new AiUiKit.ScrollRegion(bounds, null));
    }
 
-   void drawScrollbar(AiUiKit.Inner_StreamUtil scroll) {
+   void drawScrollbar(AiUiKit.ScrollPane scroll) {
       if (scroll.metrics != null) {
          ScrollbarMetricsHelper.render(
             this.graphics, scroll.metrics, scroll.metrics.containsTrack(this.mouseX, this.mouseY), scroll.isDragging()
@@ -154,7 +154,7 @@ final class AiUiKit {
       field.render(this.layoutContext);
       autismclient.gui.f.NetHelper c = this.clipBounds(bounds);
       if (c.update() > 0 && c.sync() > 0) {
-         this.hitRegions.add(new AiUiKit.Inner_DataUtil(c, null, null, null, field));
+         this.hitRegions.add(new AiUiKit.HitRegion(c, null, null, null, field));
       }
    }
 
@@ -237,7 +237,7 @@ final class AiUiKit {
       int iy = (int)y;
 
       for (int i = this.activeScrollbars.size() - 1; i >= 0 && button == 0; i--) {
-         AiUiKit.Inner_StreamUtil s = this.activeScrollbars.get(i);
+         AiUiKit.ScrollPane s = this.activeScrollbars.get(i);
          if (s.metrics.containsTrack(x, y)) {
             s.dragGrabOffset = s.metrics.containsThumb(x, y) ? iy - s.metrics.thumbY() : s.metrics.thumbHeight() / 2;
             this.draggingScroll = s;
@@ -247,7 +247,7 @@ final class AiUiKit {
       }
 
       for (int i = this.hitRegions.size() - 1; i >= 0; i--) {
-         AiUiKit.Inner_DataUtil hit = this.hitRegions.get(i);
+         AiUiKit.HitRegion hit = this.hitRegions.get(i);
          if (hit.bounds().init_Z(ix, iy)) {
             if (hit.field() != null) {
                for (autismclient.gui.ui.widgets.TextInputWidget other : fields) {
@@ -307,7 +307,7 @@ final class AiUiKit {
 
    boolean mouseScrolled(double x, double y, double amount) {
       for (int i = this.scrollRegions.size() - 1; i >= 0; i--) {
-         AiUiKit.Inner_CachePool s = this.scrollRegions.get(i);
+         AiUiKit.ScrollRegion s = this.scrollRegions.get(i);
          if (s.bounds().init_Z((int)x, (int)y)) {
             if (s.scroll() != null) {
                s.scroll().scrollByWheel(amount);
@@ -322,7 +322,7 @@ final class AiUiKit {
 
    void renderHoveredTooltip() {
       for (int i = this.hitRegions.size() - 1; i >= 0; i--) {
-         AiUiKit.Inner_DataUtil hit = this.hitRegions.get(i);
+         AiUiKit.HitRegion hit = this.hitRegions.get(i);
          if (hit.bounds().init_Z(this.mouseX, this.mouseY)) {
             if (hit.tip() != null && !hit.tip().isBlank()) {
                autismclient.gui.ui.widgets.TooltipRenderer.init(this.renderContext, hit.tip(), this.mouseX, this.mouseY);
@@ -362,8 +362,8 @@ final class AiUiKit {
       }
    }
 
-   static AiTranscriptLayout.Inner_ConfigStore createTextMeasurer(final Font font) {
-      return new AiTranscriptLayout.Inner_ConfigStore() {
+   static AiTranscriptLayout.TextMeasurer createTextMeasurer(final Font font) {
+      return new AiTranscriptLayout.TextMeasurer() {
          @Override
          public int init(String text, int start, int end) {
             return this.init(text, start, end, 0);
@@ -414,13 +414,13 @@ final class AiUiKit {
       return text == null ? "" : text.replace('\n', ' ').trim();
    }
 
-   private record Inner_CachePool(autismclient.gui.f.NetHelper bounds, AiUiKit.Inner_StreamUtil scroll) {
+   private record ScrollRegion(autismclient.gui.f.NetHelper bounds, AiUiKit.ScrollPane scroll) {
    }
 
-   private record Inner_DataUtil(autismclient.gui.f.NetHelper bounds, Runnable left, Runnable right, String tip, autismclient.gui.ui.widgets.TextInputWidget field) {
+   private record HitRegion(autismclient.gui.f.NetHelper bounds, Runnable left, Runnable right, String tip, autismclient.gui.ui.widgets.TextInputWidget field) {
    }
 
-   static final class Inner_StreamUtil {
+   static final class ScrollPane {
       int offset;
       boolean followBottom;
       private int contentHeight;
@@ -429,7 +429,7 @@ final class AiUiKit {
       private autismclient.gui.f.NetHelper viewportBounds = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
       private ScrollbarMetricsHelper.Metrics metrics;
 
-      Inner_StreamUtil(boolean follow) {
+      ScrollPane(boolean follow) {
          this.followBottom = follow;
       }
 

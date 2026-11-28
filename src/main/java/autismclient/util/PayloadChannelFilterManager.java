@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class PayloadChannelFilterManager {
-   private static final List<PayloadChannelFilterManager.Inner_CachePool> PRESET_CATALOG = loadPresetCatalog();
+   private static final List<PayloadChannelFilterManager.ChannelPreset> PRESET_CATALOG = loadPresetCatalog();
    private static final List<String> CATALOG_WARNINGS = validateCatalog(PRESET_CATALOG);
    private final List<AutismConfig.PayloadChannelFilterRule> rules = new java.util.concurrent.CopyOnWriteArrayList<>();
 
@@ -65,11 +65,11 @@ public final class PayloadChannelFilterManager {
       return this.rules;
    }
 
-   public List<PayloadChannelFilterManager.Inner_CachePool> getPresets() {
+   public List<PayloadChannelFilterManager.ChannelPreset> getPresets() {
       return PRESET_CATALOG;
    }
 
-   public static List<PayloadChannelFilterManager.Inner_CachePool> presets() {
+   public static List<PayloadChannelFilterManager.ChannelPreset> presets() {
       return PRESET_CATALOG;
    }
 
@@ -77,7 +77,7 @@ public final class PayloadChannelFilterManager {
       return CATALOG_WARNINGS;
    }
 
-   public static boolean matchesPreset(PayloadChannelFilterManager.Inner_CachePool preset, String channelName) {
+   public static boolean matchesPreset(PayloadChannelFilterManager.ChannelPreset preset, String channelName) {
       return preset == null ? false : matchesNormalized(preset.read(), normalizeChannel(channelName));
    }
 
@@ -85,12 +85,12 @@ public final class PayloadChannelFilterManager {
       return matchesNormalized(pattern, normalizeChannel(channelName));
    }
 
-   public static boolean isExactPluginChannel(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public static boolean isExactPluginChannel(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset == null) {
          return false;
       }
 
-      if (preset.kind() != PayloadChannelFilterManager.Inner_BufferHelper.EXACT) {
+      if (preset.kind() != PayloadChannelFilterManager.PresetKind.EXACT) {
          return false;
       }
 
@@ -168,19 +168,19 @@ public final class PayloadChannelFilterManager {
       return var10000;
    }
 
-   public boolean addRuleAndSave(String label, String pattern, PayloadChannelFilterManager.Inner_DataUtil direction) {
+   public boolean addRuleAndSave(String label, String pattern, PayloadChannelFilterManager.FilterDirection direction) {
       return this.upsertRuleAndSave(label, pattern, direction, false, true);
    }
 
-   public boolean addRuleInMemory(String label, String pattern, PayloadChannelFilterManager.Inner_DataUtil direction) {
+   public boolean addRuleInMemory(String label, String pattern, PayloadChannelFilterManager.FilterDirection direction) {
       return this.upsertRuleInMemory(label, pattern, direction, false, true);
    }
 
-   public boolean addPresetRuleAndSave(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public boolean addPresetRuleAndSave(PayloadChannelFilterManager.ChannelPreset preset) {
       return preset == null ? false : this.upsertRuleAndSave(preset.load(), preset.read(), preset.direction(), true, true);
    }
 
-   public boolean enablePresetAndSave(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public boolean enablePresetAndSave(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset == null) {
          return false;
       }
@@ -202,7 +202,7 @@ public final class PayloadChannelFilterManager {
       return this.addPresetRuleAndSave(preset);
    }
 
-   public boolean enablePresetInMemory(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public boolean enablePresetInMemory(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset == null) {
          return false;
       }
@@ -266,7 +266,7 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   public boolean hasPresetRule(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public boolean hasPresetRule(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset == null) {
          return false;
       }
@@ -282,7 +282,7 @@ public final class PayloadChannelFilterManager {
       return false;
    }
 
-   public boolean isPresetEnabled(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public boolean isPresetEnabled(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset == null) {
          return false;
       }
@@ -320,7 +320,7 @@ public final class PayloadChannelFilterManager {
       if (group != null && !group.isBlank()) {
          int count = 0;
 
-         for (PayloadChannelFilterManager.Inner_CachePool preset : PRESET_CATALOG) {
+         for (PayloadChannelFilterManager.ChannelPreset preset : PRESET_CATALOG) {
             if (group.equals(preset.write())) {
                count++;
             }
@@ -336,7 +336,7 @@ public final class PayloadChannelFilterManager {
       if (group != null && !group.isBlank()) {
          int count = 0;
 
-         for (PayloadChannelFilterManager.Inner_CachePool preset : PRESET_CATALOG) {
+         for (PayloadChannelFilterManager.ChannelPreset preset : PRESET_CATALOG) {
             if (group.equals(preset.write()) && this.isPresetEnabled(preset)) {
                count++;
             }
@@ -364,7 +364,7 @@ public final class PayloadChannelFilterManager {
          boolean changed = false;
          Set<String> groupKeys = new HashSet<>();
 
-         for (PayloadChannelFilterManager.Inner_CachePool preset : PRESET_CATALOG) {
+         for (PayloadChannelFilterManager.ChannelPreset preset : PRESET_CATALOG) {
             if (group.equals(preset.write())) {
                groupKeys.add(preset.init_Str());
             }
@@ -374,7 +374,7 @@ public final class PayloadChannelFilterManager {
             if (!enabled) {
                changed = this.rules.removeIf(rule -> rule != null && rule.preset && groupKeys.contains(ruleKey(rule.pattern)));
             } else {
-               for (PayloadChannelFilterManager.Inner_CachePool preset : PRESET_CATALOG) {
+               for (PayloadChannelFilterManager.ChannelPreset preset : PRESET_CATALOG) {
                   if (group.equals(preset.write()) && this.ensurePresetEnabledInMemory(preset)) {
                      changed = true;
                   }
@@ -388,7 +388,7 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   public void togglePresetAndSave(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public void togglePresetAndSave(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset != null) {
          String key = preset.init_Str();
 
@@ -412,7 +412,7 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   public void togglePresetInMemory(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public void togglePresetInMemory(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset != null) {
          String key = preset.init_Str();
 
@@ -434,7 +434,7 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   private boolean ensurePresetEnabledInMemory(PayloadChannelFilterManager.Inner_CachePool preset) {
+   private boolean ensurePresetEnabledInMemory(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset == null) {
          return false;
       }
@@ -477,7 +477,7 @@ public final class PayloadChannelFilterManager {
          }
       }
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PRESET_CATALOG) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : PRESET_CATALOG) {
          if (this.ensurePresetEnabledInMemory(preset)) {
             changed = true;
          }
@@ -510,7 +510,7 @@ public final class PayloadChannelFilterManager {
       int total = 0;
       int enabled = 0;
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PRESET_CATALOG) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : PRESET_CATALOG) {
          if (isDefaultPreset(preset)) {
             total++;
             if (this.isPresetEnabled(preset)) {
@@ -553,7 +553,7 @@ public final class PayloadChannelFilterManager {
    }
 
    public synchronized void resetToDefaultsAndSave() {
-      Map<String, PayloadChannelFilterManager.Inner_CachePool> defaults = defaultPresetsByKey();
+      Map<String, PayloadChannelFilterManager.ChannelPreset> defaults = defaultPresetsByKey();
       if (!defaults.isEmpty()) {
          boolean[] changed = new boolean[]{false};
          this.rules.removeIf(rule -> {
@@ -562,7 +562,7 @@ public final class PayloadChannelFilterManager {
                return true;
             }
             String key = ruleKey(rule.pattern);
-            PayloadChannelFilterManager.Inner_CachePool defaultPreset = defaults.get(key);
+            PayloadChannelFilterManager.ChannelPreset defaultPreset = defaults.get(key);
             if (defaultPreset != null) {
                if (!rule.enabled) {
                   rule.enabled = true;
@@ -590,7 +590,7 @@ public final class PayloadChannelFilterManager {
             return false;
          });
 
-         for (PayloadChannelFilterManager.Inner_CachePool preset : defaults.values()) {
+         for (PayloadChannelFilterManager.ChannelPreset preset : defaults.values()) {
             if (this.ensurePresetEnabledInMemory(preset)) {
                changed[0] = true;
             }
@@ -603,14 +603,14 @@ public final class PayloadChannelFilterManager {
    }
 
    public synchronized void resetToDefaultsInMemory() {
-      Map<String, PayloadChannelFilterManager.Inner_CachePool> defaults = defaultPresetsByKey();
+      Map<String, PayloadChannelFilterManager.ChannelPreset> defaults = defaultPresetsByKey();
       if (!defaults.isEmpty()) {
          this.rules.removeIf(rule -> {
             if (rule == null) {
                return true;
             }
             String key = ruleKey(rule.pattern);
-            PayloadChannelFilterManager.Inner_CachePool defaultPreset = defaults.get(key);
+            PayloadChannelFilterManager.ChannelPreset defaultPreset = defaults.get(key);
             if (defaultPreset != null) {
                rule.enabled = true;
                rule.preset = true;
@@ -627,7 +627,7 @@ public final class PayloadChannelFilterManager {
             return false;
          });
 
-         for (PayloadChannelFilterManager.Inner_CachePool preset : defaults.values()) {
+         for (PayloadChannelFilterManager.ChannelPreset preset : defaults.values()) {
             this.ensurePresetEnabledInMemory(preset);
          }
       }
@@ -646,7 +646,7 @@ public final class PayloadChannelFilterManager {
    public void ensureDefaultsEnabledAndSave() {
       boolean changed = false;
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PRESET_CATALOG) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : PRESET_CATALOG) {
          if (isDefaultPreset(preset) && this.ensurePresetEnabledInMemory(preset)) {
             changed = true;
          }
@@ -661,10 +661,10 @@ public final class PayloadChannelFilterManager {
       return new HashSet<>(defaultPresetsByKey().keySet());
    }
 
-   private static Map<String, PayloadChannelFilterManager.Inner_CachePool> defaultPresetsByKey() {
-      Map<String, PayloadChannelFilterManager.Inner_CachePool> defaults = new LinkedHashMap<>();
+   private static Map<String, PayloadChannelFilterManager.ChannelPreset> defaultPresetsByKey() {
+      Map<String, PayloadChannelFilterManager.ChannelPreset> defaults = new LinkedHashMap<>();
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : PRESET_CATALOG) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : PRESET_CATALOG) {
          if (isDefaultPreset(preset)) {
             defaults.put(preset.init_Str(), preset);
          }
@@ -673,13 +673,13 @@ public final class PayloadChannelFilterManager {
       return defaults;
    }
 
-   public PayloadChannelFilterManager.Inner_StreamUtil findMatchingRuleForEntry(AutismPayloadSupport.PayloadEntry snapshot, String packetDirection) {
+   public PayloadChannelFilterManager.MatchedRule findMatchingRuleForEntry(AutismPayloadSupport.PayloadEntry snapshot, String packetDirection) {
       return snapshot != null && snapshot.channel() != null && !snapshot.channel().isBlank()
          ? this.findMatchingRule(snapshot.channel(), packetDirection)
          : null;
    }
 
-   public PayloadChannelFilterManager.Inner_StreamUtil findMatchingRule(String channelName, String packetDirection) {
+   public PayloadChannelFilterManager.MatchedRule findMatchingRule(String channelName, String packetDirection) {
       String channel = normalizeChannel(channelName);
       if (channel.isBlank()) {
          return null;
@@ -688,7 +688,7 @@ public final class PayloadChannelFilterManager {
       for (AutismConfig.PayloadChannelFilterRule rule : this.rules) {
          if (rule != null && rule.enabled && matchesNormalized(rule.pattern, channel)) {
             String label = rule.label != null && !rule.label.isBlank() ? rule.label : rule.pattern;
-            return new PayloadChannelFilterManager.Inner_StreamUtil(label, rule.pattern, PayloadChannelFilterManager.Inner_DataUtil.ANY);
+            return new PayloadChannelFilterManager.MatchedRule(label, rule.pattern, PayloadChannelFilterManager.FilterDirection.ANY);
          }
       }
 
@@ -696,11 +696,11 @@ public final class PayloadChannelFilterManager {
    }
 
    public String matchSearchText(AutismPayloadSupport.PayloadEntry snapshot, String packetDirection) {
-      PayloadChannelFilterManager.Inner_StreamUtil match = this.findMatchingRuleForEntry(snapshot, packetDirection);
+      PayloadChannelFilterManager.MatchedRule match = this.findMatchingRuleForEntry(snapshot, packetDirection);
       return match == null ? "" : match.init_Str();
    }
 
-   public static boolean isDefaultCorePreset(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public static boolean isDefaultCorePreset(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset == null) {
          return false;
       }
@@ -724,11 +724,11 @@ public final class PayloadChannelFilterManager {
       return var10000;
    }
 
-   public static boolean isRegisterableExactPreset(PayloadChannelFilterManager.Inner_CachePool preset) {
-      return preset != null && preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT ? PayloadRegistrationManager.isExactChannel(preset.read()) : false;
+   public static boolean isRegisterableExactPreset(PayloadChannelFilterManager.ChannelPreset preset) {
+      return preset != null && preset.kind() == PayloadChannelFilterManager.PresetKind.EXACT ? PayloadRegistrationManager.isExactChannel(preset.read()) : false;
    }
 
-   public static String editablePrefixFor(PayloadChannelFilterManager.Inner_CachePool preset) {
+   public static String editablePrefixFor(PayloadChannelFilterManager.ChannelPreset preset) {
       if (preset == null) {
          return "";
       }
@@ -737,7 +737,7 @@ public final class PayloadChannelFilterManager {
       return prefix != null && !prefix.isBlank() ? prefix : stripWildcardSuffix(preset.read());
    }
 
-   private static boolean isDefaultPreset(PayloadChannelFilterManager.Inner_CachePool preset) {
+   private static boolean isDefaultPreset(PayloadChannelFilterManager.ChannelPreset preset) {
       return isDefaultCorePreset(preset);
    }
 
@@ -760,14 +760,14 @@ public final class PayloadChannelFilterManager {
       return pattern == null ? "" : normalizeChannel(pattern.trim());
    }
 
-   private static PayloadChannelFilterManager.Inner_BufferHelper inferPresetKind(String pattern) {
+   private static PayloadChannelFilterManager.PresetKind inferPresetKind(String pattern) {
       String normalized = normalizePattern(pattern);
       if (isCoreChannel(normalized)) {
-         return PayloadChannelFilterManager.Inner_BufferHelper.CORE;
+         return PayloadChannelFilterManager.PresetKind.CORE;
       } else if (normalized.indexOf(42) >= 0) {
-         return PayloadChannelFilterManager.Inner_BufferHelper.TEMPLATE;
+         return PayloadChannelFilterManager.PresetKind.TEMPLATE;
       } else {
-         return PayloadRegistrationManager.isExactChannel(normalized) ? PayloadChannelFilterManager.Inner_BufferHelper.UNVERIFIED : PayloadChannelFilterManager.Inner_BufferHelper.TEMPLATE;
+         return PayloadRegistrationManager.isExactChannel(normalized) ? PayloadChannelFilterManager.PresetKind.UNVERIFIED : PayloadChannelFilterManager.PresetKind.TEMPLATE;
       }
    }
 
@@ -818,7 +818,7 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   private boolean upsertRuleAndSave(String label, String pattern, PayloadChannelFilterManager.Inner_DataUtil direction, boolean preset, boolean enabled) {
+   private boolean upsertRuleAndSave(String label, String pattern, PayloadChannelFilterManager.FilterDirection direction, boolean preset, boolean enabled) {
       boolean changed = this.upsertRuleInMemory(label, pattern, direction, preset, enabled);
       if (changed) {
          this.saveToConfig();
@@ -827,13 +827,13 @@ public final class PayloadChannelFilterManager {
       return changed;
    }
 
-   private boolean upsertRuleInMemory(String label, String pattern, PayloadChannelFilterManager.Inner_DataUtil direction, boolean preset, boolean enabled) {
+   private boolean upsertRuleInMemory(String label, String pattern, PayloadChannelFilterManager.FilterDirection direction, boolean preset, boolean enabled) {
       String normalized = normalizePattern(pattern);
       if (normalized.isBlank()) {
          return false;
       }
 
-      PayloadChannelFilterManager.Inner_DataUtil dir = PayloadChannelFilterManager.Inner_DataUtil.ANY;
+      PayloadChannelFilterManager.FilterDirection dir = PayloadChannelFilterManager.FilterDirection.ANY;
       String key = ruleKey(normalized);
 
       for (AutismConfig.PayloadChannelFilterRule existing : this.rules) {
@@ -923,13 +923,13 @@ public final class PayloadChannelFilterManager {
             || normalized.contains("java_utf");
    }
 
-   private static List<String> validateCatalog(List<PayloadChannelFilterManager.Inner_CachePool> presets) {
+   private static List<String> validateCatalog(List<PayloadChannelFilterManager.ChannelPreset> presets) {
       if (presets != null && !presets.isEmpty()) {
          List<String> warnings = new ArrayList<>();
          Set<String> keys = new HashSet<>();
          Map<String, String> groupCase = new LinkedHashMap<>();
 
-         for (PayloadChannelFilterManager.Inner_CachePool preset : presets) {
+         for (PayloadChannelFilterManager.ChannelPreset preset : presets) {
             if (preset == null) {
                warnings.add("null preset row");
             } else {
@@ -950,7 +950,7 @@ public final class PayloadChannelFilterManager {
                }
 
                String pattern = normalizePattern(preset.read());
-               if (preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.EXACT) {
+               if (preset.kind() == PayloadChannelFilterManager.PresetKind.EXACT) {
                   if (pattern.indexOf(42) >= 0) {
                      warnings.add("exact preset uses wildcard " + preset.read());
                   }
@@ -964,7 +964,7 @@ public final class PayloadChannelFilterManager {
                   }
                }
 
-               if (preset.kind() == PayloadChannelFilterManager.Inner_BufferHelper.CORE && !isCoreChannel(pattern)) {
+               if (preset.kind() == PayloadChannelFilterManager.PresetKind.CORE && !isCoreChannel(pattern)) {
                   warnings.add("core preset has non-core channel " + preset.read());
                }
 
@@ -980,8 +980,8 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   private static List<PayloadChannelFilterManager.Inner_CachePool> loadPresetCatalog() {
-      List<PayloadChannelFilterManager.Inner_CachePool> presets = new ArrayList<>();
+   private static List<PayloadChannelFilterManager.ChannelPreset> loadPresetCatalog() {
+      List<PayloadChannelFilterManager.ChannelPreset> presets = new ArrayList<>();
       try (InputStream in = PayloadChannelFilterManager.class.getResourceAsStream("/assets/autismclient/plugin_channels.json")) {
          if (in == null) {
             AutismClientAddon.LOG.error("[PayloadFilters] Missing preset catalog resource /assets/autismclient/plugin_channels.json");
@@ -1018,44 +1018,44 @@ public final class PayloadChannelFilterManager {
       return el != null && !el.isJsonNull() ? el.getAsString() : "";
    }
 
-   private static void addTemplatePreset(List<PayloadChannelFilterManager.Inner_CachePool> presets, String label, String pattern, String group) {
+   private static void addTemplatePreset(List<PayloadChannelFilterManager.ChannelPreset> presets, String label, String pattern, String group) {
       String normalized = normalizePattern(pattern);
-      PayloadChannelFilterManager.Inner_BufferHelper kind = inferPresetKind(normalized);
-      String evidence = kind == PayloadChannelFilterManager.Inner_BufferHelper.TEMPLATE ? "Template only; no exact public channel proof." : "";
+      PayloadChannelFilterManager.PresetKind kind = inferPresetKind(normalized);
+      String evidence = kind == PayloadChannelFilterManager.PresetKind.TEMPLATE ? "Template only; no exact public channel proof." : "";
       addPresetEntry(presets, label, normalized, group, kind, evidence, stripWildcardSuffix(normalized));
    }
 
-   private static void addExactPreset(List<PayloadChannelFilterManager.Inner_CachePool> presets, String label, String pattern, String group, String evidence) {
-      addPresetEntry(presets, label, normalizePattern(pattern), group, PayloadChannelFilterManager.Inner_BufferHelper.EXACT, evidence, "");
+   private static void addExactPreset(List<PayloadChannelFilterManager.ChannelPreset> presets, String label, String pattern, String group, String evidence) {
+      addPresetEntry(presets, label, normalizePattern(pattern), group, PayloadChannelFilterManager.PresetKind.EXACT, evidence, "");
    }
 
-   private static void addCorePreset(List<PayloadChannelFilterManager.Inner_CachePool> presets, String label, String pattern, String group, String evidence) {
-      addPresetEntry(presets, label, normalizePattern(pattern), group, PayloadChannelFilterManager.Inner_BufferHelper.CORE, evidence, "");
+   private static void addCorePreset(List<PayloadChannelFilterManager.ChannelPreset> presets, String label, String pattern, String group, String evidence) {
+      addPresetEntry(presets, label, normalizePattern(pattern), group, PayloadChannelFilterManager.PresetKind.CORE, evidence, "");
    }
 
    private static void addPresetEntry(
-      List<PayloadChannelFilterManager.Inner_CachePool> presets, String label, String normalized, String group, PayloadChannelFilterManager.Inner_BufferHelper kind, String evidence, String templatePrefix
+      List<PayloadChannelFilterManager.ChannelPreset> presets, String label, String normalized, String group, PayloadChannelFilterManager.PresetKind kind, String evidence, String templatePrefix
    ) {
       String key = ruleKey(normalized);
 
-      for (PayloadChannelFilterManager.Inner_CachePool preset : presets) {
+      for (PayloadChannelFilterManager.ChannelPreset preset : presets) {
          if (preset.init_Str().equals(key)) {
             return;
          }
       }
 
-      PayloadChannelFilterManager.Inner_BufferHelper safeKind = kind == null ? inferPresetKind(normalized) : kind;
+      PayloadChannelFilterManager.PresetKind safeKind = kind == null ? inferPresetKind(normalized) : kind;
       String safeEvidence = evidence == null ? "" : evidence;
       String safeTemplate = templatePrefix == null ? "" : templatePrefix;
-      boolean invalidExact = safeKind == PayloadChannelFilterManager.Inner_BufferHelper.EXACT
+      boolean invalidExact = safeKind == PayloadChannelFilterManager.PresetKind.EXACT
          && (safeEvidence.isBlank() || normalized.indexOf(42) >= 0 || !PayloadRegistrationManager.isExactChannel(normalized));
       if (invalidExact) {
-         safeKind = PayloadChannelFilterManager.Inner_BufferHelper.UNVERIFIED;
+         safeKind = PayloadChannelFilterManager.PresetKind.UNVERIFIED;
          safeTemplate = safeTemplate.isBlank() ? stripWildcardSuffix(normalized) : safeTemplate;
          safeEvidence = safeEvidence.isBlank() ? "Exact channel proof missing; kept as editable template." : safeEvidence;
       }
 
-      presets.add(new PayloadChannelFilterManager.Inner_CachePool(label, normalized, PayloadChannelFilterManager.Inner_DataUtil.ANY, group, safeKind, safeEvidence, safeTemplate));
+      presets.add(new PayloadChannelFilterManager.ChannelPreset(label, normalized, PayloadChannelFilterManager.FilterDirection.ANY, group, safeKind, safeEvidence, safeTemplate));
    }
 
    static {
@@ -1064,7 +1064,7 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   public enum Inner_BufferHelper {
+   public enum PresetKind {
       EXACT("Exact"),
       CORE("Core"),
       TEMPLATE("Template"),
@@ -1072,7 +1072,7 @@ public final class PayloadChannelFilterManager {
 
       private final String badge;
 
-      Inner_BufferHelper(String badge) {
+      PresetKind(String badge) {
          this.badge = badge;
       }
 
@@ -1085,10 +1085,10 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   public record Inner_CachePool(
-      String init_Str, String load, PayloadChannelFilterManager.Inner_DataUtil direction, String read, PayloadChannelFilterManager.Inner_BufferHelper kind, String write, String update
+   public record ChannelPreset(
+      String init_Str, String load, PayloadChannelFilterManager.FilterDirection direction, String read, PayloadChannelFilterManager.PresetKind kind, String write, String update
    ) {
-      public Inner_CachePool(String label, String pattern, PayloadChannelFilterManager.Inner_DataUtil direction, String group) {
+      public ChannelPreset(String label, String pattern, PayloadChannelFilterManager.FilterDirection direction, String group) {
          this(label, pattern, direction, group, PayloadChannelFilterManager.inferPresetKind(pattern), "", PayloadChannelFilterManager.stripWildcardSuffix(pattern));
       }
 
@@ -1117,12 +1117,12 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum FilterDirection {
       ANY,
       C2S,
       S2C;
 
-      public static PayloadChannelFilterManager.Inner_DataUtil parse(String value) {
+      public static PayloadChannelFilterManager.FilterDirection parse(String value) {
          if (value == null) {
             return ANY;
          }
@@ -1139,7 +1139,7 @@ public final class PayloadChannelFilterManager {
       }
    }
 
-   public record Inner_StreamUtil(String init_Str, String load, PayloadChannelFilterManager.Inner_DataUtil direction) {
+   public record MatchedRule(String init_Str, String load, PayloadChannelFilterManager.FilterDirection direction) {
       public String init_Str() {
          return (this.init_Str + " " + this.load).toLowerCase(Locale.ROOT);
       }

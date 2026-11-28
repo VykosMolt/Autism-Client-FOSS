@@ -41,9 +41,9 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    private static final int write_I = -1;
    private final ResourcePackDownloadScope.Inner_BufferHelper scopeSnapshot;
    private final Proxy connectionProxy;
-   private final PackUrlValidator.Inner_StreamUtil resolver;
-   private final ScopedHttpUrlConnection.Inner_NetHelper socketFactory;
-   private final ScopedHttpUrlConnection.Inner_SyncManager tlsFactory;
+   private final PackUrlValidator.HostResolver resolver;
+   private final ScopedHttpUrlConnection.PlainSocketFactory socketFactory;
+   private final ScopedHttpUrlConnection.TlsSocketFactory tlsFactory;
    private final BooleanSupplier stillCurrent;
    private final LinkedHashMap<String, List<String>> requestHeaders = new LinkedHashMap<>();
    private int update = -1;
@@ -53,9 +53,9 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    private volatile boolean disconnected;
    private boolean socketConnected;
    private boolean viaProxy;
-   private ScopedHttpUrlConnection.Inner_JsonUtil response;
+   private ScopedHttpUrlConnection.ResponseHead response;
    private InputStream responseBody;
-   private PackUrlValidator.Inner_BufferHelper route;
+   private PackUrlValidator.PackRoute route;
    private boolean routeResolved;
 
    public ScopedHttpUrlConnection(ResourcePackDownloadScope.Inner_BufferHelper snapshot, URL url, Proxy proxy) throws IOException, UnknownHostException {
@@ -74,9 +74,9 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       ResourcePackDownloadScope.Inner_BufferHelper snapshot,
       URL url,
       Proxy proxy,
-      PackUrlValidator.Inner_StreamUtil resolver,
-      ScopedHttpUrlConnection.Inner_NetHelper socketFactory,
-      ScopedHttpUrlConnection.Inner_SyncManager tlsFactory,
+      PackUrlValidator.HostResolver resolver,
+      ScopedHttpUrlConnection.PlainSocketFactory socketFactory,
+      ScopedHttpUrlConnection.TlsSocketFactory tlsFactory,
       BooleanSupplier currency
    ) throws IOException {
       super(Objects.requireNonNull(url, "url"));
@@ -337,11 +337,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
          this.socketConnected = true;
          this.read();
-         PackUrlValidator.Inner_ConfigStore target = PackUrlValidator.parseUrl(this.url);
-         PackUrlValidator.Inner_ConfigStore initialTarget = target;
-         PackUrlValidator.Inner_ConfigStore previousTarget = null;
-         PackUrlValidator.Inner_CachePool endpoint = null;
-         PackUrlValidator.Inner_BufferHelper route = this.resolveRoute();
+         PackUrlValidator.ParsedTarget target = PackUrlValidator.parseUrl(this.url);
+         PackUrlValidator.ParsedTarget initialTarget = target;
+         PackUrlValidator.ParsedTarget previousTarget = null;
+         PackUrlValidator.ResolvedEndpoint endpoint = null;
+         PackUrlValidator.PackRoute route = this.resolveRoute();
          boolean used305 = false;
          int redirects = 0;
 
@@ -366,7 +366,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                }
 
                this.init(socket, target, previousTarget == null ? null : initialTarget, route);
-               ScopedHttpUrlConnection.Inner_JsonUtil response = this.init_RenderState_JsonUt_InputStream(this.socketInputFor(socket));
+               ScopedHttpUrlConnection.ResponseHead response = this.init_RenderState_JsonUt_InputStream(this.socketInputFor(socket));
                String location = this.instanceFollowRedirects ? this.redirectLocation(response) : null;
                if (!isRedirectStatus(response.code) || location == null) {
                   this.response = this.init_RenderState_JsonUt_RenderState_JsonUt(response);
@@ -395,7 +395,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                   route = PackUrlValidator.routeForLocation(location, this.scopeSnapshot, this.resolver);
                   used305 = true;
                } else {
-                  PackUrlValidator.Inner_ConfigStore next = resolveRedirectTarget(target, location);
+                  PackUrlValidator.ParsedTarget next = resolveRedirectTarget(target, location);
                   if (!target.init_Str().equals(next.init_Str())) {
                      throw new ProtocolException("Resource-pack redirect changed URL scheme");
                   }
@@ -425,7 +425,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private PackUrlValidator.Inner_BufferHelper resolveRoute() throws IOException {
+   private PackUrlValidator.PackRoute resolveRoute() throws IOException {
       if (!this.routeResolved) {
          this.route = PackUrlValidator.routeFor(this.connectionProxy, this.resolver);
          this.routeResolved = true;
@@ -434,8 +434,8 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return this.route;
    }
 
-   private Socket openSocketFor(PackUrlValidator.Inner_CachePool target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
-      PackUrlValidator.Inner_CachePool connectionEndpoint = route == null ? target : route.endpoint();
+   private Socket openSocketFor(PackUrlValidator.ResolvedEndpoint target, PackUrlValidator.PackRoute route) throws IOException {
+      PackUrlValidator.ResolvedEndpoint connectionEndpoint = route == null ? target : route.endpoint();
       IOException last = null;
 
       for (InetAddress address : connectionEndpoint.addresses()) {
@@ -492,7 +492,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return this.socketInput;
    }
 
-   private Socket layerTls(Socket plain, PackUrlValidator.Inner_ConfigStore target) throws IOException {
+   private Socket layerTls(Socket plain, PackUrlValidator.ParsedTarget target) throws IOException {
       Socket layered = this.tlsFactory.create(plain, target.load(), target.port(), true);
       if (layered == null) {
          throw new IOException("TLS factory returned no socket");
@@ -520,7 +520,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return layered;
    }
 
-   private void init(Socket socket, PackUrlValidator.Inner_CachePool target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
+   private void init(Socket socket, PackUrlValidator.ResolvedEndpoint target, PackUrlValidator.PackRoute route) throws IOException {
       OutputStream output = socket.getOutputStream();
       InputStream input = this.socketInputFor(socket);
       ConnectionPrivacyRegistry.ProxyEndpoint frozen = this.scopeSnapshot.proxyEndpoint();
@@ -531,7 +531,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          ResourcePackDownloadScope.Inner_ConfigStore authentication = frozen == null ? ResourcePackDownloadScope.init(this.scopeSnapshot, route) : null;
          byte[] username = null;
          byte[] password = null;
-         ScopedHttpUrlConnection.Inner_StreamUtil authenticationRequest = null;
+         ScopedHttpUrlConnection.ByteBuilder authenticationRequest = null;
 
          try {
             if (frozen != null) {
@@ -585,7 +585,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                   throw new IOException("Invalid SOCKS5 proxy credentials");
                }
 
-               authenticationRequest = new ScopedHttpUrlConnection.Inner_StreamUtil(3 + username.length + password.length);
+               authenticationRequest = new ScopedHttpUrlConnection.ByteBuilder(3 + username.length + password.length);
                authenticationRequest.init(1);
                authenticationRequest.init(username.length);
                authenticationRequest.init(username);
@@ -603,7 +603,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
             InetAddress address = target.addresses().getFirst();
             byte[] raw = address.getAddress();
-            ScopedHttpUrlConnection.Inner_StreamUtil request = new ScopedHttpUrlConnection.Inner_StreamUtil(7 + raw.length);
+            ScopedHttpUrlConnection.ByteBuilder request = new ScopedHttpUrlConnection.ByteBuilder(7 + raw.length);
             request.init(5);
             request.init(1);
             request.init(0);
@@ -658,7 +658,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private void init(Socket socket, PackUrlValidator.Inner_ConfigStore target, PackUrlValidator.Inner_BufferHelper route) throws IOException {
+   private void init(Socket socket, PackUrlValidator.ParsedTarget target, PackUrlValidator.PackRoute route) throws IOException {
       String host = target.load().indexOf(58) >= 0 ? "[" + target.load() + "]" : target.load();
       String connectAuthority = host + ":" + target.port();
       StringBuilder request = new StringBuilder("CONNECT ").append(connectAuthority).append(" HTTP/1.1\r\nHost: ").append(target.read()).append("\r\n");
@@ -668,7 +668,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       request.append("\r\n");
       socket.getOutputStream().write(request.toString().getBytes(StandardCharsets.ISO_8859_1));
       socket.getOutputStream().flush();
-      ScopedHttpUrlConnection.Inner_JsonUtil response = this.init_RenderState_JsonUt_InputStream(this.socketInputFor(socket));
+      ScopedHttpUrlConnection.ResponseHead response = this.init_RenderState_JsonUt_InputStream(this.socketInputFor(socket));
       if (response.code != 200) {
          throw new IOException("HTTP proxy CONNECT failed with status " + response.code);
       }
@@ -676,7 +676,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       this.read();
    }
 
-   private void init(Socket socket, PackUrlValidator.Inner_ConfigStore target, PackUrlValidator.Inner_ConfigStore previousTarget, PackUrlValidator.Inner_BufferHelper route) throws IOException {
+   private void init(Socket socket, PackUrlValidator.ParsedTarget target, PackUrlValidator.ParsedTarget previousTarget, PackUrlValidator.PackRoute route) throws IOException {
       String requestTarget = target.write();
       boolean plainHttpProxy = route != null && route.proxyType() == Type.HTTP && "http".equals(target.init_Str());
       if (plainHttpProxy) {
@@ -728,7 +728,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private void appendProxyAuthorization(StringBuilder request, PackUrlValidator.Inner_BufferHelper route) {
+   private void appendProxyAuthorization(StringBuilder request, PackUrlValidator.PackRoute route) {
       if (route.init_Z()) {
          for (String value : headerValues(this.requestHeaders, "Proxy-Authorization")) {
             load(request, "Proxy-Authorization", value);
@@ -740,7 +740,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       request.append(name).append(": ").append(value).append("\r\n");
    }
 
-   private ScopedHttpUrlConnection.Inner_JsonUtil init_RenderState_JsonUt_InputStream(InputStream input) throws IOException {
+   private ScopedHttpUrlConnection.ResponseHead init_RenderState_JsonUt_InputStream(InputStream input) throws IOException {
       int aggregate = 0;
       int interim = 0;
 
@@ -751,7 +751,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             throw new IOException("HTTP response headers are too large");
          }
 
-         ScopedHttpUrlConnection.Inner_StateCache statusLine = parseStatusLine(status);
+         ScopedHttpUrlConnection.StatusLine statusLine = parseStatusLine(status);
          LinkedHashMap<String, List<String>> headers = new LinkedHashMap<>();
 
          while (true) {
@@ -771,7 +771,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                   throw new IOException("Too many or unsupported interim HTTP responses");
                }
 
-               return new ScopedHttpUrlConnection.Inner_JsonUtil(status, statusLine.code, statusLine.reasonPhrase, headers, -1L, false, false);
+               return new ScopedHttpUrlConnection.ResponseHead(status, statusLine.code, statusLine.reasonPhrase, headers, -1L, false, false);
             }
 
             if (line.charAt(0) == ' ' || line.charAt(0) == '\t') {
@@ -817,14 +817,14 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static ScopedHttpUrlConnection.Inner_StateCache parseStatusLine(String line) throws IOException {
+   private static ScopedHttpUrlConnection.StatusLine parseStatusLine(String line) throws IOException {
       int first = line.indexOf(32);
       if (first >= 0 && (line.startsWith("HTTP/1.1") || line.startsWith("HTTP/1.0"))) {
          int second = line.indexOf(32, first + 1);
          String code = second < 0 ? line.substring(first + 1) : line.substring(first + 1, second);
          if (code.length() == 3 && code.chars().allMatch(Character::isDigit)) {
             String message = second < 0 ? "" : line.substring(second + 1);
-            return new ScopedHttpUrlConnection.Inner_StateCache(Integer.parseInt(code), message);
+            return new ScopedHttpUrlConnection.StatusLine(Integer.parseInt(code), message);
          } else {
             throw new IOException("Malformed HTTP response status");
          }
@@ -833,7 +833,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private ScopedHttpUrlConnection.Inner_JsonUtil init_RenderState_JsonUt_RenderState_JsonUt(ScopedHttpUrlConnection.Inner_JsonUtil response) throws IOException {
+   private ScopedHttpUrlConnection.ResponseHead init_RenderState_JsonUt_RenderState_JsonUt(ScopedHttpUrlConnection.ResponseHead response) throws IOException {
       List<String> transfer = response.init("Transfer-Encoding");
       List<String> lengths = response.init("Content-Length");
       if (!transfer.isEmpty() && !lengths.isEmpty()) {
@@ -886,22 +886,22 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          throw new IOException("Response body has no active socket");
       }
 
-      ScopedHttpUrlConnection.Inner_JsonUtil response = this.response;
+      ScopedHttpUrlConnection.ResponseHead response = this.response;
       InputStream input = this.socketInputFor(socket);
       if (response.noBody) {
-         this.responseBody = new ScopedHttpUrlConnection.Inner_DataUtil(this, socket, InputStream.nullInputStream(), true, response.code >= 400);
+         this.responseBody = new ScopedHttpUrlConnection.BodyStream(this, socket, InputStream.nullInputStream(), true, response.code >= 400);
       } else if (response.chunked) {
-         this.responseBody = new ScopedHttpUrlConnection.Inner_CachePool(this, socket, input, response.code >= 400);
+         this.responseBody = new ScopedHttpUrlConnection.ChunkedBodyStream(this, socket, input, response.code >= 400);
       } else if (response.contentLength >= 0L) {
-         this.responseBody = new ScopedHttpUrlConnection.Inner_TaskQueue(this, socket, input, response.contentLength, response.code >= 400);
+         this.responseBody = new ScopedHttpUrlConnection.FixedLengthBodyStream(this, socket, input, response.contentLength, response.code >= 400);
       } else {
-         this.responseBody = new ScopedHttpUrlConnection.Inner_ConfigStore(this, socket, input, response.code >= 400);
+         this.responseBody = new ScopedHttpUrlConnection.UntilCloseBodyStream(this, socket, input, response.code >= 400);
       }
 
       return this.responseBody;
    }
 
-   private String redirectLocation(ScopedHttpUrlConnection.Inner_JsonUtil response) throws ProtocolException {
+   private String redirectLocation(ScopedHttpUrlConnection.ResponseHead response) throws ProtocolException {
       if (!isRedirectStatus(response.code)) {
          return null;
       }
@@ -920,7 +920,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static PackUrlValidator.Inner_ConfigStore resolveRedirectTarget(PackUrlValidator.Inner_ConfigStore current, String location) throws MalformedURLException {
+   private static PackUrlValidator.ParsedTarget resolveRedirectTarget(PackUrlValidator.ParsedTarget current, String location) throws MalformedURLException {
       try {
          URI resolved = current.uri().resolve(new URI(location));
          return PackUrlValidator.parseUri(resolved);
@@ -1114,18 +1114,18 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return result;
    }
 
-   private static final class Inner_BufferHelper extends ScopedHttpUrlConnection.Inner_DataUtil {
-      private Inner_BufferHelper(ScopedHttpUrlConnection owner, Socket socket, boolean closeOnEof) {
+   private static final class NoBodyStream extends ScopedHttpUrlConnection.BodyStream {
+      private NoBodyStream(ScopedHttpUrlConnection owner, Socket socket, boolean closeOnEof) {
          super(owner, socket, InputStream.nullInputStream(), true, closeOnEof);
       }
    }
 
-   private static final class Inner_CachePool extends ScopedHttpUrlConnection.Inner_DataUtil {
+   private static final class ChunkedBodyStream extends ScopedHttpUrlConnection.BodyStream {
       private long chunkRemaining;
       private boolean chunkEndPending;
       private boolean reachedEnd;
 
-      private Inner_CachePool(ScopedHttpUrlConnection owner, Socket socket, InputStream input, boolean closeOnEof) {
+      private ChunkedBodyStream(ScopedHttpUrlConnection owner, Socket socket, InputStream input, boolean closeOnEof) {
          super(owner, socket, input, false, closeOnEof);
       }
 
@@ -1206,20 +1206,20 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static final class Inner_ConfigStore extends ScopedHttpUrlConnection.Inner_DataUtil {
-      private Inner_ConfigStore(ScopedHttpUrlConnection owner, Socket socket, InputStream input, boolean closeOnEof) {
+   private static final class UntilCloseBodyStream extends ScopedHttpUrlConnection.BodyStream {
+      private UntilCloseBodyStream(ScopedHttpUrlConnection owner, Socket socket, InputStream input, boolean closeOnEof) {
          super(owner, socket, input, false, closeOnEof);
       }
    }
 
-   private static class Inner_DataUtil extends InputStream {
+   private static class BodyStream extends InputStream {
       private final ScopedHttpUrlConnection owner;
       private final Socket socket;
       protected final InputStream delegate;
       private final boolean closeOnEof;
       private boolean load;
 
-      private Inner_DataUtil(ScopedHttpUrlConnection owner, Socket socket, InputStream input, boolean done, boolean closeOnEof) {
+      private BodyStream(ScopedHttpUrlConnection owner, Socket socket, InputStream input, boolean done, boolean closeOnEof) {
          this.owner = owner;
          this.socket = socket;
          this.delegate = input;
@@ -1277,7 +1277,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static final class Inner_JsonUtil {
+   private static final class ResponseHead {
       private final String statusLine;
       private final int code;
       private final String message;
@@ -1286,7 +1286,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       private final boolean chunked;
       private final boolean noBody;
 
-      private Inner_JsonUtil(
+      private ResponseHead(
          String statusLine, int code, String message, LinkedHashMap<String, List<String>> headers, long contentLength, boolean chunked, boolean noBody
       ) {
          this.statusLine = statusLine;
@@ -1302,24 +1302,24 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          return ScopedHttpUrlConnection.headerValues(this.headers, name);
       }
 
-      private ScopedHttpUrlConnection.Inner_JsonUtil init(long length, boolean chunked, boolean noBody) {
-         return new ScopedHttpUrlConnection.Inner_JsonUtil(this.statusLine, this.code, this.message, this.headers, length, chunked, noBody);
+      private ScopedHttpUrlConnection.ResponseHead init(long length, boolean chunked, boolean noBody) {
+         return new ScopedHttpUrlConnection.ResponseHead(this.statusLine, this.code, this.message, this.headers, length, chunked, noBody);
       }
    }
 
    @FunctionalInterface
-   public interface Inner_NetHelper {
+   public interface PlainSocketFactory {
       Socket create();
    }
 
-   private record Inner_StateCache(int code, String reasonPhrase) {
+   private record StatusLine(int code, String reasonPhrase) {
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class ByteBuilder {
       private final byte[] bytes;
       private int length;
 
-      private Inner_StreamUtil(int capacity) {
+      private ByteBuilder(int capacity) {
          this.bytes = new byte[capacity];
       }
 
@@ -1342,14 +1342,14 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    @FunctionalInterface
-   public interface Inner_SyncManager {
+   public interface TlsSocketFactory {
       Socket create(Socket var1, String var2, int var3, boolean var4) throws IOException;
    }
 
-   private static final class Inner_TaskQueue extends ScopedHttpUrlConnection.Inner_DataUtil {
+   private static final class FixedLengthBodyStream extends ScopedHttpUrlConnection.BodyStream {
       private long remaining;
 
-      private Inner_TaskQueue(ScopedHttpUrlConnection owner, Socket socket, InputStream input, long length, boolean closeOnEof) {
+      private FixedLengthBodyStream(ScopedHttpUrlConnection owner, Socket socket, InputStream input, long length, boolean closeOnEof) {
          super(owner, socket, input, length == 0L, closeOnEof);
          this.remaining = length;
       }

@@ -70,7 +70,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    private boolean applyingHistoryEntry = false;
    private String cachedRichSource = "";
    private Function<String, Component> cachedRichProvider;
-   private TextInputWidget.Inner_StreamUtil cachedRichMetrics;
+   private TextInputWidget.RichMetrics cachedRichMetrics;
    private boolean richCacheValid;
    private long cachedRichRevision = -9223372036854775808L;
    private long textVersion = 1L;
@@ -81,7 +81,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    private Identifier prefixCacheFontId;
    private int prefixCacheGeneration = -2147483648;
    private int prefixCacheColor;
-   private TextInputWidget.Inner_StreamUtil prefixCacheRichMetrics;
+   private TextInputWidget.RichMetrics prefixCacheRichMetrics;
    private boolean prefixCacheUsesMsdf;
    private int[] prefixWidths = new int[]{0};
    private long wrapCacheTextVersion = -9223372036854775808L;
@@ -91,8 +91,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    private int wrapCacheGeneration = -2147483648;
    private int wrapCacheWidth = -2147483648;
    private boolean wrapCacheMultiline;
-   private TextInputWidget.Inner_StreamUtil wrapCacheRichMetrics;
-   private List<TextInputWidget.Inner_CachePool> cachedWrappedLines = List.of();
+   private TextInputWidget.RichMetrics wrapCacheRichMetrics;
+   private List<TextInputWidget.WrappedLine> cachedWrappedLines = List.of();
    private String placeholderWrapText = "";
    private Font placeholderWrapFont;
    private Identifier placeholderWrapFontId;
@@ -441,7 +441,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          int bg = this.backgroundColorOverride != 0 ? this.backgroundColorOverride : (this.focused && this.focusEffectsEnabled ? context.theme().start() : context.theme().reset());
          int border = this.editable && this.focused && this.focusEffectsEnabled ? context.theme().run() : context.theme().set();
          int innerW = this.computeInnerTextWidth(drawW, scaledHorizontalPadding, frameInset);
-         TextInputWidget.Inner_StreamUtil richMetrics = this.value.isEmpty() ? null : this.resolveRichMetrics(this.value);
+         TextInputWidget.RichMetrics richMetrics = this.value.isEmpty() ? null : this.resolveRichMetrics(this.value);
          if (!this.multiline) {
             this.ensureHorizontalScrollForCursor(context.font(), font, bodyColor, innerW, richMetrics);
          }
@@ -515,7 +515,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                }
             }
          } else if (this.multiline) {
-            List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
+            List<TextInputWidget.WrappedLine> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
             int lineHeight = fontHeight + lineSpacing;
             int visibleLineCount = Math.max(1, Math.max(1, drawH - context.theme().load(6)) / lineHeight);
             this.ensureVerticalScrollForCursor(visibleLineCount, wrappedLines);
@@ -529,7 +529,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
                int lineY = drawY + contentInset + textYOffsetPx;
 
                for (int lineIndex = startLine; lineIndex < endLine; lineIndex++) {
-                  TextInputWidget.Inner_CachePool line = wrappedLines.get(lineIndex);
+                  TextInputWidget.WrappedLine line = wrappedLines.get(lineIndex);
                   if (selectionStart != selectionEnd) {
                      int visibleSelectionStart = Math.max(selectionStart, line.start());
                      int visibleSelectionEnd = Math.min(selectionEnd, line.renderEnd());
@@ -575,7 +575,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
             if (this.focused && this.isCaretBlinkVisible()) {
                int cursorLine = this.findLineIndexForCursor(wrappedLines, this.cursorIndex);
                if (cursorLine >= startLine && cursorLine < endLine) {
-                  TextInputWidget.Inner_CachePool line = wrappedLines.get(cursorLine);
+                  TextInputWidget.WrappedLine line = wrappedLines.get(cursorLine);
                   int visibleCursor = Math.min(this.cursorIndex, this.lineContentEnd(line));
                   int caretX = textX + this.measureRangeWidth(context.font(), font, bodyColor, this.value, richMetrics, line.start(), visibleCursor);
                   int caretY = drawY + contentInset + textYOffsetPx + (cursorLine - startLine) * lineHeight;
@@ -676,10 +676,10 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
       Identifier font = this.resolveFontId(context);
       int bodyColor = context.theme().load(this.textTone);
-      TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
+      TextInputWidget.RichMetrics richMetrics = this.resolveRichMetrics(this.value);
       int clickCursor;
       if (this.multiline) {
-         List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
+         List<TextInputWidget.WrappedLine> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
          int lineHeight = context.theme().init_I_l(this.textTone) + context.theme().load(1);
          int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.nodeHeight) - context.theme().load(6)) / lineHeight);
          this.ensureVerticalScrollForCursor(visibleLineCount, wrappedLines);
@@ -744,9 +744,9 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          Identifier font = this.resolveFontId(context);
          int bodyColor = context.theme().load(this.textTone);
          int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
-         TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
+         TextInputWidget.RichMetrics richMetrics = this.resolveRichMetrics(this.value);
          if (this.multiline) {
-            List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
+            List<TextInputWidget.WrappedLine> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
             int lineHeight = context.theme().init_I_l(this.textTone) + context.theme().load(1);
             int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.nodeHeight) - context.theme().load(6)) / lineHeight);
             this.ensureVerticalScrollForCursor(visibleLineCount, wrappedLines);
@@ -794,7 +794,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private boolean tryStartScrollbarDrag(autismclient.gui.ui.layout.LayoutContext context, float mouseX, float mouseY) {
-      TextInputWidget.Inner_DataUtil info = this.computeScrollbarInfo(context);
+      TextInputWidget.ScrollbarInfo info = this.computeScrollbarInfo(context);
       if (info != null && info.metrics().isScrollable() && info.metrics().containsTrack(mouseX, mouseY)) {
          this.draggingScrollbar = true;
          this.scrollbarDragOffsetY = info.metrics().containsThumb(mouseX, mouseY)
@@ -808,7 +808,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
    }
 
    private void updateScrollbarDrag(autismclient.gui.ui.layout.LayoutContext context, float mouseY) {
-      TextInputWidget.Inner_DataUtil info = this.computeScrollbarInfo(context);
+      TextInputWidget.ScrollbarInfo info = this.computeScrollbarInfo(context);
       if (info != null && info.metrics().isScrollable()) {
          int pixels = ScrollbarMetricsHelper.scrollOffsetForMouseY(info.metrics(), mouseY, this.scrollbarDragOffsetY);
          this.verticalScrollLine = Math.max(0, Math.min(info.maxStartLine(), Math.round((float)pixels / Math.max(1, info.lineHeight()))));
@@ -816,7 +816,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private TextInputWidget.Inner_DataUtil computeScrollbarInfo(autismclient.gui.ui.layout.LayoutContext context) {
+   private TextInputWidget.ScrollbarInfo computeScrollbarInfo(autismclient.gui.ui.layout.LayoutContext context) {
       if (!this.multiline) {
          return null;
       }
@@ -824,8 +824,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       Identifier font = this.resolveFontId(context);
       int bodyColor = context.theme().load(this.textTone);
       int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
-      TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
-      List<TextInputWidget.Inner_CachePool> wrappedLines = this.value.isEmpty()
+      TextInputWidget.RichMetrics richMetrics = this.resolveRichMetrics(this.value);
+      List<TextInputWidget.WrappedLine> wrappedLines = this.value.isEmpty()
          ? this.wrapPlaceholderAsSpans(context.font(), font, bodyColor, this.placeholder, innerW)
          : this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
       int lineHeight = context.theme().init_I_l(this.textTone) + context.theme().load(1);
@@ -840,22 +840,22 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          Math.max(1, Math.round(this.nodeHeight) - 4),
          this.verticalScrollLine * lineHeight
       );
-      return new TextInputWidget.Inner_DataUtil(metrics, lineHeight, maxStart);
+      return new TextInputWidget.ScrollbarInfo(metrics, lineHeight, maxStart);
    }
 
-   private List<TextInputWidget.Inner_CachePool> wrapPlaceholderAsSpans(Font renderer, Identifier font, int color, String text, int maxWidth) {
+   private List<TextInputWidget.WrappedLine> wrapPlaceholderAsSpans(Font renderer, Identifier font, int color, String text, int maxWidth) {
       String source = text != null && !text.isEmpty() ? text : " ";
-      List<TextInputWidget.Inner_CachePool> lines = new ArrayList<>();
+      List<TextInputWidget.WrappedLine> lines = new ArrayList<>();
       int offset = 0;
 
       for (String line : this.wrapPlaceholderLines(renderer, font, color, source, maxWidth)) {
          int end = Math.min(source.length(), offset + line.length());
-         lines.add(new TextInputWidget.Inner_CachePool(offset, end, end));
+         lines.add(new TextInputWidget.WrappedLine(offset, end, end));
          offset = Math.min(source.length(), end + 1);
       }
 
       if (lines.isEmpty()) {
-         lines.add(new TextInputWidget.Inner_CachePool(0, 0, 0));
+         lines.add(new TextInputWidget.WrappedLine(0, 0, 0));
       }
 
       return lines;
@@ -867,8 +867,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          Identifier font = this.resolveFontId(context);
          int bodyColor = context.theme().load(this.textTone);
          int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
-         TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
-         List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
+         TextInputWidget.RichMetrics richMetrics = this.resolveRichMetrics(this.value);
+         List<TextInputWidget.WrappedLine> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
          int lineHeight = context.theme().init_I_l(this.textTone) + context.theme().load(1);
          int visibleLineCount = Math.max(1, Math.max(1, Math.round(this.nodeHeight) - context.theme().load(6)) / lineHeight);
          int maxStart = Math.max(0, wrappedLines.size() - visibleLineCount);
@@ -1121,14 +1121,14 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       this.selectionAnchor = Utf16TextCursor.clampIndex(this.value, this.selectionAnchor);
    }
 
-   private int findVisibleEndIndex(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics) {
+   private int findVisibleEndIndex(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.RichMetrics richMetrics) {
       this.ensurePrefixWidths(renderer, font, color, richMetrics);
       int start = Utf16TextCursor.clampIndex(this.value, this.horizontalScrollIndex);
       int target = this.prefixWidths[start] + Math.max(0, availableWidth);
       return Utf16TextCursor.clampIndex(this.value, upperBoundInclusive(this.prefixWidths, start, this.value.length(), target));
    }
 
-   private void ensureHorizontalScrollForCursor(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics) {
+   private void ensureHorizontalScrollForCursor(Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.RichMetrics richMetrics) {
       this.clampCursorAndSelection();
       this.ensurePrefixWidths(renderer, font, color, richMetrics);
       int safeCursor = Utf16TextCursor.clampIndex(this.value, this.cursorIndex);
@@ -1152,7 +1152,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private int indexForSingleLineX(Font renderer, Identifier font, int color, float mouseInnerX, TextInputWidget.Inner_StreamUtil richMetrics) {
+   private int indexForSingleLineX(Font renderer, Identifier font, int color, float mouseInnerX, TextInputWidget.RichMetrics richMetrics) {
       this.ensurePrefixWidths(renderer, font, color, richMetrics);
       int start = Utf16TextCursor.clampIndex(this.value, this.horizontalScrollIndex);
       int target = Math.max(0, this.prefixWidths[start] + Math.round(mouseInnerX));
@@ -1175,7 +1175,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
          List<String> wrapped = new ArrayList<>();
 
-         for (TextInputWidget.Inner_CachePool line : this.computeWrappedLines(renderer, font, color, text, safeWidth, null)) {
+         for (TextInputWidget.WrappedLine line : this.computeWrappedLines(renderer, font, color, text, safeWidth, null)) {
             wrapped.add(text.substring(line.start(), line.renderEnd()));
          }
 
@@ -1195,7 +1195,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private TextInputWidget.Inner_StreamUtil resolveRichMetrics(String sourceValue) {
+   private TextInputWidget.RichMetrics resolveRichMetrics(String sourceValue) {
       if (this.displayTextProvider != null && sourceValue != null && !sourceValue.isEmpty()) {
          long providerRevision = this.queryDisplayRevision();
          if (this.richCacheValid && this.cachedRichProvider == this.displayTextProvider && this.cachedRichRevision == providerRevision && Objects.equals(this.cachedRichSource, sourceValue)) {
@@ -1240,7 +1240,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
             charStyles = new ArrayList<>(charStyles.subList(0, richComponent.length()));
          }
 
-         TextInputWidget.Inner_StreamUtil metrics = new TextInputWidget.Inner_StreamUtil(richComponent, charStyles);
+         TextInputWidget.RichMetrics metrics = new TextInputWidget.RichMetrics(richComponent, charStyles);
          this.storeRichCache(sourceValue, providerRevision, metrics);
          return metrics;
       } else {
@@ -1260,7 +1260,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private void storeRichCache(String sourceValue, long providerRevision, TextInputWidget.Inner_StreamUtil metrics) {
+   private void storeRichCache(String sourceValue, long providerRevision, TextInputWidget.RichMetrics metrics) {
       this.cachedRichSource = sourceValue == null ? "" : sourceValue;
       this.cachedRichProvider = this.displayTextProvider;
       this.cachedRichRevision = providerRevision;
@@ -1289,7 +1289,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       this.cachedWrappedLines = List.of();
    }
 
-   private void ensurePrefixWidths(Font renderer, Identifier font, int color, TextInputWidget.Inner_StreamUtil richMetrics) {
+   private void ensurePrefixWidths(Font renderer, Identifier font, int color, TextInputWidget.RichMetrics richMetrics) {
       int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration();
       if (this.prefixCacheTextVersion != this.textVersion
          || this.prefixCacheStyleVersion != this.styleVersion
@@ -1341,7 +1341,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private Component buildStyledComponent(String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
+   private Component buildStyledComponent(String sourceText, TextInputWidget.RichMetrics richMetrics, int start, int end) {
       int safeStart = Utf16TextCursor.clampIndex(sourceText, start);
       int safeEnd = Math.max(safeStart, Utf16TextCursor.clampIndex(sourceText, end));
       if (richMetrics != null && safeStart < safeEnd) {
@@ -1372,7 +1372,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private int measureRangeWidth(Font renderer, Identifier font, int color, String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
+   private int measureRangeWidth(Font renderer, Identifier font, int color, String sourceText, TextInputWidget.RichMetrics richMetrics, int start, int end) {
       int safeStart = Utf16TextCursor.clampIndex(sourceText, start);
       int safeEnd = Math.max(safeStart, Utf16TextCursor.clampIndex(sourceText, end));
       if (safeStart >= safeEnd) {
@@ -1387,7 +1387,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private int measureStyledRangeWidth(Font renderer, Identifier font, int fallbackColor, String sourceText, TextInputWidget.Inner_StreamUtil richMetrics, int start, int end) {
+   private int measureStyledRangeWidth(Font renderer, Identifier font, int fallbackColor, String sourceText, TextInputWidget.RichMetrics richMetrics, int start, int end) {
       int safeStart = Utf16TextCursor.clampIndex(sourceText, start);
       int safeEnd = Math.max(safeStart, Utf16TextCursor.clampIndex(sourceText, end));
       return renderer.width(this.buildStyledComponent(sourceText, richMetrics, safeStart, safeEnd));
@@ -1399,7 +1399,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       Identifier font,
       int fallbackColor,
       String sourceText,
-      TextInputWidget.Inner_StreamUtil richMetrics,
+      TextInputWidget.RichMetrics richMetrics,
       int start,
       int end,
       int x,
@@ -1412,8 +1412,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private List<TextInputWidget.Inner_CachePool> getWrappedLines(
-      Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics
+   private List<TextInputWidget.WrappedLine> getWrappedLines(
+      Font renderer, Identifier font, int color, int availableWidth, TextInputWidget.RichMetrics richMetrics
    ) {
       int safeWidth = Math.max(1, availableWidth);
       int reloadGeneration = autismclient.gui.sdf.MsdfTextRenderer.cacheGeneration();
@@ -1429,7 +1429,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
 
       this.ensurePrefixWidths(renderer, font, color, richMetrics);
-      List<TextInputWidget.Inner_CachePool> lines = this.computeWrappedLines(renderer, font, color, this.value, safeWidth, richMetrics);
+      List<TextInputWidget.WrappedLine> lines = this.computeWrappedLines(renderer, font, color, this.value, safeWidth, richMetrics);
       this.cachedWrappedLines = List.copyOf(lines);
       this.wrapCacheTextVersion = this.textVersion;
       this.wrapCacheStyleVersion = this.styleVersion;
@@ -1442,22 +1442,22 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return this.cachedWrappedLines;
    }
 
-   private List<TextInputWidget.Inner_CachePool> computeWrappedLines(
-      Font renderer, Identifier font, int color, String text, int availableWidth, TextInputWidget.Inner_StreamUtil richMetrics
+   private List<TextInputWidget.WrappedLine> computeWrappedLines(
+      Font renderer, Identifier font, int color, String text, int availableWidth, TextInputWidget.RichMetrics richMetrics
    ) {
       String safeComponent = text == null ? "" : text;
-      List<TextInputWidget.Inner_CachePool> lines = new ArrayList<>();
+      List<TextInputWidget.WrappedLine> lines = new ArrayList<>();
 
       for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil line : autismclient.gui.ui.TextWrapLayout.init(
          safeComponent, availableWidth, (start, end) -> this.measureRangeWidth(renderer, font, color, safeComponent, richMetrics, start, end)
       )) {
-         lines.add(new TextInputWidget.Inner_CachePool(line.init(), line.load(), line.read()));
+         lines.add(new TextInputWidget.WrappedLine(line.init(), line.load(), line.read()));
       }
 
       return lines;
    }
 
-   private void ensureVerticalScrollForCursor(int visibleLineCount, List<TextInputWidget.Inner_CachePool> wrappedLines) {
+   private void ensureVerticalScrollForCursor(int visibleLineCount, List<TextInputWidget.WrappedLine> wrappedLines) {
       if (wrappedLines.isEmpty()) {
          this.verticalScrollLine = 0;
       } else {
@@ -1479,7 +1479,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       }
    }
 
-   private int findLineIndexForCursor(List<TextInputWidget.Inner_CachePool> wrappedLines, int index) {
+   private int findLineIndexForCursor(List<TextInputWidget.WrappedLine> wrappedLines, int index) {
       if (wrappedLines.isEmpty()) {
          return 0;
       }
@@ -1487,7 +1487,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       int clamped = Math.max(0, Math.min(index, this.value.length()));
 
       for (int i = 0; i < wrappedLines.size(); i++) {
-         TextInputWidget.Inner_CachePool line = wrappedLines.get(i);
+         TextInputWidget.WrappedLine line = wrappedLines.get(i);
          if (clamped < line.end()) {
             return i;
          }
@@ -1517,8 +1517,8 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       float mouseInnerX,
       float mouseInnerY,
       int lineHeight,
-      List<TextInputWidget.Inner_CachePool> wrappedLines,
-      TextInputWidget.Inner_StreamUtil richMetrics
+      List<TextInputWidget.WrappedLine> wrappedLines,
+      TextInputWidget.RichMetrics richMetrics
    ) {
       if (wrappedLines.isEmpty()) {
          return 0;
@@ -1526,12 +1526,12 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
 
       int lineIndex = this.verticalScrollLine + Math.max(0, (int)Math.floor((double)mouseInnerY / Math.max(1, lineHeight)));
       lineIndex = Math.max(0, Math.min(lineIndex, wrappedLines.size() - 1));
-      TextInputWidget.Inner_CachePool line = wrappedLines.get(lineIndex);
+      TextInputWidget.WrappedLine line = wrappedLines.get(lineIndex);
       return this.indexForLineX(renderer, font, color, mouseInnerX, line, richMetrics);
    }
 
    private int indexForLineX(
-      Font renderer, Identifier font, int color, float mouseInnerX, TextInputWidget.Inner_CachePool line, TextInputWidget.Inner_StreamUtil richMetrics
+      Font renderer, Identifier font, int color, float mouseInnerX, TextInputWidget.WrappedLine line, TextInputWidget.RichMetrics richMetrics
    ) {
       this.ensurePrefixWidths(renderer, font, color, richMetrics);
       int contentEnd = this.lineContentEnd(line);
@@ -1543,7 +1543,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return Math.max(line.start(), Math.min(best, contentEnd));
    }
 
-   private int lineContentEnd(TextInputWidget.Inner_CachePool line) {
+   private int lineContentEnd(TextInputWidget.WrappedLine line) {
       int end = line.end();
       if (end > line.start() && end <= this.value.length() && this.value.charAt(end - 1) == '\n') {
          end--;
@@ -1556,16 +1556,16 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       Identifier font = this.resolveFontId(context);
       int bodyColor = context.theme().load(this.textTone);
       int innerW = this.computeInnerTextWidth(Math.round(this.nodeWidth), context.theme().load(this.horizontalPadding), context.theme().load(2));
-      TextInputWidget.Inner_StreamUtil richMetrics = this.resolveRichMetrics(this.value);
-      List<TextInputWidget.Inner_CachePool> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
+      TextInputWidget.RichMetrics richMetrics = this.resolveRichMetrics(this.value);
+      List<TextInputWidget.WrappedLine> wrappedLines = this.getWrappedLines(context.font(), font, bodyColor, innerW, richMetrics);
       if (!wrappedLines.isEmpty()) {
          int currentLineIndex = this.findLineIndexForCursor(wrappedLines, this.cursorIndex);
          int targetLineIndex = Math.max(0, Math.min(wrappedLines.size() - 1, currentLineIndex + direction));
          if (targetLineIndex != currentLineIndex) {
-            TextInputWidget.Inner_CachePool currentLine = wrappedLines.get(currentLineIndex);
+            TextInputWidget.WrappedLine currentLine = wrappedLines.get(currentLineIndex);
             int visibleCursor = Math.min(this.cursorIndex, this.lineContentEnd(currentLine));
             int cursorX = this.measureRangeWidth(context.font(), font, bodyColor, this.value, richMetrics, currentLine.start(), visibleCursor);
-            TextInputWidget.Inner_CachePool targetLine = wrappedLines.get(targetLineIndex);
+            TextInputWidget.WrappedLine targetLine = wrappedLines.get(targetLineIndex);
             int targetCursor = this.indexForLineX(context.font(), font, bodyColor, cursorX, targetLine, richMetrics);
             this.moveCursorTo(targetCursor, keepSelection);
          }
@@ -1954,12 +1954,12 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       return target - widths[left] < widths[right] - target ? left : right;
    }
 
-   private record Inner_CachePool(int start, int end, int renderEnd) {
+   private record WrappedLine(int start, int end, int renderEnd) {
    }
 
-   private record Inner_DataUtil(ScrollbarMetricsHelper.Metrics metrics, int lineHeight, int maxStartLine) {
+   private record ScrollbarInfo(ScrollbarMetricsHelper.Metrics metrics, int lineHeight, int maxStartLine) {
    }
 
-   private record Inner_StreamUtil(String text, List<Style> charStyles) {
+   private record RichMetrics(String text, List<Style> charStyles) {
    }
 }

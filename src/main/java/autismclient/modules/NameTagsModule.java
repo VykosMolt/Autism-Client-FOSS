@@ -39,7 +39,7 @@ public final class NameTagsModule extends Module {
             .description("Background color and opacity for every nametag row")
       );
       this.add(
-         new EnumSetting<>("font", "Font", NameTagsModule.Inner_DataUtil.ONEST, NameTagsModule.Inner_DataUtil.values())
+         new EnumSetting<>("font", "Font", NameTagsModule.TagFont.ONEST, NameTagsModule.TagFont.values())
             .group("Display")
             .description("Onest or the vanilla Minecraft font")
       );
@@ -76,7 +76,7 @@ public final class NameTagsModule extends Module {
       NameTagsRenderer.reset();
    }
 
-   public enum Inner_DataUtil {
+   public enum TagFont {
       ONEST,
       VANILLA;
    }

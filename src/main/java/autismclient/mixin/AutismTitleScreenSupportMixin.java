@@ -30,7 +30,7 @@ public abstract class AutismTitleScreenSupportMixin extends Screen {
       if (!aD.init_Z()) {
          this.autism$rightButton(Component.literal("Modules & Macros"), 4, b -> {
             if (!aD.read_Z()) {
-               this.minecraft.gui.setScreen(new AutismModulesScreen(this, AutismModulesScreen.Inner_DataUtil.TITLE_SETUP));
+               this.minecraft.gui.setScreen(new AutismModulesScreen(this, AutismModulesScreen.ScreenMode.TITLE_SETUP));
             }
          });
          this.autism$rightButton(Component.literal("Profiles"), 28, b -> this.autism$openProfilesOverlay());
