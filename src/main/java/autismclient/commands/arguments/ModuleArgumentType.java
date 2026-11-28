@@ -21,7 +21,7 @@ public class ModuleArgumentType implements ArgumentType<String> {
       return new ModuleArgumentType();
    }
 
-   public static String init(CommandContext<AutismCommandSource> ctx, String name) {
+   public static String getValue(CommandContext<AutismCommandSource> ctx, String name) {
       return ctx.getArgument(name, String.class);
    }
 

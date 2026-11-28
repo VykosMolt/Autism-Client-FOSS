@@ -73,13 +73,13 @@ public final class ProfilesLibraryView {
       return Math.round(320.0F * Math.max(1.0F, MsdfTextRenderer.fontScale()));
    }
 
-   public int init(int width) {
+   public int contentHeight(int width) {
       AutismProfile profile = this.profileManager.byId(this.selectedProfileId);
       int innerW = Math.max(0, width - 8);
       int body = profile == null
          ? Math.min(4 * flush_I(), gridHeight(this.profileManager.count(), columnsFor(innerW)))
          : Math.min(cardHeight(profile, innerW), 10 * sync_I());
-      int modal = this.init_Z() ? (this.pendingSwitch != null ? read_I() : this.load_I()) : 0;
+      int modal = this.isEditing() ? (this.pendingSwitch != null ? read_I() : this.load_I()) : 0;
       return Math.max(modal + 8, 8 + inputHeight() + 4 + Math.max(2 * flush_I(), body));
    }
 
@@ -93,7 +93,7 @@ public final class ProfilesLibraryView {
       this.inputs.clear();
       this.scrollbarMetrics = null;
       this.clipArea = this.area;
-      boolean modal = this.init_Z();
+      boolean modal = this.isEditing();
       this.interactive = !modal;
       autismclient.gui.f.SyncManager page = modal ? ctx.load_SyncManager() : ctx;
       AutismProfile profile = this.profileManager.byId(this.selectedProfileId);
@@ -268,7 +268,7 @@ public final class ProfilesLibraryView {
 
                int iconSize = 18;
                this.serverIconCache
-                  .init(
+                  .draw(
                      ctx,
                      server,
                      pattern == null ? autismclient.gui.f.a.DataUtil.add : autismclient.gui.f.a.DataUtil.push,
@@ -345,7 +345,7 @@ public final class ProfilesLibraryView {
                PacketUtil.load(ctx.init_GuiGraphicsExtract(), rule, 3, this.colors.cardSurface);
                ServerData server = this.serverIconCache.serverFor(pattern);
                int iconSize = sync_I() - 4;
-               this.serverIconCache.init(ctx, server, autismclient.gui.f.a.DataUtil.push, rule.read() + 4, rule.write() + 2, iconSize);
+               this.serverIconCache.draw(ctx, server, autismclient.gui.f.a.DataUtil.push, rule.read() + 4, rule.write() + 2, iconSize);
                int tx = rule.read() + iconSize + 8;
                NetHelper remove = NetHelper.init(rule.init() - sync_I(), rule.write() + 1, sync_I() - 2, sync_I() - 2);
                String label = describeServerPattern(pattern, null);
@@ -354,7 +354,7 @@ public final class ProfilesLibraryView {
                }
 
                this.init(ctx, label, tx, rule.write(), remove.read() - tx - 4, this.colors.textPrimary);
-               IconButtonRenderer.init(
+               IconButtonRenderer.renderIcon(
                   ctx.init_GuiGraphicsExtract(), this.font, remove, GuiIconAtlas.CLOSE, this.isHovered(ctx, remove), true, true
                );
                this.addHitRegion(remove, () -> this.removeServerPattern(p, pattern));
@@ -525,7 +525,7 @@ public final class ProfilesLibraryView {
       this.blurInputs();
    }
 
-   public boolean init_Z() {
+   public boolean isEditing() {
       return this.mode != ProfilesLibraryView.Inner_StreamUtil.NONE || this.pendingSwitch != null;
    }
 
@@ -539,7 +539,7 @@ public final class ProfilesLibraryView {
       this.area = null;
       this.hitRegions.clear();
       this.inputs.clear();
-      this.serverIconCache.init();
+      this.serverIconCache.release();
    }
 
    private void switchToProfile(AutismProfile target) {
@@ -678,7 +678,7 @@ public final class ProfilesLibraryView {
             return true;
          }
 
-         if (this.scrollbarMetrics != null && !this.init_Z() && this.scrollbarMetrics.containsTrack(mx, my)) {
+         if (this.scrollbarMetrics != null && !this.isEditing() && this.scrollbarMetrics.containsTrack(mx, my)) {
             this.draggingScrollbar = true;
             this.dragGrabOffset = this.scrollbarMetrics.containsThumb(mx, my) ? my - this.scrollbarMetrics.thumbY() : this.scrollbarMetrics.thumbHeight() / 2;
             this.scroll = ScrollbarMetricsHelper.scrollOffsetForMouseY(this.scrollbarMetrics, my, this.dragGrabOffset);
@@ -712,11 +712,11 @@ public final class ProfilesLibraryView {
          return true;
       } else {
          this.blurInputs();
-         return this.init_Z();
+         return this.isEditing();
       }
    }
 
-   public boolean load(int mx, int my, int button) {
+   public boolean mouseReleased(int mx, int my, int button) {
       if (this.draggingScrollbar) {
          this.draggingScrollbar = false;
          return true;
@@ -751,7 +751,7 @@ public final class ProfilesLibraryView {
    }
 
    public boolean mouseScrolled(int mx, int my, double amount) {
-      if (this.init_Z()) {
+      if (this.isEditing()) {
          return true;
       } else if (this.scrollbarMetrics != null && this.listArea.init_Z(mx, my)) {
          int pitch = this.selectedProfileId == null ? flush_I() : sync_I() + 2;
@@ -762,9 +762,9 @@ public final class ProfilesLibraryView {
       }
    }
 
-   public boolean read(int key, int scanCode, int modifiers) {
+   public boolean keyPressed(int key, int scanCode, int modifiers) {
       if (key == 256) {
-         if (this.init_Z()) {
+         if (this.isEditing()) {
             this.cancelCreate();
             this.pendingSwitch = null;
             return true;
@@ -778,7 +778,7 @@ public final class ProfilesLibraryView {
             return false;
          }
       } else {
-         if (!this.init_Z() && this.selectedProfileId == null && key == 70 && (modifiers & 10) != 0) {
+         if (!this.isEditing() && this.selectedProfileId == null && key == 70 && (modifiers & 10) != 0) {
             this.searchInput.setFocused(true);
             return true;
          }
@@ -791,7 +791,7 @@ public final class ProfilesLibraryView {
             }
          }
 
-         return this.init_Z();
+         return this.isEditing();
       }
    }
 
@@ -804,7 +804,7 @@ public final class ProfilesLibraryView {
          }
       }
 
-      return this.init_Z();
+      return this.isEditing();
    }
 
    public boolean hasFocusedInput() {

@@ -38,16 +38,16 @@ final class AiSourceKnowledge {
       }
    }
 
-   static String init(Class<?> type) {
+   static String featureDocs(Class<?> type) {
       String text = init_Map.getOrDefault(type.getName(), "");
       return text.isBlank() ? "" : "\nFeature-owned documentation: " + text;
    }
 
-   static String load(Class<?> type) {
+   static String docsFor(Class<?> type) {
       return load.getOrDefault(type.getName(), "");
    }
 
-   static String init_Str() {
+   static String overview() {
       return init_Str;
    }
 }

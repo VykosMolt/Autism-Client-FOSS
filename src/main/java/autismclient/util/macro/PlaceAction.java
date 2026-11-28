@@ -44,14 +44,14 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
                selectTarget(mc, target);
                boolean sneaking = this.sneak;
                if (sneaking) {
-                  autismclient.util.SneakPacketController.init(mc, this.sneakMode);
+                  autismclient.util.SneakPacketController.press(mc, this.sneakMode);
                }
 
                try {
                   mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
                } finally {
                   if (sneaking) {
-                     autismclient.util.SneakPacketController.load(mc, this.sneakMode);
+                     autismclient.util.SneakPacketController.release(mc, this.sneakMode);
                   }
                }
 
@@ -132,7 +132,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    @Override
-   public void load(boolean v) {
+   public void setWaitForGuiBefore(boolean v) {
       this.waitForGuiBefore = v;
    }
 
@@ -142,7 +142,7 @@ public class PlaceAction implements PacketOrderAware, AimTargetAction, MacroActi
    }
 
    @Override
-   public void read(boolean v) {
+   public void setWaitForGuiAfter(boolean v) {
       this.waitForGuiAfter = v;
    }
 

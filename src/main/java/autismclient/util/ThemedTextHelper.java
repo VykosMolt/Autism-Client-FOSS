@@ -78,19 +78,19 @@ public final class ThemedTextHelper {
       return Style.EMPTY.withFont(init(init_Identifier(tone))).withColor(color);
    }
 
-   public static int init(Font renderer, String value, ThemedTextHelper.TextTone tone) {
+   public static int width(Font renderer, String value, ThemedTextHelper.TextTone tone) {
       return autismclient.gui.f.b.k.init(renderer, value, init_Identifier(tone), init_I(tone));
    }
 
-   public static String init(Font renderer, String value, int maxWidth, ThemedTextHelper.TextTone tone) {
+   public static String ellipsize(Font renderer, String value, int maxWidth, ThemedTextHelper.TextTone tone) {
       return autismclient.gui.f.b.k.init(renderer, value, maxWidth, init_Identifier(tone), init_I(tone));
    }
 
-   public static void init(GuiGraphicsExtractor context, Font renderer, String value, ThemedTextHelper.TextTone tone, int x, int y, boolean shadow) {
+   public static void drawTone(GuiGraphicsExtractor context, Font renderer, String value, ThemedTextHelper.TextTone tone, int x, int y, boolean shadow) {
       autismclient.gui.f.b.k.init(context, renderer, value, init_Identifier(tone), init_I(tone), x, y, shadow);
    }
 
-   public static void init(GuiGraphicsExtractor context, Font renderer, String value, int color, int x, int y, boolean shadow) {
+   public static void drawColor(GuiGraphicsExtractor context, Font renderer, String value, int color, int x, int y, boolean shadow) {
       autismclient.gui.f.b.k.init(context, renderer, value, autismclient.gui.f.a.DataUtil.init, color, x, y, shadow);
    }
 

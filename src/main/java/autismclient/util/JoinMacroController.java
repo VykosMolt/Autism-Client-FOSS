@@ -32,13 +32,13 @@ public final class JoinMacroController {
    }
 
    public static JoinMacroController.JoinTiming timing() {
-      return JoinMacroController.JoinTiming.init(AutismConfig.getGlobal().joinMacroTiming);
+      return JoinMacroController.JoinTiming.fromConfig(AutismConfig.getGlobal().joinMacroTiming);
    }
 
-   public static void init(JoinMacroController.JoinTiming timing) {
+   public static void setTiming(JoinMacroController.JoinTiming timing) {
       AutismConfig config = AutismConfig.getGlobal();
-      config.joinMacroTiming = (timing == null ? JoinMacroController.JoinTiming.flush : timing).id();
-      sync();
+      config.joinMacroTiming = (timing == null ? JoinMacroController.JoinTiming.DEFAULT : timing).id();
+      resetState();
       config.save();
    }
 
@@ -46,25 +46,25 @@ public final class JoinMacroController {
       AutismConfig config = AutismConfig.getGlobal();
       config.joinMacroName = macroName == null ? "" : macroName.trim();
       config.joinMacroEnabled = !config.joinMacroName.isBlank();
-      sync();
+      resetState();
       config.save();
    }
 
    public static void setEnabled(boolean enabled) {
       AutismConfig config = AutismConfig.getGlobal();
       config.joinMacroEnabled = enabled && config.joinMacroName != null && !config.joinMacroName.isBlank();
-      sync();
+      resetState();
       config.save();
    }
 
    public static JoinMacroController.JoinTrigger trigger() {
-      return init(JoinMacroController.JoinTrigger.init_aA_CachePool_Str(AutismConfig.getGlobal().joinMacroTriggerJoin), keepEnabled());
+      return init(JoinMacroController.JoinTrigger.parse(AutismConfig.getGlobal().joinMacroTriggerJoin), keepEnabled());
    }
 
-   public static void init(JoinMacroController.JoinTrigger triggerJoin) {
+   public static void setTrigger(JoinMacroController.JoinTrigger triggerJoin) {
       AutismConfig config = AutismConfig.getGlobal();
       config.joinMacroTriggerJoin = init(triggerJoin == null ? JoinMacroController.JoinTrigger.FIRST : triggerJoin, config.joinMacroKeepEnabled).init();
-      sync();
+      resetState();
       config.save();
    }
 
@@ -75,8 +75,8 @@ public final class JoinMacroController {
    public static void setKeepEnabled(boolean keepEnabled) {
       AutismConfig config = AutismConfig.getGlobal();
       config.joinMacroKeepEnabled = keepEnabled;
-      config.joinMacroTriggerJoin = init(JoinMacroController.JoinTrigger.init_aA_CachePool_Str(config.joinMacroTriggerJoin), keepEnabled).init();
-      sync();
+      config.joinMacroTriggerJoin = init(JoinMacroController.JoinTrigger.parse(config.joinMacroTriggerJoin), keepEnabled).init();
+      resetState();
       config.save();
    }
 
@@ -91,7 +91,7 @@ public final class JoinMacroController {
 
    public static void init_V() {
       load = false;
-      detector.init();
+      detector.reset();
    }
 
    public static void onJoin() {
@@ -99,21 +99,21 @@ public final class JoinMacroController {
       init_Z = false;
       load = true;
       if (timing() == JoinMacroController.JoinTiming.JOINING) {
-         load(JoinMacroController.JoinTiming.JOINING);
+         maybeRun(JoinMacroController.JoinTiming.JOINING);
       }
    }
 
    public static void onWorldLoaded() {
       if (timing() == JoinMacroController.JoinTiming.WORLD) {
-         load(JoinMacroController.JoinTiming.WORLD);
+         maybeRun(JoinMacroController.JoinTiming.WORLD);
       }
    }
 
    public static void tick(Minecraft mc) {
       if (hasMacro() && !init_Z && mc != null) {
          JoinMacroController.JoinTiming timing = timing();
-         if (detector.init(mc, timing, load)) {
-            load(timing);
+         if (detector.isReady(mc, timing, load)) {
+            maybeRun(timing);
          }
       }
    }
@@ -135,7 +135,7 @@ public final class JoinMacroController {
       reset();
       configListener = listener;
       init_I++;
-      if (hasMacro() && trigger().init_Z_I(init_I)) {
+      if (hasMacro() && trigger().matches(init_I)) {
          AutismMacro selected = MacroLibraryManager.getInstance().findByName(macroName());
          if (selected != null) {
             AutismMacro copy = selected.copy();
@@ -161,7 +161,7 @@ public final class JoinMacroController {
             if (prefix != 0 && sawCustomMenu) {
                List<MacroAction> leading = List.copyOf(copy.actions.subList(0, prefix));
                Connection connection = ((ClientCommonNetworkHandlerAccessor) listener).getConnection();
-               Thread worker = new Thread(() -> init(leading, connection), "AUTISM-Join-CustomMenu");
+               Thread worker = new Thread(() -> runActions(leading, connection), "AUTISM-Join-CustomMenu");
                worker.setDaemon(true);
                workerThread = worker;
                worker.start();
@@ -211,7 +211,7 @@ public final class JoinMacroController {
       return !Thread.currentThread().isInterrupted() && live == bound && bound.isConnected();
    }
 
-   private static void init(List<MacroAction> actions, Connection connection) {
+   private static void runActions(List<MacroAction> actions, Connection connection) {
       for (MacroAction macroAction : actions) {
          if (macroAction != null && macroAction.isEnabled()) {
             if (init_Z(macroAction)) {
@@ -220,7 +220,7 @@ public final class JoinMacroController {
                   return;
                }
             } else if (macroAction instanceof autismclient.util.macro.CustomMenuAction action) {
-               long deadline = System.currentTimeMillis() + action.init();
+               long deadline = System.currentTimeMillis() + action.timeout();
                Minecraft mc = Minecraft.getInstance();
                CustomMenuSnapshot snapshot = null;
                long seenGeneration = 0L;
@@ -239,7 +239,7 @@ public final class JoinMacroController {
                   if (snapshot == null) {
                      LockSupport.parkNanos(20000000L);
                   } else {
-                     prepared = autismclient.util.macro.CustomMenuActionPlanner.init(action, snapshot, JoinMacroController::load_Str);
+                     prepared = autismclient.util.macro.CustomMenuActionPlanner.prepare(action, snapshot, JoinMacroController::load_Str);
                      if (prepared.isReady() || prepared.error() == null || !prepared.error().contains("unavailable")) {
                         break;
                      }
@@ -275,7 +275,7 @@ public final class JoinMacroController {
                         }
 
                         autismclient.util.custommenu.CustomMenuTracker.replace(seenGeneration, result.replacement(), snapshot.phase());
-                        autismclient.util.custommenu.DialogScreenBridge.init(mc, result.clientAction(), answered);
+                        autismclient.util.custommenu.DialogScreenBridge.answer(mc, result.clientAction(), answered);
                      }
                   }
                } else {
@@ -294,7 +294,7 @@ public final class JoinMacroController {
          if (!(action instanceof autismclient.util.macro.WaitGuiTypeAction w)) {
             if (action instanceof autismclient.util.macro.DelayAction d) {
                long ms = d.useTicks ? d.delayTicks * 50L : d.delayMs;
-               init(Math.max(0L, Math.min(120000L, ms)));
+               sleep(Math.max(0L, Math.min(120000L, ms)));
                return;
             }
 
@@ -315,7 +315,7 @@ public final class JoinMacroController {
       }
    }
 
-   private static void init(long ms) {
+   private static void sleep(long ms) {
       long deadline = System.currentTimeMillis() + ms;
 
       while (System.currentTimeMillis() < deadline && !Thread.currentThread().isInterrupted()) {
@@ -385,8 +385,8 @@ public final class JoinMacroController {
       return true;
    }
 
-   private static void load(JoinMacroController.JoinTiming timing) {
-      if (hasMacro() && !init_Z && trigger().init_Z_I(init_I)) {
+   private static void maybeRun(JoinMacroController.JoinTiming timing) {
+      if (hasMacro() && !init_Z && trigger().matches(init_I)) {
          init_Z = true;
          String macroName = macroName();
          AutismMacro macro = pendingMacro != null ? pendingMacro : MacroLibraryManager.getInstance().findByName(macroName);
@@ -429,16 +429,16 @@ public final class JoinMacroController {
       return mc.getConnection() != null && mc.player != null && mc.level != null;
    }
 
-   private static boolean load(Minecraft mc) {
+   private static boolean isPlayable(Minecraft mc) {
       return isInWorld(mc) && mc.gui.screen() == null;
    }
 
    public static String summary() {
       boolean keepEnabled = keepEnabled();
-      return timing().load() + " / " + trigger().label(keepEnabled) + " / " + (keepEnabled ? "Stays Enabled" : "Clears After Run");
+      return timing().label() + " / " + trigger().label(keepEnabled) + " / " + (keepEnabled ? "Stays Enabled" : "Clears After Run");
    }
 
-   private static void sync() {
+   private static void resetState() {
       init_I = 0;
       init_Z = false;
       init_V();
@@ -538,7 +538,7 @@ public final class JoinMacroController {
          }
       }
 
-      public boolean init_Z_I(int joinOrdinal) {
+      public boolean matches(int joinOrdinal) {
          if (this == ANY) {
             return true;
          } else {
@@ -546,7 +546,7 @@ public final class JoinMacroController {
          }
       }
 
-      public static JoinMacroController.JoinTrigger init_aA_CachePool_Str(String value) {
+      public static JoinMacroController.JoinTrigger parse(String value) {
          if (value != null) {
             for (JoinMacroController.JoinTrigger target : values()) {
                if (target.init_Str.equalsIgnoreCase(value)) {
@@ -591,14 +591,14 @@ public final class JoinMacroController {
       private int init;
       private int load;
 
-      public void init() {
+      public void reset() {
          this.init = 0;
          this.load = 0;
       }
 
-      public boolean init(Minecraft mc, JoinMacroController.JoinTiming timing, boolean joined) {
+      public boolean isReady(Minecraft mc, JoinMacroController.JoinTiming timing, boolean joined) {
          if (!JoinMacroController.isInWorld(mc)) {
-            this.init();
+            this.reset();
             return false;
          }
 
@@ -618,10 +618,10 @@ public final class JoinMacroController {
                var10000 = mc.player != null && mc.player.inventoryMenu != null && mc.player.getInventory() != null;
                break;
             case PLAYABLE:
-               var10000 = JoinMacroController.load(mc);
+               var10000 = JoinMacroController.isPlayable(mc);
                break;
             case FULLY_READY:
-               if (JoinMacroController.load(mc)) {
+               if (JoinMacroController.isPlayable(mc)) {
                   this.load++;
                   var10000 = this.load >= 2;
                } else {
@@ -647,7 +647,7 @@ public final class JoinMacroController {
 
       private final String init_Str;
       private final String load_Str;
-      public static final JoinMacroController.JoinTiming flush = PLAYABLE;
+      public static final JoinMacroController.JoinTiming DEFAULT = PLAYABLE;
 
       JoinTiming(String id, String label) {
          this.init_Str = id;
@@ -658,7 +658,7 @@ public final class JoinMacroController {
          return this.init_Str;
       }
 
-      public String load() {
+      public String label() {
          return this.load_Str;
       }
 
@@ -667,7 +667,7 @@ public final class JoinMacroController {
          return values[(this.ordinal() + 1) % values.length];
       }
 
-      public static JoinMacroController.JoinTiming init(String value) {
+      public static JoinMacroController.JoinTiming fromConfig(String value) {
          if ("JOINING".equalsIgnoreCase(value)) {
             return JOINING;
          } else if ("WORLD".equalsIgnoreCase(value)) {
@@ -679,7 +679,7 @@ public final class JoinMacroController {
          } else if ("PLAYABLE".equalsIgnoreCase(value)) {
             return PLAYABLE;
          } else {
-            return !"FULLY_READY".equalsIgnoreCase(value) && !"FULLYREADY".equalsIgnoreCase(value) ? flush : FULLY_READY;
+            return !"FULLY_READY".equalsIgnoreCase(value) && !"FULLYREADY".equalsIgnoreCase(value) ? DEFAULT : FULLY_READY;
          }
       }
    }

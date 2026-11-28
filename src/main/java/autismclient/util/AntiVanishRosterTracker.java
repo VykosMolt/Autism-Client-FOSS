@@ -89,7 +89,7 @@ public final class AntiVanishRosterTracker {
                if (p.listed) {
                   m.markPresent(now);
                } else {
-                  m.init(now, departures >= 4);
+                  m.markAbsent(now, departures >= 4);
                }
             } else {
                this.members.remove(p.uuid);
@@ -99,7 +99,7 @@ public final class AntiVanishRosterTracker {
          for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
             if (!live.containsKey(m.id)) {
                m.write_Z = false;
-               m.init(now, departures >= 4);
+               m.markAbsent(now, departures >= 4);
             }
          }
 
@@ -171,7 +171,7 @@ public final class AntiVanishRosterTracker {
    public void init(AntiVanishRosterTracker.ActorInfo actor, String action, long now) {
       if (actor != null && actor.init_Z && !actor.load && action != null && !action.isBlank()) {
          AntiVanishRosterTracker.RosterMember m = this.members.get(actor.id);
-         if (m != null && m.name.equals(actor.name) && m.init_Z(now)) {
+         if (m != null && m.name.equals(actor.name) && m.isRecentlyGone(now)) {
             m.expireStale(now);
             if (m.update < 0L || now - m.update >= 250L) {
                m.update = now;
@@ -196,7 +196,7 @@ public final class AntiVanishRosterTracker {
          }
 
          for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
-            if (m.init_Z(now) && requestedAt >= m.load_J + 2000L) {
+            if (m.isRecentlyGone(now) && requestedAt >= m.leftAt + 2000L) {
                if (!offered.contains(normalizeName(m.name))) {
                   m.load_I = 0;
                   m.sync = -1L;
@@ -218,7 +218,7 @@ public final class AntiVanishRosterTracker {
 
       for (Entry<UUID, AntiVanishRosterTracker.PendingRequest> entry : this.pendingRequests.entrySet()) {
          AntiVanishRosterTracker.PendingRequest fact = entry.getValue();
-         if (fact.init_I >= 2 && this.load(entry.getKey(), now)) {
+         if (fact.init_I >= 2 && this.tryRequest(entry.getKey(), now)) {
             out.add(new AntiVanishRosterTracker.VanishAlert(entry.getKey(), fact.name, "online outside TAB in two server roster checks"));
          }
       }
@@ -226,7 +226,7 @@ public final class AntiVanishRosterTracker {
       this.lastSeen.entrySet().removeIf(entry -> now - entry.getValue().seenAt > 75000L);
 
       for (Entry<UUID, AntiVanishRosterTracker.LastSeen> entry : this.lastSeen.entrySet()) {
-         if (entry.getValue().init_I >= 2 && this.load(entry.getKey(), now)) {
+         if (entry.getValue().init_I >= 2 && this.tryRequest(entry.getKey(), now)) {
             UUID id = entry.getKey();
             out.add(
                new AntiVanishRosterTracker.VanishAlert(id, "UUID:" + id.toString().substring(0, 8), "unlisted UUID in two complete player-roster updates: " + id, true)
@@ -236,7 +236,7 @@ public final class AntiVanishRosterTracker {
 
       for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
          m.expireStale(now);
-         if (m.load_Z(now) && this.load(m.id, now)) {
+         if (m.isLikelyVanished(now) && this.tryRequest(m.id, now)) {
             out.add(
                new AntiVanishRosterTracker.VanishAlert(
                   m.id, m.name, m.init_I >= 2 ? "repeated player actions outside TAB" : "player action + repeated online completion"
@@ -264,11 +264,11 @@ public final class AntiVanishRosterTracker {
          m.expireStale(now);
       }
 
-      return m != null && m.load_Z(now);
+      return m != null && m.isLikelyVanished(now);
    }
 
    public boolean hasRecentHiddenAction(long now) {
-      return this.members.values().stream().anyMatch(m -> m.init_Z(now) && m.update >= 0L && now - m.update <= 4000L);
+      return this.members.values().stream().anyMatch(m -> m.isRecentlyGone(now) && m.update >= 0L && now - m.update <= 4000L);
    }
 
    public boolean needsRecheck() {
@@ -277,17 +277,17 @@ public final class AntiVanishRosterTracker {
 
    public void init(String systemMessage, long now) {
       for (AntiVanishRosterTracker.RosterMember m : this.members.values()) {
-         if (NormalizedTextMatcher.load(systemMessage, m.name)) {
-            m.init();
+         if (NormalizedTextMatcher.matchesLeave(systemMessage, m.name)) {
+            m.resetEvidence();
             if (!m.present) {
-               m.load_J = now;
+               m.leftAt = now;
             }
 
             this.write_Map.remove(m.id);
          }
       }
 
-      this.pendingRequests.values().removeIf(p -> NormalizedTextMatcher.load(systemMessage, p.name));
+      this.pendingRequests.values().removeIf(p -> NormalizedTextMatcher.matchesLeave(systemMessage, p.name));
    }
 
    public int trackedCount() {
@@ -295,7 +295,7 @@ public final class AntiVanishRosterTracker {
    }
 
    public void resetProbes() {
-      this.members.values().forEach(AntiVanishRosterTracker.RosterMember::init);
+      this.members.values().forEach(AntiVanishRosterTracker.RosterMember::resetEvidence);
    }
 
    public void clearPending() {
@@ -319,7 +319,7 @@ public final class AntiVanishRosterTracker {
       return name.toLowerCase(Locale.ROOT);
    }
 
-   private boolean load(UUID id, long now) {
+   private boolean tryRequest(UUID id, long now) {
       Long last = this.write_Map.get(id);
       if (last != null && now - last < 12000L) {
          return false;
@@ -337,7 +337,7 @@ public final class AntiVanishRosterTracker {
       final UUID id;
       final String name;
       long presentSince = -1L;
-      long load_J = -1L;
+      long leftAt = -1L;
       long read_J;
       long write_J = -1L;
       long update = -1L;
@@ -357,34 +357,34 @@ public final class AntiVanishRosterTracker {
       void markPresent(long now) {
          if (!this.present) {
             this.presentSince = now;
-            this.init();
+            this.resetEvidence();
          }
 
          this.present = true;
          this.settled = now - this.presentSince >= 3000L;
-         this.load_J = -1L;
+         this.leftAt = -1L;
          this.bulk = false;
       }
 
-      void init(long now, boolean bulk) {
+      void markAbsent(long now, boolean bulk) {
          if (this.present) {
             this.settled = this.settled | now - this.presentSince >= 3000L;
             this.present = false;
-            this.load_J = now;
+            this.leftAt = now;
             this.bulk = bulk;
-            this.init();
+            this.resetEvidence();
          }
       }
 
-      boolean init_Z(long now) {
-         return this.settled && !this.present && !this.bulk && this.load_J >= 0L && now - this.load_J >= 2000L && now - this.read_J <= 30000L;
+      boolean isRecentlyGone(long now) {
+         return this.settled && !this.present && !this.bulk && this.leftAt >= 0L && now - this.leftAt >= 2000L && now - this.read_J <= 30000L;
       }
 
-      boolean load_Z(long now) {
-         return this.init_Z(now) && this.init_I > 0 && (this.init_I >= 2 || this.load_I >= 2) && (this.write_Z || this.load_I >= 2);
+      boolean isLikelyVanished(long now) {
+         return this.isRecentlyGone(now) && this.init_I > 0 && (this.init_I >= 2 || this.load_I >= 2) && (this.write_Z || this.load_I >= 2);
       }
 
-      void init() {
+      void resetEvidence() {
          this.init_I = this.load_I = 0;
          this.write_J = this.update = this.sync = -1L;
       }

@@ -33,7 +33,7 @@ public abstract class AutismGifEntityRenderMixin {
          if (level != null && level.getEntity(avatar.id) instanceof Player player && player.getGameProfile() != null) {
             String name = player.getGameProfile().name();
             if (name != null && !name.isEmpty()) {
-               GifRenderContext.init(name);
+               GifRenderContext.enter(name);
             }
          }
       }

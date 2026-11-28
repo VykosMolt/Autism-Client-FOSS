@@ -130,7 +130,7 @@ public final class NormalizedTextMatcher {
       }
    }
 
-   public static boolean load(String message, String playerName) {
+   public static boolean matchesLeave(String message, String playerName) {
       if (!matchesName(message, playerName)) {
          return false;
       }

@@ -329,7 +329,7 @@ final class AiPortalLinks {
       } else if (mc.player.getY() < mc.level.getMinY()) {
          return "the arrival is below the world's build height";
       } else {
-         return autismclient.ai.engine.AiEnvironmentHazards.init(mc.level, mc.player.blockPosition()) ? "arrival intersects an unmodelled sulfur launch column" : null;
+         return autismclient.ai.engine.AiEnvironmentHazards.isHazardous(mc.level, mc.player.blockPosition()) ? "arrival intersects an unmodelled sulfur launch column" : null;
       }
    }
 

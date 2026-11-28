@@ -193,7 +193,7 @@ final class AiScreens {
       return out;
    }
 
-   static JsonObject read(JsonObject args) {
+   static JsonObject storeGui(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       String action = AiJson.getString(args, "action", "save").trim().toLowerCase(Locale.ROOT);
       switch (action) {
@@ -201,7 +201,7 @@ final class AiScreens {
             if (mc.gui.screen() == null) {
                throw new IllegalArgumentException("No screen is open to store");
             } else {
-               if (!autismclient.util.GuiDesyncHelper.init(mc, false)) {
+               if (!autismclient.util.GuiDesyncHelper.saveGui(mc, false)) {
                   throw new IllegalStateException("The screen could not be stored (no container or no player)");
                }
 
@@ -223,7 +223,7 @@ final class AiScreens {
       }
    }
 
-   static JsonObject write(JsonObject args) {
+   static JsonObject typeText(JsonObject args) {
       String text = textArg(args);
       boolean append = AiJson.getBoolean(args, "append", false);
       Minecraft mc = Minecraft.getInstance();
@@ -391,7 +391,7 @@ final class AiScreens {
       };
    }
 
-   static JsonObject sync(JsonObject args) {
+   static JsonObject disconnect(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.getConnection() == null) {
          throw new IllegalArgumentException("Not connected to a server or world");

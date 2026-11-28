@@ -30,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class IncomingProjectileScanner {
-   static IncomingProjectileScanner.ProjectileKind init(Entity entity) {
+   static IncomingProjectileScanner.ProjectileKind kindOf(Entity entity) {
       if (entity instanceof Fireball) {
          return IncomingProjectileScanner.ProjectileKind.FIREBALL;
       } else if (entity instanceof AbstractArrow) {
@@ -42,7 +42,7 @@ public final class IncomingProjectileScanner {
       }
    }
 
-   static IncomingProjectileScanner.ProjectileKind init(ItemStack stack) {
+   static IncomingProjectileScanner.ProjectileKind kindForItem(ItemStack stack) {
       if (stack.is(Items.BOW) || stack.is(Items.CROSSBOW)) {
          return IncomingProjectileScanner.ProjectileKind.ARROW;
       } else if (stack.is(Items.SNOWBALL)) {
@@ -71,7 +71,7 @@ public final class IncomingProjectileScanner {
       return var10000;
    }
 
-   static IncomingProjectileScanner.ProjectilePath init(Level level, Projectile projectile, IncomingProjectileScanner.ProjectileKind kind) {
+   static IncomingProjectileScanner.ProjectilePath traceProjectile(Level level, Projectile projectile, IncomingProjectileScanner.ProjectileKind kind) {
       return init_A_DataUtil_A_ConfigStore(
          init_A_ConfigStore_Level(level, projectile, projectile.getOwner(), projectile.tickCount, projectile.getBbWidth()),
          projectile.position(),
@@ -81,14 +81,14 @@ public final class IncomingProjectileScanner {
       );
    }
 
-   static IncomingProjectileScanner.ProjectilePath init(Level level, Player owner, IncomingProjectileScanner.ProjectileKind kind, ProjectileBallistics.ProjectileShot shot) {
+   static IncomingProjectileScanner.ProjectilePath predict(Level level, Player owner, IncomingProjectileScanner.ProjectileKind kind, ProjectileBallistics.ProjectileShot shot) {
       ProjectileBallistics.ProjectileInfo info = shot.info();
-      Vec3 velocity = ProjectileBallistics.init(owner.getYRot(), owner.getXRot(), shot);
+      Vec3 velocity = ProjectileBallistics.shotVelocity(owner.getYRot(), owner.getXRot(), shot);
       if (info.init_Z()) {
          Vec3 inherited = ProjectileBallistics.inheritedVelocity(owner);
          if (owner instanceof RemotePlayer && owner.tickCount > 1) {
             Vec3 observed = owner.position().subtract(new Vec3(owner.xOld, owner.yOld, owner.zOld));
-            if (init(observed) && observed.lengthSqr() < 9.0) {
+            if (isFinite(observed) && observed.lengthSqr() < 9.0) {
                inherited = new Vec3(observed.x, owner.onGround() ? 0.0 : observed.y, observed.z);
             }
          }
@@ -114,19 +114,19 @@ public final class IncomingProjectileScanner {
       final int pierce = source instanceof AbstractArrow arrow ? arrow.getPierceLevel() : 0;
       return new IncomingProjectileScanner.TraceWorld() {
          @Override
-         public boolean init(Vec3 at) {
+         public boolean inBounds(Vec3 at) {
             cursor.set(at.x, at.y, at.z);
             return at.y >= level.getMinY() && at.y <= level.getMaxY() && level.getChunkSource().hasChunk(cursor.getX() >> 4, cursor.getZ() >> 4);
          }
 
          @Override
-         public boolean load(Vec3 at) {
+         public boolean isFluid(Vec3 at) {
             cursor.set(at.x, at.y, at.z);
             return level.getFluidState(cursor).is(FluidTags.WATER);
          }
 
          @Override
-         public HitResult init(Vec3 from, Vec3 to, int tick) {
+         public HitResult trace(Vec3 from, Vec3 to, int tick) {
             HitResult block = level.clipIncludingBorder(new ClipContext(from, to, Block.COLLIDER, Fluid.NONE, source));
             Vec3 end = block.getType() == Type.MISS ? to : block.getLocation();
             AABB sweep = new AABB(from, end).inflate(width * 0.5 + 1.0);
@@ -167,12 +167,12 @@ public final class IncomingProjectileScanner {
    }
 
    static IncomingProjectileScanner.ProjectilePath init_A_DataUtil_A_ConfigStore(IncomingProjectileScanner.TraceWorld world, Vec3 position, Vec3 velocity, IncomingProjectileScanner.BallisticParams physics, int maxTicks) {
-      if (init(position) && init(velocity)) {
+      if (isFinite(position) && isFinite(velocity)) {
          List<Vec3> points = new ArrayList<>(Math.min(maxTicks + 1, 121));
          points.add(position);
 
-         for (int tick = 0; tick < Math.min(120, maxTicks) && world.init(position); tick++) {
-            boolean water = world.load(position);
+         for (int tick = 0; tick < Math.min(120, maxTicks) && world.inBounds(position); tick++) {
+            boolean water = world.isFluid(position);
             if (physics.init_Z()) {
                velocity = init(velocity, physics, water);
             } else if (water) {
@@ -180,11 +180,11 @@ public final class IncomingProjectileScanner {
             }
 
             Vec3 next = position.add(velocity);
-            if (!init(next) || !world.init(next)) {
+            if (!isFinite(next) || !world.inBounds(next)) {
                break;
             }
 
-            HitResult hit = world.init(position, next, tick);
+            HitResult hit = world.trace(position, next, tick);
             if (hit != null) {
                points.add(hit.getLocation());
                double fraction = velocity.lengthSqr() < 1.0E-10 ? 0.0 : Math.min(1.0, position.distanceTo(hit.getLocation()) / velocity.length());
@@ -216,7 +216,7 @@ public final class IncomingProjectileScanner {
       return velocity.add(0.0, -physics.init_D(), 0.0).scale(water ? physics.read() : physics.load());
    }
 
-   static boolean init(IncomingProjectileScanner.ProjectilePath flight, IncomingProjectileScanner.ProjectileKind kind, Vec3 player, double radius) {
+   static boolean threatens(IncomingProjectileScanner.ProjectilePath flight, IncomingProjectileScanner.ProjectileKind kind, Vec3 player, double radius) {
       double range = radius;
       Vec3 landing = kind == IncomingProjectileScanner.ProjectileKind.PEARL ? flight.load() : flight.init_Vec3();
       if (landing != null && landing.distanceToSqr(player) <= range * range) {
@@ -243,7 +243,7 @@ public final class IncomingProjectileScanner {
       }
    }
 
-   static boolean init(IncomingProjectileScanner.ProjectileWarning warning) {
+   static boolean isPearlThreat(IncomingProjectileScanner.ProjectileWarning warning) {
       return warning != null
          && warning.kind() == IncomingProjectileScanner.ProjectileKind.PEARL
          && init(warning.init_A_DataUtil())
@@ -253,17 +253,17 @@ public final class IncomingProjectileScanner {
    }
 
    static boolean init(IncomingProjectileScanner.ProjectilePath flight) {
-      return flight != null && flight.init_Vec3() != null && flight.load() != null && init(flight.load());
+      return flight != null && flight.init_Vec3() != null && flight.load() != null && isFinite(flight.load());
    }
 
-   private static boolean init(Vec3 v) {
+   private static boolean isFinite(Vec3 v) {
       return Double.isFinite(v.x) && Double.isFinite(v.y) && Double.isFinite(v.z);
    }
 
    public record ProjectileWarning(
       Entity entity, Player shooter, IncomingProjectileScanner.ProjectileKind kind, boolean init_Z, IncomingProjectileScanner.ProjectilePath init_A_DataUtil, int init_I
    ) {
-      Vec3 init_Vec3() {
+      Vec3 aimPoint() {
          return this.entity.position().add(0.0, this.init_Z ? this.entity.getEyeHeight() : this.entity.getBbHeight() * 0.5, 0.0);
       }
    }
@@ -272,11 +272,11 @@ public final class IncomingProjectileScanner {
    }
 
    interface TraceWorld {
-      boolean init(Vec3 var1);
+      boolean inBounds(Vec3 var1);
 
-      boolean load(Vec3 var1);
+      boolean isFluid(Vec3 var1);
 
-      HitResult init(Vec3 var1, Vec3 var2, int var3);
+      HitResult trace(Vec3 var1, Vec3 var2, int var3);
    }
 
    public record ProjectilePath(List<Vec3> points, HitResult hit, Vec3 init_Vec3, double init_D) {
@@ -308,7 +308,7 @@ public final class IncomingProjectileScanner {
          return this.init_Str;
       }
 
-      public String load() {
+      public String groupName() {
          return this.load_Str;
       }
 

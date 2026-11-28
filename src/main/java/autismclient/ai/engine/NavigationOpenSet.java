@@ -8,7 +8,7 @@ final class NavigationOpenSet {
    private int init_I;
    private double init_D = 1.0;
 
-   void init(double weight) {
+   void setWeight(double weight) {
       this.init_D = weight;
    }
 
@@ -20,16 +20,16 @@ final class NavigationOpenSet {
       return this.init_I == 0;
    }
 
-   double init(double cost, double heuristic) {
+   double priority(double cost, double heuristic) {
       return cost + this.init_D * heuristic;
    }
 
    double peekPriority() {
-      return this.isEmpty() ? 1.0 / 0.0 : this.init(this.init_t_DataUtilArr[0].cost, this.init_t_DataUtilArr[0].heuristic);
+      return this.isEmpty() ? 1.0 / 0.0 : this.priority(this.init_t_DataUtilArr[0].cost, this.init_t_DataUtilArr[0].heuristic);
    }
 
    private boolean init(NavigationOpenSet.Inner_DataUtil a, NavigationOpenSet.Inner_DataUtil b) {
-      int order = Double.compare(this.init(a.cost, a.heuristic), this.init(b.cost, b.heuristic));
+      int order = Double.compare(this.priority(a.cost, a.heuristic), this.priority(b.cost, b.heuristic));
       if (order == 0) {
          order = Double.compare(a.heuristic, b.heuristic);
       }
@@ -45,7 +45,7 @@ final class NavigationOpenSet {
       return order < 0;
    }
 
-   void init(NavigationOpenSet.Inner_DataUtil node) {
+   void insertOrUpdate(NavigationOpenSet.Inner_DataUtil node) {
       int i = node.init_I;
       if (i < 0) {
          if (this.init_I == this.init_t_DataUtilArr.length) {

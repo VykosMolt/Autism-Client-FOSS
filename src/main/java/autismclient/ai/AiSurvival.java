@@ -61,7 +61,7 @@ final class AiSurvival {
                double distance = mob.distanceToSqr(mc.player);
                if (!(distance >= best) && mc.player.hasLineOfSight(mob)) {
                   boolean engaged = AiThreats.isActiveThreat(mc, mob);
-                  if (engaged || AiCombatPriority.init(AiThreats.classify(mob)) && !(mob instanceof Piglin)) {
+                  if (engaged || AiCombatPriority.isPriorityThreat(AiThreats.classify(mob)) && !(mob instanceof Piglin)) {
                      nearest = mob;
                      best = distance;
                   }
@@ -394,12 +394,12 @@ final class AiSurvival {
                         }
                      }
 
-                     if (safeHandoff && !this.shielding && AiShield.init(this.mc) != null) {
+                     if (safeHandoff && !this.shielding && AiShield.bestBlock(this.mc) != null) {
                         for (Entity threat : close) {
                            if (threat instanceof Creeper creeper
                               && AiSurvival.creeperAboutToBlow(creeper.distanceTo(this.mc.player), creeper.getSwellDir() > 0, creeper.isIgnited())
                               && this.mc.player.hasLineOfSight(creeper)
-                              && AiShield.init(this.mc, creeper) != null) {
+                              && AiShield.coverCell(this.mc, creeper) != null) {
                               if (this.leg != null) {
                                  this.leg.cancel();
                               }
@@ -528,7 +528,7 @@ final class AiSurvival {
                            .filter(entity -> entity instanceof Creeper)
                            .min(Comparator.comparingDouble(entity -> entity.distanceToSqr(this.mc.player)))
                            .orElse(null);
-                        if (creeper != null && AiShield.init(this.mc) != null && AiShield.init(this.mc, creeper) != null) {
+                        if (creeper != null && AiShield.bestBlock(this.mc) != null && AiShield.coverCell(this.mc, creeper) != null) {
                            this.shielding = true;
                            this.leg = AiCover.create(AiJson.objectOf("sealOnly", true, "timeoutSeconds", 10));
                            AiOperation.Result first = this.leg.tick();

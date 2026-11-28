@@ -77,7 +77,7 @@ public class UseItemPhaseAction implements MacroAction {
       return this.gateDuringHold && this.holdTicks > 0;
    }
 
-   private InteractionHand init_InteractionHand() {
+   private InteractionHand configuredHand() {
       return "OFF_HAND".equalsIgnoreCase(this.hand) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
    }
 
@@ -88,7 +88,7 @@ public class UseItemPhaseAction implements MacroAction {
             autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, target, mc.player.getInventory().getSelectedSlot());
          }
 
-         InteractionHand h = this.init_InteractionHand();
+         InteractionHand h = this.configuredHand();
          switch (this.phase) {
             case USE_ONCE:
             case START_USE:
@@ -151,7 +151,7 @@ public class UseItemPhaseAction implements MacroAction {
    public void load(Minecraft mc) {
       if (mc != null && mc.player != null && mc.getConnection() != null) {
          if (this.swapSlotBeforeRelease >= 0) {
-            this.init(mc, this.swapSlotBeforeRelease, this.swapButton, ContainerInput.SWAP);
+            this.clickSlot(mc, this.swapSlotBeforeRelease, this.swapButton, ContainerInput.SWAP);
          }
 
          if (this.releaseAfterHold) {
@@ -159,15 +159,15 @@ public class UseItemPhaseAction implements MacroAction {
          }
 
          if (this.dropSlotAfterRelease) {
-            this.init(mc, this.dropSlot, 0, ContainerInput.THROW);
+            this.clickSlot(mc, this.dropSlot, 0, ContainerInput.THROW);
          }
       }
    }
 
-   private void init(Minecraft mc, int slot, int button, ContainerInput input) {
+   private void clickSlot(Minecraft mc, int slot, int button, ContainerInput input) {
       int handlerSlot = this.useCustomSlotMapping ? autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slot) : slot;
       if (handlerSlot >= 0) {
-         autismclient.util.ContainerClickExecutor.init(mc, handlerSlot, button, input);
+         autismclient.util.ContainerClickExecutor.click(mc, handlerSlot, button, input);
       }
    }
 

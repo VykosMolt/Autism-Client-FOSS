@@ -971,7 +971,7 @@ public final class AiJumpSolver {
          var11 |= var9.horizontalCollision();
          var12 |= var11 || var9.verticalCollision() && !var9.onGround();
          if (isGroundedNotRising(var9)) {
-            if (var13 - var9.y() > var0.putAt_D() + 1.0E-5) {
+            if (var13 - var9.y() > var0.dropLimit() + 1.0E-5) {
                return new AiJumpSolver.ArcResult(var9, var15, true, var4, var5.along(var9), -1.0, var12, var11);
             }
 
@@ -996,7 +996,7 @@ public final class AiJumpSolver {
    }
 
    static boolean isInFluid(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
-      return var0.state((int)Math.floor(var1.x()), (int)Math.floor(var1.y()), (int)Math.floor(var1.z()));
+      return var0.climbableAt((int)Math.floor(var1.x()), (int)Math.floor(var1.y()), (int)Math.floor(var1.z()));
    }
 
    public static double settledLandingMargin(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, double var3, float var5) {
@@ -1935,7 +1935,7 @@ public final class AiJumpSolver {
       }
 
       AiPhysics.MoveInput var7 = AiPhysics.MoveInput.running(var6, true);
-      AiStride.FallResult var8 = AiStride.putAt(var0, var1, var7);
+      AiStride.FallResult var8 = AiStride.jumpFallResult(var0, var1, var7);
       if (var8 == null) {
          return null;
       }

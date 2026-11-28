@@ -693,7 +693,7 @@ final class AiClientConfig {
             case "add":
                BlockPos pos = parsePos(args);
                int color = args.has("color") ? parseColor(AiJson.getString(args, "color", ""), "color") : -8337153;
-               w.init(scope, new AutismWaypoints.Waypoint(requireString(args, "name"), pos.getX(), pos.getY(), pos.getZ(), color, System.currentTimeMillis()));
+               w.addWaypoint(scope, new AutismWaypoints.Waypoint(requireString(args, "name"), pos.getX(), pos.getY(), pos.getZ(), color, System.currentTimeMillis()));
                break;
             case "remove":
                if (!w.remove(scope, requireString(args, "name"))) {
@@ -704,7 +704,7 @@ final class AiClientConfig {
                w.clearScope(scope);
                break;
             case "rename":
-               if (!w.init(scope, requireString(args, "name"), requireString(args, "newName"))) {
+               if (!w.rename(scope, requireString(args, "name"), requireString(args, "newName"))) {
                   throw new IllegalArgumentException("Unknown waypoint or duplicate name");
                }
                break;
@@ -714,7 +714,7 @@ final class AiClientConfig {
                }
                break;
             case "pruneDeaths":
-               w.init(scope, AuditDeathWaypoints.retention(args));
+               w.trimDeaths(scope, AuditDeathWaypoints.retention(args));
                break;
             default:
                throw new IllegalArgumentException("Unknown action '" + action + "'; use list, add, remove, clear, rename, color or pruneDeaths");
@@ -849,7 +849,7 @@ final class AiClientConfig {
                }
 
                if (args.has("timing")) {
-                  autismclient.util.JoinMacroController.init(autismclient.util.JoinMacroController.JoinTiming.init(AiJson.getString(args, "timing", "PLAYABLE")));
+                  autismclient.util.JoinMacroController.setTiming(autismclient.util.JoinMacroController.JoinTiming.fromConfig(AiJson.getString(args, "timing", "PLAYABLE")));
                }
 
                if (args.has("keepEnabled")) {

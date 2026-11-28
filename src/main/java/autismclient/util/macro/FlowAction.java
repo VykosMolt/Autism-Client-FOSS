@@ -10,7 +10,7 @@ public class FlowAction implements MacroAction {
    public FlowAction.MissingLabelPolicy onMissingLabel = FlowAction.MissingLabelPolicy.CONTINUE;
    public boolean conditional = false;
    public MacroCondition condition = MacroCondition.createDefault();
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -37,7 +37,7 @@ public class FlowAction implements MacroAction {
       MacroCondition c = this.condition == null ? MacroCondition.createDefault() : this.condition;
       tag.put("condition", c.toTag());
       c.writeFlat(tag, "cond_");
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -48,9 +48,9 @@ public class FlowAction implements MacroAction {
       this.labelName = tag.getStringOr("labelName", "");
       this.onMissingLabel = MacroNbtCodecHelper.parseEnum(FlowAction.MissingLabelPolicy.class, tag.getStringOr("onMissingLabel", "CONTINUE"), FlowAction.MissingLabelPolicy.CONTINUE);
       this.conditional = tag.getBooleanOr("conditional", false);
-      this.condition = MacroCondition.init(tag, "condition", "cond_");
+      this.condition = MacroCondition.fromTagOrFlat(tag, "condition", "cond_");
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -94,12 +94,12 @@ public class FlowAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum MissingLabelPolicy {

@@ -29,6 +29,6 @@ public final class PingSpoofModule extends Module {
    }
 
    private void init() {
-      autismclient.util.macro.PingSpoofScheduler.load(this.integer("delay"), this.bool("real-incoming"), this.bool("real-outgoing"));
+      autismclient.util.macro.PingSpoofScheduler.setGlobal(this.integer("delay"), this.bool("real-incoming"), this.bool("real-outgoing"));
    }
 }

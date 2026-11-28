@@ -222,7 +222,7 @@ public final class AiPacketLog {
 
    private static void appendPacketDetail(JsonObject out, AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry.packetClass != null) {
-         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(entry.packetClass);
+         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.schemaFor(entry.packetClass);
          if (schema != null) {
             JsonArray fields = new JsonArray();
 
@@ -271,7 +271,7 @@ public final class AiPacketLog {
          }
 
          out.add("decoded", AiJson.objectOf("status", view.status(), "complete", view.read(), "fields", decoded));
-         PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.init(entry.packet);
+         PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.captureFor(entry.packet);
          if (snapshot != null) {
             byte[] plaintext = snapshot.plaintext();
             out.add(
@@ -313,7 +313,7 @@ public final class AiPacketLog {
       for (int i = offset; i < end; i++) {
          Class<? extends Packet<?>> packetClass = matched.get(i);
          String flow = directionOf(packetClass);
-         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(packetClass);
+         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.schemaFor(packetClass);
          JsonObject entry = AiJson.objectOf("name", autismclient.util.PacketTypeRegistry.getPacketName(packetClass), "schema", schema);
          entry.addProperty("direction", flow);
          entry.addProperty("numericPacketId", packetIdFor(packetClass, "BOTH".equals(flow) ? "C2S" : flow));

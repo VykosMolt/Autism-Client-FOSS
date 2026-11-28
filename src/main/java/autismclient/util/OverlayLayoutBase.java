@@ -172,11 +172,11 @@ public abstract class OverlayLayoutBase {
    }
 
    private autismclient.gui.f.NetHelper headerCloseButtonBounds(OverlayBounds bounds) {
-      return autismclient.gui.ui.widgets.WindowHeaderHelper.load(this.headerBounds(bounds), 14);
+      return autismclient.gui.ui.widgets.WindowHeaderHelper.closeButton(this.headerBounds(bounds), 14);
    }
 
    private autismclient.gui.f.NetHelper headerToggleBounds(OverlayBounds bounds) {
-      return autismclient.gui.ui.widgets.WindowHeaderHelper.read(this.headerBounds(bounds), 14);
+      return autismclient.gui.ui.widgets.WindowHeaderHelper.collapseButton(this.headerBounds(bounds), 14);
    }
 
    private boolean isClickHeaderCollapse() {

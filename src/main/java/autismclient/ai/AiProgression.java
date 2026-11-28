@@ -254,8 +254,8 @@ final class AiProgression {
          }
 
          @Override
-         public String init(Set<String> variants) {
-            return live.init(variants);
+         public String familyOf(Set<String> variants) {
+            return live.familyOf(variants);
          }
       };
       Map<String, Integer> total = new LinkedHashMap<>();
@@ -311,8 +311,8 @@ final class AiProgression {
          }
 
          @Override
-         public String init(Set<String> variants) {
-            return live.init(variants);
+         public String familyOf(Set<String> variants) {
+            return live.familyOf(variants);
          }
       };
       int planks = 0;
@@ -370,8 +370,8 @@ final class AiProgression {
             }
 
             @Override
-            public String init(Set<String> variants) {
-               return live.init(variants);
+            public String familyOf(Set<String> variants) {
+               return live.familyOf(variants);
             }
          };
          Map<String, Integer> out = new LinkedHashMap<>();
@@ -773,7 +773,7 @@ final class AiProgression {
          public AiOperation.Result tick() {
             AiOperation.Result result = this.advance();
             if (!result.terminal()) {
-               AiVisualization.showCount(this, this.title, AiTaskStatus.init(result.message(), "Preparing materials"), AiCraft.countItem(itemId), goal);
+               AiVisualization.showCount(this, this.title, AiTaskStatus.phaseLabel(result.message(), "Preparing materials"), AiCraft.countItem(itemId), goal);
                AiGoal.set(this, 1, this.title, AiGoal.stepLabel(this.stepKey), "");
             } else {
                AiVisualization.clearOwner(this);
@@ -847,7 +847,7 @@ final class AiProgression {
                      }
 
                      this.completionTableTried = true;
-                     AiOperation carry = AiProgression.init(tableBudget, true);
+                     AiOperation carry = AiProgression.reclaimTable(tableBudget, true);
                      if (carry != null) {
                         return this.startStep("pack-table-completion", "carry the crafting table onward with the completed kit", carry);
                      }
@@ -908,7 +908,7 @@ final class AiProgression {
                            : this.stepOp.tick();
                      } finally {
                         if (allowHurt) {
-                           autismclient.ai.engine.AiLowHealth.load();
+                           autismclient.ai.engine.AiLowHealth.exitOverride();
                         }
                      }
 
@@ -1068,7 +1068,7 @@ final class AiProgression {
                && death.remainingMillis() > 20000L
                && death.dimension().equals(mc.level.dimension().identifier().toString())
                && this.failuresByStep.getOrDefault("recover", 0) == 0) {
-               return this.startStep("recover", "go back for the items dropped at " + death.position().toShortString(), AiRecover.init(new JsonObject()));
+               return this.startStep("recover", "go back for the items dropped at " + death.position().toShortString(), AiRecover.recover(new JsonObject()));
             }
 
             AiProgression.Inner_CachePool have = this.effectiveTier();
@@ -1441,7 +1441,7 @@ final class AiProgression {
                }
 
                BlockState ordinaryOre = Blocks.DIAMOND_ORE.defaultBlockState();
-               int slot = autismclient.ai.engine.MiningCost.load(mc, ordinaryOre, true);
+               int slot = autismclient.ai.engine.MiningCost.bestToolSlot(mc, ordinaryOre, true);
                if (slot < 0) {
                   return -1;
                }
@@ -2018,7 +2018,7 @@ final class AiProgression {
 
                      if (this.singleTable && table == null && !this.tableRecoveryTried) {
                         this.tableRecoveryTried = true;
-                        AiOperation recovery = AiProgression.init(Math.min(90, this.secondsLeft()));
+                        AiOperation recovery = AiProgression.reclaimTable(Math.min(90, this.secondsLeft()));
                         if (recovery != null) {
                            return this.startStep("reclaim-table", "recover the observed table before acquiring new wood", recovery);
                         }
@@ -2087,7 +2087,7 @@ final class AiProgression {
 
             int planksShort = (items * 200 + 299) / 300 - largestPlanks;
             if (AiItems.countInInventory(AiItems.resolveItem("log")) > 0 && this.failuresByStep.getOrDefault("fuel-planks", 0) == 0) {
-               AiOperation planks = AiPlanks.init(mc.player.getInventory(), planksShort);
+               AiOperation planks = AiPlanks.craftPlanks(mc.player.getInventory(), planksShort);
                if (planks != null) {
                   return this.startStep("fuel-planks", "turn a log into planks to burn", planks);
                }
@@ -2215,7 +2215,7 @@ final class AiProgression {
                AutismClientAddon.LOG.info("[AI] ladder for {}: night falls, {}", itemId, bed ? "sleeping" : "burrowing");
                this.stepOp = bed
                   ? AiSleep.create(AiJson.objectOf("timeoutSeconds", 240))
-                  : AiBurrow.init(AiJson.objectOf("timeoutSeconds", 600));
+                  : AiBurrow.burrow(AiJson.objectOf("timeoutSeconds", 600));
                this.stepKey = "night";
                this.stepLabel = bed ? "sleep through the night" : "burrow until dawn";
                return this.running("Night falls; " + this.stepLabel);
@@ -2416,11 +2416,11 @@ final class AiProgression {
       return best;
    }
 
-   static AiOperation init(int seconds) {
-      return init(seconds, false);
+   static AiOperation reclaimTable(int seconds) {
+      return reclaimTable(seconds, false);
    }
 
-   static AiOperation init(int seconds, boolean carryRequired) {
+   static AiOperation reclaimTable(int seconds, boolean carryRequired) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null && AiCraft.countItem("minecraft:crafting_table") <= 0 && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
          ItemEntity observed = null;
@@ -2482,7 +2482,7 @@ final class AiProgression {
          final long deadline = stationDeadline;
          final int heldAtStart = AiCraft.countItem(item);
          final AiPreparationReceipt receipt = new AiPreparationReceipt();
-         AiOperation carryCheck = AiGameplay.init(List.of(item), Math.max(1, seconds - 5));
+         AiOperation carryCheck = AiGameplay.prepareCapacity(List.of(item), Math.max(1, seconds - 5));
          AiOperation breakOp;
          AiOperation pickupOp;
          int dropWaitTicks;

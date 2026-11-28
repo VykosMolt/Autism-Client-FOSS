@@ -16,7 +16,7 @@ public class LabelNode extends LayoutNode {
       this.nodeHeight = 10.0F;
    }
 
-   public LabelNode init(String text) {
+   public LabelNode text(String text) {
       String next = text == null ? "" : text;
       if (!this.init_Str.equals(next)) {
          this.init_Str = next;
@@ -26,7 +26,7 @@ public class LabelNode extends LayoutNode {
       return this;
    }
 
-   public LabelNode init(l tone) {
+   public LabelNode tone(l tone) {
       l next = tone == null ? l.read : tone;
       if (this.init_l != next) {
          this.init_l = next;

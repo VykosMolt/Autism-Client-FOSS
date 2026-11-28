@@ -18,7 +18,7 @@ public class AutismSplashRendererMixin {
    private void autism$hideSplashText(GuiGraphicsExtractor graphics, int screenWidth, Font font, float alpha, CallbackInfo ci) {
       if (aD.init_Z()) {
          if (!Minecraft.getInstance().options.hideSplashTexts().get()) {
-            CustomSplashProvider.init(Minecraft.getInstance(), graphics, screenWidth, font, alpha);
+            CustomSplashProvider.render(Minecraft.getInstance(), graphics, screenWidth, font, alpha);
          }
 
          ci.cancel();

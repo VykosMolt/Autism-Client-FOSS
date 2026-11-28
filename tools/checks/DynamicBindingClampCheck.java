@@ -22,9 +22,9 @@ public class DynamicBindingClampCheck {
       WaitForHealthAction health = new WaitForHealthAction();
       DynamicBindingManager.setBinding(health, "healthThreshold", "-4");
       Minecraft noGame = null;
-      check(DynamicBindingManager.init(bound, noGame) && bound.holdTicks == 2000, "bound int field is clamped, got " + bound.holdTicks);
-      check(DynamicBindingManager.init(reader, noGame) && reader.tolerance == 100.0, "bound double field is clamped, got " + reader.tolerance);
-      check(DynamicBindingManager.init(health, noGame) && health.healthThreshold == 0.0F, "bound float field is clamped, got " + health.healthThreshold);
+      check(DynamicBindingManager.apply(bound, noGame) && bound.holdTicks == 2000, "bound int field is clamped, got " + bound.holdTicks);
+      check(DynamicBindingManager.apply(reader, noGame) && reader.tolerance == 100.0, "bound double field is clamped, got " + reader.tolerance);
+      check(DynamicBindingManager.apply(health, noGame) && health.healthThreshold == 0.0F, "bound float field is clamped, got " + health.healthThreshold);
 
       CompoundTag fromOldSave = new CompoundTag();
       fromOldSave.putString("type", "USE_ITEM_PHASE");

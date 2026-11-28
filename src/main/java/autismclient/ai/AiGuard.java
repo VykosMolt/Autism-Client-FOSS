@@ -158,7 +158,7 @@ final class AiGuard {
 
    static void recordShooterCover(int id) {
       if (id >= 0 && isTrackedEntityAlive(id)) {
-         autismclient.ai.engine.AiSight.init(id);
+         autismclient.ai.engine.AiSight.markShooter(id);
          long now = System.nanoTime();
          shooterCoverTimestamps.values().forEach(q -> q.removeIf(t -> now - t > 90000000000L));
          shooterCoverTimestamps.values().removeIf(ArrayDeque::isEmpty);
@@ -194,7 +194,7 @@ final class AiGuard {
    }
 
    static boolean isShooterApproachable(Minecraft mc, Entity shooter) {
-      if (AiCombat.init(shooter)) {
+      if (AiCombat.isIgnored(shooter)) {
          return false;
       } else {
          return shooter.distanceTo(mc.player) <= 4.5 && Math.abs(shooter.getY() - mc.player.getY()) <= 3.0 && mc.player.hasLineOfSight(shooter)
@@ -441,7 +441,7 @@ final class AiGuard {
                if (entity instanceof Mob mob
                   && mob.isAggressive()
                   && mob.isAlive()
-                  && autismclient.ai.engine.AiSight.init(mob)
+                  && autismclient.ai.engine.AiSight.isRangedShooter(mob)
                   && mob.distanceToSqr(mc.player) < 256.0
                   && hasClearShotLine(mc, mob)) {
                   lastThreatTick = now;
@@ -451,7 +451,7 @@ final class AiGuard {
                if (entity instanceof Monster mob
                   && mob.isAggressive()
                   && mob.isAlive()
-                  && !autismclient.ai.engine.AiSight.init(mob)
+                  && !autismclient.ai.engine.AiSight.isRangedShooter(mob)
                   && !(mob instanceof Creeper)
                   && mob.distanceToSqr(mc.player) < 25.0
                   && mc.player.hasLineOfSight(mob)) {
@@ -476,7 +476,7 @@ final class AiGuard {
 
          for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity.isAlive() && !(entity instanceof Ghast) && !(entity instanceof EnderDragon)) {
-               if (autismclient.ai.engine.AiSight.init(entity)) {
+               if (autismclient.ai.engine.AiSight.isRangedShooter(entity)) {
                   double d2 = entity.distanceToSqr(mc.player);
                   boolean sees = d2 < 256.0 && hasClearShotLine(mc, entity);
                   boolean aiming = entity instanceof Mob mob && mob.isAggressive();
@@ -506,7 +506,7 @@ final class AiGuard {
                   }
 
                   if ((
-                        !AiCombat.init(entity)
+                        !AiCombat.isIgnored(entity)
                            || !(entity.distanceToSqr(mc.player) >= 9.0) && !(entity instanceof Mob mob && AiThreats.horizontalGapToAttackBox(mob, mc.player.getBoundingBox()) > 1.0)
                      )
                      && (!(entity instanceof Creeper) || mc.player.hasLineOfSight(entity))) {
@@ -594,7 +594,7 @@ final class AiGuard {
                   return false;
                }
 
-               if (!autismclient.ai.engine.AiSight.init(mob) && p != AiThreats.ThreatKind.CROSSBOW) {
+               if (!autismclient.ai.engine.AiSight.isRangedShooter(mob) && p != AiThreats.ThreatKind.CROSSBOW) {
                   if (p == AiThreats.ThreatKind.CREEPER) {
                      if (ahead || d < 5.0) {
                         return false;
@@ -696,7 +696,7 @@ final class AiGuard {
             for (Entity entity : mc.level.entitiesForRendering()) {
                if (entity instanceof Enemy
                   && entity.isAlive()
-                  && !autismclient.ai.engine.AiSight.init(entity)
+                  && !autismclient.ai.engine.AiSight.isRangedShooter(entity)
                   && Math.abs(entity.getY() - mc.player.getY()) <= 3.0
                   && entity.distanceToSqr(mc.player) <= 441.0
                   && mc.player.hasLineOfSight(entity)) {
@@ -724,7 +724,7 @@ final class AiGuard {
          && vitals.hostilesNear() == rangedHostileCount
          && !creeperNearby
          && recentCoverCountFor(nearestShooterEntityId) >= 2
-         && AiCombat.init(nearestShooterEntity())
+         && AiCombat.isIgnored(nearestShooterEntity())
          && vitals.health() >= 12.0F) {
          return null;
       }
@@ -775,7 +775,7 @@ final class AiGuard {
          if ((action == AiGuard.GuardAction.FIGHT || action == AiGuard.GuardAction.FLEE) && rangedHostileCount > 0 && !creeperNearby && !striking && !swarmed) {
             boolean coverBackoff = coverBackoffNanos != 0L && System.nanoTime() - coverBackoffNanos < 10000000000L;
             boolean hunt = recentCoverCountFor(nearestShooterEntityId) >= 1
-               && !AiCombat.init(nearestShooterEntity())
+               && !AiCombat.isIgnored(nearestShooterEntity())
                && vitals.health() >= 12.0F
                && (combatBackoffNanos == 0L || System.nanoTime() - combatBackoffNanos >= 10000000000L);
             Entity shooter = nearestShooterEntity();
@@ -784,13 +784,13 @@ final class AiGuard {
                && self != null
                && shooter.distanceTo(self) <= 4.5
                && Math.abs(shooter.getY() - self.getY()) <= 3.0
-               && !AiCombat.init(shooter);
+               && !AiCombat.isIgnored(shooter);
             boolean blazeShooter = shooter instanceof Blaze;
             if (blazeShooter && !AiThreats.isLegacyCombatEnabled() && (vitals.health() < 14.0F || AiWorldScan.findEntitiesByType("minecraft:blaze", 16.0).size() > 1)) {
                upClose = false;
             }
 
-            if (policy.flee() && !blockedRetreat && recentCoverCountFor(nearestShooterEntityId) >= 2 && AiCombat.init(shooter)) {
+            if (policy.flee() && !blockedRetreat && recentCoverCountFor(nearestShooterEntityId) >= 2 && AiCombat.isIgnored(shooter)) {
                burrowActive = false;
                fleeActive = true;
                AutismClientAddon.LOG.info("[AI] cover: repeated cover from an unreachable shooter, leaving its range");
@@ -801,8 +801,8 @@ final class AiGuard {
             if (shouldChargeShooter(policy, vitals, upClose, nearestShooterApproachable || hunt, rangedHostileCount) && (!blazeCharge || !(vitals.health() < 12.0F))) {
                burrowActive = false;
                AiOperation charge = blazeCharge
-                  ? AiBlazeFight.init(AiJson.objectOf("count", 1, "radius", 16.0, "retreatHealth", 8, "timeoutSeconds", 20))
-                  : AiCombat.init(
+                  ? AiBlazeFight.blazeFight(AiJson.objectOf("count", 1, "radius", 16.0, "retreatHealth", 8, "timeoutSeconds", 20))
+                  : AiCombat.fight(
                      AiJson.objectOf(
                         "entityId",
                         nearestShooterEntityId,
@@ -894,7 +894,7 @@ final class AiGuard {
          if (hide) {
             blockedRetreatNanos = 0L;
             return allowDuringLowHealth(
-               AiBurrow.init(
+               AiBurrow.burrow(
                   AiJson.objectOf(
                      "healTo",
                      Math.min(vitals.maxHealth(), 16.0F),
@@ -916,7 +916,7 @@ final class AiGuard {
                var10000 = null;
                break;
             case FIGHT:
-               var10000 = AiCombat.init(
+               var10000 = AiCombat.fight(
                   AiJson.objectOf(
                      "target",
                      "hostiles",
@@ -955,7 +955,7 @@ final class AiGuard {
          burrowActive = false;
          perchCombatActive = true;
          return allowDuringLowHealth(
-            AiCombat.init(
+            AiCombat.fight(
                AiJson.objectOf(
                   "target",
                   "hostiles",
@@ -1007,7 +1007,7 @@ final class AiGuard {
                         )
                      ),
                      () -> AiNetherRun.sequence(
-                        AiCombat.init(100), () -> AiBucket.create(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 5))
+                        AiCombat.rest(100), () -> AiBucket.create(AiJson.objectOf("action", "fill", "fluid", "water", "timeoutSeconds", 5))
                      )
                   );
                } else {
@@ -1150,7 +1150,7 @@ final class AiGuard {
    }
 
    static String formatLowHealthAbort(String activity, float health, float maxHealth) {
-      return autismclient.ai.engine.AiLowHealth.init(activity, health, maxHealth);
+      return autismclient.ai.engine.AiLowHealth.refusalMessage(activity, health, maxHealth);
    }
 
    static AiOperation allowDuringLowHealth(final AiOperation inner) {
@@ -1162,7 +1162,7 @@ final class AiGuard {
             try {
                return inner.tick();
             } finally {
-               autismclient.ai.engine.AiLowHealth.load();
+               autismclient.ai.engine.AiLowHealth.exitOverride();
             }
          }
 

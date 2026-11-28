@@ -19,7 +19,7 @@ public final class SubpixelScissorTracker {
       return rectangle != null && !exactRects.isEmpty() ? exactRects.get(rectangle) : null;
    }
 
-   public static void init() {
+   public static void clear() {
       exactRects.clear();
    }
 

@@ -219,7 +219,7 @@ public final class AiMacroValidator {
 
          ActionFieldSchema schema;
          try {
-            schema = autismclient.gui.macro.editor.ActionFieldRegistry.init(MacroActionType.valueOf(id));
+            schema = autismclient.gui.macro.editor.ActionFieldRegistry.schemaForType(MacroActionType.valueOf(id));
          } catch (IllegalArgumentException e) {
             schema = MacroActionRegistry.schema(id);
          }

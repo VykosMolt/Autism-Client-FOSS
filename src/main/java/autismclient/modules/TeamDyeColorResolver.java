@@ -14,7 +14,7 @@ final class TeamDyeColorResolver {
    private TeamDyeColorResolver() {
    }
 
-   static DyeColor init() {
+   static DyeColor ownTeamColor() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.getConnection() != null) {
          PlayerTeam team = mc.player.getTeam();
@@ -41,7 +41,7 @@ final class TeamDyeColorResolver {
       }
    }
 
-   static DyeColor load(String name, Component tab, Component display, Integer teamRgb) {
+   static DyeColor resolve(String name, Component tab, Component display, Integer teamRgb) {
       DyeColor tabColor = init_DyeColor(name, tab);
       DyeColor shownColor = init_DyeColor(name, display);
       DyeColor teamColor = teamRgb == null ? null : init(teamRgb);

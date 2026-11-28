@@ -45,11 +45,11 @@ public final class ActionFieldRegistry {
       "VARIABLE"
    };
 
-   public static ActionFieldSchema init(MacroActionType type) {
+   public static ActionFieldSchema schemaForType(MacroActionType type) {
       return init_Map.getOrDefault(type, init_ActionFieldSchema);
    }
 
-   public static ActionFieldSchema init(MacroAction action) {
+   public static ActionFieldSchema schemaFor(MacroAction action) {
       if (action == null) {
          return init_ActionFieldSchema;
       } else if (action instanceof ToolsAction tools) {
@@ -65,10 +65,10 @@ public final class ActionFieldRegistry {
                ids.add(saved);
             }
 
-            return init(type).withEnumOptions("cond_toolFilter", ids);
+            return schemaForType(type).withEnumOptions("cond_toolFilter", ids);
          } else {
             if (type != null) {
-               return init(type);
+               return schemaForType(type);
             }
 
             ActionFieldSchema addonSchema = MacroActionRegistry.schema(action.getTypeId());

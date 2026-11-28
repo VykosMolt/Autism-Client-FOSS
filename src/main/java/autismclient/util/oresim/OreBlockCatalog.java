@@ -64,7 +64,7 @@ public final class OreBlockCatalog {
       return known.contains(block);
    }
 
-   public static OreBlockCatalog.OreKind init(String blockId) {
+   public static OreBlockCatalog.OreKind kindOf(String blockId) {
       if (blockId == null) {
          return null;
       }
@@ -148,14 +148,14 @@ public final class OreBlockCatalog {
          return id >= 0 && id < snapshot.length ? snapshot[id] : null;
       }
 
-      public static int init() {
+      public static int count() {
          return states.length;
       }
 
-      public static int init(BlockState state) {
+      public static int idOf(BlockState state) {
          if (state != null && OreBlockCatalog.isOre(state.getBlock())) {
             Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-            OreBlockCatalog.OreKind kind = id == null ? null : OreBlockCatalog.init(id.toString());
+            OreBlockCatalog.OreKind kind = id == null ? null : OreBlockCatalog.kindOf(id.toString());
             return kind == null ? -1 : idFor(state, kind);
          } else {
             return -1;

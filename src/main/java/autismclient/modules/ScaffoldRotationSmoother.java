@@ -45,22 +45,22 @@ final class ScaffoldRotationSmoother {
    }
 
    void init_V_ValueRange(ValueRange band) {
-      this.init_V_aM_DataUtil(this.init_aM_DataUtil_ValueRange(band));
+      this.init_V_aM_DataUtil(this.pickBand(band));
    }
 
-   ScaffoldRotationSmoother.Inner_DataUtil init_aM_DataUtil_ValueRange(ValueRange band) {
+   ScaffoldRotationSmoother.Inner_DataUtil pickBand(ValueRange band) {
       ValueRange safe = band.clamp(0.0, 100.0);
       return new ScaffoldRotationSmoother.Inner_DataUtil(safe.random(this.random), safe.random(this.random));
    }
 
    void init_V_aM_DataUtil(ScaffoldRotationSmoother.Inner_DataUtil selected) {
-      this.init(selected, false);
+      this.apply(selected, false);
    }
 
-   void init(ScaffoldRotationSmoother.Inner_DataUtil selected, boolean efficient) {
+   void apply(ScaffoldRotationSmoother.Inner_DataUtil selected, boolean efficient) {
       this.reset();
-      this.init_D = selected.init_D();
-      this.load_D = selected.load_D();
+      this.init_D = selected.placePercent();
+      this.load_D = selected.returnPercent();
       this.update_Z = efficient;
       this.init_Z = true;
    }
@@ -103,7 +103,7 @@ final class ScaffoldRotationSmoother {
    }
 
    int write(ValueRange band) {
-      return !this.load_Z ? this.load(band) : (this.read_Z ? 0 : this.init_I());
+      return !this.load_Z ? this.load(band) : (this.read_Z ? 0 : this.remainingTurnTicks());
    }
 
    float init_F_ValueRange(ValueRange band) {
@@ -250,7 +250,7 @@ final class ScaffoldRotationSmoother {
       return this.load_Z && this.load_ce_DataUtil != null ? this.init(from, Math.min(this.write_D, this.read_D + 1.0), band, gcd).yaw() : from.yaw();
    }
 
-   int init_I() {
+   int remainingTurnTicks() {
       return this.load_Z ? Math.max(0, (int)Math.ceil(this.write_D - this.read_D)) : 0;
    }
 
@@ -264,7 +264,7 @@ final class ScaffoldRotationSmoother {
    }
 
    record Inner_DataUtil(double init, double load) {
-      int init_I() {
+      int placeTicks() {
          return ScaffoldRotationSmoother.init_I_D(this.init);
       }
 
@@ -272,11 +272,11 @@ final class ScaffoldRotationSmoother {
          return ScaffoldRotationSmoother.init_I_D(this.load);
       }
 
-      public double init_D() {
+      public double placePercent() {
          return this.init;
       }
 
-      public double load_D() {
+      public double returnPercent() {
          return this.load;
       }
    }

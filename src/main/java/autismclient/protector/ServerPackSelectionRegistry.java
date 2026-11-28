@@ -20,7 +20,7 @@ public final class ServerPackSelectionRegistry {
    private ServerPackSelectionRegistry() {
    }
 
-   public static void init(ResourcePackSessionTracker.PackSession session, Collection<IdAndPath> requested, Collection<Pack> loaded) {
+   public static void recordSelection(ResourcePackSessionTracker.PackSession session, Collection<IdAndPath> requested, Collection<Pack> loaded) {
       if (loaded != null && session != null && ResourcePackSessionTracker.isActive(session)) {
          long revision = ResourcePackSessionTracker.revision(session);
          if (loaded.isEmpty()) {
@@ -96,7 +96,7 @@ public final class ServerPackSelectionRegistry {
                   }
 
                   if (resources instanceof IsolatedPackDownloader.IsolationAware isolated) {
-                     IsolatedPackDownloader.PackIsolation binding = isolated.init();
+                     IsolatedPackDownloader.PackIsolation binding = isolated.packIsolation();
                      if (policy != ResourcePackSessionTracker.PackPolicy.ISOLATED
                         || binding.session() != session
                         || !packId.equals(binding.packId())
@@ -130,7 +130,7 @@ public final class ServerPackSelectionRegistry {
       if (resources != null && resources.location() != null) {
          ServerPackSelectionRegistry.Inner_StreamUtil provenance = init_CharEncoder_Stream(session, resources.location().id());
          if (provenance != null && resources instanceof IsolatedPackDownloader.IsolationAware isolated) {
-            IsolatedPackDownloader.PackIsolation binding = isolated.init();
+            IsolatedPackDownloader.PackIsolation binding = isolated.packIsolation();
             if (provenance.policy() != ResourcePackSessionTracker.PackPolicy.ISOLATED
                || binding.session() != session
                || !provenance.packId().equals(binding.packId())
@@ -268,7 +268,7 @@ public final class ServerPackSelectionRegistry {
       }
    }
 
-   static void init(ResourcePackSessionTracker.PackSession session) {
+   static void forget(ResourcePackSessionTracker.PackSession session) {
       if (session != null) {
          synchronized (LOCK) {
             SELECTIONS.remove(session);

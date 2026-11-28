@@ -21,7 +21,7 @@ public final class PayloadSubscriptionManager {
    private static int update;
    private static String init_Str = "";
    private static long init_J;
-   private static PayloadSubscriptionManager.RegistrationStatus status = PayloadSubscriptionManager.RegistrationStatus.init(96);
+   private static PayloadSubscriptionManager.RegistrationStatus status = PayloadSubscriptionManager.RegistrationStatus.idle(96);
    private static final LinkedHashSet<String> init_LinkedHashSet = new LinkedHashSet<>();
    private static final LinkedHashSet<String> load_LinkedHashSet = new LinkedHashSet<>();
    private static final LinkedHashSet<String> read_LinkedHashSet = new LinkedHashSet<>();
@@ -42,17 +42,17 @@ public final class PayloadSubscriptionManager {
       load_LinkedHashSet.clear();
       read_LinkedHashSet.clear();
       init_LinkedHashSet.clear();
-      status = PayloadSubscriptionManager.RegistrationStatus.init(96);
+      status = PayloadSubscriptionManager.RegistrationStatus.idle(96);
    }
 
    public static synchronized PayloadSubscriptionManager.RegistrationStatus status() {
       if (autismclient.modules.aD.read_Z()) {
-         status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), 0);
+         status = PayloadSubscriptionManager.RegistrationStatus.idle(configuredLimit(), 0);
          return status;
       }
 
       if (!isRegistrationUnlocked() && !status.locked()) {
-         status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), status.write());
+         status = PayloadSubscriptionManager.RegistrationStatus.idle(configuredLimit(), status.write());
       }
 
       return status;
@@ -70,7 +70,7 @@ public final class PayloadSubscriptionManager {
          config.payloadRegistrationWarningAcceptedVersion = 1;
          config.save();
          requestSync();
-         status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit());
+         status = PayloadSubscriptionManager.RegistrationStatus.idle(configuredLimit());
       }
    }
 
@@ -85,7 +85,7 @@ public final class PayloadSubscriptionManager {
             init_Str = "";
             init_J = 0L;
             init_LinkedHashSet.clear();
-            status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), 0);
+            status = PayloadSubscriptionManager.RegistrationStatus.idle(configuredLimit(), 0);
          }
       } else {
          PayloadSubscriptionManager.UnregisterResult unregister = new PayloadSubscriptionManager.UnregisterResult(0, true);
@@ -105,7 +105,7 @@ public final class PayloadSubscriptionManager {
                init_LinkedHashSet.clear();
             }
 
-            status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), unregister.init_I());
+            status = PayloadSubscriptionManager.RegistrationStatus.idle(configuredLimit(), unregister.init_I());
          }
       }
    }
@@ -113,14 +113,14 @@ public final class PayloadSubscriptionManager {
    public static synchronized void learnCodecChannel(String channel) {
       String normalized = normalize(channel);
       if (isRegisterable(normalized) && !load_Z(normalized)) {
-         init(load_LinkedHashSet, normalized);
+         moveToEnd(load_LinkedHashSet, normalized);
       }
    }
 
    public static synchronized void learnObservedChannel(String channel) {
       String normalized = normalize(channel);
       if (isRegisterable(normalized) && !load_Z(normalized)) {
-         init(read_LinkedHashSet, normalized);
+         moveToEnd(read_LinkedHashSet, normalized);
       }
    }
 
@@ -131,7 +131,7 @@ public final class PayloadSubscriptionManager {
          for (String channel : AutismPayloadSupport.extractRegisteredChannels(snapshot.channel(), snapshot.rawBytes())) {
             String normalized = normalize(channel);
             if (isRegisterable(normalized) && !load_Z(normalized)) {
-               init(read_LinkedHashSet, normalized);
+               moveToEnd(read_LinkedHashSet, normalized);
             }
          }
       }
@@ -162,10 +162,10 @@ public final class PayloadSubscriptionManager {
                load_Z = false;
                init_Str = "";
                init_J = 0L;
-               status = PayloadSubscriptionManager.RegistrationStatus.init(configuredLimit(), 0);
+               status = PayloadSubscriptionManager.RegistrationStatus.idle(configuredLimit(), 0);
             }
          } else {
-            PayloadSubscriptionManager.RegistrationPlan plan = init(packetLoggerCapturing);
+            PayloadSubscriptionManager.RegistrationPlan plan = plan(packetLoggerCapturing);
             if (plan.channels().isEmpty()) {
                PayloadSubscriptionManager.UnregisterResult unregister = init_bD_TaskQueue(List.of());
                synchronized (PayloadSubscriptionManager.class) {
@@ -221,7 +221,7 @@ public final class PayloadSubscriptionManager {
                            newStatus.read(),
                            unregister.init_I(),
                            sent,
-                           newStatus.load_Str()
+                           newStatus.appliedSummary()
                         );
                   }
                }
@@ -230,16 +230,16 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   public static PayloadSubscriptionManager.RegistrationPlan init(boolean packetLoggerCapturing) {
+   public static PayloadSubscriptionManager.RegistrationPlan plan(boolean packetLoggerCapturing) {
       int limit = configuredLimit();
       PayloadSubscriptionManager.PlanCollector collector = new PayloadSubscriptionManager.PlanCollector(limit);
       PayloadRegistrationManager registrations = new PayloadRegistrationManager();
 
       for (String channel : registrations.enabledChannels()) {
-         collector.init(channel);
+         collector.offer(channel);
       }
 
-      return collector.init();
+      return collector.build();
    }
 
    private static PayloadSubscriptionManager.UnregisterResult init_bD_TaskQueue(List<String> nextChannels) {
@@ -270,7 +270,7 @@ public final class PayloadSubscriptionManager {
       }
 
       if (TRACE) {
-         AutismClientAddon.LOG.info("[Autism Payload] unregistered {} plugin channels: sent={}, sample={}", removed.size(), sent, init(removed));
+         AutismClientAddon.LOG.info("[Autism Payload] unregistered {} plugin channels: sent={}, sample={}", removed.size(), sent, describeChannels(removed));
       }
 
       return new PayloadSubscriptionManager.UnregisterResult(removed.size(), sent);
@@ -293,7 +293,7 @@ public final class PayloadSubscriptionManager {
       } else {
          for (PayloadChannelFilterManager.ChannelPreset preset : PayloadChannelFilterManager.presets()) {
             String presetPattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-            if (presetPattern.indexOf(42) < 0 && PayloadChannelFilterManager.isRegisterableExactPreset(preset) && init(normalized, presetPattern)) {
+            if (presetPattern.indexOf(42) < 0 && PayloadChannelFilterManager.isRegisterableExactPreset(preset) && matchesPattern(normalized, presetPattern)) {
                channels.add(presetPattern);
             }
          }
@@ -303,7 +303,7 @@ public final class PayloadSubscriptionManager {
    }
 
    public static PayloadSubscriptionManager.PatternProjection init(Collection<String> patterns, boolean packetLoggerCapturing) {
-      PayloadSubscriptionManager.RegistrationPlan plan = init(packetLoggerCapturing);
+      PayloadSubscriptionManager.RegistrationPlan plan = plan(packetLoggerCapturing);
       LinkedHashSet<String> projected = new LinkedHashSet<>(plan.channels());
       int before = projected.size();
       if (patterns != null) {
@@ -373,7 +373,7 @@ public final class PayloadSubscriptionManager {
       return channel == null ? "" : channel.trim().toLowerCase(Locale.ROOT);
    }
 
-   private static void init(LinkedHashSet<String> set, String channel) {
+   private static void moveToEnd(LinkedHashSet<String> set, String channel) {
       if (set.remove(channel)) {
          set.add(channel);
       } else {
@@ -386,7 +386,7 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   private static boolean init(String pattern, String text) {
+   private static boolean matchesPattern(String pattern, String text) {
       String normalizedPattern = PayloadChannelFilterManager.normalizePattern(pattern);
       String normalizedText = normalize(text);
       if (!normalizedPattern.isEmpty() && !normalizedText.isEmpty()) {
@@ -430,7 +430,7 @@ public final class PayloadSubscriptionManager {
       }
    }
 
-   private static String init(Set<String> channels) {
+   private static String describeChannels(Set<String> channels) {
       if (channels != null && !channels.isEmpty()) {
          List<String> values = new ArrayList<>(channels);
          int count = Math.min(8, values.size());
@@ -443,11 +443,11 @@ public final class PayloadSubscriptionManager {
    public record RegistrationStatus(
       int registered, int limit, int read, boolean sent, long init_J, List<String> applied, List<String> load_List, int write, boolean locked
    ) {
-      private static PayloadSubscriptionManager.RegistrationStatus init(int limit) {
+      private static PayloadSubscriptionManager.RegistrationStatus idle(int limit) {
          return new PayloadSubscriptionManager.RegistrationStatus(0, limit, 0, false, 0L, List.of(), List.of(), 0, false);
       }
 
-      private static PayloadSubscriptionManager.RegistrationStatus init(int limit, int lastUnregisteredCount) {
+      private static PayloadSubscriptionManager.RegistrationStatus idle(int limit, int lastUnregisteredCount) {
          return new PayloadSubscriptionManager.RegistrationStatus(0, limit, 0, false, System.currentTimeMillis(), List.of(), List.of(), Math.max(0, lastUnregisteredCount), true);
       }
 
@@ -464,7 +464,7 @@ public final class PayloadSubscriptionManager {
          return this.read > 0 ? base + " +" + this.read : base;
       }
 
-      public String load_Str() {
+      public String appliedSummary() {
          if (this.applied != null && !this.applied.isEmpty()) {
             int count = Math.min(8, this.applied.size());
             return String.join(", ", this.applied.subList(0, count)) + (this.applied.size() > count ? ", ..." : "");
@@ -484,28 +484,28 @@ public final class PayloadSubscriptionManager {
    }
 
    private static final class PlanCollector {
-      private final int init_I;
-      private final LinkedHashMap<String, String> init_LinkedHashMap = new LinkedHashMap<>();
-      private final LinkedHashSet<String> init_LinkedHashSet = new LinkedHashSet<>();
+      private final int limit;
+      private final LinkedHashMap<String, String> accepted = new LinkedHashMap<>();
+      private final LinkedHashSet<String> overflow = new LinkedHashSet<>();
 
       private PlanCollector(int limit) {
-         this.init_I = limit;
+         this.limit = limit;
       }
 
-      private void init(String channel) {
+      private void offer(String channel) {
          String normalized = PayloadSubscriptionManager.normalize(channel);
-         if (PayloadSubscriptionManager.isRegisterable(normalized) && !this.init_LinkedHashMap.containsKey(normalized)) {
-            if (this.init_LinkedHashMap.size() >= this.init_I) {
-               this.init_LinkedHashSet.add(normalized);
+         if (PayloadSubscriptionManager.isRegisterable(normalized) && !this.accepted.containsKey(normalized)) {
+            if (this.accepted.size() >= this.limit) {
+               this.overflow.add(normalized);
             } else {
-               this.init_LinkedHashMap.put(normalized, normalized);
+               this.accepted.put(normalized, normalized);
             }
          }
       }
 
-      private PayloadSubscriptionManager.RegistrationPlan init() {
+      private PayloadSubscriptionManager.RegistrationPlan build() {
          return new PayloadSubscriptionManager.RegistrationPlan(
-            List.copyOf(this.init_LinkedHashMap.values()), this.init_I, this.init_LinkedHashSet.size(), List.copyOf(this.init_LinkedHashSet)
+            List.copyOf(this.accepted.values()), this.limit, this.overflow.size(), List.copyOf(this.overflow)
          );
       }
    }

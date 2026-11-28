@@ -257,8 +257,8 @@ final class SchematicCapture {
                            TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, this.level.registryAccess());
                            if (entity.save(output)) {
                               CompoundTag tag = output.buildResult();
-                              init(tag, target.area.min);
-                              target.load.add(tag);
+                              relativizeEntityPos(tag, target.area.min);
+                              target.entityTags.add(tag);
                            }
                         }
                      }
@@ -321,7 +321,7 @@ final class SchematicCapture {
       this.stage = "Packing schematic";
       this.saveTask = SchematicLibrary.EXECUTOR.submit(() -> {
          try {
-            this.savedPath = init(this.folder, this.name, this.chunks, true, p -> {
+            this.savedPath = save(this.folder, this.name, this.chunks, true, p -> {
                this.progress = 70 + p / 5;
                this.read();
             });
@@ -340,7 +340,7 @@ final class SchematicCapture {
       });
    }
 
-   static Path init(Path folder, String name, List<SchematicCapture.Inner_CachePool> chunks, boolean trimAir, IntConsumer progress) throws IOException {
+   static Path save(Path folder, String name, List<SchematicCapture.Inner_CachePool> chunks, boolean trimAir, IntConsumer progress) throws IOException {
       Files.createDirectories(folder);
       CompoundTag root = init(chunks, trimAir, progress);
       SchematicDocument.checkInterrupted();
@@ -485,7 +485,7 @@ final class SchematicCapture {
          }
 
          region.put("BlockStatePalette", entries);
-         region.putLongArray("BlockStates", init(values, palette.size()));
+         region.putLongArray("BlockStates", packIndices(values, palette.size()));
          BlockPos shift = a.min.subtract(chunk.area.min);
          ListTag bes = new ListTag();
 
@@ -500,9 +500,9 @@ final class SchematicCapture {
          region.put("TileEntities", bes);
          ListTag entities = new ListTag();
 
-         for (CompoundTag saved : chunk.load) {
+         for (CompoundTag saved : chunk.entityTags) {
             CompoundTag tag = saved.copy();
-            init(tag, shift);
+            relativizeEntityPos(tag, shift);
             entities.add(tag);
          }
 
@@ -529,7 +529,7 @@ final class SchematicCapture {
       return root;
    }
 
-   static long[] init(int[] ids, int paletteSize) {
+   static long[] packIndices(int[] ids, int paletteSize) {
       if (paletteSize > 65536) {
          throw new IllegalArgumentException("A captured region has " + paletteSize + " block states; schematics are limited to 65536");
       }
@@ -552,7 +552,7 @@ final class SchematicCapture {
       return t;
    }
 
-   static void init(CompoundTag tag, BlockPos base) {
+   static void relativizeEntityPos(CompoundTag tag, BlockPos base) {
       ListTag pos = tag.getListOrEmpty("Pos");
       if (pos.size() == 3) {
          ListTag result = new ListTag();
@@ -564,7 +564,7 @@ final class SchematicCapture {
 
       for (Tag passenger : tag.getListOrEmpty("Passengers")) {
          if (passenger instanceof CompoundTag p) {
-            init(p, base);
+            relativizeEntityPos(p, base);
          }
       }
    }
@@ -587,7 +587,7 @@ final class SchematicCapture {
       final SchematicCapture.Inner_DataUtil area;
       final Int2ObjectOpenHashMap<PalettedContainer<BlockState>> init_Map = new Int2ObjectOpenHashMap<>();
       final List<CompoundTag> blockEntityTags = new ArrayList<>();
-      final List<CompoundTag> load = new ArrayList<>();
+      final List<CompoundTag> entityTags = new ArrayList<>();
 
       Inner_CachePool(ChunkPos pos, SchematicCapture.Inner_DataUtil area) {
          this.chunkPos = pos;
@@ -712,7 +712,7 @@ final class SchematicCapture {
             this.init(at.getX() + tag.getIntOr("x", 0), at.getY() + tag.getIntOr("y", 0), at.getZ() + tag.getIntOr("z", 0));
          }
 
-         for (CompoundTag tag : chunk.load) {
+         for (CompoundTag tag : chunk.entityTags) {
             ListTag pos = tag.getListOrEmpty("Pos");
             if (pos.size() == 3) {
                this.init(

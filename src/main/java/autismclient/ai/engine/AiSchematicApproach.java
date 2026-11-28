@@ -65,7 +65,7 @@ public final class AiSchematicApproach implements AiOperation {
    private Runnable click;
    private BooleanSupplier pending = () -> false;
 
-   public void init(Function<Predicate<AABB>, Vec3> look, Runnable click, BooleanSupplier pending) {
+   public void bindActions(Function<Predicate<AABB>, Vec3> look, Runnable click, BooleanSupplier pending) {
       if (!AutismLiteVariant.enabled()) {
          this.look = look;
          this.click = click;
@@ -378,7 +378,7 @@ public final class AiSchematicApproach implements AiOperation {
       }
 
       public void load_V() {
-         this.planningBudget.init(5000000000L);
+         this.planningBudget.capDeadline(5000000000L);
       }
 
       public double elapsedMs() {
@@ -410,7 +410,7 @@ public final class AiSchematicApproach implements AiOperation {
       }
 
       public static List<PlacementGoal.PlacementRequest> orderByRoute(List<PlacementGoal.PlacementRequest> candidates, Vec3 start) {
-         return AiSchematicBatchPlan.init(candidates, start, PlacementGoal.PlacementRequest::pos);
+         return AiSchematicBatchPlan.travelOrder(candidates, start, PlacementGoal.PlacementRequest::pos);
       }
 
       public AiOperation operation(int seconds, Set<Long> keep, Set<Long> avoid) {
@@ -623,7 +623,7 @@ public final class AiSchematicApproach implements AiOperation {
             return null;
          }
 
-         if (supported || floor.canBeReplaced() && floor.getFluidState().isEmpty() && this.placementGoal.read(feet.below())) {
+         if (supported || floor.canBeReplaced() && floor.getFluidState().isEmpty() && this.placementGoal.mayPlace(feet.below())) {
             double top = supported ? floorShape.max(Axis.Y) : 1.0;
             Vec3 position = Vec3.atBottomCenterOf(feet).add(0.0, top - 1.0, 0.0);
             AABB body = new AABB(position.x - 0.3, position.y, position.z - 0.3, position.x + 0.3, position.y + 1.8, position.z + 0.3);
@@ -648,7 +648,7 @@ public final class AiSchematicApproach implements AiOperation {
                   }
 
                   if (obstructs) {
-                     if (!this.placementGoal.load(cell)
+                     if (!this.placementGoal.mayBreak(cell)
                         || state.hasBlockEntity()
                         || !state.getFluidState().isEmpty()
                         || state.getDestroySpeed(this.level, cell) < 0.0F
@@ -753,7 +753,7 @@ public final class AiSchematicApproach implements AiOperation {
                }
             }
 
-            List<Integer> order = AiSchematicBatchPlan.init(available, before);
+            List<Integer> order = AiSchematicBatchPlan.dependencyOrder(available, before);
             HashMap<BlockPos, BlockState> observed = new HashMap<>();
             observed.put(probe.feet.below(), this.level.getBlockState(probe.feet.below()));
 
@@ -921,7 +921,7 @@ public final class AiSchematicApproach implements AiOperation {
          for (List<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> list : List.of(this.read_List, this.write_List)) {
             for (AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station : list) {
                if (station.probe.feet.equals(feet)) {
-                  return AiSchematicBatchPlan.load(feet, this.mc.player.position(), station.order.size(), station.supports, station.probe.clearCells.size());
+                  return AiSchematicBatchPlan.stationScore(feet, this.mc.player.position(), station.order.size(), station.supports, station.probe.clearCells.size());
                }
             }
          }
@@ -1054,11 +1054,11 @@ public final class AiSchematicApproach implements AiOperation {
       }
 
       public static <T> void fillBatch(List<T> source, int cursor, List<T> batch) {
-         AiSchematicBatchPlan.init(source, cursor, batch);
+         AiSchematicBatchPlan.promoteBatch(source, cursor, batch);
       }
 
       public static <T> Set<Long> batchKeepCells(List<T> source, int cursor, Set<Long> existing, ToLongFunction<T> position) {
-         return AiSchematicBatchPlan.init(source, cursor, existing, position);
+         return AiSchematicBatchPlan.windowCells(source, cursor, existing, position);
       }
 
       static boolean init_Z_VoxelShape(VoxelShape shape) {
@@ -1148,7 +1148,7 @@ public final class AiSchematicApproach implements AiOperation {
                      );
                      if (hit.getType() == Type.BLOCK
                         && placement.lands(hit, target.pos())
-                        && placement.init(view.getBlockState(hit.getBlockPos()), hit.getBlockPos(), true)) {
+                        && placement.accepts(view.getBlockState(hit.getBlockPos()), hit.getBlockPos(), true)) {
                         return new BlockPlacementPlanner.PlacementPlan(clipped, aim, hit, false, 0.0);
                      }
 
@@ -1250,7 +1250,7 @@ public final class AiSchematicApproach implements AiOperation {
          AiSchematicApproach.Inner_DataUtil.Inner_DataUtil_2 probe, List<Integer> order, long[] blockers, Map<BlockPos, BlockState> observed, int supports
       ) {
          double score(Vec3 worker) {
-            return AiSchematicBatchPlan.init(this.probe.feet, worker, this.order.size(), this.supports, this.probe.clearCells.size());
+            return AiSchematicBatchPlan.stationCost(this.probe.feet, worker, this.order.size(), this.supports, this.probe.clearCells.size());
          }
       }
    }

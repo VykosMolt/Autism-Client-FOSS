@@ -27,7 +27,7 @@ public final class AiLadderJump {
          for (int var16 = 0; var16 < 27; var16++) {
             AiPhysics.MoveInput var17 = var10.withJump(!var12.onGround() || var12.y() < var4 - 0.02);
             AiPhysics.MotionState var18 = AiPhysics.stepWithClimbable(var12, var17, var0);
-            if (AiPhysics.hitsStrictHazard(var0, var12, var18) || var14 - var18.y() > var0.putAt_D()) {
+            if (AiPhysics.hitsStrictHazard(var0, var12, var18) || var14 - var18.y() > var0.dropLimit()) {
                break;
             }
 
@@ -62,7 +62,7 @@ public final class AiLadderJump {
                }
 
                BlockPos var21 = BlockPos.of(var18.support());
-               if (!var0.state(var21.getX(), var21.getY(), var21.getZ())
+               if (!var0.climbableAt(var21.getX(), var21.getY(), var21.getZ())
                   && (var21.getX() != var3.getX() || var21.getZ() != var3.getZ() || !(var4 - var18.y() <= 0.51) || !(var18.y() <= var4 + 0.02))) {
                   break;
                }
@@ -84,7 +84,7 @@ public final class AiLadderJump {
       for (int var10 = var3; var10 < var2.inputs().size() + 3; var10++) {
          AiPhysics.MoveInput var11 = AiSlimeBounce.putAt_TokenCore_CacheHel_TaskStore_I(var2, var10);
          AiPhysics.MotionState var12 = AiPhysics.stepWithClimbable(var7, var11, var0);
-         if (AiPhysics.hitsStrictHazard(var0, var7, var12) || var8 - var12.y() > var0.putAt_D()) {
+         if (AiPhysics.hitsStrictHazard(var0, var7, var12) || var8 - var12.y() > var0.dropLimit()) {
             return false;
          }
 
@@ -135,7 +135,7 @@ public final class AiLadderJump {
                boolean var21 = AiJumpSolver.isInFluid(var0, var20);
                var17 |= !var21 && !var20.onGround();
                if (var17 && var21) {
-                  if (AiSlimeBounce.putAt(var0, BlockPos.containing(var20.x(), var20.y(), var20.z()), var2)
+                  if (AiSlimeBounce.columnReachable(var0, BlockPos.containing(var20.x(), var20.y(), var20.z()), var2)
                      && putAt_Z_TokenCore_TaskStat(var0, var20, var2, var10)) {
                      AiJumpManeuver var22 = new AiJumpManeuver(var16, var1, var20, 0.1, var14);
                      return new AiJumpSolver.JumpPlan(
@@ -188,7 +188,7 @@ public final class AiLadderJump {
    ) {
       boolean var5 = AiJumpSolver.isInFluid(var0, var1);
       AiJumpSolver.JumpPlan var6 = putAt_IoUtil_TextState_TokenCore_TaskStat(var0, var1, var3, var4 && !var5);
-      if (var6 == null && !var0.state(var2.getX(), var2.getY() + 1, var2.getZ())) {
+      if (var6 == null && !var0.climbableAt(var2.getX(), var2.getY() + 1, var2.getZ())) {
          for (int var10 : putAt_IArr) {
             AiLadderJump.Inner_CacheHelper var11 = putAt_TableCore_CacheHel_TokenCore_TaskStat(var0, var1, var2, var10);
             if (var11 != null) {
@@ -290,7 +290,7 @@ public final class AiLadderJump {
       var var5 = var2.inputs();
 
       for (int var6 = var3; var6 < var5.size() + 3; var6++) {
-         if (AiSlimeBounce.putAt(var0, BlockPos.containing(var1.x(), var1.y(), var1.z()), var4)) {
+         if (AiSlimeBounce.columnReachable(var0, BlockPos.containing(var1.x(), var1.y(), var1.z()), var4)) {
             return putAt_Z_TokenCore_TaskStat(var0, var1, var4, ((AiPhysics.MoveInput)var5.getLast()).yaw());
          }
 
@@ -328,7 +328,7 @@ public final class AiLadderJump {
                      break;
                   }
 
-                  if (AiSlimeBounce.putAt(var0, BlockPos.containing(var17.x(), var17.y(), var17.z()), var2)) {
+                  if (AiSlimeBounce.columnReachable(var0, BlockPos.containing(var17.x(), var17.y(), var17.z()), var2)) {
                      if (putAt_Z_TokenCore_TaskStat(var0, var17, var2, var9)) {
                         return var14;
                      }
@@ -397,7 +397,7 @@ public final class AiLadderJump {
 
       while (var5 < (var4 ? 8 : 4)) {
          AiPhysics.MotionState var6 = AiPhysics.stepWithClimbable(var1, putAt_TokenCore_CacheHel_TokenCore_TaskStat(var0, var1, var2, var3), var0);
-         if (!AiPhysics.hitsStrictHazard(var0, var1, var6) && AiSlimeBounce.putAt(var0, BlockPos.containing(var6.x(), var6.y(), var6.z()), var2)) {
+         if (!AiPhysics.hitsStrictHazard(var0, var1, var6) && AiSlimeBounce.columnReachable(var0, BlockPos.containing(var6.x(), var6.y(), var6.z()), var2)) {
             if (!(var6.vy() > 0.0)
                || !(Math.abs(var6.vx()) < 0.06)
                || !(Math.abs(var6.vz()) < 0.06)
@@ -426,7 +426,7 @@ public final class AiLadderJump {
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, float var3
    ) {
       BlockPos var4 = BlockPos.containing(var1.x(), var1.y(), var1.z());
-      if (putAt(var0, var4)) {
+      if (canClimbAt(var0, var4)) {
          return putAt_TokenCore_CacheHel_TokenCore_TaskStat(var0, var1, var2, true, var3);
       }
 
@@ -455,8 +455,8 @@ public final class AiLadderJump {
       );
    }
 
-   static boolean putAt(AiPhysics.PhysicsWorld var0, BlockPos var1) {
-      return var0.state(var1.getX(), var1.getY(), var1.getZ()) && !var0.putAt_Z_AABB(new AABB(var1).deflate(0.01));
+   static boolean canClimbAt(AiPhysics.PhysicsWorld var0, BlockPos var1) {
+      return var0.climbableAt(var1.getX(), var1.getY(), var1.getZ()) && !var0.putAt_Z_AABB(new AABB(var1).deflate(0.01));
    }
 
    static boolean fill(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2, float var3) {
@@ -466,7 +466,7 @@ public final class AiLadderJump {
    }
 
    private static boolean putAt_Z(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2) {
-      return var1.vy() < 0.0 && var1.y() - var2.getY() < 0.2 && !var0.state(var2.getX(), var2.getY() - 1, var2.getZ());
+      return var1.vy() < 0.0 && var1.y() - var2.getY() < 0.2 && !var0.climbableAt(var2.getX(), var2.getY() - 1, var2.getZ());
    }
 
    private static float putAt(AiPhysics.PhysicsWorld var0, BlockPos var1, float var2) {

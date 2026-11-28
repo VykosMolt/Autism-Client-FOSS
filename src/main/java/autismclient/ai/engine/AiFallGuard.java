@@ -47,10 +47,10 @@ public final class AiFallGuard {
    }
 
    static void init(AiPathfinder.MoveType type, boolean tellyBridge) {
-      init(type, tellyBridge, false);
+      setMoveContext(type, tellyBridge, false);
    }
 
-   static void init(AiPathfinder.MoveType type, boolean tellyBridge, boolean provedRunUp) {
+   static void setMoveContext(AiPathfinder.MoveType type, boolean tellyBridge, boolean provedRunUp) {
       init_ClassCache_SyncMan = type;
       init_Z = provedRunUp || init_Set.contains(type) || type == AiPathfinder.MoveType.BRIDGE_CELL && tellyBridge;
       LocalPlayer player = Minecraft.getInstance().player;
@@ -58,7 +58,7 @@ public final class AiFallGuard {
       init_J = System.nanoTime();
    }
 
-   public static void load() {
+   public static void stampTick() {
       LocalPlayer player = Minecraft.getInstance().player;
       write = player == null ? -1073741824 : player.tickCount;
    }
@@ -84,7 +84,7 @@ public final class AiFallGuard {
       return load_J;
    }
 
-   public static Input init(ClientInput source, Input original) {
+   public static Input filterInput(ClientInput source, Input original) {
       Minecraft mc = Minecraft.getInstance();
       LocalPlayer player = mc.player;
       if (original != null && player != null && mc.level != null && player.input == source) {
@@ -175,7 +175,7 @@ public final class AiFallGuard {
       }
    }
 
-   public static boolean init(AiPhysics.PhysicsWorld world, AiPhysics.MotionState state, AiPhysics.MoveInput input) {
+   public static boolean isSafeStep(AiPhysics.PhysicsWorld world, AiPhysics.MotionState state, AiPhysics.MoveInput input) {
       if (!input.sneak() && !input.jump() && state.onGround()) {
          int x = (int)Math.floor(state.x());
          int y = (int)Math.floor(state.y() + 0.001);

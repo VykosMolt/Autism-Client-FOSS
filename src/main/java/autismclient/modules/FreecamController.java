@@ -104,7 +104,7 @@ public final class FreecamController {
          float startingYaw = startingView.getYRot();
          float startingPitch = startingView.getXRot();
          if (RemoteViewController.isActive()) {
-            RemoteViewController.init(false);
+            RemoteViewController.stop(false);
          }
 
          reloadChunksOnExit = shouldReloadChunks;

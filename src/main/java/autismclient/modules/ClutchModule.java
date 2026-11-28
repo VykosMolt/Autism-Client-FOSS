@@ -215,7 +215,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private void syncTrailRenderer() {
-      PlacedBlockTrailRenderer.init(
+      PlacedBlockTrailRenderer.configure(
          PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH,
          this.isEnabled() && this.bool("place-animation"),
          this.bool("animation-custom"),
@@ -787,7 +787,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          if (result != null && result.consumesAction()) {
             ScaffoldModule.init_V_I_I(clutch.placedSlot, clutch.placementSequence);
             if (clutch.lastPlacedPos != null && MC.level != null && !MC.level.getBlockState(clutch.lastPlacedPos).isAir()) {
-               PlacedBlockTrailRenderer.init(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH, clutch.lastPlacedPos);
+               PlacedBlockTrailRenderer.mark(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH, clutch.lastPlacedPos);
             }
          }
 
@@ -1005,7 +1005,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                         return;
                      }
 
-                     if (forecast.unsafe() && forecast.edgeTick() > 8 && (first == null || first.plan().init_k_NetHelper().load_I() > 8)) {
+                     if (forecast.unsafe() && forecast.edgeTick() > 8 && (first == null || first.plan().firstLink().load_I() > 8)) {
                         return;
                      }
 
@@ -1153,11 +1153,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                            tower = this.planTower(forecast, slot, reserve);
                         }
 
-                        if (tower != null && (route == null || route.plan().init_k_NetHelper().load_I() >= 3)) {
+                        if (tower != null && (route == null || route.plan().firstLink().load_I() >= 3)) {
                            route = tower;
                         }
 
-                        this.dangerReturning = DangerModule.init_Z_52() && (route == null || route.tower() || route.plan().init_k_NetHelper().load_I() >= 4);
+                        this.dangerReturning = DangerModule.init_Z_52() && (route == null || route.tower() || route.plan().firstLink().load_I() >= 4);
                         if (this.dangerReturning) {
                            this.currentPlan = null;
                            this.status = "Danger returning";
@@ -1207,13 +1207,13 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               this.catchRowY = this.catchTarget.getY();
                            }
 
-                           ClutchBlockPlanner.PlacementLink link = route.plan().init_k_NetHelper();
+                           ClutchBlockPlanner.PlacementLink link = route.plan().firstLink();
                            this.ticksToPlacement = this.placementTick(link);
                            if (hand
                               && this.currentPlan != null
                               && this.currentPlan.slot == this.clutchSlot
                               && !this.recentPlacementCells.containsKey(this.currentPlan.pos)
-                              && (!route.tower() || route.plan().init_k_NetHelper().init_BlockPos().equals(this.currentPlan.pos))) {
+                              && (!route.tower() || route.plan().firstLink().init_BlockPos().equals(this.currentPlan.pos))) {
                               for (int i = 0; i < route.plan().init_List().size(); i++) {
                                  ClutchBlockPlanner.PlacementLink preparedLink = route.plan().init_List().get(i);
                                  if (preparedLink.init_BlockPos().equals(this.currentPlan.pos)) {
@@ -1247,11 +1247,11 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
                               );
                               if (alternate != null) {
                                  ClutchModule.PlacementStep candidate = this.preparePlacement(
-                                    alternate, alternate.plan().init_k_NetHelper(), this.clutchSlot
+                                    alternate, alternate.plan().firstLink(), this.clutchSlot
                                  );
                                  if (candidate != null) {
                                     route = alternate;
-                                    link = route.plan().init_k_NetHelper();
+                                    link = route.plan().firstLink();
                                     next = candidate;
                                     this.ticksToPlacement = this.placementTick(link);
                                     if (!route.plan().init_Z_2()) {
@@ -1892,7 +1892,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
 
          for (int pass = own ? 0 : 2; pass < 3 && plan == null; pass++) {
             ClutchBlockPlanner.PlacementWorld world = this.placementWorld(assumed, range, rejectedStarts, pass < 2 ? this.supportRowY() : 2147483647);
-            plan = ClutchBlockPlanner.init(
+            plan = ClutchBlockPlanner.planClutch(
                bodies,
                eyeHeight,
                range - 0.05,
@@ -1928,7 +1928,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          }
 
          double reach = MC.player.blockInteractionRange() - 0.03;
-         ClutchBlockPlanner.ClutchPlan urgent = ClutchBlockPlanner.init(
+         ClutchBlockPlanner.ClutchPlan urgent = ClutchBlockPlanner.planUrgent(
             bodies,
             MC.player.getEyeHeight(),
             reach - 0.05,
@@ -2020,17 +2020,17 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
          }
 
          @Override
-         public boolean init(int x, int y, int z) {
+         public boolean allowedStart(int x, int y, int z) {
             return rejectedStarts.isEmpty() || !rejectedStarts.contains(new BlockPos(x, y, z));
          }
 
          @Override
-         public boolean load(int x, int y, int z) {
+         public boolean supportAt(int x, int y, int z) {
             return this.isAssumed(x, y, z) || ClutchModule.this.worldCache.isSupport(x, y, z, sneaking);
          }
 
          @Override
-         public boolean read(int x, int y, int z) {
+         public boolean canPlaceAt(int x, int y, int z) {
             if (y <= maxRow && !this.isAssumed(x, y, z) && ClutchModule.this.worldCache.isReplaceable(x, y, z)) {
                if (!ClutchModule.this.recentPlacementCells.isEmpty() && ClutchModule.this.recentPlacementCells.containsKey(new BlockPos(x, y, z))) {
                   return false;
@@ -2828,7 +2828,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
             }
 
             this.disengageTicks++;
-            RotationMath.Rotation resume = ScaffoldModule.read_ce_DataUtil();
+            RotationMath.Rotation resume = ScaffoldModule.resumeRotation();
             boolean bridge = this.scaffoldActive();
             if (this.slotsReleased) {
                this.finishDisengage(bridge);
@@ -2853,7 +2853,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    }
 
    private boolean scaffoldActive() {
-      return ScaffoldModule.read_ce_DataUtil() != null || scaffoldEnabled();
+      return ScaffoldModule.resumeRotation() != null || scaffoldEnabled();
    }
 
    private void finishDisengage(boolean bridge) {
@@ -2935,7 +2935,7 @@ public final class ClutchModule extends Module implements SilentMovementCoordina
    @Override
    public void onGameLeft() {
       this.resetAll();
-      PlacedBlockTrailRenderer.load(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH);
+      PlacedBlockTrailRenderer.clearSource(PlacedBlockTrailRenderer.Inner_DataUtil.CLUTCH);
    }
 
    private void resetAll() {

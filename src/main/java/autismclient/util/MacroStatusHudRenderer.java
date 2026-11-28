@@ -52,7 +52,7 @@ public final class MacroStatusHudRenderer {
       if (textRenderer == null) {
          return 0;
       } else {
-         return !isVisibleCached(textRenderer, panelWidth, maxLines) ? 0 : autismclient.gui.ui.layout.InfoCardRenderer.init(cachedLines.size());
+         return !isVisibleCached(textRenderer, panelWidth, maxLines) ? 0 : autismclient.gui.ui.layout.InfoCardRenderer.height(cachedLines.size());
       }
    }
 
@@ -60,7 +60,7 @@ public final class MacroStatusHudRenderer {
       GuiGraphicsExtractor context, Font textRenderer, int x, int y, int panelWidth, int maxLines, boolean topBorder, boolean bottomBorder, boolean rightBorder
    ) {
       return textRenderer != null && isVisibleCached(textRenderer, panelWidth, maxLines)
-         ? autismclient.gui.ui.layout.InfoCardRenderer.init(
+         ? autismclient.gui.ui.layout.InfoCardRenderer.render(
             context, textRenderer, x, y, panelWidth, cachedTitle, cachedLines, THEME.run(), 0, true, rightBorder, topBorder, bottomBorder
          )
          : 0;

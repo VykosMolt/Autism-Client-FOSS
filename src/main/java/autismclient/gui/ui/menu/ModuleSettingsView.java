@@ -48,8 +48,8 @@ final class ModuleSettingsView {
    private static final int load_I = 40;
    private static final int read = 62;
    private final ModulesMenuController controller;
-   private final Map<String, String> init_Map = new HashMap<>();
-   private final Map<String, ModuleSettingsView.NameListSummary> load_Map = new HashMap<>();
+   private final Map<String, String> summaryCache = new HashMap<>();
+   private final Map<String, ModuleSettingsView.NameListSummary> nameListCache = new HashMap<>();
    private String query = "";
    private boolean classic;
 
@@ -62,7 +62,7 @@ final class ModuleSettingsView {
    }
 
    void onModuleOpened(Module module) {
-      this.load_Map.clear();
+      this.nameListCache.clear();
       this.query = "";
       this.controller.setScroll("settings", 0.0F);
    }
@@ -82,7 +82,7 @@ final class ModuleSettingsView {
       }
 
       for (Setting<?, ?> option : module.settings()) {
-         if (option.isVisible() && this.init_Z_Setting(option)) {
+         if (option.isVisible() && this.isAvailable(option)) {
             return true;
          }
       }
@@ -90,7 +90,7 @@ final class ModuleSettingsView {
       return false;
    }
 
-   private boolean init_Z_Setting(Setting<?, ?> option) {
+   private boolean isAvailable(Setting<?, ?> option) {
       Minecraft minecraft = Minecraft.getInstance();
       boolean inWorld = minecraft != null && minecraft.level != null;
       boolean inContainer = this.controller.getHost().screen() instanceof AbstractContainerScreen;
@@ -99,17 +99,17 @@ final class ModuleSettingsView {
 
    void render(SyncManager context, NetHelper content, Module module, float frameSeconds) {
       if (!this.hasVisibleSettings(module)) {
-         this.load(context, content, module, frameSeconds);
+         this.renderNoSettings(context, content, module, frameSeconds);
       } else {
          UiTheme theme = context.init_TableIndex();
          if (this.classic) {
-            this.load(context, content, module, theme);
+            this.renderCompactHeader(context, content, module, theme);
          } else {
-            this.init_V_SyncManager_3(context, content, module, theme);
+            this.renderClassicHeader(context, content, module, theme);
          }
 
          int headerH = this.headerHeight();
-         int groupH = load();
+         int groupH = groupHeaderHeight();
          NetHelper listArea = NetHelper.init(content.read(), content.write() + headerH, content.update(), content.sync() - headerH);
          if (!module.settingsHint().isBlank()) {
             context.init_PoolEntry()
@@ -125,9 +125,9 @@ final class ModuleSettingsView {
             listArea = preview.listArea();
          }
 
-         List<ModuleSettingsView.SettingRow> rows = this.init_List_Module(module);
-         int contentHeight = this.init_I_List(rows) + 4;
-         int scroll = this.init_I_Str("settings", listArea, contentHeight, frameSeconds);
+         List<ModuleSettingsView.SettingRow> rows = this.settingRows(module);
+         int contentHeight = this.rowsHeight(rows) + 4;
+         int scroll = this.scrollFor("settings", listArea, contentHeight, frameSeconds);
          int y = listArea.write() + 2 - scroll;
          this.controller.pushClip(context, listArea);
 
@@ -138,16 +138,16 @@ final class ModuleSettingsView {
                   if (bounds.load() >= listArea.write() && bounds.write() <= listArea.load()) {
                      boolean collapsed = this.controller.isCollapsed(module, row.group());
                      boolean hovered = bounds.init_Z(context.read(), context.write());
-                     GroupHeaderRenderer.init(context, bounds, row.group(), collapsed, hovered);
+                     GroupHeaderRenderer.render(context, bounds, row.group(), collapsed, hovered);
                      this.controller.addHit(ModulesMenuController.HitType.GROUP, bounds, module, null, row.group(), -1);
                   }
 
                   y += groupH + 1;
-               } else if (row.init_Setting() != null) {
-                  int rowH = this.init_I_Setting(row.init_Setting());
+               } else if (row.setting() != null) {
+                  int rowH = this.rowHeightFor(row.setting());
                   NetHelper bounds = NetHelper.init(listArea.read() + 3, y, listArea.update() - 6 - (contentHeight > listArea.sync() ? 6 : 0), rowH);
                   if (bounds.load() >= listArea.write() && bounds.write() <= listArea.load()) {
-                     this.init_V_SyncManager_4(context, module, row.init_Setting(), bounds);
+                     this.renderSettingRow(context, module, row.setting(), bounds);
                   }
 
                   y += rowH + 1;
@@ -164,13 +164,13 @@ final class ModuleSettingsView {
       }
    }
 
-   private void load(SyncManager context, NetHelper content, Module module, float frameSeconds) {
+   private void renderNoSettings(SyncManager context, NetHelper content, Module module, float frameSeconds) {
       int pad = 8;
       int controlH = UiDensityMetrics.scaledHeight(13);
       int rowH = controlH + 8;
       int x = content.read() + pad;
       int contentHeight = this.contentHeight(module);
-      int scroll = this.init_I_Str("settings", content, contentHeight, frameSeconds);
+      int scroll = this.scrollFor("settings", content, contentHeight, frameSeconds);
       int w = Math.max(1, content.update() - pad * 2 - (contentHeight > content.sync() ? 6 : 0));
       int y = content.write() + pad - scroll;
       this.controller.pushClip(context, content);
@@ -231,7 +231,7 @@ final class ModuleSettingsView {
       this.drawScrollbar(context, content, contentHeight, scroll);
    }
 
-   private void init_V_SyncManager_3(SyncManager context, NetHelper content, Module module, UiTheme theme) {
+   private void renderClassicHeader(SyncManager context, NetHelper content, Module module, UiTheme theme) {
       int headerH = this.headerHeight();
       NetHelper strip = NetHelper.init(content.read(), content.write(), content.update(), headerH - 1);
       int controlH = UiDensityMetrics.scaledHeight(13);
@@ -274,7 +274,7 @@ final class ModuleSettingsView {
       return UiDensityMetrics.scaledHeight(13) + (this.classic ? 10 : 3);
    }
 
-   private void load(SyncManager context, NetHelper content, Module module, UiTheme theme) {
+   private void renderCompactHeader(SyncManager context, NetHelper content, Module module, UiTheme theme) {
       int headerH = this.headerHeight();
       int controlH = UiDensityMetrics.scaledHeight(13);
       int gap = 2;
@@ -323,18 +323,18 @@ final class ModuleSettingsView {
       );
    }
 
-   private static int load() {
+   private static int groupHeaderHeight() {
       return UiDensityMetrics.scaledHeight(12);
    }
 
-   private List<ModuleSettingsView.SettingRow> init_List_Module(Module module) {
+   private List<ModuleSettingsView.SettingRow> settingRows(Module module) {
       List<ModuleSettingsView.SettingRow> rows = new ArrayList<>();
       Map<String, List<Setting<?, ?>>> groups = new LinkedHashMap<>();
       String query = this.query.trim().toLowerCase(Locale.ROOT);
 
       for (Setting<?, ?> option : module.settings()) {
          if (option.isVisible()
-            && this.init_Z_Setting(option)
+            && this.isAvailable(option)
             && (query.isEmpty() || option.label().toLowerCase(Locale.ROOT).contains(query) || option.description().toLowerCase(Locale.ROOT).contains(query))) {
             groups.computeIfAbsent(option.group() == null ? "" : option.group(), key -> new ArrayList<>()).add(option);
          }
@@ -371,7 +371,7 @@ final class ModuleSettingsView {
          int rows = 1 + (module.hasActivationToggle() ? 1 : 0) + (this.classic ? 0 : 1);
          return 24 + rows * (controlH + 8) + UiDensityMetrics.scaledHeight(12) + controlH;
       } else {
-         return this.headerHeight() + this.hintHeight(module) + this.init_I_List(this.init_List_Module(module)) + 4;
+         return this.headerHeight() + this.hintHeight(module) + this.rowsHeight(this.settingRows(module)) + 4;
       }
    }
 
@@ -379,18 +379,18 @@ final class ModuleSettingsView {
       return module.settingsHint().isBlank() ? 0 : UiDensityMetrics.scaledHeight(12) + 6;
    }
 
-   private int init_I_List(List<ModuleSettingsView.SettingRow> rows) {
+   private int rowsHeight(List<ModuleSettingsView.SettingRow> rows) {
       int height = 0;
-      int groupH = load();
+      int groupH = groupHeaderHeight();
 
       for (ModuleSettingsView.SettingRow row : rows) {
-         height += (row.group() != null ? groupH : this.init_I_Setting(row.init_Setting())) + 1;
+         height += (row.group() != null ? groupH : this.rowHeightFor(row.setting())) + 1;
       }
 
       return height;
    }
 
-   private static String init_Str_Setting(Setting<?, ?> option) {
+   private static String tooltipOf(Setting<?, ?> option) {
       String description = option.description();
       if (description != null && !description.isBlank()) {
          return description.trim().split("\\s+").length > 5 ? "" : description;
@@ -399,16 +399,16 @@ final class ModuleSettingsView {
       }
    }
 
-   private int init_I_Setting(Setting<?, ?> option) {
+   private int rowHeightFor(Setting<?, ?> option) {
       int row = UiDensityMetrics.scaledHeight(14);
       if (!this.classic) {
          return row;
       } else {
-         return init_Str_Setting(option).isBlank() ? row + 4 : row + 14;
+         return tooltipOf(option).isBlank() ? row + 4 : row + 14;
       }
    }
 
-   private void init_V_SyncManager_4(SyncManager context, Module module, Setting<?, ?> option, NetHelper bounds) {
+   private void renderSettingRow(SyncManager context, Module module, Setting<?, ?> option, NetHelper bounds) {
       UiTheme theme = context.init_TableIndex();
       boolean hovered = bounds.init_Z(context.read(), context.write());
       float hoverT = autismclient.gui.ui.HoverTransitionCache.sample("set:" + module.id() + ":" + option.id(), hovered);
@@ -434,7 +434,7 @@ final class ModuleSettingsView {
             plainToggle
                ? ModulesMenuController.togglePillBounds(bounds, bounds.init()).update()
                : (
-                  load_Z_Setting(option)
+                  isRangeLike(option)
                      ? Math.min(ModulesMenuController.scaled(190), Math.max(ModulesMenuController.scaled(110), bounds.update() * 3 / 5))
                      : Math.min(ModulesMenuController.scaled(120), Math.max(ModulesMenuController.scaled(90), bounds.update() / 3))
                )
@@ -442,7 +442,7 @@ final class ModuleSettingsView {
       int labelX = bounds.read() + 5;
       NetHelper control = NetHelper.init(bounds.init() - 4 - controlW, bounds.write() + (bounds.sync() - controlH) / 2, controlW, controlH);
       int labelW = Math.max(40, control.read() - 4 - labelX);
-      String tip = init_Str_Setting(option);
+      String tip = tooltipOf(option);
       boolean described = this.classic && !tip.isBlank();
       if (option.kind() == Kind.ENTITY_TYPE_LIST && option.displayMode() == DisplayMode.DEFAULT) {
          int labelTextW = Math.max(context.init_PoolEntry().measureWidth(option.label()), described ? context.init_PoolEntry().measureWidth(tip) : 0);
@@ -464,13 +464,13 @@ final class ModuleSettingsView {
       }
 
       if (option.displayMode() == DisplayMode.FILE_PICKER) {
-         this.init(context, module, option, control, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, ModulesMenuController.HitType.FILE_PICKER);
+         this.renderActionControl(context, module, option, control, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, ModulesMenuController.HitType.FILE_PICKER);
       } else if (option.displayMode() == DisplayMode.READONLY_SUMMARY) {
-         this.update(context, module, option, control);
+         this.renderSummaryControl(context, module, option, control);
       } else if (macroDisplay) {
-         this.init(context, module, option, control, "Select", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, ModulesMenuController.HitType.MACRO_PICKER);
+         this.renderActionControl(context, module, option, control, "Select", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, ModulesMenuController.HitType.MACRO_PICKER);
       } else if (option.displayMode() == DisplayMode.RANGE_SLIDER) {
-         this.read(context, module, option, control);
+         this.renderRangeControl(context, module, option, control);
       } else {
          switch (option.kind()) {
             case BOOLEAN:
@@ -486,20 +486,20 @@ final class ModuleSettingsView {
                break;
             case INTEGER:
             case DOUBLE:
-               this.load(context, module, option, control);
+               this.renderNumberControl(context, module, option, control);
                break;
             case ENUM:
-               int dropW = this.init_I(module, option, control.update());
+               int dropW = this.dropdownWidth(module, option, control.update());
                NetHelper dropdown = NetHelper.init(control.init() - dropW, control.write(), dropW, control.sync());
                DropdownMenu.renderTrigger(context, dropdown, module.displayValue(option), dropdown.init_Z(context.read(), context.write()), false);
                this.controller.addHit(ModulesMenuController.HitType.DROPDOWN, dropdown, module, option, "", -1);
                break;
             case STRING:
-               this.init(context, control, module, option, "<empty>");
+               this.renderTextField(context, control, module, option, "<empty>");
                this.controller.addHit(ModulesMenuController.HitType.TEXT_FIELD, control, module, option, "", -1);
                break;
             case COLOR:
-               this.write(context, module, option, control);
+               this.renderFilePicker(context, module, option, control);
                break;
             case STRING_LIST:
             case ITEM_LIST:
@@ -510,7 +510,7 @@ final class ModuleSettingsView {
                int editW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Edit"));
                NetHelper edit = NetHelper.init(control.init() - editW, control.write(), editW, control.sync());
                NetHelper value = NetHelper.init(control.read(), control.write(), Math.max(1, control.update() - editW - 4), control.sync());
-               this.update(context, module, option, value);
+               this.renderSummaryControl(context, module, option, value);
                autismclient.gui.f.b.CachePool.init(
                   context, edit, "Edit", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, edit.init_Z(context.read(), context.write()), false
                );
@@ -521,7 +521,7 @@ final class ModuleSettingsView {
                int pickW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Pick"));
                NetHelper edit = NetHelper.init(control.init() - pickW, control.write(), pickW, control.sync());
                NetHelper value = NetHelper.init(control.read(), control.write(), Math.max(1, control.update() - pickW - 4), control.sync());
-               this.update(context, module, option, value);
+               this.renderSummaryControl(context, module, option, value);
                autismclient.gui.f.b.CachePool.init(
                   context, edit, "Pick", autismclient.gui.f.b.CachePool.Inner_DataUtil.read, edit.init_Z(context.read(), context.write()), false
                );
@@ -555,7 +555,7 @@ final class ModuleSettingsView {
       }
    }
 
-   private int init_I(Module module, Setting<?, ?> option, int maxWidth) {
+   private int dropdownWidth(Module module, Setting<?, ?> option, int maxWidth) {
       Font font = this.controller.getHost().font();
       int widest = k.init(font, module.displayValue(option), autismclient.gui.f.a.DataUtil.init, 0);
 
@@ -566,9 +566,9 @@ final class ModuleSettingsView {
       return Math.min(maxWidth, Math.max(56, widest + 26));
    }
 
-   private void load(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
+   private void renderNumberControl(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
       if (option.displayMode() == DisplayMode.NUMERIC_TEXT_FIELD) {
-         this.init(context, control, module, option, "");
+         this.renderTextField(context, control, module, option, "");
          this.controller.addHit(ModulesMenuController.HitType.TEXT_FIELD, control, module, option, "", -1);
       } else {
          double current = option.kind() == Kind.INTEGER
@@ -586,7 +586,7 @@ final class ModuleSettingsView {
          NetHelper value = NetHelper.init(control.init() - unitSpace - valueW, control.write(), valueW, control.sync());
          double ratio = (current - option.sliderMin()) / Math.max(1.0E-4, option.sliderMax() - option.sliderMin());
          SliderRenderer.draw(context, slider, ratio, slider.init_Z(context.read(), context.write()));
-         this.init(context, value, module, option, "");
+         this.renderTextField(context, value, module, option, "");
          if (!unit.isEmpty()) {
             context.init_PoolEntry()
                .drawTrimmed(
@@ -604,7 +604,7 @@ final class ModuleSettingsView {
       }
    }
 
-   private void init(SyncManager context, NetHelper bounds, Module module, Setting<?, ?> option, String placeholder) {
+   private void renderTextField(SyncManager context, NetHelper bounds, Module module, Setting<?, ?> option, String placeholder) {
       boolean focused = this.controller.isEditing(module, option);
       String shown = focused ? this.controller.textEdit.text : module.value(option.id());
       if (focused) {
@@ -626,7 +626,7 @@ final class ModuleSettingsView {
       );
    }
 
-   private void read(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
+   private void renderRangeControl(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
       String unit = option.unit() == null ? "" : option.unit();
       ValueRange range = this.currentRange(module, option);
       String label = range.format(option.step()) + (unit.isEmpty() ? "" : " " + unit);
@@ -650,7 +650,7 @@ final class ModuleSettingsView {
       this.controller.addHit(ModulesMenuController.HitType.RANGE_SLIDER, slider, module, option, "", -1);
    }
 
-   private void write(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
+   private void renderFilePicker(SyncManager context, Module module, Setting<?, ?> option, NetHelper control) {
       UiTheme theme = context.init_TableIndex();
       int pickW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth("Pick"));
       NetHelper pick = NetHelper.init(control.init() - pickW, control.write(), pickW, control.sync());
@@ -676,7 +676,7 @@ final class ModuleSettingsView {
       this.controller.addHit(ModulesMenuController.HitType.COLOR_PICKER, value, module, option, "", -1);
    }
 
-   private void init(
+   private void renderActionControl(
       SyncManager context,
       Module module,
       Setting<?, ?> option,
@@ -688,22 +688,22 @@ final class ModuleSettingsView {
       int buttonW = UiDensityMetrics.buttonWidthForText(context.init_PoolEntry().measureWidth(buttonText));
       NetHelper button = NetHelper.init(control.init() - buttonW, control.write(), buttonW, control.sync());
       NetHelper value = NetHelper.init(control.read(), control.write(), Math.max(1, control.update() - buttonW - 4), control.sync());
-      this.update(context, module, option, value);
+      this.renderSummaryControl(context, module, option, value);
       autismclient.gui.f.b.CachePool.init(context, button, buttonText, tone, button.init_Z(context.read(), context.write()), false);
       Setting<?, ?> linked = option.linkedActionId().isBlank() ? option : module.setting(option.linkedActionId());
       this.controller.addHit(hitType, button, module, linked == null ? option : linked, "", -1);
    }
 
-   private void update(SyncManager context, Module module, Setting<?, ?> option, NetHelper bounds) {
+   private void renderSummaryControl(SyncManager context, Module module, Setting<?, ?> option, NetHelper bounds) {
       UiTheme theme = context.init_TableIndex();
       String summary = this.settingSummary(module, option);
       boolean empty = summary == null || summary.isBlank() || "Empty".equals(summary) || "No file selected".equals(summary);
       String shown = empty ? (summary != null && !summary.isBlank() ? summary : "Empty") : summary;
       int availableWidth = Math.max(1, bounds.update() - 4);
       if (option.kind() == Kind.ENTITY_TYPE_LIST) {
-         ModuleSettingsView.NameListSummary entities = this.init_BufferHelper_DataU_Str(module.value(option.id()));
-         if (entities.init_I() > 1 && context.init_PoolEntry().measureWidth(shown) > availableWidth) {
-            shown = entities.init_I() + " entries";
+         ModuleSettingsView.NameListSummary entities = this.nameListSummary(module.value(option.id()));
+         if (entities.count() > 1 && context.init_PoolEntry().measureWidth(shown) > availableWidth) {
+            shown = entities.count() + " entries";
          }
       }
 
@@ -737,13 +737,13 @@ final class ModuleSettingsView {
                case BLOCK_LIST:
                case SOUND_EVENT_LIST:
                case STORAGE_LIST:
-                  var10000 = this.init_Str_Module(module, option, value, () -> listSummary(value));
+                  var10000 = this.cachedSummary(module, option, value, () -> listSummary(value));
                   break;
                case ENTITY_TYPE_LIST:
-                  var10000 = this.init_BufferHelper_DataU_Str(value).init_Str();
+                  var10000 = this.nameListSummary(value).text();
                   break;
                case PACKET_LIST:
-                  var10000 = this.init_Str_Module(module, option, value, () -> init_Str_Setting_Str(option, value));
+                  var10000 = this.cachedSummary(module, option, value, () -> packetFilterSummary(option, value));
                   break;
                default:
                   var10000 = option.format(value);
@@ -763,12 +763,12 @@ final class ModuleSettingsView {
       }
    }
 
-   private ModuleSettingsView.NameListSummary init_BufferHelper_DataU_Str(String value) {
-      if (this.load_Map.size() > 512) {
-         this.load_Map.clear();
+   private ModuleSettingsView.NameListSummary nameListSummary(String value) {
+      if (this.nameListCache.size() > 512) {
+         this.nameListCache.clear();
       }
 
-      return this.load_Map
+      return this.nameListCache
          .computeIfAbsent(
             value,
             raw -> {
@@ -778,7 +778,7 @@ final class ModuleSettingsView {
                   Identifier id = Identifier.tryParse(entry);
                   String name = id == null
                      ? entry
-                     : BuiltInRegistries.ENTITY_TYPE.getOptional(id).map(type -> type.getDescription().getString()).orElseGet(() -> init_Str_Str(entry));
+                     : BuiltInRegistries.ENTITY_TYPE.getOptional(id).map(type -> type.getDescription().getString()).orElseGet(() -> prettifyEntityId(entry));
                   names.add(name);
                }
 
@@ -787,7 +787,7 @@ final class ModuleSettingsView {
          );
    }
 
-   private static String init_Str_Str(String entry) {
+   private static String prettifyEntityId(String entry) {
       String path = entry.startsWith("minecraft:") ? entry.substring("minecraft:".length()) : entry;
       if (path.indexOf(58) >= 0) {
          return path;
@@ -808,15 +808,15 @@ final class ModuleSettingsView {
       return name.toString();
    }
 
-   private String init_Str_Module(Module module, Setting<?, ?> option, String value, Supplier<String> compute) {
-      if (this.init_Map.size() > 512) {
-         this.init_Map.clear();
+   private String cachedSummary(Module module, Setting<?, ?> option, String value, Supplier<String> compute) {
+      if (this.summaryCache.size() > 512) {
+         this.summaryCache.clear();
       }
 
-      return this.init_Map.computeIfAbsent(module.id() + " " + option.id() + " " + value, ignored -> compute.get());
+      return this.summaryCache.computeIfAbsent(module.id() + " " + option.id() + " " + value, ignored -> compute.get());
    }
 
-   private static String init_Str_Setting_Str(Setting<?, ?> option, String value) {
+   private static String packetFilterSummary(Setting<?, ?> option, String value) {
       boolean c2s = PacketFilterListCodec.isC2sOption(option == null ? "" : option.id());
       Set<Class<? extends Packet<?>>> packets = PacketFilterListCodec.parse(value, c2s);
       List<String> invalid = PacketFilterListCodec.invalidEntries(value, c2s);
@@ -857,7 +857,7 @@ final class ModuleSettingsView {
       }
    }
 
-   private static boolean load_Z_Setting(Setting<?, ?> option) {
+   private static boolean isRangeLike(Setting<?, ?> option) {
       boolean var10000;
       switch (option.displayMode()) {
          case RANGE_SLIDER:
@@ -896,7 +896,7 @@ final class ModuleSettingsView {
          double ratio = (double)(mx - hit.bounds().read()) / Math.max(1, hit.bounds().update());
          ratio = Math.max(0.0, Math.min(1.0, ratio));
          if (hit.type() == ModulesMenuController.HitType.RANGE_SLIDER) {
-            this.init_V_ConfigStore_Stream_D(hit, ratio);
+            this.applySliderRatio(hit, ratio);
          } else {
             double value = option.sliderMin() + ratio * (option.sliderMax() - option.sliderMin());
             double step = Math.max(1.0E-4, option.step());
@@ -910,7 +910,7 @@ final class ModuleSettingsView {
       }
    }
 
-   private void init_V_ConfigStore_Stream_D(ModulesMenuController.HitRegion hit, double ratio) {
+   private void applySliderRatio(ModulesMenuController.HitRegion hit, double ratio) {
       Module module = hit.module();
       Setting<?, ?> option = hit.setting();
       ValueRange current = this.currentRange(module, option);
@@ -934,7 +934,7 @@ final class ModuleSettingsView {
       }
    }
 
-   private int init_I_Str(String key, NetHelper viewport, int contentHeight, float frameSeconds) {
+   private int scrollFor(String key, NetHelper viewport, int contentHeight, float frameSeconds) {
       int max = Math.max(0, contentHeight - viewport.sync());
       this.controller.recordScrollMetrics(key, viewport.sync(), max);
       float target = ModulesMenuController.clampFloat(this.controller.scrollTarget(key), 0.0F, max);
@@ -946,9 +946,9 @@ final class ModuleSettingsView {
       this.controller.drawScrollbar("settings", context, viewport, contentHeight, scroll);
    }
 
-   private record NameListSummary(String init_Str, int init_I) {
+   private record NameListSummary(String text, int count) {
    }
 
-   private record SettingRow(String group, Setting<?, ?> init_Setting) {
+   private record SettingRow(String group, Setting<?, ?> setting) {
    }
 }

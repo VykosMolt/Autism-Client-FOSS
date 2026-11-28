@@ -364,7 +364,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             this.stopBlockHit(false);
          }
 
-         this.shieldHitWindow.load();
+         this.shieldHitWindow.clear();
       }
 
       if ("block-hit-after-hit".equals(settingId)) {
@@ -468,7 +468,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private void runPreMovementTick() {
-      this.shieldHitWindow.init(this.timerSpeedRatio());
+      this.shieldHitWindow.setTimeScale(this.timerSpeedRatio());
       this.releasePendingUnblock();
       if (MC.gui.screen() == null && MC.gui.overlay() == null && (AutismLiteVariant.enabled() || !autismclient.ai.aP.load_Z())) {
          if (!SilentMovementCoordinator.isSafeWalkActive() && !ScaffoldModule.update_Z_5()) {
@@ -503,7 +503,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
                boolean throwable = this.holdsAllowedItem();
                if (autismclient.util.KeyMappingControl.of(MC.options.keyAttack).autism$isActuallyDown() && this.candidateInReach()) {
-                  autismclient.util.RecentCombatTracker.init();
+                  autismclient.util.RecentCombatTracker.markCombat();
                }
 
                boolean wrongItem = !this.heldItemPassesFilter();
@@ -531,7 +531,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
                      this.trackTargetMotion(this.currentTarget);
                      this.clickScheduler.setActive(this.currentTarget != null && this.withinPreReach(this.currentTarget));
                      if (this.currentTarget != null && this.withinPreReach(this.currentTarget)) {
-                        autismclient.util.RecentCombatTracker.init();
+                        autismclient.util.RecentCombatTracker.markCombat();
                      }
 
                      this.tickSwitchBack();
@@ -642,7 +642,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       LivingEntity target = this.currentTarget;
       if (target != null && this.humanAimAnchor != null) {
          autismclient.util.CombatAimEngine hand = this.getAimEngine();
-         boolean opening = autismclient.util.RecentCombatTracker.init(target);
+         boolean opening = autismclient.util.RecentCombatTracker.isFreshTarget(target);
          hand.setMissChance(this.integer("miss-chance") * 0.01);
          Vec3 eyes = MC.player.getEyePosition();
          AABB targetBox = target.getBoundingBox();
@@ -788,7 +788,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             && target != null
             && this.humanAimAnchor != null
             && this.aimTuning.forceWhiff
-            && !autismclient.util.RecentCombatTracker.init(target)
+            && !autismclient.util.RecentCombatTracker.isFreshTarget(target)
             && this.ticksSinceLastAttack != 0
             && this.ticksSinceMissSwing != 0
             && this.missState.canPlanMiss()
@@ -929,7 +929,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
    private boolean playerWantsToUseItem() {
       if (!AutismLiteVariant.enabled()) {
-         if (autismclient.util.CombatInteractionController.load()) {
+         if (autismclient.util.CombatInteractionController.isBlockMode()) {
             return false;
          }
 
@@ -1355,7 +1355,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             motion = new Vec3(motion.x, Math.max(motion.y, ((AutismLivingEntityAccessor)MC.player).autism$getJumpPower()), motion.z);
          }
 
-         return this.cachedTicksUntilFalling = ShieldHitWindowHelper.init(MC.player.getBoundingBox(), motion, (body, step) -> Entity.collideBoundingBox(MC.player, step, body, MC.level, List.of()));
+         return this.cachedTicksUntilFalling = ShieldHitWindowHelper.ticksUntilFalling(MC.player.getBoundingBox(), motion, (body, step) -> Entity.collideBoundingBox(MC.player, step, body, MC.level, List.of()));
       } else {
          return this.cachedTicksUntilFalling;
       }
@@ -1401,11 +1401,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private boolean holdsAllowedItem() {
-      return this.allowedItemCache.init(AutismSessionState.getInstance().getClientTick(), this::holdsAllowedItemNow);
+      return this.allowedItemCache.valueFor(AutismSessionState.getInstance().getClientTick(), this::holdsAllowedItemNow);
    }
 
    private boolean heldItemPassesFilter() {
-      return this.heldItemFilterCache.init(AutismSessionState.getInstance().getClientTick(), this::heldItemPassesFilterNow);
+      return this.heldItemFilterCache.valueFor(AutismSessionState.getInstance().getClientTick(), this::heldItemPassesFilterNow);
    }
 
    private boolean heldItemPassesFilterNow() {
@@ -1709,7 +1709,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private boolean heldItemPassesBedBudgetFilter() {
-      return AutismLiteVariant.enabled() ? this.heldItemPassesFilterNow() : !this.heldItemFilter.isEnabled() || this.heldItemPassesFilterNow() || this.heldItemFilter.accepts(BedNukerModule.init_ItemStack());
+      return AutismLiteVariant.enabled() ? this.heldItemPassesFilterNow() : !this.heldItemFilter.isEnabled() || this.heldItemPassesFilterNow() || this.heldItemFilter.accepts(BedNukerModule.toolStack());
    }
 
    static boolean recentlySeen(boolean relevant, long ticksSinceSeen) {
@@ -2190,7 +2190,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             Vec3 eyes = MC.player.getEyePosition();
             double distance = Math.sqrt(target.getBoundingBox().distanceToSqr(eyes));
             boolean legalSwing = distance > this.attackReach() || rotationHitsBox(eyes, target.getBoundingBox(), rotation);
-            if (!autismclient.util.RecentCombatTracker.init(target) && this.clickScheduler.clickDueNow() && legalSwing && distance <= this.attackReach() + this.preReachFor(target)
+            if (!autismclient.util.RecentCombatTracker.isFreshTarget(target) && this.clickScheduler.clickDueNow() && legalSwing && distance <= this.attackReach() + this.preReachFor(target)
                )
              {
                boolean nearMiss = distance <= this.attackReach();
@@ -2352,7 +2352,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          return rotation;
       }
 
-      if (autismclient.util.RecentCombatTracker.init(target)) {
+      if (autismclient.util.RecentCombatTracker.isFreshTarget(target)) {
          this.missState.clear();
          return rotation;
       }
@@ -2710,7 +2710,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
             if (piercing != null && !MC.gameMode.isSpectator()) {
                Compat263.piercingAttack(MC.gameMode, piercing);
-               autismclient.util.RecentCombatTracker.init(MC.player, target);
+               autismclient.util.RecentCombatTracker.onAttack(MC.player, target);
                Compat263.swing(MC.player, InteractionHand.MAIN_HAND);
                autismclient.util.ClickRateTracker.recordLeftClick();
                dispatched.run();
@@ -2734,9 +2734,9 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
             if ("Packet".equals(this.choice("attack-mode"))) {
                if (MC.gameMode.isSpectator()) {
                   MC.getConnection().send(new ServerboundAttackPacket(target.getId()));
-                  autismclient.util.RecentCombatTracker.init(MC.player, target);
+                  autismclient.util.RecentCombatTracker.onAttack(MC.player, target);
                } else {
-                  autismclient.util.CombatAttackDispatcher.init(target, () -> MC.gameMode.attack(MC.player, target), dispatched);
+                  autismclient.util.CombatAttackDispatcher.dispatch(target, () -> MC.gameMode.attack(MC.player, target), dispatched);
                }
 
                Compat263.swing(MC.player, InteractionHand.MAIN_HAND);
@@ -2747,7 +2747,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
 
                return true;
             } else {
-               if (!autismclient.util.CombatAttackDispatcher.init(this.id(), hit, dispatched)) {
+               if (!autismclient.util.CombatAttackDispatcher.queueAttack(this.id(), hit, dispatched)) {
                   return false;
                }
 
@@ -2946,7 +2946,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
    }
 
    private float swingOffsetFor(float delay, Entity target) {
-      return autismclient.util.RecentCombatTracker.init(target) ? 0.0F : Math.max(this.swingOffset, -0.08F * delay);
+      return autismclient.util.RecentCombatTracker.isFreshTarget(target) ? 0.0F : Math.max(this.swingOffset, -0.08F * delay);
    }
 
    private void rerollSwingOffset() {
@@ -3265,7 +3265,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       this.pendingUnblockReleaseCount = 0;
       this.plannedBlockHand = null;
       this.blockThreat = null;
-      this.shieldHitWindow.load();
+      this.shieldHitWindow.clear();
       this.fallTicksCacheTick = -2147483648;
       this.cachedTicksUntilFalling = 2147483647;
       this.currentTarget = null;
@@ -3448,11 +3448,11 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       String debugSummary(boolean reset) {
          String out = this.reasonCounts.toString()
             + " engine accepted="
-            + this.patternEngine.read_J()
+            + this.patternEngine.resetAt()
             + " refused="
-            + this.patternEngine.update()
+            + this.patternEngine.stopAt()
             + " obsolete="
-            + this.patternEngine.sync();
+            + this.patternEngine.nextAt();
          if (reset) {
             this.reasonCounts.clear();
          }
@@ -3784,7 +3784,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       private int cachedTick = -2147483648;
       private boolean cachedValue;
 
-      boolean init(int clientTick, BooleanSupplier live) {
+      boolean valueFor(int clientTick, BooleanSupplier live) {
          if (clientTick != this.cachedTick) {
             this.cachedTick = clientTick;
             this.cachedValue = live.getAsBoolean();

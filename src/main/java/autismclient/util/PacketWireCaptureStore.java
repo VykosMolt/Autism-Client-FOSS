@@ -51,7 +51,7 @@ public final class PacketWireCaptureStore {
       }
    }
 
-   public static PacketWireCaptureStore.PacketCapture init(Packet<?> packet) {
+   public static PacketWireCaptureStore.PacketCapture captureFor(Packet<?> packet) {
       return packet == null ? null : packetCaptures.get(packet);
    }
 

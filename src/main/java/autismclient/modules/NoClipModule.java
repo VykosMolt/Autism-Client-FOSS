@@ -85,7 +85,7 @@ public final class NoClipModule extends Module {
       this.init_V_30();
    }
 
-   public static boolean init_Z_34() {
+   public static boolean noClipActive() {
       NoClipModule module = init_av;
       return module != null && module.isEnabled() && !aD.read_Z() && !module.load();
    }

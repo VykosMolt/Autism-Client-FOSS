@@ -7,22 +7,22 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 final class QueuedAttackBuffer {
-   private final ArrayDeque<QueuedAttackBuffer.QueuedAttack> init = new ArrayDeque<>();
+   private final ArrayDeque<QueuedAttackBuffer.QueuedAttack> pending = new ArrayDeque<>();
 
    boolean queue(Object target, Runnable attack, Runnable receipt) {
-      if (this.init.size() >= 4) {
+      if (this.pending.size() >= 4) {
          return false;
       }
 
-      this.init.addLast(new QueuedAttackBuffer.QueuedAttack(target, Objects.requireNonNull(attack), receipt == null ? () -> {} : receipt, null));
+      this.pending.addLast(new QueuedAttackBuffer.QueuedAttack(target, Objects.requireNonNull(attack), receipt == null ? () -> {} : receipt, null));
       return true;
    }
 
    boolean enqueue(Runnable swing) {
-      QueuedAttackBuffer.QueuedAttack last = this.init.peekLast();
+      QueuedAttackBuffer.QueuedAttack last = this.pending.peekLast();
       if (last != null && last.read == null) {
-         this.init.removeLast();
-         this.init.addLast(new QueuedAttackBuffer.QueuedAttack(last.target, last.action, last.load, swing));
+         this.pending.removeLast();
+         this.pending.addLast(new QueuedAttackBuffer.QueuedAttack(last.target, last.action, last.load, swing));
          return true;
       } else {
          return false;
@@ -30,11 +30,11 @@ final class QueuedAttackBuffer {
    }
 
    boolean hasQueued() {
-      return !this.init.isEmpty();
+      return !this.pending.isEmpty();
    }
 
    int size() {
-      return this.init.size();
+      return this.pending.size();
    }
 
    int init_I_Predicate(Predicate<Object> valid) {
@@ -42,8 +42,8 @@ final class QueuedAttackBuffer {
    }
 
    int dispatch(Predicate<Object> valid, Consumer<Object> sent) {
-      ArrayList<QueuedAttackBuffer.QueuedAttack> hits = new ArrayList<>(this.init);
-      this.init.clear();
+      ArrayList<QueuedAttackBuffer.QueuedAttack> hits = new ArrayList<>(this.pending);
+      this.pending.clear();
       int count = 0;
 
       for (QueuedAttackBuffer.QueuedAttack hit : hits) {
@@ -63,7 +63,7 @@ final class QueuedAttackBuffer {
    }
 
    void clear() {
-      this.init.clear();
+      this.pending.clear();
    }
 
    static boolean isCompatibleOwner(String owner) {
@@ -74,37 +74,37 @@ final class QueuedAttackBuffer {
    }
 
    static final class HoldWindow {
-      private long init_J;
-      private boolean init_Z;
+      private long until;
+      private boolean holding;
 
-      void init_V(long now) {
-         this.init(now, 350000000L);
+      void openDefault(long now) {
+         this.open(now, 350000000L);
       }
 
-      void init(long now, long duration) {
-         this.init_J = now + Math.max(0L, duration);
-         this.init_Z = true;
+      void open(long now, long duration) {
+         this.until = now + Math.max(0L, duration);
+         this.holding = true;
       }
 
-      boolean init_Z() {
-         return this.init_Z;
+      boolean isHolding() {
+         return this.holding;
       }
 
-      boolean init_Z(long now) {
-         if (this.init_Z && now >= this.init_J) {
-            this.load();
+      boolean isHoldingAt(long now) {
+         if (this.holding && now >= this.until) {
+            this.clear();
          }
 
-         return this.init_Z;
+         return this.holding;
       }
 
-      void init_V() {
-         this.load();
+      void release() {
+         this.clear();
       }
 
-      void load() {
-         this.init_Z = false;
-         this.init_J = 0L;
+      void clear() {
+         this.holding = false;
+         this.until = 0L;
       }
    }
 }

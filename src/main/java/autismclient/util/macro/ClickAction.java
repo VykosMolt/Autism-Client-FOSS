@@ -45,7 +45,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
    }
 
    @Override
-   public void load(boolean v) {
+   public void setWaitForGuiBefore(boolean v) {
       this.waitForGuiBefore = v;
    }
 
@@ -55,7 +55,7 @@ public class ClickAction implements PacketOrderAware, MacroAction, GuiWaitAware 
    }
 
    @Override
-   public void read(boolean v) {
+   public void setWaitForGuiAfter(boolean v) {
       this.waitForGuiAfter = v;
    }
 

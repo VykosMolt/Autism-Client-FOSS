@@ -254,7 +254,7 @@ public class ButtonNode extends LayoutNode {
 
          ConnectedButtonRenderer.init(ui, bounds, this.label, this.leadingIcon, hovered, this.toggleProgress, this.connectedEdges);
       } else {
-         ConnectedButtonRenderer.init(ui, bounds, this.label, this.leadingIcon, this.resolveButtonTone(), hovered, this.connectedEdges);
+         ConnectedButtonRenderer.render(ui, bounds, this.label, this.leadingIcon, this.resolveButtonTone(), hovered, this.connectedEdges);
       }
    }
 

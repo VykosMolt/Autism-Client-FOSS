@@ -31,11 +31,11 @@ public final class AiServerIntel {
    private AiServerIntel() {
    }
 
-   static String init(boolean connectedToServer) {
+   static String notConnectedError(boolean connectedToServer) {
       return connectedToServer ? null : "Not connected to a multiplayer server; join one first (singleplayer has no server intelligence)";
    }
 
-   static List<AiServerIntel.PluginReport> init(
+   static List<AiServerIntel.PluginReport> buildReports(
       List<String> plugins,
       Map<String, List<String>> commands,
       Map<String, String> evidence,
@@ -139,7 +139,7 @@ public final class AiServerIntel {
       int included = 0;
       if (plugins != null) {
          for (AiServerIntel.PluginReport plugin : plugins) {
-            JsonObject entry = init(plugin);
+            JsonObject entry = reportJson(plugin);
             if (entries.toString().length() + entry.toString().length() > charBudget) {
                break;
             }
@@ -161,7 +161,7 @@ public final class AiServerIntel {
       return out;
    }
 
-   private static JsonObject init(AiServerIntel.PluginReport plugin) {
+   private static JsonObject reportJson(AiServerIntel.PluginReport plugin) {
       JsonObject entry = new JsonObject();
       entry.addProperty("name", plugin.displayName());
       if (!plugin.key().isBlank()) {
@@ -245,14 +245,14 @@ public final class AiServerIntel {
          }
 
          if (value != null && !value.isBlank()) {
-            out.add(init(value.trim(), 120));
+            out.add(truncate(value.trim(), 120));
          }
       }
 
       return out;
    }
 
-   private static String init(String value, int max) {
+   private static String truncate(String value, int max) {
       if (value == null) {
          return "";
       } else {
@@ -260,14 +260,14 @@ public final class AiServerIntel {
       }
    }
 
-   private static String read(String value) {
+   private static String nullToEmpty(String value) {
       return value == null ? "" : value;
    }
 
    public static AiOperation create(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       final String address = serverAddress(mc);
-      String precondition = init(!address.isBlank());
+      String precondition = notConnectedError(!address.isBlank());
       if (precondition != null) {
          throw new IllegalArgumentException(precondition);
       }
@@ -280,7 +280,7 @@ public final class AiServerIntel {
       }
 
       final long startRevision = AutismConfig.getGlobal().pluginScanRevision();
-      final String brand = load(mc);
+      final String brand = serverBrand(mc);
       overlay.startAutoScan();
       return new AiOperation() {
          final long scanDeadline = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -321,11 +321,11 @@ public final class AiServerIntel {
             this.waitTicks++;
             if (!scanning && this.stableTicks >= 5) {
                if (entry != null) {
-                  return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Plugin scan results cached for " + address, this.init(entry, false));
+                  return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Plugin scan results cached for " + address, this.resultData(entry, false));
                }
 
                if (this.sawScanning || revision != startRevision) {
-                  return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Plugin scan completed with no detected plugins", this.init(null, false));
+                  return AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Plugin scan completed with no detected plugins", this.resultData(null, false));
                }
 
                if (this.waitTicks % 20 == 0) {
@@ -336,7 +336,7 @@ public final class AiServerIntel {
             if (System.nanoTime() > this.scanDeadline) {
                this.cancelled = true;
                return AiGameOperations.result(
-                  AiOperation.Status.TIMED_OUT, "Plugin scan did not finish in time; returning cached partial results", this.init(entry, true)
+                  AiOperation.Status.TIMED_OUT, "Plugin scan did not finish in time; returning cached partial results", this.resultData(entry, true)
                );
             } else {
                JsonObject progress = new JsonObject();
@@ -346,8 +346,8 @@ public final class AiServerIntel {
             }
          }
 
-         private JsonObject init(AutismConfig.PluginScanCacheEntry entry, boolean partial) {
-            return AiServerIntel.init(address, entry, false, partial, brand);
+         private JsonObject resultData(AutismConfig.PluginScanCacheEntry entry, boolean partial) {
+            return AiServerIntel.cacheEntryJson(address, entry, false, partial, brand);
          }
 
          @Override
@@ -377,7 +377,7 @@ public final class AiServerIntel {
                if (value != null && value.scannedAtMs > newest) {
                   newest = value.scannedAtMs;
                   entry = value;
-                  address = !read(value.serverAddress).isBlank() ? value.serverAddress.trim().toLowerCase(Locale.ROOT) : candidate.getKey().split("\\|", 2)[0];
+                  address = !nullToEmpty(value.serverAddress).isBlank() ? value.serverAddress.trim().toLowerCase(Locale.ROOT) : candidate.getKey().split("\\|", 2)[0];
                }
             }
          }
@@ -394,7 +394,7 @@ public final class AiServerIntel {
          out.addProperty("hint", "No plugin scan cached; run client:plugin_scan while connected to the server");
          return out;
       } else {
-         return init(address, entry, true, false, load(mc));
+         return cacheEntryJson(address, entry, true, false, serverBrand(mc));
       }
    }
 
@@ -407,7 +407,7 @@ public final class AiServerIntel {
       return server != null && server.ip != null && !server.ip.isBlank() ? server.ip.trim().toLowerCase(Locale.ROOT) : "";
    }
 
-   private static String load(Minecraft mc) {
+   private static String serverBrand(Minecraft mc) {
       try {
          return mc != null && mc.getConnection() != null && mc.getConnection().serverBrand() != null ? mc.getConnection().serverBrand() : "";
       } catch (Throwable ignored) {
@@ -415,7 +415,7 @@ public final class AiServerIntel {
       }
    }
 
-   private static JsonObject init(String address, AutismConfig.PluginScanCacheEntry entry, boolean cached, boolean partial, String brand) {
+   private static JsonObject cacheEntryJson(String address, AutismConfig.PluginScanCacheEntry entry, boolean cached, boolean partial, String brand) {
       JsonObject out = new JsonObject();
       out.addProperty("cached", cached);
       if (partial) {
@@ -437,18 +437,18 @@ public final class AiServerIntel {
       }
 
       out.addProperty("present", true);
-      if (!read(entry.serverName).isBlank()) {
+      if (!nullToEmpty(entry.serverName).isBlank()) {
          out.addProperty("serverName", entry.serverName);
       }
 
       out.addProperty("scannedAtMs", entry.scannedAtMs);
-      out.addProperty("scanStatus", read(entry.scanStatus).isBlank() ? "UNKNOWN" : entry.scanStatus);
+      out.addProperty("scanStatus", nullToEmpty(entry.scanStatus).isBlank() ? "UNKNOWN" : entry.scanStatus);
       out.addProperty("fresh", entry.scannedAtMs > 0L && System.currentTimeMillis() - entry.scannedAtMs < 5184000000L);
       out.add(
          "probes",
          AiJson.objectOf("total", entry.totalProbes, "answered", entry.answeredProbes, "retried", entry.retriedProbes, "failed", entry.failedProbes)
       );
-      List<AiServerIntel.PluginReport> plugins = init(entry.plugins, entry.commands, entry.evidence, entry.channels, entry.guis, entry.confidence, 40);
+      List<AiServerIntel.PluginReport> plugins = buildReports(entry.plugins, entry.commands, entry.evidence, entry.channels, entry.guis, entry.confidence, 40);
       out.addProperty("pluginCount", plugins.size());
       JsonObject bounded = init_JsonObject(plugins, 36000);
 
@@ -481,15 +481,15 @@ public final class AiServerIntel {
                array.add(
                   AiJson.objectOf(
                      "plugin",
-                     read(fingerprint.plugin()),
+                     nullToEmpty(fingerprint.plugin()),
                      "key",
-                     read(fingerprint.load()),
+                     nullToEmpty(fingerprint.load()),
                      "channels",
                      init_List(fingerprint.channels(), 8),
                      "score",
                      fingerprint.score(),
                      "basis",
-                     read(fingerprint.read())
+                     nullToEmpty(fingerprint.read())
                   )
                );
             }

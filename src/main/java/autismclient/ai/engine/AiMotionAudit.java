@@ -165,7 +165,7 @@ public final class AiMotionAudit {
 
             lastPos = pos;
             lastYaw = yaw;
-            AiDecisionAudit.init(mc, clip(activity, 90) + (pendingNote.isEmpty() ? "" : " | " + pendingNote));
+            AiDecisionAudit.auditTick(mc, clip(activity, 90) + (pendingNote.isEmpty() ? "" : " | " + pendingNote));
             pendingNote = "";
          }
       }
@@ -174,7 +174,7 @@ public final class AiMotionAudit {
    public static void finishOperation() {
       if (ENABLED && operationId != null) {
          endPause();
-         AiDecisionAudit.init(operationId);
+         AiDecisionAudit.logSummary(operationId);
          if (operationTicks > 0) {
             AutismClientAddon.LOG
                .info(

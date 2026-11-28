@@ -35,10 +35,10 @@ public final class StatusToastCardRenderer {
    public static void init(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper requestedBounds, String title, String message, String detail, int titleColor
    ) {
-      init(context, requestedBounds, title, message, detail, titleColor, -1);
+      render(context, requestedBounds, title, message, detail, titleColor, -1);
    }
 
-   public static void init(
+   public static void render(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper requestedBounds,
       String title,

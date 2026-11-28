@@ -37,7 +37,7 @@ public abstract class AutismConnectScreenUiMixin extends Screen {
 
    @Inject(method = "init", at = @At("TAIL"))
    private void autism$addReconnectToggle(CallbackInfo ci) {
-      if (!aD.init_Z() && AutoReconnectController.read()) {
+      if (!aD.init_Z() && AutoReconnectController.canReconnect()) {
          int w = 148;
          int h = 16;
          this.autism$reconnectToggle = new StyledButton(

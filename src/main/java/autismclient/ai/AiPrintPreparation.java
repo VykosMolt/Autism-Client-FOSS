@@ -66,9 +66,9 @@ final class AiPrintPreparation implements AiOperation {
    private AiOperation printOperation;
    private AiOperation.Result finalResult;
    private long progressSteps;
-   private long update = 1L;
-   private long sync;
-   private long flush;
+   private long totalSteps = 1L;
+   private long maxTickNanos;
+   private long finishedNanos;
    private int cellCount;
    private int skippedCells;
    private JsonArray preflightIssues = new JsonArray();
@@ -83,14 +83,14 @@ final class AiPrintPreparation implements AiOperation {
          this.verify = AiJson.getBoolean(args, "verify", true);
          int seconds = args.has("timeoutSeconds") ? AiJson.getInt(args, "timeoutSeconds", 0) : 0;
          this.deadlineNanos = seconds > 0 ? System.nanoTime() + seconds * 1000000000L : 0L;
-         this.pendingTask = this.worker.init(this::decodeSchematic);
+         this.pendingTask = this.worker.submit(this::decodeSchematic);
       } else {
          throw new IllegalArgumentException("schematic is mutually exclusive with blocks/blueprint; pass one source");
       }
    }
 
    private AiPrintPreparation.DecodedSchematic decodeSchematic() throws IOException {
-      AiPrintPreparation.FileStamp stamp = AiPrintPreparation.FileStamp.read(this.schematicPath);
+      AiPrintPreparation.FileStamp stamp = AiPrintPreparation.FileStamp.of(this.schematicPath);
       AiSchematic.LoadedSchematic loaded = AiSchematic.load(
          this.schematicPath, this.origin, this.options.rotation(), this.options.mirror(), this.skipUnknown, 2097152
       );
@@ -104,7 +104,7 @@ final class AiPrintPreparation implements AiOperation {
       LinkedHashSet<BlockPos> neighbors = new LinkedHashSet<>(AiBuilder.collectLeafNeighborPositions(blueprint));
       neighbors.addAll(AiSchematicReadiness.read(blueprint));
       neighbors.addAll(AiSchematicReadiness.load(blueprint));
-      if (!stamp.equals(AiPrintPreparation.FileStamp.read(this.schematicPath))) {
+      if (!stamp.equals(AiPrintPreparation.FileStamp.of(this.schematicPath))) {
          throw new IOException("Schematic changed while it was being read; start the build again");
       } else {
          return new AiPrintPreparation.DecodedSchematic(
@@ -116,7 +116,7 @@ final class AiPrintPreparation implements AiOperation {
       }
    }
 
-   private AiPrintPreparation.NormalizedSchematic init(AiPrintPreparation.DecodedSchematic input, Map<Long, BlockState> snapshot) throws IOException {
+   private AiPrintPreparation.NormalizedSchematic normalize(AiPrintPreparation.DecodedSchematic input, Map<Long, BlockState> snapshot) throws IOException {
       AiBuilder.Blueprint blueprint = AiBuilder.normalizeSchematicBlueprint(input.blueprint(), snapshot);
       requireBuildableCells(blueprint);
       AiBuilder.checkNotCancelled();
@@ -128,7 +128,7 @@ final class AiPrintPreparation implements AiOperation {
       AiBuilder.checkNotCancelled();
       AiBuilder.Blueprint construction = AiBuilder.stripPoweredLevers(blueprint);
       AiPrintPreparation.SourceIndex source = AiPrintPreparation.SourceIndex.of(blueprint);
-      if (!input.stamp().equals(AiPrintPreparation.FileStamp.read(this.schematicPath))) {
+      if (!input.stamp().equals(AiPrintPreparation.FileStamp.of(this.schematicPath))) {
          throw new IOException("Schematic changed during preparation; start the build again");
       }
 
@@ -158,7 +158,7 @@ final class AiPrintPreparation implements AiOperation {
       long started = System.nanoTime();
       AiOperation.Result result = this.tickPreparation();
       if (preparing) {
-         this.sync = Math.max(this.sync, System.nanoTime() - started);
+         this.maxTickNanos = Math.max(this.maxTickNanos, System.nanoTime() - started);
       }
 
       if (!preparing && !result.terminal()) {
@@ -167,10 +167,10 @@ final class AiPrintPreparation implements AiOperation {
 
       JsonObject data = JsonParser.parseString(result.dataJson()).getAsJsonObject();
       data.addProperty("preparationDone", this.progressSteps);
-      data.addProperty("preparationTotal", this.update);
+      data.addProperty("preparationTotal", this.totalSteps);
       data.addProperty("filePreparationDone", this.progressSteps);
-      data.addProperty("maxPreparationTickMs", this.sync / 1000000.0);
-      data.addProperty("preparationWallMs", ((this.flush == 0L ? System.nanoTime() : this.flush) - this.startedNanos) / 1000000L);
+      data.addProperty("maxPreparationTickMs", this.maxTickNanos / 1000000.0);
+      data.addProperty("preparationWallMs", ((this.finishedNanos == 0L ? System.nanoTime() : this.finishedNanos) - this.startedNanos) / 1000000L);
       String message = result.message();
       if (this.skippedCells > 0) {
          data.addProperty("preflightSkippedCells", this.skippedCells);
@@ -191,19 +191,19 @@ final class AiPrintPreparation implements AiOperation {
       }
 
       if (this.cancelled) {
-         return this.init(AiOperation.Status.CANCELLED, "Build cancelled", AiFailure.CANCELLED);
+         return this.fail(AiOperation.Status.CANCELLED, "Build cancelled", AiFailure.CANCELLED);
       }
 
       if (!this.worldGuard.matches(this.client.level, this.client.player)) {
-         return this.init(AiOperation.Status.CANCELLED, "World or player changed", AiFailure.CANCELLED);
+         return this.fail(AiOperation.Status.CANCELLED, "World or player changed", AiFailure.CANCELLED);
       }
 
       if (!this.client.player.isAlive()) {
-         return this.init(AiOperation.Status.FAILED, "The player died", AiFailure.EXECUTION_FAILED);
+         return this.fail(AiOperation.Status.FAILED, "The player died", AiFailure.EXECUTION_FAILED);
       }
 
       if (this.deadlineNanos != 0L && System.nanoTime() >= this.deadlineNanos) {
-         return this.init(AiOperation.Status.TIMED_OUT, "Requested build deadline reached", AiFailure.TIMEOUT);
+         return this.fail(AiOperation.Status.TIMED_OUT, "Requested build deadline reached", AiFailure.TIMEOUT);
       }
 
       if (this.printOperation != null) {
@@ -227,14 +227,14 @@ final class AiPrintPreparation implements AiOperation {
                      this.pendingTask = null;
                      this.progressSteps++;
                      this.cellCount = this.decoded.blueprint().cells().size();
-                     this.update = this.progressSteps + this.decoded.leafNeighbors().size() + this.cellCount + 2L;
+                     this.totalSteps = this.progressSteps + this.decoded.leafNeighbors().size() + this.cellCount + 2L;
                      this.leafScan = new AiPrintPreparation.LeafSnapshotScan(this.decoded.leafNeighbors());
                      this.phase = AiPrintPreparation.PreparationPhase.LEAVES;
                      break;
                   case LEAVES:
                      int before = this.leafScan.nextIndex;
                      this.leafScan
-                        .init(
+                        .advance(
                            4096,
                            System.nanoTime() + 2000000L,
                            pos -> AiTerrain.isLoaded(this.client.level, pos) ? this.client.level.getBlockState(pos) : Blocks.AIR.defaultBlockState()
@@ -243,7 +243,7 @@ final class AiPrintPreparation implements AiOperation {
                      if (this.leafScan.isComplete()) {
                         Map<Long, BlockState> snapshot = this.leafScan.snapshot();
                         AiPrintPreparation.DecodedSchematic input = this.decoded;
-                        this.pendingTask = this.worker.init(() -> this.init(input, snapshot));
+                        this.pendingTask = this.worker.submit(() -> this.normalize(input, snapshot));
                         this.phase = AiPrintPreparation.PreparationPhase.NORMALIZE;
                      }
                      break;
@@ -281,8 +281,8 @@ final class AiPrintPreparation implements AiOperation {
                      }
 
                      if (this.cellCount == 0) {
-                        this.flush = System.nanoTime();
-                        return this.init(AiOperation.Status.FAILED, "No cells in the selected schematic can be placed at this site", AiFailure.PLACEMENT_IMPOSSIBLE);
+                        this.finishedNanos = System.nanoTime();
+                        return this.fail(AiOperation.Status.FAILED, "No cells in the selected schematic can be placed at this site", AiFailure.PLACEMENT_IMPOSSIBLE);
                      }
 
                      this.materialPlan = new AiPrintPreparation.MaterialPlan(this.normalized.stockPlan(), this.normalized.source().keys());
@@ -293,7 +293,7 @@ final class AiPrintPreparation implements AiOperation {
                         this.phase = AiPrintPreparation.PreparationPhase.HANDOFF;
                      } else {
                         int beforeWrite = this.materialPlan.nextCell;
-                        this.materialPlan.init(4096, System.nanoTime() + 2000000L, this.client.level);
+                        this.materialPlan.scanSlice(4096, System.nanoTime() + 2000000L, this.client.level);
                         this.progressSteps = this.progressSteps + (this.materialPlan.nextCell - beforeWrite);
                         if (this.materialPlan.isDone()) {
                            this.missingMaterials = this.computeMissingMaterials();
@@ -308,7 +308,7 @@ final class AiPrintPreparation implements AiOperation {
                               this.worldScan = new AiPrintPreparation.StockScan(
                                  this.startPos, this.normalized.blueprint().origin(), this.normalized.source()
                               );
-                              this.update = Math.max(this.update, this.progressSteps + this.worldScan.totalVolume() + 1L);
+                              this.totalSteps = Math.max(this.totalSteps, this.progressSteps + this.worldScan.totalVolume() + 1L);
                               this.phase = AiPrintPreparation.PreparationPhase.STOCK;
                            }
                         }
@@ -320,7 +320,7 @@ final class AiPrintPreparation implements AiOperation {
                      } else {
                         long beforeUpdate = this.worldScan.scannedBlocks;
                         this.worldScan
-                           .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.client.level, pos), this.client.level::getBlockState);
+                           .scanSlice(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.client.level, pos), this.client.level::getBlockState);
                         this.progressSteps = this.progressSteps + (this.worldScan.scannedBlocks - beforeUpdate);
                         if (this.worldScan.done) {
                            this.phase = AiPrintPreparation.PreparationPhase.HANDOFF;
@@ -354,7 +354,7 @@ final class AiPrintPreparation implements AiOperation {
                         this.worldScan = new AiPrintPreparation.StockScan(
                            this.startPos, this.normalized.blueprint().origin(), this.normalized.source()
                         );
-                        this.update = Math.max(this.update, this.progressSteps + this.worldScan.totalVolume() + 1L);
+                        this.totalSteps = Math.max(this.totalSteps, this.progressSteps + this.worldScan.totalVolume() + 1L);
                         this.phase = AiPrintPreparation.PreparationPhase.STOCK;
                      }
                }
@@ -414,8 +414,8 @@ final class AiPrintPreparation implements AiOperation {
                this.printOperation = operation;
             }
 
-            this.progressSteps = this.update = Math.max(this.progressSteps, this.update);
-            this.flush = System.nanoTime();
+            this.progressSteps = this.totalSteps = Math.max(this.progressSteps, this.totalSteps);
+            this.finishedNanos = System.nanoTime();
             this.decoded = null;
             this.normalized = null;
             this.leafScan = null;
@@ -428,14 +428,14 @@ final class AiPrintPreparation implements AiOperation {
                   : "Starting construction. Skipping " + this.skippedCells + (this.skippedCells == 1 ? " cell" : " cells") + " that cannot be placed as saved."
             );
          } catch (InterruptedException failure) {
-            return this.init(AiOperation.Status.CANCELLED, "Schematic preparation interrupted", AiFailure.CANCELLED);
+            return this.fail(AiOperation.Status.CANCELLED, "Schematic preparation interrupted", AiFailure.CANCELLED);
          } catch (CancellationException failure) {
-            return this.init(AiOperation.Status.CANCELLED, "Schematic preparation cancelled", AiFailure.CANCELLED);
+            return this.fail(AiOperation.Status.CANCELLED, "Schematic preparation cancelled", AiFailure.CANCELLED);
          } catch (ExecutionException failure) {
             Throwable cause = failure.getCause();
-            return this.init(AiOperation.Status.FAILED, "Could not prepare schematic: " + cause.getMessage(), AiFailure.EXECUTION_FAILED);
+            return this.fail(AiOperation.Status.FAILED, "Could not prepare schematic: " + cause.getMessage(), AiFailure.EXECUTION_FAILED);
          } catch (RuntimeException failure) {
-            return this.init(AiOperation.Status.FAILED, "Could not prepare schematic: " + failure.getMessage(), AiFailure.EXECUTION_FAILED);
+            return this.fail(AiOperation.Status.FAILED, "Could not prepare schematic: " + failure.getMessage(), AiFailure.EXECUTION_FAILED);
          }
       }
    }
@@ -454,7 +454,7 @@ final class AiPrintPreparation implements AiOperation {
 
    private AiOperation.Result load() {
       this.worker.close();
-      this.flush = System.nanoTime();
+      this.finishedNanos = System.nanoTime();
       this.finalResult = AiOperation.Result.failed(
          AiFailure.MISSING_MATERIALS,
          "Missing materials for the schematic; "
@@ -496,10 +496,10 @@ final class AiPrintPreparation implements AiOperation {
       );
    }
 
-   private AiOperation.Result init(AiOperation.Status status, String message, AiFailure failure) {
+   private AiOperation.Result fail(AiOperation.Status status, String message, AiFailure failure) {
       this.worker.close();
-      if (this.flush == 0L) {
-         this.flush = System.nanoTime();
+      if (this.finishedNanos == 0L) {
+         this.finishedNanos = System.nanoTime();
       }
 
       if (this.printOperation != null) {
@@ -541,7 +541,7 @@ final class AiPrintPreparation implements AiOperation {
    static final class MaterialPlan {
       final AiBuilder.Blueprint blueprint;
       final Set<Long> sourceKeys;
-      final Set<BlockPos> load = new HashSet<>();
+      final Set<BlockPos> foundations = new HashSet<>();
       private final Map<AiPrintPreparation.MaterialPlan.RequirementKey, AiCellMaterials.MaterialRequirement> requirementsByKey = new LinkedHashMap<>();
       int nextCell;
 
@@ -550,11 +550,11 @@ final class AiPrintPreparation implements AiOperation {
          this.sourceKeys = source;
       }
 
-      void init(int limit, LevelReader world) {
-         this.init(limit, 9223372036854775807L, world);
+      void advance(int limit, LevelReader world) {
+         this.scanSlice(limit, 9223372036854775807L, world);
       }
 
-      void init(int limit, long deadline, LevelReader world) {
+      void scanSlice(int limit, long deadline, LevelReader world) {
          int first = this.nextCell;
          int end = Math.min(this.blueprint.cells().size(), this.nextCell + Math.max(1, limit));
 
@@ -565,12 +565,12 @@ final class AiPrintPreparation implements AiOperation {
                BlockState live = world.getBlockState(at);
                if (!AiBuilder.matchesSchematicCell(cell, live)) {
                   for (AiCellMaterials.MaterialRequirement requirement : AiCellMaterials.requirements(cell, live, world.getFluidState(at.above()).is(FluidTags.WATER))) {
-                     this.init(requirement);
+                     this.addRequirement(requirement);
                   }
 
                   BlockPos foundation = AiSchematicActions.foundationFor(cell, at, world, this.sourceKeys);
-                  if (foundation != null && this.load.add(foundation)) {
-                     this.init(
+                  if (foundation != null && this.foundations.add(foundation)) {
+                     this.addRequirement(
                         new AiCellMaterials.MaterialRequirement(AiCellMaterials.CellAction.PLACE, "minecraft:dirt", Items.DIRT, 1, AiCellMaterials.MaterialUse.CONSUME)
                      );
                   }
@@ -579,7 +579,7 @@ final class AiPrintPreparation implements AiOperation {
          }
       }
 
-      private void init(AiCellMaterials.MaterialRequirement requirement) {
+      private void addRequirement(AiCellMaterials.MaterialRequirement requirement) {
          AiPrintPreparation.MaterialPlan.RequirementKey key = new AiPrintPreparation.MaterialPlan.RequirementKey(requirement.itemSpec(), requirement.use());
          AiCellMaterials.MaterialRequirement previous = this.requirementsByKey.get(key);
          if (previous == null) {
@@ -649,9 +649,9 @@ final class AiPrintPreparation implements AiOperation {
       private final List<AiPrintPreparation.StockScan.ScanRegion> regions = new ArrayList<>(2);
       private final Set<Long> sourceKeys;
       int regionIndex;
-      int load;
-      int read;
-      int write;
+      int cursorX;
+      int cursorY;
+      int cursorZ;
       long scannedBlocks;
       boolean done;
       BlockPos stockPos;
@@ -682,26 +682,26 @@ final class AiPrintPreparation implements AiOperation {
       private void resetCursorToRegion() {
          if (this.regionIndex < this.regions.size()) {
             BlockPos min = this.regions.get(this.regionIndex).min();
-            this.load = min.getX();
-            this.read = min.getY();
-            this.write = min.getZ();
+            this.cursorX = min.getX();
+            this.cursorY = min.getY();
+            this.cursorZ = min.getZ();
          }
       }
 
-      void init(int limit, Predicate<BlockPos> loaded, Function<BlockPos, BlockState> state) {
-         this.init(limit, 9223372036854775807L, loaded, state);
+      void advance(int limit, Predicate<BlockPos> loaded, Function<BlockPos, BlockState> state) {
+         this.scanSlice(limit, 9223372036854775807L, loaded, state);
       }
 
-      void init(int limit, long deadline, Predicate<BlockPos> loaded, Function<BlockPos, BlockState> state) {
+      void scanSlice(int limit, long deadline, Predicate<BlockPos> loaded, Function<BlockPos, BlockState> state) {
          for (int inSlice = 0; inSlice < Math.max(1, limit) && !this.isDone() && (inSlice == 0 || System.nanoTime() < deadline); inSlice++) {
             this.scannedBlocks++;
-            BlockPos at = new BlockPos(this.load, this.read, this.write);
+            BlockPos at = new BlockPos(this.cursorX, this.cursorY, this.cursorZ);
             BlockPos max = this.regions.get(this.regionIndex).max();
-            if (++this.load > max.getX()) {
-               this.load = this.regions.get(this.regionIndex).min().getX();
-               if (++this.read > max.getY()) {
-                  this.read = this.regions.get(this.regionIndex).min().getY();
-                  if (++this.write > max.getZ()) {
+            if (++this.cursorX > max.getX()) {
+               this.cursorX = this.regions.get(this.regionIndex).min().getX();
+               if (++this.cursorY > max.getY()) {
+                  this.cursorY = this.regions.get(this.regionIndex).min().getY();
+                  if (++this.cursorZ > max.getZ()) {
                      this.regionIndex++;
                      this.resetCursorToRegion();
                   }
@@ -736,7 +736,7 @@ final class AiPrintPreparation implements AiOperation {
    }
 
    record FileStamp(long size, FileTime modified, Object fileKey) {
-      static AiPrintPreparation.FileStamp read(Path file) throws IOException {
+      static AiPrintPreparation.FileStamp of(Path file) throws IOException {
          BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
          return new AiPrintPreparation.FileStamp(attributes.size(), attributes.lastModifiedTime(), attributes.fileKey());
       }
@@ -751,11 +751,11 @@ final class AiPrintPreparation implements AiOperation {
          this.positions = positions;
       }
 
-      void init(int limit, Function<BlockPos, BlockState> state) {
-         this.init(limit, 9223372036854775807L, state);
+      void advance(int limit, Function<BlockPos, BlockState> state) {
+         this.advance(limit, 9223372036854775807L, state);
       }
 
-      void init(int limit, long deadline, Function<BlockPos, BlockState> state) {
+      void advance(int limit, long deadline, Function<BlockPos, BlockState> state) {
          int first = this.nextIndex;
          int end = Math.min(this.positions.size(), this.nextIndex + Math.max(1, limit));
 
@@ -787,7 +787,7 @@ final class AiPrintPreparation implements AiOperation {
       private Future<?> current;
       private boolean closed;
 
-      synchronized <T> Future<T> init(Callable<T> action) {
+      synchronized <T> Future<T> submit(Callable<T> action) {
          if (this.closed) {
             throw new CancellationException("Schematic preparation cancelled");
          }

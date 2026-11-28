@@ -12,7 +12,7 @@ public final class LatencyTickWindow<K> {
       this.init_I = Math.max(1, maximum);
    }
 
-   public void init(K key, int tick, int latencyMs) {
+   public void mark(K key, int tick, int latencyMs) {
       int expiry = tick + windowTicks(latencyMs);
       this.init_Map.put(key, expiry);
       this.expire(tick);
@@ -22,7 +22,7 @@ public final class LatencyTickWindow<K> {
       }
    }
 
-   public boolean init(K key, int tick) {
+   public boolean isPending(K key, int tick) {
       Integer expiry = this.init_Map.get(key);
       if (expiry == null) {
          return false;

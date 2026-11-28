@@ -252,7 +252,7 @@ final class AiBlazeFight {
       return seen && targetHealth > 0.0F && targetHealth <= finishDamage && gap <= reach + 1.0 && health > floor && finishTicks < 30;
    }
 
-   static AiOperation init(final JsonObject args) {
+   static AiOperation blazeFight(final JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       final int count = Math.max(1, AiJson.getInt(args, "count", 1));
       final double radius = Math.max(6.0, Math.min(32.0, AiJson.getDouble(args, "radius", 24.0)));
@@ -703,10 +703,10 @@ final class AiBlazeFight {
                                  && !mc.player.hasEffect(MobEffects.BLINDNESS);
                               boolean blockNow = hasShield
                                  && coming != null
-                                 && AiDefense.init(mc, mc.level.getEntity(coming.entityId()))
-                                 && AiDefense.init(mc, AiCombat.init(coming))
-                                 && AiCombat.init(coming) <= 10;
-                              boolean swingFirst = AiBlazeFight.canSwingFirst(blockNow, coming == null ? 2147483647 : AiCombat.init(coming), AiDefense.load(mc));
+                                 && AiDefense.canBlock(mc, mc.level.getEntity(coming.entityId()))
+                                 && AiDefense.shieldReadyFor(mc, AiCombat.ticksToClosest(coming))
+                                 && AiCombat.ticksToClosest(coming) <= 10;
+                              boolean swingFirst = AiBlazeFight.canSwingFirst(blockNow, coming == null ? 2147483647 : AiCombat.ticksToClosest(coming), AiDefense.blockDelayTicks(mc));
                               boolean swingSoon = inReach && charge >= 0.85F && swingFirst;
                               Vec3 look = autismclient.ai.engine.AiAim.bestEntityAimPoint(this.target);
                               if (blockNow && !swingSoon) {
@@ -719,7 +719,7 @@ final class AiBlazeFight {
                               boolean killsNow = this.target instanceof LivingEntity dying
                                  && dying.getHealth() <= this.meleeDamage(charge) * 0.95
                                  && charge >= 0.5F;
-                              boolean swingDue = inReach && (charge >= 0.92F || killsNow) && onTarget && AiDefense.init(mc, this.target, this.aim);
+                              boolean swingDue = inReach && (charge >= 0.92F || killsNow) && onTarget && AiDefense.canSwingAt(mc, this.target, this.aim);
                               int forward = horizontal > 2.55 ? 1 : (horizontal < 2.15 ? -1 : 0);
                               this.strafeDirection = 0;
                               if (!mc.player.onGround() || !this.init_Z_I_I(forward, 0)) {
@@ -774,7 +774,7 @@ final class AiBlazeFight {
                               AiProjectiles.IncomingProjectile dodge = null;
 
                               for (AiProjectiles.IncomingProjectile t : AiProjectiles.incoming(mc)) {
-                                 if (AiProjectiles.isImminent(t) && AiCombat.init(t) <= 20 && (dodge == null || AiCombat.init(t) < AiCombat.init(dodge))) {
+                                 if (AiProjectiles.isImminent(t) && AiCombat.ticksToClosest(t) <= 20 && (dodge == null || AiCombat.ticksToClosest(t) < AiCombat.ticksToClosest(dodge))) {
                                     dodge = t;
                                  }
                               }
@@ -791,7 +791,7 @@ final class AiBlazeFight {
                                  && !knockHold
                                  && mc.player.onGround()
                                  && (
-                                    dodge != null && AiCombat.init(dodge) <= 20
+                                    dodge != null && AiCombat.ticksToClosest(dodge) <= 20
                                        || this.target.distanceToSqr(mc.player) < 6.760000000000001
                                        || this.isBlazeTooClose()
                                        || this.put > 0
@@ -825,14 +825,14 @@ final class AiBlazeFight {
                                  && !this.init_Z
                                  && !blockNow
                                  && mc.player.onGround()
-                                 && autismclient.ai.engine.AiCombatMotion.init(mc, mc.player.getYRot(), 1.0, 0.0, 8, 4, true) != null;
+                                 && autismclient.ai.engine.AiCombatMotion.predictTrace(mc, mc.player.getYRot(), 1.0, 0.0, 8, 4, true) != null;
                               if (!sprint && mc.player.isSprinting()) {
                                  mc.player.setSprinting(false);
                               }
 
                               mc.options.keySprint.setDown(sprint);
                               boolean canFinish = this.target instanceof LivingEntity living && living.getHealth() <= this.meleeDamage(charge) * 0.95;
-                              boolean canJump = mc.player.onGround() && this.read_Z_2() && autismclient.ai.engine.AiCombatMotion.init(mc) && this.load_Z_5();
+                              boolean canJump = mc.player.onGround() && this.read_Z_2() && autismclient.ai.engine.AiCombatMotion.jumpSafe(mc) && this.load_Z_5();
                               boolean jump = canJump
                                  && !canFinish
                                  && !blockNow
@@ -851,7 +851,7 @@ final class AiBlazeFight {
 
                               mc.options.keyJump.setDown(jump);
                               if (swingDue
-                                 && AiDefense.init(mc, this.target, this.aim)
+                                 && AiDefense.canSwingAt(mc, this.target, this.aim)
                                  && swingFirst
                                  && (this.stop >= 2 || killsNow)
                                  && !knockHold
@@ -949,11 +949,11 @@ final class AiBlazeFight {
                                  );
                               }
 
-                              AiProjectiles.IncomingProjectile onTheWay = AiDefense.hasShield(mc) ? AiCombat.load(mc) : null;
+                              AiProjectiles.IncomingProjectile onTheWay = AiDefense.hasShield(mc) ? AiCombat.nearestIncoming(mc) : null;
                               if (onTheWay == null
-                                 || !AiDefense.init(mc, mc.level.getEntity(onTheWay.entityId()))
-                                 || !AiDefense.init(mc, AiCombat.init(onTheWay))
-                                 || AiCombat.init(onTheWay) > 8
+                                 || !AiDefense.canBlock(mc, mc.level.getEntity(onTheWay.entityId()))
+                                 || !AiDefense.shieldReadyFor(mc, AiCombat.ticksToClosest(onTheWay))
+                                 || AiCombat.ticksToClosest(onTheWay) > 8
                                  || this.child != null && (!this.child.canInterruptNow() || this.preparation.requiresReconciliation(this.child))) {
                                  this.stopUsingItem();
                                  double gapApproach = Math.sqrt(box.distanceToSqr(eye));
@@ -1559,7 +1559,7 @@ final class AiBlazeFight {
 
          boolean init_Z_I_I(int forward, int strafe) {
             if (mc.player.onGround()) {
-               AABB end = autismclient.ai.engine.AiCombatMotion.init(mc, forward, strafe, 6);
+               AABB end = autismclient.ai.engine.AiCombatMotion.predictEndBox(mc, forward, strafe, 6);
                if (end == null) {
                   return false;
                }
@@ -1579,7 +1579,7 @@ final class AiBlazeFight {
                   return true;
                }
 
-               if (mc.player.onGround() && !mc.player.isInWater() && autismclient.ai.engine.AiCombatMotion.init(mc, forward, strafe, 6) == null) {
+               if (mc.player.onGround() && !mc.player.isInWater() && autismclient.ai.engine.AiCombatMotion.predictEndBox(mc, forward, strafe, 6) == null) {
                   return false;
                }
 
@@ -1843,7 +1843,7 @@ final class AiBlazeFight {
             return this.flush_Z
                || this.preparation.requiresReconciliation(this.child)
                || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
-               || this.fireControl.read()
+               || this.fireControl.isBusy()
                || this.arena != null && this.arena.requiresReconciliationAfterEmergency();
          }
 

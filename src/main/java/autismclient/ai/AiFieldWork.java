@@ -155,7 +155,7 @@ final class AiFieldWork {
          int externalReplants;
          int confirmedSown;
          int finalDropTicks;
-         AiFieldPlan.FaceTarget init_H_StreamUtil;
+         AiFieldPlan.FaceTarget lastFaceTarget;
          final Map<Long, Long> read_Map;
          final Set<Long> init_Set;
          AiOperation init_AiOperation;
@@ -186,7 +186,7 @@ final class AiFieldWork {
                   this.load_V_2();
                   this.aim.clear();
                   this.load_Z = false;
-                  this.init_H_StreamUtil = null;
+                  this.lastFaceTarget = null;
                   return this.running("Harvest paused while a screen is open");
                }
 
@@ -335,13 +335,13 @@ final class AiFieldWork {
                boolean acted = false;
                if (best != null) {
                   AiFieldPlan.FaceTarget nextGoal = AiFieldPlan.FaceTarget.of(best, bestBreak ? bestHit.getDirection() : Direction.UP);
-                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.raycastLookBlock())) {
+                  if (AiFieldPlan.init(this.lastFaceTarget, nextGoal, autismclient.ai.engine.AiAim.raycastLookBlock())) {
                      this.aim.aimAt(bestHit.getLocation());
                      this.aimRequests++;
                      this.load_Z = false;
                   }
 
-                  this.init_H_StreamUtil = nextGoal;
+                  this.lastFaceTarget = nextGoal;
                }
 
                this.aim.tick();
@@ -734,7 +734,7 @@ final class AiFieldWork {
          int lostCount;
          int seedsSeen;
          int aimRequests;
-         AiFieldPlan.FaceTarget init_H_StreamUtil;
+         AiFieldPlan.FaceTarget lastFaceTarget;
          final Set<Long> load_Set;
          final Set<Long> read_Set;
          double init_D;
@@ -848,12 +848,12 @@ final class AiFieldWork {
                boolean clicked = false;
                if (best != null) {
                   AiFieldPlan.FaceTarget nextGoal = AiFieldPlan.FaceTarget.of(best, Direction.UP);
-                  if (AiFieldPlan.init(this.init_H_StreamUtil, nextGoal, autismclient.ai.engine.AiAim.raycastLookBlock())) {
+                  if (AiFieldPlan.init(this.lastFaceTarget, nextGoal, autismclient.ai.engine.AiAim.raycastLookBlock())) {
                      this.aim.aimAt(bestHit.getLocation());
                      this.aimRequests++;
                   }
 
-                  this.init_H_StreamUtil = nextGoal;
+                  this.lastFaceTarget = nextGoal;
                }
 
                this.aim.tick();

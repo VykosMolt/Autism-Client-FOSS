@@ -88,7 +88,7 @@ public final class ColorPickerPopup {
          WindowFrameRenderer.init(
             context, this.bounds, "Color", false, false, true, this.init_NetHelper().init_Z(context.read(), context.write()), true, 5, 5, 14
          );
-         autismclient.gui.f.NetHelper close = TitleBarRenderer.load(this.init_NetHelper());
+         autismclient.gui.f.NetHelper close = TitleBarRenderer.closeButton(this.init_NetHelper());
          boolean closeHover = close.init_Z(context.read(), context.write());
          float closeFade = autismclient.gui.ui.HoverTransitionCache.sample("colorpicker-close:" + autismclient.gui.ui.HoverTransitionCache.boundsKey(close), closeHover);
          if (closeFade > 0.001F) {
@@ -151,7 +151,7 @@ public final class ColorPickerPopup {
          return true;
       }
 
-      if (TitleBarRenderer.load(this.init_NetHelper()).init_Z(mouseX, mouseY) || this.cancelButton().init_Z(mouseX, mouseY)) {
+      if (TitleBarRenderer.closeButton(this.init_NetHelper()).init_Z(mouseX, mouseY) || this.cancelButton().init_Z(mouseX, mouseY)) {
          this.dismiss();
          return true;
       }

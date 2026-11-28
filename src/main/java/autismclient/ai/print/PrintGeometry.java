@@ -20,19 +20,19 @@ public final class PrintGeometry {
    private PrintGeometry() {
    }
 
-   public static AABB init(double x, double feetY, double z, boolean crouched) {
+   public static AABB bodyBox(double x, double feetY, double z, boolean crouched) {
       return new AABB(x - 0.3, feetY, z - 0.3, x + 0.3, feetY + (crouched ? 1.5 : 1.8), z + 0.3);
    }
 
-   public static Vec3 init(Vec3 feet, boolean crouched) {
+   public static Vec3 eyePos(Vec3 feet, boolean crouched) {
       return new Vec3(feet.x, feet.y + (crouched ? 1.27 : 1.62), feet.z);
    }
 
-   public static float init(Vec3 from, Vec3 to) {
+   public static float yawTo(Vec3 from, Vec3 to) {
       return (float)(Mth.atan2(to.z - from.z, to.x - from.x) * 57.2957763671875) - 90.0F;
    }
 
-   public static float load(Vec3 from, Vec3 to) {
+   public static float pitchTo(Vec3 from, Vec3 to) {
       double dx = to.x - from.x;
       double dy = to.y - from.y;
       double dz = to.z - from.z;

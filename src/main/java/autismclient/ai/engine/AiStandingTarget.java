@@ -148,7 +148,7 @@ public final class AiStandingTarget {
       private AiStandingTarget.StandingSpot init_j_StreamUtil;
       private long init_J;
 
-      public AiStandingTarget.StandingSpot init(Minecraft mc, Vec3 eye, Vec3 direction, double reach, boolean water, boolean fresh) {
+      public AiStandingTarget.StandingSpot resolve(Minecraft mc, Vec3 eye, Vec3 direction, double reach, boolean water, boolean fresh) {
          BlockHitResult hit = AiStandingTarget.raycast(mc, eye, direction, reach, water);
          long now = System.nanoTime();
          if (fresh
@@ -167,7 +167,7 @@ public final class AiStandingTarget {
          return this.init_j_StreamUtil;
       }
 
-      public void init() {
+      public void invalidate() {
          this.init_Obj = null;
          this.init_BlockHitResult = null;
          this.init_j_StreamUtil = null;

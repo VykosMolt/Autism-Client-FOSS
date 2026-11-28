@@ -83,31 +83,31 @@ public final class AiAddons {
       AiOperation var10000;
       switch (action) {
          case "scaffold":
-            var10000 = load(args);
+            var10000 = scaffoldAddon(args);
             break;
          case "write":
-            var10000 = read(args);
+            var10000 = writeSources(args);
             break;
          case "read":
-            var10000 = write(args);
+            var10000 = readSources(args);
             break;
          case "build":
-            var10000 = init(args, AiAddons::init_CachePool_StreamUt, AiAddons::init_List);
+            var10000 = buildAddon(args, AiAddons::defaultCompiler, AiAddons::init_List);
             break;
          case "load":
-            var10000 = update(args);
+            var10000 = loadAddon(args);
             break;
          case "unload":
-            var10000 = sync(args);
+            var10000 = unloadAddon(args);
             break;
          case "list":
             var10000 = init_AiOperation();
             break;
          case "install":
-            var10000 = flush(args);
+            var10000 = installAddon(args);
             break;
          case "verify":
-            var10000 = close(args);
+            var10000 = verifyAddon(args);
             break;
          default:
             throw new IllegalArgumentException("Unknown addon action '" + action + "'; expected scaffold|write|read|build|load|unload|list|install|verify");
@@ -217,10 +217,10 @@ public final class AiAddons {
       return "aiaddon." + addonId.replace('-', '_');
    }
 
-   static String init(String name, String addonId) {
-      String base = write(name);
+   static String entryClassName(String name, String addonId) {
+      String base = toPascalCase(name);
       if (base.isEmpty()) {
-         base = write(addonId);
+         base = toPascalCase(addonId);
       }
 
       if (base.isEmpty() || !Character.isLetter(base.charAt(0))) {
@@ -230,7 +230,7 @@ public final class AiAddons {
       return base.endsWith("Addon") ? base : base + "Addon";
    }
 
-   private static String write(String value) {
+   private static String toPascalCase(String value) {
       StringBuilder out = new StringBuilder();
       boolean upper = true;
       if (value != null) {
@@ -247,7 +247,7 @@ public final class AiAddons {
       return out.toString();
    }
 
-   static String read(String value) {
+   static String escapeJava(String value) {
       StringBuilder out = new StringBuilder();
 
       for (char c : (value == null ? "" : value).toCharArray()) {
@@ -275,7 +275,7 @@ public final class AiAddons {
       return out.toString();
    }
 
-   static JsonObject init(String id, String name, String description, String entryClass) {
+   static JsonObject manifestJson(String id, String name, String description, String entryClass) {
       JsonObject json = new JsonObject();
       json.addProperty("schemaVersion", 1);
       json.addProperty("id", id);
@@ -314,17 +314,17 @@ public final class AiAddons {
       return out;
    }
 
-   static AiAddons.CompilerChoice init_CachePool_StreamUt() {
-      return init(
+   static AiAddons.CompilerChoice defaultCompiler() {
+      return chooseCompiler(
          ToolProvider::getSystemJavaCompiler,
          Path.of(System.getProperty("java.home", ".")),
          AiAddons::findOnPath,
          () -> System.getenv("JAVA_HOME"),
-         AiAddons::load
+         AiAddons::jdkSearchRoots
       );
    }
 
-   static AiAddons.CompilerChoice init(
+   static AiAddons.CompilerChoice chooseCompiler(
       Supplier<JavaCompiler> system, Path javaHome, Function<String, Path> pathLookup, Supplier<String> javaHomeEnv, Supplier<List<Path>> prismRuntimeDirs
    ) {
       JavaCompiler compiler = system.get();
@@ -394,7 +394,7 @@ public final class AiAddons {
       return null;
    }
 
-   private static List<Path> load() {
+   private static List<Path> jdkSearchRoots() {
       List<Path> roots = new ArrayList<>();
       String appData = System.getenv("APPDATA");
       if (appData != null && !appData.isBlank()) {
@@ -455,7 +455,7 @@ public final class AiAddons {
       }
    }
 
-   private static void init(Path addonDir, AiAddons.AddonManifest meta) throws IOException {
+   private static void writeManifest(Path addonDir, AiAddons.AddonManifest meta) throws IOException {
       AiJson.writeAtomicJson(addonDir.resolve("addon.json"), meta.toJson());
    }
 
@@ -463,17 +463,17 @@ public final class AiAddons {
       return addonsRoot().resolve(id).normalize();
    }
 
-   private static AiAddons.AddonManifest init(String id, Path dir) {
+   private static AiAddons.AddonManifest requireManifest(String id, Path dir) {
       AiAddons.AddonManifest meta = readManifest(dir);
       if (meta != null) {
          return meta;
       }
 
-      String className = init(id, id);
+      String className = entryClassName(id, id);
       return new AiAddons.AddonManifest(id, id, "", load_Str(id), load_Str(id) + "." + className, List.of(), List.of());
    }
 
-   private static AiOperation load(JsonObject args) {
+   private static AiOperation scaffoldAddon(JsonObject args) {
       String id = validateId(AiJson.getString(args, "id", ""));
       String name = AiJson.getString(args, "name", "").trim();
       if (name.isEmpty()) {
@@ -507,12 +507,12 @@ public final class AiAddons {
          }
 
          String pkg = load_Str(id);
-         String className = init(name, id);
+         String className = entryClassName(name, id);
          String entryClass = pkg + "." + className;
          Path source = dir.resolve("src").resolve(pkg.replace('.', '/')).resolve(className + ".java");
          Files.createDirectories(source.getParent());
-         Files.writeString(source, init(id, name, description, features), StandardCharsets.UTF_8);
-         init(dir, new AiAddons.AddonManifest(id, name, description, pkg, entryClass, features, List.of()));
+         Files.writeString(source, scaffoldSource(id, name, description, features), StandardCharsets.UTF_8);
+         writeManifest(dir, new AiAddons.AddonManifest(id, name, description, pkg, entryClass, features, List.of()));
          return init_AiOperation(
             AiOperation.Status.SUCCEEDED,
             "Scaffolded addon '" + id + "' (" + String.join(", ", features) + ")",
@@ -563,11 +563,11 @@ public final class AiAddons {
       }
    }
 
-   static String init(String id, String name, String description, List<String> features) {
+   static String scaffoldSource(String id, String name, String description, List<String> features) {
       String pkg = load_Str(id);
-      String className = init(name, id);
-      String n = read(name);
-      String d = read(description);
+      String className = entryClassName(name, id);
+      String n = escapeJava(name);
+      String d = escapeJava(description);
       StringBuilder src = new StringBuilder();
       src.append("package ").append(pkg).append(";\n\n");
       src.append("import autismclient.api.ApiVersion;\n");
@@ -627,7 +627,7 @@ public final class AiAddons {
       return src.toString();
    }
 
-   private static AiOperation read(JsonObject args) {
+   private static AiOperation writeSources(JsonObject args) {
       String id = validateId(AiJson.getString(args, "id", ""));
       Path dir = addonDir(id);
       Path target = resolveInside(dir, AiJson.getString(args, "path", ""));
@@ -657,7 +657,7 @@ public final class AiAddons {
       }
    }
 
-   private static AiOperation write(JsonObject args) {
+   private static AiOperation readSources(JsonObject args) {
       String id = validateId(AiJson.getString(args, "id", ""));
       Path dir = addonDir(id);
       if (!Files.isDirectory(dir)) {
@@ -728,7 +728,7 @@ public final class AiAddons {
       }
    }
 
-   static AiOperation init(JsonObject args, final AiAddons.CompilerLocator locator, final Supplier<List<Path>> classpath) {
+   static AiOperation buildAddon(JsonObject args, final AiAddons.CompilerLocator locator, final Supplier<List<Path>> classpath) {
       final String id = validateId(AiJson.getString(args, "id", ""));
       final Path dir = addonDir(id);
 
@@ -745,7 +745,7 @@ public final class AiAddons {
          );
       }
 
-      final AiAddons.AddonManifest meta = init(id, dir);
+      final AiAddons.AddonManifest meta = requireManifest(id, dir);
       return new AiOperation() {
          final long buildDeadline;
          final AtomicReference<Process> compilerProcess;
@@ -767,7 +767,7 @@ public final class AiAddons {
 
             if (this.worker == null) {
                this.worker = new Thread(
-                  () -> this.outcome = AiAddons.init(
+                  () -> this.outcome = AiAddons.buildSources(
                      dir, meta, sources, locator.find(), classpath.get(), this.compilerProcess, this.cancelRequested::get
                   ),
                   "ai-addon-build-" + id
@@ -854,7 +854,7 @@ public final class AiAddons {
       }
    }
 
-   static AiAddons.BuildOutcome init(
+   static AiAddons.BuildOutcome buildSources(
       Path dir,
       AiAddons.AddonManifest meta,
       List<Path> sources,
@@ -881,9 +881,9 @@ public final class AiAddons {
       try {
          if (compiler.inProcess()) {
             diags = new ArrayList<>();
-            ok = init(compiler.system(), sources, classesDir, classpath, diags);
+            ok = compileInProcess(compiler.system(), sources, classesDir, classpath, diags);
          } else {
-            diags = init(compiler.executable(), sources, classesDir, classpath, running, cancelled);
+            diags = compileExternal(compiler.executable(), sources, classesDir, classpath, running, cancelled);
             ok = diags.stream().noneMatch(d -> d.kind().equals("error"));
          }
       } catch (InterruptedException e) {
@@ -914,7 +914,7 @@ public final class AiAddons {
 
       try {
          int classCount = init_I(classesDir);
-         Path jar = init(dir, meta, classesDir);
+         Path jar = packageJar(dir, meta, classesDir);
          return new AiAddons.BuildOutcome(
             true, "Built " + classCount + " classes into " + jar.getFileName(), List.of(), warnings, classCount, jar.toString(), compiler.describe(), false
          );
@@ -931,14 +931,14 @@ public final class AiAddons {
       }
    }
 
-   private static boolean init(JavaCompiler compiler, List<Path> sources, Path classesDir, List<Path> classpath, List<AiAddons.CompileDiagnostic> diags) throws IOException {
+   private static boolean compileInProcess(JavaCompiler compiler, List<Path> sources, Path classesDir, List<Path> classpath, List<AiAddons.CompileDiagnostic> diags) throws IOException {
       DiagnosticCollector<JavaFileObject> collector = new DiagnosticCollector<>();
       StringWriter log = new StringWriter();
 
       boolean ok;
       try (StandardJavaFileManager files = compiler.getStandardFileManager(collector, Locale.ROOT, StandardCharsets.UTF_8)) {
          List<String> options = new ArrayList<>(
-            List.of("-classpath", init(classpath), "-d", classesDir.toString(), "-proc:none", "-nowarn", "-encoding", "UTF-8")
+            List.of("-classpath", joinClasspath(classpath), "-d", classesDir.toString(), "-proc:none", "-nowarn", "-encoding", "UTF-8")
          );
          ok = compiler.getTask(log, files, collector, options, null, files.getJavaFileObjectsFromPaths(sources)).call();
       }
@@ -972,19 +972,19 @@ public final class AiAddons {
       return ok;
    }
 
-   private static List<AiAddons.CompileDiagnostic> init(
+   private static List<AiAddons.CompileDiagnostic> compileExternal(
       Path executable, List<Path> sources, Path classesDir, List<Path> classpath, AtomicReference<Process> running, BooleanSupplier cancelled
    ) throws IOException, InterruptedException {
       Path argsFile = Files.createTempFile("ai-addon-javac", ".args");
 
       try {
          StringBuilder args = new StringBuilder();
-         args.append("-classpath\n\"").append(update(init(classpath))).append("\"\n");
-         args.append("-d\n\"").append(update(classesDir.toString())).append("\"\n");
+         args.append("-classpath\n\"").append(forwardSlashes(joinClasspath(classpath))).append("\"\n");
+         args.append("-d\n\"").append(forwardSlashes(classesDir.toString())).append("\"\n");
          args.append("-proc:none\n-nowarn\n-encoding\nUTF-8\n");
 
          for (Path source : sources) {
-            args.append('"').append(update(source.toString())).append("\"\n");
+            args.append('"').append(forwardSlashes(source.toString())).append("\"\n");
          }
 
          Files.writeString(argsFile, args.toString(), StandardCharsets.UTF_8);
@@ -1051,7 +1051,7 @@ public final class AiAddons {
       }
    }
 
-   private static String init(List<Path> classpath) {
+   private static String joinClasspath(List<Path> classpath) {
       StringBuilder out = new StringBuilder();
 
       for (Path entry : classpath) {
@@ -1065,13 +1065,13 @@ public final class AiAddons {
       return out.toString();
    }
 
-   private static String update(String path) {
+   private static String forwardSlashes(String path) {
       return path.replace('\\', '/');
    }
 
-   private static Path init(Path dir, AiAddons.AddonManifest meta, Path classesDir) throws IOException {
+   private static Path packageJar(Path dir, AiAddons.AddonManifest meta, Path classesDir) throws IOException {
       Path jar = dir.resolve(meta.id() + ".jar");
-      String manifest = AiJson.GSON.toJson(init(meta.id(), meta.name(), meta.description(), meta.entryClass()));
+      String manifest = AiJson.GSON.toJson(manifestJson(meta.id(), meta.name(), meta.description(), meta.entryClass()));
 
       try (JarOutputStream out = new JarOutputStream(Files.newOutputStream(jar))) {
          out.putNextEntry(new JarEntry("fabric.mod.json"));
@@ -1084,7 +1084,7 @@ public final class AiAddons {
          }
 
          for (Path clazz : classes) {
-            out.putNextEntry(new JarEntry(update(classesDir.relativize(clazz).toString())));
+            out.putNextEntry(new JarEntry(forwardSlashes(classesDir.relativize(clazz).toString())));
             out.write(Files.readAllBytes(clazz));
             out.closeEntry();
          }
@@ -1093,7 +1093,7 @@ public final class AiAddons {
       return jar;
    }
 
-   private static AiOperation update(JsonObject args) {
+   private static AiOperation loadAddon(JsonObject args) {
       String id = validateId(AiJson.getString(args, "id", ""));
       Path dir = addonDir(id);
       Path classesDir = dir.resolve("classes");
@@ -1109,7 +1109,7 @@ public final class AiAddons {
          return init_AiOperation(AiOperation.Status.FAILED, "No compiled classes for '" + id + "'; run action=build first", AiJson.objectOf("id", id));
       }
 
-      AiAddons.AddonManifest meta = init(id, dir);
+      AiAddons.AddonManifest meta = requireManifest(id, dir);
       String entryClass = AiJson.getString(args, "entryClass", meta.entryClass());
       if (entryClass.isBlank()) {
          return init_AiOperation(
@@ -1121,7 +1121,7 @@ public final class AiAddons {
       List<String> registered = result.init_List() == null ? List.of() : result.init_List().stream().limit(40L).toList();
 
       try {
-         init(dir, meta.withRegistered(registered));
+         writeManifest(dir, meta.withRegistered(registered));
       } catch (IOException var11) {
       }
 
@@ -1138,7 +1138,7 @@ public final class AiAddons {
       );
    }
 
-   private static AiOperation sync(JsonObject args) {
+   private static AiOperation unloadAddon(JsonObject args) {
       String id = validateId(AiJson.getString(args, "id", ""));
       boolean unloaded = autismclient.b.DataUtil.init_Z(id);
       return init_AiOperation(
@@ -1148,7 +1148,7 @@ public final class AiAddons {
       );
    }
 
-   private static AiOperation flush(JsonObject args) {
+   private static AiOperation installAddon(JsonObject args) {
       String id = validateId(AiJson.getString(args, "id", ""));
       Path dir = addonDir(id);
       Path jar = dir.resolve(id + ".jar");
@@ -1242,7 +1242,7 @@ public final class AiAddons {
       return init_AiOperation(AiOperation.Status.SUCCEEDED, "Found " + addons.size() + " scaffolded addon(s)", AiJson.objectOf("addons", addons));
    }
 
-   private static AiOperation close(JsonObject args) {
+   private static AiOperation verifyAddon(JsonObject args) {
       String id = validateId(AiJson.getString(args, "id", ""));
       boolean loaded = init_Z(id);
       JsonObject data = AiJson.objectOf("id", id, "runtimeLoaded", loaded);

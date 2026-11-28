@@ -84,7 +84,7 @@ final class BedProximityTracker {
          PlayerTeam ownTeam = mc.player.getTeam();
          TextColor ownRgb = ownTeam == null ? null : ownTeam.getColor().map(TeamColor::textColor).orElse(null);
          PlayerInfo ownInfo = mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(mc.player.getUUID());
-         DyeColor own = TeamDyeColorResolver.load(
+         DyeColor own = TeamDyeColorResolver.resolve(
             mc.player.getGameProfile().name(),
             ownInfo == null ? null : ownInfo.getTabListDisplayName(),
             mc.player.getDisplayName(),
@@ -132,7 +132,7 @@ final class BedProximityTracker {
                      PlayerInfo info = mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(player.getUUID());
                      Component display = info == null ? null : info.getTabListDisplayName();
                      String account = player.getGameProfile().name();
-                     DyeColor dye = TeamDyeColorResolver.load(account, display, player.getDisplayName(), fallback == null ? null : fallback.getValue());
+                     DyeColor dye = TeamDyeColorResolver.resolve(account, display, player.getDisplayName(), fallback == null ? null : fallback.getValue());
                      if (this.init_v_CachePool.init(player.getUUID(), team == null ? null : team.getName(), dye, this.init_I, 20)
                         && (module.bool("bed-include-team") || dye != own && (team == null || team != mc.player.getTeam()))
                         && (module.bool("bed-include-friends") || !TeamsModule.isFriend(player) || dye == own)) {
@@ -263,7 +263,7 @@ final class BedProximityTracker {
    }
 
    record Inner_DataUtil(String init_Str, Component init_Component, int tint, int load, double init_D) {
-      Component init(boolean distances) {
+      Component label(boolean distances) {
          MutableComponent label = this.load == 1
             ? (as.init_Z_33() ? as.load(this.init_Component).copy() : this.init_Component.copy())
             : Component.literal(this.load + " players").withColor(this.tint & 16777215);

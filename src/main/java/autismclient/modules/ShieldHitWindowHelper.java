@@ -103,7 +103,7 @@ final class ShieldHitWindowHelper {
       return isLookingAt(eye, view, victim) && isInReachWindow(eye, victim, minReach, maxReach + 0.5, margin);
    }
 
-   static int init(AABB body, Vec3 motion, ShieldHitWindowHelper.CollisionClipper collision) {
+   static int ticksUntilFalling(AABB body, Vec3 motion, ShieldHitWindowHelper.CollisionClipper collision) {
       for (int step = 0; step <= 1; step++) {
          Vec3 moved = collision.clip(body, motion);
          if (motion.y < 0.0 && Math.abs(moved.y - motion.y) > 1.0E-5) {
@@ -167,7 +167,7 @@ final class ShieldHitWindowHelper {
          return w.poll != -2147483648 && age >= 0L && age < 60L;
       }
 
-      void init(double scale) {
+      void setTimeScale(double scale) {
          this.timeScale = Double.isFinite(scale) ? Math.clamp(scale, 0.25, 4.0) : 1.0;
       }
 
@@ -284,7 +284,7 @@ final class ShieldHitWindowHelper {
          }
       }
 
-      void load() {
+      void clear() {
          this.windows.clear();
          this.timeScale = 1.0;
       }

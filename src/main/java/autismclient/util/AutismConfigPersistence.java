@@ -9,13 +9,13 @@ final class AutismConfigPersistence {
    }
 
    static void schedule(AutismConfig config) {
-      DebouncedPersistenceScheduler.init(config);
+      DebouncedPersistenceScheduler.schedule(config);
    }
 
    static void persist(AutismConfig source) {
       AutismConfig snapshot;
       try {
-         snapshot = AutismConfigSnapshotter.load(source);
+         snapshot = AutismConfigSnapshotter.persistentSnapshot(source);
       } catch (Throwable t) {
          AutismClientAddon.LOG.error("Failed to capture Autism config", t);
          return;
@@ -26,7 +26,7 @@ final class AutismConfigPersistence {
    }
 
    static void scheduleWrite(AutismConfig snapshot) {
-      DebouncedPersistenceScheduler.init(SCHEDULE_KEY, () -> {
+      DebouncedPersistenceScheduler.schedule(SCHEDULE_KEY, () -> {
          try {
             AutismConfig.writeToDisk(AutismConfig.toJson(snapshot));
          } catch (Throwable t) {
@@ -36,10 +36,10 @@ final class AutismConfigPersistence {
    }
 
    static void init() {
-      DebouncedPersistenceScheduler.init();
+      DebouncedPersistenceScheduler.flushConfig();
    }
 
    static void init(long timeoutMs) {
-      DebouncedPersistenceScheduler.init(timeoutMs);
+      DebouncedPersistenceScheduler.flushAll(timeoutMs);
    }
 }

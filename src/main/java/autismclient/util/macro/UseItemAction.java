@@ -124,7 +124,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    }
 
    @Override
-   public void load(boolean v) {
+   public void setWaitForGuiBefore(boolean v) {
    }
 
    @Override
@@ -133,7 +133,7 @@ public class UseItemAction implements PacketOrderAware, MacroAction, GuiWaitAwar
    }
 
    @Override
-   public void read(boolean v) {
+   public void setWaitForGuiAfter(boolean v) {
       this.waitForGui = v;
    }
 

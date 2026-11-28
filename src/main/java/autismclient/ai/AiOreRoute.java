@@ -146,7 +146,7 @@ final class AiOreRoute {
                   case NEAR:
                   case DEEP:
                   case MINE_BRANCH:
-                     this.child = autismclient.ai.engine.AiMine.init(
+                     this.child = autismclient.ai.engine.AiMine.mine(
                         AiJson.objectOf(
                            "block",
                            family,
@@ -162,7 +162,7 @@ final class AiOreRoute {
                   case DESCEND: {
                      this.descentStartY = mc.player.getBlockY();
                      Direction d = AiOreRoute.rotateClockwise(this.heading, this.branchIndex);
-                     this.child = autismclient.ai.engine.AiExcavate.load(
+                     this.child = autismclient.ai.engine.AiExcavate.dig(
                         AiJson.objectOf(
                            "shape", "staircase", "targetY", bestY, "direction", d.getName(), "timeoutSeconds", Math.max(60, legSeconds * 2)
                         )
@@ -171,7 +171,7 @@ final class AiOreRoute {
                   }
                   case BRANCH: {
                      Direction d = AiOreRoute.rotateClockwise(this.heading, this.init_I);
-                     this.child = autismclient.ai.engine.AiExcavate.load(
+                     this.child = autismclient.ai.engine.AiExcavate.dig(
                         AiJson.objectOf("shape", "tunnel", "direction", d.getName(), "length", 20, "timeoutSeconds", legSeconds)
                      );
                      return this.running("Branch tunnel " + (this.init_I + 1) + " " + d.getName() + " looking for " + family);

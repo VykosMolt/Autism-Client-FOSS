@@ -38,12 +38,12 @@ public class VClipAction implements MacroAction {
       options.segmentBlocks = this.segmentBlocks;
       options.maxPackets = this.maxPackets;
       options.updateLocalPosition = this.updateLocalPosition;
-      options.read = this.tryVehicleFirst;
-      options.write = this.forceGrounded;
-      init(mc, options);
+      options.vehicle = this.tryVehicleFirst;
+      options.forceGround = this.forceGrounded;
+      clip(mc, options);
    }
 
-   public static VClipAction.ClipResult init(Minecraft mc, VClipAction.ClipOptions options) {
+   public static VClipAction.ClipResult clip(Minecraft mc, VClipAction.ClipOptions options) {
       if (options == null) {
          options = new VClipAction.ClipOptions();
       }
@@ -52,7 +52,7 @@ public class VClipAction implements MacroAction {
          LocalPlayer player = mc.player;
          double blocks = options.deltaY;
          if (options.mode != VClipAction.ClipMode.MANUAL) {
-            VClipAction.ClipTarget target = init(player, options.mode);
+            VClipAction.ClipTarget target = resolveTarget(player, options.mode);
             if (!target.found()) {
                if (options.update) {
                   AutismClientMessaging.sendPrefixed("§cVClip: " + target.message());
@@ -75,15 +75,15 @@ public class VClipAction implements MacroAction {
             packetsRequired = 1;
          }
 
-         Entity vehicle = options.read ? player.getVehicle() : null;
+         Entity vehicle = options.vehicle ? player.getVehicle() : null;
          if (vehicle != null) {
             try {
                for (int i = 0; i < packetsRequired - 1; i++) {
-                  init(mc, ServerboundMoveVehiclePacket.fromEntity(vehicle));
+                  sendPacket(mc, ServerboundMoveVehiclePacket.fromEntity(vehicle));
                }
 
                vehicle.setPos(vehicle.getX(), vehicle.getY() + blocks, vehicle.getZ());
-               init(mc, ServerboundMoveVehiclePacket.fromEntity(vehicle));
+               sendPacket(mc, ServerboundMoveVehiclePacket.fromEntity(vehicle));
             } catch (Throwable t) {
                String message = "Vehicle vclip failed: " + t.getMessage();
                if (options.update) {
@@ -96,7 +96,7 @@ public class VClipAction implements MacroAction {
             double x = player.getX();
             double y = player.getY();
             double z = player.getZ();
-            boolean grounded = options.write || player.onGround();
+            boolean grounded = options.forceGround || player.onGround();
             boolean horizontalCollision = player.horizontalCollision;
             if (blocks < -3.0) {
                int padding = options.segmented ? Math.max(0, packetsRequired - 1) : 0;
@@ -105,10 +105,10 @@ public class VClipAction implements MacroAction {
                player.resetFallDistance();
 
                for (int i = 0; i < packetsRequired - 1; i++) {
-                  init(mc, new StatusOnly(grounded, horizontalCollision));
+                  sendPacket(mc, new StatusOnly(grounded, horizontalCollision));
                }
 
-               init(mc, new Pos(x, y + blocks, z, grounded, horizontalCollision));
+               sendPacket(mc, new Pos(x, y + blocks, z, grounded, horizontalCollision));
                if (options.updateLocalPosition) {
                   player.setPos(x, y + blocks, z);
                   resetFall(player);
@@ -134,7 +134,7 @@ public class VClipAction implements MacroAction {
       }
    }
 
-   private static VClipAction.ClipTarget init(LocalPlayer player, VClipAction.ClipMode mode) {
+   private static VClipAction.ClipTarget resolveTarget(LocalPlayer player, VClipAction.ClipMode mode) {
       if (mode == VClipAction.ClipMode.TOP) {
          return findTarget(player);
       } else {
@@ -144,7 +144,7 @@ public class VClipAction implements MacroAction {
 
    private static VClipAction.ClipTarget findTarget(LocalPlayer player) {
       Vec3 start = player.position();
-      Vec3 candidate = TpRoutePlanner.update(TpRoutePlanner.entityView(player), start, 128.0);
+      Vec3 candidate = TpRoutePlanner.groundBelow(TpRoutePlanner.entityView(player), start, 128.0);
       return candidate != null ? new VClipAction.ClipTarget(true, candidate.y - start.y, "top") : new VClipAction.ClipTarget(false, 0.0, "no direct safe top target");
    }
 
@@ -153,7 +153,7 @@ public class VClipAction implements MacroAction {
 
       for (double offset = 0.5; offset <= 128.0; offset += 0.5) {
          Vec3 candidate = new Vec3(start.x, start.y - offset, start.z);
-         if (init(player, candidate) && load(player, candidate) && read(player, candidate)) {
+         if (isLoaded(player, candidate) && fitsAt(player, candidate) && read(player, candidate)) {
             return new VClipAction.ClipTarget(true, candidate.y - start.y, "bottom");
          }
       }
@@ -161,11 +161,11 @@ public class VClipAction implements MacroAction {
       return new VClipAction.ClipTarget(false, 0.0, "no direct safe bottom target");
    }
 
-   private static boolean init(LocalPlayer player, Vec3 pos) {
+   private static boolean isLoaded(LocalPlayer player, Vec3 pos) {
       return player != null && player.level() != null && player.level().isLoaded(BlockPos.containing(pos));
    }
 
-   private static boolean load(LocalPlayer player, Vec3 pos) {
+   private static boolean fitsAt(LocalPlayer player, Vec3 pos) {
       Vec3 delta = pos.subtract(player.position());
       return player.level().noCollision(player, player.getBoundingBox().move(delta));
    }
@@ -182,17 +182,17 @@ public class VClipAction implements MacroAction {
       int sent = 0;
 
       for (int i = 0; i < paddingPackets; i++) {
-         init(mc, new StatusOnly(true, false));
+         sendPacket(mc, new StatusOnly(true, false));
          sent++;
       }
 
-      init(mc, new StatusOnly(true, false));
+      sendPacket(mc, new StatusOnly(true, false));
       sent++;
       Vec3 from = new Vec3(x, y, z);
       Vec3 target = new Vec3(x, targetY, z);
 
       for (ClipCollisionHelper.ClipStep step : ClipCollisionHelper.steps(from, target, true)) {
-         init(mc, new Pos(step.position(), step.onGround(), false));
+         sendPacket(mc, new Pos(step.position(), step.onGround(), false));
          sent++;
       }
 
@@ -204,7 +204,7 @@ public class VClipAction implements MacroAction {
       return sent;
    }
 
-   private static void init(Minecraft mc, Packet<?> packet) {
+   private static void sendPacket(Minecraft mc, Packet<?> packet) {
       if (AutismLiteVariant.enabled()) {
          mc.getConnection().send(packet);
       } else {
@@ -238,7 +238,7 @@ public class VClipAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.mode = init(tag.getStringOr("mode", VClipAction.ClipMode.MANUAL.name()));
+      this.mode = parseMode(tag.getStringOr("mode", VClipAction.ClipMode.MANUAL.name()));
       this.deltaY = tag.getDoubleOr("deltaY", 0.0);
       this.useSegmented = tag.getBooleanOr("useSegmented", true);
       this.segmentBlocks = Math.max(1, tag.getIntOr("segmentBlocks", 10));
@@ -280,7 +280,7 @@ public class VClipAction implements MacroAction {
       this.enabled = e;
    }
 
-   private static VClipAction.ClipMode init(String value) {
+   private static VClipAction.ClipMode parseMode(String value) {
       try {
          return VClipAction.ClipMode.valueOf(value == null ? VClipAction.ClipMode.MANUAL.name() : value.toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException ignored) {
@@ -298,17 +298,17 @@ public class VClipAction implements MacroAction {
       public int segmentBlocks = 10;
       public int maxPackets = 20;
       public boolean updateLocalPosition = true;
-      public boolean read = true;
-      public boolean write = true;
+      public boolean vehicle = true;
+      public boolean forceGround = true;
       public boolean update = false;
 
-      public static VClipAction.ClipOptions init(double blocks) {
+      public static VClipAction.ClipOptions blocks(double blocks) {
          VClipAction.ClipOptions options = new VClipAction.ClipOptions();
          options.deltaY = blocks;
          return options;
       }
 
-      public VClipAction.ClipOptions init() {
+      public VClipAction.ClipOptions single() {
          this.segmented = false;
          return this;
       }

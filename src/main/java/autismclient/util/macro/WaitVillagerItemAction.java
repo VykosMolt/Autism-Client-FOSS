@@ -64,7 +64,7 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Wait Villager Item / " + this.filter.init() + (this.timeoutTicks > 0 ? " / " + this.timeoutTicks + "t" : "");
+      return "Wait Villager Item / " + this.filter.label() + (this.timeoutTicks > 0 ? " / " + this.timeoutTicks + "t" : "");
    }
 
    @Override
@@ -113,10 +113,10 @@ public final class WaitVillagerItemAction implements ContextMacroAction {
          }
 
          autismclient.util.villagerdupe.VillagerDupeDriver.ConfigStore next = (this.write
-               ? this.driver.load(mc, this.driverOptions)
-               : this.driver.read(mc, this.driverOptions))
+               ? this.driver.start(mc, this.driverOptions)
+               : this.driver.resume(mc, this.driverOptions))
             .status();
-         this.init_Z = autismclient.util.villagerdupe.VillagerDupeDriver.init_Z_Minecraft(mc, this.itemFilter, this.read);
+         this.init_Z = autismclient.util.villagerdupe.VillagerDupeDriver.hasTrader(mc, this.itemFilter, this.read);
          this.load_I++;
          if (!this.init_Z && (this.init_I <= 0 || this.load_I < this.init_I)) {
             if (next != this.init_DataUtil_ConfigSto) {

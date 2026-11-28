@@ -372,7 +372,7 @@ public final class StorageEspCatalog {
    public static final class StorageTarget {
       public final String id;
       public final String label;
-      public final String read;
+      public final String group;
       private final Supplier<ItemStack> iconSupplier;
       private final boolean blockEntityBacked;
       private final Class<? extends BlockEntity> beClass;
@@ -383,7 +383,7 @@ public final class StorageEspCatalog {
       ) {
          this.id = id;
          this.label = label;
-         this.read = group;
+         this.group = group;
          this.iconSupplier = iconSupplier;
          this.blockEntityBacked = beClass != null;
          this.beClass = beClass;

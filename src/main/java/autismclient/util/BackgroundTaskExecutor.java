@@ -49,7 +49,7 @@ public final class BackgroundTaskExecutor {
       return future;
    }
 
-   public static Future<?> init(String name, BooleanSupplier done, Runnable onDone, long pollMs) {
+   public static Future<?> watch(String name, BooleanSupplier done, Runnable onDone, long pollMs) {
       return submit(name, () -> {
          while (!done.getAsBoolean()) {
             try {

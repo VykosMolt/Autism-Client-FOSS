@@ -34,7 +34,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
          if (load(this.connection, packet)) {
             super.write(ctx, msg, promise);
          } else {
-            OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.init(this.connection, packet);
+            OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.verdict(this.connection, packet);
             switch (verdict.kind) {
                case PASS:
                   ProtectorFeatureFlags.unmarkDirect(packet);
@@ -54,7 +54,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
 
    public static boolean init(Connection connection, Channel channel, Packet<?> packet) {
       if (connection != null && init(channel) && (packet instanceof ServerboundCustomPayloadPacket || packet instanceof ServerboundCustomQueryAnswerPacket)) {
-         OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.init(connection, packet);
+         OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.verdict(connection, packet);
          Packet var10000;
          switch (verdict.kind) {
             case PASS:
@@ -108,12 +108,12 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       }
    }
 
-   public static boolean init(Connection connection, Channel channel, Packet<?> packet, ChannelFutureListener listener, boolean flush) {
+   public static boolean filterSend(Connection connection, Channel channel, Packet<?> packet, ChannelFutureListener listener, boolean flush) {
       if (!(packet instanceof ServerboundCustomPayloadPacket) && !(packet instanceof ServerboundCustomQueryAnswerPacket)) {
          return true;
       }
 
-      OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.init(connection, packet);
+      OutboundChannelPolicy.Verdict verdict = OutboundChannelPolicy.verdict(connection, packet);
       ProtectorFeatureFlags.unmarkDirect(packet);
       switch (verdict.kind) {
          case PASS:
@@ -192,7 +192,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       return channel != null && channel.isOpen() && channel.isActive();
    }
 
-   public static boolean init(Object packet) {
+   public static boolean isPayloadPacket(Object packet) {
       return packet instanceof ServerboundCustomPayloadPacket || packet instanceof ServerboundCustomQueryAnswerPacket;
    }
 
@@ -267,7 +267,7 @@ public final class OutboundPacketFilterHandler extends ChannelOutboundHandlerAda
       }
    }
 
-   static void init(Connection connection) {
+   static void forget(Connection connection) {
       synchronized (init_Map) {
          Map<Packet<?>, Boolean> removed = init_Map.remove(connection);
          if (removed != null) {

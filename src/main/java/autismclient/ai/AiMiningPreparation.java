@@ -66,7 +66,7 @@ public final class AiMiningPreparation {
                }
             }
 
-            return init(mc, args, wanted, blocks);
+            return prepareWood(mc, args, wanted, blocks);
          } else {
             return null;
          }
@@ -116,7 +116,7 @@ public final class AiMiningPreparation {
                }
             }
 
-            AiOperation woodPreparation = init(mc, args, wanted, blocksToMine);
+            AiOperation woodPreparation = prepareWood(mc, args, wanted, blocksToMine);
             if (woodPreparation != null) {
                return woodPreparation;
             }
@@ -212,7 +212,7 @@ public final class AiMiningPreparation {
                            double woodTicks = 0.0;
                            if (logs > 0) {
                               BlockState logState = mc.level.getBlockState(wood);
-                              int woodSlot = autismclient.ai.engine.MiningCost.load(mc, logState, true);
+                              int woodSlot = autismclient.ai.engine.MiningCost.bestToolSlot(mc, logState, true);
                               woodTicks = logs
                                     * autismclient.ai.engine.MiningCost.breakTicks(
                                        mc,
@@ -247,18 +247,18 @@ public final class AiMiningPreparation {
                final JsonObject resume = args.deepCopy();
                resume.addProperty("toolPrepared", true);
                return new AiOperation() {
-                  final long init_J = System.nanoTime() + Math.max(20, AiJson.getInt(args, "timeoutSeconds", 600)) * 1000000000L;
-                  AiOperation init_AiOperation;
-                  int init_I;
-                  boolean init_Z;
+                  final long deadline = System.nanoTime() + Math.max(20, AiJson.getInt(args, "timeoutSeconds", 600)) * 1000000000L;
+                  AiOperation childOp;
+                  int stage;
+                  boolean cancelled;
 
                   @Override
                   public AiOperation.Result tick() {
-                     if (this.init_Z) {
+                     if (this.cancelled) {
                         return AiGameOperations.result(AiOperation.Status.CANCELLED, "Mining cancelled", new JsonObject());
                      }
 
-                     if (System.nanoTime() >= this.init_J) {
+                     if (System.nanoTime() >= this.deadline) {
                         boolean uncertain = this.requiresReconciliationAfterEmergency();
                         this.cancel();
                         return AiGameOperations.result(
@@ -268,31 +268,31 @@ public final class AiMiningPreparation {
                         );
                      }
 
-                     int seconds = (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
-                     if (this.init_AiOperation != null) {
-                        AiOperation.Result r = this.init_AiOperation.tick();
+                     int seconds = (int)Math.max(1L, (this.deadline - System.nanoTime()) / 1000000000L);
+                     if (this.childOp != null) {
+                        AiOperation.Result r = this.childOp.tick();
                         if (!r.terminal()) {
                            return r;
                         }
 
-                        boolean uncertain = r.status() == AiOperation.Status.UNCERTAIN || this.init_AiOperation.requiresReconciliationAfterEmergency();
-                        this.init_AiOperation.cancel();
-                        this.init_AiOperation = null;
+                        boolean uncertain = r.status() == AiOperation.Status.UNCERTAIN || this.childOp.requiresReconciliationAfterEmergency();
+                        this.childOp.cancel();
+                        this.childOp = null;
                         if (uncertain || r.status() == AiOperation.Status.CANCELLED) {
                            return r;
                         }
 
-                        if (this.init_I == 4) {
+                        if (this.stage == 4) {
                            return r;
                         }
 
                         if (r.status() != AiOperation.Status.SUCCEEDED) {
-                           this.init_I = 3;
+                           this.stage = 3;
                         }
                      }
 
-                     if (this.init_I == 0 && logs > 0) {
-                        this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
+                     if (this.stage == 0 && logs > 0) {
+                        this.childOp = autismclient.ai.engine.AiBlockMine.create(
                            AiJson.objectOf(
                               "block",
                               logId,
@@ -310,9 +310,9 @@ public final class AiMiningPreparation {
                               Math.min(20, seconds)
                            )
                         );
-                        this.init_I = 1;
-                     } else if (this.init_I < 2 && cobble > 0) {
-                        this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(
+                        this.stage = 1;
+                     } else if (this.stage < 2 && cobble > 0) {
+                        this.childOp = autismclient.ai.engine.AiBlockMine.create(
                            AiJson.objectOf(
                               "blocks",
                               autismclient.ai.engine.AiBlockMine.jsonArray(List.of("minecraft:stone", "minecraft:cobblestone")),
@@ -330,38 +330,38 @@ public final class AiMiningPreparation {
                               Math.min(20, seconds)
                            )
                         );
-                        this.init_I = 2;
-                     } else if (this.init_I < 3) {
-                        this.init_AiOperation = AiCraft.craft(
+                        this.stage = 2;
+                     } else if (this.stage < 3) {
+                        this.childOp = AiCraft.craft(
                            AiJson.objectOf("item", tool, "count", AiCraft.countItem(tool) + 1, "timeoutSeconds", Math.min(20, seconds))
                         );
-                        this.init_I = 3;
+                        this.stage = 3;
                      } else {
                         resume.addProperty("timeoutSeconds", seconds);
-                        this.init_AiOperation = autismclient.ai.engine.AiBlockMine.create(resume);
-                        this.init_I = 4;
+                        this.childOp = autismclient.ai.engine.AiBlockMine.create(resume);
+                        this.stage = 4;
                      }
 
                      return AiGameOperations.result(
-                        AiOperation.Status.RUNNING, this.init_I < 4 ? "Prepare a faster mining tool" : "Continue the mining batch", new JsonObject()
+                        AiOperation.Status.RUNNING, this.stage < 4 ? "Prepare a faster mining tool" : "Continue the mining batch", new JsonObject()
                      );
                   }
 
                   @Override
                   public boolean canInterruptNow() {
-                     return this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
+                     return this.childOp == null || this.childOp.canInterruptNow();
                   }
 
                   @Override
                   public boolean requiresReconciliationAfterEmergency() {
-                     return this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+                     return this.childOp != null && this.childOp.requiresReconciliationAfterEmergency();
                   }
 
                   @Override
                   public void cancel() {
-                     this.init_Z = true;
-                     if (this.init_AiOperation != null) {
-                        this.init_AiOperation.cancel();
+                     this.cancelled = true;
+                     if (this.childOp != null) {
+                        this.childOp.cancel();
                      }
                   }
                };
@@ -376,7 +376,7 @@ public final class AiMiningPreparation {
       }
    }
 
-   static AiMiningPreparation.CraftOption init(
+   static AiMiningPreparation.CraftOption craftOption(
       AiCraftPlanner.RecipeGraph graph,
       boolean tableHeld,
       String log,
@@ -437,11 +437,11 @@ public final class AiMiningPreparation {
          || id.endsWith("_hyphae");
    }
 
-   static boolean init(BlockPos origin, BlockPos log, boolean loaded, boolean reachable, boolean easy) {
+   static boolean isUsableLog(BlockPos origin, BlockPos log, boolean loaded, boolean reachable, boolean easy) {
       return loaded && reachable && easy && log.getY() >= origin.getY() && log.distSqr(origin) <= 36.0;
    }
 
-   private static AiOperation init(Minecraft mc, JsonObject args, Set<Item> wanted, Set<Block> blocks) {
+   private static AiOperation prepareWood(Minecraft mc, JsonObject args, Set<Item> wanted, Set<Block> blocks) {
       int held = AiJson.getInt(args, "held", 0);
       if (held > 0 && !blocks.isEmpty() && mc.player.onGround() && !mc.player.isInWater() && !mc.player.isInLava()) {
          Set<String> goalLogs = new HashSet<>();
@@ -494,7 +494,7 @@ public final class AiMiningPreparation {
                && mc.level.getBlockState(at).is(BlockTags.LOGS)
                && !(at.distSqr(origin) > 36.0)
                && init(mc, at, origin.getY())
-               && init(origin, at, true, autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, at) != null, init(mc, at))) {
+               && isUsableLog(origin, at, true, autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, at) != null, init(mc, at))) {
                String log = BuiltInRegistries.ITEM.getKey(mc.level.getBlockState(at).getBlock().asItem()).toString();
                if (goalLogs.contains(log)) {
                   local.computeIfAbsent(log, ignored -> new ArrayList<>()).add(at.immutable());
@@ -509,14 +509,14 @@ public final class AiMiningPreparation {
          }
 
          double setup = 40 + (tableHeld ? 0 : 60);
-         AiMiningPreparation.CraftOption chosen = init(graph, tableHeld, "", goalLogs, remaining, 0, before, after, setup, before, Math.max(1, axe.getMaxDamage() - 2));
+         AiMiningPreparation.CraftOption chosen = craftOption(graph, tableHeld, "", goalLogs, remaining, 0, before, after, setup, before, Math.max(1, axe.getMaxDamage() - 2));
          String chosenLog = "";
 
          for (Entry<String, List<BlockPos>> entry : local.entrySet()) {
             BlockState state = mc.level.getBlockState(entry.getValue().getFirst());
             double logTicks = autismclient.ai.engine.MiningCost.breakTicks(mc, ItemStack.EMPTY, state, state.getBlock().defaultDestroyTime(), factors);
             double walk = Math.sqrt(entry.getValue().stream().mapToDouble(at -> at.distSqr(origin)).max().orElse(0.0)) * 8.0;
-            AiMiningPreparation.CraftOption candidate = init(
+            AiMiningPreparation.CraftOption candidate = craftOption(
                graph,
                tableHeld,
                entry.getKey(),
@@ -577,7 +577,7 @@ public final class AiMiningPreparation {
                   "item", "minecraft:wooden_axe", "count", AiCraft.countItem("minecraft:wooden_axe") + 1, "timeoutSeconds", Math.min(20, seconds.getAsInt())
                )
             ),
-            () -> autismclient.ai.engine.AiBlockMine.create(init(resume, seconds.getAsInt())),
+            () -> autismclient.ai.engine.AiBlockMine.create(resumeArgs(resume, seconds.getAsInt())),
             () -> mc.player.blockPosition().distSqr(origin) <= 36.0,
             () -> mc.level == world && mc.player == player && mc.getConnection() == connection,
             deadline
@@ -587,7 +587,7 @@ public final class AiMiningPreparation {
       }
    }
 
-   static JsonObject init(JsonObject args, int seconds) {
+   static JsonObject resumeArgs(JsonObject args, int seconds) {
       JsonObject resume = args.deepCopy();
       resume.addProperty("toolPrepared", true);
       resume.addProperty("timeoutSeconds", seconds);
@@ -619,123 +619,123 @@ public final class AiMiningPreparation {
       final long deadline
    ) {
       return new AiOperation() {
-         AiOperation init_AiOperation = gather;
-         AiOperation.Result init_AiOperation_Result;
-         AiOperation.Result load_AiOperation_Result;
-         int init_I = gather == null ? 1 : 0;
-         boolean init_Z;
-         boolean load_Z;
+         AiOperation childOp = gather;
+         AiOperation.Result refusedResult;
+         AiOperation.Result finalResult;
+         int stage = gather == null ? 1 : 0;
+         boolean cancelled;
+         boolean pendingReconciliation;
 
          @Override
          public AiOperation.Result tick() {
-            if (this.load_AiOperation_Result != null) {
-               return this.load_AiOperation_Result;
+            if (this.finalResult != null) {
+               return this.finalResult;
             }
 
-            if (this.init_Z) {
-               return this.init(AiOperation.Status.CANCELLED, "Wood preparation cancelled");
+            if (this.cancelled) {
+               return this.finish(AiOperation.Status.CANCELLED, "Wood preparation cancelled");
             }
 
             if (!valid.getAsBoolean()) {
-               return this.init(AiOperation.Status.UNCERTAIN, "World, connection or player changed during wood preparation");
+               return this.finish(AiOperation.Status.UNCERTAIN, "World, connection or player changed during wood preparation");
             }
 
             if (System.nanoTime() >= deadline) {
-               return this.init(AiOperation.Status.TIMED_OUT, "Wood preparation exceeded the mining deadline");
+               return this.finish(AiOperation.Status.TIMED_OUT, "Wood preparation exceeded the mining deadline");
             }
 
-            if (this.init_I == 0 && !local.getAsBoolean()) {
+            if (this.stage == 0 && !local.getAsBoolean()) {
                AiOperation.Result refused = AiOperation.Result.failed(
-                  AiFailure.UNREACHABLE, "Optional wood stock is no longer nearby", this.init_AiOperation_Result == null ? "{}" : this.init_AiOperation_Result.dataJson()
+                  AiFailure.UNREACHABLE, "Optional wood stock is no longer nearby", this.refusedResult == null ? "{}" : this.refusedResult.dataJson()
                );
-               refused = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.init_AiOperation, refused);
-               this.init_AiOperation = null;
-               this.init_AiOperation_Result = refused;
+               refused = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.childOp, refused);
+               this.childOp = null;
+               this.refusedResult = refused;
                if (refused.status() == AiOperation.Status.UNCERTAIN) {
-                  return this.init(refused.status(), refused.message());
+                  return this.finish(refused.status(), refused.message());
                }
 
-               this.init_I = 2;
-               this.init_AiOperation_Result = null;
+               this.stage = 2;
+               this.refusedResult = null;
             }
 
-            if (this.init_AiOperation == null) {
-               this.init_AiOperation = this.init_I == 1 ? craft.get() : resume.get();
-               this.init_AiOperation_Result = null;
+            if (this.childOp == null) {
+               this.childOp = this.stage == 1 ? craft.get() : resume.get();
+               this.refusedResult = null;
                return AiGameOperations.result(
-                  AiOperation.Status.RUNNING, this.init_I == 1 ? "Crafting an axe for the log batch" : "Continuing the log batch", new JsonObject()
+                  AiOperation.Status.RUNNING, this.stage == 1 ? "Crafting an axe for the log batch" : "Continuing the log batch", new JsonObject()
                );
             }
 
-            AiOperation.Result result = this.init_AiOperation.tick();
-            this.init_AiOperation_Result = result;
+            AiOperation.Result result = this.childOp.tick();
+            this.refusedResult = result;
             if (!result.terminal()) {
                return result;
             }
 
-            result = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.init_AiOperation, result);
-            this.init_AiOperation = null;
-            this.init_AiOperation_Result = result;
+            result = AiNetherRun.init_AiOperation_Result_AiOperation_AiOperation_Result(this.childOp, result);
+            this.childOp = null;
+            this.refusedResult = result;
             if (result.status() == AiOperation.Status.UNCERTAIN || result.status() == AiOperation.Status.CANCELLED) {
-               return this.init(result.status(), result.message());
+               return this.finish(result.status(), result.message());
             }
 
-            if (this.init_I == 2) {
-               return this.init(result.status(), result.message());
+            if (this.stage == 2) {
+               return this.finish(result.status(), result.message());
             }
 
-            this.init_I = result.status() == AiOperation.Status.SUCCEEDED ? this.init_I + 1 : 2;
-            this.init_AiOperation_Result = null;
+            this.stage = result.status() == AiOperation.Status.SUCCEEDED ? this.stage + 1 : 2;
+            this.refusedResult = null;
             return AiGameOperations.result(
-               AiOperation.Status.RUNNING, this.init_I == 1 ? "Preparing a faster axe" : "Continuing the log batch", new JsonObject()
+               AiOperation.Status.RUNNING, this.stage == 1 ? "Preparing a faster axe" : "Continuing the log batch", new JsonObject()
             );
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
-            this.load_Z = this.load_Z | this.requiresReconciliationAfterEmergency();
-            this.load_AiOperation_Result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
+         AiOperation.Result finish(AiOperation.Status status, String message) {
+            this.pendingReconciliation = this.pendingReconciliation | this.requiresReconciliationAfterEmergency();
+            this.finalResult = AiNetherRun.init_AiOperation_Result_AiOperation_Status(
                status,
                message,
-               AiJson.objectOf("investment", "minecraft:wooden_axe", "stage", this.init_I),
-               this.load_Z,
-               this.init_AiOperation_Result
+               AiJson.objectOf("investment", "minecraft:wooden_axe", "stage", this.stage),
+               this.pendingReconciliation,
+               this.refusedResult
             );
-            if (this.init_AiOperation_Result != null && this.init_AiOperation_Result.terminal()) {
-               this.load_AiOperation_Result = new AiOperation.Result(
-                  this.load_AiOperation_Result.status(),
-                  this.load_AiOperation_Result.message(),
-                  this.load_AiOperation_Result.dataJson(),
-                  this.init_AiOperation_Result.evidence(),
-                  this.init_AiOperation_Result.failure()
+            if (this.refusedResult != null && this.refusedResult.terminal()) {
+               this.finalResult = new AiOperation.Result(
+                  this.finalResult.status(),
+                  this.finalResult.message(),
+                  this.finalResult.dataJson(),
+                  this.refusedResult.evidence(),
+                  this.refusedResult.failure()
                );
             }
 
             this.cancel();
-            return this.load_AiOperation_Result;
+            return this.finalResult;
          }
 
          @Override
          public boolean canInterruptNow() {
-            return !this.load_Z && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+            return !this.pendingReconciliation && (this.childOp == null || this.childOp.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            JsonObject evidence = this.init_AiOperation_Result == null ? new JsonObject() : AiRunResources.parseEvidenceJson(this.init_AiOperation_Result.dataJson());
-            return this.load_Z
-               || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency()
+            JsonObject evidence = this.refusedResult == null ? new JsonObject() : AiRunResources.parseEvidenceJson(this.refusedResult.dataJson());
+            return this.pendingReconciliation
+               || this.childOp != null && this.childOp.requiresReconciliationAfterEmergency()
                || AiJson.getBoolean(evidence, "reobserveBeforeResuming", false)
                || AiJson.getBoolean(evidence, "interruptedActionNeedsReconciliation", false);
          }
 
          @Override
          public void cancel() {
-            if (!this.init_Z) {
-               this.load_Z = this.load_Z | this.requiresReconciliationAfterEmergency();
-               this.init_Z = true;
-               if (this.init_AiOperation != null) {
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+            if (!this.cancelled) {
+               this.pendingReconciliation = this.pendingReconciliation | this.requiresReconciliationAfterEmergency();
+               this.cancelled = true;
+               if (this.childOp != null) {
+                  this.childOp.cancel();
+                  this.childOp = null;
                }
             }
          }
@@ -795,8 +795,8 @@ public final class AiMiningPreparation {
             }
 
             @Override
-            public String init(Set<String> ids) {
-               return graph.init(ids);
+            public String familyOf(Set<String> ids) {
+               return graph.familyOf(ids);
             }
          },
          "autism:prepared_mining_tool",

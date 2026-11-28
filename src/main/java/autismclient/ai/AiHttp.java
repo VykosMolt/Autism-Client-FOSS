@@ -22,7 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.Flow.Subscription;
 
 final class AiHttp {
-   private static final HttpClient init_HttpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15L)).followRedirects(Redirect.NEVER).build();
+   private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15L)).followRedirects(Redirect.NEVER).build();
    static final String CLAUDE_TOKEN_MESSAGE = "This is a Claude sign-in token (Claude Code / Claude app subscription), which Anthropic only accepts inside its own apps. Paste an Anthropic Console API key instead (console.anthropic.com, API keys)";
 
    private AiHttp() {
@@ -39,7 +39,7 @@ final class AiHttp {
       }
 
       if (provider == AiSettings.Provider.ANTHROPIC) {
-         if (init(key)) {
+         if (isOauthToken(key)) {
             throw new IllegalArgumentException(
                "This is a Claude sign-in token (Claude Code / Claude app subscription), which Anthropic only accepts inside its own apps. Paste an Anthropic Console API key instead (console.anthropic.com, API keys)"
             );
@@ -51,7 +51,7 @@ final class AiHttp {
       }
    }
 
-   static boolean init(String key) {
+   static boolean isOauthToken(String key) {
       return key != null && key.trim().startsWith("sk-ant-oat");
    }
 
@@ -201,7 +201,7 @@ final class AiHttp {
 
    static HttpResponse<byte[]> send(HttpRequest request, int limit, Runnable checkpoint) throws InterruptedException, TimeoutException, ExecutionException {
       checkpoint.run();
-      CompletableFuture<HttpResponse<byte[]>> future = init_HttpClient.sendAsync(request, info -> new AiHttp.LimitedBodySubscriber(limit));
+      CompletableFuture<HttpResponse<byte[]>> future = HTTP.sendAsync(request, info -> new AiHttp.LimitedBodySubscriber(limit));
       long deadline = System.nanoTime() + request.timeout().orElse(Duration.ofSeconds(60L)).toNanos();
 
       try {
@@ -224,9 +224,9 @@ final class AiHttp {
    }
 
    private static final class LimitedBodySubscriber implements BodySubscriber<byte[]> {
-      private final BodySubscriber<byte[]> init_HttpResponse_BodyS = BodySubscribers.ofByteArray();
+      private final BodySubscriber<byte[]> delegate = BodySubscribers.ofByteArray();
       private final int limit;
-      private long init_J;
+      private long received;
       private Subscription subscription;
 
       LimitedBodySubscriber(int limit) {
@@ -235,40 +235,40 @@ final class AiHttp {
 
       @Override
       public CompletionStage<byte[]> getBody() {
-         return this.init_HttpResponse_BodyS.getBody();
+         return this.delegate.getBody();
       }
 
       @Override
       public void onSubscribe(Subscription subscription) {
          this.subscription = subscription;
-         this.init_HttpResponse_BodyS.onSubscribe(subscription);
+         this.delegate.onSubscribe(subscription);
       }
 
       public void onNext(List<ByteBuffer> buffers) {
-         this.init(buffers);
+         this.consume(buffers);
       }
 
-      public void init(List<ByteBuffer> buffers) {
+      public void consume(List<ByteBuffer> buffers) {
          for (ByteBuffer b : buffers) {
-            this.init_J = this.init_J + b.remaining();
+            this.received = this.received + b.remaining();
          }
 
-         if (this.init_J > this.limit) {
+         if (this.received > this.limit) {
             this.subscription.cancel();
-            this.init_HttpResponse_BodyS.onError(new IOException("HTTP body exceeds " + this.limit + " bytes"));
+            this.delegate.onError(new IOException("HTTP body exceeds " + this.limit + " bytes"));
          } else {
-            this.init_HttpResponse_BodyS.onNext(buffers);
+            this.delegate.onNext(buffers);
          }
       }
 
       @Override
       public void onError(Throwable error) {
-         this.init_HttpResponse_BodyS.onError(error);
+         this.delegate.onError(error);
       }
 
       @Override
       public void onComplete() {
-         this.init_HttpResponse_BodyS.onComplete();
+         this.delegate.onComplete();
       }
    }
 }

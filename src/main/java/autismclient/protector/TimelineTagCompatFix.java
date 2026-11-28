@@ -16,7 +16,7 @@ public final class TimelineTagCompatFix {
    private TimelineTagCompatFix() {
    }
 
-   public static void init(Map<ResourceKey<? extends Registry<?>>, NetworkedRegistryData> entries, boolean translated) {
+   public static void apply(Map<ResourceKey<? extends Registry<?>>, NetworkedRegistryData> entries, boolean translated) {
       NetworkedRegistryData timelines = entries.get(Registries.TIMELINE);
       if (timelines != null && timelines.tags().isEmpty()) {
          Map<Identifier, Integer> ids = new HashMap<>();

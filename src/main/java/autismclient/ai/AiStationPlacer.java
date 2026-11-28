@@ -263,7 +263,7 @@ final class AiStationPlacer {
             return false;
          }
 
-         if (autismclient.ai.engine.MiningCost.load(mc, state, false) < 0) {
+         if (autismclient.ai.engine.MiningCost.bestToolSlot(mc, state, false) < 0) {
             return false;
          }
 

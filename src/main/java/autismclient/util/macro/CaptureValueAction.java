@@ -176,10 +176,10 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    public CaptureValueAction.SidebarLine selectedScoreboardLine(Minecraft mc) {
-      return this.init(mc, this.scoreboardRow, this.scoreboardRowIndex, this.scoreboardObjective);
+      return this.sidebarLine(mc, this.scoreboardRow, this.scoreboardRowIndex, this.scoreboardObjective);
    }
 
-   public CaptureValueAction.SidebarLine init(Minecraft mc, String preferredKey, int preferredRow, String preferredObjective) {
+   public CaptureValueAction.SidebarLine sidebarLine(Minecraft mc, String preferredKey, int preferredRow, String preferredObjective) {
       List<CaptureValueAction.SidebarLine> lines = sidebarLines(mc);
       if (lines.isEmpty()) {
          return null;
@@ -319,11 +319,11 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
          }
 
          CaptureValueAction.ModifierResult modification = this.init_TaskQueue_ConfigSt_Map(additions);
-         if (!modification.init_Z()) {
-            return CaptureValueAction.CaptureResult.failure(modification.init_Str());
+         if (!modification.ok()) {
+            return CaptureValueAction.CaptureResult.failure(modification.error());
          }
 
-         additions = new LinkedHashMap<>(modification.init_Map());
+         additions = new LinkedHashMap<>(modification.variables());
          return additions.isEmpty()
             ? CaptureValueAction.CaptureResult.failure("Enter a variable name")
             : new CaptureValueAction.CaptureResult(true, captured.text, additions, "Ready");
@@ -362,7 +362,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    private CaptureValueAction.ModifierResult init_TaskQueue_ConfigSt_Map(Map<String, MacroVarValue> values) {
       String error = this.numberModifierError();
       if (!error.isBlank()) {
-         return CaptureValueAction.ModifierResult.init(error);
+         return CaptureValueAction.ModifierResult.failure(error);
       }
 
       CaptureValueAction.NumberModifier modifier = this.numberModifier == null ? CaptureValueAction.NumberModifier.NONE : this.numberModifier;
@@ -383,9 +383,9 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
             }
          }
 
-         return ok ? CaptureValueAction.ModifierResult.init(modified) : CaptureValueAction.ModifierResult.init("Not a number");
+         return ok ? CaptureValueAction.ModifierResult.success(modified) : CaptureValueAction.ModifierResult.failure("Not a number");
       } else {
-         return CaptureValueAction.ModifierResult.init(values == null ? Map.of() : values);
+         return CaptureValueAction.ModifierResult.success(values == null ? Map.of() : values);
       }
    }
 
@@ -568,7 +568,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    private CaptureValueAction.CapturedValue captureFromTabList(Minecraft mc) {
-      List<TabPlayerListParser.ParsedPlayer> players = TabPlayerListParser.init(mc);
+      List<TabPlayerListParser.ParsedPlayer> players = TabPlayerListParser.parse(mc);
       List<String> names = new ArrayList<>(players.size() + 1);
       Map<String, String> prefixes = new HashMap<>();
 
@@ -666,7 +666,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    private CaptureValueAction.CapturedValue captureFromContainer(Minecraft mc, boolean playerOnly) {
       if (mc.player != null && mc.player.containerMenu != null) {
          CaptureValueAction.ItemFilterResolution filterResolution = this.resolveItemFilter(mc);
-         if (!filterResolution.init_Z()) {
+         if (!filterResolution.valid()) {
             return null;
          }
 
@@ -695,7 +695,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       CaptureValueAction.CapturedValue menu = this.captureFromContainer(mc, true);
       if (menu == null && mc.player != null) {
          CaptureValueAction.ItemFilterResolution filterResolution = this.resolveItemFilter(mc);
-         if (!filterResolution.init_Z()) {
+         if (!filterResolution.valid()) {
             return null;
          }
 
@@ -843,12 +843,12 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    }
 
    @Override
-   public String load() {
+   public String getSaveAs() {
       return this.saveAs;
    }
 
    @Override
-   public void a_(String name) {
+   public void setSaveAs(String name) {
       this.saveAs = name == null ? "" : name;
    }
 
@@ -931,12 +931,12 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       LORE;
    }
 
-   private record ModifierResult(boolean init_Z, Map<String, MacroVarValue> init_Map, String init_Str) {
-      private static CaptureValueAction.ModifierResult init(Map<String, MacroVarValue> values) {
+   private record ModifierResult(boolean ok, Map<String, MacroVarValue> variables, String error) {
+      private static CaptureValueAction.ModifierResult success(Map<String, MacroVarValue> values) {
          return new CaptureValueAction.ModifierResult(true, values == null ? Map.of() : values, "");
       }
 
-      private static CaptureValueAction.ModifierResult init(String message) {
+      private static CaptureValueAction.ModifierResult failure(String message) {
          return new CaptureValueAction.ModifierResult(false, Map.of(), message == null ? "Invalid number modifier" : message);
       }
    }
@@ -978,7 +978,7 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       NAMESCRAPE;
    }
 
-   private record ItemFilterResolution(boolean init_Z, MacroItemTarget filter) {
+   private record ItemFilterResolution(boolean valid, MacroItemTarget filter) {
    }
 
    public enum NumberModifier {

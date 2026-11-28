@@ -13,26 +13,26 @@ public class OverlayContextMenu<T> {
    private final autismclient.gui.f.b.CharEncoder theme;
    private final Font font;
    private final Function<T, String[]> itemProvider;
-   private final int update;
-   private boolean init_Z;
-   private int sync;
-   private int flush;
+   private final int lineHeight;
+   private boolean visible;
+   private int menuX;
+   private int menuY;
    private T target;
-   private String[] init_StrArr = new String[0];
-   private int close = -1;
-   private int open = -1;
-   private int poll = -1;
-   private int push = -1;
+   private String[] items = new String[0];
+   private int cachedWidth = -1;
+   private int cachedHeight = -1;
+   private int cachedScreenWidth = -1;
+   private int cachedScreenHeight = -1;
 
    public OverlayContextMenu(autismclient.gui.f.b.CharEncoder theme, Font font, Function<T, String[]> itemProvider, int lineHeight) {
       this.theme = theme;
       this.font = font;
       this.itemProvider = itemProvider;
-      this.update = Math.max(12, lineHeight);
+      this.lineHeight = Math.max(12, lineHeight);
    }
 
    public boolean isOpen() {
-      return this.init_Z && this.target != null;
+      return this.visible && this.target != null;
    }
 
    public T getTarget() {
@@ -41,40 +41,40 @@ public class OverlayContextMenu<T> {
 
    public void open(int mouseX, int mouseY, T target) {
       this.target = target;
-      this.sync = mouseX;
-      this.flush = mouseY;
-      this.init_Z = true;
+      this.menuX = mouseX;
+      this.menuY = mouseY;
+      this.visible = true;
       String[] items = this.itemProvider.apply(target);
-      this.init_StrArr = items == null ? new String[0] : items;
-      this.load();
-      this.read();
+      this.items = items == null ? new String[0] : items;
+      this.invalidateLayout();
+      this.clampToScreen();
    }
 
    public void close() {
-      this.init_Z = false;
+      this.visible = false;
       this.target = null;
-      this.init_StrArr = new String[0];
-      this.load();
+      this.items = new String[0];
+      this.invalidateLayout();
    }
 
    private String[] visibleItems() {
-      return this.init_Z && this.target != null ? this.init_StrArr : new String[0];
+      return this.visible && this.target != null ? this.items : new String[0];
    }
 
-   private int init_I(String[] items) {
-      this.init_V(items);
-      return this.close;
+   private int menuWidth(String[] items) {
+      this.ensureLayout(items);
+      return this.cachedWidth;
    }
 
-   private int load(String[] items) {
-      this.init_V(items);
-      return this.open;
+   private int menuHeight(String[] items) {
+      this.ensureLayout(items);
+      return this.cachedHeight;
    }
 
-   private void init_V(String[] items) {
+   private void ensureLayout(String[] items) {
       int screenWidth = Math.max(1, cA.init_I());
       int screenHeight = Math.max(1, cA.load_I());
-      if (this.close < 0 || this.open < 0 || this.poll != screenWidth || this.push != screenHeight) {
+      if (this.cachedWidth < 0 || this.cachedHeight < 0 || this.cachedScreenWidth != screenWidth || this.cachedScreenHeight != screenHeight) {
          int maxW = 0;
 
          for (String s : items) {
@@ -87,34 +87,34 @@ public class OverlayContextMenu<T> {
             maxW = Math.max(maxW, w);
          }
 
-         this.close = Math.min(Math.max(1, screenWidth - 4), maxW + 8);
-         this.open = this.read(items) * this.update + 4;
-         this.poll = screenWidth;
-         this.push = screenHeight;
+         this.cachedWidth = Math.min(Math.max(1, screenWidth - 4), maxW + 8);
+         this.cachedHeight = this.visibleRowCount(items) * this.lineHeight + 4;
+         this.cachedScreenWidth = screenWidth;
+         this.cachedScreenHeight = screenHeight;
       }
    }
 
-   private void load() {
-      this.close = -1;
-      this.open = -1;
-      this.poll = -1;
-      this.push = -1;
+   private void invalidateLayout() {
+      this.cachedWidth = -1;
+      this.cachedHeight = -1;
+      this.cachedScreenWidth = -1;
+      this.cachedScreenHeight = -1;
    }
 
-   private int read(String[] items) {
+   private int visibleRowCount(String[] items) {
       int available = Math.max(1, cA.load_I() - 4 - 4);
-      return Math.max(0, Math.min(items.length, available / Math.max(1, this.update)));
+      return Math.max(0, Math.min(items.length, available / Math.max(1, this.lineHeight)));
    }
 
-   private void read() {
-      if (this.init_Z) {
+   private void clampToScreen() {
+      if (this.visible) {
          String[] items = this.visibleItems();
-         int w = this.init_I(items);
-         int h = this.load(items);
+         int w = this.menuWidth(items);
+         int h = this.menuHeight(items);
          int sw = Math.max(1, cA.init_I());
          int sh = Math.max(1, cA.load_I());
-         this.sync = Math.max(2, Math.min(this.sync, sw - w - 2));
-         this.flush = Math.max(2, Math.min(this.flush, sh - h - 2));
+         this.menuX = Math.max(2, Math.min(this.menuX, sw - w - 2));
+         this.menuY = Math.max(2, Math.min(this.menuY, sh - h - 2));
       }
    }
 
@@ -124,37 +124,37 @@ public class OverlayContextMenu<T> {
       }
 
       String[] items = this.visibleItems();
-      int w = this.init_I(items);
-      int h = this.load(items);
-      return mx >= this.sync && mx < this.sync + w && my >= this.flush && my < this.flush + h;
+      int w = this.menuWidth(items);
+      int h = this.menuHeight(items);
+      return mx >= this.menuX && mx < this.menuX + w && my >= this.menuY && my < this.menuY + h;
    }
 
    public void render(GuiGraphicsExtractor ctx, int mx, int my) {
       if (this.isOpen()) {
-         this.read();
+         this.clampToScreen();
          String[] items = this.visibleItems();
-         int w = this.init_I(items);
-         int h = this.load(items);
+         int w = this.menuWidth(items);
+         int h = this.menuHeight(items);
          autismclient.gui.f.PacketUtil.init_V_GuiGraphicsExtract_3(
             ctx,
-            autismclient.gui.f.NetHelper.init(this.sync - 1, this.flush - 1, w + 2, h + 2),
+            autismclient.gui.f.NetHelper.init(this.menuX - 1, this.menuY - 1, w + 2, h + 2),
             this.theme.poll(),
             this.theme.get(),
             this.theme.run()
          );
-         int visibleItems = this.read(items);
+         int visibleItems = this.visibleRowCount(items);
 
          for (int i = 0; i < visibleItems; i++) {
-            int iy = this.flush + 2 + i * this.update;
-            boolean hov = mx >= this.sync && mx < this.sync + w && my >= iy && my < iy + this.update;
+            int iy = this.menuY + 2 + i * this.lineHeight;
+            boolean hov = mx >= this.menuX && mx < this.menuX + w && my >= iy && my < iy + this.lineHeight;
             if (hov) {
-               autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(ctx, this.sync + 1, iy, w - 2, this.update, UiColorPalette.contextMenuHoverFill());
+               autismclient.gui.ui.widgets.PanelSurfaceHelper.fillRect(ctx, this.menuX + 1, iy, w - 2, this.lineHeight, UiColorPalette.contextMenuHoverFill());
             }
 
-            int textY = UiLayoutMath.centerTextY(iy, this.update, this.theme.init_I_l(autismclient.gui.f.b.l.read), this.theme.flush());
+            int textY = UiLayoutMath.centerTextY(iy, this.lineHeight, this.theme.init_I_l(autismclient.gui.f.b.l.read), this.theme.flush());
             String label = items[i];
             int tab = label.indexOf(9);
-            int labelRight = this.sync + w - 4;
+            int labelRight = this.menuX + w - 4;
             if (tab >= 0) {
                String hint = label.substring(tab + 1);
                label = label.substring(0, tab);
@@ -173,7 +173,7 @@ public class OverlayContextMenu<T> {
             }
 
             String display = autismclient.gui.f.b.k.init(
-               this.font, label, Math.max(1, labelRight - this.sync - 4), this.theme.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.menuItemText()
+               this.font, label, Math.max(1, labelRight - this.menuX - 4), this.theme.init_Identifier_l(autismclient.gui.f.b.l.read), UiColorPalette.menuItemText()
             );
             autismclient.gui.f.b.k.init(
                ctx,
@@ -181,7 +181,7 @@ public class OverlayContextMenu<T> {
                display,
                this.theme.init_Identifier_l(autismclient.gui.f.b.l.read),
                hov ? -1 : UiColorPalette.menuItemText(),
-               this.sync + 4,
+               this.menuX + 4,
                textY,
                false
             );
@@ -200,14 +200,14 @@ public class OverlayContextMenu<T> {
       }
 
       String[] items = this.visibleItems();
-      int w = this.init_I(items);
-      boolean inX = mouseX >= this.sync && mouseX < this.sync + w;
+      int w = this.menuWidth(items);
+      boolean inX = mouseX >= this.menuX && mouseX < this.menuX + w;
       if (inX) {
-         int visibleItems = this.read(items);
+         int visibleItems = this.visibleRowCount(items);
 
          for (int i = 0; i < visibleItems; i++) {
-            int iy = this.flush + 2 + i * this.update;
-            if (mouseY >= iy && mouseY < iy + this.update) {
+            int iy = this.menuY + 2 + i * this.lineHeight;
+            if (mouseY >= iy && mouseY < iy + this.lineHeight) {
                T t = this.target;
                String label = items[i];
                int idx = i;

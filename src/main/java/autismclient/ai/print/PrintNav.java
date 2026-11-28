@@ -128,7 +128,7 @@ final class PrintNav {
       double nzc = nz + 0.5;
       double rim = stepUpRimHeight(view, x, z, h);
       if (rim > h + 1.0E-6) {
-         if (!view.isBoxClear(PrintGeometry.init(cx, rim, cz, true))) {
+         if (!view.isBoxClear(PrintGeometry.bodyBox(cx, rim, cz, true))) {
             return 0.0 / 0.0;
          }
 

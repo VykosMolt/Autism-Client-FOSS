@@ -220,7 +220,7 @@ public abstract class AutismInGameHudMixin {
 
                      y = 0;
                      if (queueVisible) {
-                        int queueHeight = PacketQueueHudRenderer.init(context, MC.font, x, y, 172, 8, false, !macroRunning, false);
+                        int queueHeight = PacketQueueHudRenderer.render(context, MC.font, x, y, 172, 8, false, !macroRunning, false);
                         y += queueHeight;
                      }
 
@@ -241,7 +241,7 @@ public abstract class AutismInGameHudMixin {
                      }
 
                      if (!AutismLiteVariant.enabled() && bedsVisible) {
-                        BedEspOverlayRenderer.init(context);
+                        BedEspOverlayRenderer.renderHud(context);
                      }
 
                      if (!AutismLiteVariant.enabled() && activity.init(4096L)) {
@@ -374,7 +374,7 @@ public abstract class AutismInGameHudMixin {
       }
 
       String line1 = PayloadStudyTracker.statusLine();
-      String line2 = PayloadStudyTracker.read();
+      String line2 = PayloadStudyTracker.studyStatus();
       int sw = cA.init_I();
       autismclient.gui.ui.UiTextRenderer text = UiHelper.init(MC.font);
       int boxWidth = Math.min(sw - 16, Math.max(276, Math.max(text.measureWidth(title), Math.max(text.measureWidth(line1), text.measureWidth(line2))) + 18));

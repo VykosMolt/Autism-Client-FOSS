@@ -178,7 +178,7 @@ public interface PrintEnv {
 
    default AABB serverPlayerBox() {
       Vec3 feet = this.serverFeetPos();
-      return PrintGeometry.init(feet.x, feet.y, feet.z, this.isServerSneaking());
+      return PrintGeometry.bodyBox(feet.x, feet.y, feet.z, this.isServerSneaking());
    }
 
    default Vec3 clientEyePos() {

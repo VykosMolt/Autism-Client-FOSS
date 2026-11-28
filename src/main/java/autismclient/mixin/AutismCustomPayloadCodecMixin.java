@@ -28,7 +28,7 @@ public abstract class AutismCustomPayloadCodecMixin {
    private void autism$encodeRawCustomPacketPayload(FriendlyByteBuf buf, CustomPacketPayload payload, CallbackInfo ci) {
       if (!aD.read_Z()) {
          long captureState = PacketCaptureState.effectiveState();
-         boolean capturePayload = PacketCaptureState.load(captureState);
+         boolean capturePayload = PacketCaptureState.isPayloadCapture(captureState);
          if (capturePayload && buf != null) {
             AutismCustomPayloadCodecMixin.CaptureCursor cursor = AUTISM_CAPTURE_CURSOR.get();
             cursor.encodeStartIndex = buf.writerIndex();
@@ -63,7 +63,7 @@ public abstract class AutismCustomPayloadCodecMixin {
       cursor.encodeState = 0L;
       if (!aD.read_Z()) {
          long captureState = PacketCaptureState.effectiveState();
-         if (PacketCaptureState.load(captureState)) {
+         if (PacketCaptureState.isPayloadCapture(captureState)) {
             int startIndex = recordedState == captureState ? recordedStart : -1;
             if (payload != null && buf != null && startIndex >= 0) {
                int end = buf.writerIndex();
@@ -81,7 +81,7 @@ public abstract class AutismCustomPayloadCodecMixin {
    private void autism$captureDecodeStart(FriendlyByteBuf buf, CallbackInfoReturnable<CustomPacketPayload> cir) {
       if (!aD.read_Z()) {
          long captureState = PacketCaptureState.effectiveState();
-         if (PacketCaptureState.load(captureState) && buf != null) {
+         if (PacketCaptureState.isPayloadCapture(captureState) && buf != null) {
             AutismCustomPayloadCodecMixin.CaptureCursor cursor = AUTISM_CAPTURE_CURSOR.get();
             cursor.decodeStartIndex = buf.readerIndex();
             cursor.decodeState = captureState;
@@ -98,7 +98,7 @@ public abstract class AutismCustomPayloadCodecMixin {
       cursor.decodeState = 0L;
       if (!aD.read_Z()) {
          long captureState = PacketCaptureState.effectiveState();
-         if (PacketCaptureState.load(captureState)) {
+         if (PacketCaptureState.isPayloadCapture(captureState)) {
             int startIndex = recordedState == captureState ? recordedStart : -1;
             CustomPacketPayload payload = cir.getReturnValue();
             if (payload != null && buf != null && startIndex >= 0) {

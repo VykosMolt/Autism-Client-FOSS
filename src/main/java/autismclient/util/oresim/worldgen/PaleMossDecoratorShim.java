@@ -26,7 +26,7 @@ public final class PaleMossDecoratorShim {
       return false;
    }
 
-   public static void init(Context context, SyntheticWorldGenLevel synthetic, float leavesProbability, float trunkProbability, float groundProbability) {
+   public static void decorate(Context context, SyntheticWorldGenLevel synthetic, float leavesProbability, float trunkProbability, float groundProbability) {
       RandomSource random = context.random();
       WorldGenLevel level = context.level();
       List<BlockPos> logs = Util.shuffledCopy(context.logs(), random);

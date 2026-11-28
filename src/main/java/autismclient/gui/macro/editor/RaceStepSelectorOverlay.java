@@ -149,7 +149,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.windowNode.body().addChild(this.searchInput);
       this.listSpacer.withHeight(this.init(this.filteredOptions.size()));
       this.windowNode.body().addChild(this.listSpacer);
-      this.countLabel.init(this.filteredOptions.size() + " choices");
+      this.countLabel.text(this.filteredOptions.size() + " choices");
       this.windowNode.body().addChild(this.countLabel);
    }
 
@@ -532,7 +532,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean load_Z_F_F(float x, float y) {
-      return WindowHeaderHelper.init(
+      return WindowHeaderHelper.overClose(
          NetHelper.init(this.add, this.clear, this.reset, Math.max(this.styleTheme.load(), this.start)), this.styleTheme.load(), x, y
       );
    }

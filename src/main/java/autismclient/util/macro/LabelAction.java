@@ -17,12 +17,12 @@ public class LabelAction implements MacroAction {
       return MacroActionType.LABEL;
    }
 
-   public static String init(String s) {
+   public static String normalize(String s) {
       return s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
    }
 
-   public String init() {
-      return init(this.name);
+   public String normalizedName() {
+      return normalize(this.name);
    }
 
    @Override

@@ -191,12 +191,12 @@ public class SignEditAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public void load(boolean value) {
+   public void setWaitForGuiBefore(boolean value) {
       this.waitForGuiBefore = value;
    }
 
    @Override
-   public void read(boolean value) {
+   public void setWaitForGuiAfter(boolean value) {
       this.waitForGuiAfter = value;
    }
 

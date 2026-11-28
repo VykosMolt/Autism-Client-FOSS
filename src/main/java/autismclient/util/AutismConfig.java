@@ -318,7 +318,7 @@ public final class AutismConfig implements Cloneable {
    }
 
    public AutismConfig deepCopy() {
-      return AutismConfigSnapshotter.init(this);
+      return AutismConfigSnapshotter.snapshot(this);
    }
 
    public AutismConfig snapshotForProfile() {

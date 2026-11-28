@@ -150,7 +150,7 @@ final class AiEndRun {
       return best == null ? null : AiGuard.allowDuringLowHealth(AiGoto.travelToCompat(best, 0.45, false, false, false, 5, autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true));
    }
 
-   static AiOperation init(final Minecraft mc, final BlockPos portal) {
+   static AiOperation enterPortal(final Minecraft mc, final BlockPos portal) {
       final ResourceKey<Level> from = mc.level == null ? null : mc.level.dimension();
       return new AiOperation() {
          final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
@@ -190,7 +190,7 @@ final class AiEndRun {
 
                this.aim.aimAt(new Vec3(portal.getX() + 0.5, portal.getY(), portal.getZ() + 0.5));
                this.aim.tick();
-               AiFallGuard.load();
+               AiFallGuard.stampTick();
                mc.options.keyUp.setDown(true);
                mc.options.keyJump.setDown(mc.player.onGround() && mc.player.horizontalCollision);
                return AiGameOperations.result(AiOperation.Status.RUNNING, "stepping onto the portal", new JsonObject());
@@ -216,7 +216,7 @@ final class AiEndRun {
       };
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation endRun(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(120, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 1800)));
@@ -251,7 +251,7 @@ final class AiEndRun {
             float healThreshold = 16.0F;
 
             AiOperation stepIntoPortal(BlockPos portal) {
-               return AiEndRun.init(mc, portal);
+               return AiEndRun.enterPortal(mc, portal);
             }
 
             @Override
@@ -404,7 +404,7 @@ final class AiEndRun {
                   this.lowHealthBurrowCooldownUntil = System.nanoTime() + 15000000000L;
                   return this.startStep(
                      "heal in a hole here",
-                     AiBurrow.init(AiJson.objectOf("healTo", Math.max(18.0F, this.healThreshold), "stay", false, "towerOk", false, "timeoutSeconds", 120))
+                     AiBurrow.burrow(AiJson.objectOf("healTo", Math.max(18.0F, this.healThreshold), "stay", false, "towerOk", false, "timeoutSeconds", 120))
                   );
                }
 
@@ -428,7 +428,7 @@ final class AiEndRun {
                   this.burrowCooldownUntil = System.nanoTime() + 20000000000L;
                   return this.startStep(
                      "heal in a hole",
-                     AiBurrow.init(AiJson.objectOf("healTo", Math.max(18.0F, this.healThreshold), "stay", false, "towerOk", false, "timeoutSeconds", 120))
+                     AiBurrow.burrow(AiJson.objectOf("healTo", Math.max(18.0F, this.healThreshold), "stay", false, "towerOk", false, "timeoutSeconds", 120))
                   );
                } else {
                   return this.startStep(

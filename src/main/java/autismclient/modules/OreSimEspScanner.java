@@ -62,7 +62,7 @@ public final class OreSimEspScanner {
    private static boolean espStyle;
    private static int colorRevision = -2147483648;
    private static final Object2IntOpenHashMap<Block> init_Object2IntOpenHash = new Object2IntOpenHashMap<>();
-   private static volatile autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil seedParse = autismclient.util.oresim.OreSimSeedParser.init(null);
+   private static volatile autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil seedParse = autismclient.util.oresim.OreSimSeedParser.parse(null);
    private static final long read_J = TimeUnit.MINUTES.toNanos(2L);
    private static OreSimEspScanner.BlockSelection tableSelection;
    private static boolean[] stateTable = new boolean[0];
@@ -153,7 +153,7 @@ public final class OreSimEspScanner {
                Block block = BuiltInRegistries.BLOCK.getOptional(parsed).orElse(Blocks.AIR);
                if (block != Blocks.AIR) {
                   blocks.add(block);
-                  autismclient.util.oresim.OreBlockCatalog.OreKind family = autismclient.util.oresim.OreBlockCatalog.init(id);
+                  autismclient.util.oresim.OreBlockCatalog.OreKind family = autismclient.util.oresim.OreBlockCatalog.kindOf(id);
                   if (family != null) {
                      mask |= 1 << family.ordinal();
                   } else if (!nonOre.contains(id)) {
@@ -210,14 +210,14 @@ public final class OreSimEspScanner {
       }
 
       Identifier id = BuiltInRegistries.BLOCK.getKey(block);
-      autismclient.util.oresim.OreBlockCatalog.OreKind family = id == null ? null : autismclient.util.oresim.OreBlockCatalog.init(id.toString());
+      autismclient.util.oresim.OreBlockCatalog.OreKind family = id == null ? null : autismclient.util.oresim.OreBlockCatalog.kindOf(id.toString());
       int color = family != null ? colorFor(xray, family) : (id == null ? -3355444 : am.init_I_Module(xray, "block-color-" + id, -3355444));
       init_Object2IntOpenHash.put(block, color);
       return color;
    }
 
    static Long seedFor(Module xray) {
-      autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.init(xray == null ? null : xray.value("oresim-seed"));
+      autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.parse(xray == null ? null : xray.value("oresim-seed"));
       seedParse = parsed;
       return parsed.seed();
    }
@@ -332,7 +332,7 @@ public final class OreSimEspScanner {
    }
 
    private static boolean[] stateTableFor(OreSimEspScanner.BlockSelection selection) {
-      int count = autismclient.util.oresim.OreBlockCatalog.StateRegistry.init();
+      int count = autismclient.util.oresim.OreBlockCatalog.StateRegistry.count();
       boolean[] table = stateTable;
       if (selection == tableSelection && table.length == count) {
          return table;

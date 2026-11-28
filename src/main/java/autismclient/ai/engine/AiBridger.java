@@ -730,23 +730,23 @@ public final class AiBridger {
       }
 
       @Override
-      public double putAt_D_I(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.putAt_D_I(var1, var2, var3);
+      public double frictionAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.frictionAt(var1, var2, var3);
       }
 
       @Override
-      public double fill_D(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.fill_D(var1, var2, var3);
+      public double speedFactorAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.speedFactorAt(var1, var2, var3);
       }
 
       @Override
-      public double readEx_D(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.readEx_D(var1, var2, var3);
+      public double bounceAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.bounceAt(var1, var2, var3);
       }
 
       @Override
-      public double value_D(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.value_D(var1, var2, var3);
+      public double jumpFactorAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.jumpFactorAt(var1, var2, var3);
       }
 
       @Override
@@ -755,18 +755,18 @@ public final class AiBridger {
       }
 
       @Override
-      public boolean fill_Z(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.fill_Z(var1, var2, var3);
+      public boolean waterAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.waterAt(var1, var2, var3);
       }
 
       @Override
-      public boolean readEx_Z(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.readEx_Z(var1, var2, var3);
+      public boolean invisibleLightAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.invisibleLightAt(var1, var2, var3);
       }
 
       @Override
-      public boolean value_Z(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.value_Z(var1, var2, var3);
+      public boolean pressurePlateAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.pressurePlateAt(var1, var2, var3);
       }
    }
 

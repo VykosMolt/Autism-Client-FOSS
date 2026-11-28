@@ -21,8 +21,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public class DropCommand extends Command {
-   private static final Set<String> init = Set.of("all", "everything", "inventory", "inv", "full", "fullinventory", "full_inventory", "all_items", "bag");
-   private static final Set<String> load = Set.of("hand", "held", "hand_item", "held_item", "mainhand", "main_hand");
+   private static final Set<String> ALL_WORDS = Set.of("all", "everything", "inventory", "inv", "full", "fullinventory", "full_inventory", "all_items", "bag");
+   private static final Set<String> HAND_WORDS = Set.of("hand", "held", "hand_item", "held_item", "mainhand", "main_hand");
 
    public DropCommand() {
       super("drop", "Drop hand, full inventory, or an amount of a held/specific item.");
@@ -31,29 +31,29 @@ public class DropCommand extends Command {
    @Override
    public void build(LiteralArgumentBuilder<AutismCommandSource> root) {
       root.executes(ctx -> {
-         init_V_3();
+         printUsage();
          return 1;
       });
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("hand").executes(ctx -> init_I_3()));
-      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("fullinventory").executes(ctx -> load()));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("hand").executes(ctx -> dropHand()));
+      root.then(LiteralArgumentBuilder.<AutismCommandSource>literal("fullinventory").executes(ctx -> dropAll()));
       root.then(
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("amount", IntegerArgumentType.integer(1))
                .suggests(autismclient.commands.CommandSuggestions::suggestCount)
-               .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "amount"))))
+               .executes(ctx -> dropHeld(IntegerArgumentType.getInteger(ctx, "amount"))))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("item", autismclient.commands.arguments.ItemOrBlockIdArgumentType.id())
                   .suggests(autismclient.commands.RegistrySuggestions::init)
-                  .executes(ctx -> init(IntegerArgumentType.getInteger(ctx, "amount"), autismclient.commands.arguments.ItemOrBlockIdArgumentType.getId(ctx, "item")))
+                  .executes(ctx -> dropItemId(IntegerArgumentType.getInteger(ctx, "amount"), autismclient.commands.arguments.ItemOrBlockIdArgumentType.getId(ctx, "item")))
             )
       );
       root.then(
          RequiredArgumentBuilder.<AutismCommandSource, String>argument("item [amount]", StringArgumentType.greedyString())
             .suggests(autismclient.commands.RegistrySuggestions::init)
-            .executes(ctx -> init_I(StringArgumentType.getString(ctx, "item [amount]")))
+            .executes(ctx -> runLine(StringArgumentType.getString(ctx, "item [amount]")))
       );
    }
 
-   static DropCommand.DropSpec init_TextFormat_DataUti(String line) {
+   static DropCommand.DropSpec parseSpec(String line) {
       List<String> words = new ArrayList<>();
       int amount = -1;
 
@@ -76,9 +76,9 @@ public class DropCommand extends Command {
          return amount > 0
             ? new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.ITEM, amount, "")
             : new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.UNKNOWN, -1, "");
-      } else if (init.contains(spec)) {
+      } else if (ALL_WORDS.contains(spec)) {
          return new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.FULL, -1, spec);
-      } else if (load.contains(spec)) {
+      } else if (HAND_WORDS.contains(spec)) {
          return amount > 0
             ? new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.ITEM, amount, "")
             : new DropCommand.DropSpec(DropCommand.DropSpec.DropKind.HAND, -1, spec);
@@ -87,30 +87,30 @@ public class DropCommand extends Command {
       }
    }
 
-   private static int init_I(String line) {
-      DropCommand.DropSpec request = init_TextFormat_DataUti(line);
+   private static int runLine(String line) {
+      DropCommand.DropSpec request = parseSpec(line);
       int var10000;
-      switch (request.init_TextFormat_DataUti()) {
+      switch (request.kind()) {
          case FULL:
-            var10000 = load();
+            var10000 = dropAll();
             break;
          case HAND:
-            var10000 = init_I_3();
+            var10000 = dropHand();
             break;
          case ITEM:
-            var10000 = request.init_Str().isEmpty() ? init(request.init_I()) : init(request.init_Str(), request.init_I());
+            var10000 = request.itemId().isEmpty() ? dropHeld(request.amount()) : dropBySpec(request.itemId(), request.amount());
             break;
          default:
-            init_V_3();
+            printUsage();
             var10000 = 1;
       }
 
       return var10000;
    }
 
-   private static int init(String spec, int requested) {
+   private static int dropBySpec(String spec, int requested) {
       Minecraft mc = Minecraft.getInstance();
-      if (!init(mc)) {
+      if (!requirePlayer(mc)) {
          return 1;
       }
 
@@ -126,12 +126,12 @@ public class DropCommand extends Command {
 
       Identifier id = BuiltInRegistries.ITEM.getKey(item);
       if (requested > 0) {
-         return init(mc, requested, id, item);
+         return dropMatching(mc, requested, id, item);
       }
 
       int available = 0;
 
-      for (int slot : init(mc, item)) {
+      for (int slot : slotsWith(mc, item)) {
          available += mc.player.getInventory().getItem(slot).getCount();
       }
 
@@ -139,11 +139,11 @@ public class DropCommand extends Command {
          AutismClientMessaging.sendPrefixed("§cYou do not have §f" + id + "§c in your inventory.");
          return 1;
       } else {
-         return init(mc, available, id, item);
+         return dropMatching(mc, available, id, item);
       }
    }
 
-   private static void init_V_3() {
+   private static void printUsage() {
       String prefix = autismclient.commands.CommandManager.getPrefix();
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "drop hand");
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "drop fullinventory");
@@ -151,9 +151,9 @@ public class DropCommand extends Command {
       AutismClientMessaging.sendPrefixed("§eUsage: §f" + prefix + "drop <item> [amount]  §7(e.g. drop acacia log 10, drop all)");
    }
 
-   private static int init_I_3() {
+   private static int dropHand() {
       Minecraft mc = Minecraft.getInstance();
-      if (!init(mc)) {
+      if (!requirePlayer(mc)) {
          return 1;
       } else {
          ItemStack held = mc.player.getMainHandItem();
@@ -170,9 +170,9 @@ public class DropCommand extends Command {
       }
    }
 
-   private static int load() {
+   private static int dropAll() {
       Minecraft mc = Minecraft.getInstance();
-      if (!init(mc)) {
+      if (!requirePlayer(mc)) {
          return 1;
       }
 
@@ -202,9 +202,9 @@ public class DropCommand extends Command {
       return 1;
    }
 
-   private static int init(int requested) {
+   private static int dropHeld(int requested) {
       Minecraft mc = Minecraft.getInstance();
-      if (!init(mc)) {
+      if (!requirePlayer(mc)) {
          return 1;
       } else {
          int selectedSlot = mc.player.getInventory().getSelectedSlot();
@@ -214,18 +214,18 @@ public class DropCommand extends Command {
             return 1;
          } else {
             Identifier id = BuiltInRegistries.ITEM.getKey(held.getItem());
-            return init(mc, requested, id, held.getItem());
+            return dropMatching(mc, requested, id, held.getItem());
          }
       }
    }
 
-   private static int init(int requested, String rawItemId) {
+   private static int dropItemId(int requested, String rawItemId) {
       Minecraft mc = Minecraft.getInstance();
-      if (!init(mc)) {
+      if (!requirePlayer(mc)) {
          return 1;
       }
 
-      Identifier id = init_Identifier(rawItemId);
+      Identifier id = parseItemId(rawItemId);
       Item item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
       if (item == null) {
          item = autismclient.commands.RegistrySuggestions.resolveItem(mc, rawItemId);
@@ -239,12 +239,12 @@ public class DropCommand extends Command {
          AutismClientMessaging.sendPrefixed("§cUnknown item id: §f" + rawItemId);
          return 1;
       } else {
-         return init(mc, requested, BuiltInRegistries.ITEM.getKey(item), item);
+         return dropMatching(mc, requested, BuiltInRegistries.ITEM.getKey(item), item);
       }
    }
 
-   private static int init(Minecraft mc, int requested, Identifier id, Item item) {
-      List<Integer> matchingSlots = init(mc, item);
+   private static int dropMatching(Minecraft mc, int requested, Identifier id, Item item) {
+      List<Integer> matchingSlots = slotsWith(mc, item);
       int available = 0;
 
       for (int slot : matchingSlots) {
@@ -278,38 +278,38 @@ public class DropCommand extends Command {
       if (dropped == 0) {
          AutismClientMessaging.sendPrefixed("§cCould not drop §f" + id + "§c from the current screen.");
       } else {
-         init(id, dropped, requested);
+         reportShortfall(id, dropped, requested);
       }
 
       return 1;
    }
 
-   private static List<Integer> init(Minecraft mc, Item item) {
+   private static List<Integer> slotsWith(Minecraft mc, Item item) {
       List<Integer> slots = new ArrayList<>();
       int selected = mc.player.getInventory().getSelectedSlot();
-      init(mc, item, selected, slots);
+      dropSlot(mc, item, selected, slots);
 
       for (int slot = 0; slot < 9; slot++) {
          if (slot != selected) {
-            init(mc, item, slot, slots);
+            dropSlot(mc, item, slot, slots);
          }
       }
 
       for (int slot = 9; slot < 36; slot++) {
-         init(mc, item, slot, slots);
+         dropSlot(mc, item, slot, slots);
       }
 
       return slots;
    }
 
-   private static void init(Minecraft mc, Item item, int slot, List<Integer> slots) {
+   private static void dropSlot(Minecraft mc, Item item, int slot, List<Integer> slots) {
       ItemStack stack = mc.player.getInventory().getItem(slot);
       if (!stack.isEmpty() && stack.getItem() == item) {
          slots.add(slot);
       }
    }
 
-   private static Identifier init_Identifier(String raw) {
+   private static Identifier parseItemId(String raw) {
       if (raw != null && !raw.isBlank()) {
          String value = raw.trim().toLowerCase(Locale.ROOT);
          return Identifier.tryParse(value.indexOf(58) >= 0 ? value : "minecraft:" + value);
@@ -318,7 +318,7 @@ public class DropCommand extends Command {
       }
    }
 
-   private static void init(Identifier id, int dropped, int requested) {
+   private static void reportShortfall(Identifier id, int dropped, int requested) {
       if (dropped < requested) {
          AutismClientMessaging.sendPrefixed("§eDropped §f" + dropped + "/" + requested + "x " + id + "§e (all available).");
       } else {
@@ -326,7 +326,7 @@ public class DropCommand extends Command {
       }
    }
 
-   private static boolean init(Minecraft mc) {
+   private static boolean requirePlayer(Minecraft mc) {
       if (mc.player != null && mc.gameMode != null) {
          return true;
       }
@@ -335,7 +335,7 @@ public class DropCommand extends Command {
       return false;
    }
 
-   record DropSpec(DropCommand.DropSpec.DropKind init_TextFormat_DataUti, int init_I, String init_Str) {
+   record DropSpec(DropCommand.DropSpec.DropKind kind, int amount, String itemId) {
       enum DropKind {
          FULL,
          HAND,

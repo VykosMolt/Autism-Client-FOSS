@@ -37,7 +37,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
    }
 
    @Override
-   public IsolatedPackDownloader.PackIsolation init() {
+   public IsolatedPackDownloader.PackIsolation packIsolation() {
       return this.isolation;
    }
 
@@ -129,7 +129,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
          this.languages = languages;
       }
 
-      static IsolatedResourcePack.Inner_DataUtil init(Path path) {
+      static IsolatedResourcePack.Inner_DataUtil fromPath(Path path) {
          byte[] metadata = null;
          Map<String, byte[]> languages = new HashMap<>();
          long languageBytes = 0L;
@@ -146,7 +146,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
                      if ((!metadataEntry || metadata == null) && (languages.size() < 4096 || metadataEntry)) {
                         int limit = metadataEntry ? 1048576 : 8388608;
                         if (entry.getSize() > limit) {
-                           return init();
+                           return empty();
                         }
 
                         byte[] bytes;
@@ -164,30 +164,30 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
                            continue;
                         }
 
-                        return init();
+                        return empty();
                      }
 
-                     return init();
+                     return empty();
                   }
                }
             }
          } catch (IOException | RuntimeException ignored) {
-            return init();
+            return empty();
          }
 
          return new IsolatedResourcePack.Inner_DataUtil(metadata, Collections.unmodifiableMap(new TreeMap<>(languages)));
       }
 
-      static IsolatedResourcePack.Inner_DataUtil init() {
+      static IsolatedResourcePack.Inner_DataUtil empty() {
          return new IsolatedResourcePack.Inner_DataUtil(null, Map.of());
       }
 
-      IsolatedResourcePack init(PackLocationInfo location, String overlay, boolean metadataOnly, IsolatedPackDownloader.PackIsolation isolation) {
+      IsolatedResourcePack toPack(PackLocationInfo location, String overlay, boolean metadataOnly, IsolatedPackDownloader.PackIsolation isolation) {
          String prefix = overlay.isEmpty() ? "" : overlay + "/";
          return new IsolatedResourcePack(location, this, prefix, metadataOnly, isolation);
       }
 
-      static boolean init(String overlay) {
+      static boolean isValidOverlay(String overlay) {
          if (overlay != null && !overlay.isEmpty()) {
             for (int index = 0; index < overlay.length(); index++) {
                char character = overlay.charAt(index);
@@ -211,7 +211,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
          String path = name;
          if (!path.startsWith(PackType.CLIENT_RESOURCES.getDirectory() + "/")) {
             int separator = path.indexOf(47);
-            if (separator <= 0 || !init(path.substring(0, separator))) {
+            if (separator <= 0 || !isValidOverlay(path.substring(0, separator))) {
                return false;
             }
 

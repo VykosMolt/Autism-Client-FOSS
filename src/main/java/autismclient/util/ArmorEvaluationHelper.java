@@ -40,7 +40,7 @@ public final class ArmorEvaluationHelper {
    private static final ResourceKey<Enchantment>[] load_ResourceKeyArr = keys(
       Enchantments.FEATHER_FALLING, Enchantments.THORNS, Enchantments.RESPIRATION, Enchantments.AQUA_AFFINITY, Enchantments.UNBREAKING
    );
-   private static final float[] read = new float[]{3.0F, 1.0F, 0.1F, 0.05F, 0.01F};
+   private static final float[] ENCHANT_WEIGHTS = new float[]{3.0F, 1.0F, 0.1F, 0.05F, 0.01F};
    private static final Map<ResourceKey<Enchantment>, Holder<Enchantment>> enchantHolders = new HashMap<>();
    private static Level enchantHolderLevel;
 
@@ -53,19 +53,19 @@ public final class ArmorEvaluationHelper {
       Map<EquipmentSlot, List<ArmorEvaluationHelper.ArmorCandidate>> byType = new EnumMap<>(EquipmentSlot.class);
 
       for (int inv = 0; inv < 9; inv++) {
-         addCandidate(byType, stacks.init(inv), inv, ArmorEvaluationHelper.SourceKind.HOTBAR, allowCursed);
+         addCandidate(byType, stacks.inventoryStack(inv), inv, ArmorEvaluationHelper.SourceKind.HOTBAR, allowCursed);
       }
 
       for (int inv = 9; inv < 36; inv++) {
-         addCandidate(byType, stacks.init(inv), inv, ArmorEvaluationHelper.SourceKind.INVENTORY, allowCursed);
+         addCandidate(byType, stacks.inventoryStack(inv), inv, ArmorEvaluationHelper.SourceKind.INVENTORY, allowCursed);
       }
 
       if (offhandAvailable) {
-         addCandidate(byType, stacks.init(EquipmentSlot.OFFHAND), 40, ArmorEvaluationHelper.SourceKind.INVENTORY, allowCursed);
+         addCandidate(byType, stacks.equipped(EquipmentSlot.OFFHAND), 40, ArmorEvaluationHelper.SourceKind.INVENTORY, allowCursed);
       }
 
       for (EquipmentSlot slot : ARMOR_SLOTS) {
-         addCandidate(byType, stacks.init(slot), -1, ArmorEvaluationHelper.SourceKind.ARMOR, allowCursed);
+         addCandidate(byType, stacks.equipped(slot), -1, ArmorEvaluationHelper.SourceKind.ARMOR, allowCursed);
       }
 
       return byType;
@@ -147,7 +147,7 @@ public final class ArmorEvaluationHelper {
          .thenComparing(byReduction.reversed())
          .thenComparingDouble(c -> round3(load_D(c.stack())))
          .thenComparingInt(c -> enchantmentCount(c.stack()))
-         .thenComparingInt(c -> read(c.stack()))
+         .thenComparingInt(c -> enchantability(c.stack()))
          .thenComparing(c -> c.kind() == ArmorEvaluationHelper.SourceKind.ARMOR)
          .thenComparing(c -> c.kind() == ArmorEvaluationHelper.SourceKind.HOTBAR);
    }
@@ -161,7 +161,7 @@ public final class ArmorEvaluationHelper {
 
    static double damageReduction(double damage, double defense, double toughness) {
       double f = 2.0 + toughness / 4.0;
-      double g = load(defense - damage / f, defense * 0.2, 20.0);
+      double g = clamp(defense - damage / f, defense * 0.2, 20.0);
       return 1.0 - g / 25.0;
    }
 
@@ -179,7 +179,7 @@ public final class ArmorEvaluationHelper {
       double sum = 0.0;
 
       for (int i = 0; i < load_ResourceKeyArr.length; i++) {
-         sum += enchantLevel(stack, load_ResourceKeyArr[i]) * read[i];
+         sum += enchantLevel(stack, load_ResourceKeyArr[i]) * ENCHANT_WEIGHTS[i];
       }
 
       return sum;
@@ -219,7 +219,7 @@ public final class ArmorEvaluationHelper {
       return enchantments == null ? 0 : enchantments.size();
    }
 
-   private static int read(ItemStack stack) {
+   private static int enchantability(ItemStack stack) {
       Enchantable enchantable = stack.get(DataComponents.ENCHANTABLE);
       return enchantable == null ? 0 : enchantable.value();
    }
@@ -263,7 +263,7 @@ public final class ArmorEvaluationHelper {
       return Math.round(value * 1000.0) / 1000.0;
    }
 
-   private static double load(double value, double min, double max) {
+   private static double clamp(double value, double min, double max) {
       return Math.max(min, Math.min(max, value));
    }
 
@@ -273,9 +273,9 @@ public final class ArmorEvaluationHelper {
    }
 
    public interface StackSource {
-      ItemStack init(int var1);
+      ItemStack inventoryStack(int var1);
 
-      ItemStack init(EquipmentSlot var1);
+      ItemStack equipped(EquipmentSlot var1);
    }
 
    private record ArmorScore(double defense, double load) {

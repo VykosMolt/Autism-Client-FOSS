@@ -132,9 +132,9 @@ public final class AiParkourFallWarning {
                            int var26 = (int)Math.floor(var23.x());
                            int var27 = (int)Math.floor(var23.y());
                            int var28 = (int)Math.floor(var23.z());
-                           if (!var7.state(var26, var27, var28)
-                              && !var7.fill_Z(var26, var27, var28)
-                              && (!var23.onGround() || !(var23.vy() > 0.1) && !var7.closeOf(var26, var27 - 1, var28))) {
+                           if (!var7.climbableAt(var26, var27, var28)
+                              && !var7.waterAt(var26, var27, var28)
+                              && (!var23.onGround() || !(var23.vy() > 0.1) && !var7.slimeAt(var26, var27 - 1, var28))) {
                               if (!var23.onGround()) {
                                  var24 = true;
                                  var19 = Math.max(var19, var23.y());

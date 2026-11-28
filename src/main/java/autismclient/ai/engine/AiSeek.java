@@ -47,7 +47,7 @@ public final class AiSeek {
       }
    }
 
-   static int init(AiSeek.CellPredicate air, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int sx, int sy, int sz, int cap) {
+   static int countCells(AiSeek.CellPredicate air, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int sx, int sy, int sz, int cap) {
       if (sx >= minX && sx <= maxX && sy >= minY && sy <= maxY && sz >= minZ && sz <= maxZ && air.test(sx, sy, sz)) {
          ArrayDeque<BlockPos> queue = new ArrayDeque<>();
          HashSet<Long> visited = new HashSet<>();
@@ -97,9 +97,9 @@ public final class AiSeek {
       final int columnsPerTick;
       BlockPos candidate;
       AiOperation travel;
-      int load;
-      int read;
-      boolean init_Z;
+      int digAttempts;
+      int skippedColumns;
+      boolean cancelled;
       static final int write = 3;
 
       ColumnSeekOperation(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, int maxRadius, int columnsPerTick) {
@@ -109,7 +109,7 @@ public final class AiSeek {
          this.columnsPerTick = columnsPerTick;
       }
 
-      abstract BlockPos init(BlockPos var1);
+      abstract BlockPos findTarget(BlockPos var1);
 
       boolean isNearSurface() {
          return false;
@@ -117,22 +117,22 @@ public final class AiSeek {
 
       abstract String travelLabel();
 
-      abstract String load();
+      abstract String failureMessage();
 
-      abstract String read();
+      abstract String successMessage();
 
       @Override
       public AiOperation.Result tick() {
-         if (!this.init_Z && this.client.player != null && this.client.level != null) {
+         if (!this.cancelled && this.client.player != null && this.client.level != null) {
             if (System.nanoTime() > this.deadlineNanos) {
-               return this.init(AiOperation.Status.TIMED_OUT, this.travelLabel() + " deadline reached");
+               return this.finish(AiOperation.Status.TIMED_OUT, this.travelLabel() + " deadline reached");
             }
 
             if (this.client.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
-               return this.init(
+               return this.fail(
                   AiOperation.Status.FAILED,
                   AiFailure.LOW_HEALTH,
-                  AiLowHealth.init("travel", this.client.player.getHealth(), this.client.player.getMaxHealth())
+                  AiLowHealth.refusalMessage("travel", this.client.player.getHealth(), this.client.player.getMaxHealth())
                );
             }
 
@@ -140,54 +140,54 @@ public final class AiSeek {
                for (int budget = 0; budget < this.columnsPerTick && this.candidate == null; budget++) {
                   BlockPos column = this.columnSearch.nextColumn();
                   if (column == null) {
-                     return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, this.load());
+                     return this.fail(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, this.failureMessage());
                   }
 
-                  this.candidate = this.init(column);
+                  this.candidate = this.findTarget(column);
                }
 
                if (this.candidate == null) {
-                  return this.init("Scanning (radius " + this.columnSearch.currentRadius() + ")");
+                  return this.running("Scanning (radius " + this.columnSearch.currentRadius() + ")");
                }
             }
 
             if (this.travel != null) {
                AiOperation.Result r = this.travel.tick();
                if (!r.terminal()) {
-                  return this.init("Travelling to " + this.candidate.toShortString());
+                  return this.running("Travelling to " + this.candidate.toShortString());
                }
 
                this.travel.cancel();
                this.travel = null;
                if (r.status() == AiOperation.Status.SUCCEEDED) {
-                  return this.init(AiOperation.Status.SUCCEEDED, this.read());
+                  return this.finish(AiOperation.Status.SUCCEEDED, this.successMessage());
                }
 
                if (r.status() == AiOperation.Status.TIMED_OUT) {
-                  return this.init(AiOperation.Status.TIMED_OUT, r.message());
+                  return this.finish(AiOperation.Status.TIMED_OUT, r.message());
                }
 
-               if (++this.load > 1) {
-                  if (++this.read < 3) {
+               if (++this.digAttempts > 1) {
+                  if (++this.skippedColumns < 3) {
                      this.candidate = null;
-                     this.load = 0;
-                     return this.init("No way to that column; scanning on");
+                     this.digAttempts = 0;
+                     return this.running("No way to that column; scanning on");
                   } else {
-                     return this.init(
+                     return this.fail(
                         AiOperation.Status.FAILED, AiFailure.UNREACHABLE, this.candidate.toShortString() + " unreachable even with digging (" + r.message() + ")"
                      );
                   }
                } else {
-                  return this.init("Walk-only route failed; retrying with digging allowed");
+                  return this.running("Walk-only route failed; retrying with digging allowed");
                }
             } else {
                this.travel = AiGoto.travelToCompat(
-                  this.candidate, 2.0, this.load > 0 || this.isNearSurface(), false, false, this.remainingSeconds(), this.strategy
+                  this.candidate, 2.0, this.digAttempts > 0 || this.isNearSurface(), false, false, this.remainingSeconds(), this.strategy
                );
-               return this.init(this.load == 0 ? "Travelling to " + this.candidate.toShortString() : "Retrying with digging allowed");
+               return this.running(this.digAttempts == 0 ? "Travelling to " + this.candidate.toShortString() : "Retrying with digging allowed");
             }
          } else {
-            return this.init(AiOperation.Status.CANCELLED, this.travelLabel() + " cancelled");
+            return this.finish(AiOperation.Status.CANCELLED, this.travelLabel() + " cancelled");
          }
       }
 
@@ -195,16 +195,16 @@ public final class AiSeek {
          return (int)Math.max(1L, (this.deadlineNanos - System.nanoTime()) / 1000000000L);
       }
 
-      AiOperation.Result init(String message) {
+      AiOperation.Result running(String message) {
          return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressData().toString(), List.of());
       }
 
-      AiOperation.Result init(AiOperation.Status status, String message) {
+      AiOperation.Result finish(AiOperation.Status status, String message) {
          this.cancel();
          return new AiOperation.Result(status, message, this.progressData().toString(), List.of());
       }
 
-      AiOperation.Result init(AiOperation.Status status, AiFailure code, String message) {
+      AiOperation.Result fail(AiOperation.Status status, AiFailure code, String message) {
          this.cancel();
          return AiOperation.Result.failed(code, message, this.progressData().toString());
       }
@@ -215,14 +215,14 @@ public final class AiSeek {
             out.add("candidate", AiJson.objectOf("x", this.candidate.getX(), "y", this.candidate.getY(), "z", this.candidate.getZ()));
          }
 
-         out.addProperty("attempt", this.load + 1);
+         out.addProperty("attempt", this.digAttempts + 1);
          return out;
       }
 
       @Override
       public void cancel() {
-         if (!this.init_Z) {
-            this.init_Z = true;
+         if (!this.cancelled) {
+            this.cancelled = true;
             if (this.travel != null) {
                this.travel.cancel();
                this.travel = null;
@@ -235,8 +235,8 @@ public final class AiSeek {
       final BlockPos origin;
       private final int maxRadius;
       private List<BlockPos> ring = List.of();
-      private int load;
-      private int read = 24;
+      private int cursor;
+      private int radius = 24;
       private boolean first = true;
 
       ColumnRingSearch(BlockPos origin, int maxRadius) {
@@ -250,24 +250,24 @@ public final class AiSeek {
             return this.origin;
          }
 
-         if (this.load >= this.ring.size()) {
-            if (this.read > this.maxRadius) {
+         if (this.cursor >= this.ring.size()) {
+            if (this.radius > this.maxRadius) {
                return null;
             }
 
-            this.ring = init(this.origin, this.read);
-            this.read += 24;
-            this.load = 0;
+            this.ring = ringColumns(this.origin, this.radius);
+            this.radius += 24;
+            this.cursor = 0;
          }
 
-         return this.ring.get(this.load++);
+         return this.ring.get(this.cursor++);
       }
 
       int currentRadius() {
-         return Math.min(this.read, this.maxRadius);
+         return Math.min(this.radius, this.maxRadius);
       }
 
-      private static List<BlockPos> init(BlockPos origin, int radius) {
+      private static List<BlockPos> ringColumns(BlockPos origin, int radius) {
          List<int[]> ring = new ArrayList<>();
          int inner = radius - 24;
 
@@ -302,7 +302,7 @@ public final class AiSeek {
       }
 
       @Override
-      BlockPos init(BlockPos column) {
+      BlockPos findTarget(BlockPos column) {
          int topY = this.client.level.getHeight(Types.MOTION_BLOCKING, column.getX(), column.getZ());
          BlockPos feet = new BlockPos(column.getX(), topY, column.getZ());
          if (!AiSeek.isStandableAt(this.client, feet)) {
@@ -324,12 +324,12 @@ public final class AiSeek {
       }
 
       @Override
-      String load() {
+      String failureMessage() {
          return "No open-sky column within 96 blocks";
       }
 
       @Override
-      String read() {
+      String successMessage() {
          return "Arrived under open sky";
       }
    }
@@ -339,17 +339,17 @@ public final class AiSeek {
    }
 
    private static final class CaveSeek extends AiSeek.ColumnSeekOperation {
-      private final int update;
+      private final int maxY;
 
       CaveSeek(int timeoutSeconds, AiPathfinder.RouteStrategy strategy, Integer maxY) {
          super(timeoutSeconds, strategy, 64, 8);
-         this.update = maxY != null ? maxY : this.columnSearch.origin.getY() + 8;
+         this.maxY = maxY != null ? maxY : this.columnSearch.origin.getY() + 8;
       }
 
       @Override
-      BlockPos init(BlockPos column) {
+      BlockPos findTarget(BlockPos column) {
          int topY = this.client.level.getHeight(Types.MOTION_BLOCKING, column.getX(), column.getZ());
-         int yTop = Math.min(this.update, topY - 2);
+         int yTop = Math.min(this.maxY, topY - 2);
          int yBottom = Math.max(this.client.level.getMinY(), yTop - 56);
 
          for (int y = yTop; y >= yBottom; y--) {
@@ -365,8 +365,8 @@ public final class AiSeek {
                if (!floor.passable()
                   && !floor.hazardFloor()
                   && !floor.lava()
-                  && AiSeek.init(
-                        this::init,
+                  && AiSeek.countCells(
+                        this::isAirCell,
                         column.getX() - 8,
                         yBottom,
                         column.getZ() - 8,
@@ -387,7 +387,7 @@ public final class AiSeek {
          return null;
       }
 
-      boolean init(int x, int y, int z) {
+      boolean isAirCell(int x, int y, int z) {
          AiPathfinder.CellInfo probe = AiSeek.classifyCell(this.client, new BlockPos(x, y, z));
          return probe.loaded() && probe.passable() && !probe.water() && !probe.lava();
       }
@@ -398,12 +398,12 @@ public final class AiSeek {
       }
 
       @Override
-      String load() {
+      String failureMessage() {
          return "No cave air pocket within 64 blocks";
       }
 
       @Override
-      String read() {
+      String successMessage() {
          return "Arrived in a cave air pocket";
       }
    }

@@ -13,11 +13,11 @@ public final class OnlinePlayerCollector {
    private OnlinePlayerCollector() {
    }
 
-   public static List<String> init(Minecraft mc, boolean probeHidden) {
-      return init(mc, probeHidden, () -> false);
+   public static List<String> collect(Minecraft mc, boolean probeHidden) {
+      return collect(mc, probeHidden, () -> false);
    }
 
-   public static List<String> init(Minecraft mc, boolean probeHidden, final BooleanSupplier cancelled) {
+   public static List<String> collect(Minecraft mc, boolean probeHidden, final BooleanSupplier cancelled) {
       String self = init(mc);
       LinkedHashMap<String, String> names = CommandTabNameProber.probe(mc, self);
       final ClientPacketListener connection = mc == null ? null : mc.getConnection();

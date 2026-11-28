@@ -18,13 +18,13 @@ public class DelayPacketsAction implements MacroAction {
    public boolean flushOnDisable = true;
    public List<String> c2sPacketNames = new ArrayList<>();
    public List<String> s2cPacketNames = new ArrayList<>();
-   private boolean init = true;
+   private boolean enabled = true;
 
-   public void init() {
+   public void cycleModeForward() {
       this.mode = DelayPacketsAction.DelayMode.values()[(this.mode.ordinal() + 1) % DelayPacketsAction.DelayMode.values().length];
    }
 
-   public void load() {
+   public void cycleModeBack() {
       this.mode = DelayPacketsAction.DelayMode.values()[(this.mode.ordinal() - 1 + DelayPacketsAction.DelayMode.values().length)
          % DelayPacketsAction.DelayMode.values().length];
    }
@@ -84,8 +84,8 @@ public class DelayPacketsAction implements MacroAction {
          shared.setDelayPacketsEnabled(false);
          module.notifyDelayToggle(false, flushed);
       } else {
-         Set<Class<? extends Packet<?>>> resolvedC2S = this.init(this.c2sPacketNames, true);
-         Set<Class<? extends Packet<?>>> resolvedS2C = this.init(this.s2cPacketNames, false);
+         Set<Class<? extends Packet<?>>> resolvedC2S = this.resolvePacketClasses(this.c2sPacketNames, true);
+         Set<Class<? extends Packet<?>>> resolvedS2C = this.resolvePacketClasses(this.s2cPacketNames, false);
          shared.setCustomC2sPackets(resolvedC2S);
          shared.setCustomS2cPackets(resolvedS2C);
          shared.setUseCustomPackets(true);
@@ -94,7 +94,7 @@ public class DelayPacketsAction implements MacroAction {
       }
    }
 
-   private Set<Class<? extends Packet<?>>> init(List<String> names, boolean isC2S) {
+   private Set<Class<? extends Packet<?>>> resolvePacketClasses(List<String> names, boolean isC2S) {
       Set<Class<? extends Packet<?>>> result = new HashSet<>();
       Set<Class<? extends Packet<?>>> pool = isC2S ? PacketTypeRegistry.getC2sPackets() : PacketTypeRegistry.getS2cPackets();
 
@@ -144,7 +144,7 @@ public class DelayPacketsAction implements MacroAction {
       }
 
       tag.put("s2cPackets", s2cList);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -180,7 +180,7 @@ public class DelayPacketsAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -202,12 +202,12 @@ public class DelayPacketsAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum DelayMode {

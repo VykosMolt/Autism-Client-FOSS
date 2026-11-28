@@ -14,7 +14,7 @@ final class SteppedRowContour {
 
    SteppedRowContour(List<Float> widths, List<Float> heights, float radius) {
       radius = Math.min(radius, 4.0F);
-      widths = init(widths, radius);
+      widths = smoothWidths(widths, radius);
       float widest = 0.0F;
 
       for (float value : widths) {
@@ -119,7 +119,7 @@ final class SteppedRowContour {
       this.edges = List.copyOf(lines);
    }
 
-   static List<Float> init(List<Float> widths, float radius) {
+   static List<Float> smoothWidths(List<Float> widths, float radius) {
       if (widths.size() < 2) {
          return List.copyOf(widths);
       }
@@ -145,7 +145,7 @@ final class SteppedRowContour {
       return List.copyOf(aligned);
    }
 
-   static float init(SteppedRowContour.Inner_DataUtil segment, float x, float y) {
+   static float distance(SteppedRowContour.Inner_DataUtil segment, float x, float y) {
       float t = Math.clamp(((x - segment.init) * segment.read + (y - segment.load) * segment.write) / segment.update, 0.0F, 1.0F);
       float dx = x - segment.init - segment.read * t;
       float dy = y - segment.load - segment.write * t;

@@ -26,7 +26,7 @@ import net.minecraft.network.Connection;
 public final class ViaFabricPlusBridge {
    private static final String init_Str = "viafabricplus-clientconnection";
    private static final String load = "vv:mod_details";
-   private static final ThreadLocal<ViaFabricPlusBridge.DetectionAttempt> init_ThreadLocal = new ThreadLocal<>();
+   private static final ThreadLocal<ViaFabricPlusBridge.DetectionAttempt> CURRENT_ATTEMPT = new ThreadLocal<>();
 
    private ViaFabricPlusBridge() {
    }
@@ -52,15 +52,15 @@ public final class ViaFabricPlusBridge {
       }
    }
 
-   public static Socket init(String host, int port, ViaFabricPlusBridge.SocketOpener original) throws IOException {
-      ViaFabricPlusBridge.DetectionAttempt scoped = init_ThreadLocal.get();
+   public static Socket connect(String host, int port, ViaFabricPlusBridge.SocketOpener original) throws IOException {
+      ViaFabricPlusBridge.DetectionAttempt scoped = CURRENT_ATTEMPT.get();
       if (scoped != null) {
-         return init(
+         return connectVia(
             scoped.getAddress().getAddress().getHostAddress(),
             scoped.getAddress().getPort(),
             scoped.getProxy(),
             (ignoredHost, ignoredPort) -> {
-               Socket socket = init();
+               Socket socket = openSocket();
 
                try {
                   socket.setSoTimeout(3000);
@@ -77,17 +77,17 @@ public final class ViaFabricPlusBridge {
       ProxyListManager manager = ProxyListManager.getInstance();
       ViaFabricPlusBridge.ProxyRoute route;
       synchronized (manager) {
-         route = ViaFabricPlusBridge.ProxyRoute.init(manager.getActiveProxy());
+         route = ViaFabricPlusBridge.ProxyRoute.of(manager.getActiveProxy());
       }
 
-      return init(host, port, route, original);
+      return connectVia(host, port, route, original);
    }
 
-   public static ViaFabricPlusBridge.DetectionScope init(bW proxy, InetSocketAddress address) throws IOException {
-      return init(proxy, address, 10000L);
+   public static ViaFabricPlusBridge.DetectionScope detect(bW proxy, InetSocketAddress address) throws IOException {
+      return detect(proxy, address, 10000L);
    }
 
-   static ViaFabricPlusBridge.DetectionScope init(bW proxy, InetSocketAddress address, long timeoutMs) throws IOException {
+   static ViaFabricPlusBridge.DetectionScope detect(bW proxy, InetSocketAddress address, long timeoutMs) throws IOException {
       if (address == null || address.isUnresolved()) {
          throw new IOException("AUTO protocol destination is unresolved");
       }
@@ -96,35 +96,35 @@ public final class ViaFabricPlusBridge {
          throw new IOException("Invalid AUTO protocol deadline");
       }
 
-      ViaFabricPlusBridge.DetectionAttempt previous = init_ThreadLocal.get();
-      ViaFabricPlusBridge.DetectionAttempt current = new ViaFabricPlusBridge.DetectionAttempt(ViaFabricPlusBridge.ProxyRoute.init(proxy), address);
-      current.init_ScheduledFuture = ViaFabricPlusBridge.DeadlineScheduler.init.schedule(current::init_V, timeoutMs, TimeUnit.MILLISECONDS);
-      init_ThreadLocal.set(current);
+      ViaFabricPlusBridge.DetectionAttempt previous = CURRENT_ATTEMPT.get();
+      ViaFabricPlusBridge.DetectionAttempt current = new ViaFabricPlusBridge.DetectionAttempt(ViaFabricPlusBridge.ProxyRoute.of(proxy), address);
+      current.deadline = ViaFabricPlusBridge.DeadlineScheduler.EXECUTOR.schedule(current::abort, timeoutMs, TimeUnit.MILLISECONDS);
+      CURRENT_ATTEMPT.set(current);
       return () -> {
-         current.init_V();
+         current.abort();
          if (previous == null) {
-            init_ThreadLocal.remove();
+            CURRENT_ATTEMPT.remove();
          } else {
-            init_ThreadLocal.set(previous);
+            CURRENT_ATTEMPT.set(previous);
          }
       };
    }
 
-   private static Socket init() throws IOException {
+   private static Socket openSocket() throws IOException {
       Socket socket = new Socket(Proxy.NO_PROXY);
-      ViaFabricPlusBridge.DetectionAttempt scope = init_ThreadLocal.get();
+      ViaFabricPlusBridge.DetectionAttempt scope = CURRENT_ATTEMPT.get();
       if (scope != null) {
-         scope.init(socket);
+         scope.attach(socket);
       }
 
       return socket;
    }
 
-   static Socket init(String host, int port, bW proxy, ViaFabricPlusBridge.SocketOpener original) throws IOException {
-      return init(host, port, ViaFabricPlusBridge.ProxyRoute.init(proxy), original);
+   static Socket connect(String host, int port, bW proxy, ViaFabricPlusBridge.SocketOpener original) throws IOException {
+      return connectVia(host, port, ViaFabricPlusBridge.ProxyRoute.of(proxy), original);
    }
 
-   private static Socket init(String host, int port, ViaFabricPlusBridge.ProxyRoute proxy, ViaFabricPlusBridge.SocketOpener original) throws IOException, SocketException {
+   private static Socket connectVia(String host, int port, ViaFabricPlusBridge.ProxyRoute proxy, ViaFabricPlusBridge.SocketOpener original) throws IOException, SocketException {
       if (proxy == null) {
          return original.open(host, port);
       }
@@ -148,12 +148,12 @@ public final class ViaFabricPlusBridge {
 
             try {
                if (username.length <= 255 && password.length <= 255 && proxy.load().indexOf(0) < 0) {
-                  socket = init();
+                  socket = openSocket();
                   socket.setSoTimeout(3000);
-                  socket.connect(new InetSocketAddress(proxy.init_Str(), proxy.init_I()), 3000);
+                  socket.connect(new InetSocketAddress(proxy.host(), proxy.port()), 3000);
                   DataInputStream input = new DataInputStream(socket.getInputStream());
                   OutputStream output = socket.getOutputStream();
-                  if (proxy.init_bZ() == ProxyProtocolType.Socks4) {
+                  if (proxy.type() == ProxyProtocolType.Socks4) {
                      if (literal && address.length != 4) {
                         throw new IOException("SOCKS4 does not support IPv6 destinations");
                      }
@@ -254,14 +254,14 @@ public final class ViaFabricPlusBridge {
    }
 
    public static boolean init(Object userConnection, String channel, byte[] data) {
-      Connection owner = init(userConnection);
+      Connection owner = connectionOf(userConnection);
       autismclient.protector.ConnectionPrivacyRegistry.ConnectionSession context = autismclient.protector.ConnectionPrivacyRegistry.getActive(owner);
       return context != null && context.privacyMode() != autismclient.protector.ConnectionPrivacyRegistry.PrivacyMode.VANILLA
          ? !"vv:mod_details".equals(channel)
          : false;
    }
 
-   private static Connection init(Object userConnection) {
+   private static Connection connectionOf(Object userConnection) {
       if (userConnection == null) {
          return null;
       }
@@ -289,8 +289,8 @@ public final class ViaFabricPlusBridge {
       void close();
    }
 
-   private record ProxyRoute(ProxyProtocolType init_bZ, String init_Str, int init_I, String load, String read) {
-      private static ViaFabricPlusBridge.ProxyRoute init(bW proxy) throws IOException {
+   private record ProxyRoute(ProxyProtocolType type, String host, int port, String load, String read) {
+      private static ViaFabricPlusBridge.ProxyRoute of(bW proxy) throws IOException {
          if (proxy == null) {
             return null;
          } else if (proxy.init_bZ != null && proxy.read != null && !proxy.read.isBlank() && proxy.init_I >= 1 && proxy.init_I <= 65535) {
@@ -309,9 +309,9 @@ public final class ViaFabricPlusBridge {
    }
 
    private static final class DeadlineScheduler {
-      private static final ScheduledThreadPoolExecutor init = init();
+      private static final ScheduledThreadPoolExecutor EXECUTOR = createExecutor();
 
-      private static ScheduledThreadPoolExecutor init() {
+      private static ScheduledThreadPoolExecutor createExecutor() {
          ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, task -> {
             Thread thread = new Thread(task, "Autism protocol detection deadline");
             thread.setDaemon(true);
@@ -325,9 +325,9 @@ public final class ViaFabricPlusBridge {
    private static final class DetectionAttempt {
       private final ViaFabricPlusBridge.ProxyRoute proxy;
       private final InetSocketAddress address;
-      private ScheduledFuture<?> init_ScheduledFuture;
-      private Socket init_Socket;
-      private boolean init_Z;
+      private ScheduledFuture<?> deadline;
+      private Socket socket;
+      private boolean closed;
 
       private DetectionAttempt(ViaFabricPlusBridge.ProxyRoute proxy, InetSocketAddress address) {
          this.proxy = proxy;
@@ -342,28 +342,28 @@ public final class ViaFabricPlusBridge {
          return this.address;
       }
 
-      private synchronized void init(Socket value) throws IOException {
-         if (this.init_Z) {
+      private synchronized void attach(Socket value) throws IOException {
+         if (this.closed) {
             value.close();
             throw new IOException("AUTO protocol detection deadline expired");
          }
 
-         this.init_Socket = value;
+         this.socket = value;
       }
 
-      private synchronized void init_V() {
-         this.init_Z = true;
-         if (this.init_ScheduledFuture != null) {
-            this.init_ScheduledFuture.cancel(false);
+      private synchronized void abort() {
+         this.closed = true;
+         if (this.deadline != null) {
+            this.deadline.cancel(false);
          }
 
-         if (this.init_Socket != null) {
+         if (this.socket != null) {
             try {
-               this.init_Socket.close();
+               this.socket.close();
             } catch (IOException var2) {
             }
 
-            this.init_Socket = null;
+            this.socket = null;
          }
       }
    }

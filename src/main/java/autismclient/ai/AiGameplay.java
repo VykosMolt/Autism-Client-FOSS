@@ -487,7 +487,7 @@ final class AiGameplay {
                   return this.finish(AiGameOperations.result(AiOperation.Status.TIMED_OUT, "Drop collection stopped before verified pickup", new JsonObject()));
                }
 
-               if (AiGameplay.countAll(ids) >= target && !this.preparation.requiresReconciliation(this.currentChild()) && !this.fireControl.read()) {
+               if (AiGameplay.countAll(ids) >= target && !this.preparation.requiresReconciliation(this.currentChild()) && !this.fireControl.isBusy()) {
                   return this.finish(AiGameOperations.result(AiOperation.Status.SUCCEEDED, "Collected item inventory target observed", new JsonObject()));
                }
 
@@ -570,14 +570,14 @@ final class AiGameplay {
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.preparation.requiresReconciliation(this.currentChild()) || this.fireControl.read();
+               return this.preparation.requiresReconciliation(this.currentChild()) || this.fireControl.isBusy();
             }
 
             @Override
             public void cancel() {
                if (!this.cancelled) {
                   this.cancelled = true;
-                  this.preparation.markReconciliationPending(this.fireControl.read());
+                  this.preparation.markReconciliationPending(this.fireControl.isBusy());
                   this.fireControl.reset();
                   this.preparation.cancelChild(this.mineOp);
                   this.preparation.cancelChild(this.capacityPrep);
@@ -590,7 +590,7 @@ final class AiGameplay {
       }
    }
 
-   static AiGameplay.CapacityPreparation init(List<String> ids, int seconds) {
+   static AiGameplay.CapacityPreparation prepareCapacity(List<String> ids, int seconds) {
       return prepareCapacity(ids, seconds, true);
    }
 

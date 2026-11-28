@@ -28,7 +28,7 @@ import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.world.level.material.FluidState;
 
 public final class AiStaircase {
-   private static final int[][] init_IArr2 = new int[][]{{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+   private static final int[][] HORIZONTAL_DIRS = new int[][]{{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
    private static final int init_I = 8;
 
    private AiStaircase() {
@@ -59,10 +59,10 @@ public final class AiStaircase {
          }
 
          if (spiral) {
-            int k = last == null ? 0 : init(last);
+            int k = last == null ? 0 : dirIndex(last);
 
             for (int t = 1; t <= 4; t++) {
-               options.add(init_IArr2[(k + t) % 4]);
+               options.add(HORIZONTAL_DIRS[(k + t) % 4]);
             }
          } else {
             if (alongX && rx == 0) {
@@ -82,7 +82,7 @@ public final class AiStaircase {
                options.add(new int[]{Integer.signum(rx), 0});
             }
 
-            for (int[] d : init_IArr2) {
+            for (int[] d : HORIZONTAL_DIRS) {
                options.add(d);
             }
          }
@@ -94,7 +94,7 @@ public final class AiStaircase {
          for (int[] d : options) {
             if (last == null || d[0] != -last[0] || d[1] != -last[1]) {
                BlockPos feet = new BlockPos(x + d[0], y - 1, z + d[1]);
-               if (init_Z_BlockPos_2(feet, floors, blocked) && !noFloor.test(feet.below())) {
+               if (isClearStand(feet, floors, blocked) && !noFloor.test(feet.below())) {
                   floors.add(feet.below().asLong());
                   int run = 1 + init_I_BlockPos(feet, d, horizon - 1, floors, blocked, noFloor);
                   floors.remove(feet.below().asLong());
@@ -132,10 +132,10 @@ public final class AiStaircase {
 
       int best = 0;
 
-      for (int[] d : init_IArr2) {
+      for (int[] d : HORIZONTAL_DIRS) {
          if (d[0] != -last[0] || d[1] != -last[1]) {
             BlockPos next = from.offset(d[0], -1, d[1]);
-            if (init_Z_BlockPos_2(next, floors, blocked) && !noFloor.test(next.below())) {
+            if (isClearStand(next, floors, blocked) && !noFloor.test(next.below())) {
                floors.add(next.below().asLong());
                int run = 1 + init_I_BlockPos(next, d, left - 1, floors, blocked, noFloor);
                floors.remove(next.below().asLong());
@@ -150,9 +150,9 @@ public final class AiStaircase {
       return best;
    }
 
-   private static int init(int[] d) {
+   private static int dirIndex(int[] d) {
       for (int i = 0; i < 4; i++) {
-         if (init_IArr2[i][0] == d[0] && init_IArr2[i][1] == d[1]) {
+         if (HORIZONTAL_DIRS[i][0] == d[0] && HORIZONTAL_DIRS[i][1] == d[1]) {
             return i;
          }
       }
@@ -179,7 +179,7 @@ public final class AiStaircase {
          for (int[] d : directions) {
             if (d[0] != 0 || d[1] != 0) {
                BlockPos feet = at.offset(d[0], 0, d[1]);
-               if (!noFloor.test(feet.below()) && init_Z_BlockPos_2(feet, Set.of(), blocked)) {
+               if (!noFloor.test(feet.below()) && isClearStand(feet, Set.of(), blocked)) {
                   chosen = feet;
                   break;
                }
@@ -206,7 +206,7 @@ public final class AiStaircase {
       List<BlockPos> headings = new ArrayList<>();
       headings.add(target);
 
-      for (int[] d : init_IArr2) {
+      for (int[] d : HORIZONTAL_DIRS) {
          headings.add(start.offset(d[0] * 8, 0, d[1] * 8));
       }
 
@@ -232,7 +232,7 @@ public final class AiStaircase {
       return load(start, target, Math.min(8, maxSteps), blocked, noFloor);
    }
 
-   private static boolean init_Z_BlockPos_2(BlockPos feet, Set<Long> floors, Predicate<BlockPos> blocked) {
+   private static boolean isClearStand(BlockPos feet, Set<Long> floors, Predicate<BlockPos> blocked) {
       for (int h = 0; h < 3; h++) {
          BlockPos cell = feet.above(h);
          if (floors.contains(cell.asLong()) || blocked.test(cell)) {
@@ -243,7 +243,7 @@ public final class AiStaircase {
       return true;
    }
 
-   public static Set<Long> init(List<BlockPos> steps) {
+   public static Set<Long> bodyCells(List<BlockPos> steps) {
       Set<Long> out = new HashSet<>();
 
       for (BlockPos f : steps) {
@@ -305,10 +305,10 @@ public final class AiStaircase {
       final AiStaircase.ShaftGoal goal = new AiStaircase.ShaftGoal(top, bottomY);
       final long deadline = System.nanoTime() + Math.max(10, timeoutSeconds) * 1000000000L;
       return new AiOperation() {
-         AiOperation init_AiOperation = mc.player.blockPosition().equals(top)
+         AiOperation childOp = mc.player.blockPosition().equals(top)
             ? null
             : AiGoto.travelToCompat(top, 0.5, true, false, false, Math.max(10, timeoutSeconds / 2));
-         AiGoto.GotoOp init_HashUtil_CachePool;
+         AiGoto.GotoOp gotoOp;
 
          @Override
          public AiOperation.Result tick() {
@@ -319,55 +319,55 @@ public final class AiStaircase {
                );
             }
 
-            if (this.init_AiOperation != null) {
-               AiOperation.Result r = this.init_AiOperation.tick();
+            if (this.childOp != null) {
+               AiOperation.Result r = this.childOp.tick();
                if (!r.terminal()) {
                   return new AiOperation.Result(AiOperation.Status.RUNNING, "Walking to where the shaft starts: " + r.message(), "{}", List.of());
                }
 
-               this.init_AiOperation = null;
+               this.childOp = null;
                if (r.status() != AiOperation.Status.SUCCEEDED) {
                   return r;
                }
             }
 
-            if (this.init_HashUtil_CachePool == null) {
+            if (this.gotoOp == null) {
                AutismClientAddon.LOG.info("[AI] shaft: from {} down to y {}", mc.player.blockPosition().toShortString(), bottomY);
-               this.init_HashUtil_CachePool = AiGoto.createPersistentOpCompat(
+               this.gotoOp = AiGoto.createPersistentOpCompat(
                   mc.player.blockPosition(), goal, (int)Math.max(10L, (deadline - System.nanoTime()) / 1000000000L)
                );
             }
 
-            if (this.init_HashUtil_CachePool.isAtGoal()) {
-               this.init_HashUtil_CachePool.cancel();
+            if (this.gotoOp.isAtGoal()) {
+               this.gotoOp.cancel();
                return new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Shaft dug to y " + bottomY, "{}", List.of());
             } else {
-               return this.init_HashUtil_CachePool.tick();
+               return this.gotoOp.tick();
             }
          }
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_AiOperation != null
-               ? this.init_AiOperation.canInterruptNow()
-               : this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterrupt();
+            return this.childOp != null
+               ? this.childOp.canInterruptNow()
+               : this.gotoOp == null || this.gotoOp.canInterrupt();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_AiOperation != null
-               ? this.init_AiOperation.requiresReconciliationAfterEmergency()
-               : this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency();
+            return this.childOp != null
+               ? this.childOp.requiresReconciliationAfterEmergency()
+               : this.gotoOp != null && this.gotoOp.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            if (this.childOp != null) {
+               this.childOp.cancel();
             }
 
-            if (this.init_HashUtil_CachePool != null) {
-               this.init_HashUtil_CachePool.cancel();
+            if (this.gotoOp != null) {
+               this.gotoOp.cancel();
             }
          }
       };
@@ -376,7 +376,7 @@ public final class AiStaircase {
    public static Predicate<BlockPos> protectedCells(Level level, Predicate<BlockState> keep) {
       return cell -> {
          BlockState state = level.getBlockState(cell);
-         if (!state.isAir() && init(level, cell)) {
+         if (!state.isAir() && touchesFluid(level, cell)) {
             return true;
          } else {
             return state.isAir()
@@ -390,7 +390,7 @@ public final class AiStaircase {
       };
    }
 
-   static boolean init(Level level, BlockPos cell) {
+   static boolean touchesFluid(Level level, BlockPos cell) {
       for (Direction side : Direction.values()) {
          FluidState fluid = level.getFluidState(cell.relative(side));
          if (fluid.is(FluidTags.LAVA)) {
@@ -410,7 +410,7 @@ public final class AiStaircase {
    }
 
    public static Predicate<BlockState> matchesFamily(String family) {
-      return state -> AiMine.init(family, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
+      return state -> AiMine.matchesBlock(family, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
    }
 
    public static BlockPos findNearestBlock(Level level, BlockPos from, int radius, Predicate<BlockState> matches) {
@@ -445,7 +445,7 @@ public final class AiStaircase {
       }
 
       Predicate<BlockPos> usableOre = cell -> matches.test(level.getBlockState(cell)) && usable.test(cell);
-      int missing = batch - init_I_BlockPos(first, batch, usableOre);
+      int missing = batch - countUsableOre(first, batch, usableOre);
       if (missing <= 0) {
          return first;
       }
@@ -462,7 +462,7 @@ public final class AiStaircase {
          return first;
       }
 
-      if (!init(init_I_Level(level, from, first), init_I_Level(level, from, complete))) {
+      if (!completeNoDeeper(init_I_Level(level, from, first), init_I_Level(level, from, complete))) {
          return first;
       }
 
@@ -472,7 +472,7 @@ public final class AiStaircase {
          radius,
          matches,
          p -> AiBlockMine.travelCost(level, first, p),
-         p -> usable.test(p) && init(first, p) && init_Z_BlockPos(p, missing, cell -> init(first, cell) && usableOre.test(cell))
+         p -> usable.test(p) && outsideFirstBox(first, p) && init_Z_BlockPos(p, missing, cell -> outsideFirstBox(first, cell) && usableOre.test(cell))
       );
       return remainder != null
             && !init_Z_D(AiBlockMine.travelCost(level, from, complete), AiBlockMine.travelCost(level, from, first), AiBlockMine.travelCost(level, first, remainder))
@@ -484,7 +484,7 @@ public final class AiStaircase {
       return completeCost <= firstCost + remainderCost;
    }
 
-   static boolean init(int firstDepth, int completeDepth) {
+   static boolean completeNoDeeper(int firstDepth, int completeDepth) {
       return completeDepth <= firstDepth;
    }
 
@@ -493,15 +493,15 @@ public final class AiStaircase {
       return Math.max(0, Math.min(from.getY(), surface) - ore.getY());
    }
 
-   private static boolean init(BlockPos first, BlockPos cell) {
+   private static boolean outsideFirstBox(BlockPos first, BlockPos cell) {
       return Math.abs(cell.getX() - first.getX()) > 2 || Math.abs(cell.getY() - first.getY()) > 2 || Math.abs(cell.getZ() - first.getZ()) > 2;
    }
 
    static boolean init_Z_BlockPos(BlockPos target, int batch, Predicate<BlockPos> usableOre) {
-      return batch <= 0 || init_I_BlockPos(target, batch, usableOre) >= batch;
+      return batch <= 0 || countUsableOre(target, batch, usableOre) >= batch;
    }
 
-   private static int init_I_BlockPos(BlockPos target, int cap, Predicate<BlockPos> usableOre) {
+   private static int countUsableOre(BlockPos target, int cap, Predicate<BlockPos> usableOre) {
       int count = usableOre.test(target) ? 1 : 0;
       if (count >= cap) {
          return count;
@@ -582,10 +582,10 @@ public final class AiStaircase {
       final AiStaircase.StaircaseGoal goal = new AiStaircase.StaircaseGoal(steps);
       final long deadline = System.nanoTime() + Math.max(10, timeoutSeconds) * 1000000000L;
       return new AiOperation() {
-         AiOperation init_AiOperation = approach != null && !mc.player.blockPosition().equals(approach)
+         AiOperation childOp = approach != null && !mc.player.blockPosition().equals(approach)
             ? AiGoto.travelToCompat(approach, 0.5, true, false, false, Math.max(10, timeoutSeconds / 2))
             : null;
-         AiGoto.GotoOp init_HashUtil_CachePool;
+         AiGoto.GotoOp gotoOp;
 
          @Override
          public AiOperation.Result tick() {
@@ -596,56 +596,56 @@ public final class AiStaircase {
                );
             }
 
-            if (this.init_AiOperation != null) {
-               AiOperation.Result r = this.init_AiOperation.tick();
+            if (this.childOp != null) {
+               AiOperation.Result r = this.childOp.tick();
                if (!r.terminal()) {
                   return new AiOperation.Result(AiOperation.Status.RUNNING, "Walking to where the staircase starts: " + r.message(), "{}", List.of());
                }
 
-               this.init_AiOperation = null;
+               this.childOp = null;
                if (r.status() != AiOperation.Status.SUCCEEDED) {
                   return r;
                }
             }
 
-            if (this.init_HashUtil_CachePool == null) {
+            if (this.gotoOp == null) {
                AutismClientAddon.LOG
-                  .info("[AI] staircase: {} steps from {} to {}", steps.size(), mc.player.blockPosition().toShortString(), goal.init_BlockPos.toShortString());
-               this.init_HashUtil_CachePool = AiGoto.createPersistentOpCompat(
+                  .info("[AI] staircase: {} steps from {} to {}", steps.size(), mc.player.blockPosition().toShortString(), goal.lastStep.toShortString());
+               this.gotoOp = AiGoto.createPersistentOpCompat(
                   mc.player.blockPosition(), goal, (int)Math.max(10L, (deadline - System.nanoTime()) / 1000000000L)
                );
             }
 
-            if (this.init_HashUtil_CachePool.isAtGoal()) {
-               this.init_HashUtil_CachePool.cancel();
-               return new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Staircase dug to " + goal.init_BlockPos.toShortString(), "{}", List.of());
+            if (this.gotoOp.isAtGoal()) {
+               this.gotoOp.cancel();
+               return new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Staircase dug to " + goal.lastStep.toShortString(), "{}", List.of());
             } else {
-               return this.init_HashUtil_CachePool.tick();
+               return this.gotoOp.tick();
             }
          }
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_AiOperation != null
-               ? this.init_AiOperation.canInterruptNow()
-               : this.init_HashUtil_CachePool == null || this.init_HashUtil_CachePool.canInterrupt();
+            return this.childOp != null
+               ? this.childOp.canInterruptNow()
+               : this.gotoOp == null || this.gotoOp.canInterrupt();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_AiOperation != null
-               ? this.init_AiOperation.requiresReconciliationAfterEmergency()
-               : this.init_HashUtil_CachePool != null && this.init_HashUtil_CachePool.requiresReconciliationAfterEmergency();
+            return this.childOp != null
+               ? this.childOp.requiresReconciliationAfterEmergency()
+               : this.gotoOp != null && this.gotoOp.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
+            if (this.childOp != null) {
+               this.childOp.cancel();
             }
 
-            if (this.init_HashUtil_CachePool != null) {
-               this.init_HashUtil_CachePool.cancel();
+            if (this.gotoOp != null) {
+               this.gotoOp.cancel();
             }
          }
       };
@@ -684,44 +684,44 @@ public final class AiStaircase {
    }
 
    public static final class ShaftGoal implements AiPathfinder.PathGoal {
-      final int init;
-      final int load;
-      final int read;
-      final int write;
+      final int shaftX;
+      final int shaftZ;
+      final int topY;
+      final int bottomY;
 
       public ShaftGoal(BlockPos top, int bottomY) {
-         this.init = top.getX();
-         this.load = top.getZ();
-         this.read = top.getY();
-         this.write = bottomY;
+         this.shaftX = top.getX();
+         this.shaftZ = top.getZ();
+         this.topY = top.getY();
+         this.bottomY = bottomY;
       }
 
       @Override
       public boolean isInGoal(int x, int y, int z) {
-         return x == this.init && z == this.load && y == this.write;
+         return x == this.shaftX && z == this.shaftZ && y == this.bottomY;
       }
 
       @Override
       public double heuristic(int x, int y, int z) {
-         return AiPathfinder.MoveCosts.estimateHeuristicCompat(this.init - x, this.write - y, this.load - z);
+         return AiPathfinder.MoveCosts.estimateHeuristicCompat(this.shaftX - x, this.bottomY - y, this.shaftZ - z);
       }
 
-      private boolean update(BlockPos cell) {
-         return cell.getX() == this.init && cell.getZ() == this.load && cell.getY() >= this.write && cell.getY() <= this.read + 1;
+      private boolean inShaft(BlockPos cell) {
+         return cell.getX() == this.shaftX && cell.getZ() == this.shaftZ && cell.getY() >= this.bottomY && cell.getY() <= this.topY + 1;
       }
 
       @Override
-      public boolean load(BlockPos cell) {
-         return this.update(cell);
+      public boolean mayBreak(BlockPos cell) {
+         return this.inShaft(cell);
       }
 
       @Override
       public boolean allowsCell(BlockPos cell) {
-         return this.update(cell);
+         return this.inShaft(cell);
       }
 
       @Override
-      public boolean read(BlockPos cell) {
+      public boolean mayPlace(BlockPos cell) {
          return false;
       }
 
@@ -732,48 +732,48 @@ public final class AiStaircase {
 
       @Override
       public String toString() {
-         return "shaft(" + this.init + ", " + this.load + " from y " + this.read + " to " + this.write + ")";
+         return "shaft(" + this.shaftX + ", " + this.shaftZ + " from y " + this.topY + " to " + this.bottomY + ")";
       }
    }
 
    public static final class StaircaseGoal implements AiPathfinder.PathGoal {
-      final Set<Long> init_Set;
-      final Set<Long> load = new HashSet<>();
-      final BlockPos init_BlockPos;
+      final Set<Long> bodyCells;
+      final Set<Long> floorCells = new HashSet<>();
+      final BlockPos lastStep;
 
       public StaircaseGoal(List<BlockPos> steps) {
-         this.init_Set = AiStaircase.init(steps);
+         this.bodyCells = AiStaircase.bodyCells(steps);
 
          for (BlockPos f : steps) {
-            this.load.add(f.below().asLong());
+            this.floorCells.add(f.below().asLong());
          }
 
-         this.init_BlockPos = steps.get(steps.size() - 1);
+         this.lastStep = steps.get(steps.size() - 1);
       }
 
       @Override
       public boolean isInGoal(int x, int y, int z) {
-         return x == this.init_BlockPos.getX() && y == this.init_BlockPos.getY() && z == this.init_BlockPos.getZ();
+         return x == this.lastStep.getX() && y == this.lastStep.getY() && z == this.lastStep.getZ();
       }
 
       @Override
       public double heuristic(int x, int y, int z) {
-         return AiPathfinder.MoveCosts.estimateHeuristicCompat(this.init_BlockPos.getX() - x, this.init_BlockPos.getY() - y, this.init_BlockPos.getZ() - z);
+         return AiPathfinder.MoveCosts.estimateHeuristicCompat(this.lastStep.getX() - x, this.lastStep.getY() - y, this.lastStep.getZ() - z);
       }
 
       @Override
-      public boolean load(BlockPos cell) {
-         return this.init_Set.contains(cell.asLong());
+      public boolean mayBreak(BlockPos cell) {
+         return this.bodyCells.contains(cell.asLong());
       }
 
       @Override
       public boolean allowsCell(BlockPos cell) {
-         return this.init_Set.contains(cell.asLong());
+         return this.bodyCells.contains(cell.asLong());
       }
 
       @Override
-      public boolean read(BlockPos cell) {
-         return this.load.contains(cell.asLong());
+      public boolean mayPlace(BlockPos cell) {
+         return this.floorCells.contains(cell.asLong());
       }
 
       @Override
@@ -783,7 +783,7 @@ public final class AiStaircase {
 
       @Override
       public String toString() {
-         return "staircase(" + this.init_Set.size() / 3 + " steps to " + this.init_BlockPos.toShortString() + ")";
+         return "staircase(" + this.bodyCells.size() / 3 + " steps to " + this.lastStep.toShortString() + ")";
       }
    }
 }

@@ -88,10 +88,10 @@ public final class SyntheticWorldGenLevel implements WorldGenLevel {
             return SyntheticWorldGenLevel.this;
          }
       }, true, context.dimensionType().hasSkyLight());
-      this.init(new ChunkPos(0, 0), 0);
+      this.recenter(new ChunkPos(0, 0), 0);
    }
 
-   public void init(ChunkPos center, int writeRadius) {
+   public void recenter(ChunkPos center, int writeRadius) {
       this.random = this.bootstrap
          .randomState()
          .getOrCreateRandomFactory(Identifier.withDefaultNamespace("worldgen_region_random"))

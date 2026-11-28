@@ -957,7 +957,7 @@ public final class ScaffoldModule extends Module {
    public void onGameLeft() {
       this.releaseControls(false);
       this.clearSlotCache();
-      PlacedBlockTrailRenderer.load(PlacedBlockTrailRenderer.Inner_DataUtil.SCAFFOLD);
+      PlacedBlockTrailRenderer.clearSource(PlacedBlockTrailRenderer.Inner_DataUtil.SCAFFOLD);
    }
 
    @Override
@@ -989,7 +989,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private void syncPlaceAnimation() {
-      PlacedBlockTrailRenderer.init(this.isEnabled() && this.bool("place-animation"), this.bool("animation-custom"), am.init_I_Module(this, "animation-color", -50373));
+      PlacedBlockTrailRenderer.configure(this.isEnabled() && this.bool("place-animation"), this.bool("animation-custom"), am.init_I_Module(this, "animation-color", -50373));
    }
 
    @Override
@@ -1705,7 +1705,7 @@ public final class ScaffoldModule extends Module {
             }
 
             this.recordPrediction(this.pendingSequence, cell);
-            PlacedBlockTrailRenderer.init(cell);
+            PlacedBlockTrailRenderer.mark(cell);
             this.placeStatus = "ok";
             this.captureLiveTrace("settle-ok", pending);
             this.resetPlacementState();
@@ -4006,7 +4006,7 @@ public final class ScaffoldModule extends Module {
       RotationMath.Rotation delta = new SmoothRotationIntegrator.CountStep(
             deadbandCounts(clampCounts(step.init(), maxYawStep, gcd), yawError, gcd), deadbandCounts(clampCounts(step.load(), maxPitchStep, gcd), pitchError, gcd)
          )
-         .init(gcd);
+         .step(gcd);
       return new RotationMath.Rotation(Mth.wrapDegrees(current.yaw() + delta.yaw()), Mth.clamp(current.pitch() + delta.pitch(), -90.0F, 90.0F));
    }
 
@@ -5143,7 +5143,7 @@ public final class ScaffoldModule extends Module {
          && !this.isAnchorDeviating()
          && !this.task_Z) {
          Input forward = new Input(true, false, false, false, false, false, false);
-         Input keys = init_Input_Input_2(forward, this.anchorYaw, this.activeRotation.yaw());
+         Input keys = remapSilentInput(forward, this.anchorYaw, this.activeRotation.yaw());
          Vec3 local = new Vec3(axisValue(keys.left(), keys.right()), 0.0, axisValue(keys.forward(), keys.backward())).normalize();
          double speed = player.getAttributeValue(Attributes.MOVEMENT_SPEED) / (player.isSprinting() ? 1.3 : 1.0);
          double acceleration = groundAcceleration(speed, this.blockFriction(support));
@@ -5673,14 +5673,14 @@ public final class ScaffoldModule extends Module {
                      this.reset_Z = true;
                   }
 
-                  this.smoother().init(this.smootherBand(), !this.isEagleMode());
+                  this.smoother().apply(this.smootherBand(), !this.isEagleMode());
                   this.cachedSmootherBand = null;
                   this.update_Z = false;
-                  this.imperfectionArmed = this.placeRateTracker.init(!this.isEagleMode() && !flatEntry ? this.integer("imperfection") : 0, this.clear_Z, this.random);
-                  this.imperfectionCount = this.placeRateTracker.init_I();
+                  this.imperfectionArmed = this.placeRateTracker.arm(!this.isEagleMode() && !flatEntry ? this.integer("imperfection") : 0, this.clear_Z, this.random);
+                  this.imperfectionCount = this.placeRateTracker.pending();
                   this.imperfectionRequested = false;
                   this.imperfectionCell = null;
-                  this.imperfectionSupports = init_List_BlockPos_2(footing, this.anchorDirection(), this.placeRateTracker.init_I());
+                  this.imperfectionSupports = init_List_BlockPos_2(footing, this.anchorDirection(), this.placeRateTracker.pending());
                   this.set_Z = false;
                   this.add_Z = false;
                   this.cache_Z = false;
@@ -5696,7 +5696,7 @@ public final class ScaffoldModule extends Module {
                   this.pushFooting = null;
                   this.f_J_I = 0;
                   this.tellyAirTicks = 0;
-                  this.buffer_Z = this.clear_Z && (this.write_BlockPos == null || this.batchPower == 0) || this.placeRateTracker.init_I() > 1;
+                  this.buffer_Z = this.clear_Z && (this.write_BlockPos == null || this.batchPower == 0) || this.placeRateTracker.pending() > 1;
                   this.f_S_I = 0;
                   this.livePlacement = first;
                   this.data_Z = true;
@@ -6500,10 +6500,10 @@ public final class ScaffoldModule extends Module {
                   this.recordPrediction(this.pendingSequence, placed, this.pendingPlacement.support());
                }
 
-               PlacedBlockTrailRenderer.init(placed);
+               PlacedBlockTrailRenderer.mark(placed);
                if (imperfection) {
-                  this.placeRateTracker.init_V();
-                  this.imperfectionArmed = this.placeRateTracker.init_Z();
+                  this.placeRateTracker.consume();
+                  this.imperfectionArmed = this.placeRateTracker.armed();
                   this.imperfectionCell = null;
                   this.livePlacement = null;
                } else if (turnReserve) {
@@ -7984,7 +7984,7 @@ public final class ScaffoldModule extends Module {
             }
 
             double face = Vec3.atCenterOf(target.support()).dot(forward) + 0.5;
-            return init_I_Vec3(player.position(), launch, feetY, forward, drag, air, face) >= Math.max(4, this.smootherBand().init_I() + 2);
+            return init_I_Vec3(player.position(), launch, feetY, forward, drag, air, face) >= Math.max(4, this.smootherBand().placeTicks() + 2);
          } else {
             return true;
          }
@@ -8024,7 +8024,7 @@ public final class ScaffoldModule extends Module {
          Vec3 afterLaunch = new Vec3(launch.x * drag, (launch.y - 0.08) * 0.98, launch.z * drag);
          int flight = 1 + ticksToLanding(player.position().add(launch), afterLaunch, feetY);
          int extras = flatEntry ? 0 : this.flush_I();
-         int turn = this.smootherBand().init_I();
+         int turn = this.smootherBand().placeTicks();
          if (canFillInFlight(flight, missing, turn, extras)) {
             return true;
          } else {
@@ -8140,7 +8140,7 @@ public final class ScaffoldModule extends Module {
          footing,
          this.anchorDirection(),
          this.groundDrag(footing),
-         this.smootherBand().init_I(),
+         this.smootherBand().placeTicks(),
          cell -> this.isSettledSolid(MC.level.getBlockState(cell), cell),
          cell -> MC.level.getBlockState(cell).isAir() || MC.level.getBlockState(cell).canBeReplaced(),
          cell -> !MC.level.isOutsideBuildHeight(cell)
@@ -8362,7 +8362,7 @@ public final class ScaffoldModule extends Module {
          )) {
          BlockPos root = this.effectiveLaneSupport();
          if (root != null) {
-            if (this.imperfectionCount == 2 && (this.imperfectionArmed || this.imperfectionRequested) && this.placeRateTracker.init_Z()) {
+            if (this.imperfectionCount == 2 && (this.imperfectionArmed || this.imperfectionRequested) && this.placeRateTracker.armed()) {
                this.node_Z = true;
                this.buffer_Z = true;
                this.forwardKeyState = ScaffoldModule.ForwardKeyState.HOLD;
@@ -8380,7 +8380,7 @@ public final class ScaffoldModule extends Module {
                      ? 0
                      : (
                         returning && this.smoother().init_Z()
-                           ? this.smoother().init_I()
+                           ? this.smoother().remainingTurnTicks()
                            : (
                               this.turnPhase == ScaffoldModule.TurnCyclePhase.FORWARD
                                  ? this.smoother().read(this.rotationSmoothness.get())
@@ -9535,18 +9535,18 @@ public final class ScaffoldModule extends Module {
    private ScaffoldRotationSmoother.Inner_DataUtil smootherBand() {
       ValueRange band = this.rotationSmoothness.get();
       if (this.cachedSmootherBand == null
-         || this.cachedSmootherBand.init_D() < band.min()
-         || this.cachedSmootherBand.init_D() > band.max()
-         || this.cachedSmootherBand.load_D() < band.min()
-         || this.cachedSmootherBand.load_D() > band.max()) {
-         this.cachedSmootherBand = this.smoother().init_aM_DataUtil_ValueRange(band);
+         || this.cachedSmootherBand.placePercent() < band.min()
+         || this.cachedSmootherBand.placePercent() > band.max()
+         || this.cachedSmootherBand.returnPercent() < band.min()
+         || this.cachedSmootherBand.returnPercent() > band.max()) {
+         this.cachedSmootherBand = this.smoother().pickBand(band);
       }
 
       return this.cachedSmootherBand;
    }
 
    private int sync_I() {
-      return this.imperfectionArmed && !this.clear_Z && !this.spaceHeld && !this.next_Z() ? this.placeRateTracker.init_I() * 2 : 0;
+      return this.imperfectionArmed && !this.clear_Z && !this.spaceHeld && !this.next_Z() ? this.placeRateTracker.pending() * 2 : 0;
    }
 
    private int flush_I() {
@@ -9863,7 +9863,7 @@ public final class ScaffoldModule extends Module {
 
    private boolean tick(LocalPlayer player) {
       return (this.imperfectionArmed || this.imperfectionRequested)
-         && this.placeRateTracker.init_Z()
+         && this.placeRateTracker.armed()
          && !this.clear_Z
          && !this.spaceHeld
          && !this.next_Z()
@@ -9871,7 +9871,7 @@ public final class ScaffoldModule extends Module {
          && player != null
          && !player.onGround()
          && this.turnPhase != ScaffoldModule.TurnCyclePhase.RETURNED
-         && ticksToLanding(player.position(), player.getDeltaMovement(), this.supportY + 1.0) >= this.placeRateTracker.init_I() * 2;
+         && ticksToLanding(player.position(), player.getDeltaMovement(), this.supportY + 1.0) >= this.placeRateTracker.pending() * 2;
    }
 
    private ScaffoldModule.LivePlacement init_aI_DataPipe_LocalPlayer(LocalPlayer player) {
@@ -9951,7 +9951,7 @@ public final class ScaffoldModule extends Module {
    }
 
    private boolean valid_Z() {
-      return !this.isEagleMode() && this.imperfectionCount == 2 && this.imperfectionArmed && this.placeRateTracker.init_Z() && !this.clear_Z && !this.spaceHeld && !this.next_Z();
+      return !this.isEagleMode() && this.imperfectionCount == 2 && this.imperfectionArmed && this.placeRateTracker.armed() && !this.clear_Z && !this.spaceHeld && !this.next_Z();
    }
 
    private boolean size_Z() {
@@ -10177,7 +10177,7 @@ public final class ScaffoldModule extends Module {
          && this.pushTargetTick == AutismSessionState.getInstance().getClientTick()
          && this.pushTarget != null
          && this.pushTarget.init_Z()) {
-         return this.trackedSlotCount(player.getInventory().getSelectedSlot()) >= this.pushTarget.init_I() + this.placeRateTracker.init_I() + 1;
+         return this.trackedSlotCount(player.getInventory().getSelectedSlot()) >= this.pushTarget.init_I() + this.placeRateTracker.pending() + 1;
       }
 
       Vec3 landing = coast
@@ -10215,7 +10215,7 @@ public final class ScaffoldModule extends Module {
       }
 
       return init_Z_I(
-         remaining + (carried ? 2 : 0), missing, turning, this.trackedSlotCount(player.getInventory().getSelectedSlot()), this.placeRateTracker.init_I(), !preparing
+         remaining + (carried ? 2 : 0), missing, turning, this.trackedSlotCount(player.getInventory().getSelectedSlot()), this.placeRateTracker.pending(), !preparing
       );
    }
 
@@ -10475,7 +10475,7 @@ public final class ScaffoldModule extends Module {
 
    private void block_V() {
       this.read_BlockPos = null;
-      this.placeRateTracker.load();
+      this.placeRateTracker.reset();
       if (this.rotationSmoother != null) {
          this.rotationSmoother.reset();
       }
@@ -10701,7 +10701,7 @@ public final class ScaffoldModule extends Module {
       if (packet instanceof ServerboundUseItemOnPacket use && queued != null) {
          BlockHitResult hit = use.hitResult();
          this.failureRecorder
-            .init(
+            .recordFact(
                new ScaffoldFailureRecorder.PlacementFact(
                   "use",
                   tick,
@@ -10719,7 +10719,7 @@ public final class ScaffoldModule extends Module {
             );
       } else if (packet instanceof ServerboundMovePlayerPacket move) {
          this.failureRecorder
-            .init(
+            .recordFact(
                new ScaffoldFailureRecorder.PlacementFact(
                   "move",
                   tick,
@@ -10736,9 +10736,9 @@ public final class ScaffoldModule extends Module {
                )
             );
       } else if (packet instanceof ServerboundPlayerInputPacket input) {
-         this.failureRecorder.init(new ScaffoldFailureRecorder.PlacementFact("input", tick, -1, null, null, null, lastWrittenPosition, null, null, wire, input.input(), null));
+         this.failureRecorder.recordFact(new ScaffoldFailureRecorder.PlacementFact("input", tick, -1, null, null, null, lastWrittenPosition, null, null, wire, input.input(), null));
       } else if (packet instanceof ServerboundPlayerCommandPacket command) {
-         this.failureRecorder.init(new ScaffoldFailureRecorder.PlacementFact("command", tick, -1, null, null, null, lastWrittenPosition, null, null, wire, null, command.getAction().name()));
+         this.failureRecorder.recordFact(new ScaffoldFailureRecorder.PlacementFact("command", tick, -1, null, null, null, lastWrittenPosition, null, null, wire, null, command.getAction().name()));
       }
    }
 
@@ -10746,7 +10746,7 @@ public final class ScaffoldModule extends Module {
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && scaffold.isEnabled() && scaffold.isTellyOrEagleMode() && scaffold.failureRecorder.hasFailure(cell)) {
          BlockPos immutable = cell.immutable();
          scaffold.failureRecorder
-            .init(new ScaffoldFailureRecorder.PlacementFact("server-block", AutismSessionState.getInstance().getClientTick(), -1, immutable, null, null, null, null, null, null, null, state.toString()));
+            .recordFact(new ScaffoldFailureRecorder.PlacementFact("server-block", AutismSessionState.getInstance().getClientTick(), -1, immutable, null, null, null, null, null, null, null, state.toString()));
          if (state.isAir()) {
             scaffold.captureFailure("server-sent-air-for-recent-use", immutable, -1);
          }
@@ -10755,7 +10755,7 @@ public final class ScaffoldModule extends Module {
 
    private void captureFailure(String reason, BlockPos cell, int sequence) {
       if (MC != null && MC.level != null && MC.player != null && this.capturingFailure.compareAndSet(false, true)) {
-         ScaffoldFailureRecorder.FailureCapture capture = this.failureRecorder.init(reason, cell, sequence, AutismSessionState.getInstance().getClientTick(), System.nanoTime());
+         ScaffoldFailureRecorder.FailureCapture capture = this.failureRecorder.captureFailure(reason, cell, sequence, AutismSessionState.getInstance().getClientTick(), System.nanoTime());
          if (capture == null) {
             this.capturingFailure.set(false);
          } else {
@@ -12450,7 +12450,7 @@ public final class ScaffoldModule extends Module {
       return rotation == null ? vanillaPitch : rotation.pitch();
    }
 
-   public static Vec3 init_Vec3_LivingEntity_Vec3_2(LivingEntity entity, Vec3 vanillaImpulse) {
+   public static Vec3 silentImpulse(LivingEntity entity, Vec3 vanillaImpulse) {
       RotationMath.Rotation rotation = init_ce_DataUtil_LivingEntity(entity);
       if (rotation == null) {
          return vanillaImpulse;
@@ -12461,12 +12461,12 @@ public final class ScaffoldModule extends Module {
       return new Vec3(-Mth.sin(yaw) * 0.2F, vanillaImpulse.y, Mth.cos(yaw) * 0.2F);
    }
 
-   public static float init_F_LivingEntity_F(LivingEntity entity, float vanillaPitch) {
+   public static float silentPitch(LivingEntity entity, float vanillaPitch) {
       RotationMath.Rotation rotation = init_ce_DataUtil_LivingEntity(entity);
       return rotation == null ? vanillaPitch : rotation.pitch();
    }
 
-   public static Vec3 load_Vec3_LivingEntity_Vec3(LivingEntity entity, Vec3 vanillaLook) {
+   public static Vec3 silentLook(LivingEntity entity, Vec3 vanillaLook) {
       RotationMath.Rotation rotation = init_ce_DataUtil_LivingEntity(entity);
       return rotation == null ? vanillaLook : Vec3.directionFromRotation(rotation.pitch(), rotation.yaw());
    }
@@ -12517,7 +12517,7 @@ public final class ScaffoldModule extends Module {
       return MC == null ? null : load_ce_DataUtil_LocalPlayer(MC.player);
    }
 
-   public static RotationMath.Rotation load_ce_DataUtil_3() {
+   public static RotationMath.Rotation wireRotation() {
       RotationMath.Rotation active = activeRotation();
       if (active == null) {
          return null;
@@ -12585,7 +12585,7 @@ public final class ScaffoldModule extends Module {
       return !AutismLiteVariant.enabled() && (DangerModule.read_Z_22() || ClutchModule.read_Z_20()) ? false : isSilentActive(this.rotationWindingDown, this.isEnabled(), this.chunk_Z(), this.canOperate());
    }
 
-   public static RotationMath.Rotation read_ce_DataUtil() {
+   public static RotationMath.Rotation resumeRotation() {
       boolean clutchHandoff = false;
       if (!AutismLiteVariant.enabled()) {
          clutchHandoff = ClutchModule.read_Z_20();
@@ -12596,7 +12596,7 @@ public final class ScaffoldModule extends Module {
          : null;
    }
 
-   public static void init_V_ce_DataUtil_3(RotationMath.Rotation rotation) {
+   public static void adoptRotation(RotationMath.Rotation rotation) {
       if (al.init_Module_Str("scaffold") instanceof ScaffoldModule scaffold && rotation != null) {
          scaffold.activeRotation = rotation;
          lastSentYaw = rotation.yaw();
@@ -12631,7 +12631,7 @@ public final class ScaffoldModule extends Module {
          }
       }
 
-      init_V_ce_DataUtil_3(rotation);
+      adoptRotation(rotation);
    }
 
    static boolean isSilentActive(boolean windingDown, boolean enabled, boolean silentPath, boolean canRun) {
@@ -13147,7 +13147,7 @@ public final class ScaffoldModule extends Module {
             return this.remapInput(input, MC.player.getYRot(), this.activeRotation.yaw());
          }
 
-         Input result = init_Input_Input_2(input, MC.player.getYRot(), this.activeRotation.yaw());
+         Input result = remapSilentInput(input, MC.player.getYRot(), this.activeRotation.yaw());
          if (result != null && !result.forward() && hasMovementInput(input)) {
             this.f_aP_I = AutismSessionState.getInstance().getClientTick();
          }
@@ -13440,7 +13440,7 @@ public final class ScaffoldModule extends Module {
                this.clearSteerOffsets();
                this.state_V();
                this.emittedForward = 0;
-               return init_Input_Input_2(input, courseYaw, this.activeRotation.yaw());
+               return remapSilentInput(input, courseYaw, this.activeRotation.yaw());
             } else {
                this.updateSteerOffset(courseYaw);
                return this.remapInput(input, courseYaw, this.activeRotation.yaw());
@@ -13520,7 +13520,7 @@ public final class ScaffoldModule extends Module {
       return new Input(forward, back, left, right, original.jump(), original.shift(), keepsSprint(original, forward));
    }
 
-   public static Input init_Input_Input_2(Input input, float playerYaw, float silentYaw) {
+   public static Input remapSilentInput(Input input, float playerYaw, float silentYaw) {
       if (input == null) {
          return null;
       }
@@ -16051,7 +16051,7 @@ public final class ScaffoldModule extends Module {
             } else {
                Compat263.swing(MC.player, hand);
                autismclient.util.ClickRateTracker.recordRightClick();
-               PlacedBlockTrailRenderer.init(target.load());
+               PlacedBlockTrailRenderer.mark(target.load());
                this.notePlaced(target.load(), placementLine, previousFallOff);
                boolean wasStackUsed = !stack.isEmpty() && (stack.getCount() != oldCount || MC.player.hasInfiniteMaterials());
                if (wasStackUsed) {

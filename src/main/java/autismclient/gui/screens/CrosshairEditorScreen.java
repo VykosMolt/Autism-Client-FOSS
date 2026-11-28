@@ -395,7 +395,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
             switch (control.kind()) {
                case CHIP:
-                  autismclient.gui.ui.widgets.PillBadgeRenderer.init(context, control.bounds(), control.label(), control.selected(), over);
+                  autismclient.gui.ui.widgets.PillBadgeRenderer.render(context, control.bounds(), control.label(), control.selected(), over);
                   break;
                case BUTTON:
                   autismclient.gui.f.b.CachePool.init(context, control.bounds(), control.label(), control.tone(), over, false);
@@ -425,7 +425,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
          if (hovered != null && hovered.load() != null && this.strokeButton < 0) {
             graphics.nextStratum();
-            TooltipRenderer.init(context, hovered.load(), mx, my);
+            TooltipRenderer.render(context, hovered.load(), mx, my);
          }
 
          if (this.colorPopup != null) {
@@ -1124,7 +1124,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
 
    private void applyPreset(CrosshairPresetGeometry.Inner_NetHelper style) {
       this.pushUndo(new CrosshairEditorScreen.CanvasSnapshot(this.canvasSize, (int[])this.pixels.clone()));
-      this.pixels = CrosshairPresetGeometry.init(style, this.canvasSize, this.module.thickness(), this.module.gap(), this.currentArgb()).pixels();
+      this.pixels = CrosshairPresetGeometry.pixelArt(style, this.canvasSize, this.module.thickness(), this.module.gap(), this.currentArgb()).pixels();
       this.markCanvasDirty();
    }
 

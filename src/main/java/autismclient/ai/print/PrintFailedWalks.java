@@ -8,14 +8,14 @@ import net.minecraft.world.level.block.state.BlockState;
 
 final class PrintFailedWalks {
    static final int init_I = 128;
-   private final LinkedHashMap<PrintFailedWalks.WalkEdge, Long2ObjectOpenHashMap<BlockState>> init_LinkedHashMap = new LinkedHashMap<>();
+   private final LinkedHashMap<PrintFailedWalks.WalkEdge, Long2ObjectOpenHashMap<BlockState>> failedEdges = new LinkedHashMap<>();
 
    int size() {
-      return this.init_LinkedHashMap.size();
+      return this.failedEdges.size();
    }
 
    void clear() {
-      this.init_LinkedHashMap.clear();
+      this.failedEdges.clear();
    }
 
    boolean recordFailedWalk(PrintView view, long from, double fromFeet, long to, double toFeet) {
@@ -43,11 +43,11 @@ final class PrintFailedWalks {
             }
 
             PrintFailedWalks.WalkEdge edge = PrintFailedWalks.WalkEdge.of(from, fromFeet, to, toFeet);
-            if (!this.init_LinkedHashMap.containsKey(edge) && this.init_LinkedHashMap.size() >= 128) {
-               this.init_LinkedHashMap.remove(this.init_LinkedHashMap.keySet().iterator().next());
+            if (!this.failedEdges.containsKey(edge) && this.failedEdges.size() >= 128) {
+               this.failedEdges.remove(this.failedEdges.keySet().iterator().next());
             }
 
-            this.init_LinkedHashMap.put(edge, new Long2ObjectOpenHashMap<>(reads.recordedStates));
+            this.failedEdges.put(edge, new Long2ObjectOpenHashMap<>(reads.recordedStates));
             return true;
          }
       } else {
@@ -57,7 +57,7 @@ final class PrintFailedWalks {
 
    boolean isKnownFailedWalk(PrintView view, long from, double fromFeet, long to, double toFeet) {
       PrintFailedWalks.WalkEdge edge = PrintFailedWalks.WalkEdge.of(from, fromFeet, to, toFeet);
-      Long2ObjectOpenHashMap<BlockState> reads = this.init_LinkedHashMap.get(edge);
+      Long2ObjectOpenHashMap<BlockState> reads = this.failedEdges.get(edge);
       if (reads == null) {
          return false;
       }
@@ -65,7 +65,7 @@ final class PrintFailedWalks {
       for (Entry<BlockState> entry : reads.long2ObjectEntrySet()) {
          if (view.getBlockState(BlockPos.of(entry.getLongKey())) != entry.getValue()) {
             if (!view.hasAnyHypothesis()) {
-               this.init_LinkedHashMap.remove(edge);
+               this.failedEdges.remove(edge);
             }
 
             return false;

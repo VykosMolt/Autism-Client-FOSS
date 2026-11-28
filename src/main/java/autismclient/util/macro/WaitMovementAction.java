@@ -19,7 +19,7 @@ public class WaitMovementAction implements MacroAction {
    public boolean horizontalOnly = false;
    public String targetDimension = "";
    public boolean listenDuringPreviousAction = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -29,16 +29,16 @@ public class WaitMovementAction implements MacroAction {
       MacroAction var10000;
       switch (this.mode) {
          case POSITION:
-            var10000 = this.init_aN();
+            var10000 = this.toWaitPos();
             break;
          case POSITION_DELTA:
-            var10000 = this.init_aC();
+            var10000 = this.toPositionDelta();
             break;
          case WORLD_CHANGE:
-            var10000 = this.init_aG();
+            var10000 = this.toWorldChange();
             break;
          case TELEPORT:
-            var10000 = this.init_aF();
+            var10000 = this.toTeleport();
             break;
          default:
             throw new MatchException(null, null);
@@ -47,7 +47,7 @@ public class WaitMovementAction implements MacroAction {
       return var10000;
    }
 
-   public WaitPosAction init_aN() {
+   public WaitPosAction toWaitPos() {
       WaitPosAction a = new WaitPosAction();
       a.f_x_D = this.f_x_D;
       a.f_y_D = this.f_y_D;
@@ -61,7 +61,7 @@ public class WaitMovementAction implements MacroAction {
       return a;
    }
 
-   public WaitForPositionDeltaAction init_aC() {
+   public WaitForPositionDeltaAction toPositionDelta() {
       WaitForPositionDeltaAction a = new WaitForPositionDeltaAction();
       a.distance = this.distance;
       a.horizontalOnly = this.horizontalOnly;
@@ -69,14 +69,14 @@ public class WaitMovementAction implements MacroAction {
       return a;
    }
 
-   public WaitForWorldChangeAction init_aG() {
+   public WaitForWorldChangeAction toWorldChange() {
       WaitForWorldChangeAction a = new WaitForWorldChangeAction();
       a.targetDimension = this.targetDimension;
       a.listenDuringPreviousAction = this.listenDuringPreviousAction;
       return a;
    }
 
-   public WaitForTeleportAction init_aF() {
+   public WaitForTeleportAction toTeleport() {
       WaitForTeleportAction a = new WaitForTeleportAction();
       a.minDistance = this.minDistance;
       a.horizontalOnly = this.horizontalOnly;
@@ -106,7 +106,7 @@ public class WaitMovementAction implements MacroAction {
       tag.putDouble("minDistance", this.minDistance);
       tag.putBoolean("horizontalOnly", this.horizontalOnly);
       tag.putString("targetDimension", this.targetDimension == null ? "" : this.targetDimension);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
@@ -127,7 +127,7 @@ public class WaitMovementAction implements MacroAction {
       this.horizontalOnly = tag.getBooleanOr("horizontalOnly", false);
       this.targetDimension = tag.getStringOr("targetDimension", "");
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -163,12 +163,12 @@ public class WaitMovementAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum MovementMode {

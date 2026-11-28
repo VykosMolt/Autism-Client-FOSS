@@ -5,11 +5,11 @@ import net.minecraft.nbt.CompoundTag;
 public interface GuiWaitAware {
    boolean waitsForGuiBefore();
 
-   void load(boolean var1);
+   void setWaitForGuiBefore(boolean var1);
 
    boolean waitsForGuiAfter();
 
-   void read(boolean var1);
+   void setWaitForGuiAfter(boolean var1);
 
    String getGuiName();
 
@@ -20,8 +20,8 @@ public interface GuiWaitAware {
    }
 
    default void write(boolean v) {
-      this.load(false);
-      this.read(v);
+      this.setWaitForGuiBefore(false);
+      this.setWaitForGuiAfter(v);
    }
 
    default boolean g_() {

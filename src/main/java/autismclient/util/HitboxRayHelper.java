@@ -28,7 +28,7 @@ public final class HitboxRayHelper {
       return Double.isFinite(vector.x) && Double.isFinite(vector.y) && Double.isFinite(vector.z);
    }
 
-   public static Vec3 init(AABB box, Vec3 eye) {
+   public static Vec3 nearestPoint(AABB box, Vec3 eye) {
       return new Vec3(init(eye.x, box.minX, box.maxX), init(eye.y, box.minY, box.maxY), init(eye.z, box.minZ, box.maxZ));
    }
 

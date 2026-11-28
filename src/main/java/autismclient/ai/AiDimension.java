@@ -87,7 +87,7 @@ final class AiDimension {
             cells.add(cell.asLong());
          }
 
-         for (BlockPos cell : write(origin, axis)) {
+         for (BlockPos cell : portalInterior(origin, axis)) {
             cells.add(cell.asLong());
          }
 
@@ -121,7 +121,7 @@ final class AiDimension {
       }
    }
 
-   static boolean init(List<String> armorItemIds) {
+   static boolean wearsGold(List<String> armorItemIds) {
       for (String id : armorItemIds) {
          if (GOLD_ARMOR.contains(id)) {
             return true;
@@ -131,7 +131,7 @@ final class AiDimension {
       return false;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation changeDimension(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final AiDimension.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "enter"));
@@ -504,7 +504,7 @@ final class AiDimension {
                      }
                   }
 
-                  return AiDimension.init(armor) ? null : AiJson.objectOf("warning", "No gold armor equipped; piglins attack on sight in the nether");
+                  return AiDimension.wearsGold(armor) ? null : AiJson.objectOf("warning", "No gold armor equipped; piglins attack on sight in the nether");
                }
 
                AiOperation.Result init_AiOperation_Result_41() {
@@ -576,7 +576,7 @@ final class AiDimension {
                   this.flush_Z = false;
                   this.load_Z = true;
 
-                  for (BlockPos cell : AiDimension.write(site, this.init_Direction)) {
+                  for (BlockPos cell : AiDimension.portalInterior(site, this.init_Direction)) {
                      if (!this.isOpenInterior(cell)) {
                         this.init_ArrayDeque.add(cell.immutable());
                      }
@@ -632,7 +632,7 @@ final class AiDimension {
                            return out;
                         }
 
-                        Item block = AiShield.init(mc);
+                        Item block = AiShield.bestBlock(mc);
                         if (block != null && this.canPlaceNow(cell)) {
                            this.startPlacing(cell, block);
                            AiOperation.Result placed = this.children.tickChild(this.init_n_BufferHelper);
@@ -676,7 +676,7 @@ final class AiDimension {
                               return out;
                            }
 
-                           Item block = AiShield.init(mc);
+                           Item block = AiShield.bestBlock(mc);
                            if (block != null && this.canPlaceNow(this.sync_BlockPos)) {
                               this.startPlacing(this.sync_BlockPos, block);
                               AiOperation.Result placed = this.children.tickChild(this.init_n_BufferHelper);
@@ -786,7 +786,7 @@ final class AiDimension {
                            if (!this.close_Z) {
                               this.close_Z = true;
 
-                              for (BlockPos cell : AiDimension.write(this.site, this.init_Direction)) {
+                              for (BlockPos cell : AiDimension.portalInterior(this.site, this.init_Direction)) {
                                  if (!this.isOpenInterior(cell)) {
                                     this.init_ArrayDeque.add(cell.immutable());
                                  }
@@ -1023,7 +1023,7 @@ final class AiDimension {
                   }
 
                   Set<BlockPos> site = new HashSet<>(AiDimension.frameBlocks(origin, axis));
-                  site.addAll(AiDimension.write(origin, axis));
+                  site.addAll(AiDimension.portalInterior(origin, axis));
 
                   for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
                      if (!mc.level.getBlockState(cell).is(Blocks.OBSIDIAN) && !this.hasSolidNeighbour(cell)) {
@@ -1043,7 +1043,7 @@ final class AiDimension {
                      }
                   }
 
-                  for (BlockPos cell : AiDimension.write(origin, axis)) {
+                  for (BlockPos cell : AiDimension.portalInterior(origin, axis)) {
                      if (!this.isPlaceable(cell) && !this.isClearableForFrame(cell)) {
                         return false;
                      }
@@ -1087,7 +1087,7 @@ final class AiDimension {
                      }
                   }
 
-                  for (BlockPos cell : AiDimension.write(origin, axis)) {
+                  for (BlockPos cell : AiDimension.portalInterior(origin, axis)) {
                      if (ignorePlayer ? !this.isPlaceable(cell) : !this.canPlaceNow(cell)) {
                         return false;
                      }
@@ -1176,7 +1176,7 @@ final class AiDimension {
                                     List<BlockPos> digs = new ArrayList<>();
                                     boolean ok = true;
                                     List<BlockPos> cells = new ArrayList<>(AiDimension.frameBlocks(origin, axis));
-                                    cells.addAll(AiDimension.write(origin, axis));
+                                    cells.addAll(AiDimension.portalInterior(origin, axis));
 
                                     for (BlockPos cell : cells) {
                                        if (!AiTerrain.isLoaded(mc.level, cell)) {
@@ -1264,7 +1264,7 @@ final class AiDimension {
 
                BlockPos init_BlockPos(BlockPos origin, Direction axis) {
                   Set<BlockPos> site = new HashSet<>(AiDimension.frameBlocks(origin, axis));
-                  site.addAll(AiDimension.write(origin, axis));
+                  site.addAll(AiDimension.portalInterior(origin, axis));
                   site.addAll(AiDimension.frameCorners(origin, axis));
                   BlockPos best = null;
                   double bestDistance = 1.7976931348623157E308;
@@ -1294,7 +1294,7 @@ final class AiDimension {
 
                BlockPos load_BlockPos_4(BlockPos cell) {
                   Set<BlockPos> site = new HashSet<>(AiDimension.frameBlocks(this.site, this.init_Direction));
-                  site.addAll(AiDimension.write(this.site, this.init_Direction));
+                  site.addAll(AiDimension.portalInterior(this.site, this.init_Direction));
                   BlockPos below = cell.below();
                   if (!site.contains(below) && this.isPlaceable(below) && this.hasSolidNeighbour(below)) {
                      return below;
@@ -1406,7 +1406,7 @@ final class AiDimension {
                      }
                   }
 
-                  for (BlockPos cell : AiDimension.write(this.site, this.init_Direction)) {
+                  for (BlockPos cell : AiDimension.portalInterior(this.site, this.init_Direction)) {
                      BlockState state = mc.level.getBlockState(cell);
                      if (!state.isAir()) {
                         sb.append(" interior ").append(cell.toShortString()).append('=').append(state.getBlock().getDescriptionId());
@@ -1632,7 +1632,7 @@ final class AiDimension {
       return cells;
    }
 
-   static List<BlockPos> write(BlockPos origin, Direction axis) {
+   static List<BlockPos> portalInterior(BlockPos origin, Direction axis) {
       List<BlockPos> cells = new ArrayList<>(6);
 
       for (int step = 0; step < 2; step++) {

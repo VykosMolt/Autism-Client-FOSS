@@ -30,7 +30,7 @@ final class AiBlastEscape {
 
          for (int offset : new int[]{0, 1, -1, 2, -2, 3, -3, 4, -4}) {
             float yaw = direct + offset * 22.5F;
-            List<AABB> trace = autismclient.ai.engine.AiCombatMotion.init(mc, yaw, 1.0, 0.0, 12, 4, mc.player.getFoodData().getFoodLevel() > 6);
+            List<AABB> trace = autismclient.ai.engine.AiCombatMotion.predictTrace(mc, yaw, 1.0, 0.0, 12, 4, mc.player.getFoodData().getFoodLevel() > 6);
             if (trace != null && !trace.isEmpty()) {
                Vec3 end = trace.getLast().getBottomCenter();
                double initial = start.distanceTo(primary.position());

@@ -418,7 +418,7 @@ final class AiCraft {
                         }
 
                         if (this.reclaimTable && this.placedTable && AiCraft.countItem("minecraft:crafting_table") == 0 && !outputId.equals("minecraft:crafting_table")) {
-                           this.reclaimTableOp = AiProgression.init((int)Math.max(5L, Math.min(30L, (this.deadlineNanos - System.nanoTime()) / 1000000000L)), true);
+                           this.reclaimTableOp = AiProgression.reclaimTable((int)Math.max(5L, Math.min(30L, (this.deadlineNanos - System.nanoTime()) / 1000000000L)), true);
                            if (this.reclaimTableOp != null) {
                               return this.running("Picking the crafting table back up");
                            }
@@ -571,7 +571,7 @@ final class AiCraft {
                }
 
                AiOperation.Result running(String message) {
-                  AiVisualization.showCount(this, statusTitle, AiTaskStatus.init(message, "Preparing the recipe"), AiCraft.countItem(outputId), target);
+                  AiVisualization.showCount(this, statusTitle, AiTaskStatus.phaseLabel(message, "Preparing the recipe"), AiCraft.countItem(outputId), target);
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.snapshotJson().toString(), List.of());
                }
 

@@ -22,7 +22,7 @@ public final class TabPlayerListParser {
    private TabPlayerListParser() {
    }
 
-   public static List<TabPlayerListParser.ParsedPlayer> init(Minecraft mc) {
+   public static List<TabPlayerListParser.ParsedPlayer> parse(Minecraft mc) {
       Map<String, TabPlayerListParser.ParsedPlayer> byName = new LinkedHashMap<>();
       if (mc == null) {
          return new ArrayList<>();

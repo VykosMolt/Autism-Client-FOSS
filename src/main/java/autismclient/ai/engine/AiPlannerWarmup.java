@@ -7,20 +7,20 @@ import net.minecraft.core.BlockPos;
 
 public final class AiPlannerWarmup {
    private static final int flowState = 100;
-   private static volatile boolean putAt_Z;
-   private static int flowTemp;
-   static final BlockPos putAt_BlockPos = new BlockPos(0, 64, 0);
-   static final BlockPos fill_BlockPos = new BlockPos(24, 64, 24);
-   private static final int[][] putAt_IArr2 = new int[][]{{3, 0}, {0, 3}, {3, 3}, {-3, 3}, {-3, 0}, {0, -3}};
+   private static volatile boolean started;
+   private static int tickCounter;
+   static final BlockPos WARMUP_START = new BlockPos(0, 64, 0);
+   static final BlockPos WARMUP_GOAL = new BlockPos(24, 64, 24);
+   private static final int[][] OFFSETS = new int[][]{{3, 0}, {0, 3}, {3, 3}, {-3, 3}, {-3, 0}, {0, -3}};
 
    private AiPlannerWarmup() {
    }
 
    public static void tick(Minecraft var0) {
-      if (!putAt_Z) {
-         if (++flowTemp >= 100) {
-            putAt_Z = true;
-            Thread var1 = new Thread(AiPlannerWarmup::putAt_V, "Autism planner warm-up");
+      if (!started) {
+         if (++tickCounter >= 100) {
+            started = true;
+            Thread var1 = new Thread(AiPlannerWarmup::runWarmup, "Autism planner warm-up");
             var1.setDaemon(true);
             var1.setPriority(1);
             var1.start();
@@ -28,7 +28,7 @@ public final class AiPlannerWarmup {
       }
    }
 
-   private static void putAt_V() {
+   private static void runWarmup() {
       try {
          long var0 = System.nanoTime();
          AiPathfinder.GridView var2 = putAt_FileStore_TextStor();
@@ -36,8 +36,8 @@ public final class AiPlannerWarmup {
                false, false, false, true, false, true, AiPathfinder.RouteStrategy.FASTEST, AiPathfinder.ThreatField.NONE
             )
             .withFallPolicy(AiPathfinder.FallPolicy.PARKOUR_NO_DAMAGE);
-         BlockPos var4 = putAt_BlockPos;
-         BlockPos var5 = fill_BlockPos;
+         BlockPos var4 = WARMUP_START;
+         BlockPos var5 = WARMUP_GOAL;
 
          for (int var6 = 0; var6 < 3 && System.nanoTime() - var0 < 12000000000L; var6++) {
             double var7 = 0.1 * (1.0 + 0.2 * var6);
@@ -75,7 +75,7 @@ public final class AiPlannerWarmup {
             for (byte var7 = 0; var7 <= 24; var7 += 3) {
                BlockPos var8 = putAt(var0, var6, var7);
 
-               for (int[] var12 : putAt_IArr2) {
+               for (int[] var12 : OFFSETS) {
                   int var13 = var6 + var12[0];
                   int var14 = var7 + var12[1];
                   if (var13 >= 0 && var13 <= 24 && var14 >= 0 && var14 <= 24) {

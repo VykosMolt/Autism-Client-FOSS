@@ -164,7 +164,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                autismclient.modules.ModuleRuntimeManager module = autismclient.modules.ModuleRuntimeManager.getInstance();
                autismclient.gui.ui.widgets.ListRowRenderer.drawHeaderTitle(context, this.textRenderer, "Preset Name", x, y);
                String counts = "C2S " + module.getCustomC2sPacketsCopy().size() + " | S2C " + module.getCustomS2cPacketsCopy().size();
-               ThemedTextHelper.init(context, this.textRenderer, counts, ThemedTextHelper.TextTone.MUTED, x + width - ThemedTextHelper.init(this.textRenderer, counts, ThemedTextHelper.TextTone.MUTED), y, false);
+               ThemedTextHelper.drawTone(context, this.textRenderer, counts, ThemedTextHelper.TextTone.MUTED, x + width - ThemedTextHelper.width(this.textRenderer, counts, ThemedTextHelper.TextTone.MUTED), y, false);
                y += this.textLineHeight();
                this.nameField.setBounds(x, y, width, this.nameFieldHeight());
                this.nameField.render(this.layoutContext(context, mouseX, mouseY, delta));
@@ -181,7 +181,7 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                   new boolean[]{this.canSave(), this.canLoad(), this.canOverwrite(), this.canDelete()}
                );
                String resetLabel = "Reset To Default";
-               int resetW = Math.min(width, autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ThemedTextHelper.init(this.textRenderer, resetLabel, ThemedTextHelper.TextTone.BODY)));
+               int resetW = Math.min(width, autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ThemedTextHelper.width(this.textRenderer, resetLabel, ThemedTextHelper.TextTone.BODY)));
                y = this.renderActionButton(context, mouseX, mouseY, x, y, resetW, resetLabel, this::resetToDefault, true);
                y += this.resetButtonGap() - this.sectionGap();
                int listHeight = Math.max(this.listHeightForRows(1), this.panelHeight - (y - this.panelY) - this.textLineHeight() - this.contentInset());
@@ -262,11 +262,11 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
                      );
                      int textColor = selected ? UiColorPalette.selectedText() : (row.entry.isBuiltIn() ? -4729601 : UiColorPalette.menuItemText());
                      String prefix = row.entry.isBuiltIn() ? "[DEV] " : "[USR] ";
-                     String name = ThemedTextHelper.init(this.textRenderer, prefix + row.entry.name(), contentWidth - 70, ThemedTextHelper.TextTone.BODY);
-                     ThemedTextHelper.init(context, this.textRenderer, name, textColor, x + 5, rowTextY, false);
+                     String name = ThemedTextHelper.ellipsize(this.textRenderer, prefix + row.entry.name(), contentWidth - 70, ThemedTextHelper.TextTone.BODY);
+                     ThemedTextHelper.drawColor(context, this.textRenderer, name, textColor, x + 5, rowTextY, false);
                      String counts = row.entry.c2sCount() + " / " + row.entry.s2cCount();
-                     int countsWidth = ThemedTextHelper.init(this.textRenderer, counts, ThemedTextHelper.TextTone.BODY);
-                     ThemedTextHelper.init(context, this.textRenderer, counts, textColor, x + contentWidth - countsWidth - 1, rowTextY, false);
+                     int countsWidth = ThemedTextHelper.width(this.textRenderer, counts, ThemedTextHelper.TextTone.BODY);
+                     ThemedTextHelper.drawColor(context, this.textRenderer, counts, textColor, x + contentWidth - countsWidth - 1, rowTextY, false);
                   }
 
                   autismclient.gui.ui.widgets.ListRowRenderer.drawRowSeparator(context, x + 2, rowY + this.rowHeight(), contentWidth);
@@ -284,10 +284,10 @@ public class AutismCustomFilterPresetOverlay extends DraggableOverlayWindow {
             + "/"
             + Math.max(1, Math.round((float)listLayout.maxScroll() / this.rowStep()) + 1)
          : (this.selectedPresetName == null ? "Select a preset row" : "Selected: " + this.selectedPresetName);
-      int footerMaxW = Math.max(1, width - ThemedTextHelper.init(this.textRenderer, headerLabel, ThemedTextHelper.TextTone.BODY) - 8);
-      footer = ThemedTextHelper.init(this.textRenderer, footer, footerMaxW, ThemedTextHelper.TextTone.MUTED);
-      int footerW = ThemedTextHelper.init(this.textRenderer, footer, ThemedTextHelper.TextTone.MUTED);
-      ThemedTextHelper.init(context, this.textRenderer, footer, ThemedTextHelper.TextTone.MUTED, x + width - footerW, headerY, false);
+      int footerMaxW = Math.max(1, width - ThemedTextHelper.width(this.textRenderer, headerLabel, ThemedTextHelper.TextTone.BODY) - 8);
+      footer = ThemedTextHelper.ellipsize(this.textRenderer, footer, footerMaxW, ThemedTextHelper.TextTone.MUTED);
+      int footerW = ThemedTextHelper.width(this.textRenderer, footer, ThemedTextHelper.TextTone.MUTED);
+      ThemedTextHelper.drawTone(context, this.textRenderer, footer, ThemedTextHelper.TextTone.MUTED, x + width - footerW, headerY, false);
       return y + listHeight;
    }
 

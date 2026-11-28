@@ -71,7 +71,7 @@ public class AutismLevelRendererTracerMixin {
             }
 
             if (beds) {
-               BedEspOverlayRenderer.init(matrixStack);
+               BedEspOverlayRenderer.renderWorld(matrixStack);
             }
 
             if (portal) {

@@ -188,7 +188,7 @@ public final class SchematicWorkspace {
 
          SchematicLibrary.LibraryState state;
          try {
-            state = this.library.init();
+            state = this.library.scan();
          } catch (Exception e) {
             state = new SchematicLibrary.LibraryState(List.of(this.library.defaultRoot.toString()), List.of());
             problem = SchematicLibrary.describeError(e);
@@ -232,7 +232,7 @@ public final class SchematicWorkspace {
    }
 
    private SchematicWorkspace.Inner_DataUtil activeBuild() {
-      return this.buildJob != null && !this.buildJob.job().load().isDone() ? this.buildJob : null;
+      return this.buildJob != null && !this.buildJob.job().future().isDone() ? this.buildJob : null;
    }
 
    boolean hasActiveBuild() {
@@ -284,7 +284,7 @@ public final class SchematicWorkspace {
       return this.isInWorld() && server != null && !server.isPublished();
    }
 
-   boolean sync_Z() {
+   boolean isRenaming() {
       return this.renaming;
    }
 
@@ -308,7 +308,7 @@ public final class SchematicWorkspace {
       if (this.capture != null) {
          return this.capture.stage;
       } else if (this.activeRecording != null) {
-         return this.activeRecording.putAt_Str;
+         return this.activeRecording.status;
       } else if (this.paste != null) {
          return this.paste.progress.phase();
       } else if (this.renaming || this.loadTask != null) {
@@ -324,7 +324,7 @@ public final class SchematicWorkspace {
       if (this.capture != null) {
          return this.capture.progress;
       } else if (this.activeRecording != null) {
-         return this.activeRecording.flowTemp();
+         return this.activeRecording.progress();
       } else if (this.paste != null) {
          return this.paste.progress.percent();
       } else {
@@ -652,7 +652,7 @@ public final class SchematicWorkspace {
       }
    }
 
-   void write(SchematicLibrary.Placement p) {
+   void startMove(SchematicLibrary.Placement p) {
       if (this.canMove(p) && !this.isBusy()) {
          SchematicWorkspace.Inner_StreamUtil data = this.loaded.get(p.id());
          if (data.mover == null) {
@@ -763,7 +763,7 @@ public final class SchematicWorkspace {
          return false;
       }
 
-      AiDirectOps.init(active.job());
+      AiDirectOps.cancelJob(active.job());
       return true;
    }
 
@@ -779,7 +779,7 @@ public final class SchematicWorkspace {
       }
 
       if (this.activeRecording != null && !keepRecording) {
-         this.activeRecording.fill_V();
+         this.activeRecording.cancel();
          this.activeRecording = null;
          AiVisualization.clearOwner(this.recordingVisOwner);
          this.flush = "Recording cancelled";
@@ -802,8 +802,8 @@ public final class SchematicWorkspace {
    public void open_V() {
       if (this.trackedLevel != this.mc.level) {
          this.cancelBuild();
-         if (this.activeRecording != null && this.activeRecording.putAt_Z()) {
-            this.activeRecording.putAt_V();
+         if (this.activeRecording != null && this.activeRecording.isRecording()) {
+            this.activeRecording.finish();
          }
 
          this.close_V(true);
@@ -817,7 +817,7 @@ public final class SchematicWorkspace {
          this.flush = "";
       }
 
-      if (this.buildJob != null && this.buildJob.job().load().isDone()) {
+      if (this.buildJob != null && this.buildJob.job().future().isDone()) {
          this.buildJob = null;
       }
 
@@ -838,14 +838,14 @@ public final class SchematicWorkspace {
          }
 
          if (this.activeRecording != null) {
-            this.activeRecording.putAt_V_Minecraft(this.mc);
-            if (!this.activeRecording.readEx_Z && !this.activeRecording.fill_Z) {
+            this.activeRecording.tick(this.mc);
+            if (!this.activeRecording.failed && !this.activeRecording.cancelled) {
                AiVisualization.showDetail(
                   this.recordingVisOwner,
                   "Recording chunks",
-                  this.activeRecording.putAt_Z ? this.activeRecording.putAt_Str : "",
-                  this.activeRecording.putAt_Str(),
-                  this.activeRecording.flowTemp()
+                  this.activeRecording.finished ? this.activeRecording.status : "",
+                  this.activeRecording.chunkLabel(),
+                  this.activeRecording.progress()
                );
             } else {
                SchematicRecording finished = this.activeRecording;
@@ -860,8 +860,8 @@ public final class SchematicWorkspace {
                      this.flush = "Saved " + finished.putAt_Path.getFileName();
                      autismclient.util.bi.load(this.flush);
                   }
-               } else if (!finished.fill_Str.isEmpty()) {
-                  this.read(finished.fill_Str);
+               } else if (!finished.error.isEmpty()) {
+                  this.read(finished.error);
                } else {
                   this.flush = "Recording cancelled";
                }

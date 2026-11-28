@@ -76,7 +76,7 @@ public final class AiDecisionAudit {
    private AiDecisionAudit() {
    }
 
-   static void init(Minecraft mc, String step) {
+   static void auditTick(Minecraft mc, String step) {
       LocalPlayer player = mc.player;
       if (player != null && mc.level != null) {
          tickCount++;
@@ -349,7 +349,7 @@ public final class AiDecisionAudit {
       }
    }
 
-   static void init(String op) {
+   static void logSummary(String op) {
       if (tickCount > 0) {
          AutismClientAddon.LOG
             .info(

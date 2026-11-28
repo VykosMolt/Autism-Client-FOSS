@@ -170,12 +170,12 @@ public class AutismMacro {
             autismclient.util.macro.MacroActionType type = autismclient.util.macro.MacroActionType.valueOf(typeName);
             MacroAction action = createBuiltInAction(type);
             if (type == autismclient.util.macro.MacroActionType.WAIT_ITEM) {
-               ((autismclient.util.macro.WaitForSlotChangeAction)action).init(actionTag);
+               ((autismclient.util.macro.WaitForSlotChangeAction)action).readTag(actionTag);
             } else {
                action.fromTag(actionTag);
             }
 
-            DynamicBindingManager.init(action, actionTag);
+            DynamicBindingManager.capture(action, actionTag);
             return action;
          } catch (IllegalArgumentException e) {
             return deserializeAddonAction(actionTag);
@@ -191,7 +191,7 @@ public class AutismMacro {
 
    public static CompoundTag serializeAction(MacroAction action) {
       CompoundTag tag = action == null ? new CompoundTag() : action.toTag();
-      DynamicBindingManager.load(action, tag);
+      DynamicBindingManager.restore(action, tag);
       return tag;
    }
 
@@ -557,7 +557,7 @@ public class AutismMacro {
             MacroAction action = factory.get();
             if (action != null) {
                action.fromTag(actionTag);
-               DynamicBindingManager.init(action, actionTag);
+               DynamicBindingManager.capture(action, actionTag);
                return action;
             }
          } catch (Throwable t) {

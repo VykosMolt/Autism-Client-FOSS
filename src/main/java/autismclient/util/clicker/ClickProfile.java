@@ -81,7 +81,7 @@ public final class ClickProfile {
    }
 
    public static ClickProfile forTechnique(ClickTechnique technique) {
-      return builder(technique).init();
+      return builder(technique).build();
    }
 
    private static double finiteOr(double value, double fallback) {
@@ -116,21 +116,21 @@ public final class ClickProfile {
          this.cpsHigh = this.technique.write_D;
          switch (this.technique) {
             case BUTTERFLY:
-               this.load(10.0, 80.0);
+               this.holdMs(10.0, 80.0);
                break;
             case DRAG:
-               this.load(5.0, 35.0);
+               this.holdMs(5.0, 35.0);
                break;
             default:
-               this.load(40.0, 90.0);
+               this.holdMs(40.0, 90.0);
          }
 
          if (this.technique == ClickTechnique.SCROLL) {
-            this.init_CachePool_DataUtil_I_I(4, 9);
-            this.read(100.0, 250.0);
+            this.burstCount(4, 9);
+            this.resetPause(100.0, 250.0);
          } else {
-            this.init_CachePool_DataUtil_I_I(5, 10);
-            this.read(100.0, 220.0);
+            this.burstCount(5, 10);
+            this.resetPause(100.0, 220.0);
          }
       }
 
@@ -140,45 +140,45 @@ public final class ClickProfile {
          return this;
       }
 
-      public ClickProfile.ProfileBuilder load(double lowMs, double highMs) {
+      public ClickProfile.ProfileBuilder holdMs(double lowMs, double highMs) {
          this.holdLowMs = lowMs;
          this.holdHighMs = highMs;
          return this;
       }
 
-      public ClickProfile.ProfileBuilder init(double share) {
+      public ClickProfile.ProfileBuilder variation(double share) {
          this.update = share;
          return this;
       }
 
-      public ClickProfile.ProfileBuilder load(double share) {
+      public ClickProfile.ProfileBuilder fatigue(double share) {
          this.sync = share;
          return this;
       }
 
-      public ClickProfile.ProfileBuilder read(double scale) {
+      public ClickProfile.ProfileBuilder wobble(double scale) {
          this.flush = scale;
          return this;
       }
 
-      public ClickProfile.ProfileBuilder write(double scale) {
+      public ClickProfile.ProfileBuilder fingerSync(double scale) {
          this.close = scale;
          return this;
       }
 
-      public ClickProfile.ProfileBuilder init_CachePool_DataUtil_I_I(int min, int max) {
+      public ClickProfile.ProfileBuilder burstCount(int min, int max) {
          this.init_I = min;
          this.load_I = max;
          return this;
       }
 
-      public ClickProfile.ProfileBuilder read(double lowMs, double highMs) {
+      public ClickProfile.ProfileBuilder resetPause(double lowMs, double highMs) {
          this.open = lowMs;
          this.poll = highMs;
          return this;
       }
 
-      public ClickProfile.ProfileBuilder update(double ms) {
+      public ClickProfile.ProfileBuilder pulse(double ms) {
          this.push = ms;
          return this;
       }
@@ -189,7 +189,7 @@ public final class ClickProfile {
          return this;
       }
 
-      public ClickProfile init() {
+      public ClickProfile build() {
          return new ClickProfile(this);
       }
    }

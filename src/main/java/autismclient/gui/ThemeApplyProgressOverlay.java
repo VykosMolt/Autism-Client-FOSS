@@ -35,11 +35,11 @@ public final class ThemeApplyProgressOverlay extends Overlay {
    private ThemeApplyProgressOverlay() {
    }
 
-   public static Runnable init(String label) {
-      return init(null, label);
+   public static Runnable beginStep(String label) {
+      return beginStep(null, label);
    }
 
-   public static Runnable init(String title, String label) {
+   public static Runnable beginStep(String title, String label) {
       synchronized (LOCK) {
          if (doneSteps >= totalSteps) {
             totalSteps = 0;
@@ -68,7 +68,7 @@ public final class ThemeApplyProgressOverlay extends Overlay {
       };
    }
 
-   public static void init(Runnable action) {
+   public static void onFinish(Runnable action) {
       if (aD.init_Z()) {
          Minecraft.getInstance().execute(action);
       } else {

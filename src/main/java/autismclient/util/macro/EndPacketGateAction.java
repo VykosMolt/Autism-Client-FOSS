@@ -16,7 +16,7 @@ public class EndPacketGateAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      PacketGateManager.init(this.gateId, mc == null ? null : mc.getConnection(), this.flushOnDisable);
+      PacketGateManager.close(this.gateId, mc == null ? null : mc.getConnection(), this.flushOnDisable);
    }
 
    @Override

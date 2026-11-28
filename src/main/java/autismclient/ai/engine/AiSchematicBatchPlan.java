@@ -29,7 +29,7 @@ final class AiSchematicBatchPlan {
    private AiSchematicBatchPlan() {
    }
 
-   static double init(BlockPos feet, Vec3 worker, int useful, int supports, int clearance) {
+   static double stationCost(BlockPos feet, Vec3 worker, int useful, int supports, int clearance) {
       if (useful <= 0) {
          return 1.0 / 0.0;
       }
@@ -38,11 +38,11 @@ final class AiSchematicBatchPlan {
       return (24.0 + travel + supports * 64.0 + clearance * 24.0) / useful;
    }
 
-   static double load(BlockPos feet, Vec3 worker, int useful, int supports, int clearance) {
-      return (init(feet, worker, useful, supports, clearance) * useful + useful * 10.0) / 20.0;
+   static double stationScore(BlockPos feet, Vec3 worker, int useful, int supports, int clearance) {
+      return (stationCost(feet, worker, useful, supports, clearance) * useful + useful * 10.0) / 20.0;
    }
 
-   static <T> List<T> init(List<T> candidates, Vec3 start, Function<T, BlockPos> position) {
+   static <T> List<T> travelOrder(List<T> candidates, Vec3 start, Function<T, BlockPos> position) {
       if (candidates.size() > 192) {
          throw new IllegalArgumentException("Unbounded source window");
       }
@@ -52,7 +52,7 @@ final class AiSchematicBatchPlan {
       return List.copyOf(ranked.subList(0, Math.min(32, ranked.size())));
    }
 
-   static List<Integer> init(long available, long[] before) {
+   static List<Integer> dependencyOrder(long available, long[] before) {
       if (before.length > 32) {
          throw new IllegalArgumentException("Unbounded batch");
       }
@@ -106,7 +106,7 @@ final class AiSchematicBatchPlan {
       return List.copyOf(result);
    }
 
-   static <T> void init(List<T> source, int cursor, List<T> batch) {
+   static <T> void promoteBatch(List<T> source, int cursor, List<T> batch) {
       LinkedHashSet<T> selected = new LinkedHashSet<>(batch);
       ArrayList<T> rest = new ArrayList<>();
       HashSet<T> found = new HashSet<>();
@@ -138,7 +138,7 @@ final class AiSchematicBatchPlan {
       }
    }
 
-   static <T> Set<Long> init(List<T> source, int cursor, Set<Long> existing, ToLongFunction<T> position) {
+   static <T> Set<Long> windowCells(List<T> source, int cursor, Set<Long> existing, ToLongFunction<T> position) {
       HashSet<Long> result = new HashSet<>(existing);
 
       for (int i = cursor; i < source.size() && i < cursor + 192; i++) {
@@ -411,7 +411,7 @@ final class AiSchematicBatchPlan {
             }
          }
 
-         List<Integer> ordered = AiSchematicBatchPlan.init(available, before);
+         List<Integer> ordered = AiSchematicBatchPlan.dependencyOrder(available, before);
          long done = state.done;
          long[][] views = new long[this.targets][2];
 
@@ -540,7 +540,7 @@ final class AiSchematicBatchPlan {
          }
       }
 
-      void init(long nanos) {
+      void capDeadline(long nanos) {
          this.load = Math.min(this.load, this.clock.getAsLong() + Math.max(0L, nanos));
       }
 

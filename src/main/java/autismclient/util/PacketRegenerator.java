@@ -37,7 +37,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class PacketRegenerator {
-   private static final Map<Class<? extends Packet<?>>, PacketRegenerator.Regenerator<?>> init = new HashMap<>();
+   private static final Map<Class<? extends Packet<?>>, PacketRegenerator.Regenerator<?>> REGENERATORS = new HashMap<>();
 
    public static <T extends Packet<?>> T regenerate(T original) {
       if (original == null) {
@@ -49,7 +49,7 @@ public class PacketRegenerator {
          return original;
       }
 
-      PacketRegenerator.Regenerator<T> handler = (PacketRegenerator.Regenerator<T>)init.get(original.getClass());
+      PacketRegenerator.Regenerator<T> handler = (PacketRegenerator.Regenerator<T>)REGENERATORS.get(original.getClass());
       if (handler != null) {
          try {
             return handler.regenerate(original, mc);
@@ -62,11 +62,11 @@ public class PacketRegenerator {
       }
    }
 
-   private static void init() {
-      init(
+   private static void registerDefaults() {
+      register(
          ServerboundPlayerActionPacket.class, (packet, mc) -> new ServerboundPlayerActionPacket(packet.getAction(), packet.getPos(), packet.getDirection(), 0)
       );
-      init(
+      register(
          ServerboundUseItemOnPacket.class,
          (packet, mc) -> {
             BlockPos targetBlock = packet.hitResult().getBlockPos();
@@ -81,7 +81,7 @@ public class PacketRegenerator {
             return new ServerboundUseItemOnPacket(packet.hand(), newHit, 0);
          }
       );
-      init(ServerboundContainerClickPacket.class, (packet, mc) -> {
+      register(ServerboundContainerClickPacket.class, (packet, mc) -> {
          AbstractContainerMenu handler = mc.player.containerMenu;
          if (handler == null) {
             return packet;
@@ -91,9 +91,9 @@ public class PacketRegenerator {
          int currentRevision = handler.getStateId();
 
          try {
-            int slot = init(packet, "slot", short.class, 0);
-            int button = init(packet, "button", byte.class, 0);
-            ContainerInput action = init(packet, ContainerInput.class);
+            int slot = intField(packet, "slot", short.class, 0);
+            int button = intField(packet, "button", byte.class, 0);
+            ContainerInput action = enumField(packet, ContainerInput.class);
             Int2ObjectMap<HashedStack> modifiedStacks = new Int2ObjectArrayMap<>();
             return new ServerboundContainerClickPacket(currentSyncId, currentRevision, (short)slot, (byte)button, action, modifiedStacks, HashedStack.EMPTY);
          } catch (Exception e) {
@@ -101,26 +101,26 @@ public class PacketRegenerator {
             return packet;
          }
       });
-      init(ServerboundContainerButtonClickPacket.class, (packet, mc) -> {
+      register(ServerboundContainerButtonClickPacket.class, (packet, mc) -> {
          AbstractContainerMenu handler = mc.player.containerMenu;
          if (handler == null) {
             return packet;
          }
 
-         int buttonId = init(packet, "buttonId", int.class, 1);
+         int buttonId = intField(packet, "buttonId", int.class, 1);
          return new ServerboundContainerButtonClickPacket(handler.containerId, buttonId);
       });
-      init(ServerboundUseItemPacket.class, (packet, mc) -> new ServerboundUseItemPacket(packet.hand(), 0, mc.player.getYRot(), mc.player.getXRot()));
-      init(
+      register(ServerboundUseItemPacket.class, (packet, mc) -> new ServerboundUseItemPacket(packet.hand(), 0, mc.player.getYRot(), mc.player.getXRot()));
+      register(
          PosRot.class,
          (packet, mc) -> new PosRot(
             mc.player.getX(), mc.player.getY(), mc.player.getZ(), mc.player.getYRot(), mc.player.getXRot(), mc.player.onGround(), mc.player.horizontalCollision
          )
       );
-      init(Pos.class, (packet, mc) -> new Pos(mc.player.getX(), mc.player.getY(), mc.player.getZ(), mc.player.onGround(), mc.player.horizontalCollision));
-      init(Rot.class, (packet, mc) -> new Rot(mc.player.getYRot(), mc.player.getXRot(), mc.player.onGround(), mc.player.horizontalCollision));
-      init(StatusOnly.class, (packet, mc) -> new StatusOnly(mc.player.onGround(), mc.player.horizontalCollision));
-      init(
+      register(Pos.class, (packet, mc) -> new Pos(mc.player.getX(), mc.player.getY(), mc.player.getZ(), mc.player.onGround(), mc.player.horizontalCollision));
+      register(Rot.class, (packet, mc) -> new Rot(mc.player.getYRot(), mc.player.getXRot(), mc.player.onGround(), mc.player.horizontalCollision));
+      register(StatusOnly.class, (packet, mc) -> new StatusOnly(mc.player.onGround(), mc.player.horizontalCollision));
+      register(
          ServerboundInteractPacket.class,
          (packet, mc) -> {
             int originalEntityId = packet.entityId();
@@ -146,7 +146,7 @@ public class PacketRegenerator {
                : packet;
          }
       );
-      init(
+      register(
          ServerboundAttackPacket.class,
          (packet, mc) -> {
             int originalEntityId = packet.entityId();
@@ -170,13 +170,13 @@ public class PacketRegenerator {
             return originalEntity != null ? new ServerboundAttackPacket(originalEntity.getId()) : packet;
          }
       );
-      init(ServerboundSetCarriedItemPacket.class, (packet, mc) -> packet);
-      init(ServerboundContainerClosePacket.class, (packet, mc) -> {
+      register(ServerboundSetCarriedItemPacket.class, (packet, mc) -> packet);
+      register(ServerboundContainerClosePacket.class, (packet, mc) -> {
          AbstractContainerMenu handler = mc.player.containerMenu;
          return handler == null ? packet : new ServerboundContainerClosePacket(handler.containerId);
       });
-      init(ServerboundChatPacket.class, (packet, mc) -> packet);
-      init(ServerboundCustomPayloadPacket.class, (packet, mc) -> {
+      register(ServerboundChatPacket.class, (packet, mc) -> packet);
+      register(ServerboundCustomPayloadPacket.class, (packet, mc) -> {
          CustomPacketPayload payload = packet.payload();
          if (payload == null) {
             return null;
@@ -193,13 +193,13 @@ public class PacketRegenerator {
       });
    }
 
-   private static <T extends Packet<?>> void init(Class<T> clazz, PacketRegenerator.Regenerator<T> handler) {
-      init.put(clazz, handler);
+   private static <T extends Packet<?>> void register(Class<T> clazz, PacketRegenerator.Regenerator<T> handler) {
+      REGENERATORS.put(clazz, handler);
    }
 
-   private static int init(Object obj, String hint, Class<?> type, int index) {
+   private static int intField(Object obj, String hint, Class<?> type, int index) {
       try {
-         Field field = init(obj.getClass(), type, index);
+         Field field = findField(obj.getClass(), type, index);
          if (type == byte.class) {
             return field.getByte(obj);
          } else {
@@ -210,30 +210,30 @@ public class PacketRegenerator {
       }
    }
 
-   private static void init(Object obj, String hint, Class<?> type, int index, int value) throws IllegalAccessException, NoSuchFieldException {
-      Field field = init(obj.getClass(), type, index);
+   private static void setIntField(Object obj, String hint, Class<?> type, int index, int value) throws IllegalAccessException, NoSuchFieldException {
+      Field field = findField(obj.getClass(), type, index);
       field.setInt(obj, value);
    }
 
-   private static String init(Object obj, String hint, int index) {
+   private static String stringField(Object obj, String hint, int index) {
       try {
-         Field field = init(obj.getClass(), String.class, index);
+         Field field = findField(obj.getClass(), String.class, index);
          return (String)field.get(obj);
       } catch (Exception e) {
          return null;
       }
    }
 
-   private static <E extends Enum<E>> E init(Object obj, Class<E> enumClass) {
+   private static <E extends Enum<E>> E enumField(Object obj, Class<E> enumClass) {
       try {
-         Field field = init(obj.getClass(), enumClass, 0);
+         Field field = findField(obj.getClass(), enumClass, 0);
          return (E)field.get(obj);
       } catch (Exception e) {
          return null;
       }
    }
 
-   private static Field init(Class<?> clazz, Class<?> type, int index) throws NoSuchFieldException {
+   private static Field findField(Class<?> clazz, Class<?> type, int index) throws NoSuchFieldException {
       List<Field> matches = new ArrayList<>();
 
       for (Class<?> current = clazz; current != null && current != Object.class; current = current.getSuperclass()) {
@@ -254,7 +254,7 @@ public class PacketRegenerator {
    }
 
    static {
-      init();
+      registerDefaults();
    }
 
    @FunctionalInterface

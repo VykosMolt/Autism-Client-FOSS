@@ -19,14 +19,14 @@ public class StoreItemAction implements MacroAction {
    public boolean allItems = false;
    public boolean closeSendPkt = true;
    public int delayTicks = 0;
-   private boolean init = true;
+   private boolean enabled = true;
 
    public void storeItems(Minecraft mc) {
       if (mc.player != null && mc.gameMode != null) {
          AbstractContainerMenu h = mc.player.containerMenu;
          if (h != mc.player.inventoryMenu) {
             for (int slotId : this.slotsToStore(mc)) {
-               autismclient.util.ContainerClickExecutor.init(mc, slotId, 0, ContainerInput.QUICK_MOVE);
+               autismclient.util.ContainerClickExecutor.click(mc, slotId, 0, ContainerInput.QUICK_MOVE);
             }
 
             if (this.closeAfter && !this.persistent) {
@@ -118,7 +118,7 @@ public class StoreItemAction implements MacroAction {
       tag.putBoolean("closeSendPkt", this.closeSendPkt);
       tag.putInt("delayTicks", this.delayTicks);
       tag.put("targetItems", MacroItemTarget.toListTag(this.init_List_11()));
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
@@ -161,7 +161,7 @@ public class StoreItemAction implements MacroAction {
 
       this.init_V_13();
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -276,12 +276,12 @@ public class StoreItemAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    private List<MacroItemTarget> init_List_11() {

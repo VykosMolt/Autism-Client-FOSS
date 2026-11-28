@@ -75,7 +75,7 @@ public final class AiPhysics {
 
             while (var22 <= (int)Math.floor(var18 - 1.0E-5)) {
                boolean var23 = bodyOverlapsCell(var1, var20, var21, var22);
-               if (var23 || (var21 < var15 ? !var0.chunkAt(var20, var21, var22) : !var0.prev(var20, var21, var22))) {
+               if (var23 || (var21 < var15 ? !var0.floorHazardAt(var20, var21, var22) : !var0.contactHazardAt(var20, var21, var22))) {
                   if (var21 < var15 || !var0.putAt_Z_I_2(var20, var21, var22) || var23 && !bodyOverlapsCellDest(var2, var20, var21, var22)) {
                      var22++;
                      continue;
@@ -99,7 +99,7 @@ public final class AiPhysics {
       for (int var32 = (int)Math.floor(var35); var32 <= (int)Math.floor(var36 - 1.0E-5); var32++) {
          for (int var33 = (int)Math.floor(var24); var33 <= (int)Math.floor(var26 - 1.0E-5); var33++) {
             for (int var34 = (int)Math.floor(var28); var34 <= (int)Math.floor(var30 - 1.0E-5); var34++) {
-               if (var0.readEx_Z(var32, var33, var34)
+               if (var0.invisibleLightAt(var32, var33, var34)
                   && (!feetInsideCell(var1, var32, var33, var34) || feetInsideCell(var2, var32, var33, var34))) {
                   return new int[]{var32, var33, var34, 1};
                }
@@ -164,7 +164,7 @@ public final class AiPhysics {
       for (int var27 = var21; var27 <= var22; var27++) {
          for (int var28 = var23; var28 <= var24; var28++) {
             for (int var29 = var25; var29 <= var26; var29++) {
-               if ((var28 < var16 ? var0.chunkAt(var27, var28, var29) : var0.prev(var27, var28, var29)) && (var3 || !bodyOverlapsCell(var1, var27, var28, var29))) {
+               if ((var28 < var16 ? var0.floorHazardAt(var27, var28, var29) : var0.contactHazardAt(var27, var28, var29)) && (var3 || !bodyOverlapsCell(var1, var27, var28, var29))) {
                   return true;
                }
 
@@ -173,7 +173,7 @@ public final class AiPhysics {
                      return true;
                   }
 
-                  if (var3 && var0.fill_Z(var27, var28, var29)) {
+                  if (var3 && var0.waterAt(var27, var28, var29)) {
                      return true;
                   }
                }
@@ -191,7 +191,7 @@ public final class AiPhysics {
       for (int var39 = (int)Math.floor(var42); var39 <= (int)Math.floor(var43 - 1.0E-5); var39++) {
          for (int var40 = (int)Math.floor(var31); var40 <= (int)Math.floor(var33 - 1.0E-5); var40++) {
             for (int var41 = (int)Math.floor(var35); var41 <= (int)Math.floor(var37 - 1.0E-5); var41++) {
-               if (var0.readEx_Z(var39, var40, var41)
+               if (var0.invisibleLightAt(var39, var40, var41)
                   && (var3 || !feetInsideCell(var1, var39, var40, var41) || feetInsideCell(var2, var39, var40, var41))) {
                   return true;
                }
@@ -256,9 +256,9 @@ public final class AiPhysics {
       boolean var36 = false;
       if (var1.jump()) {
          if (var0.onGround() && var23 == 0) {
-            double var37 = var2.value_D((int)Math.floor(var0.x()), (int)Math.floor(var0.y()), (int)Math.floor(var0.z()));
+            double var37 = var2.jumpFactorAt((int)Math.floor(var0.x()), (int)Math.floor(var0.y()), (int)Math.floor(var0.z()));
             if (var37 == 1.0) {
-               var37 = var2.value_D(supportBlockX(var21, var0.x()), (int)Math.floor(var0.y() - 0.5000001), supportBlockZ(var21, var0.z()));
+               var37 = var2.jumpFactorAt(supportBlockX(var21, var0.x()), (int)Math.floor(var0.y() - 0.5000001), supportBlockZ(var21, var0.z()));
             }
 
             var26 = Math.max(0.42 * var37, var26);
@@ -280,7 +280,7 @@ public final class AiPhysics {
       int var109 = supportBlockX(var21, var0.x());
       int var38 = (int)Math.floor(var0.y() - 0.5000001);
       int var110 = supportBlockZ(var21, var0.z());
-      double var40 = var0.onGround() ? var2.putAt_D_I(var109, var38, var110) : 0.6;
+      double var40 = var0.onGround() ? var2.frictionAt(var109, var38, var110) : 0.6;
       double var42 = var0.onGround() ? var40 * 0.91 : 0.91;
       double var44 = var0.onGround() ? var2.movementSpeed() * (var31 ? 1.3 : 1.0) * (0.21600002 / (var40 * var40 * var40)) : (var31 ? 0.026 : 0.02);
       double var46 = var1.forward() * 0.98;
@@ -305,7 +305,7 @@ public final class AiPhysics {
          var28 += var56 * var34 + var54 * var32;
       }
 
-      if (var4 && var2.state((int)Math.floor(var0.x()), (int)Math.floor(var0.y()), (int)Math.floor(var0.z()))) {
+      if (var4 && var2.climbableAt((int)Math.floor(var0.x()), (int)Math.floor(var0.y()), (int)Math.floor(var0.z()))) {
          var24 = Math.clamp(var24, -0.15, 0.15);
          var28 = Math.clamp(var28, -0.15, 0.15);
          var26 = Math.max(var1.sneak() ? 0.0 : -0.15, var26);
@@ -381,7 +381,7 @@ public final class AiPhysics {
       boolean var87 = false;
       if (var78) {
          if (var79 && !var1.sneak() && -var112 >= 0.08) {
-            var85 = var2.readEx_D(var118, var83, var119);
+            var85 = var2.bounceAt(var118, var83, var119);
             var87 = true;
          }
 
@@ -393,12 +393,12 @@ public final class AiPhysics {
          }
       }
 
-      if (var4 && (var76 || var77 || var1.jump()) && var2.state((int)Math.floor(var70), (int)Math.floor(var72), (int)Math.floor(var74))) {
+      if (var4 && (var76 || var77 || var1.jump()) && var2.climbableAt((int)Math.floor(var70), (int)Math.floor(var72), (int)Math.floor(var74))) {
          var26 = 0.2;
       }
 
       if (var79 && !var1.sneak() && Math.abs(var26) < 0.1) {
-         double var121 = var87 ? var85 : var2.readEx_D(var118, var83, var119);
+         double var121 = var87 ? var85 : var2.bounceAt(var118, var83, var119);
          if (var121 >= 0.9) {
             double var90 = 0.4 + Math.abs(var26) * 0.2;
             var24 *= var90;
@@ -406,9 +406,9 @@ public final class AiPhysics {
          }
       }
 
-      double var122 = var2.fill_D((int)Math.floor(var70), (int)Math.floor(var72), (int)Math.floor(var74));
+      double var122 = var2.speedFactorAt((int)Math.floor(var70), (int)Math.floor(var72), (int)Math.floor(var74));
       if (var122 == 1.0) {
-         var122 = var2.fill_D(supportBlockX(var80, var70), (int)Math.floor(var72 - 0.5000001), supportBlockZ(var80, var74));
+         var122 = var2.speedFactorAt(supportBlockX(var80, var70), (int)Math.floor(var72 - 0.5000001), supportBlockZ(var80, var74));
       }
 
       var24 *= var122;
@@ -424,7 +424,7 @@ public final class AiPhysics {
       var26 *= 0.98;
       var28 *= var42;
       byte var123 = 0;
-      if (var2.putAt_Z()) {
+      if (var2.stuckBlocksTracked()) {
          double var91 = var9 + Math.min(0.0, var64) + 1.0E-5;
          double var93 = var15 + Math.max(0.0, var64) - 1.0E-5;
          double var95 = var11 + Math.min(0.0, var66) + 1.0E-5;
@@ -478,12 +478,12 @@ public final class AiPhysics {
       double var12,
       double var14
    ) {
-      if (!var0.putAt_Z_D(var4, var6 + 1.0E-7, var8, var10, var6 + var14 - 1.0E-7, var12)) {
+      if (!var0.boxCollides(var4, var6 + 1.0E-7, var8, var10, var6 + var14 - 1.0E-7, var12)) {
          return var1.sneak() ? (var2 ? 4 : 1) : 0;
-      } else if (!var1.sneak() && !var0.putAt_Z_D(var4, var6 + 1.0E-7, var8, var10, var6 + 1.5 - 1.0E-7, var12)) {
+      } else if (!var1.sneak() && !var0.boxCollides(var4, var6 + 1.0E-7, var8, var10, var6 + 1.5 - 1.0E-7, var12)) {
          return 1;
       } else {
-         return !var0.putAt_Z_D(var4, var6 + 1.0E-7, var8, var10, var6 + 0.6 - 1.0E-7, var12) ? 2 : var3;
+         return !var0.boxCollides(var4, var6 + 1.0E-7, var8, var10, var6 + 0.6 - 1.0E-7, var12) ? 2 : var3;
       }
    }
 
@@ -532,7 +532,7 @@ public final class AiPhysics {
    }
 
    static long findSupportBlockBounds(double var0, double var2, double var4, double var6, double var8, double var10, double var12, double var14, AiPhysics.PhysicsWorld var16) {
-      return var16.putAt(var0, var2 - 1.0E-6, var4, var6, var2, var8, var10, var12, var14);
+      return var16.findSupportRaw(var0, var2 - 1.0E-6, var4, var6, var2, var8, var10, var12, var14);
    }
 
    static long findSupportInBoxes(AABB var0, double var1, double var3, double var5, List<AABB> var7, AABB[] var8) {
@@ -635,7 +635,7 @@ public final class AiPhysics {
       if (var3 != null) {
          var36 = var3.putAt(var0, var4, var6, var8, var10, var12, var14, var16, var18, var20, var24, var26, var28, var30, var32, var34);
       } else {
-         Vec3 var38 = var23.putAt(var4, var6, var8, var10, var12, var14, var16, var18, var20, var24, var26, var28, var30, var32, var34);
+         Vec3 var38 = var23.collideMotionRaw(var4, var6, var8, var10, var12, var14, var16, var18, var20, var24, var26, var28, var30, var32, var34);
          var0[0] = var38.x;
          var0[1] = var38.y;
          var0[2] = var38.z;
@@ -1026,7 +1026,7 @@ public final class AiPhysics {
    }
 
    private static boolean hasSupportBelowOffset(double var0, double var2, double var4, double var6, double var8, AiPhysics.PhysicsWorld var10) {
-      return var10.putAt_Z_D(var0 + 1.0E-7, var2 - 0.6 - 1.0E-7, var4 + 1.0E-7, var6 - 1.0E-7, var2, var8 - 1.0E-7);
+      return var10.boxCollides(var0 + 1.0E-7, var2 - 0.6 - 1.0E-7, var4 + 1.0E-7, var6 - 1.0E-7, var2, var8 - 1.0E-7);
    }
 
    public static List<AiPhysics.MotionState> simulate(AiPhysics.MotionState var0, List<AiPhysics.MoveInput> var1, AiPhysics.PhysicsWorld var2) {
@@ -1261,7 +1261,7 @@ public final class AiPhysics {
       default boolean isHazard(int x, int y, int z) { return false; }
       default boolean init_Z(AABB q) { return this.putAt_Z_AABB(q); }
 
-      default double putAt_D() {
+      default double dropLimit() {
          return this.maxDropBlocks();
       }
 
@@ -1277,11 +1277,11 @@ public final class AiPhysics {
          return this.collisions(var1);
       }
 
-      default Vec3 putAt_Vec3_Vec3(Vec3 var1, AABB var2, AABB var3) {
+      default Vec3 collideMotion(Vec3 var1, AABB var2, AABB var3) {
          return AiPhysics.collideWithBoxes(var1, var2, this.collisions(var3));
       }
 
-      default Vec3 putAt(
+      default Vec3 collideMotionRaw(
          double var1,
          double var3,
          double var5,
@@ -1298,7 +1298,7 @@ public final class AiPhysics {
          double var27,
          double var29
       ) {
-         return this.putAt_Vec3_Vec3(
+         return this.collideMotion(
             new Vec3(var1, var3, var5), new AABB(var7, var9, var11, var13, var15, var17), new AABB(var19, var21, var23, var25, var27, var29)
          );
       }
@@ -1313,39 +1313,39 @@ public final class AiPhysics {
          return false;
       }
 
-      default boolean putAt_Z_D(double var1, double var3, double var5, double var7, double var9, double var11) {
+      default boolean boxCollides(double var1, double var3, double var5, double var7, double var9, double var11) {
          return this.putAt_Z_AABB(new AABB(var1, var3, var5, var7, var9, var11));
       }
 
-      default long putAt_J_AABB(AABB var1, double var2, double var4, double var6) {
+      default long findSupport(AABB var1, double var2, double var4, double var6) {
          return AiPhysics.findSupportInBoxesRaw(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2, var4, var6, this.collisions(var1), null);
       }
 
-      default long putAt(double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, double var17) {
-         return this.putAt_J_AABB(new AABB(var1, var3, var5, var7, var9, var11), var13, var15, var17);
+      default long findSupportRaw(double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, double var17) {
+         return this.findSupport(new AABB(var1, var3, var5, var7, var9, var11), var13, var15, var17);
       }
 
-      default double putAt_D_I(int var1, int var2, int var3) {
+      default double frictionAt(int var1, int var2, int var3) {
          return this.blockFriction(var1, var2, var3);
       }
 
-      default double fill_D(int var1, int var2, int var3) {
+      default double speedFactorAt(int var1, int var2, int var3) {
          return this.speedFactor(var1, var2, var3);
       }
 
-      default boolean closeOf(int var1, int var2, int var3) {
+      default boolean slimeAt(int var1, int var2, int var3) {
          return this.isSlimeBlock(var1, var2, var3);
       }
 
-      default double readEx_D(int var1, int var2, int var3) {
-         return this.closeOf(var1, var2, var3) ? 1.0 : this.bounceFactor(var1, var2, var3);
+      default double bounceAt(int var1, int var2, int var3) {
+         return this.slimeAt(var1, var2, var3) ? 1.0 : this.bounceFactor(var1, var2, var3);
       }
 
-      default double value_D(int var1, int var2, int var3) {
+      default double jumpFactorAt(int var1, int var2, int var3) {
          return this.jumpFactor(var1, var2, var3);
       }
 
-      default boolean state(int var1, int var2, int var3) {
+      default boolean climbableAt(int var1, int var2, int var3) {
          return this.isClimbable(var1, var2, var3);
       }
 
@@ -1353,7 +1353,7 @@ public final class AiPhysics {
          return this.stuckBlockKindIn(var1);
       }
 
-      default boolean putAt_Z() {
+      default boolean stuckBlocksTracked() {
          return this.tracksStuckBlocks();
       }
 
@@ -1361,27 +1361,27 @@ public final class AiPhysics {
          return this.isLavaOrUnloaded(var1, var2, var3);
       }
 
-      default boolean fill_Z(int var1, int var2, int var3) {
+      default boolean waterAt(int var1, int var2, int var3) {
          return this.isWater(var1, var2, var3);
       }
 
-      default boolean prevEx(int var1, int var2, int var3) {
+      default boolean hazardAt(int var1, int var2, int var3) {
          return this.isHazard(var1, var2, var3);
       }
 
-      default boolean prev(int var1, int var2, int var3) {
-         return this.prevEx(var1, var2, var3);
+      default boolean contactHazardAt(int var1, int var2, int var3) {
+         return this.hazardAt(var1, var2, var3);
       }
 
-      default boolean chunkAt(int var1, int var2, int var3) {
-         return this.prevEx(var1, var2, var3);
+      default boolean floorHazardAt(int var1, int var2, int var3) {
+         return this.hazardAt(var1, var2, var3);
       }
 
-      default boolean readEx_Z(int var1, int var2, int var3) {
+      default boolean invisibleLightAt(int var1, int var2, int var3) {
          return this.isInvisibleLightBlock(var1, var2, var3);
       }
 
-      default boolean value_Z(int var1, int var2, int var3) {
+      default boolean pressurePlateAt(int var1, int var2, int var3) {
          return this.isPressurePlate(var1, var2, var3);
       }
 

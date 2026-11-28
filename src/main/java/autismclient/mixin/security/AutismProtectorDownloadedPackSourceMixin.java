@@ -64,7 +64,7 @@ public abstract class AutismProtectorDownloadedPackSourceMixin {
    private void autism$suppressDownloadedPackSourceAfterFailure(CallbackInfoReturnable<RepositorySource> cir) {
       RepositorySource original = cir.getReturnValue();
       cir.setReturnValue(output -> {
-         if (!PackFailureGuard.init_Z()) {
+         if (!PackFailureGuard.isBlocked()) {
             original.loadPacks(output);
          }
       });

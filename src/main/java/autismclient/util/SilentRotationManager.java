@@ -179,7 +179,7 @@ public final class SilentRotationManager {
       double[] want = customHandStepper.step(at, maxYawStep, maxPitchStep);
       usedHumanizedStep = true;
       lastHumanizedTick = -1073741824;
-      return RotationStreamPlanner.init(streamState, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.gcdStep(), customHandAccelUp, 18.0, CombatAimEngine.isPitchRestingStep(want), "kill-aura".equals(customHandOwnerId));
+      return RotationStreamPlanner.step(streamState, want[0], want[1], maxYawStep, maxPitchStep, RotationMath.gcdStep(), customHandAccelUp, 18.0, CombatAimEngine.isPitchRestingStep(want), "kill-aura".equals(customHandOwnerId));
    }
 
    public static void setExactYawHints(float exactYaw, float exactClosestYaw) {
@@ -409,7 +409,7 @@ public final class SilentRotationManager {
 
                if (!pinQuiet
                   || currentRotation == null
-                  || (AutismLiteVariant.enabled() || !SilentMiningCoordinator.init(ownerId, currentRotation, targetRotation, streamState))
+                  || (AutismLiteVariant.enabled() || !SilentMiningCoordinator.allowRotation(ownerId, currentRotation, targetRotation, streamState))
                      && (
                         !(Math.abs(RotationMath.angleDelta(currentRotation.yaw(), targetRotation.yaw())) <= 0.05F)
                            || !(Math.abs(currentRotation.pitch() - targetRotation.pitch()) <= 0.05F)

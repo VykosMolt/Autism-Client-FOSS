@@ -196,7 +196,7 @@ final class AiGameState {
                   entry.addProperty("health", Math.round(living.getHealth() * 10.0F) / 10.0);
                }
 
-               String category = AiEntityQuery.init(AiEntityQuery.init(e, entityType));
+               String category = AiEntityQuery.category(AiEntityQuery.facts(e, entityType));
                entry.addProperty("hostile", category.equals("hostile") || category.equals("boss"));
                entities.add(entry);
             }

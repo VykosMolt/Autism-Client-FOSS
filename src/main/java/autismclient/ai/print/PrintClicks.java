@@ -220,16 +220,16 @@ final class PrintClicks {
          }
       }
 
-      Vec3 eye = PrintGeometry.init(feet, false);
+      Vec3 eye = PrintGeometry.eyePos(feet, false);
       Vec3 point = click.result().getLocation();
       if (eye.distanceToSqr(point) > reach * reach) {
          return false;
       }
 
-      float yaw = PrintGeometry.init(eye, point);
-      float pitch = PrintGeometry.load(eye, point);
+      float yaw = PrintGeometry.yawTo(eye, point);
+      float pitch = PrintGeometry.pitchTo(eye, point);
       Direction required = getRequiredLookDirection(click.target().wanted());
-      if (required != null && AiPlacementContext.init(yaw, pitch)[0] != required) {
+      if (required != null && AiPlacementContext.facingOrder(yaw, pitch)[0] != required) {
          return false;
       }
 
@@ -273,12 +273,12 @@ final class PrintClicks {
    ) {
       if (!budget.isExhausted() && isReplaceableTargetState(view.getBlockState(target.pos()))) {
          boolean compact = crouch && !env.canUseFlight();
-         AABB body = PrintGeometry.init(feet.x, feet.y, feet.z, compact);
+         AABB body = PrintGeometry.bodyBox(feet.x, feet.y, feet.z, compact);
          if (!budget.isBodyClear(view, body)) {
             return null;
          }
 
-         Vec3 eye = PrintGeometry.init(feet, compact);
+         Vec3 eye = PrintGeometry.eyePos(feet, compact);
          budget.raycastCount++;
          BlockHitResult hit = view.raycastBlock(eye, eye.add(PrintGeometry.lookDirection(yaw, pitch).scale(reach)));
          if (hit != null
@@ -288,7 +288,7 @@ final class PrintClicks {
             && acceptsSupportFace(target.wanted(), hit.getDirection(), constraint)
             && satisfiesPlaceConstraint(constraint, hit.getDirection(), eye, hit.getLocation(), hit.getBlockPos())) {
             Direction required = getRequiredLookDirection(target.wanted());
-            if (required != null && AiPlacementContext.init(yaw, pitch)[0] != required) {
+            if (required != null && AiPlacementContext.facingOrder(yaw, pitch)[0] != required) {
                return null;
             }
 
@@ -395,7 +395,7 @@ final class PrintClicks {
          BlockState placed = env.predictPlacedState(item, click.result(), click.yaw(), click.pitch(), click.crouch(), target.pos());
          if (placed != null && matchesPredictedState(view, rules, target, placed) && placed != click.predicted()) {
             boolean compact = click.eye().y - feet.y < 1.61;
-            return collidesWithPlacedState(view, placed, target.pos(), PrintGeometry.init(feet.x, feet.y, feet.z, compact))
+            return collidesWithPlacedState(view, placed, target.pos(), PrintGeometry.bodyBox(feet.x, feet.y, feet.z, compact))
                ? click
                : new PrintClicks.Inner_StreamUtil(
                   target, mode, item, click.support(), click.face(), click.result(), click.eye(), feet, click.crouch(), click.yaw(), click.pitch(), placed
@@ -425,20 +425,20 @@ final class PrintClicks {
       boolean flightPose
    ) {
       boolean compact = crouch && !flightPose;
-      AABB body = PrintGeometry.init(feet.x, feet.y, feet.z, compact);
+      AABB body = PrintGeometry.bodyBox(feet.x, feet.y, feet.z, compact);
       if (!budget.isBodyClear(view, body)) {
          if (compact || flightPose) {
             return null;
          }
 
          compact = true;
-         body = PrintGeometry.init(feet.x, feet.y, feet.z, true);
+         body = PrintGeometry.bodyBox(feet.x, feet.y, feet.z, true);
          if (!budget.isBodyClear(view, body)) {
             return null;
          }
       }
 
-      Vec3 eye = PrintGeometry.init(feet, compact);
+      Vec3 eye = PrintGeometry.eyePos(feet, compact);
       BlockPos cell = target.pos();
       if (eye.distanceToSqr(PrintView.blockCenter(cell)) > square(reach + 0.9)) {
          return null;
@@ -486,9 +486,9 @@ final class PrintClicks {
                                           float yaw = 0.0F;
                                           float pitch = 0.0F;
                                           if (requiredLook != null || railShape != null) {
-                                             yaw = PrintGeometry.init(eye, point);
-                                             pitch = PrintGeometry.load(eye, point);
-                                             if (requiredLook != null && AiPlacementContext.init(yaw, pitch)[0] != requiredLook
+                                             yaw = PrintGeometry.yawTo(eye, point);
+                                             pitch = PrintGeometry.pitchTo(eye, point);
+                                             if (requiredLook != null && AiPlacementContext.facingOrder(yaw, pitch)[0] != requiredLook
                                                 || railShape != null
                                                    && Direction.fromYRot(yaw).getAxis() != (railShape == RailShape.NORTH_SOUTH ? Axis.Z : Axis.X)) {
                                                 continue;
@@ -507,8 +507,8 @@ final class PrintClicks {
                                              && hit.getDirection() == face
                                              && !(hit.getLocation().distanceToSqr(point) > 4.0E-4)) {
                                              if (requiredLook == null && railShape == null) {
-                                                yaw = PrintGeometry.init(eye, point);
-                                                pitch = PrintGeometry.load(eye, point);
+                                                yaw = PrintGeometry.yawTo(eye, point);
+                                                pitch = PrintGeometry.pitchTo(eye, point);
                                              }
 
                                              if (exact) {
@@ -797,7 +797,7 @@ final class PrintClicks {
          }
 
          EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(BuiltInRegistries.ITEM.getKey(item)).orElse(null);
-         if (type == null || type.getDimensions().makeBoundingBox(PrintRailVehicle.init(cell, state, rail)).intersects(PrintGeometry.init(feet.x, feet.y, feet.z, crouch))
+         if (type == null || type.getDimensions().makeBoundingBox(PrintRailVehicle.cartPosition(cell, state, rail)).intersects(PrintGeometry.bodyBox(feet.x, feet.y, feet.z, crouch))
             )
           {
             return null;
@@ -837,8 +837,8 @@ final class PrintClicks {
                         Vec3 dir = point.subtract(eye).normalize();
                         BlockHitResult hit = view.raycastBlock(eye, point.add(dir.scale(0.02)));
                         if (hit != null && hit.getBlockPos().equals(cell) && hit.getDirection() == face) {
-                           float yaw = PrintGeometry.init(eye, point);
-                           float pitch = PrintGeometry.load(eye, point);
+                           float yaw = PrintGeometry.yawTo(eye, point);
+                           float pitch = PrintGeometry.pitchTo(eye, point);
                            if (mode != PrintClicks.Inner_CachePool.INTERACT || !(state.getBlock() instanceof MultifaceBlock)) {
                               return new PrintClicks.Inner_StreamUtil(target, mode, item, cell, hit.getDirection(), hit, eye, feet, crouch, yaw, pitch, null);
                            }
@@ -872,7 +872,7 @@ final class PrintClicks {
          if (exact && !view.hasHypotheses()) {
             var17 = env.predictPlacedState(item, hit, yaw, pitch, crouch, target.pos());
          } else {
-            for (Direction direction : AiPlacementContext.init(yaw, pitch)) {
+            for (Direction direction : AiPlacementContext.facingOrder(yaw, pitch)) {
                var17 = block.getStateForPlacement(live, view, target.pos(), direction);
                if (var17 != null) {
                   break;
@@ -1172,7 +1172,7 @@ final class PrintClicks {
                return index < this.resolved.size();
             }
 
-            AABB body = PrintGeometry.init(feet.x, this.feetY, feet.z, true);
+            AABB body = PrintGeometry.bodyBox(feet.x, this.feetY, feet.z, true);
             if (this.view.isBoxClear(body)
                && !this.view.intersectsHazard(body)
                && !PrintView.isHazardBlock(this.view.getBlockState(BlockPos.containing(feet.x, this.feetY - 0.2, feet.z)))) {

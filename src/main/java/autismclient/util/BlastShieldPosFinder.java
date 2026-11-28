@@ -71,12 +71,12 @@ public final class BlastShieldPosFinder {
    public static boolean init(
       double beforeTarget, double beforeSelf, double afterTarget, double afterSelf, double minimumTarget, double maximumSelf, boolean efficient
    ) {
-      if (WeaponDamageCalculator.init(afterTarget, afterSelf, minimumTarget, maximumSelf, efficient)
+      if (WeaponDamageCalculator.worthIt(afterTarget, afterSelf, minimumTarget, maximumSelf, efficient)
          && Double.isFinite(beforeTarget)
          && Double.isFinite(beforeSelf)
          && !(beforeTarget < 0.0)
          && !(beforeSelf - afterSelf < 2.0)) {
-         return !WeaponDamageCalculator.init(beforeTarget, beforeSelf, minimumTarget, maximumSelf, efficient)
+         return !WeaponDamageCalculator.worthIt(beforeTarget, beforeSelf, minimumTarget, maximumSelf, efficient)
             ? true
             : afterTarget >= beforeTarget * 0.9 && (afterTarget - afterSelf) * 3.0 >= (beforeTarget - beforeSelf) * 4.0;
       } else {

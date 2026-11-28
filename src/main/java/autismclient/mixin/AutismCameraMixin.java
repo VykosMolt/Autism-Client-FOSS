@@ -45,11 +45,11 @@ public abstract class AutismCameraMixin {
       if (!AutismLiteVariant.enabled()) {
          Minecraft mc = Minecraft.getInstance();
          if (this.entity != mc.player) {
-            AiCameraTurn.putAt(null);
+            AiCameraTurn.cameraRotation(null);
             return;
          }
 
-         RotationMath.Rotation rotation = DangerModule.init_ce_DataUtil_F_2(partialTick);
+         RotationMath.Rotation rotation = DangerModule.visibleRotation(partialTick);
          if (rotation == null
             && mc.player != null
             && mc.options.getCameraType().isFirstPerson()
@@ -57,9 +57,9 @@ public abstract class AutismCameraMixin {
             && !mc.player.isPassenger()
             && !FreecamController.isActive()
             && FreeLookModule.active() == null) {
-            rotation = AiCameraTurn.putAt(mc.player);
+            rotation = AiCameraTurn.cameraRotation(mc.player);
          } else {
-            AiCameraTurn.putAt(null);
+            AiCameraTurn.cameraRotation(null);
          }
 
          if (rotation != null) {

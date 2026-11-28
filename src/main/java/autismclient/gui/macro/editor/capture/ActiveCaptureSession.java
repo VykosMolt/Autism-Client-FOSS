@@ -11,7 +11,7 @@ public final class ActiveCaptureSession {
       return this.init != null;
    }
 
-   public boolean init(String key) {
+   public boolean isCapturing(String key) {
       return key != null && key.equals(this.init);
    }
 
@@ -24,7 +24,7 @@ public final class ActiveCaptureSession {
       }
    }
 
-   public boolean init(Runnable endCapture) {
+   public boolean end(Runnable endCapture) {
       if (this.init == null) {
          return false;
       }
@@ -37,9 +37,9 @@ public final class ActiveCaptureSession {
       return true;
    }
 
-   public void init(String key, Runnable beginCapture, Runnable endCapture) {
-      if (this.init(key)) {
-         this.init(endCapture);
+   public void toggle(String key, Runnable beginCapture, Runnable endCapture) {
+      if (this.isCapturing(key)) {
+         this.end(endCapture);
       } else {
          this.init(key, beginCapture);
       }

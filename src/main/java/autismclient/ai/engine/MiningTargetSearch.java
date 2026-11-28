@@ -10,7 +10,7 @@ public final class MiningTargetSearch {
    private MiningTargetSearch() {
    }
 
-   public static MiningTargetSearch.SearchResult init(
+   public static MiningTargetSearch.SearchResult search(
       AiPathfinder.GridView grid,
       BlockPos start,
       List<MiningTargetSearch.Candidate> candidates,
@@ -29,7 +29,7 @@ public final class MiningTargetSearch {
       for (MiningTargetSearch.Candidate candidate : ordered) {
          if (!(init(start, candidate, reach, eyeHeight) >= bestCost)) {
             if (!Thread.currentThread().isInterrupted() && System.nanoTime() < deadline) {
-               AiPathfinder.PathGoal goal = new InteractionGoal(candidate.cell, reach, eyeHeight).init(grid);
+               AiPathfinder.PathGoal goal = new InteractionGoal(candidate.cell, reach, eyeHeight).bindToGrid(grid);
                BlockPos from = start;
                double cost = candidate.miningTicks;
                int constructionRemaining = caps.constructionBlocks();

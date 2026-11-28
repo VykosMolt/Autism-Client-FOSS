@@ -194,7 +194,7 @@ final class AiStronghold {
             }
 
             boolean canReachFrame(Vec3 eye, BlockPos frame) {
-               return AiEndPortal.init(mc, eye, frame, mc.player.blockInteractionRange() - 0.3) != null;
+               return AiEndPortal.frameHit(mc, eye, frame, mc.player.blockInteractionRange() - 0.3) != null;
             }
 
             BlockPos init_BlockPos_6(BlockPos frame) {
@@ -447,7 +447,7 @@ final class AiStronghold {
                   if (dayTime > 13000L && dayTime < 23000L && !AiSpeedrun.hasHuntable(mc, 48.0)) {
                      return this.startChild(
                         "shelter until daylight for travel food",
-                        AiBurrow.init(
+                        AiBurrow.burrow(
                            AiJson.objectOf("timeoutSeconds", Math.max(60L, Math.min(600L, (this.deadlineNanos - System.nanoTime()) / 1000000000L)))
                         )
                      );
@@ -654,7 +654,7 @@ final class AiStronghold {
                         || !(Math.hypot(mc.player.getX() - (stance.getX() + 0.5), mc.player.getZ() - (stance.getZ() + 0.5)) > 0.8)
                            && !(Math.abs(mc.player.getY() - stance.getY()) > 0.6)) {
                         BlockPos into = stance == null ? portal : this.nearestPortalBlock(stance);
-                        return this.startChild("onto the end portal at " + into.toShortString(), AiEndRun.init(mc, into));
+                        return this.startChild("onto the end portal at " + into.toShortString(), AiEndRun.enterPortal(mc, into));
                      } else {
                         this.portalStanceAttempts++;
                         return this.startChild(
@@ -701,7 +701,7 @@ final class AiStronghold {
                         }
 
                         this.portalFrame = frame;
-                        AiEndPortal.Inner_StreamUtil ring = AiEndPortal.load(frame);
+                        AiEndPortal.Inner_StreamUtil ring = AiEndPortal.ringAt(frame);
                         if (ring != null) {
                            this.portalRoomLoadTrips = 0;
                            List<BlockPos> empty = ring.empty();
@@ -971,7 +971,7 @@ final class AiStronghold {
                                  this.corridorExplorations++;
                                  return this.startChild(
                                     "explore the observed stronghold corridors",
-                                    AiStrongholdSearch.init(
+                                    AiStrongholdSearch.search(
                                        estimate.position(),
                                        (int)Math.max(30L, Math.min(360L, (this.deadlineNanos - System.nanoTime()) / 1000000000L)),
                                        this.search
@@ -1141,7 +1141,7 @@ final class AiStronghold {
                   } else {
                      Vec3 now = this.init_EyeOfEnder.position();
                      double moved = Math.hypot(now.x - this.write_Vec3.x, now.z - this.write_Vec3.z);
-                     Vec3 fitted = this.init_z_StreamUtil.init(now);
+                     Vec3 fitted = this.init_z_StreamUtil.addSample(now);
                      if (fitted == null
                         && (!(moved >= 4.0) || this.update_I - this.write_I <= 40)
                         && this.init_EyeOfEnder.isAlive()
@@ -1163,7 +1163,7 @@ final class AiStronghold {
                         AiStronghold.savedThrowCount = this.throwCount;
                         this.navigation
                            .addThrow(
-                              line != null ? this.init_z_StreamUtil.load() : this.write_Vec3,
+                              line != null ? this.init_z_StreamUtil.meanPoint() : this.write_Vec3,
                               line != null ? line.scale(Math.max(4.0, moved)) : now.subtract(this.write_Vec3)
                            );
                         AiRunTrace.emitServiceEvent(
@@ -1467,17 +1467,17 @@ final class AiStronghold {
    }
 
    static final class DarkSearchTimer {
-      private long init_J = -9223372036854775808L;
+      private long nextAt = -9223372036854775808L;
       private long darkSearchNanos;
       private boolean darkSearch;
 
       void accumulate(long now, boolean darkSearch) {
-         if (this.init_J == -9223372036854775808L || now >= this.init_J) {
-            if (this.init_J != -9223372036854775808L && this.darkSearch) {
-               this.darkSearchNanos = this.darkSearchNanos + (now - this.init_J);
+         if (this.nextAt == -9223372036854775808L || now >= this.nextAt) {
+            if (this.nextAt != -9223372036854775808L && this.darkSearch) {
+               this.darkSearchNanos = this.darkSearchNanos + (now - this.nextAt);
             }
 
-            this.init_J = now;
+            this.nextAt = now;
             this.darkSearch = darkSearch;
          }
       }
@@ -1495,7 +1495,7 @@ final class AiStronghold {
       private AiOperation child;
       private AiOperation.Result lastResult;
       private AiOperation.Result pendingResult;
-      private boolean init_Z;
+      private boolean pendingReconciliation;
 
       AiOperation.Result tickChild(AiOperation child) {
          boolean before = child.requiresReconciliationAfterEmergency();
@@ -1530,7 +1530,7 @@ final class AiStronghold {
          if (needsObservation
             || AiJson.getBoolean(receipt, "interruptedActionNeedsReconciliation", false)
             || AiJson.getBoolean(receipt, "reobserveBeforeResuming", false)) {
-            this.init_Z = true;
+            this.pendingReconciliation = true;
             if (actual != null && (this.pendingResult == null || actual == this.lastResult)) {
                this.pendingResult = actual;
             }
@@ -1545,7 +1545,7 @@ final class AiStronghold {
       }
 
       boolean needsReconciliation() {
-         return this.init_Z;
+         return this.pendingReconciliation;
       }
 
       AiOperation.Result result(AiOperation.Status status, String message, JsonObject phaseData, AiOperation.Result actual) {
@@ -1558,7 +1558,7 @@ final class AiStronghold {
             actual = this.lastResult != null ? this.lastResult : this.pendingResult;
          }
 
-         AiOperation.Result result = AiStronghold.resultWithChild(status, message, data, this.init_Z, actual);
+         AiOperation.Result result = AiStronghold.resultWithChild(status, message, data, this.pendingReconciliation, actual);
          return actual == null ? result : new AiOperation.Result(result.status(), result.message(), result.dataJson(), actual.evidence(), actual.failure());
       }
    }

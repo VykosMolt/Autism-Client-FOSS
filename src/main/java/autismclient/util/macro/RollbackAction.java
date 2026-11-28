@@ -25,7 +25,7 @@ import net.minecraft.world.item.ItemStack;
 
 public final class RollbackAction implements MacroAction {
    private static final int init_I = 60;
-   private boolean init_Z = true;
+   private boolean enabled = true;
    public RollbackAction.RollbackScope scope = RollbackAction.RollbackScope.ALL_CONTAINER;
    public ArrayList<String> slots = new ArrayList<>();
    public int startSlot = 0;
@@ -39,7 +39,7 @@ public final class RollbackAction implements MacroAction {
          } catch (InterruptedException e) {
             AutismClientMessaging.sendPrefixed("§eRollback canceled safely.");
          } catch (Throwable t) {
-            AutismClientMessaging.sendPrefixed("§cRollback failed: " + init_Str_Throwable(t));
+            AutismClientMessaging.sendPrefixed("§cRollback failed: " + rootMessage(t));
          }
       } else {
          AutismClientMessaging.sendPrefixed("§cRollback must run from the macro executor.");
@@ -53,10 +53,10 @@ public final class RollbackAction implements MacroAction {
             if (server == null) {
                AutismClientMessaging.sendPrefixed("§cRollback requires a singleplayer world or the LAN host.");
             } else {
-               RollbackAction.RollbackPlan plan = init(mc, () -> this.init_R_CachePool_Minecraft(mc));
+               RollbackAction.RollbackPlan plan = onClientThread(mc, () -> this.capturePlan(mc));
                if (plan != null) {
-                  init();
-                  init(server, () -> init(server, plan));
+                  checkInterrupted();
+                  onServerThread(server, () -> restoreOnServer(server, plan));
                }
             }
          }
@@ -65,11 +65,11 @@ public final class RollbackAction implements MacroAction {
       }
    }
 
-   private RollbackAction.RollbackPlan init_R_CachePool_Minecraft(Minecraft mc) {
+   private RollbackAction.RollbackPlan capturePlan(Minecraft mc) {
       if (mc.player != null && mc.gameMode != null && mc.player.containerMenu != null) {
          AbstractContainerMenu menu = mc.player.containerMenu;
          if (menu != mc.player.inventoryMenu && menu.containerId != 0 && menu.getCarried().isEmpty()) {
-            List<Integer> requested = this.init_List_I_2(menu.slots.size());
+            List<Integer> requested = this.requestedSlots(menu.slots.size());
             List<RollbackAction.SlotSnapshot> selected = new ArrayList<>();
             IdentityHashMap<Container, Set<Integer>> capturedContainerSlots = new IdentityHashMap<>();
 
@@ -101,7 +101,7 @@ public final class RollbackAction implements MacroAction {
       }
    }
 
-   private List<Integer> init_List_I_2(int menuSize) {
+   private List<Integer> requestedSlots(int menuSize) {
       LinkedHashSet<Integer> result = new LinkedHashSet<>();
       switch (this.scope == null ? RollbackAction.RollbackScope.ALL_CONTAINER : this.scope) {
          case ALL_CONTAINER:
@@ -129,18 +129,18 @@ public final class RollbackAction implements MacroAction {
       return List.copyOf(result);
    }
 
-   private static boolean init(IntegratedServer server, RollbackAction.RollbackPlan plan) {
-      ServerPlayer player = server.getPlayerList().getPlayer(plan.init_UUID);
-      if (player != null && player.containerMenu != null && player.containerMenu.containerId == plan.init_I && player.containerMenu.getCarried().isEmpty()) {
+   private static boolean restoreOnServer(IntegratedServer server, RollbackAction.RollbackPlan plan) {
+      ServerPlayer player = server.getPlayerList().getPlayer(plan.playerId);
+      if (player != null && player.containerMenu != null && player.containerMenu.containerId == plan.containerId && player.containerMenu.getCarried().isEmpty()) {
          AbstractContainerMenu menu = player.containerMenu;
 
-         for (RollbackAction.SlotSnapshot expected : plan.init_List) {
-            if (expected.init_I >= menu.slots.size()) {
+         for (RollbackAction.SlotSnapshot expected : plan.slots) {
+            if (expected.slot >= menu.slots.size()) {
                throw new IllegalStateException("container layout changed");
             }
 
-            Slot source = menu.slots.get(expected.init_I);
-            if (source.container == player.getInventory() || !ItemStack.matches(source.getItem(), expected.init_ItemStack)) {
+            Slot source = menu.slots.get(expected.slot);
+            if (source.container == player.getInventory() || !ItemStack.matches(source.getItem(), expected.stack)) {
                throw new IllegalStateException("container contents changed before duplication");
             }
          }
@@ -152,8 +152,8 @@ public final class RollbackAction implements MacroAction {
             simulated.add(inventory.getItem(slot).copy());
          }
 
-         for (RollbackAction.SlotSnapshot source : plan.init_List) {
-            if (!init(simulated, source.init_ItemStack.copy(), inventory.getMaxStackSize())) {
+         for (RollbackAction.SlotSnapshot source : plan.slots) {
+            if (!canFit(simulated, source.stack.copy(), inventory.getMaxStackSize())) {
                throw new IllegalStateException("not enough inventory space for all selected items");
             }
          }
@@ -169,7 +169,7 @@ public final class RollbackAction implements MacroAction {
 
          inventory.setChanged();
          menu.broadcastFullState();
-         if (init(inventory, simulated) && init(menu, plan)) {
+         if (matchesInventory(inventory, simulated) && matchesMenu(menu, plan)) {
             return true;
          } else {
             throw new IllegalStateException("authoritative duplicate verification failed");
@@ -179,9 +179,9 @@ public final class RollbackAction implements MacroAction {
       }
    }
 
-   private static boolean init(AbstractContainerMenu menu, RollbackAction.RollbackPlan plan) {
-      for (RollbackAction.SlotSnapshot expected : plan.init_List) {
-         if (expected.init_I >= menu.slots.size() || !ItemStack.matches(menu.slots.get(expected.init_I).getItem(), expected.init_ItemStack)) {
+   private static boolean matchesMenu(AbstractContainerMenu menu, RollbackAction.RollbackPlan plan) {
+      for (RollbackAction.SlotSnapshot expected : plan.slots) {
+         if (expected.slot >= menu.slots.size() || !ItemStack.matches(menu.slots.get(expected.slot).getItem(), expected.stack)) {
             return false;
          }
       }
@@ -189,7 +189,7 @@ public final class RollbackAction implements MacroAction {
       return true;
    }
 
-   private static boolean init(Inventory inventory, List<ItemStack> expected) {
+   private static boolean matchesInventory(Inventory inventory, List<ItemStack> expected) {
       if (expected.size() != 36) {
          return false;
       }
@@ -203,7 +203,7 @@ public final class RollbackAction implements MacroAction {
       return true;
    }
 
-   private static boolean init(List<ItemStack> inventory, ItemStack incoming, int inventoryMaxStackSize) {
+   private static boolean canFit(List<ItemStack> inventory, ItemStack incoming, int inventoryMaxStackSize) {
       if (incoming.isEmpty()) {
          return true;
       }
@@ -234,13 +234,13 @@ public final class RollbackAction implements MacroAction {
       return incoming.isEmpty();
    }
 
-   private static void init() throws InterruptedException {
+   private static void checkInterrupted() throws InterruptedException {
       if (autismclient.modules.aD.read_Z() || !MacroExecutor.isCurrentRunActive() || Thread.currentThread().isInterrupted()) {
          throw new InterruptedException("rollback canceled");
       }
    }
 
-   private static <T> T init(Minecraft mc, Supplier<T> task) throws InterruptedException, ExecutionException, TimeoutException {
+   private static <T> T onClientThread(Minecraft mc, Supplier<T> task) throws InterruptedException, ExecutionException, TimeoutException {
       if (mc.isSameThread()) {
          return task.get();
       }
@@ -256,7 +256,7 @@ public final class RollbackAction implements MacroAction {
       return future.get(60L, TimeUnit.SECONDS);
    }
 
-   private static <T> T init(IntegratedServer server, Supplier<T> task) throws InterruptedException, ExecutionException, TimeoutException {
+   private static <T> T onServerThread(IntegratedServer server, Supplier<T> task) throws InterruptedException, ExecutionException, TimeoutException {
       CompletableFuture<T> future = new CompletableFuture<>();
       server.execute(() -> {
          try {
@@ -268,7 +268,7 @@ public final class RollbackAction implements MacroAction {
       return future.get(60L, TimeUnit.SECONDS);
    }
 
-   private static String init_Str_Throwable(Throwable throwable) {
+   private static String rootMessage(Throwable throwable) {
       Throwable current = throwable;
 
       while (current.getCause() != null) {
@@ -283,7 +283,7 @@ public final class RollbackAction implements MacroAction {
    public CompoundTag toTag() {
       CompoundTag tag = new CompoundTag();
       tag.putString("type", this.getType().name());
-      tag.putBoolean("enabled", this.init_Z);
+      tag.putBoolean("enabled", this.enabled);
       tag.putString("scope", this.scope.name());
       tag.put("slots", MacroNbtCodecHelper.toStringListTag(this.slots));
       tag.putInt("startSlot", this.startSlot);
@@ -293,7 +293,7 @@ public final class RollbackAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.init_Z = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
       this.scope = MacroNbtCodecHelper.parseEnum(RollbackAction.RollbackScope.class, tag.getStringOr("scope", "ALL_CONTAINER"), RollbackAction.RollbackScope.ALL_CONTAINER);
       this.slots = MacroNbtCodecHelper.fromStringListTag(tag.getList("slots").orElse(new ListTag()));
       this.startSlot = tag.getIntOr("startSlot", 0);
@@ -317,15 +317,15 @@ public final class RollbackAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init_Z;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.init_Z = enabled;
+      this.enabled = enabled;
    }
 
-   private record RollbackPlan(int init_I, List<RollbackAction.SlotSnapshot> init_List, UUID init_UUID) {
+   private record RollbackPlan(int containerId, List<RollbackAction.SlotSnapshot> slots, UUID playerId) {
    }
 
    public enum RollbackScope {
@@ -334,6 +334,6 @@ public final class RollbackAction implements MacroAction {
       SLOT_RANGE;
    }
 
-   private record SlotSnapshot(int init_I, ItemStack init_ItemStack) {
+   private record SlotSnapshot(int slot, ItemStack stack) {
    }
 }

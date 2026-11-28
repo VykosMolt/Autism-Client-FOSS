@@ -36,7 +36,7 @@ public final class BlinkClonePlayer extends RemotePlayer {
       this.init_PlayerInfo = resolved;
    }
 
-   public void init(float headYaw, float bodyYaw) {
+   public void setRotations(float headYaw, float bodyYaw) {
       this.yHeadRot = headYaw;
       this.yHeadRotO = headYaw;
       this.yBodyRot = bodyYaw;

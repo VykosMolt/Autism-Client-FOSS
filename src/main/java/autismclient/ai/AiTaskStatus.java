@@ -16,7 +16,7 @@ public final class AiTaskStatus {
    private AiTaskStatus() {
    }
 
-   static AiTaskStatus.Inner_StreamUtil init(String title, String activity, int completed, int target) {
+   static AiTaskStatus.Inner_StreamUtil progressStatus(String title, String activity, int completed, int target) {
       String heading = init(title);
       if (heading.isEmpty()) {
          return AiTaskStatus.Inner_StreamUtil.EMPTY;
@@ -27,7 +27,7 @@ public final class AiTaskStatus {
       return new AiTaskStatus.Inner_StreamUtil(heading, action.isEmpty() ? "In progress" : action, "", percent);
    }
 
-   public static String init(String diagnostic, String fallback) {
+   public static String phaseLabel(String diagnostic, String fallback) {
       String phase = load(diagnostic, fallback);
       Matcher furnace = init_Pattern.matcher(init(diagnostic));
       return furnace.find()
@@ -102,19 +102,19 @@ public final class AiTaskStatus {
       }
    }
 
-   static AiTaskStatus.Inner_StreamUtil init(Collection<AiTaskStatus.Inner_DataUtil> candidates, long now) {
+   static AiTaskStatus.Inner_StreamUtil pickStatus(Collection<AiTaskStatus.Inner_DataUtil> candidates, long now) {
       AiTaskStatus.Inner_DataUtil chosen = init_cs_DataUtil(candidates);
       if (chosen == null) {
-         init_W_StreamUtil.init();
-         load.init();
+         init_W_StreamUtil.reset();
+         load.reset();
          return AiTaskStatus.Inner_StreamUtil.EMPTY;
       } else if (!chosen.immediate && chosen.priority < 200) {
-         String title = init_W_StreamUtil.init(chosen.content.title, now, 1500000000L);
-         String activity = load.init(chosen.content.activity, now, 1500000000L);
+         String title = init_W_StreamUtil.stabilize(chosen.content.title, now, 1500000000L);
+         String activity = load.stabilize(chosen.content.activity, now, 1500000000L);
          return new AiTaskStatus.Inner_StreamUtil(title, activity, chosen.content.detail, chosen.content.percent);
       } else {
-         init_W_StreamUtil.init();
-         load.init();
+         init_W_StreamUtil.reset();
+         load.reset();
          return chosen.content;
       }
    }
@@ -137,7 +137,7 @@ public final class AiTaskStatus {
       return chosen;
    }
 
-   static int init(AiTaskStatus.Inner_StreamUtil content, ToIntFunction<String> measure, int available) {
+   static int contentWidth(AiTaskStatus.Inner_StreamUtil content, ToIntFunction<String> measure, int available) {
       int titleW = measure.applyAsInt(content.title);
       if (content.percent >= 0) {
          titleW += measure.applyAsInt("100%") + 12;

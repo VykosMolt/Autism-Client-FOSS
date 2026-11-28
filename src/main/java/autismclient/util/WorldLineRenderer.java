@@ -12,17 +12,17 @@ public final class WorldLineRenderer {
    private WorldLineRenderer() {
    }
 
-   public static void init(Pose pose, VertexConsumer buffer, Vec3 start, Vec3 end, int color, float width) {
+   public static void line(Pose pose, VertexConsumer buffer, Vec3 start, Vec3 end, int color, float width) {
       if (start != null && end != null) {
          init(pose, buffer, start.x, start.y, start.z, end.x, end.y, end.z, color, width);
       }
    }
 
    public static void init(Pose pose, VertexConsumer buffer, double x1, double y1, double z1, double x2, double y2, double z2, int color, float width) {
-      init(pose, buffer, x1, y1, z1, x2, y2, z2, color, color, width);
+      line(pose, buffer, x1, y1, z1, x2, y2, z2, color, color, width);
    }
 
-   public static void init(
+   public static void line(
       Pose pose, VertexConsumer buffer, double x1, double y1, double z1, double x2, double y2, double z2, int color1, int color2, float width
    ) {
       Vector3f normal = init.get().set((float)(x2 - x1), (float)(y2 - y1), (float)(z2 - z1));
@@ -34,7 +34,7 @@ public final class WorldLineRenderer {
       }
    }
 
-   public static void init(Pose pose, VertexConsumer buffer, AABB b, int color, float width) {
+   public static void box(Pose pose, VertexConsumer buffer, AABB b, int color, float width) {
       for (int i = 0; i < 2; i++) {
          for (int j = 0; j < 2; j++) {
             double x = i == 0 ? b.minX : b.maxX;
@@ -48,7 +48,7 @@ public final class WorldLineRenderer {
       }
    }
 
-   public static void init(Pose pose, VertexConsumer buffer, AABB b, int color) {
+   public static void box(Pose pose, VertexConsumer buffer, AABB b, int color) {
       init(pose, buffer, color, b.minX, b.minY, b.minZ, b.maxX, b.minY, b.minZ, b.maxX, b.minY, b.maxZ, b.minX, b.minY, b.maxZ);
       init(pose, buffer, color, b.minX, b.maxY, b.maxZ, b.maxX, b.maxY, b.maxZ, b.maxX, b.maxY, b.minZ, b.minX, b.maxY, b.minZ);
       init(pose, buffer, color, b.minX, b.minY, b.maxZ, b.maxX, b.minY, b.maxZ, b.maxX, b.maxY, b.maxZ, b.minX, b.maxY, b.maxZ);

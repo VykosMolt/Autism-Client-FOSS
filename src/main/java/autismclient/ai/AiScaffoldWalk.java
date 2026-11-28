@@ -146,7 +146,7 @@ final class AiScaffoldWalk {
                float prevPitch = mc.player.getXRot();
                mc.player.setYRot(candidate.aim().emittedRotation().yaw());
                mc.player.setXRot(candidate.aim().emittedRotation().pitch());
-               autismclient.ai.engine.AiCameraTurn.putAt(mc.player, prevYaw, prevPitch);
+               autismclient.ai.engine.AiCameraTurn.recordTurn(mc.player, prevYaw, prevPitch);
                this.write_Z = true;
                mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, candidate.hit());
                return true;
@@ -300,7 +300,7 @@ final class AiScaffoldWalk {
                               AiOperation.Status.RUNNING, "Out of blocks, stopping on the scaffold", AiJson.objectOf("placed", this.placedCount)
                            );
                      } else {
-                        autismclient.ai.engine.AiBridgeDriver.BridgeStatus step = this.bridgeDriver.init(slot, this::selectSlot, cell -> {
+                        autismclient.ai.engine.AiBridgeDriver.BridgeStatus step = this.bridgeDriver.step(slot, this::selectSlot, cell -> {
                            this.placedCount++;
                            this.legPlaced++;
                            this.read_Z = true;

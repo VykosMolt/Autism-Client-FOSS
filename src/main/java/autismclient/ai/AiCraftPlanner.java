@@ -355,7 +355,7 @@ public final class AiCraftPlanner {
                   }
                }
 
-               String family = this.graph.init(new HashSet<>(tied));
+               String family = this.graph.familyOf(new HashSet<>(tied));
                if (family != null) {
                   return family;
                }
@@ -424,7 +424,7 @@ public final class AiCraftPlanner {
          return this.recipesFor(itemId).isEmpty() ? 2 : 1;
       }
 
-      default String init(Set<String> variantIds) {
+      default String familyOf(Set<String> variantIds) {
          return null;
       }
 

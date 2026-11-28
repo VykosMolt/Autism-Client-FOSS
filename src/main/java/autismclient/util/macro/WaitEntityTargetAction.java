@@ -33,14 +33,14 @@ public class WaitEntityTargetAction implements MacroAction {
          boolean var10000;
          switch (this.condition) {
             case LOOKING_AT:
-               var10000 = this.init(mc.crosshairPickEntity, expectedEntity);
+               var10000 = this.entityMatches(mc.crosshairPickEntity, expectedEntity);
                break;
             case WITHIN_REACH:
             case NEARBY:
                boolean found = false;
 
                for (Entity entity : mc.level.entitiesForRendering()) {
-                  if (entity != mc.player && mc.player.distanceTo(entity) <= this.range && this.init(entity, expectedEntity)) {
+                  if (entity != mc.player && mc.player.distanceTo(entity) <= this.range && this.entityMatches(entity, expectedEntity)) {
                      found = true;
                      break;
                   }
@@ -49,7 +49,7 @@ public class WaitEntityTargetAction implements MacroAction {
                var10000 = found;
                break;
             case MOUNTED_IN:
-               var10000 = this.init(mc.player.getVehicle(), expectedEntity);
+               var10000 = this.entityMatches(mc.player.getVehicle(), expectedEntity);
                break;
             default:
                throw new MatchException(null, null);
@@ -61,7 +61,7 @@ public class WaitEntityTargetAction implements MacroAction {
       }
    }
 
-   private boolean init(Entity entity, String expectedEntity) {
+   private boolean entityMatches(Entity entity, String expectedEntity) {
       if (entity == null) {
          return false;
       } else {

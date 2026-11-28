@@ -47,7 +47,7 @@ final class AiDeathLog {
       init_Z = true;
    }
 
-   static void load() {
+   static void clear() {
       lastDeath = null;
       init_Z = false;
    }

@@ -315,8 +315,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
          this.mainSection.getContent().addChild(this.chatInput);
          this.mainSection.getContent().addChild(new autismclient.gui.ui.layout.FixedSpacerNode(0.0F, 2.0F));
          autismclient.gui.ui.layout.RowLayout syncRow = new autismclient.gui.ui.layout.RowLayout()
-            .init(this.syncRowGap())
-            .init(new autismclient.gui.ui.layout.EdgeInsets(4, 0, 2, 0))
+            .gap(this.syncRowGap())
+            .padding(new autismclient.gui.ui.layout.EdgeInsets(4, 0, 2, 0))
             .setUnderlineOnHover(false);
          syncRow.setGrowX(true);
          int keyColor = LauncherQuickActions.keyColor();
@@ -341,7 +341,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
       if (!this.includeChatSection && !this.mainSection.getContent().getChildren().isEmpty()) {
          autismclient.gui.ui.layout.LayoutNode last = this.mainSection.getContent().getChildren().getLast();
          if (last instanceof autismclient.gui.ui.layout.ButtonNode button) {
-            button.setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.init(true, true));
+            button.setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.edges(true, true));
          } else if (last instanceof autismclient.gui.ui.layout.RowLayout pair) {
             List<autismclient.gui.ui.layout.ButtonNode> buttons = pair.getChildren()
                .stream()
@@ -350,7 +350,7 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
                .toList();
 
             for (int i = 0; i < buttons.size(); i++) {
-               buttons.get(i).setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.init(i == 0, i == buttons.size() - 1));
+               buttons.get(i).setConnectedEdges(autismclient.gui.ui.widgets.ConnectedButtonRenderer.edges(i == 0, i == buttons.size() - 1));
             }
          }
       }
@@ -391,8 +391,8 @@ public class AutismLauncherOverlay extends DraggableOverlayWindow {
 
    private void addButtonPair(autismclient.gui.ui.layout.ColumnLayout parent, autismclient.gui.ui.layout.ButtonNode left, autismclient.gui.ui.layout.ButtonNode right) {
       autismclient.gui.ui.layout.RowLayout row = new autismclient.gui.ui.layout.RowLayout()
-         .init(this.get_I_9())
-         .init(autismclient.gui.ui.layout.EdgeInsets.ZERO)
+         .gap(this.get_I_9())
+         .padding(autismclient.gui.ui.layout.EdgeInsets.ZERO)
          .setUnderlineOnHover(false);
       left.withGrowX(true);
       right.withGrowX(true);

@@ -596,10 +596,10 @@ final class SchematicPaste {
          if (includeAir || !Arrays.stream(r.palette).allMatch(BlockStateBase::isAir)) {
             int cellIndex = 0;
 
-            for (int sy = r.load; sy < r.load + r.update; sy++) {
+            for (int sy = r.originY; sy < r.originY + r.height; sy++) {
                int wy = sy + origin.getY();
 
-               for (int sz = r.read; sz < r.read + r.sync; sz++) {
+               for (int sz = r.originZ; sz < r.originZ + r.length; sz++) {
                   int wx = origin.getX() + p0.getX() + dx.getX() * r.originX + dz.getX() * sz;
                   int wz = origin.getZ() + p0.getZ() + dx.getZ() * r.originX + dz.getZ() * sz;
                   int lastCol = -1;
@@ -607,7 +607,7 @@ final class SchematicPaste {
                   int yOffset = 0;
                   BitSet bits = null;
 
-                  for (int sx = r.originX; sx < r.originX + r.write; wz += dx.getZ()) {
+                  for (int sx = r.originX; sx < r.originX + r.width; wz += dx.getZ()) {
                      int idx = cellIndex++;
                      if ((idx & 4095) == 0) {
                         SchematicDocument.checkInterrupted();
@@ -650,8 +650,8 @@ final class SchematicPaste {
       TreeMap<Long, List<SchematicPaste.YRange>> ranges = new TreeMap<>();
 
       for (SchematicDocument.Region r : doc.regions) {
-         BlockPos a = doc.transform(r.originX, r.load, r.read, rotation, mirror);
-         BlockPos b = doc.transform(r.originX + r.write - 1, r.load, r.read + r.sync - 1, rotation, mirror);
+         BlockPos a = doc.transform(r.originX, r.originY, r.originZ, rotation, mirror);
+         BlockPos b = doc.transform(r.originX + r.width - 1, r.originY, r.originZ + r.length - 1, rotation, mirror);
          int x0 = origin.getX() + Math.min(a.getX(), b.getX()) >> 4;
          int x1 = origin.getX() + Math.max(a.getX(), b.getX()) >> 4;
          int z0 = origin.getZ() + Math.min(a.getZ(), b.getZ()) >> 4;
@@ -660,7 +660,7 @@ final class SchematicPaste {
          for (int x = x0; x <= x1; x++) {
             for (int z = z0; z <= z1; z++) {
                ranges.computeIfAbsent(ChunkPos.pack(x, z), k -> new ArrayList<>())
-                  .add(new SchematicPaste.YRange(origin.getY() + r.load, origin.getY() + r.load + r.update - 1));
+                  .add(new SchematicPaste.YRange(origin.getY() + r.originY, origin.getY() + r.originY + r.height - 1));
             }
          }
       }

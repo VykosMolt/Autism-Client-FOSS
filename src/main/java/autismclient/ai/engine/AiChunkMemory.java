@@ -45,7 +45,7 @@ public final class AiChunkMemory {
    private static final int poll = 1094929713;
    private static final int push = 2;
    private static final long load_J = 64000000L;
-   private static final Set<String> init_Set = Set.of(
+   private static final Set<String> NOTABLE_PATHS = Set.of(
       "ancient_debris",
       "chest",
       "trapped_chest",
@@ -81,7 +81,7 @@ public final class AiChunkMemory {
    };
    private final Set<Long> load_Set = new HashSet<>();
    private final Set<Long> read_Set = ConcurrentHashMap.newKeySet();
-   private final Set<Long> write_Set = ConcurrentHashMap.newKeySet();
+   private final Set<Long> loadingRegions = ConcurrentHashMap.newKeySet();
    private final Map<Long, Long> auditReadFailedAt = new ConcurrentHashMap<>();
    private final ExecutorService init_ExecutorService = Executors.newSingleThreadExecutor(runnable -> {
       Thread thread = new Thread(runnable, "autism-ai-chunkmemory");
@@ -89,13 +89,13 @@ public final class AiChunkMemory {
       return thread;
    });
    private volatile Path init_Path;
-   private Object load_Obj;
+   private Object trackedLevel;
    private volatile long generation;
-   private long write_J;
+   private long lastSaveNanos;
    private static final AiChunkMemory instance = new AiChunkMemory();
-   private static volatile Path load_Path;
+   private static volatile Path storageRoot;
 
-   private static long[] init_JArr(int height) {
+   private static long[] observedNow(int height) {
       long[] observed = new long[height];
       Arrays.fill(observed, System.currentTimeMillis());
       return observed;
@@ -106,11 +106,11 @@ public final class AiChunkMemory {
    }
 
    public static void setBaseDir(Path baseDir) {
-      load_Path = baseDir;
+      storageRoot = baseDir;
    }
 
    public static void tick(Minecraft mc) {
-      instance.load_V_Minecraft(mc);
+      instance.onTick(mc);
    }
 
    public static int init_I(int flags) {
@@ -124,18 +124,18 @@ public final class AiChunkMemory {
    }
 
    public static boolean isNotableBlock(String path) {
-      return path != null && (path.endsWith("_ore") || init_Set.contains(path));
+      return path != null && (path.endsWith("_ore") || NOTABLE_PATHS.contains(path));
    }
 
-   static int init_I_BArr_I(byte[] packed, int index) {
+   static int unpackClass(byte[] packed, int index) {
       return packed[index >> 2] >> ((index & 3) << 1) & 3;
    }
 
-   private static void init_V_BArr(byte[] packed, int index, int cls) {
+   private static void packClass(byte[] packed, int index, int cls) {
       packed[index >> 2] = (byte)(packed[index >> 2] | (byte)(cls << ((index & 3) << 1)));
    }
 
-   private static byte[] init_BArr_SArr(short[] flags, int yLo, int height) {
+   private static byte[] packFlags(short[] flags, int yLo, int height) {
       byte[] packed = new byte[height * 64];
 
       for (int x = 0; x < 16; x++) {
@@ -143,7 +143,7 @@ public final class AiChunkMemory {
             for (int y = 0; y < height; y++) {
                int source = (x * 16 + z) * height + y;
                if ((flags[source] & 1) != 0) {
-                  init_V_BArr(packed, y * 256 + z * 16 + x, init_I(flags[source]));
+                  packClass(packed, y * 256 + z * 16 + x, init_I(flags[source]));
                }
             }
          }
@@ -154,21 +154,21 @@ public final class AiChunkMemory {
 
    public void storeChunk(int cx, int cz, int yLo, int height, short[] flags, Map<Integer, String> notables) {
       if (height > 0 && height <= 128) {
-         byte[] fresh = init_BArr_SArr(flags, yLo, height);
+         byte[] fresh = packFlags(flags, yLo, height);
          Map<Integer, String> freshNotables = notables == null ? Map.of() : notables;
          long key = AiGridRevisions.chunkKey(cx, cz);
          synchronized (this.init_Obj) {
             AiChunkMemory.ChunkRecord old = this.init_LinkedHashMap.get(key);
             AiChunkMemory.ChunkRecord merged = old == null
-               ? new AiChunkMemory.ChunkRecord(yLo, height, fresh, init(freshNotables))
-               : init_StateCache_DataUti_StateCache_DataUti(old, yLo, height, fresh, freshNotables);
+               ? new AiChunkMemory.ChunkRecord(yLo, height, fresh, capNotables(freshNotables))
+               : mergeRecord(old, yLo, height, fresh, freshNotables);
             this.init_LinkedHashMap.put(key, merged);
             this.load_Set.add(key);
          }
       }
    }
 
-   private static Map<Integer, String> init(Map<Integer, String> notables) {
+   private static Map<Integer, String> capNotables(Map<Integer, String> notables) {
       if (notables.size() <= 256) {
          return Map.copyOf(notables);
       }
@@ -186,11 +186,11 @@ public final class AiChunkMemory {
       return capped;
    }
 
-   private static AiChunkMemory.ChunkRecord init_StateCache_DataUti_StateCache_DataUti(
+   private static AiChunkMemory.ChunkRecord mergeRecord(
       AiChunkMemory.ChunkRecord old, int freshYLo, int freshHeight, byte[] fresh, Map<Integer, String> freshNotables
    ) {
       int newLo = Math.min(old.yLo, freshYLo);
-      int newHi = Math.max(old.yLo + old.load, freshYLo + freshHeight);
+      int newHi = Math.max(old.yLo + old.height, freshYLo + freshHeight);
       if (newHi - newLo > 128) {
          newLo = freshYLo;
          newHi = freshYLo + freshHeight;
@@ -200,13 +200,13 @@ public final class AiChunkMemory {
       byte[] merged = new byte[newHeight * 64];
       long[] observed = new long[newHeight];
 
-      for (int y = Math.max(old.yLo, newLo); y < Math.min(old.yLo + old.load, newHi); y++) {
+      for (int y = Math.max(old.yLo, newLo); y < Math.min(old.yLo + old.height, newHi); y++) {
          observed[y - newLo] = old.observed[y - old.yLo];
 
          for (int i = 0; i < 256; i++) {
-            int cls = init_I_BArr_I(old.packed, (y - old.yLo) * 256 + i);
+            int cls = unpackClass(old.packed, (y - old.yLo) * 256 + i);
             if (cls != 0) {
-               init_V_BArr(merged, (y - newLo) * 256 + i, cls);
+               packClass(merged, (y - newLo) * 256 + i, cls);
             }
          }
       }
@@ -236,15 +236,15 @@ public final class AiChunkMemory {
    }
 
    public AiPathfinder.CellInfo probeCell(int x, int y, int z) {
-      AiChunkMemory.ChunkRecord mem = this.init_StateCache_DataUti_I_I(x >> 4, z >> 4);
+      AiChunkMemory.ChunkRecord mem = this.recordAt(x >> 4, z >> 4);
       if (mem == null) {
          return AiPathfinder.CellInfo.UNLOADED;
       }
 
       int ry = y - mem.yLo;
-      if (ry >= 0 && ry < mem.load && mem.observed[ry] != 0L) {
+      if (ry >= 0 && ry < mem.height && mem.observed[ry] != 0L) {
          AiPathfinder.CellInfo var10000;
-         switch (init_I_BArr_I(mem.packed, ry * 256 + (z & 15) * 16 + (x & 15))) {
+         switch (unpackClass(mem.packed, ry * 256 + (z & 15) * 16 + (x & 15))) {
             case 1:
                var10000 = AiPathfinder.CellInfo.CACHED_SOLID;
                break;
@@ -265,7 +265,7 @@ public final class AiChunkMemory {
    }
 
    public AiPathfinder.LiveGridView.SectionSlice sectionSlice(int cx, int cz, int yLo, int height, int revision) {
-      AiChunkMemory.ChunkRecord mem = this.init_StateCache_DataUti_I_I(cx, cz);
+      AiChunkMemory.ChunkRecord mem = this.recordAt(cx, cz);
       if (mem == null) {
          return null;
       }
@@ -277,13 +277,13 @@ public final class AiChunkMemory {
       Arrays.fill(digX4, (short)-1);
       Arrays.fill(mult10, (byte)10);
       int lo = Math.max(yLo, mem.yLo);
-      int hi = Math.min(yLo + height, mem.yLo + mem.load);
+      int hi = Math.min(yLo + height, mem.yLo + mem.height);
 
       for (int y = lo; y < hi; y++) {
          if (mem.observed[y - mem.yLo] != 0L) {
             for (int x = 0; x < 16; x++) {
                for (int z = 0; z < 16; z++) {
-                  int cls = init_I_BArr_I(mem.packed, (y - mem.yLo) * 256 + z * 16 + x);
+                  int cls = unpackClass(mem.packed, (y - mem.yLo) * 256 + z * 16 + x);
                   int i = (x * 16 + z) * height + (y - yLo);
                   int f = 2049;
                   switch (cls) {
@@ -310,7 +310,7 @@ public final class AiChunkMemory {
       return new AiPathfinder.LiveGridView.SectionSlice(flags, top16, digX4, mult10, revision);
    }
 
-   private AiChunkMemory.ChunkRecord init_StateCache_DataUti_I_I(int cx, int cz) {
+   private AiChunkMemory.ChunkRecord recordAt(int cx, int cz) {
       long key = AiGridRevisions.chunkKey(cx, cz);
       AiChunkMemory.ChunkRecord mem;
       synchronized (this.init_Obj) {
@@ -318,7 +318,7 @@ public final class AiChunkMemory {
       }
 
       if (mem == null) {
-         this.init_V_I_I(cx, cz);
+         this.requestRegionLoad(cx, cz);
       }
 
       return mem;
@@ -376,9 +376,9 @@ public final class AiChunkMemory {
       return merged.size() <= limit ? merged : merged.subList(0, limit);
    }
 
-   private void load_V_Minecraft(Minecraft mc) {
+   private void onTick(Minecraft mc) {
       Object level = mc.level;
-      if (level != this.load_Obj) {
+      if (level != this.trackedLevel) {
          this.init_V();
          this.generation++;
          synchronized (this.init_Obj) {
@@ -387,15 +387,15 @@ public final class AiChunkMemory {
          }
 
          this.read_Set.clear();
-         this.write_Set.clear();
+         this.loadingRegions.clear();
          this.auditReadFailedAt.clear();
-         this.load_Obj = level;
-         Path base = load_Path;
+         this.trackedLevel = level;
+         Path base = storageRoot;
          this.init_Path = level != null && mc.player != null && base != null ? base.resolve(AiJson.sha256Hex(AiWorldIdentity.currentWorldKey(mc) + "/dimension/" + AiWorldIdentity.currentDimensionId(mc))) : null;
       }
 
-      if (this.init_Path != null && System.nanoTime() - this.write_J >= 20000000000L) {
-         this.write_J = System.nanoTime();
+      if (this.init_Path != null && System.nanoTime() - this.lastSaveNanos >= 20000000000L) {
+         this.lastSaveNanos = System.nanoTime();
          this.init_V();
       }
    }
@@ -422,11 +422,11 @@ public final class AiChunkMemory {
       }
 
       if (dir != null) {
-         this.init_ExecutorService.execute(() -> this.init_V_Path(dir, saving, generation));
+         this.init_ExecutorService.execute(() -> this.writeRegions(dir, saving, generation));
       }
    }
 
-   private void init_V_Path(Path dir, Map<Long, AiChunkMemory.ChunkRecord> saving, long generation) {
+   private void writeRegions(Path dir, Map<Long, AiChunkMemory.ChunkRecord> saving, long generation) {
       try {
          Map<Long, Map<Long, AiChunkMemory.ChunkRecord>> byRegion = new HashMap<>();
 
@@ -442,10 +442,10 @@ public final class AiChunkMemory {
             int rx = (int)(region.getKey() >> 32);
             int rz = (int)region.getKey().longValue();
             Map<Long, AiChunkMemory.ChunkRecord> merged = new HashMap<>();
-            Path file = init_Path_Path(dir, rx, rz);
+            Path file = regionFile(dir, rx, rz);
             if (Files.exists(file)) {
                try {
-                  merged.putAll(init(Files.readAllBytes(file)).chunks());
+                  merged.putAll(decodeRegion(Files.readAllBytes(file)).chunks());
                } catch (Exception corrupt) {
                   Files.move(file, dir.resolve(file.getFileName() + ".corrupt-" + System.currentTimeMillis()), StandardCopyOption.REPLACE_EXISTING);
                }
@@ -453,11 +453,11 @@ public final class AiChunkMemory {
 
             merged.putAll(region.getValue());
             Path temp = dir.resolve(file.getFileName() + ".tmp");
-            Files.write(temp, init_BArr_I(rx, rz, merged));
+            Files.write(temp, encodeRegion(rx, rz, merged));
             Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
          }
 
-         load_V_Path(dir);
+         pruneRegionFiles(dir);
       } catch (Exception failure) {
          synchronized (this.init_Obj) {
             if (generation == this.generation) {
@@ -469,7 +469,7 @@ public final class AiChunkMemory {
       }
    }
 
-   private void init_V_I_I(int cx, int cz) {
+   private void requestRegionLoad(int cx, int cz) {
       Path dir = this.init_Path;
       long generation = this.generation;
       if (dir != null) {
@@ -479,19 +479,19 @@ public final class AiChunkMemory {
             return;
          }
 
-         if (!this.read_Set.contains(regionKey) && this.write_Set.add(regionKey)) {
+         if (!this.read_Set.contains(regionKey) && this.loadingRegions.add(regionKey)) {
             this.init_ExecutorService.execute(() -> {
                boolean loaded = false;
                try {
-                  Path file = init_Path_Path(dir, cx >> 5, cz >> 5);
+                  Path file = regionFile(dir, cx >> 5, cz >> 5);
                   if (Files.isRegularFile(file) && Files.size(file) <= 64000000L) {
                      byte[] bytes = Files.readAllBytes(file);
                      AiChunkMemory.RegionFile region = null;
                      try {
-                        region = init(bytes);
+                        region = decodeRegion(bytes);
                      } catch (Exception corrupt) {
                         Files.move(file, dir.resolve(file.getFileName() + ".corrupt-" + System.currentTimeMillis()), StandardCopyOption.REPLACE_EXISTING);
-                        load_V_Path(dir);
+                        pruneRegionFiles(dir);
                      }
 
                      if (region != null) {
@@ -507,7 +507,7 @@ public final class AiChunkMemory {
                } catch (Exception var17) {
                } finally {
                   if (generation == this.generation && dir.equals(this.init_Path)) {
-                     this.write_Set.remove(regionKey);
+                     this.loadingRegions.remove(regionKey);
                      if (loaded) {
                         this.read_Set.add(regionKey);
                      } else {
@@ -520,7 +520,7 @@ public final class AiChunkMemory {
       }
    }
 
-   private static void load_V_Path(Path dir) throws IOException {
+   private static void pruneRegionFiles(Path dir) throws IOException {
       try (Stream<Path> files = Files.list(dir)) {
          List<Path> sorted = files.sorted(Comparator.comparingLong(f -> f.toFile().lastModified())).toList();
          List<Path> regions = sorted.stream().filter(f -> f.getFileName().toString().endsWith(".bin.gz")).toList();
@@ -536,11 +536,11 @@ public final class AiChunkMemory {
       }
    }
 
-   private static Path init_Path_Path(Path dir, int rx, int rz) {
+   private static Path regionFile(Path dir, int rx, int rz) {
       return dir.resolve("r." + rx + "." + rz + ".bin.gz");
    }
 
-   static byte[] init_BArr_I(int regionX, int regionZ, Map<Long, AiChunkMemory.ChunkRecord> chunks) throws IOException {
+   static byte[] encodeRegion(int regionX, int regionZ, Map<Long, AiChunkMemory.ChunkRecord> chunks) throws IOException {
       Map<String, Integer> palette = new LinkedHashMap<>();
 
       for (AiChunkMemory.ChunkRecord mem : chunks.values()) {
@@ -571,7 +571,7 @@ public final class AiChunkMemory {
             out.writeByte(cx - regionX * 32);
             out.writeByte(cz - regionZ * 32);
             out.writeShort(mem.yLo);
-            out.writeShort(mem.load);
+            out.writeShort(mem.height);
             out.write(mem.packed);
 
             for (long observed : mem.observed) {
@@ -590,7 +590,7 @@ public final class AiChunkMemory {
       return raw.toByteArray();
    }
 
-   static AiChunkMemory.RegionFile init(byte[] data) throws IOException {
+   static AiChunkMemory.RegionFile decodeRegion(byte[] data) throws IOException {
       try (DataInputStream in = new DataInputStream(new GZIPInputStream(new ByteArrayInputStream(data)))) {
          if (in.readInt() != 1094929713 || in.readInt() != 2) {
             throw new IOException("Unsupported chunk-memory region");
@@ -668,18 +668,18 @@ public final class AiChunkMemory {
 
    static final class ChunkRecord {
       final int yLo;
-      final int load;
+      final int height;
       final byte[] packed;
       final Map<Integer, String> notables;
       final long[] observed;
 
       ChunkRecord(int yLo, int height, byte[] packed, Map<Integer, String> notables) {
-         this(yLo, height, packed, notables, AiChunkMemory.init_JArr(height));
+         this(yLo, height, packed, notables, AiChunkMemory.observedNow(height));
       }
 
       ChunkRecord(int yLo, int height, byte[] packed, Map<Integer, String> notables, long[] observed) {
          this.yLo = yLo;
-         this.load = height;
+         this.height = height;
          this.packed = packed;
          this.notables = notables;
          this.observed = observed;

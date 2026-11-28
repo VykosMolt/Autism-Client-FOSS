@@ -313,7 +313,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       this.engagedTick = -2147483648;
       this.stepCooldowns.reset();
       this.leadEstimator.init();
-      this.activationLatch.init();
+      this.activationLatch.reset();
       this.switchSettledAtNanos = 0L;
       this.pausedUntilNanos = 0L;
       this.ownPlacedAnchors.clear();
@@ -481,7 +481,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       int bind = this.integer("activation-key");
       boolean down = bind != -1 && autismclient.util.ValueSink.init(MC, bind);
-      return this.activationLatch.init(this.choice("activation"), down);
+      return this.activationLatch.update(this.choice("activation"), down);
    }
 
    private void pauseAfterKill(LivingEntity previous) {
@@ -756,7 +756,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
          BlockPos cell = hit.getBlockPos();
          return (cell.equals(this.activeAnchor) || cell.equals(this.activeSupport) || cell.equals(this.activeShield))
-            && MC.level.getBlockState(cell) != autismclient.util.ServerVerifiedBlockState.init(MC.level, cell);
+            && MC.level.getBlockState(cell) != autismclient.util.ServerVerifiedBlockState.serverState(MC.level, cell);
       } else {
          return false;
       }
@@ -778,7 +778,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
 
       BlockState state = MC.level.getBlockState(cell);
-      if (state.getBlock() instanceof RespawnAnchorBlock && !(autismclient.util.ServerVerifiedBlockState.init(MC.level, cell).getBlock() instanceof RespawnAnchorBlock)) {
+      if (state.getBlock() instanceof RespawnAnchorBlock && !(autismclient.util.ServerVerifiedBlockState.serverState(MC.level, cell).getBlock() instanceof RespawnAnchorBlock)) {
          return null;
       }
 
@@ -793,7 +793,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
             return null;
          }
 
-         if (autismclient.util.ServerVerifiedBlockState.init(MC.level, this.activeSupport).canBeReplaced()) {
+         if (autismclient.util.ServerVerifiedBlockState.serverState(MC.level, this.activeSupport).canBeReplaced()) {
             return null;
          }
 
@@ -816,7 +816,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          int charge = state.getValue(RespawnAnchorBlock.CHARGE);
          if (this.activeShield != null
             && !MC.level.getBlockState(this.activeShield).canBeReplaced()
-            && autismclient.util.ServerVerifiedBlockState.init(MC.level, this.activeShield).canBeReplaced()) {
+            && autismclient.util.ServerVerifiedBlockState.serverState(MC.level, this.activeShield).canBeReplaced()) {
             return null;
          }
 
@@ -830,7 +830,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                this.activeShield = null;
                this.activeShieldObsidian = false;
             } else {
-               if (charge <= 0 || autismclient.util.ServerVerifiedBlockState.init(MC.level, cell).getValue(RespawnAnchorBlock.CHARGE) <= 0) {
+               if (charge <= 0 || autismclient.util.ServerVerifiedBlockState.serverState(MC.level, cell).getValue(RespawnAnchorBlock.CHARGE) <= 0) {
                   this.releaseActiveAnchor(true);
                   return null;
                }
@@ -842,7 +842,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
          if (charge <= 0) {
             if (!this.shieldedDetonationSafe(cell)) {
-               if (this.activeShield != null && MC.level.getBlockState(this.activeShield) == autismclient.util.ServerVerifiedBlockState.init(MC.level, this.activeShield)) {
+               if (this.activeShield != null && MC.level.getBlockState(this.activeShield) == autismclient.util.ServerVerifiedBlockState.serverState(MC.level, this.activeShield)) {
                   this.releaseActiveAnchor(true);
                }
 
@@ -1063,7 +1063,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
                && this.bool("force-engage")
                && this.emptyCellTicks >= 3
                && this.rankAcceptable(
-                  autismclient.util.TargetLeadDamageEstimator.init(enemy, center(cell), 5.0F, verify, autismclient.util.TargetLeadDamageEstimator.init(enemy))
+                  autismclient.util.TargetLeadDamageEstimator.init(enemy, center(cell), 5.0F, verify, autismclient.util.TargetLeadDamageEstimator.leadBox(enemy))
                )
                && (!this.bool("protect-friends") || autismclient.util.WeaponDamageCalculator.init(center(cell), 5.0F, verify, this.decimal("max-friend-damage")));
       } else {
@@ -1330,7 +1330,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          }
 
          @Override
-         public boolean init(BlockState state, BlockPos pos, boolean sneaking) {
+         public boolean accepts(BlockState state, BlockPos pos, boolean sneaking) {
             return !(state.getBlock() instanceof RespawnAnchorBlock)
                ? !autismclient.util.BlockPlacementPlanner.wouldInteractWithoutSneak(state, pos, sneaking)
                : anchor != null && anchor.equals(pos) && AnchorAuraModule.isObsidian(held) && state.getValue(RespawnAnchorBlock.CHARGE) <= 0;
@@ -1346,7 +1346,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          return null;
       }
 
-      if (!(autismclient.util.ServerVerifiedBlockState.init(MC.level, anchor).getBlock() instanceof RespawnAnchorBlock)) {
+      if (!(autismclient.util.ServerVerifiedBlockState.serverState(MC.level, anchor).getBlock() instanceof RespawnAnchorBlock)) {
          return null;
       }
 
@@ -1519,7 +1519,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
       BlockState state = MC.level.getBlockState(plan.cell());
       boolean anchor = state.getBlock() instanceof RespawnAnchorBlock
-         && autismclient.util.ServerVerifiedBlockState.init(MC.level, plan.cell()).getBlock() instanceof RespawnAnchorBlock;
+         && autismclient.util.ServerVerifiedBlockState.serverState(MC.level, plan.cell()).getBlock() instanceof RespawnAnchorBlock;
       boolean var10000;
       switch (plan.step()) {
          case SUPPORT:
@@ -1565,7 +1565,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          return false;
       } else {
          int charge = state.getValue(RespawnAnchorBlock.CHARGE);
-         BlockState received = autismclient.util.ServerVerifiedBlockState.init(MC.level, cell);
+         BlockState received = autismclient.util.ServerVerifiedBlockState.serverState(MC.level, cell);
          if (!(received.getBlock() instanceof RespawnAnchorBlock)
             || !autismclient.util.WeaponDamageCalculator.isAnchorChargeConfirmed(charge, received.getValue(RespawnAnchorBlock.CHARGE), isGlowstone(MC.player.getOffhandItem()))) {
             return false;
@@ -1878,7 +1878,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
                evaluated++;
                autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(
-                  enemy, centre, 5.0F, this.simOptionsFor(cursor), autismclient.util.TargetLeadDamageEstimator.init(enemy)
+                  enemy, centre, 5.0F, this.simOptionsFor(cursor), autismclient.util.TargetLeadDamageEstimator.leadBox(enemy)
                );
                if (this.rankAcceptable(rank) && this.friendsSafe(cursor)) {
                   accepted.add(new AnchorAuraModule.ScoredCell(cursor.immutable(), rank, distanceSq));
@@ -1945,7 +1945,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
 
                   evaluated++;
                   autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(
-                     enemy, centre, 5.0F, this.simOptionsFor(cursor), autismclient.util.TargetLeadDamageEstimator.init(enemy)
+                     enemy, centre, 5.0F, this.simOptionsFor(cursor), autismclient.util.TargetLeadDamageEstimator.leadBox(enemy)
                   );
                   if (!(rank.load() < damageFloor) && !(rank.selfDamage() <= selfCeiling)) {
                      needsShield.add(new AnchorAuraModule.ScoredCell(cursor.immutable(), rank, distanceSq));
@@ -1987,7 +1987,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private BlockPos findShieldCell(LivingEntity enemy, BlockPos anchorCell, double damageFloor, double selfCeiling) {
       Vec3 centre = center(anchorCell);
       autismclient.util.ExplosionDamageCalculator.DamagePair before = autismclient.util.TargetLeadDamageEstimator.init(
-         enemy, centre, 5.0F, this.simOptionsFor(anchorCell), autismclient.util.TargetLeadDamageEstimator.init(enemy)
+         enemy, centre, 5.0F, this.simOptionsFor(anchorCell), autismclient.util.TargetLeadDamageEstimator.leadBox(enemy)
       );
       if (before.selfDamage() < 2.0) {
          return null;
@@ -2006,7 +2006,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
          if (obsidianAvailable && this.durableCoverPlaceable(shieldCell, anchorCell) || glowstoneAvailable && this.hasAnySupport(shieldCell)) {
             autismclient.util.ExplosionDamageCalculator.SimOptions verify = this.simOptionsFor(anchorCell).withPlacedObsidian(shieldCell);
             autismclient.util.ExplosionDamageCalculator.DamagePair rank = autismclient.util.TargetLeadDamageEstimator.init(
-               enemy, centre, 5.0F, verify, autismclient.util.TargetLeadDamageEstimator.init(enemy)
+               enemy, centre, 5.0F, verify, autismclient.util.TargetLeadDamageEstimator.leadBox(enemy)
             );
             if (!autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(rank.selfDamage())
                && autismclient.util.BlastShieldPosFinder.init(before.load(), before.selfDamage(), rank.load(), rank.selfDamage(), damageFloor, selfCeiling, this.bool("efficient"))
@@ -2366,7 +2366,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private boolean rankAcceptable(autismclient.util.ExplosionDamageCalculator.DamagePair rank) {
       return autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(rank.selfDamage())
          ? false
-         : autismclient.util.WeaponDamageCalculator.init(rank.load(), rank.selfDamage(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
+         : autismclient.util.WeaponDamageCalculator.worthIt(rank.load(), rank.selfDamage(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
    }
 
    private boolean selfDamageSafe(BlockPos cell) {
@@ -2393,7 +2393,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       } else if (this.shieldInPlace(cell)) {
          return options.withPlacedObsidian(this.activeShield);
       } else {
-         return MC.level.getBlockState(this.activeShield) != autismclient.util.ServerVerifiedBlockState.init(MC.level, this.activeShield)
+         return MC.level.getBlockState(this.activeShield) != autismclient.util.ServerVerifiedBlockState.serverState(MC.level, this.activeShield)
             ? options.withExcludedBlocks(List.of(cell, this.activeShield))
             : options;
       }
@@ -2402,7 +2402,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
    private boolean shieldInPlace(BlockPos cell) {
       if (this.activeShield != null && cell.equals(this.activeAnchor)) {
          net.minecraft.world.level.block.Block material = shieldState(this.activeShieldObsidian).getBlock();
-         return MC.level.getBlockState(this.activeShield).is(material) && autismclient.util.ServerVerifiedBlockState.init(MC.level, this.activeShield).is(material);
+         return MC.level.getBlockState(this.activeShield).is(material) && autismclient.util.ServerVerifiedBlockState.serverState(MC.level, this.activeShield).is(material);
       } else {
          return false;
       }
@@ -2506,7 +2506,7 @@ public final class AnchorAuraModule extends Module implements SilentMovementCoor
       }
 
       @Override
-      public boolean init(BlockState state, BlockPos pos, boolean sneaking) {
+      public boolean accepts(BlockState state, BlockPos pos, boolean sneaking) {
          return this.init.equals(pos) && state.getBlock() instanceof RespawnAnchorBlock;
       }
    }

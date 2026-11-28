@@ -45,7 +45,7 @@ public final class FarmCropCatalog {
       return block != null && read.contains(block);
    }
 
-   public static boolean load(Block block) {
+   public static boolean isStacking(Block block) {
       return block != null && STACKING_CROPS.contains(block);
    }
 

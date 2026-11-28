@@ -31,11 +31,11 @@ public class JoinAction implements MacroAction {
    static final long init_J = 5000L;
    private static final long load = 30000L;
    private static final long read = 2000L;
-   private static final ReentrantLock init_ReentrantLock = new ReentrantLock();
+   private static final ReentrantLock JOIN_LOCK = new ReentrantLock();
    public String server = "";
    public String when = DEFAULT_WHEN.id();
    public int timeoutSec = 60;
-   private boolean init_Z = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -72,7 +72,7 @@ public class JoinAction implements MacroAction {
       }
    }
 
-   public String init_Str() {
+   public String resolveAddress() {
       String typed = this.server == null ? "" : this.server.trim();
       if (!typed.isEmpty()) {
          return typed;
@@ -83,46 +83,46 @@ public class JoinAction implements MacroAction {
    }
 
    public autismclient.util.JoinMacroController.JoinTiming timing() {
-      return autismclient.util.JoinMacroController.JoinTiming.init(this.when);
+      return autismclient.util.JoinMacroController.JoinTiming.fromConfig(this.when);
    }
 
    public boolean join(Minecraft mc, Consumer<String> status) throws InterruptedException {
-      String address = this.init_Str();
+      String address = this.resolveAddress();
       if (address.isEmpty()) {
-         return init_Z("Join: no server - set one or join a server first");
+         return failWith("Join: no server - set one or join a server first");
       }
 
       if (!ServerAddress.isValidAddress(address)) {
-         return init_Z("Join: \"" + address + "\" is not a server address");
+         return failWith("Join: \"" + address + "\" is not a server address");
       }
 
-      if (!load(mc)) {
-         return init_Z("Join: multiplayer is not allowed on this account");
+      if (!allowsMultiplayer(mc)) {
+         return failWith("Join: multiplayer is not allowed on this account");
       }
 
-      init_ReentrantLock.lockInterruptibly();
+      JOIN_LOCK.lockInterruptibly();
 
       try {
          long budgetMs = Math.max(1, Math.min(300, this.timeoutSec)) * 1000L;
-         return new JoinAction.JoinAttempt(mc, address, this.timing(), budgetMs, status == null ? s -> {} : status).init_Z();
+         return new JoinAction.JoinAttempt(mc, address, this.timing(), budgetMs, status == null ? s -> {} : status).run();
       } finally {
-         init_ReentrantLock.unlock();
+         JOIN_LOCK.unlock();
       }
    }
 
    public static void awaitDisconnect(Minecraft mc, long timeoutMs) throws InterruptedException {
       long deadline = System.currentTimeMillis() + timeoutMs;
 
-      while (init(mc) && System.currentTimeMillis() < deadline) {
-         init_V_2();
+      while (isInWorld(mc) && System.currentTimeMillis() < deadline) {
+         awaitTick();
       }
    }
 
-   private static boolean init(Minecraft mc) {
+   private static boolean isInWorld(Minecraft mc) {
       return mc.getConnection() != null || mc.level != null || mc.hasSingleplayerServer();
    }
 
-   private static boolean load(Minecraft mc) {
+   private static boolean allowsMultiplayer(Minecraft mc) {
       try {
          return mc.allowsMultiplayer();
       } catch (RuntimeException e) {
@@ -130,12 +130,12 @@ public class JoinAction implements MacroAction {
       }
    }
 
-   private static boolean init_Z(String message) {
+   private static boolean failWith(String message) {
       bi.read(message);
       return false;
    }
 
-   private static void init_V_2() throws InterruptedException {
+   private static void awaitTick() throws InterruptedException {
       if (Thread.currentThread().isInterrupted()) {
          throw new InterruptedException();
       }
@@ -152,7 +152,7 @@ public class JoinAction implements MacroAction {
       }
    }
 
-   private static void init_V_Minecraft_ConnectScreen(Minecraft mc, ConnectScreen screen) {
+   private static void abortConnectScreen(Minecraft mc, ConnectScreen screen) {
       AutismConnectScreenAccessor access = (AutismConnectScreenAccessor)screen;
       synchronized (screen) {
          access.autism$setAborted(true);
@@ -173,7 +173,7 @@ public class JoinAction implements MacroAction {
       }
    }
 
-   private static String init_Str(String reason) {
+   private static String cleanReason(String reason) {
       if (reason == null) {
          return "";
       }
@@ -189,17 +189,17 @@ public class JoinAction implements MacroAction {
       tag.putString("server", this.server == null ? "" : this.server);
       tag.putString("when", this.timing().id());
       tag.putInt("timeoutSec", this.timeoutSec);
-      tag.putBoolean("enabled", this.init_Z);
+      tag.putBoolean("enabled", this.enabled);
       return tag;
    }
 
    @Override
    public void fromTag(CompoundTag tag) {
       this.server = tag.getStringOr("server", "");
-      this.when = autismclient.util.JoinMacroController.JoinTiming.init(tag.getStringOr("when", DEFAULT_WHEN.id())).id();
+      this.when = autismclient.util.JoinMacroController.JoinTiming.fromConfig(tag.getStringOr("when", DEFAULT_WHEN.id())).id();
       this.timeoutSec = Math.max(1, Math.min(300, tag.getIntOr("timeoutSec", 60)));
       if (tag.contains("enabled")) {
-         this.init_Z = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
    }
 
@@ -221,12 +221,12 @@ public class JoinAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init_Z;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init_Z = e;
+      this.enabled = e;
    }
 
    private static final class JoinAttempt {
@@ -235,14 +235,14 @@ public class JoinAction implements MacroAction {
       private final autismclient.util.JoinMacroController.JoinTiming timing;
       private final long budgetMs;
       private final Consumer<String> status;
-      private final autismclient.util.JoinMacroController.ReadinessDetector init_aA_DataUtil = new autismclient.util.JoinMacroController.ReadinessDetector();
-      private JoinAction.ConnectAttempt init_ClassCache_DataUti;
-      private int init_I;
-      private long load_J;
-      private long read_J;
-      private long write;
-      private long update;
-      private String load_Str = "";
+      private final autismclient.util.JoinMacroController.ReadinessDetector readiness = new autismclient.util.JoinMacroController.ReadinessDetector();
+      private JoinAction.ConnectAttempt connectAttempt;
+      private int tries;
+      private long elapsedMs;
+      private long lastTickMs;
+      private long lastConnectMs;
+      private long nextRetryMs;
+      private String lastFailure = "";
       private Screen screen;
       private String line;
 
@@ -254,8 +254,8 @@ public class JoinAction implements MacroAction {
          this.status = status;
       }
 
-      boolean init_Z() throws InterruptedException {
-         this.read_J = System.currentTimeMillis();
+      boolean run() throws InterruptedException {
+         this.lastTickMs = System.currentTimeMillis();
          if (OverlayScreenController.getActualScreen(this.mc) instanceof DisconnectedScreen earlier) {
             this.screen = earlier;
          }
@@ -264,103 +264,103 @@ public class JoinAction implements MacroAction {
             while (true) {
                while (true) {
                   long now = System.currentTimeMillis();
-                  long elapsed = Math.max(0L, now - this.read_J);
-                  this.read_J = now;
-                  if (this.write()) {
-                     this.init_ClassCache_DataUti = null;
-                     this.setStatusLine("Waiting: " + this.timing.load());
-                     if (this.init_aA_DataUtil.init(this.mc, this.timing, true)) {
+                  long elapsed = Math.max(0L, now - this.lastTickMs);
+                  this.lastTickMs = now;
+                  if (this.isOnTargetServer()) {
+                     this.connectAttempt = null;
+                     this.setStatusLine("Waiting: " + this.timing.label());
+                     if (this.readiness.isReady(this.mc, this.timing, true)) {
                         return true;
                      }
                      break;
                   }
 
-                  this.init_aA_DataUtil.init();
+                  this.readiness.reset();
                   if (this.mc.getConnection() == null && !this.mc.hasSingleplayerServer()) {
-                     Boolean done = this.init(now, elapsed);
+                     Boolean done = this.pollConnect(now, elapsed);
                      if (done != null) {
                         return done;
                      }
                      break;
                   }
 
-                  if (!this.update()) {
-                     return JoinAction.init_Z("Join: could not leave the current world");
+                  if (!this.leaveCurrentWorld()) {
+                     return JoinAction.failWith("Join: could not leave the current world");
                   }
 
-                  this.read_J = System.currentTimeMillis();
+                  this.lastTickMs = System.currentTimeMillis();
                }
 
-               JoinAction.init_V_2();
+               JoinAction.awaitTick();
             }
          } catch (InterruptedException e) {
-            if (!this.write()) {
-               this.init_V();
+            if (!this.isOnTargetServer()) {
+               this.abortConnect();
             }
 
             throw e;
          }
       }
 
-      private Boolean init(long now, long elapsed) {
+      private Boolean pollConnect(long now, long elapsed) {
          Screen screen = OverlayScreenController.getActualScreen(this.mc);
-         if (this.init_ClassCache_DataUti == null && screen instanceof ConnectScreen connecting && this.mc.level == null) {
+         if (this.connectAttempt == null && screen instanceof ConnectScreen connecting && this.mc.level == null) {
             ServerData pending = autismclient.modules.AutoReconnectController.lastServer();
             if (pending == null || !JoinAction.sameAddress(pending.ip, this.address)) {
-               this.load_J += elapsed;
+               this.elapsedMs += elapsed;
                this.setStatusLine("Waiting for another connection");
-               return this.load() ? this.read() : null;
+               return this.budgetExceeded() ? this.failTimedOut() : null;
             }
 
-            this.init_ClassCache_DataUti = JoinAction.ConnectAttempt.init_ClassCache_DataUti_ConnectScreen_J(connecting, now);
-            this.write = now;
+            this.connectAttempt = JoinAction.ConnectAttempt.adopt(connecting, now);
+            this.lastConnectMs = now;
          }
 
-         if (this.init_ClassCache_DataUti != null) {
-            switch (this.init_ClassCache_DataUti.init_ClassCache_StreamU_Minecraft_J(this.mc, now)) {
+         if (this.connectAttempt != null) {
+            switch (this.connectAttempt.status(this.mc, now)) {
                case ALIVE:
-                  if (!this.init_ClassCache_DataUti.init_Z_Minecraft(this.mc)) {
-                     this.load_J += elapsed;
+                  if (!this.connectAttempt.connectedPastScreen(this.mc)) {
+                     this.elapsedMs += elapsed;
                   }
 
-                  this.setStatusLine(this.init_I > 1 ? "Joining " + this.address + " (try " + this.init_I + ")" : "Joining " + this.address);
+                  this.setStatusLine(this.tries > 1 ? "Joining " + this.address + " (try " + this.tries + ")" : "Joining " + this.address);
                   break;
                case FAILED:
-                  this.load_J += elapsed;
-                  this.init(screen, now);
-                  this.init_ClassCache_DataUti = null;
+                  this.elapsedMs += elapsed;
+                  this.noteDisconnect(screen, now);
+                  this.connectAttempt = null;
                   break;
                case CANCELLED:
                   bi.init("Join cancelled - macro stopped", -14249);
                   return false;
             }
          } else {
-            this.load_J += elapsed;
-            this.init(screen, now);
-            if (now >= this.update && !this.load()) {
-               this.init_V_J(now);
+            this.elapsedMs += elapsed;
+            this.noteDisconnect(screen, now);
+            if (now >= this.nextRetryMs && !this.budgetExceeded()) {
+               this.startConnect(now);
             } else {
-               long waitS = Math.max(1L, (this.update - now + 999L) / 1000L);
-               this.setStatusLine(this.load_Str.isEmpty() ? "Joining " + this.address + " in " + waitS + "s" : "Retry in " + waitS + "s: " + this.load_Str);
+               long waitS = Math.max(1L, (this.nextRetryMs - now + 999L) / 1000L);
+               this.setStatusLine(this.lastFailure.isEmpty() ? "Joining " + this.address + " in " + waitS + "s" : "Retry in " + waitS + "s: " + this.lastFailure);
             }
          }
 
-         return this.load() ? this.read() : null;
+         return this.budgetExceeded() ? this.failTimedOut() : null;
       }
 
-      private boolean load() {
-         return this.load_J > this.budgetMs;
+      private boolean budgetExceeded() {
+         return this.elapsedMs > this.budgetMs;
       }
 
-      private boolean read() {
-         this.init_V();
+      private boolean failTimedOut() {
+         this.abortConnect();
          long seconds = this.budgetMs / 1000L;
-         return JoinAction.init_Z(
-            "Join: could not get into " + this.address + " within " + seconds + "s" + (this.load_Str.isEmpty() ? "" : " - " + this.load_Str)
+         return JoinAction.failWith(
+            "Join: could not get into " + this.address + " within " + seconds + "s" + (this.lastFailure.isEmpty() ? "" : " - " + this.lastFailure)
          );
       }
 
-      private boolean write() {
+      private boolean isOnTargetServer() {
          if (this.mc.getConnection() != null && this.mc.level != null && !this.mc.hasSingleplayerServer()) {
             ServerData current = this.mc.getCurrentServer();
             return current != null && JoinAction.sameAddress(current.ip, this.address);
@@ -369,22 +369,22 @@ public class JoinAction implements MacroAction {
          }
       }
 
-      private void init(Screen screen, long now) {
+      private void noteDisconnect(Screen screen, long now) {
          if (screen instanceof DisconnectedScreen && screen != this.screen) {
             this.screen = screen;
             String reason = screen instanceof autismclient.mixin.duck.DisconnectedScreenDuck access ? access.autism$reason() : "";
-            this.load_Str = JoinAction.init_Str(reason);
-            this.update = Math.max(this.write + 5000L, now + 1000L);
+            this.lastFailure = JoinAction.cleanReason(reason);
+            this.nextRetryMs = Math.max(this.lastConnectMs + 5000L, now + 1000L);
          }
       }
 
-      private void init_V_J(long now) {
-         this.init_I++;
-         this.write = now;
-         this.update = now + 5000L;
+      private void startConnect(long now) {
+         this.tries++;
+         this.lastConnectMs = now;
+         this.nextRetryMs = now + 5000L;
          JoinAction.ConnectAttempt next = new JoinAction.ConnectAttempt(now, true);
-         this.init_ClassCache_DataUti = next;
-         this.setStatusLine(this.init_I > 1 ? "Joining " + this.address + " (try " + this.init_I + ")" : "Joining " + this.address);
+         this.connectAttempt = next;
+         this.setStatusLine(this.tries > 1 ? "Joining " + this.address + " (try " + this.tries + ")" : "Joining " + this.address);
          ServerAddress target = ServerAddress.parseString(this.address);
          this.mc.execute(() -> {
             try {
@@ -393,7 +393,7 @@ public class JoinAction implements MacroAction {
                   next.ours = false;
                   next.screen = already;
                } else {
-                  ConnectScreen.startConnecting(unwrapDisconnected(current), this.mc, target, this.init_ServerData(), false, null);
+                  ConnectScreen.startConnecting(unwrapDisconnected(current), this.mc, target, this.findSavedServer(), false, null);
                   if (OverlayScreenController.getActualScreen(this.mc) instanceof ConnectScreen connecting) {
                      next.screen = connecting;
                   }
@@ -401,12 +401,12 @@ public class JoinAction implements MacroAction {
             } catch (Throwable t) {
                AutismClientAddon.LOG.warn("[Autism] Join could not start connecting to {}", this.address, t);
             } finally {
-               next.load_Z = true;
+               next.attached = true;
             }
          });
       }
 
-      private ServerData init_ServerData() {
+      private ServerData findSavedServer() {
          try {
             ServerList list = new ServerList(this.mc);
             list.load();
@@ -432,34 +432,34 @@ public class JoinAction implements MacroAction {
          }
       }
 
-      private boolean update() throws InterruptedException {
+      private boolean leaveCurrentWorld() throws InterruptedException {
          ServerData current = this.mc.getCurrentServer();
          this.setStatusLine(this.mc.hasSingleplayerServer() ? "Leaving the world" : "Leaving " + (current == null ? "the server" : current.ip));
          this.mc.execute(() -> MacroExecutor.runWithSuppressedLeaveMark(() -> {
-            if (JoinAction.init(this.mc)) {
+            if (JoinAction.isInWorld(this.mc)) {
                this.mc.disconnectFromWorld(ClientLevel.DEFAULT_QUIT_MESSAGE);
             }
          }));
          long deadline = System.currentTimeMillis() + 30000L;
 
-         while (JoinAction.init(this.mc)) {
+         while (JoinAction.isInWorld(this.mc)) {
             if (System.currentTimeMillis() > deadline) {
                return false;
             }
 
-            JoinAction.init_V_2();
+            JoinAction.awaitTick();
          }
 
          return true;
       }
 
-      private void init_V() {
-         JoinAction.ConnectAttempt current = this.init_ClassCache_DataUti;
+      private void abortConnect() {
+         JoinAction.ConnectAttempt current = this.connectAttempt;
          if (current != null && current.ours) {
-            current.read = true;
+            current.abortRequested = true;
             ConnectScreen screen = current.screen;
             if (screen != null) {
-               this.mc.execute(() -> JoinAction.init_V_Minecraft_ConnectScreen(this.mc, screen));
+               this.mc.execute(() -> JoinAction.abortConnectScreen(this.mc, screen));
             }
          }
       }
@@ -475,25 +475,25 @@ public class JoinAction implements MacroAction {
    private static final class ConnectAttempt {
       volatile boolean ours;
       volatile ConnectScreen screen;
-      volatile boolean load_Z;
-      volatile boolean read;
+      volatile boolean attached;
+      volatile boolean abortRequested;
       private final long startedAt;
-      private long load_J = -1L;
+      private long detachedSince = -1L;
 
       ConnectAttempt(long startedAt, boolean ours) {
          this.startedAt = startedAt;
          this.ours = ours;
       }
 
-      static JoinAction.ConnectAttempt init_ClassCache_DataUti_ConnectScreen_J(ConnectScreen screen, long now) {
+      static JoinAction.ConnectAttempt adopt(ConnectScreen screen, long now) {
          JoinAction.ConnectAttempt attempt = new JoinAction.ConnectAttempt(now, false);
          attempt.screen = screen;
-         attempt.load_Z = true;
+         attempt.attached = true;
          return attempt;
       }
 
-      JoinAction.AttemptStatus init_ClassCache_StreamU_Minecraft_J(Minecraft mc, long now) {
-         if (!this.load_Z) {
+      JoinAction.AttemptStatus status(Minecraft mc, long now) {
+         if (!this.attached) {
             return now - this.startedAt > 10000L ? JoinAction.AttemptStatus.FAILED : JoinAction.AttemptStatus.ALIVE;
          }
 
@@ -504,12 +504,12 @@ public class JoinAction implements MacroAction {
 
          AutismConnectScreenAccessor access = (AutismConnectScreenAccessor)connecting;
          if (access.autism$aborted()) {
-            return this.read ? JoinAction.AttemptStatus.FAILED : JoinAction.AttemptStatus.CANCELLED;
+            return this.abortRequested ? JoinAction.AttemptStatus.FAILED : JoinAction.AttemptStatus.CANCELLED;
          }
 
          Screen current = OverlayScreenController.getActualScreen(mc);
-         if (current == connecting || init_Z_AutismConnectScree(access)) {
-            this.load_J = -1L;
+         if (current == connecting || hasLiveConnection(access)) {
+            this.detachedSince = -1L;
             return JoinAction.AttemptStatus.ALIVE;
          }
 
@@ -517,24 +517,24 @@ public class JoinAction implements MacroAction {
             return JoinAction.AttemptStatus.FAILED;
          }
 
-         if (this.load_J < 0L) {
-            this.load_J = now;
+         if (this.detachedSince < 0L) {
+            this.detachedSince = now;
          }
 
-         return now - this.load_J > 2000L ? JoinAction.AttemptStatus.FAILED : JoinAction.AttemptStatus.ALIVE;
+         return now - this.detachedSince > 2000L ? JoinAction.AttemptStatus.FAILED : JoinAction.AttemptStatus.ALIVE;
       }
 
-      boolean init_Z_Minecraft(Minecraft mc) {
+      boolean connectedPastScreen(Minecraft mc) {
          ConnectScreen connecting = this.screen;
          if (connecting != null && mc.level == null) {
             Screen current = OverlayScreenController.getActualScreen(mc);
-            return current != connecting && !(current instanceof DisconnectedScreen) && init_Z_AutismConnectScree((AutismConnectScreenAccessor)connecting);
+            return current != connecting && !(current instanceof DisconnectedScreen) && hasLiveConnection((AutismConnectScreenAccessor)connecting);
          } else {
             return false;
          }
       }
 
-      private static boolean init_Z_AutismConnectScree(AutismConnectScreenAccessor access) {
+      private static boolean hasLiveConnection(AutismConnectScreenAccessor access) {
          Connection connection = access.autism$connection();
          return connection != null && connection.isConnected();
       }

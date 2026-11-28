@@ -17,7 +17,7 @@ public final class IconButtonRenderer {
    private IconButtonRenderer() {
    }
 
-   public static void init(
+   public static void renderSymbol(
       GuiGraphicsExtractor graphics, Font font, autismclient.gui.f.NetHelper bounds, String symbol, boolean hovered, boolean active, boolean danger
    ) {
       if (graphics != null && font != null && bounds != null && bounds.update() > 0 && bounds.sync() > 0) {
@@ -71,7 +71,7 @@ public final class IconButtonRenderer {
       return Math.min(3, Math.max(2, Math.min(bounds.update(), bounds.sync()) / 3));
    }
 
-   public static void init(
+   public static void renderIcon(
       GuiGraphicsExtractor graphics, Font font, autismclient.gui.f.NetHelper bounds, Identifier icon, boolean hovered, boolean active, boolean danger
    ) {
       if (graphics != null && font != null && bounds != null && bounds.update() > 0 && bounds.sync() > 0) {
@@ -109,7 +109,7 @@ public final class IconButtonRenderer {
       }
    }
 
-   public static Font init() {
+   public static Font font() {
       Minecraft minecraft = Minecraft.getInstance();
       return minecraft == null ? null : minecraft.font;
    }

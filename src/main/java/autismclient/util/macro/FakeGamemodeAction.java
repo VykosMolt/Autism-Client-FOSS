@@ -17,7 +17,7 @@ public class FakeGamemodeAction implements MacroAction {
       if (this.mode == FakeGamemodeAction.GameModeChoice.RESET) {
          result = autismclient.util.FakeGamemodeManager.clearFake();
       } else if (this.method == FakeGamemodeAction.ApplyMethod.REAL) {
-         result = autismclient.util.RealGamemodeSender.init(gameTypeOf(this.mode));
+         result = autismclient.util.RealGamemodeSender.send(gameTypeOf(this.mode));
       } else {
          result = autismclient.util.FakeGamemodeManager.applyFake(gameTypeOf(this.mode));
       }

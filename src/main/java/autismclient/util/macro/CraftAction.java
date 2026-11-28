@@ -212,7 +212,7 @@ public class CraftAction implements MacroAction {
          return entry;
       }
 
-      public static CraftAction.CraftEntry init(autismclient.util.AutoCraftingEngine.CraftOption option, int amount, boolean useMaxAmount) {
+      public static CraftAction.CraftEntry create(autismclient.util.AutoCraftingEngine.CraftOption option, int amount, boolean useMaxAmount) {
          CraftAction.CraftEntry entry = new CraftAction.CraftEntry();
          if (option == null) {
             return entry;

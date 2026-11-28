@@ -197,7 +197,7 @@ public final class ClickPatternEngine {
       return this.add_J;
    }
 
-   public long read_J() {
+   public long resetAt() {
       return this.reset_J;
    }
 
@@ -205,11 +205,11 @@ public final class ClickPatternEngine {
       return this.start_J;
    }
 
-   public long update() {
+   public long stopAt() {
       return this.stop_J;
    }
 
-   public long sync() {
+   public long nextAt() {
       return this.next_J;
    }
 

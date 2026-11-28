@@ -733,8 +733,8 @@ public final class AiBlockDigger {
                            this.minecraft.player
                         )
                      );
-                  if (var16.getType() == Type.BLOCK && var16.getBlockPos().equals(this.activeTarget) && AiDigLine.init(var16, var12) >= 0.06) {
-                     return new RotationMath.Rotation(AiDigLine.init(var15), AiDigLine.load(var15));
+                  if (var16.getType() == Type.BLOCK && var16.getBlockPos().equals(this.activeTarget) && AiDigLine.edgeMargin(var16, var12) >= 0.06) {
+                     return new RotationMath.Rotation(AiDigLine.yawOf(var15), AiDigLine.pitchOf(var15));
                   }
                }
 

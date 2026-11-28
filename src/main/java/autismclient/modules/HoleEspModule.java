@@ -97,20 +97,20 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
    }
 
    @Override
-   public int init_I_32() {
+   public int horizontalRange() {
       this.refreshSettings();
       return this.horizontalDistance;
    }
 
    @Override
-   public int load_I_17() {
+   public int verticalRange() {
       this.refreshSettings();
       return this.verticalDistance;
    }
 
    private void registerScanner() {
       if (!this.scannerRegistered) {
-         autismclient.util.PvpHoleScanner.init(this);
+         autismclient.util.PvpHoleScanner.subscribe(this);
          this.scannerRegistered = true;
       }
    }
@@ -118,7 +118,7 @@ public final class HoleEspModule extends Module implements autismclient.util.Pvp
    private void unregisterScanner() {
       if (this.scannerRegistered) {
          this.scannerRegistered = false;
-         autismclient.util.PvpHoleScanner.load(this);
+         autismclient.util.PvpHoleScanner.unsubscribe(this);
       }
    }
 

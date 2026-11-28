@@ -53,7 +53,7 @@ public final class StrongholdTriangulator {
 
    private void recompute() {
       if (this.enabled && this.solution == null) {
-         StrongholdRingEstimator.RingEstimate fresh = StrongholdRingEstimator.init(this.samples, this.legacy);
+         StrongholdRingEstimator.RingEstimate fresh = StrongholdRingEstimator.estimate(this.samples, this.legacy);
          if (fresh == null) {
             if (this.provisional != null
                && this.lastThrow() != null
@@ -63,7 +63,7 @@ public final class StrongholdTriangulator {
 
             if (this.samples.size() > 1) {
                StrongholdTriangulator.ThrowSample last = this.lastThrow();
-               fresh = StrongholdRingEstimator.init(last, this.legacy);
+               fresh = StrongholdRingEstimator.estimateOne(last, this.legacy);
                if (fresh != null) {
                   this.samples.clear();
                   this.samples.add(last);
@@ -294,7 +294,7 @@ public final class StrongholdTriangulator {
          this.init_Z = !StrongholdTriangulator.isValidPoint(origin);
       }
 
-      public StrongholdTriangulator.ThrowSample init(Vec3 at, int age) {
+      public StrongholdTriangulator.ThrowSample sample(Vec3 at, int age) {
          if (!this.init_Z && !this.load_Z && age <= 60 && StrongholdTriangulator.isValidPoint(at)) {
             if (at.distanceToSqr(this.last) > 9.0) {
                this.init_Z = true;
@@ -351,7 +351,7 @@ public final class StrongholdTriangulator {
          }
       }
 
-      public boolean init() {
+      public boolean isDone() {
          return this.init_Z || this.load_Z;
       }
    }

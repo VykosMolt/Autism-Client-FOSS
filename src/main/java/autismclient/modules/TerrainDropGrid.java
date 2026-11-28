@@ -30,7 +30,7 @@ final class TerrainDropGrid {
    private byte[] init_BArr;
    private byte[] load_BArr;
    private int[] init_IArr;
-   private int open;
+   private int queuedColumns;
    int columnFetches;
 
    TerrainDropGrid(KnockbackThrowPlanner.ThrowWorld world, AABB body, double ref, double radius, double minimum, boolean voidOnly) {
@@ -64,7 +64,7 @@ final class TerrainDropGrid {
 
       TerrainDropGrid.Column column = this.columns[index];
       if (column == null) {
-         column = this.world.init_V_StreamUtil_I(x, z, this.baseY, this.refY + 0.6);
+         column = this.world.column(x, z, this.baseY, this.refY + 0.6);
          if (column == null) {
             column = TerrainDropGrid.Column.EMPTY_COLUMN;
          }
@@ -189,7 +189,7 @@ final class TerrainDropGrid {
          }
 
          double friction = ground ? block * 0.91 : 0.91;
-         if (countering && steer.init(vx, vz)) {
+         if (countering && steer.opposes(vx, vz)) {
             double accel = ground ? steer.read() * (0.21600002 / (block * block * block)) : steer.write();
             vx += steer.init_D() * accel;
             vz += steer.load() * accel;
@@ -505,13 +505,13 @@ final class TerrainDropGrid {
          for (int cx = this.originX - r; cx <= this.originX + r; cx++) {
             for (int cz = this.originZ - r; cz <= this.originZ + r; cz++) {
                if (this.distanceToCell(cx, cz) <= this.radius + 1.0E-6 && this.init_B_I_I(cx, cz) == 1) {
-                  this.init_IArr[this.open++] = this.columnIndex(cx, cz);
+                  this.init_IArr[this.queuedColumns++] = this.columnIndex(cx, cz);
                }
             }
          }
       }
 
-      for (int i = 0; i < this.open; i++) {
+      for (int i = 0; i < this.queuedColumns; i++) {
          int anchor = this.init_IArr[i];
          int ax = anchor / this.span - this.halfSpan + this.originX;
          int az = anchor % this.span - this.halfSpan + this.originZ;
@@ -591,7 +591,7 @@ final class TerrainDropGrid {
       boolean load_Z,
       boolean read_Z
    ) {
-      boolean init(double minimum, boolean voidOnly) {
+      boolean isLethal(double minimum, boolean voidOnly) {
          return this.outcome == KnockbackThrowPlanner.LandingOutcome.VOID
             || !voidOnly
                && (this.outcome == KnockbackThrowPlanner.LandingOutcome.LAVA || this.outcome == KnockbackThrowPlanner.LandingOutcome.DROP && this.init_D + 1.0E-6 >= minimum);

@@ -14,7 +14,7 @@ public class WaitDurabilityAction implements MacroAction {
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
    public boolean useNext = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -33,10 +33,10 @@ public class WaitDurabilityAction implements MacroAction {
                var10000 = this.matches(mc.player.getMainHandItem()) || this.matches(mc.player.getOffhandItem());
                break;
             case ITEM:
-               var10000 = this.load(mc);
+               var10000 = this.conditionMet(mc);
                break;
             case SLOT:
-               var10000 = this.matches(this.init(mc, this.slot));
+               var10000 = this.matches(this.stackAt(mc, this.slot));
                break;
             default:
                throw new MatchException(null, null);
@@ -48,7 +48,7 @@ public class WaitDurabilityAction implements MacroAction {
       }
    }
 
-   private boolean load(Minecraft mc) {
+   private boolean conditionMet(Minecraft mc) {
       MacroItemTarget target = MacroItemTarget.parse(this.itemName).resolveTemplates(mc);
       if (target == null) {
          return false;
@@ -75,7 +75,7 @@ public class WaitDurabilityAction implements MacroAction {
       return itemOnly.matchScore(mc.player.getOffhandItem(), 40) >= 0 && this.matches(mc.player.getOffhandItem());
    }
 
-   private ItemStack init(Minecraft mc, int visibleSlot) {
+   private ItemStack stackAt(Minecraft mc, int visibleSlot) {
       if (mc == null || mc.player == null) {
          return ItemStack.EMPTY;
       }
@@ -92,8 +92,8 @@ public class WaitDurabilityAction implements MacroAction {
    public boolean matches(ItemStack stack) {
       if (stack != null && !stack.isEmpty() && stack.isDamageableItem()) {
          int metric = this.init_I(stack);
-         int target = this.load(stack);
-         return this.init(metric, target);
+         int target = this.measure(stack);
+         return this.compare(metric, target);
       } else {
          return false;
       }
@@ -119,12 +119,12 @@ public class WaitDurabilityAction implements MacroAction {
       return var10000;
    }
 
-   private int load(ItemStack stack) {
+   private int measure(ItemStack stack) {
       int max = this.measurement == WaitDurabilityAction.Measurement.PERCENT_REMAINING ? 100 : Math.max(0, stack == null ? 2048 : stack.getMaxDamage());
       return Math.max(0, Math.min(max, this.value));
    }
 
-   private boolean init(int actual, int target) {
+   private boolean compare(int actual, int target) {
       boolean var10000;
       switch (this.comparison) {
          case BELOW:
@@ -161,7 +161,7 @@ public class WaitDurabilityAction implements MacroAction {
       tag.putInt("value", Math.max(0, this.value));
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
       tag.putBoolean("useNext", this.useNext);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
@@ -177,7 +177,7 @@ public class WaitDurabilityAction implements MacroAction {
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       this.useNext = tag.getBooleanOr("useNext", false);
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -185,10 +185,10 @@ public class WaitDurabilityAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Wait Durability " + this.init() + " " + this.load() + " " + this.read() + " " + Math.max(0, this.value) + (this.useNext ? " + next" : "");
+      return "Wait Durability " + this.targetLabel() + " " + this.measurementLabel() + " " + this.comparisonSymbol() + " " + Math.max(0, this.value) + (this.useNext ? " + next" : "");
    }
 
-   private String init() {
+   private String targetLabel() {
       String var10000;
       switch (this.targetMode) {
          case HELD:
@@ -207,7 +207,7 @@ public class WaitDurabilityAction implements MacroAction {
       return var10000;
    }
 
-   private String load() {
+   private String measurementLabel() {
       String var10000;
       switch (this.measurement) {
          case REMAINING:
@@ -226,7 +226,7 @@ public class WaitDurabilityAction implements MacroAction {
       return var10000;
    }
 
-   private String read() {
+   private String comparisonSymbol() {
       String var10000;
       switch (this.comparison) {
          case BELOW:
@@ -258,12 +258,12 @@ public class WaitDurabilityAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum TargetMode {

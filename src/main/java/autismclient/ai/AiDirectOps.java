@@ -31,7 +31,7 @@ public final class AiDirectOps {
    private static volatile autismclient.util.macro.MacroToolBridge.ToolJob lastJob;
    private static volatile AiOperation.Result lastResult;
 
-   public static boolean init_Z(String id) {
+   public static boolean isCampaignTool(String id) {
       return CAMPAIGN_TOOL_IDS.contains(id);
    }
 
@@ -39,7 +39,7 @@ public final class AiDirectOps {
    }
 
    public static void reloadToolSettings() {
-      cachedToolSettings = AiToolSettings.load(aiFolder());
+      cachedToolSettings = AiToolSettings.loadFrom(aiFolder());
    }
 
    static void init(Minecraft client) {
@@ -177,11 +177,11 @@ public final class AiDirectOps {
          }
 
          lastJob = created.job;
-         created.job.init(() -> Minecraft.getInstance().execute(() -> init(created.job)));
+         created.job.onCancel(() -> Minecraft.getInstance().execute(() -> cancelJob(created.job)));
          if (lease != null) {
-            created.job.init(autismclient.util.macro.MacroToolBridge.JobState.WAITING, "Starting " + id, "{}");
+            created.job.publish(autismclient.util.macro.MacroToolBridge.JobState.WAITING, "Starting " + id, "{}");
          } else {
-            created.job.init(autismclient.util.macro.MacroToolBridge.JobState.WAITING, "Waiting for shared controls", "{}");
+            created.job.publish(autismclient.util.macro.MacroToolBridge.JobState.WAITING, "Waiting for shared controls", "{}");
          }
 
          lastResult = null;
@@ -200,7 +200,7 @@ public final class AiDirectOps {
       return a != null ? a.job : (latestJob != null ? latestJob : lastJob);
    }
 
-   public static void init(autismclient.util.macro.MacroToolBridge.ToolJob job) {
+   public static void cancelJob(autismclient.util.macro.MacroToolBridge.ToolJob job) {
       AiDirectOps.Inner_DataUtil a = active;
       if (a != null && a.job == job) {
          failOp(a, AiFailure.CANCELLED, "Cancelled by its owner");
@@ -290,7 +290,7 @@ public final class AiDirectOps {
          AutismClientMessaging.sendPrefixed("§7" + a.id + " is already paused - " + toolsCommand() + " resume continues.");
       } else if (a.defense == null && !UNPAUSABLE_TOOL_IDS.contains(a.id)) {
          a.paused = true;
-         a.job.init(autismclient.util.macro.MacroToolBridge.JobState.PAUSED, "Paused", a.lastData);
+         a.job.publish(autismclient.util.macro.MacroToolBridge.JobState.PAUSED, "Paused", a.lastData);
          releaseInputs(a);
          AutismClientMessaging.sendPrefixed("§e" + a.id + " paused (inputs released; its deadline keeps running) - " + toolsCommand() + " resume continues.");
       } else {
@@ -307,7 +307,7 @@ public final class AiDirectOps {
       } else {
          a.paused = false;
          a.job
-            .init(
+            .publish(
                a.lease == null ? autismclient.util.macro.MacroToolBridge.JobState.WAITING : autismclient.util.macro.MacroToolBridge.JobState.RUNNING,
                "Resumed",
                a.lastData
@@ -340,7 +340,7 @@ public final class AiDirectOps {
          stopAll("client panic mode");
       } else if (!autismclient.modules.AutoTotemModule.init_Z_6()) {
          if (a.world != null && mc.level != a.world) {
-            if (!init_Z(a.id)) {
+            if (!isCampaignTool(a.id)) {
                failOp(a, AiFailure.WORLD_CHANGED, "World or session changed");
                AutismClientMessaging.sendPrefixed("§e" + a.id + " cancelled [WORLD_CHANGED]: world or session changed.");
                return;
@@ -362,7 +362,7 @@ public final class AiDirectOps {
                   return;
                }
 
-               a.job.init(autismclient.util.macro.MacroToolBridge.JobState.WAITING, "Starting " + a.id, a.lastData);
+               a.job.publish(autismclient.util.macro.MacroToolBridge.JobState.WAITING, "Starting " + a.id, a.lastData);
             }
 
             if (mc.player != null && mc.player.isAlive() && a.resources.contains("INPUT") && a.resources.contains("ROTATION")) {
@@ -375,10 +375,10 @@ public final class AiDirectOps {
                   && a.defense != null
                   && a.kind.equals("food")
                   && AiService.isSafeStanceForReflex(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
-                  if (AiDodge.init(mc, false)) {
+                  if (AiDodge.hasImminentThreat(mc, false)) {
                      interruptForDefense(
                         a,
-                        AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4)),
+                        AiDodge.dodge(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4)),
                         "projectile",
                         AiFailure.THREAT_INTERRUPT,
                         "incoming projectile while eating"
@@ -406,11 +406,11 @@ public final class AiDirectOps {
                   && AiService.isInterruptibleOperation(a.id)
                   && !AiGuard.isSuppressed()
                   && AiService.isSafeStanceForReflex(mc.player.onGround(), mc.player.isInWater(), mc.player.onClimbable())) {
-                  boolean projectile = AiDodge.init(mc, mc.player.getDeltaMovement().horizontalDistance() >= 0.12);
+                  boolean projectile = AiDodge.hasImminentThreat(mc, mc.player.getDeltaMovement().horizontalDistance() >= 0.12);
                   if (projectile) {
                      interruptForDefense(
                         a,
-                        AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4)),
+                        AiDodge.dodge(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 4)),
                         "projectile",
                         AiFailure.THREAT_INTERRUPT,
                         "incoming projectile"
@@ -532,11 +532,11 @@ public final class AiDirectOps {
       a.lastMessage = result.message();
       a.lastData = data == null ? "{}" : data;
       if (!result.terminal()) {
-         a.job.init(autismclient.util.macro.MacroToolBridge.JobState.RUNNING, a.lastMessage, a.lastData);
+         a.job.publish(autismclient.util.macro.MacroToolBridge.JobState.RUNNING, a.lastMessage, a.lastData);
          if (active == a) {
             String title = a.id.substring(a.id.indexOf(':') + 1).replace('_', ' ');
             String pretty = title.isEmpty() ? a.id : Character.toUpperCase(title.charAt(0)) + title.substring(1);
-            AiVisualization.showNavStatus(a, pretty, AiTaskStatus.init(a.lastMessage, "In progress"), -1);
+            AiVisualization.showNavStatus(a, pretty, AiTaskStatus.phaseLabel(a.lastMessage, "In progress"), -1);
          }
       }
    }
@@ -642,7 +642,7 @@ public final class AiDirectOps {
                pendingInputCleanups--;
             }
 
-            a.job.init(autismclient.util.macro.MacroToolBridge.JobState.valueOf(result.status().name()), result.message(), result.dataJson());
+            a.job.publish(autismclient.util.macro.MacroToolBridge.JobState.valueOf(result.status().name()), result.message(), result.dataJson());
          }
       });
    }
@@ -714,14 +714,14 @@ public final class AiDirectOps {
    public static AiToolSettings toolSettings() {
       AiToolSettings s = cachedToolSettings;
       if (s == null) {
-         s = AiToolSettings.load(aiFolder());
+         s = AiToolSettings.loadFrom(aiFolder());
          cachedToolSettings = s;
       }
 
       return s;
    }
 
-   public static void init(AiToolSettings next) {
+   public static void saveToolSettings(AiToolSettings next) {
       next.clamp();
       cachedToolSettings = next;
 
@@ -745,7 +745,7 @@ public final class AiDirectOps {
       }
    }
 
-   public static void init(Consumer<AiSettings> edit) {
+   public static void editSettings(Consumer<AiSettings> edit) {
       AiService existing = AiService.getExistingInstance();
       if (existing != null) {
          existing.editSettingsAsync(edit);

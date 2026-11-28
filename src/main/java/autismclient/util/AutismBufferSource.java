@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 public final class AutismBufferSource implements AutoCloseable {
    private final StagedVertexBuffer stagedBuffer;
    private final List<Draw> draws = new ArrayList<>();
-   private final List<RenderType> load = new ArrayList<>();
+   private final List<RenderType> renderTypes = new ArrayList<>();
 
    public AutismBufferSource() {
       this(4194304);
@@ -24,14 +24,14 @@ public final class AutismBufferSource implements AutoCloseable {
    }
 
    public VertexConsumer buffer(RenderType renderType) {
-      if (!this.load.isEmpty() && this.load.getLast() == renderType && renderType.canConsolidateConsecutiveGeometry()) {
+      if (!this.renderTypes.isEmpty() && this.renderTypes.getLast() == renderType && renderType.canConsolidateConsecutiveGeometry()) {
          return this.stagedBuffer.getVertexBuilder(this.draws.getLast());
       }
 
       Draw draw = this.stagedBuffer
          .appendDraw(renderType.format(), renderType.primitiveTopology(), renderType.sortOnUpload() ? RenderSystem.getProjectionType().vertexSorting() : null);
       this.draws.add(draw);
-      this.load.add(renderType);
+      this.renderTypes.add(renderType);
       return this.stagedBuffer.getVertexBuilder(draw);
    }
 
@@ -44,11 +44,11 @@ public final class AutismBufferSource implements AutoCloseable {
          this.stagedBuffer.upload();
 
          for (int i = 0; i < this.draws.size(); i++) {
-            this.init(this.load.get(i), this.draws.get(i));
+            this.init(this.renderTypes.get(i), this.draws.get(i));
          }
       } finally {
          this.draws.clear();
-         this.load.clear();
+         this.renderTypes.clear();
          this.stagedBuffer.endFrame();
       }
    }

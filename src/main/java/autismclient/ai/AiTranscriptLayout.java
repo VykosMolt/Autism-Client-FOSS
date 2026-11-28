@@ -40,7 +40,7 @@ final class AiTranscriptLayout {
       return this.contentHeight;
    }
 
-   boolean init(
+   boolean layout(
       List<AiService.TranscriptEntry> messages,
       int width,
       int epoch,
@@ -383,7 +383,7 @@ final class AiTranscriptLayout {
             byte[] styles = block.styles();
             int first = out.size();
 
-            for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil w : autismclient.gui.ui.TextWrapLayout.init(
+            for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil w : autismclient.gui.ui.TextWrapLayout.wrap(
                safe, Math.max(1, width - indent), (s, e) -> init_I(safe, styles, s, e, measure)
             )) {
                String rowText = safe.substring(w.init(), w.read());
@@ -420,7 +420,7 @@ final class AiTranscriptLayout {
       int total = 0;
 
       for (int[] run : styleRuns(styles, start, end)) {
-         total += measure.init(text, run[0], run[1], run[2]);
+         total += measure.measureStyled(text, run[0], run[1], run[2]);
       }
 
       return total;
@@ -430,7 +430,7 @@ final class AiTranscriptLayout {
       List<AiTranscriptLayout.StyledSpan> out = new ArrayList<>();
 
       for (int[] run : styleRuns(styles, start, end)) {
-         out.add(new AiTranscriptLayout.StyledSpan(text.substring(run[0], run[1]), run[2], measure.init(text, run[0], run[1], run[2])));
+         out.add(new AiTranscriptLayout.StyledSpan(text.substring(run[0], run[1]), run[2], measure.measureStyled(text, run[0], run[1], run[2])));
       }
 
       return List.copyOf(out);
@@ -464,8 +464,8 @@ final class AiTranscriptLayout {
       String safe = text == null ? "" : text.replace("\r", "").replace('\t', ' ');
       List<String> out = new ArrayList<>();
 
-      for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil line : autismclient.gui.ui.TextWrapLayout.init(
-         safe, Math.max(1, width), (s, e) -> measure.init(safe, s, e)
+      for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil line : autismclient.gui.ui.TextWrapLayout.wrap(
+         safe, Math.max(1, width), (s, e) -> measure.measure(safe, s, e)
       )) {
          out.add(safe.substring(line.init(), line.read()));
       }
@@ -513,10 +513,10 @@ final class AiTranscriptLayout {
    }
 
    interface TextMeasurer {
-      int init(String var1, int var2, int var3);
+      int measure(String var1, int var2, int var3);
 
-      default int init(String text, int start, int end, int style) {
-         return this.init(text, start, end);
+      default int measureStyled(String text, int start, int end, int style) {
+         return this.measure(text, start, end);
       }
    }
 

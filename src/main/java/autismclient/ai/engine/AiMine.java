@@ -54,7 +54,7 @@ public final class AiMine {
    private AiMine() {
    }
 
-   public static AiOperation init(JsonObject args) {
+   public static AiOperation mine(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final String blockArg = AiMiningTargets.parse(AiJson.getString(args, "block", "")).spec();
@@ -134,7 +134,7 @@ public final class AiMine {
                   return this.init(
                      AiOperation.Status.FAILED,
                      AiFailure.LOW_HEALTH,
-                     AiLowHealth.init("mining", this.mc.player.getHealth(), this.mc.player.getMaxHealth())
+                     AiLowHealth.refusalMessage("mining", this.mc.player.getHealth(), this.mc.player.getMaxHealth())
                   );
                }
 
@@ -453,7 +453,7 @@ public final class AiMine {
             }
 
             boolean init(Block block) {
-               return this.blockMatchCache.computeIfAbsent(block, b -> AiMine.init(blockArg, BuiltInRegistries.BLOCK.getKey(b).toString()))
+               return this.blockMatchCache.computeIfAbsent(block, b -> AiMine.matchesBlock(blockArg, BuiltInRegistries.BLOCK.getKey(b).toString()))
                   && (quota == null || quota.covers(BuiltInRegistries.BLOCK.getKey(block).toString()));
             }
 
@@ -593,7 +593,7 @@ public final class AiMine {
                      AiPathfinder.PathOptions routeCapabilities = new AiPathfinder.PathOptions(true, true, true, sprint, constructionBlocks > 0)
                         .withConstructionBlocks(constructionBlocks);
                      this.routeSearch = new FutureTask<>(
-                        () -> MiningTargetSearch.init(this.grid, from, choices, routeCapabilities, reach, eye, this.routeSearchDeadline)
+                        () -> MiningTargetSearch.search(this.grid, from, choices, routeCapabilities, reach, eye, this.routeSearchDeadline)
                      );
                      Thread.ofVirtual().name("mining-target-routes").start(this.routeSearch);
                   }
@@ -657,7 +657,7 @@ public final class AiMine {
                BlockState state = this.mc.level.getBlockState(pos);
                Boolean match = this.blockMatchCache.get(state.getBlock());
                if (match == null) {
-                  match = AiMine.init(blockArg, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
+                  match = AiMine.matchesBlock(blockArg, BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
                   this.blockMatchCache.put(state.getBlock(), match);
                }
 
@@ -742,7 +742,7 @@ public final class AiMine {
                   }
                }
 
-               ToolUpkeep.UpkeepDecision decision = ToolUpkeep.init(this.init(state));
+               ToolUpkeep.UpkeepDecision decision = ToolUpkeep.decide(this.init(state));
                if (decision instanceof ToolUpkeep.UpkeepDecision.KeepHotbar keep) {
                   this.selectSlot(keep.hotbarSlot());
                   return null;
@@ -809,7 +809,7 @@ public final class AiMine {
 
                for (int i = 0; i < 36; i++) {
                   ItemStack stack = inventory.getItem(i);
-                  if (!stack.isEmpty() && AiMine.init(dropArg, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
+                  if (!stack.isEmpty() && AiMine.matchesBlock(dropArg, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())) {
                      total += stack.getCount();
                   }
                }
@@ -914,7 +914,7 @@ public final class AiMine {
       }
    }
 
-   public static boolean init(String arg, String blockId) {
+   public static boolean matchesBlock(String arg, String blockId) {
       return AiMiningTargets.matches(arg, blockId);
    }
 

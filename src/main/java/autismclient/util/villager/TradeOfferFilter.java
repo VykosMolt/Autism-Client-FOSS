@@ -28,7 +28,7 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
             return false;
          }
 
-         int price = init(offer);
+         int price = cost(offer);
          if (!withinPriceLimit(price, this.maxPrice)) {
             return false;
          }
@@ -67,11 +67,11 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
       return limit == 0 || price <= limit;
    }
 
-   public static boolean init(int cost, int spent, int budget, int available, int reserve) {
+   public static boolean affordable(int cost, int spent, int budget, int available, int reserve) {
       return (budget == 0 || (long)spent + cost <= budget) && (cost == 0 || available - cost >= reserve);
    }
 
-   public static int init(MerchantOffer offer) {
+   public static int cost(MerchantOffer offer) {
       return init(offer.getCostA()) + init(offer.getCostB());
    }
 
@@ -85,10 +85,10 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
       }
 
       String actual = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-      return ids.stream().map(TradeOfferFilter::init).anyMatch(actual::equals);
+      return ids.stream().map(TradeOfferFilter::normalizeItem).anyMatch(actual::equals);
    }
 
-   public static String init(String value) {
+   public static String normalizeItem(String value) {
       if (value != null && !value.isBlank()) {
          String clean = value.strip().toLowerCase(Locale.ROOT);
          return clean.contains(":") ? clean : "minecraft:" + clean;
@@ -99,7 +99,7 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
 
    public record Inner_DataUtil(String enchantment, int minLevel, int load) {
       public Inner_DataUtil(String enchantment, int minLevel, int load) {
-         enchantment = TradeOfferFilter.init(enchantment);
+         enchantment = TradeOfferFilter.normalizeItem(enchantment);
          if (!enchantment.isBlank() && minLevel >= 1 && minLevel <= 255 && load >= 0 && load <= 128) {
             this.enchantment = enchantment;
             this.minLevel = minLevel;
@@ -109,7 +109,7 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
          }
       }
 
-      public static TradeOfferFilter.Inner_DataUtil init(String value) {
+      public static TradeOfferFilter.Inner_DataUtil parse(String value) {
          String[] parts = value.strip().split("\\s+");
          if (parts.length >= 1 && parts.length <= 3) {
             try {

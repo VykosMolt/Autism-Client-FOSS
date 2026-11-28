@@ -57,7 +57,7 @@ public final class AiPlanks {
       return id != null && BuiltInRegistries.ITEM.getOptional(id).isPresent() ? planks : null;
    }
 
-   public static int init(Inventory inventory) {
+   public static int plankYield(Inventory inventory) {
       int total = 0;
 
       for (int slot = 0; slot < 36; slot++) {
@@ -70,7 +70,7 @@ public final class AiPlanks {
       return total;
    }
 
-   public static AiOperation init(Inventory inventory, int wanted) {
+   public static AiOperation craftPlanks(Inventory inventory, int wanted) {
       Map<String, Integer> byPlanks = new HashMap<>();
       Map<String, Integer> perLog = new HashMap<>();
 

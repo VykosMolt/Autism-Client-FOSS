@@ -23,7 +23,7 @@ public class ToggleCommand extends Command {
       });
       root.then(
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("module", autismclient.commands.arguments.ModuleArgumentType.module())
-               .executes(ctx -> init(autismclient.commands.arguments.ModuleArgumentType.init(ctx, "module"), ak.Inner_StreamUtil.init)))
+               .executes(ctx -> init(autismclient.commands.arguments.ModuleArgumentType.getValue(ctx, "module"), ak.Inner_StreamUtil.init)))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("state", StringArgumentType.word())
                   .suggests(autismclient.commands.CommandSuggestions::suggestDelayState)
@@ -63,7 +63,7 @@ public class ToggleCommand extends Command {
                         }
 
                         ak.Inner_StreamUtil mode = var10000;
-                        return init(autismclient.commands.arguments.ModuleArgumentType.init(ctx, "module"), mode);
+                        return init(autismclient.commands.arguments.ModuleArgumentType.getValue(ctx, "module"), mode);
                      }
                   )
             )

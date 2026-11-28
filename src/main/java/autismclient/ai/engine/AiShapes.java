@@ -71,7 +71,7 @@ public final class AiShapes {
       }
    }
 
-   public static short init(boolean loaded, boolean passable, int top16) {
+   public static short shapeId(boolean loaded, boolean passable, int top16) {
       if (!loaded) {
          return 1;
       } else {
@@ -80,7 +80,7 @@ public final class AiShapes {
    }
 
    public static short shapeIdOf(AiPathfinder.CellInfo probe) {
-      return probe == null ? -1 : init(probe.loaded(), probe.passable(), probe.top16());
+      return probe == null ? -1 : shapeId(probe.loaded(), probe.passable(), probe.top16());
    }
 
    private static boolean isFullCube(AABB b) {

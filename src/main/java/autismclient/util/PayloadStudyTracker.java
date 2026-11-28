@@ -27,7 +27,7 @@ public final class PayloadStudyTracker {
    private PayloadStudyTracker() {
    }
 
-   public static synchronized void init(String studyLabel, Collection<String> studyPatterns, Collection<String> registeredNow) {
+   public static synchronized void startStudy(String studyLabel, Collection<String> studyPatterns, Collection<String> registeredNow) {
       studying = true;
       currentLabel = studyLabel != null && !studyLabel.isBlank() ? studyLabel.trim() : "Payloads";
       studyStartedAt = System.currentTimeMillis();
@@ -72,7 +72,7 @@ public final class PayloadStudyTracker {
       return !studying ? "" : payloadCount + " payloads | " + statsByChannel.size() + " channels | ESC to finish";
    }
 
-   public static synchronized String read() {
+   public static synchronized String studyStatus() {
       if (!studying) {
          return "";
       }

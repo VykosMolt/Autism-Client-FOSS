@@ -39,7 +39,7 @@ final class AiFastPath {
    private AiFastPath() {
    }
 
-   static AiFastPath.Inner_DataUtil init(String objective, Function<String, int[]> waypoint) {
+   static AiFastPath.Inner_DataUtil parse(String objective, Function<String, int[]> waypoint) {
       if (objective == null) {
          return null;
       }

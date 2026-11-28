@@ -14,6 +14,6 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class AutismSteerableEntityControlMixin {
    @ModifyReturnValue(method = "getControllingPassenger", at = @At("RETURN"))
    private LivingEntity autism$entityControlSteer(LivingEntity original) {
-      return original == null && EntityControlModule.init_Z_Entity_2((Entity)(Object)this) ? Minecraft.getInstance().player : original;
+      return original == null && EntityControlModule.controls((Entity)(Object)this) ? Minecraft.getInstance().player : original;
    }
 }

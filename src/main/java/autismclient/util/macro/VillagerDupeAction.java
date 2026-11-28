@@ -110,7 +110,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
    @Override
    public String getDisplayName() {
       String passes = this.count <= 0 ? (this.stopAfter > 0 ? " / " + this.stopAfter + " items" : " / until stopped") : " x" + this.count;
-      return "Villager Dupe / " + this.filter.init() + (this.targets == VillagerDupeAction.TargetSelection.NEAREST ? " / Nearest" : "") + passes;
+      return "Villager Dupe / " + this.filter.label() + (this.targets == VillagerDupeAction.TargetSelection.NEAREST ? " / Nearest" : "") + passes;
    }
 
    @Override
@@ -165,7 +165,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
             return this.finish();
          } else if (this.write_Z) {
             if (this.driver.isActive() && this.activeTicks++ < 10) {
-               this.driver.load(mc, this.options);
+               this.driver.start(mc, this.options);
             }
 
             if (!this.driver.isActive()) {

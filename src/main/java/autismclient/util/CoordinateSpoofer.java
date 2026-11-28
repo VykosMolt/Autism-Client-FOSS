@@ -12,26 +12,26 @@ public final class CoordinateSpoofer {
    private static double offsetX;
    private static double offsetY;
    private static double offsetZ;
-   private static double write;
-   private static double update;
-   private static double sync;
-   private static double flush;
-   private static double close;
-   private static double open;
-   private static double poll;
+   private static double scaleX;
+   private static double scaleZ;
+   private static double scaleOriginX;
+   private static double scaleOriginZ;
+   private static double rotation;
+   private static double rotateOriginX;
+   private static double rotateOriginZ;
    private static long noiseSeed;
-   private static double push;
-   private static double pop;
-   private static double tick;
-   private static volatile double run;
-   private static volatile double get;
-   private static volatile double set;
-   private static double put;
-   private static double add;
-   private static double clear;
-   private static volatile double reset;
-   private static volatile double start;
-   private static volatile double stop;
+   private static double fixedX;
+   private static double fixedY;
+   private static double fixedZ;
+   private static volatile double fakeAnchorX;
+   private static volatile double fakeAnchorY;
+   private static volatile double fakeAnchorZ;
+   private static double realAnchorX;
+   private static double realAnchorY;
+   private static double realAnchorZ;
+   private static volatile double deltaX;
+   private static volatile double deltaY;
+   private static volatile double deltaZ;
 
    private CoordinateSpoofer() {
    }
@@ -63,37 +63,37 @@ public final class CoordinateSpoofer {
 
    public static void reroll() {
       offsetX = randomOffset();
-      offsetY = init(-120, 200);
+      offsetY = randomBetween(-120, 200);
       offsetZ = randomOffset();
-      write = randomScale();
-      update = randomScale();
-      sync = randomOffset();
-      flush = randomOffset();
-      close = RANDOM.nextDouble() * 3.141592653589793 * 2.0;
-      open = randomOffset();
-      poll = randomOffset();
+      scaleX = randomScale();
+      scaleZ = randomScale();
+      scaleOriginX = randomOffset();
+      scaleOriginZ = randomOffset();
+      rotation = RANDOM.nextDouble() * 3.141592653589793 * 2.0;
+      rotateOriginX = randomOffset();
+      rotateOriginZ = randomOffset();
       noiseSeed = RANDOM.nextLong();
-      push = randomOffset();
-      pop = init(-50, 320);
-      tick = randomOffset();
+      fixedX = randomOffset();
+      fixedY = randomBetween(-50, 320);
+      fixedZ = randomOffset();
    }
 
    public static void setCustomCoords(double cx, double cy, double cz) {
-      run = cx;
-      get = cy;
-      set = cz;
-      reset = run - put;
-      start = get - add;
-      stop = set - clear;
+      fakeAnchorX = cx;
+      fakeAnchorY = cy;
+      fakeAnchorZ = cz;
+      deltaX = fakeAnchorX - realAnchorX;
+      deltaY = fakeAnchorY - realAnchorY;
+      deltaZ = fakeAnchorZ - realAnchorZ;
    }
 
-   public static void load(double realX, double realY, double realZ) {
-      put = realX;
-      add = realY;
-      clear = realZ;
-      reset = run - put;
-      start = get - add;
-      stop = set - clear;
+   public static void setRealAnchor(double realX, double realY, double realZ) {
+      realAnchorX = realX;
+      realAnchorY = realY;
+      realAnchorZ = realZ;
+      deltaX = fakeAnchorX - realAnchorX;
+      deltaY = fakeAnchorY - realAnchorY;
+      deltaZ = fakeAnchorZ - realAnchorZ;
    }
 
    public static double[] spoof(double x, double y, double z) {
@@ -106,15 +106,15 @@ public final class CoordinateSpoofer {
       double fz;
       switch (mode) {
          case SCALED:
-            fx = (x - sync) * write + offsetX;
+            fx = (x - scaleOriginX) * scaleX + offsetX;
             fy = y + offsetY;
-            fz = (z - flush) * update + offsetZ;
+            fz = (z - scaleOriginZ) * scaleZ + offsetZ;
             break;
          case ROTATED:
-            double dx = x - open;
-            double dz = z - poll;
-            double c = Math.cos(close);
-            double s = Math.sin(close);
+            double dx = x - rotateOriginX;
+            double dz = z - rotateOriginZ;
+            double c = Math.cos(rotation);
+            double s = Math.sin(rotation);
             fx = dx * c - dz * s + offsetX;
             fz = dx * s + dz * c + offsetZ;
             fy = y + offsetY;
@@ -123,19 +123,19 @@ public final class CoordinateSpoofer {
             long rx = Math.floorDiv((long)Math.floor(x), 1024L);
             long ry = Math.floorDiv((long)Math.floor(y), 1024L);
             long rz = Math.floorDiv((long)Math.floor(z), 1024L);
-            fx = x + init(noiseSeed, rx, rz, 0);
-            fz = z + init(noiseSeed, rx, rz, 1);
-            fy = y + init(noiseSeed ^ -7046029254386353131L, ry, 0L, 2);
+            fx = x + hashNoise(noiseSeed, rx, rz, 0);
+            fz = z + hashNoise(noiseSeed, rx, rz, 1);
+            fy = y + hashNoise(noiseSeed ^ -7046029254386353131L, ry, 0L, 2);
             break;
          case FROZEN:
-            fx = push;
-            fy = pop;
-            fz = tick;
+            fx = fixedX;
+            fy = fixedY;
+            fz = fixedZ;
             break;
          case CUSTOM:
-            fx = x + reset;
-            fy = y + start;
-            fz = z + stop;
+            fx = x + deltaX;
+            fy = y + deltaY;
+            fz = z + deltaZ;
             break;
          default:
             fx = x + offsetX;
@@ -150,7 +150,7 @@ public final class CoordinateSpoofer {
       return new double[]{fx, fy, fz};
    }
 
-   private static double init(long key, long a, long b, int axis) {
+   private static double hashNoise(long key, long a, long b, int axis) {
       long h = key + -7046029254386353131L * (a + 1L);
       h ^= h >>> 29;
       h = h * -4658895280553007687L + b + 1L;
@@ -164,7 +164,7 @@ public final class CoordinateSpoofer {
       return RANDOM.nextDouble() * 2.0E7 - 1.0E7;
    }
 
-   private static double init(int lo, int hi) {
+   private static double randomBetween(int lo, int hi) {
       return lo + RANDOM.nextInt(hi - lo);
    }
 

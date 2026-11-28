@@ -8,7 +8,7 @@ public final class NativeImageMipmapBuilder {
    private NativeImageMipmapBuilder() {
    }
 
-   public static NativeImage[] init(NativeImage base, int maxTop) {
+   public static NativeImage[] build(NativeImage base, int maxTop) {
       List<NativeImage> levels = new ArrayList<>();
       NativeImage current = base;
 

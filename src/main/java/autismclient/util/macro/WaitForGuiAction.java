@@ -17,7 +17,7 @@ public class WaitForGuiAction implements MacroAction {
    public String saveAs = "";
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public MacroActionType getType() {
@@ -158,7 +158,7 @@ public class WaitForGuiAction implements MacroAction {
       tag.putString("matchMode", (this.matchMode == null ? PatternCaptureMatcher.MatchMode.MATCH : this.matchMode).name());
       tag.putString("saveAs", this.saveAs == null ? "" : this.saveAs);
       tag.putInt("timeoutMs", this.timeoutMs);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
@@ -184,7 +184,7 @@ public class WaitForGuiAction implements MacroAction {
       this.saveAs = tag.getStringOr("saveAs", "");
       this.timeoutMs = tag.getIntOr("timeoutMs", 0);
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -199,12 +199,12 @@ public class WaitForGuiAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    public enum WaitMode {

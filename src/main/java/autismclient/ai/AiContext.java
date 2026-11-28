@@ -317,10 +317,10 @@ public final class AiContext {
       long now,
       int maxCharacters
    ) {
-      return init(catalog, objective, updates, taskState, planning, vision, true, memories, now, maxCharacters);
+      return buildPrompt(catalog, objective, updates, taskState, planning, vision, true, memories, now, maxCharacters);
    }
 
-   public static AiContext.PromptParts init(
+   public static AiContext.PromptParts buildPrompt(
       AiCatalog.Snapshot catalog,
       String objective,
       List<String> updates,

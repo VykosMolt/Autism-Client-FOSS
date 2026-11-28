@@ -16,7 +16,7 @@ public final class PayloadNotificationTracker {
    private PayloadNotificationTracker() {
    }
 
-   public static synchronized void init(String channel, String direction, PayloadChannelFilterManager.MatchedRule match) {
+   public static synchronized void notice(String channel, String direction, PayloadChannelFilterManager.MatchedRule match) {
       if ("S2C".equalsIgnoreCase(direction) && !autismclient.modules.aD.init_Z()) {
          String normalized = init(channel);
          if (!normalized.isBlank()) {
@@ -43,7 +43,7 @@ public final class PayloadNotificationTracker {
       }
    }
 
-   public static void init() {
+   public static void flush() {
       if (init_Z) {
          synchronized (PayloadNotificationTracker.class) {
             if (init_Map.isEmpty()) {
@@ -74,7 +74,7 @@ public final class PayloadNotificationTracker {
       }
    }
 
-   public static synchronized void load() {
+   public static synchronized void clear() {
       init_Map.clear();
       init_Z = false;
    }

@@ -61,7 +61,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
                            break;
                         }
 
-                        DirectPacketSender.init(toSend);
+                        DirectPacketSender.send(toSend);
                         successCount++;
                      } catch (Exception e) {
                         AutismClientMessaging.sendPrefixed("§cSend failed: " + e.getMessage());
@@ -89,7 +89,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public void load(boolean v) {
+   public void setWaitForGuiBefore(boolean v) {
       this.waitForGuiBefore = v;
    }
 
@@ -99,7 +99,7 @@ public class SendPacketAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public void read(boolean v) {
+   public void setWaitForGuiAfter(boolean v) {
       this.waitForGuiAfter = v;
    }
 

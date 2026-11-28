@@ -69,12 +69,12 @@ public final class InteractionGoal implements AiPathfinder.PathGoal {
    }
 
    @Override
-   public boolean load(BlockPos cell) {
+   public boolean mayBreak(BlockPos cell) {
       return !this.target.equals(cell);
    }
 
    @Override
-   public AiPathfinder.PathGoal init(AiPathfinder.GridView grid) {
+   public AiPathfinder.PathGoal bindToGrid(AiPathfinder.GridView grid) {
       return new InteractionGoal(this.target, this.init_D, this.standEyeHeight, grid, this.init_Set, this.init_Direction, this.init_Z);
    }
 

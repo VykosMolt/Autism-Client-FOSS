@@ -93,7 +93,7 @@ public final class PayloadRegistrationManager {
    }
 
    public boolean init(String label, String channel, String source) {
-      boolean changed = this.load(label, channel, source);
+      boolean changed = this.register(label, channel, source);
       if (changed) {
          this.sync();
       }
@@ -101,7 +101,7 @@ public final class PayloadRegistrationManager {
       return changed;
    }
 
-   public boolean load(String label, String channel, String source) {
+   public boolean register(String label, String channel, String source) {
       String normalized = normalize(channel);
       if (!isExactChannel(normalized)) {
          return false;
@@ -298,7 +298,7 @@ public final class PayloadRegistrationManager {
       }
    }
 
-   public void update() {
+   public void refreshDefaults() {
       Set<String> defaults = new LinkedHashSet<>();
 
       for (PayloadChannelFilterManager.ChannelPreset preset : PayloadChannelFilterManager.presets()) {

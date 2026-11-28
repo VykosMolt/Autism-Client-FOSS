@@ -47,7 +47,7 @@ public final class PearlGhostRenderer {
 
    public static boolean isActive() {
       DangerModule danger = DangerModule.instance();
-      return danger != null && danger.isEnabled() && !aD.init_Z() && danger.open_Z_6();
+      return danger != null && danger.isEnabled() && !aD.init_Z() && danger.showsTrajectories();
    }
 
    public static void render(PoseStack pose) {
@@ -60,7 +60,7 @@ public final class PearlGhostRenderer {
             AutismBufferSource buffers = BUFFERS.init();
             VertexConsumer lines = buffers.buffer(autismclient.render.AutismRenderTypes.aiPlanLines());
 
-            for (IncomingProjectileScanner.ProjectileWarning warning : danger.read_List_2()) {
+            for (IncomingProjectileScanner.ProjectileWarning warning : danger.incoming()) {
                if (!warning.entity().isRemoved()) {
                   int color = danger.warningColor(warning);
                   List<Vec3> points = warning.init_A_DataUtil().points();
@@ -143,7 +143,7 @@ public final class PearlGhostRenderer {
       for (FireballBlastPredictor.DestroyedBlock block : blocks) {
          AABB box = new AABB(block.pos()).inflate(0.002).move(camera.scale(-1.0));
          int alpha = (int)Math.round(90.0 + 125.0 * block.init_D());
-         WorldLineRenderer.init(pose, lines, box, 16729413 | alpha << 24, 1.5F);
+         WorldLineRenderer.box(pose, lines, box, 16729413 | alpha << 24, 1.5F);
       }
    }
 
@@ -151,7 +151,7 @@ public final class PearlGhostRenderer {
       for (FireballBlastPredictor.DestroyedBlock block : blocks) {
          AABB box = new AABB(block.pos()).inflate(0.001).move(camera.scale(-1.0));
          int alpha = (int)Math.round(14.0 + 35.0 * block.init_D());
-         WorldLineRenderer.init(pose, fill, box, 16729413 | alpha << 24);
+         WorldLineRenderer.box(pose, fill, box, 16729413 | alpha << 24);
       }
    }
 

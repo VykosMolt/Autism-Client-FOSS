@@ -304,19 +304,19 @@ final class ClickerSettingsGroup {
          }
 
          if (this.hold != null) {
-            builder.load(this.hold.get().min(), this.hold.get().max());
+            builder.holdMs(this.hold.get().min(), this.hold.get().max());
          }
 
          if (this.burstCount != null) {
-            builder.init_CachePool_DataUtil_I_I((int)Math.round(this.burstCount.get().min()), (int)Math.round(this.burstCount.get().max()));
+            builder.burstCount((int)Math.round(this.burstCount.get().min()), (int)Math.round(this.burstCount.get().max()));
          }
 
          if (this.resetPause != null) {
-            builder.read(this.resetPause.get().min(), this.resetPause.get().max());
+            builder.resetPause(this.resetPause.get().min(), this.resetPause.get().max());
          }
 
          if (this.pulse != null) {
-            builder.update(this.pulse.get().intValue());
+            builder.pulse(this.pulse.get().intValue());
          }
 
          if (this.wheel != null) {
@@ -324,22 +324,22 @@ final class ClickerSettingsGroup {
          }
 
          if (this.wobble != null) {
-            builder.read(this.wobble.get().intValue() / 100.0);
+            builder.wobble(this.wobble.get().intValue() / 100.0);
          }
 
          if (this.fingerSync != null) {
-            builder.write(this.fingerSync.get().intValue() / 100.0);
+            builder.fingerSync(this.fingerSync.get().intValue() / 100.0);
          }
 
          if (this.variation != null) {
-            builder.init(this.variation.get().intValue() / 100.0);
+            builder.variation(this.variation.get().intValue() / 100.0);
          }
 
          if (this.fatigue != null) {
-            builder.load(this.fatigue.get().intValue() / 100.0);
+            builder.fatigue(this.fatigue.get().intValue() / 100.0);
          }
 
-         this.cachedProfile = builder.init();
+         this.cachedProfile = builder.build();
          this.cachedValues = raw;
          return this.cachedProfile;
       }

@@ -30,7 +30,7 @@ public final class TradeAction implements ContextMacroAction {
    public autismclient.util.villager.TradeOfferFilter init() {
       return new autismclient.util.villager.TradeOfferFilter(
          this.selection == TradeAction.TradeSelection.OFFER ? clamp(this.offerNumber, 1, 512) : 0,
-         this.selection == TradeAction.TradeSelection.ITEM ? List.of(autismclient.util.villager.TradeOfferFilter.init(this.resultItem)) : List.of(),
+         this.selection == TradeAction.TradeSelection.ITEM ? List.of(autismclient.util.villager.TradeOfferFilter.normalizeItem(this.resultItem)) : List.of(),
          List.of(),
          this.selection == TradeAction.TradeSelection.BOOK
             ? List.of(new autismclient.util.villager.TradeOfferFilter.Inner_DataUtil(this.enchantment, clamp(this.minLevel, 1, 255), 0))

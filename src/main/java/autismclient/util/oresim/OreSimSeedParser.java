@@ -9,7 +9,7 @@ public final class OreSimSeedParser {
    private OreSimSeedParser() {
    }
 
-   public static OreSimSeedParser.Inner_DataUtil init(String raw) {
+   public static OreSimSeedParser.Inner_DataUtil parse(String raw) {
       if (raw == null) {
          return init;
       }

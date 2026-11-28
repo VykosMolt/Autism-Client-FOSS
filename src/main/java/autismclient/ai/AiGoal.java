@@ -8,51 +8,51 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class AiGoal {
    static final long init_J = 1500000000L;
    static final long load = 3000000000L;
-   private static final Map<Object, AiGoal.GoalEntry> init_Map = new ConcurrentHashMap<>();
-   private static final Object init_Obj = new Object();
-   private static final AiGoal.StableLabel init_W_StreamUtil = new AiGoal.StableLabel();
-   private static volatile AiTaskStatus.Inner_StreamUtil init_cs_StreamUtil = AiTaskStatus.Inner_StreamUtil.EMPTY;
-   private static volatile long read;
-   private static String init_Str = "";
+   private static final Map<Object, AiGoal.GoalEntry> goals = new ConcurrentHashMap<>();
+   private static final Object VIS_OWNER = new Object();
+   private static final AiGoal.StableLabel LABEL = new AiGoal.StableLabel();
+   private static volatile AiTaskStatus.Inner_StreamUtil status = AiTaskStatus.Inner_StreamUtil.EMPTY;
+   private static volatile long statusAt;
+   private static String detail = "";
 
    private AiGoal() {
    }
 
    static void set(Object owner, int depth, String objective, String goal, String detail) {
       long now = System.nanoTime();
-      AiGoal.GoalEntry old = init_Map.get(owner);
-      String g = update(goal);
+      AiGoal.GoalEntry old = goals.get(owner);
+      String g = oneLine(goal);
       if (g.isEmpty()) {
          g = old == null ? "" : old.goal;
       }
 
       if (!g.isEmpty()) {
-         init_Map.put(owner, new AiGoal.GoalEntry(depth, update(objective), g, update(detail), now));
-         init(now);
+         goals.put(owner, new AiGoal.GoalEntry(depth, oneLine(objective), g, oneLine(detail), now));
+         refresh(now);
       }
    }
 
    static void clear(Object owner) {
-      if (init_Map.remove(owner) != null) {
-         init(System.nanoTime());
+      if (goals.remove(owner) != null) {
+         refresh(System.nanoTime());
       }
    }
 
-   static AiTaskStatus.Inner_StreamUtil init() {
-      return System.nanoTime() - read > 1500000000L ? AiTaskStatus.Inner_StreamUtil.EMPTY : init_cs_StreamUtil;
+   static AiTaskStatus.Inner_StreamUtil currentStatus() {
+      return System.nanoTime() - statusAt > 1500000000L ? AiTaskStatus.Inner_StreamUtil.EMPTY : status;
    }
 
    static String statusLine(String fallback) {
-      AiTaskStatus.Inner_StreamUtil shown = init();
+      AiTaskStatus.Inner_StreamUtil shown = currentStatus();
       return !shown.visible() ? fallback : shown.activity() + (shown.detail().isEmpty() ? "" : " (" + shown.detail() + ")");
    }
 
-   private static synchronized void init(long now) {
-      init_Map.values().removeIf(e -> now - e.touched > 1500000000L);
+   private static synchronized void refresh(long now) {
+      goals.values().removeIf(e -> now - e.touched > 1500000000L);
       AiGoal.GoalEntry deepest = null;
       AiGoal.GoalEntry shallowest = null;
 
-      for (AiGoal.GoalEntry e : init_Map.values()) {
+      for (AiGoal.GoalEntry e : goals.values()) {
          if (deepest == null || e.depth > deepest.depth || e.depth == deepest.depth && e.touched > deepest.touched) {
             deepest = e;
          }
@@ -63,24 +63,24 @@ public final class AiGoal {
       }
 
       if (deepest == null) {
-         init_W_StreamUtil.init();
-         init_Str = "";
-         init_cs_StreamUtil = AiTaskStatus.Inner_StreamUtil.EMPTY;
-         AiVisualization.clearOwner(init_Obj);
+         LABEL.reset();
+         detail = "";
+         status = AiTaskStatus.Inner_StreamUtil.EMPTY;
+         AiVisualization.clearOwner(VIS_OWNER);
       } else {
-         String goal = init_W_StreamUtil.init(deepest.goal, now, 3000000000L);
-         if (!goal.equals(init_cs_StreamUtil.activity())) {
+         String goal = LABEL.stabilize(deepest.goal, now, 3000000000L);
+         if (!goal.equals(status.activity())) {
             AutismClientAddon.LOG.info("[AI] goal: {} - {}", shallowest.objective.isEmpty() ? deepest.objective : shallowest.objective, goal);
          }
 
          if (goal.equals(deepest.goal)) {
-            init_Str = deepest.detail;
+            detail = deepest.detail;
          }
 
          String title = shallowest.objective.isEmpty() ? deepest.objective : shallowest.objective;
-         init_cs_StreamUtil = new AiTaskStatus.Inner_StreamUtil(title.isEmpty() ? goal : title, goal, init_Str);
-         read = now;
-         AiVisualization.showContent(init_Obj, init_cs_StreamUtil);
+         status = new AiTaskStatus.Inner_StreamUtil(title.isEmpty() ? goal : title, goal, detail);
+         statusAt = now;
+         AiVisualization.showContent(VIS_OWNER, status);
       }
    }
 
@@ -283,7 +283,7 @@ public final class AiGoal {
       }
    }
 
-   private static String update(String value) {
+   private static String oneLine(String value) {
       return value == null ? "" : value.strip().replaceAll("[\\r\\n\\t]+", " ");
    }
 
@@ -291,31 +291,31 @@ public final class AiGoal {
    }
 
    static final class StableLabel {
-      private String init_Str = "";
-      private String load = "";
-      private long init_J;
+      private String shown = "";
+      private String pending = "";
+      private long pendingSince;
 
-      String init(String next, long now, long hold) {
-         if (!this.init_Str.isEmpty() && !next.equals(this.init_Str)) {
-            if (!next.equals(this.load)) {
-               this.load = next;
-               this.init_J = now;
-            } else if (now - this.init_J >= hold) {
-               this.init_Str = next;
-               this.load = "";
+      String stabilize(String next, long now, long hold) {
+         if (!this.shown.isEmpty() && !next.equals(this.shown)) {
+            if (!next.equals(this.pending)) {
+               this.pending = next;
+               this.pendingSince = now;
+            } else if (now - this.pendingSince >= hold) {
+               this.shown = next;
+               this.pending = "";
             }
 
-            return this.init_Str;
+            return this.shown;
          } else {
-            this.init_Str = next;
-            this.load = "";
-            return this.init_Str;
+            this.shown = next;
+            this.pending = "";
+            return this.shown;
          }
       }
 
-      void init() {
-         this.init_Str = "";
-         this.load = "";
+      void reset() {
+         this.shown = "";
+         this.pending = "";
       }
    }
 }

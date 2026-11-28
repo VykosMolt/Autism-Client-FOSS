@@ -37,7 +37,7 @@ public final class TpClickModule extends Module {
    }
 
    private void resetState() {
-      this.init_j_DataUtil.init();
+      this.init_j_DataUtil.invalidate();
       this.init_j_StreamUtil = null;
       this.init_Z = false;
    }
@@ -69,7 +69,7 @@ public final class TpClickModule extends Module {
             Vec3 eye = FreecamController.isActive() ? FreecamController.getInterpolatedEyePos(1.0F) : MC.player.getEyePosition();
             Vec3 direction = FreecamController.isActive() ? Vec3.directionFromRotation(FreecamController.getInterpolatedPitch(1.0F), FreecamController.getInterpolatedYaw(1.0F)) : MC.player.getViewVector(1.0F);
             this.init_j_StreamUtil = this.init_j_DataUtil
-               .init(MC, eye, direction, Math.max(10, this.integer("reach")), MC.player.getVehicle() != null, pressed);
+               .resolve(MC, eye, direction, Math.max(10, this.integer("reach")), MC.player.getVehicle() != null, pressed);
             if (pressed && this.init_j_StreamUtil != null && this.init_j_StreamUtil.valid() && !AutismLiteVariant.enabled()) {
                Vec3 destination = this.init_j_StreamUtil.feet();
                String result = PkgCls_a.init_Str_Str(String.format(Locale.ROOT, "%.6f %.6f %.6f", destination.x, destination.y, destination.z));

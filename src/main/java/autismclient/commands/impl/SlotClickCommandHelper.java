@@ -19,14 +19,14 @@ final class SlotClickCommandHelper {
    private SlotClickCommandHelper() {
    }
 
-   static void init(ArgumentBuilder<AutismCommandSource, ?> target, SlotClickCommandHelper.ClickExecutor executor) {
-      target.then(init("left", SlotClickCommandHelper.ClickSpec.init("Left", ContainerInput.PICKUP, 0), executor));
-      target.then(init("right", SlotClickCommandHelper.ClickSpec.init("Right", ContainerInput.PICKUP, 1), executor));
-      target.then(init("middle", SlotClickCommandHelper.ClickSpec.init("Middle", ContainerInput.PICKUP, 2), executor));
-      target.then(init("shift-left", SlotClickCommandHelper.ClickSpec.init("Shift Left", ContainerInput.QUICK_MOVE, 0), executor));
-      target.then(init("shift-right", SlotClickCommandHelper.ClickSpec.init("Shift Right", ContainerInput.QUICK_MOVE, 1), executor));
-      target.then(init("clone", SlotClickCommandHelper.ClickSpec.init("Clone", ContainerInput.CLONE, 2), executor));
-      target.then(init("pickup-all", SlotClickCommandHelper.ClickSpec.init("Pick Up All", ContainerInput.PICKUP_ALL, 0), executor));
+   static void register(ArgumentBuilder<AutismCommandSource, ?> target, SlotClickCommandHelper.ClickExecutor executor) {
+      target.then(init("left", SlotClickCommandHelper.ClickSpec.of("Left", ContainerInput.PICKUP, 0), executor));
+      target.then(init("right", SlotClickCommandHelper.ClickSpec.of("Right", ContainerInput.PICKUP, 1), executor));
+      target.then(init("middle", SlotClickCommandHelper.ClickSpec.of("Middle", ContainerInput.PICKUP, 2), executor));
+      target.then(init("shift-left", SlotClickCommandHelper.ClickSpec.of("Shift Left", ContainerInput.QUICK_MOVE, 0), executor));
+      target.then(init("shift-right", SlotClickCommandHelper.ClickSpec.of("Shift Right", ContainerInput.QUICK_MOVE, 1), executor));
+      target.then(init("clone", SlotClickCommandHelper.ClickSpec.of("Clone", ContainerInput.CLONE, 2), executor));
+      target.then(init("pickup-all", SlotClickCommandHelper.ClickSpec.of("Pick Up All", ContainerInput.PICKUP_ALL, 0), executor));
       target.then(init("drop-item", SlotClickCommandHelper.ClickSpec.dropSpec("Drop Item", SlotClickCommandHelper.DropMode.ITEM), executor));
       target.then(load("drop-stack", SlotClickCommandHelper.ClickSpec.dropSpec("Drop Stack", SlotClickCommandHelper.DropMode.STACK), executor));
       LiteralArgumentBuilder<AutismCommandSource> swap = LiteralArgumentBuilder.<AutismCommandSource>literal("swap");
@@ -41,7 +41,7 @@ final class SlotClickCommandHelper {
          .executes(
             context -> executor.execute(
                context,
-               SlotClickCommandHelper.ClickSpec.init(
+               SlotClickCommandHelper.ClickSpec.of(
                   "Swap " + IntegerArgumentType.getInteger(context, "swap-hotbar"),
                   ContainerInput.SWAP,
                   IntegerArgumentType.getInteger(context, "swap-hotbar") - 1
@@ -53,7 +53,7 @@ final class SlotClickCommandHelper {
          timesArgument(
             (context, times) -> executor.execute(
                context,
-               SlotClickCommandHelper.ClickSpec.init(
+               SlotClickCommandHelper.ClickSpec.of(
                   "Swap " + IntegerArgumentType.getInteger(context, "swap-hotbar"),
                   ContainerInput.SWAP,
                   IntegerArgumentType.getInteger(context, "swap-hotbar") - 1
@@ -66,7 +66,7 @@ final class SlotClickCommandHelper {
       target.then(swap);
    }
 
-   static int init(int handlerSlot, SlotClickCommandHelper.ClickSpec spec, int times, String targetLabel) {
+   static int click(int handlerSlot, SlotClickCommandHelper.ClickSpec spec, int times, String targetLabel) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null || mc.gameMode == null || mc.getConnection() == null || mc.player.containerMenu == null) {
          AutismClientMessaging.sendPrefixed("§cNo active inventory or GUI.");
@@ -87,7 +87,7 @@ final class SlotClickCommandHelper {
          } else if (spec.kind() == SlotClickCommandHelper.DropMode.STACK) {
             completed = InventoryDropHelper.dropFromHandler(mc, handlerSlot, 0) > 0 ? 1 : 0;
          } else {
-            for (int i = 0; i < requested && ContainerClickExecutor.init(mc, handlerSlot, spec.init_I(), spec.input()); i++) {
+            for (int i = 0; i < requested && ContainerClickExecutor.click(mc, handlerSlot, spec.init_I(), spec.input()); i++) {
                completed++;
             }
          }
@@ -142,7 +142,7 @@ final class SlotClickCommandHelper {
    }
 
    record ClickSpec(String label, ContainerInput input, int init_I, SlotClickCommandHelper.DropMode kind) {
-      static SlotClickCommandHelper.ClickSpec init(String label, ContainerInput input, int button) {
+      static SlotClickCommandHelper.ClickSpec of(String label, ContainerInput input, int button) {
          return new SlotClickCommandHelper.ClickSpec(label, input, button, SlotClickCommandHelper.DropMode.NONE);
       }
 

@@ -118,7 +118,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
             this.load(ctx, mx, my, delta);
          } else {
             this.windowWidth = this.libraryView.preferredWidth() + 2;
-            int want = this.libraryView.init(this.windowWidth - 2) + 14 + 1;
+            int want = this.libraryView.contentHeight(this.windowWidth - 2) + 14 + 1;
             int maxH = Math.min(cA.load_I() - 16, 380);
             this.windowHeight = Math.max(this.getMinHeight(), Math.min(want, maxH));
             OverlayBounds bounds = this.clampCurrentBounds(this);
@@ -149,7 +149,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
       int headerHeight = autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
       int availableHeight = Math.max(1, sh - autismclient.gui.ui.UiDensityMetrics.scaledHeight(44));
       this.windowWidth = Math.max(1, Math.min(sw - margin * 2, this.libraryView.preferredWidth() + 2));
-      this.windowHeight = Math.min(availableHeight, this.libraryView.init(this.windowWidth - 2) + headerHeight + 1);
+      this.windowHeight = Math.min(availableHeight, this.libraryView.contentHeight(this.windowWidth - 2) + headerHeight + 1);
       this.windowX = (sw - this.windowWidth) / 2;
       this.windowY = (availableHeight - this.windowHeight) / 2;
       autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(ctx, this.font, mx, my).init_SyncManager();
@@ -212,7 +212,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
          this.saveBounds();
          return true;
       } else {
-         return this.libraryView.load((int)Math.round(mx), (int)Math.round(my), button);
+         return this.libraryView.mouseReleased((int)Math.round(mx), (int)Math.round(my), button);
       }
    }
 
@@ -237,7 +237,7 @@ public final class AutismProfilesOverlay extends DraggableOverlayWindow {
 
    @Override
    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-      return this.windowVisible && !this.windowCollapsed && this.libraryView.read(keyCode, scanCode, modifiers);
+      return this.windowVisible && !this.windowCollapsed && this.libraryView.keyPressed(keyCode, scanCode, modifiers);
    }
 
    @Override

@@ -133,7 +133,7 @@ final class AiPlanRunner {
       return true;
    }
 
-   static boolean init(AiPlanRunner.Inner_StreamUtil progress, boolean succeeded, String message, AiPlanRunner.Inner_DataUtil policy) {
+   static boolean recordResult(AiPlanRunner.Inner_StreamUtil progress, boolean succeeded, String message, AiPlanRunner.Inner_DataUtil policy) {
       progress.message = message;
       if (succeeded) {
          progress.state = AiPlanRunner.Inner_CachePool.DONE;
@@ -167,7 +167,7 @@ final class AiPlanRunner {
       return counts;
    }
 
-   static void init(String capability) {
+   static void requireGameCapability(String capability) {
       if (capability == null || !capability.startsWith("game:")) {
          throw new IllegalArgumentException(
             "Plan steps may only call game: capabilities; '" + capability + "' is not one. Use perform directly for modules, macros and commands."

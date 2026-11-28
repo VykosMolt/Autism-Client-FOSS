@@ -27,7 +27,7 @@ public class PacketGateAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      PacketGateManager.init(this, MacroExecutor.getCurrentRunId());
+      PacketGateManager.open(this, MacroExecutor.getCurrentRunId());
    }
 
    ArrayList<String> packetNamesCopy() {

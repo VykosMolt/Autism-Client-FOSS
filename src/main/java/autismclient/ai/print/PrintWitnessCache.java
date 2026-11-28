@@ -43,7 +43,7 @@ final class PrintWitnessCache {
       return entry == null ? null : entry.witness();
    }
 
-   PrintCore.StanceWitness load(int id) {
+   PrintCore.StanceWitness peek(int id) {
       PrintWitnessCache.Inner_DataUtil entry = this.init_Int2ObjectLinkedOp.get(id);
       return entry == null ? null : entry.witness();
    }
@@ -73,8 +73,8 @@ final class PrintWitnessCache {
       return entry == null ? 0 : entry.cells().length;
    }
 
-   PrintCore.StanceWitness init(int id, PrintCore.StanceWitness witness) {
-      PrintCore.StanceWitness previous = this.read(id);
+   PrintCore.StanceWitness store(int id, PrintCore.StanceWitness witness) {
+      PrintCore.StanceWitness previous = this.touch(id);
       if (witness == null) {
          return previous;
       }
@@ -95,7 +95,7 @@ final class PrintWitnessCache {
 
          while (this.init_Int2ObjectLinkedOp.size() >= this.maxEntries || this.write + cells.size() > this.load) {
             int idToEvict = this.init_Int2ObjectLinkedOp.firstIntKey();
-            this.read(idToEvict);
+            this.touch(idToEvict);
             this.init_IntConsumer.accept(idToEvict);
          }
 
@@ -113,7 +113,7 @@ final class PrintWitnessCache {
       }
    }
 
-   PrintCore.StanceWitness read(int id) {
+   PrintCore.StanceWitness touch(int id) {
       PrintWitnessCache.Inner_DataUtil removed = this.init_Int2ObjectLinkedOp.remove(id);
       if (removed == null) {
          return null;

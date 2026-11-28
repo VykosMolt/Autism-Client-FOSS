@@ -31,8 +31,8 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
    private final List<ProxyConfigScreen.SettingRow> rows = new ArrayList<>();
    private int scroll;
    private int panelWidth = 380;
-   private int sync;
-   private int flush;
+   private int lastWidth;
+   private int lastHeight;
 
    public ProxyConfigScreen(Screen parent) {
       super(Component.literal("Proxy Config"));
@@ -48,18 +48,18 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       this.buttons.clear();
       this.dropdowns.clear();
       this.rows.clear();
-      this.scroll = Math.max(0, Math.min(this.stop(), this.scroll));
-      int panelX = this.close();
-      int panelW = this.open();
-      int y = this.add() - this.scroll;
+      this.scroll = Math.max(0, Math.min(this.maxScroll(), this.scroll));
+      int panelX = this.panelX();
+      int panelW = this.panelWidth();
+      int y = this.rowsTop() - this.scroll;
       ProxyListManager mgr = ProxyListManager.getInstance();
-      this.init("Timeout", "How long each proxy check can take.", mgr.getTimeoutMs(), mgr::setTimeoutMs, TIMEOUT_CHOICES, this::formatSeconds, panelX, panelW, y);
-      y += this.flush();
-      this.init("Threads", "How many proxies can be checked at once.", mgr.getWorkerThreads(), mgr::setWorkerThreads, THREAD_CHOICES, Integer::toString, panelX, panelW, y);
-      y += this.flush();
-      this.init("Retries", "Extra attempts when a proxy check times out.", mgr.getRetryCount(), mgr::setRetryCount, RETRY_CHOICES, Integer::toString, panelX, panelW, y);
-      y += this.flush();
-      this.init(
+      this.addChoiceRow("Timeout", "How long each proxy check can take.", mgr.getTimeoutMs(), mgr::setTimeoutMs, TIMEOUT_CHOICES, this::formatSeconds, panelX, panelW, y);
+      y += this.rowPitch();
+      this.addChoiceRow("Threads", "How many proxies can be checked at once.", mgr.getWorkerThreads(), mgr::setWorkerThreads, THREAD_CHOICES, Integer::toString, panelX, panelW, y);
+      y += this.rowPitch();
+      this.addChoiceRow("Retries", "Extra attempts when a proxy check times out.", mgr.getRetryCount(), mgr::setRetryCount, RETRY_CHOICES, Integer::toString, panelX, panelW, y);
+      y += this.rowPitch();
+      this.addChoiceRow(
          "Prune latency",
          "Cleanup removes alive proxies slower than this.",
          mgr.getPruneLatencyMs(),
@@ -70,8 +70,8 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          panelW,
          y
       );
-      y += this.flush();
-      this.init(
+      y += this.rowPitch();
+      this.addChoiceRow(
          "Prune limit",
          "Cleanup keeps only the fastest proxies when enabled.",
          mgr.getPruneToCount(),
@@ -82,20 +82,20 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          panelW,
          y
       );
-      y += this.flush();
-      this.init("Sort by latency", mgr.isSortByLatency(), "Refresh/cancel sorts alive proxies from fastest to slowest.", value -> mgr.setSortByLatency(value), panelX, panelW, y);
-      y += this.flush();
-      this.init("Prune dead", mgr.isPruneDead(), "Cleanup removes proxies marked as dead.", value -> mgr.setPruneDead(value), panelX, panelW, y);
-      y += this.flush();
-      this.init("Location lookup", mgr.auditGeoLookup(), "Sends proxy IPs to api.country.is to show their country.", value -> mgr.auditSetGeoLookup(value), panelX, panelW, y);
-      int wanted = this.poll();
+      y += this.rowPitch();
+      this.addToggleRow("Sort by latency", mgr.isSortByLatency(), "Refresh/cancel sorts alive proxies from fastest to slowest.", value -> mgr.setSortByLatency(value), panelX, panelW, y);
+      y += this.rowPitch();
+      this.addToggleRow("Prune dead", mgr.isPruneDead(), "Cleanup removes proxies marked as dead.", value -> mgr.setPruneDead(value), panelX, panelW, y);
+      y += this.rowPitch();
+      this.addToggleRow("Location lookup", mgr.auditGeoLookup(), "Sends proxy IPs to api.country.is to show their country.", value -> mgr.auditSetGeoLookup(value), panelX, panelW, y);
+      int wanted = this.wantedWidth();
       if (wanted != this.panelWidth) {
          this.panelWidth = wanted;
          this.rebuildProxyWidgets();
       } else {
          if (!this.isCompactLayout()) {
-            int ctl = this.write();
-            int footerY = this.clear();
+            int ctl = this.controlHeight();
+            int footerY = this.footerY();
             int backWidth = this.buttonWidthFor("Back");
             this.buttons
                .add(
@@ -114,12 +114,12 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
                );
          }
 
-         this.sync = this.virtualWidth();
-         this.flush = this.virtualHeight();
+         this.lastWidth = this.virtualWidth();
+         this.lastHeight = this.virtualHeight();
       }
    }
 
-   private void init(
+   private void addChoiceRow(
       String label, String hint, int current, IntConsumer setter, int[] options, ProxyConfigScreen.IntFormatter formatter, int panelX, int panelW, int y
    ) {
       List<String> labels = this.init(options, formatter);
@@ -129,7 +129,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          this.dropdowns
             .add(
                new autismclient.gui.ui.widgets.DropdownWidget(
-                  this.init(panelX, panelW, controlW), this.read(y), controlW, this.write(), labels, this.init(current, options), index -> {
+                  this.controlX(panelX, panelW, controlW), this.controlY(y), controlW, this.controlHeight(), labels, this.init(current, options), index -> {
                      if (index >= 0 && index < options.length) {
                         setter.accept(options[index]);
                         this.rebuildProxyWidgets();
@@ -140,14 +140,14 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(String label, boolean enabled, String hint, ProxyConfigScreen.BoolSetter setter, int panelX, int panelW, int y) {
+   private void addToggleRow(String label, boolean enabled, String hint, ProxyConfigScreen.BoolSetter setter, int panelX, int panelW, int y) {
       int controlW = Math.max(this.buttonWidthFor("Enabled"), this.buttonWidthFor("Disabled"));
       this.rows.add(new ProxyConfigScreen.SettingRow(label, enabled ? "Enabled" : "Disabled", hint, y, true, enabled, controlW));
       if (this.isRowVisible(y)) {
          this.buttons
             .add(
                autismclient.gui.ui.widgets.OverlayActionButton.create(
-                     this.init(panelX, panelW, controlW), this.read(y), controlW, this.write(), Component.literal(enabled ? "Enabled" : "Disabled"), b -> {
+                     this.controlX(panelX, panelW, controlW), this.controlY(y), controlW, this.controlHeight(), Component.literal(enabled ? "Enabled" : "Disabled"), b -> {
                         setter.accept(!enabled);
                         this.rebuildProxyWidgets();
                      }
@@ -210,15 +210,15 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       cA.init_V_GuiGraphicsExtract(graphics);
 
       try {
-         if (this.sync != this.virtualWidth() || this.flush != this.virtualHeight()) {
+         if (this.lastWidth != this.virtualWidth() || this.lastHeight != this.virtualHeight()) {
             this.rebuildProxyWidgets();
          }
 
          autismclient.gui.f.PacketUtil.init(graphics, autismclient.gui.f.NetHelper.init(0, 0, this.virtualWidth(), this.virtualHeight()), -15987181);
-         int panelX = this.close();
-         int panelW = this.open();
-         int panelTop = this.push();
-         autismclient.gui.f.NetHelper panelBounds = autismclient.gui.f.NetHelper.init(panelX, panelTop, panelW, this.set() - panelTop);
+         int panelX = this.panelX();
+         int panelW = this.panelWidth();
+         int panelTop = this.panelTop();
+         autismclient.gui.f.NetHelper panelBounds = autismclient.gui.f.NetHelper.init(panelX, panelTop, panelW, this.panelBottom() - panelTop);
          autismclient.gui.ui.widgets.DialogFrameRenderer.draw(
             autismclient.gui.f.UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY),
             panelBounds,
@@ -228,7 +228,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          );
          autismclient.gui.ui.widgets.SectionCardRenderer.drawPlain(
             autismclient.gui.f.UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY),
-            autismclient.gui.f.NetHelper.init(panelX + 4, this.put(), Math.max(0, panelW - 8), Math.max(0, this.reset() + 4 - this.put())),
+            autismclient.gui.f.NetHelper.init(panelX + 4, this.listTop(), Math.max(0, panelW - 8), Math.max(0, this.rowsBottom() + 4 - this.listTop())),
             -1206840035
          );
          boolean suppressUnderlyingPointer = autismclient.gui.ui.widgets.DropdownWidget.isAnyMenuActive();
@@ -236,12 +236,12 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
          int buttonMouseX = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseX : -2147483648;
          int buttonMouseY = !dropdownMenuHovered && !suppressUnderlyingPointer ? virtualMouseY : -2147483648;
          if (this.isCompactLayout()) {
-            this.init(graphics, "Window too small.", this.init_I_I_5(panelX), this.centerTextY(this.put(), 12), GuiColorPalette.close, false, Math.max(0, panelW - 16));
+            this.drawText(graphics, "Window too small.", this.init_I_I_5(panelX), this.centerTextY(this.listTop(), 12), GuiColorPalette.close, false, Math.max(0, panelW - 16));
             return;
          }
 
          for (ProxyConfigScreen.SettingRow row : this.rows) {
-            this.init(graphics, row, panelX, panelW);
+            this.renderRow(graphics, row, panelX, panelW);
          }
 
          for (autismclient.gui.ui.widgets.OverlayActionButton button : this.buttons) {
@@ -257,22 +257,22 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       }
    }
 
-   private void init(GuiGraphicsExtractor graphics, ProxyConfigScreen.SettingRow row, int panelX, int panelW) {
+   private void renderRow(GuiGraphicsExtractor graphics, ProxyConfigScreen.SettingRow row, int panelX, int panelW) {
       if (this.isRowVisible(row.y())) {
          int x = this.init_I_I_5(panelX);
          int y = row.y();
-         int w = this.load(panelW);
-         int h = this.sync();
-         int line = this.update();
+         int w = this.rowWidth(panelW);
+         int h = this.rowHeight();
+         int line = this.lineHeight();
          int fill = row.toggle() && row.enabled() ? 571483674 : 403771667;
          autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(x, y, w, h), 4, fill);
          if (row.toggle() && row.enabled()) {
             autismclient.gui.f.PacketUtil.load(graphics, autismclient.gui.f.NetHelper.init(x, y + 2, 2, h - 4), 1, GuiColorPalette.open);
          }
 
-         int textMaxWidth = Math.max(1, this.init(panelX, panelW, row.controlWidth()) - 4 - (x + 6));
-         this.init(graphics, row.label(), x + 6, this.centerTextY(y, line), GuiColorPalette.flush, false, textMaxWidth);
-         this.init(graphics, row.read(), x + 6, this.centerTextY(y + line, line), GuiColorPalette.close, false, textMaxWidth);
+         int textMaxWidth = Math.max(1, this.controlX(panelX, panelW, row.controlWidth()) - 4 - (x + 6));
+         this.drawText(graphics, row.label(), x + 6, this.centerTextY(y, line), GuiColorPalette.flush, false, textMaxWidth);
+         this.drawText(graphics, row.read(), x + 6, this.centerTextY(y + line, line), GuiColorPalette.close, false, textMaxWidth);
       }
    }
 
@@ -281,7 +281,7 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       MouseButtonEvent virtualEvent = toVirtual(event);
       if (Compat263.mouseEventGlfwButton(virtualEvent) == 0
          && autismclient.gui.ui.widgets.DialogFrameRenderer.isOverHeader(
-            autismclient.gui.f.NetHelper.init(this.close(), this.push(), this.open(), this.set() - this.push()),
+            autismclient.gui.f.NetHelper.init(this.panelX(), this.panelTop(), this.panelWidth(), this.panelBottom() - this.panelTop()),
             this.read_I_5(),
             (int)virtualEvent.x(),
             (int)virtualEvent.y()
@@ -313,8 +313,8 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       double virtualY = cA.init_D_D(mouseY);
       if (autismclient.gui.ui.widgets.DropdownWidget.handleMouseScroll(this.dropdowns, virtualX, virtualY, scrollY)) {
          return true;
-      } else if (!(virtualX < this.close()) && !(virtualX > this.close() + this.open()) && !(virtualY < this.add()) && !(virtualY > this.reset())) {
-         this.scroll = Math.max(0, Math.min(this.stop(), this.scroll + (scrollY < 0.0 ? this.flush() : -this.flush())));
+      } else if (!(virtualX < this.panelX()) && !(virtualX > this.panelX() + this.panelWidth()) && !(virtualY < this.rowsTop()) && !(virtualY > this.rowsBottom())) {
+         this.scroll = Math.max(0, Math.min(this.maxScroll(), this.scroll + (scrollY < 0.0 ? this.rowPitch() : -this.rowPitch())));
          this.rebuildProxyWidgets();
          return true;
       } else {
@@ -331,125 +331,125 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(14);
    }
 
-   private int write() {
+   private int controlHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(13);
    }
 
-   private int update() {
+   private int lineHeight() {
       return autismclient.gui.ui.UiDensityMetrics.scaledHeight(12);
    }
 
-   private int sync() {
-      return this.update() * 2;
+   private int rowHeight() {
+      return this.lineHeight() * 2;
    }
 
-   private int flush() {
-      return this.sync() + 2;
+   private int rowPitch() {
+      return this.rowHeight() + 2;
    }
 
    private int init_I_I_5(int panelX) {
       return panelX + 8;
    }
 
-   private int load(int panelW) {
+   private int rowWidth(int panelW) {
       return panelW - 16;
    }
 
-   private int init(int panelX, int panelW, int controlW) {
-      return this.init_I_I_5(panelX) + this.load(panelW) - 4 - controlW;
+   private int controlX(int panelX, int panelW, int controlW) {
+      return this.init_I_I_5(panelX) + this.rowWidth(panelW) - 4 - controlW;
    }
 
-   private int read(int rowY) {
-      return rowY + (this.sync() - this.write()) / 2;
+   private int controlY(int rowY) {
+      return rowY + (this.rowHeight() - this.controlHeight()) / 2;
    }
 
    private int centerTextY(int top, int height) {
       return autismclient.gui.f.UiHelper.init(this.font).centerTextY(autismclient.gui.f.NetHelper.init(0, top, 1, height));
    }
 
-   private int close() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.open(), 6);
+   private int panelX() {
+      return autismclient.gui.ui.layout.PanelLayoutMath.centerWithMargin(this.virtualWidth(), this.panelWidth(), 6);
    }
 
-   private int open() {
+   private int panelWidth() {
       return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualWidth(), 6, Math.min(380, this.panelWidth));
    }
 
-   private int poll() {
+   private int wantedWidth() {
       int text = 0;
       int control = 0;
 
       for (ProxyConfigScreen.SettingRow row : this.rows) {
-         text = Math.max(text, Math.max(this.load(row.label()), this.load(row.read())));
+         text = Math.max(text, Math.max(this.textWidth(row.label()), this.textWidth(row.read())));
          control = Math.max(control, row.controlWidth());
       }
 
       return 14 + text + 4 + control + 4 + 8;
    }
 
-   private int push() {
+   private int panelTop() {
       return 6;
    }
 
-   private int pop() {
-      return this.read_I_5() + 4 + 4 + 4 + 4 + this.write() + 4;
+   private int chromeHeight() {
+      return this.read_I_5() + 4 + 4 + 4 + 4 + this.controlHeight() + 4;
    }
 
    private int visibleRowCount() {
-      int available = this.virtualHeight() - 12 - this.pop();
-      return Math.max(0, Math.min(8, (available + 2) / this.flush()));
+      int available = this.virtualHeight() - 12 - this.chromeHeight();
+      return Math.max(0, Math.min(8, (available + 2) / this.rowPitch()));
    }
 
-   private int run() {
+   private int rowsHeight() {
       int shown = this.visibleRowCount();
-      return shown <= 0 ? 0 : shown * this.flush() - 2;
+      return shown <= 0 ? 0 : shown * this.rowPitch() - 2;
    }
 
-   private int get() {
-      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, this.pop() + this.run());
+   private int panelHeight() {
+      return autismclient.gui.ui.layout.PanelLayoutMath.clampSizeToMargin(this.virtualHeight(), 6, this.chromeHeight() + this.rowsHeight());
    }
 
-   private int set() {
-      return this.push() + this.get();
+   private int panelBottom() {
+      return this.panelTop() + this.panelHeight();
    }
 
-   private int put() {
-      return this.push() + this.read_I_5() + 4;
+   private int listTop() {
+      return this.panelTop() + this.read_I_5() + 4;
    }
 
-   private int add() {
-      return this.put() + 4;
+   private int rowsTop() {
+      return this.listTop() + 4;
    }
 
-   private int clear() {
-      return this.set() - 4 - this.write();
+   private int footerY() {
+      return this.panelBottom() - 4 - this.controlHeight();
    }
 
-   private int reset() {
-      return this.clear() - 4 - 4;
+   private int rowsBottom() {
+      return this.footerY() - 4 - 4;
    }
 
-   private int start() {
-      return 8 * this.flush() - 2;
+   private int contentHeight() {
+      return 8 * this.rowPitch() - 2;
    }
 
-   private int stop() {
-      return Math.max(0, this.start() - Math.max(0, this.reset() - this.add()));
+   private int maxScroll() {
+      return Math.max(0, this.contentHeight() - Math.max(0, this.rowsBottom() - this.rowsTop()));
    }
 
    private boolean isRowVisible(int y) {
-      return y >= this.add() && y + this.sync() <= this.reset();
+      return y >= this.rowsTop() && y + this.rowHeight() <= this.rowsBottom();
    }
 
    private boolean isCompactLayout() {
-      return this.open() < 220 || this.reset() - this.add() < this.sync();
+      return this.panelWidth() < 220 || this.rowsBottom() - this.rowsTop() < this.rowHeight();
    }
 
    private int buttonWidthFor(String label) {
       return autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(k.init(this.font, label, THEME.init_Identifier_l(l.read), 0));
    }
 
-   private int load(String text) {
+   private int textWidth(String text) {
       return k.init(this.font, text, THEME.init_Identifier_l(l.read), 0);
    }
 
@@ -463,11 +463,11 @@ public class ProxyConfigScreen extends VirtualScaledScreen {
       return Math.max(56, widest + 26);
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean right) {
-      this.init(graphics, text, x, y, color, right, 2147483647);
+   private void drawText(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean right) {
+      this.drawText(graphics, text, x, y, color, right, 2147483647);
    }
 
-   private void init(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean right, int maxWidth) {
+   private void drawText(GuiGraphicsExtractor graphics, String text, int x, int y, int color, boolean right, int maxWidth) {
       Font renderer = this.font;
       Identifier font = THEME.init_Identifier_l(l.read);
       if (maxWidth != 2147483647 && !right) {

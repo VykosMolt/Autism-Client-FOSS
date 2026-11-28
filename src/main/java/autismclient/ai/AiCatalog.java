@@ -43,7 +43,7 @@ public final class AiCatalog {
          autismclient.modules.al.init_I(),
          autismclient.commands.CommandManager.getRegistryVersion(),
          AiCapabilities.revision(),
-         AiSourceKnowledge.init_Str(),
+         AiSourceKnowledge.overview(),
          MacroActionRegistry.entries().stream().map(ex -> ex.typeId()).toList(),
          CustomMenuAdapterRegistry.ids()
       );
@@ -101,7 +101,7 @@ public final class AiCatalog {
                "module:" + m.id(),
                m.isAddon() ? "addon-module" : "autism",
                "modules/" + m.category().load(),
-               m.name() + ": " + m.description() + AiSourceKnowledge.init(m.getClass()),
+               m.name() + ": " + m.description() + AiSourceKnowledge.featureDocs(m.getClass()),
                List.of(m.name(), m.category().load()),
                schema,
                "Available in the installed registry; world/container requirements and hidden-state restrictions are checked at execution.",
@@ -125,7 +125,7 @@ public final class AiCatalog {
                throw new IllegalStateException("Built-in macro type has no catalog adapter: " + type.name());
             }
 
-            addActionEntry(entries, type.name(), action, autismclient.gui.macro.editor.ActionFieldRegistry.init(type), "autism", "");
+            addActionEntry(entries, type.name(), action, autismclient.gui.macro.editor.ActionFieldRegistry.schemaForType(type), "autism", "");
          }
 
          for (MacroActionEntry entry : MacroActionRegistry.entries()) {
@@ -272,7 +272,7 @@ public final class AiCatalog {
       String semantics = (
             action.getType() == null ? "Legacy add-on action; behavior is undocumented until its owner contributes an AI contract." : AiMacroValidator.describe(action.getType())
          )
-         + AiSourceKnowledge.init(action.getClass());
+         + AiSourceKnowledge.featureDocs(action.getClass());
       if (contributed != null) {
          semantics = "Owning contract v"
             + contributed.version()
@@ -322,7 +322,7 @@ public final class AiCatalog {
          );
       }
 
-      addEntryWith(entries, descriptor, defaults, AiSourceKnowledge.load(action.getClass()) + AiSourceKnowledge.load(autismclient.util.AutismMacro.class) + AiSourceKnowledge.load(AiMacroValidator.class));
+      addEntryWith(entries, descriptor, defaults, AiSourceKnowledge.docsFor(action.getClass()) + AiSourceKnowledge.docsFor(autismclient.util.AutismMacro.class) + AiSourceKnowledge.docsFor(AiMacroValidator.class));
    }
 
    static AiCapabilityDescriptor descriptor(
@@ -350,81 +350,81 @@ public final class AiCatalog {
       if (d.id().startsWith("module:")) {
          Module module = autismclient.modules.al.init_Module_Str(d.id().substring(7));
          if (module != null) {
-            dependency = AiSourceKnowledge.load(module.getClass());
+            dependency = AiSourceKnowledge.docsFor(module.getClass());
          }
       } else if (d.id().startsWith("command:")) {
          dependency = autismclient.commands.CommandManager.getCommands()
             .stream()
             .filter(c -> d.id().equals("command:" + autismclient.commands.CommandManager.getPrimaryName(c)))
-            .map(c -> AiSourceKnowledge.load(c.getClass()))
+            .map(c -> AiSourceKnowledge.docsFor(c.getClass()))
             .findFirst()
             .orElse("");
       } else if (d.owner().equals("autism")) {
-         dependency = AiSourceKnowledge.load(AiGameOperations.class)
-            + AiSourceKnowledge.load(AiGameplay.class)
-            + AiSourceKnowledge.load(AiInventoryController.class)
-            + AiSourceKnowledge.load(AiContainerTransactions.class)
-            + AiSourceKnowledge.load(AiExpectations.class)
-            + AiSourceKnowledge.load(AiTerrain.class)
-            + AiSourceKnowledge.load(AiChatOps.class)
-            + AiSourceKnowledge.load(AiChatLedger.class)
-            + AiSourceKnowledge.load(AiPacketLog.class)
-            + AiSourceKnowledge.load(AiPacketSend.class)
-            + AiSourceKnowledge.load(AiServerIntel.class)
-            + AiSourceKnowledge.load(AiLanSync.class)
-            + AiSourceKnowledge.load(AiWorldReaders.class)
-            + AiSourceKnowledge.load(AiScreens.class)
-            + AiSourceKnowledge.load(AiSurvival.class)
-            + AiSourceKnowledge.load(AiBuilder.class)
-            + AiSourceKnowledge.load(AiCommandOp.class)
-            + AiSourceKnowledge.load(AiEnchant.class)
-            + AiSourceKnowledge.load(AiOracle.class)
-            + AiSourceKnowledge.load(AiAddons.class)
-            + AiSourceKnowledge.load(AiTelly.class)
-            + AiSourceKnowledge.load(AiScaffoldWalk.class)
-            + AiSourceKnowledge.load(AiDodge.class)
-            + AiSourceKnowledge.load(AiProjectiles.class)
-            + AiSourceKnowledge.load(AiDanger.class)
-            + AiSourceKnowledge.load(AiMlg.class)
-            + AiSourceKnowledge.load(AiWorldCreate.class)
-            + AiSourceKnowledge.load(AiChop.class)
-            + AiSourceKnowledge.load(AiCollect.class)
-            + AiSourceKnowledge.load(AiItems.class)
-            + AiSourceKnowledge.load(AiCraft.class)
-            + AiSourceKnowledge.load(AiCraftPlanner.class)
-            + AiSourceKnowledge.load(AiObtain.class)
-            + AiSourceKnowledge.load(AiCombat.class)
-            + AiSourceKnowledge.load(AiContainer.class)
-            + AiSourceKnowledge.load(AiEquip.class)
-            + AiSourceKnowledge.load(AiSmelt.class)
-            + AiSourceKnowledge.load(AiTrade.class)
-            + AiSourceKnowledge.load(AiFarm.class)
-            + AiSourceKnowledge.load(AiDimension.class)
-            + AiSourceKnowledge.load(AiProspect.class)
-            + AiSourceKnowledge.load(AiGuard.class)
-            + AiSourceKnowledge.load(AiDeathLog.class)
-            + AiSourceKnowledge.load(AiRecover.class)
-            + AiSourceKnowledge.load(AiPlan.class)
-            + AiSourceKnowledge.load(AiPlanRunner.class)
-            + AiSourceKnowledge.load(AiSleep.class)
-            + AiSourceKnowledge.load(AiFish.class)
-            + AiSourceKnowledge.load(AiBucket.class)
-            + AiSourceKnowledge.load(AiRide.class)
-            + AiSourceKnowledge.load(AiRedstone.class)
-            + AiSourceKnowledge.load(AiRanged.class)
-            + AiSourceKnowledge.load(AiTidy.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiAim.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiPlacer.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiPathfinder.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiWrExecutor.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiPaceScript.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiPacePlayback.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiWallJump.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiLadderJump.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiSlimeBounce.class)
-            + AiSourceKnowledge.load(AiParkourRoute.class)
-            + AiSourceKnowledge.load(AiGoto.class)
-            + AiSourceKnowledge.load(autismclient.ai.engine.AiMine.class);
+         dependency = AiSourceKnowledge.docsFor(AiGameOperations.class)
+            + AiSourceKnowledge.docsFor(AiGameplay.class)
+            + AiSourceKnowledge.docsFor(AiInventoryController.class)
+            + AiSourceKnowledge.docsFor(AiContainerTransactions.class)
+            + AiSourceKnowledge.docsFor(AiExpectations.class)
+            + AiSourceKnowledge.docsFor(AiTerrain.class)
+            + AiSourceKnowledge.docsFor(AiChatOps.class)
+            + AiSourceKnowledge.docsFor(AiChatLedger.class)
+            + AiSourceKnowledge.docsFor(AiPacketLog.class)
+            + AiSourceKnowledge.docsFor(AiPacketSend.class)
+            + AiSourceKnowledge.docsFor(AiServerIntel.class)
+            + AiSourceKnowledge.docsFor(AiLanSync.class)
+            + AiSourceKnowledge.docsFor(AiWorldReaders.class)
+            + AiSourceKnowledge.docsFor(AiScreens.class)
+            + AiSourceKnowledge.docsFor(AiSurvival.class)
+            + AiSourceKnowledge.docsFor(AiBuilder.class)
+            + AiSourceKnowledge.docsFor(AiCommandOp.class)
+            + AiSourceKnowledge.docsFor(AiEnchant.class)
+            + AiSourceKnowledge.docsFor(AiOracle.class)
+            + AiSourceKnowledge.docsFor(AiAddons.class)
+            + AiSourceKnowledge.docsFor(AiTelly.class)
+            + AiSourceKnowledge.docsFor(AiScaffoldWalk.class)
+            + AiSourceKnowledge.docsFor(AiDodge.class)
+            + AiSourceKnowledge.docsFor(AiProjectiles.class)
+            + AiSourceKnowledge.docsFor(AiDanger.class)
+            + AiSourceKnowledge.docsFor(AiMlg.class)
+            + AiSourceKnowledge.docsFor(AiWorldCreate.class)
+            + AiSourceKnowledge.docsFor(AiChop.class)
+            + AiSourceKnowledge.docsFor(AiCollect.class)
+            + AiSourceKnowledge.docsFor(AiItems.class)
+            + AiSourceKnowledge.docsFor(AiCraft.class)
+            + AiSourceKnowledge.docsFor(AiCraftPlanner.class)
+            + AiSourceKnowledge.docsFor(AiObtain.class)
+            + AiSourceKnowledge.docsFor(AiCombat.class)
+            + AiSourceKnowledge.docsFor(AiContainer.class)
+            + AiSourceKnowledge.docsFor(AiEquip.class)
+            + AiSourceKnowledge.docsFor(AiSmelt.class)
+            + AiSourceKnowledge.docsFor(AiTrade.class)
+            + AiSourceKnowledge.docsFor(AiFarm.class)
+            + AiSourceKnowledge.docsFor(AiDimension.class)
+            + AiSourceKnowledge.docsFor(AiProspect.class)
+            + AiSourceKnowledge.docsFor(AiGuard.class)
+            + AiSourceKnowledge.docsFor(AiDeathLog.class)
+            + AiSourceKnowledge.docsFor(AiRecover.class)
+            + AiSourceKnowledge.docsFor(AiPlan.class)
+            + AiSourceKnowledge.docsFor(AiPlanRunner.class)
+            + AiSourceKnowledge.docsFor(AiSleep.class)
+            + AiSourceKnowledge.docsFor(AiFish.class)
+            + AiSourceKnowledge.docsFor(AiBucket.class)
+            + AiSourceKnowledge.docsFor(AiRide.class)
+            + AiSourceKnowledge.docsFor(AiRedstone.class)
+            + AiSourceKnowledge.docsFor(AiRanged.class)
+            + AiSourceKnowledge.docsFor(AiTidy.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiAim.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiPlacer.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiPathfinder.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiWrExecutor.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiPaceScript.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiPacePlayback.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiWallJump.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiLadderJump.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiSlimeBounce.class)
+            + AiSourceKnowledge.docsFor(AiParkourRoute.class)
+            + AiSourceKnowledge.docsFor(AiGoto.class)
+            + AiSourceKnowledge.docsFor(autismclient.ai.engine.AiMine.class);
       }
 
       addEntryWith(entries, d, defaults, dependency);

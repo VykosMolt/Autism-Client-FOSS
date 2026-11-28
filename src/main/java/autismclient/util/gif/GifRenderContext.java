@@ -8,7 +8,7 @@ public final class GifRenderContext {
    private GifRenderContext() {
    }
 
-   public static void init(String name) {
+   public static void enter(String name) {
       init_I++;
       init_Str = name;
    }

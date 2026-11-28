@@ -47,7 +47,7 @@ public final class PacketFilterListCodec {
       return invalid;
    }
 
-   public static String init(Collection<Class<? extends Packet<?>>> packets) {
+   public static String encode(Collection<Class<? extends Packet<?>>> packets) {
       if (packets != null && !packets.isEmpty()) {
          List<String> names = new ArrayList<>();
 
@@ -63,7 +63,7 @@ public final class PacketFilterListCodec {
    }
 
    public static String init_Str(String value, boolean c2s) {
-      return init(parse(value, c2s));
+      return encode(parse(value, c2s));
    }
 
    private static List<String> init_List(String value) {

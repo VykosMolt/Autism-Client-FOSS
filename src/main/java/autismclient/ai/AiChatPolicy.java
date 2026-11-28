@@ -91,11 +91,11 @@ final class AiChatPolicy {
    private AiChatPolicy() {
    }
 
-   static long init(long revision) {
+   static long clampRevision(long revision) {
       return Math.max(0L, revision);
    }
 
-   static AiChatPolicy.Inner_StreamUtil init(AiChatLedger.ChatEntry entry, String selfName, AiChatPolicy.Inner_DataUtil config) {
+   static AiChatPolicy.Inner_StreamUtil admit(AiChatLedger.ChatEntry entry, String selfName, AiChatPolicy.Inner_DataUtil config) {
       if (entry != null && config != null) {
          String source = entry.source() == null ? "" : entry.source().toUpperCase(Locale.ROOT);
          boolean privateSource = source.equals("PLAYER_PRIVATE");
@@ -104,7 +104,7 @@ final class AiChatPolicy {
          }
 
          boolean playerSource = source.equals("PLAYER") || source.equals("DISGUISED") || privateSource;
-         String sender = init(entry);
+         String sender = senderOf(entry);
          boolean genericSender = isGenericSender(sender);
          if (!playerSource) {
             if (!config.includeServerChat()) {
@@ -159,7 +159,7 @@ final class AiChatPolicy {
          return null;
       }
 
-      String sender = init(entry);
+      String sender = senderOf(entry);
       String text = normalize(entry.text());
       if (text.isEmpty() || text.startsWith("/")) {
          return null;
@@ -186,7 +186,7 @@ final class AiChatPolicy {
       }
    }
 
-   static String init(AiChatLedger.ChatEntry entry) {
+   static String senderOf(AiChatLedger.ChatEntry entry) {
       if (entry == null) {
          return "";
       }
@@ -267,11 +267,11 @@ final class AiChatPolicy {
       }
    }
 
-   static boolean load_Z(String objective) {
+   static boolean wantsChat(String objective) {
       return objective != null && !objective.isBlank() ? KEEP_CHATTING.matcher(objective).find() : false;
    }
 
-   static boolean read(String objective) {
+   static boolean wantsStopChat(String objective) {
       if (objective != null && !objective.isBlank()) {
          Matcher matcher = STOP_CHATTING.matcher(objective);
 
@@ -288,7 +288,7 @@ final class AiChatPolicy {
       }
    }
 
-   static boolean write(String objective) {
+   static boolean isTaskRequest(String objective) {
       return objective != null && TASK_REQUEST.matcher(objective).find();
    }
 
@@ -303,7 +303,7 @@ final class AiChatPolicy {
          while (matcher.find()) {
             for (String candidate : matcher.group(1).split("(?i)\\s*(?:,|and|&)\\s+")) {
                String name = candidate.trim();
-               if (!name.isEmpty() && !NON_NAME_WORDS.contains(name.toLowerCase(Locale.ROOT)) && !write("and " + name)) {
+               if (!name.isEmpty() && !NON_NAME_WORDS.contains(name.toLowerCase(Locale.ROOT)) && !isTaskRequest("and " + name)) {
                   boolean seen = false;
 
                   for (String existing : out) {
@@ -326,7 +326,7 @@ final class AiChatPolicy {
       }
    }
 
-   static String init(AiChatPolicy.Inner_DataUtil config, String selfName) {
+   static String systemPrompt(AiChatPolicy.Inner_DataUtil config, String selfName) {
       String name = selfName != null && !selfName.isBlank() ? selfName : "the player";
       StringBuilder out = new StringBuilder(1200);
       out.append("You are ")
@@ -355,7 +355,7 @@ final class AiChatPolicy {
       return out.toString();
    }
 
-   static String init(List<AiChatPolicy.Inner_StreamUtil> history, List<AiChatPolicy.Inner_StreamUtil> batch, String selfName) {
+   static String userPrompt(List<AiChatPolicy.Inner_StreamUtil> history, List<AiChatPolicy.Inner_StreamUtil> batch, String selfName) {
       StringBuilder out = new StringBuilder(2048);
       out.append("RECENT CHAT (oldest first, for context):\n");
       List<AiChatPolicy.Inner_StreamUtil> recent = history == null ? List.of() : history;
@@ -403,7 +403,7 @@ final class AiChatPolicy {
       return (self ? selfName + " (you)" : line.sender()) + ": " + text;
    }
 
-   static String init(String raw, int maxChars) {
+   static String sanitize(String raw, int maxChars) {
       if (raw == null) {
          return "";
       }
@@ -452,7 +452,7 @@ final class AiChatPolicy {
       return text;
    }
 
-   static boolean update(String raw) {
+   static boolean isSkipAnswer(String raw) {
       if (raw == null) {
          return true;
       }
@@ -462,7 +462,7 @@ final class AiChatPolicy {
       return value.equals("SKIP") || value.equals("NOREPLY") || value.equals("NO_REPLY") || value.equals("NO-REPLY");
    }
 
-   static long init(AiChatPolicy.Inner_DataUtil config, List<AiChatPolicy.Inner_StreamUtil> pending, String selfName) {
+   static long replyDelay(AiChatPolicy.Inner_DataUtil config, List<AiChatPolicy.Inner_StreamUtil> pending, String selfName) {
       if (config == null) {
          return 1200L;
       } else {
@@ -470,7 +470,7 @@ final class AiChatPolicy {
       }
    }
 
-   static boolean init(long now, Deque<Long> replyTimes, long lastReplyAt, Map<String, Long> lastBySender, String sender, AiChatPolicy.Inner_DataUtil config) {
+   static boolean withinRateLimit(long now, Deque<Long> replyTimes, long lastReplyAt, Map<String, Long> lastBySender, String sender, AiChatPolicy.Inner_DataUtil config) {
       if (config == null) {
          return false;
       }

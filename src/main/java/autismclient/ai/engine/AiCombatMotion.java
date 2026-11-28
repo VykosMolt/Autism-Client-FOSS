@@ -13,7 +13,7 @@ public final class AiCombatMotion {
    private AiCombatMotion() {
    }
 
-   public static boolean init(Minecraft mc) {
+   public static boolean jumpSafe(Minecraft mc) {
       if (mc.player != null && mc.level != null && mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable()) {
          AiLiveWorld world = new AiLiveWorld(mc.level, mc.player);
          AiPhysics.MotionState state = AiPhysics.MotionState.of(mc.player);
@@ -41,20 +41,20 @@ public final class AiCombatMotion {
       }
    }
 
-   public static AABB init(Minecraft mc, double forward, double strafe, int ticks) {
+   public static AABB predictEndBox(Minecraft mc, double forward, double strafe, int ticks) {
       List<AABB> trace = init(mc, mc.player == null ? 0.0F : mc.player.getYRot(), forward, strafe, ticks);
       return trace == null ? null : (trace.isEmpty() ? mc.player.getBoundingBox() : trace.getLast());
    }
 
    public static List<AABB> init(Minecraft mc, float yaw, double forward, double strafe, int ticks) {
-      return init(mc, yaw, forward, strafe, ticks, 0);
+      return predictTrace(mc, yaw, forward, strafe, ticks, 0);
    }
 
-   public static List<AABB> init(Minecraft mc, float yaw, double forward, double strafe, int ticks, int coastTicks) {
-      return init(mc, yaw, forward, strafe, ticks, coastTicks, false);
+   public static List<AABB> predictTrace(Minecraft mc, float yaw, double forward, double strafe, int ticks, int coastTicks) {
+      return predictTrace(mc, yaw, forward, strafe, ticks, coastTicks, false);
    }
 
-   public static List<AABB> init(Minecraft mc, float yaw, double forward, double strafe, int ticks, int coastTicks, boolean sprint) {
+   public static List<AABB> predictTrace(Minecraft mc, float yaw, double forward, double strafe, int ticks, int coastTicks, boolean sprint) {
       if (mc.player != null && mc.level != null && mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable()) {
          AiLiveWorld world = new AiLiveWorld(mc.level, mc.player);
          AiPhysics.MotionState state = AiPhysics.MotionState.of(mc.player);

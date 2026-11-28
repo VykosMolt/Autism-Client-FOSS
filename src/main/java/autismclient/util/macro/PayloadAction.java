@@ -101,7 +101,7 @@ public class PayloadAction implements MacroAction {
                PayloadScriptRunner.ScriptContext context = new PayloadScriptRunner.ScriptContext(
                   targetChannel, rawBytes, this.commandApiRecognized && this.commandApiOverride ? this.commandApiValue : null
                );
-               PayloadScriptRunner.ScriptOutput result = PayloadScriptRunner.init(this.payloadScriptEnabled ? this.javaSource : "", context);
+               PayloadScriptRunner.ScriptOutput result = PayloadScriptRunner.run(this.payloadScriptEnabled ? this.javaSource : "", context);
                if (AutismPayloadSupport.sendCustomPayload(result.channel(), result.bytes(), sendProtocol)) {
                   AutismClientMessaging.sendPrefixed("Sent payload: " + result.channel());
                }

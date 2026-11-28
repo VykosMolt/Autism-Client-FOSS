@@ -83,10 +83,10 @@ final class KnockbackThrowPlanner {
    static KnockbackThrowPlanner.ThrowPlan plan(
       KnockbackThrowPlanner.ThrowInput input, float yaw, double quantum, double maximumTurn, double minimum, boolean voidOnly, int side, KnockbackThrowPlanner.ThrowWorld world
    ) {
-      return init(input, yaw, quantum, new KnockbackThrowPlanner.PlanSettings(maximumTurn, minimum, voidOnly, side, 10.0), KnockbackThrowPlanner.CounterHypotheses.NO_HYPOTHESES, world);
+      return plan(input, yaw, quantum, new KnockbackThrowPlanner.PlanSettings(maximumTurn, minimum, voidOnly, side, 10.0), KnockbackThrowPlanner.CounterHypotheses.NO_HYPOTHESES, world);
    }
 
-   static KnockbackThrowPlanner.ThrowPlan init(
+   static KnockbackThrowPlanner.ThrowPlan plan(
       KnockbackThrowPlanner.ThrowInput input, float yaw, double quantum, KnockbackThrowPlanner.PlanSettings settings, KnockbackThrowPlanner.CounterHypotheses hypotheses, KnockbackThrowPlanner.ThrowWorld world
    ) {
       lastStatus = input != null && Double.isFinite(input.extra) && input.extra <= 0.0 ? "no-extra-push" : "invalid";
@@ -157,7 +157,7 @@ final class KnockbackThrowPlanner {
                ArrayList<KnockbackThrowPlanner.ThrowCandidate> throwsFound = new ArrayList<>();
 
                for (KnockbackThrowPlanner.ThrowCandidate c : candidates) {
-                  if (c.landing.init_Z() && c.landing.init(minimum, voidOnly)) {
+                  if (c.landing.init_Z() && c.landing.isLethal(minimum, voidOnly)) {
                      throwsFound.add(c);
                   }
                }
@@ -171,7 +171,7 @@ final class KnockbackThrowPlanner {
                      TerrainDropGrid.FlightResult countered = grid.simulateFlight(
                         input.body, pushedVelocity(unturned, c.yaw), input.grounded, hypotheses.counter()
                      );
-                     holds = countered.init_Z() && countered.init(minimum, voidOnly);
+                     holds = countered.init_Z() && countered.isLethal(minimum, voidOnly);
                   }
 
                   robust.put(c, holds);
@@ -185,7 +185,7 @@ final class KnockbackThrowPlanner {
                   boolean holds = strafe == null ? robust.get(c) : false;
                   if (strafe != null) {
                      TerrainDropGrid.FlightResult strafed = grid.simulateFlight(input.body, pushed, input.grounded, strafe);
-                     holds = strafed.init_Z() && strafed.init(minimum, voidOnly);
+                     holds = strafed.init_Z() && strafed.isLethal(minimum, voidOnly);
                   }
 
                   strafeHolds.put(c, holds);
@@ -225,7 +225,7 @@ final class KnockbackThrowPlanner {
                         TerrainDropGrid.FlightResult actualFlight = grid.simulateFlight(
                            at.body, pushedVelocity(at, c.yaw), at.grounded, KnockbackThrowPlanner.CounterSteer.NONE
                         );
-                        if (actualFlight.init_Z() && actualFlight.init(minimum, voidOnly)) {
+                        if (actualFlight.init_Z() && actualFlight.isLethal(minimum, voidOnly)) {
                            KnockbackThrowPlanner.ThrowEvaluation result = evaluate(at, c.yaw, world, KnockbackThrowPlanner.CounterSteer.NONE);
                            confirmations++;
                            if (result.meetsGoal(minimum, voidOnly)) {
@@ -304,12 +304,12 @@ final class KnockbackThrowPlanner {
 
          for (int t = 0; t < ticks; t++) {
             Vec3 want = new Vec3(vx, grounded ? -0.0784 : vy, vz);
-            if (!world.init_Z_AABB(body.expandTowards(want).inflate(1.0, 0.6, 1.0))) {
+            if (!world.regionLoaded(body.expandTowards(want).inflate(1.0, 0.6, 1.0))) {
                break;
             }
 
             if (grounded && (vx != 0.0 || vz != 0.0)) {
-               Vec3 down = world.init_Vec3_AABB_Vec3(body.move(vx, 0.0, vz), new Vec3(0.0, -0.6, 0.0));
+               Vec3 down = world.collide(body.move(vx, 0.0, vz), new Vec3(0.0, -0.6, 0.0));
                if (!isFiniteVec(down) || down.y <= -0.5999999) {
                   vx = 0.0;
                   vz = 0.0;
@@ -317,7 +317,7 @@ final class KnockbackThrowPlanner {
                }
             }
 
-            Vec3 actual = world.init_Vec3_AABB_Vec3(body, want);
+            Vec3 actual = world.collide(body, want);
             if (!isFiniteVec(actual)) {
                break;
             }
@@ -366,7 +366,7 @@ final class KnockbackThrowPlanner {
          int tick = 1;
 
          while (tick <= 64) {
-            if (!world.init_Z_AABB(body.expandTowards(motion).inflate(0.001))) {
+            if (!world.regionLoaded(body.expandTowards(motion).inflate(0.001))) {
                return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.UNKNOWN, 0.0, tick);
             }
 
@@ -374,16 +374,16 @@ final class KnockbackThrowPlanner {
                return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick);
             }
 
-            double block = ground ? world.init_D_AABB(body) : 0.6;
+            double block = ground ? world.frictionUnder(body) : 0.6;
             double friction = ground ? block * 0.91 : 0.91;
             if (Double.isFinite(friction) && !(friction <= 0.0) && !(friction > 1.0)) {
-               if (countering && steer.init(motion.x, motion.z)) {
+               if (countering && steer.opposes(motion.x, motion.z)) {
                   double accel = ground ? steer.read() * (0.21600002 / (block * block * block)) : steer.write();
                   motion = motion.add(steer.init_D() * accel, 0.0, steer.load() * accel);
                }
 
                Vec3 wanted = Math.abs(motion.y) < 1.0E-8 ? new Vec3(motion.x, -0.01, motion.z) : motion;
-               Vec3 actual = world.init_Vec3_AABB_Vec3(body, wanted);
+               Vec3 actual = world.collide(body, wanted);
                if (!isFiniteVec(actual)) {
                   return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.UNKNOWN, 0.0, tick);
                }
@@ -392,7 +392,7 @@ final class KnockbackThrowPlanner {
                   return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick);
                }
 
-               if (world.read(body.expandTowards(actual))) {
+               if (world.touchesLava(body.expandTowards(actual))) {
                   return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.LAVA, 1.0 / 0.0, tick);
                }
 
@@ -421,7 +421,7 @@ final class KnockbackThrowPlanner {
                      region = region.inflate(1.0, 0.0, 1.0);
                   }
 
-                  KnockbackThrowPlanner.FloorProbe below = world.init_W_CachePool_AABB(region);
+                  KnockbackThrowPlanner.FloorProbe below = world.probeFloor(region);
                   if (below != null && below.read && below.init_Z && !below.load) {
                      return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.VOID, 1.0 / 0.0, tick);
                   }
@@ -436,7 +436,7 @@ final class KnockbackThrowPlanner {
                   return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.UNKNOWN, 0.0, tick);
                }
 
-               KnockbackThrowPlanner.FloorProbe floor = world.init_W_CachePool_AABB(body);
+               KnockbackThrowPlanner.FloorProbe floor = world.probeFloor(body);
                if (floor != null && floor.read) {
                   if (floor.load) {
                      return new KnockbackThrowPlanner.ThrowEvaluation(KnockbackThrowPlanner.LandingOutcome.SAFE, 0.0, tick);
@@ -534,7 +534,7 @@ final class KnockbackThrowPlanner {
          this(body, attacker, velocity, grounded, resistance, extra, body == null ? 0.0 / 0.0 : body.minY, false);
       }
 
-      KnockbackThrowPlanner.ThrowInput init(Vec3 origin) {
+      KnockbackThrowPlanner.ThrowInput withOrigin(Vec3 origin) {
          return new KnockbackThrowPlanner.ThrowInput(this.body, origin, this.velocity, this.grounded, this.resistance, this.extra, this.read, this.load_Z);
       }
 
@@ -573,11 +573,11 @@ final class KnockbackThrowPlanner {
          this(x, z, speed, air, false);
       }
 
-      boolean init(double vx, double vz) {
+      boolean opposes(double vx, double vz) {
          return !this.active || vx * this.init_D + vz * this.load < 0.0;
       }
 
-      static KnockbackThrowPlanner.CounterSteer init(float yaw, double speed, double air) {
+      static KnockbackThrowPlanner.CounterSteer forYaw(float yaw, double speed, double air) {
          if (Float.isFinite(yaw) && Double.isFinite(speed) && Double.isFinite(air)) {
             double a = Math.toRadians(yaw);
             return new KnockbackThrowPlanner.CounterSteer(-Math.sin(a), Math.cos(a), Math.max(0.0, Math.min(1.0, speed)) * 0.98, Math.max(0.0, Math.min(0.2, air)) * 0.98);
@@ -596,17 +596,17 @@ final class KnockbackThrowPlanner {
    }
 
    interface ThrowWorld {
-      boolean init_Z_AABB(AABB var1);
+      boolean regionLoaded(AABB var1);
 
-      Vec3 init_Vec3_AABB_Vec3(AABB var1, Vec3 var2);
+      Vec3 collide(AABB var1, Vec3 var2);
 
       boolean load_Z_AABB(AABB var1);
 
-      KnockbackThrowPlanner.FloorProbe init_W_CachePool_AABB(AABB var1);
+      KnockbackThrowPlanner.FloorProbe probeFloor(AABB var1);
 
-      double init();
+      double minY();
 
-      TerrainDropGrid.Column init_V_StreamUtil_I(int var1, int var2, int var3, double var4);
+      TerrainDropGrid.Column column(int var1, int var2, int var3, double var4);
 
       default boolean init_Z_F(float yaw) {
          return true;
@@ -620,11 +620,11 @@ final class KnockbackThrowPlanner {
          return input;
       }
 
-      default boolean read(AABB body) {
+      default boolean touchesLava(AABB body) {
          return false;
       }
 
-      default double init_D_AABB(AABB body) {
+      default double frictionUnder(AABB body) {
          return 0.6;
       }
    }

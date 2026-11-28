@@ -250,7 +250,7 @@ public final class ThemeTextureRecolorer {
    public static void init_V() {
       if (preview != null && init_Z) {
          int generation = currentGeneration;
-         Runnable jobDone = autismclient.gui.ThemeApplyProgressOverlay.init("Recoloring panorama");
+         Runnable jobDone = autismclient.gui.ThemeApplyProgressOverlay.beginStep("Recoloring panorama");
          MINECRAFT.execute(() -> {
             try {
                if (generation != currentGeneration) {
@@ -359,7 +359,7 @@ public final class ThemeTextureRecolorer {
       ThemePaletteManager.CompiledPalette st = ThemePaletteManager.getPalette();
       if (st.isModified(ThemePaletteManager.ColorRole.BACKDROP)) {
          load_Z = true;
-         recolorBackdrop(st, autismclient.gui.ThemeApplyProgressOverlay.init("Recoloring backdrop"));
+         recolorBackdrop(st, autismclient.gui.ThemeApplyProgressOverlay.beginStep("Recoloring backdrop"));
       }
 
       init_V();

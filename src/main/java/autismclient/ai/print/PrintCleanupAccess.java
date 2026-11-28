@@ -47,7 +47,7 @@ final class PrintCleanupAccess {
       this.core = core;
    }
 
-   void init(long key, int owner) {
+   void claim(long key, int owner) {
       PrintCleanupAccess.Inner_StreamUtil entry = this.entries.get(key);
       if (entry != null && entry.owner == owner) {
          if (this.core.env.isCreativeMode()) {
@@ -55,7 +55,7 @@ final class PrintCleanupAccess {
          }
       } else {
          if (entry != null) {
-            this.load(key);
+            this.release(key);
          }
 
          this.entries.put(key, new PrintCleanupAccess.Inner_StreamUtil(key, owner));
@@ -90,7 +90,7 @@ final class PrintCleanupAccess {
       }
    }
 
-   void load(long key) {
+   void release(long key) {
       PrintCleanupAccess.Inner_StreamUtil entry = this.entries.remove(key);
       if (entry != null) {
          this.unlinkCertificate(entry);
@@ -106,7 +106,7 @@ final class PrintCleanupAccess {
       }
    }
 
-   void read(long key) {
+   void markReadDirty(long key) {
       LongOpenHashSet keys = this.dependentsByRead.get(key);
       if (keys != null) {
          this.dirtyKeys.addAll(keys);
@@ -114,7 +114,7 @@ final class PrintCleanupAccess {
       }
    }
 
-   void init() {
+   void bumpRevision() {
       this.update++;
       this.revision++;
    }
@@ -174,7 +174,7 @@ final class PrintCleanupAccess {
       }
 
       PrintCleanupAccess.Inner_CachePool guard = this.blockGuards.get(position.asLong());
-      if (guard == null || guard.state != state || !guard.init()) {
+      if (guard == null || guard.state != state || !guard.proofValid()) {
          guard = this.newCleanupProof(position, state);
          if (this.blockGuards.size() >= 64) {
             this.blockGuards.remove(this.blockGuards.keySet().iterator().next());
@@ -184,7 +184,7 @@ final class PrintCleanupAccess {
       }
 
       if (!guard.update && !this.core.isBudgetSpent()) {
-         guard.init(this.core.workBudget());
+         guard.advanceProof(this.core.workBudget());
       }
 
       return guard.flush || !guard.update || guard.sync;
@@ -412,7 +412,7 @@ final class PrintCleanupAccess {
          this.update = this.load_Z;
       }
 
-      boolean init() {
+      boolean proofValid() {
          return !this.flush
             && this.cleanupRevision == PrintCleanupAccess.this.revision
             && (
@@ -442,8 +442,8 @@ final class PrintCleanupAccess {
          return false;
       }
 
-      void init(long allowance) {
-         if (!this.init()) {
+      void advanceProof(long allowance) {
+         if (!this.proofValid()) {
             this.flush = true;
          } else if (!this.update) {
             try (PrintView.DynamicShapeTracker.ShapeAttachment geometry = this.init_ArrayUtil_StreamUt.attach()) {

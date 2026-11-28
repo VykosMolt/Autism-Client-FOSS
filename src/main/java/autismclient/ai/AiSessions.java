@@ -112,7 +112,7 @@ public final class AiSessions {
       this.init_Set.remove(id);
       Files.deleteIfExists(this.sessionFile(id));
       Files.deleteIfExists(this.transcriptFile(id));
-      Files.deleteIfExists(this.read(id));
+      Files.deleteIfExists(this.rotatedTranscriptPath(id));
    }
 
    public synchronized AiSessions.SessionData fork(String id) throws IOException {
@@ -132,8 +132,8 @@ public final class AiSessions {
          Files.copy(this.transcriptFile(id), this.transcriptFile(child.id), StandardCopyOption.REPLACE_EXISTING);
       }
 
-      if (Files.isRegularFile(this.read(id))) {
-         Files.copy(this.read(id), this.read(child.id), StandardCopyOption.REPLACE_EXISTING);
+      if (Files.isRegularFile(this.rotatedTranscriptPath(id))) {
+         Files.copy(this.rotatedTranscriptPath(id), this.rotatedTranscriptPath(child.id), StandardCopyOption.REPLACE_EXISTING);
       }
 
       return child;
@@ -155,7 +155,7 @@ public final class AiSessions {
       AiJson.auditPrivateFile(file);
       Files.writeString(file, serializeLine(line) + "\n", StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
       if (Files.size(file) > 4000000L) {
-         Files.move(file, this.read(id), StandardCopyOption.REPLACE_EXISTING);
+         Files.move(file, this.rotatedTranscriptPath(id), StandardCopyOption.REPLACE_EXISTING);
       }
    }
 
@@ -181,7 +181,7 @@ public final class AiSessions {
          Files.deleteIfExists(temp);
       }
 
-      Files.deleteIfExists(this.read(id));
+      Files.deleteIfExists(this.rotatedTranscriptPath(id));
    }
 
    private static String serializeLine(JsonObject line) {
@@ -199,7 +199,7 @@ public final class AiSessions {
       List<JsonObject> parsed = new ArrayList<>();
 
       // the rotated archive holds the older lines, so it is read first and the live file appended
-      for (Path file : List.of(this.read(id), this.transcriptFile(id))) {
+      for (Path file : List.of(this.rotatedTranscriptPath(id), this.transcriptFile(id))) {
          if (Files.isRegularFile(file)) {
             String line;
             try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
@@ -300,7 +300,7 @@ public final class AiSessions {
       return cut.trim() + "…";
    }
 
-   public static AiSessions.SessionData init(JsonObject legacy, String newId, long now, int defaultTaskMinutes) {
+   public static AiSessions.SessionData migrateLegacy(JsonObject legacy, String newId, long now, int defaultTaskMinutes) {
       AiSessions.SessionData d = new AiSessions.SessionData();
       d.id = newId;
       d.createdAt = d.lastActiveAt = now;
@@ -524,7 +524,7 @@ public final class AiSessions {
       return this.sessionsDir.resolve(id + ".transcript.jsonl");
    }
 
-   private Path read(String id) {
+   private Path rotatedTranscriptPath(String id) {
       return this.sessionsDir.resolve(id + ".transcript.jsonl.1");
    }
 

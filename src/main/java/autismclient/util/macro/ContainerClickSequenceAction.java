@@ -26,17 +26,17 @@ public class ContainerClickSequenceAction implements MacroAction {
    @Override
    public void execute(Minecraft mc) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.player != null && mc.gameMode != null && mc.player.containerMenu != null) {
-         List<Integer> clickSlots = this.init();
+         List<Integer> clickSlots = this.slots();
 
          for (int r = 0; r < Math.max(1, this.repeatCount); r++) {
             for (int visibleSlot : clickSlots) {
-               this.init(mc, visibleSlot);
+               this.clickSlot(mc, visibleSlot);
             }
          }
       }
    }
 
-   boolean init(Minecraft mc, int visibleSlot) {
+   boolean clickSlot(Minecraft mc, int visibleSlot) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.player != null && mc.gameMode != null && mc.player.containerMenu != null) {
          int handlerSlot = this.containerSource != ContainerClickSequenceAction.Inner_DataUtil.CURRENT && this.containerSource != ContainerClickSequenceAction.Inner_DataUtil.PLAYER_INVENTORY
             ? visibleSlot
@@ -83,7 +83,7 @@ public class ContainerClickSequenceAction implements MacroAction {
       return var10000;
    }
 
-   public List<Integer> init() {
+   public List<Integer> slots() {
       ArrayList<Integer> out = new ArrayList<>();
       switch (this.slotSource) {
          case SINGLE:

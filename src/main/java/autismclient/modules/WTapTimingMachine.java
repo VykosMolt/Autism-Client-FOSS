@@ -14,7 +14,7 @@ final class WTapTimingMachine {
    private static final long flush = 50000000L;
    private long close;
 
-   boolean init(long now, int tick, long delay, long duration, boolean selected) {
+   boolean arm(long now, int tick, long delay, long duration, boolean selected) {
       this.init_V(now);
       if (selected
          && this.init_be_DataUtil == WTapTimingMachine.Inner_DataUtil.IDLE
@@ -33,7 +33,7 @@ final class WTapTimingMachine {
       }
    }
 
-   boolean init_Z(long now) {
+   boolean beginDelay(long now) {
       this.init_V(now);
       if (this.init_be_DataUtil != WTapTimingMachine.Inner_DataUtil.HIT) {
          return false;
@@ -44,7 +44,7 @@ final class WTapTimingMachine {
       return true;
    }
 
-   boolean init(long now, int tick, boolean eligible) {
+   boolean shouldRelease(long now, int tick, boolean eligible) {
       if (!eligible) {
          this.reset();
          return false;
@@ -85,7 +85,7 @@ final class WTapTimingMachine {
       return this.init_be_DataUtil != WTapTimingMachine.Inner_DataUtil.IDLE;
    }
 
-   boolean load(long now) {
+   boolean activeAt(long now) {
       this.init_V(now);
       return this.isActive();
    }

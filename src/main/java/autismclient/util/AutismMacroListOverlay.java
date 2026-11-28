@@ -557,7 +557,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
          this.overlayHeight = clamped.height;
          this.windowNode.setBounds(this.overlayX, this.overlayY, this.overlayWidth, this.overlayHeight);
          this.statusLabel
-            .init(
+            .text(
                this.selectedKeys.isEmpty()
                   ? "Click to select, drag to move. Right-click for more."
                   : this.selectedKeys.size() + " selected. Drag to move, right-click for more."
@@ -1529,7 +1529,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       if (sync.isInSession()) {
          for (Entry<String, Map<String, AutismMacro>> entry : remoteMacros.entrySet()) {
             List<AutismMacro> available = entry.getValue().values().stream().filter(m -> !AutoFishMacroPresets.isStopMacro(m)).filter(m -> MacroLibraryManager.getInstance().findByName(m.name) == null).toList();
-            List<MacroFolderLayout.Inner_DataUtil> remoteRows = MacroFolderLayout.init(
+            List<MacroFolderLayout.Inner_DataUtil> remoteRows = MacroFolderLayout.rows(
                available, List.of(), folder -> this.init_Set.contains(entry.getKey() + "\u0000" + MacroFolderLayout.key(folder)), filter, false
             );
             if (!remoteRows.isEmpty()) {
@@ -2555,7 +2555,7 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
    }
 
    private boolean load_Z_F_F_3(float uiMouseX, float uiMouseY) {
-      return autismclient.gui.ui.widgets.WindowHeaderHelper.init(
+      return autismclient.gui.ui.widgets.WindowHeaderHelper.overClose(
          autismclient.gui.f.NetHelper.init(this.overlayX, this.overlayY, this.overlayWidth, Math.max(this.styleTheme.load(), this.overlayHeight)),
          this.styleTheme.load(),
          uiMouseX,

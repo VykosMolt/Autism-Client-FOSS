@@ -30,7 +30,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
       this.packetName = packetName;
    }
 
-   public static String init(String target) {
+   public static String directionOf(String target) {
       if (target == null) {
          return "";
       } else {
@@ -43,7 +43,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   public static String load(String target) {
+   public static String packetOf(String target) {
       if (target == null) {
          return "";
       } else {
@@ -56,9 +56,9 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   public static String read(String target) {
-      String direction = init(target);
-      String packet = load(target);
+   public static String normalizeTarget(String target) {
+      String direction = directionOf(target);
+      String packet = packetOf(target);
       if (packet.isEmpty()) {
          return "";
       } else {
@@ -66,8 +66,8 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   public static String init(String direction, String packetName) {
-      String packet = load(packetName);
+   public static String target(String direction, String packetName) {
+      String packet = packetOf(packetName);
       if (packet.isEmpty()) {
          return "";
       } else if ("C2S".equalsIgnoreCase(direction)) {
@@ -77,19 +77,19 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   public static String write(String target) {
-      String packet = load(target);
+   public static String describe(String target) {
+      String packet = packetOf(target);
       String friendly = PacketNameResolver.friendlyName(packet);
-      String direction = init(target);
+      String direction = directionOf(target);
       return direction.isEmpty() ? friendly : direction + " " + friendly;
    }
 
-   public List<String> init() {
+   public List<String> targets() {
       if (!this.packetNames.isEmpty()) {
          List<String> normalized = new ArrayList<>();
 
          for (String target : this.packetNames) {
-            String safe = read(target);
+            String safe = normalizeTarget(target);
             if (!safe.isEmpty()) {
                normalized.add(safe);
             }
@@ -100,7 +100,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
          }
       }
 
-      String legacy = read(this.packetName);
+      String legacy = normalizeTarget(this.packetName);
       return !legacy.isEmpty() ? Collections.singletonList(legacy) : Collections.emptyList();
    }
 
@@ -156,13 +156,13 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public String getDisplayName() {
-      List<String> eff = this.init();
+      List<String> eff = this.targets();
       if (eff.isEmpty()) {
          return "Wait Pkt: Any";
       }
 
       if (eff.size() == 1) {
-         return "Wait Pkt: " + write(eff.get(0));
+         return "Wait Pkt: " + describe(eff.get(0));
       }
 
       Map<String, Integer> counts = new LinkedHashMap<>();
@@ -174,7 +174,7 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
       if (counts.size() == 1) {
          String n = counts.keySet().iterator().next();
          int c = counts.get(n);
-         return "Wait Pkt: " + write(n) + " x" + c;
+         return "Wait Pkt: " + describe(n) + " x" + c;
       } else {
          return "Wait Pkts (" + eff.size() + ")";
       }
@@ -196,12 +196,12 @@ public class WaitForPacketAction implements CaptureOutputAction, MacroAction {
    }
 
    @Override
-   public String load() {
+   public String getSaveAs() {
       return this.saveAs;
    }
 
    @Override
-   public void a_(String name) {
+   public void setSaveAs(String name) {
       this.saveAs = name == null ? "" : name;
    }
 }

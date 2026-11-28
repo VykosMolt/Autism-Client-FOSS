@@ -11,16 +11,16 @@ final class AiStride {
    static final int readEx = 8;
    static final int value = 8;
    static final double putAt_D = 2.2;
-   private static final int[] putAt_IArr = new int[]{0, -12, 12, -24, 24};
+   private static final int[] YAW_OFFSETS = new int[]{0, -12, 12, -24, 24};
 
    private AiStride() {
    }
 
    static long putAt_J_D_D(double var0, double var2) {
-      return putAt_J_I_I((int)Math.floor(var0), (int)Math.floor(var2));
+      return packPair((int)Math.floor(var0), (int)Math.floor(var2));
    }
 
-   static long putAt_J_I_I(int var0, int var1) {
+   static long packPair(int var0, int var1) {
       return (long)var0 << 32 ^ var1 & 4294967295L;
    }
 
@@ -35,7 +35,7 @@ final class AiStride {
             return false;
          }
 
-         if (!AiGroundContinuity.putAt(var2, var3, var8, var4) || !var1.test(putAt_J_D_D(var8.x(), var8.z()))) {
+         if (!AiGroundContinuity.continuousGround(var2, var3, var8, var4) || !var1.test(putAt_J_D_D(var8.x(), var8.z()))) {
             return false;
          }
 
@@ -89,7 +89,7 @@ final class AiStride {
 
       while (var8 < 8) {
          AiPhysics.MotionState var9 = AiPhysics.step(var0, AiPhysics.MoveInput.NONE, var4);
-         if (AiGroundContinuity.putAt(var4, var0, var9, var6) && !AiPhysics.hitsHazard(var4, var0, var9)) {
+         if (AiGroundContinuity.continuousGround(var4, var0, var9, var6) && !AiPhysics.hitsHazard(var4, var0, var9)) {
             if (var9.onGround()) {
                var6 = var9.y();
             }
@@ -110,7 +110,7 @@ final class AiStride {
       return false;
    }
 
-   static AiStride.FallResult putAt(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, boolean var2, AiPhysics.PhysicsWorld var3) {
+   static AiStride.FallResult fallResult(AiPhysics.MotionState var0, AiPhysics.MoveInput var1, boolean var2, AiPhysics.PhysicsWorld var3) {
       AiPhysics.MotionState var4 = var0;
       boolean var5 = false;
       boolean var6 = false;
@@ -135,11 +135,11 @@ final class AiStride {
       return new AiStride.FallResult(null, 30, var5, var6);
    }
 
-   static AiStride.FallResult putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2) {
+   static AiStride.FallResult jumpFallResult(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2) {
       if (var1.jumpDelay() <= 1 && var1.onGround()) {
          AiPhysics.MotionState var3 = AiPhysics.step(var1, var2.withJump(true), var0);
          if (var3.verticalCollision() && !var3.onGround() && !var3.horizontalCollision() && !AiPhysics.hitsStrictHazard(var0, var1, var3)) {
-            AiStride.FallResult var4 = putAt(var1, var2, true, var0);
+            AiStride.FallResult var4 = fallResult(var1, var2, true, var0);
             return var4.down()
                   && var4.ceiling()
                   && !var4.wall()
@@ -285,7 +285,7 @@ final class AiStride {
             float var15 = AiPhysics.yawBetween(0.0, 0.0, var7, var9);
             AiStride.StridePlan var16 = null;
 
-            for (int var20 : putAt_IArr) {
+            for (int var20 : YAW_OFFSETS) {
                AiPhysics.MoveInput var21 = AiPhysics.MoveInput.running(var15 + var20, true);
 
                for (int var22 = 0; var22 < 3; var22++) {
@@ -389,7 +389,7 @@ final class AiStride {
          AiPhysics.MoveInput var21 = var20 == AiStride.StrideAction.GO
             ? var1
             : (var20 == AiStride.StrideAction.NONE ? var2 : var3);
-         AiStride.FallResult var22 = putAt(var0, var21, false, var10);
+         AiStride.FallResult var22 = fallResult(var0, var21, false, var10);
          if (var22.down()) {
             double var23 = Math.hypot(var22.at().x() - var6, var22.at().z() - var8);
             if (var23 < var15) {

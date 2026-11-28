@@ -26,11 +26,11 @@ public final class AiRoutePolicy {
    static final long putAt_J = 45000000000L;
    static final long fill_J = 500000000L;
    static final double value_D = 0.2;
-   private static final ItemStack[] putAt_ItemStackArr = new ItemStack[9];
+   private static final ItemStack[] scratchHotbar = new ItemStack[9];
    private static volatile LongPredicate putAt_LongPredicate = var0 -> false;
-   private static volatile long readEx_J;
-   private static volatile Set<Long> putAt_Set = Set.of();
-   private static volatile long value_J;
+   private static volatile long blockedPredicateUntil;
+   private static volatile Set<Long> avoidCells = Set.of();
+   private static volatile long avoidCellsUntil;
    private static volatile AiRoutePolicy.Inner_TableCache putAt_ValueSink_TableCac;
 
    private AiRoutePolicy() {
@@ -38,25 +38,25 @@ public final class AiRoutePolicy {
 
    public static void putAt(LongPredicate var0) {
       putAt_LongPredicate = var0;
-      readEx_J = System.nanoTime() + 3000000000L;
+      blockedPredicateUntil = System.nanoTime() + 3000000000L;
    }
 
    public static void putAt_V() {
       putAt_LongPredicate = var0 -> false;
-      readEx_J = 0L;
+      blockedPredicateUntil = 0L;
    }
 
    static boolean putAt(BlockPos var0) {
-      return System.nanoTime() < readEx_J && putAt_LongPredicate.test(var0.asLong());
+      return System.nanoTime() < blockedPredicateUntil && putAt_LongPredicate.test(var0.asLong());
    }
 
    public static void setClosedDoors(Set<Long> var0) {
-      putAt_Set = Set.copyOf(var0);
-      value_J = var0.isEmpty() ? 0L : System.nanoTime() + 3000000000L;
+      avoidCells = Set.copyOf(var0);
+      avoidCellsUntil = var0.isEmpty() ? 0L : System.nanoTime() + 3000000000L;
    }
 
    static boolean isKnownClosedDoor(BlockPos var0) {
-      return System.nanoTime() < value_J && (putAt_Set.contains(var0.asLong()) || putAt_Set.contains(var0.below().asLong()));
+      return System.nanoTime() < avoidCellsUntil && (avoidCells.contains(var0.asLong()) || avoidCells.contains(var0.below().asLong()));
    }
 
    public static void putAt(AiRoutePolicy.Inner_TableCache var0) {
@@ -74,7 +74,7 @@ public final class AiRoutePolicy {
       }
    }
 
-   static long putAt_J(AiPathfinder.PathStep var0) {
+   static long stepKey(AiPathfinder.PathStep var0) {
       return (var0.from().asLong() * 31L + var0.to().asLong()) * 31L + var0.type().ordinal();
    }
 
@@ -445,7 +445,7 @@ public final class AiRoutePolicy {
          return -1;
       }
 
-      Function var2 = var1x -> AiPathfinder.LiveGridView.classifyCell(var1, var1.level, ((BlockPos)var1x), putAt_ItemStackArr);
+      Function var2 = var1x -> AiPathfinder.LiveGridView.classifyCell(var1, var1.level, ((BlockPos)var1x), scratchHotbar);
       return !var0.isEmpty() && !putAt_Z_FileStore_PacketHe((AiPathfinder.PathStep)var0.getFirst(), var2, true)
          ? 0
          : putAt_I_List(var0, 0, var0.size(), var2, true);
@@ -460,7 +460,7 @@ public final class AiRoutePolicy {
       int var6 = Math.min(var0.size(), var1 + 1 + var2);
 
       for (int var7 = Math.max(var5, 0); var7 < var6; var7++) {
-         if (putAt(((AiPathfinder.PathStep)var0.get(var7)).type())) {
+         if (isParkourJump(((AiPathfinder.PathStep)var0.get(var7)).type())) {
             return var7;
          }
       }
@@ -468,7 +468,7 @@ public final class AiRoutePolicy {
       return -1;
    }
 
-   static boolean putAt(AiPathfinder.MoveType var0) {
+   static boolean isParkourJump(AiPathfinder.MoveType var0) {
       return var0 == AiPathfinder.MoveType.JUMP_GAP_3 || var0 == AiPathfinder.MoveType.PARKOUR_ASCEND;
    }
 
@@ -479,7 +479,7 @@ public final class AiRoutePolicy {
          || var0 == AiPathfinder.MoveType.JUMP;
    }
 
-   static boolean readEx(AiPathfinder.MoveType var0) {
+   static boolean isDigMove(AiPathfinder.MoveType var0) {
       return var0 == AiPathfinder.MoveType.DIG_DOWN_1
          || var0 == AiPathfinder.MoveType.DIG_TUNNEL
          || var0 == AiPathfinder.MoveType.DIG_ASCEND
@@ -567,7 +567,7 @@ public final class AiRoutePolicy {
    }
 
    static boolean putAt_Z_FileStore_SyncPool(AiPathfinder.MoveType var0, boolean var1, boolean var2, double var3, boolean var5) {
-      if (!var5 && !readEx(var0)) {
+      if (!var5 && !isDigMove(var0)) {
          return false;
       }
 
@@ -676,7 +676,7 @@ public final class AiRoutePolicy {
       }
    }
 
-   static Vec3 putAt_Vec3_Vec3(Vec3 var0, float var1, float var2) {
+   static Vec3 lookPoint(Vec3 var0, float var1, float var2) {
       double var3 = Math.toRadians(var1);
       double var5 = Math.toRadians(var2);
       double var7 = 4.0 * Math.cos(var5);
@@ -721,7 +721,7 @@ public final class AiRoutePolicy {
    }
 
    static {
-      Arrays.fill(putAt_ItemStackArr, ItemStack.EMPTY);
+      Arrays.fill(scratchHotbar, ItemStack.EMPTY);
    }
 
    static final class Inner_CacheHelper {
@@ -732,7 +732,7 @@ public final class AiRoutePolicy {
             this.putAt.pollFirst();
          }
 
-         long var4 = AiRoutePolicy.putAt_J(var1);
+         long var4 = AiRoutePolicy.stepKey(var1);
          var var6 = this.putAt.descendingIterator();
 
          while (var6.hasNext()) {

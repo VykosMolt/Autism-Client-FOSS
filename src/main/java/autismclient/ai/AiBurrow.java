@@ -228,7 +228,7 @@ final class AiBurrow {
       return blocks >= 8;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation burrow(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final int timeoutSeconds = Math.max(60, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 600)));

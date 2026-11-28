@@ -88,7 +88,7 @@ public final class MiningCost {
       return init_I_Minecraft(mc, state, requireDrops, 9);
    }
 
-   public static int load(Minecraft mc, BlockState state, boolean requireDrops) {
+   public static int bestToolSlot(Minecraft mc, BlockState state, boolean requireDrops) {
       return init_I_Minecraft(mc, state, requireDrops, 36);
    }
 

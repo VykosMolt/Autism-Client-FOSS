@@ -36,10 +36,10 @@ public final class ProxyConnectivityTester {
                }
             }
          } else {
-            return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.INVALID);
+            return ProxyConnectivityTester.TestResult.of(ProxyConnectivityTester.TestOutcome.INVALID);
          }
       } else {
-         return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.INVALID);
+         return ProxyConnectivityTester.TestResult.of(ProxyConnectivityTester.TestOutcome.INVALID);
       }
    }
 
@@ -63,17 +63,17 @@ public final class ProxyConnectivityTester {
          InputStream in = socket.getInputStream();
          ProxyConnectivityTester.TestOutcome state = type == ProxyProtocolType.Socks4 ? load(out, in, proxy, host, port) : init(out, in, proxy, host, port);
          if (state != ProxyConnectivityTester.TestOutcome.VERIFIED) {
-            return ProxyConnectivityTester.TestResult.init(state);
+            return ProxyConnectivityTester.TestResult.of(state);
          }
 
          long latency = Math.max(0L, (System.nanoTime() - started) / 1000000L);
          return new ProxyConnectivityTester.TestResult(true, latency, type, ProxyConnectivityTester.TestOutcome.VERIFIED);
       } catch (SocketTimeoutException ignored) {
-         return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.TIMEOUT);
+         return ProxyConnectivityTester.TestResult.of(ProxyConnectivityTester.TestOutcome.TIMEOUT);
       } catch (ConnectException ignored) {
-         return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.REFUSED);
+         return ProxyConnectivityTester.TestResult.of(ProxyConnectivityTester.TestOutcome.REFUSED);
       } catch (IOException | RuntimeException ignored) {
-         return ProxyConnectivityTester.TestResult.init(ProxyConnectivityTester.TestOutcome.OFFLINE);
+         return ProxyConnectivityTester.TestResult.of(ProxyConnectivityTester.TestOutcome.OFFLINE);
       }
    }
 
@@ -86,7 +86,7 @@ public final class ProxyConnectivityTester {
       }
 
       out.flush();
-      byte[] method = init(in, 2);
+      byte[] method = readExactly(in, 2);
       if (method.length >= 2 && method[0] == 5) {
          int chosen = method[1] & 255;
          if (chosen == 255) {
@@ -118,7 +118,7 @@ public final class ProxyConnectivityTester {
          request.write(port & 0xFF);
          out.write(request.toByteArray());
          out.flush();
-         byte[] reply = init(in, 4);
+         byte[] reply = readExactly(in, 4);
          if (reply.length >= 4 && reply[0] == 5 && reply[2] == 0) {
             byte var10000;
             switch (reply[3] & 0xFF) {
@@ -130,7 +130,7 @@ public final class ProxyConnectivityTester {
                   var10000 = -1;
                   break;
                case 3:
-                  byte[] length = init(in, 1);
+                  byte[] length = readExactly(in, 1);
                   var10000 = (byte)(length.length >= 1 && (length[0] & 255) != 0 ? length[0] & 0xFF : -1);
                   break;
                case 4:
@@ -138,7 +138,7 @@ public final class ProxyConnectivityTester {
             }
 
             int addressLength = var10000;
-            if (addressLength >= 0 && init(in, addressLength + 2).length >= addressLength + 2) {
+            if (addressLength >= 0 && readExactly(in, addressLength + 2).length >= addressLength + 2) {
                return reply[1] == 0 ? ProxyConnectivityTester.TestOutcome.VERIFIED : ProxyConnectivityTester.TestOutcome.REFUSED;
             } else {
                return ProxyConnectivityTester.TestOutcome.OFFLINE;
@@ -162,7 +162,7 @@ public final class ProxyConnectivityTester {
       auth.write(pass, 0, pass.length);
       out.write(auth.toByteArray());
       out.flush();
-      byte[] reply = init(in, 2);
+      byte[] reply = readExactly(in, 2);
       if (reply.length >= 2 && reply[0] == 1) {
          return reply[1] == 0 ? ProxyConnectivityTester.TestOutcome.VERIFIED : ProxyConnectivityTester.TestOutcome.REFUSED;
       } else {
@@ -193,7 +193,7 @@ public final class ProxyConnectivityTester {
 
       out.write(request.toByteArray());
       out.flush();
-      byte[] reply = init(in, 8);
+      byte[] reply = readExactly(in, 8);
       if (reply.length >= 8 && reply[0] == 0) {
          return reply[1] == 90 ? ProxyConnectivityTester.TestOutcome.VERIFIED : ProxyConnectivityTester.TestOutcome.REFUSED;
       } else {
@@ -201,7 +201,7 @@ public final class ProxyConnectivityTester {
       }
    }
 
-   private static byte[] init(InputStream in, int count) throws IOException {
+   private static byte[] readExactly(InputStream in, int count) throws IOException {
       return in.readNBytes(count);
    }
 
@@ -242,7 +242,7 @@ public final class ProxyConnectivityTester {
          this(ok, latencyMs, null);
       }
 
-      static ProxyConnectivityTester.TestResult init(ProxyConnectivityTester.TestOutcome state) {
+      static ProxyConnectivityTester.TestResult of(ProxyConnectivityTester.TestOutcome state) {
          return new ProxyConnectivityTester.TestResult(false, 0L, null, state);
       }
    }

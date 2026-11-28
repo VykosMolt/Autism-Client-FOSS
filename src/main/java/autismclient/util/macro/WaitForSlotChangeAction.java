@@ -126,7 +126,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       this.saveAs = tag.getStringOr("saveAs", "");
    }
 
-   public void init(CompoundTag tag) {
+   public void readTag(CompoundTag tag) {
       this.entries.clear();
       String itemName = tag.getStringOr("itemName", "");
       boolean useSlot = tag.contains("useSlot") && tag.getBooleanOr("useSlot", false);
@@ -189,12 +189,12 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
    }
 
    @Override
-   public String load() {
+   public String getSaveAs() {
       return this.saveAs;
    }
 
    @Override
-   public void a_(String name) {
+   public void setSaveAs(String name) {
       this.saveAs = name == null ? "" : name;
    }
 

@@ -285,7 +285,7 @@ public final class BlockPlacementPlanner {
          }
 
          boolean sneaking = request.isSneaking() || option.requiresSneak() && request.allowAutoSneak();
-         if (request.hitValidator() != null && request.hitValidator().init(state, support, sneaking)) {
+         if (request.hitValidator() != null && request.hitValidator().accepts(state, support, sneaking)) {
             Vec3 eye = request.eyePos();
             if (isSelfOccludedByLid(eye, support, face, level)) {
                return rejectAim(refusal, BlockPlacementPlanner.RejectReason.SELF_OCCLUDED, request, face);
@@ -553,7 +553,7 @@ public final class BlockPlacementPlanner {
                BlockPos hitPos = hit == null ? null : hit.getBlockPos();
                BlockState hitState = hit == null ? null : level.getBlockState(hitPos);
                boolean builds = hit != null
-                  && request.hitValidator().init(hitState, hitPos, sneaking)
+                  && request.hitValidator().accepts(hitState, hitPos, sneaking)
                   && request.hitValidator().lands(hit, request.targetCell());
                if (!builds) {
                   StringBuilder trace = request.trace();
@@ -742,7 +742,7 @@ public final class BlockPlacementPlanner {
             } else {
                BlockPos hitPos = hit.getBlockPos();
                BlockState hitState = level.getBlockState(hitPos);
-               if (!request.hitValidator().init(hitState, hitPos, request.isSneaking())) {
+               if (!request.hitValidator().accepts(hitState, hitPos, request.isSneaking())) {
                   return null;
                } else if (!request.hitValidator().lands(hit, candidate.support().targetCell())) {
                   return null;
@@ -1322,7 +1322,7 @@ public final class BlockPlacementPlanner {
    public interface HitValidator {
       boolean lands(BlockHitResult var1, BlockPos var2);
 
-      default boolean init(BlockState state, BlockPos pos, boolean sneaking) {
+      default boolean accepts(BlockState state, BlockPos pos, boolean sneaking) {
          return !BlockPlacementPlanner.wouldInteractWithoutSneak(state, pos, sneaking);
       }
    }

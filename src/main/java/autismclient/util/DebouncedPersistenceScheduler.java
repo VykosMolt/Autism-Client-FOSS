@@ -29,7 +29,7 @@ final class DebouncedPersistenceScheduler {
    private DebouncedPersistenceScheduler() {
    }
 
-   static void init(AutismConfig config) {
+   static void schedule(AutismConfig config) {
       if (config != null) {
          synchronized (init_Obj) {
             init_AutismConfig = config;
@@ -69,7 +69,7 @@ final class DebouncedPersistenceScheduler {
       AutismConfigPersistence.persist(config);
    }
 
-   static void init() {
+   static void flushConfig() {
       AutismConfig config;
       synchronized (init_Obj) {
          config = init_AutismConfig;
@@ -124,7 +124,7 @@ final class DebouncedPersistenceScheduler {
       write.put(key, write.getOrDefault(key, 0L) + 1L);
    }
 
-   static void init(String key, Runnable work) {
+   static void schedule(String key, Runnable work) {
       if (key != null && work != null) {
          synchronized (init_Obj) {
             init_Map.put(key, work);
@@ -154,8 +154,8 @@ final class DebouncedPersistenceScheduler {
       }
    }
 
-   static void init(long timeoutMs) {
-      init();
+   static void flushAll(long timeoutMs) {
+      flushConfig();
       CountDownLatch latch = new CountDownLatch(1);
       init_ScheduledExecutorS.execute(latch::countDown);
 

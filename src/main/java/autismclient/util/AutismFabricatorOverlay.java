@@ -298,7 +298,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private ContainerClickSnapshot.Inner_DataUtil selectedPacketClick() {
-      return ContainerClickSnapshot.Inner_DataUtil.init(this.clickModeIndex);
+      return ContainerClickSnapshot.Inner_DataUtil.byIndex(this.clickModeIndex);
    }
 
    private boolean isDropAction() {
@@ -315,7 +315,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       }
 
       ContainerClickType packetAction = this.action.clickType(this.dropWholeStack);
-      return packetAction.load() ? packetAction.defaultButton() : Math.min(this.clickModeIndex, 1);
+      return packetAction.hasDefaultButton() ? packetAction.defaultButton() : Math.min(this.clickModeIndex, 1);
    }
 
    private String unusedClickModeLabel() {
@@ -1246,7 +1246,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private autismclient.util.macro.CraftAction.CraftEntry draftEntry() {
       if (this.selectedOption != null && !this.selectedOutput.isEmpty()) {
          int configuredAmount = this.enteredAmount();
-         return configuredAmount <= 0 ? null : autismclient.util.macro.CraftAction.CraftEntry.init(this.selectedOption, configuredAmount, this.useMaxAmount);
+         return configuredAmount <= 0 ? null : autismclient.util.macro.CraftAction.CraftEntry.create(this.selectedOption, configuredAmount, this.useMaxAmount);
       } else {
          return null;
       }
@@ -1460,7 +1460,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                int labelX = this.panelX + 4;
                int fieldX = this.fieldX();
                int fieldWidth = this.fieldWidth();
-               ThemedTextHelper.init(context, MINECRAFT.font, "Action", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.actionRowY()), false);
+               ThemedTextHelper.drawTone(context, MINECRAFT.font, "Action", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.actionRowY()), false);
                if (this.actionDropdown == null) {
                   this.actionDropdown = new autismclient.gui.ui.widgets.DropdownWidget(
                      fieldX, this.actionRowY(), fieldWidth, fieldHeight(), this.actionLabels, this.actionIndex, idx -> {
@@ -1486,13 +1486,13 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                }
 
                if (this.showsSlotFields()) {
-                  ThemedTextHelper.init(context, MINECRAFT.font, "Slot", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.slotRowY()), false);
-                  ThemedTextHelper.init(context, MINECRAFT.font, "Item", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.itemRowY()), false);
+                  ThemedTextHelper.drawTone(context, MINECRAFT.font, "Slot", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.slotRowY()), false);
+                  ThemedTextHelper.drawTone(context, MINECRAFT.font, "Item", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.itemRowY()), false);
                }
 
                if (this.isClickMode()) {
                   if (this.usesClickDropdown() || this.isDropAction()) {
-                     ThemedTextHelper.init(
+                     ThemedTextHelper.drawTone(
                         context,
                         MINECRAFT.font,
                         this.isDropAction() ? "Drop Mode" : "Click",
@@ -1541,7 +1541,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      }
                   }
 
-                  ThemedTextHelper.init(context, MINECRAFT.font, this.amountLabel(), ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.timesRowY()), false);
+                  ThemedTextHelper.drawTone(context, MINECRAFT.font, this.amountLabel(), ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.timesRowY()), false);
                } else {
                   this.pollRecipeResults();
                   int listX = this.contentX();
@@ -1598,7 +1598,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics craftPlanScrollbar = this.planScrollbar();
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(context, craftPlanScrollbar, craftPlanScrollbar.containsTrack(mouseX, mouseY), this.draggingScrollbar == 1);
                   if (this.selectedOutput.isEmpty()) {
-                     ThemedTextHelper.init(context, MINECRAFT.font, "Recipe: none selected", ThemedTextHelper.TextTone.MUTED, listX, this.recipeSummaryY(), false);
+                     ThemedTextHelper.drawTone(context, MINECRAFT.font, "Recipe: none selected", ThemedTextHelper.TextTone.MUTED, listX, this.recipeSummaryY(), false);
                   } else {
                      Component summaryText = Component.empty()
                         .append(this.selectedOutput.getHoverName().copy())
@@ -1609,10 +1609,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                                  + (this.selectedOption != null && this.selectedOption.craftable ? " | x" + this.selectedOption.maxCrafts : "")
                            )
                         );
-                     ThemedTextHelper.init(context, MINECRAFT.font, summaryText.getString(), UiColorPalette.textMuted(), listX, this.recipeSummaryY(), false);
+                     ThemedTextHelper.drawColor(context, MINECRAFT.font, summaryText.getString(), UiColorPalette.textMuted(), listX, this.recipeSummaryY(), false);
                   }
 
-                  ThemedTextHelper.init(context, MINECRAFT.font, "Amount", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.amountRowY()), false);
+                  ThemedTextHelper.drawTone(context, MINECRAFT.font, "Amount", ThemedTextHelper.TextTone.MUTED, labelX, this.labelY(this.amountRowY()), false);
                   this.drawToggleButton(context, this.useMaxButtonX(), this.amountRowY(), this.useMaxButtonWidth(), fieldHeight(), "Use Max", this.useMaxAmount, "fabricator:use-max", mouseX, mouseY);
                   autismclient.gui.ui.widgets.ListRowRenderer.drawHeaderTitle(context, MINECRAFT.font, "Recipes", listX, this.recipesHeaderY());
                   int listY = this.recipeListY();
@@ -1667,10 +1667,10 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                   autismclient.gui.ui.UiClipStack.getInstance().pop(context);
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.Metrics craftListScrollbar = this.craftListScrollbar();
                   autismclient.gui.ui.widgets.ScrollbarMetricsHelper.render(context, craftListScrollbar, craftListScrollbar.containsTrack(mouseX, mouseY), this.draggingScrollbar == 2);
-                  String recipeCountLine = ThemedTextHelper.init(
+                  String recipeCountLine = ThemedTextHelper.ellipsize(
                      MINECRAFT.font, this.craftableCount + " ready / " + this.craftOptions.size() + " total", listWidth, ThemedTextHelper.TextTone.MUTED
                   );
-                  ThemedTextHelper.init(context, MINECRAFT.font, recipeCountLine, ThemedTextHelper.TextTone.MUTED, listX, listY + this.listHeight + 2, false);
+                  ThemedTextHelper.drawTone(context, MINECRAFT.font, recipeCountLine, ThemedTextHelper.TextTone.MUTED, listX, listY + this.listHeight + 2, false);
                }
 
                int btnY = this.buttonRowY();
@@ -1723,7 +1723,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                      break;
                   }
 
-                  ThemedTextHelper.init(context, MINECRAFT.font, actionLines.get(i), ThemedTextHelper.TextTone.MUTED, this.panelX + 4, lineY, false);
+                  ThemedTextHelper.drawTone(context, MINECRAFT.font, actionLines.get(i), ThemedTextHelper.TextTone.MUTED, this.panelX + 4, lineY, false);
                }
 
                if (!this.dropdowns.isEmpty()) {
@@ -2053,7 +2053,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
                int effectiveButton = this.effectiveButton();
 
                for (int i = 0; i < repeats; i++) {
-                  ContainerClickExecutor.init(MINECRAFT, slot, effectiveButton, actionType);
+                  ContainerClickExecutor.click(MINECRAFT, slot, effectiveButton, actionType);
                }
 
                return;
@@ -2223,7 +2223,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          int queuedCount = AutismSessionState.getInstance().flushDelayedPackets(handler);
 
          for (Packet<?> packet : packets) {
-            DirectPacketSender.init(packet);
+            DirectPacketSender.send(packet);
          }
 
          if (queuedCount > 0) {

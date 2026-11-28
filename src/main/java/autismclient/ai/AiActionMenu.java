@@ -69,7 +69,7 @@ final class AiActionMenu {
    private AiActionMenu.TargetOption selectedTarget;
    private final Map<String, AiActionMenu.TargetOption> read_Map;
    private final Map<String, autismclient.gui.ui.widgets.TextInputWidget> write_Map;
-   private List<String> update;
+   private List<String> typedTargetTypes;
    private Object load_Obj;
    private boolean extraItems;
    private boolean read_Z;
@@ -79,9 +79,9 @@ final class AiActionMenu {
    private AiActionMenu.TargetOption previousTarget;
    private boolean farmBuild;
    private String farmSubstrate;
-   private final AiUiKit.ScrollPane load_cE_StreamUtil;
-   private final AiUiKit.ScrollPane read_cE_StreamUtil;
-   private AiActionMenu.MenuStep load_StreamUtil_BufferH;
+   private final AiUiKit.ScrollPane actionListScroll;
+   private final AiUiKit.ScrollPane optionsScroll;
+   private AiActionMenu.MenuStep restoredStep;
 
    AiActionMenu(AiService service, AiViewState view, AiAssistantOverlay host, Runnable onRun) {
       this.selectedAction = AiActionMenu.MenuAction.GET;
@@ -92,11 +92,11 @@ final class AiActionMenu {
       this.step = AiActionMenu.MenuStep.HOME;
       this.read_Map = new LinkedHashMap<>();
       this.write_Map = new LinkedHashMap<>();
-      this.update = List.of();
+      this.typedTargetTypes = List.of();
       this.issue = "";
       this.farmSubstrate = "farmland";
-      this.load_cE_StreamUtil = new AiUiKit.ScrollPane(false);
-      this.read_cE_StreamUtil = new AiUiKit.ScrollPane(false);
+      this.actionListScroll = new AiUiKit.ScrollPane(false);
+      this.optionsScroll = new AiUiKit.ScrollPane(false);
       this.service = service;
       this.view = view;
       this.host = host;
@@ -112,9 +112,9 @@ final class AiActionMenu {
    }
 
    void openAction(String actionName, String query) {
-      this.load_StreamUtil_BufferH = null;
+      this.restoredStep = null;
       if ("HOME".equals(actionName)) {
-         this.open();
+         this.resetToActions();
       } else {
          String[] parts = actionName.split(":", 2);
          if (parts[0].equals("FARM") && parts.length > 1 && parts[1].equals("REVIEW") && this.farmPlacement != null && this.farmPlacement.isComplete()) {
@@ -122,14 +122,14 @@ final class AiActionMenu {
          } else {
             this.selectAction(AiActionMenu.MenuAction.valueOf(parts[0]));
             if (this.selectedAction == AiActionMenu.MenuAction.MINE && query != null && query.contains(",")) {
-               this.update = AiMiningTargets.parse(query).types();
+               this.typedTargetTypes = AiMiningTargets.parse(query).types();
                this.searchInput.setValue("");
             } else {
                this.searchInput.setValue(query == null ? "" : query);
             }
 
             if (parts.length > 1) {
-               this.load_StreamUtil_BufferH = AiActionMenu.MenuStep.valueOf(parts[1]);
+               this.restoredStep = AiActionMenu.MenuStep.valueOf(parts[1]);
             }
          }
       }
@@ -255,24 +255,24 @@ final class AiActionMenu {
    }
 
    void render(AiUiKit kit, autismclient.gui.f.NetHelper area, long now) {
-      if (!this.update.isEmpty() && this.step == AiActionMenu.MenuStep.TARGET) {
+      if (!this.typedTargetTypes.isEmpty() && this.step == AiActionMenu.MenuStep.TARGET) {
          List<AiActionMenu.TargetOption> rows = this.filteredActionRows();
 
          for (int i = 0; i < rows.size(); i++) {
             String key = this.mineKeyOf(rows.get(i));
-            if (this.update.contains(key) && !this.read_Map.containsKey(key)) {
-               this.load(i);
+            if (this.typedTargetTypes.contains(key) && !this.read_Map.containsKey(key)) {
+               this.selectRow(i);
             }
          }
 
-         if (this.read_Map.keySet().containsAll(this.update)) {
-            this.update = List.of();
+         if (this.read_Map.keySet().containsAll(this.typedTargetTypes)) {
+            this.typedTargetTypes = List.of();
          }
       }
 
-      if (this.load_StreamUtil_BufferH != null && this.update.isEmpty()) {
-         if (this.step == this.load_StreamUtil_BufferH) {
-            this.load_StreamUtil_BufferH = null;
+      if (this.restoredStep != null && this.typedTargetTypes.isEmpty()) {
+         if (this.step == this.restoredStep) {
+            this.restoredStep = null;
          } else if (this.step == AiActionMenu.MenuStep.TARGET) {
             if (this.selectedRow(this.filteredActionRows()) != null) {
                this.sync_V();
@@ -293,7 +293,7 @@ final class AiActionMenu {
       }
 
       if (this.load_Obj != null && this.load_Obj != Minecraft.getInstance().level) {
-         this.open();
+         this.resetToActions();
          this.issue = "World changed. Choose the action again.";
       }
 
@@ -335,7 +335,7 @@ final class AiActionMenu {
                   autismclient.gui.f.NetHelper.init(body.init() - importW + 2, body.write(), importW - 2, h),
                   this.init_Z ? "Loading..." : "Import",
                   autismclient.gui.f.b.CachePool.Inner_DataUtil.load,
-                  this::pop
+                  this::pickAttachment
                );
             }
 
@@ -378,7 +378,7 @@ final class AiActionMenu {
             this.init_V_cE_2(kit, autismclient.gui.f.NetHelper.init(body.read(), listTop, body.update(), Math.max(0, body.load() - listTop)), rows);
             break;
          case OPTIONS:
-            this.load(kit, body);
+            this.renderStepContent(kit, body);
             break;
          case REVIEW:
             this.read(kit, body);
@@ -410,11 +410,11 @@ final class AiActionMenu {
       if (this.step != AiActionMenu.MenuStep.HOME) {
          int w = kit.measureButtonWidth("Back");
          kit.drawButton(
-            autismclient.gui.f.NetHelper.init(footer.read(), footer.write(), w, h), "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::close
+            autismclient.gui.f.NetHelper.init(footer.read(), footer.write(), w, h), "Back", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this::stepBack
          );
          String label = this.step == AiActionMenu.MenuStep.REVIEW ? (this.view.isWorking() ? "Replace task" : "Start") : "Next";
          int nextW = kit.measureButtonWidth(label);
-         this.init(
+         this.drawButton(
             kit,
             autismclient.gui.f.NetHelper.init(footer.init() - nextW, footer.write(), nextW, h),
             label,
@@ -429,7 +429,7 @@ final class AiActionMenu {
                )
                && (this.schematicPlacement == null || this.schematicPlacement.isReadyToConfirm() && !this.schematicPlacement.isSearching())
                && (this.farmPlacement == null || this.farmPlacement.isComplete()),
-            this.step == AiActionMenu.MenuStep.REVIEW ? this::poll : this::sync_V
+            this.step == AiActionMenu.MenuStep.REVIEW ? this::pollReview : this::sync_V
          );
       }
    }
@@ -456,7 +456,7 @@ final class AiActionMenu {
       return var10000;
    }
 
-   private void init(AiUiKit kit, autismclient.gui.f.NetHelper b, String text, boolean enabled, Runnable action) {
+   private void drawButton(AiUiKit kit, autismclient.gui.f.NetHelper b, String text, boolean enabled, Runnable action) {
       autismclient.gui.f.b.CachePool.init(
          kit.renderContext,
          b,
@@ -477,15 +477,15 @@ final class AiActionMenu {
       int columns = area.update() >= 440 ? 3 : 2;
       int rowH = AiUiKit.toolbarHeight() + AiUiKit.lineHeight() + 2 + 4;
       int rows = (actions.size() + columns - 1) / columns;
-      this.load_cE_StreamUtil.layout(area, rows * (rowH + 2));
-      kit.registerScrollPane(this.load_cE_StreamUtil);
-      int available = area.update() - (this.load_cE_StreamUtil.maxScroll() > 0 ? 7 : 0);
+      this.actionListScroll.layout(area, rows * (rowH + 2));
+      kit.registerScrollPane(this.actionListScroll);
+      int available = area.update() - (this.actionListScroll.maxScroll() > 0 ? 7 : 0);
       int w = (available - 2 * (columns - 1)) / columns;
 
       for (int i = 0; i < actions.size(); i++) {
          AiActionMenu.MenuAction a = actions.get(i);
          autismclient.gui.f.NetHelper b = autismclient.gui.f.NetHelper.init(
-            area.read() + i % columns * (w + 2), area.write() + i / columns * (rowH + 2) - this.load_cE_StreamUtil.offset, w, rowH
+            area.read() + i % columns * (w + 2), area.write() + i / columns * (rowH + 2) - this.actionListScroll.offset, w, rowH
          );
          if (b.load() > area.write() && b.write() < area.load()) {
             kit.drawButton(
@@ -505,18 +505,18 @@ final class AiActionMenu {
          }
       }
 
-      kit.drawScrollbar(this.load_cE_StreamUtil);
+      kit.drawScrollbar(this.actionListScroll);
    }
 
-   private void load(AiUiKit kit, autismclient.gui.f.NetHelper area) {
+   private void renderStepContent(AiUiKit kit, autismclient.gui.f.NetHelper area) {
       int h = AiUiKit.toolbarHeight();
       int line = AiUiKit.rowHeight();
       int contentH = this.read_I();
-      this.read_cE_StreamUtil.layout(area, contentH);
-      kit.registerScrollPane(this.read_cE_StreamUtil);
-      int w = area.update() - (this.read_cE_StreamUtil.maxScroll() > 0 ? 7 : 0);
+      this.optionsScroll.layout(area, contentH);
+      kit.registerScrollPane(this.optionsScroll);
+      int w = area.update() - (this.optionsScroll.maxScroll() > 0 ? 7 : 0);
       int x = area.read();
-      int y = area.write() - this.read_cE_StreamUtil.offset;
+      int y = area.write() - this.optionsScroll.offset;
       kit.drawCenteredRowText(
          this.selectedTarget == null ? this.selectedAction.write_Str : this.read_Str(),
          autismclient.gui.f.NetHelper.init(x, y, w, line),
@@ -553,12 +553,12 @@ final class AiActionMenu {
             }
          );
          int var24 = var23 + h + 2;
-         this.init(
+         this.drawButton(
             kit,
             autismclient.gui.f.NetHelper.init(x, var24, w, h),
             this.farmPlacement == null ? "Choose two corners" : "Change corners",
             !this.view.isWorking() && !AiDirectOps.isDrivingInput(),
-            this::flush
+            this::runSelected
          );
          int var25 = var24 + h + 2;
          kit.drawCenteredRowText(
@@ -588,7 +588,7 @@ final class AiActionMenu {
          );
          y += line + 2;
          int half = (w - 2) / 2;
-         this.init(
+         this.drawButton(
             kit,
             autismclient.gui.f.NetHelper.init(x, y, half, h),
             "Choose in world",
@@ -599,7 +599,7 @@ final class AiActionMenu {
             kit.addTooltipRegion(autismclient.gui.f.NetHelper.init(x, y, half, h), "Pause the current action before choosing a placement in world");
          }
 
-         this.init(
+         this.drawButton(
             kit,
             autismclient.gui.f.NetHelper.init(x + half + 2, y, half, h),
             this.schematicPlacement.isSearching() ? "Searching..." : "Best nearby site",
@@ -715,7 +715,7 @@ final class AiActionMenu {
          }
       }
 
-      kit.drawScrollbar(this.read_cE_StreamUtil);
+      kit.drawScrollbar(this.optionsScroll);
    }
 
    private void read(AiUiKit kit, autismclient.gui.f.NetHelper area) {
@@ -786,9 +786,9 @@ final class AiActionMenu {
          lines = extended.toArray(String[]::new);
       }
 
-      this.read_cE_StreamUtil.layout(area, lines.length * line + 8);
-      kit.registerScrollPane(this.read_cE_StreamUtil);
-      y -= this.read_cE_StreamUtil.offset;
+      this.optionsScroll.layout(area, lines.length * line + 8);
+      kit.registerScrollPane(this.optionsScroll);
+      y -= this.optionsScroll.offset;
 
       for (String text : lines) {
          kit.drawCenteredRowText(text, autismclient.gui.f.NetHelper.init(x, y, w, line), x, w, kit.colors.textPrimary);
@@ -796,7 +796,7 @@ final class AiActionMenu {
          y += line;
       }
 
-      kit.drawScrollbar(this.read_cE_StreamUtil);
+      kit.drawScrollbar(this.optionsScroll);
    }
 
    private String schematicOriginText() {
@@ -901,7 +901,7 @@ final class AiActionMenu {
                   false
                );
                int index = i;
-               kit.addInteractiveRegion(b, () -> this.load(index), null, null);
+               kit.addInteractiveRegion(b, () -> this.selectRow(index), null, null);
             }
 
             kit.popClip();
@@ -913,7 +913,7 @@ final class AiActionMenu {
    private String statusMessage() {
       if (!isInWorld()) {
          return "Join a world first";
-      } else if (this.init_Map.get(this.selectedAction) == null || this.init_Map.get(this.selectedAction).init() == null) {
+      } else if (this.init_Map.get(this.selectedAction) == null || this.init_Map.get(this.selectedAction).visible() == null) {
          return "Loading...";
       } else if (this.searchQueryText().isEmpty() && this.selectedAction == AiActionMenu.MenuAction.GOTO) {
          return "Type x y z";
@@ -965,12 +965,12 @@ final class AiActionMenu {
          return false;
       }
 
-      this.close();
+      this.stepBack();
       return true;
    }
 
    private void init_V_I(int delta) {
-      if (this.selectedAction.init()) {
+      if (this.selectedAction.isDirect()) {
          List<AiActionMenu.TargetOption> rows = this.load_List();
          if (!rows.isEmpty()) {
             this.selectedIndex = Math.max(0, Math.min(rows.size() - 1, this.selectedIndex + delta));
@@ -988,7 +988,7 @@ final class AiActionMenu {
       }
    }
 
-   private void load(int index) {
+   private void selectRow(int index) {
       this.selectedIndex = index;
       if (this.selectedAction == AiActionMenu.MenuAction.MINE) {
          List<AiActionMenu.TargetOption> rows = this.load_List();
@@ -1032,7 +1032,7 @@ final class AiActionMenu {
       this.read_Map.clear();
       this.write_Map.clear();
       this.read_Z = false;
-      this.update = List.of();
+      this.typedTargetTypes = List.of();
       if (next != this.selectedAction) {
          this.selectedAction = next;
          this.searchInput.setValue("");
@@ -1043,9 +1043,9 @@ final class AiActionMenu {
          this.listScroll.scrollToTop();
       }
 
-      this.step = next.init() ? AiActionMenu.MenuStep.TARGET : AiActionMenu.MenuStep.REVIEW;
-      this.read_cE_StreamUtil.scrollToTop();
-      if (next.init()) {
+      this.step = next.isDirect() ? AiActionMenu.MenuStep.TARGET : AiActionMenu.MenuStep.REVIEW;
+      this.optionsScroll.scrollToTop();
+      if (next.isDirect()) {
          this.host.focusInput(this.searchInput);
       } else {
          this.blur();
@@ -1068,7 +1068,7 @@ final class AiActionMenu {
 
             this.load_Obj = Minecraft.getInstance().level;
             if (this.selectedAction == AiActionMenu.MenuAction.FARM) {
-               AiIntents.IntentStep farmStep = this.init_ad_BufferHelper_Str_Str(
+               AiIntents.IntentStep farmStep = this.planStep(
                   this.selectedTarget.request().apply(null), this.selectedAction.load_Str
                );
                if (farmStep == null) {
@@ -1087,7 +1087,7 @@ final class AiActionMenu {
             }
 
             if (this.selectedAction == AiActionMenu.MenuAction.BUILD) {
-               AiIntents.IntentStep step = this.init_ad_BufferHelper_Str_Str(
+               AiIntents.IntentStep step = this.planStep(
                   this.selectedTarget.request().apply(null), this.selectedAction.load_Str
                );
                if (step == null) {
@@ -1107,7 +1107,7 @@ final class AiActionMenu {
          } else if (this.step == AiActionMenu.MenuStep.OPTIONS) {
             try {
                if (this.selectedAction == AiActionMenu.MenuAction.FARM && this.farmBuild && (this.farmPlacement == null || !this.farmPlacement.isComplete())) {
-                  this.flush();
+                  this.runSelected();
                   return;
                }
 
@@ -1127,7 +1127,7 @@ final class AiActionMenu {
          }
 
          this.blur();
-         this.read_cE_StreamUtil.scrollToTop();
+         this.optionsScroll.scrollToTop();
       }
    }
 
@@ -1143,10 +1143,10 @@ final class AiActionMenu {
       );
    }
 
-   private void flush() {
+   private void runSelected() {
       if (!this.view.isWorking() && !AiDirectOps.isDrivingInput()) {
          try {
-            AiIntents.IntentStep step = this.init_ad_BufferHelper_Str_Str(
+            AiIntents.IntentStep step = this.planStep(
                this.selectedTarget.request().apply(null), this.selectedAction.load_Str
             );
             if (step == null) {
@@ -1169,12 +1169,12 @@ final class AiActionMenu {
       }
    }
 
-   private void close() {
+   private void stepBack() {
       this.issue = "";
       this.blur();
-      this.read_cE_StreamUtil.scrollToTop();
+      this.optionsScroll.scrollToTop();
       if (this.step == AiActionMenu.MenuStep.REVIEW) {
-         this.step = this.selectedAction.init() ? AiActionMenu.MenuStep.OPTIONS : AiActionMenu.MenuStep.HOME;
+         this.step = this.selectedAction.isDirect() ? AiActionMenu.MenuStep.OPTIONS : AiActionMenu.MenuStep.HOME;
       } else if (this.step == AiActionMenu.MenuStep.OPTIONS) {
          if (this.schematicPlacement != null) {
             this.schematicPlacement.cancel();
@@ -1188,11 +1188,11 @@ final class AiActionMenu {
          this.farmPlacement = null;
          this.step = AiActionMenu.MenuStep.TARGET;
       } else {
-         this.open();
+         this.resetToActions();
       }
    }
 
-   private void open() {
+   private void resetToActions() {
       if (this.schematicPlacement != null) {
          this.schematicPlacement.cancel();
       }
@@ -1211,16 +1211,16 @@ final class AiActionMenu {
       this.read_Map.clear();
       this.write_Map.clear();
       this.read_Z = false;
-      this.update = List.of();
+      this.typedTargetTypes = List.of();
    }
 
    private AiIntents.IntentStep buildRequest() {
-      Integer amount = this.selectedAction.init_Z ? AiLocalRequest.init(this.countInput.getValue(), this.write_I()) : null;
+      Integer amount = this.selectedAction.init_Z ? AiLocalRequest.parseCount(this.countInput.getValue(), this.write_I()) : null;
       if (this.selectedAction == AiActionMenu.MenuAction.MINE) {
          List<JsonObject> targets = this.read_Map
             .values()
             .stream()
-            .map(row -> this.init_ad_BufferHelper_Str_Str(row.request().apply(null), this.selectedAction.load_Str))
+            .map(row -> this.planStep(row.request().apply(null), this.selectedAction.load_Str))
             .map(stepx -> {
                if (stepx == null) {
                   throw new IllegalArgumentException("A selected block is no longer available");
@@ -1228,7 +1228,7 @@ final class AiActionMenu {
 
                JsonObject argsx = stepx.arguments().deepCopy();
                String key = AiJson.getString(argsx, "block", "");
-               Integer custom = AiLocalRequest.init(this.init_BitSetUtil_Str(key).getValue(), 640);
+               Integer custom = AiLocalRequest.parseCount(this.init_BitSetUtil_Str(key).getValue(), 640);
                if (custom != null) {
                   argsx.addProperty("mineAmount", custom);
                }
@@ -1236,14 +1236,14 @@ final class AiActionMenu {
                return argsx;
             })
             .toList();
-         JsonObject args = AiLocalRequest.init(targets, amount);
+         JsonObject args = AiLocalRequest.mineRequest(targets, amount);
          String label = "Mine "
             + args.getAsJsonObject("counts").entrySet().stream().map(e -> e.getValue().getAsInt() + " " + e.getKey()).collect(Collectors.joining(", "));
          return new AiIntents.IntentStep(label, this.selectedAction.load_Str, args, label);
       }
 
-      String text = this.selectedAction.init() ? this.selectedTarget.request().apply(amount) : this.selectedAction.update_Str;
-      AiIntents.IntentStep step = this.init_ad_BufferHelper_Str_Str(text, this.selectedAction.load_Str);
+      String text = this.selectedAction.isDirect() ? this.selectedTarget.request().apply(amount) : this.selectedAction.update_Str;
+      AiIntents.IntentStep step = this.planStep(text, this.selectedAction.load_Str);
       if (step == null) {
          throw new IllegalArgumentException("That option is unavailable. Choose the target again.");
       }
@@ -1272,10 +1272,10 @@ final class AiActionMenu {
       return new AiIntents.IntentStep(text, this.selectedAction.load_Str, args, step.describe());
    }
 
-   private void poll() {
+   private void pollReview() {
       if (this.step == AiActionMenu.MenuStep.REVIEW && isInWorld()) {
          if (this.load_Obj != null && this.load_Obj != Minecraft.getInstance().level) {
-            this.open();
+            this.resetToActions();
             this.issue = "World changed. Choose the action again.";
          } else {
             try {
@@ -1289,7 +1289,7 @@ final class AiActionMenu {
 
                AiIntents.IntentStep step = this.buildRequest();
                if (this.read_Z() && this.write_Z()) {
-                  JsonObject args = AiLocalRequest.init(
+                  JsonObject args = AiLocalRequest.clampCount(
                      step.arguments(), AiItems.countInInventory(AiItems.resolveItem(AiJson.getString(step.arguments(), "item", ""))), this.write_I()
                   );
                   step = new AiIntents.IntentStep(step.clause() + " more", step.capability(), args, step.describe());
@@ -1321,7 +1321,7 @@ final class AiActionMenu {
                   this.schematicPlacement = null;
                }
 
-               this.open();
+               this.resetToActions();
                this.onRun.run();
                this.view.invalidate();
             } catch (RuntimeException e) {
@@ -1333,7 +1333,7 @@ final class AiActionMenu {
 
    void confirm() {
       if (this.selectedAction == AiActionMenu.MenuAction.FARM && this.farmBuild) {
-         this.flush();
+         this.runSelected();
       } else if (this.schematicPlacement != null && this.schematicPlacement.isReadyToConfirm()) {
          aP.init_V_bW_Runnable(this.schematicPlacement, () -> {});
       } else if (this.farmPlacement != null) {
@@ -1348,7 +1348,7 @@ final class AiActionMenu {
    }
 
    void update_V() {
-      this.poll();
+      this.pollReview();
    }
 
    JsonObject statusJson() {
@@ -1359,18 +1359,18 @@ final class AiActionMenu {
       return this.selectedAction == AiActionMenu.MenuAction.GET || this.extraItems;
    }
 
-   private void push() {
+   private void stopTask() {
       this.service.stopTask();
       this.view.invalidate();
    }
 
-   private void pop() {
+   private void pickAttachment() {
       if (!this.init_Z) {
          this.init_Z = true;
          CompletableFuture.<AiAttachments.Inner_DataUtil>supplyAsync(() -> {
             try {
-               String path = AiAttachments.init();
-               return path != null && !path.isBlank() ? AiAttachments.init(Path.of(path), AiSchematic.directory()) : null;
+               String path = AiAttachments.pickFile();
+               return path != null && !path.isBlank() ? AiAttachments.attach(Path.of(path), AiSchematic.directory()) : null;
             } catch (Exception e) {
                throw new CompletionException(e);
             }
@@ -1424,7 +1424,7 @@ final class AiActionMenu {
          }
 
          AiActionMenu.TargetOption place = this.selectedAction == AiActionMenu.MenuAction.GOTO
-            ? this.init_StreamUtil_CachePo_Str(this.searchInput.getValue().trim())
+            ? this.typedTarget(this.searchInput.getValue().trim())
             : null;
          if (place != null) {
             out.add(0, place);
@@ -1453,10 +1453,10 @@ final class AiActionMenu {
       return label.startsWith(q) ? 0 : (label.contains(" " + q) ? 1 : 2);
    }
 
-   private AiActionMenu.TargetOption init_StreamUtil_CachePo_Str(String typed) {
+   private AiActionMenu.TargetOption typedTarget(String typed) {
       if (!typed.isEmpty() && !typed.chars().noneMatch(Character::isDigit)) {
          String text = "go to " + typed;
-         return this.init_ad_BufferHelper_Str_Str(text, AiActionMenu.MenuAction.GOTO.load_Str) == null
+         return this.planStep(text, AiActionMenu.MenuAction.GOTO.load_Str) == null
             ? null
             : new AiActionMenu.TargetOption("Go to " + typed, "", autismclient.util.DisplayItemStackFactory.displayStack(Items.COMPASS), n -> text, "", 0, "");
       } else {
@@ -1469,35 +1469,35 @@ final class AiActionMenu {
       AiActionMenu.OptionBuild v = this.init_Map.get(a);
       long now = System.currentTimeMillis();
       Object world = mc.getConnection();
-      if (v == null || v.world != world || init_Z_StreamUtil_DataUti(a, v, now)) {
-         List<AiActionMenu.TargetOption> previous = v != null && v.world == world ? v.init() : null;
+      if (v == null || v.world != world || isStale(a, v, now)) {
+         List<AiActionMenu.TargetOption> previous = v != null && v.world == world ? v.visible() : null;
          boolean recipes = a == AiActionMenu.MenuAction.GET
             || a == AiActionMenu.MenuAction.CRAFT
             || a == AiActionMenu.MenuAction.SMELT;
          boolean missing = recipes && (a == AiActionMenu.MenuAction.SMELT ? AiToolsSuggest.smeltableIds() : AiToolsSuggest.craftableIds()).isEmpty();
-         v = new AiActionMenu.OptionBuild(world, now, this.load(a), previous, missing);
+         v = new AiActionMenu.OptionBuild(world, now, this.candidatesFor(a), previous, missing);
          this.init_Map.put(a, v);
       }
 
-      if (v.write == null) {
-         this.init_V_StreamUtil_DataUti_StreamUtil_ConfigS(a, v);
+      if (v.finished == null) {
+         this.buildMoreOptions(a, v);
       }
 
-      return v.init();
+      return v.visible();
    }
 
-   private static boolean init_Z_StreamUtil_DataUti(AiActionMenu.MenuAction a, AiActionMenu.OptionBuild v, long now) {
-      return v.write != null && now - v.builtAt >= 2000L ? a == AiActionMenu.MenuAction.GOTO || a == AiActionMenu.MenuAction.BUILD || v.recipesMissing : false;
+   private static boolean isStale(AiActionMenu.MenuAction a, AiActionMenu.OptionBuild v, long now) {
+      return v.finished != null && now - v.builtAt >= 2000L ? a == AiActionMenu.MenuAction.GOTO || a == AiActionMenu.MenuAction.BUILD || v.recipesMissing : false;
    }
 
-   private void init_V_StreamUtil_DataUti_StreamUtil_ConfigS(AiActionMenu.MenuAction a, AiActionMenu.OptionBuild v) {
+   private void buildMoreOptions(AiActionMenu.MenuAction a, AiActionMenu.OptionBuild v) {
       long until = System.nanoTime() + 3000000L;
       boolean dedupe = a == AiActionMenu.MenuAction.GET || a == AiActionMenu.MenuAction.MINE;
 
       while (v.nextIndex < v.candidates.size()) {
-         AiActionMenu.TargetOption row = this.init_StreamUtil_CachePo_StreamUtil_DataUti(a, v.candidates.get(v.nextIndex++), dedupe ? v.seenKeys : null);
+         AiActionMenu.TargetOption row = this.toOption(a, v.candidates.get(v.nextIndex++), dedupe ? v.seenKeys : null);
          if (row != null) {
-            v.read.add(row);
+            v.building.add(row);
          }
 
          if (System.nanoTime() > until) {
@@ -1505,15 +1505,15 @@ final class AiActionMenu {
          }
       }
 
-      v.read.sort(Comparator.comparingInt(AiActionMenu.TargetOption::order).thenComparing(rowx -> rowx.label().toLowerCase(Locale.ROOT)));
-      v.write = List.copyOf(v.read);
+      v.building.sort(Comparator.comparingInt(AiActionMenu.TargetOption::order).thenComparing(rowx -> rowx.label().toLowerCase(Locale.ROOT)));
+      v.finished = List.copyOf(v.building);
    }
 
-   private AiActionMenu.TargetOption init_StreamUtil_CachePo_StreamUtil_DataUti(AiActionMenu.MenuAction a, AiActionMenu.TargetCandidate c, Set<String> seen) {
+   private AiActionMenu.TargetOption toOption(AiActionMenu.MenuAction a, AiActionMenu.TargetCandidate c, Set<String> seen) {
       for (Function<Integer, String> form : c.forms()) {
-         AiIntents.IntentStep step = this.init_ad_BufferHelper_Str_Str(form.apply(null), a.load_Str);
+         AiIntents.IntentStep step = this.planStep(form.apply(null), a.load_Str);
          if (step != null && (c.expect() == null || sameItemId(AiJson.getString(step.arguments(), c.key(), ""), c.expect()))) {
-            if (seen != null && !seen.add(init_Str_ad_BufferHelper_Str(step, c.key()))) {
+            if (seen != null && !seen.add(stepKey(step, c.key()))) {
                return null;
             }
 
@@ -1539,7 +1539,7 @@ final class AiActionMenu {
       return null;
    }
 
-   private AiIntents.IntentStep init_ad_BufferHelper_Str_Str(String text, String capability) {
+   private AiIntents.IntentStep planStep(String text, String capability) {
       try {
          AiIntents.IntentPlan plan = AiIntents.plan(text, this.waypointResolver);
          if (plan.steps().size() == 1 && plan.handledAll()) {
@@ -1557,7 +1557,7 @@ final class AiActionMenu {
       return a.replace("minecraft:", "").equalsIgnoreCase(b.replace("minecraft:", ""));
    }
 
-   private static String init_Str_ad_BufferHelper_Str(AiIntents.IntentStep step, String key) {
+   private static String stepKey(AiIntents.IntentStep step, String key) {
       JsonObject args = step.arguments().deepCopy();
       args.remove("count");
       String value = key == null ? null : AiJson.getString(args, key, null);
@@ -1589,7 +1589,7 @@ final class AiActionMenu {
             continue;
          }
 
-         if (a.init() || this.init_ad_BufferHelper_Str_Str(a.update_Str, a.load_Str) != null) {
+         if (a.isDirect() || this.planStep(a.update_Str, a.load_Str) != null) {
             out.add(a);
          }
       }
@@ -1602,7 +1602,7 @@ final class AiActionMenu {
       return this.cachedLevelEntries = List.copyOf(out);
    }
 
-   private List<AiActionMenu.TargetCandidate> load(AiActionMenu.MenuAction a) {
+   private List<AiActionMenu.TargetCandidate> candidatesFor(AiActionMenu.MenuAction a) {
       List<AiActionMenu.TargetCandidate> out = new ArrayList<>();
       switch (a) {
          case GET:
@@ -1619,7 +1619,7 @@ final class AiActionMenu {
                      || !AiItems.sourceEntitiesFor(item).isEmpty()
                      || mined.contains(id.toString()) && AiItems.sourceBlocksFor(item).stream().anyMatch(AiToolsSuggest::init);
                   if (route) {
-                     out.add(init_StreamUtil_StreamU_Str_2("get", item, "item"));
+                     out.add(itemCandidate("get", item, "item"));
                   }
                }
             }
@@ -1628,7 +1628,7 @@ final class AiActionMenu {
             List<AiActionMenu.TargetCandidate> families = new ArrayList<>();
 
             for (String family : AiItems.familyNames()) {
-               families.add(init_StreamUtil_StreamU_Str("get", family, "item"));
+               families.add(familyCandidate("get", family, "item"));
             }
 
             sortByLabel(families);
@@ -1640,9 +1640,9 @@ final class AiActionMenu {
             for (String id : AiToolsSuggest.write()) {
                Block block = blockById(id);
                if (block != null) {
-                  out.add(init_StreamUtil_StreamU_Str_Block("mine", block));
+                  out.add(blockCandidate("mine", block));
                } else {
-                  familiesMine.add(init_StreamUtil_StreamU_Str("mine", id, "block"));
+                  familiesMine.add(familyCandidate("mine", id, "block"));
                }
             }
 
@@ -1686,7 +1686,7 @@ final class AiActionMenu {
             for (String id : AiToolsSuggest.craftableIds()) {
                Item item = itemById(id);
                if (item != null) {
-                  out.add(init_StreamUtil_StreamU_Str_2("craft", item, "item"));
+                  out.add(itemCandidate("craft", item, "item"));
                }
             }
             break;
@@ -1694,7 +1694,7 @@ final class AiActionMenu {
             for (String id : AiToolsSuggest.smeltableIds()) {
                Item item = itemById(id);
                if (item != null) {
-                  out.add(init_StreamUtil_StreamU_Str_2("smelt", item, "item"));
+                  out.add(itemCandidate("smelt", item, "item"));
                }
             }
             break;
@@ -1815,7 +1815,7 @@ final class AiActionMenu {
       list.sort(Comparator.comparing(c -> c.label().toLowerCase(Locale.ROOT)));
    }
 
-   private static AiActionMenu.TargetCandidate init_StreamUtil_StreamU_Str_2(String verb, Item item, String key) {
+   private static AiActionMenu.TargetCandidate itemCandidate(String verb, Item item, String key) {
       Identifier id = BuiltInRegistries.ITEM.getKey(item);
       String path = id.getPath();
       String words = path.replace('_', ' ');
@@ -1830,7 +1830,7 @@ final class AiActionMenu {
       );
    }
 
-   private static AiActionMenu.TargetCandidate init_StreamUtil_StreamU_Str_Block(String verb, Block block) {
+   private static AiActionMenu.TargetCandidate blockCandidate(String verb, Block block) {
       Identifier id = BuiltInRegistries.BLOCK.getKey(block);
       String path = id.getPath();
       String words = path.replace('_', ' ');
@@ -1845,7 +1845,7 @@ final class AiActionMenu {
       );
    }
 
-   private static AiActionMenu.TargetCandidate init_StreamUtil_StreamU_Str(String verb, String family, String key) {
+   private static AiActionMenu.TargetCandidate familyCandidate(String verb, String family, String key) {
       String words = family.replace('_', ' ');
       ItemStack icon = ItemStack.EMPTY;
 
@@ -1909,12 +1909,12 @@ final class AiActionMenu {
       final Object world;
       final long builtAt;
       final List<AiActionMenu.TargetCandidate> candidates;
-      final List<AiActionMenu.TargetOption> load;
-      final List<AiActionMenu.TargetOption> read = new ArrayList<>();
+      final List<AiActionMenu.TargetOption> previous;
+      final List<AiActionMenu.TargetOption> building = new ArrayList<>();
       final Set<String> seenKeys = new HashSet<>();
       final boolean recipesMissing;
       int nextIndex;
-      List<AiActionMenu.TargetOption> write;
+      List<AiActionMenu.TargetOption> finished;
 
       OptionBuild(
          Object world, long builtAt, List<AiActionMenu.TargetCandidate> candidates, List<AiActionMenu.TargetOption> previous, boolean recipesMissing
@@ -1922,12 +1922,12 @@ final class AiActionMenu {
          this.world = world;
          this.builtAt = builtAt;
          this.candidates = candidates;
-         this.load = previous;
+         this.previous = previous;
          this.recipesMissing = recipesMissing;
       }
 
-      List<AiActionMenu.TargetOption> init() {
-         return this.write != null ? this.write : this.load;
+      List<AiActionMenu.TargetOption> visible() {
+         return this.finished != null ? this.finished : this.previous;
       }
    }
 
@@ -1974,7 +1974,7 @@ final class AiActionMenu {
          this.update_Str = fixed;
       }
 
-      boolean init() {
+      boolean isDirect() {
          return this.update_Str == null;
       }
    }

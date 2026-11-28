@@ -40,7 +40,7 @@ final class AiCombatPriority {
       return hostiles > 0 || ranged > 0;
    }
 
-   static boolean init(AiThreats.ThreatKind profile) {
+   static boolean isPriorityThreat(AiThreats.ThreatKind profile) {
       boolean var10000;
       switch (profile) {
          case ZOMBIE:

@@ -14,7 +14,7 @@ public final class CombatAttackDispatcher {
    private CombatAttackDispatcher() {
    }
 
-   public static boolean init(String owner, EntityHitResult hit, Runnable dispatched) {
+   public static boolean queueAttack(String owner, EntityHitResult hit, Runnable dispatched) {
       Objects.requireNonNull(dispatched);
       if (!ClientInteractionOverride.queueAttackEntity(owner, hit)) {
          return false;
@@ -24,22 +24,22 @@ public final class CombatAttackDispatcher {
       return true;
    }
 
-   public static void init(Player player, Entity target) {
+   public static void onAttack(Player player, Entity target) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && player == mc.player && !init.init_Z(target) && ClientInteractionOverride.ownsAttackInput()) {
          init.load(target);
       }
    }
 
-   public static void init(Entity target, Runnable attack, Runnable dispatched) {
+   public static void dispatch(Entity target, Runnable attack, Runnable dispatched) {
       init.init(target, attack, dispatched);
    }
 
-   static void init() {
+   static void clear() {
       init.init(() -> {});
    }
 
-   public static Runnable init_Runnable(Entity target) {
+   public static Runnable receiptFor(Entity target) {
       return init.init_Runnable(target);
    }
 

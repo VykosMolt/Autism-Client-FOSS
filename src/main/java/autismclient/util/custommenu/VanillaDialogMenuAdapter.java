@@ -76,7 +76,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       }
    }
 
-   public static CustomMenuSnapshot init(Dialog dialog, String phase) {
+   public static CustomMenuSnapshot snapshot(Dialog dialog, String phase) {
       return dialog == null ? null : load(dialog, phase);
    }
 

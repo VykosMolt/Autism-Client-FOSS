@@ -31,7 +31,7 @@ public final class BlockSelectionOutlineRenderer {
    private BlockSelectionOutlineRenderer() {
    }
 
-   public static void init(boolean enabled, int line, float width, boolean cornerStyle, boolean filled, int fillArgb) {
+   public static void configure(boolean enabled, int line, float width, boolean cornerStyle, boolean filled, int fillArgb) {
       init_I = line;
       init_F = Math.max(0.1F, width);
       load_Z = cornerStyle;
@@ -40,7 +40,7 @@ public final class BlockSelectionOutlineRenderer {
       init_Z = enabled;
    }
 
-   public static void init(boolean dynamic) {
+   public static void setDynamic(boolean dynamic) {
       write = dynamic;
    }
 
@@ -52,7 +52,7 @@ public final class BlockSelectionOutlineRenderer {
       return !AutismLiteVariant.enabled() && !autismclient.e.TokenStore.init() ? false : init_Z && !autismclient.modules.aD.read_Z();
    }
 
-   public static void load() {
+   public static void register() {
       LevelRenderEvents.COLLECT_SUBMITS
          .register(
             context -> {

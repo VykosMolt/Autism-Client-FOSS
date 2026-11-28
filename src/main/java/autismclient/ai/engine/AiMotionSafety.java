@@ -125,7 +125,7 @@ public final class AiMotionSafety {
             for (AiPhysics.MoveInput var10 : new AiPhysics.MoveInput[]{
                AiPhysics.MoveInput.running(var3, var2.sprint()), AiPhysics.MoveInput.NONE, AiPhysics.MoveInput.running(var3 + 180.0F, false)
             }) {
-               AiStride.FallResult var11 = AiStride.putAt(var1, var10, false, var0);
+               AiStride.FallResult var11 = AiStride.fallResult(var1, var10, false, var0);
                if (var11.down() && var4.test(AiStride.putAt_J_D_D(var11.at().x(), var11.at().z())) && AiStride.putAt(var11.at(), var4, var0)) {
                   return true;
                }
@@ -244,7 +244,7 @@ public final class AiMotionSafety {
       }
 
       for (int var6 = 0; var6 < 64; var6++) {
-         if (!AiGroundContinuity.putAt(var0, var1, var5, var3)) {
+         if (!AiGroundContinuity.continuousGround(var0, var1, var5, var3)) {
             return false;
          }
 
@@ -379,7 +379,7 @@ public final class AiMotionSafety {
 
             if (!var13.onGround()) {
                for (AiPhysics.MoveInput var17 : var7) {
-                  AiStride.FallResult var18 = AiStride.putAt(var13, var17, false, var0);
+                  AiStride.FallResult var18 = AiStride.fallResult(var13, var17, false, var0);
                   if (var18.down() && isSafeLandingState(var0, var18.at(), var3, var5)) {
                      return var10;
                   }
@@ -422,7 +422,7 @@ public final class AiMotionSafety {
       Vec3 var2 = var0.getEyePosition();
       Vec3 var3 = var1.subtract(var2);
       double var4 = var3.length();
-      return !(var4 < 0.001) && !(AiDigLine.load(var3) >= pitchFloorDegrees) ? var2.add(Vec3.directionFromRotation(pitchFloorDegrees, AiDigLine.init(var3)).scale(var4)) : var1;
+      return !(var4 < 0.001) && !(AiDigLine.pitchOf(var3) >= pitchFloorDegrees) ? var2.add(Vec3.directionFromRotation(pitchFloorDegrees, AiDigLine.yawOf(var3)).scale(var4)) : var1;
    }
 
    static float activePitchFloor() {

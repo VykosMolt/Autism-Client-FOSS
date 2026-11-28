@@ -7,17 +7,17 @@ public final class WorldIndicatorBadge {
    private WorldIndicatorBadge() {
    }
 
-   public static WorldIndicatorBadge.BadgeSize init(int captionWidth, int lineHeight, boolean caption) {
-      return init(captionWidth, lineHeight, caption, true);
+   public static WorldIndicatorBadge.BadgeSize size(int captionWidth, int lineHeight, boolean caption) {
+      return size(captionWidth, lineHeight, caption, true);
    }
 
-   public static WorldIndicatorBadge.BadgeSize init(int captionWidth, int lineHeight, boolean caption, boolean arrow) {
+   public static WorldIndicatorBadge.BadgeSize size(int captionWidth, int lineHeight, boolean caption, boolean arrow) {
       return new WorldIndicatorBadge.BadgeSize(
          (arrow ? 36 : 24) + (caption ? Math.max(0, captionWidth) + 4 : 0), Math.max(20, caption ? Math.max(1, lineHeight) + 4 : 20)
       );
    }
 
-   public static WorldIndicatorBadge.BadgePlacement init(
+   public static WorldIndicatorBadge.BadgePlacement place(
       float clipX, float clipY, float clipW, double relativeYaw, int screenW, int screenH, WorldIndicatorBadge.BadgeSize size, float scale, float ring
    ) {
       if (screenW >= 64
@@ -58,7 +58,7 @@ public final class WorldIndicatorBadge {
       }
    }
 
-   public static autismclient.gui.f.NetHelper init(WorldIndicatorBadge.BadgePlacement placement, WorldIndicatorBadge.BadgeSize size, float scale) {
+   public static autismclient.gui.f.NetHelper bounds(WorldIndicatorBadge.BadgePlacement placement, WorldIndicatorBadge.BadgeSize size, float scale) {
       if (placement == null) {
          return autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
       }
@@ -70,7 +70,7 @@ public final class WorldIndicatorBadge {
       return autismclient.gui.f.NetHelper.init(x, y, right - x, bottom - y);
    }
 
-   public static void init(
+   public static void render(
       autismclient.gui.f.SyncManager ui,
       WorldIndicatorBadge.BadgePlacement placement,
       WorldIndicatorBadge.BadgeSize size,

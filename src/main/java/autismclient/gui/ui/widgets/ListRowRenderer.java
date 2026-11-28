@@ -179,7 +179,7 @@ public final class ListRowRenderer {
    }
 
    public static void drawDeleteButton(GuiGraphicsExtractor context, int x, int y, int width, int height, boolean hovered) {
-      IconButtonRenderer.init(context, IconButtonRenderer.init(), autismclient.gui.f.NetHelper.init(x, y, width, height), GuiIconAtlas.DELETE, hovered, true, true);
+      IconButtonRenderer.renderIcon(context, IconButtonRenderer.font(), autismclient.gui.f.NetHelper.init(x, y, width, height), GuiIconAtlas.DELETE, hovered, true, true);
    }
 
    public static void drawSymbolButtonSquare(GuiGraphicsExtractor context, int x, int y, int size, String symbol, boolean hovered, boolean danger) {
@@ -187,7 +187,7 @@ public final class ListRowRenderer {
    }
 
    public static void drawSymbolButton(GuiGraphicsExtractor context, int x, int y, int width, int height, String symbol, boolean hovered, boolean danger) {
-      IconButtonRenderer.init(context, IconButtonRenderer.init(), autismclient.gui.f.NetHelper.init(x, y, width, height), symbol, hovered, true, danger);
+      IconButtonRenderer.renderSymbol(context, IconButtonRenderer.font(), autismclient.gui.f.NetHelper.init(x, y, width, height), symbol, hovered, true, danger);
    }
 
    public enum RowTone {

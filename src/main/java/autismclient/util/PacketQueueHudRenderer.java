@@ -34,7 +34,7 @@ public final class PacketQueueHudRenderer {
    }
 
    public static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor context, Font textRenderer, int x, int y, int width, int maxLines) {
-      init(context, textRenderer, x - 6, y - 8, width + 12, maxLines, true, true, true);
+      render(context, textRenderer, x - 6, y - 8, width + 12, maxLines, true, true, true);
    }
 
    public static int layoutHeight(Font textRenderer, int panelWidth, int maxLines) {
@@ -43,10 +43,10 @@ public final class PacketQueueHudRenderer {
       }
 
       init_V(textRenderer, panelWidth, maxLines);
-      return autismclient.gui.ui.layout.InfoCardRenderer.init(init_List.size());
+      return autismclient.gui.ui.layout.InfoCardRenderer.height(init_List.size());
    }
 
-   public static int init(
+   public static int render(
       GuiGraphicsExtractor context, Font textRenderer, int x, int y, int panelWidth, int maxLines, boolean topBorder, boolean bottomBorder, boolean rightBorder
    ) {
       if (textRenderer == null) {
@@ -54,7 +54,7 @@ public final class PacketQueueHudRenderer {
       }
 
       init_V(textRenderer, panelWidth, maxLines);
-      return autismclient.gui.ui.layout.InfoCardRenderer.init(
+      return autismclient.gui.ui.layout.InfoCardRenderer.render(
          context, textRenderer, x, y, panelWidth, load_Str, init_List, push, 0, true, rightBorder, topBorder, bottomBorder
       );
    }

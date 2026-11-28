@@ -91,7 +91,7 @@ public interface AutismOverlay {
    }
 
    default boolean isOverResizeGrip(double mouseX, double mouseY) {
-      return this.isResizable() && this.isVisible() && !this.isCollapsed() ? autismclient.gui.ui.widgets.ResizeGripRenderer.init(this.getBounds(), mouseX, mouseY) : false;
+      return this.isResizable() && this.isVisible() && !this.isCollapsed() ? autismclient.gui.ui.widgets.ResizeGripRenderer.hovered(this.getBounds(), mouseX, mouseY) : false;
    }
 
    default void resizeTo(int width, int height) {

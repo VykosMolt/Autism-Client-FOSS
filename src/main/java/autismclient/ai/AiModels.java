@@ -28,14 +28,14 @@ final class AiModels {
    }
 
    static AiModels.Inner_CachePool init_aw_CachePool(AiSettings.Provider provider, String endpoint, String key) {
-      return init(provider, endpoint, key, () -> {});
+      return fetchModels(provider, endpoint, key, () -> {});
    }
 
-   static AiModels.Inner_CachePool init(AiSettings.Provider provider, String endpoint, String key, Runnable checkpoint) {
-      return init(provider, endpoint, key, (url, p, k) -> init(url, p, k, checkpoint));
+   static AiModels.Inner_CachePool fetchModels(AiSettings.Provider provider, String endpoint, String key, Runnable checkpoint) {
+      return fetchModelsWith(provider, endpoint, key, (url, p, k) -> init(url, p, k, checkpoint));
    }
 
-   static AiModels.Inner_CachePool init(AiSettings.Provider provider, String endpoint, String key, AiModels.Inner_DataUtil fetch) {
+   static AiModels.Inner_CachePool fetchModelsWith(AiSettings.Provider provider, String endpoint, String key, AiModels.Inner_DataUtil fetch) {
       if (provider == null) {
          return new AiModels.Inner_CachePool(List.of(), "No provider selected");
       }

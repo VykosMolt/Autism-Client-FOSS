@@ -12,17 +12,17 @@ import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 public final class PackTranslationPolicyResolver {
-   private static final AtomicReference<PackTranslationPolicyResolver.TranslationPolicy> init = new AtomicReference<>();
+   private static final AtomicReference<PackTranslationPolicyResolver.TranslationPolicy> POLICY = new AtomicReference<>();
 
    private PackTranslationPolicyResolver() {
    }
 
-   public static void init(PackTranslationPolicyResolver.TranslationPolicy callback) {
-      PackTranslationPolicyResolver.TranslationPolicy previous = init.getAndSet(callback);
+   public static void install(PackTranslationPolicyResolver.TranslationPolicy callback) {
+      PackTranslationPolicyResolver.TranslationPolicy previous = POLICY.getAndSet(callback);
       load(previous);
    }
 
-   public static PackTranslationPolicyResolver.ScopeHandle init(ResourceManager resourceManager) {
+   public static PackTranslationPolicyResolver.ScopeHandle enter(ResourceManager resourceManager) {
       try {
          ProtectorFeatureFlags.refresh();
          Object policyIdentity = null;
@@ -31,7 +31,7 @@ public final class PackTranslationPolicyResolver {
 
          for (int attempt = 0; attempt < 4; attempt++) {
             policyIdentity = ProtectorFeatureFlags.identity();
-            mode = init(ConnectionPrivacyRegistry.getByListener(init_PacketListener()));
+            mode = privacyMode(ConnectionPrivacyRegistry.getByListener(currentPacketListener()));
             if (policyIdentity == ProtectorFeatureFlags.identity()) {
                stable = true;
                break;
@@ -39,10 +39,10 @@ public final class PackTranslationPolicyResolver {
          }
 
          return !stable
-            ? init(new PackTranslationPolicyResolver.PolicyScope())
-            : load(resourceManager, PackTranslationPolicyResolver::init_ResourceManager, PackTranslationPolicyResolver::init_PacketListener, policyIdentity, mode);
+            ? openScope(new PackTranslationPolicyResolver.PolicyScope())
+            : load(resourceManager, PackTranslationPolicyResolver::currentResourceManager, PackTranslationPolicyResolver::currentPacketListener, policyIdentity, mode);
       } catch (Throwable ignored) {
-         return init(new PackTranslationPolicyResolver.PolicyScope());
+         return openScope(new PackTranslationPolicyResolver.PolicyScope());
       }
    }
 
@@ -99,30 +99,30 @@ public final class PackTranslationPolicyResolver {
          PackTranslationPolicyResolver.PolicyScope scope = new PackTranslationPolicyResolver.PolicyScope(
             resourceManager, currentManager, currentListener, policyIdentity, effectiveMode, selectedPacks, packIds, serverBindings, listener, context
          );
-         return init(scope);
+         return openScope(scope);
       } catch (Throwable ignored) {
-         return init(new PackTranslationPolicyResolver.PolicyScope());
+         return openScope(new PackTranslationPolicyResolver.PolicyScope());
       }
    }
 
-   public static void init(PackTranslationPolicyResolver.ScopeHandle token) {
+   public static void exit(PackTranslationPolicyResolver.ScopeHandle token) {
       if (token != null) {
-         token.init.load();
+         token.scope.deactivate();
       }
    }
 
    public static boolean init(ResourceManager resourceManager, PackResources pack, String sourcePackId) {
       if (resourceManager != null && pack != null && sourcePackId != null) {
-         PackTranslationPolicyResolver.TranslationPolicy current = init.get();
+         PackTranslationPolicyResolver.TranslationPolicy current = POLICY.get();
          if (current == null) {
             return false;
          }
 
          try {
-            return current.init(resourceManager, pack, sourcePackId) && init.get() == current;
+            return current.shouldTranslate(resourceManager, pack, sourcePackId) && POLICY.get() == current;
          } catch (Throwable ignored) {
             if (current instanceof PackTranslationPolicyResolver.PolicyScope scope) {
-               scope.load();
+               scope.deactivate();
             }
 
             return false;
@@ -133,35 +133,35 @@ public final class PackTranslationPolicyResolver {
    }
 
    public static boolean init(ResourceManager resourceManager, PackResources pack, String sourcePackId, ConnectionPrivacyRegistry.ConnectionSession origin) {
-      PackTranslationPolicyResolver.TranslationPolicy current = init.get();
+      PackTranslationPolicyResolver.TranslationPolicy current = POLICY.get();
       return origin != null && current instanceof PackTranslationPolicyResolver.PolicyScope scope && scope.capturedContext == origin
-         ? init(resourceManager, pack, sourcePackId) && init.get() == current
+         ? init(resourceManager, pack, sourcePackId) && POLICY.get() == current
          : false;
    }
 
-   private static PackTranslationPolicyResolver.ScopeHandle init(PackTranslationPolicyResolver.PolicyScope scope) {
-      PackTranslationPolicyResolver.TranslationPolicy previous = init.getAndSet(scope);
+   private static PackTranslationPolicyResolver.ScopeHandle openScope(PackTranslationPolicyResolver.PolicyScope scope) {
+      PackTranslationPolicyResolver.TranslationPolicy previous = POLICY.getAndSet(scope);
       load(previous);
       return new PackTranslationPolicyResolver.ScopeHandle(scope);
    }
 
    private static void load(PackTranslationPolicyResolver.TranslationPolicy callback) {
       if (callback instanceof PackTranslationPolicyResolver.PolicyScope scope) {
-         scope.init_Z = false;
+         scope.active = false;
       }
    }
 
-   private static ResourceManager init_ResourceManager() {
+   private static ResourceManager currentResourceManager() {
       Minecraft minecraft = Minecraft.getInstance();
       return minecraft == null ? null : minecraft.getResourceManager();
    }
 
-   private static PacketListener init_PacketListener() {
+   private static PacketListener currentPacketListener() {
       Minecraft minecraft = Minecraft.getInstance();
       return minecraft == null ? null : minecraft.getConnection();
    }
 
-   private static ConnectionPrivacyRegistry.PrivacyMode init(ConnectionPrivacyRegistry.ConnectionSession context) {
+   private static ConnectionPrivacyRegistry.PrivacyMode privacyMode(ConnectionPrivacyRegistry.ConnectionSession context) {
       if (context != null) {
          return context.privacyMode();
       } else {
@@ -170,11 +170,11 @@ public final class PackTranslationPolicyResolver {
    }
 
    private record ServerBinding(
-      ConnectionPrivacyRegistry.ConnectionSession init_BufferHelper_Strea,
+      ConnectionPrivacyRegistry.ConnectionSession session,
       long init_J,
-      PacketListener init_PacketListener,
-      ConnectionPrivacyRegistry.ServerEndpoint init_BufferHelper_Buffe,
-      ResourcePackSessionTracker.PackSession init_FileCache_BufferHe,
+      PacketListener packetListener,
+      ConnectionPrivacyRegistry.ServerEndpoint endpoint,
+      ResourcePackSessionTracker.PackSession packSession,
       ServerPackSelectionRegistry.Inner_StreamUtil provenance
    ) {
    }
@@ -190,7 +190,7 @@ public final class PackTranslationPolicyResolver {
       private final IdentityHashMap<PackResources, PackTranslationPolicyResolver.ServerBinding> serverBindings;
       private final PacketListener capturedListener;
       private final ConnectionPrivacyRegistry.ConnectionSession capturedContext;
-      private volatile boolean init_Z;
+      private volatile boolean active;
 
       private PolicyScope(
          ResourceManager buildingManager,
@@ -214,7 +214,7 @@ public final class PackTranslationPolicyResolver {
          this.serverBindings = serverBindings;
          this.capturedListener = capturedListener;
          this.capturedContext = capturedContext;
-         this.init_Z = true;
+         this.active = true;
       }
 
       private PolicyScope() {
@@ -228,12 +228,12 @@ public final class PackTranslationPolicyResolver {
          this.serverBindings = new IdentityHashMap<>();
          this.capturedListener = null;
          this.capturedContext = null;
-         this.init_Z = false;
+         this.active = false;
       }
 
       @Override
-      public boolean init(ResourceManager resourceManager, PackResources pack, String sourcePackId) {
-         if (!this.init_Z) {
+      public boolean shouldTranslate(ResourceManager resourceManager, PackResources pack, String sourcePackId) {
+         if (!this.active) {
             return false;
          }
 
@@ -241,36 +241,36 @@ public final class PackTranslationPolicyResolver {
             if (resourceManager == this.buildingManager && this.currentManager.get() == this.buildingManager) {
                PacketListener listener = this.currentListener.get();
                if (listener != this.capturedListener) {
-                  return this.load();
+                  return this.deactivate();
                }
 
                ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByListener(listener);
                if (context != this.capturedContext) {
-                  return this.load();
+                  return this.deactivate();
                }
 
-               if (PackTranslationPolicyResolver.init(context) == this.mode && this.policyIdentity == ProtectorFeatureFlags.identity()) {
+               if (PackTranslationPolicyResolver.privacyMode(context) == this.mode && this.policyIdentity == ProtectorFeatureFlags.identity()) {
                   PackTranslationPolicyResolver.ServerBinding server = this.serverBindings.get(pack);
                   if (this.mode == ConnectionPrivacyRegistry.PrivacyMode.VANILLA && server == null) {
                      return false;
                   } else if (!this.init()) {
-                     return this.load();
+                     return this.deactivate();
                   } else {
                      String capturedId = this.packIds.get(pack);
                      if (capturedId != null && capturedId.equals(sourcePackId)) {
-                        return server == null ? false : this.init(server, pack) || this.load();
+                        return server == null ? false : this.matchesServer(server, pack) || this.deactivate();
                      } else {
-                        return this.load();
+                        return this.deactivate();
                      }
                   }
                } else {
-                  return this.load();
+                  return this.deactivate();
                }
             } else {
-               return this.load();
+               return this.deactivate();
             }
          } catch (Throwable ignored) {
-            return this.load();
+            return this.deactivate();
          }
       }
 
@@ -295,13 +295,13 @@ public final class PackTranslationPolicyResolver {
          return true;
       }
 
-      private boolean init(PackTranslationPolicyResolver.ServerBinding server, PackResources pack) {
-         ConnectionPrivacyRegistry.ConnectionSession context = server.init_BufferHelper_Strea();
+      private boolean matchesServer(PackTranslationPolicyResolver.ServerBinding server, PackResources pack) {
+         ConnectionPrivacyRegistry.ConnectionSession context = server.session();
          if (ConnectionPrivacyRegistry.isActive(context)
             && context.lifecycleId() == server.init_J()
-            && context.packetListener() == server.init_PacketListener()
-            && Objects.equals(context.serverEndpoint(), server.init_BufferHelper_Buffe())) {
-            ResourcePackSessionTracker.PackSession session = server.init_FileCache_BufferHe();
+            && context.packetListener() == server.packetListener()
+            && Objects.equals(context.serverEndpoint(), server.endpoint())) {
+            ResourcePackSessionTracker.PackSession session = server.packSession();
             if (ResourcePackSessionTracker.sessionFor(context) == session && ResourcePackSessionTracker.isActive(session)) {
                ServerPackSelectionRegistry.Inner_StreamUtil captured = server.provenance();
                return captured.equals(ServerPackSelectionRegistry.provenanceOf(session, pack));
@@ -313,23 +313,23 @@ public final class PackTranslationPolicyResolver {
          }
       }
 
-      private boolean load() {
-         this.init_Z = false;
-         PackTranslationPolicyResolver.init.compareAndSet(this, null);
+      private boolean deactivate() {
+         this.active = false;
+         PackTranslationPolicyResolver.POLICY.compareAndSet(this, null);
          return false;
       }
    }
 
    @FunctionalInterface
    public interface TranslationPolicy {
-      boolean init(ResourceManager var1, PackResources var2, String var3);
+      boolean shouldTranslate(ResourceManager var1, PackResources var2, String var3);
    }
 
    public static final class ScopeHandle {
-      private final PackTranslationPolicyResolver.PolicyScope init;
+      private final PackTranslationPolicyResolver.PolicyScope scope;
 
       private ScopeHandle(PackTranslationPolicyResolver.PolicyScope scope) {
-         this.init = scope;
+         this.scope = scope;
       }
    }
 }

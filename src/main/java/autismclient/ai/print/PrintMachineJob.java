@@ -61,7 +61,7 @@ public interface PrintMachineJob {
       return false;
    }
 
-   default boolean init(AABB body) {
+   default boolean bodyClear(AABB body) {
       return true;
    }
 
@@ -81,7 +81,7 @@ public interface PrintMachineJob {
       return 0;
    }
 
-   default boolean close() {
+   default boolean resultUncertain() {
       return false;
    }
 
@@ -89,7 +89,7 @@ public interface PrintMachineJob {
       return "{}";
    }
 
-   default void init(Supplier<String> guard) {
+   default void setGuard(Supplier<String> guard) {
    }
 
    default void init(Map<Item, Integer> removed) {

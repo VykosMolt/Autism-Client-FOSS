@@ -96,12 +96,12 @@ public final class PingSpoofScheduler {
    }
 
    public static void enable(int delayMs, boolean realIncoming, boolean realOutgoing, long durationNanos) {
-      init(0L, delayMs, realIncoming, realOutgoing, durationNanos);
+      start(0L, delayMs, realIncoming, realOutgoing, durationNanos);
    }
 
-   public static void init(long ownerRunId, int delayMs, boolean realIncoming, boolean realOutgoing, long durationNanos) {
+   public static void start(long ownerRunId, int delayMs, boolean realIncoming, boolean realOutgoing, long durationNanos) {
       if (durationNanos <= 0L) {
-         init(ownerRunId);
+         stop(ownerRunId);
       } else {
          runOverrides.put(
             ownerRunId, new PingSpoofScheduler.Inner_StreamUtil(Math.max(0, delayMs), realIncoming, realOutgoing, System.nanoTime() + durationNanos, false)
@@ -120,10 +120,10 @@ public final class PingSpoofScheduler {
    }
 
    public static void init_V() {
-      init(0L);
+      stop(0L);
    }
 
-   public static void init(long ownerRunId) {
+   public static void stop(long ownerRunId) {
       runOverrides.remove(ownerRunId);
       flush();
    }
@@ -133,7 +133,7 @@ public final class PingSpoofScheduler {
       flush();
    }
 
-   public static void load(int delayMs, boolean realIncoming, boolean realOutgoing) {
+   public static void setGlobal(int delayMs, boolean realIncoming, boolean realOutgoing) {
       globalDelayMs = Math.max(0, delayMs);
       globalRealIncoming = realIncoming;
       globalRealOutgoing = realOutgoing;
@@ -239,7 +239,7 @@ public final class PingSpoofScheduler {
       }
    }
 
-   public static void write() {
+   public static void clearQueues() {
       init_Queue.clear();
       load_Queue.clear();
       incomingQueued.set(0);
@@ -253,7 +253,7 @@ public final class PingSpoofScheduler {
 
    public static boolean interceptIncoming(Packet<?> packet) {
       if (auditIsDisconnect(packet)) {
-         write();
+         clearQueues();
          return false;
       } else if (!write_Z) {
          return false;
@@ -316,10 +316,10 @@ public final class PingSpoofScheduler {
       return true;
    }
 
-   public static void update() {
+   public static void tick() {
       if (MINECRAFT == null || MINECRAFT.getConnection() == null) {
          if (!init_Queue.isEmpty() || !load_Queue.isEmpty() || load_AtomicInteger.get() > 0) {
-            write();
+            clearQueues();
          }
          update_Z = false;
       } else if (init_Queue.isEmpty() && load_Queue.isEmpty()) {

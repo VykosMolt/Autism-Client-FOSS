@@ -2141,7 +2141,7 @@ final class AiBuilder {
 
    static AiOperation checkSchematicReadiness(AiBuilder.Blueprint blueprint) {
       int reportLimit = 16;
-      AiSchematicReadiness.ReadinessReport audit = AiSchematicReadiness.init(blueprint, reportLimit);
+      AiSchematicReadiness.ReadinessReport audit = AiSchematicReadiness.assessBlueprint(blueprint, reportLimit);
       return readinessFailureOp(blueprint, audit);
    }
 
@@ -3275,11 +3275,11 @@ final class AiBuilder {
                this.stairLayerY = blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).min().orElse(0) - 1;
                this.accessStairsReady = true;
                this.terrainCleared = !this.ownsScaffolding || !power.clearTerrain();
-               this.scaffoldTracker = this.ownsScaffolding ? AiScaffold.init(AiBuilder.checkpointPath(blueprint), List.of()) : null;
+               this.scaffoldTracker = this.ownsScaffolding ? AiScaffold.openScope(AiBuilder.checkpointPath(blueprint), List.of()) : null;
                if (this.scaffoldTracker != null) {
                   for (BlockPos step : AiSchematicActions.init(blueprint)) {
                      for (BlockPos support : List.of(step, step.below())) {
-                        if (AiScaffold.matches(this.scaffoldTracker.init(support), mc.level.getBlockState(support).getBlock())) {
+                        if (AiScaffold.matches(this.scaffoldTracker.recorded(support), mc.level.getBlockState(support).getBlock())) {
                            this.scaffoldSupportKeys.add(support.asLong());
                         }
                      }
@@ -3420,7 +3420,7 @@ final class AiBuilder {
                   AiVisualization.showCount(
                      this,
                      schematic ? "Building schematic" : "Building",
-                     AiTaskStatus.init(r.message(), "Preparing the build") + " / " + this.placedCount + " blocks placed",
+                     AiTaskStatus.phaseLabel(r.message(), "Preparing the build") + " / " + this.placedCount + " blocks placed",
                      -1,
                      -1
                   );
@@ -3673,7 +3673,7 @@ final class AiBuilder {
 
                      if (this.activeSubtask != null) {
                         if (schematic && this.ownsScaffolding && this.activeSubtask instanceof AiSchematicApproach approach) {
-                           approach.init(this::planWalkingPlacement, this::tryWalkingClick, () -> this.placeAckTracker.pendingPos() != null);
+                           approach.bindActions(this::planWalkingPlacement, this::tryWalkingClick, () -> this.placeAckTracker.pendingPos() != null);
                         }
 
                         if (this.activeApproachJob != null && this.activeSubtask != this.batchApproachOp) {
@@ -5443,7 +5443,7 @@ final class AiBuilder {
             }
 
             Block scaffoldBlockAt(BlockPos pos) {
-               Block tracked = this.scaffoldTracker == null ? null : this.scaffoldTracker.init(pos);
+               Block tracked = this.scaffoldTracker == null ? null : this.scaffoldTracker.recorded(pos);
                return tracked == null ? AiScaffold.recordedBlock(pos) : tracked;
             }
 
@@ -5899,7 +5899,7 @@ final class AiBuilder {
                if (this.scaffoldTracker != null) {
                   for (BlockPos support : this.scaffoldTracker.ownedCells()) {
                      if (!this.close_Set.contains(support.asLong())
-                        && AiScaffold.matches(this.scaffoldTracker.init(support), mc.level.getBlockState(support).getBlock())
+                        && AiScaffold.matches(this.scaffoldTracker.recorded(support), mc.level.getBlockState(support).getBlock())
                         && AiSchematicActions.init(support, this.load_Map, mc.level)) {
                         keep.add(support.asLong());
                      }
@@ -7756,7 +7756,7 @@ final class AiBuilder {
                   );
                   AutismClientAddon.LOG
                      .info("[AI] build: withdrawing {} x{} from shulker at {}", BuiltInRegistries.ITEM.getKey(want), need, source.pos().toShortString());
-                  return AiContainer.init(args, this.cachedProtectedCells());
+                  return AiContainer.create(args, this.cachedProtectedCells());
                } else {
                   return null;
                }
@@ -7808,7 +7808,7 @@ final class AiBuilder {
                   if (!AiBuilder.isCellSatisfied(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
                      remaining++;
 
-                     for (Item item : AiSchematicActions.load(cell, pos)) {
+                     for (Item item : AiSchematicActions.materialItems(cell, pos)) {
                         if (item != Items.AIR) {
                            nextMaterials.add(BuiltInRegistries.ITEM.getKey(item).toString());
                         }
@@ -7825,7 +7825,7 @@ final class AiBuilder {
 
                   BlockPos pos = blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz());
                   if (!AiBuilder.isCellSatisfied(cell, mc.level.getBlockState(pos), power.substitutes(), schematic)) {
-                     for (Item item : AiSchematicActions.load(cell, pos)) {
+                     for (Item item : AiSchematicActions.materialItems(cell, pos)) {
                         if (item != Items.AIR && nextMaterials.size() < 24) {
                            nextMaterials.add(BuiltInRegistries.ITEM.getKey(item).toString());
                         }

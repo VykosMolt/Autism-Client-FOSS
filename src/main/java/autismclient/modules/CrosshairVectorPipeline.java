@@ -29,24 +29,24 @@ import org.lwjgl.system.MemoryUtil;
 final class CrosshairVectorPipeline {
    private static final Identifier init_Identifier = Identifier.fromNamespaceAndPath("autismclient", "ui/crosshair_vector");
    private static final int init_I = 128;
-   private static final LinkedHashMap<CrosshairVectorPipeline.StyleKey, CrosshairVectorPipeline.ParameterTexture> init_LinkedHashMap = new LinkedHashMap<>(16, 0.75F, true);
-   private static final ArrayDeque<CrosshairVectorPipeline.ParameterTexture> init_ArrayDeque = new ArrayDeque<>();
+   private static final LinkedHashMap<CrosshairVectorPipeline.StyleKey, CrosshairVectorPipeline.ParameterTexture> parameterCache = new LinkedHashMap<>(16, 0.75F, true);
+   private static final ArrayDeque<CrosshairVectorPipeline.ParameterTexture> retired = new ArrayDeque<>();
    private static RenderPipeline init_RenderPipeline;
-   private static RenderPipeline load;
-   private static boolean init_Z;
+   private static RenderPipeline invertPipeline;
+   private static boolean initialized;
 
    private CrosshairVectorPipeline() {
    }
 
    static boolean init(GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, float centerX, float centerY, float pixelsPerGuiUnit, int maxPixels, int target) {
-      if (!look.style().isPreset() || !init()) {
+      if (!look.style().isPreset() || !ensurePipelines()) {
          return false;
       }
 
       if (Float.isFinite(centerX) && Float.isFinite(centerY) && Float.isFinite(pixelsPerGuiUnit) && !(pixelsPerGuiUnit <= 0.0F)) {
          CrosshairVectorSpec shape = new CrosshairVectorSpec(look.style(), look.load_D(), look.read_D());
          double border = look.load_Z() ? look.write_D() : 0.0;
-         double span = shape.init(pixelsPerGuiUnit, look.init_D(), border);
+         double span = shape.span(pixelsPerGuiUnit, look.init_D(), border);
          if (Double.isFinite(span) && !(span <= 4.0)) {
             double fit = maxPixels > 0 ? Math.clamp((maxPixels - 4.0) / (span - 4.0), 0.0, 1.0) : 1.0;
             if (fit <= 0.0) {
@@ -54,10 +54,10 @@ final class CrosshairVectorPipeline {
             }
 
             float unit = (float)(pixelsPerGuiUnit * look.init_D() * fit);
-            int stroke = CrosshairPresetGeometry.init(look.load_D(), unit);
+            int stroke = CrosshairPresetGeometry.strokeWidth(look.load_D(), unit);
             float gap = (float)Math.round(look.read_D() * unit);
             float outline = border > 0.0 ? (float)Math.max(1L, Math.round(border * pixelsPerGuiUnit * fit)) : 0.0F;
-            float extent = Math.max((float)shape.read() * unit + 1.0F, 7.0F * unit + stroke * 1.25F + 2.0F) + outline + 2.0F;
+            float extent = Math.max((float)shape.extent() * unit + 1.0F, 7.0F * unit + stroke * 1.25F + 2.0F) + outline + 2.0F;
             Matrix3x2fStack pose = graphics.pose();
             centerX = snapToPixel(centerX, pose.m00(), pose.m20(), pixelsPerGuiUnit, stroke);
             centerY = snapToPixel(centerY, pose.m11(), pose.m21(), pixelsPerGuiUnit, stroke);
@@ -66,11 +66,11 @@ final class CrosshairVectorPipeline {
             CrosshairVectorPipeline.StyleKey key = new CrosshairVectorPipeline.StyleKey(
                shape.style().ordinal(), stroke, gap, outline, unit, fill, look.load_Z() ? look.load_I() : 0, Math.clamp(look.init_F(), 0.0F, 1.0F)
             );
-            CrosshairVectorPipeline.ParameterTexture parameters = init(key);
-            float[] quad = init(centerX, centerY, extent);
+            CrosshairVectorPipeline.ParameterTexture parameters = parametersFor(key);
+            float[] quad = square(centerX, centerY, extent);
             if (inverted) {
                graphics.nextStratum();
-               init_V_GuiGraphicsExtract_2(graphics, load, parameters, quad, 1);
+               init_V_GuiGraphicsExtract_2(graphics, invertPipeline, parameters, quad, 1);
                if (outline > 0.0F && look.load_I() >>> 24 != 0) {
                   graphics.nextStratum();
                   init_V_GuiGraphicsExtract_2(graphics, init_RenderPipeline, parameters, quad, 2);
@@ -91,16 +91,16 @@ final class CrosshairVectorPipeline {
    }
 
    static void init_V_GuiGraphicsExtract(GuiGraphicsExtractor graphics, float x, float y, float radiusX, float radiusY) {
-      if (init()) {
+      if (ensurePipelines()) {
          float w = radiusX + 2.0F;
          float h = radiusY + 2.0F;
          float[] quad = new float[]{x - w, y - h, x + w, y + h, -w / radiusX, -h / radiusY, w / radiusX, h / radiusY};
-         CrosshairVectorPipeline.ParameterTexture parameters = init(new CrosshairVectorPipeline.StyleKey(4, 0.0F, 0.0F, 0.0F, 0.0F, -1275068417, 0, 1.0F));
+         CrosshairVectorPipeline.ParameterTexture parameters = parametersFor(new CrosshairVectorPipeline.StyleKey(4, 0.0F, 0.0F, 0.0F, 0.0F, -1275068417, 0, 1.0F));
          init_V_GuiGraphicsExtract_2(graphics, init_RenderPipeline, parameters, quad, 0);
       }
    }
 
-   private static float[] init(float x, float y, float extent) {
+   private static float[] square(float x, float y, float extent) {
       return new float[]{x - extent, y - extent, x + extent, y + extent, -extent, -extent, extent, extent};
    }
 
@@ -115,14 +115,14 @@ final class CrosshairVectorPipeline {
       return position + (Math.round(screenPosition - half) + half - screenPosition) / pixelSize;
    }
 
-   private static CrosshairVectorPipeline.ParameterTexture init(CrosshairVectorPipeline.StyleKey key) {
-      CrosshairVectorPipeline.ParameterTexture parameters = init_LinkedHashMap.get(key);
+   private static CrosshairVectorPipeline.ParameterTexture parametersFor(CrosshairVectorPipeline.StyleKey key) {
+      CrosshairVectorPipeline.ParameterTexture parameters = parameterCache.get(key);
       if (parameters == null) {
          parameters = new CrosshairVectorPipeline.ParameterTexture(key);
-         init_LinkedHashMap.put(key, parameters);
-         if (init_LinkedHashMap.size() > 128) {
-            Iterator<CrosshairVectorPipeline.ParameterTexture> iterator = init_LinkedHashMap.values().iterator();
-            init_ArrayDeque.add(iterator.next());
+         parameterCache.put(key, parameters);
+         if (parameterCache.size() > 128) {
+            Iterator<CrosshairVectorPipeline.ParameterTexture> iterator = parameterCache.values().iterator();
+            retired.add(iterator.next());
             iterator.remove();
          }
       }
@@ -133,7 +133,7 @@ final class CrosshairVectorPipeline {
    private static void init_V_GuiGraphicsExtract_2(
       GuiGraphicsExtractor graphics, RenderPipeline pipeline, CrosshairVectorPipeline.ParameterTexture parameters, float[] quad, int mode
    ) {
-      autismclient.gui.sdf.TexturedQuadRenderState element = autismclient.gui.sdf.TexturedQuadRenderState.init(
+      autismclient.gui.sdf.TexturedQuadRenderState element = autismclient.gui.sdf.TexturedQuadRenderState.create(
          pipeline,
          TextureSetup.singleTexture(parameters.getTextureView(), parameters.getSampler()),
          new Matrix3x2f(graphics.pose()),
@@ -147,36 +147,36 @@ final class CrosshairVectorPipeline {
       }
    }
 
-   private static boolean init() {
-      if (!init_Z) {
-         init_Z = true;
+   private static boolean ensurePipelines() {
+      if (!initialized) {
+         initialized = true;
 
          try {
-            init_RenderPipeline = init("crosshair_vector", RenderPipelines.GUI_TEXTURED);
-            load = init("crosshair_vector_invert", RenderPipelines.CROSSHAIR);
+            init_RenderPipeline = createPipeline("crosshair_vector", RenderPipelines.GUI_TEXTURED);
+            invertPipeline = createPipeline("crosshair_vector_invert", RenderPipelines.CROSSHAIR);
             ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-               while (!init_ArrayDeque.isEmpty()) {
-                  init_ArrayDeque.removeFirst().close();
+               while (!retired.isEmpty()) {
+                  retired.removeFirst().close();
                }
             });
             ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> {
-               init_LinkedHashMap.values().forEach(AbstractTexture::close);
-               init_LinkedHashMap.clear();
+               parameterCache.values().forEach(AbstractTexture::close);
+               parameterCache.clear();
 
-               while (!init_ArrayDeque.isEmpty()) {
-                  init_ArrayDeque.removeFirst().close();
+               while (!retired.isEmpty()) {
+                  retired.removeFirst().close();
                }
             });
          } catch (RuntimeException | LinkageError error) {
-            load = null;
+            invertPipeline = null;
             init_RenderPipeline = null;
          }
       }
 
-      return init_RenderPipeline != null && load != null;
+      return init_RenderPipeline != null && invertPipeline != null;
    }
 
-   private static RenderPipeline init(String name, RenderPipeline base) {
+   private static RenderPipeline createPipeline(String name, RenderPipeline base) {
       return Compat263.createRenderPipeline(
          Identifier.fromNamespaceAndPath("autismclient", "pipeline/" + name),
          Compat263.getVertexShader(base),

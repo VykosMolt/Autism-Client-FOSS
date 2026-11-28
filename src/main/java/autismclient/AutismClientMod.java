@@ -138,8 +138,8 @@ public final class AutismClientMod implements ClientModInitializer {
       BlockPreviewRenderer.register();
       FreecamTargetOutlineRenderer.register();
       SkeletonEspRenderer.register();
-      BlockSelectionOutlineRenderer.load();
-      PlacedBlockTrailRenderer.load();
+      BlockSelectionOutlineRenderer.register();
+      PlacedBlockTrailRenderer.register();
       if (!AutismLiteVariant.enabled()) {
          BedDefenderGhostRenderer.register();
       }
@@ -225,7 +225,7 @@ public final class AutismClientMod implements ClientModInitializer {
          }
 
          try {
-            PacedTpJobManager.init(client);
+            PacedTpJobManager.tick(client);
          } catch (Throwable t) {
             logTickError("pacedTp", t);
          }
@@ -275,12 +275,12 @@ public final class AutismClientMod implements ClientModInitializer {
       });
       ClientConfigurationConnectionEvents.DISCONNECT.register((listener, client) -> {
          runSafe("cfg.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));
-         runSafe("cfg.remoteView", () -> RemoteViewController.init(false));
+         runSafe("cfg.remoteView", () -> RemoteViewController.stop(false));
          runSafe("cfg.persist", AutismConfig::enqueuePendingSaveNow);
-         runSafe("cfg.pacedTp", () -> PacedTpJobManager.init("connection changed"));
+         runSafe("cfg.pacedTp", () -> PacedTpJobManager.cancelAll("connection changed"));
          runSafe("cfg.fakeGamemode", FakeGamemodeManager::reset);
          runSafe("cfg.instaBreak", BlockPreviewRenderer::clear);
-         runSafe("cfg.packFailureGuard", PackFailureGuard::load);
+         runSafe("cfg.packFailureGuard", PackFailureGuard::reset);
          runSafe("cfg.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(listener), null));
          runSafe("cfg.hideOverlays", () -> {
             if (!OverlayScreenController.hasRetainedForeground()) {
@@ -293,10 +293,10 @@ public final class AutismClientMod implements ClientModInitializer {
       ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
          runSafe("join.clientInfo", AuditJoinSend.create(client, handler));
          runSafe("join.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));
-         runSafe("join.pacedTp", () -> PacedTpJobManager.init("connection changed"));
+         runSafe("join.pacedTp", () -> PacedTpJobManager.cancelAll("connection changed"));
          runSafe("join.movementGrace", NoFallPauseTimer::start);
          runSafe("join.hideMenuOverlays", () -> ModuleRuntimeManager.getInstance().hideProfilesOverlayIfUnretained());
-         runSafe("join.remember", () -> AutoReconnectController.init(client.getCurrentServer()));
+         runSafe("join.remember", () -> AutoReconnectController.remember(client.getCurrentServer()));
          runSafe("join.onGameJoin", () -> ModuleRuntimeManager.getInstance().onGameJoin());
          runSafe("join.joinMacro", JoinMacroController::onJoin);
          runSafe("join.surfaceFailures", autismclient.b.DataUtil::load_V);
@@ -306,16 +306,16 @@ public final class AutismClientMod implements ClientModInitializer {
       });
       ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
          runSafe("leave.preserveUi", () -> OverlayScreenController.captureRetainedForegroundIfNeeded(client));
-         runSafe("leave.remoteView", () -> RemoteViewController.init(false));
+         runSafe("leave.remoteView", () -> RemoteViewController.stop(false));
          runSafe("leave.persist", AutismConfig::enqueuePendingSaveNow);
          runSafe("leave.stopMacro", () -> MacroExecutor.onServerDisconnect(AutismConfig.getGlobal().stopMacroOnLeave));
-         runSafe("leave.pacedTp", () -> PacedTpJobManager.init("disconnected"));
+         runSafe("leave.pacedTp", () -> PacedTpJobManager.cancelAll("disconnected"));
          runSafe("leave.movementGrace", NoFallPauseTimer::reset);
          runSafe("leave.fakeGamemode", FakeGamemodeManager::reset);
          runSafe("leave.instaBreak", BlockPreviewRenderer::clear);
          runSafe("leave.packStrip", ServerPackSelectionRegistry::load);
          runSafe("leave.packResponses", () -> ResourcePackSessionTracker.init(autismclient.protector.ConnectionPrivacyRegistry.getByListener(handler), null));
-         runSafe("leave.packFailureGuard", PackFailureGuard::load);
+         runSafe("leave.packFailureGuard", PackFailureGuard::reset);
          runSafe("leave.macroEditor", AutismMacroEditorOverlay::onLeave);
          runSafe("leave.lanSync", () -> LanSyncManager.getInstance().resetActiveExecution());
          runSafe("leave.hideOverlays", () -> {
@@ -325,7 +325,7 @@ public final class AutismClientMod implements ClientModInitializer {
          });
          runSafe("leave.joinMacro", JoinMacroController::reset);
          runSafe("leave.onGameLeft", () -> ModuleRuntimeManager.getInstance().onGameLeave());
-         runSafe("leave.pingSpoof", autismclient.util.macro.PingSpoofScheduler::write);
+         runSafe("leave.pingSpoof", autismclient.util.macro.PingSpoofScheduler::clearQueues);
          runSafe("leave.blink", autismclient.modules.BlinkPacketManager::auditDisconnect);
          runSafe("leave.lagWatchdog", LagWatchdogReporter::reset);
       });

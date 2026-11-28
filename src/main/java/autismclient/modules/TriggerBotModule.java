@@ -234,7 +234,7 @@ final class TriggerBotModule extends Module {
       if (this.lastTargetId >= 0 && MC.level != null) {
          if (!(MC.level.getEntity(this.lastTargetId) instanceof LivingEntity living && this.isValidTarget(living))) {
             return null;
-         } else if (autismclient.util.RecentCombatTracker.init(living, now)) {
+         } else if (autismclient.util.RecentCombatTracker.isFreshTarget(living, now)) {
             return null;
          } else {
             Vec3 eyes = MC.player.getEyePosition();
@@ -300,13 +300,13 @@ final class TriggerBotModule extends Module {
          double reach = autismclient.util.AttackReachHelper.maxReach(MC.player);
          if (!rage && this.edgeTolerance > 0.0) {
             LivingEntity graze = this.findGrazeTarget(reach + this.edgeTolerance, this.edgeTolerance);
-            if (graze != null && !autismclient.util.RecentCombatTracker.init(graze, now)) {
+            if (graze != null && !autismclient.util.RecentCombatTracker.isFreshTarget(graze, now)) {
                return graze;
             }
          }
 
          LivingEntity poke = noCooldown ? this.findGrazeTarget(reach + this.extraReach, 0.0) : null;
-         return poke != null && !autismclient.util.RecentCombatTracker.init(poke, now) ? poke : null;
+         return poke != null && !autismclient.util.RecentCombatTracker.isFreshTarget(poke, now) ? poke : null;
       }
    }
 
@@ -371,7 +371,7 @@ final class TriggerBotModule extends Module {
          }
 
          if (reacted) {
-            boolean opening = autismclient.util.RecentCombatTracker.init(target, now);
+            boolean opening = autismclient.util.RecentCombatTracker.isFreshTarget(target, now);
             double scored = ticker + 0.5;
             double shown = opening ? scored : Math.max(scored, ticker + MC.getDeltaTracker().getGameTimeDeltaPartialTick(false));
             double offset = opening ? 0.0 : this.swingOffset;
@@ -445,7 +445,7 @@ final class TriggerBotModule extends Module {
       double bias = 0.92 + 0.16 * (trait - Math.floor(trait));
       RotationMath.Rotation toTarget = RotationMath.lookAt(target.getBoundingBox().getCenter(), MC.player.getEyePosition());
       float angle = RotationMath.angularDistance(RotationMath.ofPlayer(MC.player), toTarget);
-      return autismclient.util.clicker.ReactionDelayModel.init(this.random, reaction.min(), reaction.max(), bias, angle);
+      return autismclient.util.clicker.ReactionDelayModel.sample(this.random, reaction.min(), reaction.max(), bias, angle);
    }
 
    private boolean isValidTarget(Entity entity) {

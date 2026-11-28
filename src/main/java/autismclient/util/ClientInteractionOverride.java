@@ -113,7 +113,7 @@ public final class ClientInteractionOverride {
        {
          pendingAttackClicks++;
          if (!AutismLiteVariant.enabled()) {
-            CombatAttackDispatcher.init();
+            CombatAttackDispatcher.clear();
          }
 
          return true;
@@ -127,7 +127,7 @@ public final class ClientInteractionOverride {
          pendingAttackHit = hit;
          pendingAttackClicks = 1;
          if (!AutismLiteVariant.enabled()) {
-            CombatAttackDispatcher.init();
+            CombatAttackDispatcher.clear();
          }
 
          return true;

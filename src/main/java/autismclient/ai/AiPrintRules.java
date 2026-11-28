@@ -66,7 +66,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
       AiSchematic.LoadedSchematic loaded = AiSchematic.load(file, origin, rotation, mirror, false, 2097152);
       AiBuilder.Blueprint normalized = AiBuilder.normalizeSchematicBlueprint(loaded.blueprint());
       AiSchematicMachinePlan machine = AiSchematicMachinePlan.fromSchematic(loaded, loaded.blueprint()).init(normalized);
-      List<AiSchematicMachinePlan.ContainerPlan> hoppers = machine.load(origin, registries);
+      List<AiSchematicMachinePlan.ContainerPlan> hoppers = machine.hopperPlans(origin, registries);
       AiSchematicMachinePlan.MachineSpec actions = machine.machineSpec(origin, registries);
       HashMap<Long, ListTag> contents = new HashMap<>();
       if (fixtureContents) {
@@ -183,7 +183,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
             return autismclient.ai.print.PrintTarget.TargetKind.SOIL;
          } else if (id.startsWith("minecraft:potted_")) {
             return autismclient.ai.print.PrintTarget.TargetKind.POT;
-         } else if (AiSchematicActions.write(cell)) {
+         } else if (AiSchematicActions.isFilledCauldron(cell)) {
             return autismclient.ai.print.PrintTarget.TargetKind.CAULDRON;
          } else {
             return AiSchematicActions.isFilledComposter(cell) ? autismclient.ai.print.PrintTarget.TargetKind.COMPOSTER : autismclient.ai.print.PrintTarget.TargetKind.PLACE;
@@ -350,7 +350,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
                   return null;
                }
 
-               Item plant = AiSchematicActions.init(target.wanted().getBlock());
+               Item plant = AiSchematicActions.pottedItem(target.wanted().getBlock());
                return plant == Items.AIR ? null : new autismclient.ai.print.PrintRules.Interaction(plant, "plant");
             case CAULDRON:
                return !live.is(Blocks.CAULDRON) && !AiSchematicActions.isPartialFill(cell, live) ? null : new autismclient.ai.print.PrintRules.Interaction(AiSchematicActions.cauldronFillItem(cell), "fill");

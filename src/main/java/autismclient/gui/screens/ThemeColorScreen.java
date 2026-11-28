@@ -621,7 +621,7 @@ public class ThemeColorScreen extends Screen {
    }
 
    private void renderPreviewChip(GuiGraphicsExtractor g, int x, int y, int w, int h, String label, int color) {
-      autismclient.gui.ui.widgets.PillBadgeRenderer.init(this.uiContext(g, -1, -1), autismclient.gui.f.NetHelper.init(x, y, w, h), label, color, true, false);
+      autismclient.gui.ui.widgets.PillBadgeRenderer.render(this.uiContext(g, -1, -1), autismclient.gui.f.NetHelper.init(x, y, w, h), label, color, true, false);
    }
 
    private int recolor(int color, ThemePaletteManager.ColorRole ch) {
@@ -813,7 +813,7 @@ public class ThemeColorScreen extends Screen {
    private void applyDraft() {
       copyColors(this.draftColors, this.config.themeColors);
       ThemePaletteManager.reload();
-      Runnable saved = autismclient.gui.ThemeApplyProgressOverlay.init("Saving config");
+      Runnable saved = autismclient.gui.ThemeApplyProgressOverlay.beginStep("Saving config");
       autismclient.util.BackgroundTaskExecutor.submit("theme-config-save", () -> {
          try {
             this.config.save();

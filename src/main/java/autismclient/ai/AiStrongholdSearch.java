@@ -18,7 +18,7 @@ final class AiStrongholdSearch {
    private AiStrongholdSearch() {
    }
 
-   private static boolean init(BlockState state) {
+   private static boolean isStrongholdBlock(BlockState state) {
       return state.is(Blocks.STONE_BRICKS)
          || state.is(Blocks.MOSSY_STONE_BRICKS)
          || state.is(Blocks.CRACKED_STONE_BRICKS)
@@ -28,70 +28,70 @@ final class AiStrongholdSearch {
          || state.is(Blocks.STONE_BRICK_STAIRS);
    }
 
-   private static long init(BlockPos at) {
+   private static long regionKey(BlockPos at) {
       return new BlockPos(Math.floorDiv(at.getX(), 6), Math.floorDiv(at.getY(), 4), Math.floorDiv(at.getZ(), 6)).asLong();
    }
 
-   static AiOperation init(Vec3 lead, int seconds) {
-      return init(lead, seconds, new AiStrongholdSearch.SearchMemory());
+   static AiOperation searchFresh(Vec3 lead, int seconds) {
+      return search(lead, seconds, new AiStrongholdSearch.SearchMemory());
    }
 
-   static AiOperation init(final Vec3 lead, final int seconds, final AiStrongholdSearch.SearchMemory memory) {
+   static AiOperation search(final Vec3 lead, final int seconds, final AiStrongholdSearch.SearchMemory memory) {
       final Minecraft mc = Minecraft.getInstance();
-      memory.init(mc.level, mc.getConnection(), lead);
+      memory.resetIfChanged(mc.level, mc.getConnection(), lead);
       return new AiOperation() {
-         final Object init_Obj = mc.level;
-         final Object load_Obj = mc.getConnection();
-         final long init_J = System.nanoTime() + Math.max(30, Math.min(360, seconds)) * 1000000000L;
-         final Set<Long> init_Set;
-         final Set<Long> load_Set;
-         final JsonArray init_JsonArray;
-         AiOperation init_AiOperation;
-         BlockPos init_BlockPos;
-         BlockPos load_BlockPos;
-         int init_I;
-         boolean init_Z;
+         final Object startLevel = mc.level;
+         final Object startConnection = mc.getConnection();
+         final long deadline = System.nanoTime() + Math.max(30, Math.min(360, seconds)) * 1000000000L;
+         final Set<Long> visitedRegions;
+         final Set<Long> deadEnds;
+         final JsonArray routeGraph;
+         AiOperation travelOp;
+         BlockPos frontierTarget;
+         BlockPos legStart;
+         int steps;
+         boolean cancelled;
 
          {
-            this.init_Set = memory.init_Set;
-            this.load_Set = memory.load_Set;
-            this.init_JsonArray = memory.init_JsonArray;
+            this.visitedRegions = memory.visitedRegions;
+            this.deadEnds = memory.deadEnds;
+            this.routeGraph = memory.routeGraph;
          }
 
          @Override
          public AiOperation.Result tick() {
-            if (this.init_Z || mc.player == null || mc.level != this.init_Obj || this.load_Obj != mc.getConnection()) {
-               return this.init(AiOperation.Status.CANCELLED, "Local stronghold world changed");
+            if (this.cancelled || mc.player == null || mc.level != this.startLevel || this.startConnection != mc.getConnection()) {
+               return this.finish(AiOperation.Status.CANCELLED, "Local stronghold world changed");
             }
 
             if (!mc.player.isAlive()) {
-               return this.init(AiOperation.Status.FAILED, "Player died in the stronghold search");
+               return this.finish(AiOperation.Status.FAILED, "Player died in the stronghold search");
             }
 
             BlockPos frame = AiWorldScan.findNearestBlock(s -> s.is(Blocks.END_PORTAL_FRAME), 12);
             if (frame != null) {
-               return this.init(AiOperation.Status.SUCCEEDED, "Portal-frame evidence loaded at " + frame.toShortString());
+               return this.finish(AiOperation.Status.SUCCEEDED, "Portal-frame evidence loaded at " + frame.toShortString());
             }
 
-            if (System.nanoTime() <= this.init_J && this.init_I < 24) {
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result result = this.init_AiOperation.tick();
+            if (System.nanoTime() <= this.deadline && this.steps < 24) {
+               if (this.travelOp != null) {
+                  AiOperation.Result result = this.travelOp.tick();
                   if (!result.terminal()) {
                      return AiGameOperations.result(
-                        AiOperation.Status.RUNNING, "Exploring supported structure terrain: " + result.message(), this.init_JsonObject_54()
+                        AiOperation.Status.RUNNING, "Exploring supported structure terrain: " + result.message(), this.progressData()
                      );
                   }
 
-                  boolean pending = this.init_AiOperation.requiresReconciliationAfterEmergency();
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
-                  this.init_JsonArray
+                  boolean pending = this.travelOp.requiresReconciliationAfterEmergency();
+                  this.travelOp.cancel();
+                  this.travelOp = null;
+                  this.routeGraph
                      .add(
                         AiJson.objectOf(
                            "from",
-                           this.load_BlockPos.toShortString(),
+                           this.legStart.toShortString(),
                            "toward",
-                           this.init_BlockPos.toShortString(),
+                           this.frontierTarget.toShortString(),
                            "actualArrival",
                            mc.player.blockPosition().toShortString(),
                            "status",
@@ -101,45 +101,45 @@ final class AiStrongholdSearch {
                         )
                      );
                   if (result.status() == AiOperation.Status.UNCERTAIN || pending) {
-                     return this.init(AiOperation.Status.UNCERTAIN, "Structure route needs reconciliation: " + result.message());
+                     return this.finish(AiOperation.Status.UNCERTAIN, "Structure route needs reconciliation: " + result.message());
                   }
 
                   if (result.status() == AiOperation.Status.CANCELLED) {
-                     return this.init(AiOperation.Status.CANCELLED, "Structure approach cancelled");
+                     return this.finish(AiOperation.Status.CANCELLED, "Structure approach cancelled");
                   }
 
                   if (result.status() != AiOperation.Status.SUCCEEDED) {
-                     this.load_Set.add(AiStrongholdSearch.init(this.init_BlockPos));
-                  } else if (!memory.init_Z) {
-                     memory.init_Z = this.init_Z_8(mc.player.blockPosition());
+                     this.deadEnds.add(AiStrongholdSearch.regionKey(this.frontierTarget));
+                  } else if (!memory.reachedStronghold) {
+                     memory.reachedStronghold = this.nearStrongholdBlock(mc.player.blockPosition());
                   }
 
-                  this.init_Set.add(AiStrongholdSearch.init(this.init_BlockPos));
-                  this.init_Set.add(AiStrongholdSearch.init(mc.player.blockPosition()));
+                  this.visitedRegions.add(AiStrongholdSearch.regionKey(this.frontierTarget));
+                  this.visitedRegions.add(AiStrongholdSearch.regionKey(mc.player.blockPosition()));
                }
 
                BlockPos feet = mc.player.blockPosition();
-               if (!memory.init_Z) {
-                  this.init_BlockPos = this.init_BlockPos_16();
-                  if (this.init_BlockPos == null) {
-                     return this.init("No untried loaded masonry supports a standing approach at this Eye estimate");
+               if (!memory.reachedStronghold) {
+                  this.frontierTarget = this.observedFrontier();
+                  if (this.frontierTarget == null) {
+                     return this.running("No untried loaded masonry supports a standing approach at this Eye estimate");
                   }
                } else {
-                  this.init_BlockPos = this.load_BlockPos_3(feet);
-                  if (this.init_BlockPos == null) {
-                     return this.init("Observed local corridors exhausted; unloaded rooms remain unknown");
+                  this.frontierTarget = this.exploreTarget(feet);
+                  if (this.frontierTarget == null) {
+                     return this.running("Observed local corridors exhausted; unloaded rooms remain unknown");
                   }
                }
 
-               this.load_BlockPos = feet;
-               this.init_I++;
-               this.init_AiOperation = AiGoto.travelToCompat(
-                  this.init_BlockPos,
+               this.legStart = feet;
+               this.steps++;
+               this.travelOp = AiGoto.travelToCompat(
+                  this.frontierTarget,
                   1.2,
                   true,
                   true,
                   false,
-                  Math.min(90, Math.max(15, (int)((this.init_J - System.nanoTime()) / 1000000000L))),
+                  Math.min(90, Math.max(15, (int)((this.deadline - System.nanoTime()) / 1000000000L))),
                   autismclient.ai.engine.AiPathfinder.RouteStrategy.SAFEST,
                   true,
                   2.0,
@@ -147,18 +147,18 @@ final class AiStrongholdSearch {
                   AiGoto.GotoOptions.DEFAULT
                );
                return AiGameOperations.result(
-                  AiOperation.Status.RUNNING, "Following observed stronghold frontier " + this.init_BlockPos.toShortString(), this.init_JsonObject_54()
+                  AiOperation.Status.RUNNING, "Following observed stronghold frontier " + this.frontierTarget.toShortString(), this.progressData()
                );
             } else {
-               return this.init("Local search budget ended; portal room remains unobserved");
+               return this.running("Local search budget ended; portal room remains unobserved");
             }
          }
 
-         BlockPos init_BlockPos_16() {
-            for (BlockPos evidence : AiWorldScan.findBlocks(AiStrongholdSearch::init, 8, 16, 256)) {
+         BlockPos observedFrontier() {
+            for (BlockPos evidence : AiWorldScan.findBlocks(AiStrongholdSearch::isStrongholdBlock, 8, 16, 256)) {
                if (!(Math.hypot(evidence.getX() - lead.x, evidence.getZ() - lead.z) > 240.0)) {
-                  BlockPos candidate = this.init_BlockPos_7(evidence.above());
-                  if (candidate != null && !this.init_Set.contains(AiStrongholdSearch.init(candidate)) && !this.load_Set.contains(AiStrongholdSearch.init(candidate))) {
+                  BlockPos candidate = this.nearestStandable(evidence.above());
+                  if (candidate != null && !this.visitedRegions.contains(AiStrongholdSearch.regionKey(candidate)) && !this.deadEnds.contains(AiStrongholdSearch.regionKey(candidate))) {
                      return candidate;
                   }
                }
@@ -167,9 +167,9 @@ final class AiStrongholdSearch {
             return null;
          }
 
-         boolean init_Z_8(BlockPos feet) {
+         boolean nearStrongholdBlock(BlockPos feet) {
             for (BlockPos p : BlockPos.betweenClosed(feet.offset(-2, -2, -2), feet.offset(2, 1, 2))) {
-               if (AiTerrain.isLoaded(mc.level, p) && AiStrongholdSearch.init(mc.level.getBlockState(p))) {
+               if (AiTerrain.isLoaded(mc.level, p) && AiStrongholdSearch.isStrongholdBlock(mc.level.getBlockState(p))) {
                   return true;
                }
             }
@@ -177,12 +177,12 @@ final class AiStrongholdSearch {
             return false;
          }
 
-         BlockPos init_BlockPos_7(BlockPos center) {
+         BlockPos nearestStandable(BlockPos center) {
             BlockPos best = null;
             double distance = 1.7976931348623157E308;
 
             for (BlockPos p : BlockPos.betweenClosed(center.offset(-4, -4, -4), center.offset(4, 4, 4))) {
-               if (!this.init_Set.contains(AiStrongholdSearch.init(p)) && !this.load_Set.contains(AiStrongholdSearch.init(p)) && this.load_Z_6(p) && AiCombat.isSafeStep(mc, p)
+               if (!this.visitedRegions.contains(AiStrongholdSearch.regionKey(p)) && !this.deadEnds.contains(AiStrongholdSearch.regionKey(p)) && this.isStandable(p) && AiCombat.isSafeStep(mc, p)
                   )
                 {
                   double d = p.distSqr(center);
@@ -196,17 +196,17 @@ final class AiStrongholdSearch {
             return best;
          }
 
-         BlockPos load_BlockPos_3(BlockPos feet) {
+         BlockPos exploreTarget(BlockPos feet) {
             BlockPos best = null;
             double score = 1.7976931348623157E308;
 
             for (BlockPos p : BlockPos.betweenClosed(feet.offset(-24, -12, -24), feet.offset(24, 12, 24))) {
-               long key = AiStrongholdSearch.init(p);
-               if (!this.init_Set.contains(key)
-                  && !this.load_Set.contains(key)
+               long key = AiStrongholdSearch.regionKey(p);
+               if (!this.visitedRegions.contains(key)
+                  && !this.deadEnds.contains(key)
                   && !(p.distSqr(feet) < 16.0)
-                  && this.load_Z_6(p)
-                  && AiStrongholdSearch.init(mc.level.getBlockState(p.below()))
+                  && this.isStandable(p)
+                  && AiStrongholdSearch.isStrongholdBlock(mc.level.getBlockState(p.below()))
                   && AiCombat.isSafeStep(mc, p)) {
                   double value = Math.sqrt(p.distSqr(feet)) + Math.abs(p.getY() - feet.getY()) * 2;
                   if (value < score) {
@@ -219,7 +219,7 @@ final class AiStrongholdSearch {
             return best;
          }
 
-         boolean load_Z_6(BlockPos at) {
+         boolean isStandable(BlockPos at) {
             if (AiTerrain.isLoaded(mc.level, at) && AiTerrain.isLoaded(mc.level, at.above()) && AiTerrain.isLoaded(mc.level, at.below())) {
                for (BlockPos cell : List.of(at, at.above())) {
                   BlockState state = mc.level.getBlockState(cell);
@@ -234,7 +234,7 @@ final class AiStrongholdSearch {
             }
          }
 
-         JsonObject init_JsonObject_54() {
+         JsonObject progressData() {
             return AiJson.objectOf(
                "leadIsEstimate",
                true,
@@ -243,25 +243,25 @@ final class AiStrongholdSearch {
                "leadZ",
                lead.z,
                "visitedRegions",
-               this.init_Set.size(),
+               this.visitedRegions.size(),
                "knownDeadEnds",
-               this.load_Set.size(),
+               this.deadEnds.size(),
                "routeGraph",
-               this.init_JsonArray,
+               this.routeGraph,
                "steps",
-               this.init_I
+               this.steps
             );
          }
 
-         AiOperation.Result init(String message) {
-            AiOperation.Result result = AiStrongholdSearch.init(message, this.init_JsonObject_54(), this.requiresReconciliationAfterEmergency());
+         AiOperation.Result running(String message) {
+            AiOperation.Result result = AiStrongholdSearch.runningResult(message, this.progressData(), this.requiresReconciliationAfterEmergency());
             this.cancel();
             return result;
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
+         AiOperation.Result finish(AiOperation.Status status, String message) {
             AiOperation.Result result = AiGuardLayer.wrapPendingTermination(
-               this.requiresReconciliationAfterEmergency(), AiGameOperations.result(status, message, this.init_JsonObject_54())
+               this.requiresReconciliationAfterEmergency(), AiGameOperations.result(status, message, this.progressData())
             );
             this.cancel();
             return result;
@@ -269,55 +269,55 @@ final class AiStrongholdSearch {
 
          @Override
          public boolean canInterruptNow() {
-            return this.init_AiOperation == null || this.init_AiOperation.canInterruptNow();
+            return this.travelOp == null || this.travelOp.canInterruptNow();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
+            return this.travelOp != null && this.travelOp.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
-            this.init_Z = true;
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
-               this.init_AiOperation = null;
+            this.cancelled = true;
+            if (this.travelOp != null) {
+               this.travelOp.cancel();
+               this.travelOp = null;
             }
          }
       };
    }
 
-   static AiOperation.Result init(String message, JsonObject data, boolean pending) {
+   static AiOperation.Result runningResult(String message, JsonObject data, boolean pending) {
       return AiGuardLayer.wrapPendingTermination(pending, AiOperation.Result.failed(AiFailure.TARGET_NOT_FOUND, message, data.toString()));
    }
 
    static final class SearchMemory {
-      private Object init_Obj;
-      private Object load_Obj;
-      private Vec3 init_Vec3;
-      final Set<Long> init_Set = new HashSet<>();
-      final Set<Long> load_Set = new HashSet<>();
-      final JsonArray init_JsonArray = new JsonArray();
-      boolean init_Z;
+      private Object world;
+      private Object session;
+      private Vec3 lead;
+      final Set<Long> visitedRegions = new HashSet<>();
+      final Set<Long> deadEnds = new HashSet<>();
+      final JsonArray routeGraph = new JsonArray();
+      boolean reachedStronghold;
 
-      void init(Object world, Object session, Vec3 nextLead) {
-         if (this.init_Obj != world
-            || this.load_Obj != session
-            || this.init_Vec3 != null && Math.hypot(this.init_Vec3.x - nextLead.x, this.init_Vec3.z - nextLead.z) > 240.0) {
-            this.init_Set.clear();
-            this.load_Set.clear();
+      void resetIfChanged(Object world, Object session, Vec3 nextLead) {
+         if (this.world != world
+            || this.session != session
+            || this.lead != null && Math.hypot(this.lead.x - nextLead.x, this.lead.z - nextLead.z) > 240.0) {
+            this.visitedRegions.clear();
+            this.deadEnds.clear();
 
-            while (!this.init_JsonArray.isEmpty()) {
-               this.init_JsonArray.remove(this.init_JsonArray.size() - 1);
+            while (!this.routeGraph.isEmpty()) {
+               this.routeGraph.remove(this.routeGraph.size() - 1);
             }
 
-            this.init_Z = false;
+            this.reachedStronghold = false;
          }
 
-         this.init_Obj = world;
-         this.load_Obj = session;
-         this.init_Vec3 = nextLead;
+         this.world = world;
+         this.session = session;
+         this.lead = nextLead;
       }
    }
 }

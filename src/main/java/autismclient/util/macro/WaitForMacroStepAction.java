@@ -9,7 +9,7 @@ public class WaitForMacroStepAction implements MacroAction {
    public WaitForMacroStepAction.StepEvent mode = WaitForMacroStepAction.StepEvent.COMPLETED_STEP;
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -23,7 +23,7 @@ public class WaitForMacroStepAction implements MacroAction {
       tag.putInt("step", Math.max(1, this.step));
       tag.putString("mode", this.mode.name());
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       return tag;
    }
@@ -40,7 +40,7 @@ public class WaitForMacroStepAction implements MacroAction {
       }
 
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
-      this.init = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
       ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
@@ -62,12 +62,12 @@ public class WaitForMacroStepAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean enabled) {
-      this.init = enabled;
+      this.enabled = enabled;
    }
 
    public enum StepEvent {

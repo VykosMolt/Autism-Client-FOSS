@@ -30,7 +30,7 @@ final class AiRide {
    private AiRide() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation ride(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final AiRide.Inner_DataUtil action = init(AiJson.getString(args, "action", "mount"));

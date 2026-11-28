@@ -5,22 +5,22 @@ import java.util.Map;
 
 public final class EndPortalMemoryCache {
    public static final long init_J = 360000L;
-   private final Map<String, EndPortalMemoryCache.DimensionMemory> init_Map = new LinkedHashMap<>(8, 0.75F, true);
+   private final Map<String, EndPortalMemoryCache.DimensionMemory> memories = new LinkedHashMap<>(8, 0.75F, true);
    private long load = -1L;
 
-   public EndPortalMemoryCache.DimensionMemory init(String server, String dimension) {
+   public EndPortalMemoryCache.DimensionMemory memoryFor(String server, String dimension) {
       String key = server + "\n" + dimension;
-      EndPortalMemoryCache.DimensionMemory current = this.init_Map.get(key);
+      EndPortalMemoryCache.DimensionMemory current = this.memories.get(key);
       if (current != null) {
          return current;
       }
 
-      if (this.init_Map.size() >= 8) {
-         this.init_Map.remove(this.init_Map.keySet().iterator().next());
+      if (this.memories.size() >= 8) {
+         this.memories.remove(this.memories.keySet().iterator().next());
       }
 
       current = new EndPortalMemoryCache.DimensionMemory();
-      this.init_Map.put(key, current);
+      this.memories.put(key, current);
       return current;
    }
 
@@ -32,7 +32,7 @@ public final class EndPortalMemoryCache {
 
    public void expire(long now) {
       if (this.load >= 0L && now - this.load >= 360000L) {
-         this.init_Map.clear();
+         this.memories.clear();
       }
    }
 
@@ -42,11 +42,11 @@ public final class EndPortalMemoryCache {
    }
 
    public boolean hasMemory() {
-      return !this.init_Map.isEmpty();
+      return !this.memories.isEmpty();
    }
 
-   public int init_I() {
-      return this.init_Map.size();
+   public int size() {
+      return this.memories.size();
    }
 
    public static final class DimensionMemory {

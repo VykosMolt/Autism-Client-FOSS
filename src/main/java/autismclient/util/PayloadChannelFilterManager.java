@@ -313,7 +313,7 @@ public final class PayloadChannelFilterManager {
    }
 
    public List<String> getSubscribedChannels(boolean includeLoggerDefaults) {
-      return PayloadSubscriptionManager.init(includeLoggerDefaults).channels();
+      return PayloadSubscriptionManager.plan(includeLoggerDefaults).channels();
    }
 
    public int countPresetsInGroup(String group) {

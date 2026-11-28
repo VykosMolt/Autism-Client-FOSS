@@ -11,23 +11,23 @@ final class AiMarkdown {
    static final int read_I = 4;
    static final int write_I = 8;
    static final int update_I = 16;
-   private static final Pattern init_Pattern = Pattern.compile("\u001b\\[[0-9;?]*[ -/]*[@-~]");
-   private static final Pattern load_Pattern = Pattern.compile("^ {0,3}(#{1,6})[ \\t]+(.*?)[ \\t#]*$");
-   private static final Pattern read_Pattern = Pattern.compile("^( *)[-*+][ \\t]+(.*)$");
-   private static final Pattern write_Pattern = Pattern.compile("^( *)(\\d{1,3})[.)][ \\t]+(.*)$");
-   private static final Pattern update_Pattern = Pattern.compile("^ {0,3}([-*_])( *\\1){2,} *$");
-   private static final Pattern sync = Pattern.compile("^ {0,3}(```+|~~~+).*$");
-   private static final Pattern flush = Pattern.compile("\\[([^\\]]+)]\\(([^)\\s]+)\\)");
+   private static final Pattern ANSI_ESCAPE = Pattern.compile("\u001b\\[[0-9;?]*[ -/]*[@-~]");
+   private static final Pattern HEADING = Pattern.compile("^ {0,3}(#{1,6})[ \\t]+(.*?)[ \\t#]*$");
+   private static final Pattern BULLET = Pattern.compile("^( *)[-*+][ \\t]+(.*)$");
+   private static final Pattern ORDERED = Pattern.compile("^( *)(\\d{1,3})[.)][ \\t]+(.*)$");
+   private static final Pattern RULE = Pattern.compile("^ {0,3}([-*_])( *\\1){2,} *$");
+   private static final Pattern FENCE = Pattern.compile("^ {0,3}(```+|~~~+).*$");
+   private static final Pattern LINK = Pattern.compile("\\[([^\\]]+)]\\(([^)\\s]+)\\)");
 
    private AiMarkdown() {
    }
 
-   static String init_Str(String text) {
-      return text == null ? "" : init_Pattern.matcher(text).replaceAll("");
+   static String stripAnsi(String text) {
+      return text == null ? "" : ANSI_ESCAPE.matcher(text).replaceAll("");
    }
 
    static List<AiMarkdown.MarkdownBlock> parse(String markdown) {
-      String text = init_Str(markdown).replace("\r", "");
+      String text = stripAnsi(markdown).replace("\r", "");
       List<AiMarkdown.MarkdownBlock> blocks = new ArrayList<>();
       StringBuilder pending = new StringBuilder();
       AiMarkdown.BlockType pendingType = AiMarkdown.BlockType.PARAGRAPH;
@@ -35,8 +35,8 @@ final class AiMarkdown {
 
       for (String line : text.split("\n", -1)) {
          if (code != null) {
-            if (sync.matcher(line).matches()) {
-               blocks.add(init(AiMarkdown.BlockType.CODE, code.toString()));
+            if (FENCE.matcher(line).matches()) {
+               blocks.add(block(AiMarkdown.BlockType.CODE, code.toString()));
                code = null;
             } else {
                if (!code.isEmpty()) {
@@ -45,30 +45,30 @@ final class AiMarkdown {
 
                code.append(line);
             }
-         } else if (sync.matcher(line).matches()) {
-            init(pending, pendingType, blocks);
+         } else if (FENCE.matcher(line).matches()) {
+            flushParagraph(pending, pendingType, blocks);
             code = new StringBuilder();
          } else if (line.isBlank()) {
-            init(pending, pendingType, blocks);
+            flushParagraph(pending, pendingType, blocks);
          } else {
             Matcher m;
-            if ((m = load_Pattern.matcher(line)).matches()) {
-               init(pending, pendingType, blocks);
-               blocks.add(init(AiMarkdown.BlockType.HEADING, m.group(2), "", m.group(1).length(), 0));
-            } else if (update_Pattern.matcher(line).matches()) {
-               init(pending, pendingType, blocks);
-               blocks.add(init(AiMarkdown.BlockType.RULE, ""));
-            } else if ((m = read_Pattern.matcher(line)).matches()) {
-               init(pending, pendingType, blocks);
-               blocks.add(init(AiMarkdown.BlockType.BULLET, m.group(2), "", 0, m.group(1).length() / 2));
-            } else if ((m = write_Pattern.matcher(line)).matches()) {
-               init(pending, pendingType, blocks);
-               blocks.add(init(AiMarkdown.BlockType.NUMBERED, m.group(3), m.group(2) + ".", 0, m.group(1).length() / 2));
+            if ((m = HEADING.matcher(line)).matches()) {
+               flushParagraph(pending, pendingType, blocks);
+               blocks.add(styledBlock(AiMarkdown.BlockType.HEADING, m.group(2), "", m.group(1).length(), 0));
+            } else if (RULE.matcher(line).matches()) {
+               flushParagraph(pending, pendingType, blocks);
+               blocks.add(block(AiMarkdown.BlockType.RULE, ""));
+            } else if ((m = BULLET.matcher(line)).matches()) {
+               flushParagraph(pending, pendingType, blocks);
+               blocks.add(styledBlock(AiMarkdown.BlockType.BULLET, m.group(2), "", 0, m.group(1).length() / 2));
+            } else if ((m = ORDERED.matcher(line)).matches()) {
+               flushParagraph(pending, pendingType, blocks);
+               blocks.add(styledBlock(AiMarkdown.BlockType.NUMBERED, m.group(3), m.group(2) + ".", 0, m.group(1).length() / 2));
             } else {
                AiMarkdown.BlockType type = line.startsWith(">") ? AiMarkdown.BlockType.QUOTE : AiMarkdown.BlockType.PARAGRAPH;
                String content = type == AiMarkdown.BlockType.QUOTE ? line.substring(1).stripLeading() : line;
                if (type != pendingType) {
-                  init(pending, pendingType, blocks);
+                  flushParagraph(pending, pendingType, blocks);
                   pendingType = type;
                }
 
@@ -88,25 +88,25 @@ final class AiMarkdown {
             rest = rest.substring(0, rest.length() - 1);
          }
 
-         blocks.add(init(AiMarkdown.BlockType.CODE, rest));
+         blocks.add(block(AiMarkdown.BlockType.CODE, rest));
       }
 
-      init(pending, pendingType, blocks);
+      flushParagraph(pending, pendingType, blocks);
       return blocks;
    }
 
-   private static void init(StringBuilder pending, AiMarkdown.BlockType type, List<AiMarkdown.MarkdownBlock> blocks) {
+   private static void flushParagraph(StringBuilder pending, AiMarkdown.BlockType type, List<AiMarkdown.MarkdownBlock> blocks) {
       if (!pending.isEmpty()) {
-         blocks.add(init(type, pending.toString(), "", 0, 0));
+         blocks.add(styledBlock(type, pending.toString(), "", 0, 0));
          pending.setLength(0);
       }
    }
 
-   private static AiMarkdown.MarkdownBlock init(AiMarkdown.BlockType type, String text) {
+   private static AiMarkdown.MarkdownBlock block(AiMarkdown.BlockType type, String text) {
       return new AiMarkdown.MarkdownBlock(type, text, new byte[text.length()], "", 0, 0);
    }
 
-   static AiMarkdown.MarkdownBlock init(AiMarkdown.BlockType type, String raw, String marker, int level, int indent) {
+   static AiMarkdown.MarkdownBlock styledBlock(AiMarkdown.BlockType type, String raw, String marker, int level, int indent) {
       StringBuilder out = new StringBuilder(raw.length());
       StringBuilder styles = new StringBuilder(raw.length());
       int base = type == AiMarkdown.BlockType.HEADING ? 17 : 0;
@@ -119,14 +119,14 @@ final class AiMarkdown {
          char c = raw.charAt(i);
          int current = base | bold | italic;
          if (c == '\\' && i + 1 < n && "*_`[]\\#".indexOf(raw.charAt(i + 1)) >= 0) {
-            init(out, styles, raw.charAt(i + 1), current);
+            appendStyled(out, styles, raw.charAt(i + 1), current);
             i += 2;
          } else {
             if (c == '`') {
                int close = raw.indexOf(96, i + 1);
                if (close > i + 1) {
                   for (int k = i + 1; k < close; k++) {
-                     init(out, styles, raw.charAt(k), base | 4);
+                     appendStyled(out, styles, raw.charAt(k), base | 4);
                   }
 
                   i = close + 1;
@@ -135,10 +135,10 @@ final class AiMarkdown {
             }
 
             if (c == '[') {
-               Matcher m = flush.matcher(raw).region(i, n);
+               Matcher m = LINK.matcher(raw).region(i, n);
                if (m.lookingAt()) {
                   for (char ch : m.group(1).toCharArray()) {
-                     init(out, styles, ch, current | 8);
+                     appendStyled(out, styles, ch, current | 8);
                   }
 
                   i = m.end();
@@ -163,7 +163,7 @@ final class AiMarkdown {
 
                boolean wordStart = !underscore || i == 0 || !Character.isLetterOrDigit(raw.charAt(i - 1));
                boolean content = i + width < n && !Character.isWhitespace(raw.charAt(i + width));
-               if (wordStart && content && init(raw, i + width, raw.substring(i, i + width), underscore)) {
+               if (wordStart && content && hasClosing(raw, i + width, raw.substring(i, i + width), underscore)) {
                   if (twin) {
                      bold = 1;
                   } else {
@@ -175,7 +175,7 @@ final class AiMarkdown {
                }
             }
 
-            init(out, styles, c, current);
+            appendStyled(out, styles, c, current);
             i++;
          }
       }
@@ -189,12 +189,12 @@ final class AiMarkdown {
       return new AiMarkdown.MarkdownBlock(type, out.toString(), bytes, marker, level, indent);
    }
 
-   private static void init(StringBuilder out, StringBuilder styles, char c, int style) {
+   private static void appendStyled(StringBuilder out, StringBuilder styles, char c, int style) {
       out.append(c);
       styles.append((char)style);
    }
 
-   private static boolean init(String s, int from, String delimiter, boolean underscore) {
+   private static boolean hasClosing(String s, int from, String delimiter, boolean underscore) {
       for (int at = s.indexOf(delimiter, from); at >= 0; at = s.indexOf(delimiter, at + delimiter.length())) {
          boolean boundary = !underscore || at + delimiter.length() >= s.length() || !Character.isLetterOrDigit(s.charAt(at + delimiter.length()));
          boolean afterContent = at > 0 && !Character.isWhitespace(s.charAt(at - 1));

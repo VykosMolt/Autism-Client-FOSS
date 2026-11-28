@@ -9,7 +9,7 @@ public final class ContainerScreenToolbar {
    private ContainerScreenToolbar() {
    }
 
-   public static List<autismclient.gui.ui.widgets.SimpleClickButton> init(Minecraft client, AutismQueueEditorOverlay queueEditorOverlay) {
+   public static List<autismclient.gui.ui.widgets.SimpleClickButton> buttons(Minecraft client, AutismQueueEditorOverlay queueEditorOverlay) {
       List<autismclient.gui.ui.widgets.SimpleClickButton> buttons = new ArrayList<>();
       if (!AutismLiteVariant.enabled() && !autismclient.e.FileCache.init()) {
          return buttons;
@@ -116,7 +116,7 @@ public final class ContainerScreenToolbar {
             defaultHeight,
             Component.literal("Save GUI"),
             autismclient.gui.f.b.CachePool.Inner_DataUtil.init,
-            () -> GuiDesyncHelper.init(client)
+            () -> GuiDesyncHelper.saveGui(client)
          )
       );
       buttons.add(

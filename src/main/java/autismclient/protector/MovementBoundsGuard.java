@@ -10,23 +10,23 @@ public final class MovementBoundsGuard {
    private MovementBoundsGuard() {
    }
 
-   public static boolean init(double value) {
+   public static boolean isBadCoord(double value) {
       return Double.isNaN(value) || Double.isInfinite(value) || Math.abs(value) > 1.0E9;
    }
 
-   public static boolean init(Vec3 vec) {
-      return vec == null || init(vec.x) || init(vec.y) || init(vec.z);
+   public static boolean isBadPosition(Vec3 vec) {
+      return vec == null || isBadCoord(vec.x) || isBadCoord(vec.y) || isBadCoord(vec.z);
    }
 
    public static boolean load(double value) {
       return Double.isNaN(value) || Double.isInfinite(value) || Math.abs(value) > 10000.0;
    }
 
-   public static boolean load(Vec3 vec) {
+   public static boolean isBadMotion(Vec3 vec) {
       return vec == null || load(vec.x) || load(vec.y) || load(vec.z);
    }
 
-   public static boolean init(PositionMoveRotation change) {
-      return change == null || init(change.position()) || load(change.deltaMovement()) || init(change.yRot()) || init(change.xRot());
+   public static boolean isBadChange(PositionMoveRotation change) {
+      return change == null || isBadPosition(change.position()) || isBadMotion(change.deltaMovement()) || isBadCoord(change.yRot()) || isBadCoord(change.xRot());
    }
 }

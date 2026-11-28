@@ -48,27 +48,27 @@ final class AiGhastReflect {
    private int projectileId = -1;
    private int ghastId = -1;
    private int update_I = -1;
-   private int sync;
-   private int flush;
-   private int close;
-   private int open;
-   private int poll;
-   private int push;
+   private int movementTicks;
+   private int confirmedReflections;
+   private int ghastDeaths;
+   private int missedAttempts;
+   private int defensiveBats;
+   private int confirmTicks;
    private UUID projectileUuid;
    private UUID ghastUuid;
    private Vec3 incomingVelocity;
    private Vec3 sentDirection;
    private Vec3 ghastMotion = Vec3.ZERO;
    private Vec3 lastGhastPos;
-   private int pop;
-   private int tick;
-   private int run;
-   private int get;
-   private int set;
+   private int lastGhastSampleTick;
+   private int predictedFlightTicks;
+   private int threatSeenTick;
+   private int reactionTicks;
+   private int outcomeTicks;
    private long evidenceRevision;
    private boolean reflected;
    private boolean load_Z;
-   private AiGhastReflect.InterceptPlan init_V_StreamUtil;
+   private AiGhastReflect.InterceptPlan plan;
    private JsonObject lastRejection;
    private String state = "idle";
    private String reason = "No incoming ghast fireball";
@@ -85,7 +85,7 @@ final class AiGhastReflect {
    }
 
    int init_I() {
-      return this.flush;
+      return this.confirmedReflections;
    }
 
    boolean load_Z() {
@@ -126,35 +126,35 @@ final class AiGhastReflect {
                && motion.revision() > this.evidenceRevision
                && isReflected(this.incomingVelocity, this.sentDirection, motion.velocity())) {
                this.reflected = true;
-               this.flush++;
+               this.confirmedReflections++;
                this.projectileIdentityById.put(this.projectileId, this.projectileUuid);
-               this.push = this.mc.player.tickCount - this.update_I;
+               this.confirmTicks = this.mc.player.tickCount - this.update_I;
                if (this.load_Z) {
-                  this.poll++;
+                  this.defensiveBats++;
                }
 
-               this.init(
-                  "returning", (this.load_Z ? "Server confirms defensive bat" : "Server confirms return") + " after " + this.push + " ticks; objective resumes"
+               this.setState(
+                  "returning", (this.load_Z ? "Server confirms defensive bat" : "Server confirms return") + " after " + this.confirmTicks + " ticks; objective resumes"
                );
             }
 
             if (ghast != null && !ghast.isAlive()) {
                if (this.reflected) {
-                  this.close++;
+                  this.ghastDeaths++;
                }
 
-               this.load(this.reflected ? "ghast_death_observed" : "death_without_motion_confirmation");
+               this.recordOutcome(this.reflected ? "ghast_death_observed" : "death_without_motion_confirmation");
             } else {
                int age = this.mc.player.tickCount - this.update_I;
                if (!this.reflected && age >= 5) {
-                  this.open++;
-                  this.load("no_server_redirection; emergency_defense");
-               } else if (this.reflected && (ball == null || !ball.isAlive()) || age > this.tick + 8 || this.ghastId >= 0 && ghast == null) {
+                  this.missedAttempts++;
+                  this.recordOutcome("no_server_redirection; emergency_defense");
+               } else if (this.reflected && (ball == null || !ball.isAlive()) || age > this.predictedFlightTicks + 8 || this.ghastId >= 0 && ghast == null) {
                   if (this.reflected && !this.load_Z && ghast != null && ghast.isAlive()) {
-                     this.open++;
+                     this.missedAttempts++;
                   }
 
-                  this.load(
+                  this.recordOutcome(
                      this.ghastId >= 0 && ghast == null
                         ? "target_unavailable"
                         : (this.load_Z ? "defensive_bat; no_observed_kill" : "returned_shot_ended_without_observed_kill")
@@ -162,7 +162,7 @@ final class AiGhastReflect {
                }
             }
          } else {
-            this.load("world_or_player_changed; outcome_unknown");
+            this.recordOutcome("world_or_player_changed; outcome_unknown");
          }
       }
    }
@@ -192,11 +192,11 @@ final class AiGhastReflect {
 
          Vec3 eye = this.mc.player.getEyePosition();
          if (threats.stream().noneMatch(t -> t.entityId() == this.projectileId)) {
-            this.load("fireball_no_longer_threatens_body; objective_resumes");
+            this.recordOutcome("fireball_no_longer_threatens_body; objective_resumes");
             return null;
          }
 
-         this.init_V_StreamUtil = null;
+         this.plan = null;
          this.load_Z = false;
          if (this.mc.player.isWithinAttackRange(this.mc.player.getMainHandItem(), ball.getBoundingBox(), 0.0)
             && !this.mc.player.cannotAttackWithItem(this.mc.player.getMainHandItem(), 0)) {
@@ -212,17 +212,17 @@ final class AiGhastReflect {
                )
                : null;
             if (immediate != null && this.init_Z_Vec3(ball.position(), immediate, ball)) {
-               this.init_V_StreamUtil = new AiGhastReflect.InterceptPlan(immediate, 0, 0, 0, yawOf(immediate.direction), 0.0);
+               this.plan = new AiGhastReflect.InterceptPlan(immediate, 0, 0, 0, yawOf(immediate.direction), 0.0);
             } else {
-               AiGhastReflect.FireballFlight bat = this.init_V_DataUtil_LargeFireball(ball);
+               AiGhastReflect.FireballFlight bat = this.batFlight(ball);
                if (bat != null) {
                   this.load_Z = true;
-                  this.init_V_StreamUtil = new AiGhastReflect.InterceptPlan(bat, 0, 0, 0, yawOf(bat.direction), 0.0);
+                  this.plan = new AiGhastReflect.InterceptPlan(bat, 0, 0, 0, yawOf(bat.direction), 0.0);
                }
             }
          }
 
-         if (this.init_V_StreamUtil == null
+         if (this.plan == null
             && !this.load_Set.contains(this.projectileUuid)
             && ghast != null
             && ghast.isAlive()
@@ -232,18 +232,18 @@ final class AiGhastReflect {
             && this.init_Z_AABB(this.mc.player.getBoundingBox())) {
             this.mc.options.keySprint.setDown(false);
             this.mc.player.setSprinting(false);
-            this.init_V_StreamUtil = this.init_V_StreamUtil_LargeFireball(ball, ghast, threats);
+            this.plan = this.interceptPlan(ball, ghast, threats);
          }
 
-         if (this.init_V_StreamUtil == null) {
-            this.init("evading", "No safe ghast return; shield/dodge until defensive hit is reachable: " + this.rejections);
+         if (this.plan == null) {
+            this.setState("evading", "No safe ghast return; shield/dodge until defensive hit is reachable: " + this.rejections);
             this.load_Set.add(this.projectileUuid);
             this.projectileId = -1;
             return null;
          }
 
-         AiGameOperations.snapLookAt(eye.add(this.init_V_StreamUtil.flight.direction.scale(16.0)));
-         if (this.init_V_StreamUtil.interceptTicks == 0 && AiDefense.load(this.mc, ball)) {
+         AiGameOperations.snapLookAt(eye.add(this.plan.flight.direction.scale(16.0)));
+         if (this.plan.interceptTicks == 0 && AiDefense.canSwingAt(this.mc, ball)) {
             autismclient.util.ServerRotationTracker.RotationSnapshot wire = autismclient.util.ServerRotationTracker.getSnapshot();
             if (!wire.initialized()) {
                return null;
@@ -267,43 +267,43 @@ final class AiGhastReflect {
             }
 
             if (actual != null && this.init_Z_Vec3(ball.position(), actual, ball) && (!this.load_Z || this.init(ball, direction))) {
-               this.write();
-               this.update();
+               this.releaseUse();
+               this.releaseMovementKeys();
                this.mc.options.keySprint.setDown(false);
                this.incomingVelocity = ball.getDeltaMovement();
                this.sentDirection = direction;
                AiServerEvidence.EntityVelocity evidence = AiServerEvidence.lastEntityVelocity(this.projectileId);
                this.evidenceRevision = evidence == null ? 0L : evidence.revision();
                this.update_I = this.mc.player.tickCount;
-               this.tick = actual.ticks;
-               this.get = this.update_I - this.run;
+               this.predictedFlightTicks = actual.ticks;
+               this.reactionTicks = this.update_I - this.threatSeenTick;
                this.init_Set.add(this.projectileUuid);
                ACTIVE_BY_PROJECTILE.put(this.projectileUuid, this);
 
                while (ACTIVE_BY_PROJECTILE.size() > 16) {
-                  ACTIVE_BY_PROJECTILE.values().iterator().next().load("observation_capacity; outcome_unknown");
+                  ACTIVE_BY_PROJECTILE.values().iterator().next().recordOutcome("observation_capacity; outcome_unknown");
                }
 
                this.mc.gameMode.attack(this.mc.player, ball);
                Compat263.swing(this.mc.player, InteractionHand.MAIN_HAND);
-               this.init(
+               this.setState(
                   "struck",
                   (this.load_Z ? "Batting threatening fireball away; no kill solution required" : "Returning the fireball along the predicted ghast intercept")
                      + "; "
-                     + this.get
+                     + this.reactionTicks
                      + " ticks since threat acquisition"
                );
                return this.reason;
             } else {
                return this.init_Str();
             }
-         } else if (this.init_V_StreamUtil.interceptTicks == 0) {
+         } else if (this.plan.interceptTicks == 0) {
             if (this.mc.player.cannotAttackWithItem(this.mc.player.getMainHandItem(), 0)) {
                return null;
             }
 
             if (this.mc.player.isWithinAttackRange(this.mc.player.getMainHandItem(), ball.getBoundingBox(), 0.0)
-               && rayHitsBall(eye, this.init_V_StreamUtil.flight.direction, ball.getBoundingBox().inflate(ball.getPickRadius()), AiDefense.attackReach(this.mc))
+               && rayHitsBall(eye, this.plan.flight.direction, ball.getBoundingBox().inflate(ball.getPickRadius()), AiDefense.attackReach(this.mc))
                )
              {
                return this.init_Str();
@@ -323,7 +323,7 @@ final class AiGhastReflect {
                "look",
                vecJson(this.mc.player.getLookAngle()),
                "intended",
-               vecJson(this.init_V_StreamUtil.flight.direction),
+               vecJson(this.plan.flight.direction),
                "projectileBox",
                ball.getBoundingBox().toString(),
                "reach",
@@ -331,37 +331,37 @@ final class AiGhastReflect {
             );
             AiSpeedrun.log("[AI] ghast reflection rejected attack: {}", this.lastRejection);
             this.init_Set.add(this.projectileUuid);
-            this.load("live_attack_ray_or_range_rejected; emergency defense");
+            this.recordOutcome("live_attack_ray_or_range_rejected; emergency defense");
             return null;
          } else {
             if (this.mc.player.isUsingItem()) {
-               this.write();
-               this.update();
+               this.releaseUse();
+               this.releaseMovementKeys();
                return "Preparing interception; rechecking movement after shield slowdown";
             }
 
-            this.update();
+            this.releaseMovementKeys();
             this.mc.options.keySprint.setDown(false);
-            this.mc.options.keyUp.setDown(this.init_V_StreamUtil.forward > 0);
-            this.mc.options.keyDown.setDown(this.init_V_StreamUtil.forward < 0);
-            this.mc.options.keyLeft.setDown(this.init_V_StreamUtil.strafe > 0);
-            this.mc.options.keyRight.setDown(this.init_V_StreamUtil.strafe < 0);
-            if (this.init_V_StreamUtil.forward != 0 || this.init_V_StreamUtil.strafe != 0) {
-               this.sync++;
+            this.mc.options.keyUp.setDown(this.plan.forward > 0);
+            this.mc.options.keyDown.setDown(this.plan.forward < 0);
+            this.mc.options.keyLeft.setDown(this.plan.strafe > 0);
+            this.mc.options.keyRight.setDown(this.plan.strafe < 0);
+            if (this.plan.forward != 0 || this.plan.strafe != 0) {
+               this.movementTicks++;
             }
 
-            this.init("aligning", "Moving into the fireball's predicted return line");
+            this.setState("aligning", "Moving into the fireball's predicted return line");
             return this.reason;
          }
       } else {
-         this.load("incoming_shot_unavailable");
+         this.recordOutcome("incoming_shot_unavailable");
          return null;
       }
    }
 
    private String init_Str() {
-      this.update();
-      this.init("facing", "Publishing the defensive look through ordinary movement before striking");
+      this.releaseMovementKeys();
+      this.setState("facing", "Publishing the defensive look through ordinary movement before striking");
       return this.reason;
    }
 
@@ -398,20 +398,20 @@ final class AiGhastReflect {
          this.projectileUuid = ball.getUUID();
          this.ghastId = ghast == null ? -1 : ghast.getId();
          this.ghastUuid = ghast == null ? null : ghast.getUUID();
-         this.run = this.firstSeenTick.computeIfAbsent(this.projectileUuid, ignored -> this.mc.player.tickCount);
-         this.push = this.get = this.set = 0;
+         this.threatSeenTick = this.firstSeenTick.computeIfAbsent(this.projectileUuid, ignored -> this.mc.player.tickCount);
+         this.confirmTicks = this.reactionTicks = this.outcomeTicks = 0;
          this.update_I = -1;
          this.reflected = false;
-         this.init_V_StreamUtil = null;
+         this.plan = null;
          this.lastGhastPos = null;
          this.ghastMotion = ghast == null ? Vec3.ZERO : observedMotion(ghast);
          if (!this.load_Set.contains(this.projectileUuid)) {
-            this.init("acquired", "Predicting incoming fireball and moving ghast");
+            this.setState("acquired", "Predicting incoming fireball and moving ghast");
          }
       }
    }
 
-   private AiGhastReflect.FireballFlight init_V_DataUtil_LargeFireball(LargeFireball ball) {
+   private AiGhastReflect.FireballFlight batFlight(LargeFireball ball) {
       Vec3 eye = this.mc.player.getEyePosition();
       AABB pick = ball.getBoundingBox().inflate(ball.getPickRadius());
       AiGhastReflect.FireballFlight best = null;
@@ -471,8 +471,8 @@ final class AiGhastReflect {
    private void trackGhast(Ghast ghast) {
       int tick = this.mc.player.tickCount;
       Vec3 motion = observedMotion(ghast);
-      if (this.lastGhastPos != null && tick > this.pop) {
-         Vec3 observed = ghast.position().subtract(this.lastGhastPos).scale(1.0 / (tick - this.pop));
+      if (this.lastGhastPos != null && tick > this.lastGhastSampleTick) {
+         Vec3 observed = ghast.position().subtract(this.lastGhastPos).scale(1.0 / (tick - this.lastGhastSampleTick));
          if (observed.lengthSqr() < 1.0) {
             motion = observed;
          }
@@ -480,7 +480,7 @@ final class AiGhastReflect {
 
       this.ghastMotion = motion;
       this.lastGhastPos = ghast.position();
-      this.pop = tick;
+      this.lastGhastSampleTick = tick;
    }
 
    private static Vec3 observedMotion(Entity target) {
@@ -492,7 +492,7 @@ final class AiGhastReflect {
       return observed.lengthSqr() <= 1.0 ? observed : Vec3.ZERO;
    }
 
-   private AiGhastReflect.InterceptPlan init_V_StreamUtil_LargeFireball(LargeFireball ball, Ghast ghast, List<AiProjectiles.IncomingProjectile> threats) {
+   private AiGhastReflect.InterceptPlan interceptPlan(LargeFireball ball, Ghast ghast, List<AiProjectiles.IncomingProjectile> threats) {
       this.rejections.clear();
       Vec3 eye = this.mc.player.getEyePosition();
       double reach = AiDefense.attackReach(this.mc);
@@ -500,7 +500,7 @@ final class AiGhastReflect {
       if (now != null
          && this.mc.player.isWithinAttackRange(this.mc.player.getMainHandItem(), ball.getBoundingBox(), 0.0)
          && this.init_Z_Vec3(ball.position(), now, ball)
-         && autismclient.ai.engine.AiCombatMotion.init(this.mc, 0.0, 0.0, 4) != null
+         && autismclient.ai.engine.AiCombatMotion.predictEndBox(this.mc, 0.0, 0.0, 4) != null
          && this.init_Z_LargeFireball(ball, this.mc.player.getBoundingBox(), 0, threats)) {
          return new AiGhastReflect.InterceptPlan(now, 0, 0, 0, yawOf(now.direction), 0.0);
       }
@@ -535,7 +535,7 @@ final class AiGhastReflect {
       for (int forward = -1; forward <= 1; forward++) {
          for (int strafe = -1; strafe <= 1; strafe++) {
             for (int horizon : new int[]{4, 8, 12}) {
-               List<AABB> trace = autismclient.ai.engine.AiCombatMotion.init(this.mc, facing, forward, strafe, horizon, 4);
+               List<AABB> trace = autismclient.ai.engine.AiCombatMotion.predictTrace(this.mc, facing, forward, strafe, horizon, 4);
                if (trace != null && !trace.stream().anyMatch(bodyx -> !this.init_Z_AABB(bodyx))) {
                   for (int tick = 1; tick <= 32 && inbound[tick] != null; tick++) {
                      AABB body = trace.get(Math.min(tick - 1, trace.size() - 1));
@@ -755,7 +755,7 @@ final class AiGhastReflect {
       return this.mc.level.clip(new ClipContext(from, to, Block.COLLIDER, Fluid.NONE, context)).getType() == Type.MISS;
    }
 
-   private void init(String next, String why) {
+   private void setState(String next, String why) {
       if (!this.state.equals(next)) {
          AiSpeedrun.log("[AI] ghast reflection: {} ball={} ghast={} ({})", next, this.projectileId, this.ghastId, why);
       }
@@ -764,9 +764,9 @@ final class AiGhastReflect {
       this.reason = why;
    }
 
-   private void load(String outcome) {
+   private void recordOutcome(String outcome) {
       if (this.update_I >= 0 && this.mc.player == this.player) {
-         this.set = this.mc.player.tickCount - this.update_I;
+         this.outcomeTicks = this.mc.player.tickCount - this.update_I;
       }
 
       if (this.init_JsonArray.size() < 8) {
@@ -784,19 +784,19 @@ final class AiGhastReflect {
                   "strikeTick",
                   this.update_I,
                   "attackDelayTicks",
-                  this.get,
+                  this.reactionTicks,
                   "acknowledgementTicks",
-                  this.push,
+                  this.confirmTicks,
                   "outcomeObservationTicks",
-                  this.set
+                  this.outcomeTicks
                )
             );
       }
 
-      this.init("resolved", outcome);
+      this.setState("resolved", outcome);
       this.projectileId = -1;
       this.update_I = -1;
-      this.init_V_StreamUtil = null;
+      this.plan = null;
       if (this.projectileUuid != null) {
          ACTIVE_BY_PROJECTILE.remove(this.projectileUuid);
          FINISHED_STATUS.put(this.projectileUuid, this.statusJson());
@@ -818,49 +818,49 @@ final class AiGhastReflect {
          "ghastId",
          this.ghastId,
          "movementTicks",
-         this.sync,
+         this.movementTicks,
          "serverConfirmedReflections",
-         this.flush,
+         this.confirmedReflections,
          "ghastDeathsObserved",
-         this.close,
+         this.ghastDeaths,
          "missedAttempts",
-         this.open,
+         this.missedAttempts,
          "defensiveBats",
-         this.poll,
+         this.defensiveBats,
          "outcomePending",
          this.update_I >= 0,
          "acknowledgementTicks",
-         this.push,
+         this.confirmTicks,
          "attackDelayTicks",
-         this.get,
+         this.reactionTicks,
          "threatToAcknowledgementTicks",
-         this.get + this.push,
+         this.reactionTicks + this.confirmTicks,
          "outcomeObservationTicks",
-         this.set,
+         this.outcomeTicks,
          "targetVelocity",
          vecJson(this.ghastMotion),
          "outcomes",
          this.init_JsonArray
       );
       out.add("rejections", AiJson.GSON.toJsonTree(this.rejections));
-      if (this.init_V_StreamUtil != null) {
+      if (this.plan != null) {
          out.add(
             "plan",
             AiJson.objectOf(
                "interceptTicks",
-               this.init_V_StreamUtil.interceptTicks,
+               this.plan.interceptTicks,
                "returnFlightTicks",
-               this.init_V_StreamUtil.flight.ticks,
+               this.plan.flight.ticks,
                "predictedGhast",
-               vecJson(this.init_V_StreamUtil.flight.target),
+               vecJson(this.plan.flight.target),
                "aimDirection",
-               vecJson(this.init_V_StreamUtil.flight.direction),
+               vecJson(this.plan.flight.direction),
                "forward",
-               this.init_V_StreamUtil.forward,
+               this.plan.forward,
                "strafe",
-               this.init_V_StreamUtil.strafe,
+               this.plan.strafe,
                "plannedTravel",
-               this.init_V_StreamUtil.error
+               this.plan.error
             )
          );
       }
@@ -876,7 +876,7 @@ final class AiGhastReflect {
       return AiJson.objectOf("x", v.x, "y", v.y, "z", v.z);
    }
 
-   private void write() {
+   private void releaseUse() {
       if (this.mc.player.isUsingItem()) {
          this.mc.gameMode.releaseUsingItem(this.mc.player);
       }
@@ -884,7 +884,7 @@ final class AiGhastReflect {
       this.mc.options.keyUse.setDown(false);
    }
 
-   private void update() {
+   private void releaseMovementKeys() {
       for (KeyMapping key : List.of(
          this.mc.options.keyUp,
          this.mc.options.keyDown,
@@ -897,7 +897,7 @@ final class AiGhastReflect {
    }
 
    void tick() {
-      this.update();
+      this.releaseMovementKeys();
    }
 
    record FireballFlight(Vec3 direction, int ticks, Vec3 target) {

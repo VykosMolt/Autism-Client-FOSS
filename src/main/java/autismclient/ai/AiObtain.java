@@ -766,9 +766,9 @@ final class AiObtain {
                         depth + 1,
                         nested
                      );
-                     return AiNetherRun.sequence(sword, () -> AiCombat.init(fightArgs));
+                     return AiNetherRun.sequence(sword, () -> AiCombat.fight(fightArgs));
                   } else {
-                     return AiCombat.init(fightArgs);
+                     return AiCombat.fight(fightArgs);
                   }
                }
 
@@ -1053,7 +1053,7 @@ final class AiObtain {
                               Integer nextY = AiObtain.nextDescentY(this.startY, currentY, mc.level.getMinY(), found);
                               if (found) {
                                  this.sourceSeen = true;
-                                 this.mineOp = autismclient.ai.engine.AiMine.init(
+                                 this.mineOp = autismclient.ai.engine.AiMine.mine(
                                     AiJson.objectOf("block", blockId, "count", count, "radius", radius, "timeoutSeconds", init_I_19())
                                  );
                                  return AiGameOperations.result(AiOperation.Status.RUNNING, "Mining " + blockId, new JsonObject());
@@ -1321,7 +1321,7 @@ final class AiObtain {
                      this.visualTitle = "Getting " + label;
                   }
 
-                  AiVisualization.showCount(this, this.visualTitle, AiTaskStatus.init(message, "Preparing materials"), AiItems.countInInventory(this.init_af_DataUtil), goal);
+                  AiVisualization.showCount(this, this.visualTitle, AiTaskStatus.phaseLabel(message, "Preparing materials"), AiItems.countInInventory(this.init_af_DataUtil), goal);
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.statusData().toString(), List.of());
                }
 
@@ -1837,7 +1837,7 @@ final class AiObtain {
          }
 
          @Override
-         public String init(Set<String> variantIds) {
+         public String familyOf(Set<String> variantIds) {
             return AiObtain.commonFamily(variantIds, AiObtain::resolveItemIds);
          }
 

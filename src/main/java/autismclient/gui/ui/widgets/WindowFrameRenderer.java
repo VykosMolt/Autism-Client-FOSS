@@ -71,6 +71,6 @@ public final class WindowFrameRenderer {
    ) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       autismclient.gui.f.PacketUtil.init_V_SyncManager(context, bounds, 8, colors.windowSurface, colors.borderSubtle);
-      WindowHeaderHelper.init(context, bounds, headerHeight, title, collapsed, collapse, close, headerHovered, active, titleLeftInset, titleRightInset);
+      WindowHeaderHelper.render(context, bounds, headerHeight, title, collapsed, collapse, close, headerHovered, active, titleLeftInset, titleRightInset);
    }
 }

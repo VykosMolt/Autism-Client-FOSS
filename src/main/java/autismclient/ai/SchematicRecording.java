@@ -48,12 +48,12 @@ final class SchematicRecording {
    private boolean prev_Z;
    private boolean chunkAt_Z;
    private Future<?> putAt_Future;
-   volatile boolean putAt_Z;
-   volatile boolean fill_Z;
-   volatile boolean readEx_Z;
+   volatile boolean finished;
+   volatile boolean cancelled;
+   volatile boolean failed;
    volatile int flowTemp = -1;
-   volatile String putAt_Str = "Recording";
-   volatile String fill_Str = "";
+   volatile String status = "Recording";
+   volatile String error = "";
    volatile Path putAt_Path;
 
    SchematicRecording(Minecraft var1, Path var2, String var3, boolean var4) {
@@ -81,7 +81,7 @@ final class SchematicRecording {
       }
    }
 
-   boolean putAt_Z() {
+   boolean isRecording() {
       return this.prevEx_Z;
    }
 
@@ -93,12 +93,12 @@ final class SchematicRecording {
       return this.putAt_Long2ObjectOpenHas.size();
    }
 
-   String putAt_Str() {
+   String chunkLabel() {
       return this.flowState() + (this.flowState() == 1 ? " chunk" : " chunks");
    }
 
-   int flowTemp() {
-      return this.putAt_Z ? this.flowTemp : mixState(this.flowState(), this.putAt_Long2ObjectLinkedO.size());
+   int progress() {
+      return this.finished ? this.flowTemp : mixState(this.flowState(), this.putAt_Long2ObjectLinkedO.size());
    }
 
    static int mixState(int var0, int var1) {
@@ -111,7 +111,7 @@ final class SchematicRecording {
          if (!this.putAt_Long2ObjectOpenHas.containsKey(var3)) {
             if (this.putAt_Long2ObjectOpenHas.size() + this.putAt_Long2ObjectLinkedO.size() >= 16384 && !this.putAt_Long2ObjectLinkedO.containsKey(var3)) {
                this.chunkAt_Z = true;
-               this.putAt_V();
+               this.finish();
             } else {
                this.putAt_Long2ObjectLinkedO.put(var3, var2);
             }
@@ -119,11 +119,11 @@ final class SchematicRecording {
       }
    }
 
-   void putAt_V_Minecraft(Minecraft var1) {
-      if ((this.prevEx_Z || this.prev_Z) && !this.putAt_Z && !this.readEx_Z && !this.fill_Z) {
+   void tick(Minecraft var1) {
+      if ((this.prevEx_Z || this.prev_Z) && !this.finished && !this.failed && !this.cancelled) {
          try {
             if (var1.level != this.putAt_ClientLevel || var1.player == null) {
-               this.putAt_V();
+               this.finish();
             }
 
             this.value();
@@ -140,15 +140,15 @@ final class SchematicRecording {
    void putAt_V_Str(String var1) {
       if (this.prevEx_Z) {
          this.readEx_Str = SchematicCapture.normalizeName(var1);
-         this.putAt_V();
+         this.finish();
       }
    }
 
-   void putAt_V() {
-      if (this.prevEx_Z && !this.putAt_Z && !this.readEx_Z && !this.fill_Z) {
+   void finish() {
+      if (this.prevEx_Z && !this.finished && !this.failed && !this.cancelled) {
          this.prevEx_Z = false;
          this.prev_Z = true;
-         this.putAt_Str = "Finishing capture";
+         this.status = "Finishing capture";
          if (this.putAt_Long2ObjectLinkedO.isEmpty()) {
             this.readEx();
          }
@@ -157,60 +157,60 @@ final class SchematicRecording {
 
    private void readEx() {
       this.prevEx_Z = this.prev_Z = false;
-      this.putAt_Z = true;
+      this.finished = true;
       this.putAt_Long2ObjectLinkedO.clear();
       this.flowTemp = 1;
-      this.putAt_Str = "Packing recording";
+      this.status = "Packing recording";
       String var1 = this.readEx_Str;
       var var2 = new ArrayList<>(this.putAt_Long2ObjectOpenHas.values());
       if (var2.isEmpty()) {
-         this.fill_Str = "No chunks were recorded";
-         this.putAt_Str = "Save failed";
-         this.readEx_Z = true;
+         this.error = "No chunks were recorded";
+         this.status = "Save failed";
+         this.failed = true;
       } else {
          try {
             this.putAt_Future = SchematicLibrary.EXECUTOR.submit(
                   () -> {
                      try {
-                        this.putAt_Str = "Trimming recording";
+                        this.status = "Trimming recording";
                         var2.sort(
                            Comparator.<SchematicCapture.Inner_CachePool>comparingInt(var0 -> var0.chunkPos.z())
                               .thenComparingInt(var0 -> var0.chunkPos.x())
                         );
-                        this.putAt_Path = SchematicCapture.init(this.fill_Path, var1, var2, true, var1xx -> this.flowTemp = 5 + var1xx * 85 / 100);
+                        this.putAt_Path = SchematicCapture.save(this.fill_Path, var1, var2, true, var1xx -> this.flowTemp = 5 + var1xx * 85 / 100);
                         this.flowTemp = 100;
-                        this.putAt_Str = "Saved";
-                        this.readEx_Z = true;
+                        this.status = "Saved";
+                        this.failed = true;
                      } catch (CancellationException var8) {
-                        this.fill_Z = true;
-                        this.putAt_Str = "Cancelled";
+                        this.cancelled = true;
+                        this.status = "Cancelled";
                      } catch (Exception var9) {
-                        this.fill_Str = SchematicLibrary.describeError(var9);
-                        this.putAt_Str = "Save failed";
-                        this.readEx_Z = true;
+                        this.error = SchematicLibrary.describeError(var9);
+                        this.status = "Save failed";
+                        this.failed = true;
                      } finally {
                         Thread.interrupted();
                      }
                   }
                );
          } catch (RejectedExecutionException var4) {
-            this.putAt_Z = false;
-            this.fill_Str = "Schematic files are busy. Try again";
-            this.putAt_Str = "Save failed";
-            this.readEx_Z = true;
+            this.finished = false;
+            this.error = "Schematic files are busy. Try again";
+            this.status = "Save failed";
+            this.failed = true;
          }
       }
    }
 
-   void fill_V() {
+   void cancel() {
       this.prevEx_Z = this.prev_Z = false;
-      this.fill_Z = true;
+      this.cancelled = true;
       this.putAt_Long2ObjectLinkedO.clear();
       if (this.putAt_Future != null) {
          this.putAt_Future.cancel(true);
       }
 
-      this.putAt_Str = "Recording cancelled";
+      this.status = "Recording cancelled";
       this.flowTemp = -1;
    }
 
@@ -225,7 +225,7 @@ final class SchematicRecording {
    }
 
    private void putAt_V_NetHelper_JsonCach(SchematicCapture.Inner_CachePool var1) {
-      boolean var2 = !var1.init_Map.isEmpty() || !var1.blockEntityTags.isEmpty() || !var1.load.isEmpty();
+      boolean var2 = !var1.init_Map.isEmpty() || !var1.blockEntityTags.isEmpty() || !var1.entityTags.isEmpty();
       if (var2) {
          int var3 = Math.min(this.chunkAt_I, var1.chunkPos.x());
          int var4 = Math.max(this.state, var1.chunkPos.x());
@@ -245,7 +245,7 @@ final class SchematicRecording {
             var8 = Math.max(var8, var11);
          }
 
-         long var13 = var1.load.isEmpty() ? putAt_J_I_I(var7, var8) : var1.area.volume();
+         long var13 = var1.entityTags.isEmpty() ? putAt_J_I_I(var7, var8) : var1.area.volume();
          if (putAt(var3, var4, var5, var6) || this.fill_J + var13 > 134217728L) {
             this.chunkAt_Z = true;
             this.readEx();
@@ -321,8 +321,8 @@ final class SchematicRecording {
             TagValueOutput var6 = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, this.putAt_ClientLevel.registryAccess());
             if (var5.save(var6)) {
                CompoundTag var7 = var6.buildResult();
-               SchematicCapture.init(var7, var2.min());
-               var1.load.add(var7);
+               SchematicCapture.relativizeEntityPos(var7, var2.min());
+               var1.entityTags.add(var7);
             }
          }
       }

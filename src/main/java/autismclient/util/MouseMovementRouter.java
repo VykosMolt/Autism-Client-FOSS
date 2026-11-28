@@ -10,7 +10,7 @@ public final class MouseMovementRouter {
    private static final double init_D = 0.05;
    private static final EnumMap<MouseMovementRouter.MovementSource, FractionalCountAccumulator> ACCUMULATORS = new EnumMap<>(MouseMovementRouter.MovementSource.class);
    private static final TimedMouseSmoother SMOOTHER = new TimedMouseSmoother();
-   private static volatile MouseMovementRouter.MovementSource init_ba_StreamUtil;
+   private static volatile MouseMovementRouter.MovementSource exclusiveSource;
    private static boolean init_Z;
    private static long init_J;
 
@@ -101,7 +101,7 @@ public final class MouseMovementRouter {
       long now = System.nanoTime();
       double elapsedSeconds = init_J == 0L ? 0.016666666666666666 : Math.clamp((now - init_J) / 1.0E9, 0.001, 0.05);
       init_J = now;
-      MouseMovementRouter.MovementSource exclusive = init_ba_StreamUtil;
+      MouseMovementRouter.MovementSource exclusive = exclusiveSource;
       if (exclusive != null) {
          load(exclusive);
          FractionalCountAccumulator.WholeCounts counts = init_dh_DataUtil_ba_StreamUtil_D(exclusive, elapsedSeconds);
@@ -141,7 +141,7 @@ public final class MouseMovementRouter {
       }
 
       SMOOTHER.reset();
-      init_ba_StreamUtil = null;
+      exclusiveSource = null;
       init_Z = false;
       init_J = 0L;
    }
@@ -172,11 +172,11 @@ public final class MouseMovementRouter {
    public static void init_V_ba_StreamUtil_Z(MouseMovementRouter.MovementSource source, boolean exclusive) {
       if (exclusive) {
          if (source != null) {
-            init_ba_StreamUtil = source;
+            exclusiveSource = source;
             load(source);
          }
-      } else if (source == null || init_ba_StreamUtil == source) {
-         init_ba_StreamUtil = null;
+      } else if (source == null || exclusiveSource == source) {
+         exclusiveSource = null;
          if (source != null) {
             release(source);
          }
@@ -184,11 +184,11 @@ public final class MouseMovementRouter {
    }
 
    public static boolean hasActiveSource() {
-      return init_ba_StreamUtil != null;
+      return exclusiveSource != null;
    }
 
    public static boolean isActive(MouseMovementRouter.MovementSource source) {
-      return source != null && init_ba_StreamUtil == source;
+      return source != null && exclusiveSource == source;
    }
 
    public static boolean read() {

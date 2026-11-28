@@ -79,7 +79,7 @@ final class AiContainer {
       };
    }
 
-   static AiOperation.Result init(AiOperation.Result route, JsonObject containerData) {
+   static AiOperation.Result mergeNavigation(AiOperation.Result route, JsonObject containerData) {
       JsonObject data = containerData.deepCopy();
       data.add("navigation", AiRunResources.parseEvidenceJson(route.dataJson()));
       data.addProperty("navigationStatus", route.status().name());
@@ -87,10 +87,10 @@ final class AiContainer {
    }
 
    static AiOperation create(JsonObject args) {
-      return init(args, Set.of());
+      return create(args, Set.of());
    }
 
-   static AiOperation init(JsonObject args, final Set<Long> protectedCells) {
+   static AiOperation create(JsonObject args, final Set<Long> protectedCells) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final AiContainer.Inner_DataUtil action = init(AiJson.getString(args, "action", "inspect"));
@@ -282,7 +282,7 @@ final class AiContainer {
                   this.approach.cancel();
                   this.approach = null;
                   if (legResult.status() != AiOperation.Status.SUCCEEDED) {
-                     AiOperation.Result result = AiContainer.init(legResult, this.reportJson());
+                     AiOperation.Result result = AiContainer.mergeNavigation(legResult, this.reportJson());
                      this.cancel();
                      return result;
                   }

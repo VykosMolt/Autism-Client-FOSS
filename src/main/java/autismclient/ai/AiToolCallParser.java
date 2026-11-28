@@ -427,7 +427,7 @@ public final class AiToolCallParser {
       return (int)Math.floor(parseRelativeCoord(token, base));
    }
 
-   public static AiToolCallParser.ToolCall init(String sub, List<String> args, double px, double py, double pz) {
+   public static AiToolCallParser.ToolCall parse(String sub, List<String> args, double px, double py, double pz) {
       AiToolCallParser.ToolCall var10000;
       switch (sub) {
          case "goto":

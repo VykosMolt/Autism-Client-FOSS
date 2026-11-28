@@ -22,7 +22,7 @@ final class AiRaycast {
    private AiRaycast() {
    }
 
-   static JsonObject init(JsonObject args) {
+   static JsonObject raycast(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          double maxDistance = Math.max(1.0, Math.min(128.0, AiJson.getDouble(args, "maxDistance", 32.0)));

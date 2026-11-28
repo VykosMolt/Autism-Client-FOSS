@@ -46,7 +46,7 @@ final class FireballInterceptMath {
    }
 
    static double init_D_Vec3(Vec3 eye, Vec3 bodyMotion, AABB projectile, Vec3 velocity, double acceleration, double inertia, double reach, int horizon) {
-      if (init(velocity) && init(bodyMotion) && !(velocity.lengthSqr() < 1.0E-8)) {
+      if (isFinite(velocity) && isFinite(bodyMotion) && !(velocity.lengthSqr() < 1.0E-8)) {
          Vec3 relativeEye = eye;
          Vec3 motion = velocity;
 
@@ -80,7 +80,7 @@ final class FireballInterceptMath {
    }
 
    static double init_D_AABB(AABB body, Vec3 bodyMotion, AABB projectile, Vec3 velocity, int horizon, double margin, double acceleration, double inertia) {
-      if (!(velocity.lengthSqr() < 1.0E-8) && init(velocity) && init(bodyMotion)) {
+      if (!(velocity.lengthSqr() < 1.0E-8) && isFinite(velocity) && isFinite(bodyMotion)) {
          Vec3 center = projectile.getCenter();
          AABB expanded = body.inflate(projectile.getXsize() * 0.5 + margin, projectile.getYsize() * 0.5 + margin, projectile.getZsize() * 0.5 + margin);
          Vec3 motion = velocity;
@@ -107,7 +107,7 @@ final class FireballInterceptMath {
    }
 
    static double load(AABB body, Vec3 bodyMotion, AABB projectile, Vec3 velocity, int horizon, double margin, double acceleration, double inertia) {
-      if (!(velocity.lengthSqr() < 1.0E-8) && init(velocity) && init(bodyMotion)) {
+      if (!(velocity.lengthSqr() < 1.0E-8) && isFinite(velocity) && isFinite(bodyMotion)) {
          Vec3 center = projectile.getCenter();
          Vec3 motion = velocity;
          double previous = Math.sqrt(body.distanceToSqr(center));
@@ -204,10 +204,10 @@ final class FireballInterceptMath {
       return -1.0;
    }
 
-   static FireballInterceptMath.AimSolution init(Vec3 eye, Vec3 bodyMotion, AABB box, Vec3 velocity, Vec3 wantedDirection, double reach) {
+   static FireballInterceptMath.AimSolution solve(Vec3 eye, Vec3 bodyMotion, AABB box, Vec3 velocity, Vec3 wantedDirection, double reach) {
       Vec3 nextEye = eye.add(bodyMotion);
       AABB nextBox = box.move(velocity);
-      if (init(bodyMotion) && init(velocity) && box.distanceToSqr(eye) > reach * reach && nextBox.distanceToSqr(nextEye) <= reach * reach) {
+      if (isFinite(bodyMotion) && isFinite(velocity) && box.distanceToSqr(eye) > reach * reach && nextBox.distanceToSqr(nextEye) <= reach * reach) {
          eye = nextEye;
          box = nextBox;
       }
@@ -247,7 +247,7 @@ final class FireballInterceptMath {
       return best;
    }
 
-   static boolean init(Vec3 vector) {
+   static boolean isFinite(Vec3 vector) {
       return Double.isFinite(vector.x) && Double.isFinite(vector.y) && Double.isFinite(vector.z);
    }
 

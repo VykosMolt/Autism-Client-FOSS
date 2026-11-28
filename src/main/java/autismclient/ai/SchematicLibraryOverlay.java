@@ -52,7 +52,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
    private boolean flush_Z;
    private double dragOffsetX;
    private double dragOffsetY;
-   private int run;
+   private int scrollbarGrabOffset;
    private String query = "";
    private Path directory;
    private List<SchematicLibrary.SchematicEntry> cachedSource = List.of();
@@ -332,7 +332,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
                int progress = this.workspace.getProgress();
                if (progress >= 0) {
                   SchematicRecording recording = this.workspace.activeRecording();
-                  String statusText = recording != null && !recording.putAt_Z ? recording.putAt_Str() : this.workspace.getStatus();
+                  String statusText = recording != null && !recording.finished ? recording.chunkLabel() : this.workspace.getStatus();
                   String pctText = progress + "%";
                   int pctWidth = ui.init_PoolEntry().measureWidth(pctText);
                   int barWidth = Math.min(90, w / 3);
@@ -560,7 +560,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
          );
          actions.add(
             new SchematicLibraryOverlay.ActionButton(
-               "Move", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.workspace.canMove(picked), () -> this.workspace.write(picked)
+               "Move", autismclient.gui.f.b.CachePool.Inner_DataUtil.init, this.workspace.canMove(picked), () -> this.workspace.startMove(picked)
             )
          );
          actions.add(
@@ -596,7 +596,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             )
          );
          this.drawActions(ui, x, bottom + 3, width, actions);
-      } else if (!this.workspace.sync_Z()) {
+      } else if (!this.workspace.isRenaming()) {
          this.drawActions(
             ui,
             x,
@@ -638,7 +638,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
       );
       int row2Y = rowY + step;
       SchematicRecording recording = this.workspace.activeRecording();
-      if (recording != null && recording.putAt_Z()) {
+      if (recording != null && recording.isRecording()) {
          this.drawActions(
             ui,
             x,
@@ -901,8 +901,8 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             && this.listLayout.scrollbar().isScrollable()
             && this.listLayout.scrollbar().containsTrack(x, y)) {
             ScrollbarMetricsHelper.Metrics bar = this.listLayout.scrollbar();
-            this.run = bar.containsThumb(x, y) ? y - bar.thumbY() : bar.thumbHeight() / 2;
-            this.scroll.dragToMouseY(bar, y, this.run);
+            this.scrollbarGrabOffset = bar.containsThumb(x, y) ? y - bar.thumbY() : bar.thumbHeight() / 2;
+            this.scroll.dragToMouseY(bar, y, this.scrollbarGrabOffset);
             this.write_Z = true;
             return true;
          }
@@ -948,7 +948,7 @@ final class SchematicLibraryOverlay extends autismclient.util.DraggableOverlayWi
             menu.onMouseDragged((int)x, (int)y, button, dx, dy);
             return true;
          } else if (this.write_Z && this.listLayout != null) {
-            this.scroll.dragToMouseY(this.listLayout.scrollbar(), y, this.run);
+            this.scroll.dragToMouseY(this.listLayout.scrollbar(), y, this.scrollbarGrabOffset);
             return true;
          } else {
             return this.textInput != null && this.textInput.mouseDragged(x, y, button, dx, dy);

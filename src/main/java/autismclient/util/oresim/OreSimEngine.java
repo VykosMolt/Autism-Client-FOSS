@@ -345,7 +345,7 @@ public final class OreSimEngine {
    }
 
    private static void buildContext(OreSimEngine.WorldKey key, long token) {
-      WORKERS.init(() -> {
+      WORKERS.submit(() -> {
          autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap built;
          boolean tagsVerified;
          try {
@@ -374,7 +374,7 @@ public final class OreSimEngine {
    private static void generateChunk(int chunkX, int chunkZ, autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
       initialChunkPending = true;
       generating = true;
-      WORKERS.init(() -> {
+      WORKERS.submit(() -> {
          try {
             try {
                if (!context.init_Z()) {
@@ -522,7 +522,7 @@ public final class OreSimEngine {
       LongArrayList positions = new LongArrayList();
       IntArrayList stateIds = new IntArrayList();
       autismclient.util.oresim.worldgen.OreSimRegionGenerator.scanChunk(chunk, state -> OreBlockCatalog.isOre(state.getBlock()), (x, y, z, state) -> {
-         int stateId = OreBlockCatalog.StateRegistry.init(state);
+         int stateId = OreBlockCatalog.StateRegistry.idOf(state);
          if (stateId >= 0) {
             positions.add(BlockPos.asLong(x, y, z));
             stateIds.add(stateId);
@@ -601,7 +601,7 @@ public final class OreSimEngine {
 
    private static void verifyWorldgenAsync(autismclient.util.oresim.worldgen.VanillaWorldGenBootstrap context, long token) {
       verificationRunning = true;
-      WORKERS.init(() -> {
+      WORKERS.submit(() -> {
          boolean verified = false;
          Throwable failure = null;
 
@@ -696,7 +696,7 @@ public final class OreSimEngine {
             Entry<Long, OreSimEngine.ChunkOres> entry = iterator.next();
             int chunkX = ChunkPos.getX(entry.getKey());
             int chunkZ = ChunkPos.getZ(entry.getKey());
-            if (NearestChunkSelector.init(trackedCenterX + 0.5, trackedCenterZ + 0.5, chunkX, chunkZ, missing)) {
+            if (NearestChunkSelector.isCloser(trackedCenterX + 0.5, trackedCenterZ + 0.5, chunkX, chunkZ, missing)) {
                chunkOres.put(entry.getKey(), entry.getValue());
                iterator.remove();
                changed = true;

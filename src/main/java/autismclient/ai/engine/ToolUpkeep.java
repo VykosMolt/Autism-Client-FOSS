@@ -8,7 +8,7 @@ public final class ToolUpkeep {
    private ToolUpkeep() {
    }
 
-   public static ToolUpkeep.UpkeepDecision init(List<ToolUpkeep.ToolSlot> tools) {
+   public static ToolUpkeep.UpkeepDecision decide(List<ToolUpkeep.ToolSlot> tools) {
       ToolUpkeep.ToolSlot keep = null;
       ToolUpkeep.ToolSlot swap = null;
 

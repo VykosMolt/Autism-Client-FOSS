@@ -121,7 +121,7 @@ public abstract class AtomicNbtListStore<T> {
       tag.put(this.getListTagKey(), list);
       String key = "nbt:" + target.getAbsolutePath();
       File destination = target;
-      DebouncedPersistenceScheduler.init(key, () -> this.writeAtomically(tag, destination));
+      DebouncedPersistenceScheduler.schedule(key, () -> this.writeAtomically(tag, destination));
    }
 
    private void writeAtomically(CompoundTag tag, File target) {

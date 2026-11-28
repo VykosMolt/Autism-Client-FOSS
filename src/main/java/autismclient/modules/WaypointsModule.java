@@ -58,7 +58,7 @@ public final class WaypointsModule extends Module {
    @Override
    public void onGameJoin() {
       if (MC != null) {
-         AutismWaypoints.getInstance().init(AuditWaypointScope.current(MC), this.deathMemory.get());
+         AutismWaypoints.getInstance().trimDeaths(AuditWaypointScope.current(MC), this.deathMemory.get());
       }
    }
 

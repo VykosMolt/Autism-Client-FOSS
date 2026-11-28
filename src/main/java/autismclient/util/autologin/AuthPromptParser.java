@@ -5,14 +5,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class AuthPromptParser {
-   private static final Pattern init = Pattern.compile("(?i)/reg(?:ister)?\\b");
-   private static final Pattern load = Pattern.compile("(?i)/log(?:in)?\\b");
-   private static final Pattern read = Pattern.compile("<[^>]{1,32}>");
+   private static final Pattern REGISTER = Pattern.compile("(?i)/reg(?:ister)?\\b");
+   private static final Pattern LOGIN = Pattern.compile("(?i)/log(?:in)?\\b");
+   private static final Pattern PLACEHOLDER = Pattern.compile("<[^>]{1,32}>");
 
    private AuthPromptParser() {
    }
 
-   public static AuthPromptParser.AuthPrompt init(String rawLine) {
+   public static AuthPromptParser.AuthPrompt parse(String rawLine) {
       if (rawLine == null) {
          return AuthPromptParser.AuthPrompt.NONE;
       } else {
@@ -20,12 +20,12 @@ public final class AuthPromptParser {
          if (line.isEmpty()) {
             return AuthPromptParser.AuthPrompt.NONE;
          } else {
-            Matcher reg = init.matcher(line);
+            Matcher reg = REGISTER.matcher(line);
             if (reg.find()) {
                String command = line.substring(reg.start(), reg.end()).toLowerCase(Locale.ROOT);
-               return new AuthPromptParser.AuthPrompt(AuthPromptParser.PromptKind.REGISTER, command, init(line, reg.end()));
+               return new AuthPromptParser.AuthPrompt(AuthPromptParser.PromptKind.REGISTER, command, placeholderCount(line, reg.end()));
             } else {
-               Matcher log = load.matcher(line);
+               Matcher log = LOGIN.matcher(line);
                return log.find()
                   ? new AuthPromptParser.AuthPrompt(AuthPromptParser.PromptKind.LOGIN, line.substring(log.start(), log.end()).toLowerCase(Locale.ROOT), 1)
                   : AuthPromptParser.AuthPrompt.NONE;
@@ -42,9 +42,9 @@ public final class AuthPromptParser {
       }
    }
 
-   private static int init(String line, int afterCommand) {
+   private static int placeholderCount(String line, int afterCommand) {
       String tail = line.substring(afterCommand);
-      Matcher ph = read.matcher(tail);
+      Matcher ph = PLACEHOLDER.matcher(tail);
       int count = 0;
       boolean email = false;
 
@@ -66,7 +66,7 @@ public final class AuthPromptParser {
    public record AuthPrompt(AuthPromptParser.PromptKind kind, String command, int init_I) {
       public static final AuthPromptParser.AuthPrompt NONE = new AuthPromptParser.AuthPrompt(AuthPromptParser.PromptKind.NONE, "", 0);
 
-      public String init(String password) {
+      public String loginCommand(String password) {
          String line = this.command + " " + password;
          return this.init_I >= 2 ? line + " " + password : line;
       }

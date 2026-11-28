@@ -83,11 +83,11 @@ public final class VillagerDupeDriver {
       return this.init_DataUtil_BufferHel_Minecraft(mc, opts, VillagerDupeDriver.StreamUtil.SHEAR);
    }
 
-   public VillagerDupeDriver.BufferHelper load(Minecraft mc, VillagerDupeDriver.CachePool opts) {
+   public VillagerDupeDriver.BufferHelper start(Minecraft mc, VillagerDupeDriver.CachePool opts) {
       return this.init_DataUtil_BufferHel_Minecraft(mc, opts, VillagerDupeDriver.StreamUtil.HOLD);
    }
 
-   public VillagerDupeDriver.BufferHelper read(Minecraft mc, VillagerDupeDriver.CachePool opts) {
+   public VillagerDupeDriver.BufferHelper resume(Minecraft mc, VillagerDupeDriver.CachePool opts) {
       return this.init_DataUtil_BufferHel_Minecraft(mc, opts, VillagerDupeDriver.StreamUtil.WATCH);
    }
 
@@ -145,7 +145,7 @@ public final class VillagerDupeDriver {
       return emerald != null ? emerald : this.init(mc, player, opts, player.hasInfiniteMaterials(), AutismSessionState.getInstance().getClientTick());
    }
 
-   public static boolean init_Z_Minecraft(Minecraft mc, VillagerDupeDriver.Inner_DataUtil filter, boolean traders) {
+   public static boolean hasTrader(Minecraft mc, VillagerDupeDriver.Inner_DataUtil filter, boolean traders) {
       if (!isClientReady(mc)) {
          return false;
       }
@@ -960,7 +960,7 @@ public final class VillagerDupeDriver {
          this.init_Str = label;
       }
 
-      public String init() {
+      public String label() {
          return this.init_Str;
       }
 

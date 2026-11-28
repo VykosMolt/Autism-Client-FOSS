@@ -18,7 +18,7 @@ public final class PacketCaptureState {
 
    public static long effectiveState() {
       long current = capturedState;
-      if (!load(current)) {
+      if (!isPayloadCapture(current)) {
          return current;
       }
 
@@ -55,7 +55,7 @@ public final class PacketCaptureState {
       return (captureFlags(capturedState) & 1) != 0;
    }
 
-   public static boolean load(long capturedState) {
+   public static boolean isPayloadCapture(long capturedState) {
       return (captureFlags(capturedState) & 2) != 0;
    }
 
@@ -64,22 +64,22 @@ public final class PacketCaptureState {
    }
 
    public static boolean load_Z() {
-      return load(capturedState);
+      return isPayloadCapture(capturedState);
    }
 
    public static void write() {
-      load(autismclient.modules.ModuleRuntimeManager.getInstance());
+      refresh(autismclient.modules.ModuleRuntimeManager.getInstance());
    }
 
    public static void expireIfDue(autismclient.modules.ModuleRuntimeManager module) {
       long deadline = load_J;
       if (deadline > 0L && System.currentTimeMillis() > deadline) {
          load_J = 0L;
-         load(module);
+         refresh(module);
       }
    }
 
-   public static void load(autismclient.modules.ModuleRuntimeManager module) {
+   public static void refresh(autismclient.modules.ModuleRuntimeManager module) {
       int next = 0;
       if (module != null && !autismclient.modules.aD.read_Z()) {
          if (module.isLoggerCaptureEnabled()) {

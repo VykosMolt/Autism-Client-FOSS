@@ -27,7 +27,7 @@ public enum ContainerClickType {
       return !this.init_Z;
    }
 
-   public boolean load() {
+   public boolean hasDefaultButton() {
       return this.defaultButton() >= 0;
    }
 

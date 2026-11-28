@@ -260,7 +260,7 @@ public class OverlayManager {
             this.renderLayers.remove(overlay);
             return true;
          });
-         this.layerHost.init();
+         this.layerHost.clear();
          this.layerHostDirty = true;
          this.hiddenOverlayIds.clear();
          this.draggingOverlay = null;
@@ -1343,11 +1343,11 @@ public class OverlayManager {
 
    private void rebuildLayerHost() {
       if (this.layerHostDirty) {
-         this.layerHost.init();
+         this.layerHost.clear();
 
          for (AutismOverlay overlay : this.overlays) {
             this.layerHost
-               .init(this.isStepPickerOverlay(overlay) ? autismclient.gui.ui.UiLayer.DROPDOWN : autismclient.gui.ui.UiLayer.FLOATING, this.getOrCreateAdapter(overlay));
+               .add(this.isStepPickerOverlay(overlay) ? autismclient.gui.ui.UiLayer.DROPDOWN : autismclient.gui.ui.UiLayer.FLOATING, this.getOrCreateAdapter(overlay));
          }
 
          this.layerHostDirty = false;

@@ -22,17 +22,17 @@ final class AiPrintClock {
          private Boolean creative;
 
          @Override
-         public autismclient.ai.print.PrintMachineJob init(BlockPos at, BlockState source) {
+         public autismclient.ai.print.PrintMachineJob containerJob(BlockPos at, BlockState source) {
             return AiPrintContainer.forClock(env, new AiSchematicMachinePlan.ContainerPlan(at, Map.of(), source));
          }
 
          @Override
-         public autismclient.ai.print.PrintMachineJob init(boolean powered) {
+         public autismclient.ai.print.PrintMachineJob clockControlJob(boolean powered) {
             return new AiPrintClock.ClockControlJob(env, spec, powered);
          }
 
          @Override
-         public autismclient.ai.print.PrintMachineJob init(BlockPos at, BlockState source, Map<Integer, ItemStack> contents) {
+         public autismclient.ai.print.PrintMachineJob filledContainerJob(BlockPos at, BlockState source, Map<Integer, ItemStack> contents) {
             return AiPrintContainer.create(env, new AiSchematicMachinePlan.ContainerPlan(at, contents, source));
          }
 
@@ -42,7 +42,7 @@ final class AiPrintClock {
          }
 
          @Override
-         public boolean init() {
+         public boolean creative() {
             return env.isCreativeMode();
          }
 
@@ -52,12 +52,12 @@ final class AiPrintClock {
          }
 
          @Override
-         public boolean load(ItemStack material) {
+         public boolean canFetch(ItemStack material) {
             return mc.player == originalPlayer && mc.player != null && !AiCarriedShulker.init(mc.player.getInventory(), material, List.of()).isEmpty();
          }
 
          @Override
-         public boolean load() {
+         public boolean contextValid() {
             if (mc.player == originalPlayer && originalPlayer != null) {
                if (this.creative == null) {
                   this.creative = env.isCreativeMode();

@@ -9,17 +9,17 @@ final class MineBreakPaceGuard {
    private boolean init_Z;
    private boolean load_Z;
 
-   boolean init_Z(long now) {
+   boolean ready(long now) {
       return !this.load_Z || now - this.update >= 295000000L;
    }
 
-   void init_V(long now) {
+   void start(long now) {
       this.init_Z = true;
       this.read = now;
       this.write = now;
    }
 
-   float init(float step, float damage, long now) {
+   float pacedStep(float step, float damage, long now) {
       if (this.init_Z && step > 0.0F && Float.isFinite(step)) {
          this.write = this.read + (long)Math.ceil(1.0 / step) * 50000000L;
          if (damage + step >= 1.0F) {
@@ -38,20 +38,20 @@ final class MineBreakPaceGuard {
       }
    }
 
-   double init_D(long now) {
+   double ticksUntilBreak(long now) {
       return this.init_Z ? Math.ceil(Math.max(0L, this.write - now - 5000000L) / 5.0E7) : 0.0;
    }
 
-   double load(long now) {
+   double cooldownTicks(long now) {
       return !this.init_Z && this.load_Z ? Math.ceil(Math.max(0L, 295000000L - (now - this.update)) / 5.0E7) : 0.0;
    }
 
-   void init() {
+   void stop() {
       this.init_Z = false;
    }
 
-   void load() {
-      this.init();
+   void reset() {
+      this.stop();
       this.load_Z = false;
    }
 }

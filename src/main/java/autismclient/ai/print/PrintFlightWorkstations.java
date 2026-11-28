@@ -90,7 +90,7 @@ final class PrintFlightWorkstations {
       for (double next : edges) {
          if (next - previous > 1.0E-6) {
             Vec3 point = new Vec3(center.x, (previous + next) * 0.5, center.z);
-            AABB body = PrintGeometry.init(point.x, point.y, point.z, false);
+            AABB body = PrintGeometry.bodyBox(point.x, point.y, point.z, false);
             boolean free = true;
 
             for (AABB box : boxes) {

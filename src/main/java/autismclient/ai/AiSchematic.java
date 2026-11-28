@@ -64,16 +64,16 @@ final class AiSchematic {
    private static final String[] WOOD_TYPES = new String[]{"oak", "spruce", "birch", "jungle", "acacia", "dark_oak"};
    private static final String[] TORCH_FACINGS = new String[]{"east", "west", "south", "north"};
    private static final String[] HORIZONTAL_FACINGS = new String[]{"south", "west", "north", "east"};
-   private static final String[] sync = new String[]{"east", "south", "west", "north"};
-   private static final String[] flush = new String[]{"north", "south", "west", "east"};
-   private static final String[] close = new String[]{"west", "north", "east", "south"};
-   private static final String[] open = new String[]{null, null, "north", "south", "west", "east"};
-   private static final String[] poll = new String[]{"down", "up", "north", "south", "west", "east"};
+   private static final String[] DOOR_FACINGS = new String[]{"east", "south", "west", "north"};
+   private static final String[] TRAPDOOR_FACINGS = new String[]{"north", "south", "west", "east"};
+   private static final String[] ANVIL_FACINGS = new String[]{"west", "north", "east", "south"};
+   private static final String[] WALL_FACINGS = new String[]{null, null, "north", "south", "west", "east"};
+   private static final String[] DIRECTIONAL_FACINGS = new String[]{"down", "up", "north", "south", "west", "east"};
 
    private AiSchematic() {
    }
 
-   static void init(List<Tag> entries, int offsetX, int offsetY, int offsetZ, List<AiSchematic.RailVehicleSpec> into) {
+   static void readRailVehicles(List<Tag> entries, int offsetX, int offsetY, int offsetZ, List<AiSchematic.RailVehicleSpec> into) {
       for (Tag entry : entries) {
          if (entry instanceof CompoundTag outer) {
             CompoundTag data = outer.getCompound("Data").orElse(outer);
@@ -105,7 +105,7 @@ final class AiSchematic {
       }
    }
 
-   static void init(List<Tag> entries, int offsetX, int offsetY, int offsetZ, int dataVersion, List<AiSchematic.ItemFrameSpec> into) {
+   static void readItemFrames(List<Tag> entries, int offsetX, int offsetY, int offsetZ, int dataVersion, List<AiSchematic.ItemFrameSpec> into) {
       int current = SharedConstants.getCurrentVersion().dataVersion().version();
 
       for (Tag entry : entries) {
@@ -290,7 +290,7 @@ final class AiSchematic {
       throw new IllegalArgumentException("No schematic named \"" + clean + "\" in " + schematicsDir + " (tried " + String.join(", ", candidates) + ")");
    }
 
-   static AiBuilder.Blueprint init(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown) {
+   static AiBuilder.Blueprint loadBlueprint(Path file, BlockPos origin, int rotation, String mirror, boolean skipUnknown) {
       return loadBlueprint(file, origin, rotation, mirror, skipUnknown, 2097152);
    }
 
@@ -413,7 +413,7 @@ final class AiSchematic {
       String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
       CompoundTag root = readNbt(file, 67108864L);
       if (root.getCompound("Regions").isPresent()) {
-         return load(root, skipUnknown);
+         return decodeSchematic(root, skipUnknown);
       } else {
          CompoundTag body = root.getCompound("Schematic").orElse(root);
          if (body.getCompound("Palette").isPresent() || body.getCompound("Blocks").flatMap(blocks -> blocks.getCompound("Palette")).isPresent()) {
@@ -423,7 +423,7 @@ final class AiSchematic {
          } else if (name.endsWith(".schem")) {
             return init_bP_DataUtil(root, skipUnknown);
          } else {
-            return name.endsWith(".schematic") ? decodeSponge(root, skipUnknown) : load(root, skipUnknown);
+            return name.endsWith(".schematic") ? decodeSponge(root, skipUnknown) : decodeSchematic(root, skipUnknown);
          }
       }
    }
@@ -462,7 +462,7 @@ final class AiSchematic {
             }
 
             try {
-               byIndex.put(index, init(state, "palette index " + index, dataVersion));
+               byIndex.put(index, parsePaletteState(state, "palette index " + index, dataVersion));
             } catch (AiSchematic.UnknownBlock e) {
                if (!skipUnknown) {
                   throw e;
@@ -479,7 +479,7 @@ final class AiSchematic {
             .orElse(new int[]{metadata.getIntOr("WEOffsetX", 0), metadata.getIntOr("WEOffsetY", 0), metadata.getIntOr("WEOffsetZ", 0)});
          byte[] blockData = blocks.getByteArray(version == 3 ? "Data" : "BlockData")
             .orElseThrow(() -> new IllegalArgumentException("Sponge schematic has no BlockData array"));
-         int volume = init(width, height, length);
+         int volume = checkedVolume(width, height, length);
          List<AiBuilder.CellSpec> cells = new ArrayList<>();
          int air = 0;
          int cursor = 0;
@@ -560,9 +560,9 @@ final class AiSchematic {
          TreeMap<String, Integer> entities = new TreeMap<>();
          countEntities(root.getListOrEmpty("Entities"), entities);
          ArrayList<AiSchematic.RailVehicleSpec> vehicles = new ArrayList<>();
-         init(root.getListOrEmpty("Entities"), offset[0], offset[1], offset[2], vehicles);
+         readRailVehicles(root.getListOrEmpty("Entities"), offset[0], offset[1], offset[2], vehicles);
          ArrayList<AiSchematic.ItemFrameSpec> frames = new ArrayList<>();
-         init(root.getListOrEmpty("Entities"), offset[0], offset[1], offset[2], dataVersion, frames);
+         readItemFrames(root.getListOrEmpty("Entities"), offset[0], offset[1], offset[2], dataVersion, frames);
          return new AiSchematic.DecodedFile(
             List.copyOf(cells),
             Set.of(),
@@ -579,7 +579,7 @@ final class AiSchematic {
       }
    }
 
-   private static int init(int width, int height, int length) {
+   private static int checkedVolume(int width, int height, int length) {
       long volume = (long)width * height * length;
       if (width > 0 && height > 0 && length > 0 && volume <= 16777216L) {
          return (int)volume;
@@ -597,15 +597,15 @@ final class AiSchematic {
       }
    }
 
-   static AiSchematic.PaletteState init_bP_ConfigStore_Str_Str(String raw, String context) {
-      return init(raw, context, 0);
+   static AiSchematic.PaletteState parsePaletteState(String raw, String context) {
+      return parsePaletteState(raw, context, 0);
    }
 
    static AiSchematic.PaletteState parseState(String raw, int dataVersion) {
-      return init(raw, "palette state " + raw, Math.max(1, dataVersion));
+      return parsePaletteState(raw, "palette state " + raw, Math.max(1, dataVersion));
    }
 
-   private static AiSchematic.PaletteState init(String raw, String context, int dataVersion) {
+   private static AiSchematic.PaletteState parsePaletteState(String raw, String context, int dataVersion) {
       int bracket = raw.indexOf(91);
       String id = (bracket < 0 ? raw : raw.substring(0, bracket)).trim();
       if (!id.contains(":")) {
@@ -632,7 +632,7 @@ final class AiSchematic {
       }
 
       if (dataVersion <= 0) {
-         return new AiSchematic.PaletteState(id, init(id, properties, context));
+         return new AiSchematic.PaletteState(id, normalizeProperties(id, properties, context));
       }
 
       CompoundTag state = new CompoundTag();
@@ -643,10 +643,10 @@ final class AiSchematic {
          state.put("Properties", props);
       }
 
-      return init(state, dataVersion, dataVersion < 1631, context);
+      return parsePaletteEntry(state, dataVersion, dataVersion < 1631, context);
    }
 
-   static AiSchematic.PaletteState init(CompoundTag entry, int dataVersion, boolean preFlattening, String context) {
+   static AiSchematic.PaletteState parsePaletteEntry(CompoundTag entry, int dataVersion, boolean preFlattening, String context) {
       String name = entry.getStringOr("Name", "");
       if (name.isBlank()) {
          throw new IllegalArgumentException(context + " has no block Name");
@@ -683,14 +683,14 @@ final class AiSchematic {
          properties.put(key, value);
       }
 
-      return new AiSchematic.PaletteState(id, init(id, properties, context));
+      return new AiSchematic.PaletteState(id, normalizeProperties(id, properties, context));
    }
 
-   static Map<String, String> init(String blockId, Map<String, String> properties, String context) {
-      return init(blockId, properties, context, true);
+   static Map<String, String> normalizeProperties(String blockId, Map<String, String> properties, String context) {
+      return normalizeProperties(blockId, properties, context, true);
    }
 
-   private static Map<String, String> init(String blockId, Map<String, String> properties, String context, boolean defaults) {
+   private static Map<String, String> normalizeProperties(String blockId, Map<String, String> properties, String context, boolean defaults) {
       Identifier id = Identifier.tryParse(blockId);
       Block block = id == null ? null : BuiltInRegistries.BLOCK.getOptional(id).orElse(null);
       if (block == null) {
@@ -718,13 +718,13 @@ final class AiSchematic {
       Optional<CompoundTag> front = entity.getCompound("front_text");
       if (front.isPresent()) {
          for (Tag message : front.get().getListOrEmpty("messages")) {
-            lines.add(init(message));
+            lines.add(tagText(message));
          }
       } else {
          for (int i = 1; i <= 4; i++) {
             Tag line = entity.get("Text" + i);
             if (line != null) {
-               lines.add(init(line));
+               lines.add(tagText(line));
             }
          }
       }
@@ -740,7 +740,7 @@ final class AiSchematic {
       return String.join("\n", lines.subList(0, 4));
    }
 
-   private static String init(Tag tag) {
+   private static String tagText(Tag tag) {
       try {
          if (tag instanceof StringTag(String value)) {
             String trimmed = value.trim();
@@ -782,7 +782,7 @@ final class AiSchematic {
       return Map.copyOf(out);
    }
 
-   static Map<Long, ListTag> load(AiSchematic.DecodedFile decoded, int rotation, String mirror) {
+   static Map<Long, ListTag> transformedBlockEntities(AiSchematic.DecodedFile decoded, int rotation, String mirror) {
       return decoded.containerContents().isEmpty()
          ? Map.of()
          : containerContents(decoded, rotation, mirror, AiBuilder.minCellOffset(AiBuilder.transformCells(decoded.cells(), rotation, mirror)));
@@ -905,7 +905,7 @@ final class AiSchematic {
       byte[] blocks = root.getByteArray("Blocks").orElseThrow(() -> new IllegalArgumentException("Legacy schematic has no Blocks array"));
       byte[] data = root.getByteArray("Data").orElse(new byte[0]);
       byte[] add = root.getByteArray("AddBlocks").orElse(new byte[0]);
-      int volume = init(width, height, length);
+      int volume = checkedVolume(width, height, length);
       if (blocks.length < volume) {
          throw new IllegalArgumentException("Legacy Blocks array is truncated: " + blocks.length + " of " + volume + " cells present");
       }
@@ -949,7 +949,7 @@ final class AiSchematic {
                }
 
                template = new AiBuilder.CellSpec(
-                  0, 0, 0, state.block(), init(state.block(), state.properties(), "legacy id " + id + ":" + meta, false)
+                  0, 0, 0, state.block(), normalizeProperties(state.block(), state.properties(), "legacy id " + id + ":" + meta, false)
                );
                mapped.put(key, template);
             }
@@ -982,7 +982,7 @@ final class AiSchematic {
       TreeMap<String, Integer> entities = new TreeMap<>();
       countEntities(root.getListOrEmpty("Entities"), entities);
       ArrayList<AiSchematic.RailVehicleSpec> vehicles = new ArrayList<>();
-      init(root.getListOrEmpty("Entities"), offsetX, offsetY, offsetZ, vehicles);
+      readRailVehicles(root.getListOrEmpty("Entities"), offsetX, offsetY, offsetZ, vehicles);
       return new AiSchematic.DecodedFile(
          List.copyOf(cells),
          Set.copyOf(unmapped),
@@ -995,11 +995,11 @@ final class AiSchematic {
       );
    }
 
-   static AiSchematic.DecodedFile load(CompoundTag root) {
-      return load(root, false);
+   static AiSchematic.DecodedFile decodeSchematic(CompoundTag root) {
+      return decodeSchematic(root, false);
    }
 
-   static AiSchematic.DecodedFile load(CompoundTag root, boolean skipUnknown) {
+   static AiSchematic.DecodedFile decodeSchematic(CompoundTag root, boolean skipUnknown) {
       int version = root.getIntOr("Version", 0);
       if (version >= 1 && version <= 7) {
          int dataVersion = root.getIntOr("MinecraftDataVersion", 1631);
@@ -1043,7 +1043,7 @@ final class AiSchematic {
                   .orElseThrow(() -> new IllegalArgumentException("Litematic region \"" + regionName + "\" has no BlockStates array"));
                int bits = Math.max(2, 32 - Integer.numberOfLeadingZeros(Math.max(1, palette.size() - 1)));
                long mask = (1L << bits) - 1L;
-               int volume = init(ax, ay, az);
+               int volume = checkedVolume(ax, ay, az);
                if (packed.length != ((long)volume * bits + 63L) / 64L) {
                   throw new IllegalArgumentException(
                      "Litematic region \""
@@ -1071,7 +1071,7 @@ final class AiSchematic {
 
                for (int value = 0; value < palette.size(); value++) {
                   try {
-                     states[value] = init(
+                     states[value] = parsePaletteEntry(
                         palette.getCompoundOrEmpty(value), dataVersion, preFlattening, "Litematic region \"" + regionName + "\" palette entry " + value
                      );
                   } catch (AiSchematic.UnknownBlock e) {
@@ -1093,8 +1093,8 @@ final class AiSchematic {
 
                boxes.add(box);
                countEntities(region.getListOrEmpty("Entities"), entities);
-               init(region.getListOrEmpty("Entities"), px, py, pz, vehicles);
-               init(region.getListOrEmpty("Entities"), px, py, pz, dataVersion, frames);
+               readRailVehicles(region.getListOrEmpty("Entities"), px, py, pz, vehicles);
+               readItemFrames(region.getListOrEmpty("Entities"), px, py, pz, dataVersion, frames);
 
                for (Tag entry : region.getListOrEmpty("TileEntities")) {
                   if (entry instanceof CompoundTag entity) {
@@ -1167,7 +1167,7 @@ final class AiSchematic {
    }
 
    private static String legacyFacing(int data) {
-      String facing = open[Math.min(data & 7, 5)];
+      String facing = WALL_FACINGS[Math.min(data & 7, 5)];
       return facing == null ? "north" : facing;
    }
 
@@ -1175,15 +1175,15 @@ final class AiSchematic {
       return new AiSchematic.LegacyBlockState("minecraft:" + block, Map.of());
    }
 
-   private static AiSchematic.LegacyBlockState init(String block, String k1, String v1) {
+   private static AiSchematic.LegacyBlockState legacy(String block, String k1, String v1) {
       return new AiSchematic.LegacyBlockState("minecraft:" + block, Map.of(k1, v1));
    }
 
-   private static AiSchematic.LegacyBlockState init(String block, String k1, String v1, String k2, String v2) {
+   private static AiSchematic.LegacyBlockState legacy(String block, String k1, String v1, String k2, String v2) {
       return new AiSchematic.LegacyBlockState("minecraft:" + block, Map.of(k1, v1, k2, v2));
    }
 
-   private static AiSchematic.LegacyBlockState init(String block, String k1, String v1, String k2, String v2, String k3, String v3) {
+   private static AiSchematic.LegacyBlockState legacy(String block, String k1, String v1, String k2, String v2, String k3, String v3) {
       return new AiSchematic.LegacyBlockState("minecraft:" + block, Map.of(k1, v1, k2, v2, k3, v3));
    }
 
@@ -1232,18 +1232,18 @@ final class AiSchematic {
             var10000 = simpleBlock(WOOD_TYPES[Math.min(data & 7, 5)] + "_planks");
             break;
          case 6:
-            var10000 = init(WOOD_TYPES[Math.min(data & 7, 5)] + "_sapling", "stage", String.valueOf(data >> 3 & 1));
+            var10000 = legacy(WOOD_TYPES[Math.min(data & 7, 5)] + "_sapling", "stage", String.valueOf(data >> 3 & 1));
             break;
          case 7:
             var10000 = simpleBlock("bedrock");
             break;
          case 8:
          case 9:
-            var10000 = init("water", "level", String.valueOf(data & 15));
+            var10000 = legacy("water", "level", String.valueOf(data & 15));
             break;
          case 10:
          case 11:
-            var10000 = init("lava", "level", String.valueOf(data & 15));
+            var10000 = legacy("lava", "level", String.valueOf(data & 15));
             break;
          case 12:
             var10000 = simpleBlock(data == 1 ? "red_sand" : "sand");
@@ -1264,7 +1264,7 @@ final class AiSchematic {
             var10000 = legacyLog(WOOD_TYPES[data & 3], data);
             break;
          case 18:
-            var10000 = init(WOOD_TYPES[data & 3] + "_leaves", "persistent", (data & 4) != 0 ? "true" : "false");
+            var10000 = legacy(WOOD_TYPES[data & 3] + "_leaves", "persistent", (data & 4) != 0 ? "true" : "false");
             break;
          case 19:
             var10000 = simpleBlock(data == 1 ? "wet_sponge" : "sponge");
@@ -1279,7 +1279,7 @@ final class AiSchematic {
             var10000 = simpleBlock("lapis_block");
             break;
          case 23:
-            var10000 = init("dispenser", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("dispenser", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 24:
             var10000 = simpleBlock(data == 1 ? "chiseled_sandstone" : (data == 2 ? "cut_sandstone" : "sandstone"));
@@ -1288,16 +1288,16 @@ final class AiSchematic {
             var10000 = simpleBlock("note_block");
             break;
          case 26:
-            var10000 = init("red_bed", "facing", HORIZONTAL_FACINGS[data & 3], "part", (data & 8) != 0 ? "head" : "foot");
+            var10000 = legacy("red_bed", "facing", HORIZONTAL_FACINGS[data & 3], "part", (data & 8) != 0 ? "head" : "foot");
             break;
          case 27:
-            var10000 = sync("powered_rail", data);
+            var10000 = legacyRail("powered_rail", data);
             break;
          case 28:
-            var10000 = sync("detector_rail", data);
+            var10000 = legacyRail("detector_rail", data);
             break;
          case 29:
-            var10000 = init("sticky_piston", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("sticky_piston", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 30:
             var10000 = simpleBlock("cobweb");
@@ -1309,10 +1309,10 @@ final class AiSchematic {
             var10000 = simpleBlock("dead_bush");
             break;
          case 33:
-            var10000 = init("piston", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("piston", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 34:
-            var10000 = init("piston_head", "type", (data & 1) != 0 ? "sticky" : "normal");
+            var10000 = legacy("piston_head", "type", (data & 1) != 0 ? "sticky" : "normal");
             break;
          case 35:
             var10000 = simpleBlock(color + "_wool");
@@ -1378,7 +1378,7 @@ final class AiSchematic {
             var10000 = simpleBlock("bricks");
             break;
          case 46:
-            var10000 = init("tnt", "unstable", (data & 1) != 0 ? "true" : "false");
+            var10000 = legacy("tnt", "unstable", (data & 1) != 0 ? "true" : "false");
             break;
          case 47:
             var10000 = simpleBlock("bookshelf");
@@ -1390,7 +1390,7 @@ final class AiSchematic {
             var10000 = simpleBlock("obsidian");
             break;
          case 50:
-            var10000 = data == 5 ? simpleBlock("torch") : init("wall_torch", "facing", TORCH_FACINGS[Math.min(Math.max(data - 1, 0), 3)]);
+            var10000 = data == 5 ? simpleBlock("torch") : legacy("wall_torch", "facing", TORCH_FACINGS[Math.min(Math.max(data - 1, 0), 3)]);
             break;
          case 51:
             var10000 = simpleBlock("fire");
@@ -1399,13 +1399,13 @@ final class AiSchematic {
             var10000 = simpleBlock("spawner");
             break;
          case 53:
-            var10000 = load("oak_stairs", data);
+            var10000 = torch("oak_stairs", data);
             break;
          case 54:
-            var10000 = init("chest", "facing", legacyFacing(data));
+            var10000 = legacy("chest", "facing", legacyFacing(data));
             break;
          case 55:
-            var10000 = init("redstone_wire", "power", String.valueOf(data & 15));
+            var10000 = legacy("redstone_wire", "power", String.valueOf(data & 15));
             break;
          case 56:
             var10000 = simpleBlock("diamond_ore");
@@ -1417,34 +1417,34 @@ final class AiSchematic {
             var10000 = simpleBlock("crafting_table");
             break;
          case 59:
-            var10000 = init("wheat", "age", String.valueOf(data & 7));
+            var10000 = legacy("wheat", "age", String.valueOf(data & 7));
             break;
          case 60:
-            var10000 = init("farmland", "moisture", String.valueOf(data & 7));
+            var10000 = legacy("farmland", "moisture", String.valueOf(data & 7));
             break;
          case 61:
-            var10000 = init("furnace", "facing", legacyFacing(data));
+            var10000 = legacy("furnace", "facing", legacyFacing(data));
             break;
          case 62:
-            var10000 = init("furnace", "facing", legacyFacing(data), "lit", "true");
+            var10000 = legacy("furnace", "facing", legacyFacing(data), "lit", "true");
             break;
          case 63:
-            var10000 = init("oak_sign", "rotation", String.valueOf(data & 15));
+            var10000 = legacy("oak_sign", "rotation", String.valueOf(data & 15));
             break;
          case 64:
-            var10000 = read("oak_door", data);
+            var10000 = halfBlock("oak_door", data);
             break;
          case 65:
-            var10000 = init("ladder", "facing", legacyFacing(data));
+            var10000 = legacy("ladder", "facing", legacyFacing(data));
             break;
          case 66:
-            var10000 = sync("rail", data);
+            var10000 = legacyRail("rail", data);
             break;
          case 67:
-            var10000 = load("cobblestone_stairs", data);
+            var10000 = torch("cobblestone_stairs", data);
             break;
          case 68:
-            var10000 = init("oak_wall_sign", "facing", legacyFacing(data));
+            var10000 = legacy("oak_wall_sign", "facing", legacyFacing(data));
             break;
          case 69:
             var10000 = legacyLever(data);
@@ -1453,7 +1453,7 @@ final class AiSchematic {
             var10000 = simpleBlock("stone_pressure_plate");
             break;
          case 71:
-            var10000 = read("iron_door", data);
+            var10000 = halfBlock("iron_door", data);
             break;
          case 72:
             var10000 = simpleBlock("oak_pressure_plate");
@@ -1462,23 +1462,23 @@ final class AiSchematic {
             var10000 = simpleBlock("redstone_ore");
             break;
          case 74:
-            var10000 = init("redstone_ore", "lit", "true");
+            var10000 = legacy("redstone_ore", "lit", "true");
             break;
          case 75:
             var10000 = data == 5
-               ? init("redstone_torch", "lit", "false")
-               : init("redstone_wall_torch", "facing", TORCH_FACINGS[Math.min(Math.max(data - 1, 0), 3)], "lit", "false");
+               ? legacy("redstone_torch", "lit", "false")
+               : legacy("redstone_wall_torch", "facing", TORCH_FACINGS[Math.min(Math.max(data - 1, 0), 3)], "lit", "false");
             break;
          case 76:
             var10000 = data == 5
                ? simpleBlock("redstone_torch")
-               : init("redstone_wall_torch", "facing", TORCH_FACINGS[Math.min(Math.max(data - 1, 0), 3)]);
+               : legacy("redstone_wall_torch", "facing", TORCH_FACINGS[Math.min(Math.max(data - 1, 0), 3)]);
             break;
          case 77:
             var10000 = update("stone_button", data);
             break;
          case 78:
-            var10000 = init("snow", "layers", String.valueOf(Math.min((data & 7) + 1, 8)));
+            var10000 = legacy("snow", "layers", String.valueOf(Math.min((data & 7) + 1, 8)));
             break;
          case 79:
             var10000 = simpleBlock("ice");
@@ -1487,13 +1487,13 @@ final class AiSchematic {
             var10000 = simpleBlock("snow_block");
             break;
          case 81:
-            var10000 = init("cactus", "age", String.valueOf(data & 15));
+            var10000 = legacy("cactus", "age", String.valueOf(data & 15));
             break;
          case 82:
             var10000 = simpleBlock("clay");
             break;
          case 83:
-            var10000 = init("sugar_cane", "age", String.valueOf(data & 15));
+            var10000 = legacy("sugar_cane", "age", String.valueOf(data & 15));
             break;
          case 84:
             var10000 = simpleBlock("jukebox");
@@ -1514,25 +1514,25 @@ final class AiSchematic {
             var10000 = simpleBlock("glowstone");
             break;
          case 90:
-            var10000 = init("nether_portal", "axis", (data & 3) == 2 ? "z" : "x");
+            var10000 = legacy("nether_portal", "axis", (data & 3) == 2 ? "z" : "x");
             break;
          case 91:
-            var10000 = init("jack_o_lantern", "facing", HORIZONTAL_FACINGS[data & 3]);
+            var10000 = legacy("jack_o_lantern", "facing", HORIZONTAL_FACINGS[data & 3]);
             break;
          case 92:
-            var10000 = init("cake", "bites", String.valueOf(Math.min(data & 7, 6)));
+            var10000 = legacy("cake", "bites", String.valueOf(Math.min(data & 7, 6)));
             break;
          case 93:
-            var10000 = init("repeater", "facing", HORIZONTAL_FACINGS[data & 3], "delay", String.valueOf((data >> 2 & 3) + 1), "powered", "false");
+            var10000 = legacy("repeater", "facing", HORIZONTAL_FACINGS[data & 3], "delay", String.valueOf((data >> 2 & 3) + 1), "powered", "false");
             break;
          case 94:
-            var10000 = init("repeater", "facing", HORIZONTAL_FACINGS[data & 3], "delay", String.valueOf((data >> 2 & 3) + 1), "powered", "true");
+            var10000 = legacy("repeater", "facing", HORIZONTAL_FACINGS[data & 3], "delay", String.valueOf((data >> 2 & 3) + 1), "powered", "true");
             break;
          case 95:
             var10000 = simpleBlock(color + "_stained_glass");
             break;
          case 96:
-            var10000 = init("oak_trapdoor", "facing", flush[data & 3], "half", (data & 8) != 0 ? "top" : "bottom", "open", (data & 4) != 0 ? "true" : "false");
+            var10000 = legacy("oak_trapdoor", "facing", TRAPDOOR_FACINGS[data & 3], "half", (data & 8) != 0 ? "top" : "bottom", "open", (data & 4) != 0 ? "true" : "false");
             break;
          case 97:
             String var8;
@@ -1592,22 +1592,22 @@ final class AiSchematic {
             var10000 = simpleBlock("melon");
             break;
          case 104:
-            var10000 = init("pumpkin_stem", "age", String.valueOf(data & 7));
+            var10000 = legacy("pumpkin_stem", "age", String.valueOf(data & 7));
             break;
          case 105:
-            var10000 = init("melon_stem", "age", String.valueOf(data & 7));
+            var10000 = legacy("melon_stem", "age", String.valueOf(data & 7));
             break;
          case 106:
-            var10000 = load(data);
+            var10000 = vine(data);
             break;
          case 107:
-            var10000 = write("oak_fence_gate", data);
+            var10000 = fenceGate("oak_fence_gate", data);
             break;
          case 108:
-            var10000 = load("brick_stairs", data);
+            var10000 = torch("brick_stairs", data);
             break;
          case 109:
-            var10000 = load("stone_brick_stairs", data);
+            var10000 = torch("stone_brick_stairs", data);
             break;
          case 110:
             var10000 = simpleBlock("mycelium");
@@ -1622,10 +1622,10 @@ final class AiSchematic {
             var10000 = simpleBlock("nether_brick_fence");
             break;
          case 114:
-            var10000 = load("nether_brick_stairs", data);
+            var10000 = torch("nether_brick_stairs", data);
             break;
          case 115:
-            var10000 = init("nether_wart", "age", String.valueOf(data & 3));
+            var10000 = legacy("nether_wart", "age", String.valueOf(data & 3));
             break;
          case 116:
             var10000 = simpleBlock("enchanting_table");
@@ -1634,13 +1634,13 @@ final class AiSchematic {
             var10000 = simpleBlock("brewing_stand");
             break;
          case 118:
-            var10000 = (data & 3) == 0 ? simpleBlock("cauldron") : init("water_cauldron", "level", String.valueOf(Math.min(data & 3, 3)));
+            var10000 = (data & 3) == 0 ? simpleBlock("cauldron") : legacy("water_cauldron", "level", String.valueOf(Math.min(data & 3, 3)));
             break;
          case 119:
             var10000 = simpleBlock("end_portal");
             break;
          case 120:
-            var10000 = init("end_portal_frame", "facing", HORIZONTAL_FACINGS[data & 3], "eye", (data & 4) != 0 ? "true" : "false");
+            var10000 = legacy("end_portal_frame", "facing", HORIZONTAL_FACINGS[data & 3], "eye", (data & 4) != 0 ? "true" : "false");
             break;
          case 121:
             var10000 = simpleBlock("end_stone");
@@ -1652,7 +1652,7 @@ final class AiSchematic {
             var10000 = simpleBlock("redstone_lamp");
             break;
          case 124:
-            var10000 = init("redstone_lamp", "lit", "true");
+            var10000 = legacy("redstone_lamp", "lit", "true");
             break;
          case 125:
             var10000 = load(data, true);
@@ -1661,19 +1661,19 @@ final class AiSchematic {
             var10000 = legacySlab(data, true);
             break;
          case 127:
-            var10000 = init("cocoa", "age", String.valueOf(Math.min(data >> 2 & 3, 2)), "facing", HORIZONTAL_FACINGS[data & 3]);
+            var10000 = legacy("cocoa", "age", String.valueOf(Math.min(data >> 2 & 3, 2)), "facing", HORIZONTAL_FACINGS[data & 3]);
             break;
          case 128:
-            var10000 = load("sandstone_stairs", data);
+            var10000 = torch("sandstone_stairs", data);
             break;
          case 129:
             var10000 = simpleBlock("emerald_ore");
             break;
          case 130:
-            var10000 = init("ender_chest", "facing", legacyFacing(data));
+            var10000 = legacy("ender_chest", "facing", legacyFacing(data));
             break;
          case 131:
-            var10000 = init(
+            var10000 = legacy(
                "tripwire_hook",
                "facing",
                HORIZONTAL_FACINGS[data & 3],
@@ -1690,16 +1690,16 @@ final class AiSchematic {
             var10000 = simpleBlock("emerald_block");
             break;
          case 134:
-            var10000 = load("spruce_stairs", data);
+            var10000 = torch("spruce_stairs", data);
             break;
          case 135:
-            var10000 = load("birch_stairs", data);
+            var10000 = torch("birch_stairs", data);
             break;
          case 136:
-            var10000 = load("jungle_stairs", data);
+            var10000 = torch("jungle_stairs", data);
             break;
          case 137:
-            var10000 = init("command_block", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("command_block", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 138:
             var10000 = simpleBlock("beacon");
@@ -1711,10 +1711,10 @@ final class AiSchematic {
             var10000 = simpleBlock("flower_pot");
             break;
          case 141:
-            var10000 = init("carrots", "age", String.valueOf(data & 7));
+            var10000 = legacy("carrots", "age", String.valueOf(data & 7));
             break;
          case 142:
-            var10000 = init("potatoes", "age", String.valueOf(data & 7));
+            var10000 = legacy("potatoes", "age", String.valueOf(data & 7));
             break;
          case 143:
             var10000 = update("oak_button", data);
@@ -1756,22 +1756,22 @@ final class AiSchematic {
                   var5 = "anvil";
             }
 
-            var10000 = init(var5, "facing", close[data & 3]);
+            var10000 = legacy(var5, "facing", ANVIL_FACINGS[data & 3]);
             break;
          case 146:
-            var10000 = init("trapped_chest", "facing", legacyFacing(data));
+            var10000 = legacy("trapped_chest", "facing", legacyFacing(data));
             break;
          case 147:
-            var10000 = init("light_weighted_pressure_plate", "power", String.valueOf(data & 15));
+            var10000 = legacy("light_weighted_pressure_plate", "power", String.valueOf(data & 15));
             break;
          case 148:
-            var10000 = init("heavy_weighted_pressure_plate", "power", String.valueOf(data & 15));
+            var10000 = legacy("heavy_weighted_pressure_plate", "power", String.valueOf(data & 15));
             break;
          case 149:
-            var10000 = init("comparator", "facing", HORIZONTAL_FACINGS[data & 3], "powered", "false");
+            var10000 = legacy("comparator", "facing", HORIZONTAL_FACINGS[data & 3], "powered", "false");
             break;
          case 150:
-            var10000 = init("comparator", "facing", HORIZONTAL_FACINGS[data & 3], "powered", "true");
+            var10000 = legacy("comparator", "facing", HORIZONTAL_FACINGS[data & 3], "powered", "true");
             break;
          case 151:
             var10000 = simpleBlock("daylight_detector");
@@ -1783,29 +1783,29 @@ final class AiSchematic {
             var10000 = simpleBlock("nether_quartz_ore");
             break;
          case 154:
-            var10000 = init("hopper", "facing", (data & 7) == 1 ? "down" : poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("hopper", "facing", (data & 7) == 1 ? "down" : DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 155:
             switch (data) {
                case 1:
                   return simpleBlock("chiseled_quartz_block");
                case 2:
-                  return init("quartz_pillar", "axis", "y");
+                  return legacy("quartz_pillar", "axis", "y");
                case 3:
-                  return init("quartz_pillar", "axis", "x");
+                  return legacy("quartz_pillar", "axis", "x");
                case 4:
-                  return init("quartz_pillar", "axis", "z");
+                  return legacy("quartz_pillar", "axis", "z");
                default:
                   return simpleBlock("quartz_block");
             }
          case 156:
-            var10000 = load("quartz_stairs", data);
+            var10000 = torch("quartz_stairs", data);
             break;
          case 157:
-            var10000 = sync("activator_rail", data);
+            var10000 = legacyRail("activator_rail", data);
             break;
          case 158:
-            var10000 = init("dropper", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("dropper", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 159:
             var10000 = simpleBlock(color + "_terracotta");
@@ -1814,16 +1814,16 @@ final class AiSchematic {
             var10000 = simpleBlock(color + "_stained_glass_pane");
             break;
          case 161:
-            var10000 = init((data & 1) != 0 ? "dark_oak_leaves" : "acacia_leaves", "persistent", (data & 4) != 0 ? "true" : "false");
+            var10000 = legacy((data & 1) != 0 ? "dark_oak_leaves" : "acacia_leaves", "persistent", (data & 4) != 0 ? "true" : "false");
             break;
          case 162:
             var10000 = legacyLog((data & 1) != 0 ? "dark_oak" : "acacia", data);
             break;
          case 163:
-            var10000 = load("acacia_stairs", data);
+            var10000 = torch("acacia_stairs", data);
             break;
          case 164:
-            var10000 = load("dark_oak_stairs", data);
+            var10000 = torch("dark_oak_stairs", data);
             break;
          case 165:
             var10000 = simpleBlock("slime_block");
@@ -1832,7 +1832,7 @@ final class AiSchematic {
             var10000 = simpleBlock("barrier");
             break;
          case 167:
-            var10000 = init("iron_trapdoor", "facing", flush[data & 3], "half", (data & 8) != 0 ? "top" : "bottom", "open", (data & 4) != 0 ? "true" : "false");
+            var10000 = legacy("iron_trapdoor", "facing", TRAPDOOR_FACINGS[data & 3], "half", (data & 8) != 0 ? "top" : "bottom", "open", (data & 4) != 0 ? "true" : "false");
             break;
          case 168:
             String var4;
@@ -1865,7 +1865,7 @@ final class AiSchematic {
                   var12 = "y";
             }
 
-            var10000 = init("hay_block", "axis", var12);
+            var10000 = legacy("hay_block", "axis", var12);
             break;
          case 171:
             var10000 = simpleBlock(color + "_carpet");
@@ -1880,43 +1880,43 @@ final class AiSchematic {
             var10000 = simpleBlock("packed_ice");
             break;
          case 175:
-            var10000 = read(data);
+            var10000 = doublePlant(data);
             break;
          case 176:
-            var10000 = init("white_banner", "rotation", String.valueOf(data & 15));
+            var10000 = legacy("white_banner", "rotation", String.valueOf(data & 15));
             break;
          case 177:
-            var10000 = init("white_wall_banner", "facing", legacyFacing(data));
+            var10000 = legacy("white_wall_banner", "facing", legacyFacing(data));
             break;
          case 178:
-            var10000 = init("daylight_detector", "inverted", "true");
+            var10000 = legacy("daylight_detector", "inverted", "true");
             break;
          case 179:
             var10000 = simpleBlock(data == 1 ? "chiseled_red_sandstone" : (data == 2 ? "cut_red_sandstone" : "red_sandstone"));
             break;
          case 180:
-            var10000 = load("red_sandstone_stairs", data);
+            var10000 = torch("red_sandstone_stairs", data);
             break;
          case 181:
-            var10000 = init("red_sandstone_slab", "type", "double");
+            var10000 = legacy("red_sandstone_slab", "type", "double");
             break;
          case 182:
-            var10000 = init("red_sandstone_slab", "type", (data & 8) != 0 ? "top" : "bottom");
+            var10000 = legacy("red_sandstone_slab", "type", (data & 8) != 0 ? "top" : "bottom");
             break;
          case 183:
-            var10000 = write("spruce_fence_gate", data);
+            var10000 = fenceGate("spruce_fence_gate", data);
             break;
          case 184:
-            var10000 = write("birch_fence_gate", data);
+            var10000 = fenceGate("birch_fence_gate", data);
             break;
          case 185:
-            var10000 = write("jungle_fence_gate", data);
+            var10000 = fenceGate("jungle_fence_gate", data);
             break;
          case 186:
-            var10000 = write("dark_oak_fence_gate", data);
+            var10000 = fenceGate("dark_oak_fence_gate", data);
             break;
          case 187:
-            var10000 = write("acacia_fence_gate", data);
+            var10000 = fenceGate("acacia_fence_gate", data);
             break;
          case 188:
             var10000 = simpleBlock("spruce_fence");
@@ -1934,28 +1934,28 @@ final class AiSchematic {
             var10000 = simpleBlock("acacia_fence");
             break;
          case 193:
-            var10000 = read("spruce_door", data);
+            var10000 = halfBlock("spruce_door", data);
             break;
          case 194:
-            var10000 = read("birch_door", data);
+            var10000 = halfBlock("birch_door", data);
             break;
          case 195:
-            var10000 = read("jungle_door", data);
+            var10000 = halfBlock("jungle_door", data);
             break;
          case 196:
-            var10000 = read("acacia_door", data);
+            var10000 = halfBlock("acacia_door", data);
             break;
          case 197:
-            var10000 = read("dark_oak_door", data);
+            var10000 = halfBlock("dark_oak_door", data);
             break;
          case 198:
-            var10000 = init("end_rod", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("end_rod", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 199:
             var10000 = simpleBlock("chorus_plant");
             break;
          case 200:
-            var10000 = init("chorus_flower", "age", String.valueOf(Math.min(data & 7, 5)));
+            var10000 = legacy("chorus_flower", "age", String.valueOf(Math.min(data & 7, 5)));
             break;
          case 201:
             var10000 = simpleBlock("purpur_block");
@@ -1973,22 +1973,22 @@ final class AiSchematic {
                   var11 = "y";
             }
 
-            var10000 = init("purpur_pillar", "axis", var11);
+            var10000 = legacy("purpur_pillar", "axis", var11);
             break;
          case 203:
-            var10000 = load("purpur_stairs", data);
+            var10000 = torch("purpur_stairs", data);
             break;
          case 204:
-            var10000 = init("purpur_slab", "type", "double");
+            var10000 = legacy("purpur_slab", "type", "double");
             break;
          case 205:
-            var10000 = init("purpur_slab", "type", (data & 8) != 0 ? "top" : "bottom");
+            var10000 = legacy("purpur_slab", "type", (data & 8) != 0 ? "top" : "bottom");
             break;
          case 206:
             var10000 = simpleBlock("end_stone_bricks");
             break;
          case 207:
-            var10000 = init("beetroots", "age", String.valueOf(data & 3));
+            var10000 = legacy("beetroots", "age", String.valueOf(data & 3));
             break;
          case 208:
             var10000 = simpleBlock("dirt_path");
@@ -1997,13 +1997,13 @@ final class AiSchematic {
             var10000 = simpleBlock("end_gateway");
             break;
          case 210:
-            var10000 = init("repeating_command_block", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("repeating_command_block", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 211:
-            var10000 = init("chain_command_block", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("chain_command_block", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 212:
-            var10000 = init("frosted_ice", "age", String.valueOf(data & 3));
+            var10000 = legacy("frosted_ice", "age", String.valueOf(data & 3));
             break;
          case 213:
             var10000 = simpleBlock("magma_block");
@@ -2027,13 +2027,13 @@ final class AiSchematic {
                   var10002 = "y";
             }
 
-            var10000 = init("bone_block", "axis", var10002);
+            var10000 = legacy("bone_block", "axis", var10002);
             break;
          case 217:
             var10000 = simpleBlock("structure_void");
             break;
          case 218:
-            var10000 = init("observer", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy("observer", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 219:
          case 220:
@@ -2051,7 +2051,7 @@ final class AiSchematic {
          case 232:
          case 233:
          case 234:
-            var10000 = init(DYE_COLORS[id - 219] + "_shulker_box", "facing", poll[Math.min(data & 7, 5)]);
+            var10000 = legacy(DYE_COLORS[id - 219] + "_shulker_box", "facing", DIRECTIONAL_FACINGS[Math.min(data & 7, 5)]);
             break;
          case 235:
          case 236:
@@ -2069,7 +2069,7 @@ final class AiSchematic {
          case 248:
          case 249:
          case 250:
-            var10000 = init(DYE_COLORS[id - 235] + "_glazed_terracotta", "facing", HORIZONTAL_FACINGS[data & 3]);
+            var10000 = legacy(DYE_COLORS[id - 235] + "_glazed_terracotta", "facing", HORIZONTAL_FACINGS[data & 3]);
             break;
          case 251:
             var10000 = simpleBlock(color + "_concrete");
@@ -2093,23 +2093,23 @@ final class AiSchematic {
       AiSchematic.LegacyBlockState var10000;
       switch (data & 12) {
          case 4:
-            var10000 = init(type + "_log", "axis", "x");
+            var10000 = legacy(type + "_log", "axis", "x");
             break;
          case 8:
-            var10000 = init(type + "_log", "axis", "z");
+            var10000 = legacy(type + "_log", "axis", "z");
             break;
          case 12:
             var10000 = simpleBlock(type + "_wood");
             break;
          default:
-            var10000 = init(type + "_log", "axis", "y");
+            var10000 = legacy(type + "_log", "axis", "y");
       }
 
       return var10000;
    }
 
-   private static AiSchematic.LegacyBlockState load(String block, int data) {
-      return init(block, "facing", TORCH_FACINGS[data & 3], "half", (data & 4) != 0 ? "top" : "bottom");
+   private static AiSchematic.LegacyBlockState torch(String block, int data) {
+      return legacy(block, "facing", TORCH_FACINGS[data & 3], "half", (data & 4) != 0 ? "top" : "bottom");
    }
 
    private static AiSchematic.LegacyBlockState legacySlab(int data, boolean wooden) {
@@ -2117,7 +2117,7 @@ final class AiSchematic {
          "stone_slab", "sandstone_slab", "petrified_oak_slab", "cobblestone_slab", "brick_slab", "stone_brick_slab", "nether_brick_slab", "quartz_slab"
       };
       String block = wooden ? WOOD_TYPES[Math.min(data & 7, 5)] + "_slab" : stone[data & 7];
-      return init(block, "type", (data & 8) != 0 ? "top" : "bottom");
+      return legacy(block, "type", (data & 8) != 0 ? "top" : "bottom");
    }
 
    private static AiSchematic.LegacyBlockState load(int data, boolean wooden) {
@@ -2140,18 +2140,18 @@ final class AiSchematic {
             "stone_slab", "sandstone_slab", "petrified_oak_slab", "cobblestone_slab", "brick_slab", "stone_brick_slab", "nether_brick_slab", "quartz_slab"
          };
          String block = wooden ? WOOD_TYPES[Math.min(data & 7, 5)] + "_slab" : stone[data & 7];
-         return init(block, "type", "double");
+         return legacy(block, "type", "double");
       }
    }
 
-   private static AiSchematic.LegacyBlockState read(String block, int data) {
+   private static AiSchematic.LegacyBlockState halfBlock(String block, int data) {
       return (data & 8) != 0
-         ? init(block, "half", "upper", "hinge", (data & 1) != 0 ? "right" : "left")
-         : init(block, "facing", sync[data & 3], "half", "lower", "open", (data & 4) != 0 ? "true" : "false");
+         ? legacy(block, "half", "upper", "hinge", (data & 1) != 0 ? "right" : "left")
+         : legacy(block, "facing", DOOR_FACINGS[data & 3], "half", "lower", "open", (data & 4) != 0 ? "true" : "false");
    }
 
-   private static AiSchematic.LegacyBlockState write(String block, int data) {
-      return init(block, "facing", HORIZONTAL_FACINGS[data & 3], "open", (data & 4) != 0 ? "true" : "false");
+   private static AiSchematic.LegacyBlockState fenceGate(String block, int data) {
+      return legacy(block, "facing", HORIZONTAL_FACINGS[data & 3], "open", (data & 4) != 0 ? "true" : "false");
    }
 
    private static AiSchematic.LegacyBlockState legacyLever(int data) {
@@ -2159,28 +2159,28 @@ final class AiSchematic {
       AiSchematic.LegacyBlockState var10000;
       switch (data & 7) {
          case 0:
-            var10000 = init("lever", "face", "ceiling", "facing", "east", "powered", powered);
+            var10000 = legacy("lever", "face", "ceiling", "facing", "east", "powered", powered);
             break;
          case 1:
-            var10000 = init("lever", "face", "wall", "facing", "east", "powered", powered);
+            var10000 = legacy("lever", "face", "wall", "facing", "east", "powered", powered);
             break;
          case 2:
-            var10000 = init("lever", "face", "wall", "facing", "west", "powered", powered);
+            var10000 = legacy("lever", "face", "wall", "facing", "west", "powered", powered);
             break;
          case 3:
-            var10000 = init("lever", "face", "wall", "facing", "south", "powered", powered);
+            var10000 = legacy("lever", "face", "wall", "facing", "south", "powered", powered);
             break;
          case 4:
-            var10000 = init("lever", "face", "wall", "facing", "north", "powered", powered);
+            var10000 = legacy("lever", "face", "wall", "facing", "north", "powered", powered);
             break;
          case 5:
-            var10000 = init("lever", "face", "floor", "facing", "north", "powered", powered);
+            var10000 = legacy("lever", "face", "floor", "facing", "north", "powered", powered);
             break;
          case 6:
-            var10000 = init("lever", "face", "floor", "facing", "west", "powered", powered);
+            var10000 = legacy("lever", "face", "floor", "facing", "west", "powered", powered);
             break;
          default:
-            var10000 = init("lever", "face", "ceiling", "facing", "north", "powered", powered);
+            var10000 = legacy("lever", "face", "ceiling", "facing", "north", "powered", powered);
       }
 
       return var10000;
@@ -2191,28 +2191,28 @@ final class AiSchematic {
       AiSchematic.LegacyBlockState var10000;
       switch (data & 7) {
          case 1:
-            var10000 = init(block, "face", "wall", "facing", "east", "powered", powered);
+            var10000 = legacy(block, "face", "wall", "facing", "east", "powered", powered);
             break;
          case 2:
-            var10000 = init(block, "face", "wall", "facing", "west", "powered", powered);
+            var10000 = legacy(block, "face", "wall", "facing", "west", "powered", powered);
             break;
          case 3:
-            var10000 = init(block, "face", "wall", "facing", "south", "powered", powered);
+            var10000 = legacy(block, "face", "wall", "facing", "south", "powered", powered);
             break;
          case 4:
-            var10000 = init(block, "face", "wall", "facing", "north", "powered", powered);
+            var10000 = legacy(block, "face", "wall", "facing", "north", "powered", powered);
             break;
          case 5:
-            var10000 = init(block, "face", "floor", "facing", "north", "powered", powered);
+            var10000 = legacy(block, "face", "floor", "facing", "north", "powered", powered);
             break;
          default:
-            var10000 = init(block, "face", "ceiling", "facing", "north", "powered", powered);
+            var10000 = legacy(block, "face", "ceiling", "facing", "north", "powered", powered);
       }
 
       return var10000;
    }
 
-   private static AiSchematic.LegacyBlockState sync(String block, int data) {
+   private static AiSchematic.LegacyBlockState legacyRail(String block, int data) {
       String[] shapes = new String[]{
          "north_south",
          "east_west",
@@ -2226,14 +2226,14 @@ final class AiSchematic {
          "north_east"
       };
       if (block.equals("rail")) {
-         return init(block, "shape", shapes[Math.min(data & 15, 9)]);
+         return legacy(block, "shape", shapes[Math.min(data & 15, 9)]);
       }
 
       String shape = shapes[Math.min(data & 7, 5)];
-      return block.equals("powered_rail") ? init(block, "shape", shape, "powered", (data & 8) != 0 ? "true" : "false") : init(block, "shape", shape);
+      return block.equals("powered_rail") ? legacy(block, "shape", shape, "powered", (data & 8) != 0 ? "true" : "false") : legacy(block, "shape", shape);
    }
 
-   private static AiSchematic.LegacyBlockState load(int data) {
+   private static AiSchematic.LegacyBlockState vine(int data) {
       Map<String, String> properties = new LinkedHashMap<>();
       properties.put("south", (data & 1) != 0 ? "true" : "false");
       properties.put("west", (data & 2) != 0 ? "true" : "false");
@@ -2243,7 +2243,7 @@ final class AiSchematic {
       return new AiSchematic.LegacyBlockState("minecraft:vine", Map.copyOf(properties));
    }
 
-   private static AiSchematic.LegacyBlockState read(int data) {
+   private static AiSchematic.LegacyBlockState doublePlant(int data) {
       String var10000;
       switch (data & 7) {
          case 1:
@@ -2266,7 +2266,7 @@ final class AiSchematic {
       }
 
       String block = var10000;
-      return init(block, "half", (data & 8) != 0 ? "upper" : "lower");
+      return legacy(block, "half", (data & 8) != 0 ? "upper" : "lower");
    }
 
    record LoadedSchematic(

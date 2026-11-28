@@ -40,7 +40,7 @@ public final class SodiumRegionResourceProbe {
          return new SodiumRegionResourceProbe.RenderListHandles(SodiumRegionResourceProbe.init(type, "getRegion", 0), SodiumRegionResourceProbe.init(type, "sectionsWithGeometryIterator", 1));
       }
    };
-   private static final ClassValue<SodiumRegionResourceProbe.RegionStorageHandles> write = new ClassValue<SodiumRegionResourceProbe.RegionStorageHandles>() {
+   private static final ClassValue<SodiumRegionResourceProbe.RegionStorageHandles> REGION_HANDLES = new ClassValue<SodiumRegionResourceProbe.RegionStorageHandles>() {
       protected SodiumRegionResourceProbe.RegionStorageHandles computeValue(Class<?> type) {
          return this.init(type);
       }
@@ -49,7 +49,7 @@ public final class SodiumRegionResourceProbe {
          return new SodiumRegionResourceProbe.RegionStorageHandles(SodiumRegionResourceProbe.init(type, "getStorage", 1), SodiumRegionResourceProbe.init(type, "getCachedBatch", 1), SodiumRegionResourceProbe.init(type, "getResources", 0));
       }
    };
-   private static final ClassValue<SodiumRegionResourceProbe.EmptyCheckHandle> update = new ClassValue<SodiumRegionResourceProbe.EmptyCheckHandle>() {
+   private static final ClassValue<SodiumRegionResourceProbe.EmptyCheckHandle> EMPTY_CHECK_HANDLES = new ClassValue<SodiumRegionResourceProbe.EmptyCheckHandle>() {
       protected SodiumRegionResourceProbe.EmptyCheckHandle computeValue(Class<?> type) {
          return this.init(type);
       }
@@ -84,7 +84,7 @@ public final class SodiumRegionResourceProbe {
       return !load_Z && (init_Z || init_AtomicInteger.get() != load_I || read_I > 0);
    }
 
-   static void read() {
+   static void resetFrame() {
       init_Z = false;
       load_Z = false;
       load_I = init_AtomicInteger.get();
@@ -131,14 +131,14 @@ public final class SodiumRegionResourceProbe {
 
                   Object region = (Object)renderAccess.init().invoke((Object)renderList);
                   if (region != null) {
-                     SodiumRegionResourceProbe.RegionStorageHandles regionAccess = write.get(region.getClass());
+                     SodiumRegionResourceProbe.RegionStorageHandles regionAccess = REGION_HANDLES.get(region.getClass());
                      if (regionAccess.init() == null || regionAccess.load() == null || regionAccess.read() == null) {
                         return load_Z();
                      }
 
                      if ((Object)regionAccess.init().invoke((Object)region, (Object)pass) != null) {
                         Object batch = (Object)regionAccess.load().invoke((Object)region, (Object)pass);
-                        SodiumRegionResourceProbe.EmptyCheckHandle batchAccess = batch == null ? null : update.get(batch.getClass());
+                        SodiumRegionResourceProbe.EmptyCheckHandle batchAccess = batch == null ? null : EMPTY_CHECK_HANDLES.get(batch.getClass());
                         if (batchAccess != null && batchAccess.init() == null) {
                            return load_Z();
                         }

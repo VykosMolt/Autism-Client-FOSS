@@ -30,7 +30,7 @@ public final class RemoteViewCommand extends Command {
          if (!RemoteViewController.isActive()) {
             AutismClientMessaging.sendPrefixed("§7Remote view is not active.");
          } else {
-            RemoteViewController.init(false);
+            RemoteViewController.stop(false);
             AutismClientMessaging.sendPrefixed("§aRemote view stopped.");
          }
 
@@ -100,7 +100,7 @@ public final class RemoteViewCommand extends Command {
    private static CompletableFuture<Suggestions> suggestPlayers(CommandContext<AutismCommandSource> ignored, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(Minecraft.getInstance())) {
+      for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.parse(Minecraft.getInstance())) {
          if (player.name().toLowerCase(Locale.ROOT).startsWith(remaining)) {
             builder.suggest(player.name());
          }

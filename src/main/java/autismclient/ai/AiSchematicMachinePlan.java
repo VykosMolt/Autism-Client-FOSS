@@ -242,7 +242,7 @@ public final class AiSchematicMachinePlan {
       return this.init(origin, registries, this.containerContents.keySet());
    }
 
-   List<AiSchematicMachinePlan.ContainerPlan> load(BlockPos origin, Provider registries) {
+   List<AiSchematicMachinePlan.ContainerPlan> hopperPlans(BlockPos origin, Provider registries) {
       return this.init(origin, registries, this.hopperCells);
    }
 

@@ -15,23 +15,23 @@ public final class TranslationSnapshot {
    private static final ThreadLocal<TranslationSnapshot.SnapshotBuilder> ACTIVE_BUILDER = new ThreadLocal<>();
    private final ResourceManager resourceManager;
    private final Map<String, TranslationSnapshot.SourcedEntry> entries;
-   private final Map<String, String> load;
+   private final Map<String, String> vanillaEntries;
 
    private TranslationSnapshot(ResourceManager resourceManager, Map<String, TranslationSnapshot.SourcedEntry> entries, Map<String, String> vanillaEntries) {
       this.resourceManager = resourceManager;
       this.entries = entries;
-      this.load = vanillaEntries;
+      this.vanillaEntries = vanillaEntries;
    }
 
-   public static String init(Language language, String key, String fallback) {
-      return init(language, key, fallback, null, false);
+   public static String resolve(Language language, String key, String fallback) {
+      return resolve(language, key, fallback, null, false);
    }
 
    public static String translate(Language language, String key, String fallback, ConnectionPrivacyRegistry.ConnectionSession origin) {
-      return init(language, key, fallback, origin, true);
+      return resolve(language, key, fallback, origin, true);
    }
 
-   private static String init(Language language, String key, String fallback, ConnectionPrivacyRegistry.ConnectionSession origin, boolean connectionBound) {
+   private static String resolve(Language language, String key, String fallback, ConnectionPrivacyRegistry.ConnectionSession origin, boolean connectionBound) {
       if (language instanceof TranslationSnapshotDuck access) {
          TranslationSnapshot snapshot = access.autism$getTranslationSnapshot();
          if (snapshot != null) {
@@ -39,7 +39,7 @@ public final class TranslationSnapshot {
             if (sourced != null) {
                TranslationSnapshot.TranslationEntry entry = sourced.entry();
                if (entry.origin() == TranslationSnapshot.EntryOrigin.VANILLA) {
-                  return entry.init_Str();
+                  return entry.value();
                }
 
                if (sourced.source() != null
@@ -49,12 +49,12 @@ public final class TranslationSnapshot {
                         ? PackTranslationPolicyResolver.init(snapshot.resourceManager, sourced.source(), sourced.init_Str(), origin)
                         : PackTranslationPolicyResolver.init(snapshot.resourceManager, sourced.source(), sourced.init_Str())
                   )) {
-                  return entry.init_Str();
+                  return entry.value();
                }
             }
 
             if (connectionBound) {
-               String vanilla = snapshot.load.get(key);
+               String vanilla = snapshot.vanillaEntries.get(key);
                if (vanilla != null) {
                   return vanilla;
                }
@@ -80,7 +80,7 @@ public final class TranslationSnapshot {
    public static final class SnapshotBuilder implements AutoCloseable {
       private final ResourceManager resourceManager;
       private final Map<String, TranslationSnapshot.SourcedEntry> entries = new HashMap<>();
-      private final Map<String, String> load = new HashMap<>();
+      private final Map<String, String> vanilla = new HashMap<>();
       private final TranslationSnapshot.SnapshotBuilder previous;
       private boolean closed;
 
@@ -99,27 +99,27 @@ public final class TranslationSnapshot {
          return TranslationSnapshot.ACTIVE_BUILDER.get();
       }
 
-      public void init(PackResources source, String sourcePackId, String key, String value) {
+      public void putFromPack(PackResources source, String sourcePackId, String key, String value) {
          Objects.requireNonNull(source, "source");
          Objects.requireNonNull(key, "key");
          Objects.requireNonNull(value, "value");
          if (source instanceof VanillaPackResources) {
-            this.init(TranslationSnapshot.EntryOrigin.VANILLA, key, value);
+            this.put(TranslationSnapshot.EntryOrigin.VANILLA, key, value);
          } else if (PackTranslationPolicyResolver.init(this.resourceManager, source, sourcePackId)) {
-            this.init(init_ClassCache_CachePo_PackResources(source), key, value, source, sourcePackId);
+            this.put(init_ClassCache_CachePo_PackResources(source), key, value, source, sourcePackId);
          }
       }
 
-      void init(TranslationSnapshot.EntryOrigin origin, String key, String value) {
-         this.init(origin, key, value, null, null);
+      void put(TranslationSnapshot.EntryOrigin origin, String key, String value) {
+         this.put(origin, key, value, null, null);
       }
 
-      private void init(TranslationSnapshot.EntryOrigin origin, String key, String value, PackResources source, String sourcePackId) {
+      private void put(TranslationSnapshot.EntryOrigin origin, String key, String value, PackResources source, String sourcePackId) {
          Objects.requireNonNull(origin, "origin");
          Objects.requireNonNull(key, "key");
          Objects.requireNonNull(value, "value");
          if (origin == TranslationSnapshot.EntryOrigin.VANILLA) {
-            this.load.put(key, value);
+            this.vanilla.put(key, value);
          }
 
          if (origin == TranslationSnapshot.EntryOrigin.MOD) {
@@ -141,18 +141,18 @@ public final class TranslationSnapshot {
          return modId == null ? TranslationSnapshot.EntryOrigin.OTHER : TranslationSnapshot.EntryOrigin.MOD;
       }
 
-      public void init(List<String> removed, Map<String, String> renamed) {
+      public void applyDeprecations(List<String> removed, Map<String, String> renamed) {
          for (String key : removed) {
             this.entries.remove(key);
-            this.load.remove(key);
+            this.vanilla.remove(key);
          }
 
          for (Entry<String, String> rename : renamed.entrySet()) {
-            String previousVanilla = this.load.remove(rename.getKey());
+            String previousVanilla = this.vanilla.remove(rename.getKey());
             if (previousVanilla == null) {
-               this.load.remove(rename.getValue());
+               this.vanilla.remove(rename.getValue());
             } else {
-               this.load.put(rename.getValue(), previousVanilla);
+               this.vanilla.put(rename.getValue(), previousVanilla);
             }
 
             TranslationSnapshot.SourcedEntry previousValue = this.entries.remove(rename.getKey());
@@ -165,7 +165,7 @@ public final class TranslationSnapshot {
       }
 
       public TranslationSnapshot build() {
-         return new TranslationSnapshot(this.resourceManager, Map.copyOf(this.entries), Map.copyOf(this.load));
+         return new TranslationSnapshot(this.resourceManager, Map.copyOf(this.entries), Map.copyOf(this.vanilla));
       }
 
       TranslationSnapshot.TranslationEntry lookup(String key) {
@@ -190,9 +190,9 @@ public final class TranslationSnapshot {
       }
    }
 
-   public record TranslationEntry(String init_Str, TranslationSnapshot.EntryOrigin origin) {
+   public record TranslationEntry(String value, TranslationSnapshot.EntryOrigin origin) {
       public TranslationEntry {
-         Objects.requireNonNull(init_Str, "value");
+         Objects.requireNonNull(value, "value");
          Objects.requireNonNull(origin, "origin");
       }
    }

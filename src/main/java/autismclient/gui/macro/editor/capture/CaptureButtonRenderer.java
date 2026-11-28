@@ -24,10 +24,10 @@ public final class CaptureButtonRenderer {
       int mouseY,
       Runnable action
    ) {
-      return init(graphics, font, bounds, mode, capturing, active, mouseX, mouseY, null, null, action);
+      return render(graphics, font, bounds, mode, capturing, active, mouseX, mouseY, null, null, action);
    }
 
-   public static OverlayActionButton init(
+   public static OverlayActionButton render(
       GuiGraphicsExtractor graphics,
       Font font,
       NetHelper bounds,
@@ -47,7 +47,7 @@ public final class CaptureButtonRenderer {
          bounds.write(),
          bounds.update(),
          bounds.sync(),
-         Component.literal(init(resolvedMode, capturing, idleLabel, capturingLabel)),
+         Component.literal(label(resolvedMode, capturing, idleLabel, capturingLabel)),
          ignored -> resolvedAction.run()
       );
       button.setTone(capturing ? OverlayActionButton.ButtonTone.SUCCESS : OverlayActionButton.ButtonTone.PRIMARY);
@@ -57,10 +57,10 @@ public final class CaptureButtonRenderer {
    }
 
    public static String init(autismclient.gui.macro.editor.CaptureMode mode, boolean capturing) {
-      return init(mode, capturing, null, null);
+      return label(mode, capturing, null, null);
    }
 
-   public static String init(autismclient.gui.macro.editor.CaptureMode mode, boolean capturing, String idleLabel, String capturingLabel) {
+   public static String label(autismclient.gui.macro.editor.CaptureMode mode, boolean capturing, String idleLabel, String capturingLabel) {
       if (capturing && capturingLabel != null && !capturingLabel.isBlank()) {
          return capturingLabel;
       }

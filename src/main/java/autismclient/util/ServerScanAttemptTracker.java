@@ -15,11 +15,11 @@ final class ServerScanAttemptTracker {
       return !this.init_Z && this.init_J == expectedGeneration && this.init_Str.equals(currentAddress == null ? "" : currentAddress);
    }
 
-   boolean init(int completedAttempts) {
+   boolean canRetry(int completedAttempts) {
       return !this.init_Z && completedAttempts + 1 < 4;
    }
 
-   boolean init() {
+   boolean finish() {
       if (this.init_Z) {
          return false;
       }
@@ -28,11 +28,11 @@ final class ServerScanAttemptTracker {
       return true;
    }
 
-   boolean init(int runtimeErrors, int failedProbes, int pendingProbes) {
+   boolean hadFailures(int runtimeErrors, int failedProbes, int pendingProbes) {
       return runtimeErrors > 0 || failedProbes > 0 || pendingProbes > 0;
    }
 
-   boolean load() {
+   boolean isFinished() {
       return this.init_Z;
    }
 }

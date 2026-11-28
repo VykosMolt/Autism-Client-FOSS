@@ -29,22 +29,22 @@ final class BedMiningEstimator {
    private static final Map<BlockPos, BedMiningEstimator.Inner_DataUtil> init_Map = new LinkedHashMap<>();
    private static Object init_Obj;
 
-   static void init() {
+   static void clearCache() {
       init_Map.clear();
       init_Obj = null;
    }
 
-   static BedBreachRouteSolver.BreachRoute init(BlockPos bed, boolean tools, BlockPos mining, float progress) {
+   static BedBreachRouteSolver.BreachRoute localRoute(BlockPos bed, boolean tools, BlockPos mining, float progress) {
       return init(bed, tools, mining, progress, 0.0);
    }
 
-   static BedBreachRouteSolver.BreachRoute load(BlockPos bed, boolean tools, BlockPos mining, float progress) {
+   static BedBreachRouteSolver.BreachRoute nukerRoute(BlockPos bed, boolean tools, BlockPos mining, float progress) {
       return init(bed, tools, mining, progress, 8.0);
    }
 
    private static BedBreachRouteSolver.BreachRoute init(BlockPos bed, boolean tools, BlockPos mining, float progress, double coverDepth) {
       if (init_Obj != init_Minecraft.level) {
-         init();
+         clearCache();
          init_Obj = init_Minecraft.level;
       }
 
@@ -96,7 +96,7 @@ final class BedMiningEstimator {
                            slot = init(block);
                         }
 
-                        ticks = init(block, p, init_Minecraft.player.getInventory().getItem(slot));
+                        ticks = breakTicks(block, p, init_Minecraft.player.getInventory().getItem(slot));
                         cost = new BedBreachRouteSolver.BreachCell(p, List.of(), ticks, slot, target);
                         costs.put(block, cost);
                      }
@@ -107,7 +107,7 @@ final class BedMiningEstimator {
 
                   if (ideal && breakable) {
                      actualCosts.put(p, ticks);
-                     ticks = idealCosts.computeIfAbsent(block, b -> recommended.stream().mapToDouble(stack -> init(b, p, stack)).min().orElse(1.0 / 0.0));
+                     ticks = idealCosts.computeIfAbsent(block, b -> recommended.stream().mapToDouble(stack -> breakTicks(b, p, stack)).min().orElse(1.0 / 0.0));
                   }
 
                   cells.add(new BedBreachRouteSolver.BreachCell(p, boxes, ticks, slot, target));
@@ -128,7 +128,7 @@ final class BedMiningEstimator {
          init_Map.put(bed.immutable(), cached);
       }
 
-      BedBreachRouteSolver.BreachRoute route = cached.init_DataPipe_CachePool.init(mining, progress, preferred);
+      BedBreachRouteSolver.BreachRoute route = cached.init_DataPipe_CachePool.bestRoute(mining, progress, preferred);
       if (ideal && route != null) {
          List<BedBreachRouteSolver.BreachCell> actual = route.cells().stream().map(c -> {
             double ticksx = actualCosts.get(c.pos());
@@ -146,7 +146,7 @@ final class BedMiningEstimator {
       }
    }
 
-   static BedMiningEstimator.Inner_StreamUtil init(BlockPos pos, Vec3 preferred, float progress, Vec3 nextEye) {
+   static BedMiningEstimator.Inner_StreamUtil track(BlockPos pos, Vec3 preferred, float progress, Vec3 nextEye) {
       if (!init_Minecraft.level.isLoaded(pos)) {
          return null;
       }
@@ -160,7 +160,7 @@ final class BedMiningEstimator {
             .map(b -> b.move(pos))
             .toList();
          double reach = init_Minecraft.player.blockInteractionRange();
-         if (!BedTargetAimSolver.init(boxes, eye, reach)) {
+         if (!BedTargetAimSolver.anyInReach(boxes, eye, reach)) {
             return null;
          }
 
@@ -184,7 +184,7 @@ final class BedMiningEstimator {
             }
          }
 
-         double remaining = Math.max(1.0, Math.ceil(init(state, pos, init_Minecraft.player.getMainHandItem()) * (1.0F - Math.clamp(progress, 0.0F, 1.0F))));
+         double remaining = Math.max(1.0, Math.ceil(breakTicks(state, pos, init_Minecraft.player.getMainHandItem()) * (1.0F - Math.clamp(progress, 0.0F, 1.0F))));
          Vec3 visible = BedTargetAimSolver.visibleAimPoint(boxes, blockers, eye, reach, preferred);
          Vec3 future = BedTargetAimSolver.visibleAimPoint(boxes, blockers, nextEye, reach, preferred);
          return new BedMiningEstimator.Inner_StreamUtil(
@@ -210,7 +210,7 @@ final class BedMiningEstimator {
       }
    }
 
-   static double init(BlockState state, BlockPos pos, ItemStack stack) {
+   static double breakTicks(BlockState state, BlockPos pos, ItemStack stack) {
       if (init_Minecraft.player.hasInfiniteMaterials()) {
          return state.getDestroySpeed(init_Minecraft.level, pos) < 0.0F ? 1.0 / 0.0 : 1.0;
       }

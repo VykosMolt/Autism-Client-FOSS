@@ -22,7 +22,7 @@ public class MacroNameArgumentType implements ArgumentType<String> {
       return new MacroNameArgumentType();
    }
 
-   public static String init(CommandContext<AutismCommandSource> ctx, String name) {
+   public static String getValue(CommandContext<AutismCommandSource> ctx, String name) {
       return ctx.getArgument(name, String.class);
    }
 

@@ -7,11 +7,11 @@ public final class GuiDesyncHelper {
    private GuiDesyncHelper() {
    }
 
-   public static boolean init(Minecraft mc) {
-      return init(mc, true);
+   public static boolean saveGui(Minecraft mc) {
+      return saveGui(mc, true);
    }
 
-   public static boolean init(Minecraft mc, boolean notify) {
+   public static boolean saveGui(Minecraft mc, boolean notify) {
       if (mc != null && mc.gui.screen() != null && mc.player != null) {
          AutismSessionState.getInstance().storeGuiScreen(mc.gui.screen(), mc.player.containerMenu);
          if (notify) {

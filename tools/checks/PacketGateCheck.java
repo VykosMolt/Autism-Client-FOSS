@@ -21,15 +21,15 @@ public class PacketGateCheck {
       autismclient.modules.aD.init((autismclient.util.AutismConfig)null);
 
       PacketGateManager.clearAll();
-      PacketGateManager.load(gate("g", PacketGateAction.GateMode.CANCEL), 0L);
+      PacketGateManager.install(gate("g", PacketGateAction.GateMode.CANCEL), 0L);
       check(PacketGateManager.hasActiveGates(), "owner-0 gate installed");
-      PacketGateManager.load(gate("g", PacketGateAction.GateMode.DISABLE_GATE), 7L);
+      PacketGateManager.install(gate("g", PacketGateAction.GateMode.DISABLE_GATE), 7L);
       check(!PacketGateManager.hasActiveGates(), "UNBLOCK from a run removes the owner-0 gate with the same id");
 
-      PacketGateManager.load(gate("g", PacketGateAction.GateMode.CANCEL), 0L);
-      PacketGateManager.load(gate("run", PacketGateAction.GateMode.CANCEL), 7L);
+      PacketGateManager.install(gate("g", PacketGateAction.GateMode.CANCEL), 0L);
+      PacketGateManager.install(gate("run", PacketGateAction.GateMode.CANCEL), 7L);
       CompatSwingPacket packet = new CompatSwingPacket(InteractionHand.MAIN_HAND);
-      check(PacketGateManager.init(packet, "C2S") == PacketGateManager.Inner_StreamUtil.CANCEL, "gates block on the connection they were made on");
+      check(PacketGateManager.match(packet, "C2S") == PacketGateManager.Inner_StreamUtil.CANCEL, "gates block on the connection they were made on");
 
       net.minecraft.SharedConstants.tryDetectVersion();
       net.minecraft.server.Bootstrap.bootStrap();
@@ -39,9 +39,9 @@ public class PacketGateCheck {
       Field playerField = Minecraft.class.getField("player");
       unsafe.putObject(mc, unsafe.objectFieldOffset(playerField), player);
       check(mc.getConnection() != null, "fake connection in place");
-      PacketGateManager.init(packet, "C2S");
-      check(PacketGateManager.init(7L) == 1, "run-owned gate survives a connection change");
-      check(PacketGateManager.init(0L) == 0, "owner-0 gate is dropped on a different connection");
+      PacketGateManager.match(packet, "C2S");
+      check(PacketGateManager.countForRun(7L) == 1, "run-owned gate survives a connection change");
+      check(PacketGateManager.countForRun(0L) == 0, "owner-0 gate is dropped on a different connection");
       System.out.println("PASS PacketGateCheck");
    }
 

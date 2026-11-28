@@ -151,7 +151,7 @@ public final class ToolsAction implements MacroAction {
 
    public MacroToolBridge.ToolJob startJob(Minecraft mc, long owner) {
       if (!"RUN".equals(this.operation)) {
-         return MacroToolBridge.load(owner, this.scope, "");
+         return MacroToolBridge.start(owner, this.scope, "");
       } else if (this.toolId != null && !this.toolId.isBlank()) {
          return MacroToolBridge.startTool(owner, this.toolId, this.buildArgs(mc).toString());
       } else {

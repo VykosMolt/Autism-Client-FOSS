@@ -132,7 +132,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
          }
       }
 
-      return withFeetHazard(var6, AiEnvironmentHazards.init(this.level, new BlockPos(var1, var2, var3)));
+      return withFeetHazard(var6, AiEnvironmentHazards.isHazardous(this.level, new BlockPos(var1, var2, var3)));
    }
 
    @Override

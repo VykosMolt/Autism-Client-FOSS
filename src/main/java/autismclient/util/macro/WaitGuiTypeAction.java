@@ -98,12 +98,12 @@ public class WaitGuiTypeAction implements CaptureOutputAction, MacroAction {
    }
 
    @Override
-   public String load() {
+   public String getSaveAs() {
       return this.saveAs;
    }
 
    @Override
-   public void a_(String value) {
+   public void setSaveAs(String value) {
       this.saveAs = value == null ? "" : value;
    }
 

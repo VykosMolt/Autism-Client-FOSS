@@ -79,15 +79,15 @@ public final class SchematicDecodeCheck {
       Path wide = write("wide600.litematic", litematic(region(0, 0, 0, 600, 1, 1, List.of("minecraft:stone"), new int[600])));
       Path wider = write("wide1100.litematic", litematic(region(0, 0, 0, 1100, 1, 1, List.of("minecraft:stone"), new int[1100])));
       Path target = Files.createTempDirectory(dir, "attached");
-      check(!throwsOn(() -> AiAttachments.init(wide, target)), "S7 a 600-wide schematic attaches (direct build accepts it)");
+      check(!throwsOn(() -> AiAttachments.attach(wide, target)), "S7 a 600-wide schematic attaches (direct build accepts it)");
       check(!throwsOn(() -> AiSchematic.load(wide, BlockPos.ZERO, 0, "none", false, 2097152)), "S7 a 600-wide schematic builds");
-      check(throwsOn(() -> AiAttachments.init(wider, target)), "S7 a 1100-wide schematic is refused on attach like build");
+      check(throwsOn(() -> AiAttachments.attach(wider, target)), "S7 a 1100-wide schematic is refused on attach like build");
 
       // S9: the capture writer refuses a palette its own reader would reject.
-      check(throwsOn(() -> SchematicCapture.init(new int[1], 65537)), "S9 capture writer refuses 65537 block states");
+      check(throwsOn(() -> SchematicCapture.packIndices(new int[1], 65537)), "S9 capture writer refuses 65537 block states");
       BlockState[] states = new BlockState[65536];
       java.util.Arrays.fill(states, Blocks.AIR.defaultBlockState());
-      check(!throwsOn(() -> new SchematicDocument.Region(0, 0, 0, 1, 1, 1, states, SchematicCapture.init(new int[1], 65536), null)), "S9 65536 states round-trip");
+      check(!throwsOn(() -> new SchematicDocument.Region(0, 0, 0, 1, 1, 1, states, SchematicCapture.packIndices(new int[1], 65536), null)), "S9 65536 states round-trip");
 
       if (!failures.isEmpty()) {
          failures.forEach(f -> System.out.println("FAIL SchematicDecodeCheck: " + f));

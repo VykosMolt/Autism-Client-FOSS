@@ -947,7 +947,7 @@ final class AiSchematicActions {
          || id.startsWith("minecraft:potted_")
          || "upper".equals(cell.properties().get("half"))
          || isBedHead(cell)
-         || write(cell)
+         || isFilledCauldron(cell)
          || isFilledComposter(cell);
    }
 
@@ -959,7 +959,7 @@ final class AiSchematicActions {
       return "head".equals(cell.properties().get("part")) && cell.block().endsWith("_bed");
    }
 
-   static boolean write(AiBuilder.CellSpec cell) {
+   static boolean isFilledCauldron(AiBuilder.CellSpec cell) {
       return cell.block().equals("minecraft:water_cauldron")
          || cell.block().equals("minecraft:lava_cauldron")
          || cell.block().equals("minecraft:powder_snow_cauldron");
@@ -982,7 +982,7 @@ final class AiSchematicActions {
    }
 
    static boolean isPartialFill(AiBuilder.CellSpec cell, BlockState live) {
-      if (write(cell) && live != null) {
+      if (isFilledCauldron(cell) && live != null) {
          Block wantedBlock = BuiltInRegistries.BLOCK.getValue(Identifier.parse(cell.block()));
          if (live.getBlock() != wantedBlock) {
             return false;
@@ -1011,9 +1011,9 @@ final class AiSchematicActions {
          return List.of();
       }
 
-      if (!write(cell)) {
+      if (!isFilledCauldron(cell)) {
          if (id.startsWith("minecraft:potted_")) {
-            return init(AiBuilder.toBlockState(cell).getBlock()) != Items.AIR ? List.of() : List.of("no plant item for the pot");
+            return pottedItem(AiBuilder.toBlockState(cell).getBlock()) != Items.AIR ? List.of() : List.of("no plant item for the pot");
          } else {
             return "upper".equals(cell.properties().get("half")) ? List.of() : List.of("no survival construction strategy");
          }
@@ -1024,7 +1024,7 @@ final class AiSchematicActions {
       }
    }
 
-   static Item init(Block block) {
+   static Item pottedItem(Block block) {
       return block instanceof FlowerPotBlock pot ? pot.getPotted().asItem() : Items.AIR;
    }
 
@@ -1184,7 +1184,7 @@ final class AiSchematicActions {
       return distinctItems(materialPlans(cell));
    }
 
-   static List<Item> load(AiBuilder.CellSpec cell, BlockPos target) {
+   static List<Item> materialItems(AiBuilder.CellSpec cell, BlockPos target) {
       return distinctItems(materialPlans(cell, target));
    }
 
@@ -1311,7 +1311,7 @@ final class AiSchematicActions {
                   } else {
                      return this.finish(AiOperation.Status.FAILED, "The composter cell is occupied by protected contents");
                   }
-               } else if (!AiSchematicActions.write(cell)) {
+               } else if (!AiSchematicActions.isFilledCauldron(cell)) {
                   if ("upper".equals(cell.properties().get("half"))) {
                      if (live.canBeReplaced() || live.getBlock() == BuiltInRegistries.BLOCK.getValue(Identifier.parse(id))) {
                         BlockPos root = target.below();
@@ -1449,7 +1449,7 @@ final class AiSchematicActions {
                         return this.running("Placing soil");
                      }
                   } else if (id.startsWith("minecraft:potted_")) {
-                     Item plant = AiSchematicActions.init(AiBuilder.toBlockState(cell).getBlock());
+                     Item plant = AiSchematicActions.pottedItem(AiBuilder.toBlockState(cell).getBlock());
                      if (plant == Items.AIR) {
                         return this.finish(AiOperation.Status.FAILED, "No plant item for " + id);
                      } else if (!live.is(Blocks.FLOWER_POT)) {

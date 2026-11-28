@@ -138,12 +138,12 @@ final class AiSmelt {
             try {
                resolved = collect
                   ? new AiSmelt.SmeltRecipe(
-                     load(AiJson.getString(args, "item", "")),
-                     load(AiJson.getString(args, "input", "")),
+                     requireItem(AiJson.getString(args, "item", "")),
+                     requireItem(AiJson.getString(args, "input", "")),
                      fuelOrCoal(AiJson.getString(args, "fuel", "")),
                      AiJson.getString(args, "station", "minecraft:furnace")
                   )
-                  : init(mc, outputTarget, AiJson.getString(args, "input", ""), AiJson.getString(args, "fuel", ""), requested);
+                  : resolveRecipe(mc, outputTarget, AiJson.getString(args, "input", ""), AiJson.getString(args, "fuel", ""), requested);
             } catch (IllegalArgumentException noFuel) {
                if (!collect
                   && AiJson.getString(args, "fuel", "").isBlank()
@@ -206,9 +206,9 @@ final class AiSmelt {
                boolean write_Z;
                boolean update_Z;
                boolean sync_Z;
-               boolean flush;
+               boolean stationWarned;
                AiOperation read_AiOperation;
-               final boolean close = AiJson.getString(args, "fuel", "").isBlank();
+               final boolean autoFuel = AiJson.getString(args, "fuel", "").isBlank();
                AiOperation write_AiOperation;
                int sync_I;
 
@@ -235,15 +235,15 @@ final class AiSmelt {
                      || mc.level != this.startLevel
                      || mc.getConnection() != this.startConnection
                      || mc.player != this.startPlayer) {
-                     return this.init(AiOperation.Status.CANCELLED, "Smelting cancelled or world/player changed; committed contents keep cooking");
+                     return this.finish(AiOperation.Status.CANCELLED, "Smelting cancelled or world/player changed; committed contents keep cooking");
                   }
 
                   if (!mc.player.isAlive()) {
-                     return this.init(AiOperation.Status.FAILED, "Player died while smelting");
+                     return this.finish(AiOperation.Status.FAILED, "Player died while smelting");
                   }
 
                   if (System.nanoTime() > this.deadline) {
-                     return this.init(
+                     return this.finish(
                         this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
                         "Smelting target not reached before the deadline; pending transfers require reconciliation"
                      );
@@ -252,7 +252,7 @@ final class AiSmelt {
                   AiOperation.Result guarded = this.guard.tick(this, this::cancelWork, this::secondsLeft);
                   if (guarded != null) {
                      if (!guarded.terminal()) {
-                        return this.init(guarded.message());
+                        return this.running(guarded.message());
                      }
 
                      JsonObject receipt = this.receipt();
@@ -261,7 +261,7 @@ final class AiSmelt {
                      return new AiOperation.Result(guarded.status(), guarded.message(), receipt.toString(), guarded.evidence(), guarded.failure());
                   } else {
                      if (AiGameState.countInventoryItem(outputId) >= target && this.load_AiOperation == null) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Inventory already holds the requested " + outputId);
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Inventory already holds the requested " + outputId);
                      }
 
                      if (this.sync_Z && AiGameState.countInventoryItem(resolved.stationId()) <= 0) {
@@ -272,54 +272,54 @@ final class AiSmelt {
                            AiJson.objectOf("item", resolved.stationId(), "count", 1, "timeoutSeconds", Math.max(20, Math.min(90, this.secondsLeft())))
                         );
                         if (this.read_AiOperation != null) {
-                           return this.init("Making a " + resolved.stationId() + " of our own");
+                           return this.running("Making a " + resolved.stationId() + " of our own");
                         }
                      }
 
                      if (this.write_AiOperation != null) {
                         AiOperation.Result got = this.write_AiOperation.tick();
                         if (!got.terminal()) {
-                           return this.init("Fetching fuel: " + got.message());
+                           return this.running("Fetching fuel: " + got.message());
                         }
 
                         this.write_AiOperation.cancel();
                         this.write_AiOperation = null;
                         return got.status() != AiOperation.Status.SUCCEEDED
-                           ? this.init(AiOperation.Status.FAILED, "Out of fuel, and fetching more failed: " + got.message())
-                           : this.init("Fuel in hand; back to the " + resolved.stationId());
+                           ? this.finish(AiOperation.Status.FAILED, "Out of fuel, and fetching more failed: " + got.message())
+                           : this.running("Fuel in hand; back to the " + resolved.stationId());
                      } else if (this.read_AiOperation != null) {
                         AiOperation.Result made = this.read_AiOperation.tick();
                         if (!made.terminal()) {
-                           return this.init("Making a " + resolved.stationId() + " of our own: " + made.message());
+                           return this.running("Making a " + resolved.stationId() + " of our own: " + made.message());
                         }
 
                         this.read_AiOperation.cancel();
                         this.read_AiOperation = null;
                         return made.status() != AiOperation.Status.SUCCEEDED
-                           ? this.init(AiOperation.Status.FAILED, "Making a " + resolved.stationId() + " failed: " + made.message())
-                           : this.init("Our own " + resolved.stationId() + " is ready to place");
+                           ? this.finish(AiOperation.Status.FAILED, "Making a " + resolved.stationId() + " failed: " + made.message())
+                           : this.running("Our own " + resolved.stationId() + " is ready to place");
                      } else if (this.furnaceWork != null) {
                         AiOperation.Result r = this.furnaceWork.tick();
                         this.init_JsonObject = AiRunResources.parseEvidenceJson(r.dataJson());
                         if (!r.terminal()) {
-                           return this.init(r.message());
+                           return this.running(r.message());
                         }
 
                         this.furnaceWork.cancel();
                         this.furnaceWork = null;
                         return r.status() != AiOperation.Status.SUCCEEDED
-                           ? this.init(r.status(), "Productive smelt work: " + r.message())
-                           : this.init("Back at the furnace to collect or load the next batch");
+                           ? this.finish(r.status(), "Productive smelt work: " + r.message())
+                           : this.running("Back at the furnace to collect or load the next batch");
                      } else {
                         if (this.load_Z && this.init_BlockPos != null) {
                            this.load_Z = false;
                            this.furnaceWork = new AiFurnaceWork(this.station, this.init_BlockPos, BuiltInRegistries.ITEM.getKey(resolved.input()).toString(), 0);
-                           return this.init("Survival interruption settled; replan the return to the committed furnace");
+                           return this.running("Survival interruption settled; replan the return to the committed furnace");
                         }
 
                         if (this.load_AiOperation != null && !(mc.player.containerMenu instanceof AbstractFurnaceMenu)) {
                            if (this.load_AiOperation.requiresReconciliationAfterEmergency()) {
-                              return this.init(AiOperation.Status.UNCERTAIN, "Furnace closed with an unconfirmed transfer; reconcile before reopening");
+                              return this.finish(AiOperation.Status.UNCERTAIN, "Furnace closed with an unconfirmed transfer; reconcile before reopening");
                            }
 
                            this.load_AiOperation.cancel();
@@ -352,21 +352,21 @@ final class AiSmelt {
                                  this.init_BlockPos = mc.player.blockPosition();
                                  String workInput = BuiltInRegistries.ITEM.getKey(resolved.input()).toString();
                                  this.furnaceWork = new AiFurnaceWork(this.station, this.init_BlockPos, workInput, window, workPlan);
-                                 return this.init("Batch is cooking; start useful work with a clear walking return route");
+                                 return this.running("Batch is cooking; start useful work with a clear walking return route");
                               }
 
                               if (result.message().startsWith("Loading furnace input")) {
                                  this.init_Z = false;
                               }
 
-                              return this.init(result.message());
+                              return this.running(result.message());
                            } else {
                               this.load_AiOperation = null;
                               if (result.status() == AiOperation.Status.SUCCEEDED) {
-                                 return this.init(AiOperation.Status.SUCCEEDED, loadOnly ? result.message() : "Smelted " + outputId + " to target");
+                                 return this.finish(AiOperation.Status.SUCCEEDED, loadOnly ? result.message() : "Smelted " + outputId + " to target");
                               }
 
-                              if (this.close && !collect && !loadOnly && this.sync_I < 2 && AiSmelt.isFuelProblem(result.message())) {
+                              if (this.autoFuel && !collect && !loadOnly && this.sync_I < 2 && AiSmelt.isFuelProblem(result.message())) {
                                  this.sync_I++;
                                  if (mc.player.containerMenu instanceof AbstractFurnaceMenu) {
                                     mc.player.closeContainer();
@@ -375,11 +375,11 @@ final class AiSmelt {
                                  this.load_I = 0;
                                  this.write_AiOperation = this.init(Math.max(1, target - AiGameState.countInventoryItem(outputId)));
                                  if (this.write_AiOperation != null) {
-                                    return this.init("Out of spare fuel; fetching more");
+                                    return this.running("Out of spare fuel; fetching more");
                                  }
                               }
 
-                              return this.init(result.status(), result.message());
+                              return this.finish(result.status(), result.message());
                            }
                         } else {
                            if (!(mc.player.containerMenu instanceof AbstractFurnaceMenu)) {
@@ -415,7 +415,7 @@ final class AiSmelt {
                                  Math.max(10, this.secondsLeft())
                               )
                            );
-                           return this.init("Loading the " + resolved.stationId());
+                           return this.running("Loading the " + resolved.stationId());
                         }
                      }
                   }
@@ -428,25 +428,25 @@ final class AiSmelt {
                   }
 
                   if (this.station == null && this.update_I < 40 && !this.read_Z) {
-                     return this.init("Looking for a " + resolved.stationId());
+                     return this.running("Looking for a " + resolved.stationId());
                   }
 
                   if (this.station == null) {
                      if (!this.read_Z) {
-                        if (AiGameState.countInventoryItem(resolved.stationId()) <= 0 && !this.flush) {
-                           this.flush = true;
+                        if (AiGameState.countInventoryItem(resolved.stationId()) <= 0 && !this.stationWarned) {
+                           this.stationWarned = true;
                            this.read_AiOperation = AiObtain.obtain(
                               AiJson.objectOf(
                                  "item", resolved.stationId(), "count", 1, "timeoutSeconds", Math.max(30, Math.min(300, this.secondsLeft()))
                               )
                            );
-                           return this.init("No " + resolved.stationId() + " near; making one");
+                           return this.running("No " + resolved.stationId() + " near; making one");
                         }
 
                         if (AiGameState.countInventoryItem(resolved.stationId()) <= 0) {
                            JsonObject missing = new JsonObject();
                            missing.addProperty(resolved.stationId(), 1);
-                           return this.init(
+                           return this.finishWith(
                               AiOperation.Status.FAILED,
                               "No " + resolved.stationId() + " in reach or in the bag",
                               AiJson.objectOf("missing", missing)
@@ -463,12 +463,12 @@ final class AiSmelt {
                      if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
                         this.station = this.stationPlacer.getPlaced();
                         this.read_Z = false;
-                        return this.init(resolved.stationId() + " placed");
+                        return this.running(resolved.stationId() + " placed");
                      } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
                         this.read_Z = false;
-                        return this.init(AiOperation.Status.FAILED, "Could not place a " + resolved.stationId() + ": " + this.stationPlacer.getFailureReason());
+                        return this.finish(AiOperation.Status.FAILED, "Could not place a " + resolved.stationId() + ": " + this.stationPlacer.getFailureReason());
                      } else {
-                        return this.init(this.stationPlacer.getStatus());
+                        return this.running(this.stationPlacer.getStatus());
                      }
                   } else {
                      BlockHitResult interactionHit = autismclient.ai.engine.AiBlockInteraction.findReachableHit(mc, this.station);
@@ -479,14 +479,14 @@ final class AiSmelt {
 
                         AiOperation.Result legResult = this.init_AiOperation.tick();
                         if (!legResult.terminal()) {
-                           return this.init("Travelling to the " + resolved.stationId());
+                           return this.running("Travelling to the " + resolved.stationId());
                         }
 
                         this.init_AiOperation.cancel();
                         this.init_AiOperation = null;
                         if (legResult.status() != AiOperation.Status.SUCCEEDED) {
                            if (++this.read_I >= 2) {
-                              return this.init(
+                              return this.finish(
                                  AiOperation.Status.FAILED, "No route to the " + resolved.stationId() + " at " + this.station.toShortString()
                               );
                            }
@@ -494,13 +494,13 @@ final class AiSmelt {
                            if (knownStation != null
                               && this.station.equals(knownStation)
                               && mc.level.getBlockState(knownStation).getBlock() == AiCraft.requireBlock(resolved.stationId())) {
-                              return this.init("No route to the furnace yet; trying again");
+                              return this.running("No route to the furnace yet; trying again");
                            }
 
                            this.station = null;
-                           return this.init("No route to that station; looking for another");
+                           return this.running("No route to that station; looking for another");
                         } else {
-                           return this.init("Arrived at the " + resolved.stationId());
+                           return this.running("Arrived at the " + resolved.stationId());
                         }
                      } else {
                         if (this.init_AiOperation != null) {
@@ -521,25 +521,25 @@ final class AiSmelt {
                                     resolved.stationId(),
                                     interactionHit.getBlockPos().toShortString()
                                  );
-                              return this.init("The " + resolved.stationId() + " will not open; making one");
+                              return this.running("The " + resolved.stationId() + " will not open; making one");
                            } else {
-                              return this.init(
+                              return this.finish(
                                  AiOperation.Status.FAILED, "Could not open the " + resolved.stationId() + " at " + this.station.toShortString()
                               );
                            }
                         } else {
                            if (!autismclient.ai.engine.AiAim.isLookingAtBlock(this.station)) {
-                              return this.init("Turning toward the " + resolved.stationId());
+                              return this.running("Turning toward the " + resolved.stationId());
                            }
 
                            BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                            if (hit == null) {
-                              return this.init("Turning toward the " + resolved.stationId());
+                              return this.running("Turning toward the " + resolved.stationId());
                            }
 
                            mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hit);
                            Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
-                           return mc.player.containerMenu instanceof AbstractFurnaceMenu ? null : this.init("Opening the " + resolved.stationId());
+                           return mc.player.containerMenu instanceof AbstractFurnaceMenu ? null : this.running("Opening the " + resolved.stationId());
                         }
                      }
                   }
@@ -598,16 +598,16 @@ final class AiSmelt {
                   );
                }
 
-               AiOperation.Result init(String message) {
-                  AiVisualization.showCount(this, statusTitle, AiTaskStatus.init(message, "Preparing the furnace"), AiGameState.countInventoryItem(outputId), target);
+               AiOperation.Result running(String message) {
+                  AiVisualization.showCount(this, statusTitle, AiTaskStatus.phaseLabel(message, "Preparing the furnace"), AiGameState.countInventoryItem(outputId), target);
                   return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.receipt().toString(), List.of());
                }
 
-               AiOperation.Result init(AiOperation.Status status, String message) {
-                  return this.init(status, message, null);
+               AiOperation.Result finish(AiOperation.Status status, String message) {
+                  return this.finishWith(status, message, null);
                }
 
-               AiOperation.Result init(AiOperation.Status status, String message, JsonObject extra) {
+               AiOperation.Result finishWith(AiOperation.Status status, String message, JsonObject extra) {
                   JsonObject data = this.receipt();
                   if (extra != null) {
                      for (Entry<String, JsonElement> entry : extra.entrySet()) {
@@ -732,7 +732,7 @@ final class AiSmelt {
       retry.addProperty("fuelFetched", true);
       return new AiOperation() {
          AiOperation fuelOperation = fuel;
-         AiOperation load;
+         AiOperation retryOp;
          boolean init_Z;
 
          @Override
@@ -741,8 +741,8 @@ final class AiSmelt {
                return AiGameOperations.result(AiOperation.Status.CANCELLED, "Smelting cancelled", new JsonObject());
             }
 
-            if (this.load != null) {
-               return this.load.tick();
+            if (this.retryOp != null) {
+               return this.retryOp.tick();
             }
 
             AiOperation.Result got = this.fuelOperation.tick();
@@ -756,7 +756,7 @@ final class AiSmelt {
             }
 
             try {
-               this.load = AiSmelt.smelt(retry, workPlan);
+               this.retryOp = AiSmelt.smelt(retry, workPlan);
             } catch (IllegalArgumentException e) {
                return AiOperation.Result.failed(AiFailure.MISSING_MATERIALS, e.getMessage(), "{}");
             }
@@ -766,20 +766,20 @@ final class AiSmelt {
 
          @Override
          public boolean canInterruptNow() {
-            return this.load == null ? this.fuelOperation.canInterruptNow() : this.load.canInterruptNow();
+            return this.retryOp == null ? this.fuelOperation.canInterruptNow() : this.retryOp.canInterruptNow();
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.load == null ? this.fuelOperation.requiresReconciliationAfterEmergency() : this.load.requiresReconciliationAfterEmergency();
+            return this.retryOp == null ? this.fuelOperation.requiresReconciliationAfterEmergency() : this.retryOp.requiresReconciliationAfterEmergency();
          }
 
          @Override
          public void cancel() {
             this.init_Z = true;
             this.fuelOperation.cancel();
-            if (this.load != null) {
-               this.load.cancel();
+            if (this.retryOp != null) {
+               this.retryOp.cancel();
             }
          }
       };
@@ -790,14 +790,14 @@ final class AiSmelt {
    }
 
    static Item fuelOrCoal(String recorded) {
-      return recorded.isBlank() ? Items.COAL : load(recorded);
+      return recorded.isBlank() ? Items.COAL : requireItem(recorded);
    }
 
-   private static Item load(String id) {
+   private static Item requireItem(String id) {
       return BuiltInRegistries.ITEM.getOptional(Identifier.parse(id)).orElseThrow(() -> new IllegalArgumentException("Unknown item " + id));
    }
 
-   static AiSmelt.SmeltRecipe init(Minecraft mc, AiItems.ItemSpec outputTarget, String inputSpec, String fuelSpec, int items) {
+   static AiSmelt.SmeltRecipe resolveRecipe(Minecraft mc, AiItems.ItemSpec outputTarget, String inputSpec, String fuelSpec, int items) {
       List<String> tried = new ArrayList<>();
 
       record Inner_DataUtil(Item output, autismclient.util.AutoCraftingEngine.SmeltRecipe plan, Item input, int stationTier) {
@@ -860,8 +860,8 @@ final class AiSmelt {
    }
 
    static boolean canSmelt(Minecraft mc, String output, String input) {
-      Item wanted = load(output);
-      Item source = load(input);
+      Item wanted = requireItem(output);
+      Item source = requireItem(input);
       return autismclient.util.AutoCraftingEngine.getSmeltRecipesFor(mc, wanted)
          .stream()
          .filter(p -> p.inputs().contains(source))
@@ -906,7 +906,7 @@ final class AiSmelt {
 
       if (!fuelSpec.isBlank()) {
          AiItems.ItemSpec requested = AiItems.resolveItem(fuelSpec);
-         return init(
+         return pickBest(
             requested.items(),
             candidate -> Math.max(0, AiGameState.countMainInventoryItem(BuiltInRegistries.ITEM.getKey(candidate).toString()) - AiRunResources.mandatoryReservedCount(candidate)),
             candidate -> AiItems.fuelBurnTime(new ItemStack(candidate)),
@@ -1002,7 +1002,7 @@ final class AiSmelt {
       }
    }
 
-   static <T> T init(Iterable<T> candidates, ToIntFunction<T> count, ToIntFunction<T> burn, int items) {
+   static <T> T pickBest(Iterable<T> candidates, ToIntFunction<T> count, ToIntFunction<T> burn, int items) {
       long needed = Math.max(1L, items) * 200L;
       long most = 0L;
       T richest = null;

@@ -196,14 +196,14 @@ final class AiCover {
                         this.cancelCoverRoute();
                         Entity mount = seer.getVehicle() instanceof Mob m && m.isAlive() ? m : null;
                         Entity melee = this.meleeThreat();
-                        Entity strike = mount != null ? mount : (melee != null && !autismclient.ai.engine.AiSight.init(melee) ? melee : seer);
+                        Entity strike = mount != null ? mount : (melee != null && !autismclient.ai.engine.AiSight.isRangedShooter(melee) ? melee : seer);
                         this.aimAndStrike(strike);
                         return this.running("Hitting the " + BuiltInRegistries.ENTITY_TYPE.getKey(strike.getType()).getPath());
                      }
 
                      if (!(seerDistance <= 4.5)
                         || !(Math.abs(seer.getY() - mc.player.getY()) <= 3.0)
-                        || AiCombat.init(seer)
+                        || AiCombat.isIgnored(seer)
                         || seer instanceof Creeper
                         || this.visibleShooterCount(shooters) > 1
                         || seer instanceof Blaze && !AiThreats.isLegacyCombatEnabled() && (mc.player.getHealth() < 16.0F || AiWorldScan.findEntitiesByType("minecraft:blaze", 16.0).size() > 1)) {
@@ -254,7 +254,7 @@ final class AiCover {
                            boolean creeper = !keepAway.isEmpty();
                            List<BlockPos> stances = this.routeFailures >= 3
                               ? List.of()
-                              : autismclient.ai.engine.AiSight.init(
+                              : autismclient.ai.engine.AiSight.coverCells(
                                  mc.level,
                                  feet,
                                  eyes,
@@ -282,7 +282,7 @@ final class AiCover {
                                  !mc.level.getBlockState(nearest).getCollisionShape(mc.level, nearest).isEmpty()
                                     || !mc.level.getBlockState(nearest.above()).getCollisionShape(mc.level, nearest.above()).isEmpty()
                               );
-                           boolean far = wetDig || autismclient.ai.engine.AiSight.init(mc.level, feet, nearest) > 3.0;
+                           boolean far = wetDig || autismclient.ai.engine.AiSight.coverCost(mc.level, feet, nearest) > 3.0;
                            if ((far || this.enemyNearby())
                               && keepAway.isEmpty()
                               && this.shieldsPlaced < 6
@@ -477,11 +477,11 @@ final class AiCover {
             }
 
             BlockPos shieldCellAgainst(Entity seer) {
-               return AiShield.init(mc, seer);
+               return AiShield.coverCell(mc, seer);
             }
 
             Item shieldBlockItem() {
-               return AiShield.init(mc);
+               return AiShield.bestBlock(mc);
             }
 
             boolean enemyNearby() {
@@ -502,7 +502,7 @@ final class AiCover {
                List<Entity> found = new ArrayList<>();
 
                for (Entity entity : mc.level.entitiesForRendering()) {
-                  if (entity.isAlive() && (autismclient.ai.engine.AiSight.init(entity) || entity instanceof Creeper) && entity.distanceTo(mc.player) <= 20.0) {
+                  if (entity.isAlive() && (autismclient.ai.engine.AiSight.isRangedShooter(entity) || entity instanceof Creeper) && entity.distanceTo(mc.player) <= 20.0) {
                      found.add(entity);
                   }
                }
@@ -586,7 +586,7 @@ final class AiCover {
             }
 
             boolean stepBackFrom(Entity mob) {
-               boolean safe = mc.player.onGround() && autismclient.ai.engine.AiCombatMotion.init(mc, -1.0, 0.0, 6) != null;
+               boolean safe = mc.player.onGround() && autismclient.ai.engine.AiCombatMotion.predictEndBox(mc, -1.0, 0.0, 6) != null;
                mc.options.keyUp.setDown(false);
                mc.options.keyDown.setDown(safe);
                mc.options.keyLeft.setDown(false);

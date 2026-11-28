@@ -11,9 +11,9 @@ import java.util.function.LongSupplier;
 public final class AsyncJobRegistry {
    private static final int init_I = 64;
    private final LongSupplier clock;
-   private final int load;
+   private final int retention;
    private final Map<Long, AsyncJobRegistry.JobState> jobs = new LinkedHashMap<>();
-   private int read;
+   private int terminalCount;
 
    public AsyncJobRegistry(LongSupplier clock) {
       this(clock, 64);
@@ -21,10 +21,10 @@ public final class AsyncJobRegistry {
 
    AsyncJobRegistry(LongSupplier clock, int terminalRetention) {
       this.clock = clock;
-      this.load = Math.max(0, terminalRetention);
+      this.retention = Math.max(0, terminalRetention);
    }
 
-   public synchronized AsyncJobRegistry.JobState init(long id, String owner, long timeoutMs) {
+   public synchronized AsyncJobRegistry.JobState register(long id, String owner, long timeoutMs) {
       if (this.jobs.containsKey(id)) {
          throw new IllegalArgumentException("duplicate job id: " + id);
       }
@@ -46,11 +46,11 @@ public final class AsyncJobRegistry {
       }
    }
 
-   public synchronized boolean init(long id, AsyncJobRegistry.JobStatus completion) {
+   public synchronized boolean complete(long id, AsyncJobRegistry.JobStatus completion) {
       AsyncJobRegistry.JobState state = this.jobs.get(id);
       if (state != null && !state.init_Z() && completion != null && completion != AsyncJobRegistry.JobStatus.PENDING) {
          this.jobs.put(id, new AsyncJobRegistry.JobState(state.id(), state.label(), completion, false, false, state.deadline()));
-         this.read++;
+         this.terminalCount++;
          this.init_V();
          return true;
       } else {
@@ -61,10 +61,10 @@ public final class AsyncJobRegistry {
    private void init_V() {
       Iterator<Entry<Long, AsyncJobRegistry.JobState>> iterator = this.jobs.entrySet().iterator();
 
-      while (this.read > this.load && iterator.hasNext()) {
+      while (this.terminalCount > this.retention && iterator.hasNext()) {
          if (iterator.next().getValue().init_Z()) {
             iterator.remove();
-            this.read--;
+            this.terminalCount--;
          }
       }
    }

@@ -13,11 +13,11 @@ public final class TooltipRenderer {
    private TooltipRenderer() {
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, String text, int mouseX, int mouseY) {
-      init(context, text, mouseX, mouseY, 220);
+   public static void render(autismclient.gui.f.SyncManager context, String text, int mouseX, int mouseY) {
+      render(context, text, mouseX, mouseY, 220);
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, String text, int mouseX, int mouseY, int preferredMaxWidth) {
+   public static void render(autismclient.gui.f.SyncManager context, String text, int mouseX, int mouseY, int preferredMaxWidth) {
       if (text != null && !text.isBlank()) {
          int lineHeight = Math.max(10, k.init(autismclient.gui.f.a.DataUtil.init) + 2);
          int availableW = Math.max(1, context.init_I() - 8);

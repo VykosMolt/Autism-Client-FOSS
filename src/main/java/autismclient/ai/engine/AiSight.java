@@ -42,7 +42,7 @@ public final class AiSight {
    private AiSight() {
    }
 
-   public static boolean init(Entity entity) {
+   public static boolean isRangedShooter(Entity entity) {
       return entity instanceof AbstractSkeleton skeleton && !(entity instanceof WitherSkeleton) && skeleton.getMainHandItem().is(Items.BOW)
          || entity instanceof Pillager
          || entity instanceof Witch
@@ -124,10 +124,10 @@ public final class AiSight {
       Set<Long> rejected,
       int max
    ) {
-      return init(level, feet, eyes, keepAway, distance, openOnly, horizontal, up, down, rejected, max, false);
+      return coverCells(level, feet, eyes, keepAway, distance, openOnly, horizontal, up, down, rejected, max, false);
    }
 
-   public static List<BlockPos> init(
+   public static List<BlockPos> coverCells(
       BlockGetter level,
       BlockPos feet,
       List<Vec3> eyes,
@@ -199,7 +199,7 @@ public final class AiSight {
       return Math.hypot(dx, dz) + (dy > 0.0 ? dy * 2.0 : -dy * 1.2);
    }
 
-   public static double init(BlockGetter level, BlockPos feet, BlockPos stance) {
+   public static double coverCost(BlockGetter level, BlockPos feet, BlockPos stance) {
       double cost = init(feet, stance);
       if (stance.getY() < feet.getY()) {
          return cost;
@@ -216,13 +216,13 @@ public final class AiSight {
       return cost;
    }
 
-   public static void init(int id) {
+   public static void markShooter(int id) {
       long now = System.nanoTime();
       init_Map.values().removeIf(t -> now - t > 90000000000L);
       init_Map.put(id, now);
    }
 
-   public static boolean load(Entity shooter) {
+   public static boolean recentlyShot(Entity shooter) {
       Long at = shooter == null ? null : init_Map.get(shooter.getId());
       return at != null && System.nanoTime() - at <= 90000000000L;
    }
@@ -312,10 +312,10 @@ public final class AiSight {
          charges.add(10.0);
       }
 
-      return init(level, shooterEyes, charges);
+      return threatField(level, shooterEyes, charges);
    }
 
-   public static AiPathfinder.ThreatField init(BlockGetter level, List<Vec3> shooterEyes, List<Double> shooterCharges) {
+   public static AiPathfinder.ThreatField threatField(BlockGetter level, List<Vec3> shooterEyes, List<Double> shooterCharges) {
       List<Vec3> eyes = List.copyOf(shooterEyes);
       List<Double> charges = List.copyOf(shooterCharges);
       if (eyes.isEmpty()) {

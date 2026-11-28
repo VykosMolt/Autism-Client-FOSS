@@ -4,7 +4,7 @@ final class AiGroundContinuity {
    private AiGroundContinuity() {
    }
 
-   static boolean putAt(double var0, double var2) {
+   static boolean sameFloorY(double var0, double var2) {
       return Math.abs(var0 - var2) <= 0.062501;
    }
 
@@ -21,7 +21,7 @@ final class AiGroundContinuity {
       }
    }
 
-   static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, double var3) {
+   static boolean continuousGround(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, double var3) {
       if (var2.y() < var3 - 1.0625) {
          return false;
       } else {

@@ -393,7 +393,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
             long generation = manager.getRefreshStatus().generation();
             this.toast("Refreshing proxies...", -7429889);
             this.rebuildButtons();
-            autismclient.util.BackgroundTaskExecutor.init("Autism-Proxy-Refresh-Watch", () -> !manager.getRefreshStatus().running(), () -> {
+            autismclient.util.BackgroundTaskExecutor.watch("Autism-Proxy-Refresh-Watch", () -> !manager.getRefreshStatus().running(), () -> {
                if (this.minecraft != null) {
                   this.minecraft.execute(() -> {
                      ProxyListManager.RefreshStatus finished = manager.getRefreshStatus();
@@ -513,7 +513,7 @@ public class ProxiesScreen extends VirtualScaledScreen {
    private void onImportStarted(ProxyListManager manager, long generation) {
       this.toast("Importing proxies...", -7429889);
       this.rebuildButtons();
-      autismclient.util.BackgroundTaskExecutor.init("Autism-Proxy-Import-Watch", () -> !manager.getImportStatus().running(), () -> {
+      autismclient.util.BackgroundTaskExecutor.watch("Autism-Proxy-Import-Watch", () -> !manager.getImportStatus().running(), () -> {
          if (this.minecraft != null) {
             this.minecraft.execute(() -> {
                ProxyListManager.ImportStatus finished = manager.getImportStatus();

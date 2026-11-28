@@ -63,7 +63,7 @@ final class AiChatMode {
          }
 
          this.active = true;
-         this.ledgerRevision = AiChatPolicy.init(this.host.load_J());
+         this.ledgerRevision = AiChatPolicy.clampRevision(this.host.ledgerRevision());
          this.pendingLines.clear();
          this.read_Deque.clear();
          this.replyTimes.clear();
@@ -74,7 +74,7 @@ final class AiChatMode {
          this.lastLineAt = this.firstPendingAt = 0L;
          this.lastReplyAt = 0L;
          this.nextReplyAt = 0L;
-         List<AiChatLedger.ChatEntry> recent = this.host.init(12);
+         List<AiChatLedger.ChatEntry> recent = this.host.recentChat(12);
          List<AiChatLedger.ChatEntry> oldestFirst = new ArrayList<>(recent);
          Collections.reverse(oldestFirst);
 
@@ -88,16 +88,16 @@ final class AiChatMode {
          this.update();
       }
 
-      this.host.init_V();
-      this.host.init(this.statusJson());
+      this.host.enterChatting();
+      this.host.saveStatus(this.statusJson());
    }
 
    boolean isActive() {
       return this.active;
    }
 
-   void init_V_Str(String text) {
-      String clean = AiChatPolicy.init(text, 256);
+   void noteSent(String text) {
+      String clean = AiChatPolicy.sanitize(text, 256);
       if (!clean.isEmpty()) {
          synchronized (this) {
             this.recentSent.addLast(clean);
@@ -125,17 +125,17 @@ final class AiChatMode {
             this.read_Deque.removeIf(line -> !this.init_Z_PathHelper_StreamU(line));
          }
 
-         this.host.init(this.statusJson());
+         this.host.saveStatus(this.statusJson());
       }
    }
 
    void tick() {
       if (this.active) {
          if (!this.host.canSend()) {
-            this.load("Chat mode stopped: no connection");
+            this.stop("Chat mode stopped: no connection");
          } else {
-            long revision = this.host.load_J();
-            List<AiChatLedger.ChatEntry> latest = this.host.init(64);
+            long revision = this.host.ledgerRevision();
+            List<AiChatLedger.ChatEntry> latest = this.host.recentChat(64);
             synchronized (this) {
                if (!this.active) {
                   return;
@@ -158,8 +158,8 @@ final class AiChatMode {
 
                for (AiChatLedger.ChatEntry entry : fresh) {
                   this.ledgerRevision = Math.max(this.ledgerRevision, entry.revision());
-                  AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.init(entry, self, this.config);
-                  if (line != null && (!AiChatPolicy.init(entry).isEmpty() || !this.wasRecentlySent(line.text()))) {
+                  AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.admit(entry, self, this.config);
+                  if (line != null && (!AiChatPolicy.senderOf(entry).isEmpty() || !this.wasRecentlySent(line.text()))) {
                      boolean wasEmpty = this.pendingLines.isEmpty();
                      this.pendingLines.addLast(line);
                      if (this.pendingLines.size() > 16) {
@@ -185,7 +185,7 @@ final class AiChatMode {
       }
    }
 
-   void load(String reason) {
+   void stop(String reason) {
       AiChatMode.Inner_StreamUtil closing;
       synchronized (this) {
          if (!this.active) {
@@ -207,8 +207,8 @@ final class AiChatMode {
       }
 
       String message = reason != null && !reason.isBlank() ? reason : "Chat mode stopped";
-      this.host.init(this.statusJson());
-      this.host.load(message);
+      this.host.saveStatus(this.statusJson());
+      this.host.stopChat(message);
    }
 
    String statusLine() {
@@ -296,7 +296,7 @@ final class AiChatMode {
          long now = this.host.now();
          long debounce = this.pendingLines.isEmpty()
             ? 0L
-            : AiChatPolicy.init(this.config, new ArrayList<>(this.pendingLines), this.host.playerName());
+            : AiChatPolicy.replyDelay(this.config, new ArrayList<>(this.pendingLines), this.host.playerName());
          boolean settled = this.pendingLines.isEmpty() || now - this.lastLineAt >= debounce;
          boolean heldTooLong = !this.pendingLines.isEmpty() && this.firstPendingAt != 0L && now - this.firstPendingAt >= 5000L;
          if (!settled && !heldTooLong) {
@@ -308,7 +308,7 @@ final class AiChatMode {
          }
 
          String sender = (this.read_Deque.isEmpty() ? this.pendingLines : this.read_Deque).peekFirst().sender();
-         if (!AiChatPolicy.init(now, this.replyTimes, this.lastReplyAt, this.lastReplyBySender, sender, this.config)) {
+         if (!AiChatPolicy.withinRateLimit(now, this.replyTimes, this.lastReplyAt, this.lastReplyBySender, sender, this.config)) {
             return;
          }
 
@@ -363,20 +363,20 @@ final class AiChatMode {
                model = this.brain;
             }
 
-            String system = AiChatPolicy.init(requestConfig, self);
-            String user = AiChatPolicy.init(historySnapshot, batch, self);
+            String system = AiChatPolicy.systemPrompt(requestConfig, self);
+            String user = AiChatPolicy.userPrompt(historySnapshot, batch, self);
             long version = requestVersion;
             BooleanSupplier current = () -> this.active && this.close == version;
             AiChatMode.Inner_DataUtil answer = model.init(system, user, () -> !current.getAsBoolean() || System.nanoTime() > deadline);
             if (answer != null) {
                runQuietly(
                   () -> this.host
-                     .init(Math.max(0L, answer.inputTokens()), Math.max(0L, answer.outputTokens()), Math.max(1L, answer.requests()))
+                     .addUsage(Math.max(0L, answer.inputTokens()), Math.max(0L, answer.outputTokens()), Math.max(1L, answer.requests()))
                );
             }
 
-            String clean = AiChatPolicy.init(answer == null ? "" : answer.text(), requestConfig.maxReplyChars());
-            boolean skip = AiChatPolicy.update(answer == null ? null : answer.text()) || clean.isEmpty();
+            String clean = AiChatPolicy.sanitize(answer == null ? "" : answer.text(), requestConfig.maxReplyChars());
+            boolean skip = AiChatPolicy.isSkipAnswer(answer == null ? null : answer.text()) || clean.isEmpty();
             boolean send = false;
             String privateTarget = null;
             long now = this.host.now();
@@ -448,23 +448,23 @@ final class AiChatMode {
             if (send && this.active && this.host.canSend()) {
                try {
                   if (privateTarget != null) {
-                     this.host.init(privateTarget, clean, current);
+                     this.host.whisper(privateTarget, clean, current);
                   } else {
-                     this.host.init(clean, current);
+                     this.host.sendChat(clean, current);
                   }
                } catch (RuntimeException sendError) {
-                  runQuietly(() -> this.host.load("error", "Chat line could not be sent: " + describeError(sendError)));
+                  runQuietly(() -> this.host.appendTranscript("error", "Chat line could not be sent: " + describeError(sendError)));
                }
 
                String loggedTarget = privateTarget == null ? batch.getLast().sender() : privateTarget;
 
                try {
-                  this.host.load("assistant", "Chat to " + loggedTarget + (privateTarget == null ? "" : " (private)") + ": " + clean);
+                  this.host.appendTranscript("assistant", "Chat to " + loggedTarget + (privateTarget == null ? "" : " (private)") + ": " + clean);
                } catch (RuntimeException var50) {
                }
             }
 
-            runQuietly(() -> this.host.init(this.statusJson()));
+            runQuietly(() -> this.host.saveStatus(this.statusJson()));
          } catch (Exception var57) {
             Exception error = var57;
             synchronized (this) {
@@ -489,11 +489,11 @@ final class AiChatMode {
                }
 
                if (this.read_I == 1 || this.read_I % 5 == 0) {
-                  runQuietly(() -> this.host.load("error", "Chat reply failed (" + this.read_I + "): " + this.init_Str));
+                  runQuietly(() -> this.host.appendTranscript("error", "Chat reply failed (" + this.read_I + "): " + this.init_Str));
                }
             }
 
-            runQuietly(() -> this.host.init(this.statusJson()));
+            runQuietly(() -> this.host.saveStatus(this.statusJson()));
          }
       } finally {
          synchronized (this) {
@@ -525,7 +525,7 @@ final class AiChatMode {
    }
 
    private boolean init_Z_PathHelper_StreamU(AiChatPolicy.Inner_StreamUtil line) {
-      return AiChatPolicy.init(
+      return AiChatPolicy.admit(
             new AiChatLedger.ChatEntry(0L, line.revision(), line.source(), line.sender(), line.text(), List.of(), ""),
             this.host.playerName(),
             this.config
@@ -581,36 +581,36 @@ final class AiChatMode {
 
       boolean canSend();
 
-      long load_J();
+      long ledgerRevision();
 
-      List<AiChatLedger.ChatEntry> init(int var1);
+      List<AiChatLedger.ChatEntry> recentChat(int var1);
 
-      void init(String var1);
+      void sendChat(String var1);
 
-      default void init(String text, BooleanSupplier current) {
+      default void sendChat(String text, BooleanSupplier current) {
          if (current.getAsBoolean()) {
-            this.init(text);
+            this.sendChat(text);
          }
       }
 
-      default void init(String player, String text) {
+      default void whisper(String player, String text) {
       }
 
-      default void init(String player, String text, BooleanSupplier current) {
+      default void whisper(String player, String text, BooleanSupplier current) {
          if (current.getAsBoolean()) {
-            this.init(player, text);
+            this.whisper(player, text);
          }
       }
 
-      void load(String var1, String var2);
+      void appendTranscript(String var1, String var2);
 
-      void init(JsonObject var1);
+      void saveStatus(JsonObject var1);
 
-      void init_V();
+      void enterChatting();
 
-      void load(String var1);
+      void stopChat(String var1);
 
-      default void init(long inputTokens, long outputTokens, long requests) {
+      default void addUsage(long inputTokens, long outputTokens, long requests) {
       }
    }
 

@@ -311,7 +311,7 @@ public final class PackUrlValidator {
          return true;
       }
 
-      if (snapshot.init_Z()) {
+      if (snapshot.isLocal()) {
          return kind == PackUrlValidator.AddressKind.LOOPBACK;
       }
 
@@ -501,7 +501,7 @@ public final class PackUrlValidator {
          }
       }
 
-      public String load() {
+      public String host() {
          return this.init_Str;
       }
    }

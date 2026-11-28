@@ -14,20 +14,20 @@ public final class PacedTpJobManager {
    public static PacedTpJobManager.Inner_StreamUtil init(autismclient.util.macro.PacedTpAction action, String owner) {
       long id = init_AtomicLong.incrementAndGet();
       PacedTpJobManager.Inner_StreamUtil handle = new PacedTpJobManager.Inner_StreamUtil(id, owner == null ? "" : owner);
-      init_dc.init(id, handle.init_Str(), 300000L);
+      init_dc.register(id, handle.init_Str(), 300000L);
 
       autismclient.util.g.PkgCls_a.Inner_StateCache result;
       try {
          result = autismclient.util.g.PkgCls_a.init_a_StateCache_w_bl_StreamUtil(action, handle);
       } catch (RuntimeException | Error error) {
-         init_dc.init(id, AsyncJobRegistry.JobStatus.FAILED);
+         init_dc.complete(id, AsyncJobRegistry.JobStatus.FAILED);
          throw error;
       }
 
       if (result != null && result.init_Z()) {
          init_dc.requestCancel(id);
       } else {
-         init_dc.init(id, AsyncJobRegistry.JobStatus.FAILED);
+         init_dc.complete(id, AsyncJobRegistry.JobStatus.FAILED);
       }
 
       return handle;
@@ -42,32 +42,32 @@ public final class PacedTpJobManager {
       return status(id).state();
    }
 
-   public static void init(long id, String reason) {
+   public static void cancel(long id, String reason) {
       if (init_bl_DataUtil(id) == PacedTpJobManager.Inner_DataUtil.PENDING) {
          autismclient.util.g.PkgCls_a.init_V_J_Str(id, reason);
-         init_dc.init(id, AsyncJobRegistry.JobStatus.CANCELLED);
+         init_dc.complete(id, AsyncJobRegistry.JobStatus.CANCELLED);
       }
    }
 
-   public static void init(Minecraft client) {
+   public static void tick(Minecraft client) {
       for (long id : init_dc.expireOverdue()) {
          autismclient.util.g.PkgCls_a.load(id, "timeout");
-         init_dc.init(id, AsyncJobRegistry.JobStatus.FAILED);
+         init_dc.complete(id, AsyncJobRegistry.JobStatus.FAILED);
       }
 
       autismclient.util.g.PkgCls_a.init_V_Minecraft(client);
    }
 
-   public static void init(String reason) {
+   public static void cancelAll(String reason) {
       autismclient.util.g.PkgCls_a.init_V_Str(reason);
 
       for (long id : init_dc.pendingIds()) {
-         init_dc.init(id, AsyncJobRegistry.JobStatus.CANCELLED);
+         init_dc.complete(id, AsyncJobRegistry.JobStatus.CANCELLED);
       }
    }
 
    public static void init(long id, PacedTpJobManager.Inner_DataUtil completion) {
-      init_dc.init(id, init(completion));
+      init_dc.complete(id, init(completion));
    }
 
    private static AsyncJobRegistry.JobStatus init(PacedTpJobManager.Inner_DataUtil completion) {

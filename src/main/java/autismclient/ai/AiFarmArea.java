@@ -107,7 +107,7 @@ final class AiFarmArea {
       }
    }
 
-   private static JsonObject init(BlockPos pos) {
+   private static JsonObject posJson(BlockPos pos) {
       return AiJson.objectOf("x", pos.getX(), "y", pos.getY(), "z", pos.getZ());
    }
 
@@ -184,7 +184,7 @@ final class AiFarmArea {
       }
 
       JsonObject arguments(String substrate) {
-         return AiJson.objectOf("substrate", substrate, "from", AiFarmArea.init(this.from), "to", AiFarmArea.init(this.to));
+         return AiJson.objectOf("substrate", substrate, "from", AiFarmArea.posJson(this.from), "to", AiFarmArea.posJson(this.to));
       }
    }
 }

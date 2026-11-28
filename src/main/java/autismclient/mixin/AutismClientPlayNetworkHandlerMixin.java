@@ -117,7 +117,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    @Inject(method = "handleSetHeldSlot", at = @At("RETURN"))
    private void autism$leafDupeServerSlot(ClientboundSetHeldSlotPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled()) {
-         LeafDupePacketTracker.init(packet.slot());
+         LeafDupePacketTracker.setCarriedSlot(packet.slot());
       }
    }
 
@@ -159,7 +159,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
 
       if (!AutismLiteVariant.enabled() && AiService.getExistingInstance() != null) {
          AiServerEvidence.recordServerMessage(packet.content().getString());
-         AiChatLedger.init(packet.content(), "SERVER");
+         AiChatLedger.recordSystem(packet.content(), "SERVER");
       }
    }
 
@@ -167,14 +167,14 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    private void autism$aiPlayerChat(ClientboundPlayerChatPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled() && AiService.getExistingInstance() != null) {
          Component content = packet.unsignedContent().orElse(Component.literal(packet.body().content()));
-         AiChatLedger.init(content, packet.sender(), packet.chatType().name().getString());
+         AiChatLedger.recordPlayer(content, packet.sender(), packet.chatType().name().getString());
       }
    }
 
    @Inject(method = "handleDisguisedChat", at = @At("RETURN"))
    private void autism$aiDisguisedChat(ClientboundDisguisedChatPacket packet, CallbackInfo ci) {
       if (!AutismLiteVariant.enabled() && AiService.getExistingInstance() != null) {
-         AiChatLedger.load(packet.message(), packet.chatType().name().getString());
+         AiChatLedger.recordDisguised(packet.message(), packet.chatType().name().getString());
       }
    }
 
@@ -373,7 +373,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       if (!AutismLiteVariant.enabled()) {
          ClutchModule.onDamageEvent(packet);
          AntiKnockbackModule.onDamageEvent(packet);
-         WTappingModule.init(packet);
+         WTappingModule.onDamageEvent(packet);
          KBDisplacementModule.onDamageEvent(packet);
          Minecraft mc = Minecraft.getInstance();
          LocalPlayer player = mc.player;
@@ -422,7 +422,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
       }
 
       if (!AutismLiteVariant.enabled()) {
-         LeafDupePacketTracker.load(packet);
+         LeafDupePacketTracker.onReceive(packet);
       }
 
       autismclient.util.villager.BlockChangeAckTracker.acknowledge(Minecraft.getInstance().level, packet.sequence());
@@ -460,7 +460,7 @@ public abstract class AutismClientPlayNetworkHandlerMixin {
    private void autism$captureView() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null) {
-         RotationMath.Rotation wire = ScaffoldModule.load_ce_DataUtil_3();
+         RotationMath.Rotation wire = ScaffoldModule.wireRotation();
          if (wire != null) {
             this.autism$viewYaw = mc.player.getYRot();
             this.autism$viewPitch = mc.player.getXRot();

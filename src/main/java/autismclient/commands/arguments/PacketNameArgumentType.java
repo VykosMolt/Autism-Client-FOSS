@@ -21,7 +21,7 @@ public class PacketNameArgumentType implements ArgumentType<String> {
       return new PacketNameArgumentType();
    }
 
-   public static String init(CommandContext<AutismCommandSource> ctx, String name) {
+   public static String getValue(CommandContext<AutismCommandSource> ctx, String name) {
       return ctx.getArgument(name, String.class);
    }
 

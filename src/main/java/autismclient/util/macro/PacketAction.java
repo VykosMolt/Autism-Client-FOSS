@@ -51,7 +51,7 @@ public class PacketAction implements MacroAction {
                         packet = regenerated;
                      }
 
-                     DirectPacketSender.init(packet);
+                     DirectPacketSender.send(packet);
                   } catch (Exception e) {
                      AutismClientMessaging.sendPrefixed("§cPacket send error: " + e.getMessage());
                      AutismClientAddon.LOG.error("[MacroExecutor] Packet action failed", e);

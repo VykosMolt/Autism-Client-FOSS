@@ -57,17 +57,17 @@ final class AiPrintSupply {
    private final Map<Long, AiBuilder.CellSpec> cells;
    private final AiPrintSupply.ShortageTracker shortage = new AiPrintSupply.ShortageTracker();
    private List<BlockPos> terrainCells;
-   private int read;
+   private int terrainCursor;
    private AiPrintSupply.StockSourceScan stockScan;
    private ItemStack carriedBox = ItemStack.EMPTY;
    private ItemStack contentsWanted = ItemStack.EMPTY;
    private final List<ItemStack> triedBoxes = new ArrayList<>();
    int shulkerRefills;
    int terrainCleared;
-   private int write = 1;
+   private int neededStock = 1;
 
    int init_I() {
-      return this.write;
+      return this.neededStock;
    }
 
    static void validateOptions(AiBuilder.BuildOptions power) {
@@ -114,7 +114,7 @@ final class AiPrintSupply {
       return this.prep.indexed
          + 6L * this.prep.supportCursor
          + this.prep.supportSide
-         + this.prep.depotScan.load
+         + this.prep.depotScan.cursor
          + this.prep.terrainCursor;
    }
 
@@ -133,7 +133,7 @@ final class AiPrintSupply {
    }
 
    void load(BlockPos pos) {
-      this.prep.load(pos);
+      this.prep.noteChange(pos);
    }
 
    void notifyChunkChanged(long key) {
@@ -159,7 +159,7 @@ final class AiPrintSupply {
    }
 
    boolean canSupply(Item item) {
-      return this.shortage.init(item, item == null ? 0 : load(this.mc.player.getInventory(), item));
+      return this.shortage.noteShortage(item, item == null ? 0 : load(this.mc.player.getInventory(), item));
    }
 
    Item getMissingItem() {
@@ -168,18 +168,18 @@ final class AiPrintSupply {
 
    boolean hasPortableStock() {
       return this.shortage.item != null
-         && !AiCarriedShulker.init(this.mc.player.getInventory(), this.shortage.item, this.shortage.triedBoxes, true).isEmpty();
+         && !AiCarriedShulker.bestBoxFor(this.mc.player.getInventory(), this.shortage.item, this.shortage.triedBoxes, true).isEmpty();
    }
 
    void completeRefill() {
-      this.shortage.init();
+      this.shortage.reset();
       this.stockScan = null;
       this.carriedBox = ItemStack.EMPTY;
       this.shulkerRefills++;
    }
 
    void resetRefill() {
-      this.shortage.init();
+      this.shortage.reset();
       this.stockScan = null;
       this.carriedBox = ItemStack.EMPTY;
    }
@@ -201,7 +201,7 @@ final class AiPrintSupply {
          }
 
          this.triedBoxes.add(box.copy());
-         return new AiCarriedShulker(box, wanted, additional, init(this.ownedCells(), owned));
+         return new AiCarriedShulker(box, wanted, additional, unionView(this.ownedCells(), owned));
       } else {
          return null;
       }
@@ -236,7 +236,7 @@ final class AiPrintSupply {
       }
 
       if (this.stockScan == null || this.stockScan.item != this.shortage.item) {
-         this.carriedBox = AiCarriedShulker.init(
+         this.carriedBox = AiCarriedShulker.bestBoxFor(
             this.mc.player.getInventory(), this.shortage.item, this.shortage.triedBoxes, true
          );
          if (this.carriedBox.isEmpty() && this.shortage.triedSources.size() >= 3) {
@@ -255,7 +255,7 @@ final class AiPrintSupply {
          }
       }
 
-      this.stockScan.init(workBudget);
+      this.stockScan.advance(workBudget);
       if (this.stockScan.finished
          && !this.carriedBox.isEmpty()
          && AiCarriedShulker.init(this.mc.player.getInventory(), this.carriedBox, this.shortage.item) == null) {
@@ -266,7 +266,7 @@ final class AiPrintSupply {
          && this.stockScan.bestSource != null
          && AiTerrain.isLoaded(this.mc.level, this.stockScan.bestSource)
          && !(this.mc.level.getBlockState(this.stockScan.bestSource).getBlock() instanceof ShulkerBoxBlock)) {
-         this.shortage.init(this.stockScan.bestSource.asLong());
+         this.shortage.tryNewSource(this.stockScan.bestSource.asLong());
          this.stockScan = null;
          return false;
       } else {
@@ -278,10 +278,10 @@ final class AiPrintSupply {
       if (this.shortage.item != null && (!this.carriedBox.isEmpty() || this.shortage.triedSources.size() < 3)) {
          if (this.stockScan != null && this.stockScan.finished && this.stockScan.item == this.shortage.item) {
             BlockPos source = this.stockScan.bestSource;
-            int need = this.stockScan.load();
-            this.write = this.stockScan.neededCount();
+            int need = this.stockScan.clampedNeed();
+            this.neededStock = this.stockScan.neededCount();
             this.stockScan = null;
-            Set<Long> keep = init(this.ownedCells(), owned);
+            Set<Long> keep = unionView(this.ownedCells(), owned);
             if (!this.carriedBox.isEmpty()) {
                ItemStack selected = this.carriedBox;
                this.carriedBox = ItemStack.EMPTY;
@@ -297,7 +297,7 @@ final class AiPrintSupply {
                   return null;
                }
 
-               if (!this.shortage.init(source.asLong())) {
+               if (!this.shortage.tryNewSource(source.asLong())) {
                   return null;
                }
 
@@ -315,7 +315,7 @@ final class AiPrintSupply {
                            ? AiPrintSupply.StockState.SHULKER
                            : AiPrintSupply.StockState.REPLACED
                      ),
-                  () -> AiContainer.init(
+                  () -> AiContainer.create(
                      AiJson.objectOf(
                         "action",
                         "withdraw",
@@ -350,8 +350,8 @@ final class AiPrintSupply {
          throw new IllegalStateException("Schematic terrain preparation is still running");
       }
 
-      for (int checked = 0; this.read < this.terrainCells.size() && checked < 64; checked++) {
-         BlockPos p = this.terrainCells.get(this.read++);
+      for (int checked = 0; this.terrainCursor < this.terrainCells.size() && checked < 64; checked++) {
+         BlockPos p = this.terrainCells.get(this.terrainCursor++);
          if (!AiTerrain.isLoaded(this.mc.level, p)) {
             throw new IllegalStateException("Terrain is not loaded at " + p.toShortString());
          }
@@ -371,14 +371,14 @@ final class AiPrintSupply {
    }
 
    boolean isTerrainCleared() {
-      return this.isPrepared() && this.read >= this.terrainCells.size();
+      return this.isPrepared() && this.terrainCursor >= this.terrainCells.size();
    }
 
    private static Set<Long> newCellSet() {
       return Collections.newSetFromMap(new AiPrintSupply.SectionedCellMap<>());
    }
 
-   private static Set<Long> init(final Set<Long> first, final Set<Long> second) {
+   private static Set<Long> unionView(final Set<Long> first, final Set<Long> second) {
       return Collections.unmodifiableSet(new AbstractSet<Long>() {
          @Override
          public boolean contains(Object key) {
@@ -410,7 +410,7 @@ final class AiPrintSupply {
       });
    }
 
-   static void init(String[] messages, String text) {
+   static void fillMessages(String[] messages, String text) {
       if (text != null) {
          String[] lines = text.split("\n", -1);
 
@@ -430,7 +430,7 @@ final class AiPrintSupply {
       messagesField.setAccessible(true);
       SignBlockEntity sign = (SignBlockEntity)signField.get(editor);
       if (slotField.get(editor) == SignTextSlot.FRONT) {
-         init((String[])messagesField.get(editor), text.get(sign.getBlockPos().subtract(origin).asLong()));
+         fillMessages((String[])messagesField.get(editor), text.get(sign.getBlockPos().subtract(origin).asLong()));
       }
    }
 
@@ -451,8 +451,8 @@ final class AiPrintSupply {
       double bestDistSq = 1.0 / 0.0;
       int cellCursor;
       int consumeCount;
-      int read;
-      int write;
+      int maxRequirement;
+      int stepsThisTick;
       boolean stockScanned;
       boolean finished;
 
@@ -465,23 +465,23 @@ final class AiPrintSupply {
       }
 
       void skipDepotScan() {
-         this.depotScan.load = this.depotScan.total;
+         this.depotScan.cursor = this.depotScan.total;
          this.stockScanned = true;
       }
 
-      void init(int budget) {
-         this.write = 0;
-         this.prep.pop = 0;
+      void advance(int budget) {
+         this.stepsThisTick = 0;
+         this.prep.workUnits = 0;
          long deadline = System.nanoTime() + 2000000L;
 
          while (
-            this.write < Math.max(0, budget)
+            this.stepsThisTick < Math.max(0, budget)
                && !this.finished
-               && (this.write <= 0 || this.prep.pop < 4096 && ((this.write & 31) != 0 || System.nanoTime() < deadline))
+               && (this.stepsThisTick <= 0 || this.prep.workUnits < 4096 && ((this.stepsThisTick & 31) != 0 || System.nanoTime() < deadline))
          ) {
-            this.write++;
-            if (!this.depotScan.init()) {
-               this.depotScan.init(this.prep);
+            this.stepsThisTick++;
+            if (!this.depotScan.isDone()) {
+               this.depotScan.step(this.prep);
             } else if (!this.stockScanned) {
                if (this.stockIterator == null) {
                   this.stockIterator = this.prep.stockCells.iterator();
@@ -504,7 +504,7 @@ final class AiPrintSupply {
                } else {
                   this.stockScanned = true;
                }
-            } else if (this.cellCursor < this.prep.blueprint.cells().size() && this.consumeCount + this.read < 576) {
+            } else if (this.cellCursor < this.prep.blueprint.cells().size() && this.consumeCount + this.maxRequirement < 576) {
                AiBuilder.CellSpec cell = this.prep.blueprint.cells().get(this.cellCursor++);
                BlockPos p = this.prep.worldPos(cell);
                BlockState live = this.prep.loaded.test(p) ? this.prep.readState(p) : null;
@@ -512,7 +512,7 @@ final class AiPrintSupply {
                   for (AiCellMaterials.MaterialRequirement requirement : AiCellMaterials.requirements(cell, live, false)) {
                      if (requirement.item() == this.item) {
                         if (requirement.use() == AiCellMaterials.MaterialUse.REUSE) {
-                           this.read = Math.max(this.read, requirement.count());
+                           this.maxRequirement = Math.max(this.maxRequirement, requirement.count());
                         } else {
                            this.consumeCount = Math.min(576, this.consumeCount + requirement.count());
                         }
@@ -526,11 +526,11 @@ final class AiPrintSupply {
       }
 
       int neededCount() {
-         return Math.max(1, Math.min(Math.max(1, this.consumeCount + this.read), 576));
+         return Math.max(1, Math.min(Math.max(1, this.consumeCount + this.maxRequirement), 576));
       }
 
-      int load() {
-         int total = this.consumeCount + this.read;
+      int clampedNeed() {
+         int total = this.consumeCount + this.maxRequirement;
          return Math.max(1, Math.min(total == 0 ? this.item.getDefaultMaxStackSize() : total, 576));
       }
    }
@@ -609,14 +609,14 @@ final class AiPrintSupply {
       int supportCursor;
       int supportSide;
       int minDx;
-      int sync;
-      int flush;
-      int close = -2147483648;
-      int open = -2147483648;
-      int poll = -2147483648;
+      int minDy;
+      int minDz;
+      int maxDx = -2147483648;
+      int maxDy = -2147483648;
+      int maxDz = -2147483648;
       long terrainCursor;
-      int push;
-      int pop;
+      int stepsThisTick;
+      int workUnits;
       boolean prepared;
       private BlockPos changedStock;
       private AuditBuilderHull auditHull;
@@ -643,8 +643,8 @@ final class AiPrintSupply {
                return "Indexing schematic stock (" + this.indexed + "/" + this.blueprint.cells().size() + ")";
             } else if (this.supportCursor < this.blueprint.cells().size()) {
                return "Checking source supports (" + this.supportCursor + "/" + this.blueprint.cells().size() + ")";
-            } else if (!this.depotScan.init()) {
-               return "Scanning original stock depot (" + this.depotScan.load + "/" + this.depotScan.total + ")";
+            } else if (!this.depotScan.isDone()) {
+               return "Scanning original stock depot (" + this.depotScan.cursor + "/" + this.depotScan.total + ")";
             } else {
                return this.prepared ? "Schematic stock prepared" : "Checking terrain (" + this.terrainCursor + " cells)";
             }
@@ -654,25 +654,25 @@ final class AiPrintSupply {
       }
 
       void step(int budget) {
-         this.push = this.pop = 0;
+         this.stepsThisTick = this.workUnits = 0;
          long deadline = System.nanoTime() + 2000000L;
 
          while (
-            this.push < Math.max(0, budget) && !this.settled() && (this.push <= 0 || this.pop < 4096 && ((this.push & 31) != 0 || System.nanoTime() < deadline))
+            this.stepsThisTick < Math.max(0, budget) && !this.settled() && (this.stepsThisTick <= 0 || this.workUnits < 4096 && ((this.stepsThisTick & 31) != 0 || System.nanoTime() < deadline))
          ) {
-            this.push++;
-            if (!this.load()) {
+            this.stepsThisTick++;
+            if (!this.processPendingChange()) {
                if (this.indexed < this.blueprint.cells().size()) {
                   AiBuilder.CellSpec cell = this.blueprint.cells().get(this.indexed++);
                   BlockPos p = this.worldPos(cell);
                   this.cells.put(p.asLong(), cell);
                   this.protectedCells.add(p.asLong());
                   this.minDx = Math.min(this.minDx, cell.dx());
-                  this.close = Math.max(this.close, cell.dx());
-                  this.sync = Math.min(this.sync, cell.dy());
-                  this.open = Math.max(this.open, cell.dy());
-                  this.flush = Math.min(this.flush, cell.dz());
-                  this.poll = Math.max(this.poll, cell.dz());
+                  this.maxDx = Math.max(this.maxDx, cell.dx());
+                  this.minDy = Math.min(this.minDy, cell.dy());
+                  this.maxDy = Math.max(this.maxDy, cell.dy());
+                  this.minDz = Math.min(this.minDz, cell.dz());
+                  this.maxDz = Math.max(this.maxDz, cell.dz());
                } else if (this.changedStock != null) {
                   BlockPos stock = this.changedStock;
                   this.changedStock = null;
@@ -692,8 +692,8 @@ final class AiPrintSupply {
                   if (!this.cells.containsKey(p.asLong()) && this.supportCandidates.add(p.asLong()) && this.init_Z_BlockPos(p)) {
                      this.protectedCells.add(p.asLong());
                   }
-               } else if (!this.depotScan.init()) {
-                  this.depotScan.init(this);
+               } else if (!this.depotScan.isDone()) {
+                  this.depotScan.step(this);
                } else if (this.clearTerrain && this.terrainCursor < this.boxVolume()) {
                   this.checkTerrainCell();
                } else {
@@ -708,23 +708,23 @@ final class AiPrintSupply {
       }
 
       BlockState readState(BlockPos p) {
-         this.pop++;
+         this.workUnits++;
          return this.world.getBlockState(p);
       }
 
       private long boxVolume() {
          return this.blueprint.cells().isEmpty()
             ? 0L
-            : ((long)this.close - this.minDx + 1L) * ((long)this.open - this.sync + 1L) * ((long)this.poll - this.flush + 1L);
+            : ((long)this.maxDx - this.minDx + 1L) * ((long)this.maxDy - this.minDy + 1L) * ((long)this.maxDz - this.minDz + 1L);
       }
 
       private void checkTerrainCell() {
-         long width = (long)this.close - this.minDx + 1L;
-         long depth = (long)this.poll - this.flush + 1L;
+         long width = (long)this.maxDx - this.minDx + 1L;
+         long depth = (long)this.maxDz - this.minDz + 1L;
          long i = this.terrainCursor++;
-         int y = this.open - (int)(i / (width * depth));
+         int y = this.maxDy - (int)(i / (width * depth));
          long row = i % (width * depth);
-         BlockPos p = this.blueprint.origin().offset(this.minDx + (int)(row / depth), y, this.flush + (int)(row % depth));
+         BlockPos p = this.blueprint.origin().offset(this.minDx + (int)(row / depth), y, this.minDz + (int)(row % depth));
          if (!this.cells.containsKey(p.asLong())) {
             if (!this.loaded.test(p)) {
                throw new IllegalStateException("Terrain must be loaded before clearing at " + p.toShortString());
@@ -748,7 +748,7 @@ final class AiPrintSupply {
          }
       }
 
-      void load(BlockPos pos) {
+      void noteChange(BlockPos pos) {
          boolean relevant = this.cells.containsKey(pos.asLong()) || this.readsByCell.containsKey(pos.asLong());
 
          for (Direction d : AiPrintSupply.DIRECTIONS) {
@@ -770,11 +770,11 @@ final class AiPrintSupply {
          Set<Long> owners = this.ownersByChunk.get(key);
          if (owners != null && !owners.isEmpty()) {
             this.dirtyChunks.add(key);
-            this.init(new AiPrintSupply.SupplyPreparation.PendingChange(true, key), owners);
+            this.queueChange(new AiPrintSupply.SupplyPreparation.PendingChange(true, key), owners);
          }
       }
 
-      private void init(AiPrintSupply.SupplyPreparation.PendingChange change, Set<Long> owners) {
+      private void queueChange(AiPrintSupply.SupplyPreparation.PendingChange change, Set<Long> owners) {
          if (owners != null && !owners.isEmpty() && this.fullRecheck == null && !this.pendingChanges.containsKey(change)) {
             if (this.pendingChanges.size() >= 128) {
                this.pendingChanges.clear();
@@ -785,7 +785,7 @@ final class AiPrintSupply {
          }
       }
 
-      private boolean load() {
+      private boolean processPendingChange() {
          if (this.fullRecheck != null) {
             if (this.fullRecheck.hasNext()) {
                this.protectedCells.add(this.fullRecheck.next());
@@ -836,10 +836,10 @@ final class AiPrintSupply {
                   } else if (method.isDefault()) {
                      return InvocationHandler.invokeDefault(proxy, method, args);
                   } else {
-                     throw AiPrintSupply.SupplyPreparation.IncompleteRead.init;
+                     throw AiPrintSupply.SupplyPreparation.IncompleteRead.INSTANCE;
                   }
                } else if (++queries[0] <= 32 && this.loaded.test(p)) {
-                  this.pop++;
+                  this.workUnits++;
                   reads.add(p.asLong());
                   Object var10000;
                   switch (name) {
@@ -855,7 +855,7 @@ final class AiPrintSupply {
 
                   return var10000;
                } else {
-                  throw AiPrintSupply.SupplyPreparation.IncompleteRead.init;
+                  throw AiPrintSupply.SupplyPreparation.IncompleteRead.INSTANCE;
                }
             }
          );
@@ -889,7 +889,7 @@ final class AiPrintSupply {
       }
 
       private static final class IncompleteRead extends RuntimeException {
-         static final AiPrintSupply.SupplyPreparation.IncompleteRead init = new AiPrintSupply.SupplyPreparation.IncompleteRead();
+         static final AiPrintSupply.SupplyPreparation.IncompleteRead INSTANCE = new AiPrintSupply.SupplyPreparation.IncompleteRead();
 
          private IncompleteRead() {
             super(null, null, false, false);
@@ -901,12 +901,12 @@ final class AiPrintSupply {
       private final ConcurrentSkipListMap<Long, Map<Long, V>> bySection = new ConcurrentSkipListMap<>();
       private final AtomicInteger size = new AtomicInteger();
 
-      private static long init(long key) {
+      private static long sectionKey(long key) {
          return BlockPos.asLong(BlockPos.getX(key) >> 4, BlockPos.getY(key) >> 4, BlockPos.getZ(key) >> 4);
       }
 
-      public V init(Long key, V value) {
-         Map<Long, V> map = this.bySection.computeIfAbsent(init(key), ignored -> new ConcurrentHashMap<>());
+      public V putEntry(Long key, V value) {
+         Map<Long, V> map = this.bySection.computeIfAbsent(sectionKey(key), ignored -> new ConcurrentHashMap<>());
          V before = map.put(key, value);
          if (before == null) {
             this.size.incrementAndGet();
@@ -917,13 +917,13 @@ final class AiPrintSupply {
 
       @Override
       public V put(Long key, V value) {
-         return this.init(key, value);
+         return this.putEntry(key, value);
       }
 
       @Override
       public V get(Object key) {
          if (key instanceof Long value) {
-            Map<Long, V> map = this.bySection.get(init(value));
+            Map<Long, V> map = this.bySection.get(sectionKey(value));
             return map == null ? null : map.get(value);
          } else {
             return null;
@@ -952,26 +952,26 @@ final class AiPrintSupply {
             public Iterator<Entry<Long, V>> iterator() {
                final Iterator<Map<Long, V>> outer = SectionedCellMap.this.bySection.values().iterator();
                return new Iterator<Entry<Long, V>>() {
-                  Iterator<Entry<Long, V>> init = Collections.emptyIterator();
+                  Iterator<Entry<Long, V>> current = Collections.emptyIterator();
 
                   @Override
                   public boolean hasNext() {
-                     while (!this.init.hasNext() && outer.hasNext()) {
-                        this.init = outer.next().entrySet().iterator();
+                     while (!this.current.hasNext() && outer.hasNext()) {
+                        this.current = outer.next().entrySet().iterator();
                      }
 
-                     return this.init.hasNext();
+                     return this.current.hasNext();
                   }
 
                   public Entry<Long, V> next() {
-                     return this.init();
+                     return this.nextEntry();
                   }
 
-                  public Entry<Long, V> init() {
+                  public Entry<Long, V> nextEntry() {
                      if (!this.hasNext()) {
                         throw new NoSuchElementException();
                      } else {
-                        return this.init.next();
+                        return this.current.next();
                      }
                   }
                };
@@ -990,7 +990,7 @@ final class AiPrintSupply {
       final int chunkWidth;
       final int total;
       Iterator<BlockPos> pending = Collections.emptyIterator();
-      int load;
+      int cursor;
 
       DepotScan(BlockPos center, LevelReader world) {
          this.center = center.immutable();
@@ -1002,15 +1002,15 @@ final class AiPrintSupply {
          this.total = this.level == null ? CUBE_CELLS : this.chunkWidth * chunkDepth;
       }
 
-      boolean init() {
-         return this.load >= this.total && !this.pending.hasNext();
+      boolean isDone() {
+         return this.cursor >= this.total && !this.pending.hasNext();
       }
 
-      void init(AiPrintSupply.SupplyPreparation prep) {
+      void step(AiPrintSupply.SupplyPreparation prep) {
          BlockPos p;
          if (this.level != null) {
             if (!this.pending.hasNext()) {
-               int idx = this.load++;
+               int idx = this.cursor++;
                LevelChunk chunk = this.level
                   .getChunkSource()
                   .getChunk(this.minChunkX + idx % this.chunkWidth, this.minChunkZ + idx / this.chunkWidth, ChunkStatus.FULL, false);
@@ -1032,7 +1032,7 @@ final class AiPrintSupply {
                return;
             }
          } else {
-            int i = this.load++;
+            int i = this.cursor++;
             p = this.center.offset(i % 49 - 24, i / 49 % 17 - 8, i / 833 - 24);
          }
 
@@ -1052,19 +1052,19 @@ final class AiPrintSupply {
       }
 
       public BlockPos get(int index) {
-         return this.init(index);
+         return this.getAt(index);
       }
 
       public boolean add(BlockPos pos) {
-         return this.init(pos);
+         return this.append(pos);
       }
 
-      public BlockPos init(int index) {
+      public BlockPos getAt(int index) {
          Objects.checkIndex(index, this.size);
          return this.pages.get(index >>> 10)[index & 1023];
       }
 
-      public boolean init(BlockPos pos) {
+      public boolean append(BlockPos pos) {
          this.pages.computeIfAbsent(this.size >>> 10, ignored -> new BlockPos[1024])[this.size & 1023] = pos;
          this.size++;
          return true;
@@ -1094,11 +1094,11 @@ final class AiPrintSupply {
          }
 
          if (System.nanoTime() >= this.deadline) {
-            return this.init(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Stock navigation/withdrawal deadline reached", "{}", List.of(), AiFailure.TIMEOUT));
+            return this.finishWith(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Stock navigation/withdrawal deadline reached", "{}", List.of(), AiFailure.TIMEOUT));
          }
 
          if (this.stateSupplier.get() == AiPrintSupply.StockState.REPLACED) {
-            return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
+            return this.finishWith(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
          }
 
          if (this.navigation != null) {
@@ -1108,11 +1108,11 @@ final class AiPrintSupply {
             }
 
             if (result.status() != AiOperation.Status.SUCCEEDED) {
-               return this.init(AiContainer.init(result, AiJson.objectOf("action", "withdraw")));
+               return this.finishWith(AiContainer.mergeNavigation(result, AiJson.objectOf("action", "withdraw")));
             }
 
             if (this.navigation.requiresReconciliationAfterEmergency() || !this.navigation.canInterruptNow()) {
-               return this.init(
+               return this.finishWith(
                   new AiOperation.Result(AiOperation.Status.UNCERTAIN, "Stock approach needs reconciliation", result.dataJson(), result.evidence())
                );
             }
@@ -1127,7 +1127,7 @@ final class AiPrintSupply {
          }
 
          if (observed == AiPrintSupply.StockState.REPLACED) {
-            return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
+            return this.finishWith(new AiOperation.Result(AiOperation.Status.FAILED, "The remembered stock is no longer a shulker box", "{}", List.of(), AiFailure.MISSING_MATERIALS));
          }
 
          if (this.opened == null) {
@@ -1135,17 +1135,17 @@ final class AiPrintSupply {
          }
 
          AiOperation.Result result = this.receipt.tickChild(this.opened);
-         return result.terminal() ? this.init(result) : result;
+         return result.terminal() ? this.finishWith(result) : result;
       }
 
-      private AiOperation.Result init(AiOperation.Result result) {
+      private AiOperation.Result finishWith(AiOperation.Result result) {
          boolean pending = this.requiresReconciliationAfterEmergency();
-         this.init();
+         this.cancelChildren();
          this.finalResult = this.receipt.finalizeResult(result, pending);
          return this.finalResult;
       }
 
-      private void init() {
+      private void cancelChildren() {
          if (this.navigation != null) {
             this.receipt.cancelChild(this.navigation);
             this.navigation = null;
@@ -1160,9 +1160,9 @@ final class AiPrintSupply {
       @Override
       public void cancel() {
          if (this.finalResult == null) {
-            this.init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Stock operation cancelled", "{}", List.of()));
+            this.finishWith(new AiOperation.Result(AiOperation.Status.CANCELLED, "Stock operation cancelled", "{}", List.of()));
          } else {
-            this.init();
+            this.cancelChildren();
          }
       }
 
@@ -1191,25 +1191,25 @@ final class AiPrintSupply {
       final Set<Long> triedSources = new HashSet<>();
       final List<ItemStack> triedBoxes = new ArrayList<>();
 
-      boolean init(Item wanted, int available) {
+      boolean noteShortage(Item wanted, int available) {
          if (wanted != null && wanted != Items.AIR && available <= 0) {
             if (this.item != wanted) {
-               this.init();
+               this.reset();
                this.item = wanted;
             }
 
             return ++this.misses >= 10;
          } else {
-            this.init();
+            this.reset();
             return false;
          }
       }
 
-      boolean init(long key) {
+      boolean tryNewSource(long key) {
          return this.triedSources.size() < 3 && this.triedSources.add(key);
       }
 
-      void init() {
+      void reset() {
          this.item = null;
          this.misses = 0;
          this.triedSources.clear();

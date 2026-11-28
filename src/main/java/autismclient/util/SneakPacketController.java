@@ -8,13 +8,13 @@ public final class SneakPacketController {
    private SneakPacketController() {
    }
 
-   public static boolean init(String mode) {
+   public static boolean isPacketMode(String mode) {
       return "Packet".equalsIgnoreCase(mode);
    }
 
-   public static void init(Minecraft mc, String mode) {
+   public static void press(Minecraft mc, String mode) {
       if (mc != null) {
-         if (init(mode)) {
+         if (isPacketMode(mode)) {
             load(mc, true);
          } else if (mc.options != null && mc.options.keyShift != null) {
             mc.options.keyShift.setDown(true);
@@ -22,9 +22,9 @@ public final class SneakPacketController {
       }
    }
 
-   public static void load(Minecraft mc, String mode) {
+   public static void release(Minecraft mc, String mode) {
       if (mc != null) {
-         if (init(mode)) {
+         if (isPacketMode(mode)) {
             load(mc, false);
          }
 
@@ -34,7 +34,7 @@ public final class SneakPacketController {
       }
    }
 
-   public static void init(Minecraft mc, boolean sneak) {
+   public static void setSneak(Minecraft mc, boolean sneak) {
       if (mc != null) {
          if (mc.options != null && mc.options.keyShift != null) {
             mc.options.keyShift.setDown(sneak);

@@ -853,7 +853,7 @@ public final class ResourcePackSessionTracker {
          }
 
          cancelWaits(waits);
-         ServerPackSelectionRegistry.init(session);
+         ServerPackSelectionRegistry.forget(session);
          IsolatedPackDownloader.init_V(session, null);
          if (handler != null) {
             try {

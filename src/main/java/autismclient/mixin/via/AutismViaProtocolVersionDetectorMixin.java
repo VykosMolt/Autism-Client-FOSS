@@ -13,6 +13,6 @@ public abstract class AutismViaProtocolVersionDetectorMixin {
    @WrapOperation(method = "get", at = @At(value = "NEW", target = "(Ljava/lang/String;I)Ljava/net/Socket;"), remap = false)
    private static Socket autism$proxySafeAutoDetection(String host, int port, Operation<Socket> original) throws IOException {
       Operation var3 = original;
-      return ViaFabricPlusBridge.init(host, port, (xva$0, xva$1) -> (Socket)var3.call(xva$0, xva$1));
+      return ViaFabricPlusBridge.connect(host, port, (xva$0, xva$1) -> (Socket)var3.call(xva$0, xva$1));
    }
 }

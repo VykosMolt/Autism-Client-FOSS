@@ -97,7 +97,7 @@ public final class WaypointsCommand extends Command {
          int y = (int)Math.floor(mc.player.getY());
          int z = (int)Math.floor(mc.player.getZ());
          String name = store.nextName(scope, "Waypoint");
-         store.init(scope, new AutismWaypoints.Waypoint(name, x, y, z, waypointColor(), System.currentTimeMillis()));
+         store.addWaypoint(scope, new AutismWaypoints.Waypoint(name, x, y, z, waypointColor(), System.currentTimeMillis()));
          AutismClientMessaging.sendPrefixed("§aWaypoint saved: §f" + name + " §7(" + x + " " + y + " " + z + ")");
          return 1;
       } else {
@@ -114,7 +114,7 @@ public final class WaypointsCommand extends Command {
       int y = floorToInt(dy);
       int z = floorToInt(dz);
       String name = store.nextName(scope, "Waypoint");
-      store.init(scope, new AutismWaypoints.Waypoint(name, x, y, z, waypointColor(), System.currentTimeMillis()));
+      store.addWaypoint(scope, new AutismWaypoints.Waypoint(name, x, y, z, waypointColor(), System.currentTimeMillis()));
       AutismClientMessaging.sendPrefixed("§aWaypoint saved: §f" + name + " §7(" + x + " " + y + " " + z + ")");
       return 1;
    }

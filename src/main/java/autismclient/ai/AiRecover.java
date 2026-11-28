@@ -24,7 +24,7 @@ final class AiRecover {
    private AiRecover() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation recover(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final AiDeathLog.DeathRecord death = AiDeathLog.lastDeath();

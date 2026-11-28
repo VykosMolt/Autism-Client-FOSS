@@ -104,12 +104,12 @@ public class WaitGamemodeChangeAction implements CaptureOutputAction, MacroActio
    }
 
    @Override
-   public String load() {
+   public String getSaveAs() {
       return this.saveAs;
    }
 
    @Override
-   public void a_(String name) {
+   public void setSaveAs(String name) {
       this.saveAs = name == null ? "" : name;
    }
 

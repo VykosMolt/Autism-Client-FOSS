@@ -6,57 +6,57 @@ import java.util.List;
 import java.util.Locale;
 
 public final class PayloadEditorModel {
-   private static final char[] init_CArr = "0123456789ABCDEF".toCharArray();
+   private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
    public String direction = "C2S";
    public String phase = "PLAY";
    public String channel = "minecraft:brand";
-   public String write_Str = "";
+   public String payloadClassName = "";
    public int packetId = -1;
-   public String update_Str = "";
+   public String sourceProtocol = "";
    public String encodingMode = "";
    public List<PayloadFieldCodec.PayloadField> fields = new ArrayList<>();
    public byte[] bodyBytes = new byte[0];
-   public byte[] load_BArr = new byte[0];
-   public PayloadEditorModel.PayloadProvenance init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.USER_EDITED;
+   public byte[] baselineBody = new byte[0];
+   public PayloadEditorModel.PayloadProvenance provenance = PayloadEditorModel.PayloadProvenance.USER_EDITED;
    public String error = "";
    public String close = "Binary";
    public boolean hasCommandApiValue = false;
    public boolean commandApiOverride = false;
    public int commandApiValue = 2147483639;
-   private long init_J = 1L;
-   private long load_J = -9223372036854775808L;
-   private String open = "";
-   private long read_J = -9223372036854775808L;
-   private String poll = "";
-   private long write_J = -9223372036854775808L;
-   private String push = "";
-   private long update_J = -9223372036854775808L;
-   private String pop = "";
+   private long revision = 1L;
+   private long scriptRevision = -9223372036854775808L;
+   private String cachedScript = "";
+   private long hexDumpRevision = -9223372036854775808L;
+   private String cachedHexDump = "";
+   private long readCacheRevision = -9223372036854775808L;
+   private String cachedRead = "";
+   private long writeCacheRevision = -9223372036854775808L;
+   private String cachedWrite = "";
 
    public long revision() {
-      return this.init_J;
+      return this.revision;
    }
 
    public void bumpRevision() {
-      this.init_J++;
+      this.revision++;
    }
 
    public static PayloadEditorModel fromAction(autismclient.util.macro.PayloadAction action) {
       PayloadEditorModel model = new PayloadEditorModel();
       if (action == null) {
          model.fields = new ArrayList<>(PayloadFieldCodec.defaultBrandTemplate().fields());
-         model.init_Z_Z(false);
+         model.rebuildBody(false);
          return model;
       }
 
       model.direction = normalizeDirection(action.payloadDirection != null && !action.payloadDirection.isBlank() ? action.payloadDirection : action.sourceDirection);
-      model.phase = load_Str_Str(action.payloadPhase);
+      model.phase = normalizePhase(action.payloadPhase);
       model.channel = action.channel != null && !action.channel.isBlank() ? action.channel.strip() : "minecraft:brand";
-      model.write_Str = action.payloadClassName == null ? "" : action.payloadClassName;
+      model.payloadClassName = action.payloadClassName == null ? "" : action.payloadClassName;
       model.packetId = action.payloadPacketId;
-      model.update_Str = action.sourceProtocol == null ? "" : action.sourceProtocol;
+      model.sourceProtocol = action.sourceProtocol == null ? "" : action.sourceProtocol;
       model.encodingMode = action.payloadEncodingMode == null ? "" : action.payloadEncodingMode;
-      model.init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.init(action.payloadProvenance);
+      model.provenance = PayloadEditorModel.PayloadProvenance.parse(action.payloadProvenance);
       model.hasCommandApiValue = action.commandApiRecognized;
       model.commandApiOverride = action.commandApiOverride;
       model.commandApiValue = action.commandApiValue;
@@ -73,11 +73,11 @@ public final class PayloadEditorModel {
       List<PayloadFieldCodec.PayloadField> fields = PayloadFieldCodec.parseFields(action.payloadFields);
       if (!fields.isEmpty()) {
          model.fields = new ArrayList<>(fields);
-         if (!model.init_Z_Z(false) && haveRaw) {
-            model.init_V_BArr_bE_StreamUtil(raw, PayloadEditorModel.PayloadProvenance.init(action.payloadProvenance));
+         if (!model.rebuildBody(false) && haveRaw) {
+            model.setBody(raw, PayloadEditorModel.PayloadProvenance.parse(action.payloadProvenance));
          }
       } else {
-         model.init_V_BArr_bE_StreamUtil(raw, PayloadEditorModel.PayloadProvenance.init(action.payloadProvenance));
+         model.setBody(raw, PayloadEditorModel.PayloadProvenance.parse(action.payloadProvenance));
       }
 
       return model;
@@ -92,14 +92,14 @@ public final class PayloadEditorModel {
       action.channel = this.channel != null && !this.channel.isBlank() ? this.channel.strip() : "minecraft:brand";
       action.payloadDirection = normalizeDirection(this.direction);
       action.sourceDirection = action.payloadDirection;
-      action.payloadPhase = load_Str_Str(this.phase);
-      action.sourceProtocol = this.update_Str != null && !this.update_Str.isBlank()
-         ? this.update_Str
+      action.payloadPhase = normalizePhase(this.phase);
+      action.sourceProtocol = this.sourceProtocol != null && !this.sourceProtocol.isBlank()
+         ? this.sourceProtocol
          : ("CONFIGURATION".equals(action.payloadPhase) ? "CONFIGURATION" : "");
-      action.payloadClassName = this.write_Str == null ? "" : this.write_Str;
+      action.payloadClassName = this.payloadClassName == null ? "" : this.payloadClassName;
       action.payloadPacketId = this.packetId;
-      action.payloadProvenance = this.init_bE_StreamUtil == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.init() : this.init_bE_StreamUtil.init();
-      action.payloadEncodingMode = this.sync();
+      action.payloadProvenance = this.provenance == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.init() : this.provenance.init();
+      action.payloadEncodingMode = this.encodingMode();
       action.payloadFields = PayloadFieldCodec.formatFields(this.fields);
       action.payloadData = AutismPayloadSupport.toHexString(this.bodyBytes);
       action.payloadJson = "";
@@ -116,13 +116,13 @@ public final class PayloadEditorModel {
          this.channel,
          PayloadFieldCodec.PayloadDirection.parse(this.direction),
          PayloadFieldCodec.ProtocolPhase.parse(this.phase),
-         PayloadFieldCodec.EncodingMode.parse(this.sync(), this.channel),
+         PayloadFieldCodec.EncodingMode.parse(this.encodingMode(), this.channel),
          this.fields == null ? List.of() : this.fields
       );
    }
 
    public boolean parseScript(String script) {
-      PayloadEditorModel parsed = this.init_bE();
+      PayloadEditorModel parsed = this.copy();
       List<String> writerLines = new ArrayList<>();
       String[] lines = (script == null ? "" : script).replace("\r\n", "\n").replace('\r', '\n').split("\n", -1);
 
@@ -131,7 +131,7 @@ public final class PayloadEditorModel {
          if (line.isEmpty()) {
             writerLines.add(raw == null ? "" : raw);
          } else {
-            int split = init_I_Str(line);
+            int split = separatorIndex(line);
             if (split > 0) {
                String key = line.substring(0, split).strip().toLowerCase(Locale.ROOT);
                String value = line.substring(split + 1).strip();
@@ -140,14 +140,14 @@ public final class PayloadEditorModel {
                      parsed.direction = normalizeDirection(value);
                      break;
                   case "phase":
-                     parsed.phase = load_Str_Str(value);
+                     parsed.phase = normalizePhase(value);
                      break;
                   case "channel":
                      parsed.channel = value.isBlank() ? "minecraft:brand" : value;
                      break;
                   case "packetclass":
                   case "packet_class":
-                     parsed.write_Str = value;
+                     parsed.payloadClassName = value;
                      break;
                   case "packetid":
                   case "packet_id":
@@ -155,7 +155,7 @@ public final class PayloadEditorModel {
                      break;
                   case "sourceprotocol":
                   case "source_protocol":
-                     parsed.update_Str = value;
+                     parsed.sourceProtocol = value;
                      break;
                   default:
                      writerLines.add(raw == null ? "" : raw);
@@ -167,13 +167,13 @@ public final class PayloadEditorModel {
       }
 
       parsed.fields = new ArrayList<>(PayloadFieldCodec.parseFields(String.join("\n", writerLines)));
-      if (!parsed.init_Z_Z(true)) {
+      if (!parsed.rebuildBody(true)) {
          this.error = parsed.error;
          this.bumpRevision();
          return false;
       } else {
-         this.init_V_bE(parsed);
-         this.init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.USER_EDITED;
+         this.copyFrom(parsed);
+         this.provenance = PayloadEditorModel.PayloadProvenance.USER_EDITED;
          this.bumpRevision();
          return true;
       }
@@ -181,7 +181,7 @@ public final class PayloadEditorModel {
 
    public boolean parseHex(String hex) {
       try {
-         this.init_V_BArr_bE_StreamUtil(init_BArr_Str(hex), PayloadEditorModel.PayloadProvenance.USER_EDITED);
+         this.setBody(hexToBytes(hex), PayloadEditorModel.PayloadProvenance.USER_EDITED);
          this.error = "";
          return true;
       } catch (Throwable t) {
@@ -192,12 +192,12 @@ public final class PayloadEditorModel {
    }
 
    public boolean setUtf8(String text) {
-      this.init_V_BArr_bE_StreamUtil((text == null ? "" : text).getBytes(StandardCharsets.UTF_8), PayloadEditorModel.PayloadProvenance.USER_EDITED);
+      this.setBody((text == null ? "" : text).getBytes(StandardCharsets.UTF_8), PayloadEditorModel.PayloadProvenance.USER_EDITED);
       return true;
    }
 
    public boolean setLogical(String text) {
-      PayloadEditorModel parsed = this.init_bE();
+      PayloadEditorModel parsed = this.copy();
       String bodyHex = null;
       String logicalHex = null;
       String[] lines = (text == null ? "" : text).replace("\r\n", "\n").replace('\r', '\n').split("\n", -1);
@@ -205,7 +205,7 @@ public final class PayloadEditorModel {
       for (String raw : lines) {
          String line = raw == null ? "" : raw.strip();
          if (!line.isEmpty() && !line.startsWith("#")) {
-            int split = init_I_Str(line);
+            int split = separatorIndex(line);
             if (split >= 0) {
                String key = line.substring(0, split).strip().toLowerCase(Locale.ROOT);
                String value = line.substring(split + 1).strip();
@@ -214,7 +214,7 @@ public final class PayloadEditorModel {
                      parsed.direction = normalizeDirection(value);
                      break;
                   case "phase":
-                     parsed.phase = load_Str_Str(value);
+                     parsed.phase = normalizePhase(value);
                      break;
                   case "channel":
                      parsed.channel = value.isBlank() ? parsed.channel : value;
@@ -233,11 +233,11 @@ public final class PayloadEditorModel {
                      break;
                   case "packetclass":
                   case "packet_class":
-                     parsed.write_Str = value;
+                     parsed.payloadClassName = value;
                      break;
                   case "sourceprotocol":
                   case "source_protocol":
-                     parsed.update_Str = value;
+                     parsed.sourceProtocol = value;
                }
             }
          }
@@ -245,16 +245,16 @@ public final class PayloadEditorModel {
 
       try {
          if (logicalHex != null && !logicalHex.isBlank()) {
-            PayloadEditorModel.DecodedPayload logical = init_bE_DataUtil_Str(logicalHex);
+            PayloadEditorModel.DecodedPayload logical = decodeLogical(logicalHex);
             if (parsed.packetId >= 0 && logical.packetId != parsed.packetId) {
                throw new IllegalArgumentException("Logical packet id does not match packetId");
             }
 
             parsed.packetId = logical.packetId;
             parsed.channel = logical.channel;
-            parsed.init_V_BArr_bE_StreamUtil(logical.body, PayloadEditorModel.PayloadProvenance.USER_EDITED);
+            parsed.setBody(logical.body, PayloadEditorModel.PayloadProvenance.USER_EDITED);
          } else if (bodyHex != null) {
-            parsed.init_V_BArr_bE_StreamUtil(init_BArr_Str(bodyHex), PayloadEditorModel.PayloadProvenance.USER_EDITED);
+            parsed.setBody(hexToBytes(bodyHex), PayloadEditorModel.PayloadProvenance.USER_EDITED);
          }
       } catch (Throwable t) {
          this.error = AutismPayloadSupport.describeError(t);
@@ -262,45 +262,45 @@ public final class PayloadEditorModel {
          return false;
       }
 
-      this.init_V_bE(parsed);
-      this.init_bE_StreamUtil = PayloadEditorModel.PayloadProvenance.USER_EDITED;
+      this.copyFrom(parsed);
+      this.provenance = PayloadEditorModel.PayloadProvenance.USER_EDITED;
       this.error = "";
       this.bumpRevision();
       return true;
    }
 
    public String toScript() {
-      if (this.load_J == this.init_J) {
-         return this.open;
+      if (this.scriptRevision == this.revision) {
+         return this.cachedScript;
       }
 
       StringBuilder sb = new StringBuilder();
       sb.append("direction = ").append(normalizeDirection(this.direction)).append('\n');
-      sb.append("phase = ").append(load_Str_Str(this.phase)).append('\n');
+      sb.append("phase = ").append(normalizePhase(this.phase)).append('\n');
       sb.append("channel = ").append(this.channel != null && !this.channel.isBlank() ? this.channel.strip() : "minecraft:brand").append('\n');
       if (this.packetId >= 0) {
          sb.append("packetId = ").append(this.packetId).append('\n');
       }
 
-      if (this.write_Str != null && !this.write_Str.isBlank()) {
-         sb.append("packetClass = ").append(this.write_Str).append('\n');
+      if (this.payloadClassName != null && !this.payloadClassName.isBlank()) {
+         sb.append("packetClass = ").append(this.payloadClassName).append('\n');
       }
 
-      if (this.update_Str != null && !this.update_Str.isBlank()) {
-         sb.append("sourceProtocol = ").append(this.update_Str).append('\n');
+      if (this.sourceProtocol != null && !this.sourceProtocol.isBlank()) {
+         sb.append("sourceProtocol = ").append(this.sourceProtocol).append('\n');
       }
 
       sb.append('\n');
       sb.append(PayloadFieldCodec.formatFields(this.fields));
-      this.open = sb.toString();
-      this.load_J = this.init_J;
-      return this.open;
+      this.cachedScript = sb.toString();
+      this.scriptRevision = this.revision;
+      return this.cachedScript;
    }
 
    public String toHexDump() {
       if (this.bodyBytes != null && this.bodyBytes.length != 0) {
-         if (this.read_J == this.init_J) {
-            return this.poll;
+         if (this.hexDumpRevision == this.revision) {
+            return this.cachedHexDump;
          }
 
          StringBuilder sb = new StringBuilder(this.bodyBytes.length * 3 + this.bodyBytes.length / 16 * 10);
@@ -311,67 +311,67 @@ public final class PayloadEditorModel {
             }
 
             int value = this.bodyBytes[i] & 255;
-            sb.append(init_CArr[value >>> 4]).append(init_CArr[value & 15]);
+            sb.append(HEX_DIGITS[value >>> 4]).append(HEX_DIGITS[value & 15]);
          }
 
-         this.poll = sb.toString();
-         this.read_J = this.init_J;
-         return this.poll;
+         this.cachedHexDump = sb.toString();
+         this.hexDumpRevision = this.revision;
+         return this.cachedHexDump;
       } else {
          return "";
       }
    }
 
    public String utf8Text() {
-      if (this.write_J == this.init_J) {
-         return this.push;
+      if (this.readCacheRevision == this.revision) {
+         return this.cachedRead;
       }
 
       String text = AutismPayloadSupport.decodePrintableUtf8(this.bodyBytes);
-      this.push = text == null ? "" : text;
-      this.write_J = this.init_J;
-      return this.push;
+      this.cachedRead = text == null ? "" : text;
+      this.readCacheRevision = this.revision;
+      return this.cachedRead;
    }
 
    public String logicalText() {
-      if (this.update_J == this.init_J) {
-         return this.pop;
+      if (this.writeCacheRevision == this.revision) {
+         return this.cachedWrite;
       }
 
       StringBuilder sb = new StringBuilder();
       sb.append("direction = ").append(normalizeDirection(this.direction)).append('\n');
-      sb.append("phase = ").append(load_Str_Str(this.phase)).append('\n');
+      sb.append("phase = ").append(normalizePhase(this.phase)).append('\n');
       sb.append("channel = ").append(this.channel == null ? "" : this.channel).append('\n');
       sb.append("packetId = ").append(this.packetId >= 0 ? this.packetId : "unavailable").append('\n');
-      if (this.write_Str != null && !this.write_Str.isBlank()) {
-         sb.append("packetClass = ").append(this.write_Str).append('\n');
+      if (this.payloadClassName != null && !this.payloadClassName.isBlank()) {
+         sb.append("packetClass = ").append(this.payloadClassName).append('\n');
       }
 
-      if (this.update_Str != null && !this.update_Str.isBlank()) {
-         sb.append("sourceProtocol = ").append(this.update_Str).append('\n');
+      if (this.sourceProtocol != null && !this.sourceProtocol.isBlank()) {
+         sb.append("sourceProtocol = ").append(this.sourceProtocol).append('\n');
       }
 
-      sb.append("provenance = ").append(this.init_bE_StreamUtil == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.init() : this.init_bE_StreamUtil.init()).append('\n');
+      sb.append("provenance = ").append(this.provenance == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED.init() : this.provenance.init()).append('\n');
       sb.append("bodyBytes = ").append(this.bodyBytes == null ? 0 : this.bodyBytes.length).append('\n');
-      sb.append("decoded = ").append(this.update()).append('\n');
+      sb.append("decoded = ").append(this.decodedSummary()).append('\n');
       sb.append("bodyHex = ").append(AutismPayloadSupport.toHexString(this.bodyBytes)).append('\n');
       if (this.packetId >= 0) {
-         sb.append("logicalHex = ").append(AutismPayloadSupport.toHexString(this.init_BArr())).append('\n');
+         sb.append("logicalHex = ").append(AutismPayloadSupport.toHexString(this.logicalPacketBytes())).append('\n');
       } else {
          sb.append("logicalHex = unavailable; packet id was not captured/resolved\n");
       }
 
-      this.pop = sb.toString();
-      this.update_J = this.init_J;
-      return this.pop;
+      this.cachedWrite = sb.toString();
+      this.writeCacheRevision = this.revision;
+      return this.cachedWrite;
    }
 
-   public byte[] init_BArr() {
+   public byte[] logicalPacketBytes() {
       if (this.packetId < 0) {
          return new byte[0];
       }
 
-      byte[] packet = init_BArr_I(this.packetId);
+      byte[] packet = encodeVarInt(this.packetId);
       byte[] channelBytes = AutismPayloadSupport.encodeMcString(this.channel == null ? "" : this.channel);
       byte[] body = this.bodyBytes == null ? new byte[0] : this.bodyBytes;
       byte[] out = new byte[packet.length + channelBytes.length + body.length];
@@ -381,11 +381,11 @@ public final class PayloadEditorModel {
       return out;
    }
 
-   public String update() {
+   public String decodedSummary() {
       return this.fields != null && !this.fields.isEmpty() ? this.fields.get(0).init_Str() : "empty";
    }
 
-   private boolean init_Z_Z(boolean strict) {
+   private boolean rebuildBody(boolean strict) {
       PayloadFieldCodec.PayloadTemplate template = this.toSpec();
       PayloadFieldCodec.EncodeResult built = template.encode();
       if (!built.isValid()) {
@@ -401,27 +401,27 @@ public final class PayloadEditorModel {
       this.phase = template.phase().name();
       this.encodingMode = template.encodingMode().name();
       this.bodyBytes = built.bytes();
-      this.load_BArr = (byte[])this.bodyBytes.clone();
-      this.close = init_Str_BArr(this.bodyBytes);
-      this.load_V();
+      this.baselineBody = (byte[])this.bodyBytes.clone();
+      this.close = guessBodyKind(this.bodyBytes);
+      this.detectCommandApi();
       this.error = "";
       this.bumpRevision();
       return true;
    }
 
-   private void init_V_BArr_bE_StreamUtil(byte[] bytes, PayloadEditorModel.PayloadProvenance source) {
+   private void setBody(byte[] bytes, PayloadEditorModel.PayloadProvenance source) {
       this.bodyBytes = bytes == null ? new byte[0] : (byte[])bytes.clone();
-      this.load_BArr = (byte[])this.bodyBytes.clone();
+      this.baselineBody = (byte[])this.bodyBytes.clone();
       this.fields = new ArrayList<>(AutismPayloadSupport.inferPayloadFields(this.bodyBytes));
       this.encodingMode = AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
-      this.close = init_Str_BArr(this.bodyBytes);
-      this.init_bE_StreamUtil = source == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED : source;
-      this.load_V();
+      this.close = guessBodyKind(this.bodyBytes);
+      this.provenance = source == null ? PayloadEditorModel.PayloadProvenance.USER_EDITED : source;
+      this.detectCommandApi();
       this.error = "";
       this.bumpRevision();
    }
 
-   private void load_V() {
+   private void detectCommandApi() {
       Integer parsed = AutismPayloadSupport.detectCommandApiValue(null, this.channel, this.bodyBytes);
       if (parsed != null) {
          this.hasCommandApiValue = true;
@@ -433,11 +433,11 @@ public final class PayloadEditorModel {
       }
    }
 
-   private String sync() {
+   private String encodingMode() {
       return this.encodingMode != null && !this.encodingMode.isBlank() ? this.encodingMode : AutismPayloadSupport.inferEncodingMode(this.channel, this.bodyBytes);
    }
 
-   private static String init_Str_BArr(byte[] bytes) {
+   private static String guessBodyKind(byte[] bytes) {
       if (AutismPayloadSupport.decodeMcString(bytes) != null) {
          return "Minecraft String";
       }
@@ -450,24 +450,24 @@ public final class PayloadEditorModel {
       return utf8 != null && !utf8.isBlank() ? "Raw UTF-8" : "Binary Hex";
    }
 
-   private PayloadEditorModel init_bE() {
+   private PayloadEditorModel copy() {
       PayloadEditorModel copy = new PayloadEditorModel();
-      copy.init_V_bE(this);
+      copy.copyFrom(this);
       return copy;
    }
 
-   private void init_V_bE(PayloadEditorModel other) {
+   private void copyFrom(PayloadEditorModel other) {
       this.direction = other.direction;
       this.phase = other.phase;
       this.channel = other.channel;
-      this.write_Str = other.write_Str;
+      this.payloadClassName = other.payloadClassName;
       this.packetId = other.packetId;
-      this.update_Str = other.update_Str;
+      this.sourceProtocol = other.sourceProtocol;
       this.encodingMode = other.encodingMode;
       this.fields = new ArrayList<>(other.fields == null ? List.of() : other.fields);
       this.bodyBytes = other.bodyBytes == null ? new byte[0] : (byte[])other.bodyBytes.clone();
-      this.load_BArr = other.load_BArr == null ? new byte[0] : (byte[])other.load_BArr.clone();
-      this.init_bE_StreamUtil = other.init_bE_StreamUtil;
+      this.baselineBody = other.baselineBody == null ? new byte[0] : (byte[])other.baselineBody.clone();
+      this.provenance = other.provenance;
       this.error = other.error;
       this.close = other.close;
       this.hasCommandApiValue = other.hasCommandApiValue;
@@ -476,7 +476,7 @@ public final class PayloadEditorModel {
       this.bumpRevision();
    }
 
-   private static byte[] init_BArr_Str(String text) {
+   private static byte[] hexToBytes(String text) {
       String value = text == null ? "" : text.strip();
       if (value.isEmpty()) {
          return new byte[0];
@@ -504,12 +504,12 @@ public final class PayloadEditorModel {
       return out;
    }
 
-   private static PayloadEditorModel.DecodedPayload init_bE_DataUtil_Str(String hex) {
-      byte[] bytes = init_BArr_Str(hex);
+   private static PayloadEditorModel.DecodedPayload decodeLogical(String hex) {
+      byte[] bytes = hexToBytes(hex);
       int[] index = new int[]{0};
-      Integer packetId = init_Integer_BArr_IArr(bytes, index);
+      Integer packetId = readVarInt(bytes, index);
       if (packetId != null && packetId >= 0) {
-         String channel = init_Str_BArr_IArr(bytes, index);
+         String channel = readMcString(bytes, index);
          byte[] body = new byte[Math.max(0, bytes.length - index[0])];
          if (body.length > 0) {
             System.arraycopy(bytes, index[0], body, 0, body.length);
@@ -521,8 +521,8 @@ public final class PayloadEditorModel {
       }
    }
 
-   private static String init_Str_BArr_IArr(byte[] bytes, int[] index) {
-      Integer len = init_Integer_BArr_IArr(bytes, index);
+   private static String readMcString(byte[] bytes, int[] index) {
+      Integer len = readVarInt(bytes, index);
       if (len != null && len >= 0) {
          if (index[0] + len > bytes.length) {
             throw new IllegalArgumentException("Channel length exceeds logical packet");
@@ -540,7 +540,7 @@ public final class PayloadEditorModel {
       }
    }
 
-   private static Integer init_Integer_BArr_IArr(byte[] bytes, int[] indexRef) {
+   private static Integer readVarInt(byte[] bytes, int[] indexRef) {
       int value = 0;
       int position = 0;
       int index = Math.max(0, indexRef[0]);
@@ -562,7 +562,7 @@ public final class PayloadEditorModel {
       return null;
    }
 
-   private static byte[] init_BArr_I(int value) {
+   private static byte[] encodeVarInt(int value) {
       byte[] out = new byte[5];
       int index = 0;
 
@@ -577,7 +577,7 @@ public final class PayloadEditorModel {
       return trimmed;
    }
 
-   private static int init_I_Str(String line) {
+   private static int separatorIndex(String line) {
       int eq = line.indexOf(61);
       int colon = line.indexOf(58);
       if (eq < 0) {
@@ -591,7 +591,7 @@ public final class PayloadEditorModel {
       return "S2C".equalsIgnoreCase(raw == null ? "" : raw.strip()) ? "S2C" : "C2S";
    }
 
-   private static String load_Str_Str(String raw) {
+   private static String normalizePhase(String raw) {
       String value = raw == null ? "" : raw.strip().toUpperCase(Locale.ROOT);
       return value.contains("CONFIG") ? "CONFIGURATION" : "PLAY";
    }
@@ -622,7 +622,7 @@ public final class PayloadEditorModel {
          return this.init_Str;
       }
 
-      public static PayloadEditorModel.PayloadProvenance init(String raw) {
+      public static PayloadEditorModel.PayloadProvenance parse(String raw) {
          if (raw != null && !raw.isBlank()) {
             String normalized = raw.strip().toLowerCase(Locale.ROOT);
 

@@ -82,7 +82,7 @@ public class AutismMinecraftClientMixin {
    @WrapMethod(method = "pick")
    private void autism$wrapPickForCameraOverrides(float partialTicks, Operation<Void> original) {
       Minecraft self = (Minecraft)(Object)this;
-      Entity restoreRemote = RemoteViewController.init(self);
+      Entity restoreRemote = RemoteViewController.swapCamera(self);
       try {
          Entity fcCam = null;
          double fcX = 0.0;
@@ -141,7 +141,7 @@ public class AutismMinecraftClientMixin {
             }
          }
       } finally {
-         RemoteViewController.init(self, restoreRemote);
+         RemoteViewController.restoreCamera(self, restoreRemote);
       }
    }
 

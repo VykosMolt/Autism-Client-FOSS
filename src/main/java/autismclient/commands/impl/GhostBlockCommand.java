@@ -104,7 +104,7 @@ public class GhostBlockCommand extends Command {
          target = true;
       }
 
-      module.init(target);
+      module.setCreativeMode(target);
       if (target && !module.isEnabled()) {
          module.setEnabled(true);
       }
@@ -134,7 +134,7 @@ public class GhostBlockCommand extends Command {
             return 1;
          }
 
-         module.init(block, false);
+         module.setCreativeBlock(block, false);
          if (!module.isEnabled()) {
             module.setEnabled(true);
          }
@@ -144,7 +144,7 @@ public class GhostBlockCommand extends Command {
          );
          return 1;
       } else {
-         module.init(null, false);
+         module.setCreativeBlock(null, false);
          AutismClientMessaging.sendPrefixed("§7Ghost block disarmed; held blocks place ghosts again.");
          return 1;
       }

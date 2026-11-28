@@ -215,7 +215,7 @@ public final class AiMemoryStore {
       this.journal("observation", AiJson.GSON.toJsonTree(observation));
    }
 
-   public synchronized AiMemoryStore.Memory init(
+   public synchronized AiMemoryStore.Memory remember(
       AiMemoryStore.MemoryKind kind, String scope, String text, String evidenceId, String revision, String payload
    ) throws IOException {
       if (text == null || text.isBlank() || text.length() > 16000) {

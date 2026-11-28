@@ -25,7 +25,7 @@ public final class AiPlacementContext extends BlockPlaceContext {
    private final float read;
    private final boolean secondaryUse;
 
-   static boolean init(Item item, PlacementGoal.PlaceConstraint constraint, BlockPos target, Function<BlockPos, BlockState> states) {
+   static boolean satisfies(Item item, PlacementGoal.PlaceConstraint constraint, BlockPos target, Function<BlockPos, BlockState> states) {
       if (constraint == null) {
          return false;
       }
@@ -84,7 +84,7 @@ public final class AiPlacementContext extends BlockPlaceContext {
 
    @Override
    public Direction getNearestLookingDirection() {
-      return init(this.read, this.load)[0];
+      return facingOrder(this.read, this.load)[0];
    }
 
    @Override
@@ -99,7 +99,7 @@ public final class AiPlacementContext extends BlockPlaceContext {
 
    @Override
    public Direction[] getNearestLookingDirections() {
-      Direction[] directions = init(this.read, this.load);
+      Direction[] directions = facingOrder(this.read, this.load);
       if (!this.replacingClickedOnBlock()) {
          Direction first = this.getClickedFace().getOpposite();
          int index = 0;
@@ -115,7 +115,7 @@ public final class AiPlacementContext extends BlockPlaceContext {
       return directions;
    }
 
-   public static Direction[] init(float yaw, float pitch) {
+   public static Direction[] facingOrder(float yaw, float pitch) {
       float pitchSin = Mth.sin(pitch * 0.017453292F);
       float pitchCos = Mth.cos(pitch * 0.017453292F);
       float yawSin = Mth.sin(-yaw * 0.017453292F);

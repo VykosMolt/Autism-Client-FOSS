@@ -28,57 +28,57 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AutismPacketSanityMixin {
    @Inject(method = "handleSetEntityMotion", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneSetEntityMotion(ClientboundSetEntityMotionPacket packet, CallbackInfo ci) {
-      if (MovementBoundsGuard.load(packet.movement())) {
+      if (MovementBoundsGuard.isBadMotion(packet.movement())) {
          ci.cancel();
       }
    }
 
    @Inject(method = "handleExplosion", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneExplosion(ClientboundExplodePacket packet, CallbackInfo ci) {
-      if (MovementBoundsGuard.init(packet.center())
-         || MovementBoundsGuard.init(packet.radius())
-         || packet.playerKnockback().isPresent() && MovementBoundsGuard.load(packet.playerKnockback().get())) {
+      if (MovementBoundsGuard.isBadPosition(packet.center())
+         || MovementBoundsGuard.isBadCoord(packet.radius())
+         || packet.playerKnockback().isPresent() && MovementBoundsGuard.isBadMotion(packet.playerKnockback().get())) {
          ci.cancel();
       }
    }
 
    @Inject(method = "handleMovePlayer", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneMovePlayer(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
-      if (MovementBoundsGuard.init(packet.change()) && autism$suppressesCorrections((ClientPacketListener)(Object)this)) {
+      if (MovementBoundsGuard.isBadChange(packet.change()) && autism$suppressesCorrections((ClientPacketListener)(Object)this)) {
          ci.cancel();
       }
    }
 
    @Inject(method = "handleTeleportEntity", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneTeleportEntity(ClientboundTeleportEntityPacket packet, CallbackInfo ci) {
-      if (MovementBoundsGuard.init(packet.change())) {
+      if (MovementBoundsGuard.isBadChange(packet.change())) {
          ci.cancel();
       }
    }
 
    @Inject(method = "handleEntityPositionSync", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneEntityPositionSync(ClientboundEntityPositionSyncPacket packet, CallbackInfo ci) {
-      if (MovementBoundsGuard.init(Compat263.entityPosSyncValues(packet))) {
+      if (MovementBoundsGuard.isBadChange(Compat263.entityPosSyncValues(packet))) {
          ci.cancel();
       }
    }
 
    @Inject(method = "handleAddEntity", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneAddEntity(ClientboundAddEntityPacket packet, CallbackInfo ci) {
-      if (MovementBoundsGuard.init(packet.getX()) || MovementBoundsGuard.init(packet.getY()) || MovementBoundsGuard.init(packet.getZ()) || MovementBoundsGuard.load(packet.getMovement())) {
+      if (MovementBoundsGuard.isBadCoord(packet.getX()) || MovementBoundsGuard.isBadCoord(packet.getY()) || MovementBoundsGuard.isBadCoord(packet.getZ()) || MovementBoundsGuard.isBadMotion(packet.getMovement())) {
          ci.cancel();
       }
    }
 
    @Inject(method = "handleParticleEvent", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneParticles(ClientboundLevelParticlesPacket packet, CallbackInfo ci) {
-      if (MovementBoundsGuard.init(packet.x())
-         || MovementBoundsGuard.init(packet.y())
-         || MovementBoundsGuard.init(packet.z())
-         || MovementBoundsGuard.init(packet.xDist())
-         || MovementBoundsGuard.init(packet.yDist())
-         || MovementBoundsGuard.init(packet.zDist())
-         || MovementBoundsGuard.init(packet.xMaxSpeed())
+      if (MovementBoundsGuard.isBadCoord(packet.x())
+         || MovementBoundsGuard.isBadCoord(packet.y())
+         || MovementBoundsGuard.isBadCoord(packet.z())
+         || MovementBoundsGuard.isBadCoord(packet.xDist())
+         || MovementBoundsGuard.isBadCoord(packet.yDist())
+         || MovementBoundsGuard.isBadCoord(packet.zDist())
+         || MovementBoundsGuard.isBadCoord(packet.xMaxSpeed())
          || packet.count() > 100000) {
          ci.cancel();
       }
@@ -87,9 +87,9 @@ public abstract class AutismPacketSanityMixin {
    @Inject(method = "handleMoveVehicle", at = @At("HEAD"), cancellable = true, require = 0)
    private void autism$saneMoveVehicle(ClientboundMoveVehiclePacket packet, CallbackInfo ci) {
       if ((
-            MovementBoundsGuard.init(Compat263.moveVehiclePos(packet))
-               || MovementBoundsGuard.init(Compat263.moveVehicleYRot(packet))
-               || MovementBoundsGuard.init(Compat263.moveVehicleXRot(packet))
+            MovementBoundsGuard.isBadPosition(Compat263.moveVehiclePos(packet))
+               || MovementBoundsGuard.isBadCoord(Compat263.moveVehicleYRot(packet))
+               || MovementBoundsGuard.isBadCoord(Compat263.moveVehicleXRot(packet))
          )
          && autism$suppressesCorrections((ClientPacketListener)(Object)this)) {
          ci.cancel();

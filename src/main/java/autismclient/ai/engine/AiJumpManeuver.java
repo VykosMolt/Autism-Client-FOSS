@@ -56,7 +56,7 @@ public record AiJumpManeuver(
       double var7 = 0.0;
       boolean var9 = var0 != null
          && var1.onGround()
-         && var0.putAt_D_I((int)Math.floor(var1.x()), (int)Math.floor(var1.y() - 0.5), (int)Math.floor(var1.z())) >= 0.9;
+         && var0.frictionAt((int)Math.floor(var1.x()), (int)Math.floor(var1.y() - 0.5), (int)Math.floor(var1.z())) >= 0.9;
       if (var3 >= (var9 ? 0.025 : 0.1)) {
          double var10 = Math.toRadians(var2);
          double var12 = (-var1.vx() * Math.sin(var10) + var1.vz() * Math.cos(var10)) / var3;
@@ -76,7 +76,7 @@ public record AiJumpManeuver(
                ? var11
                : new AiPhysics.MoveInput(0.0, 0.0, false, false, false, var2);
             AiPhysics.MotionState var16 = AiPhysics.step(var19, var15, var0);
-            if (AiPhysics.hitsStrictHazard(var0, var19, var16) || !var16.onGround() || !AiGroundContinuity.putAt(var16.y(), var1.y())) {
+            if (AiPhysics.hitsStrictHazard(var0, var19, var16) || !var16.onGround() || !AiGroundContinuity.sameFloorY(var16.y(), var1.y())) {
                var13 = false;
                break;
             }
@@ -84,7 +84,7 @@ public record AiJumpManeuver(
             var19 = var16;
             if (var19.speed() <= 0.02) {
                AiPhysics.MotionState var17 = AiPhysics.step(var19, AiPhysics.MoveInput.NONE, var0);
-               var13 = var17.onGround() && AiGroundContinuity.putAt(var17.y(), var1.y());
+               var13 = var17.onGround() && AiGroundContinuity.sameFloorY(var17.y(), var1.y());
                break;
             }
          }
@@ -176,7 +176,7 @@ public record AiJumpManeuver(
          double var16 = Math.abs(var12 - var14) <= 0.07 ? 0.0 : Math.signum(var12 - var14);
          AiPhysics.MoveInput var18 = new AiPhysics.MoveInput(var16, 0.0, false, false, false, var4);
          AiPhysics.MotionState var19 = AiPhysics.step(var1, var18, var0);
-         if (var19.equals(var1) || !AiGroundContinuity.putAt(var19.y(), var2.y()) || !var19.onGround() || AiPhysics.hitsStrictHazard(var0, var1, var19)) {
+         if (var19.equals(var1) || !AiGroundContinuity.sameFloorY(var19.y(), var2.y()) || !var19.onGround() || AiPhysics.hitsStrictHazard(var0, var1, var19)) {
             return null;
          }
 
@@ -395,7 +395,7 @@ public record AiJumpManeuver(
 
          var9 = Math.max(var9, var12.y());
          if (AiJumpSolver.isGroundedNotRising(var12)) {
-            if (var9 - var12.y() > var1.putAt_D() + 1.0E-5) {
+            if (var9 - var12.y() > var1.dropLimit() + 1.0E-5) {
                return -1.0;
             }
 
@@ -507,7 +507,7 @@ public record AiJumpManeuver(
                         AiPhysics.MoveInput var19 = new AiPhysics.MoveInput(1.0, var18, false, true, false, var27 + var30);
                         AiPhysics.MotionState var20 = AiPhysics.step(var12.state(), var19, var1);
                         if (var20.onGround()
-                           && AiGroundContinuity.putAt(var20.y(), var2.y())
+                           && AiGroundContinuity.sameFloorY(var20.y(), var2.y())
                            && !var20.horizontalCollision()
                            && !AiPhysics.hitsStrictHazard(var1, var12.state(), var20)) {
                            var var21 = new ArrayList<>(var12.prefix());
@@ -1731,7 +1731,7 @@ public record AiJumpManeuver(
       int var16 = AiPhysics.supportBlockX(var1.support(), var1.x());
       int var17 = (int)Math.floor(var1.y() - 0.5000001);
       int var18 = AiPhysics.supportBlockZ(var1.support(), var1.z());
-      double var19 = Math.max(0.6, var0.putAt_D_I(var16, var17, var18));
+      double var19 = Math.max(0.6, var0.frictionAt(var16, var17, var18));
       var12 *= var19 * 0.91;
       double var21 = var4 ? 0.026 : 0.02;
 
@@ -2074,7 +2074,7 @@ public record AiJumpManeuver(
                var13.putAt_List.add(new AiJumpManeuver.Inner_DataUtil(var17, var20, var18));
             }
          } else {
-            if (Math.abs(var17.y() - var4) > 0.02 || var18 - var17.y() > var0.putAt_D() + 1.0E-5) {
+            if (Math.abs(var17.y() - var4) > 0.02 || var18 - var17.y() > var0.dropLimit() + 1.0E-5) {
                return null;
             }
 

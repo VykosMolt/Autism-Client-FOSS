@@ -24,7 +24,7 @@ public final class AiSlimeBounce {
    private AiSlimeBounce() {
    }
 
-   static List<AiSlimeBounce.Inner_JsonCache> putAt_List_TokenCore_TaskStat(
+   static List<AiSlimeBounce.Inner_JsonCache> findBounces(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, float var2, BlockPos var3, boolean var4
    ) {
       LinkedHashMap var5 = new LinkedHashMap();
@@ -42,7 +42,7 @@ public final class AiSlimeBounce {
          }
       }
 
-      boolean var43 = var3 != null && var0.state(var3.getX(), var3.getY(), var3.getZ());
+      boolean var43 = var3 != null && var0.climbableAt(var3.getX(), var3.getY(), var3.getZ());
       int var44 = var43 ? putAt_I_TokenCore_TaskStat_BlockPos(var0, var3) : (var3 != null ? var3.getY() : 0);
       AiSlimeBounce.Inner_JsonCache var45 = null;
       double var46 = 1.7976931348623157E308;
@@ -81,7 +81,7 @@ public final class AiSlimeBounce {
                AiSlimeBounce.Inner_JsonCache var62 = var27.landing();
                if (var62 != null) {
                   if (var3 != null) {
-                     if (var62.cell().equals(var3) || putAt(var0, var62.cell(), var3)) {
+                     if (var62.cell().equals(var3) || columnReachable(var0, var62.cell(), var3)) {
                         double var65 = putAt_D_StreamCore_JsonCac(var62, var43, var44, var27.headBonked(), var27.wallHits());
                         if (var65 < var46) {
                            var46 = var65;
@@ -97,7 +97,7 @@ public final class AiSlimeBounce {
                         }
                      }
                   } else {
-                     boolean var66 = var0.state(var62.cell().getX(), var62.cell().getY(), var62.cell().getZ());
+                     boolean var66 = var0.climbableAt(var62.cell().getX(), var62.cell().getY(), var62.cell().getZ());
                      int var31 = var66 ? putAt_I_TokenCore_TaskStat_BlockPos(var0, var62.cell()) : var62.cell().getY();
                      double var32 = putAt_D_StreamCore_JsonCac(var62, var66, var31, var27.headBonked(), var27.wallHits());
                      if (var27.clean()) {
@@ -130,7 +130,7 @@ public final class AiSlimeBounce {
                         AiSlimeBounce.Inner_JsonCache var68 = var64.landing();
                         if (var68 != null) {
                            if (var3 != null) {
-                              if (var68.cell().equals(var3) || putAt(var0, var68.cell(), var3)) {
+                              if (var68.cell().equals(var3) || columnReachable(var0, var68.cell(), var3)) {
                                  double var71 = putAt_D_StreamCore_JsonCac(var68, var43, var44, var64.headBonked(), var64.wallHits());
                                  if (var71 < var46) {
                                     var46 = var71;
@@ -142,7 +142,7 @@ public final class AiSlimeBounce {
                                  }
                               }
                            } else {
-                              boolean var70 = var0.state(var68.cell().getX(), var68.cell().getY(), var68.cell().getZ());
+                              boolean var70 = var0.climbableAt(var68.cell().getX(), var68.cell().getY(), var68.cell().getZ());
                               int var73 = var70 ? putAt_I_TokenCore_TaskStat_BlockPos(var0, var68.cell()) : var68.cell().getY();
                               double var74 = putAt_D_StreamCore_JsonCac(var68, var70, var73, var64.headBonked(), var64.wallHits());
                               Double var76 = (Double)var6.get(var68.cell());
@@ -163,7 +163,7 @@ public final class AiSlimeBounce {
                                  AiSlimeBounce.Inner_JsonCache var37 = var36.landing();
                                  if (var37 != null) {
                                     if (var3 != null) {
-                                       if (var37.cell().equals(var3) || putAt(var0, var37.cell(), var3)) {
+                                       if (var37.cell().equals(var3) || columnReachable(var0, var37.cell(), var3)) {
                                           double var38 = putAt_D_StreamCore_JsonCac(var37, var43, var44, var36.headBonked(), var36.wallHits());
                                           if (var38 < var46) {
                                              var46 = var38;
@@ -175,7 +175,7 @@ public final class AiSlimeBounce {
                                           }
                                        }
                                     } else {
-                                       boolean var77 = var0.state(var37.cell().getX(), var37.cell().getY(), var37.cell().getZ());
+                                       boolean var77 = var0.climbableAt(var37.cell().getX(), var37.cell().getY(), var37.cell().getZ());
                                        int var39 = var77 ? putAt_I_TokenCore_TaskStat_BlockPos(var0, var37.cell()) : var37.cell().getY();
                                        double var40 = putAt_D_StreamCore_JsonCac(var37, var77, var39, var36.headBonked(), var36.wallHits());
                                        Double var42 = (Double)var6.get(var37.cell());
@@ -208,7 +208,7 @@ public final class AiSlimeBounce {
    private static int putAt_I_TokenCore_TaskStat_BlockPos(AiPhysics.PhysicsWorld var0, BlockPos var1) {
       int var2 = var1.getY();
 
-      while (var0.state(var1.getX(), var2 + 1, var1.getZ())) {
+      while (var0.climbableAt(var1.getX(), var2 + 1, var1.getZ())) {
          var2++;
       }
 
@@ -224,11 +224,11 @@ public final class AiSlimeBounce {
 
    private static boolean putAt(AiPhysics.PhysicsWorld var0, Map<BlockPos, AiJumpSolver.JumpPlan> var1, double var2) {
       for (BlockPos var5 : var1.keySet()) {
-         if (!var0.state(var5.getX(), var5.getY(), var5.getZ())) {
+         if (!var0.climbableAt(var5.getX(), var5.getY(), var5.getZ())) {
             return false;
          }
 
-         if (!var0.state(var5.getX(), var5.getY() + 2, var5.getZ()) && var5.getY() >= var2 - 4.0) {
+         if (!var0.climbableAt(var5.getX(), var5.getY() + 2, var5.getZ()) && var5.getY() >= var2 - 4.0) {
             return false;
          }
       }
@@ -509,7 +509,7 @@ public final class AiSlimeBounce {
       boolean var10
    ) {
       BlockPos var11 = BlockPos.containing(var4.x(), var9 ? var4.y() : Math.ceil(var4.y() - 1.0E-6), var4.z());
-      if (var9 && AiLadderJump.putAt(var0, var11) && !AiLadderJump.putAt_Z_TokenCore_TaskStat(var0, var4, var11, var7)) {
+      if (var9 && AiLadderJump.canClimbAt(var0, var11) && !AiLadderJump.putAt_Z_TokenCore_TaskStat(var0, var4, var11, var7)) {
          return null;
       }
 
@@ -543,9 +543,9 @@ public final class AiSlimeBounce {
 
          if (AiJumpSolver.isInFluid(var0, var8)) {
             BlockPos var9 = BlockPos.containing(var8.x(), var8.y(), var8.z());
-            return putAt(var0, var9, var4)
+            return columnReachable(var0, var9, var4)
                && (
-                  !AiLadderJump.putAt(var0, var9)
+                  !AiLadderJump.canClimbAt(var0, var9)
                      || AiLadderJump.putAt_Z_TokenCore_TaskStat(var0, var8, var4, putAt_TokenCore_CacheHel_TaskStore_I(var2, var7).yaw())
                );
          }
@@ -568,14 +568,14 @@ public final class AiSlimeBounce {
       return var1 < var0.inputs().size() ? var0.inputs().get(var1) : var0.inputs().getLast().withJump(false);
    }
 
-   static boolean putAt(AiPhysics.PhysicsWorld var0, BlockPos var1, BlockPos var2) {
+   static boolean columnReachable(AiPhysics.PhysicsWorld var0, BlockPos var1, BlockPos var2) {
       if (var1.getX() == var2.getX() && var1.getZ() == var2.getZ()) {
          if (Math.abs(var1.getY() - var2.getY()) > 4) {
             return false;
          }
 
          for (int var3 = Math.min(var1.getY(), var2.getY()); var3 <= Math.max(var1.getY(), var2.getY()); var3++) {
-            if (!var0.state(var1.getX(), var3, var1.getZ())) {
+            if (!var0.climbableAt(var1.getX(), var3, var1.getZ())) {
                return false;
             }
          }
@@ -591,14 +591,14 @@ public final class AiSlimeBounce {
    ) {
       return var2.y() >= var5 - 24.0
          && !AiPhysics.hitsStrictHazard(var0, var1, var2)
-         && (!var2.onGround() || putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(var0, var2) || var3 - var2.y() <= var0.putAt_D());
+         && (!var2.onGround() || putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(var0, var2) || var3 - var2.y() <= var0.dropLimit());
    }
 
    static boolean putAt_Z_TokenCore_TaskStat_TokenCore_TableCac(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
       if (var1.onGround() && !(var1.vy() < 0.2)) {
          long var2 = var1.support() == -9223372036854775808L ? AiPhysics.findSupportBlock(var1.box(false), var1.x(), var1.y(), var1.z(), var0) : var1.support();
          BlockPos var4 = var2 == -9223372036854775808L ? BlockPos.containing(var1.x(), var1.y() - 0.15, var1.z()) : BlockPos.of(var2);
-         return var0.readEx_D(var4.getX(), var4.getY(), var4.getZ()) >= 0.9;
+         return var0.bounceAt(var4.getX(), var4.getY(), var4.getZ()) >= 0.9;
       } else {
          return false;
       }

@@ -66,7 +66,7 @@ final class AiPlan {
 
                      this.stopPlan = result.status() == AiOperation.Status.UNCERTAIN
                         ? AiPlanRunner.init(this.current, result.status() + ": " + result.message(), policy)
-                        : AiPlanRunner.init(this.current, succeeded, result.status() + ": " + result.message(), policy);
+                        : AiPlanRunner.recordResult(this.current, succeeded, result.status() + ": " + result.message(), policy);
                      String id = this.current.step.id();
                      this.current = null;
                      return this.stopPlan
@@ -92,7 +92,7 @@ final class AiPlan {
                         );
                      } catch (RuntimeException e) {
                         this.child = null;
-                        this.stopPlan = AiPlanRunner.init(this.current, false, "rejected: " + e.getMessage(), policy);
+                        this.stopPlan = AiPlanRunner.recordResult(this.current, false, "rejected: " + e.getMessage(), policy);
                         String id = this.current.step.id();
                         this.current = null;
                         if (this.stopPlan) {
@@ -103,7 +103,7 @@ final class AiPlan {
                      }
 
                      if (this.child == null) {
-                        this.stopPlan = AiPlanRunner.init(
+                        this.stopPlan = AiPlanRunner.recordResult(
                            this.current, false, "unknown capability " + this.current.step.capability(), policy
                         );
                         String id = this.current.step.id();
@@ -280,7 +280,7 @@ final class AiPlan {
             }
 
             String id = capability.equals(AiJson.getString(entry, "id", "")) ? "step" + index : AiJson.getString(entry, "id", "step" + index);
-            AiPlanRunner.init(capability);
+            AiPlanRunner.requireGameCapability(capability);
             JsonObject arguments = entry.has("arguments") && entry.get("arguments").isJsonObject() ? entry.getAsJsonObject("arguments") : new JsonObject();
             init(id, capability, arguments);
             List<String> needs = new ArrayList<>();
@@ -311,7 +311,7 @@ final class AiPlan {
             String sub = tokens.remove(0).toLowerCase(Locale.ROOT);
 
             try {
-               AiToolCallParser.ToolCall call = AiToolCallParser.init(
+               AiToolCallParser.ToolCall call = AiToolCallParser.parse(
                   sub, tokens, player == null ? 0.0 : player.getX(), player == null ? 0.0 : player.getY(), player == null ? 0.0 : player.getZ()
                );
                return AiJson.objectOf("id", "step" + index, "capability", call.id(), "arguments", call.arguments());

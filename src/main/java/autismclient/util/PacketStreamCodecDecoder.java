@@ -19,7 +19,7 @@ import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.resources.Identifier;
 
 public final class PacketStreamCodecDecoder {
-   private static final Minecraft init = Minecraft.getInstance();
+   private static final Minecraft MC = Minecraft.getInstance();
 
    private PacketStreamCodecDecoder() {
    }
@@ -28,7 +28,7 @@ public final class PacketStreamCodecDecoder {
       ByteBuf buf = Unpooled.wrappedBuffer(plaintextBytes == null ? new byte[0] : plaintextBytes);
 
       try {
-         int packetId = init(buf);
+         int packetId = readVarInt(buf);
          byte[] body = new byte[buf.readableBytes()];
          if (body.length > 0) {
             buf.readBytes(body);
@@ -48,7 +48,7 @@ public final class PacketStreamCodecDecoder {
 
       byte[] body = bodyBytes == null ? new byte[0] : (byte[])bodyBytes.clone();
       if (packetClass != ServerboundCustomPayloadPacket.class && packetClass != ClientboundCustomPayloadPacket.class) {
-         List<PacketStreamCodecDecoder.NamedCodec> codecs = init(packetClass, protocolPhase);
+         List<PacketStreamCodecDecoder.NamedCodec> codecs = codecsFor(packetClass, protocolPhase);
          if (codecs.isEmpty()) {
             throw new IllegalArgumentException("No STREAM_CODEC found for " + packetClass.getName() + ".");
          }
@@ -60,7 +60,7 @@ public final class PacketStreamCodecDecoder {
                ByteBuf buffer = factory.create();
 
                try {
-                  Object decoded = candidate.init(buffer);
+                  Object decoded = candidate.decode(buffer);
                   if (!(decoded instanceof Packet<?> packet)) {
                      throw new IllegalArgumentException(
                         "Codec " + candidate.name + " returned " + (decoded == null ? "null" : decoded.getClass().getName()) + ", not a packet."
@@ -88,9 +88,9 @@ public final class PacketStreamCodecDecoder {
             }
          }
 
-         throw new IllegalArgumentException(init(firstFailure));
+         throw new IllegalArgumentException(describeError(firstFailure));
       } else {
-         return init(packetClass, body);
+         return decodePacket(packetClass, body);
       }
    }
 
@@ -98,7 +98,7 @@ public final class PacketStreamCodecDecoder {
       ByteBuf buf = Unpooled.wrappedBuffer(plaintextBytes == null ? new byte[0] : plaintextBytes);
 
       try {
-         init(buf);
+         readVarInt(buf);
          byte[] body = new byte[buf.readableBytes()];
          if (body.length > 0) {
             buf.readBytes(body);
@@ -110,7 +110,7 @@ public final class PacketStreamCodecDecoder {
       }
    }
 
-   private static List<PacketStreamCodecDecoder.NamedCodec> init(Class<?> packetClass, String protocolPhase) {
+   private static List<PacketStreamCodecDecoder.NamedCodec> codecsFor(Class<?> packetClass, String protocolPhase) {
       List<PacketStreamCodecDecoder.NamedCodec> candidates = new ArrayList<>();
 
       for (Class<?> cursor = packetClass; cursor != null && cursor != Object.class; cursor = cursor.getSuperclass()) {
@@ -154,7 +154,7 @@ public final class PacketStreamCodecDecoder {
    private static List<PacketStreamCodecDecoder.BufferFactory> init_List(byte[] bodyBytes) {
       byte[] bytes = bodyBytes == null ? new byte[0] : (byte[])bodyBytes.clone();
       List<PacketStreamCodecDecoder.BufferFactory> out = new ArrayList<>();
-      RegistryAccess access = init();
+      RegistryAccess access = registryAccess();
       if (access != null) {
          out.add(() -> new RegistryFriendlyByteBuf(Unpooled.wrappedBuffer((byte[])bytes.clone()), access));
       }
@@ -164,14 +164,14 @@ public final class PacketStreamCodecDecoder {
       return out;
    }
 
-   private static RegistryAccess init() {
+   private static RegistryAccess registryAccess() {
       try {
-         if (init != null && init.level != null) {
-            return init.level.registryAccess();
+         if (MC != null && MC.level != null) {
+            return MC.level.registryAccess();
          }
 
-         if (init != null && init.getConnection() != null) {
-            return init.getConnection().registryAccess();
+         if (MC != null && MC.getConnection() != null) {
+            return MC.getConnection().registryAccess();
          }
       } catch (Throwable var1) {
       }
@@ -179,7 +179,7 @@ public final class PacketStreamCodecDecoder {
       return null;
    }
 
-   private static Packet<?> init(Class<? extends Packet<?>> packetClass, byte[] body) {
+   private static Packet<?> decodePacket(Class<? extends Packet<?>> packetClass, byte[] body) {
       FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.wrappedBuffer(body == null ? new byte[0] : body));
 
       try {
@@ -198,13 +198,13 @@ public final class PacketStreamCodecDecoder {
             return new ClientboundCustomPayloadPacket(rawPayload);
          }
       } catch (Throwable t) {
-         throw new IllegalArgumentException("Custom payload body must be <channel identifier><payload bytes>: " + init(t));
+         throw new IllegalArgumentException("Custom payload body must be <channel identifier><payload bytes>: " + describeError(t));
       } finally {
          buf.release();
       }
    }
 
-   private static int init(ByteBuf buf) {
+   private static int readVarInt(ByteBuf buf) {
       int value = 0;
       int position = 0;
 
@@ -224,7 +224,7 @@ public final class PacketStreamCodecDecoder {
       throw new IllegalArgumentException("Full packet bytes are missing the packet id VarInt.");
    }
 
-   private static String init(Throwable t) {
+   private static String describeError(Throwable t) {
       if (t == null) {
          return "unknown";
       }
@@ -233,10 +233,10 @@ public final class PacketStreamCodecDecoder {
       return message != null && !message.isBlank() ? message : t.getClass().getSimpleName();
    }
 
-   public record DecodedFrame(Packet<?> packet, int init_I, byte[] init_BArr, String init_Str) {
+   public record DecodedFrame(Packet<?> packet, int init_I, byte[] init_BArr, String source) {
       public DecodedFrame {
          init_BArr = init_BArr == null ? new byte[0] : (byte[])init_BArr.clone();
-         init_Str = init_Str != null && !init_Str.isBlank() ? init_Str : "minecraft STREAM_CODEC";
+         source = source != null && !source.isBlank() ? source : "minecraft STREAM_CODEC";
       }
 
       public byte[] init_BArr() {
@@ -249,7 +249,7 @@ public final class PacketStreamCodecDecoder {
    }
 
    private record NamedCodec(String name, StreamCodec<ByteBuf, ?> codec) {
-      Object init(ByteBuf buffer) {
+      Object decode(ByteBuf buffer) {
          return this.codec.decode(buffer);
       }
    }

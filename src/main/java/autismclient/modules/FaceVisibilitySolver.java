@@ -19,10 +19,10 @@ final class FaceVisibilitySolver {
    }
 
    static List<Vec3> visiblePoints(Vec3 eye, AABB face, Direction side, List<AABB> blockers, Vec3 preferred) {
-      return init(eye, face, side, List.of()).init(blockers, preferred);
+      return project(eye, face, side, List.of()).visiblePoints(blockers, preferred);
    }
 
-   static FaceVisibilitySolver.FaceProjection init(Vec3 eye, AABB face, Direction side, List<AABB> hard) {
+   static FaceVisibilitySolver.FaceProjection project(Vec3 eye, AABB face, Direction side, List<AABB> hard) {
       return new FaceVisibilitySolver.FaceProjection(eye, face, side, hard);
    }
 
@@ -61,7 +61,7 @@ final class FaceVisibilitySolver {
       return (b.init - a.init) * (c.load - a.load) - (b.load - a.load) * (c.init - a.init);
    }
 
-   private static double init(Vec3 point, Axis axis) {
+   private static double coord(Vec3 point, Axis axis) {
       double var10000;
       switch (axis) {
          case X:
@@ -103,9 +103,9 @@ final class FaceVisibilitySolver {
       private final double planeCoord;
       private final double eyeOffset;
       private final double facingSign;
-      private final double write;
-      private final double update;
-      private final double sync;
+      private final double depth;
+      private final double eyeU;
+      private final double eyeV;
       private final Area visibleArea;
 
       private FaceProjection(Vec3 eye, AABB face, Direction side, List<AABB> hard) {
@@ -115,15 +115,15 @@ final class FaceVisibilitySolver {
          this.uAxis = this.normalAxis == Axis.X ? Axis.Y : Axis.X;
          this.vAxis = this.normalAxis == Axis.Z ? Axis.Y : Axis.Z;
          this.planeCoord = side.getAxisDirection() == AxisDirection.POSITIVE ? face.max(this.normalAxis) : face.min(this.normalAxis);
-         this.eyeOffset = this.planeCoord - FaceVisibilitySolver.init(eye, this.normalAxis);
+         this.eyeOffset = this.planeCoord - FaceVisibilitySolver.coord(eye, this.normalAxis);
          this.facingSign = Math.signum(this.eyeOffset);
-         this.write = Math.abs(this.eyeOffset);
-         this.update = FaceVisibilitySolver.init(eye, this.uAxis) - face.min(this.uAxis);
-         this.sync = FaceVisibilitySolver.init(eye, this.vAxis) - face.min(this.vAxis);
+         this.depth = Math.abs(this.eyeOffset);
+         this.eyeU = FaceVisibilitySolver.coord(eye, this.uAxis) - face.min(this.uAxis);
+         this.eyeV = FaceVisibilitySolver.coord(eye, this.vAxis) - face.min(this.vAxis);
          double width = face.max(this.uAxis) - face.min(this.uAxis);
          double height = face.max(this.vAxis) - face.min(this.vAxis);
          double inset = Math.min(1.0E-5, Math.min(width, height) / 8.0);
-         this.visibleArea = !(this.write < 1.0E-7) && !(this.facingSign * side.getAxisDirection().getStep() > 0.0) && !(width < 1.0E-7) && !(height < 1.0E-7)
+         this.visibleArea = !(this.depth < 1.0E-7) && !(this.facingSign * side.getAxisDirection().getStep() > 0.0) && !(width < 1.0E-7) && !(height < 1.0E-7)
             ? new Area(new java.awt.geom.Rectangle2D.Double(inset, inset, width - 2.0 * inset, height - 2.0 * inset))
             : new Area();
          this.init(this.visibleArea, hard);
@@ -132,10 +132,10 @@ final class FaceVisibilitySolver {
       private void init(Area open, List<AABB> blockers) {
          if (!open.isEmpty()) {
             for (AABB box : blockers) {
-               double a = (box.min(this.normalAxis) - FaceVisibilitySolver.init(this.eye, this.normalAxis)) * this.facingSign;
-               double b = (box.max(this.normalAxis) - FaceVisibilitySolver.init(this.eye, this.normalAxis)) * this.facingSign;
+               double a = (box.min(this.normalAxis) - FaceVisibilitySolver.coord(this.eye, this.normalAxis)) * this.facingSign;
+               double b = (box.max(this.normalAxis) - FaceVisibilitySolver.coord(this.eye, this.normalAxis)) * this.facingSign;
                double near = Math.max(1.0E-7, Math.min(a, b));
-               double far = Math.min(this.write - 1.0E-7, Math.max(a, b));
+               double far = Math.min(this.depth - 1.0E-7, Math.max(a, b));
                if (!(near >= far)) {
                   ArrayList<FaceVisibilitySolver.Point2> projected = new ArrayList<>(8);
 
@@ -144,8 +144,8 @@ final class FaceVisibilitySolver {
                         for (double y : new double[]{box.min(this.vAxis), box.max(this.vAxis)}) {
                            projected.add(
                               new FaceVisibilitySolver.Point2(
-                                 this.update + (x - FaceVisibilitySolver.init(this.eye, this.uAxis)) * this.write / n,
-                                 this.sync + (y - FaceVisibilitySolver.init(this.eye, this.vAxis)) * this.write / n
+                                 this.eyeU + (x - FaceVisibilitySolver.coord(this.eye, this.uAxis)) * this.depth / n,
+                                 this.eyeV + (y - FaceVisibilitySolver.coord(this.eye, this.vAxis)) * this.depth / n
                               )
                            );
                         }
@@ -174,7 +174,7 @@ final class FaceVisibilitySolver {
          }
       }
 
-      List<Vec3> init(List<AABB> blockers, Vec3 preferred) {
+      List<Vec3> visiblePoints(List<AABB> blockers, Vec3 preferred) {
          if (this.visibleArea.isEmpty()) {
             return List.of();
          }
@@ -208,8 +208,8 @@ final class FaceVisibilitySolver {
 
          ArrayList<Double> ys = new ArrayList<>(levels);
          ArrayList<Vec3> points = new ArrayList<>();
-         double wantedU = FaceVisibilitySolver.init(preferred, this.uAxis) - this.face.min(this.uAxis);
-         double wantedV = FaceVisibilitySolver.init(preferred, this.vAxis) - this.face.min(this.vAxis);
+         double wantedU = FaceVisibilitySolver.coord(preferred, this.uAxis) - this.face.min(this.uAxis);
+         double wantedV = FaceVisibilitySolver.coord(preferred, this.vAxis) - this.face.min(this.vAxis);
 
          for (int i = 1; i < ys.size(); i++) {
             double low = ys.get(i - 1);

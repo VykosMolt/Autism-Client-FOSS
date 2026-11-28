@@ -13,10 +13,10 @@ final class BlockPlacementOrderSolver {
    }
 
    static List<BlockPos> init(Vec3 eye, List<BlockPos> preferred, Map<BlockPos, List<Vec3>> rays) {
-      return init(eye, preferred, rays, Map.of());
+      return order(eye, preferred, rays, Map.of());
    }
 
-   static List<BlockPos> init(Vec3 eye, List<BlockPos> preferred, Map<BlockPos, List<Vec3>> rays, Map<BlockPos, Set<BlockPos>> prerequisites) {
+   static List<BlockPos> order(Vec3 eye, List<BlockPos> preferred, Map<BlockPos, List<Vec3>> rays, Map<BlockPos, Set<BlockPos>> prerequisites) {
       int count = Math.min(64, preferred.size());
       boolean[][] before = new boolean[count][count];
       int[] dependencies = new int[count];

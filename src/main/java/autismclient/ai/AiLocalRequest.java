@@ -28,7 +28,7 @@ final class AiLocalRequest {
       "game:speedrun"
    );
 
-   static JsonObject init(List<JsonObject> targets, Integer amount) {
+   static JsonObject mineRequest(List<JsonObject> targets, Integer amount) {
       if (targets.isEmpty()) {
          throw new IllegalArgumentException("Choose at least one block to mine");
       }
@@ -50,7 +50,7 @@ final class AiLocalRequest {
       }
    }
 
-   static JsonObject init(String label, String capability, JsonObject arguments) {
+   static JsonObject localRequest(String label, String capability, JsonObject arguments) {
       if (label != null && !label.isBlank() && label.length() <= 16000 && capability != null && init.contains(capability) && arguments != null) {
          return AiJson.objectOf("label", label, "capability", capability, "arguments", arguments.deepCopy());
       } else {
@@ -58,18 +58,18 @@ final class AiLocalRequest {
       }
    }
 
-   static AiIntents.IntentPlan init(JsonObject stored) {
+   static AiIntents.IntentPlan toPlan(JsonObject stored) {
       String label = AiJson.getString(stored, "label", "");
       String capability = AiJson.getString(stored, "capability", "");
       if (stored.has("arguments") && stored.get("arguments").isJsonObject()) {
-         JsonObject checked = init(label, capability, stored.getAsJsonObject("arguments"));
+         JsonObject checked = localRequest(label, capability, stored.getAsJsonObject("arguments"));
          return new AiIntents.IntentPlan(List.of(new AiIntents.IntentStep(label, capability, checked.getAsJsonObject("arguments"), label)), "");
       } else {
          throw new IllegalArgumentException("Local action has no arguments");
       }
    }
 
-   static Integer init(String text, int max) {
+   static Integer parseCount(String text, int max) {
       if (text != null && !text.isBlank()) {
          try {
             int count = Integer.parseInt(text.trim());
@@ -85,7 +85,7 @@ final class AiLocalRequest {
       }
    }
 
-   static JsonObject init(JsonObject arguments, int held, int limit) {
+   static JsonObject clampCount(JsonObject arguments, int held, int limit) {
       JsonObject args = arguments.deepCopy();
       int requested = AiJson.getInt(args, "count", 1);
       long total = (long)held + requested;
@@ -98,7 +98,7 @@ final class AiLocalRequest {
       }
    }
 
-   static boolean init(JsonObject stored, String world, String dimension) {
+   static boolean matchesWorld(JsonObject stored, String world, String dimension) {
       return !stored.has("placementWorld")
          || AiJson.getString(stored, "placementWorld", "").equals(world) && AiJson.getString(stored, "placementDimension", "").equals(dimension);
    }

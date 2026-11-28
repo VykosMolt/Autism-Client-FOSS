@@ -27,7 +27,7 @@ public final class EndPortalSessionTracker {
       this.load_Obj = connection;
       this.init_Str = server;
       this.load_Str = dimension;
-      this.init_cR_DataUtil = this.cache.init(server, dimension);
+      this.init_cR_DataUtil = this.cache.memoryFor(server, dimension);
       return true;
    }
 

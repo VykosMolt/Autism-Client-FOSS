@@ -37,7 +37,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 
 final class AiSpeedrun {
-   static final Map<String, Integer> KIT = load();
+   static final Map<String, Integer> KIT = defaultKit();
    static final int init_I = 16;
    static final int load_I = 32;
    static final long QUICK_FAIL_NANOS = 5000000000L;
@@ -91,7 +91,7 @@ final class AiSpeedrun {
    private AiSpeedrun() {
    }
 
-   private static Map<String, Integer> load() {
+   private static Map<String, Integer> defaultKit() {
       Map<String, Integer> kit = new LinkedHashMap<>();
       kit.put("minecraft:diamond_axe", 1);
       kit.put("minecraft:diamond_shovel", 1);
@@ -329,7 +329,7 @@ final class AiSpeedrun {
             int portalStepAsides;
             long legStartNanos;
             BlockPos quickFailFeet;
-            int set;
+            int stuckRetries;
             boolean finished;
 
             void trackVitals() {
@@ -399,7 +399,7 @@ final class AiSpeedrun {
                this.diagnostics.init(this.phase == null ? "START" : this.phase.name(), this.lastMessage);
                if (mc.player != null && mc.level != null) {
                   if (!this.worldKey.equals(AiWorldIdentity.currentWorldKey(mc)) || this.connection != mc.getConnection() || !this.playerId.equals(mc.player.getUUID())) {
-                     return this.init(AiOperation.Status.CANCELLED, "World or player identity changed; revalidate before resuming");
+                     return this.finish(AiOperation.Status.CANCELLED, "World or player identity changed; revalidate before resuming");
                   }
 
                   if (mc.player.isAlive() && AiServerEvidence.deathRevision() == this.deathRevision) {
@@ -422,7 +422,7 @@ final class AiSpeedrun {
                      }
 
                      if (System.nanoTime() > this.deadline) {
-                        return this.init(
+                        return this.finish(
                            this.canInterruptNow() ? AiOperation.Status.TIMED_OUT : AiOperation.Status.UNCERTAIN,
                            "Out of time in phase " + this.phase
                         );
@@ -462,7 +462,7 @@ final class AiSpeedrun {
                         this.phaseOp = null;
                         this.pearlHuntCooldownUntil = System.nanoTime() + 60000000000L;
                         this.pearlHunting = true;
-                        return this.init(this.phase, pearlOp, null);
+                        return this.enterPhase(this.phase, pearlOp, null);
                      }
 
                      if (this.phaseOp != null && this.shouldHealNow()) {
@@ -519,7 +519,7 @@ final class AiSpeedrun {
                         this.emergencyOp.cancel();
                         this.emergencyOp = null;
                         if (this.emergencyNeedsReconcile || e.status() == AiOperation.Status.UNCERTAIN) {
-                           return this.init(AiOperation.Status.UNCERTAIN, "Emergency handled; interrupted action requires fresh reconciliation before resuming");
+                           return this.finish(AiOperation.Status.UNCERTAIN, "Emergency handled; interrupted action requires fresh reconciliation before resuming");
                         }
                      }
 
@@ -530,7 +530,7 @@ final class AiSpeedrun {
                            this.guardLayerActive = false;
                         }, this::secondsLeft);
                         if (g != null) {
-                           return g.terminal() ? this.init(g.status(), g.message()) : g;
+                           return g.terminal() ? this.finish(g.status(), g.message()) : g;
                         }
                      }
 
@@ -579,7 +579,7 @@ final class AiSpeedrun {
 
                         AiRunTrace.emitServiceEvent("speedrun_leg", this.legs.get(this.legs.size() - 1).getAsJsonObject());
                         if (r.status() == AiOperation.Status.CANCELLED) {
-                           return this.init(AiOperation.Status.CANCELLED, "Cancelled during " + this.phase);
+                           return this.finish(AiOperation.Status.CANCELLED, "Cancelled during " + this.phase);
                         }
 
                         if (r.status() == AiOperation.Status.UNCERTAIN
@@ -595,7 +595,7 @@ final class AiSpeedrun {
                         }
 
                         if (r.status() == AiOperation.Status.UNCERTAIN) {
-                           return this.init(AiOperation.Status.UNCERTAIN, this.phase + ": " + r.message());
+                           return this.finish(AiOperation.Status.UNCERTAIN, this.phase + ": " + r.message());
                         }
 
                         JsonObject legEvidence = AiRunResources.parseEvidenceJson(r.dataJson());
@@ -604,7 +604,7 @@ final class AiSpeedrun {
                            && AiJson.getBoolean(legEvidence, "pearlRouteChange", false);
                         if (pearlRouteChange) {
                            if (this.pearlRecoveryReturns >= 1) {
-                              return this.init(
+                              return this.finish(
                                  AiOperation.Status.FAILED,
                                  "Pearl supplies remain short after an Overworld search and a Nether recovery; the route needs a new strategy"
                               );
@@ -623,7 +623,7 @@ final class AiSpeedrun {
                            && !this.steppingAside
                            && !this.pearlHunting
                            && mc.level.dimension() == Level.OVERWORLD) {
-                           return this.init(
+                           return this.finish(
                               AiOperation.Status.SUCCEEDED, "Beat the game: the dragon is dead and the exit portal taken, in " + this.elapsedSeconds() + " s"
                            );
                         }
@@ -644,18 +644,18 @@ final class AiSpeedrun {
                         BlockPos feetNow = mc.player.blockPosition();
                         boolean stuck = quickFail && feetNow.equals(this.quickFailFeet);
                         this.quickFailFeet = quickFail ? feetNow : null;
-                        if (stuck && this.set < 6 && !wasPearlLeg) {
-                           this.set++;
+                        if (stuck && this.stuckRetries < 6 && !wasPearlLeg) {
+                           this.stuckRetries++;
                            this.quickFailFeet = null;
                            AiSpeedrun.log(
                               "[AI] speedrun: {} failed at once twice from {}; moving off first ({} of {})",
                               this.phase,
                               feetNow.toShortString(),
-                              this.set,
+                              this.stuckRetries,
                               6
                            );
                            this.steppingAside = true;
-                           return this.init(this.phase, this.stepAside(), null);
+                           return this.enterPhase(this.phase, this.stepAside(), null);
                         }
 
                         if (this.phase == AiSpeedrun.RunPhase.HEAL
@@ -675,7 +675,7 @@ final class AiSpeedrun {
                            int n = this.failuresByPhase.merge(this.phase, 1, Integer::sum);
                            int same = this.failuresByMessage.merge(this.phase + ": " + AiSpeedrun.clip(r.message()), 1, Integer::sum);
                            if (n >= 6 || same >= 3) {
-                              return this.init(
+                              return this.finish(
                                  AiOperation.Status.FAILED,
                                  "Phase "
                                     + this.phase
@@ -701,12 +701,12 @@ final class AiSpeedrun {
                         }
                      }
                   } else {
-                     return this.init(
+                     return this.finish(
                         AiOperation.Status.FAILED, "The deathless attempt ended: server/player death was observed in " + this.phase
                      );
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Left the world");
+                  return this.finish(AiOperation.Status.CANCELLED, "Left the world");
                }
             }
 
@@ -760,7 +760,7 @@ final class AiSpeedrun {
 
                if (!(mc.player.getHealth() >= 12.0F) && System.nanoTime() >= this.healCooldownUntil) {
                   if (mc.player.getFoodData().getFoodLevel() < 18 && AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0 && this.mealAttempts++ < 3) {
-                     AiOperation.Result meal = this.init(AiSpeedrun.RunPhase.HEAL, AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 20)), null);
+                     AiOperation.Result meal = this.enterPhase(AiSpeedrun.RunPhase.HEAL, AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 20)), null);
                      this.guardLayerActive = true;
                      return meal;
                   } else {
@@ -770,18 +770,18 @@ final class AiSpeedrun {
                         && mc.level.dimension() == Level.OVERWORLD
                         && System.nanoTime() > this.nextFoodTripAt) {
                         this.nextFoodTripAt = System.nanoTime() + 180000000000L;
-                        return this.init(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(10, 240), null);
+                        return this.enterPhase(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(10, 240), null);
                      } else if (this.healFailures > 0) {
                         this.healCooldownUntil = System.nanoTime() + 10000000000L;
-                        AiOperation.Result rest = this.init(AiSpeedrun.RunPhase.HEAL, AiCombat.init(200), null);
+                        AiOperation.Result rest = this.enterPhase(AiSpeedrun.RunPhase.HEAL, AiCombat.rest(200), null);
                         this.guardLayerActive = true;
                         return rest;
                      } else {
                         this.healCooldownUntil = System.nanoTime() + 60000000000L;
                         return (mc.player.getFoodData().getFoodLevel() >= 18 || mc.player.getHealth() <= 6.0F) && mc.level.dimension() != Level.END
-                           ? this.init(
+                           ? this.enterPhase(
                               AiSpeedrun.RunPhase.HEAL,
-                              AiGuard.allowDuringLowHealth(AiBurrow.init(AiJson.objectOf("healTo", 18, "stay", true, "timeoutSeconds", 180))),
+                              AiGuard.allowDuringLowHealth(AiBurrow.burrow(AiJson.objectOf("healTo", 18, "stay", true, "timeoutSeconds", 180))),
                               null
                            )
                            : null;
@@ -795,7 +795,7 @@ final class AiSpeedrun {
             AiOperation stepAside() {
                BlockPos feet = mc.player.blockPosition();
                int[][] dirs = new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-               int[] best = dirs[this.set % 4];
+               int[] best = dirs[this.stuckRetries % 4];
                int bestOpen = -1;
 
                for (int[] d : dirs) {
@@ -841,12 +841,12 @@ final class AiSpeedrun {
                   }
                }
 
-               if (!portals.isEmpty() && this.init(feet, portals, 1)) {
+               if (!portals.isEmpty() && this.isNearAny(feet, portals, 1)) {
                   BlockPos best = null;
                   double bestDistance = 1.7976931348623157E308;
 
                   for (BlockPos c : BlockPos.betweenClosed(feet.offset(-8, -3, -8), feet.offset(8, 3, 8))) {
-                     if (!this.init(c, portals, 2)) {
+                     if (!this.isNearAny(c, portals, 2)) {
                         BlockPos floor = c.below();
                         BlockState floorState = mc.level.getBlockState(floor);
                         if (!floorState.getCollisionShape(mc.level, floor).isEmpty()
@@ -880,7 +880,7 @@ final class AiSpeedrun {
                }
             }
 
-            boolean init(BlockPos c, List<BlockPos> cells, int range) {
+            boolean isNearAny(BlockPos c, List<BlockPos> cells, int range) {
                for (BlockPos p : cells) {
                   if (Math.abs(p.getX() - c.getX()) <= range && Math.abs(p.getY() - c.getY()) <= range + 1 && Math.abs(p.getZ() - c.getZ()) <= range) {
                      return true;
@@ -898,7 +898,7 @@ final class AiSpeedrun {
                      this.portalStepAsides++;
                      this.steppingAside = true;
                      AiSpeedrun.log("[AI] speedrun: stepping clear of the portal to {}", clear.toShortString());
-                     return this.init(
+                     return this.enterPhase(
                         this.phase == null ? AiSpeedrun.RunPhase.WOOD : this.phase,
                         AiGoto.travelToCompat(clear, 0.6, true, false, false, 20),
                         null
@@ -910,11 +910,11 @@ final class AiSpeedrun {
 
                if (dimension == Level.END) {
                   return !AiNetherRun.load_Z()
-                     ? this.init(
+                     ? this.finish(
                         AiOperation.Status.UNCERTAIN,
                         "Already in the End, but the required barter and blaze-spawner route cannot be verified for this campaign"
                      )
-                     : this.init(AiSpeedrun.RunPhase.END, AiEndRun.init(AiJson.objectOf("timeoutSeconds", Math.min(3600, this.secondsLeft()))), null);
+                     : this.enterPhase(AiSpeedrun.RunPhase.END, AiEndRun.endRun(AiJson.objectOf("timeoutSeconds", Math.min(3600, this.secondsLeft()))), null);
                }
 
                if (this.pearlRecoveryPending && AiCraft.countItem("minecraft:ender_eye") + AiCraft.countItem("minecraft:ender_pearl") >= this.pearlRecoveryGoal) {
@@ -922,7 +922,7 @@ final class AiSpeedrun {
                }
 
                if (dimension == Level.NETHER) {
-                  return this.init(
+                  return this.enterPhase(
                      AiSpeedrun.RunPhase.NETHER,
                      AiNetherRun.create(
                         AiJson.objectOf(
@@ -941,7 +941,7 @@ final class AiSpeedrun {
                }
 
                if (dimension != Level.OVERWORLD) {
-                  return this.init(AiOperation.Status.UNCERTAIN, "Campaign entered an unsupported dimension; revalidate the route");
+                  return this.finish(AiOperation.Status.UNCERTAIN, "Campaign entered an unsupported dimension; revalidate the route");
                }
 
                if (AiNetherRun.init_Z && this.missingGear().isEmpty() && this.armourEquipped()) {
@@ -950,12 +950,12 @@ final class AiSpeedrun {
                   if (this.safeFoodItems() < 10 && night && this.netherFoodTrips >= 1 && this.nightBurrows < 1 && AiBurrow.init()) {
                      this.nightBurrows++;
                      AiSpeedrun.log("[AI] speedrun: home for food at night (day time {}); a hole until dawn", dayTime);
-                     return this.init(AiSpeedrun.RunPhase.FOOD, AiBurrow.init(AiJson.objectOf("timeoutSeconds", 600)), null);
+                     return this.enterPhase(AiSpeedrun.RunPhase.FOOD, AiBurrow.burrow(AiJson.objectOf("timeoutSeconds", 600)), null);
                   }
 
                   if (this.safeFoodItems() < 10 && this.netherFoodTrips < 3) {
                      this.netherFoodTrips++;
-                     return this.init(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(10, 240), null);
+                     return this.enterPhase(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(10, 240), null);
                   }
 
                   AiOperation.Result cook = this.cookStep();
@@ -965,16 +965,16 @@ final class AiSpeedrun {
 
                   if (AiRunResources.totalSafeFoodNutrition() < 32) {
                      return this.foodReserveAttempts++ >= 4
-                        ? this.init(AiOperation.Status.FAILED, "Nether revisit blocked: safe food reserve is still insufficient")
-                        : this.init(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(this.safeFoodItems() + Math.max(4, (32 - AiRunResources.totalSafeFoodNutrition() + 5) / 6), 240), null);
+                        ? this.finish(AiOperation.Status.FAILED, "Nether revisit blocked: safe food reserve is still insufficient")
+                        : this.enterPhase(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(this.safeFoodItems() + Math.max(4, (32 - AiRunResources.totalSafeFoodNutrition() + 5) / 6), 240), null);
                   }
 
                   if (AiCraft.countItem("minecraft:water_bucket") < 2) {
-                     return this.init(AiSpeedrun.RunPhase.KIT, AiObsidian.init(2, Math.min(180, this.secondsLeft())), null);
+                     return this.enterPhase(AiSpeedrun.RunPhase.KIT, AiObsidian.init(2, Math.min(180, this.secondsLeft())), null);
                   }
 
                   if (AiRunResources.spareBuildingBlockCount() < 64) {
-                     return this.init(
+                     return this.enterPhase(
                         AiSpeedrun.RunPhase.KIT,
                         AiObtain.obtain(AiJson.objectOf("item", "minecraft:cobblestone", "count", 64, "timeoutSeconds", Math.min(180, this.secondsLeft()))),
                         null
@@ -983,7 +983,7 @@ final class AiSpeedrun {
 
                   this.netherFoodTrips = 0;
                   this.nightBurrows = 0;
-                  return this.init(
+                  return this.enterPhase(
                      AiSpeedrun.RunPhase.NETHER_ENTRY,
                      AiNetherEntry.create(AiJson.objectOf("skipVillage", true, "beds", 0, "timeoutSeconds", Math.min(3600, this.secondsLeft()))),
                      null
@@ -997,7 +997,7 @@ final class AiSpeedrun {
                         int nutritionGoal = AiSpeedrun.foodTarget(missing);
                         if (!this.logStockTried && this.pickaxeCount() == 0 && AiItems.countInInventory(AiItems.resolveItem("log")) < 16) {
                            this.logStockTried = true;
-                           return this.init(
+                           return this.enterPhase(
                               AiSpeedrun.RunPhase.WOOD, AiObtain.obtain(AiJson.objectOf("item", "log", "count", 16, "timeoutSeconds", 300)), null
                            );
                         }
@@ -1007,7 +1007,7 @@ final class AiSpeedrun {
                            && AiRunResources.totalSafeFoodNutrition() < 40
                            && 4 * AiItems.countInInventory(AiItems.resolveItem("log")) + AiItems.countInInventory(AiItems.resolveItem("planks")) >= 12) {
                            this.woodenAxeTried = true;
-                           return this.init(
+                           return this.enterPhase(
                               AiSpeedrun.RunPhase.KIT,
                               AiObtain.obtain(AiJson.objectOf("item", "minecraft:wooden_axe", "count", 1, "staged", true, "timeoutSeconds", 60)),
                               null
@@ -1015,10 +1015,10 @@ final class AiSpeedrun {
                         }
 
                         if (AiRunResources.totalSafeFoodNutrition() < nutritionGoal && this.breadAttempts < 2) {
-                           AiOperation bread = AiSpeedrun.load(Math.max(1, (nutritionGoal - AiRunResources.totalSafeFoodNutrition() + 4) / 5), Math.min(45, this.secondsLeft()));
+                           AiOperation bread = AiSpeedrun.craftBreadOp(Math.max(1, (nutritionGoal - AiRunResources.totalSafeFoodNutrition() + 4) / 5), Math.min(45, this.secondsLeft()));
                            if (bread != null) {
                               this.breadAttempts++;
-                              return this.init(AiSpeedrun.RunPhase.COOK, bread, null);
+                              return this.enterPhase(AiSpeedrun.RunPhase.COOK, bread, null);
                            }
                         }
 
@@ -1043,7 +1043,7 @@ final class AiSpeedrun {
                               AiRunResources.totalSafeFoodNutrition(),
                               Math.min(600, this.secondsLeft())
                            );
-                           return this.init(
+                           return this.enterPhase(
                               AiSpeedrun.RunPhase.KIT,
                               AiProgression.obtain(
                                  AiJson.objectOf(
@@ -1069,8 +1069,8 @@ final class AiSpeedrun {
                            && !AiSpeedrun.hasHuntable(mc, 48.0)
                            && AiBurrow.init()) {
                            this.nightBurrowing = true;
-                           return this.init(
-                              AiSpeedrun.RunPhase.FOOD, AiBurrow.init(AiJson.objectOf("timeoutSeconds", Math.min(600, this.secondsLeft()))), null
+                           return this.enterPhase(
+                              AiSpeedrun.RunPhase.FOOD, AiBurrow.burrow(AiJson.objectOf("timeoutSeconds", Math.min(600, this.secondsLeft()))), null
                            );
                         }
 
@@ -1078,11 +1078,11 @@ final class AiSpeedrun {
                            this.foodTrips++;
                            this.unusedFoodTripStarted = true;
                            int foodGoal = this.safeFoodItems() + Math.max(4, (nutritionGoal - AiRunResources.totalSafeFoodNutrition() + 5) / 6);
-                           return this.init(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(foodGoal, 240), null);
+                           return this.enterPhase(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(foodGoal, 240), null);
                         }
 
                         if (AiRunResources.totalSafeFoodNutrition() < Math.min(nutritionGoal, 12)) {
-                           return this.init(
+                           return this.finish(
                               AiOperation.Status.FAILED,
                               "Food preparation could not secure the " + nutritionGoal + " nutrition required for the remaining kit work"
                            );
@@ -1102,7 +1102,7 @@ final class AiSpeedrun {
                               kit.addProperty(id, n);
                            }
                         });
-                        return this.init(
+                        return this.enterPhase(
                            AiSpeedrun.RunPhase.KIT,
                            AiProgression.obtain(
                               AiJson.objectOf("kit", kit, "kitPlanks", 8, "timeoutSeconds", this.secondsLeft()), main, missing.getOrDefault(main, 1)
@@ -1111,14 +1111,14 @@ final class AiSpeedrun {
                         );
                      } else if (this.armourEquipped()) {
                         AiOperation carryTable = this.tableCarry
-                           .init(AiCraft.countItem("minecraft:crafting_table"), this.secondsLeft(), seconds -> AiProgression.init(seconds, true));
+                           .maybeCarry(AiCraft.countItem("minecraft:crafting_table"), this.secondsLeft(), seconds -> AiProgression.reclaimTable(seconds, true));
                         if (carryTable != null) {
-                           return this.init(AiSpeedrun.RunPhase.KIT, carryTable, null);
+                           return this.enterPhase(AiSpeedrun.RunPhase.KIT, carryTable, null);
                         }
 
                         if (this.safeFoodItems() < (AiSpeedrun.init_Z_Minecraft_I(mc, 8) ? 6 : 2) && System.nanoTime() > this.nextFoodTripAt) {
                            this.nextFoodTripAt = System.nanoTime() + 600000000000L;
-                           return this.init(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(10, 240), null);
+                           return this.enterPhase(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(10, 240), null);
                         }
 
                         AiOperation.Result cook = this.cookStep();
@@ -1128,23 +1128,23 @@ final class AiSpeedrun {
 
                         if (AiRunResources.totalSafeFoodNutrition() < 32) {
                            if (this.foodReserveAttempts++ >= 4) {
-                              return this.init(AiOperation.Status.FAILED, "Nether entry blocked: safe food reserve could not be replenished");
+                              return this.finish(AiOperation.Status.FAILED, "Nether entry blocked: safe food reserve could not be replenished");
                            }
 
                            int goal = this.safeFoodItems() + Math.max(4, (32 - AiRunResources.totalSafeFoodNutrition() + 5) / 6);
-                           return this.init(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(goal, 240), null);
+                           return this.enterPhase(AiSpeedrun.RunPhase.FOOD, AiSpeedrun.secureFood(goal, 240), null);
                         } else if (AiCraft.countItem("minecraft:water_bucket") < 2) {
-                           return this.init(AiSpeedrun.RunPhase.KIT, AiObsidian.init(2, Math.min(180, this.secondsLeft())), null);
+                           return this.enterPhase(AiSpeedrun.RunPhase.KIT, AiObsidian.init(2, Math.min(180, this.secondsLeft())), null);
                         } else {
                            return AiRunResources.spareBuildingBlockCount() < 64
-                              ? this.init(
+                              ? this.enterPhase(
                                  AiSpeedrun.RunPhase.KIT,
                                  AiObtain.obtain(
                                     AiJson.objectOf("item", "minecraft:cobblestone", "count", 64, "timeoutSeconds", Math.min(180, this.secondsLeft()))
                                  ),
                                  null
                               )
-                              : this.init(
+                              : this.enterPhase(
                                  AiSpeedrun.RunPhase.NETHER_ENTRY,
                                  AiNetherEntry.create(AiJson.objectOf("skipVillage", true, "beds", 0, "timeoutSeconds", Math.min(3600, this.secondsLeft()))),
                                  null
@@ -1152,15 +1152,15 @@ final class AiSpeedrun {
                         }
                      } else {
                         if (this.armourEquipTried) {
-                           return this.init(AiOperation.Status.FAILED, "Required armor or golden boots were not equipped; the Nether gate remains closed");
+                           return this.finish(AiOperation.Status.FAILED, "Required armor or golden boots were not equipped; the Nether gate remains closed");
                         }
 
                         this.armourEquipTried = true;
-                        return this.init(AiSpeedrun.RunPhase.EQUIP, AiEquip.create(AiJson.objectOf("what", "armor")), null);
+                        return this.enterPhase(AiSpeedrun.RunPhase.EQUIP, AiEquip.create(AiJson.objectOf("what", "armor")), null);
                      }
                   } else {
                      AiNetherRun.init_V();
-                     return this.init(AiSpeedrun.RunPhase.STRONGHOLD, AiStronghold.create(AiJson.objectOf("timeoutSeconds", Math.min(5400, this.secondsLeft()))), null);
+                     return this.enterPhase(AiSpeedrun.RunPhase.STRONGHOLD, AiStronghold.create(AiJson.objectOf("timeoutSeconds", Math.min(5400, this.secondsLeft()))), null);
                   }
                }
             }
@@ -1171,11 +1171,11 @@ final class AiSpeedrun {
                }
 
                if (this.cookFailures >= 4) {
-                  return this.init(AiOperation.Status.FAILED, "Cooking repeatedly failed; raw food cannot satisfy the safe nutrition reserve");
+                  return this.finish(AiOperation.Status.FAILED, "Cooking repeatedly failed; raw food cannot satisfy the safe nutrition reserve");
                }
 
                AiOperation cooking = AiForage.cook(Math.min(600, this.secondsLeft()));
-               return cooking == null ? null : this.init(AiSpeedrun.RunPhase.COOK, cooking, null);
+               return cooking == null ? null : this.enterPhase(AiSpeedrun.RunPhase.COOK, cooking, null);
             }
 
             Map<String, Integer> missingGear() {
@@ -1186,7 +1186,7 @@ final class AiSpeedrun {
                return AiRunResources.isMandatoryArmorEquipped();
             }
 
-            boolean init(EquipmentSlot slot, String id) {
+            boolean isWearing(EquipmentSlot slot, String id) {
                ItemStack stack = mc.player.getItemBySlot(slot);
                return !stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().equals(id);
             }
@@ -1205,7 +1205,7 @@ final class AiSpeedrun {
                return AiRunResources.totalSafeFoodItems();
             }
 
-            AiOperation.Result init(AiSpeedrun.RunPhase next, AiOperation op, String notBuilt) {
+            AiOperation.Result enterPhase(AiSpeedrun.RunPhase next, AiOperation op, String notBuilt) {
                if (next != this.phase) {
                   if (this.phase != null) {
                      this.phaseNanos.merge(this.phase, System.nanoTime() - this.phaseStartNanos, Long::sum);
@@ -1234,7 +1234,7 @@ final class AiSpeedrun {
                }
 
                if (notBuilt != null) {
-                  return this.init(AiOperation.Status.FAILED, "Reached phase " + next + ", but " + notBuilt);
+                  return this.finish(AiOperation.Status.FAILED, "Reached phase " + next + ", but " + notBuilt);
                }
 
                this.phaseOp = AiRunDiagnostics.trace("campaign", next.name(), op);
@@ -1312,7 +1312,7 @@ final class AiSpeedrun {
                return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.reportJson());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                this.finished = true;
                AiGoal.clear(this);
                JsonObject debug = this.diagnostics
@@ -1437,7 +1437,7 @@ final class AiSpeedrun {
       }
    }
 
-   private static AiOperation load(int needed, int seconds) {
+   private static AiOperation craftBreadOp(int needed, int seconds) {
       if (seconds < 15) {
          return null;
       } else {
@@ -1505,8 +1505,8 @@ final class AiSpeedrun {
          int explorationLegs;
          int surfaceAttempts;
          int cookingSteps;
-         int write;
-         int update;
+         int breadAttempts;
+         int hayAttempts;
          final Set<Long> triedHay = new HashSet<>();
          AiSpeedrun.HayTarget hayTarget;
          boolean cancelled;
@@ -1514,20 +1514,20 @@ final class AiSpeedrun {
          @Override
          public AiOperation.Result tick() {
             if (this.cancelled || mc.player == null || mc.level != this.startLevel || mc.getConnection() != this.startConnection || mc.player != this.startPlayer) {
-               return this.init(AiOperation.Status.CANCELLED, "Food trip cancelled or world/player changed");
+               return this.finish(AiOperation.Status.CANCELLED, "Food trip cancelled or world/player changed");
             }
 
             if (!mc.player.isAlive()) {
-               return this.init(AiOperation.Status.FAILED, "Player died during the food trip");
+               return this.finish(AiOperation.Status.FAILED, "Player died during the food trip");
             }
 
             int have = AiRunResources.totalSafeFoodItems();
             if (have >= items && this.canInterruptNow() && !this.requiresReconciliationAfterEmergency() && !this.guardLayer.isActive()) {
-               return this.init(AiOperation.Status.SUCCEEDED, "Food in the bag: " + have);
+               return this.finish(AiOperation.Status.SUCCEEDED, "Food in the bag: " + have);
             }
 
             if (System.nanoTime() > this.deadline) {
-               return this.init(
+               return this.finish(
                   this.requiresReconciliationAfterEmergency()
                      ? AiOperation.Status.UNCERTAIN
                      : (have > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED),
@@ -1553,7 +1553,7 @@ final class AiSpeedrun {
                      this.legFactory = this::cookLeg;
                      this.legOp = cooking;
                      this.legName = "cook";
-                     return this.init("Cooking the gathered meat before spending raw rations");
+                     return this.running("Cooking the gathered meat before spending raw rations");
                   }
                }
             }
@@ -1562,17 +1562,17 @@ final class AiSpeedrun {
             if (guarded != null) {
                this.lastGuardResult = guarded;
                if (!guarded.terminal()) {
-                  return this.init(guarded.message());
+                  return this.running(guarded.message());
                }
 
                JsonObject receipt = this.progressJson();
                receipt.add("survival", AiRunResources.parseEvidenceJson(guarded.dataJson()));
-               return this.init(guarded.status(), guarded.message(), receipt, guarded);
+               return this.finishWith(guarded.status(), guarded.message(), receipt, guarded);
             } else {
                if (this.legOp == null && this.legFactory != null) {
                   this.legOp = this.legFactory.get();
                   if (this.legOp != null) {
-                     return this.init("Resuming " + this.legName + " after survival care");
+                     return this.running("Resuming " + this.legName + " after survival care");
                   }
 
                   this.legFactory = null;
@@ -1581,13 +1581,13 @@ final class AiSpeedrun {
                if (this.legOp != null) {
                   long before = System.nanoTime();
                   boolean transferWork = this.legName.equals("cook") || this.legName.equals("bread") || this.legName.equals("hay-mine");
-                  AiOperation.Result r = this.childTracker.init(this.legOp, transferWork);
+                  AiOperation.Result r = this.childTracker.tickChild(this.legOp, transferWork);
                   if (this.legName.equals("surface")) {
                      this.deadline = this.deadline + System.nanoTime() - before + 50000000L;
                   }
 
                   if (r.status() == AiOperation.Status.UNCERTAIN) {
-                     return this.init(AiOperation.Status.UNCERTAIN, this.legName + ": " + r.message());
+                     return this.finish(AiOperation.Status.UNCERTAIN, this.legName + ": " + r.message());
                   }
 
                   boolean seen = this.legName.startsWith("walk")
@@ -1595,11 +1595,11 @@ final class AiSpeedrun {
                      && !this.legOp.requiresReconciliationAfterEmergency()
                      && AiSpeedrun.hasHuntable(mc, 48.0);
                   if (!r.terminal() && !seen) {
-                     return this.init(this.legName + ": " + r.message());
+                     return this.running(this.legName + ": " + r.message());
                   }
 
                   boolean gatherHay = this.legName.equals("hay-walk") && r.status() == AiOperation.Status.SUCCEEDED;
-                  this.childTracker.load(this.legOp);
+                  this.childTracker.cancelChild(this.legOp);
                   this.legOp = null;
                   this.legFactory = null;
                   this.legName = "";
@@ -1632,20 +1632,20 @@ final class AiSpeedrun {
                      );
                      this.legOp = this.legFactory.get();
                      this.legName = "hay-mine";
-                     return this.init("Gathering nearby hay for bread");
+                     return this.running("Gathering nearby hay for bread");
                   }
                }
 
-               AiOperation bread = this.load();
+               AiOperation bread = this.nextBreadOp();
                if (bread != null) {
-                  this.legFactory = this::load;
+                  this.legFactory = this::nextBreadOp;
                   this.legOp = bread;
                   this.legName = "bread";
-                  return this.init("Making bread from gathered food");
+                  return this.running("Making bread from gathered food");
                }
 
-               if (AiSpeedrun.mayTryHay(this.update, this.secondsLeft()) && (this.hayTarget = AiSpeedrun.nearestHay(mc, this.triedHay)) != null) {
-                  this.update++;
+               if (AiSpeedrun.mayTryHay(this.hayAttempts, this.secondsLeft()) && (this.hayTarget = AiSpeedrun.nearestHay(mc, this.triedHay)) != null) {
+                  this.hayAttempts++;
                   this.triedHay.add(this.hayTarget.block().asLong());
                   BlockPos stand = this.hayTarget.stand();
                   this.legFactory = () -> AiRunDiagnostics.trace(
@@ -1667,10 +1667,10 @@ final class AiSpeedrun {
                   );
                   this.legOp = this.legFactory.get();
                   this.legName = "hay-walk";
-                  return this.init("Nearby hay can provide bread");
+                  return this.running("Nearby hay can provide bread");
                }
 
-               AiFoodHuntBudget.Inner_DataUtil admission = AiFoodHuntBudget.init(this.deadline, System.nanoTime(), this.graceUsed);
+               AiFoodHuntBudget.Inner_DataUtil admission = AiFoodHuntBudget.admit(this.deadline, System.nanoTime(), this.graceUsed);
                if (admission.admitted()) {
                   AiOperation hunt = AiSpeedrun.hunt(48.0, Math.max(1, items - have), admission.childSeconds());
                   if (hunt != null) {
@@ -1678,7 +1678,7 @@ final class AiSpeedrun {
                      this.graceUsed = admission.graceUsed();
                      this.legOp = AiRunDiagnostics.trace("food_trip", "hunt " + have + "/" + items, hunt);
                      this.legName = "hunt";
-                     return this.init("Hunting food");
+                     return this.running("Hunting food");
                   }
 
                   if (!AiSpeedrun.init_Z_Minecraft_I(mc, 5) && this.surfaceAttempts < 2) {
@@ -1690,16 +1690,16 @@ final class AiSpeedrun {
                      );
                      this.legOp = this.legFactory.get();
                      this.legName = "surface";
-                     return this.init("Up to open sky for food animals");
+                     return this.running("Up to open sky for food animals");
                   }
 
                   if (this.explorationLegs >= 6) {
-                     return this.init(have > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED, "No food animal found; " + have + " food held");
+                     return this.finish(have > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED, "No food animal found; " + have + " food held");
                   }
 
                   long dayTime = mc.level.getOverworldClockTime() % 24000L;
                   if (mc.level.dimension() == Level.OVERWORLD && dayTime > 13000L && dayTime < 23000L) {
-                     return this.init(
+                     return this.finish(
                         have > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED, "Night: no walk out for food; " + have + " food held"
                      );
                   }
@@ -1709,7 +1709,7 @@ final class AiSpeedrun {
                   int z = this.origin.getZ() + (int)Math.round(Math.sin(a) * 64.0);
                   BlockPos surface = AiSpeedrun.findSurface(mc.player.blockPosition(), x, z, column -> AiSpeedrun.observedSurface(mc, column));
                   if (surface == null) {
-                     return this.init("No observed safe surface in this direction; trying another bearing");
+                     return this.running("No observed safe surface in this direction; trying another bearing");
                   }
 
                   this.legFactory = () -> AiRunDiagnostics.trace(
@@ -1731,18 +1731,18 @@ final class AiSpeedrun {
                   );
                   this.legName = "walk";
                   this.legOp = this.legFactory.get();
-                  return this.init("Looking for food animals");
+                  return this.running("Looking for food animals");
                } else {
-                  return !AiFoodHuntBudget.init(this.canInterruptNow() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported(), this.requiresReconciliationAfterEmergency())
-                     ? this.init("Waiting for the food trip's safe handoff")
-                     : this.init(
+                  return !AiFoodHuntBudget.canInterrupt(this.canInterruptNow() && autismclient.ai.engine.AiMotionSafety.isPlayerSupported(), this.requiresReconciliationAfterEmergency())
+                     ? this.running("Waiting for the food trip's safe handoff")
+                     : this.finish(
                         have > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED, "No time for another complete hunt; " + have + " food held"
                      );
                }
             }
          }
 
-         AiOperation.Result init(String message) {
+         AiOperation.Result running(String message) {
             return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
          }
 
@@ -1761,9 +1761,9 @@ final class AiSpeedrun {
                "cookingSteps",
                this.cookingSteps,
                "breadSteps",
-               this.write,
+               this.breadAttempts,
                "hayTrips",
-               this.update,
+               this.hayAttempts,
                "survivalActive",
                this.guardLayer.isActive()
             );
@@ -1787,35 +1787,35 @@ final class AiSpeedrun {
             }
          }
 
-         AiOperation load() {
-            if (this.write >= 2) {
+         AiOperation nextBreadOp() {
+            if (this.breadAttempts >= 2) {
                return null;
             }
 
-            AiOperation bread = AiSpeedrun.load(Math.max(1, items - AiRunResources.totalSafeFoodItems()), Math.min(45, this.secondsLeft()));
+            AiOperation bread = AiSpeedrun.craftBreadOp(Math.max(1, items - AiRunResources.totalSafeFoodItems()), Math.min(45, this.secondsLeft()));
             if (bread == null) {
                return null;
             }
 
-            this.write++;
+            this.breadAttempts++;
             return AiRunDiagnostics.trace("food_trip", "bread from held wheat or hay", bread);
          }
 
          void releaseLeg() {
             if (this.legOp != null) {
-               this.childTracker.load(this.legOp);
+               this.childTracker.cancelChild(this.legOp);
                this.legOp = null;
             }
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message) {
-            return this.init(status, message, this.progressJson(), null);
+         AiOperation.Result finish(AiOperation.Status status, String message) {
+            return this.finishWith(status, message, this.progressJson(), null);
          }
 
-         AiOperation.Result init(AiOperation.Status status, String message, JsonObject receipt, AiOperation.Result actual) {
+         AiOperation.Result finishWith(AiOperation.Status status, String message, JsonObject receipt, AiOperation.Result actual) {
             this.childTracker.observeChild(this.legOp);
-            this.childTracker.init(this.guardLayer.requiresReconciliation(), this.lastGuardResult);
-            AiOperation.Result result = this.childTracker.init(status, message, receipt, actual);
+            this.childTracker.observe(this.guardLayer.requiresReconciliation(), this.lastGuardResult);
+            AiOperation.Result result = this.childTracker.finish(status, message, receipt, actual);
             this.cancel();
             AiSpeedrun.log("[AI] speedrun food trip {}: {}", result.status(), result.message());
             return result;
@@ -1823,12 +1823,12 @@ final class AiSpeedrun {
 
          @Override
          public boolean canInterruptNow() {
-            return !this.childTracker.init() && this.guardLayer.canInterruptNow() && (this.legOp == null || this.legOp.canInterruptNow());
+            return !this.childTracker.isReconciliationNeeded() && this.guardLayer.canInterruptNow() && (this.legOp == null || this.legOp.canInterruptNow());
          }
 
          @Override
          public boolean requiresReconciliationAfterEmergency() {
-            return this.childTracker.init()
+            return this.childTracker.isReconciliationNeeded()
                || this.guardLayer.requiresReconciliation()
                || this.legOp != null && this.legOp.requiresReconciliationAfterEmergency();
          }
@@ -1836,7 +1836,7 @@ final class AiSpeedrun {
          @Override
          public void cancel() {
             this.childTracker.observeChild(this.legOp);
-            this.childTracker.init(this.guardLayer.requiresReconciliation(), this.lastGuardResult);
+            this.childTracker.observe(this.guardLayer.requiresReconciliation(), this.lastGuardResult);
             this.cancelled = true;
             this.guardLayer.cancel();
             this.releaseLeg();
@@ -1938,10 +1938,10 @@ final class AiSpeedrun {
    static final class ChildTracker {
       private AiOperation child;
       private AiOperation.Result childResult;
-      private AiOperation.Result load;
+      private AiOperation.Result pendingResult;
       private boolean needsReconciliation;
 
-      AiOperation.Result init(AiOperation child, boolean transfer) {
+      AiOperation.Result tickChild(AiOperation child, boolean transfer) {
          boolean before = transfer && child.requiresReconciliationAfterEmergency();
          AiOperation.Result result = child.tick();
          boolean after = child.requiresReconciliationAfterEmergency();
@@ -1954,7 +1954,7 @@ final class AiSpeedrun {
          this.child = child;
          this.childResult = result;
          if (result.terminal() && needsReobserve(result)) {
-            this.init(true, result);
+            this.observe(true, result);
          }
 
          return result;
@@ -1963,7 +1963,7 @@ final class AiSpeedrun {
       void observeChild(AiOperation child) {
          if (child != null) {
             AiOperation.Result actual = this.child == child ? this.childResult : null;
-            this.init(child.requiresReconciliationAfterEmergency(), actual);
+            this.observe(child.requiresReconciliationAfterEmergency(), actual);
             if (this.child != child) {
                this.child = child;
                this.childResult = null;
@@ -1971,34 +1971,34 @@ final class AiSpeedrun {
          }
       }
 
-      void init(boolean needsObservation, AiOperation.Result actual) {
+      void observe(boolean needsObservation, AiOperation.Result actual) {
          if (needsObservation || needsReobserve(actual)) {
             this.needsReconciliation = true;
-            if (actual != null && (this.load == null || actual == this.childResult)) {
-               this.load = actual;
+            if (actual != null && (this.pendingResult == null || actual == this.childResult)) {
+               this.pendingResult = actual;
             }
          }
       }
 
-      void load(AiOperation child) {
+      void cancelChild(AiOperation child) {
          if (child != null) {
             this.observeChild(child);
             child.cancel();
          }
       }
 
-      boolean init() {
+      boolean isReconciliationNeeded() {
          return this.needsReconciliation;
       }
 
-      AiOperation.Result init(AiOperation.Status status, String message, JsonObject phaseData, AiOperation.Result actual) {
+      AiOperation.Result finish(AiOperation.Status status, String message, JsonObject phaseData, AiOperation.Result actual) {
          JsonObject data = phaseData.deepCopy();
-         if (this.load != null) {
-            data.add("pendingChild", AiRunResources.compactEvidenceJson(this.load.dataJson()));
+         if (this.pendingResult != null) {
+            data.add("pendingChild", AiRunResources.compactEvidenceJson(this.pendingResult.dataJson()));
          }
 
          if (actual == null) {
-            actual = this.childResult != null ? this.childResult : this.load;
+            actual = this.childResult != null ? this.childResult : this.pendingResult;
          }
 
          AiOperation.Result result = AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, data, this.needsReconciliation, actual);
@@ -2016,13 +2016,13 @@ final class AiSpeedrun {
    }
 
    static final class TableCarry {
-      private boolean init;
+      private boolean attempted;
 
-      AiOperation init(int held, int secondsLeft, IntFunction<AiOperation> observed) {
-         if (!this.init && held <= 0 && secondsLeft > 0) {
+      AiOperation maybeCarry(int held, int secondsLeft, IntFunction<AiOperation> observed) {
+         if (!this.attempted && held <= 0 && secondsLeft > 0) {
             AiOperation operation = observed.apply(Math.min(90, secondsLeft));
             if (operation != null) {
-               this.init = true;
+               this.attempted = true;
             }
 
             return operation;

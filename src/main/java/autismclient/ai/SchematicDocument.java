@@ -67,17 +67,17 @@ final class SchematicDocument {
          long volume = 0L;
 
          for (SchematicDocument.Region r : raw) {
-            volume += r.flush;
+            volume += r.cellCount;
             if (volume > 134217728L) {
                throw new IllegalArgumentException("Schematic exceeds the 128 million voxel limit");
             }
 
             minX = Math.min(minX, r.originX);
-            minY = Math.min(minY, r.load);
-            minZ = Math.min(minZ, r.read);
-            maxX = Math.max(maxX, Math.addExact(r.originX, r.write));
-            maxY = Math.max(maxY, Math.addExact(r.load, r.update));
-            maxZ = Math.max(maxZ, Math.addExact(r.read, r.sync));
+            minY = Math.min(minY, r.originY);
+            minZ = Math.min(minZ, r.originZ);
+            maxX = Math.max(maxX, Math.addExact(r.originX, r.width));
+            maxY = Math.max(maxY, Math.addExact(r.originY, r.height));
+            maxZ = Math.max(maxZ, Math.addExact(r.originZ, r.length));
          }
 
          this.sizeX = Math.subtractExact(maxX, minX);
@@ -90,7 +90,7 @@ final class SchematicDocument {
             for (SchematicDocument.Region r : raw) {
                normalized.add(
                   new SchematicDocument.Region(
-                     r.originX - minX, r.load - minY, r.read - minZ, r.write, r.update, r.sync, r.palette, r.packed, r.values
+                     r.originX - minX, r.originY - minY, r.originZ - minZ, r.width, r.height, r.length, r.palette, r.packed, r.values
                   )
                );
             }
@@ -113,9 +113,9 @@ final class SchematicDocument {
             Long2ObjectOpenHashMap<ArrayList<SchematicDocument.Region>> build = new Long2ObjectOpenHashMap<>();
 
             for (SchematicDocument.Region r : this.regions) {
-               for (int sx = r.originX >> 4; sx <= r.originX + r.write - 1 >> 4; sx++) {
-                  for (int sy = r.load >> 4; sy <= r.load + r.update - 1 >> 4; sy++) {
-                     for (int sz = r.read >> 4; sz <= r.read + r.sync - 1 >> 4; sz++) {
+               for (int sx = r.originX >> 4; sx <= r.originX + r.width - 1 >> 4; sx++) {
+                  for (int sy = r.originY >> 4; sy <= r.originY + r.height - 1 >> 4; sy++) {
+                     for (int sz = r.originZ >> 4; sz <= r.originZ + r.length - 1 >> 4; sz++) {
                         long key = BlockPos.asLong(sx, sy, sz);
                         build.computeIfAbsent(key, k -> new ArrayList<>()).add(r);
                         if (build.size() > 262144) {
@@ -166,17 +166,17 @@ final class SchematicDocument {
       long done = 0L;
 
       for (SchematicDocument.Region r : this.regions) {
-         for (int i = 0; i < r.flush; i++) {
+         for (int i = 0; i < r.cellCount; i++) {
             if ((i & 4095) == 0) {
                checkInterrupted();
                progress.accept((int)(100L * done / Math.max(1L, this.volume)));
             }
 
-            int y = i / (r.write * r.sync);
-            int rest = i % (r.write * r.sync);
-            int z = rest / r.write;
-            int x = rest % r.write;
-            if (!r.stateAtIndex(i).isAir() && this.regionAt(r.originX + x, r.load + y, r.read + z) == r) {
+            int y = i / (r.width * r.length);
+            int rest = i % (r.width * r.length);
+            int z = rest / r.width;
+            int x = rest % r.width;
+            if (!r.stateAtIndex(i).isAir() && this.regionAt(r.originX + x, r.originY + y, r.originZ + z) == r) {
                count++;
             }
 
@@ -199,7 +199,7 @@ final class SchematicDocument {
       IdentityHashMap<BlockState, AiBuilder.CellSpec> cache = new IdentityHashMap<>();
 
       for (SchematicDocument.Region r : this.regions) {
-         for (int i = 0; i < r.flush; i++) {
+         for (int i = 0; i < r.cellCount; i++) {
             if ((i & 4095) == 0) {
                checkInterrupted();
                progress.accept((int)(100L * done / Math.max(1L, this.volume)));
@@ -208,10 +208,10 @@ final class SchematicDocument {
             done++;
             BlockState s = r.stateAtIndex(i);
             if (!s.isAir()) {
-               int y = r.load + i / (r.write * r.sync);
-               int rest = i % (r.write * r.sync);
-               int z = r.read + rest / r.write;
-               int x = r.originX + rest % r.write;
+               int y = r.originY + i / (r.width * r.length);
+               int rest = i % (r.width * r.length);
+               int z = r.originZ + rest / r.width;
+               int x = r.originX + rest % r.width;
                if (this.regionAt(x, y, z) == r) {
                   count++;
                   BlockPos at = this.transform(x, y, z, rotation, mirror);
@@ -431,7 +431,7 @@ final class SchematicDocument {
                BlockState[] palette = new BlockState[entries.size()];
 
                for (int i = 0; i < palette.length; i++) {
-                  AiSchematic.PaletteState parsed = AiSchematic.init(entries.getCompoundOrEmpty(i), dataVersion, version < 4 || dataVersion < 1631, "region " + name);
+                  AiSchematic.PaletteState parsed = AiSchematic.parsePaletteEntry(entries.getCompoundOrEmpty(i), dataVersion, version < 4 || dataVersion < 1631, "region " + name);
                   palette[i] = AiBuilder.toBlockState(new AiBuilder.CellSpec(0, 0, 0, parsed.block(), parsed.properties()));
                }
 
@@ -616,34 +616,34 @@ final class SchematicDocument {
 
    static final class Region {
       final int originX;
-      final int load;
-      final int read;
-      final int write;
-      final int update;
-      final int sync;
-      final int flush;
+      final int originY;
+      final int originZ;
+      final int width;
+      final int height;
+      final int length;
+      final int cellCount;
       final BlockState[] palette;
       final long[] packed;
       final int[] values;
-      final int close;
+      final int bitsPerEntry;
 
       Region(int x, int y, int z, int width, int height, int length, BlockState[] palette, long[] packed, int[] values) {
          this.originX = x;
-         this.load = y;
-         this.read = z;
-         this.write = width;
-         this.update = height;
-         this.sync = length;
+         this.originY = y;
+         this.originZ = z;
+         this.width = width;
+         this.height = height;
+         this.length = length;
          if (width >= 1 && height >= 1 && length >= 1 && width <= 4096 && height <= 4096 && length <= 4096) {
             long volume = (long)width * height * length;
             if (volume <= 134217728L && palette.length >= 1 && palette.length <= 65536) {
-               this.flush = (int)volume;
+               this.cellCount = (int)volume;
                this.palette = palette;
                this.packed = packed;
                this.values = values;
-               this.close = SchematicDocument.bitsForPaletteSize(palette.length);
+               this.bitsPerEntry = SchematicDocument.bitsForPaletteSize(palette.length);
                if (values != null && values.length != volume
-                  || values == null && (packed == null || packed.length != ((long)this.flush * this.close + 63L) / 64L)) {
+                  || values == null && (packed == null || packed.length != ((long)this.cellCount * this.bitsPerEntry + 63L) / 64L)) {
                   throw new IllegalArgumentException("Schematic region data does not match its size");
                }
             } else {
@@ -659,15 +659,15 @@ final class SchematicDocument {
             return this.values[index];
          }
 
-         long bit = (long)index * this.close;
+         long bit = (long)index * this.bitsPerEntry;
          int word = (int)(bit >>> 6);
          int shift = (int)(bit & 63L);
          long value = this.packed[word] >>> shift;
-         if (shift + this.close > 64) {
+         if (shift + this.bitsPerEntry > 64) {
             value |= this.packed[word + 1] << 64 - shift;
          }
 
-         return (int)(value & (1L << this.close) - 1L);
+         return (int)(value & (1L << this.bitsPerEntry) - 1L);
       }
 
       BlockState stateAtIndex(int index) {
@@ -680,16 +680,16 @@ final class SchematicDocument {
       }
 
       BlockState stateAt(int px, int py, int pz) {
-         return this.stateAtIndex(((py - this.load) * this.sync + pz - this.read) * this.write + px - this.originX);
+         return this.stateAtIndex(((py - this.originY) * this.length + pz - this.originZ) * this.width + px - this.originX);
       }
 
       boolean contains(int px, int py, int pz) {
          return px >= this.originX
-            && px < this.originX + this.write
-            && py >= this.load
-            && py < this.load + this.update
-            && pz >= this.read
-            && pz < this.read + this.sync;
+            && px < this.originX + this.width
+            && py >= this.originY
+            && py < this.originY + this.height
+            && pz >= this.originZ
+            && pz < this.originZ + this.length;
       }
    }
 

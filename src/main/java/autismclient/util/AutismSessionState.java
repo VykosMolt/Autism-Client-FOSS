@@ -865,7 +865,7 @@ public final class AutismSessionState {
                   if (PacketTypeRegistry.getC2sPackets().contains(qp.packet.getClass())) {
                      Packet<?> packetToSend = this.preparePacketForSend(qp);
                      if (packetToSend != null) {
-                        DirectPacketSender.init(packetToSend);
+                        DirectPacketSender.send(packetToSend);
                      }
                   } else {
                      AutismClientAddon.LOG.warn("[Autism] Skipped sending invalid C2S packet during flush: {}", qp.packet.getClass().getName());

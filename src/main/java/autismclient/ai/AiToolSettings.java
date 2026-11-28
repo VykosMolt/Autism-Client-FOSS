@@ -46,7 +46,7 @@ public final class AiToolSettings {
       AiJson.writeAtomicJson(directory.resolve("tools-settings.json"), this);
    }
 
-   public static AiToolSettings load(Path directory) {
+   public static AiToolSettings loadFrom(Path directory) {
       Path path = directory.resolve("tools-settings.json");
       if (!Files.exists(path)) {
          return new AiToolSettings();

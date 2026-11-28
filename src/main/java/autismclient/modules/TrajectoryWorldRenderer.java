@@ -162,16 +162,16 @@ public final class TrajectoryWorldRenderer {
             VertexConsumer fill = buffers.buffer(autismclient.render.AutismRenderTypes.storageEspFillSeeThrough());
 
             for (Entity entity : hitTargets) {
-               WorldLineRenderer.init(pose, fill, entityBox(entity, camera, partial, 0.016), withAlpha(-44976, 72));
+               WorldLineRenderer.box(pose, fill, entityBox(entity, camera, partial, 0.016), withAlpha(-44976, 72));
             }
 
             VertexConsumer edge = buffers.buffer(autismclient.render.AutismRenderTypes.aiPlanLines());
 
             for (Entity entity : hitTargets) {
                AABB box = entityBox(entity, camera, partial, 0.018);
-               WorldLineRenderer.init(pose, edge, box, withAlpha(-44976, 48), 7.0F);
-               WorldLineRenderer.init(pose, edge, box, -653585893, 4.8F);
-               WorldLineRenderer.init(pose, edge, box, withAlpha(-44976, 255), 3.0F);
+               WorldLineRenderer.box(pose, edge, box, withAlpha(-44976, 48), 7.0F);
+               WorldLineRenderer.box(pose, edge, box, -653585893, 4.8F);
+               WorldLineRenderer.box(pose, edge, box, withAlpha(-44976, 255), 3.0F);
             }
          }
 

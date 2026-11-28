@@ -18,7 +18,7 @@ public class MsdfEditBox extends EditBox {
    private boolean centered;
    private boolean load;
    private int cursor = -1;
-   private String init_Str = "";
+   private String lastValue = "";
    private long init_J;
 
    public MsdfEditBox(Font font, int width, int height, Component narration) {
@@ -53,7 +53,7 @@ public class MsdfEditBox extends EditBox {
          && (value.isEmpty() || autismclient.gui.sdf.MsdfTextRenderer.canRender(autismclient.gui.sdf.MsdfFontFace.BODY, value));
    }
 
-   private float init(String text) {
+   private float textWidth(String text) {
       return autismclient.gui.sdf.MsdfTextRenderer.measureWidthFloat(
          autismclient.gui.sdf.MsdfFontFace.BODY,
          text,
@@ -65,8 +65,8 @@ public class MsdfEditBox extends EditBox {
       String value = this.getValue();
       int cursor = Utf16TextCursor.clampIndex(value, this.getCursorPosition());
       float available = Math.max(1, this.getInnerWidth() - 1);
-      float caret = this.init(value.substring(0, cursor));
-      float maxScroll = Math.max(0.0F, this.init(value) - available);
+      float caret = this.textWidth(value.substring(0, cursor));
+      float maxScroll = Math.max(0.0F, this.textWidth(value) - available);
       this.caret = Math.max(0.0F, Math.min(this.caret, maxScroll));
       if (caret < this.caret) {
          this.caret = caret;
@@ -75,20 +75,20 @@ public class MsdfEditBox extends EditBox {
       }
    }
 
-   private float init_F() {
-      float width = this.init(this.getValue());
+   private float textStartX() {
+      float width = this.textWidth(this.getValue());
       return this.centered && width < this.getInnerWidth() ? this.getX() + (this.getWidth() - width) / 2.0F : this.getX() + (this.isBordered() ? 4 : 0);
    }
 
-   private int init(double mouseX) {
+   private int cursorIndexAt(double mouseX) {
       this.init_V();
       String value = this.getValue();
-      float target = (float)mouseX - this.init_F() + this.caret;
+      float target = (float)mouseX - this.textStartX() + this.caret;
       float previousWidth = 0.0F;
       int previous = 0;
 
       for (int next = Utf16TextCursor.next(value, 0); next > previous; next = Utf16TextCursor.next(value, previous)) {
-         float nextWidth = this.init(value.substring(0, next));
+         float nextWidth = this.textWidth(value.substring(0, next));
          if (target < (previousWidth + nextWidth) / 2.0F) {
             return previous;
          }
@@ -105,7 +105,7 @@ public class MsdfEditBox extends EditBox {
       if (!this.init_Z()) {
          super.onClick(event, doubleClick);
       } else {
-         int clicked = this.init(event.x());
+         int clicked = this.cursorIndexAt(event.x());
          if (doubleClick) {
             this.setCursorPosition(clicked);
             int start = this.getWordPosition(-1);
@@ -125,7 +125,7 @@ public class MsdfEditBox extends EditBox {
       if (!this.init_Z()) {
          super.onDrag(event, dx, dy);
       } else {
-         this.moveCursorTo(this.init(event.x()), true);
+         this.moveCursorTo(this.cursorIndexAt(event.x()), true);
          this.init_J = Util.getMillis();
       }
    }
@@ -142,7 +142,7 @@ public class MsdfEditBox extends EditBox {
 
       this.init_V();
       int end = Utf16TextCursor.clampIndex(this.getValue(), charIndex);
-      return Math.round(this.init_F() - this.caret + this.init(this.getValue().substring(0, end)));
+      return Math.round(this.textStartX() - this.caret + this.textWidth(this.getValue().substring(0, end)));
    }
 
    @Override
@@ -154,7 +154,7 @@ public class MsdfEditBox extends EditBox {
          } else {
             String value = this.getValue();
             this.init_V();
-            autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, MsdfEditBox.FontSource.init(), mouseX, mouseY);
+            autismclient.gui.f.SyncManager context = autismclient.gui.f.UiHelper.init(graphics, MsdfEditBox.FontSource.font(), mouseX, mouseY);
             autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
             autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.BODY;
             float size = autismclient.gui.sdf.MsdfTextRenderer.scaledFontSize(face);
@@ -170,17 +170,17 @@ public class MsdfEditBox extends EditBox {
 
             int cursor = Utf16TextCursor.clampIndex(value, acc.autism$cursorPos());
             int highlight = Utf16TextCursor.clampIndex(value, acc.autism$highlightPos());
-            if (cursor != this.cursor || !value.equals(this.init_Str)) {
+            if (cursor != this.cursor || !value.equals(this.lastValue)) {
                this.cursor = cursor;
-               this.init_Str = value;
+               this.lastValue = value;
                this.init_J = Util.getMillis();
             }
 
             int textColor = acc.autism$isEditable() ? colors.textPrimary : colors.textMuted;
-            float drawX = this.init_F() - this.caret;
+            float drawX = this.textStartX() - this.caret;
             float textY = autismclient.gui.sdf.MsdfTextRenderer.centerVertically(face, this.getY(), this.getHeight(), size);
             float textTop = autismclient.gui.sdf.MsdfTextRenderer.alignToVanillaTop(face, textY, size);
-            float cursorX = drawX + this.init(value.substring(0, cursor));
+            float cursorX = drawX + this.textWidth(value.substring(0, cursor));
             int padding = this.isBordered() ? 4 : 0;
             int clipLeft = this.getX() + padding;
             int clipRight = Math.max(clipLeft, this.getX() + this.getWidth() - padding);
@@ -190,7 +190,7 @@ public class MsdfEditBox extends EditBox {
 
             try {
                if (this.isFocused() && highlight != cursor) {
-                  float highlightX = drawX + this.init(value.substring(0, highlight));
+                  float highlightX = drawX + this.textWidth(value.substring(0, highlight));
                   int left = Math.round(Math.min(cursorX, highlightX));
                   int right = Math.round(Math.max(cursorX, highlightX));
                   graphics.fill(left, selectionTop, Math.max(left + 1, right), selectionBottom, autismclient.gui.f.PacketUtil.init(colors.accent, 0.35F));
@@ -198,7 +198,7 @@ public class MsdfEditBox extends EditBox {
 
                autismclient.gui.sdf.MsdfTextRenderer.draw(graphics, face, value, drawX, textTop, size, textColor, false);
                if (value.isEmpty() && acc.autism$hint() != null && !this.isFocused()) {
-                  graphics.text(MsdfEditBox.FontSource.init(), acc.autism$hint(), Math.round(this.init_F()), Math.round(textY), colors.textMuted);
+                  graphics.text(MsdfEditBox.FontSource.font(), acc.autism$hint(), Math.round(this.textStartX()), Math.round(textY), colors.textMuted);
                }
 
                if (cursor == value.length() && value.length() < acc.autism$maxLength() && acc.autism$suggestion() != null) {
@@ -222,7 +222,7 @@ public class MsdfEditBox extends EditBox {
    }
 
    private static final class FontSource {
-      private static Font init() {
+      private static Font font() {
          return Minecraft.getInstance().font;
       }
    }

@@ -27,7 +27,7 @@ final class AiAttachments {
    private AiAttachments() {
    }
 
-   static String init() {
+   static String pickFile() {
       PointerBuffer filters = BufferUtils.createPointerBuffer(AiSchematic.EXTENSIONS.length);
       ArrayList<ByteBuffer> buffers = new ArrayList<>();
 
@@ -45,7 +45,7 @@ final class AiAttachments {
       }
    }
 
-   static AiAttachments.Inner_DataUtil init(Path source, Path directory) throws IOException, NoSuchAlgorithmException {
+   static AiAttachments.Inner_DataUtil attach(Path source, Path directory) throws IOException, NoSuchAlgorithmException {
       String name = AiSchematic.validateName(source.getFileName().toString());
       if (name.chars().anyMatch(c -> c < 32 || c == 34)) {
          throw new IllegalArgumentException("Invalid file name");
@@ -93,7 +93,7 @@ final class AiAttachments {
       }
    }
 
-   static String init(String text, List<AiAttachments.Inner_DataUtil> files) {
+   static String composeMessage(String text, List<AiAttachments.Inner_DataUtil> files) {
       if (files.isEmpty()) {
          return text;
       }

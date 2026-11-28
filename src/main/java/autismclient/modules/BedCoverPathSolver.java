@@ -34,9 +34,9 @@ final class BedCoverPathSolver {
    static BedCoverPathSolver.CoverPlan plan(
       BedCoverPathSolver.CellGrid g, Vec3 observer, double reach, BedCoverPathSolver.MinimalCover cover
    ) {
-      double[] distance = new double[g.write];
+      double[] distance = new double[g.cellCount];
       Arrays.fill(distance, 1.0 / 0.0);
-      int[] parent = new int[g.write];
+      int[] parent = new int[g.cellCount];
       Arrays.fill(parent, -1);
 
       record Inner_DataUtil(int init_I, double init_D) {
@@ -49,7 +49,7 @@ final class BedCoverPathSolver {
       if (g.canStand(own, false)) {
          seed = own;
       } else {
-         for (int i = 0; i < g.write; i++) {
+         for (int i = 0; i < g.cellCount; i++) {
             if (g.canStand(i, false) && (g.xOf(i) == 0 || g.xOf(i) == g.sx - 1 || g.zOf(i) == 0 || g.zOf(i) == g.sizeZ - 1)) {
                double d = g.posAt(i).distToCenterSqr(observer);
                if (d < nearest) {
@@ -195,7 +195,7 @@ final class BedCoverPathSolver {
       }
 
       Collections.reverse(route);
-      BedCoverPathSolver.BreakRoute proof = new BedCoverPathSolver.BreakRoute(new BitSet(g.write), new LinkedHashSet<>(), new ArrayList<>());
+      BedCoverPathSolver.BreakRoute proof = new BedCoverPathSolver.BreakRoute(new BitSet(g.cellCount), new LinkedHashSet<>(), new ArrayList<>());
 
       for (int at = 0; at < route.size(); at++) {
          int ix = route.get(at);
@@ -365,17 +365,17 @@ final class BedCoverPathSolver {
    }
 
    static BedCoverPathSolver.MinimalCover minimalCover(BedCoverPathSolver.CellGrid g) {
-      BitSet removed = new BitSet(g.write);
+      BitSet removed = new BitSet(g.cellCount);
       Set<BlockPos> result = new LinkedHashSet<>();
       int layers = 0;
       int infinity = 10000;
 
       for (int layer = 0; layer < 16; layer++) {
-         BedCoverPathSolver.FlowNetwork flow = new BedCoverPathSolver.FlowNetwork(g.write * 2 + 2);
-         int source = g.write * 2;
+         BedCoverPathSolver.FlowNetwork flow = new BedCoverPathSolver.FlowNetwork(g.cellCount * 2 + 2);
+         int source = g.cellCount * 2;
          int sink = source + 1;
 
-         for (int i = 0; i < g.write; i++) {
+         for (int i = 0; i < g.cellCount; i++) {
             if (g.nodeAt(i).kind != 1) {
                flow.addEdge(i * 2, i * 2 + 1, g.nodeAt(i).kind == 2 && !removed.get(i) ? 1 : 10000);
                if (g.nodeAt(i).kind == 3) {
@@ -403,7 +403,7 @@ final class BedCoverPathSolver {
          boolean[] reachable = flow.reachableFrom(source);
          int added = 0;
 
-         for (int i = 0; i < g.write; i++) {
+         for (int i = 0; i < g.cellCount; i++) {
             if (g.nodeAt(i).kind == 2 && reachable[i * 2] && !reachable[i * 2 + 1] && !removed.get(i)) {
                removed.set(i);
                result.add(g.posAt(i));
@@ -544,7 +544,7 @@ final class BedCoverPathSolver {
       final int sx;
       final int sizeY;
       final int sizeZ;
-      final int write;
+      final int cellCount;
       final BedCoverPathSolver.GridNode[] nodes;
       final List<Integer> init_List = new ArrayList<>();
 
@@ -553,8 +553,8 @@ final class BedCoverPathSolver {
          this.sx = sx;
          this.sizeY = sy;
          this.sizeZ = sz;
-         this.write = sx * sy * sz;
-         this.nodes = new BedCoverPathSolver.GridNode[this.write];
+         this.cellCount = sx * sy * sz;
+         this.nodes = new BedCoverPathSolver.GridNode[this.cellCount];
          Arrays.fill(this.nodes, BedCoverPathSolver.OUT_OF_BOUNDS_NODE);
       }
 

@@ -39,7 +39,7 @@ public final class ClickRateTracker {
       return init(init_JArr, load_I, ms);
    }
 
-   public static boolean load(long ms) {
+   public static boolean recentUse(long ms) {
       return init(load_JArr, read, ms);
    }
 

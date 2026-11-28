@@ -391,7 +391,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       }
 
       if (Compat263.mouseEventGlfwButton(event) == 0 && this.saveRect.init_Z(mx, my)) {
-         this.read();
+         this.applyAndClose();
          return true;
       }
 
@@ -401,7 +401,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       }
 
       if (Compat263.mouseEventGlfwButton(event) == 0 && this.rawRect.init_Z(mx, my)) {
-         this.write();
+         this.commit();
          if (this.minecraft != null) {
             this.minecraft
                .gui
@@ -465,7 +465,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
             return false;
          }
 
-         this.update();
+         this.blurInputs();
          return this.searchInput.mouseClicked(this.layoutContext, mx, my, Compat263.mouseEventGlfwButton(event))
             || this.load_BitSetUtil.mouseClicked(this.layoutContext, mx, my, Compat263.mouseEventGlfwButton(event))
             || this.amountInput.mouseClicked(this.layoutContext, mx, my, Compat263.mouseEventGlfwButton(event))
@@ -556,13 +556,13 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       }
    }
 
-   private void read() {
-      this.write();
+   private void applyAndClose() {
+      this.commit();
       bi.init(this.mode.init_Str + " updated.", -13248397);
       this.onClose();
    }
 
-   private void write() {
+   private void commit() {
       if (this.module != null && this.setting != null) {
          this.module.setValue(this.setting.id(), String.join(",", this.entries));
          if (this.module instanceof f.Inner_DataUtil adminTools) {
@@ -580,8 +580,8 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
             this.load_BitSetUtil.setValue(split > 0 && split < entry.length() - 1 ? entry.substring(split + 1) : "1");
          } else {
             this.amountInput.setValue(entryValue(entry, "amount", "1"));
-            this.operation = load(OPERATIONS, entryValue(entry, "operation", OPERATIONS.get(0)));
-            this.slot = load(SLOTS, entryValue(entry, "slot", "mainhand"));
+            this.operation = validChoice(OPERATIONS, entryValue(entry, "operation", OPERATIONS.get(0)));
+            this.slot = validChoice(SLOTS, entryValue(entry, "slot", "mainhand"));
             this.modifierIdInput.setValue(entryValue(entry, "id", "autism:modifier"));
          }
       }
@@ -589,7 +589,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
 
    private String load(String id) {
       return this.mode == EnchantmentAttributeEditorScreen.EditorMode.ENCHANTMENTS
-         ? write(id) + ":" + clamp(parseIntOr(this.load_BitSetUtil.getValue(), 1), 1, 255)
+         ? stripMinecraftNamespace(id) + ":" + clamp(parseIntOr(this.load_BitSetUtil.getValue(), 1), 1, 255)
          : this.init_Str_Str_Str(id, null);
    }
 
@@ -597,26 +597,26 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       if (this.mode == EnchantmentAttributeEditorScreen.EditorMode.ENCHANTMENTS) {
          int split = existing.lastIndexOf(58);
          String id = split > 0 ? existing.substring(0, split) : existing;
-         return write(id) + ":" + clamp(parseIntOr(this.load_BitSetUtil.getValue(), 1), 1, 255);
+         return stripMinecraftNamespace(id) + ":" + clamp(parseIntOr(this.load_BitSetUtil.getValue(), 1), 1, 255);
       } else {
          return this.init_Str_Str_Str(entryValue(existing, "type", "minecraft:generic.attack_damage"), existing);
       }
    }
 
    private String init_Str_Str_Str(String type, String existing) {
-      String value = read(this.amountInput.getValue(), "1");
-      String modifierId = write(this.modifierIdInput.getValue(), "autism:modifier");
+      String value = normalizeNumber(this.amountInput.getValue(), "1");
+      String modifierId = normalizeIdentifier(this.modifierIdInput.getValue(), "autism:modifier");
       String display = load(existing, "display");
       return "{type:\""
-         + update(type)
+         + escape(type)
          + "\",amount:"
          + value
          + ",operation:\""
-         + update(this.operation)
+         + escape(this.operation)
          + "\",slot:\""
-         + update(this.slot)
+         + escape(this.slot)
          + "\",id:\""
-         + update(modifierId)
+         + escape(modifierId)
          + "\""
          + (display.isBlank() ? "" : ",display:" + display)
          + "}";
@@ -696,7 +696,7 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       return var10000;
    }
 
-   private void update() {
+   private void blurInputs() {
       this.searchInput.setFocused(false);
       this.load_BitSetUtil.setFocused(false);
       this.amountInput.setFocused(false);
@@ -807,11 +807,11 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       return choices.get((index + 1 + choices.size()) % choices.size());
    }
 
-   private static String load(List<String> choices, String value) {
+   private static String validChoice(List<String> choices, String value) {
       return choices.contains(value) ? value : choices.get(0);
    }
 
-   private static String read(String value, String fallback) {
+   private static String normalizeNumber(String value, String fallback) {
       try {
          double number = Double.parseDouble(value);
          return Double.isFinite(number) ? value : fallback;
@@ -820,15 +820,15 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
       }
    }
 
-   private static String write(String value, String fallback) {
+   private static String normalizeIdentifier(String value, String fallback) {
       return Identifier.tryParse(value) == null ? fallback : value;
    }
 
-   private static String write(String id) {
+   private static String stripMinecraftNamespace(String id) {
       return id != null && id.startsWith("minecraft:") ? id.substring("minecraft:".length()) : id;
    }
 
-   private static String update(String value) {
+   private static String escape(String value) {
       return value == null ? "" : value.replace("\\", "\\\\").replace("\"", "\\\"");
    }
 

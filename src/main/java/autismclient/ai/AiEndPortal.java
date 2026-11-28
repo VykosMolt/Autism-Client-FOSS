@@ -30,7 +30,7 @@ final class AiEndPortal {
       if (mc.level != null && portal != null) {
          for (BlockPos p : BlockPos.betweenClosed(portal.offset(-3, 0, -3), portal.offset(3, 0, 3))) {
             if (AiTerrain.isLoaded(mc.level, p) && mc.level.getBlockState(p).is(Blocks.END_PORTAL_FRAME)) {
-               AiEndPortal.Inner_StreamUtil ring = load(p);
+               AiEndPortal.Inner_StreamUtil ring = ringAt(p);
                if (ring != null
                   && ring.active
                   && ring.empty.isEmpty()
@@ -48,7 +48,7 @@ final class AiEndPortal {
       }
    }
 
-   static AiEndPortal.Inner_StreamUtil load(BlockPos seen) {
+   static AiEndPortal.Inner_StreamUtil ringAt(BlockPos seen) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == null) {
          return null;
@@ -104,7 +104,7 @@ final class AiEndPortal {
       return null;
    }
 
-   static BlockHitResult init(Minecraft mc, Vec3 eye, BlockPos frame, double reach) {
+   static BlockHitResult frameHit(Minecraft mc, Vec3 eye, BlockPos frame, double reach) {
       if (mc.level == null) {
          return null;
       }
@@ -177,7 +177,7 @@ final class AiEndPortal {
 
                if (!this.eyePlacement.init()) {
                   if (this.init_BlockHitResult == null) {
-                     this.init_BlockHitResult = AiEndPortal.init(mc, mc.player.getEyePosition(), frame, mc.player.blockInteractionRange() - 0.1);
+                     this.init_BlockHitResult = AiEndPortal.frameHit(mc, mc.player.getEyePosition(), frame, mc.player.blockInteractionRange() - 0.1);
                   }
 
                   if (this.init_BlockHitResult == null) {

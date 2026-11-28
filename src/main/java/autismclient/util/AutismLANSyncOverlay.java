@@ -706,7 +706,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
    private void init_V_GuiGraphicsExtract_3(GuiGraphicsExtractor ctx, int mouseX, int mouseY) {
       if (this.inputBox != null) {
          int labelY = this.inputBox.getY() - this.inputLabelHeight;
-         ThemedTextHelper.init(ctx, this.textRenderer, "Sync Send", ThemedTextHelper.TextTone.MUTED, this.inputBox.getX(), labelY, false);
+         ThemedTextHelper.drawTone(ctx, this.textRenderer, "Sync Send", ThemedTextHelper.TextTone.MUTED, this.inputBox.getX(), labelY, false);
          this.inputBox.render(ctx, mouseX, mouseY, 0.0F);
       }
    }
@@ -887,7 +887,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.widgets.ListRowRenderer.drawRow(
             ctx, this.textRenderer, "", lx - 2, cy, rowWidth, this.rowHeight, isHov, isSelected, autismclient.gui.ui.widgets.ListRowRenderer.RowTone.NORMAL
          );
-         autismclient.gui.ui.widgets.GlyphIndicatorRenderer.init(
+         autismclient.gui.ui.widgets.GlyphIndicatorRenderer.render(
             ctx,
             lx + 1,
             cy + 3,
@@ -921,7 +921,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
          }
 
          int nameMaxW = Math.max(20, rowWidth - 18 - rightReserve);
-         String displayName = ThemedTextHelper.init(this.textRenderer, client.username, nameMaxW, ThemedTextHelper.TextTone.BODY);
+         String displayName = ThemedTextHelper.ellipsize(this.textRenderer, client.username, nameMaxW, ThemedTextHelper.TextTone.BODY);
          autismclient.gui.f.b.k.init(
             ctx, this.textRenderer, displayName, THEME.init_Identifier_l(autismclient.gui.f.b.l.read), nameColor, lx + 18, cy + 3, false
          );
@@ -965,7 +965,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             int ctrlX = dx
                + autismclient.gui.f.b.k.init(this.textRenderer, delayLabel, THEME.init_Identifier_l(autismclient.gui.f.b.l.write), UiColorPalette.textBody())
                + 6;
-            autismclient.gui.ui.widgets.IconButtonRenderer.init(
+            autismclient.gui.ui.widgets.IconButtonRenderer.renderSymbol(
                ctx,
                this.textRenderer,
                autismclient.gui.f.NetHelper.init(ctrlX, dy, btnS, btnS),
@@ -984,7 +984,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
             autismclient.gui.ui.widgets.PanelSurfaceHelper.drawInputPill(ctx, ctrlX, dy, valW, btnS);
             this.drawText(ctx, valStr, autismclient.gui.f.b.l.read, -1, ctrlX + 4, UiLayoutMath.centerTextY(dy, btnS, 9, 0));
             ctrlX += valW + 2;
-            autismclient.gui.ui.widgets.IconButtonRenderer.init(
+            autismclient.gui.ui.widgets.IconButtonRenderer.renderSymbol(
                ctx,
                this.textRenderer,
                autismclient.gui.f.NetHelper.init(ctrlX, dy, btnS, btnS),
@@ -1235,17 +1235,17 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       cy += 4;
       AutismLANSyncOverlay.MacroAvailability syncStatus = this.macroAvailability(sync, this.selectedMacroName);
       if (this.selectedMacroName != null) {
-         String selectedLine = ThemedTextHelper.init(this.textRenderer, "Selected: " + this.selectedMacroName, btnW, ThemedTextHelper.TextTone.BODY);
+         String selectedLine = ThemedTextHelper.ellipsize(this.textRenderer, "Selected: " + this.selectedMacroName, btnW, ThemedTextHelper.TextTone.BODY);
          this.drawText(ctx, selectedLine, autismclient.gui.f.b.l.read, -1, lx, cy);
          cy += this.lineHeight;
          if (!syncStatus.missingPeers.isEmpty()) {
-            String missingLine = ThemedTextHelper.init(this.textRenderer, "Missing on: " + this.joinNames(syncStatus.missingPeers), btnW, ThemedTextHelper.TextTone.BODY);
+            String missingLine = ThemedTextHelper.ellipsize(this.textRenderer, "Missing on: " + this.joinNames(syncStatus.missingPeers), btnW, ThemedTextHelper.TextTone.BODY);
             this.drawText(ctx, missingLine, autismclient.gui.f.b.l.read, ThemePaletteManager.recolor(-38037, ThemePaletteManager.ColorRole.DANGER), lx, cy);
             cy += this.lineHeight;
          }
 
          if (!syncStatus.differentPeers.isEmpty()) {
-            String differentLine = ThemedTextHelper.init(this.textRenderer, "Different on: " + this.formatDifferences(syncStatus.differentPeers), btnW, ThemedTextHelper.TextTone.BODY);
+            String differentLine = ThemedTextHelper.ellipsize(this.textRenderer, "Different on: " + this.formatDifferences(syncStatus.differentPeers), btnW, ThemedTextHelper.TextTone.BODY);
             this.drawText(ctx, differentLine, autismclient.gui.f.b.l.read, -14249, lx, cy);
             cy += this.lineHeight;
          }
@@ -1355,7 +1355,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
                   autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.peerListX + 1, rowTop, this.peerListWidth - 2, rowBottom - rowTop, rowHov, isExpanded);
                   int chevronY = Math.max(cy + 3, clipTop + 1);
                   if (chevronY < clipBottom - 10) {
-                     autismclient.gui.ui.widgets.GlyphIndicatorRenderer.init(
+                     autismclient.gui.ui.widgets.GlyphIndicatorRenderer.render(
                         ctx,
                         lx + 1,
                         chevronY,
@@ -1369,9 +1369,9 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
 
                   int textY = Math.max(cy + 3, clipTop + 1);
                   if (textY < clipBottom - 2) {
-                     String truncPeerLabel = ThemedTextHelper.init(this.textRenderer, peerLabel, peerNameMaxW, ThemedTextHelper.TextTone.BODY);
+                     String truncPeerLabel = ThemedTextHelper.ellipsize(this.textRenderer, peerLabel, peerNameMaxW, ThemedTextHelper.TextTone.BODY);
                      this.drawText(ctx, truncPeerLabel, autismclient.gui.f.b.l.read, isMe ? UiColorPalette.textBody() : -1, lx + 10, textY);
-                     String truncAssign = ThemedTextHelper.init(this.textRenderer, assignLabel, maxAssignW, ThemedTextHelper.TextTone.BODY);
+                     String truncAssign = ThemedTextHelper.ellipsize(this.textRenderer, assignLabel, maxAssignW, ThemedTextHelper.TextTone.BODY);
                      int truncAssignW = autismclient.gui.f.b.k.init(
                         this.textRenderer, truncAssign, THEME.init_Identifier_l(autismclient.gui.f.b.l.read), assignColor
                      );
@@ -1505,7 +1505,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       LinkedHashSet<String> var521 = this.shareableMacros(var51);
       cy += 4;
       if (!var51.missingAssignments.isEmpty()) {
-         String missingLine = ThemedTextHelper.init(this.textRenderer, "Missing: " + this.missingAssignmentsSummary(var51.missingAssignments), btnW, ThemedTextHelper.TextTone.BODY);
+         String missingLine = ThemedTextHelper.ellipsize(this.textRenderer, "Missing: " + this.missingAssignmentsSummary(var51.missingAssignments), btnW, ThemedTextHelper.TextTone.BODY);
          this.drawText(ctx, missingLine, autismclient.gui.f.b.l.read, ThemePaletteManager.recolor(-38037, ThemePaletteManager.ColorRole.DANGER), lx, cy);
          cy += this.lineHeight;
       } else if (var51.hasAssignments()) {
@@ -1706,7 +1706,7 @@ public class AutismLANSyncOverlay extends DraggableOverlayWindow {
       );
       int tx = detailLx;
       int nameMaxW = Math.max(24, detailRx - tx - importW - (badge != null ? 74 : 4));
-      String displayName = ThemedTextHelper.init(this.textRenderer, macroName, nameMaxW, ThemedTextHelper.TextTone.BODY);
+      String displayName = ThemedTextHelper.ellipsize(this.textRenderer, macroName, nameMaxW, ThemedTextHelper.TextTone.BODY);
       int textY = Math.max(cy + 3, clipTop + 1);
       if (textY < clipBottom - 2) {
          autismclient.gui.f.b.k.init(

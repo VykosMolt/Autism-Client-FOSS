@@ -415,7 +415,7 @@ final class AiParallelSmelt implements AiOperation {
    }
 
    private AiOperation.Result running(String message) {
-      AiVisualization.showCount(this, this.label, AiTaskStatus.init(message, "Preparing the furnaces"), AiGameState.countInventoryItem(this.outputId), this.target);
+      AiVisualization.showCount(this, this.label, AiTaskStatus.phaseLabel(message, "Preparing the furnaces"), AiGameState.countInventoryItem(this.outputId), this.target);
       return AiGameOperations.result(AiOperation.Status.RUNNING, message, this.progressJson());
    }
 

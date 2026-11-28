@@ -4,49 +4,49 @@ import java.util.List;
 import java.util.Objects;
 
 final class AiModelCatalog {
-   private AiModelCatalog.CatalogKey init_av_DataUtil;
-   private volatile long init_J;
-   private List<String> init_List = List.of();
-   private boolean init_Z;
-   private boolean load;
-   private String init_Str = "";
+   private AiModelCatalog.CatalogKey currentKey;
+   private volatile long requestToken;
+   private List<String> models = List.of();
+   private boolean requested;
+   private boolean loading;
+   private String error = "";
 
    boolean retarget(AiModelCatalog.CatalogKey next) {
-      if (Objects.equals(this.init_av_DataUtil, next)) {
+      if (Objects.equals(this.currentKey, next)) {
          return false;
       }
 
       this.reset();
-      this.init_av_DataUtil = next;
+      this.currentKey = next;
       return true;
    }
 
    void reset() {
-      this.init_J++;
-      this.init_av_DataUtil = null;
-      this.init_List = List.of();
-      this.init_Z = false;
-      this.load = false;
-      this.init_Str = "";
+      this.requestToken++;
+      this.currentKey = null;
+      this.models = List.of();
+      this.requested = false;
+      this.loading = false;
+      this.error = "";
    }
 
    long beginFetch(AiModelCatalog.CatalogKey next) {
       this.retarget(next);
-      long token = ++this.init_J;
-      this.init_List = List.of();
-      this.init_Z = true;
-      this.load = true;
-      this.init_Str = "";
+      long token = ++this.requestToken;
+      this.models = List.of();
+      this.requested = true;
+      this.loading = true;
+      this.error = "";
       return token;
    }
 
    boolean init(long token, AiModelCatalog.CatalogKey identity, AiModels.Inner_CachePool result) {
-      if (token == this.init_J && Objects.equals(this.init_av_DataUtil, identity)) {
-         this.load = false;
-         this.init_List = result.ok() ? List.copyOf(result.models()) : List.of();
-         this.init_Str = result.ok() ? "" : result.error();
+      if (token == this.requestToken && Objects.equals(this.currentKey, identity)) {
+         this.loading = false;
+         this.models = result.ok() ? List.copyOf(result.models()) : List.of();
+         this.error = result.ok() ? "" : result.error();
          if (result.ok()) {
-            this.init_av_DataUtil = new AiModelCatalog.CatalogKey(
+            this.currentKey = new AiModelCatalog.CatalogKey(
                result.provider() != null ? result.provider() : identity.provider(),
                result.endpoint() != null && !result.endpoint().isBlank() ? result.endpoint() : identity.endpoint(),
                identity.credentialDigest()
@@ -60,23 +60,23 @@ final class AiModelCatalog {
    }
 
    boolean isCurrent(long token) {
-      return this.init_J == token;
+      return this.requestToken == token;
    }
 
    boolean init_Z() {
-      return this.init_Z;
+      return this.requested;
    }
 
    boolean isScanning() {
-      return this.load;
+      return this.loading;
    }
 
    List<String> models() {
-      return this.init_List;
+      return this.models;
    }
 
    String message() {
-      return this.init_Str;
+      return this.error;
    }
 
    record CatalogKey(AiSettings.Provider provider, String endpoint, String credentialDigest) {

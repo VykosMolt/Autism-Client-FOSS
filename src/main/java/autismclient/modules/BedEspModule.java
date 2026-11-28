@@ -192,7 +192,7 @@ public final class BedEspModule extends Module {
    }
 
    private void resetCaches() {
-      BedMiningEstimator.init();
+      BedMiningEstimator.clearCache();
       this.beds = List.of();
       this.bedsByPos.clear();
       this.bedInputStamps.clear();
@@ -227,7 +227,7 @@ public final class BedEspModule extends Module {
 
          EspChunkWorker.setLevel(MC.level);
          this.tickCounter++;
-         DyeColor own = TeamDyeColorResolver.init();
+         DyeColor own = TeamDyeColorResolver.ownTeamColor();
          if (this.scannedRevision != this.blockUpdateRevision || this.tickCounter % 20 == 1) {
             this.scan();
             this.scannedRevision = this.blockUpdateRevision;
@@ -381,7 +381,7 @@ public final class BedEspModule extends Module {
       List<ItemStack> tools = this.bool("my-tools") ? hotbar : recommended;
       BlockState[] states = this.observedSurroundings.get(p);
 
-      for (int i = 0; i < grid.write; i++) {
+      for (int i = 0; i < grid.cellCount; i++) {
          BlockPos at = grid.posAt(i);
          BlockState s = states[i];
          if (s == null) {
@@ -400,7 +400,7 @@ public final class BedEspModule extends Module {
       }
 
       BedCoverPathSolver.MinimalCover cover = this.coverCache.computeIfAbsent(p, ignored -> BedCoverPathSolver.minimalCover(grid));
-      BedBreachRouteSolver.BreachRoute local = BedMiningEstimator.init(p, true, null, 0.0F);
+      BedBreachRouteSolver.BreachRoute local = BedMiningEstimator.localRoute(p, true, null, 0.0F);
       BedCoverPathSolver.CoverPlan plan = local == null
          ? BedCoverPathSolver.plan(grid, MC.player.position(), MC.player.blockInteractionRange(), cover)
          : new BedCoverPathSolver.CoverPlan(

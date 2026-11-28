@@ -48,7 +48,7 @@ final class AiRanged {
          final int shots = Math.max(1, Math.min(64, AiJson.getInt(args, "count", 1)));
          final double radius = Math.max(4.0, Math.min(48.0, AiJson.getDouble(args, "radius", 32.0)));
          final int timeoutSeconds = Math.max(5, Math.min(900, AiJson.getInt(args, "timeoutSeconds", 120)));
-         final Set<EntityType<?>> types = explicitId >= 0 ? Set.of() : AiCombat.init(spec);
+         final Set<EntityType<?>> types = explicitId >= 0 ? Set.of() : AiCombat.parseTargets(spec);
          AiService service = AiService.getExistingInstance();
          final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          return new AiOperation() {
@@ -282,7 +282,7 @@ final class AiRanged {
             }
 
             boolean wouldHit(autismclient.modules.ProjectileBallistics.ProjectileInfo info, float yaw, float pitch, Entity at, Vec3 inherited) {
-               autismclient.modules.ProjectileBallistics.Trajectory result = autismclient.modules.ProjectileBallistics.init(mc.level, mc.player, info, yaw, pitch, 120, inherited);
+               autismclient.modules.ProjectileBallistics.Trajectory result = autismclient.modules.ProjectileBallistics.simulate(mc.level, mc.player, info, yaw, pitch, 120, inherited);
                HitResult hit = result.hit();
                Vec3 motion = this.motionOf(at);
                if (motion.lengthSqr() < 0.0025000000000000005) {

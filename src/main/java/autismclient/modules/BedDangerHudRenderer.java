@@ -26,7 +26,7 @@ public final class BedDangerHudRenderer {
    private static BedDangerHudRenderer.HudLayout init_u_DataUtil(Font font) {
       DangerModule module = DangerModule.instance();
       List<Component> lines = isVisible()
-         ? module.bedProximity().stream().map(group -> group.init(module.bool("bed-distances"))).toList()
+         ? module.bedProximity().stream().map(group -> group.label(module.bool("bed-distances"))).toList()
          : List.of(Component.literal("Player  20 m").withColor(16755285));
       float scale = module == null ? 1.0F : (float)module.decimal("bed-warning-scale");
       int available = Math.max(1, (int)(cA.init_I() / scale) - 16);

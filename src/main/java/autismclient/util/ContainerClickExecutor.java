@@ -12,7 +12,7 @@ public final class ContainerClickExecutor {
    private ContainerClickExecutor() {
    }
 
-   public static boolean init(Minecraft mc, int handlerSlotId, int button, ContainerInput input) {
+   public static boolean click(Minecraft mc, int handlerSlotId, int button, ContainerInput input) {
       if (autismclient.modules.aD.read_Z()) {
          return false;
       }

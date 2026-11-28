@@ -53,7 +53,7 @@ final class AiModuleScope implements AiOperation {
       return control;
    }
 
-   static autismclient.modules.ScopedToggleOverride.OverrideHandle init(Module module, boolean enabled) {
+   static autismclient.modules.ScopedToggleOverride.OverrideHandle borrow(Module module, boolean enabled) {
       return register(module.borrowEnabled(enabled));
    }
 
@@ -61,7 +61,7 @@ final class AiModuleScope implements AiOperation {
       for (String id : List.of("scaffold", "kill-aura", "auto-armor", "inventory-tweaks", "auto-farm", "auto-tool")) {
          Module module = autismclient.modules.al.init_Module_Str(id);
          if (module != null && module.isEnabled()) {
-            init(module, false);
+            borrow(module, false);
          }
       }
    }

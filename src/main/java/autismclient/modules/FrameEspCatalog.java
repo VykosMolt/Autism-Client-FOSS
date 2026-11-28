@@ -34,7 +34,7 @@ public final class FrameEspCatalog {
    public static final String DEFAULT_IDS;
    public static final int DEFAULT_COLOR = -859848769;
    private static final Map<String, FrameEspCatalog.FrameTarget> TARGETS_BY_ID = new LinkedHashMap<>();
-   private static volatile String read;
+   private static volatile String lastConfigValue;
    private static volatile List<String> selectedIds = List.of();
    private static volatile FrameEspCatalog.CatalogSnapshot currentSnapshot;
 
@@ -47,7 +47,7 @@ public final class FrameEspCatalog {
          value = "";
       }
 
-      if (!value.equals(read)) {
+      if (!value.equals(lastConfigValue)) {
          List<String> ids = new ArrayList<>();
 
          for (String raw : value.split("\\|")) {
@@ -58,7 +58,7 @@ public final class FrameEspCatalog {
          }
 
          selectedIds = List.copyOf(ids);
-         read = value;
+         lastConfigValue = value;
       }
 
       return selectedIds;

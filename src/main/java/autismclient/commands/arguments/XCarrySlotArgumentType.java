@@ -22,11 +22,11 @@ public class XCarrySlotArgumentType implements ArgumentType<Integer> {
       Component.literal("Unknown XCarry slot — use craft1..craft5 / helmet / chestplate / leggings / boots / offhand / cursor.")
    );
 
-   public static XCarrySlotArgumentType init() {
+   public static XCarrySlotArgumentType create() {
       return new XCarrySlotArgumentType();
    }
 
-   public static int init(CommandContext<AutismCommandSource> ctx, String name) {
+   public static int getValue(CommandContext<AutismCommandSource> ctx, String name) {
       return ctx.getArgument(name, Integer.class);
    }
 

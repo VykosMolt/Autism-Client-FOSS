@@ -210,8 +210,8 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                   OverlayManager.getInstance().bringToFront(this.presetOverlay);
                }, autismclient.gui.ui.widgets.OverlayActionButton.ButtonTone.SECONDARY, true);
                String counts = "C2S " + module.getCustomC2sPacketsCopy().size() + " | S2C " + module.getCustomS2cPacketsCopy().size();
-               int countsW = ThemedTextHelper.init(this.font, counts, ThemedTextHelper.TextTone.MUTED);
-               ThemedTextHelper.init(
+               int countsW = ThemedTextHelper.width(this.font, counts, ThemedTextHelper.TextTone.MUTED);
+               ThemedTextHelper.drawTone(
                   context,
                   this.font,
                   counts,
@@ -347,8 +347,8 @@ public class AutismCustomFilterOverlay extends DraggableOverlayWindow {
                : "Click a row to remove"
          );
       if (!footer.isEmpty()) {
-         int footerW = ThemedTextHelper.init(this.font, footer, ThemedTextHelper.TextTone.MUTED);
-         ThemedTextHelper.init(
+         int footerW = ThemedTextHelper.width(this.font, footer, ThemedTextHelper.TextTone.MUTED);
+         ThemedTextHelper.drawTone(
             context,
             this.font,
             footer,

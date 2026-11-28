@@ -310,7 +310,7 @@ final class AiDragon {
             BlockPos sync_BlockPos;
             EnderDragon dragon;
             AiDragon.DragonState dragonState = AiDragon.DragonState.FLYING;
-            AiDragon.DragonState load_q_CachePool = AiDragon.DragonState.FLYING;
+            AiDragon.DragonState lastPerch = AiDragon.DragonState.FLYING;
             Inner_DataUtil phase = Inner_DataUtil.SELECT;
             String dragonPhase = "";
             String guardReason = "";
@@ -813,7 +813,7 @@ final class AiDragon {
 
                   this.releaseLeg();
                   this.dodges++;
-                  this.dodgeOperation = AiDodge.init(AiJson.objectOf("deflect", true, "timeoutSeconds", 4));
+                  this.dodgeOperation = AiDodge.dodge(AiJson.objectOf("deflect", true, "timeoutSeconds", 4));
                   return this.running("Dragon fireball inbound; dodging");
                }
             }
@@ -1234,7 +1234,7 @@ final class AiDragon {
                      double[] breath = AiDragonZones.breath(mc);
                      List<double[]> lying = this.nearbyBreathClouds();
                      if (this.open_BlockPos != null
-                        && AiDragonZones.init(zones, breath, lying, this.open_BlockPos.getX(), this.open_BlockPos.getY(), this.open_BlockPos.getZ())) {
+                        && AiDragonZones.isSafeCell(zones, breath, lying, this.open_BlockPos.getX(), this.open_BlockPos.getY(), this.open_BlockPos.getZ())) {
                         this.read_BlockPos = this.open_BlockPos;
                         int dx = this.standing.getX() - this.open_BlockPos.getX();
                         int dz = this.standing.getZ() - this.open_BlockPos.getZ();
@@ -1249,7 +1249,7 @@ final class AiDragon {
                         BlockPos support = this.groundAt(x, z);
                         if (support != null
                            && Math.abs(support.getY() + 1 - this.standing.getY()) <= 1
-                           && AiDragonZones.init(zones, breath, lying, x, support.getY() + 1, z)) {
+                           && AiDragonZones.isSafeCell(zones, breath, lying, x, support.getY() + 1, z)) {
                            this.read_BlockPos = support.above();
                            int dx = this.standing.getX() - x;
                            int dz = this.standing.getZ() - z;
@@ -1753,7 +1753,7 @@ final class AiDragon {
                   if (inReach
                      && this.aim.isAimedAtEntity(this.dragon.head)
                      && mc.player.getAttackStrengthScale(0.0F) >= 0.92F
-                     && AiDefense.init(mc, this.dragon.head, this.aim)) {
+                     && AiDefense.canSwingAt(mc, this.dragon.head, this.aim)) {
                      mc.gameMode.attack(mc.player, this.dragon.head);
                      Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
                      mc.player.resetAttackStrengthTicker();
@@ -2012,7 +2012,7 @@ final class AiDragon {
             }
 
             void notePerchState(AiDragon.DragonState perch) {
-               if (perch == AiDragon.DragonState.PERCHED && this.load_q_CachePool != AiDragon.DragonState.PERCHED) {
+               if (perch == AiDragon.DragonState.PERCHED && this.lastPerch != AiDragon.DragonState.PERCHED) {
                   this.perchCount++;
                   if (this.read_Z) {
                      this.read_Z = false;
@@ -2035,11 +2035,11 @@ final class AiDragon {
                   }
                }
 
-               if (perch != AiDragon.DragonState.PERCHED && this.load_q_CachePool == AiDragon.DragonState.PERCHED && this.dragon != null) {
+               if (perch != AiDragon.DragonState.PERCHED && this.lastPerch == AiDragon.DragonState.PERCHED && this.dragon != null) {
                   this.init_F = this.dragon.getHealth();
                }
 
-               this.load_q_CachePool = perch;
+               this.lastPerch = perch;
             }
 
             BlockPos findFountain() {
@@ -2179,7 +2179,7 @@ final class AiDragon {
                         BlockPos ground = this.groundAt(sx, sz);
                         if (ground != null) {
                            BlockPos stance = ground.above();
-                           if (AiDragonZones.init(zones, breath, clouds, sx, stance.getY(), sz) && AiCombat.isSafeStep(mc, stance)) {
+                           if (AiDragonZones.isSafeCell(zones, breath, clouds, sx, stance.getY(), sz) && AiCombat.isSafeStep(mc, stance)) {
                               safeStances++;
                               double walk = Math.hypot(sx - me.getX(), sz - me.getZ());
 
@@ -2308,7 +2308,7 @@ final class AiDragon {
                         BlockPos ground = this.groundAt(x, z);
                         if (ground != null) {
                            BlockPos stand = ground.above();
-                           if (autismclient.ai.AiDragonZones.init(zones, breath, lying, x, stand.getY(), z) && AiCombat.isSafeStep(mc, stand)) {
+                           if (autismclient.ai.AiDragonZones.isSafeCell(zones, breath, lying, x, stand.getY(), z) && AiCombat.isSafeStep(mc, stand)) {
                               return stand;
                            }
                         }
@@ -2477,12 +2477,12 @@ final class AiDragon {
             }
 
             void read_V_10() {
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.LEG, this.currentLeg);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.GUARD, this.guardOperation);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.DODGE, this.dodgeOperation);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.DOUSE, this.douseOperation);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.ZONE_LEAVE, this.zoneLeaveOperation);
-               this.children.init_V_q_DataUtil_AiOperation(AiDragon.ChildRole.CHARGE_DODGE, this.chargeDodgeOperation);
+               this.children.register(AiDragon.ChildRole.LEG, this.currentLeg);
+               this.children.register(AiDragon.ChildRole.GUARD, this.guardOperation);
+               this.children.register(AiDragon.ChildRole.DODGE, this.dodgeOperation);
+               this.children.register(AiDragon.ChildRole.DOUSE, this.douseOperation);
+               this.children.register(AiDragon.ChildRole.ZONE_LEAVE, this.zoneLeaveOperation);
+               this.children.register(AiDragon.ChildRole.CHARGE_DODGE, this.chargeDodgeOperation);
             }
 
             JsonObject statsJson() {
@@ -2665,8 +2665,8 @@ final class AiDragon {
 
    static final class ChildRegistry {
       private final EnumMap<AiDragon.ChildRole, AiDragon.ChildRegistry.LastChildResult> lastByRole = new EnumMap<>(AiDragon.ChildRole.class);
-      private final JsonObject init_JsonObject = new JsonObject();
-      private boolean init_Z;
+      private final JsonObject pending = new JsonObject();
+      private boolean pendingReconciliation;
 
       AiOperation.Result tickChild(AiDragon.ChildRole role, AiOperation child) {
          AiOperation.Result result = child.tick();
@@ -2678,41 +2678,41 @@ final class AiDragon {
          return result;
       }
 
-      void init_V_q_DataUtil_AiOperation(AiDragon.ChildRole role, AiOperation child) {
+      void register(AiDragon.ChildRole role, AiOperation child) {
          if (child != null) {
             AiDragon.ChildRegistry.LastChildResult last = this.lastByRole.get(role);
             AiOperation.Result result = last != null && last.child() == child ? last.result() : null;
             if (needsReconciliation(child, result)) {
-               this.init_Z = true;
+               this.pendingReconciliation = true;
                JsonObject receipt = AiJson.objectOf("interruptedActionNeedsReconciliation", true);
                if (result != null) {
                   receipt.addProperty("status", result.status().name());
                   receipt.add("receipt", AiRunResources.compactEvidenceJson(result.dataJson()));
                }
 
-               this.init_JsonObject.add(role.name().toLowerCase(Locale.ROOT), receipt);
+               this.pending.add(role.name().toLowerCase(Locale.ROOT), receipt);
             }
          }
       }
 
       void cancelChild(AiDragon.ChildRole role, AiOperation child) {
          if (child != null) {
-            this.init_V_q_DataUtil_AiOperation(role, child);
+            this.register(role, child);
             child.cancel();
          }
       }
 
       boolean pendingReconciliation() {
-         return this.init_Z;
+         return this.pendingReconciliation;
       }
 
       AiOperation.Result result(AiOperation.Status status, String message, JsonObject phaseData, boolean bedClicked) {
          JsonObject data = phaseData.deepCopy();
-         if (this.init_JsonObject.size() != 0) {
-            data.add("pendingChildren", this.init_JsonObject.deepCopy());
+         if (this.pending.size() != 0) {
+            data.add("pendingChildren", this.pending.deepCopy());
          }
 
-         return AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, data, bedClicked || this.init_Z, null);
+         return AiNetherRun.init_AiOperation_Result_AiOperation_Status(status, message, data, bedClicked || this.pendingReconciliation, null);
       }
 
       private static boolean needsReconciliation(AiOperation child, AiOperation.Result result) {

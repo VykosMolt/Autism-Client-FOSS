@@ -96,7 +96,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       }
    }
 
-   public boolean load(Minecraft mc) {
+   public boolean open(Minecraft mc) {
       if (mc == null || mc.player == null) {
          return false;
       }
@@ -163,7 +163,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    }
 
    @Override
-   public void load(boolean v) {
+   public void setWaitForGuiBefore(boolean v) {
       this.waitForGuiBefore = v;
    }
 
@@ -173,7 +173,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    }
 
    @Override
-   public void read(boolean v) {
+   public void setWaitForGuiAfter(boolean v) {
       this.waitForGuiAfter = v;
    }
 

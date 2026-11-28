@@ -48,13 +48,13 @@ public final class PvpHoleScanner {
    private PvpHoleScanner() {
    }
 
-   public static void init(PvpHoleScanner.ScanSubscriber subscriber) {
+   public static void subscribe(PvpHoleScanner.ScanSubscriber subscriber) {
       if (subscriber != null) {
          subscribers.add(subscriber);
       }
    }
 
-   public static void load(PvpHoleScanner.ScanSubscriber subscriber) {
+   public static void unsubscribe(PvpHoleScanner.ScanSubscriber subscriber) {
       if (subscriber != null && subscribers.remove(subscriber) && subscribers.isEmpty()) {
          reset();
       }
@@ -139,8 +139,8 @@ public final class PvpHoleScanner {
                   int vertical = 0;
 
                   for (PvpHoleScanner.ScanSubscriber subscriber : subscribers) {
-                     horizontal = Math.max(horizontal, subscriber.init_I_32());
-                     vertical = Math.max(vertical, subscriber.load_I_17());
+                     horizontal = Math.max(horizontal, subscriber.horizontalRange());
+                     vertical = Math.max(vertical, subscriber.verticalRange());
                   }
 
                   BlockPos centre = mc.player.blockPosition();
@@ -482,9 +482,9 @@ public final class PvpHoleScanner {
    }
 
    public interface ScanSubscriber {
-      int init_I_32();
+      int horizontalRange();
 
-      int load_I_17();
+      int verticalRange();
    }
 
    public static final class Hole {

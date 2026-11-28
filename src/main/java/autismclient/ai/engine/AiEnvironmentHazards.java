@@ -68,7 +68,7 @@ public final class AiEnvironmentHazards {
    private AiEnvironmentHazards() {
    }
 
-   public static boolean init(ClientLevel level, BlockPos at) {
+   public static boolean isHazardous(ClientLevel level, BlockPos at) {
       return init(level, CLIENT_WORLD, at);
    }
 

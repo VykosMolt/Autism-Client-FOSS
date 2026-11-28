@@ -40,7 +40,7 @@ public final class MacroFolderLayout {
       return sanitize(name).toLowerCase(Locale.ROOT);
    }
 
-   public String read(String name) {
+   public String canonicalName(String name) {
       String clean = sanitize(name);
       return clean.isEmpty() ? "" : this.init_Map.getOrDefault(key(clean), clean);
    }
@@ -193,12 +193,12 @@ public final class MacroFolderLayout {
 
       for (AutismMacro macro : macros) {
          if (macro != null) {
-            macro.folder = this.read(macro.folder);
+            macro.folder = this.canonicalName(macro.folder);
          }
       }
    }
 
-   public boolean init(String oldName, String newName, Collection<AutismMacro> macros) {
+   public boolean renameFolder(String oldName, String newName, Collection<AutismMacro> macros) {
       String oldKey = key(oldName);
       String next = sanitize(newName);
       String nextKey = key(next);
@@ -302,15 +302,15 @@ public final class MacroFolderLayout {
       return folders;
    }
 
-   public List<MacroFolderLayout.Inner_DataUtil> init(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
-      return init(macros, this.folders(), this::load_Z_Str, query, includeEmpty);
+   public List<MacroFolderLayout.Inner_DataUtil> rows(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
+      return rows(macros, this.folders(), this::load_Z_Str, query, includeEmpty);
    }
 
    public List<MacroFolderLayout.Inner_DataUtil> load(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
       return init(macros, this.folders(), this::load_Z_Str, query, includeEmpty, true, this.load);
    }
 
-   public static List<MacroFolderLayout.Inner_DataUtil> init(
+   public static List<MacroFolderLayout.Inner_DataUtil> rows(
       Collection<AutismMacro> macros, Collection<String> folders, Predicate<String> collapsed, String query, boolean includeEmpty
    ) {
       return init(macros, folders, collapsed, query, includeEmpty, false);

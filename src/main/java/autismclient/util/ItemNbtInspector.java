@@ -41,66 +41,66 @@ public final class ItemNbtInspector {
       ItemNbtInspector.InspectLineBuilder raw = new ItemNbtInspector.InspectLineBuilder(title + " Raw");
       String rawSnbt = ItemSnbtCodec.snbt(stack);
       String giveCommand = ItemSnbtCodec.giveCommand(stack);
-      init_V_ItemStack_az_CachePool(stack, nice);
-      init_V_Str_az_CachePool(rawSnbt, raw);
-      return new ItemNbtInspector.ItemInspection(title, stack, nice.init_List(), raw.init_List(), nice.init_Str(), rawSnbt, giveCommand);
+      appendFriendly(stack, nice);
+      appendRaw(rawSnbt, raw);
+      return new ItemNbtInspector.ItemInspection(title, stack, nice.build(), raw.build(), nice.toText(), rawSnbt, giveCommand);
    }
 
-   private static void init_V_ItemStack_az_CachePool(ItemStack stack, ItemNbtInspector.InspectLineBuilder builder) {
+   private static void appendFriendly(ItemStack stack, ItemNbtInspector.InspectLineBuilder builder) {
       if (stack != null && !stack.isEmpty()) {
-         builder.init("Identity", UiColorPalette.warmWhite());
-         builder.load("Item: " + BuiltInRegistries.ITEM.getKey(stack.getItem()), UiColorPalette.softWhite());
-         builder.load("Count: " + stack.getCount(), UiColorPalette.textBody());
-         builder.load("Hover Name: " + stack.getHoverName().getString(), UiColorPalette.textBody());
-         builder.load("Components: " + stack.getComponentsPatch().size() + " non-default", UiColorPalette.textMuted());
-         init_V_az_CachePool_ItemStack(builder, stack);
+         builder.section("Identity", UiColorPalette.warmWhite());
+         builder.line("Item: " + BuiltInRegistries.ITEM.getKey(stack.getItem()), UiColorPalette.softWhite());
+         builder.line("Count: " + stack.getCount(), UiColorPalette.textBody());
+         builder.line("Hover Name: " + stack.getHoverName().getString(), UiColorPalette.textBody());
+         builder.line("Components: " + stack.getComponentsPatch().size() + " non-default", UiColorPalette.textMuted());
+         appendIds(builder, stack);
          Component customName = stack.get(DataComponents.CUSTOM_NAME);
          Component itemName = stack.get(DataComponents.ITEM_NAME);
          ItemLore lore = stack.get(DataComponents.LORE);
          if (customName != null || itemName != null || lore != null && !lore.lines().isEmpty()) {
-            builder.init_V();
-            builder.init("Display", UiColorPalette.cyan());
+            builder.blank();
+            builder.section("Display", UiColorPalette.cyan());
             if (customName != null) {
-               builder.load("Custom Name: " + customName.getString(), UiColorPalette.softWhite());
+               builder.line("Custom Name: " + customName.getString(), UiColorPalette.softWhite());
             }
 
             if (itemName != null) {
-               builder.load("Item Name: " + itemName.getString(), UiColorPalette.textBody());
+               builder.line("Item Name: " + itemName.getString(), UiColorPalette.textBody());
             }
 
             if (lore != null && !lore.lines().isEmpty()) {
                int i = 1;
 
                for (Component line : lore.lines()) {
-                  builder.load("Lore " + i++ + ": " + line.getString(), UiColorPalette.textBody());
+                  builder.line("Lore " + i++ + ": " + line.getString(), UiColorPalette.textBody());
                }
             }
          }
 
-         init_V_az_CachePool(
+         appendSection(
             builder,
             stack,
             "Model / Visuals",
             UiColorPalette.cyan(),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.ITEM_MODEL, "Item Model"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.CUSTOM_MODEL_DATA, "Custom Model Data"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.TOOLTIP_STYLE, "Tooltip Style"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.DYED_COLOR, "Dyed Color"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.DYE, "Dye"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.RARITY, "Rarity"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, "Glint Override"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.TOOLTIP_DISPLAY, "Tooltip Display")
+            summary(DataComponents.ITEM_MODEL, "Item Model"),
+            summary(DataComponents.CUSTOM_MODEL_DATA, "Custom Model Data"),
+            summary(DataComponents.TOOLTIP_STYLE, "Tooltip Style"),
+            summary(DataComponents.DYED_COLOR, "Dyed Color"),
+            summary(DataComponents.DYE, "Dye"),
+            summary(DataComponents.RARITY, "Rarity"),
+            summary(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, "Glint Override"),
+            summary(DataComponents.TOOLTIP_DISPLAY, "Tooltip Display")
          );
-         init_V_az_CachePool(builder, "Enchantments", stack.get(DataComponents.ENCHANTMENTS));
-         init_V_az_CachePool(builder, "Stored Enchantments", stack.get(DataComponents.STORED_ENCHANTMENTS));
+         appendEnchantments(builder, "Enchantments", stack.get(DataComponents.ENCHANTMENTS));
+         appendEnchantments(builder, "Stored Enchantments", stack.get(DataComponents.STORED_ENCHANTMENTS));
          ItemAttributeModifiers attributes = stack.get(DataComponents.ATTRIBUTE_MODIFIERS);
          if (attributes != null && !attributes.modifiers().isEmpty()) {
-            builder.init_V();
-            builder.init("Attributes", UiColorPalette.amber());
+            builder.blank();
+            builder.section("Attributes", UiColorPalette.amber());
 
             for (net.minecraft.world.item.component.ItemAttributeModifiers.Entry entry : attributes.modifiers()) {
-               String attribute = init_Str_Holder(entry.attribute());
-               builder.load(
+               String attribute = holderName(entry.attribute());
+               builder.line(
                   attribute
                      + ": "
                      + entry.modifier().amount()
@@ -122,176 +122,176 @@ public final class ItemNbtInspector {
             || stack.has(DataComponents.MAX_STACK_SIZE)
             || stack.has(DataComponents.ENCHANTMENT_GLINT_OVERRIDE)
             || stack.has(DataComponents.RARITY)) {
-            builder.init_V();
-            builder.init("Item Rules", UiColorPalette.warningYellow());
+            builder.blank();
+            builder.section("Item Rules", UiColorPalette.warningYellow());
             if (stack.has(DataComponents.MAX_DAMAGE)) {
-               builder.load("Max Damage: " + stack.getMaxDamage(), UiColorPalette.textBody());
+               builder.line("Max Damage: " + stack.getMaxDamage(), UiColorPalette.textBody());
             }
 
             if (stack.has(DataComponents.DAMAGE)) {
-               builder.load("Damage: " + stack.getDamageValue(), UiColorPalette.textBody());
+               builder.line("Damage: " + stack.getDamageValue(), UiColorPalette.textBody());
             }
 
             if (stack.has(DataComponents.UNBREAKABLE)) {
-               builder.load("Unbreakable: true", UiColorPalette.textBody());
+               builder.line("Unbreakable: true", UiColorPalette.textBody());
             }
 
             if (stack.has(DataComponents.MAX_STACK_SIZE)) {
-               builder.load("Max Stack: " + stack.getMaxStackSize(), UiColorPalette.textBody());
+               builder.line("Max Stack: " + stack.getMaxStackSize(), UiColorPalette.textBody());
             }
          }
 
-         init_V_az_CachePool(
+         appendSection(
             builder,
             stack,
             "Usage / Combat",
             UiColorPalette.amber(),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.USE_EFFECTS, "Use Effects"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.MINIMUM_ATTACK_CHARGE, "Minimum Attack Charge"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.DAMAGE_TYPE, "Damage Type"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.FOOD, "Food"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.CONSUMABLE, "Consumable"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.USE_REMAINDER, "Use Remainder"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.USE_COOLDOWN, "Use Cooldown"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.DAMAGE_RESISTANT, "Damage Resistant"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.TOOL, "Tool"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.WEAPON, "Weapon"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.ATTACK_RANGE, "Attack Range"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.BLOCKS_ATTACKS, "Blocks Attacks"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.PIERCING_WEAPON, "Piercing Weapon"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.KINETIC_WEAPON, "Kinetic Weapon"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.ATTACK_ANIMATION, "Swing Animation")
+            summary(DataComponents.USE_EFFECTS, "Use Effects"),
+            summary(DataComponents.MINIMUM_ATTACK_CHARGE, "Minimum Attack Charge"),
+            summary(DataComponents.DAMAGE_TYPE, "Damage Type"),
+            summary(DataComponents.FOOD, "Food"),
+            summary(DataComponents.CONSUMABLE, "Consumable"),
+            summary(DataComponents.USE_REMAINDER, "Use Remainder"),
+            summary(DataComponents.USE_COOLDOWN, "Use Cooldown"),
+            summary(DataComponents.DAMAGE_RESISTANT, "Damage Resistant"),
+            summary(DataComponents.TOOL, "Tool"),
+            summary(DataComponents.WEAPON, "Weapon"),
+            summary(DataComponents.ATTACK_RANGE, "Attack Range"),
+            summary(DataComponents.BLOCKS_ATTACKS, "Blocks Attacks"),
+            summary(DataComponents.PIERCING_WEAPON, "Piercing Weapon"),
+            summary(DataComponents.KINETIC_WEAPON, "Kinetic Weapon"),
+            summary(DataComponents.ATTACK_ANIMATION, "Swing Animation")
          );
-         init_V_az_CachePool(
+         appendSection(
             builder,
             stack,
             "Equipment / Enchanting",
             UiColorPalette.blue(),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.ENCHANTABLE, "Enchantable"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.EQUIPPABLE, "Equippable"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.REPAIRABLE, "Repairable"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.GLIDER, "Glider"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.REPAIR_COST, "Repair Cost"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.CREATIVE_SLOT_LOCK, "Creative Slot Lock"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.INTANGIBLE_PROJECTILE, "Intangible Projectile"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.DEATH_PROTECTION, "Death Protection"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.TRIM, "Armor Trim"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.PROVIDES_TRIM_MATERIAL, "Provides Trim Material"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.BREAK_SOUND, "Break Sound")
+            summary(DataComponents.ENCHANTABLE, "Enchantable"),
+            summary(DataComponents.EQUIPPABLE, "Equippable"),
+            summary(DataComponents.REPAIRABLE, "Repairable"),
+            summary(DataComponents.GLIDER, "Glider"),
+            summary(DataComponents.REPAIR_COST, "Repair Cost"),
+            summary(DataComponents.CREATIVE_SLOT_LOCK, "Creative Slot Lock"),
+            summary(DataComponents.INTANGIBLE_PROJECTILE, "Intangible Projectile"),
+            summary(DataComponents.DEATH_PROTECTION, "Death Protection"),
+            summary(DataComponents.TRIM, "Armor Trim"),
+            summary(DataComponents.PROVIDES_TRIM_MATERIAL, "Provides Trim Material"),
+            summary(DataComponents.BREAK_SOUND, "Break Sound")
          );
-         init_V_az_CachePool(
+         appendSection(
             builder,
             stack,
             "Placement / Mining",
             UiColorPalette.warningYellow(),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.CAN_PLACE_ON, "Can Place On"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.CAN_BREAK, "Can Break"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.BLOCK_STATE, "Block State"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.LOCK, "Lock")
+            summary(DataComponents.CAN_PLACE_ON, "Can Place On"),
+            summary(DataComponents.CAN_BREAK, "Can Break"),
+            summary(DataComponents.BLOCK_STATE, "Block State"),
+            summary(DataComponents.LOCK, "Lock")
          );
          ItemContainerContents container = stack.get(DataComponents.CONTAINER);
          BundleContents bundle = stack.get(DataComponents.BUNDLE_CONTENTS);
          if (container != null || bundle != null) {
-            builder.init_V();
-            builder.init("Contents", UiColorPalette.mint());
+            builder.blank();
+            builder.section("Contents", UiColorPalette.mint());
             if (container != null) {
                long count = container.nonEmptyItemCopyStream().count();
-               builder.load("Container Items: " + count, UiColorPalette.textBody());
+               builder.line("Container Items: " + count, UiColorPalette.textBody());
             }
 
             if (bundle != null) {
-               builder.load("Bundle Items: " + bundle.size(), UiColorPalette.textBody());
+               builder.line("Bundle Items: " + bundle.size(), UiColorPalette.textBody());
             }
          }
 
-         init_V_az_CachePool(
+         appendSection(
             builder,
             stack,
             "Containers / Projectiles",
             UiColorPalette.mint(),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.CONTAINER, "Container"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.BUNDLE_CONTENTS, "Bundle Contents"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.CHARGED_PROJECTILES, "Charged Projectiles"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.CONTAINER_LOOT, "Container Loot"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.BEES, "Bees"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.RECIPES, "Recipes")
+            summary(DataComponents.CONTAINER, "Container"),
+            summary(DataComponents.BUNDLE_CONTENTS, "Bundle Contents"),
+            summary(DataComponents.CHARGED_PROJECTILES, "Charged Projectiles"),
+            summary(DataComponents.CONTAINER_LOOT, "Container Loot"),
+            summary(DataComponents.BEES, "Bees"),
+            summary(DataComponents.RECIPES, "Recipes")
          );
          if (stack.has(DataComponents.BLOCK_ENTITY_DATA)
             || stack.has(DataComponents.BUCKET_ENTITY_DATA)
             || stack.has(DataComponents.ENTITY_DATA)
             || stack.has(DataComponents.MAP_ID)
             || stack.has(DataComponents.BANNER_PATTERNS)) {
-            builder.init_V();
-            builder.init("Special Data", UiColorPalette.magenta());
-            init_V_az_CachePool(builder, stack, DataComponents.BLOCK_ENTITY_DATA, "Block Entity Data");
-            init_V_az_CachePool(builder, stack, DataComponents.BUCKET_ENTITY_DATA, "Bucket Entity Data");
-            init_V_az_CachePool(builder, stack, DataComponents.ENTITY_DATA, "Entity Data");
-            init_V_az_CachePool(builder, stack, DataComponents.MAP_ID, "Map ID");
-            init_V_az_CachePool(builder, stack, DataComponents.BANNER_PATTERNS, "Banner Patterns");
+            builder.blank();
+            builder.section("Special Data", UiColorPalette.magenta());
+            appendComponent(builder, stack, DataComponents.BLOCK_ENTITY_DATA, "Block Entity Data");
+            appendComponent(builder, stack, DataComponents.BUCKET_ENTITY_DATA, "Bucket Entity Data");
+            appendComponent(builder, stack, DataComponents.ENTITY_DATA, "Entity Data");
+            appendComponent(builder, stack, DataComponents.MAP_ID, "Map ID");
+            appendComponent(builder, stack, DataComponents.BANNER_PATTERNS, "Banner Patterns");
          }
 
-         init_V_az_CachePool(
+         appendSection(
             builder,
             stack,
             "Potions / Maps",
             UiColorPalette.magenta(),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.POTION_CONTENTS, "Potion Contents"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.POTION_DURATION_SCALE, "Potion Duration Scale"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.SUSPICIOUS_STEW_EFFECTS, "Suspicious Stew Effects"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.MAP_ID, "Map Color"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.MAP_ID, "Map ID"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.MAP_DECORATIONS, "Map Decorations"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.MAP_POST_PROCESSING, "Map Post Processing")
+            summary(DataComponents.POTION_CONTENTS, "Potion Contents"),
+            summary(DataComponents.POTION_DURATION_SCALE, "Potion Duration Scale"),
+            summary(DataComponents.SUSPICIOUS_STEW_EFFECTS, "Suspicious Stew Effects"),
+            summary(DataComponents.MAP_ID, "Map Color"),
+            summary(DataComponents.MAP_ID, "Map ID"),
+            summary(DataComponents.MAP_DECORATIONS, "Map Decorations"),
+            summary(DataComponents.MAP_POST_PROCESSING, "Map Post Processing")
          );
-         init_V_az_CachePool(
+         appendSection(
             builder,
             stack,
             "Fireworks / Music / Profiles",
             UiColorPalette.warmWhite(),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.FIREWORK_EXPLOSION, "Firework Explosion"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.FIREWORKS, "Fireworks"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.PROFILE, "Profile"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.INSTRUMENT, "Instrument"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.OMINOUS_BOTTLE_AMPLIFIER, "Ominous Bottle Amplifier"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.JUKEBOX_PLAYABLE, "Jukebox Playable"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.NOTE_BLOCK_SOUND, "Note Block Sound")
+            summary(DataComponents.FIREWORK_EXPLOSION, "Firework Explosion"),
+            summary(DataComponents.FIREWORKS, "Fireworks"),
+            summary(DataComponents.PROFILE, "Profile"),
+            summary(DataComponents.INSTRUMENT, "Instrument"),
+            summary(DataComponents.OMINOUS_BOTTLE_AMPLIFIER, "Ominous Bottle Amplifier"),
+            summary(DataComponents.JUKEBOX_PLAYABLE, "Jukebox Playable"),
+            summary(DataComponents.NOTE_BLOCK_SOUND, "Note Block Sound")
          );
-         init_V_az_CachePool(
+         appendSection(
             builder,
             stack,
             "Banners / Decorations",
             UiColorPalette.cyan(),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.PROVIDES_BANNER_PATTERNS, "Provides Banner Patterns"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.BANNER_PATTERNS, "Banner Patterns"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.BASE_COLOR, "Base Color"),
-            init_az_DataUtil_DataComponentType_Str(DataComponents.POT_DECORATIONS, "Pot Decorations")
+            summary(DataComponents.PROVIDES_BANNER_PATTERNS, "Provides Banner Patterns"),
+            summary(DataComponents.BANNER_PATTERNS, "Banner Patterns"),
+            summary(DataComponents.BASE_COLOR, "Base Color"),
+            summary(DataComponents.POT_DECORATIONS, "Pot Decorations")
          );
          WrittenBookContent written = stack.get(DataComponents.WRITTEN_BOOK_CONTENT);
          WritableBookContent writable = stack.get(DataComponents.WRITABLE_BOOK_CONTENT);
          if (written != null || writable != null) {
-            builder.init_V();
-            builder.init("Book", UiColorPalette.blue());
+            builder.blank();
+            builder.section("Book", UiColorPalette.blue());
             if (written != null) {
-               builder.load("Title: " + written.title().raw(), UiColorPalette.textBody());
-               builder.load("Author: " + written.author(), UiColorPalette.textBody());
-               builder.load("Pages: " + written.pages().size(), UiColorPalette.textBody());
+               builder.line("Title: " + written.title().raw(), UiColorPalette.textBody());
+               builder.line("Author: " + written.author(), UiColorPalette.textBody());
+               builder.line("Pages: " + written.pages().size(), UiColorPalette.textBody());
             }
 
             if (writable != null) {
-               builder.load("Pages: " + writable.pages().size(), UiColorPalette.textBody());
+               builder.line("Pages: " + writable.pages().size(), UiColorPalette.textBody());
             }
          }
 
          CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
          if (customData != null) {
-            builder.init_V();
-            builder.init("Custom Data", UiColorPalette.successText());
+            builder.blank();
+            builder.section("Custom Data", UiColorPalette.successText());
             CompoundTag tag = customData.copyTag();
             if (tag.isEmpty()) {
-               builder.load("{}", UiColorPalette.textMuted());
+               builder.line("{}", UiColorPalette.textMuted());
             } else {
                for (Entry<String, Tag> entry : tag.entrySet()) {
-                  builder.load(entry.getKey() + ": " + ItemSnbtCodec.tagText(entry.getValue()), UiColorPalette.textBody());
+                  builder.line(entry.getKey() + ": " + ItemSnbtCodec.tagText(entry.getValue()), UiColorPalette.textBody());
                }
             }
          }
@@ -299,136 +299,136 @@ public final class ItemNbtInspector {
          boolean wroteOtherComponents = false;
 
          for (Entry<DataComponentType<?>, Optional<?>> entry : Compat263.dataComponentPatchEntrySet(stack.getComponentsPatch())) {
-            String id = init_Str_DataComponentType(entry.getKey());
-            if (!load(id)) {
+            String id = componentTypeName(entry.getKey());
+            if (!isKnownComponent(id)) {
                if (!wroteOtherComponents) {
-                  builder.init_V();
-                  builder.init("Other Components", UiColorPalette.silver());
+                  builder.blank();
+                  builder.section("Other Components", UiColorPalette.silver());
                   wroteOtherComponents = true;
                }
 
                Optional<?> value = entry.getValue();
                if (value.isPresent()) {
-                  builder.init(id + ": " + init_Str_Obj(value.get()));
+                  builder.snbtLine(id + ": " + describe(value.get()));
                } else {
-                  builder.init("!" + id);
+                  builder.snbtLine("!" + id);
                }
             }
          }
       } else {
-         builder.init("Empty", UiColorPalette.errorText());
-         builder.load("No item stack was selected.", UiColorPalette.errorText());
+         builder.section("Empty", UiColorPalette.errorText());
+         builder.line("No item stack was selected.", UiColorPalette.errorText());
       }
    }
 
-   private static void init_V_Str_az_CachePool(String rawSnbt, ItemNbtInspector.InspectLineBuilder builder) {
-      builder.init("Raw ItemStack SNBT", UiColorPalette.warmWhite());
+   private static void appendRaw(String rawSnbt, ItemNbtInspector.InspectLineBuilder builder) {
+      builder.section("Raw ItemStack SNBT", UiColorPalette.warmWhite());
       boolean truncated = rawSnbt != null && rawSnbt.length() > 40000;
       String shown = truncated ? rawSnbt.substring(0, 40000) : rawSnbt;
 
       for (String line : prettyLines(shown)) {
-         builder.init(line);
+         builder.snbtLine(line);
       }
 
       if (truncated) {
-         builder.init("... (truncated for display; use Copy for the full NBT)");
+         builder.snbtLine("... (truncated for display; use Copy for the full NBT)");
       }
    }
 
-   private static void init_V_az_CachePool(ItemNbtInspector.InspectLineBuilder builder, String title, ItemEnchantments enchantments) {
+   private static void appendEnchantments(ItemNbtInspector.InspectLineBuilder builder, String title, ItemEnchantments enchantments) {
       if (enchantments != null && !enchantments.isEmpty()) {
-         builder.init_V();
-         builder.init(title, UiColorPalette.blue());
+         builder.blank();
+         builder.section(title, UiColorPalette.blue());
 
          for (it.unimi.dsi.fastutil.objects.Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
-            builder.load(init_Str_Holder(entry.getKey()) + ": " + entry.getIntValue(), UiColorPalette.textBody());
+            builder.line(holderName(entry.getKey()) + ": " + entry.getIntValue(), UiColorPalette.textBody());
          }
       }
    }
 
-   private static <T> void init_V_az_CachePool(ItemNbtInspector.InspectLineBuilder builder, ItemStack stack, DataComponentType<T> type, String label) {
+   private static <T> void appendComponent(ItemNbtInspector.InspectLineBuilder builder, ItemStack stack, DataComponentType<T> type, String label) {
       T value = stack.get(type);
       if (value != null) {
-         builder.init(label + ": " + init_Str_Obj(value));
+         builder.snbtLine(label + ": " + describe(value));
       }
    }
 
    @SafeVarargs
-   private static void init_V_az_CachePool(ItemNbtInspector.InspectLineBuilder builder, ItemStack stack, String title, int sectionColor, ItemNbtInspector.ComponentSummary<?>... summaries) {
+   private static void appendSection(ItemNbtInspector.InspectLineBuilder builder, ItemStack stack, String title, int sectionColor, ItemNbtInspector.ComponentSummary<?>... summaries) {
       boolean wroteTitle = false;
 
       for (ItemNbtInspector.ComponentSummary<?> summary : summaries) {
-         Object value = init_Obj_ItemStack_DataComponentType(stack, summary.init_DataComponentType());
+         Object value = componentValue(stack, summary.type());
          if (value != null) {
             if (!wroteTitle) {
-               builder.init_V();
-               builder.init(title, sectionColor);
+               builder.blank();
+               builder.section(title, sectionColor);
                wroteTitle = true;
             }
 
-            builder.init(summary.init_Str() + ": " + init_Str_Obj(value));
+            builder.snbtLine(summary.label() + ": " + describe(value));
          }
       }
    }
 
-   private static Object init_Obj_ItemStack_DataComponentType(ItemStack stack, DataComponentType<?> type) {
+   private static Object componentValue(ItemStack stack, DataComponentType<?> type) {
       return stack.get(type);
    }
 
-   private static <T> ItemNbtInspector.ComponentSummary<T> init_az_DataUtil_DataComponentType_Str(DataComponentType<T> type, String label) {
+   private static <T> ItemNbtInspector.ComponentSummary<T> summary(DataComponentType<T> type, String label) {
       return new ItemNbtInspector.ComponentSummary<>(type, label);
    }
 
-   private static void init_V_az_CachePool_ItemStack(ItemNbtInspector.InspectLineBuilder builder, ItemStack stack) {
+   private static void appendIds(ItemNbtInspector.InspectLineBuilder builder, ItemStack stack) {
       Map<String, String> ids = new LinkedHashMap<>();
       CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
       if (customData != null) {
-         init_V_Str("", customData.copyTag(), ids);
+         collectIds("", customData.copyTag(), ids);
       }
 
-      init_V_Map(ids, stack, DataComponents.BLOCK_ENTITY_DATA, "block_entity_data");
-      init_V_Map(ids, stack, DataComponents.ENTITY_DATA, "entity_data");
-      init_V_Map(ids, stack, DataComponents.BUCKET_ENTITY_DATA, "bucket_entity_data");
+      collectId(ids, stack, DataComponents.BLOCK_ENTITY_DATA, "block_entity_data");
+      collectId(ids, stack, DataComponents.ENTITY_DATA, "entity_data");
+      collectId(ids, stack, DataComponents.BUCKET_ENTITY_DATA, "bucket_entity_data");
 
       for (Entry<DataComponentType<?>, Optional<?>> entry : Compat263.dataComponentPatchEntrySet(stack.getComponentsPatch())) {
-         String id = init_Str_DataComponentType(entry.getKey());
-         if (init_Z_Str(id) && entry.getValue().isPresent()) {
-            ids.put(id, init_Str_Obj(entry.getValue().get()));
+         String id = componentTypeName(entry.getKey());
+         if (isIdKey(id) && entry.getValue().isPresent()) {
+            ids.put(id, describe(entry.getValue().get()));
          }
       }
 
       if (!ids.isEmpty()) {
-         builder.init_V();
-         builder.init("Identity / IDs", UiColorPalette.mint());
-         ids.forEach((key, value) -> builder.init(key + ": " + value));
+         builder.blank();
+         builder.section("Identity / IDs", UiColorPalette.mint());
+         ids.forEach((key, value) -> builder.snbtLine(key + ": " + value));
       }
    }
 
-   private static <T> void init_V_Map(Map<String, String> ids, ItemStack stack, DataComponentType<T> type, String label) {
+   private static <T> void collectId(Map<String, String> ids, ItemStack stack, DataComponentType<T> type, String label) {
       T value = stack.get(type);
       if (value != null) {
-         String text = init_Str_Obj(value);
+         String text = describe(value);
          if (text.contains("id") || text.contains("uuid") || text.contains("owner") || text.contains("profile")) {
             ids.put(label, text);
          }
       }
    }
 
-   private static void init_V_Str(String path, Tag tag, Map<String, String> ids) {
+   private static void collectIds(String path, Tag tag, Map<String, String> ids) {
       if (tag instanceof CompoundTag compound) {
          for (Entry<String, Tag> entry : compound.entrySet()) {
             String key = entry.getKey();
             String childPath = path.isBlank() ? key : path + "." + key;
-            if (init_Z_Str(key)) {
+            if (isIdKey(key)) {
                ids.put(childPath, ItemSnbtCodec.tagText(entry.getValue()));
             }
 
-            init_V_Str(childPath, entry.getValue(), ids);
+            collectIds(childPath, entry.getValue(), ids);
          }
       }
    }
 
-   private static boolean init_Z_Str(String key) {
+   private static boolean isIdKey(String key) {
       if (key == null) {
          return false;
       }
@@ -444,7 +444,7 @@ public final class ItemNbtInspector {
          || normalized.contains("profile");
    }
 
-   private static String init_Str_Obj(Object value) {
+   private static String describe(Object value) {
       if (value == null) {
          return "";
       } else if (value instanceof Component component) {
@@ -454,11 +454,11 @@ public final class ItemNbtInspector {
       }
    }
 
-   private static String init_Str_Holder(Holder<?> holder) {
+   private static String holderName(Holder<?> holder) {
       return holder == null ? "<unknown>" : holder.unwrapKey().map(ResourceKey::identifier).map(Object::toString).orElse(String.valueOf(holder));
    }
 
-   private static String init_Str_DataComponentType(DataComponentType<?> type) {
+   private static String componentTypeName(DataComponentType<?> type) {
       if (type == null) {
          return "<unknown>";
       }
@@ -472,7 +472,7 @@ public final class ItemNbtInspector {
       return text.startsWith("minecraft:") ? text.substring("minecraft:".length()) : text;
    }
 
-   private static boolean load(String id) {
+   private static boolean isKnownComponent(String id) {
       boolean var10000;
       switch (id) {
          case "custom_name":
@@ -588,18 +588,18 @@ public final class ItemNbtInspector {
                switch (ch) {
                   case ',':
                      current.append(ch);
-                     init_V_List(out, current, indent);
+                     flushLine(out, current, indent);
                      break;
                   case '[':
                   case '{':
                      current.append(ch);
-                     init_V_List(out, current, indent);
+                     flushLine(out, current, indent);
                      indent++;
-                     init_I_Str_I(text, i);
+                     passIndex(text, i);
                      break;
                   case ']':
                   case '}':
-                     init_V_List(out, current, indent);
+                     flushLine(out, current, indent);
                      indent = Math.max(0, indent - 1);
                      current.append(ch);
                      if (i + 1 < text.length() && text.charAt(i + 1) == ',') {
@@ -607,7 +607,7 @@ public final class ItemNbtInspector {
                         i++;
                      }
 
-                     init_V_List(out, current, indent);
+                     flushLine(out, current, indent);
                      break;
                   default:
                      if (!Character.isWhitespace(ch)) {
@@ -620,18 +620,18 @@ public final class ItemNbtInspector {
             }
          }
 
-         init_V_List(out, current, indent);
+         flushLine(out, current, indent);
          return out.isEmpty() ? List.of(text) : out;
       } else {
          return List.of("{}");
       }
    }
 
-   private static int init_I_Str_I(String text, int index) {
+   private static int passIndex(String text, int index) {
       return index;
    }
 
-   private static void init_V_List(List<String> out, StringBuilder current, int indent) {
+   private static void flushLine(List<String> out, StringBuilder current, int indent) {
       if (!current.isEmpty()) {
          String line = current.toString().trim();
          current.setLength(0);
@@ -671,7 +671,7 @@ public final class ItemNbtInspector {
                   }
 
                   String word = text.substring(start, i);
-                  int color = init_I_Str(text, i, word, fallbackColor);
+                  int color = wordColor(text, i, word, fallbackColor);
                   tokens.add(new ItemNbtInspector.HighlightToken(word, color));
                }
             } else {
@@ -708,7 +708,7 @@ public final class ItemNbtInspector {
       }
    }
 
-   private static int init_I_Str(String text, int tokenEnd, String word, int fallbackColor) {
+   private static int wordColor(String text, int tokenEnd, String word, int fallbackColor) {
       String lower = word.toLowerCase(Locale.ROOT);
       int next = tokenEnd;
 
@@ -738,38 +738,38 @@ public final class ItemNbtInspector {
    }
 
    private static final class InspectLineBuilder {
-      private final String init_Str;
-      private final List<ItemNbtInspector.InspectLine> init_List = new ArrayList<>();
+      private final String title;
+      private final List<ItemNbtInspector.InspectLine> lines = new ArrayList<>();
 
       private InspectLineBuilder(String title) {
-         this.init_Str = title != null && !title.isBlank() ? title : "Item NBT";
+         this.title = title != null && !title.isBlank() ? title : "Item NBT";
       }
 
-      private void init(String text, int color) {
-         this.load("[" + text + "]", color);
+      private void section(String text, int color) {
+         this.line("[" + text + "]", color);
       }
 
-      private void load(String text, int color) {
-         this.init_List.add(new ItemNbtInspector.InspectLine(text == null ? "" : text, color));
+      private void line(String text, int color) {
+         this.lines.add(new ItemNbtInspector.InspectLine(text == null ? "" : text, color));
       }
 
-      private void init(String text) {
+      private void snbtLine(String text) {
          String safe = text == null ? "" : text;
-         this.init_List.add(new ItemNbtInspector.InspectLine(safe, UiColorPalette.softWhite(), ItemNbtInspector.highlight(safe, UiColorPalette.softWhite())));
+         this.lines.add(new ItemNbtInspector.InspectLine(safe, UiColorPalette.softWhite(), ItemNbtInspector.highlight(safe, UiColorPalette.softWhite())));
       }
 
-      private void init_V() {
-         this.init_List.add(new ItemNbtInspector.InspectLine("", UiColorPalette.textMuted()));
+      private void blank() {
+         this.lines.add(new ItemNbtInspector.InspectLine("", UiColorPalette.textMuted()));
       }
 
-      private List<ItemNbtInspector.InspectLine> init_List() {
-         return List.copyOf(this.init_List);
+      private List<ItemNbtInspector.InspectLine> build() {
+         return List.copyOf(this.lines);
       }
 
-      private String init_Str() {
-         StringBuilder out = new StringBuilder(this.init_Str);
+      private String toText() {
+         StringBuilder out = new StringBuilder(this.title);
 
-         for (ItemNbtInspector.InspectLine line : this.init_List) {
+         for (ItemNbtInspector.InspectLine line : this.lines) {
             out.append('\n').append(line.text());
          }
 
@@ -816,7 +816,7 @@ public final class ItemNbtInspector {
       }
    }
 
-   private record ComponentSummary<T>(DataComponentType<T> init_DataComponentType, String init_Str) {
+   private record ComponentSummary<T>(DataComponentType<T> type, String label) {
    }
 
    public interface NbtInspection {

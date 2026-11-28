@@ -27,7 +27,7 @@ public final class SdfRenderPipelines {
       return init_RenderPipeline != null ? init_RenderPipeline : RenderPipelines.GUI_TEXTURED;
    }
 
-   public static RenderPipeline load() {
+   public static RenderPipeline pipeline() {
       init_V();
       return load_RenderPipeline != null ? load_RenderPipeline : RenderPipelines.GUI_TEXTURED;
    }

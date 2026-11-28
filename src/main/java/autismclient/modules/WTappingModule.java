@@ -12,27 +12,27 @@ import net.minecraft.world.entity.player.Player;
 public final class WTappingModule extends Module {
    private final WTapController init = new WTapController(new WTapController.Inner_DataUtil() {
       @Override
-      public int init_I() {
+      public int chance() {
          return WTappingModule.this.integer("chance");
       }
 
       @Override
-      public ValueRange init_ValueRange() {
-         return ValueRange.parse(WTappingModule.this.value("delay-ms"), WTapController.init_ValueRange);
+      public ValueRange delayRange() {
+         return ValueRange.parse(WTappingModule.this.value("delay-ms"), WTapController.DEFAULT_DELAY_MS);
       }
 
       @Override
-      public ValueRange load_ValueRange() {
-         return ValueRange.parse(WTappingModule.this.value("release-ms"), WTapController.load_ValueRange);
+      public ValueRange releaseRange() {
+         return ValueRange.parse(WTappingModule.this.value("release-ms"), WTapController.DEFAULT_RELEASE_MS);
       }
 
       @Override
-      public boolean init_Z() {
+      public boolean playersOnly() {
          return WTappingModule.this.bool("players-only");
       }
 
       @Override
-      public boolean load_Z() {
+      public boolean groundOnly() {
          return WTappingModule.this.bool("ground-only");
       }
    });
@@ -58,7 +58,7 @@ public final class WTappingModule extends Module {
       WTapController built = KBDisplacementModule.wTapController();
       if (al.init_Module_Str("w-tapping") instanceof WTappingModule m && m.isEnabled()) {
          if (built != null) {
-            built.load_V();
+            built.cancelTap();
          }
 
          return m.init;
@@ -67,21 +67,21 @@ public final class WTappingModule extends Module {
       }
    }
 
-   public static void init(Player attacker, Entity entity) {
+   public static void onAttack(Player attacker, Entity entity) {
       WTapController tapper = wTapController();
       if (tapper != null) {
-         tapper.init(attacker, entity);
+         tapper.onAttack(attacker, entity);
       }
    }
 
-   public static void init(ClientboundDamageEventPacket packet) {
+   public static void onDamageEvent(ClientboundDamageEventPacket packet) {
       WTapController tapper = wTapController();
       if (tapper != null) {
          tapper.onDamageEvent(packet);
       }
    }
 
-   public static Input init(Input original) {
+   public static Input filterInput(Input original) {
       WTapController tapper = wTapController();
       return tapper == null ? original : tapper.filterInput(original);
    }
@@ -91,9 +91,9 @@ public final class WTappingModule extends Module {
       return tapper != null && tapper.isTapping();
    }
 
-   public static boolean load() {
+   public static boolean tapActive() {
       WTapController tapper = wTapController();
-      return tapper != null && tapper.load_Z();
+      return tapper != null && tapper.pollActive();
    }
 
    @Override
@@ -103,22 +103,22 @@ public final class WTappingModule extends Module {
 
    @Override
    public void onEnable() {
-      this.init.read_V();
+      this.init.resetAll();
    }
 
    @Override
    public void onDisable() {
-      this.init.read_V();
+      this.init.resetAll();
    }
 
    @Override
    public void onGameJoin() {
-      this.init.read_V();
+      this.init.resetAll();
    }
 
    @Override
    public void onGameLeft() {
-      this.init.read_V();
+      this.init.resetAll();
    }
 
    @Override

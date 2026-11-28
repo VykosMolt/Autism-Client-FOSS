@@ -47,7 +47,7 @@ public final class CustomSplashProvider {
       return load(client).stream().map(text -> (Component)Component.literal(text).setStyle(Style.EMPTY.withColor(-256))).toList();
    }
 
-   public static void init(Minecraft client, GuiGraphicsExtractor graphics, int screenWidth, Font font, float alpha) {
+   public static void render(Minecraft client, GuiGraphicsExtractor graphics, int screenWidth, Font font, float alpha) {
       Component splash = init_Component(client);
       if (splash != null) {
          int textWidth = font.width(splash);

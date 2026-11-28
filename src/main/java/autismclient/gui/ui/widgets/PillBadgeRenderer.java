@@ -4,11 +4,11 @@ public final class PillBadgeRenderer {
    private PillBadgeRenderer() {
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean selected, boolean hovered) {
-      init(context, bounds, label, context.init_TableIndex().colors().accent, selected, hovered);
+   public static void render(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean selected, boolean hovered) {
+      render(context, bounds, label, context.init_TableIndex().colors().accent, selected, hovered);
    }
 
-   public static void init(
+   public static void render(
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, int accentColor, boolean selected, boolean hovered
    ) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
@@ -21,8 +21,8 @@ public final class PillBadgeRenderer {
       context.init_PoolEntry().drawCentered(context.init_GuiGraphicsExtract(), label == null ? "" : label, bounds, text);
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label) {
-      init(context, bounds, label, false, false);
+   public static void render(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label) {
+      render(context, bounds, label, false, false);
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, bounds.sync() / 2, 1711276032);
    }
 

@@ -201,7 +201,7 @@ public final class AutoCraftingEngine {
          AutoCraftingEngine.ItemInventoryCount materials = new AutoCraftingEngine.ItemInventoryCount(bag, context.inputStacks);
 
          for (RecipeCatalogLoader.CraftingEntry localRecipe : candidates) {
-            if (localRecipe.init(context.gridWidth, context.gridHeight) && !localRecipe.result.isEmpty()) {
+            if (localRecipe.fits(context.gridWidth, context.gridHeight) && !localRecipe.result.isEmpty()) {
                RecipeDisplayEntry syncedEntry = context.syncedBySignature.get(localRecipe.signature);
                if (filter == null || filter.test(localRecipe, syncedEntry)) {
                   int maxCraftsByMaterials = materials.maxCraftsFor(localRecipe);
@@ -540,7 +540,7 @@ public final class AutoCraftingEngine {
             closeTemporaryMenu(mc, preparedContext);
          }
       } else {
-         return requestedOption.gridSource != AutoCraftingEngine.GridSource.TABLE_3X3 && requestedOption.localRecipe.init(2, 2)
+         return requestedOption.gridSource != AutoCraftingEngine.GridSource.TABLE_3X3 && requestedOption.localRecipe.fits(2, 2)
             ? AutoCraftingEngine.CraftResult.failed("Open your inventory or a crafting screen first.")
             : AutoCraftingEngine.CraftResult.failed("No reachable crafting table is available.");
       }
@@ -800,7 +800,7 @@ public final class AutoCraftingEngine {
 
       for (int i = 0; i < Math.min(planned.length, menu.slots.size()); i++) {
          if (i != layout.resultSlot()) {
-            boolean planChanges = layout.init(i) || initial == null || i >= initial.length || !ItemStack.matches(initial[i], planned[i]);
+            boolean planChanges = layout.isInputSlot(i) || initial == null || i >= initial.length || !ItemStack.matches(initial[i], planned[i]);
             if (planChanges && !ItemStack.matches(menu.slots.get(i).getItem(), planned[i])) {
                return false;
             }
@@ -818,7 +818,7 @@ public final class AutoCraftingEngine {
                return null;
             }
 
-            CraftingClickPlanner.ClickPhase phase = CraftingClickPlanner.init(layout, snapshotMenuSlots((AbstractContainerMenu)menu), menu.getCarried());
+            CraftingClickPlanner.ClickPhase phase = CraftingClickPlanner.plan(layout, snapshotMenuSlots((AbstractContainerMenu)menu), menu.getCarried());
             if (phase == null) {
                return null;
             }
@@ -939,9 +939,9 @@ public final class AutoCraftingEngine {
    private static AutoCraftingEngine.OpenMenuSession openMenuForOption(Minecraft mc, AutoCraftingEngine.CraftOption option, boolean onClient) {
       if (mc != null && mc.player != null && option != null) {
          AbstractContainerMenu current = callOnClientThread(mc, () -> mc.player == null ? null : mc.player.containerMenu);
-         if (current instanceof CraftingMenu tableMenu && option.localRecipe.init(tableMenu.getGridWidth(), tableMenu.getGridHeight())) {
+         if (current instanceof CraftingMenu tableMenu && option.localRecipe.fits(tableMenu.getGridWidth(), tableMenu.getGridHeight())) {
             return new AutoCraftingEngine.OpenMenuSession(tableMenu, false, null);
-         } else if (option.localRecipe.init(2, 2)) {
+         } else if (option.localRecipe.fits(2, 2)) {
             if (current == mc.player.inventoryMenu) {
                return new AutoCraftingEngine.OpenMenuSession(mc.player.inventoryMenu, false, null);
             }
@@ -1159,7 +1159,7 @@ public final class AutoCraftingEngine {
 
          for (RecipeDisplayEntry entry : entries) {
             if (entry != null && entry.display() != null) {
-               RecipeCatalogLoader.CraftingEntry recipe = RecipeCatalogLoader.init("synced:" + entry.id().index(), entry.display(), entry.craftingRequirements(), enabledFeatures, params);
+               RecipeCatalogLoader.CraftingEntry recipe = RecipeCatalogLoader.craftingEntry("synced:" + entry.id().index(), entry.display(), entry.craftingRequirements(), enabledFeatures, params);
                if (recipe != null) {
                   if (recipe.signature != null) {
                      bySignature.putIfAbsent(recipe.signature, entry);
@@ -1615,7 +1615,7 @@ public final class AutoCraftingEngine {
          }
 
          return new AutoCraftingEngine.ResolvedRecipe(
-            recipe.recipeKey, recipe.result.getItem(), Math.max(1, recipe.result.getCount()), !recipe.init(2, 2), inputs
+            recipe.recipeKey, recipe.result.getItem(), Math.max(1, recipe.result.getCount()), !recipe.fits(2, 2), inputs
          );
       } else {
          return null;

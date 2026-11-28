@@ -185,7 +185,7 @@ public final class AntiBotTracker {
          } else {
             GameProfile profile = player.getGameProfile();
             if (profile != null && TabPlayerListParser.isPlausibleName(profile.name())) {
-               return ArmorFilterMatcher.init_Z_UUID(player.getUUID()) ? "NPC uuid (version 2)" : null;
+               return ArmorFilterMatcher.isNpcUuid(player.getUUID()) ? "NPC uuid (version 2)" : null;
             } else {
                return "invalid profile name '" + (profile == null ? "<null>" : profile.name()) + "'";
             }
@@ -430,7 +430,7 @@ public final class AntiBotTracker {
                }
 
                if (!intersectsAnyFluid(box) && (lastY == null || !(at.y < lastY - 0.001) || !p.onGround())) {
-                  int vl = ArmorFilterMatcher.init_I_I(airGroundViolationByEntityId.getOrDefault(id, 0), p.onGround(), hasSupportingCollisionBelow(p, box));
+                  int vl = ArmorFilterMatcher.groundViolation(airGroundViolationByEntityId.getOrDefault(id, 0), p.onGround(), hasSupportingCollisionBelow(p, box));
                   if (vl <= 0) {
                      airGroundViolationByEntityId.remove(id);
                   } else if (airGroundViolationByEntityId.size() < 4096 || airGroundViolationByEntityId.containsKey(id)) {
@@ -553,7 +553,7 @@ public final class AntiBotTracker {
                }
             }
 
-            duplicateNameFlags.putAll(ArmorFilterMatcher.init_Map_List(identities));
+            duplicateNameFlags.putAll(ArmorFilterMatcher.duplicateNameFlags(identities));
          }
       } else {
          duplicateCacheLevel = null;
@@ -566,7 +566,7 @@ public final class AntiBotTracker {
       boolean isListed = info != null && listed.contains(info);
       boolean gameMode = info != null && receivedGameModeUuids.contains(uuid);
       boolean latency = info != null && info.getLatency() > 0;
-      boolean known = confirmedBotUuids.contains(uuid) || ArmorFilterMatcher.init_Z_UUID(uuid);
+      boolean known = confirmedBotUuids.contains(uuid) || ArmorFilterMatcher.isNpcUuid(uuid);
       return new ArmorFilterMatcher.Inner_DataUtil(uuid, name, entityId, proven, isListed, gameMode, latency, known);
    }
 }

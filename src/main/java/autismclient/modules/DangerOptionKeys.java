@@ -7,7 +7,7 @@ final class DangerOptionKeys {
    private DangerOptionKeys() {
    }
 
-   static Map<String, String> init(Map<String, String> saved) {
+   static Map<String, String> migrate(Map<String, String> saved) {
       Map<String, String> result = new HashMap<>();
 
       for (IncomingProjectileScanner.ProjectileKind kind : IncomingProjectileScanner.ProjectileKind.values()) {

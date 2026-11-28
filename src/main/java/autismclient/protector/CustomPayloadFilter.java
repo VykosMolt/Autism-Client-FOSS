@@ -35,14 +35,14 @@ public final class CustomPayloadFilter {
    }
 
    public static CustomPayloadFilter.Verdict init(Packet<?> packet) {
-      return init(null, packet, ProtectorFeatureFlags.spoofClientVanilla());
+      return verdict(null, packet, ProtectorFeatureFlags.spoofClientVanilla());
    }
 
    static CustomPayloadFilter.Verdict init(Packet<?> packet, boolean vanillaMode) {
-      return init(null, packet, vanillaMode);
+      return verdict(null, packet, vanillaMode);
    }
 
-   static CustomPayloadFilter.Verdict init(Connection connection, Packet<?> packet, boolean vanillaMode) {
+   static CustomPayloadFilter.Verdict verdict(Connection connection, Packet<?> packet, boolean vanillaMode) {
       if (packet == null) {
          return init_IoWorker_DataUtil;
       }

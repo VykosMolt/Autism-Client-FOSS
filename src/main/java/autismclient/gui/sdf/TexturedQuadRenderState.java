@@ -21,13 +21,13 @@ public record TexturedQuadRenderState(
    @Nullable ScreenRectangle init_ScreenRectangle,
    @Nullable ScreenRectangle load_ScreenRectangle
 ) implements GuiElementRenderState {
-   public static @Nullable TexturedQuadRenderState init(
+   public static @Nullable TexturedQuadRenderState create(
       RenderPipeline pipeline, TextureSetup textureSetup, Matrix3x2fc pose, float[] quads, int quadCount, int color, @Nullable ScreenRectangle scissorArea
    ) {
-      return init(pipeline, textureSetup, pose, quads, quadCount, color, color, 0.0F, 1.0F, scissorArea);
+      return create(pipeline, textureSetup, pose, quads, quadCount, color, color, 0.0F, 1.0F, scissorArea);
    }
 
-   public static @Nullable TexturedQuadRenderState init(
+   public static @Nullable TexturedQuadRenderState create(
       RenderPipeline pipeline,
       TextureSetup textureSetup,
       Matrix3x2fc pose,

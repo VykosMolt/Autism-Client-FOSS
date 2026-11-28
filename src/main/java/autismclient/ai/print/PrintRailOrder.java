@@ -35,7 +35,7 @@ final class PrintRailOrder {
       }
    }
 
-   static boolean init(int cell, PrintTarget[] targets, ToIntFunction<BlockPos> index, IntPredicate placed) {
+   static boolean canPlaceRail(int cell, PrintTarget[] targets, ToIntFunction<BlockPos> index, IntPredicate placed) {
       PrintTarget target = targets[cell];
       if (!(target.wanted().getBlock() instanceof BaseRailBlock)) {
          return true;

@@ -115,7 +115,7 @@ public final class PacketDetailFormatter {
          return PacketDetailFormatter.Inner_CachePool.none();
       }
 
-      PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.init(entry.packet);
+      PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.captureFor(entry.packet);
       if (snapshot != null && snapshot.plaintext().length != 0) {
          try {
             Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)entry.packetClass;
@@ -383,7 +383,7 @@ public final class PacketDetailFormatter {
          out.init("Container Id: " + slot.getContainerId(), UiColorPalette.blue());
          out.init("State Id: " + slot.getStateId(), UiColorPalette.textBody());
          out.init("Slot: " + slot.getSlot() + " (" + PacketStateDeltaTracker.describeSlot(after, slot.getSlot()) + ")", UiColorPalette.textBright());
-         out.init("Before: " + before.init(slot.getSlot()), UiColorPalette.textMuted());
+         out.init("Before: " + before.itemAt(slot.getSlot()), UiColorPalette.textMuted());
          out.init("After: " + PacketStateDeltaTracker.describeStack(slot.getItem()), UiColorPalette.successText());
          return true;
       } else if (packet instanceof ClientboundSetCursorItemPacket cursor) {
@@ -559,8 +559,8 @@ public final class PacketDetailFormatter {
       out.init("Input: " + describeInput(click.containerInput()) + " (" + click.containerInput() + ")", UiColorPalette.successText());
       out.init("Slot: " + click.slotNum() + " (" + PacketStateDeltaTracker.describeSlot(before, click.slotNum()) + ")", UiColorPalette.textBright());
       out.init("Button: " + describeButton(click.containerInput(), click.buttonNum()), UiColorPalette.textBright());
-      out.init("Slot Before: " + before.init(click.slotNum()), UiColorPalette.textMuted());
-      out.init("Slot After: " + after.init(click.slotNum()), UiColorPalette.successText());
+      out.init("Slot Before: " + before.itemAt(click.slotNum()), UiColorPalette.textMuted());
+      out.init("Slot After: " + after.itemAt(click.slotNum()), UiColorPalette.successText());
       out.init("Cursor Before: " + before.carriedItem(), UiColorPalette.textMuted());
       out.init("Cursor After: " + PacketStateDeltaTracker.describeHashedStack(click.carriedItem()), UiColorPalette.successText());
       out.init("Changed Slots: " + click.changedSlots().size(), UiColorPalette.textBright());
@@ -681,7 +681,7 @@ public final class PacketDetailFormatter {
 
    private static void init_V_AutismPacketLogger_bh_StreamUtil(AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketDetailFormatter.Inner_StreamUtil out) {
       if (entry != null && entry.packet != null) {
-         PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.init(entry.packet);
+         PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.captureFor(entry.packet);
          if (snapshot != null) {
             out.read("Protocol: " + snapshot.load(), UiColorPalette.textBody());
             out.read("Direction: " + snapshot.direction(), "C2S".equalsIgnoreCase(snapshot.direction()) ? UiColorPalette.amber() : UiColorPalette.cyan());

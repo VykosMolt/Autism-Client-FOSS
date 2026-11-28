@@ -222,8 +222,8 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
       if (!AutismLiteVariant.enabled()) {
          autismclient.gui.ui.layout.RowLayout settingsPages = new autismclient.gui.ui.layout.RowLayout()
-            .init(0)
-            .init(autismclient.gui.ui.layout.EdgeInsets.ZERO)
+            .gap(0)
+            .padding(autismclient.gui.ui.layout.EdgeInsets.ZERO)
             .setUnderlineOnHover(false);
          settingsPages.setGrowX(true);
          settingsPages.addChild(
@@ -360,7 +360,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       viewport.pushTransform(context);
 
       try {
-         TooltipRenderer.init(
+         TooltipRenderer.render(
             autismclient.gui.f.UiHelper.init(context, CLIENT.font, Math.round(uiX), Math.round(uiY)),
             text,
             Math.round(uiX),
@@ -630,7 +630,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
    }
 
    private boolean isOverCloseButton(float uiMouseX, float uiMouseY) {
-      return autismclient.gui.ui.widgets.WindowHeaderHelper.init(this.windowRect(), this.theme.load(), uiMouseX, uiMouseY);
+      return autismclient.gui.ui.widgets.WindowHeaderHelper.overClose(this.windowRect(), this.theme.load(), uiMouseX, uiMouseY);
    }
 
    private autismclient.gui.f.NetHelper windowRect() {
@@ -879,7 +879,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
 
       @Override
       public void render(autismclient.gui.ui.layout.LayoutContext context) {
-         this.labelNode.init(autismclient.gui.f.b.l.read);
+         this.labelNode.tone(autismclient.gui.f.b.l.read);
          super.render(context);
          if (this.labelNode.containsPoint(context.mouseX(), context.mouseY())) {
             AutismKeybindOverlay.this.hoveredTooltip = this.entry.tooltip;
@@ -915,7 +915,7 @@ public class AutismKeybindOverlay extends DraggableOverlayWindow {
       private MenuStyleRow() {
          super(
             new autismclient.gui.ui.layout.LabelNode("Menu Style", autismclient.gui.f.b.l.read).setTrimToBounds(true),
-            new autismclient.gui.ui.layout.RowLayout().init(2).init(autismclient.gui.ui.layout.EdgeInsets.ZERO)
+            new autismclient.gui.ui.layout.RowLayout().gap(2).padding(autismclient.gui.ui.layout.EdgeInsets.ZERO)
          );
          autismclient.gui.ui.layout.RowLayout choices = (autismclient.gui.ui.layout.RowLayout)this.getControl();
          this.defaultStyleButton = this.styleButton("DEFAULT", "DEFAULT", AutismKeybindOverlay.this.buttonWidthForLabel("DEFAULT", 47));

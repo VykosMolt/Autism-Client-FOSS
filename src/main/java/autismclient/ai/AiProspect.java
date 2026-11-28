@@ -199,7 +199,7 @@ final class AiProspect {
                      this.init_AiOperation = AiOracle.create(AiJson.objectOf("query", kind, "cap", 16));
                      return this.running("Predicting " + kind + " positions from the world seed");
                   } else if (this.phase == Inner_DataUtil.EXTRACT) {
-                     this.load_AiOperation = autismclient.ai.engine.AiMine.init(
+                     this.load_AiOperation = autismclient.ai.engine.AiMine.mine(
                         AiJson.objectOf(
                            "block",
                            AiProspect.oreBlockId(kind),

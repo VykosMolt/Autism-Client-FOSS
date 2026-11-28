@@ -355,7 +355,7 @@ public abstract class AutismMultiplayerScreenMixin extends Screen implements Ext
 
          try {
             graphics.nextStratum();
-            TooltipRenderer.init(UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY), guidance, virtualMouseX, virtualMouseY, 240);
+            TooltipRenderer.render(UiHelper.init(graphics, this.font, virtualMouseX, virtualMouseY), guidance, virtualMouseX, virtualMouseY, 240);
          } finally {
             cA.load_V_GuiGraphicsExtract(graphics);
          }

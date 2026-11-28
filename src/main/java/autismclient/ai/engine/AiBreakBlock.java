@@ -119,7 +119,7 @@ public final class AiBreakBlock {
                return this.finish(AiOperation.Status.FAILED, AiFailure.UNBREAKABLE_OBSTACLE, "Target is unbreakable");
             }
 
-            if (requireDrops && MiningCost.load(this.mc, this.mc.level.getBlockState(target), true) < 0) {
+            if (requireDrops && MiningCost.bestToolSlot(this.mc, this.mc.level.getBlockState(target), true) < 0) {
                return this.finish(AiOperation.Status.FAILED, AiFailure.TOOL_WORN, "No suitable harvesting tool above the durability floor");
             }
 

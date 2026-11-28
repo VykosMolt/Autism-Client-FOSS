@@ -31,17 +31,17 @@ public final class AutoArmorModule extends Module {
    private int lastArmorValue = -1;
    private boolean init_Z;
    private static final int read_I = 4;
-   private int write = -4;
-   private int update = -1;
+   private int lastScanTick = -4;
+   private int lastInventoryRevision = -1;
    private final Map<String, String> rawRangeValues = new HashMap<>();
    private final Map<String, ValueRange> rangeCache = new HashMap<>();
    private boolean load_Z;
    private boolean read_Z;
    private int sync;
-   private int flush;
-   private int close;
+   private int closeAt;
+   private int nextOperationAt;
    private int open = -1;
-   private static volatile int poll = -2147483648;
+   private static volatile int nextClickAt = -2147483648;
    private static volatile int push = -2147483648;
 
    private ValueRange rangeSetting(String settingId, int fallbackMin, int fallbackMax) {
@@ -111,7 +111,7 @@ public final class AutoArmorModule extends Module {
    @Override
    public void onDisable() {
       this.resetState();
-      this.close();
+      this.closeOpenedInventory();
    }
 
    @Override
@@ -130,10 +130,10 @@ public final class AutoArmorModule extends Module {
       this.load_Z = false;
       this.read_Z = false;
       this.sync = 0;
-      this.flush = 0;
-      this.close = 0;
+      this.closeAt = 0;
+      this.nextOperationAt = 0;
       this.open = -1;
-      poll = -2147483648;
+      nextClickAt = -2147483648;
       push = -2147483648;
    }
 
@@ -143,7 +143,7 @@ public final class AutoArmorModule extends Module {
          this.trackArmorValue();
          if (this.load_Z) {
             if (AutoTotemModule.init_Z_6()) {
-               this.init(true);
+               this.finishSession(true);
             } else {
                this.read_V_9();
             }
@@ -160,14 +160,14 @@ public final class AutoArmorModule extends Module {
                   }
                } else if (!BlinkPacketManager.isHoldingActionsOnly()) {
                   int now = AutismSessionState.getInstance().getClientTick();
-                  if (now >= this.close) {
+                  if (now >= this.nextOperationAt) {
                      int timesChanged = MC.player.getInventory().getTimesChanged();
-                     if (timesChanged != this.update || now - this.write >= 4) {
-                        this.update = timesChanged;
-                        this.write = now;
+                     if (timesChanged != this.lastInventoryRevision || now - this.lastScanTick >= 4) {
+                        this.lastInventoryRevision = timesChanged;
+                        this.lastScanTick = now;
                         if (this.findBestMove() == null) {
                            if (this.init_Z) {
-                              this.close();
+                              this.closeOpenedInventory();
                            }
 
                            this.open = -1;
@@ -211,8 +211,8 @@ public final class AutoArmorModule extends Module {
 
    private void read_V_9() {
       int now = AutismSessionState.getInstance().getClientTick();
-      poll = now + this.clickDelay();
-      if (now >= this.flush) {
+      nextClickAt = now + this.clickDelay();
+      if (now >= this.closeAt) {
          if (this.isEnabled()
             && !aD.read_Z()
             && MC.player.containerMenu == MC.player.inventoryMenu
@@ -225,7 +225,7 @@ public final class AutoArmorModule extends Module {
                      this.closeInventory();
                   }
 
-                  this.init(false);
+                  this.finishSession(false);
                   return;
                }
 
@@ -235,25 +235,25 @@ public final class AutoArmorModule extends Module {
             AutoArmorModule.ArmorMove move = this.findBestMove();
             if (move == null) {
                this.read_Z = true;
-               this.flush = now + this.randomDelay("close-delay", 3, 5);
+               this.closeAt = now + this.randomDelay("close-delay", 3, 5);
             } else if (!this.init(move.slot(), move.candidate(), move.stack())) {
-               this.flush = now + 1;
+               this.closeAt = now + 1;
             } else {
                this.sync++;
                if (this.findBestMove() != null) {
-                  this.flush = now + this.randomDelay("click-delay", 3, 5);
+                  this.closeAt = now + this.randomDelay("click-delay", 3, 5);
                } else {
                   this.read_Z = true;
-                  this.flush = now + this.randomDelay("close-delay", 3, 5);
+                  this.closeAt = now + this.randomDelay("close-delay", 3, 5);
                }
             }
          } else {
-            this.init(true);
+            this.finishSession(true);
          }
       }
    }
 
-   private void init(boolean aborted) {
+   private void finishSession(boolean aborted) {
       if (aborted && this.sync > 0) {
          this.closeInventory();
       }
@@ -261,12 +261,12 @@ public final class AutoArmorModule extends Module {
       this.load_Z = false;
       this.read_Z = false;
       this.sync = 0;
-      this.close = AutismSessionState.getInstance().getClientTick() + this.randomDelay("operation-delay", 3, 5);
+      this.nextOperationAt = AutismSessionState.getInstance().getClientTick() + this.randomDelay("operation-delay", 3, 5);
    }
 
    private AutoArmorModule.ArmorMove findBestMove() {
       int threshold = this.bool("save-armor") ? this.integer("durability-threshold") : -2147483648;
-      Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> best = this.init(threshold);
+      Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> best = this.bestByThreshold(threshold);
       if (this.bool("prefer-elytra")) {
          autismclient.util.ArmorEvaluationHelper.ArmorCandidate elytra = this.init_TaskTimer_DataUtil();
          if (elytra != null) {
@@ -304,7 +304,7 @@ public final class AutoArmorModule extends Module {
          this.cooldownTicks = 1;
       } else {
          if (this.init_Z) {
-            this.close();
+            this.closeOpenedInventory();
          }
 
          this.cooldownTicks = 1;
@@ -316,17 +316,17 @@ public final class AutoArmorModule extends Module {
       int armorMenuSlot = ARMOR_MENU_SLOTS.get(slot);
       boolean hotbarFast = candidate.kind() == autismclient.util.ArmorEvaluationHelper.SourceKind.HOTBAR && this.bool("hotbar");
       if (!occupied) {
-         return hotbarFast ? this.init(armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP) : this.init(this.init(candidate), 0, ContainerInput.QUICK_MOVE);
+         return hotbarFast ? this.click(armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP) : this.click(this.menuSlotOf(candidate), 0, ContainerInput.QUICK_MOVE);
       } else if (hotbarFast && this.bool("can-swap-armor")) {
-         return this.init(armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP);
+         return this.click(armorMenuSlot, candidate.inventorySlot(), ContainerInput.SWAP);
       } else {
          return MC.player.getInventory().getFreeSlot() >= 0
-            ? this.init(armorMenuSlot, 0, ContainerInput.QUICK_MOVE)
-            : this.init(armorMenuSlot, 1, ContainerInput.THROW);
+            ? this.click(armorMenuSlot, 0, ContainerInput.QUICK_MOVE)
+            : this.click(armorMenuSlot, 1, ContainerInput.THROW);
       }
    }
 
-   private boolean init(int menuSlot, int button, ContainerInput input) {
+   private boolean click(int menuSlot, int button, ContainerInput input) {
       if (menuSlot < 0) {
          return false;
       }
@@ -336,7 +336,7 @@ public final class AutoArmorModule extends Module {
       }
 
       try {
-         boolean clicked = autismclient.util.ContainerClickExecutor.init(MC, menuSlot, button, input);
+         boolean clicked = autismclient.util.ContainerClickExecutor.click(MC, menuSlot, button, input);
          if (clicked && this.bool("pause-movement")) {
             push = AutismSessionState.getInstance().getClientTick() + 1;
          }
@@ -375,7 +375,7 @@ public final class AutoArmorModule extends Module {
    }
 
    public static boolean init_Z_20() {
-      int until = poll;
+      int until = nextClickAt;
       if (until != -2147483648 && MC != null && MC.player != null) {
          Module module = al.init_Module_Str("auto-armor");
          return module != null && module.isEnabled() ? AutismSessionState.getInstance().getClientTick() <= until : false;
@@ -427,7 +427,7 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private int init(autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate) {
+   private int menuSlotOf(autismclient.util.ArmorEvaluationHelper.ArmorCandidate candidate) {
       return autismclient.util.InventorySlotHelper.toScreenSlot(MC, candidate.inventorySlot());
    }
 
@@ -508,7 +508,7 @@ public final class AutoArmorModule extends Module {
       return false;
    }
 
-   private void close() {
+   private void closeOpenedInventory() {
       if (this.init_Z) {
          this.init_Z = false;
          if (MC != null && MC.gui.screen() instanceof InventoryScreen screen) {
@@ -517,19 +517,19 @@ public final class AutoArmorModule extends Module {
       }
    }
 
-   private Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> init(int threshold) {
+   private Map<EquipmentSlot, autismclient.util.ArmorEvaluationHelper.ArmorCandidate> bestByThreshold(int threshold) {
       return autismclient.util.ArmorEvaluationHelper.bestBySlot(this.armorCandidates(), threshold);
    }
 
    private Map<EquipmentSlot, List<autismclient.util.ArmorEvaluationHelper.ArmorCandidate>> armorCandidates() {
       return autismclient.util.ArmorEvaluationHelper.candidatesBySlot(new autismclient.util.ArmorEvaluationHelper.StackSource() {
          @Override
-         public ItemStack init(int index) {
+         public ItemStack inventoryStack(int index) {
             return Module.MC.player.getInventory().getItem(index);
          }
 
          @Override
-         public ItemStack init(EquipmentSlot slot) {
+         public ItemStack equipped(EquipmentSlot slot) {
             return Module.MC.player.getItemBySlot(slot);
          }
       }, this.bool("allow-cursed"), !autismclient.util.InventorySlotArbiter.isHotbarClaimedByOther(this.id()));

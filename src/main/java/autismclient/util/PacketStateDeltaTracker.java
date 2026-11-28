@@ -608,7 +608,7 @@ public final class PacketStateDeltaTracker {
          inventoryItems = inventoryItems == null ? Map.of() : Map.copyOf(inventoryItems);
       }
 
-      public String init(int slot) {
+      public String itemAt(int slot) {
          if (slot < 0) {
             return "outside";
          }

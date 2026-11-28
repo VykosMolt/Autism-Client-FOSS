@@ -27,22 +27,22 @@ public final class SkeletonEspRenderer {
    private static final double close = 0.3;
    private static final double open = 0.3;
    private static final double poll = 48.0;
-   private static final AutismBufferSource.LazySource init_c_DataUtil = new AutismBufferSource.LazySource(786432);
-   private static volatile List<SkeletonEspRenderer.Bone> init_List = List.of();
+   private static final AutismBufferSource.LazySource BUFFERS = new AutismBufferSource.LazySource(786432);
+   private static volatile List<SkeletonEspRenderer.Bone> currentBones = List.of();
 
    private SkeletonEspRenderer() {
    }
 
    public static void register() {
       LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
-         init_List = List.of();
+         currentBones = List.of();
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.level != null && mc.player != null && !autismclient.modules.aD.init_Z() && !mc.gui.hud.isHidden()) {
             Module esp = autismclient.modules.al.init_Module_Str("esp");
             if (esp != null && esp.isEnabled() && Boolean.parseBoolean(esp.value("skeleton")) && !autismclient.modules.am.clear()) {
                boolean distanceColor = "Distance".equals(esp.value("skeleton-color-mode"));
                int staticColor = autismclient.modules.am.init_I_Module(esp, "skeleton-color", -1);
-               float width = (float)Math.max(0.5, Math.min(6.0, init(esp.value("skeleton-width"), 2.0)));
+               float width = (float)Math.max(0.5, Math.min(6.0, parseDouble(esp.value("skeleton-width"), 2.0)));
                Vec3 camera = context.levelState().cameraRenderState.pos;
                float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
                List<SkeletonEspRenderer.Bone> bones = new ArrayList<>();
@@ -50,12 +50,12 @@ public final class SkeletonEspRenderer {
                for (Entity entity : mc.level.entitiesForRendering()) {
                   if (entity instanceof LivingEntity living && !living.isRemoved() && living != mc.player && autismclient.modules.am.load_Z(entity)) {
                      int color = distanceColor ? init(camera, living, partial) : staticColor;
-                     init_V_List(bones, living, partial, camera, color, width);
+                     buildBones(bones, living, partial, camera, color, width);
                   }
                }
 
                if (!bones.isEmpty()) {
-                  init_List = bones;
+                  currentBones = bones;
                }
             }
          }
@@ -63,26 +63,26 @@ public final class SkeletonEspRenderer {
    }
 
    public static boolean hasSkeletons() {
-      return !init_List.isEmpty();
+      return !currentBones.isEmpty();
    }
 
    public static void render(PoseStack matrices) {
-      List<SkeletonEspRenderer.Bone> bones = init_List;
+      List<SkeletonEspRenderer.Bone> bones = currentBones;
       if (!bones.isEmpty()) {
-         init_List = List.of();
-         AutismBufferSource bufferSource = init_c_DataUtil.init();
+         currentBones = List.of();
+         AutismBufferSource bufferSource = BUFFERS.init();
          VertexConsumer buffer = bufferSource.buffer(autismclient.render.AutismRenderTypes.tracerEspLines());
          Pose pose = matrices.last();
 
          for (SkeletonEspRenderer.Bone bone : bones) {
-            init_V_PoseStack_Pose(pose, buffer, bone.init_Vec3, bone.load, bone.init_I, bone.init_F);
+            drawBone(pose, buffer, bone.start, bone.load, bone.color, bone.width);
          }
 
          bufferSource.drawAll();
       }
    }
 
-   private static void init_V_List(List<SkeletonEspRenderer.Bone> bones, LivingEntity e, float partial, Vec3 cam, int color, float width) {
+   private static void buildBones(List<SkeletonEspRenderer.Bone> bones, LivingEntity e, float partial, Vec3 cam, int color, float width) {
       double px = Mth.lerp(partial, e.xOld, e.getX());
       double py = Mth.lerp(partial, e.yOld, e.getY());
       double pz = Mth.lerp(partial, e.zOld, e.getZ());
@@ -116,8 +116,8 @@ public final class SkeletonEspRenderer {
       boolean using = e.isUsingItem();
       boolean rightUsing = using && e.getUsedItemHand() == InteractionHand.MAIN_HAND == rightDominant;
       boolean leftUsing = using && !rightUsing;
-      double pitchR = init(swingR, rightHeld, rightUsing) - bobPitch + crouchArm;
-      double pitchL = init(swingL, leftHeld, leftUsing) + bobPitch + crouchArm;
+      double pitchR = armSwingAngle(swingR, rightHeld, rightUsing) - bobPitch + crouchArm;
+      double pitchL = armSwingAngle(swingL, leftHeld, leftUsing) + bobPitch + crouchArm;
       double[] pelvis = new double[]{0.0, hipY, 0.0};
       double[] neck = new double[]{0.0, neckY, 0.0};
       double[] hipL = new double[]{-hipHalf, hipY, 0.0};
@@ -126,8 +126,8 @@ public final class SkeletonEspRenderer {
       double[] shR = new double[]{shoulderHalf, neckY, 0.0};
       double[] footL = new double[]{-hipHalf, hipY - legLen * Math.cos(legL), -legLen * Math.sin(legL)};
       double[] footR = new double[]{hipHalf, hipY - legLen * Math.cos(legR), -legLen * Math.sin(legR)};
-      double[] handR = init_DArr_D(1.0, shoulderHalf, neckY, armLen, pitchR, bobRoll);
-      double[] handL = init_DArr_D(-1.0, shoulderHalf, neckY, armLen, pitchL, bobRoll);
+      double[] handR = handPosition(1.0, shoulderHalf, neckY, armLen, pitchR, bobRoll);
+      double[] handL = handPosition(-1.0, shoulderHalf, neckY, armLen, pitchL, bobRoll);
       if (crouch) {
          init(neck, hipY);
          init(shL, hipY);
@@ -136,32 +136,32 @@ public final class SkeletonEspRenderer {
          init(handR, hipY);
       }
 
-      double[] head = init(neck, headLen, headPitch, netHeadYaw);
+      double[] head = headTip(neck, headLen, headPitch, netHeadYaw);
       double rad = Math.toRadians(bodyYaw);
       double sin = Math.sin(rad);
       double cos = Math.cos(rad);
-      Vec3 wPelvis = init(px, py, pz, pelvis, sin, cos, cam);
-      Vec3 wNeck = init(px, py, pz, neck, sin, cos, cam);
-      Vec3 wHipL = init(px, py, pz, hipL, sin, cos, cam);
-      Vec3 wHipR = init(px, py, pz, hipR, sin, cos, cam);
-      Vec3 wShL = init(px, py, pz, shL, sin, cos, cam);
-      Vec3 wShR = init(px, py, pz, shR, sin, cos, cam);
-      Vec3 wFootL = init(px, py, pz, footL, sin, cos, cam);
-      Vec3 wFootR = init(px, py, pz, footR, sin, cos, cam);
-      Vec3 wHandL = init(px, py, pz, handL, sin, cos, cam);
-      Vec3 wHandR = init(px, py, pz, handR, sin, cos, cam);
-      Vec3 wHead = init(px, py, pz, head, sin, cos, cam);
-      init(bones, wPelvis, wNeck, color, width);
-      init(bones, wHipL, wHipR, color, width);
-      init(bones, wShL, wShR, color, width);
-      init(bones, wNeck, wHead, color, width);
-      init(bones, wShL, wHandL, color, width);
-      init(bones, wShR, wHandR, color, width);
-      init(bones, wHipL, wFootL, color, width);
-      init(bones, wHipR, wFootR, color, width);
+      Vec3 wPelvis = toWorld(px, py, pz, pelvis, sin, cos, cam);
+      Vec3 wNeck = toWorld(px, py, pz, neck, sin, cos, cam);
+      Vec3 wHipL = toWorld(px, py, pz, hipL, sin, cos, cam);
+      Vec3 wHipR = toWorld(px, py, pz, hipR, sin, cos, cam);
+      Vec3 wShL = toWorld(px, py, pz, shL, sin, cos, cam);
+      Vec3 wShR = toWorld(px, py, pz, shR, sin, cos, cam);
+      Vec3 wFootL = toWorld(px, py, pz, footL, sin, cos, cam);
+      Vec3 wFootR = toWorld(px, py, pz, footR, sin, cos, cam);
+      Vec3 wHandL = toWorld(px, py, pz, handL, sin, cos, cam);
+      Vec3 wHandR = toWorld(px, py, pz, handR, sin, cos, cam);
+      Vec3 wHead = toWorld(px, py, pz, head, sin, cos, cam);
+      addBone(bones, wPelvis, wNeck, color, width);
+      addBone(bones, wHipL, wHipR, color, width);
+      addBone(bones, wShL, wShR, color, width);
+      addBone(bones, wNeck, wHead, color, width);
+      addBone(bones, wShL, wHandL, color, width);
+      addBone(bones, wShR, wHandR, color, width);
+      addBone(bones, wHipL, wFootL, color, width);
+      addBone(bones, wHipR, wFootR, color, width);
    }
 
-   private static double init(double swing, boolean holdingItem, boolean using) {
+   private static double armSwingAngle(double swing, boolean holdingItem, boolean using) {
       if (using) {
          return swing * 0.5 + 0.9;
       } else {
@@ -169,7 +169,7 @@ public final class SkeletonEspRenderer {
       }
    }
 
-   private static double[] init_DArr_D(double side, double shoulderHalf, double neckY, double armLen, double pitch, double roll) {
+   private static double[] handPosition(double side, double shoulderHalf, double neckY, double armLen, double pitch, double roll) {
       double cp = Math.cos(pitch);
       double sp = Math.sin(pitch);
       double cr = Math.cos(roll);
@@ -177,7 +177,7 @@ public final class SkeletonEspRenderer {
       return new double[]{side * (shoulderHalf + armLen * cp * sr), neckY - armLen * cp * cr, armLen * sp};
    }
 
-   private static double[] init(double[] neck, double headLen, float headPitch, float netHeadYaw) {
+   private static double[] headTip(double[] neck, double headLen, float headPitch, float netHeadYaw) {
       double hpr = Math.toRadians(headPitch);
       double upY = headLen * Math.cos(hpr);
       double upZ = headLen * Math.sin(hpr);
@@ -194,7 +194,7 @@ public final class SkeletonEspRenderer {
       p[2] = ry * s + rz * c;
    }
 
-   private static Vec3 init(double px, double py, double pz, double[] local, double sin, double cos, Vec3 cam) {
+   private static Vec3 toWorld(double px, double py, double pz, double[] local, double sin, double cos, Vec3 cam) {
       double lx = local[0];
       double ly = local[1];
       double lz = local[2];
@@ -204,7 +204,7 @@ public final class SkeletonEspRenderer {
       return new Vec3(wx - cam.x, wy - cam.y, wz - cam.z);
    }
 
-   private static void init_V_PoseStack_Pose(Pose entry, VertexConsumer buffer, Vec3 a, Vec3 b, int color, float width) {
+   private static void drawBone(Pose entry, VertexConsumer buffer, Vec3 a, Vec3 b, int color, float width) {
       Vector3f normal = new Vector3f((float)(b.x - a.x), (float)(b.y - a.y), (float)(b.z - a.z));
       if (!(normal.lengthSquared() <= 1.0E-8F)) {
          normal.normalize();
@@ -227,11 +227,11 @@ public final class SkeletonEspRenderer {
       }
    }
 
-   private static void init(List<SkeletonEspRenderer.Bone> bones, Vec3 a, Vec3 b, int color, float width) {
+   private static void addBone(List<SkeletonEspRenderer.Bone> bones, Vec3 a, Vec3 b, int color, float width) {
       bones.add(new SkeletonEspRenderer.Bone(a, b, color, width));
    }
 
-   private static double init(String value, double fallback) {
+   private static double parseDouble(String value, double fallback) {
       if (value == null) {
          return fallback;
       }
@@ -250,6 +250,6 @@ public final class SkeletonEspRenderer {
       return autismclient.modules.am.init_I_D_D(Math.sqrt(dx * dx + dy * dy + dz * dz), 48.0);
    }
 
-   private record Bone(Vec3 init_Vec3, Vec3 load, int init_I, float init_F) {
+   private record Bone(Vec3 start, Vec3 load, int color, float width) {
    }
 }

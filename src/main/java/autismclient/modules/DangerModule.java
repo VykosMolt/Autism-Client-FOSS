@@ -99,7 +99,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       super("danger", "Danger", ae.init_ae, "Predict nearby projectiles and pearl landings; optionally return fireballs.");
       AutismConfig.ModuleState saved = AutismConfig.getGlobal().modules.get(this.id());
       if (saved != null) {
-         saved.settings.putAll(DangerOptionKeys.init(saved.settings));
+         saved.settings.putAll(DangerOptionKeys.migrate(saved.settings));
       }
 
       for (IncomingProjectileScanner.ProjectileKind kind : IncomingProjectileScanner.ProjectileKind.values()) {
@@ -107,31 +107,31 @@ public final class DangerModule extends Module implements SilentMovementCoordina
          if (kind == IncomingProjectileScanner.ProjectileKind.FIREBALL) {
             this.add(
                new BoolSetting("auto-return", "Auto Return", true)
-                  .group(kind.load())
+                  .group(kind.groupName())
                   .description("Rotate smoothly and hit incoming redirectable fireballs")
                   .visibleWhen(() -> this.isKindEnabled(kind))
             );
             this.add(
                new EnumSetting<>("rotation", "Rotation", DangerModule.Inner_StreamUtil.SILENT, DangerModule.Inner_StreamUtil.values())
-                  .group(kind.load())
+                  .group(kind.groupName())
                   .visibleWhen(() -> this.isKindEnabled(kind) && this.bool("auto-return"))
             );
             this.add(
                new BoolSetting("fireball-blast-blocks", "Blast Block Highlights", false)
-                  .group(kind.load())
+                  .group(kind.groupName())
                   .description("Red blocks at risk from incoming fireballs and your own shots; dimmer edges are less likely")
                   .visibleWhen(() -> this.isKindEnabled(kind))
             );
          } else if (kind == IncomingProjectileScanner.ProjectileKind.PEARL) {
             this.add(
                new BoolSetting("pearl-ghost", "Landing Ghost", true)
-                  .group(kind.load())
+                  .group(kind.groupName())
                   .description("Textureless ghost at every known teleport landing, white or name-colored; independent of Warning Radius")
                   .visibleWhen(() -> this.isKindEnabled(kind))
             );
             this.add(
                new DoubleSetting("ghost-opacity", "Ghost Opacity", 0.35, 0.1, 0.8, 0.05)
-                  .group(kind.load())
+                  .group(kind.groupName())
                   .visibleWhen(() -> this.isKindEnabled(kind) && this.bool("pearl-ghost"))
             );
          }
@@ -233,7 +233,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
    private void addKindSettings(IncomingProjectileScanner.ProjectileKind kind) {
       String key = kind.id() + "-";
-      String group = kind.load();
+      String group = kind.groupName();
       this.add(new BoolSetting(key + "enabled", "Enabled", true).group(group));
       this.add(
          new BoolSetting(key + "hud", "Directional Warning", true)
@@ -302,7 +302,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       return this.close;
    }
 
-   public List<IncomingProjectileScanner.ProjectileWarning> read_List_2() {
+   public List<IncomingProjectileScanner.ProjectileWarning> incoming() {
       return this.incomingProjectiles;
    }
 
@@ -326,11 +326,11 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       return this.decimal(kind.id() + "-radius");
    }
 
-   public boolean close_Z_9() {
+   public boolean showsHud() {
       return this.isEnabled() && this.incomingProjectiles.stream().anyMatch(w -> this.isKindOptionEnabled(w.kind(), "hud"));
    }
 
-   public boolean open_Z_6() {
+   public boolean showsTrajectories() {
       return !this.predictedBlasts.isEmpty()
          || this.incomingProjectiles.stream().anyMatch(w -> this.isKindOptionEnabled(w.kind(), "trajectory"))
          || this.isKindEnabled(IncomingProjectileScanner.ProjectileKind.PEARL) && this.bool("pearl-ghost") && !this.read_List.isEmpty();
@@ -550,7 +550,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       Vec3 outgoing = shooter != null && shooter != MC.player && shooter.isAlive()
          ? shooter.getBoundingBox().getCenter().add(shooter.getDeltaMovement().scale(Math.min(10.0, shooter.distanceTo(ball) / 1.5))).subtract(box.getCenter())
          : ball.getDeltaMovement().scale(-1.0);
-      FireballInterceptMath.AimSolution aim = FireballInterceptMath.init(eye, this.effectiveMotion(), box, ball.getDeltaMovement(), outgoing, MC.player.entityInteractionRange() - 0.025);
+      FireballInterceptMath.AimSolution aim = FireballInterceptMath.solve(eye, this.effectiveMotion(), box, ball.getDeltaMovement(), outgoing, MC.player.entityInteractionRange() - 0.025);
       return RotationMath.lookAt(aim.load(), aim.init());
    }
 
@@ -568,16 +568,16 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private static boolean run() {
-      return MC.player.onGround() && ScaffoldModule.read_Z_12() && ScaffoldModule.read_ce_DataUtil() != null;
+      return MC.player.onGround() && ScaffoldModule.read_Z_12() && ScaffoldModule.resumeRotation() != null;
    }
 
    private boolean get() {
-      return !MC.player.onGround() && !MC.player.getAbilities().flying && ScaffoldModule.read_ce_DataUtil() != null;
+      return !MC.player.onGround() && !MC.player.getAbilities().flying && ScaffoldModule.resumeRotation() != null;
    }
 
    private boolean init_Z_I_D_2(int turn, double strike) {
       if (!MC.player.onGround() && !MC.player.getAbilities().flying) {
-         RotationMath.Rotation resume = ScaffoldModule.read_ce_DataUtil();
+         RotationMath.Rotation resume = ScaffoldModule.resumeRotation();
          if (resume == null) {
             return true;
          }
@@ -657,7 +657,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                );
                boolean hits = impact >= 0.0;
                if (!hits) {
-                  IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.init(MC.level, ball, IncomingProjectileScanner.ProjectileKind.FIREBALL);
+                  IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.traceProjectile(MC.level, ball, IncomingProjectileScanner.ProjectileKind.FIREBALL);
                   Vec3 landing = flight.init_Vec3();
                   if (landing != null && MC.player.getBoundingBox().distanceToSqr(landing) <= 12.25) {
                      impact = flight.init_D();
@@ -716,8 +716,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             .getEntitiesOfClass(
                Projectile.class,
                MC.player.getBoundingBox().inflate(range),
-               ballx -> IncomingProjectileScanner.init(ballx) != null
-                  && this.isKindEnabled(IncomingProjectileScanner.init(ballx))
+               ballx -> IncomingProjectileScanner.kindOf(ballx) != null
+                  && this.isKindEnabled(IncomingProjectileScanner.kindOf(ballx))
                   && ballx.isAlive()
                   && !ballx.isRemoved()
                   && ballx.getOwner() != MC.player
@@ -732,18 +732,18 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             Projectile ball = candidates.get(i);
             DangerModule.Inner_DataUtil attempt = this.interceptAttempts.get(ball.getUUID());
             if (attempt == null || !(ball.getDeltaMovement().dot(attempt.velocity) < 0.0)) {
-               IncomingProjectileScanner.ProjectileKind kind = IncomingProjectileScanner.init(ball);
-               IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.init(MC.level, ball, kind);
+               IncomingProjectileScanner.ProjectileKind kind = IncomingProjectileScanner.kindOf(ball);
+               IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.traceProjectile(MC.level, ball, kind);
                Player owner = ball.getOwner() instanceof Player player ? player : null;
                IncomingProjectileScanner.ProjectileWarning warning = new IncomingProjectileScanner.ProjectileWarning(ball, owner, kind, false, flight, this.init_I_Player(owner));
                if (kind == IncomingProjectileScanner.ProjectileKind.PEARL) {
                   predictedPearls.add(ball.getUUID());
-                  if (showPearlGhosts && IncomingProjectileScanner.init(warning)) {
+                  if (showPearlGhosts && IncomingProjectileScanner.isPearlThreat(warning)) {
                      landingModels.put(ball.getUUID(), warning);
                   }
                }
 
-               if (IncomingProjectileScanner.init(flight, kind, MC.player.position(), this.kindRadius(kind))) {
+               if (IncomingProjectileScanner.threatens(flight, kind, MC.player.position(), this.kindRadius(kind))) {
                   result.add(warning);
                }
             }
@@ -770,13 +770,13 @@ public final class DangerModule extends Module implements SilentMovementCoordina
             for (int i = 0; i < Math.min(16, distantPearls.size()); i++) {
                ThrownEnderpearl pearl = distantPearls.get(i);
                Player owner = (Player)pearl.getOwner();
-               IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.init(MC.level, pearl, IncomingProjectileScanner.ProjectileKind.PEARL);
+               IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.traceProjectile(MC.level, pearl, IncomingProjectileScanner.ProjectileKind.PEARL);
                IncomingProjectileScanner.ProjectileWarning warning = new IncomingProjectileScanner.ProjectileWarning(pearl, owner, IncomingProjectileScanner.ProjectileKind.PEARL, false, flight, this.init_I_Player(owner));
-               if (IncomingProjectileScanner.init(warning)) {
+               if (IncomingProjectileScanner.isPearlThreat(warning)) {
                   landingModels.put(pearl.getUUID(), warning);
                }
 
-               if (IncomingProjectileScanner.init(flight, IncomingProjectileScanner.ProjectileKind.PEARL, MC.player.position(), this.kindRadius(IncomingProjectileScanner.ProjectileKind.PEARL))) {
+               if (IncomingProjectileScanner.threatens(flight, IncomingProjectileScanner.ProjectileKind.PEARL, MC.player.position(), this.kindRadius(IncomingProjectileScanner.ProjectileKind.PEARL))) {
                   result.add(warning);
                }
             }
@@ -800,7 +800,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
                for (InteractionHand hand : InteractionHand.values()) {
                   ItemStack stack = owner.getItemInHand(hand);
-                  IncomingProjectileScanner.ProjectileKind kind = IncomingProjectileScanner.init(stack);
+                  IncomingProjectileScanner.ProjectileKind kind = IncomingProjectileScanner.kindForItem(stack);
                   if (kind != null) {
                      List<ProjectileBallistics.ProjectileShot> shots = ProjectileBallistics.shots(owner, stack, true, true);
 
@@ -810,13 +810,13 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                         }
 
                         if (kind != IncomingProjectileScanner.ProjectileKind.ARROW || shot.info().init_D() != 0.0) {
-                           IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.init(MC.level, owner, kind, shot);
+                           IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.predict(MC.level, owner, kind, shot);
                            IncomingProjectileScanner.ProjectileWarning warning = new IncomingProjectileScanner.ProjectileWarning(owner, owner, kind, true, flight, this.init_I_Player(owner));
-                           if (showPearlGhosts && IncomingProjectileScanner.init(warning)) {
+                           if (showPearlGhosts && IncomingProjectileScanner.isPearlThreat(warning)) {
                               landingModels.put(owner.getUUID(), warning);
                            }
 
-                           if (IncomingProjectileScanner.init(flight, kind, MC.player.position(), this.kindRadius(kind))) {
+                           if (IncomingProjectileScanner.threatens(flight, kind, MC.player.position(), this.kindRadius(kind))) {
                               result.add(warning);
                            }
                         }
@@ -854,7 +854,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
 
             for (int i = 0; i < Math.min(8, own.size()); i++) {
                LargeFireball ball = own.get(i);
-               IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.init(MC.level, ball, IncomingProjectileScanner.ProjectileKind.FIREBALL);
+               IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.traceProjectile(MC.level, ball, IncomingProjectileScanner.ProjectileKind.FIREBALL);
                if (flight.init_Vec3() != null) {
                   blastSources.add(new IncomingProjectileScanner.ProjectileWarning(ball, MC.player, IncomingProjectileScanner.ProjectileKind.FIREBALL, false, flight, -1));
                }
@@ -877,8 +877,8 @@ public final class DangerModule extends Module implements SilentMovementCoordina
    }
 
    private static IncomingProjectileScanner.ProjectileKind init_A_StreamUtil_Player(Player player) {
-      IncomingProjectileScanner.ProjectileKind main = IncomingProjectileScanner.init(player.getMainHandItem());
-      return main != null ? main : IncomingProjectileScanner.init(player.getOffhandItem());
+      IncomingProjectileScanner.ProjectileKind main = IncomingProjectileScanner.kindForItem(player.getMainHandItem());
+      return main != null ? main : IncomingProjectileScanner.kindForItem(player.getOffhandItem());
    }
 
    private int init_I_Player(Player owner) {
@@ -1007,7 +1007,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                }
 
                this.load_Z = true;
-               RotationMath.Rotation bridgeResume = ScaffoldModule.read_ce_DataUtil();
+               RotationMath.Rotation bridgeResume = ScaffoldModule.resumeRotation();
                Module scaffold = al.init_Module_Str("scaffold");
                if (bridgeResume != null || scaffold != null && scaffold.isEnabled()) {
                   RotationMath.Rotation resume = bridgeResume != null ? bridgeResume : RotationMath.ofPlayer(MC.player);
@@ -1016,7 +1016,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
                   RotationMath.Rotation endpoint = autismclient.util.SilentRotationManager.getCurrentRotation();
                   if (endpoint != null && RotationMath.vectorAngleDegrees(endpoint, resume) <= 1.0F) {
                      if (bridgeResume != null) {
-                        ScaffoldModule.init_V_ce_DataUtil_3(endpoint);
+                        ScaffoldModule.adoptRotation(endpoint);
                      }
 
                      autismclient.util.SilentRotationManager.resetAll();
@@ -1038,7 +1038,7 @@ public final class DangerModule extends Module implements SilentMovementCoordina
       }
    }
 
-   public static RotationMath.Rotation init_ce_DataUtil_F_2(float partialTick) {
+   public static RotationMath.Rotation visibleRotation(float partialTick) {
       DangerModule danger = instance();
       if (danger == null
          || !"Visible".equalsIgnoreCase(danger.value("rotation"))

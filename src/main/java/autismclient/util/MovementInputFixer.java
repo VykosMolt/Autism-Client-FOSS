@@ -30,7 +30,7 @@ public final class MovementInputFixer {
    private float poll_F = 0.0F / 0.0F;
 
    public void reset() {
-      this.load();
+      this.clearState();
       this.clientTick = -2147483648;
    }
 
@@ -71,7 +71,7 @@ public final class MovementInputFixer {
          this.pressed = this.poll_F;
       } else {
          if (this.clientTick == -2147483648 || clientTick != this.clientTick + 1) {
-            this.load();
+            this.clearState();
          }
 
          this.close_I = this.write_I;
@@ -85,7 +85,7 @@ public final class MovementInputFixer {
       float forward = inputAxis(input.forward(), input.backward());
       float sideways = inputAxis(input.left(), input.right());
       if (forward == 0.0F && sideways == 0.0F) {
-         this.load();
+         this.clearState();
          return input;
       }
 
@@ -103,15 +103,15 @@ public final class MovementInputFixer {
       }
 
       int[] keys = this.write_I > 0 ? init_IArr : (this.write_I < 0 ? load_IArr : (wanted >= 0.0F ? read_IArr : write_IArr));
-      int chosen = this.init_Z_IArr_F(keys, wanted) ? this.chosen : this.init_I_IArr_F(keys, wanted);
+      int chosen = this.init_Z_IArr_F(keys, wanted) ? this.chosen : this.bestKey(keys, wanted);
       if (footing != null) {
          chosen = init(chosen, wanted, pressed, cameraYaw, silentYaw, footing);
       }
 
       this.sync_I = chosen == this.chosen ? this.sync_I + 1 : 1;
       this.chosen = chosen;
-      this.flush_F = Mth.clamp(this.flush_F + read(wanted, chosen), -0.75F, 0.75F);
-      return init_Input_I_Input(chosen, input);
+      this.flush_F = Mth.clamp(this.flush_F + lateralError(wanted, chosen), -0.75F, 0.75F);
+      return inputForKey(chosen, input);
    }
 
    static float init_F_F_I(float silentYaw, int k) {
@@ -130,11 +130,11 @@ public final class MovementInputFixer {
 
       int best = chosen;
       int bestTicks = chosenTicks;
-      float bestOffset = Math.abs(load(wanted, chosen));
+      float bestOffset = Math.abs(angleError(wanted, chosen));
 
       for (int k = 0; k < 8; k++) {
          if (k != chosen) {
-            float offset = Math.abs(load(wanted, k));
+            float offset = Math.abs(angleError(wanted, k));
             if (!(offset > 90.001F)) {
                int ticks = footing.ticks(init_F_F_I(silentYaw, k));
                boolean forward = k == 7 || k == 0 || k == 1;
@@ -165,27 +165,27 @@ public final class MovementInputFixer {
    }
 
    private boolean init_Z_IArr_F(int[] keys, float wanted) {
-      if (this.chosen >= 0 && init_Z_IArr_I(keys, this.chosen)) {
-         if (Math.abs(load(wanted, this.chosen)) > 45.001F) {
+      if (this.chosen >= 0 && containsKey(keys, this.chosen)) {
+         if (Math.abs(angleError(wanted, this.chosen)) > 45.001F) {
             return false;
          }
 
          float band = this.sync_I < 2 ? 0.75F : 0.5F;
-         return Math.abs(this.flush_F + read(wanted, this.chosen)) <= band;
+         return Math.abs(this.flush_F + lateralError(wanted, this.chosen)) <= band;
       } else {
          return false;
       }
    }
 
-   private int init_I_IArr_F(int[] keys, float wanted) {
+   private int bestKey(int[] keys, float wanted) {
       int best = -1;
       float bestError = 1.0F / 0.0F;
       float bestOffset = 1.0F / 0.0F;
 
       for (int k : keys) {
-         float offset = Math.abs(load(wanted, k));
+         float offset = Math.abs(angleError(wanted, k));
          if (!(offset > 45.001F)) {
-            float after = Math.abs(this.flush_F + read(wanted, k));
+            float after = Math.abs(this.flush_F + lateralError(wanted, k));
             if (after < bestError - 1.0E-6F || Math.abs(after - bestError) <= 1.0E-6F && offset < bestOffset) {
                best = k;
                bestError = after;
@@ -199,7 +199,7 @@ public final class MovementInputFixer {
       }
 
       for (int k : keys) {
-         float offset = Math.abs(load(wanted, k));
+         float offset = Math.abs(angleError(wanted, k));
          if (offset < bestOffset) {
             best = k;
             bestOffset = offset;
@@ -209,20 +209,20 @@ public final class MovementInputFixer {
       return best;
    }
 
-   private static float load(float wanted, int k) {
+   private static float angleError(float wanted, int k) {
       return Mth.wrapDegrees(wanted - k * 45.0F);
    }
 
-   private static float read(float wanted, int k) {
-      return (float)Math.sin(Math.toRadians(load(wanted, k)));
+   private static float lateralError(float wanted, int k) {
+      return (float)Math.sin(Math.toRadians(angleError(wanted, k)));
    }
 
-   private static Input init_Input_I_Input(int k, Input input) {
+   private static Input inputForKey(int k, Input input) {
       boolean forward = k == 7 || k == 0 || k == 1;
       return new Input(forward, k >= 3 && k <= 5, k >= 1 && k <= 3, k >= 5, input.jump(), input.shift(), input.sprint() && forward);
    }
 
-   private static boolean init_Z_IArr_I(int[] keys, int k) {
+   private static boolean containsKey(int[] keys, int k) {
       for (int key : keys) {
          if (key == k) {
             return true;
@@ -236,7 +236,7 @@ public final class MovementInputFixer {
       return positive == negative ? 0.0F : (positive ? 1.0F : -1.0F);
    }
 
-   private void load() {
+   private void clearState() {
       this.write_I = -2147483648;
       this.chosen = -1;
       this.sync_I = 0;

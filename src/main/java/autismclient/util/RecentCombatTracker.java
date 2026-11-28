@@ -19,11 +19,11 @@ public final class RecentCombatTracker {
    private RecentCombatTracker() {
    }
 
-   public static boolean init(Entity target) {
-      return init(target, System.nanoTime());
+   public static boolean isFreshTarget(Entity target) {
+      return isFreshTarget(target, System.nanoTime());
    }
 
-   public static boolean init(Entity target, long now) {
+   public static boolean isFreshTarget(Entity target, long now) {
       load();
       if (target == null) {
          return true;
@@ -40,7 +40,7 @@ public final class RecentCombatTracker {
       }
    }
 
-   public static void init(Player attacker, Entity target) {
+   public static void onAttack(Player attacker, Entity target) {
       Minecraft mc = Minecraft.getInstance();
       if (attacker != null && attacker == mc.player && !attacker.isSpectator() && target instanceof LivingEntity) {
          load();
@@ -56,11 +56,11 @@ public final class RecentCombatTracker {
       }
    }
 
-   public static void init() {
+   public static void markCombat() {
       load = System.nanoTime();
    }
 
-   public static boolean init(long nanos) {
+   public static boolean inCombatWithin(long nanos) {
       return load != -9223372036854775808L && System.nanoTime() - load <= nanos;
    }
 

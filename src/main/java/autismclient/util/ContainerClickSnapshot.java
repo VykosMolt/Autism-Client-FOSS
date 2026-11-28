@@ -27,12 +27,12 @@ public final class ContainerClickSnapshot {
          this.init_ContainerInput = input;
       }
 
-      public static ContainerClickSnapshot.Inner_DataUtil init(int index) {
+      public static ContainerClickSnapshot.Inner_DataUtil byIndex(int index) {
          ContainerClickSnapshot.Inner_DataUtil[] values = values();
          return index >= 0 && index < values.length ? values[index] : LEFT_CLICK;
       }
 
-      public static ContainerClickSnapshot.Inner_DataUtil init(String name) {
+      public static ContainerClickSnapshot.Inner_DataUtil byName(String name) {
          if (name != null) {
             for (ContainerClickSnapshot.Inner_DataUtil mode : values()) {
                if (mode.name().equalsIgnoreCase(name) || mode.init_Str.equalsIgnoreCase(name) || mode.load_Str.equalsIgnoreCase(name)) {
@@ -113,7 +113,7 @@ public final class ContainerClickSnapshot {
                tag.getStringOr("screenTitle", ""),
                tag.getStringOr("menuClass", ""),
                tag.getStringOr("itemSummary", ""),
-               ContainerClickSnapshot.Inner_DataUtil.init(tag.getStringOr("mode", ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK.name())),
+               ContainerClickSnapshot.Inner_DataUtil.byName(tag.getStringOr("mode", ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK.name())),
                tag.getLongOr("capturedAtMs", 0L)
             )
             : null;

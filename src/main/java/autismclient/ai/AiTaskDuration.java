@@ -10,7 +10,7 @@ final class AiTaskDuration {
       "\\b(?:in under|under|within|less than|no more than|max(?:imum)? of|cap(?:ped)?\\s+(?:at|of))\\s+(\\d+(?:\\.\\d+)?)\\s*(hours?|hrs?|minutes?|mins?|days?)\\b"
    );
 
-   static int init(String userRequest, int configured) {
+   static int estimateMinutes(String userRequest, int configured) {
       String text = userRequest.toLowerCase(Locale.ROOT);
       if (text.matches("(?s).*\\b(macro|script|explain|example)\\b.*")) {
          return configured;

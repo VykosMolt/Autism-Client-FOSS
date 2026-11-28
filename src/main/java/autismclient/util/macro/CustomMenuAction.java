@@ -24,7 +24,7 @@ public final class CustomMenuAction implements MacroAction {
 
    @Override
    public void execute(Minecraft mc) {
-      long deadline = System.currentTimeMillis() + this.init();
+      long deadline = System.currentTimeMillis() + this.timeout();
       boolean gateOnRun = MacroExecutor.isCurrentRunActive();
       String lastError = "";
 
@@ -44,7 +44,7 @@ public final class CustomMenuAction implements MacroAction {
          if (snapshot == null) {
             LockSupport.parkNanos(20000000L);
          } else {
-            CustomMenuActionPlanner.Inner_DataUtil prepared = CustomMenuActionPlanner.init(this, snapshot, value -> {
+            CustomMenuActionPlanner.Inner_DataUtil prepared = CustomMenuActionPlanner.prepare(this, snapshot, value -> {
                String withSecrets = autismclient.util.JoinMacroController.fillSecrets(value);
                if (withSecrets == null) {
                   throw new IllegalStateException("Missing form value");
@@ -83,7 +83,7 @@ public final class CustomMenuAction implements MacroAction {
             }
 
             autismclient.util.custommenu.CustomMenuTracker.replace(seenGeneration, result.replacement(), snapshot.phase());
-            autismclient.util.custommenu.DialogScreenBridge.init(mc, result.clientAction(), answered);
+            autismclient.util.custommenu.DialogScreenBridge.answer(mc, result.clientAction(), answered);
             return;
          }
       }
@@ -109,7 +109,7 @@ public final class CustomMenuAction implements MacroAction {
       bi.read(message);
    }
 
-   public int init() {
+   public int timeout() {
       return Math.max(100, Math.min(120000, this.timeoutMs));
    }
 
@@ -124,7 +124,7 @@ public final class CustomMenuAction implements MacroAction {
       tag.putString("type", MacroActionType.CUSTOM_MENU.name());
       tag.put("fieldValues", MacroNbtCodecHelper.toStringListTag(this.fieldValues));
       tag.putString("clickButton", this.clickButton);
-      tag.putInt("timeoutMs", this.init());
+      tag.putInt("timeoutMs", this.timeout());
       tag.putBoolean("enabled", this.init_Z);
       return tag;
    }

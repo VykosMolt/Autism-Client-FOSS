@@ -8,28 +8,28 @@ import net.minecraft.core.BlockPos;
 
 final class AiPlacementSearch {
    private final List<AiPlacementSearch.PlacementCandidate> init_List;
-   private final AiPlacementSearch.WorldProbe init_aQ_ConfigStore;
+   private final AiPlacementSearch.WorldProbe world;
    private final boolean init_Z;
    private final Map<List<AiBuilder.CellSpec>, AiPlacementSearch.CellTemplate> init_Map = new IdentityHashMap<>();
    private int init_I;
    private int load_I;
-   private int read;
-   private int write;
-   private int update;
-   private int sync;
-   private int flush;
+   private int cursorY;
+   private int cursorZ;
+   private int sizeX;
+   private int sizeY;
+   private int sizeZ;
    private int close;
    private int open;
    private int poll;
    private int push;
    private Map<Long, AiBuilder.CellSpec> load_Map;
-   private AiPlacementSearch.CandidateScore init_aQ_CachePool;
+   private AiPlacementSearch.CandidateScore best;
    private boolean load_Z;
    private long init_J;
 
    AiPlacementSearch(List<AiPlacementSearch.PlacementCandidate> candidates, AiPlacementSearch.WorldProbe world, boolean clearTerrain) {
       this.init_List = List.copyOf(candidates);
-      this.init_aQ_ConfigStore = world;
+      this.world = world;
       this.init_Z = clearTerrain;
    }
 
@@ -50,7 +50,7 @@ final class AiPlacementSearch {
                int d = 0;
 
                for (AiBuilder.CellSpec cell : c.cells()) {
-                  map.put(init(cell.dx(), cell.dy(), cell.dz()), cell);
+                  map.put(packKey(cell.dx(), cell.dy(), cell.dz()), cell);
                   w = Math.max(w, cell.dx() + 1);
                   h = Math.max(h, cell.dy() + 1);
                   d = Math.max(d, cell.dz() + 1);
@@ -61,20 +61,20 @@ final class AiPlacementSearch {
             }
 
             this.load_Map = template.cells();
-            this.update = template.width();
-            this.sync = template.height();
-            this.flush = template.depth();
-            this.load_I = this.read = this.write = this.close = this.open = this.poll = this.push = 0;
-            if (this.load_Map.isEmpty() || (long)this.update * this.sync * this.flush > 1000000L) {
+            this.sizeX = template.width();
+            this.sizeY = template.height();
+            this.sizeZ = template.depth();
+            this.load_I = this.cursorY = this.cursorZ = this.close = this.open = this.poll = this.push = 0;
+            if (this.load_Map.isEmpty() || (long)this.sizeX * this.sizeY * this.sizeZ > 1000000L) {
                this.init_V();
                continue;
             }
          }
 
          AiPlacementSearch.PlacementCandidate candidate = this.init_List.get(this.init_I);
-         AiBuilder.CellSpec cell = this.load_Map.get(init(this.load_I, this.read, this.write));
-         BlockPos pos = candidate.origin().offset(this.load_I, this.read, this.write);
-         AiPlacementSearch.CellEdit edit = this.init_aQ_ConfigStore.classify(pos, cell);
+         AiBuilder.CellSpec cell = this.load_Map.get(packKey(this.load_I, this.cursorY, this.cursorZ));
+         BlockPos pos = candidate.origin().offset(this.load_I, this.cursorY, this.cursorZ);
+         AiPlacementSearch.CellEdit edit = this.world.classify(pos, cell);
          this.init_J++;
          if (edit == AiPlacementSearch.CellEdit.UNSAFE) {
             this.init_V();
@@ -88,7 +88,7 @@ final class AiPlacementSearch {
                      this.open++;
                   }
 
-                  if (!this.load_Map.containsKey(init(this.load_I, this.read - 1, this.write)) && this.init_aQ_ConfigStore.init_Z(pos, cell)) {
+                  if (!this.load_Map.containsKey(packKey(this.load_I, this.cursorY - 1, this.cursorZ)) && this.world.init_Z(pos, cell)) {
                      this.poll++;
                   }
                }
@@ -96,21 +96,21 @@ final class AiPlacementSearch {
                this.open++;
             }
 
-            if (this.init_aQ_CachePool != null && this.close + 3L * this.open + 2L * this.poll > this.init_aQ_CachePool.work()) {
+            if (this.best != null && this.close + 3L * this.open + 2L * this.poll > this.best.work()) {
                this.init_V();
             } else {
-               if (++this.load_I == this.update) {
+               if (++this.load_I == this.sizeX) {
                   this.load_I = 0;
-                  if (++this.write == this.flush) {
-                     this.write = 0;
-                     this.read++;
+                  if (++this.cursorZ == this.sizeZ) {
+                     this.cursorZ = 0;
+                     this.cursorY++;
                   }
                }
 
-               if (this.read == this.sync) {
+               if (this.cursorY == this.sizeY) {
                   AiPlacementSearch.CandidateScore score = new AiPlacementSearch.CandidateScore(candidate, this.close, this.open, this.poll, this.push);
-                  if (this.init_aQ_CachePool == null || score.compareTo(this.init_aQ_CachePool) < 0) {
-                     this.init_aQ_CachePool = score;
+                  if (this.best == null || score.compareTo(this.best) < 0) {
+                     this.best = score;
                   }
 
                   this.init_V();
@@ -125,12 +125,12 @@ final class AiPlacementSearch {
       this.load_Map = null;
    }
 
-   private static long init(int x, int y, int z) {
+   private static long packKey(int x, int y, int z) {
       return (x & 65535L) << 32 | (y & 65535L) << 16 | z & 65535L;
    }
 
    AiPlacementSearch.CandidateScore getResult() {
-      return this.init_aQ_CachePool;
+      return this.best;
    }
 
    boolean isDone() {

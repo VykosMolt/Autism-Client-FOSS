@@ -46,10 +46,10 @@ public final class CommandTabNameProber {
    private static final int open = 2;
    private static final long write_J = 8L;
    private static final long update_J = 500L;
-   private static final List<String> init_List = List.of(
+   private static final List<String> MESSAGE_COMMANDS = List.of(
       "msg", "tell", "w", "whisper", "message", "pm", "dm", "emsg", "etell", "tpa", "tpahere", "tpask", "pay", "mail", "friend", "party", "invite"
    );
-   private static final Set<String> init_Set = Set.of(
+   private static final Set<String> PLAYER_ARG_NAMES = Set.of(
       "player",
       "players",
       "target",
@@ -67,7 +67,7 @@ public final class CommandTabNameProber {
       "targetplayer",
       "playername"
    );
-   private static final String[] init_StrArr = new String[]{
+   private static final String[] PROBE_PREFIXES = new String[]{
       "msg ",
       "tell ",
       "w ",
@@ -98,11 +98,11 @@ public final class CommandTabNameProber {
 
       ClientPacketListener connection = mc.getConnection();
       if (connection != null) {
-         init(names, init_Collection_Supplier(connection::getOnlinePlayers), self);
-         init(names, init_Collection_Supplier(connection::getListedOnlinePlayers), self);
+         addProfiles(names, safePlayerInfos(connection::getOnlinePlayers), self);
+         addProfiles(names, safePlayerInfos(connection::getListedOnlinePlayers), self);
 
          try {
-            init(names, connection.getSeenPlayers().values(), self);
+            addProfiles(names, connection.getSeenPlayers().values(), self);
          } catch (Throwable var8) {
          }
       }
@@ -111,7 +111,7 @@ public final class CommandTabNameProber {
          try {
             for (ScoreHolder holder : mc.level.getScoreboard().getTrackedPlayers()) {
                if (holder != null) {
-                  load(names, holder.getScoreboardName(), self);
+                  addUsername(names, holder.getScoreboardName(), self);
                }
             }
          } catch (Throwable var10) {
@@ -121,7 +121,7 @@ public final class CommandTabNameProber {
             for (PlayerTeam team : mc.level.getScoreboard().getPlayerTeams()) {
                if (team != null) {
                   for (String member : team.getPlayers()) {
-                     load(names, member, self);
+                     addUsername(names, member, self);
                   }
                }
             }
@@ -132,7 +132,7 @@ public final class CommandTabNameProber {
       return names;
    }
 
-   private static Collection<PlayerInfo> init_Collection_Supplier(Supplier<Collection<PlayerInfo>> supplier) {
+   private static Collection<PlayerInfo> safePlayerInfos(Supplier<Collection<PlayerInfo>> supplier) {
       try {
          Collection<PlayerInfo> value = supplier.get();
          return value == null ? List.of() : value;
@@ -141,10 +141,10 @@ public final class CommandTabNameProber {
       }
    }
 
-   private static void init(Map<String, String> names, Collection<PlayerInfo> infos, String self) {
+   private static void addProfiles(Map<String, String> names, Collection<PlayerInfo> infos, String self) {
       for (PlayerInfo info : infos) {
          if (info != null && info.getProfile() != null) {
-            init_V(names, info.getProfile().name(), self);
+            addRealPlayerName(names, info.getProfile().name(), self);
          }
       }
    }
@@ -161,20 +161,20 @@ public final class CommandTabNameProber {
 
          if (dispatcher != null && dispatcher.getRoot() != null) {
             try {
-               init(dispatcher.getRoot(), "", byPrefix, 0);
+               collectVectors(dispatcher.getRoot(), "", byPrefix, 0);
             } catch (Throwable var7) {
             }
          }
       }
 
       List<CommandTabNameProber.ProbeVector> out = new ArrayList<>(byPrefix.values());
-      out.sort(Comparator.comparingInt(CommandTabNameProber.ProbeVector::init_I));
+      out.sort(Comparator.comparingInt(CommandTabNameProber.ProbeVector::priority));
       if (out.size() > 6) {
          out = new ArrayList<>(out.subList(0, 6));
       }
 
       if (out.isEmpty()) {
-         for (String prefix : init_StrArr) {
+         for (String prefix : PROBE_PREFIXES) {
             out.add(new CommandTabNameProber.ProbeVector(prefix, 0, prefix.trim()));
          }
       }
@@ -182,7 +182,7 @@ public final class CommandTabNameProber {
       return out;
    }
 
-   private static void init(CommandNode<ClientSuggestionProvider> node, String path, Map<String, CommandTabNameProber.ProbeVector> byPrefix, int depth) {
+   private static void collectVectors(CommandNode<ClientSuggestionProvider> node, String path, Map<String, CommandTabNameProber.ProbeVector> byPrefix, int depth) {
       if (node != null && depth <= 6) {
          Collection<CommandNode<ClientSuggestionProvider>> children = node.getChildren();
          if ((children == null || children.isEmpty()) && node.getRedirect() != null) {
@@ -196,14 +196,14 @@ public final class CommandTabNameProber {
                   String name = child.getName();
                   if (name != null && !name.isBlank()) {
                      if (child instanceof ArgumentCommandNode<?, ?> arg) {
-                        if (!path.isEmpty() && init_Z_ArgumentCommandNod(arg)) {
+                        if (!path.isEmpty() && isProbeableArgument(arg)) {
                            String prefix = path + " ";
-                           CommandTabNameProber.ProbeVector candidate = new CommandTabNameProber.ProbeVector(prefix, init(path, arg), path);
-                           byPrefix.merge(prefix, candidate, (a, b) -> (CommandTabNameProber.ProbeVector)(a.init_I() <= b.init_I() ? a : b));
+                           CommandTabNameProber.ProbeVector candidate = new CommandTabNameProber.ProbeVector(prefix, vectorPriority(path, arg), path);
+                           byPrefix.merge(prefix, candidate, (a, b) -> (CommandTabNameProber.ProbeVector)(a.priority() <= b.priority() ? a : b));
                         }
                      } else {
                         String childPath = path.isEmpty() ? name : path + " " + name;
-                        init(child, childPath, byPrefix, depth + 1);
+                        collectVectors(child, childPath, byPrefix, depth + 1);
                      }
                   }
                }
@@ -212,14 +212,14 @@ public final class CommandTabNameProber {
       }
    }
 
-   private static boolean init_Z_ArgumentCommandNod(ArgumentCommandNode<?, ?> arg) {
+   private static boolean isProbeableArgument(ArgumentCommandNode<?, ?> arg) {
       Object type = arg.getType();
       return !(type instanceof EntityArgument) && !(type instanceof GameProfileArgument) && !(type instanceof ScoreHolderArgument)
-         ? init_Z_SuggestionProvider(arg.getCustomSuggestions())
+         ? asksServer(arg.getCustomSuggestions())
          : true;
    }
 
-   private static boolean init_Z_SuggestionProvider(SuggestionProvider<?> suggestions) {
+   private static boolean asksServer(SuggestionProvider<?> suggestions) {
       if (suggestions == null) {
          return false;
       }
@@ -232,15 +232,15 @@ public final class CommandTabNameProber {
       }
    }
 
-   private static int init(String path, ArgumentCommandNode<?, ?> arg) {
-      String first = init_Str_Str(path.contains(" ") ? path.substring(0, path.indexOf(32)) : path).toLowerCase(Locale.ROOT);
-      int priority = init_List.indexOf(first);
+   private static int vectorPriority(String path, ArgumentCommandNode<?, ?> arg) {
+      String first = stripNamespace(path.contains(" ") ? path.substring(0, path.indexOf(32)) : path).toLowerCase(Locale.ROOT);
+      int priority = MESSAGE_COMMANDS.indexOf(first);
       if (priority >= 0) {
          return priority;
       }
 
       String argName = arg.getName() == null ? "" : arg.getName().toLowerCase(Locale.ROOT);
-      if (init_Set.contains(argName)) {
+      if (PLAYER_ARG_NAMES.contains(argName)) {
          return 100;
       }
 
@@ -248,7 +248,7 @@ public final class CommandTabNameProber {
       return !(type instanceof EntityArgument) && !(type instanceof GameProfileArgument) && !(type instanceof ScoreHolderArgument) ? 300 : 200;
    }
 
-   private static String init_Str_Str(String literal) {
+   private static String stripNamespace(String literal) {
       int colon = literal.indexOf(58);
       return colon >= 0 ? literal.substring(colon + 1) : literal;
    }
@@ -266,19 +266,19 @@ public final class CommandTabNameProber {
          List<String> baseTexts = new ArrayList<>(vectors.size());
 
          for (CommandTabNameProber.ProbeVector vector : vectors) {
-            baseTexts.add(vector.init_Str());
+            baseTexts.add(vector.prefix());
          }
 
-         List<List<String>> bases = init(connection, baseTexts, control, queries, names, self, "Probing commands", 2500L, 0, gap, conc, stall, stallLimit);
+         List<List<String>> bases = requestSuggestions(connection, baseTexts, control, queries, names, self, "Probing commands", 2500L, 0, gap, conc, stall, stallLimit);
          List<CommandTabNameProber.ProbeVector> productive = new ArrayList<>();
 
          for (int i = 0; i < vectors.size() && i < bases.size(); i++) {
-            if (init(bases.get(i), control.read())) {
+            if (hasNameLike(bases.get(i), control.read())) {
                productive.add(vectors.get(i));
             }
          }
 
-         productive.sort(Comparator.comparingInt(CommandTabNameProber.ProbeVector::init_I));
+         productive.sort(Comparator.comparingInt(CommandTabNameProber.ProbeVector::priority));
          int maxDepth = control.write() ? 2147483647 : 1;
          int dry = 0;
 
@@ -288,7 +288,7 @@ public final class CommandTabNameProber {
             }
 
             int before = names.size();
-            init(connection, names, self, vector, control, queries, gap, conc, maxDepth, stall, stallLimit);
+            sweepVector(connection, names, self, vector, control, queries, gap, conc, maxDepth, stall, stallLimit);
             if (names.size() == before) {
                if (++dry >= 2) {
                   break;
@@ -302,7 +302,7 @@ public final class CommandTabNameProber {
       }
    }
 
-   public static List<String> init(ClientPacketListener connection, String query, CommandTabNameProber.ProbeControl control) {
+   public static List<String> probe(ClientPacketListener connection, String query, CommandTabNameProber.ProbeControl control) {
       LinkedHashMap<String, String> names = new LinkedHashMap<>();
       if (connection != null && query != null && !query.isBlank() && control != null) {
          init(connection, names, "", List.of(new CommandTabNameProber.ProbeVector(query, 0, query.trim())), control);
@@ -311,7 +311,7 @@ public final class CommandTabNameProber {
       return new ArrayList<>(names.values());
    }
 
-   private static void init(
+   private static void sweepVector(
       ClientPacketListener connection,
       Map<String, String> names,
       String self,
@@ -340,12 +340,12 @@ public final class CommandTabNameProber {
             for (int i = 0; i < "abcdefghijklmnopqrstuvwxyz0123456789_.".length(); i++) {
                String childPrefix = parent + "abcdefghijklmnopqrstuvwxyz0123456789_.".charAt(i);
                childPrefixes.add(childPrefix);
-               texts.add(vector.init_Str() + childPrefix);
+               texts.add(vector.prefix() + childPrefix);
             }
          }
 
-         String status = "Sweeping " + vector.load() + " — " + init_Str_I(names.size()) + " names (depth " + depth + ")";
-         List<List<String>> replies = init(connection, texts, control, queries, names, self, status, 1500L, 2, gap, conc, stall, stallLimit);
+         String status = "Sweeping " + vector.load() + " — " + formatCount(names.size()) + " names (depth " + depth + ")";
+         List<List<String>> replies = requestSuggestions(connection, texts, control, queries, names, self, status, 1500L, 2, gap, conc, stall, stallLimit);
          int levelCap = 0;
 
          for (List<String> reply : replies) {
@@ -374,11 +374,11 @@ public final class CommandTabNameProber {
       }
    }
 
-   private static String init_Str_I(int n) {
+   private static String formatCount(int n) {
       return String.format(Locale.US, "%,d", n);
    }
 
-   private static List<List<String>> init(
+   private static List<List<String>> requestSuggestions(
       ClientPacketListener connection,
       List<String> texts,
       CommandTabNameProber.ProbeControl control,
@@ -415,7 +415,7 @@ public final class CommandTabNameProber {
          while (true) {
             if (start < pending.size()) {
                if (!control.isCancelled() && names.size() < control.maxNames() && queries[0] < control.maxQueries() && stall[0] < stallLimit) {
-                  init_V_be_DataUtil(control);
+                  waitWhilePaused(control);
                   int batch = Math.max(4, conc[0]);
                   int end = Math.min(pending.size(), start + batch);
                   List<MacroExecutor.PacketWaiter> listeners = new ArrayList<>(end - start);
@@ -434,7 +434,7 @@ public final class CommandTabNameProber {
                         listener.future.complete(null);
                      }
 
-                     init_V_J(2L);
+                     sleepQuietly(2L);
                   }
 
                   long deadline = System.currentTimeMillis() + timeoutMs;
@@ -453,10 +453,10 @@ public final class CommandTabNameProber {
                                  done[li] = true;
                                  remaining--;
                                  queries[0]++;
-                                 List<String> reply = init_List_MacroExecutor_Even(listeners.get(li));
+                                 List<String> reply = readSuggestions(listeners.get(li));
                                  results.set(pending.get(k), reply);
                                  int prev = names.size();
-                                 init(names, reply, self, control.maxNames(), control.read());
+                                 addSuggestions(names, reply, self, control.maxNames(), control.read());
                                  stall[0] = names.size() > prev ? 0 : stall[0] + 1;
                                  control.init(names.size(), queries[0], control.maxQueries(), status);
                                  progressed = true;
@@ -466,7 +466,7 @@ public final class CommandTabNameProber {
                            if (remaining != 0) {
                               if (System.currentTimeMillis() < deadline) {
                                  if (!progressed) {
-                                    init_V_J(5L);
+                                    sleepQuietly(5L);
                                  }
                                  continue;
                               }
@@ -507,7 +507,7 @@ public final class CommandTabNameProber {
                      }
 
                      if (!control.isCancelled()) {
-                        init_V_J(gap[0]);
+                        sleepQuietly(gap[0]);
                      }
 
                      start = end;
@@ -533,7 +533,7 @@ public final class CommandTabNameProber {
       return results;
    }
 
-   private static List<String> init_List_MacroExecutor_Even(MacroExecutor.PacketWaiter listener) {
+   private static List<String> readSuggestions(MacroExecutor.PacketWaiter listener) {
       try {
          Packet<?> reply = listener.future.getNow(null);
          List<String> out = new ArrayList<>();
@@ -553,7 +553,7 @@ public final class CommandTabNameProber {
       }
    }
 
-   private static int init(Map<String, String> names, List<String> suggestions, String self, int cap, boolean usernamesOnly) {
+   private static int addSuggestions(Map<String, String> names, List<String> suggestions, String self, int cap, boolean usernamesOnly) {
       int added = 0;
 
       for (String suggestion : suggestions) {
@@ -561,7 +561,7 @@ public final class CommandTabNameProber {
             break;
          }
 
-         boolean ok = usernamesOnly ? load(names, suggestion, self) : init_Z(names, suggestion, self);
+         boolean ok = usernamesOnly ? addUsername(names, suggestion, self) : addName(names, suggestion, self);
          if (ok) {
             added++;
          }
@@ -570,7 +570,7 @@ public final class CommandTabNameProber {
       return added;
    }
 
-   private static boolean init(List<String> suggestions, boolean usernamesOnly) {
+   private static boolean hasNameLike(List<String> suggestions, boolean usernamesOnly) {
       for (String suggestion : suggestions) {
          if (suggestion != null) {
             String trimmed = suggestion.trim();
@@ -583,7 +583,7 @@ public final class CommandTabNameProber {
       return false;
    }
 
-   private static boolean init_Z(Map<String, String> names, String name, String self) {
+   private static boolean addName(Map<String, String> names, String name, String self) {
       if (name == null) {
          return false;
       }
@@ -594,7 +594,7 @@ public final class CommandTabNameProber {
          : false;
    }
 
-   private static void init_V(Map<String, String> names, String name, String self) {
+   private static void addRealPlayerName(Map<String, String> names, String name, String self) {
       if (name != null) {
          String trimmed = name.trim();
          if (!trimmed.equalsIgnoreCase(self) && TabPlayerListParser.isRealPlayerName(trimmed)) {
@@ -603,7 +603,7 @@ public final class CommandTabNameProber {
       }
    }
 
-   private static boolean load(Map<String, String> names, String name, String self) {
+   private static boolean addUsername(Map<String, String> names, String name, String self) {
       if (name == null) {
          return false;
       }
@@ -612,13 +612,13 @@ public final class CommandTabNameProber {
       return !trimmed.equalsIgnoreCase(self) && TabPlayerListParser.isRealPlayerName(trimmed) ? names.putIfAbsent(trimmed.toLowerCase(Locale.ROOT), trimmed) == null : false;
    }
 
-   private static void init_V_be_DataUtil(CommandTabNameProber.ProbeControl control) {
+   private static void waitWhilePaused(CommandTabNameProber.ProbeControl control) {
       while (control.isPaused() && !control.isCancelled()) {
-         init_V_J(120L);
+         sleepQuietly(120L);
       }
    }
 
-   private static void init_V_J(long ms) {
+   private static void sleepQuietly(long ms) {
       try {
          Thread.sleep(ms);
       } catch (InterruptedException e) {
@@ -647,6 +647,6 @@ public final class CommandTabNameProber {
       }
    }
 
-   public record ProbeVector(String init_Str, int init_I, String load) {
+   public record ProbeVector(String prefix, int priority, String load) {
    }
 }

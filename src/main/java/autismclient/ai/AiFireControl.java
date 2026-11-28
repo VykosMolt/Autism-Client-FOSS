@@ -55,7 +55,7 @@ final class AiFireControl {
       return this.init_BlockPos == null && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
    }
 
-   boolean read() {
+   boolean isBusy() {
       return this.init_BlockPos != null || this.init_AiOperation != null && this.init_AiOperation.requiresReconciliationAfterEmergency();
    }
 

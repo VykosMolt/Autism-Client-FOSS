@@ -29,18 +29,18 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 final class AiEntityQuery {
-   static final Set<String> init_Set = Set.of("minecraft:ender_dragon", "minecraft:wither", "minecraft:elder_guardian");
-   static final Set<String> load = Set.of("hostile", "passive", "villager", "player", "item", "projectile", "boss", "vehicle", "all");
-   private static final EquipmentSlot[] init_EquipmentSlotArr = new EquipmentSlot[]{
+   static final Set<String> BOSS_TYPES = Set.of("minecraft:ender_dragon", "minecraft:wither", "minecraft:elder_guardian");
+   static final Set<String> CATEGORIES = Set.of("hostile", "passive", "villager", "player", "item", "projectile", "boss", "vehicle", "all");
+   private static final EquipmentSlot[] ARMOR_SLOTS = new EquipmentSlot[]{
       EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
    };
-   private static final String[] init_StrArr = new String[]{"head", "chest", "legs", "feet"};
+   private static final String[] ARMOR_SLOT_NAMES = new String[]{"head", "chest", "legs", "feet"};
 
    private AiEntityQuery() {
    }
 
-   static String init(AiEntityQuery.EntityFacts facts) {
-      if (init_Set.contains(facts.typeId())) {
+   static String category(AiEntityQuery.EntityFacts facts) {
+      if (BOSS_TYPES.contains(facts.typeId())) {
          return "boss";
       } else if (facts.enemy()) {
          return "hostile";
@@ -59,11 +59,11 @@ final class AiEntityQuery {
       }
    }
 
-   static boolean init(String filter, String category) {
+   static boolean matchesFilter(String filter, String category) {
       return filter.equals("all") || filter.equals(category);
    }
 
-   static boolean load(String typeId, String spec) {
+   static boolean matchesType(String typeId, String spec) {
       String clean = spec.trim().toLowerCase(Locale.ROOT);
       return !clean.isEmpty() && typeId.toLowerCase(Locale.ROOT).contains(clean);
    }
@@ -86,9 +86,9 @@ final class AiEntityQuery {
       JsonObject out = new JsonObject();
       out.addProperty("id", id);
       out.addProperty("type", typeId);
-      out.add("pos", AiJson.objectOf("x", init(x), "y", init(y), "z", init(z)));
-      out.addProperty("distance", init(distance));
-      out.add("health", health == null ? JsonNull.INSTANCE : AiJson.GSON.toJsonTree(init(health.floatValue())));
+      out.add("pos", AiJson.objectOf("x", round2(x), "y", round2(y), "z", round2(z)));
+      out.addProperty("distance", round2(distance));
+      out.add("health", health == null ? JsonNull.INSTANCE : AiJson.GSON.toJsonTree(round2(health.floatValue())));
       out.addProperty("hostile", hostile);
       out.addProperty("category", category);
       if (!equipment.isEmpty()) {
@@ -113,7 +113,7 @@ final class AiEntityQuery {
          double dz = Math.max(1.0, Math.min(128.0, AiJson.getDouble(args, "dz", 32.0)));
          String spec = AiJson.getString(args, "type", "");
          String category = AiJson.getString(args, "category", "all").trim().toLowerCase(Locale.ROOT);
-         if (!load.contains(category)) {
+         if (!CATEGORIES.contains(category)) {
             throw new IllegalArgumentException("category must be one of hostile, passive, villager, player, item, projectile, boss, vehicle, all");
          }
 
@@ -134,10 +134,10 @@ final class AiEntityQuery {
                   ? !(Math.abs(pos.x - origin.x) > dx) && !(Math.abs(pos.y - origin.y) > dy) && !(Math.abs(pos.z - origin.z) > dz)
                   : !(distanceSqr > radius * radius)) {
                   String typeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
-                  if (spec.isBlank() || load(typeId, spec)) {
-                     AiEntityQuery.EntityFacts facts = init(entity, typeId);
-                     String assigned = init(facts);
-                     if (init(category, assigned)) {
+                  if (spec.isBlank() || matchesType(typeId, spec)) {
+                     AiEntityQuery.EntityFacts facts = facts(entity, typeId);
+                     String assigned = category(facts);
+                     if (matchesFilter(category, assigned)) {
                         matched++;
                         double distance = Math.sqrt(distanceSqr);
                         Float health = entity instanceof LivingEntity living ? living.getHealth() : null;
@@ -160,7 +160,7 @@ final class AiEntityQuery {
                                  health,
                                  facts.enemy(),
                                  assigned,
-                                 init(entity),
+                                 armorIds(entity),
                                  init(mc, entity),
                                  itemId,
                                  itemCount
@@ -192,7 +192,7 @@ final class AiEntityQuery {
       }
    }
 
-   static AiEntityQuery.EntityFacts init(Entity entity, String typeId) {
+   static AiEntityQuery.EntityFacts facts(Entity entity, String typeId) {
       return new AiEntityQuery.EntityFacts(
          typeId,
          entity instanceof Enemy,
@@ -205,23 +205,23 @@ final class AiEntityQuery {
       );
    }
 
-   private static List<String> init(Entity entity) {
+   private static List<String> armorIds(Entity entity) {
       if (!(entity instanceof LivingEntity living)) {
          return List.of();
       } else {
          List<String> out = new ArrayList<>(6);
-         init(out, "mainhand", living.getMainHandItem());
-         init(out, "offhand", living.getOffhandItem());
+         addArmor(out, "mainhand", living.getMainHandItem());
+         addArmor(out, "offhand", living.getOffhandItem());
 
-         for (int i = 0; i < init_EquipmentSlotArr.length; i++) {
-            init(out, init_StrArr[i], living.getItemBySlot(init_EquipmentSlotArr[i]));
+         for (int i = 0; i < ARMOR_SLOTS.length; i++) {
+            addArmor(out, ARMOR_SLOT_NAMES[i], living.getItemBySlot(ARMOR_SLOTS[i]));
          }
 
          return out;
       }
    }
 
-   private static void init(List<String> out, String name, ItemStack stack) {
+   private static void addArmor(List<String> out, String name, ItemStack stack) {
       if (!stack.isEmpty()) {
          out.add(name + "=" + BuiltInRegistries.ITEM.getKey(stack.getItem()));
       }
@@ -233,7 +233,7 @@ final class AiEntityQuery {
       return mc.level.clip(new ClipContext(eye, target, Block.OUTLINE, Fluid.NONE, mc.player)).getType() == Type.MISS;
    }
 
-   private static double init(double value) {
+   private static double round2(double value) {
       return Math.round(value * 100.0) / 100.0;
    }
 

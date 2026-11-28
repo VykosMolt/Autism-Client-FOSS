@@ -131,7 +131,7 @@ final class AiNavigationSelection extends AiPlacementSession {
    private void resolveTarget(boolean fresh) {
       if (this.isActive()) {
          this.standingTarget = this.standingResolver
-            .init(this.client, SchematicSelection.eyePosition(this.client), SchematicSelection.lookDirection(this.client), 250.0, false, fresh);
+            .resolve(this.client, SchematicSelection.eyePosition(this.client), SchematicSelection.lookDirection(this.client), 250.0, false, fresh);
       }
    }
 

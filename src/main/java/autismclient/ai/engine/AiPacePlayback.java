@@ -74,11 +74,11 @@ public final class AiPacePlayback {
    public AiPacePlayback(AiPaceScript.Inner_IoHelper var1, double var2, double var4) {
       this.putAt_TextPool_IoHelper = var1;
       double var6 = Double.isFinite(var2) && var2 > 0.0 ? var2 : 0.1;
-      double var8 = var1.putAt_D_I(0);
+      double var8 = var1.sampleAt(0);
       double var10 = Double.isFinite(var8) && var8 > 0.0 ? var8 : var6;
       this.prevEx_D = var10;
       int var12 = var1.flowState();
-      double var13 = var12 >= 0 ? var1.putAt_D_I(var12) : 0.0 / 0.0;
+      double var13 = var12 >= 0 ? var1.sampleAt(var12) : 0.0 / 0.0;
       if (var12 >= 0 && Double.isFinite(var13) && var13 > 0.0 && Math.abs(var10 - var13) > 1.0E-6) {
          this.closeOf_I = var12;
          this.prev_D = var10;
@@ -97,11 +97,11 @@ public final class AiPacePlayback {
       }
    }
 
-   public int flowState() {
+   public int stepIndex() {
       return this.store;
    }
 
-   public double putAt_D() {
+   public double worstError() {
       return this.closeOf_D;
    }
 
@@ -131,10 +131,10 @@ public final class AiPacePlayback {
    }
 
    public AiPacePlayback.Inner_JsonCache putAt_TableUtil_JsonCach_LocalPlayer(LocalPlayer var1, Vec3 var2, Runnable var3, Vec3 var4) {
-      return this.putAt(var1, var2, var3, var4, null);
+      return this.tickPlayback(var1, var2, var3, var4, null);
    }
 
-   public AiPacePlayback.Inner_JsonCache putAt(LocalPlayer var1, Vec3 var2, Runnable var3, Vec3 var4, Predicate<BlockPos> var5) {
+   public AiPacePlayback.Inner_JsonCache tickPlayback(LocalPlayer var1, Vec3 var2, Runnable var3, Vec3 var4, Predicate<BlockPos> var5) {
       Minecraft var6 = Minecraft.getInstance();
       AiLiveWorld var7 = var6.level != null ? new AiLiveWorld(var6.level, var1) : null;
       Predicate var8 = var6.level != null
@@ -168,7 +168,7 @@ public final class AiPacePlayback {
          }
       }
 
-      float var16 = var4 != null && this.putAt_TextPool_IoHelper.putAt_Z() && this.putAt_TextPool_IoHelper.flowTemp() - this.store <= 4
+      float var16 = var4 != null && this.putAt_TextPool_IoHelper.isFinished() && this.putAt_TextPool_IoHelper.size() - this.store <= 4
          ? RotationMath.lookAt(var4, var1.getEyePosition()).pitch()
          : this.putAt_F_LocalPlayer(var1);
       putAt_V_LocalPlayer(var1, var11, var16);
@@ -176,7 +176,7 @@ public final class AiPacePlayback {
    }
 
    private boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, int var3, Predicate<BlockPos> var4) {
-      int var5 = this.putAt_TextPool_IoHelper.flowTemp();
+      int var5 = this.putAt_TextPool_IoHelper.size();
       int var6 = Math.min(var5, var3 + 1 + 24 + 24);
       ArrayList var7 = new ArrayList(var6 - var3);
       var7.add(var2);
@@ -191,7 +191,7 @@ public final class AiPacePlayback {
             return false;
          }
 
-         if (var4 != null && (var13.onGround() || AiPaceScript.fill(var1, var13)) && !var4.test(BlockPos.containing(var13.x(), var13.y() + 1.0E-4, var13.z()))) {
+         if (var4 != null && (var13.onGround() || AiPaceScript.onClimbable(var1, var13)) && !var4.test(BlockPos.containing(var13.x(), var13.y() + 1.0E-4, var13.z()))) {
             return false;
          }
 
@@ -205,7 +205,7 @@ public final class AiPacePlayback {
                return false;
             }
 
-            if (this.putAt_TextPool_IoHelper.putAt_Z() && var9 == var5 - 1 && Math.hypot(var13.x() - var14.x(), var13.z() - var14.z()) > 0.35) {
+            if (this.putAt_TextPool_IoHelper.isFinished() && var9 == var5 - 1 && Math.hypot(var13.x() - var14.x(), var13.z() - var14.z()) > 0.35) {
                return false;
             }
          }
@@ -261,9 +261,9 @@ public final class AiPacePlayback {
          return new AiPacePlayback.Inner_TableCache(AiPacePlayback.Inner_JsonCache.prevEx, null, this.fill_Str);
       }
 
-      if (this.store >= this.putAt_TextPool_IoHelper.flowTemp()) {
+      if (this.store >= this.putAt_TextPool_IoHelper.size()) {
          return new AiPacePlayback.Inner_TableCache(
-            this.putAt_TextPool_IoHelper.putAt_Z() && this.store >= this.putAt_TextPool_IoHelper.flowTemp()
+            this.putAt_TextPool_IoHelper.isFinished() && this.store >= this.putAt_TextPool_IoHelper.size()
                ? AiPacePlayback.Inner_JsonCache.fill
                : AiPacePlayback.Inner_JsonCache.readEx,
             null,
@@ -451,7 +451,7 @@ public final class AiPacePlayback {
                         }
 
                         this.putAt_V_TokenCore_TableCacArr_Z(var41.rebased(), true);
-                     } else if (this.store % 4 == 0 && this.store < this.putAt_TextPool_IoHelper.flowTemp()) {
+                     } else if (this.store % 4 == 0 && this.store < this.putAt_TextPool_IoHelper.size()) {
                         AiPacePlayback.Inner_TaskState var42 = putAt(
                            var1,
                            var2,
@@ -575,7 +575,7 @@ public final class AiPacePlayback {
                      } else {
                         this.state_D = var28;
                         this.putAt_V_TokenCore_TableCacArr_Z(var40.rebased(), true);
-                        if (var40.safeUntilTick() < this.putAt_TextPool_IoHelper.flowTemp() && var40.safeUntilTick() > this.store) {
+                        if (var40.safeUntilTick() < this.putAt_TextPool_IoHelper.size() && var40.safeUntilTick() > this.store) {
                            this.dataEx = var40.safeUntilTick();
                            this.putAt_Str = "effect changed; landed safely for replan at live speed";
                         }
@@ -627,7 +627,7 @@ public final class AiPacePlayback {
                            this.putAt_V_TokenCore_TableCacArr_Z(var62.rebased(), true);
                            this.fill_Z = true;
                         }
-                     } else if (this.store % 4 == 0 && this.store < this.putAt_TextPool_IoHelper.flowTemp()) {
+                     } else if (this.store % 4 == 0 && this.store < this.putAt_TextPool_IoHelper.size()) {
                         AiPacePlayback.Inner_TaskState var58 = putAt(
                            var1,
                            var2,
@@ -731,7 +731,7 @@ public final class AiPacePlayback {
                   } else {
                      this.state_D = var28;
                      this.putAt_V_TokenCore_TableCacArr_Z(var46.rebased(), true);
-                     if (var46.safeUntilTick() < this.putAt_TextPool_IoHelper.flowTemp() && var46.safeUntilTick() > this.store) {
+                     if (var46.safeUntilTick() < this.putAt_TextPool_IoHelper.size() && var46.safeUntilTick() > this.store) {
                         this.dataEx = var46.safeUntilTick();
                         this.putAt_Str = "effect changed; landed safely for replan at live speed";
                      }
@@ -801,7 +801,7 @@ public final class AiPacePlayback {
                   }
                }
 
-               if (var26 == null && (var12 || this.store % 4 == 0 && this.store < this.putAt_TextPool_IoHelper.flowTemp())) {
+               if (var26 == null && (var12 || this.store % 4 == 0 && this.store < this.putAt_TextPool_IoHelper.size())) {
                   boolean var61 = !var12 && this.fill_Z && !this.value_Z;
                   boolean var18 = !var12 && !this.fill_Z && this.readEx_Z && !this.value_Z;
                   boolean var19 = var61 || var18;
@@ -872,7 +872,7 @@ public final class AiPacePlayback {
                      this.value_Z = true;
                      this.state_D = var28;
                      this.putAt_V_TokenCore_TableCacArr_Z(var22.rebased(), true);
-                     if (var22.safeUntilTick() < this.putAt_TextPool_IoHelper.flowTemp() && var22.safeUntilTick() > this.store) {
+                     if (var22.safeUntilTick() < this.putAt_TextPool_IoHelper.size() && var22.safeUntilTick() > this.store) {
                         this.dataEx = var22.safeUntilTick();
                         this.putAt_Str = "effect changed; landed safely for replan at live speed";
                      }
@@ -886,7 +886,7 @@ public final class AiPacePlayback {
          AiPhysics.MoveInput var29 = this.putAt_TextPool_IoHelper.putAt_TokenCore_CacheHel_I(this.store);
          if (var29 == null) {
             return new AiPacePlayback.Inner_TableCache(
-               this.putAt_TextPool_IoHelper.putAt_Z() ? AiPacePlayback.Inner_JsonCache.fill : AiPacePlayback.Inner_JsonCache.readEx, null, null
+               this.putAt_TextPool_IoHelper.isFinished() ? AiPacePlayback.Inner_JsonCache.fill : AiPacePlayback.Inner_JsonCache.readEx, null, null
             );
          } else if (var26 != null) {
             this.store++;
@@ -990,7 +990,7 @@ public final class AiPacePlayback {
    private AiPacePlayback.Inner_CacheHelper putAt(
       AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, int var3, double var4, Predicate<BlockPos> var6, Predicate<BlockPos> var7
    ) {
-      int var8 = this.putAt_TextPool_IoHelper.flowTemp();
+      int var8 = this.putAt_TextPool_IoHelper.size();
       if (var3 >= var8) {
          return null;
       }
@@ -1039,7 +1039,7 @@ public final class AiPacePlayback {
       boolean var10,
       boolean var11
    ) {
-      int var12 = this.putAt_TextPool_IoHelper.flowTemp();
+      int var12 = this.putAt_TextPool_IoHelper.size();
       if (var3 >= var12) {
          return null;
       }
@@ -1069,7 +1069,7 @@ public final class AiPacePlayback {
             }
          }
 
-         boolean var30 = var3 >= this.closeOf_I && var3 + 1 < var12 && (!this.putAt_TextPool_IoHelper.putAt_Z() || var3 + 2 < var12);
+         boolean var30 = var3 >= this.closeOf_I && var3 + 1 < var12 && (!this.putAt_TextPool_IoHelper.isFinished() || var3 + 2 < var12);
          if (var30) {
             AiPhysics.MotionState var31 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3);
             double var23 = putAt_D_TokenCore_TableCac(var2, var18, var18, var31);
@@ -1161,7 +1161,7 @@ public final class AiPacePlayback {
       double var12,
       double var14
    ) {
-      int var16 = this.putAt_TextPool_IoHelper.flowTemp();
+      int var16 = this.putAt_TextPool_IoHelper.size();
       int var17 = var3 + var4;
       int var18 = var17 + 1;
       if (var17 >= 0 && var17 < var16) {
@@ -1277,7 +1277,7 @@ public final class AiPacePlayback {
          }
 
          int var76 = 24 + (var4 < 0 ? 1 : 0);
-         AiPhysics.PhysicsWorld var79 = AiPaceScript.fill(var1, var5);
+         AiPhysics.PhysicsWorld var79 = AiPaceScript.withMovementSpeed(var1, var5);
          BlockPos[] var81 = this.putAt_TextPool_IoHelper.putAt_BlockPosArr();
          int var40 = putAt_I_BlockPosArr(var81, this.nextBy, var2);
          AiPacePlayback.Inner_CacheHelper var41 = null;
@@ -1357,7 +1357,7 @@ public final class AiPacePlayback {
                         {6, 6},
                         {7, 7}
                      };
-                     AiPhysics.PhysicsWorld var93 = AiPaceScript.fill(var1, var7);
+                     AiPhysics.PhysicsWorld var93 = AiPaceScript.withMovementSpeed(var1, var7);
 
                      for (int[] var61 : var90) {
                         if (var18 + var61.length <= var16) {
@@ -1465,7 +1465,7 @@ public final class AiPacePlayback {
          }
 
          if (var41 == null && var11 && var2.onGround() && var18 + 1 < var16) {
-            AiPhysics.PhysicsWorld var82 = AiPaceScript.fill(var1, var7);
+            AiPhysics.PhysicsWorld var82 = AiPaceScript.withMovementSpeed(var1, var7);
             AiPhysics.MoveInput var83 = this.putAt_TextPool_IoHelper.fill_TokenCore_CacheHel(var18);
             AiPhysics.MotionState var84 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var18);
             AiPhysics.MotionState var85 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(Math.min(var18 + 3, var16 - 1));
@@ -1578,7 +1578,7 @@ public final class AiPacePlayback {
             return false;
          }
 
-         if (var8 != null && (var3.onGround() || AiPaceScript.fill(var1, var3)) && !var8.test(var11)) {
+         if (var8 != null && (var3.onGround() || AiPaceScript.onClimbable(var1, var3)) && !var8.test(var11)) {
             return false;
          }
       }
@@ -1597,7 +1597,7 @@ public final class AiPacePlayback {
             return false;
          }
 
-         boolean var13 = AiPaceScript.fill(var1, var3);
+         boolean var13 = AiPaceScript.onClimbable(var1, var3);
          double var14 = Double.isFinite(var9) ? var9 : 0.75;
          if (var4.onGround()
             && var4.vy() <= 0.1
@@ -1608,7 +1608,7 @@ public final class AiPacePlayback {
             return false;
          }
 
-         if (this.putAt_TextPool_IoHelper.putAt_Z() && var5 == var6 - 1 && (var16 > 0.35 || Math.abs(var3.y() - var4.y()) > 0.15)) {
+         if (this.putAt_TextPool_IoHelper.isFinished() && var5 == var6 - 1 && (var16 > 0.35 || Math.abs(var3.y() - var4.y()) > 0.15)) {
             return false;
          }
       }
@@ -1625,7 +1625,7 @@ public final class AiPacePlayback {
    private AiPacePlayback.Inner_TableCache putAt_TableUtil_TableCac_TokenCore_TaskStat(
       AiPhysics.PhysicsWorld var1, AiPhysics.MotionState var2, double var3, AiPacePlayback.Inner_TaskState var5, boolean var6, boolean var7, boolean var8
    ) {
-      boolean var9 = var2.onGround() || AiPaceScript.fill(var1, var2);
+      boolean var9 = var2.onGround() || AiPaceScript.onClimbable(var1, var2);
       if (!var9 && var5.safeUntilTick() > this.store && var5.safeLanding() != null && var5.rebased() != null) {
          if (var6) {
             this.state_D = var3;
@@ -1704,12 +1704,12 @@ public final class AiPacePlayback {
       double var15,
       int var17
    ) {
-      int var18 = var2.flowTemp();
+      int var18 = var2.size();
       double var19 = var0.movementSpeed();
       boolean var21 = var10 == null && Math.abs(var19 - var4) > 1.0E-4;
       if (var3 >= var18) {
          BlockPos[] var61 = var2.putAt_BlockPosArr();
-         if (var17 >= 0 && var61 != null && var17 < var61.length && (var11 || var12 || var21) && var2.putAt_Z() && var18 > 0) {
+         if (var17 >= 0 && var61 != null && var17 < var61.length && (var11 || var12 || var21) && var2.isFinished() && var18 > 0) {
             int var62 = putAt_I_BlockPosArr(var61, var17, var1);
             if (var62 < var61.length) {
                for (int var63 = Math.max(0, var18 - 2); var63 < var18; var63++) {
@@ -1756,7 +1756,7 @@ public final class AiPacePlayback {
             var65 < var23
                && (
                   var65 < var22
-                     || (!var25.onGround() || !(var25.vy() <= 0.1) || !AiPaceScript.putAt_Z_TokenCore_TaskStat(var0, var25, 0.002)) && !AiPaceScript.fill(var0, var25)
+                     || (!var25.onGround() || !(var25.vy() <= 0.1) || !AiPaceScript.putAt_Z_TokenCore_TaskStat(var0, var25, 0.002)) && !AiPaceScript.onClimbable(var0, var25)
                );
             var65++
          ) {
@@ -1770,7 +1770,7 @@ public final class AiPacePlayback {
             if (var10 != null) {
                double var42 = var10.applyAsDouble(var65);
                if (Math.abs(var42 - var30) > 1.0E-9) {
-                  var29 = AiPaceScript.fill(var0, var42);
+                  var29 = AiPaceScript.withMovementSpeed(var0, var42);
                   var30 = var42;
                }
 
@@ -1786,7 +1786,7 @@ public final class AiPacePlayback {
                   );
                }
 
-               if (var8 != null && (var68.onGround() || AiPaceScript.fill(var0, var68)) && !var8.test(var43)) {
+               if (var8 != null && (var68.onGround() || AiPaceScript.onClimbable(var0, var68)) && !var8.test(var43)) {
                   return new AiPacePlayback.Inner_TaskState(
                      false, var21, var26, ((java.util.Collection<AiPhysics.MotionState>)(java.util.Collection<?>)var24).toArray(AiPhysics.MotionState[]::new), var27, "forbidden cell ahead at tick " + (var65 + 1)
                   );
@@ -1810,7 +1810,7 @@ public final class AiPacePlayback {
                   var28 = true;
                }
 
-               boolean var50 = AiPaceScript.fill(var0, var68);
+               boolean var50 = AiPaceScript.onClimbable(var0, var68);
                boolean var51 = var50 || var68.onGround() && var68.vy() <= 0.1;
                boolean var52 = var50 || var68.onGround() && var68.vy() <= 0.1 && AiPaceScript.putAt_Z_TokenCore_TaskStat(var0, var68, 0.002);
                double var53 = var69 != null ? Math.max(var47.y(), var69.y()) : var47.y();
@@ -1866,7 +1866,7 @@ public final class AiPacePlayback {
                      var27 = var68;
                   }
 
-                  if (var2.putAt_Z() && var65 == var18 - 1 && (var55 > 0.35 || Math.abs(var68.y() - var47.y()) > 0.15)) {
+                  if (var2.isFinished() && var65 == var18 - 1 && (var55 > 0.35 || Math.abs(var68.y() - var47.y()) > 0.15)) {
                      return new AiPacePlayback.Inner_TaskState(
                         false,
                         false,
@@ -1954,7 +1954,7 @@ public final class AiPacePlayback {
          }
 
          int var66 = var3 + var24.size();
-         if (var33 && var34 < var32.length && var35 >= 0 && var2.putAt_Z() && var66 >= var18) {
+         if (var33 && var34 < var32.length && var35 >= 0 && var2.isFinished() && var66 >= var18) {
             return new AiPacePlayback.Inner_TaskState(
                false,
                var21,
@@ -1985,7 +1985,7 @@ public final class AiPacePlayback {
          this.pollAt_D = var1.getY();
       }
 
-      int var2 = this.putAt_TextPool_IoHelper.flowTemp();
+      int var2 = this.putAt_TextPool_IoHelper.size();
       int var3 = Math.min(this.store + 10, var2 - 1);
       AiPhysics.MotionState var4 = this.putAt_TextPool_IoHelper.putAt_TokenCore_TableCac_I(var3);
       float var5 = AiMotionSafety.activePitchFloor();
@@ -2029,11 +2029,11 @@ public final class AiPacePlayback {
 
    static void putAt_V_LocalPlayer(LocalPlayer var0, AiPhysics.MoveInput var1, float var2) {
       Minecraft var3 = Minecraft.getInstance();
-      AiFallGuard.load();
+      AiFallGuard.stampTick();
       float var4 = var0.getYRot();
       float var5 = var0.getXRot();
       RotationMath.applyToPlayer(var0, new RotationMath.Rotation(var1.yaw(), var2), false);
-      AiCameraTurn.putAt(var0, var4, var5);
+      AiCameraTurn.recordTurn(var0, var4, var5);
       var3.options.keyUp.setDown(var1.forward() > 0.0);
       var3.options.keyDown.setDown(var1.forward() < 0.0);
       var3.options.keyLeft.setDown(var1.strafe() > 0.0);
@@ -2048,8 +2048,8 @@ public final class AiPacePlayback {
       }
    }
 
-   public AiPhysics.MotionState putAt_TokenCore_TableCac() {
-      for (int var1 = Math.max(0, this.store - 1); var1 < this.putAt_TextPool_IoHelper.flowTemp(); var1++) {
+   public AiPhysics.MotionState expectedState() {
+      for (int var1 = Math.max(0, this.store - 1); var1 < this.putAt_TextPool_IoHelper.size(); var1++) {
          AiPhysics.MotionState var2 = this.putAt_TokenCore_TableCac_I(var1);
          if (var2 != null && var2.onGround() && var2.vy() <= 0.1) {
             return var2;

@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Locale;
 
 final class AiPlaybooks {
-   private static volatile List<AiPlaybooks.Playbook> init_List = List.of();
-   private static volatile String init_Str;
+   private static volatile List<AiPlaybooks.Playbook> playbooks = List.of();
+   private static volatile String bundledText;
 
    static void load() throws IOException {
       try (InputStream in = AiPlaybooks.class.getResourceAsStream("/assets/autismclient/ai/playbooks.json")) {
@@ -35,7 +35,7 @@ final class AiPlaybooks {
             );
          }
 
-         init_List = List.copyOf(found);
+         playbooks = List.copyOf(found);
       }
    }
 
@@ -45,7 +45,7 @@ final class AiPlaybooks {
          StringBuilder result = new StringBuilder();
          int used = 0;
 
-         for (AiPlaybooks.Playbook p : init_List) {
+         for (AiPlaybooks.Playbook p : playbooks) {
             boolean hit = false;
 
             for (String keyword : p.keywords()) {
@@ -77,8 +77,8 @@ final class AiPlaybooks {
       }
    }
 
-   static int init_I() {
-      return init_List.size();
+   static int count() {
+      return playbooks.size();
    }
 
    static String load(String text, int maxCharacters) {
@@ -92,19 +92,19 @@ final class AiPlaybooks {
             return "";
          }
 
-         if (init_Str == null) {
+         if (bundledText == null) {
             try (InputStream in = AiPlaybooks.class.getResourceAsStream("/assets/autismclient/ai/addon-template.md")) {
-               init_Str = in == null ? "" : new String(in.readAllBytes(), StandardCharsets.UTF_8);
+               bundledText = in == null ? "" : new String(in.readAllBytes(), StandardCharsets.UTF_8);
             } catch (IOException e) {
-               init_Str = "";
+               bundledText = "";
             }
          }
 
-         if (init_Str.isBlank()) {
+         if (bundledText.isBlank()) {
             return "";
          }
 
-         String section = "\nADDON AUTHORING GUIDE (client-authoritative; follow it exactly when creating addons):\n" + init_Str;
+         String section = "\nADDON AUTHORING GUIDE (client-authoritative; follow it exactly when creating addons):\n" + bundledText;
          return section.length() > maxCharacters ? section.substring(0, maxCharacters) : section;
       } else {
          return "";

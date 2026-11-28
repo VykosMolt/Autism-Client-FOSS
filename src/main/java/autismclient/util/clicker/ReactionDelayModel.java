@@ -8,7 +8,7 @@ public final class ReactionDelayModel {
    private ReactionDelayModel() {
    }
 
-   public static double init(Random rng, double lowMs, double highMs, double bias, double angleDegrees) {
+   public static double sample(Random rng, double lowMs, double highMs, double bias, double angleDegrees) {
       double low = Math.max(0.0, Math.min(lowMs, highMs));
       double high = Math.max(low, Math.max(lowMs, highMs));
       if (high <= 0.0) {

@@ -34,7 +34,7 @@ final class AiDefense {
       return Math.max(0, component.blockDelayTicks() - elapsed);
    }
 
-   static int load(Minecraft mc) {
+   static int blockDelayTicks(Minecraft mc) {
       if (mc.player == null) {
          return 0;
       }
@@ -43,7 +43,7 @@ final class AiDefense {
       return component == null ? 0 : Math.max(0, component.blockDelayTicks());
    }
 
-   static boolean init(Minecraft mc, double ticksUntilImpact) {
+   static boolean shieldReadyFor(Minecraft mc, double ticksUntilImpact) {
       if (!hasShield(mc)) {
          return false;
       }
@@ -52,7 +52,7 @@ final class AiDefense {
       return remaining == 0 || ticksUntilImpact >= remaining + 2;
    }
 
-   static boolean init(Minecraft mc, Entity projectile) {
+   static boolean canBlock(Minecraft mc, Entity projectile) {
       if (hasShield(mc) && projectile != null) {
          if (projectile instanceof AbstractArrow arrow && arrow.getPierceLevel() > 0) {
             return false;
@@ -98,11 +98,11 @@ final class AiDefense {
       }
    }
 
-   static boolean load(Minecraft mc, Entity target) {
-      return init(mc, target, null);
+   static boolean canSwingAt(Minecraft mc, Entity target) {
+      return canSwingAt(mc, target, null);
    }
 
-   static boolean init(Minecraft mc, Entity target, autismclient.ai.engine.AiAim aim) {
+   static boolean canSwingAt(Minecraft mc, Entity target, autismclient.ai.engine.AiAim aim) {
       return mc.player != null
          && target != null
          && target.isAlive()

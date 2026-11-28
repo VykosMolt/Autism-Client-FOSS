@@ -137,10 +137,10 @@ final class AiCarriedShulker implements AiOperation {
    }
 
    static ItemStack init(Container inventory, Item item, List<ItemStack> tried) {
-      return init(inventory, item, tried, false);
+      return bestBoxFor(inventory, item, tried, false);
    }
 
-   static ItemStack init(Container inventory, Item item, List<ItemStack> tried, boolean requireCapacity) {
+   static ItemStack bestBoxFor(Container inventory, Item item, List<ItemStack> tried, boolean requireCapacity) {
       ItemStack best = ItemStack.EMPTY;
       int bestCount = 0;
 
@@ -490,7 +490,7 @@ final class AiCarriedShulker implements AiOperation {
          && (!ownedBoxPresent || !body.intersects(new AABB(at).expandTowards(0.0, 0.5, 0.0)))) {
          for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
-               if (level instanceof ClientLevel client && autismclient.ai.engine.AiEnvironmentHazards.init(client, at.offset(dx, 0, dz))) {
+               if (level instanceof ClientLevel client && autismclient.ai.engine.AiEnvironmentHazards.isHazardous(client, at.offset(dx, 0, dz))) {
                   return false;
                }
 
@@ -949,7 +949,7 @@ final class AiCarriedShulker implements AiOperation {
             if (this.boxEntity != null && this.boxState.getValue(ShulkerBoxBlock.FACING) == Direction.UP) {
                this.placer.reset();
                this.inventoryRevisionAtPlace = AiServerEvidence.inventoryRevision();
-               this.child = AiContainer.init(
+               this.child = AiContainer.create(
                   AiJson.objectOf(
                      "action",
                      "inspect",

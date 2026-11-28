@@ -66,13 +66,13 @@ public class AssertAction implements MacroAction {
                var10000 = GuiScreenMatcher.matches(mc.gui.screen(), guiResolution.value(), "");
                break;
             case LOOKING_AT_ENTITY:
-               var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.value());
+               var10000 = mc.crosshairPickEntity != null && this.entityMatches(mc.crosshairPickEntity, entityResolution.value());
                break;
             case LOOKING_AT_CONTAINER_ENTITY:
-               var10000 = mc.crosshairPickEntity != null && this.init(mc.crosshairPickEntity, entityResolution.value()) && this.init(mc.crosshairPickEntity);
+               var10000 = mc.crosshairPickEntity != null && this.entityMatches(mc.crosshairPickEntity, entityResolution.value()) && this.init(mc.crosshairPickEntity);
                break;
             case MOUNTED_ENTITY:
-               var10000 = mc.player != null && mc.player.getVehicle() != null && this.init(mc.player.getVehicle(), entityResolution.value());
+               var10000 = mc.player != null && mc.player.getVehicle() != null && this.entityMatches(mc.player.getVehicle(), entityResolution.value());
                break;
             case HAS_BUNDLE:
                var10000 = WaitInventoryPredicateAction.hasItem(mc, MacroItemTarget.parse("minecraft:bundle"));
@@ -113,7 +113,7 @@ public class AssertAction implements MacroAction {
       }
    }
 
-   private boolean init(Entity entity, String expected) {
+   private boolean entityMatches(Entity entity, String expected) {
       if (entity == null) {
          return false;
       } else if (expected != null && !expected.isBlank()) {

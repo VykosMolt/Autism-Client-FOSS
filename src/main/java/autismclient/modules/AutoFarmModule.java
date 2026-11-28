@@ -838,7 +838,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
          case HARVEST:
             BlockState state = MC.level.getBlockState(pos);
             if (crops.contains(state.getBlock()) && this.passesGrownFilter(state)) {
-               if (autismclient.util.FarmCropCatalog.load(state.getBlock()) && !MC.level.getBlockState(pos.below()).is(state.getBlock())) {
+               if (autismclient.util.FarmCropCatalog.isStacking(state.getBlock()) && !MC.level.getBlockState(pos.below()).is(state.getBlock())) {
                   return null;
                }
 
@@ -1015,7 +1015,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
    }
 
    private boolean init_Z_BlockPos_MutableBl_2(MutableBlockPos cursor, int x, int y, int z, Block block) {
-      return !autismclient.util.FarmCropCatalog.load(block) || MC.level.getBlockState(cursor.set(x, y - 1, z)).is(block);
+      return !autismclient.util.FarmCropCatalog.isStacking(block) || MC.level.getBlockState(cursor.set(x, y - 1, z)).is(block);
    }
 
    private void considerCandidate(
@@ -1223,7 +1223,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       BlockPos cell = ray.getBlockPos();
       BlockState state = MC.level.getBlockState(cell);
       return this.cropBlocks().contains(state.getBlock()) && this.passesGrownFilter(state)
-         ? !autismclient.util.FarmCropCatalog.load(state.getBlock()) || MC.level.getBlockState(cell.below()).is(state.getBlock())
+         ? !autismclient.util.FarmCropCatalog.isStacking(state.getBlock()) || MC.level.getBlockState(cell.below()).is(state.getBlock())
          : false;
    }
 
@@ -1304,7 +1304,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
 
    private boolean isBonemealTarget(BlockPos pos, BlockState state) {
       Block block = state.getBlock();
-      return !autismclient.util.FarmCropCatalog.load(block) && !this.isFullyGrown(state)
+      return !autismclient.util.FarmCropCatalog.isStacking(block) && !this.isFullyGrown(state)
          ? block instanceof BonemealableBlock b && Compat263.isValidBonemealTarget(b, MC.level, pos, state)
          : false;
    }
@@ -1784,7 +1784,7 @@ public final class AutoFarmModule extends Module implements SilentMovementCoordi
       BlockPos cell = ray.getBlockPos();
       BlockState state = MC.level.getBlockState(cell);
       if (this.cropBlocks().contains(state.getBlock()) && this.passesGrownFilter(state)) {
-         if (autismclient.util.FarmCropCatalog.load(state.getBlock()) && !MC.level.getBlockState(cell.below()).is(state.getBlock())) {
+         if (autismclient.util.FarmCropCatalog.isStacking(state.getBlock()) && !MC.level.getBlockState(cell.below()).is(state.getBlock())) {
             return null;
          }
 

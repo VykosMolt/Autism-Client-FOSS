@@ -4,7 +4,7 @@ public final class Utf16TextCursor {
    private Utf16TextCursor() {
    }
 
-   static int[] init(String text, Utf16TextCursor.RangeMeasurer measurer) {
+   static int[] prefixWidths(String text, Utf16TextCursor.RangeMeasurer measurer) {
       String value = text == null ? "" : text;
       int[] widths = new int[value.length() + 1];
       float running = 0.0F;

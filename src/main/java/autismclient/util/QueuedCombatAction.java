@@ -15,20 +15,20 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 
 public final class QueuedCombatAction {
-   private static QueuedCombatAction.PendingAction init;
-   private static QueuedCombatAction.PendingAction load;
+   private static QueuedCombatAction.PendingAction queued;
+   private static QueuedCombatAction.PendingAction active;
 
    private QueuedCombatAction() {
    }
 
    public static boolean queueUse(String owner, BlockHitResult hit, InteractionHand hand, BooleanSupplier legal, Runnable dispatched) {
-      if (init == null && load == null) {
+      if (queued == null && active == null) {
          QueuedCombatAction.PendingAction action = new QueuedCombatAction.PendingAction(owner, hit, hand, null, legal, dispatched);
          if (!ClientInteractionOverride.queueUseBlock(hit, hand)) {
             return false;
          }
 
-         init = action;
+         queued = action;
          return true;
       } else {
          return false;
@@ -36,13 +36,13 @@ public final class QueuedCombatAction {
    }
 
    public static boolean queueAttack(String owner, EntityHitResult hit, BooleanSupplier legal, Runnable dispatched) {
-      if (init == null && load == null) {
+      if (queued == null && active == null) {
          QueuedCombatAction.PendingAction action = new QueuedCombatAction.PendingAction(owner, null, null, hit.getEntity(), legal, dispatched);
          if (!ClientInteractionOverride.queueAttackEntity(owner, hit)) {
             return false;
          }
 
-         init = action;
+         queued = action;
          return true;
       } else {
          return false;
@@ -50,44 +50,44 @@ public final class QueuedCombatAction {
    }
 
    static void init_V() {
-      load = init;
-      init = null;
+      active = queued;
+      queued = null;
    }
 
    static boolean init_Z() {
-      return load == null || load.load();
+      return active == null || active.isReady();
    }
 
    public static boolean isQueuedOn(String owner, BlockPos support) {
-      return load != null
-         && load.owner.equals(owner)
-         && load.hit != null
-         && load.hit.getBlockPos().equals(support)
-         && load.gate.ready
-         && load.init();
+      return active != null
+         && active.owner.equals(owner)
+         && active.hit != null
+         && active.hit.getBlockPos().equals(support)
+         && active.gate.ready
+         && active.isStillValid();
    }
 
    static void load() {
-      if (init != null) {
-         init.gate.load();
+      if (queued != null) {
+         queued.gate.cancel();
       }
 
-      if (load != null) {
-         load.gate.load();
+      if (active != null) {
+         active.gate.cancel();
       }
 
-      load = null;
-      init = null;
+      active = null;
+      queued = null;
    }
 
    public static void init(String owner) {
-      if (init != null && init.owner.equals(owner) || load != null && load.owner.equals(owner)) {
+      if (queued != null && queued.owner.equals(owner) || active != null && active.owner.equals(owner)) {
          ClientInteractionOverride.clearAll();
       }
    }
 
    public static void init(Packet<?> packet) {
-      QueuedCombatAction.PendingAction action = load;
+      QueuedCombatAction.PendingAction action = active;
       if (action != null) {
          if (packet instanceof ServerboundUseItemOnPacket use
             && action.hit != null
@@ -114,7 +114,7 @@ public final class QueuedCombatAction {
       final Minecraft client = Minecraft.getInstance();
       final Object playerRef = this.client.player;
       final Object levelRef = this.client.level;
-      final Object read = this.client.getConnection();
+      final Object connection = this.client.getConnection();
       final int queuedTick = AutismSessionState.getInstance().getClientTick();
       final int selectedSlot = this.client.player.getInventory().getSelectedSlot();
       final ItemStack mainHand = this.client.player.getMainHandItem().copy();
@@ -129,23 +129,23 @@ public final class QueuedCombatAction {
          this.hit = hit;
          this.hand = hand;
          this.entity = entity;
-         this.gate = new QueuedCombatAction.DispatchGate(this::init, () -> this.read() && legal.getAsBoolean(), dispatched);
+         this.gate = new QueuedCombatAction.DispatchGate(this::isStillValid, () -> this.read() && legal.getAsBoolean(), dispatched);
       }
 
-      boolean init() {
+      boolean isStillValid() {
          Module module = autismclient.modules.al.init_Module_Str(this.owner);
-         return QueuedCombatAction.load == this
+         return QueuedCombatAction.active == this
             && module != null
             && module.isEnabled()
             && this.client.player == this.playerRef
             && this.client.level == this.levelRef
-            && this.client.getConnection() == this.read
+            && this.client.getConnection() == this.connection
             && this.queuedTick == AutismSessionState.getInstance().getClientTick()
             && this.client.gui.screen() == null
             && this.client.gui.overlay() == null;
       }
 
-      boolean load() {
+      boolean isReady() {
          return this.gate.checkReady();
       }
 
@@ -164,7 +164,7 @@ public final class QueuedCombatAction {
       final Runnable onDispatch;
       boolean ready;
       boolean committed;
-      boolean read;
+      boolean cancelled;
 
       DispatchGate(BooleanSupplier session, BooleanSupplier input, Runnable dispatched) {
          this.sessionOk = session;
@@ -173,18 +173,18 @@ public final class QueuedCombatAction {
       }
 
       boolean checkReady() {
-         return this.ready = !this.read && this.sessionOk.getAsBoolean() && this.inputOk.getAsBoolean();
+         return this.ready = !this.cancelled && this.sessionOk.getAsBoolean() && this.inputOk.getAsBoolean();
       }
 
       void dispatchIfReady() {
-         if (!this.read && !this.committed && this.ready && this.sessionOk.getAsBoolean()) {
+         if (!this.cancelled && !this.committed && this.ready && this.sessionOk.getAsBoolean()) {
             this.committed = true;
             this.onDispatch.run();
          }
       }
 
-      void load() {
-         this.read = true;
+      void cancel() {
+         this.cancelled = true;
       }
    }
 }

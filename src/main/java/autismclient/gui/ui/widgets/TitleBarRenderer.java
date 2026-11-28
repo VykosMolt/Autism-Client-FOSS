@@ -8,12 +8,12 @@ public final class TitleBarRenderer {
    private TitleBarRenderer() {
    }
 
-   public static autismclient.gui.f.NetHelper init(autismclient.gui.f.NetHelper bounds) {
+   public static autismclient.gui.f.NetHelper collapseButton(autismclient.gui.f.NetHelper bounds) {
       int size = Math.min(12, Math.max(8, bounds.sync() - 3));
       return autismclient.gui.f.NetHelper.init(bounds.read() + 2, bounds.write() + Math.max(1, (bounds.sync() - size) / 2), size, size);
    }
 
-   public static autismclient.gui.f.NetHelper load(autismclient.gui.f.NetHelper bounds) {
+   public static autismclient.gui.f.NetHelper closeButton(autismclient.gui.f.NetHelper bounds) {
       int size = Math.min(14, Math.max(10, bounds.sync() - 1));
       return autismclient.gui.f.NetHelper.init(bounds.init() - size - 2, bounds.write() + Math.max(1, (bounds.sync() - size) / 2), size, size);
    }
@@ -47,10 +47,10 @@ public final class TitleBarRenderer {
       int titleLeftInset,
       int titleRightInset
    ) {
-      init(context, bounds, title, collapsed, collapsed, collapse, close, hovered, titleLeftInset, titleRightInset);
+      render(context, bounds, title, collapsed, collapsed, collapse, close, hovered, titleLeftInset, titleRightInset);
    }
 
-   public static void init(
+   public static void render(
       autismclient.gui.f.SyncManager context,
       autismclient.gui.f.NetHelper bounds,
       String title,
@@ -65,12 +65,12 @@ public final class TitleBarRenderer {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       init(context, bounds, shapeCollapsed, hovered);
-      autismclient.gui.f.NetHelper collapseBounds = init(bounds);
+      autismclient.gui.f.NetHelper collapseBounds = collapseButton(bounds);
       if (collapse) {
          init(context, collapseBounds.init(1), collapsed, colors.textPrimary);
       }
 
-      autismclient.gui.f.NetHelper closeBounds = close ? load(bounds) : null;
+      autismclient.gui.f.NetHelper closeBounds = close ? closeButton(bounds) : null;
       int titleLeft = collapse ? collapseBounds.init() + 3 : bounds.read() + Math.max(0, titleLeftInset);
       int titleRight = close ? closeBounds.read() - 3 : bounds.init() - Math.max(0, titleRightInset);
       context.init_PoolEntry().drawEllipsized(graphics, title, titleLeft, context.init_PoolEntry().centerTextY(bounds), Math.max(1, titleRight - titleLeft), colors.textPrimary);

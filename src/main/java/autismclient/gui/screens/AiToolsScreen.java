@@ -372,8 +372,8 @@ public final class AiToolsScreen extends Screen {
    }
 
    private void applyAndClose() {
-      AiDirectOps.init(this.settings.copy());
-      AiDirectOps.init(settings -> settings.aiSilentAim = this.silentAim);
+      AiDirectOps.saveToolSettings(this.settings.copy());
+      AiDirectOps.editSettings(settings -> settings.aiSilentAim = this.silentAim);
       bi.load("AI tool settings saved");
    }
 

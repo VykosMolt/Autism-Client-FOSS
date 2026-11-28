@@ -59,18 +59,18 @@ import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.LevelStorageSource.LevelStorageAccess;
 
 public final class VanillaWorldGenBootstrap {
-   private static final Object init_Obj = new Object();
-   private static volatile VanillaWorldGenBootstrap.BootstrapState init_ConfigStore_DataUt;
+   private static final Object LOCK = new Object();
+   private static volatile VanillaWorldGenBootstrap.BootstrapState bootstrapState;
    private final long seed;
    private final ResourceKey<Level> dimension;
-   private final Provider init_HolderLookup_Provi;
-   private final RegistryAccess init_RegistryAccess;
+   private final Provider registries;
+   private final RegistryAccess registryAccess;
    private final ChunkGenerator generator;
    private final RandomState randomState;
-   private final ChunkGeneratorStructureState init_ChunkGeneratorStru;
-   private final StructureTemplateManager init_StructureTemplateM;
+   private final ChunkGeneratorStructureState structureState;
+   private final StructureTemplateManager templates;
    private final DimensionType dimensionType;
-   private final LevelHeightAccessor init_LevelHeightAccesso;
+   private final LevelHeightAccessor heightAccessor;
 
    private VanillaWorldGenBootstrap(
       long seed,
@@ -82,21 +82,21 @@ public final class VanillaWorldGenBootstrap {
    ) {
       this.seed = seed;
       this.dimension = dimension;
-      this.init_HolderLookup_Provi = bootstrap.registries();
-      this.init_RegistryAccess = bootstrap.registries();
+      this.registries = bootstrap.registries();
+      this.registryAccess = bootstrap.registries();
       this.generator = generator;
       this.randomState = randomState;
-      this.init_ChunkGeneratorStru = generator.createState(this.init_HolderLookup_Provi.lookupOrThrow(Registries.STRUCTURE_SET), randomState, seed);
-      this.init_ChunkGeneratorStru.ensureStructuresGenerated();
-      this.init_StructureTemplateM = bootstrap.templates();
+      this.structureState = generator.createState(this.registries.lookupOrThrow(Registries.STRUCTURE_SET), randomState, seed);
+      this.structureState.ensureStructuresGenerated();
+      this.templates = bootstrap.templates();
       this.dimensionType = dimensionType;
-      this.init_LevelHeightAccesso = LevelHeightAccessor.create(dimensionType.minY(), dimensionType.height());
+      this.heightAccessor = LevelHeightAccessor.create(dimensionType.minY(), dimensionType.height());
    }
 
    public static VanillaWorldGenBootstrap create(long seed, ResourceKey<Level> dimension) {
-      VanillaWorldGenBootstrap.BootstrapState bootstrap = init_ConfigStore_DataUt();
+      VanillaWorldGenBootstrap.BootstrapState bootstrap = sharedBootstrap();
       Provider lookup = bootstrap.registries();
-      ResourceKey<LevelStem> stemKey = init(dimension);
+      ResourceKey<LevelStem> stemKey = levelStemKey(dimension);
       WorldPreset preset = lookup.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.NORMAL).value();
       LevelStem stem = preset.createWorldDimensions().dimensions().get(stemKey);
       if (stem == null) {
@@ -105,11 +105,11 @@ public final class VanillaWorldGenBootstrap {
 
       ChunkGenerator generator = stem.generator();
       DimensionType dimensionType = stem.type().value();
-      RandomState randomState = init(generator, lookup, seed);
+      RandomState randomState = createRandomState(generator, lookup, seed);
       return new VanillaWorldGenBootstrap(seed, dimension, bootstrap, generator, randomState, dimensionType);
    }
 
-   private static RandomState init(ChunkGenerator generator, Provider lookup, long seed) {
+   private static RandomState createRandomState(ChunkGenerator generator, Provider lookup, long seed) {
       if (generator instanceof NoiseBasedChunkGenerator noise) {
          NoiseGeneratorSettings settings = noise.generatorSettings().value();
          return RandomState.create(lookup.lookupOrThrow(Registries.NOISE), seed, settings);
@@ -118,7 +118,7 @@ public final class VanillaWorldGenBootstrap {
       }
    }
 
-   private static ResourceKey<LevelStem> init(ResourceKey<Level> dimension) {
+   private static ResourceKey<LevelStem> levelStemKey(ResourceKey<Level> dimension) {
       if (Level.OVERWORLD.equals(dimension)) {
          return LevelStem.OVERWORLD;
       } else if (Level.NETHER.equals(dimension)) {
@@ -130,28 +130,28 @@ public final class VanillaWorldGenBootstrap {
       }
    }
 
-   private static VanillaWorldGenBootstrap.BootstrapState init_ConfigStore_DataUt() {
-      VanillaWorldGenBootstrap.BootstrapState bootstrap = init_ConfigStore_DataUt;
+   private static VanillaWorldGenBootstrap.BootstrapState sharedBootstrap() {
+      VanillaWorldGenBootstrap.BootstrapState bootstrap = bootstrapState;
       if (bootstrap != null) {
          return bootstrap;
       }
 
-      synchronized (init_Obj) {
-         if (init_ConfigStore_DataUt == null) {
-            init_ConfigStore_DataUt = load();
+      synchronized (LOCK) {
+         if (bootstrapState == null) {
+            bootstrapState = createBootstrap();
          }
 
-         return init_ConfigStore_DataUt;
+         return bootstrapState;
       }
    }
 
-   private static VanillaWorldGenBootstrap.BootstrapState load() {
+   private static VanillaWorldGenBootstrap.BootstrapState createBootstrap() {
       VanillaPackResources vanilla = ServerPacksSource.createVanillaPackSource();
       CloseableResourceManager resources = new MultiPackResourceManager(PackType.SERVER_DATA, List.of(vanilla.fullResources()));
       Executor direct = Runnable::run;
       LayeredRegistryAccess<RegistryLayer> initial = RegistryLayer.createRegistryAccess();
       List<PendingTags<?>> staticTags = TagLoader.loadTagsForExistingRegistries(resources, initial.getLayer(RegistryLayer.STATIC));
-      Map<Identifier, List<Identifier>> vanillaBlockTags = init(staticTags);
+      Map<Identifier, List<Identifier>> vanillaBlockTags = blockTagsFromPending(staticTags);
       List<RegistryLookup<?>> worldgenContext = TagLoader.buildUpdatedLookups(initial.getAccessForLoading(RegistryLayer.WORLD), staticTags);
       Frozen worldgen = RegistryDataLoader.load(resources, worldgenContext, RegistryDataLoader.WORLD_REGISTRIES, direct).join();
       List<RegistryLookup<?>> dimensionContext = Stream.concat(worldgenContext.stream(), worldgen.listRegistries()).toList();
@@ -174,22 +174,22 @@ public final class VanillaWorldGenBootstrap {
       }
    }
 
-   private static Map<Identifier, List<Identifier>> init(List<PendingTags<?>> pendingTags) {
+   private static Map<Identifier, List<Identifier>> blockTagsFromPending(List<PendingTags<?>> pendingTags) {
       PendingTags<Block> vanillaBlocks = (PendingTags<Block>)pendingTags.stream()
          .filter(tags -> tags.key().equals(Registries.BLOCK))
          .findFirst()
          .orElseThrow(() -> new IllegalStateException("Vanilla datapack supplied no block tags"));
-      Map<Identifier, List<Identifier>> expected = init(vanillaBlocks.lookup());
-      Map<Identifier, List<Identifier>> current = init(BuiltInRegistries.BLOCK);
+      Map<Identifier, List<Identifier>> expected = blockTags(vanillaBlocks.lookup());
+      Map<Identifier, List<Identifier>> current = blockTags(BuiltInRegistries.BLOCK);
       if (current.isEmpty()) {
          pendingTags.forEach(PendingTags::apply);
-         current = init(BuiltInRegistries.BLOCK);
+         current = blockTags(BuiltInRegistries.BLOCK);
       }
 
       return Map.copyOf(expected);
    }
 
-   private static Map<Identifier, List<Identifier>> init(RegistryLookup<Block> lookup) {
+   private static Map<Identifier, List<Identifier>> blockTags(RegistryLookup<Block> lookup) {
       Map<Identifier, List<Identifier>> result = new TreeMap<>();
 
       try {
@@ -214,11 +214,11 @@ public final class VanillaWorldGenBootstrap {
    }
 
    public Provider registries() {
-      return this.init_HolderLookup_Provi;
+      return this.registries;
    }
 
    public RegistryAccess registryAccess() {
-      return this.init_RegistryAccess;
+      return this.registryAccess;
    }
 
    public ChunkGenerator chunkGenerator() {
@@ -238,17 +238,17 @@ public final class VanillaWorldGenBootstrap {
    }
 
    public ChunkGeneratorStructureState structureState() {
-      return this.init_ChunkGeneratorStru;
+      return this.structureState;
    }
 
    public StructureTemplateManager structureTemplates() {
-      return this.init_StructureTemplateM;
+      return this.templates;
    }
 
    public boolean init_Z() {
-      Map<Identifier, List<Identifier>> current = init(BuiltInRegistries.BLOCK);
+      Map<Identifier, List<Identifier>> current = blockTags(BuiltInRegistries.BLOCK);
 
-      for (Entry<Identifier, List<Identifier>> entry : init_ConfigStore_DataUt.vanillaBlockTags().entrySet()) {
+      for (Entry<Identifier, List<Identifier>> entry : bootstrapState.vanillaBlockTags().entrySet()) {
          if (!entry.getValue().equals(current.get(entry.getKey()))) {
             return false;
          }
@@ -262,11 +262,11 @@ public final class VanillaWorldGenBootstrap {
    }
 
    public LevelHeightAccessor heightAccessor() {
-      return this.init_LevelHeightAccesso;
+      return this.heightAccessor;
    }
 
    public PalettedContainerFactory paletteFactory() {
-      final List<Reference<Biome>> biomes = this.init_HolderLookup_Provi.lookupOrThrow(Registries.BIOME).listElements().toList();
+      final List<Reference<Biome>> biomes = this.registries.lookupOrThrow(Registries.BIOME).listElements().toList();
       final Map<Holder<Biome>, Integer> ids = new IdentityHashMap<>();
 
       for (int i = 0; i < biomes.size(); i++) {
@@ -275,19 +275,19 @@ public final class VanillaWorldGenBootstrap {
 
       IdMap<Holder<Biome>> biomeIds = new IdMap<Holder<Biome>>() {
          public int getId(Holder<Biome> value) {
-            return this.init(value);
+            return this.idOf(value);
          }
 
          public Holder<Biome> byId(int id) {
-            return this.init(id);
+            return this.holderAt(id);
          }
 
-         public int init(Holder<Biome> value) {
+         public int idOf(Holder<Biome> value) {
             Integer id = ids.get(value);
             return id == null ? -1 : id;
          }
 
-         public Holder<Biome> init(int id) {
+         public Holder<Biome> holderAt(int id) {
             return id >= 0 && id < biomes.size() ? biomes.get(id) : null;
          }
 
@@ -303,7 +303,7 @@ public final class VanillaWorldGenBootstrap {
       };
       Strategy<BlockState> blockStrategy = Strategy.createForBlockStates(Block.BLOCK_STATE_REGISTRY);
       BlockState defaultBlock = Blocks.AIR.defaultBlockState();
-      Holder<Biome> defaultBiome = this.init_HolderLookup_Provi.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS);
+      Holder<Biome> defaultBiome = this.registries.lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS);
       return new PalettedContainerFactory(blockStrategy, defaultBlock, null, Strategy.createForBiomes(biomeIds), defaultBiome, null);
    }
 

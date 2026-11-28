@@ -392,7 +392,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             int offset = firstLine ? prefixWidth : safeContinuationOffset;
             int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.availableWidth(maxWidth, offset);
             String current = remaining;
-            int split = autismclient.gui.ui.TextWrapLayout.init(
+            int split = autismclient.gui.ui.TextWrapLayout.breakIndex(
                current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
             );
             String part = remaining.substring(0, split).stripTrailing();
@@ -415,7 +415,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
             while (!remaining.isEmpty()) {
                int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.availableWidth(maxWidth, safeOffset);
                String current = remaining;
-               int split = autismclient.gui.ui.TextWrapLayout.init(
+               int split = autismclient.gui.ui.TextWrapLayout.breakIndex(
                   current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
                );
                String part = remaining.substring(0, split).stripTrailing();
@@ -752,7 +752,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
       }
 
       AutismPayloadSupport.PayloadEntry payload = AutismPayloadSupport.resolveEntryPayload(entry);
-      PacketWireCaptureStore.PacketCapture packet = PacketWireCaptureStore.init(entry.packet);
+      PacketWireCaptureStore.PacketCapture packet = PacketWireCaptureStore.captureFor(entry.packet);
       byte[] payloadBytes = payload == null ? new byte[0] : payload.rawBytes();
       byte[] packetBytes = packet == null ? new byte[0] : packet.plaintext();
       if (payloadBytes.length == 0 && packetBytes.length == 0) {
@@ -1027,7 +1027,7 @@ public class AutismPacketInspectOverlay extends DraggableOverlayWindow {
          return true;
       }
 
-      PacketWireCaptureStore.PacketCapture packet = PacketWireCaptureStore.init(entry.packet);
+      PacketWireCaptureStore.PacketCapture packet = PacketWireCaptureStore.captureFor(entry.packet);
       return packet != null && packet.plaintext().length > 0;
    }
 

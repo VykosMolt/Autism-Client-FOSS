@@ -42,12 +42,12 @@ public final class RemoteViewController {
          }
 
          if (isActive() && player.getUUID().equals(init_UUID)) {
-            init(false);
+            stop(false);
             return new RemoteViewController.Inner_DataUtil(true, "Remote view stopped.");
          }
 
          if (isActive()) {
-            init(false);
+            stop(false);
          }
 
          init_CameraType = mc.options.getCameraType();
@@ -64,7 +64,7 @@ public final class RemoteViewController {
       }
    }
 
-   public static void init(boolean notify) {
+   public static void stop(boolean notify) {
       Minecraft mc = Minecraft.getInstance();
       Player oldTarget = init_Player;
       String oldName = init_Str;
@@ -100,7 +100,7 @@ public final class RemoteViewController {
             || current.isRemoved()
             || !current.getUUID().equals(init_UUID)
             || mc.getCameraEntity() != current) {
-            init(true);
+            stop(true);
          }
       }
    }
@@ -117,7 +117,7 @@ public final class RemoteViewController {
       return multiPilot != null ? multiPilot : init_Player();
    }
 
-   public static Entity init(Minecraft mc) {
+   public static Entity swapCamera(Minecraft mc) {
       Player current = init_Player();
       if (current != null && mc != null && mc.player != null && mc.getCameraEntity() == current) {
          mc.setCameraEntity(mc.player);
@@ -127,7 +127,7 @@ public final class RemoteViewController {
       }
    }
 
-   public static void init(Minecraft mc, Entity restore) {
+   public static void restoreCamera(Minecraft mc, Entity restore) {
       if (mc != null && restore != null && isActive() && restore == init_Player && !restore.isRemoved() && mc.getCameraEntity() == mc.player) {
          mc.setCameraEntity(restore);
       }

@@ -337,7 +337,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
          packets.remove(packetClass);
       }
 
-      String encoded = PacketFilterListCodec.init(packets);
+      String encoded = PacketFilterListCodec.encode(packets);
       if (this.isTitleSetup()) {
          module.setConfiguredValue(option.id(), encoded);
       } else {
@@ -935,7 +935,7 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
       }
 
       @Override
-      public void load() {
+      public void saveConfig() {
          AutismConfig.getGlobal().save();
       }
 
@@ -962,11 +962,11 @@ public class AutismModulesScreen extends VirtualScaledScreen implements autismcl
 
       @Override
       public void write(Module module, Setting<?, ?> option) {
-         this.init(module, option, null);
+         this.openMacroEditor(module, option, null);
       }
 
       @Override
-      public void init(Module module, Setting<?, ?> option, AutismMacro macro) {
+      public void openMacroEditor(Module module, Setting<?, ?> option, AutismMacro macro) {
          AutismMacroEditorOverlay editor = AutismMacroEditorOverlay.getInstance();
          if (editor != null) {
             editor.setConfigurationOnly(AutismModulesScreen.this.isTitleSetup());

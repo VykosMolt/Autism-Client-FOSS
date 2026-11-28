@@ -752,7 +752,7 @@ final class AiBarter {
                      armor.add(stack.isEmpty() ? "minecraft:air" : BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
                   }
 
-                  return AiDimension.init(armor);
+                  return AiDimension.wearsGold(armor);
                }
 
                int goldSlot() {

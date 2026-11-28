@@ -23,13 +23,13 @@ public final class FireballBlastPredictor {
    private static final int init_I = 1;
    private static final double[][] RAYS = buildRays();
    private final Map<UUID, FireballBlastPredictor.SavedBlast> savedById = new HashMap<>();
-   private FireballBlastPredictor.SavedBlast init_x_StreamUtil;
+   private FireballBlastPredictor.SavedBlast savedBlast;
    private Level level;
    private long tick = -9223372036854775808L;
 
    void reset() {
       this.savedById.clear();
-      this.init_x_StreamUtil = null;
+      this.savedBlast = null;
       this.level = null;
       this.tick = -9223372036854775808L;
    }
@@ -37,14 +37,14 @@ public final class FireballBlastPredictor {
    List<FireballBlastPredictor.DestroyedBlock> predictAt(Level level, Vec3 center) {
       if (level != null && center != null) {
          long tick = level.getGameTime();
-         boolean same = this.level == level && this.init_x_StreamUtil != null && this.init_x_StreamUtil.center.equals(center);
-         if (!same || tick != this.tick && !init(this.init_x_StreamUtil, level, center)) {
-            this.init_x_StreamUtil = init_x_StreamUtil_Level_Vec3(level, center);
+         boolean same = this.level == level && this.savedBlast != null && this.savedBlast.center.equals(center);
+         if (!same || tick != this.tick && !init(this.savedBlast, level, center)) {
+            this.savedBlast = computeBlast(level, center);
          }
 
          this.level = level;
          this.tick = tick;
-         return this.init_x_StreamUtil.blocks;
+         return this.savedBlast.blocks;
       } else {
          this.reset();
          return List.of();
@@ -80,7 +80,7 @@ public final class FireballBlastPredictor {
 
                this.savedById.remove(id);
                if (calculations++ < 2) {
-                  saved = init_x_StreamUtil_Level_Vec3(level, center);
+                  saved = computeBlast(level, center);
                   this.savedById.put(id, saved);
                   break;
                }
@@ -103,7 +103,7 @@ public final class FireballBlastPredictor {
             .allMatch(entry -> isLoadedPos(level, entry.getKey()) && level.getBlockState(entry.getKey()) == entry.getValue());
    }
 
-   private static FireballBlastPredictor.SavedBlast init_x_StreamUtil_Level_Vec3(Level level, Vec3 center) {
+   private static FireballBlastPredictor.SavedBlast computeBlast(Level level, Vec3 center) {
       Map<BlockPos, BlockState> states = new HashMap<>();
       HashSet<BlockPos> unavailable = new HashSet<>();
       List<FireballBlastPredictor.DestroyedBlock> blocks = init(pos -> {
@@ -153,12 +153,12 @@ public final class FireballBlastPredictor {
                }
 
                FireballBlastPredictor.CellResistance cell = cells.get(key);
-               if (cell == null || !Float.isFinite(cell.init_F)) {
+               if (cell == null || !Float.isFinite(cell.resistance)) {
                   break;
                }
 
-               if (cell.init_F >= 0.0F) {
-                  float loss = (cell.init_F + 0.3F) * 0.3F;
+               if (cell.resistance >= 0.0F) {
+                  float loss = (cell.resistance + 0.3F) * 0.3F;
                   remaining -= loss;
                   cost += loss;
                }
@@ -214,7 +214,7 @@ public final class FireballBlastPredictor {
       FireballBlastPredictor.CellResistance cell(BlockPos var1);
    }
 
-   record CellResistance(float init_F, boolean init_Z) {
+   record CellResistance(float resistance, boolean init_Z) {
    }
 
    public record DestroyedBlock(BlockPos pos, double init_D) {

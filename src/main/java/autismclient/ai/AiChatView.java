@@ -79,7 +79,7 @@ final class AiChatView {
       return this.view.settings.builtIn ? this.actionMenu.searchInput : this.input;
    }
 
-   boolean init_Z_I_BitSetUtil(int key, autismclient.gui.ui.widgets.TextInputWidget focused) {
+   boolean handleKey(int key, autismclient.gui.ui.widgets.TextInputWidget focused) {
       return this.view.settings.builtIn && (focused == null || this.actionMenu.inputs().contains(focused))
          ? this.actionMenu.handleKey(key, focused != null)
          : false;
@@ -89,7 +89,7 @@ final class AiChatView {
       return this.view.settings.builtIn && (this.init_Z || this.actionMenu.isOpen());
    }
 
-   boolean load_Z() {
+   boolean back() {
       if (!this.view.settings.builtIn) {
          return false;
       } else if (this.init_Z) {
@@ -109,11 +109,11 @@ final class AiChatView {
       }
    }
 
-   autismclient.gui.ui.widgets.TextInputWidget init_BitSetUtil_C(char c) {
+   autismclient.gui.ui.widgets.TextInputWidget inputForChar(char c) {
       return this.view.settings.builtIn ? this.actionMenu.inputForChar(c) : null;
    }
 
-   autismclient.gui.f.NetHelper init_NetHelper() {
+   autismclient.gui.f.NetHelper transcriptRect() {
       return this.transcriptArea;
    }
 
@@ -323,7 +323,7 @@ final class AiChatView {
 
             int contentW = Math.max(40, v.update() - 6 - 3);
             AiTranscriptLayout.LayoutMetrics m = this.transcriptMetrics(kit);
-            this.transcriptLayout.init(this.view.transcript, contentW, textEpoch(), m, this.expandedOverrides, this.layoutRevision, this.textMeasurer);
+            this.transcriptLayout.layout(this.view.transcript, contentW, textEpoch(), m, this.expandedOverrides, this.layoutRevision, this.textMeasurer);
             boolean live = this.view.isWorking();
             int liveH = AiUiKit.lineHeight() + 2;
             int liveY = this.transcriptLayout.height() + (this.transcriptLayout.height() > 0 ? m.blockGap() : 0);
@@ -813,8 +813,8 @@ final class AiChatView {
          String draftSession = this.lastSessionId;
          CompletableFuture.<AiAttachments.Inner_DataUtil>supplyAsync(() -> {
             try {
-               String path = AiAttachments.init();
-               return path != null && !path.isBlank() ? AiAttachments.init(Path.of(path), AiSchematic.directory()) : null;
+               String path = AiAttachments.pickFile();
+               return path != null && !path.isBlank() ? AiAttachments.attach(Path.of(path), AiSchematic.directory()) : null;
             } catch (Exception e) {
                throw new CompletionException(e);
             }
@@ -844,7 +844,7 @@ final class AiChatView {
       return this.planModeTogglePending ? this.pendingPlanMode : this.view.settings.planMode;
    }
 
-   void init_V() {
+   void togglePlanMode() {
       if (!this.view.settings.builtIn) {
          boolean next = !this.isPlanModeShown();
          this.planModeTogglePending = true;
@@ -862,10 +862,10 @@ final class AiChatView {
       boolean on = this.isPlanModeShown();
       String label = on ? "Plan" : "Act";
       autismclient.gui.f.NetHelper chip = autismclient.gui.f.NetHelper.init(x, s.write() + (s.sync() - AiUiKit.rowHeight()) / 2, kit.measureTextWidth(label) + 10, AiUiKit.rowHeight());
-      autismclient.gui.ui.widgets.PillBadgeRenderer.init(kit.renderContext, chip, label, on ? -14249 : kit.colors.accent, on, kit.isHovered(chip));
+      autismclient.gui.ui.widgets.PillBadgeRenderer.render(kit.renderContext, chip, label, on ? -14249 : kit.colors.accent, on, kit.isHovered(chip));
       kit.addInteractiveRegion(
          chip,
-         this::init_V,
+         this::togglePlanMode,
          null,
          on
             ? "Plan mode: the assistant only researches and proposes a plan you approve first. Shift+Tab switches to act mode."
@@ -891,7 +891,7 @@ final class AiChatView {
          } else if (this.view.awaitingPlanApproval) {
             this.sync();
          } else {
-            String text = AiAttachments.init(this.input.getValue().isBlank() ? "" : this.takeComposerInput(), this.attachments);
+            String text = AiAttachments.composeMessage(this.input.getValue().isBlank() ? "" : this.takeComposerInput(), this.attachments);
             this.attachments.clear();
             this.service.submitPrompt(text);
             this.transcriptScroll.scrollToBottom();
@@ -906,7 +906,7 @@ final class AiChatView {
          if (text == null) {
             this.host.focusInput(this.input);
          } else {
-            this.service.enqueueObjective(AiAttachments.init(text, this.attachments));
+            this.service.enqueueObjective(AiAttachments.composeMessage(text, this.attachments));
             this.attachments.clear();
             autismclient.util.bi.load("Queued as the next objective");
             this.view.invalidate();

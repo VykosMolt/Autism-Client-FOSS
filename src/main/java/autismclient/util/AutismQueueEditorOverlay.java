@@ -776,7 +776,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
                }
 
                if (this.displayedQueue.isEmpty()) {
-                  ThemedTextHelper.init(
+                  ThemedTextHelper.drawTone(
                      context,
                      this.font,
                      "Queue empty",
@@ -1124,7 +1124,7 @@ public class AutismQueueEditorOverlay extends DraggableOverlayWindow {
    }
 
    private void drawTooltip(GuiGraphicsExtractor ctx, String text, int x, int y) {
-      TooltipRenderer.init(autismclient.gui.f.UiHelper.init(ctx, this.font, x, y), text, x, y, 200);
+      TooltipRenderer.render(autismclient.gui.f.UiHelper.init(ctx, this.font, x, y), text, x, y, 200);
    }
 
    private void bumpDelays(int increment) {

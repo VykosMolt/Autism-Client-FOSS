@@ -38,7 +38,7 @@ public final class AutoLoginDriver {
       this.host = host;
    }
 
-   public void init(AutoLoginTimings newConfig) {
+   public void setTimings(AutoLoginTimings newConfig) {
       if (newConfig != null) {
          this.newConfig = newConfig;
       }
@@ -49,8 +49,8 @@ public final class AutoLoginDriver {
       this.init_J = now == 0L ? 1L : now;
    }
 
-   public void init(String line) {
-      AuthPromptParser.AuthPrompt detection = AuthPromptParser.init(line);
+   public void onChat(String line) {
+      AuthPromptParser.AuthPrompt detection = AuthPromptParser.parse(line);
       if (detection.kind() != AuthPromptParser.PromptKind.NONE) {
          this.detection = detection;
       }
@@ -69,7 +69,7 @@ public final class AutoLoginDriver {
       return this.init_I;
    }
 
-   public void load(long now) {
+   public void tick(long now) {
       this.init_V();
       if (this.init_CachePool_DataUtil != AutoLoginDriver.Inner_DataUtil.IDLE && !this.init_Z()) {
          if (now - this.load_J >= this.newConfig.giveUpMs()) {
@@ -108,7 +108,7 @@ public final class AutoLoginDriver {
          return false;
       }
 
-      if (this.host.read()) {
+      if (this.host.isBusy()) {
          return true;
       }
 
@@ -138,8 +138,8 @@ public final class AutoLoginDriver {
       CustomMenuButton button;
       Map<String, String> values;
       try {
-         CustomMenuButton accept = hasText ? null : CustomMenuActionPlanner.init(snapshot.buttons());
-         button = accept != null ? accept : CustomMenuActionPlanner.read(snapshot.buttons());
+         CustomMenuButton accept = hasText ? null : CustomMenuActionPlanner.acceptButton(snapshot.buttons());
+         button = accept != null ? accept : CustomMenuActionPlanner.fallbackButton(snapshot.buttons());
          if (button == null) {
             this.update = now + this.newConfig.write();
             return true;
@@ -155,7 +155,7 @@ public final class AutoLoginDriver {
          return true;
       }
 
-      if (!this.host.init(snapshot, new CustomMenuSubmission(values, button))) {
+      if (!this.host.submit(snapshot, new CustomMenuSubmission(values, button))) {
          this.update = now + this.newConfig.write();
          return true;
       }
@@ -187,9 +187,9 @@ public final class AutoLoginDriver {
                      String password = this.host.password();
                      if (password.isEmpty()) {
                         this.load("AuthMe login");
-                     } else if (this.host.load()) {
+                     } else if (this.host.hasConnection()) {
                         this.detection = AuthPromptParser.AuthPrompt.NONE;
-                        if (!this.host.sendCommand(detection.init(password))) {
+                        if (!this.host.sendCommand(detection.loginCommand(password))) {
                            this.detection = detection;
                            this.write = now + 250L;
                         } else {
@@ -225,7 +225,7 @@ public final class AutoLoginDriver {
          this.load();
       } else {
          String password = this.host.password();
-         if (!password.isEmpty() && this.host.load()) {
+         if (!password.isEmpty() && this.host.hasConnection()) {
             String token = AuthPromptParser.init(this.init_Str, this.load_Str);
             if (!this.host.sendCommand(token + " " + password)) {
                this.init_Z = true;
@@ -252,7 +252,7 @@ public final class AutoLoginDriver {
    private void load(String context) {
       if (!this.read_Z) {
          this.read_Z = true;
-         this.host.load(context == null ? "" : context);
+         this.host.onMissingPassword(context == null ? "" : context);
       }
    }
 

@@ -28,14 +28,14 @@ public final class PlacedBlockTrailRenderer {
    private PlacedBlockTrailRenderer() {
    }
 
-   public static void init(boolean enabled, boolean custom, int customArgb) {
-      init(PlacedBlockTrailRenderer.Inner_DataUtil.SCAFFOLD, enabled, custom, customArgb);
+   public static void configure(boolean enabled, boolean custom, int customArgb) {
+      configure(PlacedBlockTrailRenderer.Inner_DataUtil.SCAFFOLD, enabled, custom, customArgb);
    }
 
-   public static void init(PlacedBlockTrailRenderer.Inner_DataUtil source, boolean enabled, boolean custom, int customArgb) {
+   public static void configure(PlacedBlockTrailRenderer.Inner_DataUtil source, boolean enabled, boolean custom, int customArgb) {
       STYLES[source.ordinal()] = new PlacedBlockTrailRenderer.Inner_StreamUtil(enabled, custom, customArgb);
       if (!enabled) {
-         load(source);
+         clearSource(source);
       }
    }
 
@@ -45,10 +45,10 @@ public final class PlacedBlockTrailRenderer {
 
    public static void recordPlacement(PlacedBlockTrailRenderer.Inner_DataUtil source) {
       PlacedBlockTrailRenderer.Inner_StreamUtil style = STYLES[source.ordinal()];
-      init(source, false, style.load(), style.argb());
+      configure(source, false, style.load(), style.argb());
    }
 
-   public static void load(PlacedBlockTrailRenderer.Inner_DataUtil source) {
+   public static void clearSource(PlacedBlockTrailRenderer.Inner_DataUtil source) {
       for (int i = 0; i < 32; i++) {
          if (SOURCES[i] == source) {
             PLACED_AT[i] = 0L;
@@ -56,11 +56,11 @@ public final class PlacedBlockTrailRenderer {
       }
    }
 
-   public static void init(BlockPos pos) {
-      init(PlacedBlockTrailRenderer.Inner_DataUtil.SCAFFOLD, pos);
+   public static void mark(BlockPos pos) {
+      mark(PlacedBlockTrailRenderer.Inner_DataUtil.SCAFFOLD, pos);
    }
 
-   public static void init(PlacedBlockTrailRenderer.Inner_DataUtil source, BlockPos pos) {
+   public static void mark(PlacedBlockTrailRenderer.Inner_DataUtil source, BlockPos pos) {
       PlacedBlockTrailRenderer.Inner_StreamUtil style = STYLES[source.ordinal()];
       if (style.enabled() && pos != null) {
          XS[nextIndex] = pos.getX();
@@ -106,7 +106,7 @@ public final class PlacedBlockTrailRenderer {
       return latest;
    }
 
-   public static void load() {
+   public static void register() {
       LevelRenderEvents.COLLECT_SUBMITS
          .register(
             context -> {

@@ -38,7 +38,7 @@ final class AiDodge {
    private AiDodge() {
    }
 
-   static boolean init(Minecraft mc, boolean moving) {
+   static boolean hasImminentThreat(Minecraft mc, boolean moving) {
       if (mc.player == null) {
          return false;
       }
@@ -57,7 +57,7 @@ final class AiDodge {
       return t.secondsToClosest() >= 0.0 && t.secondsToClosest() <= 1.2 && distance <= 5.0;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation dodge(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final boolean deflect = AiJson.getBoolean(args, "deflect", true);
@@ -227,7 +227,7 @@ final class AiDodge {
                            if (this.mc.player.tickCount - this.lastSwingTick >= 4
                               && blockRay.getType() == Type.MISS
                               && fireball.getBoundingBox().distanceToSqr(eye) <= reach * reach
-                              && AiDefense.load(this.mc, fireball)) {
+                              && AiDefense.canSwingAt(this.mc, fireball)) {
                               this.mc.gameMode.attack(this.mc.player, fireball);
                               this.swungFireballs.add(fireball.getId());
                               this.lastSwingTick = this.mc.player.tickCount;
@@ -246,8 +246,8 @@ final class AiDodge {
                      }
 
                      if (shieldOk
-                        && AiDefense.init(this.mc, this.mc.level.getEntity(dominant.entityId()))
-                        && AiDefense.init(this.mc, dominant.secondsToClosest() * 20.0)
+                        && AiDefense.canBlock(this.mc, this.mc.level.getEntity(dominant.entityId()))
+                        && AiDefense.shieldReadyFor(this.mc, dominant.secondsToClosest() * 20.0)
                         && this.canShieldAll(dominant, threats)) {
                         this.releaseKeys();
                         this.aim.aimAt(new Vec3(dominant.x(), dominant.y(), dominant.z()));
@@ -335,7 +335,7 @@ final class AiDodge {
                         double forward = -candidate.x * Math.sin(yaw) + candidate.z * Math.cos(yaw);
                         double strafe = candidate.x * Math.cos(yaw) + candidate.z * Math.sin(yaw);
                         int travelTicks = Math.max(1, Math.min(12, (int)Math.ceil(dominant.secondsToClosest() * 20.0)));
-                        AABB landing = autismclient.ai.engine.AiCombatMotion.init(this.mc, forward, strafe, travelTicks);
+                        AABB landing = autismclient.ai.engine.AiCombatMotion.predictEndBox(this.mc, forward, strafe, travelTicks);
                         if (landing != null) {
                            Vec3 displacement = landing.getCenter().subtract(this.mc.player.getBoundingBox().getCenter());
                            boolean contact = false;
@@ -377,7 +377,7 @@ final class AiDodge {
                Vec3 facing = new Vec3(main.x() - this.mc.player.getX(), 0.0, main.z() - this.mc.player.getZ()).normalize();
 
                for (AiProjectiles.IncomingProjectile shot : threats) {
-                  if (!AiDefense.init(this.mc, this.mc.level.getEntity(shot.entityId()))) {
+                  if (!AiDefense.canBlock(this.mc, this.mc.level.getEntity(shot.entityId()))) {
                      return false;
                   }
 

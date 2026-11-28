@@ -159,7 +159,7 @@ public final class AiExcavate {
       return var10000;
    }
 
-   public static boolean init(AiExcavate.Inner_BufferHelper lava, int x, int y, int z) {
+   public static boolean touchesLava(AiExcavate.Inner_BufferHelper lava, int x, int y, int z) {
       for (int[] d : NEIGHBOR_OFFSETS) {
          if (lava.test(x + d[0], y + d[1], z + d[2])) {
             return true;
@@ -169,7 +169,7 @@ public final class AiExcavate {
       return false;
    }
 
-   public static AiOperation init(JsonObject args) {
+   public static AiOperation mineArea(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player == null || client.level == null) {
          throw new IllegalArgumentException("Excavation requires a connected living player");
@@ -211,7 +211,7 @@ public final class AiExcavate {
       }
    }
 
-   public static AiOperation load(JsonObject args) {
+   public static AiOperation dig(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          String shape = AiJson.getString(args, "shape", "");
@@ -371,7 +371,7 @@ public final class AiExcavate {
                this.cancel();
                return AiOperation.Result.failed(
                   AiFailure.LOW_HEALTH,
-                  AiLowHealth.init("excavation", this.mc.player.getHealth(), this.mc.player.getMaxHealth()),
+                  AiLowHealth.refusalMessage("excavation", this.mc.player.getHealth(), this.mc.player.getMaxHealth()),
                   this.statusJson().toString()
                );
             }
@@ -483,7 +483,7 @@ public final class AiExcavate {
                   if (!probe.loaded()) {
                      this.orderCursor.defer(cell);
                   } else if (!this.stateAt(cell).isAir()) {
-                     if (AiExcavate.init((x, y, z) -> this.classifyCell(new BlockPos(x, y, z)).lava(), cell.getX(), cell.getY(), cell.getZ())) {
+                     if (AiExcavate.touchesLava((x, y, z) -> this.classifyCell(new BlockPos(x, y, z)).lava(), cell.getX(), cell.getY(), cell.getZ())) {
                         if (this.stair != null) {
                            return this.fail("Lava beside the staircase", AiFailure.LAVA_DETECTED);
                         }

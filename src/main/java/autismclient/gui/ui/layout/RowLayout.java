@@ -18,7 +18,7 @@ public class RowLayout extends LayoutContainer {
       this.sync = 0.0F;
    }
 
-   public RowLayout init(EdgeInsets padding) {
+   public RowLayout padding(EdgeInsets padding) {
       EdgeInsets next = padding == null ? EdgeInsets.ZERO : padding;
       if (!this.init_IoWorker.equals(next)) {
          this.init_IoWorker = next;
@@ -28,7 +28,7 @@ public class RowLayout extends LayoutContainer {
       return this;
    }
 
-   public RowLayout init(int gap) {
+   public RowLayout gap(int gap) {
       int next = Math.max(0, gap);
       if (this.init_I != next) {
          this.init_I = next;

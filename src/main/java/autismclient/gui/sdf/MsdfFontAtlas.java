@@ -164,7 +164,7 @@ public final class MsdfFontAtlas {
       return true;
    }
 
-   public float init(String text, float size) {
+   public float width(String text, float size) {
       float width = 0.0F;
       int i = 0;
 
@@ -234,16 +234,16 @@ public final class MsdfFontAtlas {
       return text.substring(0, end);
    }
 
-   public String load(String text, float size, float maxWidth) {
+   public String fit(String text, float size, float maxWidth) {
       if (text != null && !text.isEmpty() && !(maxWidth <= 0.0F)) {
          String fitted = this.truncate(text, size, maxWidth);
-         return this.init(fitted, size) <= maxWidth ? fitted : "";
+         return this.width(fitted, size) <= maxWidth ? fitted : "";
       } else {
          return "";
       }
    }
 
-   public int init(String text, float x, float yTop, float size, float[] out, int offset) {
+   public int layoutQuads(String text, float x, float yTop, float size, float[] out, int offset) {
       float cursor = x;
       float baseline = yTop + (float)(-this.ascender * size);
       int quads = 0;

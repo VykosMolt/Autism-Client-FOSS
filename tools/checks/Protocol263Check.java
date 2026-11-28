@@ -77,7 +77,7 @@ public final class Protocol263Check {
          !(Boolean) updatePred.invoke(null, new ClientboundBundlePacket(List.of(alive))));
 
       // 3. Bare and bundled disconnect drop queues and pass through
-      PingSpoofScheduler.load(150, true, true);
+      PingSpoofScheduler.setGlobal(150, true, true);
       var dataCtor = Class.forName("autismclient.util.macro.PingSpoofScheduler$Inner_DataUtil").getDeclaredConstructor(Packet.class, long.class);
       dataCtor.setAccessible(true);
       inQueue.add(dataCtor.newInstance(alive, System.currentTimeMillis()));
@@ -108,7 +108,7 @@ public final class Protocol263Check {
       check("PingSpoof write() exempts bundled keepalive",
          (Boolean) writePred.invoke(null, new ClientboundBundlePacket(List.of(alive, new ClientboundKeepAlivePacket(42L)))));
       PingSpoofScheduler.disable();
-      PingSpoofScheduler.write();
+      PingSpoofScheduler.clearQueues();
 
       // 4. ServerboundPunchPacket in PoolEntry, bw registry aliases, and StreamCodec compatibility
       Field poolSetF = ModuleRuntimeManager.class.getDeclaredField("IGNORED_DEFAULT_C2S_PACKETS");

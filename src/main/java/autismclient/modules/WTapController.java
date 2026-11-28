@@ -19,8 +19,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 
 final class WTapController {
-   static final ValueRange init_ValueRange = new ValueRange(20, 60);
-   static final ValueRange load_ValueRange = new ValueRange(45, 85);
+   static final ValueRange DEFAULT_DELAY_MS = new ValueRange(20, 60);
+   static final ValueRange DEFAULT_RELEASE_MS = new ValueRange(45, 85);
    private static final Minecraft MC = Minecraft.getInstance();
    private final WTapTimingMachine timing = new WTapTimingMachine();
    private final Random random = new Random();
@@ -42,7 +42,7 @@ final class WTapController {
       return AutismSessionState.getInstance().getClientTick();
    }
 
-   void init(Player attacker, Entity entity) {
+   void onAttack(Player attacker, Entity entity) {
       if (attacker == MC.player
          && entity instanceof LivingEntity target
          && SprintStateTracker.attackStartSprinting()
@@ -52,14 +52,14 @@ final class WTapController {
          && target.isAlive()
          && target.level() == MC.level
          && !target.isSpectator()
-         && (!this.settings.init_Z() || target instanceof Player)
+         && (!this.settings.playersOnly() || target instanceof Player)
          && !TeamsModule.isFriend(target)
          && !AntiBotTracker.isBot(target)) {
          long now = System.nanoTime();
-         int chance = this.settings.init_I();
+         int chance = this.settings.chance();
          boolean selected = chance > 0 && this.random.nextInt(100) < chance;
          if (this.timing
-            .init(now, clientTick(), this.init(this.settings.init_ValueRange(), 0), this.init(this.settings.load_ValueRange(), 1), selected)) {
+            .arm(now, clientTick(), this.init(this.settings.delayRange(), 0), this.init(this.settings.releaseRange(), 1), selected)) {
             this.level = MC.level;
             this.connection = MC.getConnection();
             this.attacker = attacker;
@@ -75,7 +75,7 @@ final class WTapController {
       if (this.timing.isActive() && packet.entityId() == this.targetId && this.isSameSession()) {
          Entity target = MC.level.getEntity(this.targetId);
          if (target != null && target.getUUID().equals(this.targetUuid) && packet.getSource(MC.level).getEntity() == MC.player) {
-            this.timing.init_Z(System.nanoTime());
+            this.timing.beginDelay(System.nanoTime());
          }
       }
    }
@@ -87,12 +87,12 @@ final class WTapController {
 
       boolean valid = this.isSameSession()
          && this.update()
-         && this.settings.init_I() > 0
+         && this.settings.chance() > 0
          && original.forward()
          && !original.backward()
          && !original.shift()
          && this.isHoldingWeapon();
-      boolean release = this.timing.init(System.nanoTime(), clientTick(), valid);
+      boolean release = this.timing.shouldRelease(System.nanoTime(), clientTick(), valid);
       if (!this.timing.isActive()) {
          this.clearTarget();
       }
@@ -106,7 +106,7 @@ final class WTapController {
    }
 
    private static boolean init_Z_Input(Input original) {
-      autismclient.util.MovementInputFixer.FootingModel footing = LedgeFootingPredictor.init(MC.player);
+      autismclient.util.MovementInputFixer.FootingModel footing = LedgeFootingPredictor.predict(MC.player);
       if (footing == null) {
          return false;
       }
@@ -122,17 +122,17 @@ final class WTapController {
       return this.timing.isReleasing() && this.isSameSession() && this.update();
    }
 
-   boolean load_Z() {
+   boolean pollActive() {
       this.tick();
       return this.timing.isActive();
    }
 
    void tick() {
-      if (!this.timing.load(System.nanoTime())) {
+      if (!this.timing.activeAt(System.nanoTime())) {
          this.clearTarget();
       } else if (this.isSameSession()
          && this.update()
-         && this.settings.init_I() > 0
+         && this.settings.chance() > 0
          && this.isHoldingWeapon()
          && MC.options.keyUp.isDown()
          && !MC.options.keyDown.isDown()
@@ -154,7 +154,7 @@ final class WTapController {
       }
    }
 
-   void load_V() {
+   void cancelTap() {
       if (this.timing.isActive()) {
          this.timing.reset();
          this.clearTarget();
@@ -165,7 +165,7 @@ final class WTapController {
       return this.timing.init_J();
    }
 
-   void read_V() {
+   void resetAll() {
       this.timing.resetAll();
       this.clearTarget();
    }
@@ -193,14 +193,14 @@ final class WTapController {
          && !MC.player.isSpectator()
          && !MC.player.isUsingItem()
          && !autismclient.util.ManualInteractionYield.isYielding()
-         && !(MC.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !BedNukerModule.read_Z_10())
+         && !(MC.gameMode instanceof AutismMultiPlayerGameModeAccessor digging && digging.autism$isDestroying() && !BedNukerModule.isMining())
          && !MC.player.isPassenger()
          && !MC.player.getAbilities().flying
          && !MC.player.isFallFlying()
          && !MC.player.isInWater()
          && !MC.player.isInLava()
          && !MC.player.onClimbable()
-         && (!this.settings.load_Z() || MC.player.onGround())
+         && (!this.settings.groundOnly() || MC.player.onGround())
          && !aD.init_Z()
          && !FreecamController.isActive()
          && !FreecamController.isAiControllingBody()) {
@@ -219,7 +219,7 @@ final class WTapController {
    }
 
    private long init(ValueRange range, int minimum) {
-      ValueRange band = (range == null ? (minimum > 0 ? load_ValueRange : init_ValueRange) : range).clamp(minimum, 200.0);
+      ValueRange band = (range == null ? (minimum > 0 ? DEFAULT_RELEASE_MS : DEFAULT_DELAY_MS) : range).clamp(minimum, 200.0);
       this.drift = this.drift * 0.92 + this.random.nextGaussian() * 0.035;
       double style = (autismclient.util.HumanHandProfile.shared().close() - 0.9) * 0.5;
       double sample = Math.max(0.0, Math.min(1.0, (this.random.nextDouble() + this.random.nextDouble()) * 0.5 + style + this.drift));
@@ -235,14 +235,14 @@ final class WTapController {
    }
 
    interface Inner_DataUtil {
-      int init_I();
+      int chance();
 
-      ValueRange init_ValueRange();
+      ValueRange delayRange();
 
-      ValueRange load_ValueRange();
+      ValueRange releaseRange();
 
-      boolean init_Z();
+      boolean playersOnly();
 
-      boolean load_Z();
+      boolean groundOnly();
    }
 }

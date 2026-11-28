@@ -8,21 +8,21 @@ public interface AutoLoginBackend {
 
    boolean isConnected();
 
-   boolean load();
+   boolean hasConnection();
 
    CustomMenuSnapshot currentMenu();
 
-   boolean init(CustomMenuSnapshot var1, CustomMenuSubmission var2);
+   boolean submit(CustomMenuSnapshot var1, CustomMenuSubmission var2);
 
    boolean sendCommand(String var1);
 
-   default boolean read() {
+   default boolean isBusy() {
       return false;
    }
 
    default void report(String message) {
    }
 
-   default void load(String context) {
+   default void onMissingPassword(String context) {
    }
 }

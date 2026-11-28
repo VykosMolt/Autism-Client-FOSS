@@ -37,7 +37,7 @@ final class PrintFlight {
          return false;
       }
 
-      AABB box = PrintGeometry.init(point.x, point.y, point.z, false).inflate(0.3, 0.4, 0.3);
+      AABB box = PrintGeometry.bodyBox(point.x, point.y, point.z, false).inflate(0.3, 0.4, 0.3);
       int x0 = (int)Math.floor(box.minX);
       int x1 = (int)Math.floor(box.maxX);
       int y0 = (int)Math.floor(box.minY);
@@ -59,7 +59,7 @@ final class PrintFlight {
    }
 
    static boolean isFlightPointSafe(PrintView view, Vec3 point) {
-      AABB box = PrintGeometry.init(point.x, point.y, point.z, false);
+      AABB box = PrintGeometry.bodyBox(point.x, point.y, point.z, false);
       if (!view.isBoxClear(box)) {
          return false;
       }
@@ -205,7 +205,7 @@ final class PrintFlight {
    static AiPhysics.MotionState simulateFlightTick(
       AiPhysics.MotionState body, PrintMover.Inner_StreamUtil keys, float yaw, float speed, AiPhysics.PhysicsWorld world
    ) {
-      AiPhysics.MoveInput input = PrintMover.init(keys, yaw);
+      AiPhysics.MoveInput input = PrintMover.toMoveInput(keys, yaw);
       double forward = input.forward() * 0.98;
       double left = input.strafe() * 0.98;
       double length = Math.max(1.0, Math.hypot(forward, left));
@@ -228,7 +228,7 @@ final class PrintFlight {
       vx += (left * cos - forward * sin) * horizontalSpeed / length;
       vz += (forward * cos + left * sin) * horizontalSpeed / length;
       vy += ((keys.jump() ? 1 : 0) - (keys.sneak() ? 1 : 0)) * speed * 3.0F;
-      AABB box = PrintGeometry.init(body.x(), body.y(), body.z(), false);
+      AABB box = PrintGeometry.bodyBox(body.x(), body.y(), body.z(), false);
       List<VoxelShape> shapes = world.collisionBoxes(box.expandTowards(vx, vy, vz).inflate(1.0E-7)).stream().map(Shapes::create).toList();
       double y = Shapes.collide(Axis.Y, box, shapes, vy);
       box = box.move(0.0, y, 0.0);
@@ -369,7 +369,7 @@ final class PrintFlight {
          AiPhysics.MotionState body = new AiPhysics.MotionState(
             point.x, point.y, point.z, to.vx(), to.vy(), to.vz(), to.onGround(), 0, false, false
          );
-         if (PrintMover.init(world, from, body)) {
+         if (PrintMover.safeStep(world, from, body)) {
             return true;
          }
       }
@@ -398,7 +398,7 @@ final class PrintFlight {
          while (true) {
             if (tick < 25) {
                coast = simulateFlightTick(coast, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
-               if (!PrintMover.init(world, body, coast) && (tick != 0 || nextStep == null || nextStep.test(coast.position()))) {
+               if (!PrintMover.safeStep(world, body, coast) && (tick != 0 || nextStep == null || nextStep.test(coast.position()))) {
                   tick++;
                   continue;
                }
@@ -429,7 +429,7 @@ final class PrintFlight {
                   forward > 0, forward < 0, side > 0, side < 0, vertical > 0, vertical < 0, false
                );
                AiPhysics.MotionState next = simulateFlightTick(body, keys, yaw, env.flyingSpeed(), world);
-               if (!PrintMover.init(world, body, next) && (nextStep == null || nextStep.test(next.position()))) {
+               if (!PrintMover.safeStep(world, body, next) && (nextStep == null || nextStep.test(next.position()))) {
                   double distance = next.position().distanceToSqr(goal);
                   double fineValue = distance + 2.0 * (next.vx() * next.vx() + next.vy() * next.vy() + next.vz() * next.vz());
                   boolean canOpenTurn = openingTurn && distance < 0.16 && fineValue < turnScore && continuation.test(next.position());
@@ -437,7 +437,7 @@ final class PrintFlight {
 
                   for (int i = 0; i < 25; i++) {
                      next = simulateFlightTick(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
-                     if (PrintMover.init(world, body, next)) {
+                     if (PrintMover.safeStep(world, body, next)) {
                         safe = false;
                         break;
                      }

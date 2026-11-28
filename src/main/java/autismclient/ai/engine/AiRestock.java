@@ -284,12 +284,12 @@ public final class AiRestock {
    public AiRestock(final Minecraft mc) {
       this(new AiRestock.SlotOps() {
          @Override
-         public boolean init() {
+         public boolean cursorEmpty() {
             return mc.player != null && mc.player.containerMenu.getCarried().isEmpty();
          }
 
          @Override
-         public boolean init(int backpackSlot, int hotbarSlot) {
+         public boolean moveToHotbar(int backpackSlot, int hotbarSlot) {
             if (mc.player != null && !aD.read_Z()) {
                int slot = InventorySlotHelper.toScreenSlot(mc, backpackSlot);
                if (slot < 0) {
@@ -368,12 +368,12 @@ public final class AiRestock {
             return this.state;
          } else if (this.clockNanos.getAsLong() < this.nextAttemptAfterNanos) {
             return this.state;
-         } else if (!this.slotOps.init()) {
+         } else if (!this.slotOps.cursorEmpty()) {
             this.attemptCount++;
             return this.state;
          } else {
             long revision = this.inventoryRevisionSupplier.getAsLong();
-            if (!this.slotOps.init(this.backpackSlot, this.hotbarSlot)) {
+            if (!this.slotOps.moveToHotbar(this.backpackSlot, this.hotbarSlot)) {
                this.attemptCount++;
                return this.state;
             } else {
@@ -466,9 +466,9 @@ public final class AiRestock {
    }
 
    public interface SlotOps {
-      boolean init();
+      boolean cursorEmpty();
 
-      boolean init(int var1, int var2);
+      boolean moveToHotbar(int var1, int var2);
 
       boolean init(int var1, String var2);
    }

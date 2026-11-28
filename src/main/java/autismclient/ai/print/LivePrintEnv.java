@@ -101,10 +101,10 @@ public final class LivePrintEnv implements PrintEnv {
       return AiMenuClose.load()
          ? PrintEnv.ReceiptState.PENDING
          : this.interactionReceipt
-            .init(
+            .receiptState(
                this.mc.level,
                this.mc.player,
-               autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(this.mc.level, this.interactionReceipt.init()),
+               autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(this.mc.level, this.interactionReceipt.afterSequence()),
                this.nanoTime()
             );
    }
@@ -709,7 +709,7 @@ public final class LivePrintEnv implements PrintEnv {
                   int beforeSequence = prediction.currentSequence();
                   InteractionResult result = this.mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, c.clickHit);
                   if (c.trackInteractionReceipt || !c.fly) {
-                     this.interactionReceipt.init(this.mc.level, p, beforeSequence, prediction.currentSequence(), this.nanoTime());
+                     this.interactionReceipt.recordInteraction(this.mc.level, p, beforeSequence, prediction.currentSequence(), this.nanoTime());
                   }
 
                   if (signPos != null && result.consumesAction()) {

@@ -762,7 +762,7 @@ final class AiNetherEntry {
                      JsonObject sleepArgs = AiJson.objectOf("timeoutSeconds", Math.min(240, cap));
                      this.nightOp = this.allowLowHealthIfRecovery("game:sleep", sleepArgs, AiSleep.create(sleepArgs));
                   } else {
-                     this.nightOp = AiBurrow.init(AiJson.objectOf("timeoutSeconds", cap));
+                     this.nightOp = AiBurrow.burrow(AiJson.objectOf("timeoutSeconds", cap));
                   }
 
                   return this.running("Night falls; " + ("sleep".equals(action) ? "sleeping until dawn" : "burrowing until dawn"));
@@ -1899,7 +1899,7 @@ final class AiNetherEntry {
                   AiOperation var10004;
                   switch (id) {
                      case "game:chop":
-                        var10004 = AiChop.init(legArgs);
+                        var10004 = AiChop.chop(legArgs);
                         break;
                      case "game:obtain":
                         var10004 = AiObtain.obtain(legArgs);
@@ -1908,7 +1908,7 @@ final class AiNetherEntry {
                         var10004 = AiCraft.craft(legArgs);
                         break;
                      case "game:collect":
-                        var10004 = AiCollect.init(legArgs);
+                        var10004 = AiCollect.collect(legArgs);
                         break;
                      case "game:bucket":
                         var10004 = AiBucket.create(legArgs);
@@ -1929,7 +1929,7 @@ final class AiNetherEntry {
                         var10004 = AiPortalCast.create(legArgs);
                         break;
                      case "game:dimension":
-                        var10004 = AiDimension.init(legArgs);
+                        var10004 = AiDimension.changeDimension(legArgs);
                         break;
                      default:
                         throw new IllegalArgumentException("No nested leg " + id);

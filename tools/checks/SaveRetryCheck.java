@@ -56,7 +56,7 @@ public class SaveRetryCheck {
       File waypointsBlocker = new File(folder, "waypoints.json.tmp");
       waypointsBlocker.mkdirs();
       autismclient.util.AutismWaypoints.getInstance()
-         .init("check-scope", new autismclient.util.AutismWaypoints.Waypoint("checkpoint", 1, 2, 3, 0, 0L));
+         .addWaypoint("check-scope", new autismclient.util.AutismWaypoints.Waypoint("checkpoint", 1, 2, 3, 0, 0L));
       Thread.sleep(700L);
       if (waypointsSaved.exists()) {
          System.out.println("FAIL: premise, first waypoint save should have failed");

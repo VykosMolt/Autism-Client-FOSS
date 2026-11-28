@@ -712,7 +712,7 @@ public final class AiBlockMine {
                      this.blacklistedCells.contains(cell.asLong()) ? "; left" : "; surfacing first"
                   );
                if (this.travel != null) {
-                  this.travel.load(true);
+                  this.travel.setPaused(true);
                }
 
                if (!AutismLiteVariant.enabled()) {
@@ -778,7 +778,7 @@ public final class AiBlockMine {
                   }
 
                   if (e < this.bestDistance - 2.0) {
-                     toGo = this.travel.load_I_8();
+                     toGo = this.travel.blocksToGo();
                   }
                }
 
@@ -1120,7 +1120,7 @@ public final class AiBlockMine {
                                  }
 
                                  if (this.travel != null) {
-                                    this.travel.load(true);
+                                    this.travel.setPaused(true);
                                  }
 
                                  this.read_RefQueue_DataUtil.stopCompat();
@@ -1135,7 +1135,7 @@ public final class AiBlockMine {
                               if (inReach != null) {
                                  this.releaseStepKeys();
                                  if (this.travel != null) {
-                                    this.travel.load(true);
+                                    this.travel.setPaused(true);
                                  }
 
                                  this.breakingTarget = this.isTargetBlock(inReach);
@@ -1213,7 +1213,7 @@ public final class AiBlockMine {
                                     goalItems.add(stock);
                                  } else if (this.pillarDirtFresh() && mc.level.getBlockState(this.pillarDirt).isAir()) {
                                     if (this.travel != null) {
-                                       this.travel.load(true);
+                                       this.travel.setPaused(true);
                                     }
 
                                     return this.running("Taking the dirt for a pillar");
@@ -1700,7 +1700,7 @@ public final class AiBlockMine {
                      this.travel.blacklistCell(BlockPos.of(cell));
                   }
                } else {
-                  this.travel.load(false);
+                  this.travel.setPaused(false);
                   boolean airborne = !mc.player.onGround() && !mc.player.isInWater() && !mc.player.onClimbable();
                   if (changed && airborne) {
                      AiOperation.Result r = this.travel.tick();
@@ -1712,8 +1712,8 @@ public final class AiBlockMine {
                   }
                }
 
-               this.travel.init(this.collectingInBox, this.collectingInBox ? this::coversInBoxItems : null);
-               this.travel.init_V_I_2(goal instanceof AiBlockMine.DescentGoal ? this.descentDepth : 0);
+               this.travel.setHold(this.collectingInBox, this.collectingInBox ? this::coversInBoxItems : null);
+               this.travel.setDescentDepth(goal instanceof AiBlockMine.DescentGoal ? this.descentDepth : 0);
                List<BlockPos> work;
                List var20 = work = goal instanceof AiBlockMine.GatherGoal t
                   ? (t.targetBlocks.isEmpty() && !t.targetItems.isEmpty() && !dropsOnly ? this.goalBlocks() : t.targetBlocks)
@@ -2274,7 +2274,7 @@ public final class AiBlockMine {
                      return dropIds.contains(id);
                   }
 
-                  if (dropArg.isEmpty() || !id.equals(dropArg) && !AiMine.init(dropArg, id)) {
+                  if (dropArg.isEmpty() || !id.equals(dropArg) && !AiMine.matchesBlock(dropArg, id)) {
                      if (this.matchesBlockId(id)) {
                         return true;
                      }
@@ -2465,7 +2465,7 @@ public final class AiBlockMine {
 
                boolean valid = !this.digLines.isEmpty()
                   && !Collections.disjoint(this.digLinesCells, cells)
-                  && AiDigLine.init(this.digLines.get(0), from, cells, this.blockShapes(), reach) != null;
+                  && AiDigLine.firstHit(this.digLines.get(0), from, cells, this.blockShapes(), reach) != null;
                if (!valid) {
                   this.digLines.clear();
                   this.digLines
@@ -2538,7 +2538,7 @@ public final class AiBlockMine {
                double reach = mc.player.blockInteractionRange();
                BlockPos led = this.digLine == null
                   ? null
-                  : AiDigLine.init(this.digLine, from, List.of(cell), this.blockShapes(), reach);
+                  : AiDigLine.firstHit(this.digLine, from, List.of(cell), this.blockShapes(), reach);
                if (led == null && this.digLinesCells.contains(cell) && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell)) {
                   Set<BlockPos> rest = new HashSet<>();
 
@@ -2568,7 +2568,7 @@ public final class AiBlockMine {
                }
 
                Vec3 eye = mc.player.getEyePosition();
-               BlockHitResult hit = AiDigLine.init(eye, this.digLine.direction(), reach, Set.of(), this.blockShapes());
+               BlockHitResult hit = AiDigLine.trace(eye, this.digLine.direction(), reach, Set.of(), this.blockShapes());
                if (hit != null && hit.getBlockPos().equals(cell)) {
                   return hit.getLocation().add(this.digLine.direction().scale(0.02));
                }
@@ -2593,7 +2593,7 @@ public final class AiBlockMine {
                      this.digLines.add(0, here);
                   }
 
-                  return AiDigLine.init(here, eye, this.blockShapes(), reach);
+                  return AiDigLine.aimPoint(here, eye, this.blockShapes(), reach);
                } else {
                   return null;
                }
@@ -2624,7 +2624,7 @@ public final class AiBlockMine {
                      eye, mc.player.getYRot(), mc.player.getXRot(), beside, beside, this.blockShapes(), reach, 1, this.breakCost()
                   );
                   if (!lines.isEmpty()) {
-                     point = AiDigLine.init(lines.get(0), eye, this.blockShapes(), reach);
+                     point = AiDigLine.aimPoint(lines.get(0), eye, this.blockShapes(), reach);
                   }
                }
 
@@ -2775,7 +2775,7 @@ public final class AiBlockMine {
                   this.unusedDigCells = cells;
                   BlockPos led = this.digLine == null
                      ? null
-                     : AiDigLine.init(this.digLine, from, cells, this.blockShapes(), lineReach);
+                     : AiDigLine.firstHit(this.digLine, from, cells, this.blockShapes(), lineReach);
                   if (led != null && direct.contains(led)) {
                      return led;
                   }
@@ -3034,7 +3034,7 @@ public final class AiBlockMine {
             }
 
             boolean matchesBlockId(String id) {
-               return blockIds.contains(id) ? true : !blockArg.isEmpty() && AiMine.init(blockArg, id);
+               return blockIds.contains(id) ? true : !blockArg.isEmpty() && AiMine.matchesBlock(blockArg, id);
             }
 
             boolean isTargetBlock(BlockPos pos) {
@@ -3560,7 +3560,7 @@ public final class AiBlockMine {
 
       double swim = 2.0 * (depth + buried) * 0.5 + buried * 1.5;
       BlockState state = mc.level.getBlockState(pos);
-      int slot = MiningCost.load(mc, state, requireDrops);
+      int slot = MiningCost.bestToolSlot(mc, state, requireDrops);
       if (slot < 0) {
          return 1.0 / 0.0;
       }
@@ -3784,7 +3784,7 @@ public final class AiBlockMine {
       }
 
       @Override
-      public boolean load(BlockPos cell) {
+      public boolean mayBreak(BlockPos cell) {
          return !this.blocked.contains(cell.asLong());
       }
 
@@ -3921,13 +3921,13 @@ public final class AiBlockMine {
       }
 
       @Override
-      public boolean write(BlockPos cell) {
+      public boolean wantsBroken(BlockPos cell) {
          long key = cell.asLong();
          return this.dryTargetCells.contains(key) && !this.write.contains(key) && !this.noShaftCells.contains(key);
       }
 
       @Override
-      public boolean load(BlockPos cell) {
+      public boolean mayBreak(BlockPos cell) {
          return !this.write.contains(cell.asLong());
       }
 

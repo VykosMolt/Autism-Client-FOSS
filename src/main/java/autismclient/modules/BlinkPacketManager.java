@@ -242,7 +242,7 @@ public final class BlinkPacketManager {
 
    private static void syncClonePose(BlinkClonePlayer fake) {
       fake.snapTo(originX, originY, originZ, originYaw, originPitch);
-      fake.init(originHeadYaw, originBodyYaw);
+      fake.setRotations(originHeadYaw, originBodyYaw);
    }
 
    private static void discardCloneEntity() {

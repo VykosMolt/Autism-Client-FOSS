@@ -12,7 +12,7 @@ public final class BlockNbtFormatter {
    private BlockNbtFormatter() {
    }
 
-   public static BlockNbtFormatter.Inner_DataUtil init(CompoundTag source, List<ItemStack> containerItems, String note) {
+   public static BlockNbtFormatter.Inner_DataUtil format(CompoundTag source, List<ItemStack> containerItems, String note) {
       CompoundTag root = source == null ? new CompoundTag() : source.copy();
       List<ItemStack> items = copyStacks(containerItems);
       CompoundTag state = root.getCompound("state").orElse(new CompoundTag());

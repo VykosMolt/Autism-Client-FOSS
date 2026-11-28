@@ -131,7 +131,7 @@ public final class AutismWaypoints {
       }
    }
 
-   public void init(String scope, AutismWaypoints.Waypoint waypoint) {
+   public void addWaypoint(String scope, AutismWaypoints.Waypoint waypoint) {
       if (waypoint != null && waypoint.name() != null && !waypoint.name().isBlank()) {
          boolean changed = false;
          synchronized (this.init_Map) {
@@ -247,7 +247,7 @@ public final class AutismWaypoints {
       return true;
    }
 
-   public boolean init(String scope, String oldName, String newName) {
+   public boolean rename(String scope, String oldName, String newName) {
       if (oldName != null && newName != null) {
          String trimmed = newName.trim();
          if (trimmed.isEmpty()) {
@@ -308,7 +308,7 @@ public final class AutismWaypoints {
       return var10000;
    }
 
-   public void init(String scope, int maxDeaths) {
+   public void trimDeaths(String scope, int maxDeaths) {
       if (maxDeaths >= 1) {
          boolean changed = false;
          synchronized (this.init_Map) {

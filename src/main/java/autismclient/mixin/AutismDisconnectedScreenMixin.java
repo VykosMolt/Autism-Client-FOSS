@@ -41,7 +41,7 @@ public abstract class AutismDisconnectedScreenMixin extends Screen implements Di
 
    @Inject(method = "init", at = @At("TAIL"))
    private void autism$addReconnectButton(CallbackInfo ci) {
-      if (!aD.init_Z() && AutoReconnectController.read()) {
+      if (!aD.init_Z() && AutoReconnectController.canReconnect()) {
          int w = 148;
          this.addRenderableWidget(
             new StyledButton(

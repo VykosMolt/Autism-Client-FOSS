@@ -156,8 +156,8 @@ public final class WorldModule extends Module {
       boolean corners = "Corners".equals(this.choice("highlight-style"));
       boolean fill = this.bool("highlight-fill");
       int fillColor = color & 16777215 | 1073741824;
-      BlockSelectionOutlineRenderer.init(active, color, width, corners, fill, fillColor);
-      BlockSelectionOutlineRenderer.init(active && this.bool("highlight-progress"));
+      BlockSelectionOutlineRenderer.configure(active, color, width, corners, fill, fillColor);
+      BlockSelectionOutlineRenderer.setDynamic(active && this.bool("highlight-progress"));
    }
 
    @Override

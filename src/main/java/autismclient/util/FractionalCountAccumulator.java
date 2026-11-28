@@ -1,46 +1,46 @@
 package autismclient.util;
 
 public final class FractionalCountAccumulator {
-   private double init;
-   private double load;
-   private double read;
-   private double write;
+   private double pendingX;
+   private double pendingY;
+   private double remainderX;
+   private double remainderY;
 
    public void add(double x, double y) {
       if (Double.isFinite(x)) {
-         this.init += x;
+         this.pendingX += x;
       }
 
       if (Double.isFinite(y)) {
-         this.load += y;
+         this.pendingY += y;
       }
    }
 
    public void set(double x, double y) {
-      this.init = Double.isFinite(x) ? x : 0.0;
-      this.load = Double.isFinite(y) ? y : 0.0;
+      this.pendingX = Double.isFinite(x) ? x : 0.0;
+      this.pendingY = Double.isFinite(y) ? y : 0.0;
    }
 
    public FractionalCountAccumulator.WholeCounts takeWhole() {
-      double totalX = this.init + this.read;
-      double totalY = this.load + this.write;
-      long wholeX = init(totalX);
-      long wholeY = init(totalY);
-      this.read = totalX - wholeX;
-      this.write = totalY - wholeY;
-      this.init = 0.0;
-      this.load = 0.0;
+      double totalX = this.pendingX + this.remainderX;
+      double totalY = this.pendingY + this.remainderY;
+      long wholeX = wholePart(totalX);
+      long wholeY = wholePart(totalY);
+      this.remainderX = totalX - wholeX;
+      this.remainderY = totalY - wholeY;
+      this.pendingX = 0.0;
+      this.pendingY = 0.0;
       return new FractionalCountAccumulator.WholeCounts(wholeX, wholeY);
    }
 
    public void reset() {
-      this.init = 0.0;
-      this.load = 0.0;
-      this.read = 0.0;
-      this.write = 0.0;
+      this.pendingX = 0.0;
+      this.pendingY = 0.0;
+      this.remainderX = 0.0;
+      this.remainderY = 0.0;
    }
 
-   private static long init(double value) {
+   private static long wholePart(double value) {
       if (Double.isFinite(value) && !(Math.abs(value) < 1.0)) {
          return value > 0.0 ? (long)Math.floor(value) : (long)Math.ceil(value);
       } else {

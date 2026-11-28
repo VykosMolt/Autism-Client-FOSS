@@ -41,7 +41,7 @@ public class WaypointEmptyCheck {
       String[] corrupt = folder.list((dir, name) -> name.startsWith("waypoints.json.corrupt-"));
       check(corrupt != null && corrupt.length == 1, "zero-byte waypoints.json was not moved aside");
 
-      store.init("other", new AutismWaypoints.Waypoint("New", 0, 0, 0, 0, 2L));
+      store.addWaypoint("other", new AutismWaypoints.Waypoint("New", 0, 0, 0, 0, 2L));
       File primary = new File(folder, "waypoints.json");
       long deadline = System.currentTimeMillis() + 5000L;
       while (!(primary.exists() && Files.readString(primary.toPath()).contains("New")) && System.currentTimeMillis() < deadline) {

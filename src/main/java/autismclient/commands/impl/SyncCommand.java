@@ -35,7 +35,7 @@ public final class SyncCommand extends Command {
             }))
             .then(
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.arguments.MacroNameArgumentType.macroName())
-                  .executes(context -> load(autismclient.commands.arguments.MacroNameArgumentType.init(context, "name")))
+                  .executes(context -> load(autismclient.commands.arguments.MacroNameArgumentType.getValue(context, "name")))
             )
       );
    }

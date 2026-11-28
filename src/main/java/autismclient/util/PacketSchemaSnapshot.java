@@ -54,7 +54,7 @@ public record PacketSchemaSnapshot(
          return new PacketSchemaSnapshot(null, null, List.of(), false, false, "fallback", "packet object missing");
       }
 
-      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packet.getClass());
+      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packet.getClass());
       if (schema == null) {
          List<PacketFieldSnapshot> reflected = reflectFields(packet, (PacketSchemaRegistry.Inner_StreamUtil)null);
          return new PacketSchemaSnapshot(packet, null, reflected, false, false, "fallback", "no generated schema for packet class");

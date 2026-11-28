@@ -46,13 +46,13 @@ public final class LeafDupePacketTracker {
       return lastCarriedSlot;
    }
 
-   public static synchronized void init(int slot) {
+   public static synchronized void setCarriedSlot(int slot) {
       if (slot >= 0 && slot < 9) {
          lastCarriedSlot = slot;
       }
    }
 
-   public static synchronized LeafDupePacketTracker.Inner_StreamUtil init(ServerboundPlayerActionPacket packet, Object scope, int slot, double damage) {
+   public static synchronized LeafDupePacketTracker.Inner_StreamUtil trackBreak(ServerboundPlayerActionPacket packet, Object scope, int slot, double damage) {
       if (scope != null
          && slot >= 0
          && slot <= 8
@@ -69,22 +69,22 @@ public final class LeafDupePacketTracker {
    }
 
    public static synchronized LeafDupePacketTracker.Inner_StreamUtil init(ServerboundSetCarriedItemPacket packet, Object scope) {
-      return init(packet, scope, null);
+      return trackSlot(packet, scope, null);
    }
 
-   public static synchronized LeafDupePacketTracker.Inner_StreamUtil init(ServerboundSetCarriedItemPacket packet, Object scope, LeafDupePacketTracker.Inner_StreamUtil previous) {
+   public static synchronized LeafDupePacketTracker.Inner_StreamUtil trackSlot(ServerboundSetCarriedItemPacket packet, Object scope, LeafDupePacketTracker.Inner_StreamUtil previous) {
       LeafDupePacketTracker.Inner_StreamUtil receipt = new LeafDupePacketTracker.Inner_StreamUtil(scope, packet.getSlot(), 0.0 / 0.0, previous);
       receipts.put(packet, receipt);
       return receipt;
    }
 
-   public static synchronized LeafDupePacketTracker.Inner_StreamUtil init(ServerboundUseItemOnPacket packet, Object scope, int slot, LeafDupePacketTracker.Inner_StreamUtil previous) {
+   public static synchronized LeafDupePacketTracker.Inner_StreamUtil trackUse(ServerboundUseItemOnPacket packet, Object scope, int slot, LeafDupePacketTracker.Inner_StreamUtil previous) {
       LeafDupePacketTracker.Inner_StreamUtil receipt = new LeafDupePacketTracker.Inner_StreamUtil(scope, slot, 0.0 / 0.0, previous);
       receipts.put(packet, receipt);
       return receipt;
    }
 
-   public static synchronized LeafDupePacketTracker.Inner_StreamUtil init(ServerboundPlayerActionPacket packet, Object scope, int slot, LeafDupePacketTracker.Inner_StreamUtil previous) {
+   public static synchronized LeafDupePacketTracker.Inner_StreamUtil trackCycle(ServerboundPlayerActionPacket packet, Object scope, int slot, LeafDupePacketTracker.Inner_StreamUtil previous) {
       if (packet.getAction() != Action.STOP_DESTROY_BLOCK) {
          throw new IllegalArgumentException("Not a STOP");
       }
@@ -114,7 +114,7 @@ public final class LeafDupePacketTracker {
 
       if (scopeValid
          && !receipt.load_Z
-         && !receipt.init(now)
+         && !receipt.isStale(now)
          && (receipt.previous == null || receipt.previous.init_Z && !receipt.previous.load_Z)
          && (packet instanceof ServerboundSetCarriedItemPacket || lastCarriedSlot == receipt.slot)) {
          if (packet instanceof ServerboundSetCarriedItemPacket && lastCarriedSlot == receipt.slot) {
@@ -162,7 +162,7 @@ public final class LeafDupePacketTracker {
       }
    }
 
-   public static void init(Connection connection, Packet<?> packet) {
+   public static void onSend(Connection connection, Packet<?> packet) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null) {
          ClientPacketListener listener = mc.getConnection();
@@ -175,7 +175,7 @@ public final class LeafDupePacketTracker {
    static synchronized void init_V(Packet<?> packet) {
       LeafDupePacketTracker.Inner_StreamUtil receipt = receipts.get(packet);
       if (packet instanceof ServerboundSetCarriedItemPacket carried) {
-         init(carried.getSlot());
+         setCarriedSlot(carried.getSlot());
       } else if (packet instanceof ServerboundPlayerActionPacket action) {
          init(action, receipt == null ? null : receipt.damage);
       } else if (packet instanceof ServerboundMovePlayerPacket || packet instanceof CompatSwingPacket) {
@@ -241,7 +241,7 @@ public final class LeafDupePacketTracker {
       predictions.values().removeIf(prediction -> prediction.entityId != null && prediction.entityId == id);
    }
 
-   public static void load(Packet<?> packet) {
+   public static void onReceive(Packet<?> packet) {
       if (packet instanceof ClientboundBlockChangedAckPacket ack) {
          read(ack.sequence());
       } else if (packet instanceof ClientboundPingPacket ping) {
@@ -266,11 +266,11 @@ public final class LeafDupePacketTracker {
    }
 
    public static synchronized void reset() {
-      load();
+      resetCycle();
       lastCarriedSlot = -1;
    }
 
-   public static synchronized void load() {
+   public static synchronized void resetCycle() {
       for (LeafDupePacketTracker.Inner_StreamUtil receipt : receipts.values()) {
          receipt.markConsumed();
       }
@@ -300,7 +300,7 @@ public final class LeafDupePacketTracker {
       }
    }
 
-   public static synchronized void read() {
+   public static synchronized void expirePredictions() {
       long now = System.currentTimeMillis();
       predictions.values().removeIf(prediction -> now - prediction.sentAtMs > 2000L);
    }
@@ -369,7 +369,7 @@ public final class LeafDupePacketTracker {
          return this.createdNanos;
       }
 
-      public boolean init(long now) {
+      public boolean isStale(long now) {
          return now - this.createdNanos > 250000000L;
       }
 

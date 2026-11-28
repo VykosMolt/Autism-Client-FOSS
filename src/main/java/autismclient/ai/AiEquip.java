@@ -437,12 +437,12 @@ final class AiEquip {
          autismclient.util.ArmorEvaluationHelper.StackSource inventoryView() {
             return new autismclient.util.ArmorEvaluationHelper.StackSource() {
                @Override
-               public ItemStack init(int index) {
+               public ItemStack inventoryStack(int index) {
                   return mc.player.getInventory().getItem(index);
                }
 
                @Override
-               public ItemStack init(EquipmentSlot slot) {
+               public ItemStack equipped(EquipmentSlot slot) {
                   return mc.player.getItemBySlot(slot);
                }
             };

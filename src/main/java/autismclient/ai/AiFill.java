@@ -22,14 +22,14 @@ import net.minecraft.world.level.block.state.properties.Property;
 
 final class AiFill {
    private static final int init_I = 4096;
-   private static final Set<String> init_Set = Set.of("box", "walls", "shell", "sphere", "hsphere", "cylinder", "hcylinder");
-   private static final Set<String> load_Set = Set.of("expand", "contract", "shift");
+   private static final Set<String> SHAPES = Set.of("box", "walls", "shell", "sphere", "hsphere", "cylinder", "hcylinder");
+   private static final Set<String> TRANSFORM_ACTIONS = Set.of("expand", "contract", "shift");
    private static final int load_I = 64;
 
    private AiFill() {
    }
 
-   static AiFill.FillBox init_J_DataUtil(JsonObject args) {
+   static AiFill.FillBox parseBox(JsonObject args) {
       if (args.has("x") && args.has("y") && args.has("z")) {
          int x = AiJson.getInt(args, "x", 0);
          int y = AiJson.getInt(args, "y", 0);
@@ -62,30 +62,30 @@ final class AiFill {
       }
    }
 
-   static boolean init(AiFill.FillBox box, int x, int y, int z) {
+   static boolean isOnBoxFace(AiFill.FillBox box, int x, int y, int z) {
       return x == box.minX() || x == box.maxX() || y == box.minY() || y == box.maxY() || z == box.minZ() || z == box.maxZ();
    }
 
-   static boolean init(String shape, String axis, AiFill.FillBox box, int x, int y, int z) {
+   static boolean inShape(String shape, String axis, AiFill.FillBox box, int x, int y, int z) {
       boolean var10000;
       switch (shape) {
          case "walls":
             var10000 = x == box.minX() || x == box.maxX() || z == box.minZ() || z == box.maxZ();
             break;
          case "shell":
-            var10000 = init(box, x, y, z);
+            var10000 = isOnBoxFace(box, x, y, z);
             break;
          case "sphere":
-            var10000 = load(box, x, y, z);
+            var10000 = inEllipsoid(box, x, y, z);
             break;
          case "hsphere":
-            var10000 = load(box, x, y, z) && read(box, x, y, z);
+            var10000 = inEllipsoid(box, x, y, z) && isEllipsoidSurface(box, x, y, z);
             break;
          case "cylinder":
-            var10000 = init(axis, box, x, y, z);
+            var10000 = inCylinder(axis, box, x, y, z);
             break;
          case "hcylinder":
-            var10000 = init(axis, box, x, y, z) && load(axis, box, x, y, z);
+            var10000 = inCylinder(axis, box, x, y, z) && isCylinderSurface(axis, box, x, y, z);
             break;
          default:
             var10000 = true;
@@ -94,7 +94,7 @@ final class AiFill {
       return var10000;
    }
 
-   private static boolean load(AiFill.FillBox box, int x, int y, int z) {
+   private static boolean inEllipsoid(AiFill.FillBox box, int x, int y, int z) {
       double sx = box.maxX() - box.minX() + 1;
       double sy = box.maxY() - box.minY() + 1;
       double sz = box.maxZ() - box.minZ() + 1;
@@ -104,48 +104,48 @@ final class AiFill {
       return dx * dx + dy * dy + dz * dz <= 1.000000001;
    }
 
-   private static boolean read(AiFill.FillBox box, int x, int y, int z) {
-      return !load(box, x + 1, y, z)
-         || !load(box, x - 1, y, z)
-         || !load(box, x, y + 1, z)
-         || !load(box, x, y - 1, z)
-         || !load(box, x, y, z + 1)
-         || !load(box, x, y, z - 1);
+   private static boolean isEllipsoidSurface(AiFill.FillBox box, int x, int y, int z) {
+      return !inEllipsoid(box, x + 1, y, z)
+         || !inEllipsoid(box, x - 1, y, z)
+         || !inEllipsoid(box, x, y + 1, z)
+         || !inEllipsoid(box, x, y - 1, z)
+         || !inEllipsoid(box, x, y, z + 1)
+         || !inEllipsoid(box, x, y, z - 1);
    }
 
-   private static boolean init(String axis, AiFill.FillBox box, int x, int y, int z) {
+   private static boolean inCylinder(String axis, AiFill.FillBox box, int x, int y, int z) {
       boolean var10000;
       switch (axis) {
          case "x":
-            var10000 = init(box.minY(), box.maxY(), box.minZ(), box.maxZ(), y, z);
+            var10000 = inEllipse(box.minY(), box.maxY(), box.minZ(), box.maxZ(), y, z);
             break;
          case "z":
-            var10000 = init(box.minX(), box.maxX(), box.minY(), box.maxY(), x, y);
+            var10000 = inEllipse(box.minX(), box.maxX(), box.minY(), box.maxY(), x, y);
             break;
          default:
-            var10000 = init(box.minX(), box.maxX(), box.minZ(), box.maxZ(), x, z);
+            var10000 = inEllipse(box.minX(), box.maxX(), box.minZ(), box.maxZ(), x, z);
       }
 
       return var10000;
    }
 
-   private static boolean load(String axis, AiFill.FillBox box, int x, int y, int z) {
+   private static boolean isCylinderSurface(String axis, AiFill.FillBox box, int x, int y, int z) {
       boolean var10000;
       switch (axis) {
          case "x":
-            var10000 = !init(axis, box, x, y + 1, z) || !init(axis, box, x, y - 1, z) || !init(axis, box, x, y, z + 1) || !init(axis, box, x, y, z - 1);
+            var10000 = !inCylinder(axis, box, x, y + 1, z) || !inCylinder(axis, box, x, y - 1, z) || !inCylinder(axis, box, x, y, z + 1) || !inCylinder(axis, box, x, y, z - 1);
             break;
          case "z":
-            var10000 = !init(axis, box, x + 1, y, z) || !init(axis, box, x - 1, y, z) || !init(axis, box, x, y + 1, z) || !init(axis, box, x, y - 1, z);
+            var10000 = !inCylinder(axis, box, x + 1, y, z) || !inCylinder(axis, box, x - 1, y, z) || !inCylinder(axis, box, x, y + 1, z) || !inCylinder(axis, box, x, y - 1, z);
             break;
          default:
-            var10000 = !init(axis, box, x + 1, y, z) || !init(axis, box, x - 1, y, z) || !init(axis, box, x, y, z + 1) || !init(axis, box, x, y, z - 1);
+            var10000 = !inCylinder(axis, box, x + 1, y, z) || !inCylinder(axis, box, x - 1, y, z) || !inCylinder(axis, box, x, y, z + 1) || !inCylinder(axis, box, x, y, z - 1);
       }
 
       return var10000;
    }
 
-   private static boolean init(int minA, int maxA, int minB, int maxB, int a, int b) {
+   private static boolean inEllipse(int minA, int maxA, int minB, int maxB, int a, int b) {
       double sa = maxA - minA + 1;
       double sb = maxB - minB + 1;
       double da = (a - (minA + maxA) / 2.0) / (sa / 2.0);
@@ -153,11 +153,11 @@ final class AiFill {
       return da * da + db * db <= 1.000000001;
    }
 
-   static List<BlockPos> init(AiFill.FillBox box, boolean hollow) {
-      return init(box, hollow ? "shell" : "box", "y");
+   static List<BlockPos> boxCells(AiFill.FillBox box, boolean hollow) {
+      return shapeCells(box, hollow ? "shell" : "box", "y");
    }
 
-   static List<BlockPos> init(AiFill.FillBox box, String shape, String axis) {
+   static List<BlockPos> shapeCells(AiFill.FillBox box, String shape, String axis) {
       List<BlockPos> out = new ArrayList<>();
       int centerX = (box.minX() + box.maxX()) / 2;
       int centerZ = (box.minZ() + box.maxZ()) / 2;
@@ -167,7 +167,7 @@ final class AiFill {
 
          for (int x = box.minX(); x <= box.maxX(); x++) {
             for (int z = box.minZ(); z <= box.maxZ(); z++) {
-               if (init(shape, axis, box, x, y, z)) {
+               if (inShape(shape, axis, box, x, y, z)) {
                   layer.add(new BlockPos(x, y, z));
                }
             }
@@ -181,25 +181,25 @@ final class AiFill {
       return out;
    }
 
-   static boolean init_Z(String from, String blockId) {
+   static boolean matchesFrom(String from, String blockId) {
       return !from.equalsIgnoreCase("any")
-         ? autismclient.ai.engine.AiMine.init(from, blockId)
+         ? autismclient.ai.engine.AiMine.matchesBlock(from, blockId)
          : !blockId.equals("minecraft:air") && !blockId.equals("minecraft:cave_air") && !blockId.equals("minecraft:void_air");
    }
 
    static AiOperation create(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         AiFill.FillBox box = init_J_DataUtil(args);
+         AiFill.FillBox box = parseBox(args);
          if (box.volume() > 4096L) {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
 
-         Block block = init_Block(AiJson.getString(args, "block", ""), "block");
+         Block block = requireBlock(AiJson.getString(args, "block", ""), "block");
          Map<String, String> properties = AiBuilder.parseBlockProperties(args, "fill", block);
          String shape = AiJson.getString(args, "shape", AiJson.getBoolean(args, "hollow", false) ? "shell" : "box").trim().toLowerCase(Locale.ROOT);
-         if (!init_Set.contains(shape)) {
-            throw new IllegalArgumentException("shape must be one of " + String.join(", ", init_Set) + ", got \"" + shape + "\"");
+         if (!SHAPES.contains(shape)) {
+            throw new IllegalArgumentException("shape must be one of " + String.join(", ", SHAPES) + ", got \"" + shape + "\"");
          }
 
          String axis = AiJson.getString(args, "axis", "y").trim().toLowerCase(Locale.ROOT);
@@ -212,7 +212,7 @@ final class AiFill {
          String blockId = BuiltInRegistries.BLOCK.getKey(block).toString();
          List<AiBuilder.CellSpec> cells = new ArrayList<>();
 
-         for (BlockPos pos : init(box, shape, axis)) {
+         for (BlockPos pos : shapeCells(box, shape, axis)) {
             AiBuilder.CellSpec cell = new AiBuilder.CellSpec(
                pos.getX() - box.minX(), pos.getY() - box.minY(), pos.getZ() - box.minZ(), blockId, properties
             );
@@ -239,13 +239,13 @@ final class AiFill {
    static AiOperation copy(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         AiFill.FillBox box = init_J_DataUtil(args);
+         AiFill.FillBox box = parseBox(args);
          if (box.volume() > 4096L) {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
 
          String name = AiClipboard.validateName(AiJson.getString(args, "name", ""));
-         List<AiBuilder.CellSpec> cells = init(box, Minecraft.getInstance().level);
+         List<AiBuilder.CellSpec> cells = captureCells(box, Minecraft.getInstance().level);
          AiClipboard.saveClip(name, List.copyOf(cells));
          return AiGameOperations.immediate(
             AiOperation.Status.SUCCEEDED,
@@ -257,7 +257,7 @@ final class AiFill {
       }
    }
 
-   private static List<AiBuilder.CellSpec> init(AiFill.FillBox box, ClientLevel level) {
+   private static List<AiBuilder.CellSpec> captureCells(AiFill.FillBox box, ClientLevel level) {
       List<AiBuilder.CellSpec> cells = new ArrayList<>();
       int unloaded = 0;
 
@@ -346,7 +346,7 @@ final class AiFill {
       }
    }
 
-   static int[] init(String name) {
+   static int[] directionStep(String name) {
       int[] var10000;
       switch (name == null ? "" : name.trim().toLowerCase(Locale.ROOT)) {
          case "north":
@@ -374,7 +374,7 @@ final class AiFill {
       return var10000;
    }
 
-   static AiFill.TransformedBox init(AiFill.FillBox box, String action, int[] step, int amount, int minY, int maxY) {
+   static AiFill.TransformedBox transformBox(AiFill.FillBox box, String action, int[] step, int amount, int minY, int maxY) {
       int minX = box.minX();
       int lo = box.minY();
       int minZ = box.minZ();
@@ -472,7 +472,7 @@ final class AiFill {
       return new AiFill.TransformedBox(new AiFill.FillBox(minX, lo, minZ, maxX, hi, maxZ), clamped);
    }
 
-   static AiFill.TransformedCells init(List<AiBuilder.CellSpec> cells, String action, int[] step, int amount, int maxCells) {
+   static AiFill.TransformedCells transformCells(List<AiBuilder.CellSpec> cells, String action, int[] step, int amount, int maxCells) {
       int minX = 2147483647;
       int minY = 2147483647;
       int minZ = 2147483647;
@@ -499,7 +499,7 @@ final class AiFill {
          List<AiBuilder.CellSpec> grown = new ArrayList<>();
 
          for (AiBuilder.CellSpec cell : cells) {
-            if (init(cell, step, minX, minY, minZ, maxX, maxY, maxZ)) {
+            if (isLeadingFace(cell, step, minX, minY, minZ, maxX, maxY, maxZ)) {
                for (int i = 1; i <= amount; i++) {
                   grown.add(
                      new AiBuilder.CellSpec(cell.dx() + step[0] * i, cell.dy() + step[1] * i, cell.dz() + step[2] * i, cell.block(), cell.properties())
@@ -524,13 +524,13 @@ final class AiFill {
          int hiX = maxX;
          int hiY = maxY;
          int hiZ = maxZ;
-         out.removeIf(cell -> init(cell, step, layers, loX, loY, loZ, hiX, hiY, hiZ));
+         out.removeIf(cell -> isInLeadingLayers(cell, step, layers, loX, loY, loZ, hiX, hiY, hiZ));
       }
 
       return new AiFill.TransformedCells(AiBuilder.normalizeCells(out, maxCells), clamped);
    }
 
-   private static boolean init(AiBuilder.CellSpec cell, int[] step, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+   private static boolean isLeadingFace(AiBuilder.CellSpec cell, int[] step, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
       if (step[0] > 0) {
          return cell.dx() == maxX;
       } else if (step[0] < 0) {
@@ -546,7 +546,7 @@ final class AiFill {
       }
    }
 
-   private static boolean init(AiBuilder.CellSpec cell, int[] step, int layers, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+   private static boolean isInLeadingLayers(AiBuilder.CellSpec cell, int[] step, int layers, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
       if (step[0] > 0) {
          return cell.dx() > maxX - layers;
       } else if (step[0] < 0) {
@@ -562,7 +562,7 @@ final class AiFill {
       }
    }
 
-   private static int[] init(List<AiBuilder.CellSpec> cells) {
+   private static int[] cellBounds(List<AiBuilder.CellSpec> cells) {
       int minX = 0;
       int minY = 0;
       int minZ = 0;
@@ -594,11 +594,11 @@ final class AiFill {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          String action = AiJson.getString(args, "action", "").trim().toLowerCase(Locale.ROOT);
-         if (!load_Set.contains(action)) {
-            throw new IllegalArgumentException("action must be one of " + String.join(", ", load_Set) + ", got \"" + action + "\"");
+         if (!TRANSFORM_ACTIONS.contains(action)) {
+            throw new IllegalArgumentException("action must be one of " + String.join(", ", TRANSFORM_ACTIONS) + ", got \"" + action + "\"");
          }
 
-         int[] step = init(AiJson.getString(args, "direction", ""));
+         int[] step = directionStep(AiJson.getString(args, "direction", ""));
          if (step == null) {
             throw new IllegalArgumentException(
                "direction must be north, south, east, west, up or down, got \"" + AiJson.getString(args, "direction", "") + "\""
@@ -616,8 +616,8 @@ final class AiFill {
             int minY = client.level.getMinY();
             int maxY = client.level.getMaxY() - 1;
             if (clipboard.isEmpty()) {
-               AiFill.FillBox box = init_J_DataUtil(args);
-               AiFill.TransformedBox transformed = init(box, action, step, amount, minY, maxY);
+               AiFill.FillBox box = parseBox(args);
+               AiFill.TransformedBox transformed = transformBox(box, action, step, amount, minY, maxY);
                AiFill.FillBox out = transformed.box();
                if (out.volume() > 4096L) {
                   throw new IllegalArgumentException("Transformed box volume " + out.volume() + " exceeds 4096 cells; expand in smaller steps");
@@ -666,7 +666,7 @@ final class AiFill {
                }
 
                String name = AiClipboard.validateName(store);
-               List<AiBuilder.CellSpec> cells = init(out, client.level);
+               List<AiBuilder.CellSpec> cells = captureCells(out, client.level);
                AiClipboard.saveClip(name, List.copyOf(cells));
                data.addProperty("name", name);
                data.addProperty("cells", cells.size());
@@ -682,9 +682,9 @@ final class AiFill {
                }
 
                String name = AiClipboard.validateName(clipboard);
-               AiFill.TransformedCells transformed = init(AiClipboard.load(name), action, step, amount, 4096);
+               AiFill.TransformedCells transformed = transformCells(AiClipboard.load(name), action, step, amount, 4096);
                AiClipboard.saveClip(name, transformed.cells());
-               int[] extents = init(transformed.cells());
+               int[] extents = cellBounds(transformed.cells());
                return AiGameOperations.immediate(
                   AiOperation.Status.SUCCEEDED,
                   "Clipboard \"" + name + "\" " + action + "ed by " + amount,
@@ -719,7 +719,7 @@ final class AiFill {
    static AiOperation replace(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
-         AiFill.FillBox box = init_J_DataUtil(args);
+         AiFill.FillBox box = parseBox(args);
          if (box.volume() > 4096L) {
             throw new IllegalArgumentException("Box volume " + box.volume() + " exceeds 4096 cells");
          }
@@ -729,7 +729,7 @@ final class AiFill {
             throw new IllegalArgumentException("from is required: a block spec or \"any\"");
          }
 
-         Block to = init_Block(AiJson.getString(args, "to", ""), "to");
+         Block to = requireBlock(AiJson.getString(args, "to", ""), "to");
          Map<String, String> properties = AiBuilder.parseBlockProperties(args, "replace", to);
          int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
          Minecraft mc = Minecraft.getInstance();
@@ -737,12 +737,12 @@ final class AiFill {
          List<AiBuilder.CellSpec> cells = new ArrayList<>();
          List<BlockPos> digCells = new ArrayList<>();
 
-         for (BlockPos pos : init(box, false)) {
+         for (BlockPos pos : boxCells(box, false)) {
             BlockState live = mc.level.getBlockState(pos);
             AiBuilder.CellSpec cell = new AiBuilder.CellSpec(
                pos.getX() - box.minX(), pos.getY() - box.minY(), pos.getZ() - box.minZ(), toId, properties
             );
-            if (!AiBuilder.matchesExactCell(cell, live) && init_Z(from, BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString())) {
+            if (!AiBuilder.matchesExactCell(cell, live) && matchesFrom(from, BuiltInRegistries.BLOCK.getKey(live.getBlock()).toString())) {
                cells.add(cell);
                digCells.add(pos);
             }
@@ -763,7 +763,7 @@ final class AiFill {
       }
    }
 
-   private static Block init_Block(String spec, String arg) {
+   private static Block requireBlock(String spec, String arg) {
       if (spec.isBlank()) {
          throw new IllegalArgumentException(arg + " is required");
       } else {
@@ -779,179 +779,179 @@ final class AiFill {
    }
 
    private static final class ReplaceOperation implements AiOperation {
-      final Minecraft init_Minecraft = Minecraft.getInstance();
+      final Minecraft mc = Minecraft.getInstance();
       final List<BlockPos> digCells;
       final AiBuilder.Blueprint blueprint;
-      final long init_J;
-      AiOperation init_AiOperation;
-      final JsonArray init_JsonArray = new JsonArray();
-      int init_I;
-      int load_I;
-      int read;
-      int write;
-      BlockPos init_BlockPos;
-      AiOperation load_AiOperation;
-      boolean init_Z;
+      final long deadline;
+      AiOperation breakOp;
+      final JsonArray failed = new JsonArray();
+      int digIndex;
+      int dug;
+      int skipped;
+      int replaced;
+      BlockPos breakingCell;
+      AiOperation buildOp;
+      boolean cancelled;
 
       ReplaceOperation(List<BlockPos> digCells, AiBuilder.Blueprint blueprint, int timeoutSeconds) {
          this.digCells = digCells;
          this.blueprint = blueprint;
-         this.init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
+         this.deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
       }
 
       @Override
       public AiOperation.Result tick() {
-         if (!this.init_Z && this.init_Minecraft.player != null && this.init_Minecraft.level != null) {
-            if (this.init_Minecraft.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-               return this.init(
+         if (!this.cancelled && this.mc.player != null && this.mc.level != null) {
+            if (this.mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
+               return this.fail(
                   AiOperation.Status.FAILED,
                   AiFailure.LOW_HEALTH,
-                  AiGuard.formatLowHealthAbort("replacing", this.init_Minecraft.player.getHealth(), this.init_Minecraft.player.getMaxHealth())
+                  AiGuard.formatLowHealthAbort("replacing", this.mc.player.getHealth(), this.mc.player.getMaxHealth())
                );
             }
 
-            if (System.nanoTime() > this.init_J) {
-               return this.init(AiOperation.Status.TIMED_OUT, "Replace deadline reached");
+            if (System.nanoTime() > this.deadline) {
+               return this.finish(AiOperation.Status.TIMED_OUT, "Replace deadline reached");
             }
 
-            if (this.load_AiOperation == null) {
-               if (this.init_AiOperation != null) {
-                  AiOperation.Result result = this.init_AiOperation.tick();
+            if (this.buildOp == null) {
+               if (this.breakOp != null) {
+                  AiOperation.Result result = this.breakOp.tick();
                   if (!result.terminal()) {
-                     return this.init("Breaking replacement cell " + this.init_BlockPos.toShortString());
+                     return this.running("Breaking replacement cell " + this.breakingCell.toShortString());
                   }
 
-                  this.init_AiOperation.cancel();
-                  this.init_AiOperation = null;
+                  this.breakOp.cancel();
+                  this.breakOp = null;
                   if (result.status() == AiOperation.Status.SUCCEEDED) {
-                     this.load_I++;
+                     this.dug++;
                   } else {
-                     this.init(this.init_BlockPos, result.failure().name());
+                     this.recordFailure(this.breakingCell, result.failure().name());
                   }
 
-                  this.init_BlockPos = null;
+                  this.breakingCell = null;
                }
 
-               while (this.init_I < this.digCells.size()) {
-                  BlockPos cell = this.digCells.get(this.init_I++);
+               while (this.digIndex < this.digCells.size()) {
+                  BlockPos cell = this.digCells.get(this.digIndex++);
                   autismclient.ai.engine.AiPathfinder.CellInfo probe = autismclient.ai.engine.AiPathfinder.LiveGridView.classifyCellCompat(
-                     this.init_Minecraft, this.init_Minecraft.level, cell, new ItemStack[9]
+                     this.mc, this.mc.level, cell, new ItemStack[9]
                   );
                   if (!probe.loaded()) {
-                     this.init(cell, "WORLD_UNKNOWN");
-                  } else if (!this.init_Minecraft.level.getBlockState(cell).isAir()) {
-                     if (!autismclient.ai.engine.AiExcavate.init(
+                     this.recordFailure(cell, "WORLD_UNKNOWN");
+                  } else if (!this.mc.level.getBlockState(cell).isAir()) {
+                     if (!autismclient.ai.engine.AiExcavate.touchesLava(
                         (x, y, z) -> autismclient.ai.engine.AiPathfinder.LiveGridView.classifyCellCompat(
-                              this.init_Minecraft, this.init_Minecraft.level, new BlockPos(x, y, z), new ItemStack[9]
+                              this.mc, this.mc.level, new BlockPos(x, y, z), new ItemStack[9]
                            )
                            .lava(),
                         cell.getX(),
                         cell.getY(),
                         cell.getZ()
                      )) {
-                        this.init_BlockPos = cell;
-                        this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, Math.min(60, this.init_I_5()));
-                        return this.init("Approaching replacement cell " + cell.toShortString());
+                        this.breakingCell = cell;
+                        this.breakOp = autismclient.ai.engine.AiBreakBlock.breakBlock(cell, Math.min(60, this.secondsLeft()));
+                        return this.running("Approaching replacement cell " + cell.toShortString());
                      }
 
-                     this.read++;
+                     this.skipped++;
                   }
                }
 
-               if (this.load_AiOperation == null) {
-                  this.load_AiOperation = AiBuilder.buildBlueprint(this.blueprint, true, this.init_I_5());
-                  return this.init("Placing replacement blocks");
+               if (this.buildOp == null) {
+                  this.buildOp = AiBuilder.buildBlueprint(this.blueprint, true, this.secondsLeft());
+                  return this.running("Placing replacement blocks");
                } else {
-                  return this.init("Placing replacement blocks");
+                  return this.running("Placing replacement blocks");
                }
             } else {
-               AiOperation.Result r = this.load_AiOperation.tick();
+               AiOperation.Result r = this.buildOp.tick();
                if (!r.terminal()) {
-                  return this.init("Placing replacement blocks");
+                  return this.running("Placing replacement blocks");
                }
 
-               this.load_AiOperation.cancel();
-               this.load_AiOperation = null;
+               this.buildOp.cancel();
+               this.buildOp = null;
                JsonObject buildData = AiJson.parseObject(r.dataJson());
-               this.write = buildData.has("placed") ? buildData.get("placed").getAsInt() : 0;
+               this.replaced = buildData.has("placed") ? buildData.get("placed").getAsInt() : 0;
                if (buildData.has("failed")) {
-                  this.init_JsonArray.addAll(buildData.getAsJsonArray("failed"));
+                  this.failed.addAll(buildData.getAsJsonArray("failed"));
                }
 
-               return this.init(
-                  r.status() == AiOperation.Status.SUCCEEDED && (!this.init_JsonArray.isEmpty() || this.read > 0) ? AiOperation.Status.FAILED : r.status(),
+               return this.finish(
+                  r.status() == AiOperation.Status.SUCCEEDED && (!this.failed.isEmpty() || this.skipped > 0) ? AiOperation.Status.FAILED : r.status(),
                   r.message()
                );
             }
          } else {
-            return this.init(AiOperation.Status.CANCELLED, "Replace cancelled");
+            return this.finish(AiOperation.Status.CANCELLED, "Replace cancelled");
          }
       }
 
-      void init(BlockPos cell, String reason) {
-         if (this.init_JsonArray.size() < 32) {
-            this.init_JsonArray.add(AiJson.objectOf("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
+      void recordFailure(BlockPos cell, String reason) {
+         if (this.failed.size() < 32) {
+            this.failed.add(AiJson.objectOf("x", cell.getX(), "y", cell.getY(), "z", cell.getZ(), "reason", reason));
          }
       }
 
-      int init_I_5() {
-         return (int)Math.max(1L, (this.init_J - System.nanoTime()) / 1000000000L);
+      int secondsLeft() {
+         return (int)Math.max(1L, (this.deadline - System.nanoTime()) / 1000000000L);
       }
 
-      JsonObject init_JsonObject_10() {
+      JsonObject progressData() {
          return AiJson.objectOf(
             "replaced",
-            this.write,
+            this.replaced,
             "dug",
-            this.load_I,
+            this.dug,
             "digTotal",
             this.digCells.size(),
             "failed",
-            this.init_JsonArray,
+            this.failed,
             "skipped",
-            this.read,
+            this.skipped,
             "position",
-            this.init_Minecraft.player == null ? null : this.init_Minecraft.player.blockPosition().toShortString()
+            this.mc.player == null ? null : this.mc.player.blockPosition().toShortString()
          );
       }
 
-      AiOperation.Result init(String message) {
-         return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_10().toString(), List.of());
+      AiOperation.Result running(String message) {
+         return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressData().toString(), List.of());
       }
 
-      AiOperation.Result init(AiOperation.Status status, String message) {
+      AiOperation.Result finish(AiOperation.Status status, String message) {
          this.cancel();
-         return new AiOperation.Result(status, message, this.init_JsonObject_10().toString(), List.of());
+         return new AiOperation.Result(status, message, this.progressData().toString(), List.of());
       }
 
-      AiOperation.Result init(AiOperation.Status status, AiFailure code, String message) {
+      AiOperation.Result fail(AiOperation.Status status, AiFailure code, String message) {
          this.cancel();
-         return AiOperation.Result.failed(code, message, this.init_JsonObject_10().toString());
+         return AiOperation.Result.failed(code, message, this.progressData().toString());
       }
 
       @Override
       public void cancel() {
-         if (!this.init_Z) {
-            this.init_Z = true;
-            if (this.load_AiOperation != null) {
-               this.load_AiOperation.cancel();
-               this.load_AiOperation = null;
+         if (!this.cancelled) {
+            this.cancelled = true;
+            if (this.buildOp != null) {
+               this.buildOp.cancel();
+               this.buildOp = null;
             }
 
-            if (this.init_AiOperation != null) {
-               this.init_AiOperation.cancel();
-               this.init_AiOperation = null;
+            if (this.breakOp != null) {
+               this.breakOp.cancel();
+               this.breakOp = null;
             }
 
-            if (this.init_Minecraft.options != null) {
+            if (this.mc.options != null) {
                for (KeyMapping key : List.of(
-                  this.init_Minecraft.options.keyUp,
-                  this.init_Minecraft.options.keyDown,
-                  this.init_Minecraft.options.keyLeft,
-                  this.init_Minecraft.options.keyRight,
-                  this.init_Minecraft.options.keyJump,
-                  this.init_Minecraft.options.keySprint,
-                  this.init_Minecraft.options.keyShift
+                  this.mc.options.keyUp,
+                  this.mc.options.keyDown,
+                  this.mc.options.keyLeft,
+                  this.mc.options.keyRight,
+                  this.mc.options.keyJump,
+                  this.mc.options.keySprint,
+                  this.mc.options.keyShift
                )) {
                   key.setDown(autismclient.util.KeyMappingControl.of(key).autism$physicalForBody());
                }

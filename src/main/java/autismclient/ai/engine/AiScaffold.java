@@ -66,7 +66,7 @@ public final class AiScaffold {
       return scope;
    }
 
-   public static AiScaffold.JobScope init(Path journal, Collection<BlockPos> existing) {
+   public static AiScaffold.JobScope openScope(Path journal, Collection<BlockPos> existing) {
       Path key = journal.toAbsolutePath().normalize();
       LinkedHashMap<Long, Block> records = init_Map.get(key);
       if (records == null) {
@@ -276,7 +276,7 @@ public final class AiScaffold {
          return this.init_LinkedHashMap.keySet().stream().map(BlockPos::of).toList();
       }
 
-      public Block init(BlockPos pos) {
+      public Block recorded(BlockPos pos) {
          return this.init_LinkedHashMap.get(pos.asLong());
       }
 

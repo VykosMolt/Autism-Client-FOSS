@@ -38,7 +38,7 @@ public abstract class AutismPacketEncoderMixin<T extends PacketListener> {
                PacketWireCaptureStore.capture(packet, "C2S", protocol, packet.type(), output);
             }
 
-            if (PacketCaptureState.load(captureState) && autism$isPayloadCarrier(packet)) {
+            if (PacketCaptureState.isPayloadCapture(captureState) && autism$isPayloadCarrier(packet)) {
                module.captureCustomPayloadFromSource(packet, "C2S", protocol, "encoder");
             }
          }

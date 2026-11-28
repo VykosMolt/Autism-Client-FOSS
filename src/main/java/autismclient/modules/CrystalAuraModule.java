@@ -452,7 +452,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.reservedCrystalCell = null;
       this.cooldowns.reset();
       this.leadEstimator.init();
-      this.activationLatch.init();
+      this.activationLatch.reset();
       this.burstCount = 0;
       this.burstResetDeadline = 0L;
       this.stopDeadline = 0L;
@@ -694,7 +694,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
       int bind = this.integer("activation-key");
       boolean down = bind != -1 && autismclient.util.ValueSink.init(MC, bind);
-      if (!this.activationLatch.init(this.choice("activation"), down)) {
+      if (!this.activationLatch.update(this.choice("activation"), down)) {
          this.burstCount = 0;
          return false;
       }
@@ -833,7 +833,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
          this.simOptions = autismclient.util.ExplosionDamageCalculator.SimOptions.DEFAULT.withIgnoreTerrain(this.bool("terrain"));
          if (this.unverifiedObsidianPos != null) {
-            if (MC.level.getBlockState(this.unverifiedObsidianPos) != autismclient.util.ServerVerifiedBlockState.init(MC.level, this.unverifiedObsidianPos)) {
+            if (MC.level.getBlockState(this.unverifiedObsidianPos) != autismclient.util.ServerVerifiedBlockState.serverState(MC.level, this.unverifiedObsidianPos)) {
                if (!this.init_Z_LivingEntity_4(enemy)) {
                   this.releaseClaims();
                }
@@ -1286,7 +1286,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       AABB blastTarget = this.predictedHitbox(enemy, 0, 0.5);
 
       for (EndCrystal crystal : crystals) {
-         if (!this.recentAttacks.init(crystal, tick)
+         if (!this.recentAttacks.isPending(crystal, tick)
             && (!"Aimed".equals(this.choice("aim-mode")) || this.aimedHit instanceof EntityHitResult aimed && aimed.getEntity() == crystal)
             && !(distanceSqToBox(crystal.getBoundingBox(), eye) > rangeSq)) {
             autismclient.util.ExplosionDamageCalculator.DamagePair rank = this.rankDamage(enemy, crystal.position(), blastTarget);
@@ -1330,7 +1330,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
       RotationMath.Rotation best = null;
       float bestDelta = 3.4028235E38F;
-      Vec3 nearest = autismclient.util.HitboxRayHelper.init(box, eye);
+      Vec3 nearest = autismclient.util.HitboxRayHelper.nearestPoint(box, eye);
       RotationMath.Rotation nearAim = RotationMath.lookAt(nearest, eye);
       if (autismclient.util.HitboxRayHelper.init(
             box, eye, Vec3.directionFromRotation(nearAim.pitch(), nearAim.yaw()), range, pointx -> this.isRayBlocked(eye, pointx)
@@ -1422,7 +1422,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
       this.attackStage = "dispatched";
       this.clearPlans();
       this.recordAction(true);
-      this.recentAttacks.init(crystal, AutismSessionState.getInstance().getClientTick(), autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
+      this.recentAttacks.mark(crystal, AutismSessionState.getInstance().getClientTick(), autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
       this.pendingAttacks.add(crystal, BlockPos.containing(crystal.position()), AutismSessionState.getInstance().getClientTick(), autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
       this.lastBurstTick = AutismSessionState.getInstance().getClientTick();
       this.burstCount++;
@@ -1688,7 +1688,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    }
 
    private boolean recentlyPlacedAbove(BlockPos support) {
-      return this.recentPlacements.init(support.above(), AutismSessionState.getInstance().getClientTick());
+      return this.recentPlacements.isPending(support.above(), AutismSessionState.getInstance().getClientTick());
    }
 
    private void init_V_BlockPos_List(BlockPos cell, List<Entity> occupants) {
@@ -1705,7 +1705,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private void recordPlacement(BlockPos cell) {
       int tick = AutismSessionState.getInstance().getClientTick();
       this.pendingAttacks.init(cell, tick);
-      this.recentPlacements.init(cell, tick, autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
+      this.recentPlacements.mark(cell, tick, autismclient.util.macro.ServerTickPhaseTracker.getLatencyMs());
    }
 
    private boolean init_Z_Entity_BlockPos(Entity occupant, BlockPos cell) {
@@ -2667,7 +2667,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private boolean set() {
       return this.valid != AutismSessionState.getInstance().getClientTick()
          && !auditBeforeDeadline(this.auditHasUpdateDeadline, this.switchDeadline)
-         && autismclient.util.WeaponDamageCalculator.init(MC.player, MC.player.getMainHandItem()) > 0.0;
+         && autismclient.util.WeaponDamageCalculator.attackDamage(MC.player, MC.player.getMainHandItem()) > 0.0;
    }
 
    private void applyAntiWeakness() {
@@ -2677,7 +2677,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
 
          for (int slot = 0; slot < 9; slot++) {
             if (!autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, "crystal-aura")) {
-               double damage = autismclient.util.WeaponDamageCalculator.init(MC.player, MC.player.getInventory().getItem(slot));
+               double damage = autismclient.util.WeaponDamageCalculator.attackDamage(MC.player, MC.player.getInventory().getItem(slot));
                if (damage > bestDamage) {
                   best = slot;
                   bestDamage = damage;
@@ -2827,7 +2827,7 @@ public final class CrystalAuraModule extends Module implements SilentMovementCoo
    private boolean meetsDamageThresholds(LivingEntity enemy, autismclient.util.ExplosionDamageCalculator.DamagePair rank) {
       return autismclient.util.ExplosionDamageCalculator.wouldSelfDamagePopOrKill(rank.selfDamage())
          ? false
-         : autismclient.util.WeaponDamageCalculator.init(rank.load(), rank.selfDamage(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
+         : autismclient.util.WeaponDamageCalculator.worthIt(rank.load(), rank.selfDamage(), this.decimal("min-target-damage"), this.decimal("max-self-damage"), this.bool("efficient"));
    }
 
    private boolean init_Z_LivingEntity_3(LivingEntity enemy, Vec3 source, boolean placing) {

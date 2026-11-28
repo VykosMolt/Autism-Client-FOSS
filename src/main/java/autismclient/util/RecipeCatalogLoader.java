@@ -395,7 +395,7 @@ final class RecipeCatalogLoader {
       return values != null && !values.isEmpty() ? Collections.unmodifiableList(new ArrayList<>(values)) : List.of();
    }
 
-   static RecipeCatalogLoader.CraftingEntry init(
+   static RecipeCatalogLoader.CraftingEntry craftingEntry(
       String recipeKey, RecipeDisplay display, Optional<List<Ingredient>> craftingRequirements, FeatureFlagSet enabledFeatures, ContextMap slotContext
    ) {
       if (recipeKey == null || recipeKey.isBlank() || display == null || slotContext == null) {
@@ -715,7 +715,7 @@ final class RecipeCatalogLoader {
          this.signature = signature;
       }
 
-      boolean init(int gridWidth, int gridHeight) {
+      boolean fits(int gridWidth, int gridHeight) {
          return !this.shaped ? this.requirements.size() <= gridWidth * gridHeight : this.width <= gridWidth && this.height <= gridHeight;
       }
    }

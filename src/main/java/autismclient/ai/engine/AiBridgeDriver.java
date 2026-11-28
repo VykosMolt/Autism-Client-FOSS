@@ -85,7 +85,7 @@ public final class AiBridgeDriver {
       return Math.abs(x) >= Math.abs(z) ? new int[]{(int)Math.signum(x), 0} : new int[]{0, (int)Math.signum(z)};
    }
 
-   public AiBridgeDriver.BridgeStatus init(int slot, IntConsumer select, Consumer<BlockPos> onPlaced) {
+   public AiBridgeDriver.BridgeStatus step(int slot, IntConsumer select, Consumer<BlockPos> onPlaced) {
       LocalPlayer player = this.mc.player;
       AiBridger.Inner_CachePool lane = this.bridger.getLane();
       this.init_I++;

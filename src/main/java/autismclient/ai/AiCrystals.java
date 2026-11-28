@@ -738,7 +738,7 @@ final class AiCrystals {
 
                      this.aim.aimAt(this.init_Vec3_8());
                      this.aim.tick();
-                     AiFallGuard.load();
+                     AiFallGuard.stampTick();
                      mc.options.keyUp.setDown(true);
                      return this.running("Stepping off for the water clutch");
                   }
@@ -1094,7 +1094,7 @@ final class AiCrystals {
                   }
                }
 
-               return total + AiPlanks.init(mc.player.getInventory());
+               return total + AiPlanks.plankYield(mc.player.getInventory());
             }
 
             Vec3 init_Vec3_8() {

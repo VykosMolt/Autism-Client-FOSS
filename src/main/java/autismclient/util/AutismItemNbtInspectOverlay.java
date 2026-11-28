@@ -507,7 +507,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             int offset = firstLine ? prefixWidth : safeContinuationOffset;
             int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.availableWidth(maxWidth, offset);
             String current = remaining;
-            int split = autismclient.gui.ui.TextWrapLayout.init(
+            int split = autismclient.gui.ui.TextWrapLayout.breakIndex(
                current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
             );
             String part = remaining.substring(0, split).stripTrailing();
@@ -532,7 +532,7 @@ public class AutismItemNbtInspectOverlay extends DraggableOverlayWindow {
             while (!remaining.isEmpty()) {
                int availableWidth = autismclient.gui.ui.widgets.ScrollbarContentMath.availableWidth(maxWidth, safeOffset);
                String current = remaining;
-               int split = autismclient.gui.ui.TextWrapLayout.init(
+               int split = autismclient.gui.ui.TextWrapLayout.breakIndex(
                   current, 0, current.length(), availableWidth, (start, end) -> this.textWidth(current.substring(start, end))
                );
                String part = remaining.substring(0, split).stripTrailing();

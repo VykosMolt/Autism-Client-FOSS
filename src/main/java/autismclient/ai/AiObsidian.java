@@ -160,7 +160,7 @@ final class AiObsidian {
 
                   if (AiRunResources.isCampaignActive() && !this.read_Z && !AiCraft.isCraftingTableInReach() && AiCraft.countItem("minecraft:crafting_table") == 0) {
                      this.read_Z = true;
-                     AiOperation carry = AiProgression.init(Math.min(90, AiObsidian.secondsLeft(this.deadlineNanos)));
+                     AiOperation carry = AiProgression.reclaimTable(Math.min(90, AiObsidian.secondsLeft(this.deadlineNanos)));
                      if (carry != null) {
                         this.init_AiOperation = carry;
                         this.init_Str = "carry";
@@ -179,7 +179,7 @@ final class AiObsidian {
                } else {
                   if (AiRunResources.isCampaignActive() && !this.write && AiCraft.countItem("minecraft:crafting_table") == 0) {
                      this.write = true;
-                     AiOperation carry = AiProgression.init(Math.min(90, AiObsidian.secondsLeft(this.deadlineNanos)));
+                     AiOperation carry = AiProgression.reclaimTable(Math.min(90, AiObsidian.secondsLeft(this.deadlineNanos)));
                      if (carry != null) {
                         this.init_AiOperation = carry;
                         this.init_Str = "carry";
@@ -286,7 +286,7 @@ final class AiObsidian {
                AiVisualization.showCount(
                   this,
                   "Getting " + Items.OBSIDIAN.getDefaultInstance().getHoverName().getString(),
-                  AiTaskStatus.init(result.message(), "Preparing obsidian"),
+                  AiTaskStatus.phaseLabel(result.message(), "Preparing obsidian"),
                   AiCraft.countItem("minecraft:obsidian"),
                   held
                );

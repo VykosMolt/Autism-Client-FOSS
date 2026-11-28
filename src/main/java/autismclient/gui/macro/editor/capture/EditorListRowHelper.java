@@ -18,7 +18,7 @@ public final class EditorListRowHelper {
    private EditorListRowHelper() {
    }
 
-   public static EditorListRowHelper.RowLayout init(NetHelper bounds, boolean slotField, boolean capture) {
+   public static EditorListRowHelper.RowLayout layout(NetHelper bounds, boolean slotField, boolean capture) {
       int captureWidth = capture ? 52 : 0;
       int captureX = bounds.init() - captureWidth;
       int addX = (capture ? captureX - 2 : bounds.init()) - 34;

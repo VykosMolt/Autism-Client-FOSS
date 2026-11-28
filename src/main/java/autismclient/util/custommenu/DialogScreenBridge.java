@@ -20,14 +20,14 @@ public final class DialogScreenBridge {
 
    public static CustomMenuSnapshot snapshot(Minecraft mc) {
       Dialog dialog = init_Dialog(mc);
-      return dialog == null ? null : VanillaDialogMenuAdapter.init(dialog, mc.getConnection() != null ? "PLAY" : "CONFIGURATION");
+      return dialog == null ? null : VanillaDialogMenuAdapter.snapshot(dialog, mc.getConnection() != null ? "PLAY" : "CONFIGURATION");
    }
 
    public static Screen currentScreen(Minecraft mc) {
       return mc != null && mc.gui != null ? mc.gui.screen() : null;
    }
 
-   public static void init(Minecraft mc, ClickEvent clientAction, Screen answered) {
+   public static void answer(Minecraft mc, ClickEvent clientAction, Screen answered) {
       if (mc != null && answered instanceof DialogScreen) {
          CompletableFuture<Void> applied;
          try {

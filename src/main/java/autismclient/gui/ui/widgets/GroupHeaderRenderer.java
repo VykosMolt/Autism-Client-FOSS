@@ -6,7 +6,7 @@ public final class GroupHeaderRenderer {
    private GroupHeaderRenderer() {
    }
 
-   public static void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title, boolean collapsed, boolean hovered) {
+   public static void render(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String title, boolean collapsed, boolean hovered) {
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       autismclient.gui.f.PacketUtil.load(context.init_GuiGraphicsExtract(), bounds, 3, colors.cardSurface);
       init(context, bounds, hovered);

@@ -146,7 +146,7 @@ final class AiPortalCast {
                   AiPortalCast.CastPlan plan = planCast(frameCellsSorted(origin, axis), axis, reserved, lookup);
                   if (plan.blocked() == null) {
                      if (plan.blocked() != null) {
-                        Set<BlockPos> need = new HashSet<>(AiDimension.write(origin, axis));
+                        Set<BlockPos> need = new HashSet<>(AiDimension.portalInterior(origin, axis));
 
                         for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
                            need.add(cell);
@@ -234,7 +234,7 @@ final class AiPortalCast {
 
    static Set<BlockPos> reservedCells(BlockPos origin, Direction axis) {
       Set<BlockPos> reserved = new HashSet<>(AiDimension.frameBlocks(origin, axis));
-      reserved.addAll(AiDimension.write(origin, axis));
+      reserved.addAll(AiDimension.portalInterior(origin, axis));
       return reserved;
    }
 
@@ -1146,7 +1146,7 @@ final class AiPortalCast {
                      return this.finish(AiOperation.Status.SUCCEEDED, "Portal cast and lit at " + this.frameOrigin.toShortString());
                   }
 
-                  for (BlockPos interior : AiDimension.write(this.frameOrigin, this.frameAxis)) {
+                  for (BlockPos interior : AiDimension.portalInterior(this.frameOrigin, this.frameAxis)) {
                      BlockState state = this.mc.level.getBlockState(interior);
                      if (!state.isAir() && !state.is(Blocks.FIRE)) {
                         if (state.getFluidState().is(FluidTags.WATER) && AiGameState.countInventoryItem("minecraft:bucket") > 0) {
@@ -1614,7 +1614,7 @@ final class AiPortalCast {
                }
 
                BlockPos litPortalCell() {
-                  for (BlockPos interior : AiDimension.write(this.frameOrigin, this.frameAxis)) {
+                  for (BlockPos interior : AiDimension.portalInterior(this.frameOrigin, this.frameAxis)) {
                      if (this.mc.level.getBlockState(interior).is(Blocks.NETHER_PORTAL)) {
                         return interior;
                      }
@@ -1684,7 +1684,7 @@ final class AiPortalCast {
                         for (int offset = -2; offset <= 1; offset++) {
                            BlockPos origin = source.above().relative(axis, offset);
                            if (tried.add(origin.asLong())) {
-                              Set<BlockPos> need = new LinkedHashSet<>(AiDimension.write(origin, axis));
+                              Set<BlockPos> need = new LinkedHashSet<>(AiDimension.portalInterior(origin, axis));
 
                               for (BlockPos cell : AiDimension.frameBlocks(origin, axis)) {
                                  need.add(cell);

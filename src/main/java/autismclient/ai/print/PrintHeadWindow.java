@@ -30,7 +30,7 @@ final class PrintHeadWindow {
 
          this.init_J = atTick;
          this.load_J = now;
-         Direction facing = AiPlacementContext.init(y, p)[0];
+         Direction facing = AiPlacementContext.facingOrder(y, p)[0];
          if (facing != this.init_Direction) {
             this.init_Direction = facing;
             this.read_J = now;
@@ -48,7 +48,7 @@ final class PrintHeadWindow {
       if (this.load_I >= 6 && this.init_Direction == wanted && now - this.read_J >= 150000000L && now >= this.load_J && now - this.load_J <= 100000000L) {
          for (int y = 0; y < this.load_I; y++) {
             for (int p = 0; p < this.load_I; p++) {
-               if (AiPlacementContext.init(this.init_FArr[y], this.load_FArr[p])[0] != wanted) {
+               if (AiPlacementContext.facingOrder(this.init_FArr[y], this.load_FArr[p])[0] != wanted) {
                   return false;
                }
             }

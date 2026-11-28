@@ -506,7 +506,7 @@ final class AiGameOperations {
    }
 
    static AiOperation farmCrop(JsonObject args, String cropBlock, String cropItem) {
-      return AiFarm.init(args, cropBlock, cropItem);
+      return AiFarm.farmCrop(args, cropBlock, cropItem);
    }
 
    static AiOperation explore(final JsonObject args, final boolean village) {

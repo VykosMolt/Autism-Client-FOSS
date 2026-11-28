@@ -120,7 +120,7 @@ public final class OverlayActionButton {
       if (button != null && button.visible) {
          if (button.icon != null) {
             boolean iconHovered = button.containsPoint(mouseX, mouseY);
-            IconButtonRenderer.init(
+            IconButtonRenderer.renderIcon(
                context,
                textRenderer,
                autismclient.gui.f.NetHelper.init(button.x, button.y, button.width, button.height),

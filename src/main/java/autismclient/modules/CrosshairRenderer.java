@@ -256,7 +256,7 @@ public final class CrosshairRenderer {
             double unit = density * look.init_D();
             CrosshairPresetGeometry.Inner_CachePool raster = custom
                ? CrosshairPresetGeometry.rasterize(look.art(), unit, border, border + 1)
-               : CrosshairPresetGeometry.init(look.style(), unit, look.load_D(), look.read_D(), border, border + 1);
+               : CrosshairPresetGeometry.raster(look.style(), unit, look.load_D(), look.read_D(), border, border + 1);
             if (maxPixels <= 0 || raster.pixelCount() <= maxPixels || attempt == 3) {
                CrosshairRenderer.TextureEntry built = this.build(key, raster);
                if (built == null) {
@@ -288,7 +288,7 @@ public final class CrosshairRenderer {
                   int fill = Math.round(raster.coverage()[i] * 255.0F);
                   int outline = Math.round(raster.load()[i] * 255.0F);
                   if (fill > 0) {
-                     image.setPixel(0 * stride + 1 + x, 1 + y, fill << 24 | raster.init(i) & 16777215);
+                     image.setPixel(0 * stride + 1 + x, 1 + y, fill << 24 | raster.pixel(i) & 16777215);
                      image.setPixel(1 * stride + 1 + x, 1 + y, fill << 24 | 16777215);
                      image.setPixel(2 * stride + 1 + x, 1 + y, fill << 24 | fill << 16 | fill << 8 | fill);
                   }

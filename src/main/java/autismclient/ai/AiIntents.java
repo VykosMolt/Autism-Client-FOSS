@@ -443,7 +443,7 @@ final class AiIntents {
          return null;
       }
 
-      AiFastPath.Inner_DataUtil move = AiFastPath.init(c, lookups.waypoint());
+      AiFastPath.Inner_DataUtil move = AiFastPath.parse(c, lookups.waypoint());
       if (move != null) {
          return new AiIntents.IntentStep(raw, "game:goto", move.args(), move.describe());
       }
@@ -947,7 +947,7 @@ final class AiIntents {
       }
    }
 
-   static boolean init(AiIntents.ClarifyingQuestion ask, String answer, JsonObject args) {
+   static boolean applyAnswer(AiIntents.ClarifyingQuestion ask, String answer, JsonObject args) {
       String a = answer == null ? "" : answer.trim().toLowerCase(Locale.ROOT);
       if (!ask.key().equals("crop")) {
          Matcher dims = DIMENSIONS_PATTERN.matcher(a);

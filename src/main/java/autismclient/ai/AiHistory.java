@@ -468,10 +468,10 @@ final class AiHistory {
    }
 
    static AiHistory.Inner_StreamUtil init(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars) {
-      return init(provider, history, keepChars, hardChars, false);
+      return compactionCut(provider, history, keepChars, hardChars, false);
    }
 
-   static AiHistory.Inner_StreamUtil init(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars, boolean keepLastThinking) {
+   static AiHistory.Inner_StreamUtil compactionCut(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars, boolean keepLastThinking) {
       List<Integer> starts = new ArrayList<>();
 
       for (int i = 0; i < history.size(); i++) {
@@ -711,7 +711,7 @@ final class AiHistory {
       return text.toString();
    }
 
-   static String init(String objective, List<String> updates, String taskState, String digest) {
+   static String compactedContext(String objective, List<String> updates, String taskState, String digest) {
       StringBuilder out = new StringBuilder(
          "CONTEXT COMPACTED by the host: older rounds of this conversation were removed to fit the context window. Continue the objective from here; the HOST STATE at the end of this turn is current."
       );

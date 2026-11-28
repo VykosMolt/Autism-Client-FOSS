@@ -20,13 +20,13 @@ public final class AutoReconnectController {
    private AutoReconnectController() {
    }
 
-   public static void init(ServerData server) {
+   public static void remember(ServerData server) {
       if (server != null && server.ip != null && !server.ip.isBlank()) {
-         init(server, ServerAddress.parseString(server.ip));
+         remember(server, ServerAddress.parseString(server.ip));
       }
    }
 
-   public static void init(ServerData server, ServerAddress address) {
+   public static void remember(ServerData server, ServerAddress address) {
       if (server != null && (server.ip != null && !server.ip.isBlank() || address != null)) {
          ServerData copy = new ServerData(server.name, server.ip, server.type());
          copy.copyFrom(server);
@@ -58,7 +58,7 @@ public final class AutoReconnectController {
       return module != null && module.isEnabled();
    }
 
-   public static boolean read() {
+   public static boolean canReconnect() {
       return init_ServerData != null && init_ServerAddress != null && init_Minecraft.allowsMultiplayer();
    }
 

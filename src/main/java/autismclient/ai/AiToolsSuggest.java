@@ -25,8 +25,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 
 public final class AiToolsSuggest {
-   private static final List<String> init = List.of("1", "4", "8", "16", "32", "64");
-   private static final List<String> load = List.of(
+   private static final List<String> COUNTS = List.of("1", "4", "8", "16", "32", "64");
+   private static final List<String> MINE_TARGET_HINTS = List.of(
       "ore",
       "coal",
       "iron",
@@ -47,21 +47,21 @@ public final class AiToolsSuggest {
       "log",
       "wood"
    );
-   private static final List<String> read = List.of("log", "logs", "wood");
-   private static final List<String> write = List.of("north", "south", "east", "west");
-   private static List<autismclient.util.AutoCraftingEngine.ResolvedRecipe> update;
-   private static List<String> sync = List.of();
-   private static List<autismclient.util.AutoCraftingEngine.SmeltRecipe> flush;
-   private static List<String> close = List.of();
+   private static final List<String> LOG_ALIASES = List.of("log", "logs", "wood");
+   private static final List<String> CARDINALS = List.of("north", "south", "east", "west");
+   private static List<autismclient.util.AutoCraftingEngine.ResolvedRecipe> cachedCraftPlans;
+   private static List<String> cachedCraftIds = List.of();
+   private static List<autismclient.util.AutoCraftingEngine.SmeltRecipe> cachedSmeltPlans;
+   private static List<String> cachedSmeltIds = List.of();
    private static volatile List<String> open;
    private static volatile List<String> poll;
-   private static volatile List<String> push;
-   private static final List<String> pop = List.of("north", "south", "east", "west", "forward", "back", "left", "right");
+   private static volatile List<String> cachedMineTargets;
+   private static final List<String> DIRECTIONS = List.of("north", "south", "east", "west", "forward", "back", "left", "right");
 
    private AiToolsSuggest() {
    }
 
-   public static AiToolsSuggest.ArgCursor init(String remaining) {
+   public static AiToolsSuggest.ArgCursor lastArg(String remaining) {
       int cut = 0;
 
       for (int i = remaining.length() - 1; i >= 0; i--) {
@@ -78,7 +78,7 @@ public final class AiToolsSuggest {
 
    public static CompletableFuture<Suggestions> suggestArgs(String sub, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining();
-      AiToolsSuggest.ArgCursor cursor = sub.equals("mine") ? load(remaining) : init(remaining);
+      AiToolsSuggest.ArgCursor cursor = sub.equals("mine") ? lastCommaArg(remaining) : lastArg(remaining);
       int pos = cursor.position();
       SuggestionsBuilder at = builder.createOffset(builder.getStart() + cursor.offset());
 
@@ -89,11 +89,11 @@ public final class AiToolsSuggest {
             List<String> destination = completed.stream().filter(token -> !AiToolCallParser.isParkourFlag(token)).toList();
             if (!flags.noFall()) {
                String flag = cursor.current().startsWith("-") ? "--no-fall-damage" : "nofall";
-               init(at, cursor.current(), List.of(flag));
+               suggestMatching(at, cursor.current(), List.of(flag));
             }
 
             if (flags.speedLevel() < 0) {
-               init(at, cursor.current(), AiToolCallParser.parkourSpeedFlags);
+               suggestMatching(at, cursor.current(), AiToolCallParser.parkourSpeedFlags);
             }
 
             pos = destination.size();
@@ -107,7 +107,7 @@ public final class AiToolsSuggest {
                      AiToolCallParser.parseBlockCoord(coord, 0.0);
                   }
 
-                  init(at, cursor.current(), List.of("~"));
+                  suggestMatching(at, cursor.current(), List.of("~"));
                } catch (IllegalArgumentException ignored) {
                }
             }
@@ -118,17 +118,17 @@ public final class AiToolsSuggest {
             }
          }
 
-         init(at, cursor.current(), init(sub, pos));
+         suggestMatching(at, cursor.current(), suggestionsFor(sub, pos));
       } catch (Throwable var8) {
       }
 
       return at.buildFuture();
    }
 
-   static AiToolsSuggest.ArgCursor load(String remaining) {
+   static AiToolsSuggest.ArgCursor lastCommaArg(String remaining) {
       int comma = remaining.lastIndexOf(44);
       if (comma < 0 && !remaining.contains("=")) {
-         return init(remaining);
+         return lastArg(remaining);
       }
 
       int start = comma + 1;
@@ -143,19 +143,19 @@ public final class AiToolsSuggest {
          return new AiToolsSuggest.ArgCursor(1, tail.substring(equals + 1), start + equals + 1);
       }
 
-      AiToolsSuggest.ArgCursor token = init(tail);
+      AiToolsSuggest.ArgCursor token = lastArg(tail);
       return new AiToolsSuggest.ArgCursor(token.position() == 0 ? 0 : 1, token.current(), start + token.offset());
    }
 
    public static CompletableFuture<Suggestions> suggestTools(SuggestionsBuilder builder) {
-      AiToolsSuggest.ArgCursor cursor = init(builder.getRemaining());
+      AiToolsSuggest.ArgCursor cursor = lastArg(builder.getRemaining());
       SuggestionsBuilder at = builder.createOffset(builder.getStart() + cursor.offset());
 
       try {
          if (cursor.position() == 0) {
-            init(at, cursor.current(), poll());
+            suggestMatching(at, cursor.current(), toolIds());
          } else {
-            init(at, cursor.current(), init(builder.getRemaining().trim().split("\\s+")[0], cursor.current()));
+            suggestMatching(at, cursor.current(), toolArgSuggestions(builder.getRemaining().trim().split("\\s+")[0], cursor.current()));
          }
       } catch (Throwable var4) {
       }
@@ -173,37 +173,37 @@ public final class AiToolsSuggest {
             }
          }
 
-         init(builder, builder.getRemaining(), families);
+         suggestMatching(builder, builder.getRemaining(), families);
       } catch (Throwable var4) {
       }
 
       return builder.buildFuture();
    }
 
-   static List<String> init(String sub, int position) {
+   static List<String> suggestionsFor(String sub, int position) {
       List var10000;
       switch (sub) {
          case "craft":
-            var10000 = position == 0 ? craftableIds() : (position == 1 ? init : List.of());
+            var10000 = position == 0 ? craftableIds() : (position == 1 ? COUNTS : List.of());
             break;
          case "obtain":
          case "collect":
-            var10000 = position == 0 ? read() : (position == 1 ? init : List.of());
+            var10000 = position == 0 ? mineTargets() : (position == 1 ? COUNTS : List.of());
             break;
          case "smelt":
-            var10000 = position == 0 ? smeltableIds() : (position == 1 ? init : List.of());
+            var10000 = position == 0 ? smeltableIds() : (position == 1 ? COUNTS : List.of());
             break;
          case "mine":
-            var10000 = position == 0 ? write() : (position == 1 ? init : List.of());
+            var10000 = position == 0 ? write() : (position == 1 ? COUNTS : List.of());
             break;
          case "chop":
-            var10000 = position == 0 ? update() : (position == 1 ? init : List.of());
+            var10000 = position == 0 ? update() : (position == 1 ? COUNTS : List.of());
             break;
          case "farm":
             var10000 = position == 0 ? List.of("wheat", "carrots", "potatoes", "beetroots") : (position == 1 ? List.of("24", "48", "80", "160") : List.of());
             break;
          case "fight":
-            var10000 = position == 0 ? sync() : (position == 1 ? init : List.of());
+            var10000 = position == 0 ? sync() : (position == 1 ? COUNTS : List.of());
             break;
          case "follow":
             var10000 = position == 0 ? sync() : List.of();
@@ -211,18 +211,18 @@ public final class AiToolsSuggest {
          case "goto":
          case "parkour":
             var10000 = position == 0
-               ? init(sub.equals("goto"))
+               ? directionWords(sub.equals("goto"))
                : (
                   position == 1
-                     ? close()
-                     : (position == 2 ? List.of("~") : (position == 3 ? List.of("1", "2", "3", "4") : (position == 4 ? open() : List.of())))
+                     ? distanceChoices()
+                     : (position == 2 ? List.of("~") : (position == 3 ? List.of("1", "2", "3", "4") : (position == 4 ? strategies() : List.of())))
                );
             break;
          case "fill":
             var10000 = position < 6 ? List.of("~") : (position == 6 ? flush() : (position == 7 ? List.of("hollow", "solid") : List.of()));
             break;
          case "dig":
-            var10000 = position == 0 ? List.of("tunnel") : (position == 1 ? write : (position == 2 ? List.of("8", "16", "32", "64") : List.of()));
+            var10000 = position == 0 ? List.of("tunnel") : (position == 1 ? CARDINALS : (position == 2 ? List.of("8", "16", "32", "64") : List.of()));
             break;
          case "trade":
             var10000 = position == 0 ? List.of("1", "2", "3", "4", "5", "6") : List.of();
@@ -231,7 +231,7 @@ public final class AiToolsSuggest {
             var10000 = position == 0 ? List.of("0") : List.of();
             break;
          case "build":
-            var10000 = position == 0 ? push() : List.of();
+            var10000 = position == 0 ? blueprintNames() : List.of();
             break;
          default:
             var10000 = List.of();
@@ -240,7 +240,7 @@ public final class AiToolsSuggest {
       return var10000;
    }
 
-   static void init(SuggestionsBuilder builder, String current, Collection<String> values) {
+   static void suggestMatching(SuggestionsBuilder builder, String current, Collection<String> values) {
       String needle = current.toLowerCase(Locale.ROOT);
 
       for (String value : values) {
@@ -263,8 +263,8 @@ public final class AiToolsSuggest {
    static synchronized List<String> craftableIds() {
       Minecraft mc = Minecraft.getInstance();
       List<autismclient.util.AutoCraftingEngine.ResolvedRecipe> plans = autismclient.util.AutoCraftingEngine.getResolvedCraftingRecipes(mc);
-      if (plans == update) {
-         return sync;
+      if (plans == cachedCraftPlans) {
+         return cachedCraftIds;
       }
 
       Set<String> ids = new TreeSet<>();
@@ -277,15 +277,15 @@ public final class AiToolsSuggest {
          ids.add(shortId(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
       }
 
-      sync = List.copyOf(ids);
-      update = plans;
-      return sync;
+      cachedCraftIds = List.copyOf(ids);
+      cachedCraftPlans = plans;
+      return cachedCraftIds;
    }
 
    static synchronized List<String> smeltableIds() {
       List<autismclient.util.AutoCraftingEngine.SmeltRecipe> plans = autismclient.util.AutoCraftingEngine.getSmeltRecipes(Minecraft.getInstance());
-      if (plans == flush) {
-         return close;
+      if (plans == cachedSmeltPlans) {
+         return cachedSmeltIds;
       }
 
       Set<String> ids = new TreeSet<>();
@@ -294,19 +294,19 @@ public final class AiToolsSuggest {
          ids.add(shortId(BuiltInRegistries.ITEM.getKey(plan.outputItem())));
       }
 
-      close = List.copyOf(ids);
-      flush = plans;
-      return close;
+      cachedSmeltIds = List.copyOf(ids);
+      cachedSmeltPlans = plans;
+      return cachedSmeltIds;
    }
 
-   static List<String> read() {
-      List<String> cached = push;
+   static List<String> mineTargets() {
+      List<String> cached = cachedMineTargets;
       if (cached != null) {
          return cached;
       }
 
-      Set<String> ids = new TreeSet<>(load);
-      ids.addAll(read);
+      Set<String> ids = new TreeSet<>(MINE_TARGET_HINTS);
+      ids.addAll(LOG_ALIASES);
 
       for (Item item : BuiltInRegistries.ITEM) {
          if (item != Items.AIR) {
@@ -314,7 +314,7 @@ public final class AiToolsSuggest {
          }
       }
 
-      return push = List.copyOf(ids);
+      return cachedMineTargets = List.copyOf(ids);
    }
 
    static List<String> write() {
@@ -323,7 +323,7 @@ public final class AiToolsSuggest {
          return cached;
       }
 
-      Set<String> ids = new TreeSet<>(load);
+      Set<String> ids = new TreeSet<>(MINE_TARGET_HINTS);
       ids.addAll(autismclient.commands.CommandSuggestions.blockIds());
       return open = List.copyOf(ids);
    }
@@ -338,7 +338,7 @@ public final class AiToolsSuggest {
          return cached;
       }
 
-      Set<String> ids = new TreeSet<>(read);
+      Set<String> ids = new TreeSet<>(LOG_ALIASES);
 
       for (Block block : BuiltInRegistries.BLOCK) {
          Identifier key = BuiltInRegistries.BLOCK.getKey(block);
@@ -362,8 +362,8 @@ public final class AiToolsSuggest {
       return autismclient.commands.CommandSuggestions.load();
    }
 
-   private static List<String> init(boolean suggestTo) {
-      Set<String> out = new TreeSet<>(pop);
+   private static List<String> directionWords(boolean suggestTo) {
+      Set<String> out = new TreeSet<>(DIRECTIONS);
       out.add("~");
       if (suggestTo) {
          out.add("to");
@@ -384,15 +384,15 @@ public final class AiToolsSuggest {
       return new ArrayList<>(out);
    }
 
-   static List<String> close() {
+   static List<String> distanceChoices() {
       return List.of("~", "5", "10", "20", "50", "100");
    }
 
-   static List<String> open() {
+   static List<String> strategies() {
       return new ArrayList<>(new TreeSet<>(AiToolSettings.STRATEGIES));
    }
 
-   static List<String> poll() {
+   static List<String> toolIds() {
       List<String> ids = new ArrayList<>();
 
       for (AiCatalog.Entry entry : AiDirectOps.catalogSnapshot().entries()) {
@@ -404,7 +404,7 @@ public final class AiToolsSuggest {
       return ids;
    }
 
-   static List<String> init(String rawId, String current) {
+   static List<String> toolArgSuggestions(String rawId, String current) {
       AiCatalog.Entry entry = AiDirectOps.catalogEntry(AiDirectOps.resolveToolId(rawId));
       if (entry == null) {
          return List.of();
@@ -450,16 +450,16 @@ public final class AiToolsSuggest {
       }
    }
 
-   static List<String> push() {
+   static List<String> blueprintNames() {
       Set<String> names = new TreeSet<>();
-      init(AiDirectOps.blueprintsDir(), names, ".json", true);
-      init(AiDirectOps.schematicsDir(), names, ".schem", false);
-      init(AiDirectOps.schematicsDir(), names, ".schematic", false);
-      init(AiDirectOps.schematicsDir(), names, ".litematic", false);
+      collectFileNames(AiDirectOps.blueprintsDir(), names, ".json", true);
+      collectFileNames(AiDirectOps.schematicsDir(), names, ".schem", false);
+      collectFileNames(AiDirectOps.schematicsDir(), names, ".schematic", false);
+      collectFileNames(AiDirectOps.schematicsDir(), names, ".litematic", false);
       return List.copyOf(names);
    }
 
-   private static void init(Path directory, Set<String> out, String extension, boolean stripExtension) {
+   private static void collectFileNames(Path directory, Set<String> out, String extension, boolean stripExtension) {
       try {
          if (directory == null || !Files.isDirectory(directory)) {
             return;

@@ -14,10 +14,10 @@ import net.minecraft.world.phys.Vec3;
 final class PrintSpatialIndex {
    private static final int init_I = 12;
    private final int[] order;
-   private final int[] load;
-   private final int[] read;
-   private final int[] write;
-   private final int[] update;
+   private final int[] ids;
+   private final int[] xs;
+   private final int[] ys;
+   private final int[] zs;
    private final Int2IntOpenHashMap sparseIndex;
    private PrintSpatialIndex.Node root;
    private final boolean[] eligible;
@@ -29,7 +29,7 @@ final class PrintSpatialIndex {
       PrintSpatialIndex.IndexBuild build = new PrintSpatialIndex.IndexBuild(this, null, positions, i -> true);
 
       while (!build.done) {
-         build.init(2147483647);
+         build.advanceBuild(2147483647);
       }
    }
 
@@ -38,16 +38,16 @@ final class PrintSpatialIndex {
       PrintSpatialIndex.IndexBuild build = new PrintSpatialIndex.IndexBuild(this, source, positions, i -> true);
 
       while (!build.done) {
-         build.init(2147483647);
+         build.advanceBuild(2147483647);
       }
    }
 
    private PrintSpatialIndex(int size, boolean sparse) {
-      this.load = new int[size];
+      this.ids = new int[size];
       this.order = new int[size];
-      this.read = new int[size];
-      this.write = new int[size];
-      this.update = new int[size];
+      this.xs = new int[size];
+      this.ys = new int[size];
+      this.zs = new int[size];
       this.eligible = new boolean[size];
       this.leafOf = new PrintSpatialIndex.Node[size];
       this.sparseIndex = sparse ? new Int2IntOpenHashMap(size) : null;
@@ -57,12 +57,12 @@ final class PrintSpatialIndex {
    }
 
    private int coordinate(int point, int axis) {
-      return axis == 0 ? this.read[point] : (axis == 1 ? this.write[point] : this.update[point]);
+      return axis == 0 ? this.xs[point] : (axis == 1 ? this.ys[point] : this.zs[point]);
    }
 
-   private int init(int a, int b, int axis) {
+   private int compareOnAxis(int a, int b, int axis) {
       int result = Integer.compare(this.coordinate(a, axis), this.coordinate(b, axis));
-      return result != 0 ? result : Integer.compare(this.load[a], this.load[b]);
+      return result != 0 ? result : Integer.compare(this.ids[a], this.ids[b]);
    }
 
    private void swap(int a, int b) {
@@ -79,7 +79,7 @@ final class PrintSpatialIndex {
             this.revision++;
 
             for (PrintSpatialIndex.Node node = this.leafOf[point]; node != null; node = node.parent) {
-               this.init(node);
+               this.refreshBounds(node);
             }
          }
       } else {
@@ -87,21 +87,21 @@ final class PrintSpatialIndex {
       }
    }
 
-   private void init(PrintSpatialIndex.Node node) {
-      node.open = 0;
-      node.minX = node.write = node.update = 2147483647;
-      node.sync = node.flush = node.close = -2147483648;
+   private void refreshBounds(PrintSpatialIndex.Node node) {
+      node.activeCount = 0;
+      node.minX = node.minY = node.minZ = 2147483647;
+      node.maxX = node.maxY = node.maxZ = -2147483648;
       if (node.left == null) {
          for (int i = node.start; i < node.end; i++) {
             if (this.eligible[this.order[i]]) {
                int point = this.order[i];
-               node.open++;
-               node.minX = Math.min(node.minX, this.read[point]);
-               node.sync = Math.max(node.sync, this.read[point]);
-               node.write = Math.min(node.write, this.write[point]);
-               node.flush = Math.max(node.flush, this.write[point]);
-               node.update = Math.min(node.update, this.update[point]);
-               node.close = Math.max(node.close, this.update[point]);
+               node.activeCount++;
+               node.minX = Math.min(node.minX, this.xs[point]);
+               node.maxX = Math.max(node.maxX, this.xs[point]);
+               node.minY = Math.min(node.minY, this.ys[point]);
+               node.maxY = Math.max(node.maxY, this.ys[point]);
+               node.minZ = Math.min(node.minZ, this.zs[point]);
+               node.maxZ = Math.max(node.maxZ, this.zs[point]);
             }
          }
       } else {
@@ -111,14 +111,14 @@ final class PrintSpatialIndex {
    }
 
    private static void mergeBounds(PrintSpatialIndex.Node node, PrintSpatialIndex.Node child) {
-      if (child.open != 0) {
-         node.open = node.open + child.open;
+      if (child.activeCount != 0) {
+         node.activeCount = node.activeCount + child.activeCount;
          node.minX = Math.min(node.minX, child.minX);
-         node.sync = Math.max(node.sync, child.sync);
-         node.write = Math.min(node.write, child.write);
-         node.flush = Math.max(node.flush, child.flush);
-         node.update = Math.min(node.update, child.update);
-         node.close = Math.max(node.close, child.close);
+         node.maxX = Math.max(node.maxX, child.maxX);
+         node.minY = Math.min(node.minY, child.minY);
+         node.maxY = Math.max(node.maxY, child.maxY);
+         node.minZ = Math.min(node.minZ, child.minZ);
+         node.maxZ = Math.max(node.maxZ, child.maxZ);
       }
    }
 
@@ -126,7 +126,7 @@ final class PrintSpatialIndex {
       PrintSpatialIndex.NearestSearch search = this.startSearch(from, top, limit, eligible);
 
       while (!search.done) {
-         search.init(2147483647);
+         search.advance(2147483647);
       }
 
       return search.results;
@@ -136,14 +136,14 @@ final class PrintSpatialIndex {
       return new PrintSpatialIndex.NearestSearch(from, top, limit, eligible);
    }
 
-   double init(int x, int y, int z, PrintSpatialIndex.CostFunction cost) {
-      return this.root != null && this.root.open != 0
-         ? this.init(this.root, x, y, z, cost, 1.0 / 0.0)
+   double queryNearestCost(int x, int y, int z, PrintSpatialIndex.CostFunction cost) {
+      return this.root != null && this.root.activeCount != 0
+         ? this.nearestCost(this.root, x, y, z, cost, 1.0 / 0.0)
          : 1.0 / 0.0;
    }
 
-   private double init(PrintSpatialIndex.Node node, int x, int y, int z, PrintSpatialIndex.CostFunction cost, double best) {
-      if (node.open == 0 || init(node, x, y, z, cost) >= best) {
+   private double nearestCost(PrintSpatialIndex.Node node, int x, int y, int z, PrintSpatialIndex.CostFunction cost, double best) {
+      if (node.activeCount == 0 || lowerBound(node, x, y, z, cost) >= best) {
          return best;
       }
 
@@ -151,7 +151,7 @@ final class PrintSpatialIndex {
          for (int i = node.start; i < node.end && best > 0.0; i++) {
             int point = this.order[i];
             if (this.eligible[point]) {
-               best = Math.min(best, cost.at(this.read[point] - x, this.write[point] - y, this.update[point] - z));
+               best = Math.min(best, cost.at(this.xs[point] - x, this.ys[point] - y, this.zs[point] - z));
             }
          }
 
@@ -159,67 +159,67 @@ final class PrintSpatialIndex {
       } else {
          PrintSpatialIndex.Node first = node.left;
          PrintSpatialIndex.Node second = node.right;
-         if (first.open == 0 || second.open > 0 && init(first, x, y, z, cost) > init(second, x, y, z, cost)) {
+         if (first.activeCount == 0 || second.activeCount > 0 && lowerBound(first, x, y, z, cost) > lowerBound(second, x, y, z, cost)) {
             first = node.right;
             second = node.left;
          }
 
-         best = this.init(first, x, y, z, cost, best);
-         return best == 0.0 ? 0.0 : this.init(second, x, y, z, cost, best);
+         best = this.nearestCost(first, x, y, z, cost, best);
+         return best == 0.0 ? 0.0 : this.nearestCost(second, x, y, z, cost, best);
       }
    }
 
-   private static double init(PrintSpatialIndex.Node n, int x, int y, int z, PrintSpatialIndex.CostFunction cost) {
-      return cost.at(Math.clamp(x, n.minX, n.sync) - x, Math.clamp(y, n.write, n.flush) - y, Math.clamp(z, n.update, n.close) - z);
+   private static double lowerBound(PrintSpatialIndex.Node n, int x, int y, int z, PrintSpatialIndex.CostFunction cost) {
+      return cost.at(Math.clamp(x, n.minX, n.maxX) - x, Math.clamp(y, n.minY, n.maxY) - y, Math.clamp(z, n.minZ, n.maxZ) - z);
    }
 
    private final class HeapSortTask {
-      final int init;
-      final int load;
-      int read;
-      int write;
-      int update = -1;
+      final int base;
+      final int axis;
+      int heapSize;
+      int nextHeapify;
+      int siftIndex = -1;
 
       HeapSortTask(int start, int end, int axis) {
-         this.init = start;
-         this.load = axis;
-         this.read = end - start;
-         this.write = this.read / 2 - 1;
+         this.base = start;
+         this.axis = axis;
+         this.heapSize = end - start;
+         this.nextHeapify = this.heapSize / 2 - 1;
       }
 
-      boolean init() {
-         if (this.update >= 0) {
-            int child = this.update * 2 + 1;
-            if (child >= this.read) {
-               this.update = -1;
+      boolean step() {
+         if (this.siftIndex >= 0) {
+            int child = this.siftIndex * 2 + 1;
+            if (child >= this.heapSize) {
+               this.siftIndex = -1;
                return false;
             }
 
-            if (child + 1 < this.read
-               && PrintSpatialIndex.this.init(PrintSpatialIndex.this.order[this.init + child], PrintSpatialIndex.this.order[this.init + child + 1], this.load) < 0) {
+            if (child + 1 < this.heapSize
+               && PrintSpatialIndex.this.compareOnAxis(PrintSpatialIndex.this.order[this.base + child], PrintSpatialIndex.this.order[this.base + child + 1], this.axis) < 0) {
                child++;
             }
 
-            if (PrintSpatialIndex.this.init(PrintSpatialIndex.this.order[this.init + this.update], PrintSpatialIndex.this.order[this.init + child], this.load) >= 0) {
-               this.update = -1;
+            if (PrintSpatialIndex.this.compareOnAxis(PrintSpatialIndex.this.order[this.base + this.siftIndex], PrintSpatialIndex.this.order[this.base + child], this.axis) >= 0) {
+               this.siftIndex = -1;
                return false;
             } else {
-               PrintSpatialIndex.this.swap(this.init + this.update, this.init + child);
-               this.update = child;
+               PrintSpatialIndex.this.swap(this.base + this.siftIndex, this.base + child);
+               this.siftIndex = child;
                return false;
             }
          } else {
-            if (this.write >= 0) {
-               this.update = this.write--;
+            if (this.nextHeapify >= 0) {
+               this.siftIndex = this.nextHeapify--;
                return false;
             }
 
-            if (this.read <= 1) {
+            if (this.heapSize <= 1) {
                return true;
             }
 
-            PrintSpatialIndex.this.swap(this.init, this.init + --this.read);
-            this.update = 0;
+            PrintSpatialIndex.this.swap(this.base, this.base + --this.heapSize);
+            this.siftIndex = 0;
             return false;
          }
       }
@@ -237,80 +237,80 @@ final class PrintSpatialIndex {
       private final long revision;
       private final PriorityQueue<PrintSpatialIndex.FrontierEntry> frontier;
       private PrintSpatialIndex.Node currentNode;
-      private int read;
-      long init_J;
+      private int leafCursor;
+      long unusedStepCount;
       boolean done;
       boolean exhausted;
 
       private NearestSearch(Vec3 from, int top, int limit, IntPredicate eligible) {
          this.revision = PrintSpatialIndex.this.revision;
          this.frontier = new PriorityQueue<>(
-            Comparator.comparingDouble(PrintSpatialIndex.FrontierEntry::distance).thenComparingInt(e -> e.node != null ? -2147483648 : PrintSpatialIndex.this.load[e.id])
+            Comparator.comparingDouble(PrintSpatialIndex.FrontierEntry::distance).thenComparingInt(e -> e.node != null ? -2147483648 : PrintSpatialIndex.this.ids[e.id])
          );
          this.origin = from;
          this.top = top;
          this.limit = limit;
          this.eligible = eligible;
          if (PrintSpatialIndex.this.root != null
-            && PrintSpatialIndex.this.root.open != 0
+            && PrintSpatialIndex.this.root.activeCount != 0
             && limit > 0
-            && PrintSpatialIndex.this.root.write < top) {
+            && PrintSpatialIndex.this.root.minY < top) {
             this.frontier
-               .add(new PrintSpatialIndex.FrontierEntry(PrintSpatialIndex.this.root.init(from), PrintSpatialIndex.this.root, -1));
+               .add(new PrintSpatialIndex.FrontierEntry(PrintSpatialIndex.this.root.distanceSq(from), PrintSpatialIndex.this.root, -1));
          } else {
             this.done = true;
          }
       }
 
-      int init(int maxSteps) {
-         return this.init(maxSteps, null, 9223372036854775807L);
+      int advance(int maxSteps) {
+         return this.runBudgeted(maxSteps, null, 9223372036854775807L);
       }
 
-      int init(int maxSteps, LongSupplier clock, long allowance) {
-         if (this.init() && !this.done && maxSteps > 0) {
+      int runBudgeted(int maxSteps, LongSupplier clock, long allowance) {
+         if (this.isCurrent() && !this.done && maxSteps > 0) {
             int used = 0;
             long started = clock == null ? 0L : clock.getAsLong();
 
-            while (!this.done && used < maxSteps && this.init() && (used <= 0 || clock == null || clock.getAsLong() - started < Math.max(1L, allowance))) {
+            while (!this.done && used < maxSteps && this.isCurrent() && (used <= 0 || clock == null || clock.getAsLong() - started < Math.max(1L, allowance))) {
                used++;
-               this.init_J++;
+               this.unusedStepCount++;
                if (this.currentNode != null) {
-                  int point = PrintSpatialIndex.this.order[this.read++];
-                  if (PrintSpatialIndex.this.eligible[point] && PrintSpatialIndex.this.write[point] < this.top) {
-                     double dx = PrintSpatialIndex.this.read[point] + 0.5 - this.origin.x;
-                     double dy = PrintSpatialIndex.this.write[point] + 0.5 - this.origin.y;
-                     double dz = PrintSpatialIndex.this.update[point] + 0.5 - this.origin.z;
+                  int point = PrintSpatialIndex.this.order[this.leafCursor++];
+                  if (PrintSpatialIndex.this.eligible[point] && PrintSpatialIndex.this.ys[point] < this.top) {
+                     double dx = PrintSpatialIndex.this.xs[point] + 0.5 - this.origin.x;
+                     double dy = PrintSpatialIndex.this.ys[point] + 0.5 - this.origin.y;
+                     double dz = PrintSpatialIndex.this.zs[point] + 0.5 - this.origin.z;
                      this.frontier.add(new PrintSpatialIndex.FrontierEntry(dx * dx + dy * dy + dz * dz, null, point));
                   }
 
-                  if (this.read == this.currentNode.end) {
+                  if (this.leafCursor == this.currentNode.end) {
                      this.currentNode = null;
                   }
                } else {
                   PrintSpatialIndex.FrontierEntry entry = this.frontier.poll();
                   PrintSpatialIndex.Node node = entry.node;
                   if (node == null) {
-                     boolean accepted = this.eligible.test(PrintSpatialIndex.this.load[entry.id]);
-                     if (!this.init()) {
+                     boolean accepted = this.eligible.test(PrintSpatialIndex.this.ids[entry.id]);
+                     if (!this.isCurrent()) {
                         break;
                      }
 
                      if (accepted) {
-                        this.results.add(PrintSpatialIndex.this.load[entry.id]);
+                        this.results.add(PrintSpatialIndex.this.ids[entry.id]);
                      }
                   } else if (node.left != null) {
-                     if (node.left.open > 0 && node.left.write < this.top) {
+                     if (node.left.activeCount > 0 && node.left.minY < this.top) {
                         this.frontier
-                           .add(new PrintSpatialIndex.FrontierEntry(node.left.init(this.origin), node.left, -1));
+                           .add(new PrintSpatialIndex.FrontierEntry(node.left.distanceSq(this.origin), node.left, -1));
                      }
 
-                     if (node.right.open > 0 && node.right.write < this.top) {
+                     if (node.right.activeCount > 0 && node.right.minY < this.top) {
                         this.frontier
-                           .add(new PrintSpatialIndex.FrontierEntry(node.right.init(this.origin), node.right, -1));
+                           .add(new PrintSpatialIndex.FrontierEntry(node.right.distanceSq(this.origin), node.right, -1));
                      }
                   } else {
                      this.currentNode = node;
-                     this.read = node.start;
+                     this.leafCursor = node.start;
                   }
                }
 
@@ -325,7 +325,7 @@ final class PrintSpatialIndex {
          }
       }
 
-      private boolean init() {
+      private boolean isCurrent() {
          if (!this.exhausted && this.revision == PrintSpatialIndex.this.revision) {
             return true;
          }
@@ -343,7 +343,7 @@ final class PrintSpatialIndex {
       private final IntPredicate initiallyActive;
       private final ArrayDeque<PrintSpatialIndex.IndexBuild.BuildFrame> stack = new ArrayDeque<>();
       private int cursor;
-      long init_J;
+      long unusedStepCount;
       boolean done;
 
       IndexBuild(int size, IntFunction<BlockPos> positions, IntPredicate initiallyActive) {
@@ -357,21 +357,21 @@ final class PrintSpatialIndex {
          this.initiallyActive = initiallyActive;
       }
 
-      int init(int budget) {
+      int advanceBuild(int budget) {
          int used = 0;
 
          while (!this.done && used < budget) {
             used++;
-            this.init_J++;
+            this.unusedStepCount++;
             if (this.cursor < this.result.order.length) {
                int i = this.cursor++;
                int id = this.source == null ? i : this.source.getInt(i);
                this.result.order[i] = i;
-               this.result.load[i] = id;
+               this.result.ids[i] = id;
                BlockPos p = this.positions.apply(id);
-               this.result.read[i] = p.getX();
-               this.result.write[i] = p.getY();
-               this.result.update[i] = p.getZ();
+               this.result.xs[i] = p.getX();
+               this.result.ys[i] = p.getY();
+               this.result.zs[i] = p.getZ();
                this.result.eligible[i] = this.initiallyActive.test(id);
                if (this.result.sparseIndex != null && this.result.sparseIndex.put(id, i) != -1) {
                   throw new IllegalArgumentException("Duplicate spatial point " + id);
@@ -386,45 +386,45 @@ final class PrintSpatialIndex {
             } else {
                PrintSpatialIndex.IndexBuild.BuildFrame frame = this.stack.peek();
                PrintSpatialIndex.Node node = frame.node;
-               if (frame.load == 0) {
+               if (frame.phase == 0) {
                   if (frame.cursor < node.end) {
                      int point = this.result.order[frame.cursor++];
-                     node.minX = Math.min(node.minX, this.result.read[point]);
-                     node.sync = Math.max(node.sync, this.result.read[point]);
-                     node.write = Math.min(node.write, this.result.write[point]);
-                     node.flush = Math.max(node.flush, this.result.write[point]);
-                     node.update = Math.min(node.update, this.result.update[point]);
-                     node.close = Math.max(node.close, this.result.update[point]);
+                     node.minX = Math.min(node.minX, this.result.xs[point]);
+                     node.maxX = Math.max(node.maxX, this.result.xs[point]);
+                     node.minY = Math.min(node.minY, this.result.ys[point]);
+                     node.maxY = Math.max(node.maxY, this.result.ys[point]);
+                     node.minZ = Math.min(node.minZ, this.result.zs[point]);
+                     node.maxZ = Math.max(node.maxZ, this.result.zs[point]);
                   } else if (node.end - node.start <= 12) {
                      for (int i = node.start; i < node.end; i++) {
                         this.result.leafOf[this.result.order[i]] = node;
                      }
 
-                     this.result.init(node);
+                     this.result.refreshBounds(node);
                      this.stack.pop();
                   } else {
-                     int axis = node.sync - node.minX >= node.flush - node.write && node.sync - node.minX >= node.close - node.update
+                     int axis = node.maxX - node.minX >= node.maxY - node.minY && node.maxX - node.minX >= node.maxZ - node.minZ
                         ? 0
-                        : (node.flush - node.write >= node.close - node.update ? 1 : 2);
+                        : (node.maxY - node.minY >= node.maxZ - node.minZ ? 1 : 2);
                      frame.partition = this.result.new Partition(node.start, node.end, node.start + node.end >>> 1, axis);
-                     frame.load = 1;
+                     frame.phase = 1;
                   }
-               } else if (frame.load == 1) {
-                  if (frame.partition.init()) {
+               } else if (frame.phase == 1) {
+                  if (frame.partition.step()) {
                      int middle = node.start + node.end >>> 1;
                      node.left = new PrintSpatialIndex.Node(node.start, middle, 0, 0, 0, 0, 0, 0);
                      node.left.parent = node;
                      node.right = new PrintSpatialIndex.Node(middle, node.end, 0, 0, 0, 0, 0, 0);
                      node.right.parent = node;
                      frame.partition = null;
-                     frame.load = 2;
+                     frame.phase = 2;
                      this.stack.push(new PrintSpatialIndex.IndexBuild.BuildFrame(node.left));
                   }
-               } else if (frame.load == 2) {
-                  frame.load = 3;
+               } else if (frame.phase == 2) {
+                  frame.phase = 3;
                   this.stack.push(new PrintSpatialIndex.IndexBuild.BuildFrame(node.right));
                } else {
-                  this.result.init(node);
+                  this.result.refreshBounds(node);
                   this.stack.pop();
                }
             }
@@ -436,87 +436,87 @@ final class PrintSpatialIndex {
       private static final class BuildFrame {
          final PrintSpatialIndex.Node node;
          int cursor;
-         int load;
+         int phase;
          PrintSpatialIndex.Partition partition;
 
          BuildFrame(PrintSpatialIndex.Node node) {
             this.node = node;
             this.cursor = node.start;
-            node.minX = node.write = node.update = 2147483647;
-            node.sync = node.flush = node.close = -2147483648;
+            node.minX = node.minY = node.minZ = 2147483647;
+            node.maxX = node.maxY = node.maxZ = -2147483648;
          }
       }
    }
 
    private final class Partition {
       int start;
-      int load;
-      int read;
-      int write;
-      int update;
-      int sync;
-      final int flush;
-      final int close;
-      int open;
-      boolean init_Z;
-      PrintSpatialIndex.HeapSortTask init_RefQueue_BufferHel;
+      int end;
+      int depthLimit;
+      int lessEnd;
+      int scan;
+      int greaterStart;
+      final int middle;
+      final int axis;
+      int pivot;
+      boolean pivotChosen;
+      PrintSpatialIndex.HeapSortTask heapSort;
 
       Partition(int start, int end, int middle, int axis) {
          this.start = start;
-         this.load = end;
-         this.flush = middle;
-         this.close = axis;
-         this.read = 2 * (32 - Integer.numberOfLeadingZeros(end - start));
+         this.end = end;
+         this.middle = middle;
+         this.axis = axis;
+         this.depthLimit = 2 * (32 - Integer.numberOfLeadingZeros(end - start));
       }
 
-      boolean init() {
-         if (this.init_RefQueue_BufferHel != null) {
-            return this.init_RefQueue_BufferHel.init();
+      boolean step() {
+         if (this.heapSort != null) {
+            return this.heapSort.step();
          }
 
-         if (this.load - this.start <= 1) {
+         if (this.end - this.start <= 1) {
             return true;
          }
 
-         if (!this.init_Z) {
-            if (--this.read < 0) {
-               this.init_RefQueue_BufferHel = PrintSpatialIndex.this.new HeapSortTask(this.start, this.load, this.close);
+         if (!this.pivotChosen) {
+            if (--this.depthLimit < 0) {
+               this.heapSort = PrintSpatialIndex.this.new HeapSortTask(this.start, this.end, this.axis);
                return false;
             } else {
                int a = PrintSpatialIndex.this.order[this.start];
-               int b = PrintSpatialIndex.this.order[this.start + this.load >>> 1];
-               int c = PrintSpatialIndex.this.order[this.load - 1];
-               this.open = PrintSpatialIndex.this.init(a, b, this.close) < 0
-                  ? (PrintSpatialIndex.this.init(b, c, this.close) < 0 ? b : (PrintSpatialIndex.this.init(a, c, this.close) < 0 ? c : a))
-                  : (PrintSpatialIndex.this.init(a, c, this.close) < 0 ? a : (PrintSpatialIndex.this.init(b, c, this.close) < 0 ? c : b));
-               this.write = this.update = this.start;
-               this.sync = this.load;
-               this.init_Z = true;
+               int b = PrintSpatialIndex.this.order[this.start + this.end >>> 1];
+               int c = PrintSpatialIndex.this.order[this.end - 1];
+               this.pivot = PrintSpatialIndex.this.compareOnAxis(a, b, this.axis) < 0
+                  ? (PrintSpatialIndex.this.compareOnAxis(b, c, this.axis) < 0 ? b : (PrintSpatialIndex.this.compareOnAxis(a, c, this.axis) < 0 ? c : a))
+                  : (PrintSpatialIndex.this.compareOnAxis(a, c, this.axis) < 0 ? a : (PrintSpatialIndex.this.compareOnAxis(b, c, this.axis) < 0 ? c : b));
+               this.lessEnd = this.scan = this.start;
+               this.greaterStart = this.end;
+               this.pivotChosen = true;
                return false;
             }
-         } else if (this.update < this.sync) {
-            int comparison = PrintSpatialIndex.this.init(PrintSpatialIndex.this.order[this.update], this.open, this.close);
+         } else if (this.scan < this.greaterStart) {
+            int comparison = PrintSpatialIndex.this.compareOnAxis(PrintSpatialIndex.this.order[this.scan], this.pivot, this.axis);
             if (comparison < 0) {
-               PrintSpatialIndex.this.swap(this.write++, this.update++);
+               PrintSpatialIndex.this.swap(this.lessEnd++, this.scan++);
             } else if (comparison > 0) {
-               PrintSpatialIndex.this.swap(this.update, --this.sync);
+               PrintSpatialIndex.this.swap(this.scan, --this.greaterStart);
             } else {
-               this.update++;
+               this.scan++;
             }
 
             return false;
          } else {
-            if (this.flush < this.write) {
-               this.load = this.write;
+            if (this.middle < this.lessEnd) {
+               this.end = this.lessEnd;
             } else {
-               if (this.flush < this.sync) {
+               if (this.middle < this.greaterStart) {
                   return true;
                }
 
-               this.start = this.sync;
+               this.start = this.greaterStart;
             }
 
-            this.init_Z = false;
+            this.pivotChosen = false;
             return false;
          }
       }
@@ -531,12 +531,12 @@ final class PrintSpatialIndex {
       final int start;
       final int end;
       int minX;
-      int write;
-      int update;
-      int sync;
-      int flush;
-      int close;
-      int open;
+      int minY;
+      int minZ;
+      int maxX;
+      int maxY;
+      int maxZ;
+      int activeCount;
       PrintSpatialIndex.Node left;
       PrintSpatialIndex.Node right;
       PrintSpatialIndex.Node parent;
@@ -544,23 +544,23 @@ final class PrintSpatialIndex {
       Node(int start, int end, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
          this.start = start;
          this.end = end;
-         this.open = end - start;
+         this.activeCount = end - start;
          this.minX = minX;
-         this.write = minY;
-         this.update = minZ;
-         this.sync = maxX;
-         this.flush = maxY;
-         this.close = maxZ;
+         this.minY = minY;
+         this.minZ = minZ;
+         this.maxX = maxX;
+         this.maxY = maxY;
+         this.maxZ = maxZ;
       }
 
-      double init(Vec3 from) {
-         double dx = init(from.x, this.minX + 0.5, this.sync + 0.5);
-         double dy = init(from.y, this.write + 0.5, this.flush + 0.5);
-         double dz = init(from.z, this.update + 0.5, this.close + 0.5);
+      double distanceSq(Vec3 from) {
+         double dx = axisGap(from.x, this.minX + 0.5, this.maxX + 0.5);
+         double dy = axisGap(from.y, this.minY + 0.5, this.maxY + 0.5);
+         double dz = axisGap(from.z, this.minZ + 0.5, this.maxZ + 0.5);
          return dx * dx + dy * dy + dz * dz;
       }
 
-      private static double init(double value, double min, double max) {
+      private static double axisGap(double value, double min, double max) {
          return value < min ? min - value : (value > max ? value - max : 0.0);
       }
    }

@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.protocol.Packet;
 
 public class DirectPacketSender {
-   public static void init(Packet<?> packet) {
+   public static void send(Packet<?> packet) {
       if (!autismclient.modules.aD.read_Z()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.getConnection() != null) {

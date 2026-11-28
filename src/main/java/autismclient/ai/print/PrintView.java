@@ -1242,7 +1242,7 @@ public final class PrintView implements SignalGetter {
          return 0.0 / 0.0;
       }
 
-      if (!this.isBoxClear(PrintGeometry.init(cx, top, cz, false)) && !this.isBoxClear(PrintGeometry.init(cx, top, cz, true))) {
+      if (!this.isBoxClear(PrintGeometry.bodyBox(cx, top, cz, false)) && !this.isBoxClear(PrintGeometry.bodyBox(cx, top, cz, true))) {
          return 0.0 / 0.0;
       }
 
@@ -1509,10 +1509,10 @@ public final class PrintView implements SignalGetter {
    public AiPhysics.PhysicsWorld asPhysicsWorld() {
       final PrintView view = this;
       return new AiPhysics.PhysicsWorld() {
-         private final Long2ObjectOpenHashMap<List<AABB>> init = new Long2ObjectOpenHashMap<>();
+         private final Long2ObjectOpenHashMap<List<AABB>> shapeCache = new Long2ObjectOpenHashMap<>();
 
          private List<AABB> cellBoxes(int x, int y, int z) {
-            return this.init.computeIfAbsent(BlockPos.asLong(x, y, z), key -> {
+            return this.shapeCache.computeIfAbsent(BlockPos.asLong(x, y, z), key -> {
                BlockPos at = BlockPos.of(key);
                BlockState state = view.getBlockState(at);
                return state.isAir() ? List.of() : view.getCollisionBoxesForState(state, at).stream().map(box -> box.move(at)).toList();

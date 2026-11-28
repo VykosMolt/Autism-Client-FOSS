@@ -35,7 +35,7 @@ public final class TargetLeadDamageEstimator {
       this.init.reset();
    }
 
-   public static AABB init(LivingEntity target) {
+   public static AABB leadBox(LivingEntity target) {
       return target.getBoundingBox().move(EntityMotionTracker.observedPosition(target).subtract(target.position()));
    }
 

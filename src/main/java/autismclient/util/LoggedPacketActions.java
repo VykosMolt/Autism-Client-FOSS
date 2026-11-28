@@ -33,7 +33,7 @@ public final class LoggedPacketActions {
       }
 
       try {
-         DirectPacketSender.init(regenerated);
+         DirectPacketSender.send(regenerated);
          AutismClientMessaging.sendPrefixed("Sent: " + entry.name);
          return true;
       } catch (Exception e) {
@@ -57,7 +57,7 @@ public final class LoggedPacketActions {
          Packet<?> regenerated = PacketRegenerator.regenerate(entry.packet);
          if (regenerated != null) {
             try {
-               DirectPacketSender.init(regenerated);
+               DirectPacketSender.send(regenerated);
                AutismClientMessaging.sendPrefixed("Sent: " + entry.name);
                return true;
             } catch (Exception e) {
@@ -131,7 +131,7 @@ public final class LoggedPacketActions {
             AutismClientMessaging.sendPrefixed("§cCannot open the macro editor.");
             return false;
          } else {
-            String target = autismclient.util.macro.WaitForPacketAction.init(entry.direction, entry.name);
+            String target = autismclient.util.macro.WaitForPacketAction.target(entry.direction, entry.name);
             if (target.isEmpty()) {
                AutismClientMessaging.sendPrefixed("§cCannot add this packet as a wait condition.");
                return false;
@@ -140,7 +140,7 @@ public final class LoggedPacketActions {
                action.packetNames.add(target);
                macroEditor.appendAction(action);
                OverlayManager.getInstance().bringToFront(macroEditor);
-               AutismClientMessaging.sendPrefixed("Added wait condition: " + autismclient.util.macro.WaitForPacketAction.write(target));
+               AutismClientMessaging.sendPrefixed("Added wait condition: " + autismclient.util.macro.WaitForPacketAction.describe(target));
                return true;
             }
          }

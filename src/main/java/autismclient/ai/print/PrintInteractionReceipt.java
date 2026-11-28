@@ -8,11 +8,11 @@ final class PrintInteractionReceipt {
    private long load_J;
    private boolean init_Z;
 
-   int init() {
+   int afterSequence() {
       return this.after;
    }
 
-   void init(Object world, Object player, int before, int after, long now) {
+   void recordInteraction(Object world, Object player, int before, int after, long now) {
       if (before != after) {
          if (this.after < 0 && after >= 0) {
             this.world = world;
@@ -25,7 +25,7 @@ final class PrintInteractionReceipt {
       }
    }
 
-   PrintEnv.ReceiptState init(Object currentWorld, Object currentPlayer, boolean acknowledged, long now) {
+   PrintEnv.ReceiptState receiptState(Object currentWorld, Object currentPlayer, boolean acknowledged, long now) {
       if (this.init_Z) {
          return PrintEnv.ReceiptState.UNCERTAIN;
       } else if (this.after < 0) {

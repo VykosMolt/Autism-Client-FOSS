@@ -192,7 +192,7 @@ public final class PluginSignatureCatalog {
    }
 
    public static boolean isKnownPluginChannel(String channel) {
-      String normalized = write(channel);
+      String normalized = normalizeChannel(channel);
       if (normalized.isBlank()) {
          return false;
       }
@@ -219,29 +219,29 @@ public final class PluginSignatureCatalog {
          return false;
       }
 
-      String addressKey = update(serverAddress);
+      String addressKey = normalizeAddress(serverAddress);
       if (addressKey.isBlank()) {
          return false;
       }
 
       PluginSignatureCatalog.ServerChannelState state = serverStates.computeIfAbsent(addressKey, unused -> new PluginSignatureCatalog.ServerChannelState());
-      state.brand = sync(brand);
+      state.brand = normalizeBrand(brand);
       boolean changed = false;
-      String channel = write(snapshot.channel());
+      String channel = normalizeChannel(snapshot.channel());
       if (!channel.isBlank() && isKnownPluginChannel(channel)) {
-         changed |= state.init(channel, snapshot.direction());
+         changed |= state.addLive(channel, snapshot.direction());
       }
 
       if (isRegisterChannel(channel)) {
-         for (String registered : init(snapshot.rawBytes())) {
+         for (String registered : parseRegisterPayload(snapshot.rawBytes())) {
             if (isKnownPluginChannel(registered)) {
-               changed |= state.load(registered, snapshot.direction());
+               changed |= state.addRegistered(registered, snapshot.direction());
             }
          }
       } else {
-         for (String embedded : load(snapshot.rawBytes())) {
+         for (String embedded : embeddedChannels(snapshot.rawBytes())) {
             if (isKnownPluginChannel(embedded)) {
-               changed |= state.read(embedded, snapshot.direction());
+               changed |= state.addEmbedded(embedded, snapshot.direction());
             }
          }
       }
@@ -254,7 +254,7 @@ public final class PluginSignatureCatalog {
    }
 
    public static synchronized List<PluginSignatureCatalog.PluginFingerprint> fingerprints(String serverAddress, String brand) {
-      PluginSignatureCatalog.ServerChannelState state = serverStates.get(update(serverAddress));
+      PluginSignatureCatalog.ServerChannelState state = serverStates.get(normalizeAddress(serverAddress));
       if (state == null) {
          return List.of();
       }
@@ -266,7 +266,7 @@ public final class PluginSignatureCatalog {
             PluginSignatureCatalog.PluginIdentity identity = identify(stats.channel);
             if (identity != null && !identity.init().isBlank() && !identity.load().isBlank()) {
                PluginSignatureCatalog.PluginAccumulator acc = byPlugin.computeIfAbsent(identity.load(), unused -> new PluginSignatureCatalog.PluginAccumulator(identity.init(), identity.load()));
-               acc.init(stats);
+               acc.add(stats);
             }
          }
       }
@@ -278,19 +278,19 @@ public final class PluginSignatureCatalog {
       List<PluginSignatureCatalog.PluginFingerprint> out = new ArrayList<>();
 
       for (PluginSignatureCatalog.PluginAccumulator acc : byPlugin.values()) {
-         out.add(acc.init());
+         out.add(acc.build());
       }
 
       return out;
    }
 
    public static synchronized long revision(String serverAddress, String brand) {
-      PluginSignatureCatalog.ServerChannelState state = serverStates.get(update(serverAddress));
+      PluginSignatureCatalog.ServerChannelState state = serverStates.get(normalizeAddress(serverAddress));
       return state == null ? 0L : state.revision;
    }
 
    public static synchronized String init_Str(String serverAddress, String brand) {
-      PluginSignatureCatalog.ServerChannelState state = serverStates.get(update(serverAddress));
+      PluginSignatureCatalog.ServerChannelState state = serverStates.get(normalizeAddress(serverAddress));
       if (state == null) {
          return "";
       }
@@ -309,7 +309,7 @@ public final class PluginSignatureCatalog {
    }
 
    private static boolean isRegisterChannel(String channel) {
-      String normalized = write(channel);
+      String normalized = normalizeChannel(channel);
       return "minecraft:register".equals(normalized)
          || "register".equals(normalized)
          || "minecraft:unregister".equals(normalized)
@@ -317,37 +317,37 @@ public final class PluginSignatureCatalog {
    }
 
    private static boolean isInfrastructureChannel(String channel) {
-      String normalized = write(channel);
+      String normalized = normalizeChannel(channel);
       return "bungeecord".equals(normalized) || "register".equals(normalized) || "unregister".equals(normalized);
    }
 
-   private static List<String> init(byte[] rawBytes) {
+   private static List<String> parseRegisterPayload(byte[] rawBytes) {
       if (rawBytes != null && rawBytes.length != 0) {
          LinkedHashSet<String> channels = new LinkedHashSet<>();
          String text = new String(rawBytes, StandardCharsets.UTF_8);
 
          for (String part : text.split("[\\u0000\\r\\n\\t ,;]+")) {
-            String token = write(part);
+            String token = normalizeChannel(part);
             if (!token.isBlank() && (token.indexOf(58) > 0 || isInfrastructureChannel(token))) {
                channels.add(token);
             }
          }
 
-         channels.addAll(load(rawBytes));
+         channels.addAll(embeddedChannels(rawBytes));
          return List.copyOf(channels);
       } else {
          return List.of();
       }
    }
 
-   private static List<String> load(byte[] rawBytes) {
+   private static List<String> embeddedChannels(byte[] rawBytes) {
       if (rawBytes != null && rawBytes.length != 0) {
          String text = new String(rawBytes, StandardCharsets.UTF_8);
          Matcher matcher = CHANNEL_PATTERN.matcher(text);
          LinkedHashSet<String> channels = new LinkedHashSet<>();
 
          while (matcher.find()) {
-            String channel = write(matcher.group());
+            String channel = normalizeChannel(matcher.group());
             if (!channel.isBlank()) {
                channels.add(channel);
             }
@@ -364,7 +364,7 @@ public final class PluginSignatureCatalog {
    }
 
    private static PluginSignatureCatalog.PluginIdentity identify(String channel) {
-      String normalized = write(channel);
+      String normalized = normalizeChannel(channel);
       if (normalized.isBlank()) {
          return null;
       }
@@ -437,15 +437,15 @@ public final class PluginSignatureCatalog {
       return sb.isEmpty() ? clean : sb.toString();
    }
 
-   private static String write(String channel) {
+   private static String normalizeChannel(String channel) {
       return channel == null ? "" : channel.trim().toLowerCase(Locale.ROOT);
    }
 
-   private static String update(String address) {
+   private static String normalizeAddress(String address) {
       return address == null ? "" : address.trim().toLowerCase(Locale.ROOT);
    }
 
-   private static String sync(String brand) {
+   private static String normalizeBrand(String brand) {
       return brand == null ? "" : brand.trim().toLowerCase(Locale.ROOT);
    }
 
@@ -482,7 +482,7 @@ public final class PluginSignatureCatalog {
          }
       }
 
-      String fromName = close(pluginName);
+      String fromName = pluginKeyFromName(pluginName);
       if (!fromName.isBlank() && !IGNORED_NAMESPACES.contains(fromName)) {
          namespaces.add(fromName);
       }
@@ -504,7 +504,7 @@ public final class PluginSignatureCatalog {
       return out.toString();
    }
 
-   private static String close(String pluginName) {
+   private static String pluginKeyFromName(String pluginName) {
       if (pluginName == null) {
          return "";
       }
@@ -555,27 +555,27 @@ public final class PluginSignatureCatalog {
       String brand = "";
       long revision;
       final Set<String> liveChannels = new LinkedHashSet<>();
-      final Set<String> load = new LinkedHashSet<>();
-      final Set<String> read = new LinkedHashSet<>();
+      final Set<String> registered = new LinkedHashSet<>();
+      final Set<String> embedded = new LinkedHashSet<>();
       final Map<String, PluginSignatureCatalog.ChannelStats> statsByChannel = new LinkedHashMap<>();
 
-      boolean init(String channel, String direction) {
-         return this.init(this.liveChannels, channel, "live", direction);
+      boolean addLive(String channel, String direction) {
+         return this.add(this.liveChannels, channel, "live", direction);
       }
 
-      boolean load(String channel, String direction) {
-         return this.init(this.load, channel, "registered", direction);
+      boolean addRegistered(String channel, String direction) {
+         return this.add(this.registered, channel, "registered", direction);
       }
 
-      boolean read(String channel, String direction) {
-         return this.init(this.read, channel, "embedded", direction);
+      boolean addEmbedded(String channel, String direction) {
+         return this.add(this.embedded, channel, "embedded", direction);
       }
 
       Set<String> allChannels() {
          LinkedHashSet<String> out = new LinkedHashSet<>();
          out.addAll(this.liveChannels);
-         out.addAll(this.load);
-         out.addAll(this.read);
+         out.addAll(this.registered);
+         out.addAll(this.embedded);
          return Collections.unmodifiableSet(out);
       }
 
@@ -583,22 +583,22 @@ public final class PluginSignatureCatalog {
          return List.copyOf(this.statsByChannel.values());
       }
 
-      private boolean init(Set<String> set, String channel, String source, String direction) {
-         String normalized = PluginSignatureCatalog.write(channel);
+      private boolean add(Set<String> set, String channel, String source, String direction) {
+         String normalized = PluginSignatureCatalog.normalizeChannel(channel);
          if (normalized.isBlank()) {
             return false;
          }
 
-         if (this.liveChannels.size() + this.load.size() + this.read.size() >= 512
+         if (this.liveChannels.size() + this.registered.size() + this.embedded.size() >= 512
             && !this.liveChannels.contains(normalized)
-            && !this.load.contains(normalized)
-            && !this.read.contains(normalized)) {
+            && !this.registered.contains(normalized)
+            && !this.embedded.contains(normalized)) {
             return false;
          }
 
          PluginSignatureCatalog.ChannelStats stats = this.statsByChannel.computeIfAbsent(normalized, PluginSignatureCatalog.ChannelStats::new);
          int beforeScore = stats.score();
-         stats.init(source, direction);
+         stats.count(source, direction);
          return set.add(normalized) || stats.score() != beforeScore;
       }
    }
@@ -606,21 +606,21 @@ public final class PluginSignatureCatalog {
    private static final class ChannelStats {
       final String channel;
       int liveCount;
-      int load;
-      int read;
+      int registeredCount;
+      int embeddedCount;
       final Set<String> directions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
       ChannelStats(String channel) {
-         this.channel = PluginSignatureCatalog.write(channel);
+         this.channel = PluginSignatureCatalog.normalizeChannel(channel);
       }
 
-      void init(String source, String direction) {
+      void count(String source, String direction) {
          switch (source) {
             case "registered":
-               this.load++;
+               this.registeredCount++;
                break;
             case "embedded":
-               this.read++;
+               this.embeddedCount++;
                break;
             default:
                this.liveCount++;
@@ -632,15 +632,15 @@ public final class PluginSignatureCatalog {
       }
 
       int score() {
-         return this.liveCount * 4 + this.load * 3 + this.read;
+         return this.liveCount * 4 + this.registeredCount * 3 + this.embeddedCount;
       }
 
       int confidence() {
-         return this.liveCount > 0 ? 4 : (this.load > 0 ? 3 : (this.read > 0 ? 1 : 0));
+         return this.liveCount > 0 ? 4 : (this.registeredCount > 0 ? 3 : (this.embeddedCount > 0 ? 1 : 0));
       }
 
       String source() {
-         return this.liveCount > 0 ? "live" : (this.load > 0 ? "registered" : (this.read > 0 ? "embedded" : ""));
+         return this.liveCount > 0 ? "live" : (this.registeredCount > 0 ? "registered" : (this.embeddedCount > 0 ? "embedded" : ""));
       }
 
       boolean seenS2C() {
@@ -658,7 +658,7 @@ public final class PluginSignatureCatalog {
             sb.append(" ").append(String.join("/", this.directions));
          }
 
-         int count = this.liveCount + this.load + this.read;
+         int count = this.liveCount + this.registeredCount + this.embeddedCount;
          if (count > 1) {
             sb.append(" x").append(count);
          }
@@ -673,32 +673,32 @@ public final class PluginSignatureCatalog {
 
    private static final class PluginAccumulator {
       final String key;
-      String load;
+      String displayName;
       int totalScore;
-      String read = "";
+      String bestSource = "";
       final Set<String> descriptions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
       PluginAccumulator(String displayName, String key) {
-         this.load = displayName == null ? "" : displayName;
+         this.displayName = displayName == null ? "" : displayName;
          this.key = key == null ? "" : key;
       }
 
-      void init(PluginSignatureCatalog.ChannelStats stats) {
+      void add(PluginSignatureCatalog.ChannelStats stats) {
          if (stats != null && stats.channel != null && !stats.channel.isBlank()) {
             this.totalScore = this.totalScore + stats.score();
-            if (this.read.isBlank() || stats.confidence() > this.init(this.read)) {
-               this.read = stats.source();
+            if (this.bestSource.isBlank() || stats.confidence() > this.sourceRank(this.bestSource)) {
+               this.bestSource = stats.source();
             }
 
             this.descriptions.add(stats.describe());
          }
       }
 
-      PluginSignatureCatalog.PluginFingerprint init() {
-         return new PluginSignatureCatalog.PluginFingerprint(this.load, this.key, List.copyOf(this.descriptions), this.totalScore, this.read);
+      PluginSignatureCatalog.PluginFingerprint build() {
+         return new PluginSignatureCatalog.PluginFingerprint(this.displayName, this.key, List.copyOf(this.descriptions), this.totalScore, this.bestSource);
       }
 
-      private int init(String source) {
+      private int sourceRank(String source) {
          byte var10000;
          switch (source == null ? "" : source) {
             case "live":

@@ -31,7 +31,7 @@ public final class BacktrackPacketQueue<T> {
       return this.init_Obj == world && this.load_Obj == player && this.read == listener && this.write == target;
    }
 
-   public boolean init(T value, long now, long delay) {
+   public boolean offer(T value, long now, long delay) {
       if (this.init_Obj != null && this.load_Obj != null && this.read != null && this.write != null && delay > 0L && this.queue.size() < this.capacity) {
          this.queue.addLast(new BacktrackPacketQueue.Inner_DataUtil<>(value, now, Math.min(300000000L, delay)));
          return true;
@@ -40,7 +40,7 @@ public final class BacktrackPacketQueue<T> {
       }
    }
 
-   public int init(long now, boolean all, Consumer<T> apply) {
+   public int release(long now, boolean all, Consumer<T> apply) {
       long expected = this.load_J;
 
       int count;
@@ -63,7 +63,7 @@ public final class BacktrackPacketQueue<T> {
       return count;
    }
 
-   public long init(long now) {
+   public long oldestAgeNanos(long now) {
       return this.queue.isEmpty() ? 0L : Math.max(0L, now - this.queue.peekFirst().receivedAt());
    }
 

@@ -76,7 +76,7 @@ public final class OreSimRegionGenerator {
          for (int dz = -8; dz < size + 8; dz++) {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
-            level.init(chunk.getPos(), 0);
+            level.recenter(chunk.getPos(), 0);
             this.context
                .chunkGenerator()
                .createStructures(
@@ -95,7 +95,7 @@ public final class OreSimRegionGenerator {
          for (int dz = 0; dz < size; dz++) {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
-            level.init(chunk.getPos(), 0);
+            level.recenter(chunk.getPos(), 0);
             this.context.chunkGenerator().createReferences(level, structures, chunk);
             init(chunk, ChunkStatus.STRUCTURE_REFERENCES);
          }
@@ -105,7 +105,7 @@ public final class OreSimRegionGenerator {
          for (int dz = -1; dz <= size; dz++) {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
-            level.init(chunk.getPos(), 0);
+            level.recenter(chunk.getPos(), 0);
             this.context.chunkGenerator().createBiomes(this.context.randomState(), Blender.empty(), structures, chunk).join();
             init(chunk, ChunkStatus.BIOMES);
          }
@@ -115,7 +115,7 @@ public final class OreSimRegionGenerator {
          for (int dz = 0; dz < size; dz++) {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
-            level.init(chunk.getPos(), 0);
+            level.recenter(chunk.getPos(), 0);
             init(chunk, ChunkStatus.TERRAIN);
          }
       }
@@ -124,7 +124,7 @@ public final class OreSimRegionGenerator {
          for (int dz = 0; dz < size; dz++) {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
-            level.init(chunk.getPos(), 0);
+            level.recenter(chunk.getPos(), 0);
             this.init_V_WorldGenLevel(level, chunks, structures, chunk);
             init(chunk, ChunkStatus.TERRAIN);
          }
@@ -134,7 +134,7 @@ public final class OreSimRegionGenerator {
          for (int dz = 0; dz < size; dz++) {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
-            level.init(chunk.getPos(), 0);
+            level.recenter(chunk.getPos(), 0);
             this.init(level, chunks, structures, chunk, cancelled);
             init(chunk, ChunkStatus.TERRAIN);
          }
@@ -145,7 +145,7 @@ public final class OreSimRegionGenerator {
             init(cancelled);
             ChunkAccess chunk = chunks.get(ChunkPos.pack(minChunkX + dx, minChunkZ + dz));
             Heightmap.primeHeightmaps(chunk, PRIMED_HEIGHTMAPS);
-            level.init(chunk.getPos(), 1);
+            level.recenter(chunk.getPos(), 1);
             this.context.chunkGenerator().applyBiomeDecoration(level, chunk, structures);
             init(chunk, ChunkStatus.FEATURES);
          }

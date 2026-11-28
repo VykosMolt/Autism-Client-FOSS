@@ -12,9 +12,9 @@ final class MapNonEmptyCache {
    private boolean init_Z;
    private boolean load;
 
-   boolean init(Object level, MapId id, MapItemSavedData data, int tick) {
+   boolean isNonEmpty(Object level, MapId id, MapItemSavedData data, int tick) {
       if (level == null || id == null || data == null) {
-         this.init();
+         this.clear();
          return false;
       }
 
@@ -39,13 +39,13 @@ final class MapNonEmptyCache {
       return this.load;
    }
 
-   void init(MapId id) {
+   void invalidate(MapId id) {
       if (id != null && id.equals(this.id)) {
          this.init_Z = false;
       }
    }
 
-   void init() {
+   void clear() {
       this.level = null;
       this.id = null;
       this.init_MapItemSavedData = null;

@@ -64,7 +64,7 @@ public class PacketBurstAction implements MacroAction {
 
    boolean sendOnce(Minecraft mc) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.getConnection() != null) {
-         Packet<?> packet = this.init_Packet(mc);
+         Packet<?> packet = this.buildPacket(mc);
          if (packet == null) {
             return false;
          }
@@ -76,7 +76,7 @@ public class PacketBurstAction implements MacroAction {
       }
    }
 
-   private Packet<?> init_Packet(Minecraft mc) {
+   private Packet<?> buildPacket(Minecraft mc) {
       Packet var10000;
       switch (this.mode) {
          case CONTAINER_CLICK:

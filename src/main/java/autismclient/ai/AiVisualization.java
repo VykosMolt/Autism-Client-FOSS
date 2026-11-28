@@ -183,7 +183,7 @@ public final class AiVisualization {
    public static void showCount(Object owner, String title, String activity, int completed, int target) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
-         l.taskStatus = AiTaskStatus.init(title, activity, completed, target);
+         l.taskStatus = AiTaskStatus.progressStatus(title, activity, completed, target);
          l.immediateStatus = false;
          l.statusOrder = ++updateSequence;
       }
@@ -280,7 +280,7 @@ public final class AiVisualization {
    public static void showPaceScript(Object owner, autismclient.ai.engine.AiPaceScript.Inner_IoHelper script, int tickIndex, List<BlockPos> checkpoints, int checkpointIndex) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null && script != null && settings.visualizePaths) {
-         int length = script.flowTemp();
+         int length = script.size();
          if (l.pathSource != script || l.pathIndex != tickIndex || l.lastScriptLength != length || l.lastCheckpointIndex != checkpointIndex) {
             l.pathSource = script;
             l.pathIndex = tickIndex;
@@ -397,7 +397,7 @@ public final class AiVisualization {
       List<AiVisualization.RouteSegment> segments,
       List<AiVisualization.Marker> markers
    ) {
-      int total = script.flowTemp();
+      int total = script.size();
       int startIdx = Math.max(0, tickIndex);
       if (startIdx < total) {
          int endIdx = Math.min(total, startIdx + 220);
@@ -708,7 +708,7 @@ public final class AiVisualization {
             int stride = preview ? 1 : (fullPlan ? Math.max(1, (cells.size() + cap - 1) / cap) : 1);
             l.activityStatus = preview
                ? new AiTaskStatus.Inner_StreamUtil("Schematic preview", cells.size() + " planned blocks", "Blue: place / Amber: obstruction / Green: complete")
-               : AiTaskStatus.init("Building", "Following the build plan", cursor, cells.size());
+               : AiTaskStatus.progressStatus("Building", "Following the build plan", cursor, cells.size());
             List<AiVisualization.GhostBlock> out = new ArrayList<>();
             int x = 0;
             int y = 0;
@@ -760,7 +760,7 @@ public final class AiVisualization {
       l.planMesh.setMoving(l.moving);
       l.planMesh.refreshFromWorld(l.level);
       if (!l.planMesh.isReady()) {
-         l.activityStatus = AiTaskStatus.init(
+         l.activityStatus = AiTaskStatus.progressStatus(
             preview ? "Preparing schematic preview" : "Preparing build plan", "Reading every planned block", l.planMesh.preparedCount(), cells.size()
          );
          l.planBounds = null;
@@ -768,7 +768,7 @@ public final class AiVisualization {
       } else {
          l.activityStatus = preview
             ? new AiTaskStatus.Inner_StreamUtil("Schematic preview", cells.size() + " planned blocks", "Blue: place / Amber: obstruction / Green: complete")
-            : AiTaskStatus.init("Building", "Following the build plan", cursor, cells.size());
+            : AiTaskStatus.progressStatus("Building", "Following the build plan", cursor, cells.size());
          l.planBounds = cells.isEmpty()
             ? null
             : new AABB(
@@ -925,7 +925,7 @@ public final class AiVisualization {
          Vec3 body = mc.player == null ? camera : mc.player.getEyePosition();
          List<AiVisualization.GhostBlock> quietTargets = selectQuietTargets(targets.values(), body);
          frame = new AiVisualization.RenderFrame(
-            mc.level, camera, List.copyOf(sorted), quietTargets, List.copyOf(route), List.copyOf(markers), bounds, AiTaskStatus.init(statuses, now), List.copyOf(plans)
+            mc.level, camera, List.copyOf(sorted), quietTargets, List.copyOf(route), List.copyOf(markers), bounds, AiTaskStatus.pickStatus(statuses, now), List.copyOf(plans)
          );
          hudFrame = frame;
          statCollectNanos = System.nanoTime() - started;
@@ -1082,37 +1082,37 @@ public final class AiVisualization {
             if (selection != null) {
                SchematicCapture.Inner_DataUtil area = selection.getArea();
                if (area != null) {
-                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(area.min()).minmax(new AABB(area.max())).move(offset), -1336493569, 1.3F);
+                  autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(area.min()).minmax(new AABB(area.max())).move(offset), -1336493569, 1.3F);
                }
 
                if (selection.cornerA != null) {
-                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(selection.cornerA).move(offset), -12067963, 1.8F);
+                  autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(selection.cornerA).move(offset), -12067963, 1.8F);
                }
 
                if (selection.load != null) {
-                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(selection.load).move(offset), -20923, 1.8F);
+                  autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(selection.load).move(offset), -20923, 1.8F);
                }
 
                if (selection.read != null) {
-                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(selection.read).move(offset).inflate(0.008), -11093505, 2.0F);
+                  autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(selection.read).move(offset).inflate(0.008), -11093505, 2.0F);
                }
             }
 
             if (settings.visualizeGhosts) {
                for (int i = Math.max(0, f.ghosts.size() - 192); i < f.ghosts.size(); i++) {
                   AiVisualization.GhostBlock g = f.ghosts.get(i);
-                  autismclient.util.WorldLineRenderer.init(pose, lines, new AABB(g.pos).move(offset).deflate(0.006), -1342177280 | g.color & 16777215, 1.1F);
+                  autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(g.pos).move(offset).deflate(0.006), -1342177280 | g.color & 16777215, 1.1F);
                }
             }
 
             if (f.bounds != null && settings.visualizeGhosts) {
-               autismclient.util.WorldLineRenderer.init(pose, lines, f.bounds.move(offset), -1873364481, 1.6F);
+               autismclient.util.WorldLineRenderer.box(pose, lines, f.bounds.move(offset), -1873364481, 1.6F);
             }
 
             for (AiVisualization.RouteSegment s : f.route) {
                float tm = (s.t0 + s.t1) * 0.5F;
                float w = (s.active ? 3.8F : 3.4F) - 1.7F * tm;
-               autismclient.util.WorldLineRenderer.init(
+               autismclient.util.WorldLineRenderer.line(
                   pose, lines, s.a.x + offset.x, s.a.y + offset.y, s.a.z + offset.z, s.b.x + offset.x, s.b.y + offset.y, s.b.z + offset.z, haloColor(s.t0), haloColor(s.t1), w
                );
             }
@@ -1127,7 +1127,7 @@ public final class AiVisualization {
                float w = (s.active ? 2.4F : 2.15F) - 1.05F * tm;
                int c0 = routeColor(s.t0, s.air);
                int c1 = routeColor(s.t1, s.air);
-               autismclient.util.WorldLineRenderer.init(pose, lines, a.x, a.y, a.z, b.x, b.y, b.z, c0, c1, w);
+               autismclient.util.WorldLineRenderer.line(pose, lines, a.x, a.y, a.z, b.x, b.y, b.z, c0, c1, w);
                double segLen = a.distanceTo(b);
                if (traveled + segLen >= nextArrow && tm < 0.88F) {
                   Vec3 heading = b.subtract(a);
@@ -1137,8 +1137,8 @@ public final class AiVisualization {
                      double dz = heading.z / length;
                      int arrowColor = lerpColor(-253296647, 1145218798, tm);
                      float arrowWidth = 1.85F - 0.7F * tm;
-                     autismclient.util.WorldLineRenderer.init(pose, lines, b.add(-dx * 0.21 - dz * 0.11, 0.0, -dz * 0.21 + dx * 0.11), b, arrowColor, arrowWidth);
-                     autismclient.util.WorldLineRenderer.init(pose, lines, b.add(-dx * 0.21 + dz * 0.11, 0.0, -dz * 0.21 - dx * 0.11), b, arrowColor, arrowWidth);
+                     autismclient.util.WorldLineRenderer.line(pose, lines, b.add(-dx * 0.21 - dz * 0.11, 0.0, -dz * 0.21 + dx * 0.11), b, arrowColor, arrowWidth);
+                     autismclient.util.WorldLineRenderer.line(pose, lines, b.add(-dx * 0.21 + dz * 0.11, 0.0, -dz * 0.21 - dx * 0.11), b, arrowColor, arrowWidth);
                      nextArrow = traveled + segLen + 5.5;
                   }
                }
@@ -1158,10 +1158,10 @@ public final class AiVisualization {
                   List<Vec3> corners = faceCorners(b, faceTowardCamera(g.pos, f.camera));
 
                   for (int i = 0; i < 4; i++) {
-                     autismclient.util.WorldLineRenderer.init(pose, lines, corners.get(i), corners.get((i + 1) % 4), g.color, g.active ? 1.45F : 0.9F);
+                     autismclient.util.WorldLineRenderer.line(pose, lines, corners.get(i), corners.get((i + 1) % 4), g.color, g.active ? 1.45F : 0.9F);
                   }
                } else {
-                  autismclient.util.WorldLineRenderer.init(pose, lines, b, g.color, 1.7F);
+                  autismclient.util.WorldLineRenderer.box(pose, lines, b, g.color, 1.7F);
                }
             }
          } finally {
@@ -1403,8 +1403,8 @@ public final class AiVisualization {
 
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(g, Minecraft.getInstance().font, 0, 0);
       AiTaskStatus.Inner_StreamUtil status = hudFrame.status;
-      statHudContentWidth = AiTaskStatus.init(status, ui.init_PoolEntry()::measureWidth, 2147483647);
-      int width = AiTaskStatus.init(status, ui.init_PoolEntry()::measureWidth, Math.min(ui.init_I() - 16, 360));
+      statHudContentWidth = AiTaskStatus.contentWidth(status, ui.init_PoolEntry()::measureWidth, 2147483647);
+      int width = AiTaskStatus.contentWidth(status, ui.init_PoolEntry()::measureWidth, Math.min(ui.init_I() - 16, 360));
       statHudWidth = width;
       int height = autismclient.gui.ui.widgets.StatusToastCardRenderer.init(ui, width, status.bannerActivity(), status.bannerDetail(), status.percent());
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(8, 8, width, height);
@@ -1431,7 +1431,7 @@ public final class AiVisualization {
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(g, Minecraft.getInstance().font, 0, 0);
          autismclient.gui.f.NetHelper b = init_NetHelper(g);
          AiTaskStatus.Inner_StreamUtil status = hudFrame.status;
-         autismclient.gui.ui.widgets.StatusToastCardRenderer.init(
+         autismclient.gui.ui.widgets.StatusToastCardRenderer.render(
             ui, b, status.title(), status.bannerActivity(), status.bannerDetail(), ui.init_TableIndex().colors().textPrimary, status.percent()
          );
       }

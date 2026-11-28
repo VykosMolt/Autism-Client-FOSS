@@ -11,8 +11,8 @@ public final class AnimatedToggleButtonRenderer {
    private static final long load_J = 128000000L;
    private static final long read = 200000000L;
    private static final long write = 30000000000L;
-   private static final Map<String, AnimatedToggleButtonRenderer.ToggleAnimation> init_Map = new HashMap<>();
-   private static long update;
+   private static final Map<String, AnimatedToggleButtonRenderer.ToggleAnimation> animations = new HashMap<>();
+   private static long lastPrune;
 
    private AnimatedToggleButtonRenderer() {
    }
@@ -21,18 +21,18 @@ public final class AnimatedToggleButtonRenderer {
       autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, String label, boolean enabled, boolean hovered, String animationKey
    ) {
       long now = System.nanoTime();
-      AnimatedToggleButtonRenderer.ToggleAnimation state = init_Map.get(animationKey);
+      AnimatedToggleButtonRenderer.ToggleAnimation state = animations.get(animationKey);
       if (state == null) {
          state = new AnimatedToggleButtonRenderer.ToggleAnimation(enabled ? 1.0F : 0.0F, enabled, now);
-         init_Map.put(animationKey, state);
+         animations.put(animationKey, state);
       } else if (state.targetEnabled != enabled) {
-         state.startProgress = state.init(now, 200000000L);
+         state.startProgress = state.progress(now, 200000000L);
          state.targetEnabled = enabled;
-         state.init_J = now;
+         state.startedAt = now;
       }
 
-      state.load = now;
-      init(context, bounds, label, hovered, state.init(now, 200000000L));
+      state.lastUsed = now;
+      init(context, bounds, label, hovered, state.progress(now, 200000000L));
       pruneStale(now);
    }
 
@@ -56,12 +56,12 @@ public final class AnimatedToggleButtonRenderer {
    }
 
    private static void pruneStale(long now) {
-      if (now - update >= 30000000000L) {
-         update = now;
-         Iterator<AnimatedToggleButtonRenderer.ToggleAnimation> iterator = init_Map.values().iterator();
+      if (now - lastPrune >= 30000000000L) {
+         lastPrune = now;
+         Iterator<AnimatedToggleButtonRenderer.ToggleAnimation> iterator = animations.values().iterator();
 
          while (iterator.hasNext()) {
-            if (now - iterator.next().load > 30000000000L) {
+            if (now - iterator.next().lastUsed > 30000000000L) {
                iterator.remove();
             }
          }
@@ -75,18 +75,18 @@ public final class AnimatedToggleButtonRenderer {
    private static final class ToggleAnimation {
       private float startProgress;
       private boolean targetEnabled;
-      private long init_J;
-      private long load;
+      private long startedAt;
+      private long lastUsed;
 
       private ToggleAnimation(float startProgress, boolean targetEnabled, long now) {
          this.startProgress = startProgress;
          this.targetEnabled = targetEnabled;
-         this.init_J = now;
-         this.load = now;
+         this.startedAt = now;
+         this.lastUsed = now;
       }
 
-      private float init(long now, long durationNanos) {
-         float elapsed = Math.min(1.0F, (float)(now - this.init_J) / (float)Math.max(1L, durationNanos));
+      private float progress(long now, long durationNanos) {
+         float elapsed = Math.min(1.0F, (float)(now - this.startedAt) / (float)Math.max(1L, durationNanos));
          float eased = elapsed * elapsed * (3.0F - 2.0F * elapsed);
          float target = this.targetEnabled ? 1.0F : 0.0F;
          return this.startProgress + (target - this.startProgress) * eased;

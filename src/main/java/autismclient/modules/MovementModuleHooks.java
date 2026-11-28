@@ -13,8 +13,8 @@ import net.minecraft.world.phys.Vec3;
 
 public final class MovementModuleHooks {
    private static final Minecraft MC = Minecraft.getInstance();
-   private static volatile MovementModuleHooks.ToggleSnapshot init_ai_StreamUtil = MovementModuleHooks.ToggleSnapshot.init(-1);
-   private static volatile MovementModuleHooks.ModuleRefSnapshot init_ai_DataUtil = MovementModuleHooks.ModuleRefSnapshot.init(-1);
+   private static volatile MovementModuleHooks.ToggleSnapshot toggleSnapshot = MovementModuleHooks.ToggleSnapshot.of(-1);
+   private static volatile MovementModuleHooks.ModuleRefSnapshot moduleRefs = MovementModuleHooks.ModuleRefSnapshot.of(-1);
 
    private MovementModuleHooks() {
    }
@@ -22,7 +22,7 @@ public final class MovementModuleHooks {
    public static boolean suppressesSlimeBounce(Entity entity) {
       return !AutismLiteVariant.enabled() && MC != null && entity == MC.player && autismclient.ai.AiDirectOps.isRunning()
          ? false
-         : init_ai_DataUtil().init_Z() && MC != null && entity == MC.player;
+         : currentModuleRefs().init_Z() && MC != null && entity == MC.player;
    }
 
    public static float speedTimerMultiplier() {
@@ -38,12 +38,12 @@ public final class MovementModuleHooks {
    }
 
    public static float flyingSpeed(Player player) {
-      f.Inner_FileCache flight = init_ai_DataUtil().init_f_FileCache();
+      f.Inner_FileCache flight = currentModuleRefs().init_f_FileCache();
       return flight != null ? flight.init_F_7() : -1.0F;
    }
 
    public static boolean init_Z(Player player) {
-      f.Inner_FileCache flight = init_ai_DataUtil().init_f_FileCache();
+      f.Inner_FileCache flight = currentModuleRefs().init_f_FileCache();
       return flight != null && flight.load_Z_21();
    }
 
@@ -52,15 +52,15 @@ public final class MovementModuleHooks {
    }
 
    public static boolean load() {
-      return init_ai_StreamUtil().init_Z() && !ScaffoldModule.open_Z_3();
+      return currentToggles().init_Z() && !ScaffoldModule.open_Z_3();
    }
 
    public static boolean read() {
-      return init_ai_StreamUtil().load() && !ScaffoldModule.open_Z_3();
+      return currentToggles().load() && !ScaffoldModule.open_Z_3();
    }
 
    public static boolean write() {
-      return init_ai_StreamUtil().read() && !ScaffoldModule.open_Z_3();
+      return currentToggles().read() && !ScaffoldModule.open_Z_3();
    }
 
    public static boolean init(boolean original, boolean movementTick) {
@@ -127,31 +127,31 @@ public final class MovementModuleHooks {
       return new Vec3(-Math.sin(angle) * speed, velocity.y, Math.cos(angle) * speed);
    }
 
-   public static boolean flush() {
+   public static boolean isSprintEnabled() {
       return al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled();
    }
 
-   private static MovementModuleHooks.ToggleSnapshot init_ai_StreamUtil() {
+   private static MovementModuleHooks.ToggleSnapshot currentToggles() {
       int revision = al.init_I();
-      MovementModuleHooks.ToggleSnapshot snapshot = init_ai_StreamUtil;
-      if (snapshot.init_I() == revision) {
+      MovementModuleHooks.ToggleSnapshot snapshot = toggleSnapshot;
+      if (snapshot.revision() == revision) {
          return snapshot;
       }
 
       if (al.init_Module_Str("sprint") instanceof f.Inner_MapStore sprint && sprint.isEnabled()) {
          snapshot = new MovementModuleHooks.ToggleSnapshot(revision, sprint.load(), sprint.write(), sprint.update());
       } else {
-         snapshot = MovementModuleHooks.ToggleSnapshot.init(revision);
+         snapshot = MovementModuleHooks.ToggleSnapshot.of(revision);
       }
 
-      init_ai_StreamUtil = snapshot;
+      toggleSnapshot = snapshot;
       return snapshot;
    }
 
-   private static MovementModuleHooks.ModuleRefSnapshot init_ai_DataUtil() {
+   private static MovementModuleHooks.ModuleRefSnapshot currentModuleRefs() {
       int revision = al.init_I();
-      MovementModuleHooks.ModuleRefSnapshot snapshot = init_ai_DataUtil;
-      if (snapshot.init_I() == revision) {
+      MovementModuleHooks.ModuleRefSnapshot snapshot = moduleRefs;
+      if (snapshot.revision() == revision) {
          return snapshot;
       }
 
@@ -160,7 +160,7 @@ public final class MovementModuleHooks {
       Module noFall = al.init_Module_Str("no-fall");
       boolean noFallAntiBounce = noFall != null && noFall.isEnabled() && Boolean.parseBoolean(noFall.value("anti-bounce"));
       snapshot = new MovementModuleHooks.ModuleRefSnapshot(revision, flight, speed, noFallAntiBounce);
-      init_ai_DataUtil = snapshot;
+      moduleRefs = snapshot;
       return snapshot;
    }
 
@@ -181,7 +181,7 @@ public final class MovementModuleHooks {
 
          if (entity != MC.player) {
             if (MC.player != null && entity == MC.player.getVehicle() && !aD.init_Z()) {
-               Vec3 adjusted = EntityControlModule.init(entity, type, movement);
+               Vec3 adjusted = EntityControlModule.adjustMovement(entity, type, movement);
                adjusted = BoatFlyModule.adjustMovement(entity, type, adjusted);
                if (type == MoverType.SELF && adjusted != movement) {
                   entity.setDeltaMovement(adjusted);
@@ -214,7 +214,7 @@ public final class MovementModuleHooks {
          || MC.player == null
          || entity != MC.player && entity != MC.player.getVehicle()) {
          if (entity == MC.player && !aD.init_Z()) {
-            MovementModuleHooks.ModuleRefSnapshot state = init_ai_DataUtil();
+            MovementModuleHooks.ModuleRefSnapshot state = currentModuleRefs();
             f.Inner_ListPool speed = state.init_f_ListPool();
             if (speed != null) {
                Vec3 movement = entity.getDeltaMovement();
@@ -227,14 +227,14 @@ public final class MovementModuleHooks {
       }
    }
 
-   private record ModuleRefSnapshot(int init_I, f.Inner_FileCache init_f_FileCache, f.Inner_ListPool init_f_ListPool, boolean init_Z) {
-      static MovementModuleHooks.ModuleRefSnapshot init(int revision) {
+   private record ModuleRefSnapshot(int revision, f.Inner_FileCache init_f_FileCache, f.Inner_ListPool init_f_ListPool, boolean init_Z) {
+      static MovementModuleHooks.ModuleRefSnapshot of(int revision) {
          return new MovementModuleHooks.ModuleRefSnapshot(revision, null, null, false);
       }
    }
 
-   private record ToggleSnapshot(int init_I, boolean init_Z, boolean load, boolean read) {
-      static MovementModuleHooks.ToggleSnapshot init(int revision) {
+   private record ToggleSnapshot(int revision, boolean init_Z, boolean load, boolean read) {
+      static MovementModuleHooks.ToggleSnapshot of(int revision) {
          return new MovementModuleHooks.ToggleSnapshot(revision, false, false, false);
       }
    }

@@ -69,21 +69,21 @@ public final class BacktrackModule extends Module {
    private LivingEntity target;
    private LivingEntity load_LivingEntity;
    private LivingEntity read_LivingEntity;
-   private long write;
-   private long update;
+   private long lastHitAt;
+   private long confirmedHitAt;
    private Vec3 init_Vec3;
-   private long sync;
-   private long flush;
-   private long close;
-   private long open;
+   private long reachableAt;
+   private long outOfReachSince;
+   private long hitInterval;
+   private long lastSelfHurtAt;
    private final ArrayDeque<Long> recentHitTimes = new ArrayDeque<>();
-   private long poll;
+   private long lastDamageEventAt;
    private boolean releasing;
-   private long push;
-   private long pop;
-   private long tick;
-   private long run;
-   private long get;
+   private long heldPackets;
+   private long releasedPackets;
+   private long discardedPackets;
+   private long fullReleases;
+   private long hits;
    private long set;
    private double maxHeldMillis;
    private String targetReason = "idle";
@@ -149,8 +149,8 @@ public final class BacktrackModule extends Module {
       long ticket = this.resetTicket.incrementAndGet();
       Runnable enable = () -> {
          if (this.resetTicket.get() == ticket) {
-            this.load(true);
-            this.push = this.pop = this.tick = this.run = this.get = this.set = 0L;
+            this.resetQueue(true);
+            this.heldPackets = this.releasedPackets = this.discardedPackets = this.fullReleases = this.hits = this.set = 0L;
             this.maxHeldMillis = 0.0;
             this.level = CLIENT.level;
             this.player = CLIENT.player;
@@ -171,7 +171,7 @@ public final class BacktrackModule extends Module {
       instance = null;
       Runnable disable = () -> {
          if (this.resetTicket.get() == ticket) {
-            this.load(true);
+            this.resetQueue(true);
          }
       };
       if (CLIENT.isSameThread()) {
@@ -183,7 +183,7 @@ public final class BacktrackModule extends Module {
 
    @Override
    public void onGameLeft() {
-      this.load(false);
+      this.resetQueue(false);
    }
 
    @Override
@@ -200,7 +200,7 @@ public final class BacktrackModule extends Module {
                this.trailHistory.clear();
                break;
             default:
-               this.load(true);
+               this.resetQueue(true);
          }
       }
    }
@@ -290,10 +290,10 @@ public final class BacktrackModule extends Module {
                      && at - arm.armedAt() <= 500000000L
                      && module.isValidTarget(arm.victim())) {
                      if (module.level != null && !module.isSameSession()) {
-                        module.load(false);
+                        module.resetQueue(false);
                      }
 
-                     module.close = module.load_LivingEntity == arm.victim() && module.write != 0L ? at - module.write : 0L;
+                     module.hitInterval = module.load_LivingEntity == arm.victim() && module.lastHitAt != 0L ? at - module.lastHitAt : 0L;
                      if (module.load_LivingEntity != arm.victim()) {
                         module.recentHitTimes.clear();
                      }
@@ -304,8 +304,8 @@ public final class BacktrackModule extends Module {
 
                      module.recentHitTimes.addLast(at);
                      module.load_LivingEntity = arm.victim();
-                     module.write = at;
-                     module.get++;
+                     module.lastHitAt = at;
+                     module.hits++;
                      if (module.load_Z_10()) {
                         module.init_V_19();
                      }
@@ -320,11 +320,11 @@ public final class BacktrackModule extends Module {
    public void onPacketProcessFrame() {
       if (!AutismLiteVariant.enabled()) {
          if (!this.isSameSession() && this.level != null) {
-            this.load(false);
+            this.resetQueue(false);
          }
 
          if (!this.load_Z_10()) {
-            this.load(true);
+            this.resetQueue(true);
          } else {
             this.init_V_19();
             if (this.target != null) {
@@ -393,7 +393,7 @@ public final class BacktrackModule extends Module {
          double bestSquared = distance * distance;
 
          for (Player enemy : CLIENT.level.players()) {
-            if (this.isValidTarget(enemy) && (!this.bool("smart-timing") || this.load(enemy))) {
+            if (this.isValidTarget(enemy) && (!this.bool("smart-timing") || this.isAimedAt(enemy))) {
                double squared = distanceToBox(enemy.getBoundingBox(), CLIENT.player.getEyePosition());
                if (squared < bestSquared) {
                   best = enemy;
@@ -417,18 +417,18 @@ public final class BacktrackModule extends Module {
    private boolean init_Z_J_2(long now) {
       this.read_Str = this.targetReason;
       if (this.isValidTarget(this.target) && this.target.hurtTime <= this.integer("hurt-time") && this.integer("hold-time") > 0) {
-         if ((this.open == 0L || now - this.open >= 50000000L) && (!this.bool("pause-on-hurt") || this.player.hurtTime <= 0)) {
+         if ((this.lastSelfHurtAt == 0L || now - this.lastSelfHurtAt >= 50000000L) && (!this.bool("pause-on-hurt") || this.player.hurtTime <= 0)) {
             if (this.bool("smart-timing") && !"crystal-aura".equals(this.targetReason) && !"anchor-aura".equals(this.targetReason)) {
                boolean auraIntent = "kill-aura".equals(this.targetReason);
-               if (!auraIntent && !this.load(this.target)) {
+               if (!auraIntent && !this.isAimedAt(this.target)) {
                   this.read_Str = "off-aim";
                   return false;
                }
 
                int ping = this.pingMillis();
                int hold = this.integer("hold-time");
-               long sinceHit = now - this.write;
-               if (this.target != this.load_LivingEntity || !init_Z_J(sinceHit, hold, ping) && !init_Z_J_2(sinceHit, this.close, hold)) {
+               long sinceHit = now - this.lastHitAt;
+               if (this.target != this.load_LivingEntity || !init_Z_J(sinceHit, hold, ping) && !init_Z_J_2(sinceHit, this.hitInterval, hold)) {
                   int lookahead = hold + Math.min(100, ping / 2);
                   if (auraIntent && al.init_Module_Str("kill-aura") instanceof KillAuraModule aura) {
                      if (aura.activeTarget() == this.target && aura.init_Z_I_7(lookahead)) {
@@ -496,7 +496,7 @@ public final class BacktrackModule extends Module {
             AABB latest = drawn.move(this.positionTracker.position().subtract(current));
             if (rayHits(latest, eye, look, reach - 0.035)) {
                return true;
-            } else if (this.packetQueue.size() != 0 && this.read(now)) {
+            } else if (this.packetQueue.size() != 0 && this.hasReachableServerPosition(now)) {
                AABB reachable = drawn.move(this.init_Vec3.subtract(current));
                return rayHits(drawn, eye, look, reach - 0.035)
                   && rayHits(reachable, eye, look, reach - 0.06)
@@ -524,7 +524,7 @@ public final class BacktrackModule extends Module {
       return holdMillis > 0 && age >= 0L && age <= horizon * 1000000L;
    }
 
-   private boolean load(LivingEntity candidate) {
+   private boolean isAimedAt(LivingEntity candidate) {
       Vec3 eye = this.player.getEyePosition();
       double reach = this.reach();
       return candidate.getBoundingBox().inflate(0.1).clip(eye, eye.add(this.player.getViewVector(1.0F).scale(reach))).isPresent()
@@ -542,7 +542,7 @@ public final class BacktrackModule extends Module {
 
    private LivingEntity load_LivingEntity_2() {
       if (this.load_LivingEntity != null && this.isValidTarget(this.load_LivingEntity)) {
-         long age = System.nanoTime() - this.write;
+         long age = System.nanoTime() - this.lastHitAt;
          return age > this.integer("attack-window") * 1000000L && !init_Z_J(age, this.integer("hold-time"), this.pingMillis()) ? null : this.load_LivingEntity;
       } else {
          return null;
@@ -554,14 +554,14 @@ public final class BacktrackModule extends Module {
       if (module == null || module.releasing || !CLIENT.isSameThread()) {
          return false;
       } else if (!module.isEnabled()) {
-         module.load(true);
+         module.resetQueue(true);
          return false;
       } else {
-         return module.load(source, packet);
+         return module.interceptPacket(source, packet);
       }
    }
 
-   private boolean load(ClientPacketListener source, Packet<?> packet) {
+   private boolean interceptPacket(ClientPacketListener source, Packet<?> packet) {
       if (this.level == null && CLIENT.getConnection() == source && CLIENT.level != null && CLIENT.player != null) {
          this.level = CLIENT.level;
          this.player = CLIENT.player;
@@ -569,18 +569,18 @@ public final class BacktrackModule extends Module {
       }
 
       if (!this.isSameSession() || source != this.connection) {
-         this.load(false);
+         this.resetQueue(false);
          return false;
       }
 
       if (packet instanceof ClientboundRespawnPacket || packet instanceof ClientboundLoginPacket) {
-         this.load(false);
+         this.resetQueue(false);
          return false;
       }
 
       if (packet instanceof ClientboundRemoveEntitiesPacket removed) {
          if (this.target != null && removed.entityIds().contains(this.target.getId())) {
-            this.load(false);
+            this.resetQueue(false);
          }
 
          return false;
@@ -591,44 +591,44 @@ public final class BacktrackModule extends Module {
             && (victim == this.target || victim == this.load_LivingEntity)) {
             DamageSource cause = damage.getSource(this.level);
             if (cause.getEntity() != null) {
-               this.poll = System.nanoTime();
+               this.lastDamageEventAt = System.nanoTime();
             }
 
             if (cause.getDirectEntity() == this.player && cause.is(DamageTypes.PLAYER_ATTACK)) {
-               this.init_V_LivingEntity_J(victim, this.poll);
+               this.init_V_LivingEntity_J(victim, this.lastDamageEventAt);
             } else if (cause.getEntity() == null) {
-               this.load(victim, System.nanoTime());
+               this.onSourcelessDamage(victim, System.nanoTime());
             }
          }
 
          if (packet instanceof ClientboundEntityEventPacket event
             && event.getEventId() == 2
             && event.getEntity(this.level) instanceof LivingEntity victim) {
-            this.load(victim, System.nanoTime());
+            this.onSourcelessDamage(victim, System.nanoTime());
          }
 
          if (packet instanceof ClientboundAnimatePacket animation
             && animation.getAction() == 1
             && this.level.getEntity(animation.getId()) instanceof LivingEntity victim) {
-            this.load(victim, System.nanoTime());
+            this.onSourcelessDamage(victim, System.nanoTime());
          }
 
          if (packet instanceof ClientboundHurtAnimationPacket animation && this.level.getEntity(animation.id()) instanceof LivingEntity victim) {
-            this.load(victim, System.nanoTime());
+            this.onSourcelessDamage(victim, System.nanoTime());
          }
 
          if (packet instanceof ClientboundExplodePacket explosion && explosion.playerKnockback().isPresent()
             || packet instanceof ClientboundDamageEventPacket damage && damage.entityId() == this.player.getId()
             || packet instanceof ClientboundSetHealthPacket health && health.getHealth() < this.player.getHealth()
             || packet instanceof ClientboundSetEntityMotionPacket motion && motion.id() == this.player.getId()) {
-            this.open = System.nanoTime();
+            this.lastSelfHurtAt = System.nanoTime();
             this.init_Vec3 = null;
             this.init_V_Z_4(true);
             this.trailHistory.clear();
             return false;
          } else {
             if (!this.load_Z_10()) {
-               this.load(true);
+               this.resetQueue(true);
                return false;
             }
 
@@ -637,13 +637,13 @@ public final class BacktrackModule extends Module {
             }
 
             if (!this.isValidTarget(this.target)) {
-               this.load(true);
+               this.resetQueue(true);
                return false;
             }
 
             if (packet instanceof ClientboundTeleportEntityPacket teleport) {
                if (teleport.id() == this.target.getId()) {
-                  this.load(true);
+                  this.resetQueue(true);
                }
 
                return false;
@@ -683,7 +683,7 @@ public final class BacktrackModule extends Module {
                double nextRangeSq = distanceToBox(box.move(next.subtract(this.target.position())), eye);
                double beforeRangeSq = distanceToBox(box.move(before.subtract(this.target.position())), eye);
                boolean approaching = moved
-                  && (this.load(now) ? Math.sqrt(nextRangeSq) + 0.08 < Math.sqrt(beforeRangeSq) : nextRangeSq + 0.0025 < beforeRangeSq);
+                  && (this.hasRecentConfirmedHit(now) ? Math.sqrt(nextRangeSq) + 0.08 < Math.sqrt(beforeRangeSq) : nextRangeSq + 0.0025 < beforeRangeSq);
                if (next.distanceToSqr(before) > 16.0 || approaching || !this.init_Z_J_2(now) || !this.init_Z_AABB_3(box, next, eye, now)) {
                   this.init_V_Z_4(true);
                   return false;
@@ -693,7 +693,7 @@ public final class BacktrackModule extends Module {
                   return false;
                }
 
-               if (!this.packetQueue.init(packet, now, this.integer("hold-time") * 1000000L)) {
+               if (!this.packetQueue.offer(packet, now, this.integer("hold-time") * 1000000L)) {
                   this.init_V_Z_4(true);
                   return false;
                }
@@ -702,30 +702,30 @@ public final class BacktrackModule extends Module {
                   this.trailHistory.add(this.target, box, box.move(next.subtract(this.target.position())), next, now);
                }
 
-               this.push++;
+               this.heldPackets++;
                return true;
             }
          }
       } else {
-         this.load(true);
+         this.resetQueue(true);
          return false;
       }
    }
 
-   private boolean load(long now) {
-      return this.target != null && this.target == this.read_LivingEntity && now - this.update <= 350000000L;
+   private boolean hasRecentConfirmedHit(long now) {
+      return this.target != null && this.target == this.read_LivingEntity && now - this.confirmedHitAt <= 350000000L;
    }
 
    private void init_V_LivingEntity_J(LivingEntity victim, long at) {
       this.read_LivingEntity = victim;
-      this.update = at;
+      this.confirmedHitAt = at;
       if (victim == this.target) {
          this.init_V_AABB(victim.getBoundingBox(), this.positionTracker.position(), this.player.getEyePosition(), at);
       }
    }
 
-   private void load(LivingEntity victim, long now) {
-      if (victim == this.load_LivingEntity && autismclient.util.LegacyCombatDetector.isLegacyCombat(this.player) && (this.poll == 0L || now - this.poll > 75000000L)) {
+   private void onSourcelessDamage(LivingEntity victim, long now) {
+      if (victim == this.load_LivingEntity && autismclient.util.LegacyCombatDetector.isLegacyCombat(this.player) && (this.lastDamageEventAt == 0L || now - this.lastDamageEventAt > 75000000L)) {
          int ping = this.pingMillis();
 
          for (long attack : this.recentHitTimes) {
@@ -742,18 +742,18 @@ public final class BacktrackModule extends Module {
       return ageNanos >= Math.max(0, ping - 100) * 1000000L && ageNanos <= Math.max(300, ping + 125) * 1000000L;
    }
 
-   private boolean read(long now) {
-      return this.load(now) && this.init_Vec3 != null && this.flush != 0L && now - this.flush <= 100000000L && now - this.sync <= 150000000L;
+   private boolean hasReachableServerPosition(long now) {
+      return this.hasRecentConfirmedHit(now) && this.init_Vec3 != null && this.outOfReachSince != 0L && now - this.outOfReachSince <= 100000000L && now - this.reachableAt <= 150000000L;
    }
 
    private void init_V_AABB(AABB box, Vec3 next, Vec3 eye, long now) {
       double reach = this.reach();
       if (box.move(next.subtract(this.target.position())).distanceToSqr(eye) <= reach * reach) {
          this.init_Vec3 = next;
-         this.sync = now;
-         this.flush = 0L;
-      } else if (this.init_Vec3 != null && this.flush == 0L) {
-         this.flush = now;
+         this.reachableAt = now;
+         this.outOfReachSince = 0L;
+      } else if (this.init_Vec3 != null && this.outOfReachSince == 0L) {
+         this.outOfReachSince = now;
       }
    }
 
@@ -761,18 +761,18 @@ public final class BacktrackModule extends Module {
       Vec3 current = this.target.position();
       double min = this.decimal("min-distance");
       double reach = this.reach();
-      if (init(box, current, received, eye, min, reach)) {
+      if (isUsefulBacktrack(box, current, received, eye, min, reach)) {
          return true;
       }
 
-      if (!this.load(now)) {
+      if (!this.hasRecentConfirmedHit(now)) {
          return false;
       }
 
       AABB latest = box.move(received.subtract(current));
-      return load(box, current, received, eye, min, reach)
-         ? init(eye, box, latest, latest, reach, reach)
-         : this.read(now) && init(box, current, this.init_Vec3, received, eye, min, reach);
+      return serverPositionIsFarther(box, current, received, eye, min, reach)
+         ? hasSharedHitPoint(eye, box, latest, latest, reach, reach)
+         : this.hasReachableServerPosition(now) && isReachRescue(box, current, this.init_Vec3, received, eye, min, reach);
    }
 
    private void init_V_Z_4(boolean all) {
@@ -782,20 +782,20 @@ public final class BacktrackModule extends Module {
             && this.level.getEntity(this.target.getId()) == this.target
             && this.packetQueue.isBoundTo(this.level, this.player, this.connection, this.target)) {
             long now = System.nanoTime();
-            this.maxHeldMillis = Math.max(this.maxHeldMillis, this.packetQueue.init(now) / 1000000.0);
+            this.maxHeldMillis = Math.max(this.maxHeldMillis, this.packetQueue.oldestAgeNanos(now) / 1000000.0);
             if (all) {
-               this.run++;
+               this.fullReleases++;
             }
 
             this.releasing = true;
 
             try {
-               this.pop = this.pop + this.packetQueue.init(now, all, packet -> handlePacket(packet, this.connection));
+               this.releasedPackets = this.releasedPackets + this.packetQueue.release(now, all, packet -> handlePacket(packet, this.connection));
             } finally {
                this.releasing = false;
             }
          } else {
-            this.tick = this.tick + this.packetQueue.size();
+            this.discardedPackets = this.discardedPackets + this.packetQueue.size();
             this.packetQueue.clear();
          }
       }
@@ -805,27 +805,27 @@ public final class BacktrackModule extends Module {
       ((Packet<ClientPacketListener>)packet).handle(listener);
    }
 
-   private void load(boolean replay) {
+   private void resetQueue(boolean replay) {
       this.trailHistory.clear();
       if (replay && this.isSameSession()) {
          this.init_V_Z_4(true);
       }
 
-      this.tick = this.tick + this.packetQueue.size();
+      this.discardedPackets = this.discardedPackets + this.packetQueue.size();
       this.packetQueue.clear();
       synchronized (this.init_Map) {
          this.init_Map.clear();
       }
 
       this.recentHitTimes.clear();
-      this.poll = 0L;
+      this.lastDamageEventAt = 0L;
       this.target = this.load_LivingEntity = this.read_LivingEntity = null;
       this.level = null;
       this.player = null;
       this.connection = null;
-      this.write = 0L;
+      this.lastHitAt = 0L;
       this.init_Vec3 = null;
-      this.close = this.open = 0L;
+      this.hitInterval = this.lastSelfHurtAt = 0L;
       this.targetReason = this.read_Str = "idle";
       this.epoch++;
    }
@@ -865,24 +865,24 @@ public final class BacktrackModule extends Module {
          : false;
    }
 
-   public BacktrackModule.StatusSnapshot init_TaskTimer_StreamUt() {
+   public BacktrackModule.StatusSnapshot statusSnapshot() {
       boolean live = this.target != null && this.isSameSession();
       long now = System.nanoTime();
       return new BacktrackModule.StatusSnapshot(
          this.target == null ? -1 : this.target.getId(),
          this.packetQueue.size(),
-         this.push,
-         this.pop,
-         this.tick,
-         this.run,
-         this.get,
+         this.heldPackets,
+         this.releasedPackets,
+         this.discardedPackets,
+         this.fullReleases,
+         this.hits,
          this.maxHeldMillis,
          live ? this.positionTracker.position() : null,
          this.epoch,
          this.read_Str,
          this.isSameSession() ? this.pingMillis() : 0,
          live && this.bool("server-position") && (this.packetQueue.size() > 0 || this.trailHistory.hasRecentTrail(this.target, now)),
-         live && this.load(now),
+         live && this.hasRecentConfirmedHit(now),
          this.set
       );
    }
@@ -917,11 +917,11 @@ public final class BacktrackModule extends Module {
       }
    }
 
-   public static boolean init(AABB drawn, Vec3 rendered, Vec3 server, Vec3 eye, double minimum, double maximum) {
-      return load(drawn, rendered, server, eye, minimum, maximum) && init_Z_AABB(drawn, drawn.move(server.subtract(rendered)), eye, maximum);
+   public static boolean isUsefulBacktrack(AABB drawn, Vec3 rendered, Vec3 server, Vec3 eye, double minimum, double maximum) {
+      return serverPositionIsFarther(drawn, rendered, server, eye, minimum, maximum) && init_Z_AABB(drawn, drawn.move(server.subtract(rendered)), eye, maximum);
    }
 
-   private static boolean load(AABB drawn, Vec3 rendered, Vec3 server, Vec3 eye, double minimum, double maximum) {
+   private static boolean serverPositionIsFarther(AABB drawn, Vec3 rendered, Vec3 server, Vec3 eye, double minimum, double maximum) {
       if (Double.isFinite(minimum)
          && Double.isFinite(maximum)
          && !(maximum <= 0.0)
@@ -943,9 +943,9 @@ public final class BacktrackModule extends Module {
       }
    }
 
-   public static boolean init(AABB drawn, Vec3 rendered, Vec3 reachable, Vec3 server, Vec3 eye, double minimum, double maximum) {
+   public static boolean isReachRescue(AABB drawn, Vec3 rendered, Vec3 reachable, Vec3 server, Vec3 eye, double minimum, double maximum) {
       double extended = maximum + 0.65;
-      if (!load(drawn, rendered, server, eye, minimum, extended)) {
+      if (!serverPositionIsFarther(drawn, rendered, server, eye, minimum, extended)) {
          return false;
       }
 
@@ -956,10 +956,10 @@ public final class BacktrackModule extends Module {
          && oldReceived.distanceToSqr(eye) <= limit
          && received.distanceToSqr(eye) > limit
          && Math.abs(server.y - reachable.y) <= 0.5
-         && init(eye, drawn, oldReceived, received, maximum, extended);
+         && hasSharedHitPoint(eye, drawn, oldReceived, received, maximum, extended);
    }
 
-   private static boolean init(Vec3 eye, AABB drawn, AABB reachable, AABB latest, double reach, double latestReach) {
+   private static boolean hasSharedHitPoint(Vec3 eye, AABB drawn, AABB reachable, AABB latest, double reach, double latestReach) {
       AABB first = drawn.deflate(0.04);
       AABB second = reachable.deflate(0.04);
       AABB third = latest.deflate(0.04);
@@ -969,7 +969,7 @@ public final class BacktrackModule extends Module {
       for (int i = 0; i <= 4; i++) {
          Vec3 middle = from.lerp(to, i * 0.25);
          Vec3 upper = new Vec3(middle.x, Math.clamp(eye.y, first.minY, first.maxY), middle.z);
-         if (init(first, second, third, eye, upper, reach, latestReach) || init(first, second, third, eye, middle, reach, latestReach)) {
+         if (pointHitsAll(first, second, third, eye, upper, reach, latestReach) || pointHitsAll(first, second, third, eye, middle, reach, latestReach)) {
             return true;
          }
       }
@@ -977,8 +977,8 @@ public final class BacktrackModule extends Module {
       return false;
    }
 
-   private static boolean init(AABB a, AABB b, AABB c, Vec3 eye, Vec3 point, double reach, double latestReach) {
-      return load(a, eye, point, reach) && load(b, eye, point, reach) && load(c, eye, point, latestReach);
+   private static boolean pointHitsAll(AABB a, AABB b, AABB c, Vec3 eye, Vec3 point, double reach, double latestReach) {
+      return rayHitsBox(a, eye, point, reach) && rayHitsBox(b, eye, point, reach) && rayHitsBox(c, eye, point, latestReach);
    }
 
    private static boolean init_Z_AABB(AABB drawn, AABB received, Vec3 eye, double range) {
@@ -986,10 +986,10 @@ public final class BacktrackModule extends Module {
       double inset = Math.min(0.1, Math.min(received.getXsize(), Math.min(received.getYsize(), received.getZsize())) * 0.25);
       AABB interior = received.deflate(inset);
       Vec3 upper = new Vec3(middle.x, Math.max(drawn.minY + inset, Math.min(drawn.maxY - inset, eye.y)), middle.z);
-      return load(interior, eye, middle, range) && load(interior, eye, upper, range);
+      return rayHitsBox(interior, eye, middle, range) && rayHitsBox(interior, eye, upper, range);
    }
 
-   private static boolean load(AABB box, Vec3 eye, Vec3 point, double range) {
+   private static boolean rayHitsBox(AABB box, Vec3 eye, Vec3 point, double range) {
       if (box.contains(eye)) {
          return true;
       }
@@ -1016,20 +1016,20 @@ public final class BacktrackModule extends Module {
    }
 
    public record StatusSnapshot(
-      int init_I,
-      int load_I,
-      long init_J,
-      long load_J,
-      long read_J,
+      int targetId,
+      int queuedPackets,
+      long heldPackets,
+      long releasedPackets,
+      long discardedPackets,
       long write,
       long update,
-      double init_D,
-      Vec3 init_Vec3,
+      double maxHeldMillis,
+      Vec3 serverPosition,
       long sync,
-      String init_Str,
-      int read_I,
-      boolean init_Z,
-      boolean load_Z,
+      String status,
+      int pingMillis,
+      boolean showingTrail,
+      boolean recentlyHit,
       long flush
    ) {
    }

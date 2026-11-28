@@ -97,12 +97,12 @@ final class AiCollect {
       return !requiresCorrectTool || anyCarriedToolHarvests;
    }
 
-   static String init(BlockState state) {
+   static String requiredToolId(BlockState state) {
       Item needed = AiItems.cheapestRequiredTool(state);
       return needed == null ? "minecraft:iron_pickaxe" : BuiltInRegistries.ITEM.getKey(needed).toString();
    }
 
-   static JsonObject init(String toolId) {
+   static JsonObject missingTool(String toolId) {
       JsonObject missing = new JsonObject();
       missing.addProperty(toolId, 1);
       return missing;
@@ -112,7 +112,7 @@ final class AiCollect {
       return "no carried tool can harvest " + blockId + " (needs " + toolId + ")";
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation collect(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final String item = AiJson.getString(args, "item", "");
@@ -132,7 +132,7 @@ final class AiCollect {
                   if (init(blockId, BuiltInRegistries.ITEM.getKey(block.asItem()).toString(), item)) {
                      BlockState state = block.defaultBlockState();
                      if (!init(state.requiresCorrectToolForDrops(), init(client, state))) {
-                        tierGated = init(state);
+                        tierGated = requiredToolId(state);
                      } else {
                         sources.add(blockId);
                      }
@@ -223,7 +223,7 @@ final class AiCollect {
                         0
                      );
                      if (status == AiOperation.Status.FAILED && missingTool != null) {
-                        data.add("missing", AiCollect.init(missingTool));
+                        data.add("missing", AiCollect.missingTool(missingTool));
                      }
 
                      return AiGameOperations.result(status, message, data);

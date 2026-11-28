@@ -57,7 +57,7 @@ public final class FriendCommand extends Command {
    private static CompletableFuture<Suggestions> init(CommandContext<AutismCommandSource> ctx, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(Minecraft.getInstance())) {
+      for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.parse(Minecraft.getInstance())) {
          String name = player.name();
          if (name != null && name.toLowerCase(Locale.ROOT).startsWith(remaining)) {
             builder.suggest(name);

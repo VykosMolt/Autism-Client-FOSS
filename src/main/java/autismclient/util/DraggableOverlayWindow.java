@@ -61,8 +61,8 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
 
    protected autismclient.gui.f.NetHelper getPinButtonRect(OverlayBounds bounds) {
       autismclient.gui.f.NetHelper window = autismclient.gui.f.NetHelper.init(bounds.x, bounds.y, bounds.width, 14);
-      autismclient.gui.f.NetHelper bar = autismclient.gui.ui.widgets.WindowHeaderHelper.init(window, 14);
-      autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.WindowHeaderHelper.load(window, 14);
+      autismclient.gui.f.NetHelper bar = autismclient.gui.ui.widgets.WindowHeaderHelper.headerBounds(window, 14);
+      autismclient.gui.f.NetHelper close = autismclient.gui.ui.widgets.WindowHeaderHelper.closeButton(window, 14);
       int size = Math.min(12, Math.max(9, 10));
       int x = close.read() - 3 - size;
       int y = bar.write() + Math.max(1, (bar.sync() - size) / 2);
@@ -161,11 +161,11 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    }
 
    protected int resolveWindowWidth(int autoWidth, int minWidth) {
-      return this.isResizable() ? this.getSizeStore().init(autoWidth, minWidth, getMaxScreenWindowWidth()) : autoWidth;
+      return this.isResizable() ? this.getSizeStore().width(autoWidth, minWidth, getMaxScreenWindowWidth()) : autoWidth;
    }
 
    protected int resolveWindowHeight(int autoHeight, int minHeight) {
-      return this.isResizable() ? this.getSizeStore().load(autoHeight, minHeight, getMaxScreenWindowHeight()) : autoHeight;
+      return this.isResizable() ? this.getSizeStore().height(autoHeight, minHeight, getMaxScreenWindowHeight()) : autoHeight;
    }
 
    protected int getResizeMinWidth() {
@@ -190,10 +190,10 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
          int screenH = cA.load_I();
          int minW = this.getResizeMinWidth();
          int minH = this.getResizeMinHeight();
-         int w = OverlayWindowSizeStore.read(width, minW, screenW > 0 ? screenW - 4 - b.x : width);
-         int h = OverlayWindowSizeStore.read(height, minH, screenH > 0 ? screenH - 4 - b.y : height);
+         int w = OverlayWindowSizeStore.clamp(width, minW, screenW > 0 ? screenW - 4 - b.x : width);
+         int h = OverlayWindowSizeStore.clamp(height, minH, screenH > 0 ? screenH - 4 - b.y : height);
          OverlayBounds clamped = clampBounds(new OverlayBounds(b.x, b.y, w, h, b.visible, b.collapsed), minW, minH, screenW, screenH);
-         this.getSizeStore().init(clamped.width, clamped.height);
+         this.getSizeStore().save(clamped.width, clamped.height);
          this.setBounds(clamped);
          this.onSizeChanged();
       }
@@ -209,7 +209,7 @@ public abstract class DraggableOverlayWindow extends OverlayLayoutBase implement
    @Override
    public void resetSize() {
       if (this.isResizable()) {
-         this.getSizeStore().load();
+         this.getSizeStore().clear();
          this.onSizeChanged();
       }
    }

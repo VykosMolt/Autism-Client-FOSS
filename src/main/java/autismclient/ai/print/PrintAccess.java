@@ -72,7 +72,7 @@ final class PrintAccess {
    boolean goallessSearch;
    private boolean exitMode;
    private boolean groundOnly;
-   private boolean pop;
+   private boolean requireSolidFloor;
    private int maxTemps = 2147483647;
    LongArrayList removalTemps;
    long foundGoalKey = -9223372036854775808L;
@@ -81,8 +81,8 @@ final class PrintAccess {
    private BlockState placeState;
    private Item placeItem;
    private PrintClicks.Inner_StreamUtil unusedPlaceClick;
-   private boolean tick;
-   private boolean run;
+   private boolean standOnTemps;
+   private boolean explicitStandingTemps;
    private LongOpenHashSet standingTemps;
    private long avoidSwap = -9223372036854775808L;
    private PrintClicks.Inner_StreamUtil removalClick;
@@ -92,7 +92,7 @@ final class PrintAccess {
    private LongCollection indexedCells;
    private PrintSpatialIndex cellIndex;
    private BlockState tempState;
-   private boolean get;
+   private boolean hasTempState;
    int lowestGoalY = -2147483648;
 
    private boolean canPlaceTemp(BlockPos cell, BlockState material) {
@@ -209,10 +209,10 @@ final class PrintAccess {
       return session;
    }
 
-   PrintAccess.AccessSearch init_StreamUtil_ConfigS_BlockPos_D(BlockPos start, double feet) {
+   PrintAccess.AccessSearch groundSearch(BlockPos start, double feet) {
       this.goallessSearch = true;
       this.groundOnly = true;
-      this.pop = true;
+      this.requireSolidFloor = true;
       this.maxTemps = 0;
       return new PrintAccess.AccessSearch(start, feet, new IntArrayList(), null, this.view::workUnits);
    }
@@ -229,8 +229,8 @@ final class PrintAccess {
       BlockPos start, double feet, LongArrayList temps, BlockState tempState, boolean standOn, long avoidSwap
    ) {
       this.removalTemps = new LongArrayList(temps);
-      this.tick = standOn;
-      this.run = false;
+      this.standOnTemps = standOn;
+      this.explicitStandingTemps = false;
       this.standingTemps = standOn ? new LongOpenHashSet(temps) : null;
       this.avoidSwap = avoidSwap;
       return new PrintAccess.AccessSearch(start, feet, new IntArrayList(), tempState, this.view::workUnits);
@@ -241,8 +241,8 @@ final class PrintAccess {
    ) {
       this.removalTemps = new LongArrayList(temps);
       this.standingTemps = new LongOpenHashSet(standingTemps);
-      this.tick = false;
-      this.run = true;
+      this.standOnTemps = false;
+      this.explicitStandingTemps = true;
       this.avoidSwap = avoidSwap;
       return new PrintAccess.AccessSearch(start, feet, new IntArrayList(), tempState, this.view::workUnits);
    }
@@ -258,7 +258,7 @@ final class PrintAccess {
       }
 
       this.tempState = tempState;
-      this.get = tempState != null;
+      this.hasTempState = tempState != null;
       Long2DoubleOpenHashMap best = new Long2DoubleOpenHashMap();
       best.defaultReturnValue(1.0 / 0.0);
       Long2ObjectOpenHashMap<Boolean> goalCache = new Long2ObjectOpenHashMap<>();
@@ -323,8 +323,8 @@ final class PrintAccess {
                   int y = BlockPos.getY(n.key);
                   int z = BlockPos.getZ(n.key);
                   if (this.groundOnly
-                     ? this.read(n)
-                     : this.core.isWithinFootprint(x, z) && this.read(n) || y > this.core.maxTargetY() || this.isExitStance(n)) {
+                     ? this.floorIsWorldSolid(n)
+                     : this.core.isWithinFootprint(x, z) && this.floorIsWorldSolid(n) || y > this.core.maxTargetY() || this.isExitStance(n)) {
                      return this.toPlan(n, -1);
                   }
                } else {
@@ -375,8 +375,8 @@ final class PrintAccess {
       BlockPos start, double startFeet, LongArrayList temps, BlockState tempState, int maxNodes, boolean standOn
    ) {
       this.removalTemps = temps;
-      this.tick = standOn;
-      this.run = false;
+      this.standOnTemps = standOn;
+      this.explicitStandingTemps = false;
       if (standOn) {
          this.standingTemps = new LongOpenHashSet(temps);
       }
@@ -417,10 +417,10 @@ final class PrintAccess {
    PrintAccess.AccessPlan planToCells(
       BlockPos start, double startFeet, LongArrayList cells, BlockState tempState, Item item, int maxNodes
    ) {
-      return this.init(start, startFeet, cells, tempState, item, tempState, maxNodes);
+      return this.planToPlaceCells(start, startFeet, cells, tempState, item, tempState, maxNodes);
    }
 
-   PrintAccess.AccessPlan init(BlockPos start, double startFeet, LongArrayList cells, BlockState tempState, Item item, BlockState pathTemp, int maxNodes) {
+   PrintAccess.AccessPlan planToPlaceCells(BlockPos start, double startFeet, LongArrayList cells, BlockState tempState, Item item, BlockState pathTemp, int maxNodes) {
       this.placeCells = cells;
       this.placeState = tempState;
       this.placeItem = item;
@@ -470,14 +470,14 @@ final class PrintAccess {
                         PrintCore.PlacementPurpose proof = this.core.new PlacementPurpose(click, this.core.reachable);
 
                         while (!proof.complete && this.view.workUnits() - started <= this.workBudget && !budget.isExhausted()) {
-                           proof.init(1L);
+                           proof.advanceProof(1L);
                         }
 
-                        if (!proof.complete || proof.read) {
+                        if (!proof.complete || proof.invalidated) {
                            return -9223372036854775808L;
                         }
 
-                        if (!proof.load) {
+                        if (!proof.blocked) {
                            this.unusedPlaceClick = click;
                            return t;
                         }
@@ -510,7 +510,7 @@ final class PrintAccess {
       int x = BlockPos.getX(n.key);
       int y = BlockPos.getY(n.key);
       int z = BlockPos.getZ(n.key);
-      if (this.tick || this.run) {
+      if (this.standOnTemps || this.explicitStandingTemps) {
          long floor = BlockPos.asLong(x, y - 1, z);
          BlockPos under = BlockPos.of(floor);
          if ((n.temps <= 0 || floor != this.avoidSwap)
@@ -525,7 +525,7 @@ final class PrintAccess {
             return floor;
          }
 
-         if (this.tick) {
+         if (this.standOnTemps) {
             return -9223372036854775808L;
          }
       }
@@ -593,13 +593,13 @@ final class PrintAccess {
          int y = BlockPos.getY(key);
          int z = BlockPos.getZ(key);
          if (this.targetStances.size() >= 32) {
-            return this.cellSpatialIndex(this.targetStances).init(x, y, z, (dx, dy, dz) -> init(0, 0, 0, dx, dy, dz, 0.0, 1.0));
+            return this.cellSpatialIndex(this.targetStances).queryNearestCost(x, y, z, (dx, dy, dz) -> slackCost(0, 0, 0, dx, dy, dz, 0.0, 1.0));
          }
 
          double best = 1.0 / 0.0;
 
          for (long t : this.targetStances) {
-            best = Math.min(best, init(x, y, z, BlockPos.getX(t), BlockPos.getY(t), BlockPos.getZ(t), 0.0, 1.0));
+            best = Math.min(best, slackCost(x, y, z, BlockPos.getX(t), BlockPos.getY(t), BlockPos.getZ(t), 0.0, 1.0));
             if (best == 0.0) {
                return 0.0;
             }
@@ -631,7 +631,7 @@ final class PrintAccess {
                   this.goalIndex = new PrintSpatialIndex(goals, i -> this.core.targets[i].pos());
                }
 
-               return this.goalIndex.init(x, y, z, (dx, dy, dz) -> this.goalEstimate(0, 0, 0, dx, dy, dz));
+               return this.goalIndex.queryNearestCost(x, y, z, (dx, dy, dz) -> this.goalEstimate(0, 0, 0, dx, dy, dz));
             } else {
                double best = 1.0 / 0.0;
 
@@ -653,19 +653,19 @@ final class PrintAccess {
          LongArrayList cells = this.removalTemps != null ? this.removalTemps : this.placeCells;
          if (cells.size() >= 32) {
             PrintSpatialIndex geometry = this.cellSpatialIndex(cells);
-            if (this.tick && this.removalTemps != null) {
-               return geometry.init(x, y - 1, z, (dx, dy, dz) -> init(0, 0, 0, dx, dy, dz, 1.0, 1.0));
+            if (this.standOnTemps && this.removalTemps != null) {
+               return geometry.queryNearestCost(x, y - 1, z, (dx, dy, dz) -> slackCost(0, 0, 0, dx, dy, dz, 1.0, 1.0));
             } else {
                return this.alternateGuide && this.removalTemps != null
-                  ? geometry.init(x, y, z, (dx, dy, dz) -> this.goalEstimate(0, 0, 0, dx, dy, dz))
-                  : geometry.init(x, y, z, (dx, dy, dz) -> load(0, 0, 0, dx, dy, dz));
+                  ? geometry.queryNearestCost(x, y, z, (dx, dy, dz) -> this.goalEstimate(0, 0, 0, dx, dy, dz))
+                  : geometry.queryNearestCost(x, y, z, (dx, dy, dz) -> reachCost(0, 0, 0, dx, dy, dz));
             }
          } else {
             double best = 1.0 / 0.0;
 
             for (long t : cells) {
-               if (this.tick && this.removalTemps != null) {
-                  best = Math.min(best, init(x, y, z, BlockPos.getX(t), BlockPos.getY(t) + 1, BlockPos.getZ(t), 1.0, 1.0));
+               if (this.standOnTemps && this.removalTemps != null) {
+                  best = Math.min(best, slackCost(x, y, z, BlockPos.getX(t), BlockPos.getY(t) + 1, BlockPos.getZ(t), 1.0, 1.0));
                   if (best == 0.0) {
                      return 0.0;
                   }
@@ -688,21 +688,21 @@ final class PrintAccess {
    }
 
    private double goalEstimate(int x, int y, int z, int tx, int ty, int tz) {
-      double relaxed = init(x, y, z, tx, ty, tz, 6.4 + Math.sqrt(2.0) * 0.75, 8.02);
+      double relaxed = slackCost(x, y, z, tx, ty, tz, 6.4 + Math.sqrt(2.0) * 0.75, 8.02);
       return this.alternateGuide ? Math.max(relaxed, Math.max(0, ty - y - 3) * (12.0 + this.tempCost)) : relaxed;
    }
 
    private static double cellEstimate(int x, int y, int z, BlockPos target) {
-      return load(x, y, z, target.getX(), target.getY(), target.getZ());
+      return reachCost(x, y, z, target.getX(), target.getY(), target.getZ());
    }
 
-   private static double load(int x, int y, int z, int tx, int ty, int tz) {
+   private static double reachCost(int x, int y, int z, int tx, int ty, int tz) {
       double horizontal = 6.4 + Math.sqrt(2.0) * 0.75;
       double vertical = 8.02;
-      return init(x, y, z, tx, ty, tz, horizontal, vertical);
+      return slackCost(x, y, z, tx, ty, tz, horizontal, vertical);
    }
 
-   private static double init(int x, int y, int z, int tx, int ty, int tz, double horizontalSlack, double verticalSlack) {
+   private static double slackCost(int x, int y, int z, int tx, int ty, int tz, double horizontalSlack, double verticalSlack) {
       double across = Math.max(0.0, Math.hypot(tx - x, tz - z) - horizontalSlack) * Math.min(4.6, 6.5 / Math.sqrt(2.0));
       double up = Math.max(0.0, ty - y - verticalSlack) * Math.min(12.0, 2.486486486486486);
       double down = Math.max(0.0, y - ty - verticalSlack) * Math.min(15.0, 3.033333333333333);
@@ -861,7 +861,7 @@ final class PrintAccess {
       }
    }
 
-   private boolean read(PrintAccess.SearchNode n) {
+   private boolean floorIsWorldSolid(PrintAccess.SearchNode n) {
       long floor = BlockPos.asLong(BlockPos.getX(n.key), (int)Math.floor(n.feet - 0.001), BlockPos.getZ(n.key));
       int k = 0;
 
@@ -1009,7 +1009,7 @@ final class PrintAccess {
    }
 
    private boolean reachableWithSupport(PrintTarget tg, BlockPos p, List<Vec3> points, PrintClicks.Inner_DataUtil budget) {
-      if (!this.get) {
+      if (!this.hasTempState) {
          return false;
       }
 
@@ -1217,7 +1217,7 @@ final class PrintAccess {
                            && this.view.isPassableCell(stand.above())
                            && this.view.getBlockState(floor).isFaceSturdy(this.view, floor, d)) {
                            double off = 0.75;
-                           AABB lean = PrintGeometry.init(x + 0.5 + d.getStepX() * off, h, z + 0.5 + d.getStepZ() * off, true);
+                           AABB lean = PrintGeometry.bodyBox(x + 0.5 + d.getStepX() * off, h, z + 0.5 + d.getStepZ() * off, true);
                            if (this.view.isBoxClear(lean)) {
                               int i = this.core.cellIndexByPos.get(cell.asLong());
                               boolean own = i >= 0 && this.core.cellStates[i] == 0 && this.placeableAsBridge(i, d) && this.core.read_Z_I(i);
@@ -1311,7 +1311,7 @@ final class PrintAccess {
                && (this.core.temporaryBlocks.containsKey(under) || this.view.isOwnedTemporaryAt(BlockPos.of(under)))
                && (this.exitMode || !this.core.isFailedDig(under, n.key))
                && !this.core.sync_Z_J(under)
-               && (!this.pop || this.core.init_Z_BlockPos(BlockPos.of(under)))
+               && (!this.requireSolidFloor || this.core.init_Z_BlockPos(BlockPos.of(under)))
                && this.core.floorBelow(BlockPos.of(under)) != null) {
                this.view.pushHypothesis(BlockPos.of(under), Blocks.AIR.defaultBlockState());
 
@@ -1513,7 +1513,7 @@ final class PrintAccess {
 
          for (int d = 1; d <= 3; d++) {
             BlockPos q = cell.below(d);
-            if (!this.view.getCollisionShape(q).isEmpty() || hasTempPillarBelow(n, cell) && read(n, q)) {
+            if (!this.view.getCollisionShape(q).isEmpty() || hasTempPillarBelow(n, cell) && pathPlacesTempAt(n, q)) {
                return false;
             }
          }
@@ -1581,7 +1581,7 @@ final class PrintAccess {
       }
    }
 
-   private static boolean read(PrintAccess.SearchNode n, BlockPos cell) {
+   private static boolean pathPlacesTempAt(PrintAccess.SearchNode n, BlockPos cell) {
       int k = 0;
 
       for (PrintAccess.SearchNode at = n; at != null && at.via != null && k < 64; k++) {
@@ -1660,7 +1660,7 @@ final class PrintAccess {
       private final IntOpenHashSet goalSet;
       private final BlockState sessionTempState;
       private final double startFeet;
-      private final long update;
+      private final long startRevision;
       private final LongSupplier clock;
       private final Long2DoubleOpenHashMap bestCost = new Long2DoubleOpenHashMap();
       private final PriorityQueue<Object[]> openQueue = new PriorityQueue<>(
@@ -1676,7 +1676,7 @@ final class PrintAccess {
       private PrintAccess.SearchStatus status = PrintAccess.SearchStatus.SEARCHING;
       private PrintAccess.AccessPlan result;
       private PrintAccess.AccessPlan bestCandidate;
-      private long sync;
+      private long bestStanceKey;
       private PrintCore.PlannerPolicy wayOutSupport;
       private PrintCore.EscapeProof rootDownEscape;
       private PrintCore.EscapeProof rootEscape;
@@ -1685,12 +1685,12 @@ final class PrintAccess {
       private PrintAccess.AccessSearch.CandidateProof bestProof;
       PrintClicks.Inner_StreamUtil click;
       long stanceKey;
-      boolean init_Z;
+      boolean solved;
       long expandedNodes;
-      long read;
+      long nodesExpanded;
       final long[] phaseWork = new long[6];
       private final Int2BooleanOpenHashMap walkSkipByGoal = new Int2BooleanOpenHashMap();
-      long write;
+      long walkSkips;
       private PrintNav.ReachResult reach;
       private LongIterator reachCells;
       private List<Long> reachPath;
@@ -1713,13 +1713,13 @@ final class PrintAccess {
             Math.max(b.maxY(), start.getY()),
             Math.max(b.maxZ(), start.getZ())
          );
-         this.update = PrintAccess.this.view.worldMutationRevision();
+         this.startRevision = PrintAccess.this.view.worldMutationRevision();
          if (!goals.isEmpty()) {
             PrintAccess.this.lowestGoalY = PrintAccess.lowestGoalY(PrintAccess.this.core, goals);
          }
 
          PrintAccess.this.tempState = tempState;
-         PrintAccess.this.get = tempState != null;
+         PrintAccess.this.hasTempState = tempState != null;
          PrintAccess.SearchNode root = new PrintAccess.SearchNode(start.asLong(), feet, 0.0, null, null, 0);
          PrintAccess.this.rootKey = root.key;
          PrintAccess.this.rootCanEscape = null;
@@ -1733,7 +1733,7 @@ final class PrintAccess {
          return this.status;
       }
 
-      private boolean init(PrintAccess.SearchNode n) {
+      private boolean isWalkReachable(PrintAccess.SearchNode n) {
          PrintNav.ReachResult reach = PrintAccess.this.core.reachable;
          if (reach != null && n.temps == 0 && reach.isReachable(n.key) && !(Math.abs(reach.feetYOf(n.key) - n.feet) > 1.0E-6)) {
             for (PrintAccess.SearchNode at = n; at != null && at.via != null; at = at.parent) {
@@ -1768,7 +1768,7 @@ final class PrintAccess {
             .append(" work=")
             .append(Arrays.toString(this.phaseWork))
             .append(" walkSkips=")
-            .append(this.write);
+            .append(this.walkSkips);
          if (this.currentNode != null) {
             out.append(" node=")
                .append(BlockPos.of(this.currentNode.key).toShortString())
@@ -1794,23 +1794,23 @@ final class PrintAccess {
                   out.append(' ').append(PrintAccess.this.core.describeTrap(placement.trapProof));
                }
 
-               out.append(" neighbor=").append(placement.neighborProof.update).append('/').append(placement.neighborProof.neighbors.size());
+               out.append(" neighbor=").append(placement.neighborProof.checkedNeighbors).append('/').append(placement.neighborProof.neighbors.size());
             }
          }
 
          return out.toString();
       }
 
-      PrintAccess.SearchStatus init(long allowanceWork) {
+      PrintAccess.SearchStatus advanceSearch(long allowanceWork) {
          if (this.status != PrintAccess.SearchStatus.SEARCHING) {
             return this.status;
          }
 
-         if (PrintAccess.this.view.worldMutationRevision() != this.update) {
+         if (PrintAccess.this.view.worldMutationRevision() != this.startRevision) {
             return this.status = PrintAccess.SearchStatus.INVALIDATED;
          }
 
-         if (this.wayOutSupport != null && !this.wayOutSupport.init()) {
+         if (this.wayOutSupport != null && !this.wayOutSupport.proofValid()) {
             return this.status = PrintAccess.SearchStatus.INVALIDATED;
          }
 
@@ -1828,13 +1828,13 @@ final class PrintAccess {
                   if (this.bestCandidate != null
                      && (this.openQueue.isEmpty() || (Double)this.openQueue.peek()[0] >= this.bestCandidate.cost())) {
                      if (this.bestWayOutProof != null && !this.bestWayOutProof.supportStillValid()
-                        || this.bestProof != null && !this.bestProof.init()) {
+                        || this.bestProof != null && !this.bestProof.stillValid()) {
                         return this.status = PrintAccess.SearchStatus.INVALIDATED;
                      }
 
                      this.result = this.bestCandidate;
-                     this.stanceKey = this.sync;
-                     this.init_Z = true;
+                     this.stanceKey = this.bestStanceKey;
+                     this.solved = true;
                      return this.status = PrintAccess.SearchStatus.FOUND;
                   }
 
@@ -1853,13 +1853,13 @@ final class PrintAccess {
                      }
 
                      if (this.bestWayOutProof != null && !this.bestWayOutProof.supportStillValid()
-                        || this.bestProof != null && !this.bestProof.init()) {
+                        || this.bestProof != null && !this.bestProof.stillValid()) {
                         return this.status = PrintAccess.SearchStatus.INVALIDATED;
                      }
 
                      this.result = this.bestCandidate;
-                     this.stanceKey = this.sync;
-                     this.init_Z = true;
+                     this.stanceKey = this.bestStanceKey;
+                     this.solved = true;
                      return this.status = PrintAccess.SearchStatus.FOUND;
                   }
 
@@ -1869,15 +1869,15 @@ final class PrintAccess {
                if (this.wayOutProof == null) {
                   long w0 = PrintAccess.this.view.workUnits();
                   if (PrintAccess.this.removalTemps != null) {
-                     this.nodeEval.init(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
-                     this.read++;
+                     this.nodeEval.advance(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
+                     this.nodesExpanded++;
                   } else {
                      LongArrayList assumed = PrintAccess.this.pushPathHypotheses(this.currentNode);
                      this.nodeEval.pathAssumed = assumed;
 
                      try {
-                        this.nodeEval.init(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
-                        this.read++;
+                        this.nodeEval.advance(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
+                        this.nodesExpanded++;
                      } finally {
                         PrintAccess.this.popHypotheses(assumed);
                      }
@@ -1911,7 +1911,7 @@ final class PrintAccess {
 
                   long w1 = PrintAccess.this.view.workUnits();
                   PrintAccess.SearchStatus proof = this.wayOutProof
-                     .init(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
+                     .advance(Math.max(1L, allowanceWork - (this.clock.getAsLong() - started)));
                   this.phaseWork[4] = this.phaseWork[4] + (PrintAccess.this.view.workUnits() - w1);
                   PrintAccess.this.core.accessPhaseWork[4] = PrintAccess.this.core.accessPhaseWork[4] + (PrintAccess.this.view.workUnits() - w1);
                   if (proof == PrintAccess.SearchStatus.SEARCHING) {
@@ -1944,7 +1944,7 @@ final class PrintAccess {
                   );
                   if (this.bestCandidate == null || candidate.cost() < this.bestCandidate.cost()) {
                      this.bestCandidate = candidate;
-                     this.sync = this.currentNode.key;
+                     this.bestStanceKey = this.currentNode.key;
                      this.bestWayOutProof = this.wayOutProof;
                      this.bestProof = this.nodeEval.snapshotProof();
                   }
@@ -2068,9 +2068,9 @@ final class PrintAccess {
          final PrintCore.PlacementSafetyProof neighborProof;
          final PrintCore.PlacementTrapCheck trapProof;
          boolean settled;
-         boolean load;
-         boolean read;
-         boolean write;
+         boolean blocked;
+         boolean invalidated;
+         boolean trapBlocked;
 
          PlacementCheck(PrintClicks.Inner_StreamUtil click, BlockPos support) {
             this(click, support, null);
@@ -2099,8 +2099,8 @@ final class PrintAccess {
             }
          }
 
-         boolean init() {
-            if (this.read) {
+         boolean stillValid() {
+            if (this.invalidated) {
                return false;
             }
 
@@ -2109,7 +2109,7 @@ final class PrintAccess {
             }
 
             try {
-               return (this.trapProof == null || this.trapProof.init()) && this.neighborProof.init();
+               return (this.trapProof == null || this.trapProof.proofValid()) && this.neighborProof.proofValid();
             } finally {
                if (this.support != null) {
                   PrintAccess.this.view.popHypothesis(this.support);
@@ -2117,9 +2117,9 @@ final class PrintAccess {
             }
          }
 
-         void init(long allowance) {
-            if (!this.init()) {
-               this.read = this.settled = true;
+         void advance(long allowance) {
+            if (!this.stillValid()) {
+               this.invalidated = this.settled = true;
             } else if (!this.settled) {
                long started = PrintAccess.this.view.workUnits();
                if (this.support != null) {
@@ -2129,11 +2129,11 @@ final class PrintAccess {
                try {
                   if (this.trapProof != null) {
                      if (!this.trapProof.complete) {
-                        this.trapProof.init(allowance);
+                        this.trapProof.advanceProof(allowance);
                      }
 
                      if (this.trapProof.invalidated) {
-                        this.read = this.settled = true;
+                        this.invalidated = this.settled = true;
                         return;
                      }
 
@@ -2142,20 +2142,20 @@ final class PrintAccess {
                      }
 
                      if (this.trapProof.blocked) {
-                        this.write = this.load = this.settled = true;
+                        this.trapBlocked = this.blocked = this.settled = true;
                         return;
                      }
                   }
 
-                  this.neighborProof.init(Math.max(1L, allowance - (PrintAccess.this.view.workUnits() - started)));
+                  this.neighborProof.advanceProof(Math.max(1L, allowance - (PrintAccess.this.view.workUnits() - started)));
                   if (!this.neighborProof.invalidated) {
                      if (this.neighborProof.complete) {
-                        this.load = this.neighborProof.blocked;
+                        this.blocked = this.neighborProof.blocked;
                         this.settled = true;
                         return;
                      }
                   } else {
-                     this.read = this.settled = true;
+                     this.invalidated = this.settled = true;
                   }
 
                   return;
@@ -2186,8 +2186,8 @@ final class PrintAccess {
             this.escapeStage = kind == PrintAccess.AccessSearch.EscapeKind.GENERAL ? 2 : (kind == PrintAccess.AccessSearch.EscapeKind.DESCENT_AFTER ? 1 : 0);
          }
 
-         PrintAccess.SearchStatus init() {
-            if (!this.escapeSupport.init()) {
+         PrintAccess.SearchStatus step() {
+            if (!this.escapeSupport.proofValid()) {
                return this.escapeStatus = PrintAccess.SearchStatus.INVALIDATED;
             }
 
@@ -2205,7 +2205,7 @@ final class PrintAccess {
                );
             }
 
-            PrintAccess.SearchStatus result = this.escapeSearch.init(1L);
+            PrintAccess.SearchStatus result = this.escapeSearch.advanceSearch(1L);
             if (result != PrintAccess.SearchStatus.SEARCHING && result != PrintAccess.SearchStatus.INVALIDATED) {
                if ((this.escapeStage & 1) == 1) {
                   return this.escapeStatus = result;
@@ -2248,17 +2248,17 @@ final class PrintAccess {
             this.candidateDig = dig;
          }
 
-         boolean init() {
+         boolean stillValid() {
             LongArrayList path = this.withoutPath ? null : PrintAccess.this.pushPathHypotheses(this.candidateNode);
 
             try {
-               if (this.candidateEscape != null && this.candidateEscape.init() != PrintAccess.SearchStatus.FOUND) {
+               if (this.candidateEscape != null && this.candidateEscape.step() != PrintAccess.SearchStatus.FOUND) {
                   return false;
-               } else if (this.candidateSupport != null && !this.candidateSupport.init()) {
+               } else if (this.candidateSupport != null && !this.candidateSupport.proofValid()) {
                   return false;
                } else {
                   return this.candidatePlacement == null
-                        || this.candidatePlacement.init() && this.candidatePlacement.settled && !this.candidatePlacement.load
+                        || this.candidatePlacement.stillValid() && this.candidatePlacement.settled && !this.candidatePlacement.blocked
                      ? this.candidateDig == null
                         || !PrintAccess.this.core
                            .failedClicks
@@ -2311,10 +2311,10 @@ final class PrintAccess {
          PrintAccess.AccessSearch.NodeEvaluation.SupportProbe supportProbe;
          PrintAccess.AccessSearch.EscapeCheck foundEscape;
          PrintCore.PlannerPolicy nodeSupport;
-         boolean write;
-         final boolean update;
+         boolean escapeWithoutPath;
+         final boolean walkReachable;
 
-         private PrintAccess.AccessSearch.PlacementCheck init(PrintClicks.Inner_StreamUtil click) {
+         private PrintAccess.AccessSearch.PlacementCheck placementCheck(PrintClicks.Inner_StreamUtil click) {
             if (this.nodeTrapStarts == null) {
                this.nodeTrapStarts = PrintAccess.this.core.new EscapeStarts();
             }
@@ -2323,13 +2323,13 @@ final class PrintAccess {
          }
 
          boolean proofStillValid() {
-            return this.snapshotProof().init();
+            return this.snapshotProof().stillValid();
          }
 
          PrintAccess.AccessSearch.CandidateProof snapshotProof() {
             return AccessSearch.this.new CandidateProof(
                this.evalNode,
-               this.write,
+               this.escapeWithoutPath,
                this.foundEscape,
                this.nodeSupport,
                this.nodePlacement,
@@ -2339,7 +2339,7 @@ final class PrintAccess {
 
          NodeEvaluation(PrintAccess.SearchNode node) {
             this.evalNode = node;
-            this.update = AccessSearch.this.init(node);
+            this.walkReachable = AccessSearch.this.isWalkReachable(node);
             if (PrintAccess.this.removalTemps == null && PrintAccess.this.placeCells == null && !PrintAccess.this.goallessSearch) {
                if (node.via != null && node.via.own) {
                   int i = PrintAccess.this.core.cellIndexByPos.get(node.via.block);
@@ -2356,7 +2356,7 @@ final class PrintAccess {
                int side = radius * 2 + 1;
                if (AccessSearch.this.goals.size() < side * side * side) {
                   for (int g : AccessSearch.this.goals) {
-                     this.init(g, ex, ey, ez);
+                     this.considerGoal(g, ex, ey, ez);
                   }
                } else {
                   for (int dx = -radius; dx <= radius; dx++) {
@@ -2366,7 +2366,7 @@ final class PrintAccess {
                               .cellIndexByPos
                               .get(BlockPos.asLong(BlockPos.getX(node.key) + dx, BlockPos.getY(node.key) + dy, BlockPos.getZ(node.key) + dz));
                            if (g >= 0 && AccessSearch.this.goalSet.contains(g)) {
-                              this.init(g, ex, ey, ez);
+                              this.considerGoal(g, ex, ey, ez);
                            }
                         }
                      }
@@ -2377,16 +2377,16 @@ final class PrintAccess {
             }
          }
 
-         private void init(int g, double x, double y, double z) {
-            if (this.update && AccessSearch.this.walkSkipByGoal.computeIfAbsent(g, PrintAccess.this.core::close_Z_I)) {
-               AccessSearch.this.write++;
+         private void considerGoal(int g, double x, double y, double z) {
+            if (this.walkReachable && AccessSearch.this.walkSkipByGoal.computeIfAbsent(g, PrintAccess.this.core::close_Z_I)) {
+               AccessSearch.this.walkSkips++;
             } else if (!PrintAccess.this.core.init_Z_I(g, this.evalNode.feet, this.evalNode.key)
                && PrintAccess.this.core.targets[g].pos().distToCenterSqr(x, y, z) <= PrintAccess.square(5.8500000000000005)) {
                this.goalsInReach.add(g);
             }
          }
 
-         void init(long allowance) {
+         void advance(long allowance) {
             this.workSlot = PrintAccess.this.removalTemps == null && PrintAccess.this.placeCells == null && this.pourEscape == null
                ? (this.nodePlacement != null ? 2 : (this.supportProbe != null ? 3 : 1))
                : 5;
@@ -2396,8 +2396,8 @@ final class PrintAccess {
                   int y = BlockPos.getY(this.evalNode.key);
                   int z = BlockPos.getZ(this.evalNode.key);
                   if (PrintAccess.this.groundOnly
-                     ? PrintAccess.this.read(this.evalNode)
-                     : PrintAccess.this.core.isWithinFootprint(x, z) && PrintAccess.this.read(this.evalNode)
+                     ? PrintAccess.this.floorIsWorldSolid(this.evalNode)
+                     : PrintAccess.this.core.isWithinFootprint(x, z) && PrintAccess.this.floorIsWorldSolid(this.evalNode)
                         || y > PrintAccess.this.core.maxTargetY()
                         || PrintAccess.this.isExitStance(this.evalNode)) {
                      this.foundGoal = 0;
@@ -2412,21 +2412,21 @@ final class PrintAccess {
                         this.removalProbe = new PrintAccess.AccessSearch.NodeEvaluation.RemovalProbe();
                      }
 
-                     this.removalProbe.init();
+                     this.removalProbe.advance();
                   }
                } else if (PrintAccess.this.placeCells != null) {
                   if (this.cellProbe == null) {
                      this.cellProbe = new PrintAccess.AccessSearch.NodeEvaluation.CellProbe();
                   }
 
-                  this.cellProbe.init(allowance);
+                  this.cellProbe.advance(allowance);
                } else if (this.candidateCursor >= this.goalsInReach.size()) {
                   this.finished = true;
                } else {
                   int g = this.goalsInReach.getInt(this.candidateCursor);
                   PrintTarget target = PrintAccess.this.core.targets[g];
                   if (this.pourEscape != null) {
-                     PrintAccess.SearchStatus result = this.pourEscape.init();
+                     PrintAccess.SearchStatus result = this.pourEscape.step();
                      if (result == PrintAccess.SearchStatus.INVALIDATED) {
                         AccessSearch.this.status = result;
                      } else if (result != PrintAccess.SearchStatus.SEARCHING) {
@@ -2442,14 +2442,14 @@ final class PrintAccess {
                         }
                      }
                   } else if (this.nodePlacement != null) {
-                     this.nodePlacement.init(allowance);
-                     if (this.nodePlacement.read) {
+                     this.nodePlacement.advance(allowance);
+                     if (this.nodePlacement.invalidated) {
                         AccessSearch.this.status = PrintAccess.SearchStatus.INVALIDATED;
                      } else if (this.nodePlacement.settled) {
-                        if (!this.nodePlacement.load) {
+                        if (!this.nodePlacement.blocked) {
                            this.foundGoal = g;
                         } else {
-                           boolean anotherPose = this.nodePlacement.write;
+                           boolean anotherPose = this.nodePlacement.trapBlocked;
                            this.refusedStance = true;
                            this.nodePlacement = null;
                            this.nodeClick = null;
@@ -2469,7 +2469,7 @@ final class PrintAccess {
                            .isWaterlogMissing(target, PrintAccess.this.view.getBlockState(target.pos()));
                      if (this.poseIterator == null) {
                         this.contextHash = PrintAccess.this.nearbyAssumedHash(this.pathAssumed, target.pos());
-                        if (this.evalNode.parent != null && !PrintAccess.this.get && !pour && !waterlog) {
+                        if (this.evalNode.parent != null && !PrintAccess.this.hasTempState && !pour && !waterlog) {
                            this.contextHash ^= 4423348608673777095L;
                         }
 
@@ -2600,7 +2600,7 @@ final class PrintAccess {
                               }
 
                               if (this.nodeClick != null) {
-                                 this.nodePlacement = this.init(this.nodeClick);
+                                 this.nodePlacement = this.placementCheck(this.nodeClick);
                               }
                            }
                         } else if (!PrintAccess.this.core.refusedCellStances.contains(PrintCore.cellStanceKey(g, this.evalNode.key))) {
@@ -2638,12 +2638,12 @@ final class PrintAccess {
                            && !waterlog
                            && PrintAccess.this.core.machineJobAt(g) == null
                            && this.evalNode.parent != null
-                           && PrintAccess.this.get) {
+                           && PrintAccess.this.hasTempState) {
                            if (this.supportProbe == null) {
                               this.supportProbe = new PrintAccess.AccessSearch.NodeEvaluation.SupportProbe(target, this.poses);
                            }
 
-                           this.supportProbe.init(allowance);
+                           this.supportProbe.advance(allowance);
                            if (AccessSearch.this.status != PrintAccess.SearchStatus.SEARCHING || !this.supportProbe.supportDone) {
                               return;
                            }
@@ -2699,13 +2699,13 @@ final class PrintAccess {
                this.supportPoses = points;
             }
 
-            void init(long allowance) {
-               if (!this.supportGuard.init()) {
+            void advance(long allowance) {
+               if (!this.supportGuard.proofValid()) {
                   AccessSearch.this.status = PrintAccess.SearchStatus.INVALIDATED;
                } else {
                   if (this.supportPlacement != null) {
-                     this.supportPlacement.init(allowance);
-                     if (this.supportPlacement.read) {
+                     this.supportPlacement.advance(allowance);
+                     if (this.supportPlacement.invalidated) {
                         AccessSearch.this.status = PrintAccess.SearchStatus.INVALIDATED;
                         return;
                      }
@@ -2714,13 +2714,13 @@ final class PrintAccess {
                         return;
                      }
 
-                     if (!this.supportPlacement.load) {
+                     if (!this.supportPlacement.blocked) {
                         this.supportFound = this.supportDone = true;
                         return;
                      }
 
                      NodeEvaluation.this.refusedStance = true;
-                     if (!this.supportPlacement.write
+                     if (!this.supportPlacement.trapBlocked
                         && this.supportPlacement.neighborProof.complete
                         && this.supportPlacement.neighborProof.blocked) {
                         if (this.blockedNeighborProofs.size() >= 16) {
@@ -2797,7 +2797,7 @@ final class PrintAccess {
                            BlockState predicted = sourceClick.predicted() == null ? this.supportTarget.wanted() : sourceClick.predicted();
                            PrintCore.PlacementSafetyProof prior = this.blockedNeighborProofs.get(predicted);
                            if (prior != null) {
-                              if (!prior.init()) {
+                              if (!prior.proofValid()) {
                                  AccessSearch.this.status = PrintAccess.SearchStatus.INVALIDATED;
                               }
 
@@ -2833,14 +2833,14 @@ final class PrintAccess {
             PrintClicks.Inner_StreamUtil probeRemovalClick;
             PrintAccess.AccessSearch.EscapeCheck removalEscape;
 
-            void init() {
+            void advance() {
                if (!this.removalStarted) {
                   this.removalStarted = true;
                   int x = BlockPos.getX(NodeEvaluation.this.evalNode.key);
                   int y = BlockPos.getY(NodeEvaluation.this.evalNode.key);
                   int z = BlockPos.getZ(NodeEvaluation.this.evalNode.key);
                   long floor = BlockPos.asLong(x, y - 1, z);
-                  if ((PrintAccess.this.tick || PrintAccess.this.run)
+                  if ((PrintAccess.this.standOnTemps || PrintAccess.this.explicitStandingTemps)
                      && (NodeEvaluation.this.evalNode.temps <= 0 || floor != PrintAccess.this.avoidSwap)
                      && NodeEvaluation.this.evalNode.feet == y
                      && PrintAccess.this.standingTemps.contains(floor)
@@ -2857,24 +2857,24 @@ final class PrintAccess {
                      return;
                   }
 
-                  if (PrintAccess.this.tick) {
+                  if (PrintAccess.this.standOnTemps) {
                      NodeEvaluation.this.finished = true;
                      return;
                   }
                }
 
                if (this.standingRemoval) {
-                  PrintAccess.SearchStatus result = this.removalEscape.init();
+                  PrintAccess.SearchStatus result = this.removalEscape.step();
                   if (result != PrintAccess.SearchStatus.SEARCHING) {
                      if (result == PrintAccess.SearchStatus.INVALIDATED) {
                         AccessSearch.this.status = result;
                      } else if (result == PrintAccess.SearchStatus.FOUND) {
-                        this.init(this.removalEscape, true);
+                        this.acceptEscape(this.removalEscape, true);
                      } else {
                         this.standingRemoval = false;
                         this.removalEscape = null;
                         this.removalCell = -9223372036854775808L;
-                        if (PrintAccess.this.tick) {
+                        if (PrintAccess.this.standOnTemps) {
                            NodeEvaluation.this.finished = true;
                         }
                      }
@@ -2883,16 +2883,16 @@ final class PrintAccess {
                   LongArrayList path = PrintAccess.this.pushPathHypotheses(NodeEvaluation.this.evalNode);
 
                   try {
-                     this.load();
+                     this.continueEscape();
                   } finally {
                      PrintAccess.this.popHypotheses(path);
                   }
                }
             }
 
-            private void load() {
+            private void continueEscape() {
                if (this.removalEscape != null) {
-                  PrintAccess.SearchStatus result = this.removalEscape.init();
+                  PrintAccess.SearchStatus result = this.removalEscape.step();
                   if (result == PrintAccess.SearchStatus.SEARCHING) {
                      return;
                   }
@@ -2911,7 +2911,7 @@ final class PrintAccess {
                   }
 
                   if (this.removalStage == 3) {
-                     this.init(completed, false);
+                     this.acceptEscape(completed, false);
                      return;
                   }
 
@@ -2984,9 +2984,9 @@ final class PrintAccess {
                }
             }
 
-            private void init(PrintAccess.AccessSearch.EscapeCheck proof, boolean withoutPath) {
+            private void acceptEscape(PrintAccess.AccessSearch.EscapeCheck proof, boolean withoutPath) {
                NodeEvaluation.this.foundEscape = proof;
-               NodeEvaluation.this.write = withoutPath;
+               NodeEvaluation.this.escapeWithoutPath = withoutPath;
                PrintAccess.this.foundGoalKey = this.removalCell;
                PrintAccess.this.removalClick = this.probeRemovalClick;
                NodeEvaluation.this.nodeClick = this.probeRemovalClick;
@@ -2996,28 +2996,28 @@ final class PrintAccess {
 
          private final class CellProbe {
             int cellCursor;
-            int load;
+            int poseCursor;
             long probedCell;
             PrintTarget cellTarget;
             List<Vec3> cellPoses;
 
-            void init(long allowance) {
+            void advance(long allowance) {
                if (NodeEvaluation.this.nodePlacement != null) {
-                  NodeEvaluation.this.nodePlacement.init(allowance);
-                  if (NodeEvaluation.this.nodePlacement.read) {
+                  NodeEvaluation.this.nodePlacement.advance(allowance);
+                  if (NodeEvaluation.this.nodePlacement.invalidated) {
                      AccessSearch.this.status = PrintAccess.SearchStatus.INVALIDATED;
                   } else if (NodeEvaluation.this.nodePlacement.settled) {
-                     if (!NodeEvaluation.this.nodePlacement.load) {
+                     if (!NodeEvaluation.this.nodePlacement.blocked) {
                         PrintAccess.this.foundGoalKey = this.probedCell;
                         PrintAccess.this.unusedPlaceClick = NodeEvaluation.this.nodeClick;
                         NodeEvaluation.this.foundGoal = 0;
                      } else {
-                        boolean anotherPose = NodeEvaluation.this.nodePlacement.write;
+                        boolean anotherPose = NodeEvaluation.this.nodePlacement.trapBlocked;
                         NodeEvaluation.this.nodePlacement = null;
                         NodeEvaluation.this.nodeClick = null;
                         if (!anotherPose) {
                            this.cellCursor++;
-                           this.load = 0;
+                           this.poseCursor = 0;
                            this.cellTarget = null;
                         }
                      }
@@ -3052,9 +3052,9 @@ final class PrintAccess {
                      );
                   }
 
-                  if (this.load == this.cellPoses.size()) {
+                  if (this.poseCursor == this.cellPoses.size()) {
                      this.cellCursor++;
-                     this.load = 0;
+                     this.poseCursor = 0;
                      this.cellTarget = null;
                   } else {
                      NodeEvaluation.this.nodeClick = PrintClicks.findClick(
@@ -3064,14 +3064,14 @@ final class PrintAccess {
                         this.cellTarget,
                         PrintAccess.this.placeItem,
                         PrintClicks.Inner_CachePool.PLACE,
-                        this.cellPoses.get(this.load++),
+                        this.cellPoses.get(this.poseCursor++),
                         true,
                         false,
                         NodeEvaluation.this.clickBudget,
                         4.1000000000000005
                      );
                      if (NodeEvaluation.this.nodeClick != null) {
-                        NodeEvaluation.this.nodePlacement = NodeEvaluation.this.init(NodeEvaluation.this.nodeClick);
+                        NodeEvaluation.this.nodePlacement = NodeEvaluation.this.placementCheck(NodeEvaluation.this.nodeClick);
                      }
                   }
                } else {
@@ -3111,7 +3111,7 @@ final class PrintAccess {
          }
 
          boolean supportStillValid() {
-            if (AccessSearch.this.wayOutSupport != null && !AccessSearch.this.wayOutSupport.init()) {
+            if (AccessSearch.this.wayOutSupport != null && !AccessSearch.this.wayOutSupport.proofValid()) {
                return false;
             }
 
@@ -3122,13 +3122,13 @@ final class PrintAccess {
             LongArrayList assumed = PrintAccess.this.pushPathHypotheses(this.proofNode);
 
             try {
-               return this.pathSupport.init();
+               return this.pathSupport.proofValid();
             } finally {
                PrintAccess.this.popHypotheses(assumed);
             }
          }
 
-         PrintAccess.SearchStatus init(long allowance) {
+         PrintAccess.SearchStatus advance(long allowance) {
             if (!this.supportStillValid()) {
                return PrintAccess.SearchStatus.INVALIDATED;
             }
@@ -3147,7 +3147,7 @@ final class PrintAccess {
                         );
                      }
 
-                     PrintAccess.SearchStatus result = AccessSearch.this.rootDownEscape.init(left);
+                     PrintAccess.SearchStatus result = AccessSearch.this.rootDownEscape.advanceSearch(left);
                      if (result == PrintAccess.SearchStatus.SEARCHING || result == PrintAccess.SearchStatus.INVALIDATED) {
                         return result;
                      }
@@ -3166,7 +3166,7 @@ final class PrintAccess {
                         );
                      }
 
-                     PrintAccess.SearchStatus result = AccessSearch.this.rootEscape.init(left);
+                     PrintAccess.SearchStatus result = AccessSearch.this.rootEscape.advanceSearch(left);
                      if (result == PrintAccess.SearchStatus.SEARCHING || result == PrintAccess.SearchStatus.INVALIDATED) {
                         return result;
                      }
@@ -3177,7 +3177,7 @@ final class PrintAccess {
 
                      this.wayOutStage = 4;
                   } else {
-                     PrintAccess.SearchStatus result = this.init(this.wayOutStage == 2, left);
+                     PrintAccess.SearchStatus result = this.searchDirection(this.wayOutStage == 2, left);
                      if (result != PrintAccess.SearchStatus.FOUND) {
                         return result;
                      }
@@ -3193,7 +3193,7 @@ final class PrintAccess {
                      this.stepWalkBack();
                   }
 
-                  if (!AccessSearch.this.wayOutSupport.init()) {
+                  if (!AccessSearch.this.wayOutSupport.proofValid()) {
                      return PrintAccess.SearchStatus.INVALIDATED;
                   }
 
@@ -3214,7 +3214,7 @@ final class PrintAccess {
             return PrintAccess.SearchStatus.SEARCHING;
          }
 
-         private PrintAccess.SearchStatus init(boolean down, long allowance) {
+         private PrintAccess.SearchStatus searchDirection(boolean down, long allowance) {
             LongArrayList assumed = PrintAccess.this.pushPathHypotheses(this.proofNode);
 
             try {
@@ -3227,13 +3227,13 @@ final class PrintAccess {
                      this.nodeDownEscape = PrintAccess.this.core.new EscapeProof(this.pathSupport, this.proofNode.key, true);
                   }
 
-                  return this.nodeDownEscape.init(allowance);
+                  return this.nodeDownEscape.advanceSearch(allowance);
                } else {
                   if (this.nodeEscape == null) {
                      this.nodeEscape = PrintAccess.this.core.new EscapeProof(this.pathSupport, this.proofNode.key, false);
                   }
 
-                  return this.nodeEscape.init(allowance);
+                  return this.nodeEscape.advanceSearch(allowance);
                }
             } finally {
                PrintAccess.this.popHypotheses(assumed);
@@ -3297,7 +3297,7 @@ final class PrintAccess {
       PrintAccess.SearchNode replayNode;
       int replayStep;
       boolean done;
-      boolean load;
+      boolean replayGroundOnly;
 
       PlanReplay(BlockPos start, double feet, PrintAccess.AccessPlan plan, BlockState temporary) {
          this.replayPlan = plan;
@@ -3305,7 +3305,7 @@ final class PrintAccess {
          this.replayNode = new PrintAccess.SearchNode(start.asLong(), feet, 0.0, null, null, 0);
       }
 
-      void init(long allowance) {
+      void advanceReplay(long allowance) {
          long started = PrintAccess.this.view.workUnits();
 
          while (!this.done && PrintAccess.this.view.workUnits() - started < allowance) {
@@ -3316,9 +3316,9 @@ final class PrintAccess {
                   int x = BlockPos.getX(this.replayNode.key);
                   int y = BlockPos.getY(this.replayNode.key);
                   int z = BlockPos.getZ(this.replayNode.key);
-                  this.load = PrintAccess.this.groundOnly
-                     ? PrintAccess.this.read(this.replayNode)
-                     : PrintAccess.this.core.isWithinFootprint(x, z) && PrintAccess.this.read(this.replayNode)
+                  this.replayGroundOnly = PrintAccess.this.groundOnly
+                     ? PrintAccess.this.floorIsWorldSolid(this.replayNode)
+                     : PrintAccess.this.core.isWithinFootprint(x, z) && PrintAccess.this.floorIsWorldSolid(this.replayNode)
                         || y > PrintAccess.this.core.maxTargetY()
                         || PrintAccess.this.isExitStance(this.replayNode);
                } finally {

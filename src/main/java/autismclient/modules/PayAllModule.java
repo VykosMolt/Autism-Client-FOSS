@@ -63,7 +63,7 @@ public final class PayAllModule extends Module {
                   this.init("§7Pay All: scanning players...");
                }
 
-               targets.addAll(OnlinePlayerCollector.init(MC, this.bool("probe"), () -> this.init_Z(generation)));
+               targets.addAll(OnlinePlayerCollector.collect(MC, this.bool("probe"), () -> this.init_Z(generation)));
                if (targets.isEmpty()) {
                   this.init("§cPay All: no players listed or visible.");
                   return;
@@ -71,7 +71,7 @@ public final class PayAllModule extends Module {
             }
 
             long amount = Math.max(0L, autismclient.util.macro.PayAction.parseAmount(this.text("amount")));
-            long[] divided = this.bool("divide") ? autismclient.util.macro.PayAction.init(amount, targets.size()) : null;
+            long[] divided = this.bool("divide") ? autismclient.util.macro.PayAction.split(amount, targets.size()) : null;
             int sent = 0;
 
             for (int i = 0; i < targets.size(); i++) {

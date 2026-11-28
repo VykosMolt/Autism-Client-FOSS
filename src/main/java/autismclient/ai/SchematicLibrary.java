@@ -39,7 +39,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 final class SchematicLibrary {
-   private static volatile SchematicLibrary init_cR;
+   private static volatile SchematicLibrary instance;
    static final ExecutorService EXECUTOR = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(32), r -> {
       Thread t = new Thread(r, "Schematic files");
       t.setDaemon(true);
@@ -47,28 +47,28 @@ final class SchematicLibrary {
    }, new AbortPolicy());
    final Path game;
    final Path defaultRoot;
-   final Path read;
+   final Path libraryFile;
    volatile List<Path> roots = List.of();
    volatile List<SchematicLibrary.SchematicEntry> entries = List.of();
    volatile String status = "";
    volatile int percent;
-   private Future<?> init_Future;
-   private long init_J;
-   private final Map<String, SchematicLibrary.SchematicEntry> init_Map = new HashMap<>();
-   private final Gson init_Gson = new GsonBuilder().setPrettyPrinting().create();
+   private Future<?> scanTask;
+   private long scanToken;
+   private final Map<String, SchematicLibrary.SchematicEntry> entriesById = new HashMap<>();
+   private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
    SchematicLibrary(Path game) {
       this.game = game;
       this.defaultRoot = game.resolve("autismclient/schematics").toAbsolutePath().normalize();
-      this.read = game.resolve("config/autism/schematic-library.json");
+      this.libraryFile = game.resolve("config/autism/schematic-library.json");
       this.roots = List.of(this.defaultRoot);
-      init_cR = this;
+      instance = this;
    }
 
    static Path resolveToken(String token) {
-      if (init_cR != null && token.matches("sc_[0-9a-f]{24}")) {
-         for (SchematicLibrary.SchematicEntry entry : init_cR.entries) {
-            if (token.equals("sc_" + entry.id) && init_cR.isInRoots(entry.file)) {
+      if (instance != null && token.matches("sc_[0-9a-f]{24}")) {
+         for (SchematicLibrary.SchematicEntry entry : instance.entries) {
+            if (token.equals("sc_" + entry.id) && instance.isInRoots(entry.file)) {
                return entry.file;
             }
          }
@@ -79,18 +79,18 @@ final class SchematicLibrary {
       }
    }
 
-   SchematicLibrary.LibraryState init() throws IOException {
+   SchematicLibrary.LibraryState scan() throws IOException {
       Files.createDirectories(this.defaultRoot);
       LinkedHashSet<String> roots = new LinkedHashSet<>();
       roots.add(this.defaultRoot.toString());
       ArrayList<SchematicLibrary.Placement> placed = new ArrayList<>();
       Path legacy = this.game.resolve("schematics").toAbsolutePath().normalize();
-      if (!Files.exists(this.read) && Files.isDirectory(legacy)) {
+      if (!Files.exists(this.libraryFile) && Files.isDirectory(legacy)) {
          roots.add(legacy.toString());
       }
 
-      if (Files.isRegularFile(this.read) && Files.size(this.read) < 4194304L) {
-         JsonObject root = JsonParser.parseString(Files.readString(this.read)).getAsJsonObject();
+      if (Files.isRegularFile(this.libraryFile) && Files.size(this.libraryFile) < 4194304L) {
+         JsonObject root = JsonParser.parseString(Files.readString(this.libraryFile)).getAsJsonObject();
          if (root.has("folders")) {
             for (JsonElement v : root.getAsJsonArray("folders")) {
                try {
@@ -180,28 +180,28 @@ final class SchematicLibrary {
       }
 
       root.add("placements", placements);
-      Files.createDirectories(this.read.getParent());
-      Path temporary = Files.createTempFile(this.read.getParent(), "schematic-library-", ".tmp");
+      Files.createDirectories(this.libraryFile.getParent());
+      Path temporary = Files.createTempFile(this.libraryFile.getParent(), "schematic-library-", ".tmp");
 
       try {
-         Files.writeString(temporary, this.init_Gson.toJson(root), StandardCharsets.UTF_8);
-         init_V_Path_Path(temporary, this.read);
+         Files.writeString(temporary, this.gson.toJson(root), StandardCharsets.UTF_8);
+         init_V_Path_Path(temporary, this.libraryFile);
       } finally {
          Files.deleteIfExists(temporary);
       }
    }
 
    synchronized void rescan(Consumer<Runnable> client) {
-      long token = ++this.init_J;
-      if (this.init_Future != null) {
-         this.init_Future.cancel(true);
+      long token = ++this.scanToken;
+      if (this.scanTask != null) {
+         this.scanTask.cancel(true);
       }
 
       List<Path> roots = List.copyOf(this.roots);
       this.status = "Finding files";
       this.percent = 0;
-      Map<String, SchematicLibrary.SchematicEntry> cached = new HashMap<>(this.init_Map);
-      this.init_Future = EXECUTOR.submit(
+      Map<String, SchematicLibrary.SchematicEntry> cached = new HashMap<>(this.entriesById);
+      this.scanTask = EXECUTOR.submit(
          () -> {
             LinkedHashMap<Path, SchematicLibrary.SchematicEntry> found = new LinkedHashMap<>();
 
@@ -217,7 +217,7 @@ final class SchematicLibrary {
                         while (it.hasNext()) {
                            SchematicDocument.checkInterrupted();
                            Path file = it.next();
-                           if (load_Z_Path(file) && Files.isRegularFile(file)) {
+                           if (isSchematicFile(file) && Files.isRegularFile(file)) {
                               Path real = file.toRealPath();
                               if (real.startsWith(base)) {
                                  BasicFileAttributes a = Files.readAttributes(real, BasicFileAttributes.class);
@@ -291,13 +291,13 @@ final class SchematicLibrary {
       List<SchematicLibrary.SchematicEntry> snapshot = List.copyOf(rows);
       client.accept(() -> {
          synchronized (this) {
-            if (token == this.init_J) {
+            if (token == this.scanToken) {
                this.entries = snapshot;
                if (status.isEmpty()) {
-                  this.init_Map.clear();
+                  this.entriesById.clear();
 
                   for (SchematicLibrary.SchematicEntry e : snapshot) {
-                     this.init_Map.put(e.id, e);
+                     this.entriesById.put(e.id, e);
                   }
                }
 
@@ -386,12 +386,12 @@ final class SchematicLibrary {
 
    synchronized void replaceEntry(SchematicLibrary.SchematicEntry old, SchematicLibrary.SchematicEntry updated, Consumer<Runnable> client) {
       this.entries = this.entries.stream().map(row -> row.id().equals(old.id()) ? updated : row).toList();
-      this.init_Map.remove(old.id());
-      this.init_Map.put(updated.id(), updated);
+      this.entriesById.remove(old.id());
+      this.entriesById.put(updated.id(), updated);
       this.rescan(client);
    }
 
-   static boolean load_Z_Path(Path p) {
+   static boolean isSchematicFile(Path p) {
       String n = p.getFileName().toString().toLowerCase(Locale.ROOT);
       return n.endsWith(".schem") || n.endsWith(".litematic") || n.endsWith(".schematic");
    }

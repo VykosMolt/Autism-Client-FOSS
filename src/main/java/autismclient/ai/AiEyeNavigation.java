@@ -137,7 +137,7 @@ final class AiEyeNavigation {
          this.origin = origin;
       }
 
-      Vec3 init(Vec3 at) {
+      Vec3 addSample(Vec3 at) {
          double x = at.x - this.origin.x;
          double z = at.z - this.origin.z;
          double d = Math.hypot(x, z);
@@ -174,7 +174,7 @@ final class AiEyeNavigation {
          return new Vec3(x, 0.0, z);
       }
 
-      Vec3 load() {
+      Vec3 meanPoint() {
          return this.init_I == 0 ? this.origin : this.origin.add(this.init_D / this.init_I, 0.0, this.load / this.init_I);
       }
 

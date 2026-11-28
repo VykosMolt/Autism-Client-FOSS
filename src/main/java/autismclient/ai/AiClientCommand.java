@@ -17,7 +17,7 @@ final class AiClientCommand {
    private AiClientCommand() {
    }
 
-   static AiOperation init(String name, JsonObject args) {
+   static AiOperation run(String name, JsonObject args) {
       Command command = autismclient.commands.CommandManager.getCommand(name);
       if (command == null) {
          throw new IllegalArgumentException("Client command '" + name + "' is not registered");

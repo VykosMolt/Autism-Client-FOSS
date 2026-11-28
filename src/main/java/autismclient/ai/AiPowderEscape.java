@@ -52,7 +52,7 @@ final class AiPowderEscape {
       return best;
    }
 
-   static AiOperation init() {
+   static AiOperation escape() {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();

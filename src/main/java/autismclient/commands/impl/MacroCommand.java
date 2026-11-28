@@ -43,7 +43,7 @@ public class MacroCommand extends Command {
                RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.arguments.MacroNameArgumentType.macroName())
                   .executes(
                      ctx -> {
-                        String name = autismclient.commands.arguments.MacroNameArgumentType.init(ctx, "name");
+                        String name = autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name");
                         AtomicBoolean flag = init.remove(name.toLowerCase());
                         if (flag != null) {
                            flag.set(false);
@@ -63,17 +63,17 @@ public class MacroCommand extends Command {
       }));
       root.then(
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("name", autismclient.commands.arguments.MacroNameArgumentType.macroName())
-               .executes(ctx -> init(autismclient.commands.arguments.MacroNameArgumentType.init(ctx, "name"), 1, 0)))
+               .executes(ctx -> init(autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name"), 1, 0)))
             .then(
                ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("times", IntegerArgumentType.integer(1, 100000))
                      .suggests(autismclient.commands.CommandSuggestions::suggestTimes)
-                     .executes(ctx -> init(autismclient.commands.arguments.MacroNameArgumentType.init(ctx, "name"), IntegerArgumentType.getInteger(ctx, "times"), 0)))
+                     .executes(ctx -> init(autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name"), IntegerArgumentType.getInteger(ctx, "times"), 0)))
                   .then(
                      RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("delayTicks", IntegerArgumentType.integer(0, 72000))
                         .suggests(autismclient.commands.CommandSuggestions::suggestDelayTicks)
                         .executes(
                            ctx -> init(
-                              autismclient.commands.arguments.MacroNameArgumentType.init(ctx, "name"),
+                              autismclient.commands.arguments.MacroNameArgumentType.getValue(ctx, "name"),
                               IntegerArgumentType.getInteger(ctx, "times"),
                               IntegerArgumentType.getInteger(ctx, "delayTicks")
                            )

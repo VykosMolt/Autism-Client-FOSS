@@ -110,20 +110,20 @@ final class AiFarm {
    private AiFarm() {
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation farm(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          AiFarm.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "harvest"));
          if (action == AiFarm.Inner_DataUtil.HARVEST) {
             String spec = AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat"));
             String crop = resolveCrop(spec);
-            return FIELD_CROPS.contains(crop) ? harvestField(args, crop, YIELD_BY_CROP.get(crop)) : init(args, crop, YIELD_BY_CROP.get(crop));
+            return FIELD_CROPS.contains(crop) ? harvestField(args, crop, YIELD_BY_CROP.get(crop)) : farmCrop(args, crop, YIELD_BY_CROP.get(crop));
          } else if (action == AiFarm.Inner_DataUtil.PLANT) {
             String crop = resolveCrop(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
-            return AiFarmPlant.create(args, crop, load(crop));
+            return AiFarmPlant.create(args, crop, seedFor(crop));
          } else if (action == AiFarm.Inner_DataUtil.BUILD) {
             String crop = resolveCrop(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
-            return AiFarmBuild.create(args, crop, load(crop));
+            return AiFarmBuild.create(args, crop, seedFor(crop));
          } else {
             return breed(args);
          }
@@ -147,14 +147,14 @@ final class AiFarm {
    static AiFarm.Inner_StreamUtil harvestKindFor(Block block) {
       if (block == Blocks.SWEET_BERRY_BUSH) {
          return AiFarm.Inner_StreamUtil.INTERACT;
-      } else if (autismclient.util.FarmCropCatalog.load(block)) {
+      } else if (autismclient.util.FarmCropCatalog.isStacking(block)) {
          return AiFarm.Inner_StreamUtil.COLUMN;
       } else {
          return autismclient.util.FarmCropCatalog.read(block) ? AiFarm.Inner_StreamUtil.BREAK_ONLY : AiFarm.Inner_StreamUtil.BREAK_REPLANT;
       }
    }
 
-   static String load(String cropBlockId) {
+   static String seedFor(String cropBlockId) {
       return SEED_FOR_CROP.get(cropBlockId);
    }
 
@@ -190,7 +190,7 @@ final class AiFarm {
 
    static BlockPos harvestableColumnSegment(Function<BlockPos, BlockState> at, BlockPos pos) {
       BlockState state = at.apply(pos);
-      if (state != null && autismclient.util.FarmCropCatalog.load(state.getBlock())) {
+      if (state != null && autismclient.util.FarmCropCatalog.isStacking(state.getBlock())) {
          BlockPos base = pos;
 
          while (at.apply(base.below()) != null && at.apply(base.below()).is(state.getBlock())) {
@@ -208,14 +208,14 @@ final class AiFarm {
       return state.hasProperty(BlockStateProperties.HORIZONTAL_FACING) ? state.getValue(BlockStateProperties.HORIZONTAL_FACING) : Direction.NORTH;
    }
 
-   static AiOperation init(final JsonObject args, final String cropBlock, final String cropItem) {
+   static AiOperation farmCrop(final JsonObject args, final String cropBlock, final String cropItem) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          final Block crop = BuiltInRegistries.BLOCK
             .getOptional(Identifier.parse(cropBlock))
             .orElseThrow(() -> new IllegalArgumentException("Unknown crop block " + cropBlock));
          final AiFarm.Inner_StreamUtil kind = harvestKindFor(crop);
-         final String seed = load(cropBlock);
+         final String seed = seedFor(cropBlock);
          return new AiOperation() {
             final Minecraft mc = Minecraft.getInstance();
             final BlockPos origin = this.mc.player.blockPosition();
@@ -1470,7 +1470,7 @@ final class AiFarm {
          rest.addProperty("count", target);
          rest.addProperty("additional", false);
          return new AiOperation() {
-            AiOperation fieldOp = AiFieldWork.harvest(field, cropBlock, AiFarm.load(cropBlock), cropItem, target, AiJson.getBoolean(args, "replant", true));
+            AiOperation fieldOp = AiFieldWork.harvest(field, cropBlock, AiFarm.seedFor(cropBlock), cropItem, target, AiJson.getBoolean(args, "replant", true));
             boolean fallbackStarted;
             boolean dropSweepStarted;
 
@@ -1484,7 +1484,7 @@ final class AiFarm {
                if (!this.dropSweepStarted && r.status() == AiOperation.Status.SUCCEEDED && AiGameState.countInventoryItem(cropItem) >= target && this.hasFieldDrops()) {
                   this.fieldOp.cancel();
                   this.dropSweepStarted = true;
-                  this.fieldOp = AiFieldWork.harvest(field, cropBlock, AiFarm.load(cropBlock), cropItem, AiGameState.countInventoryItem(cropItem));
+                  this.fieldOp = AiFieldWork.harvest(field, cropBlock, AiFarm.seedFor(cropBlock), cropItem, AiGameState.countInventoryItem(cropItem));
                   return AiGameOperations.result(AiOperation.Status.RUNNING, "Collecting the field's remaining drops", new JsonObject());
                }
 
@@ -1498,7 +1498,7 @@ final class AiFarm {
 
                this.fieldOp.cancel();
                this.fallbackStarted = true;
-               this.fieldOp = AiFarm.init(rest, cropBlock, cropItem);
+               this.fieldOp = AiFarm.farmCrop(rest, cropBlock, cropItem);
                return AiGameOperations.result(AiOperation.Status.RUNNING, "Field done; looking for more " + cropItem, new JsonObject());
             }
 
@@ -1516,7 +1516,7 @@ final class AiFarm {
                }
 
                int y = field.getFirst().getY() + 1;
-               String seed = AiFarm.load(cropBlock);
+               String seed = AiFarm.seedFor(cropBlock);
                AABB box = new AABB(minX - 2, y - 2, minZ - 2, maxX + 3, y + 3, maxZ + 3);
                return !mc.level.getEntitiesOfClass(ItemEntity.class, box, item -> {
                   if (!item.isAlive()) {
@@ -1534,7 +1534,7 @@ final class AiFarm {
             }
          };
       } else {
-         return init(args, cropBlock, cropItem);
+         return farmCrop(args, cropBlock, cropItem);
       }
    }
 

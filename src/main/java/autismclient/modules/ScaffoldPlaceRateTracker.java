@@ -10,11 +10,11 @@ final class ScaffoldPlaceRateTracker {
    private int update;
    private int sync;
 
-   boolean init(int percentage, boolean climbing, Random random) {
+   boolean arm(int percentage, boolean climbing, Random random) {
       this.sync = 0;
       int rate = Math.clamp(percentage, 0, 200);
       if (rate == 0) {
-         this.load();
+         this.reset();
          return false;
       }
 
@@ -26,7 +26,7 @@ final class ScaffoldPlaceRateTracker {
       this.read = this.load(rate);
       this.load = rate;
       this.write = -1;
-      return this.init_Z();
+      return this.armed();
    }
 
    int init(int percentage, Random random) {
@@ -47,11 +47,11 @@ final class ScaffoldPlaceRateTracker {
       return Math.min(100 * (init(rate) + 1), (rate == this.load ? this.read : 0) + rate);
    }
 
-   boolean init_Z() {
+   boolean armed() {
       return this.sync > 0;
    }
 
-   int init_I() {
+   int pending() {
       return this.sync;
    }
 
@@ -59,14 +59,14 @@ final class ScaffoldPlaceRateTracker {
       return (Math.clamp(percentage, 0, 200) + 99) / 100;
    }
 
-   void init_V() {
+   void consume() {
       if (this.sync > 0) {
          this.sync--;
          this.read = Math.max(-100, this.read - 100);
       }
    }
 
-   void load() {
+   void reset() {
       this.load = 0;
       this.read = 0;
       this.write = -1;

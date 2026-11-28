@@ -24,7 +24,7 @@ public abstract class AutismProtectorDeprecatedTranslationsInfoMixin {
       ModNamespaceCatalog.init(this.removed(), this.renamed());
       TranslationSnapshot.SnapshotBuilder builder = TranslationSnapshot.SnapshotBuilder.current();
       if (builder != null) {
-         builder.init(this.removed(), this.renamed());
+         builder.applyDeprecations(this.removed(), this.renamed());
       }
    }
 }

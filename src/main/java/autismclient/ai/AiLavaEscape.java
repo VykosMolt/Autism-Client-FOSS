@@ -239,7 +239,7 @@ final class AiLavaEscape {
       return Math.min(nearest + 1, path.size() - 1);
    }
 
-   static AiOperation init() {
+   static AiOperation escape() {
       final Minecraft mc = Minecraft.getInstance();
       return new AiOperation() {
          final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();

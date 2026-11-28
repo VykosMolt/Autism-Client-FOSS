@@ -32,7 +32,7 @@ final class AiKeyResolver {
       return providersFor(key).size() == 1;
    }
 
-   static AiKeyResolver.Inner_DataUtil init(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, Runnable checkpoint) {
+   static AiKeyResolver.Inner_DataUtil resolve(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, Runnable checkpoint) {
       return init(key, chosen, endpoint, raceOthers, null, checkpoint);
    }
 
@@ -56,7 +56,7 @@ final class AiKeyResolver {
    }
 
    private static AiModels.Inner_CachePool init(AiSettings.Provider p, String endpoint, String key, AiModels.Inner_DataUtil fetch, Runnable checkpoint) {
-      return fetch == null ? AiModels.init(p, endpoint, key, checkpoint) : AiModels.init(p, endpoint, key, (url, provider, credential) -> {
+      return fetch == null ? AiModels.fetchModels(p, endpoint, key, checkpoint) : AiModels.fetchModelsWith(p, endpoint, key, (url, provider, credential) -> {
          checkpoint.run();
          return fetch.get(url, provider, credential);
       });
@@ -67,7 +67,7 @@ final class AiKeyResolver {
       return new AiKeyResolver.Inner_DataUtil(p, endpoint, result.models(), init(p, result.models()), "");
    }
 
-   static String init(AiSettings.Provider p) {
+   static String displayName(AiSettings.Provider p) {
       String var10000;
       switch (p) {
          case OPENAI:

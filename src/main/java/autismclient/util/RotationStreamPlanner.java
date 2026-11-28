@@ -228,10 +228,10 @@ public final class RotationStreamPlanner {
       double accelDown,
       boolean holdPitch
    ) {
-      return init(s, yawDelta, pitchDelta, maxYawStep, maxPitchStep, gcd, accelUp, accelDown, holdPitch, false);
+      return step(s, yawDelta, pitchDelta, maxYawStep, maxPitchStep, gcd, accelUp, accelDown, holdPitch, false);
    }
 
-   public static RotationMath.Rotation init(
+   public static RotationMath.Rotation step(
       RotationStreamPlanner.StreamState s,
       double yawDelta,
       double pitchDelta,

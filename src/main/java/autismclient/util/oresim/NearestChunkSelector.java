@@ -26,7 +26,7 @@ final class NearestChunkSelector {
       return nearest;
    }
 
-   static boolean init(double playerX, double playerZ, int chunkX, int chunkZ, NearestChunkSelector.Inner_DataUtil nearestMissing) {
+   static boolean isCloser(double playerX, double playerZ, int chunkX, int chunkZ, NearestChunkSelector.Inner_DataUtil nearestMissing) {
       return nearestMissing == null
          ? true
          : init_I_D(init(playerX, playerZ, chunkX, chunkZ), chunkX, chunkZ, nearestMissing.init_D(), nearestMissing.init_I(), nearestMissing.load()) <= 0;

@@ -46,13 +46,13 @@ public final class BookBotFileReader {
             decoded = load(bytes);
          }
 
-         return init(decoded);
+         return normalize(decoded);
       } else {
          return "";
       }
    }
 
-   public static String init(String text) {
+   public static String normalize(String text) {
       if (text != null && !text.isEmpty()) {
          int start = text.charAt(0) == '\ufeff' ? 1 : 0;
          String value = start == 0 ? text : text.substring(start);

@@ -377,7 +377,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
          autismclient.util.ContainerPickUpAllHelper.pickUpAll(mc, e.pickupTarget(), e.read());
       } else if (e.clickType() != autismclient.util.ContainerClickType.DROP_ITEM && e.clickType() != autismclient.util.ContainerClickType.DROP_STACK) {
          for (int j = 0; j < e.read(); j++) {
-            autismclient.util.ContainerClickExecutor.init(mc, e.load(), e.button(), e.clickType().toContainerInput());
+            autismclient.util.ContainerClickExecutor.click(mc, e.load(), e.button(), e.clickType().toContainerInput());
          }
       } else {
          autismclient.util.InventoryDropHelper.dropFromHandler(mc, e.load(), e.clickType() == autismclient.util.ContainerClickType.DROP_STACK ? 0 : e.read());
@@ -427,7 +427,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                ContainerInput input = e.clickType().toContainerInput();
 
                for (int j = 0; j < e.read(); j++) {
-                  plan.add(() -> autismclient.util.ContainerClickExecutor.init(mc, fs, fb, input));
+                  plan.add(() -> autismclient.util.ContainerClickExecutor.click(mc, fs, fb, input));
                }
             }
          }
@@ -541,7 +541,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public void load(boolean v) {
+   public void setWaitForGuiBefore(boolean v) {
       this.waitForGuiBefore = v;
    }
 
@@ -551,7 +551,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    @Override
-   public void read(boolean v) {
+   public void setWaitForGuiAfter(boolean v) {
       this.waitForGuiAfter = v;
    }
 
@@ -897,7 +897,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    private static boolean hasFixedButton(autismclient.util.ContainerClickType action) {
-      return action != autismclient.util.ContainerClickType.QUICK_MOVE && action.load();
+      return action != autismclient.util.ContainerClickType.QUICK_MOVE && action.hasDefaultButton();
    }
 
    private static int buttonCount(autismclient.util.ContainerClickType action) {

@@ -137,7 +137,7 @@ public class AutismLocalPlayerMovementMixin {
 
    @Inject(method = "jumpableVehicle", at = @At("RETURN"), cancellable = true)
    private void autism$entityControlFlightJump(CallbackInfoReturnable<PlayerRideableJumping> cir) {
-      if (EntityControlModule.read()) {
+      if (EntityControlModule.isFlying()) {
          cir.setReturnValue(null);
       }
    }

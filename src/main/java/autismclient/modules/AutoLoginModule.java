@@ -48,8 +48,8 @@ public final class AutoLoginModule extends Module {
    @Override
    public void tick() {
       this.init_CachePool
-         .init(new autismclient.util.autologin.AutoLoginTimings((long)(this.decimal("window") * 1000.0), (long)(this.decimal("chat-delay") * 1000.0), 2500L, 4, 1000L, 3000L));
-      this.init_CachePool.load(System.currentTimeMillis());
+         .setTimings(new autismclient.util.autologin.AutoLoginTimings((long)(this.decimal("window") * 1000.0), (long)(this.decimal("chat-delay") * 1000.0), 2500L, 4, 1000L, 3000L));
+      this.init_CachePool.tick(System.currentTimeMillis());
    }
 
    public static void onPacket(Packet<?> packet) {
@@ -57,9 +57,9 @@ public final class AutoLoginModule extends Module {
       if (module != null && module.isEnabled()) {
          try {
             if (packet instanceof ClientboundSystemChatPacket system) {
-               module.init_CachePool.init(system.content().getString());
+               module.init_CachePool.onChat(system.content().getString());
             } else if (packet instanceof ClientboundDisguisedChatPacket disguised) {
-               module.init_CachePool.init(disguised.message().getString());
+               module.init_CachePool.onChat(disguised.message().getString());
             }
          } catch (Throwable var4) {
          }
@@ -91,7 +91,7 @@ public final class AutoLoginModule extends Module {
       }
 
       @Override
-      public boolean load() {
+      public boolean hasConnection() {
          return Module.MC != null && Module.MC.getConnection() != null;
       }
 
@@ -101,7 +101,7 @@ public final class AutoLoginModule extends Module {
       }
 
       @Override
-      public boolean init(CustomMenuSnapshot snapshot, CustomMenuSubmission submission) {
+      public boolean submit(CustomMenuSnapshot snapshot, CustomMenuSubmission submission) {
          CustomMenuSubmitResult result = CustomMenuAdapterRegistry.submit(snapshot, submission);
          if (result != null && result.success()) {
             for (Packet<?> packet : result.packets()) {
@@ -127,7 +127,7 @@ public final class AutoLoginModule extends Module {
 
       @Override
       public boolean sendCommand(String line) {
-         if (!this.load()) {
+         if (!this.hasConnection()) {
             return false;
          }
 
@@ -136,7 +136,7 @@ public final class AutoLoginModule extends Module {
       }
 
       @Override
-      public boolean read() {
+      public boolean isBusy() {
          return autismclient.util.JoinMacroController.isRunning();
       }
 
@@ -146,7 +146,7 @@ public final class AutoLoginModule extends Module {
       }
 
       @Override
-      public void load(String context) {
+      public void onMissingPassword(String context) {
          AutismClientMessaging.sendPrefixed("§eAutoLogin: set a password in the module settings.");
       }
    }

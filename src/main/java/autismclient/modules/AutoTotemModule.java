@@ -615,7 +615,7 @@ public final class AutoTotemModule extends Module {
 
             boolean clicked;
             try {
-               clicked = autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
+               clicked = autismclient.util.ContainerClickExecutor.click(MC, from, 0, ContainerInput.PICKUP);
             } finally {
                autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
@@ -761,7 +761,7 @@ public final class AutoTotemModule extends Module {
          return true;
       } else {
          int handlerSlot = autismclient.util.InventorySlotHelper.toScreenSlot(MC, this.operationStep == 1 ? 40 : this.operationSlot);
-         return handlerSlot < 0 ? false : autismclient.util.ContainerClickExecutor.init(MC, handlerSlot, 0, ContainerInput.PICKUP);
+         return handlerSlot < 0 ? false : autismclient.util.ContainerClickExecutor.click(MC, handlerSlot, 0, ContainerInput.PICKUP);
       }
    }
 
@@ -801,7 +801,7 @@ public final class AutoTotemModule extends Module {
          int from = autismclient.util.InventorySlotHelper.toScreenSlot(MC, this.operationSlot);
          if (from >= 0 && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
             try {
-               autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
+               autismclient.util.ContainerClickExecutor.click(MC, from, 0, ContainerInput.PICKUP);
             } finally {
                autismclient.util.InventorySlotArbiter.endActionGroup(this.id());
             }
@@ -961,7 +961,7 @@ public final class AutoTotemModule extends Module {
 
    private static boolean load_Z_I(int fromSlot) {
       int handlerSlot = autismclient.util.InventorySlotHelper.toScreenSlot(MC, fromSlot);
-      return handlerSlot < 0 ? false : autismclient.util.ContainerClickExecutor.init(MC, handlerSlot, 40, ContainerInput.SWAP);
+      return handlerSlot < 0 ? false : autismclient.util.ContainerClickExecutor.click(MC, handlerSlot, 40, ContainerInput.SWAP);
    }
 
    private static boolean pickUpSwap(int fromSlot) {
@@ -969,10 +969,10 @@ public final class AutoTotemModule extends Module {
       int offhand = autismclient.util.InventorySlotHelper.toScreenSlot(MC, 40);
       if (from >= 0 && offhand >= 0) {
          boolean offhandHadItem = !MC.player.getOffhandItem().isEmpty();
-         boolean ok = autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
-         ok &= autismclient.util.ContainerClickExecutor.init(MC, offhand, 0, ContainerInput.PICKUP);
+         boolean ok = autismclient.util.ContainerClickExecutor.click(MC, from, 0, ContainerInput.PICKUP);
+         ok &= autismclient.util.ContainerClickExecutor.click(MC, offhand, 0, ContainerInput.PICKUP);
          if (offhandHadItem) {
-            ok &= autismclient.util.ContainerClickExecutor.init(MC, from, 0, ContainerInput.PICKUP);
+            ok &= autismclient.util.ContainerClickExecutor.click(MC, from, 0, ContainerInput.PICKUP);
          }
 
          return ok;

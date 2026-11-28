@@ -895,7 +895,7 @@ public class AutismTitleScreen extends Screen implements ScreenButtonBoundsProvi
    }
 
    private void renderTooltip(GuiGraphicsExtractor graphics, Component tooltip, float uiMouseX, float uiMouseY) {
-      TooltipRenderer.init(
+      TooltipRenderer.render(
          autismclient.gui.f.UiHelper.init(graphics, this.font, Math.round(uiMouseX), Math.round(uiMouseY)),
          tooltip.getString(),
          Math.round(uiMouseX),

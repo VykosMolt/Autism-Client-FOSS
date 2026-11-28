@@ -13,7 +13,7 @@ public abstract class AutismGuiRenderStateResetMixin {
    @Inject(method = "reset", at = @At("HEAD"))
    private void autism$clearScissorMirror(CallbackInfo ci) {
       UiScissorStack.clear();
-      SubpixelScissorTracker.init();
+      SubpixelScissorTracker.clear();
       autismclient.gui.ui.UiAlphaStack.popTo(0);
    }
 }

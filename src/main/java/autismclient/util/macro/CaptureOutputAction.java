@@ -1,7 +1,7 @@
 package autismclient.util.macro;
 
 public interface CaptureOutputAction {
-   String load();
+   String getSaveAs();
 
-   void a_(String var1);
+   void setSaveAs(String var1);
 }

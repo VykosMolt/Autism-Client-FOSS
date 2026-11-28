@@ -99,7 +99,7 @@ final class AutoFishStateMachine {
                this.read(observed);
             }
          } else {
-            this.update();
+            this.clearPendingAction();
             this.update_I = observed;
             this.state = AutoFishStateMachine.FishState.REEL_WAIT;
          }
@@ -188,7 +188,7 @@ final class AutoFishStateMachine {
    }
 
    private void write() {
-      this.update();
+      this.clearPendingAction();
       this.sync_I = this.update_I;
       this.state = AutoFishStateMachine.FishState.RECAST_DELAY;
       this.read_J = this.tick + Math.max(1, this.recastDelay.getAsInt());
@@ -202,7 +202,7 @@ final class AutoFishStateMachine {
    }
 
    private void read(int observed) {
-      this.update();
+      this.clearPendingAction();
       this.update_I = observed;
       this.sync_I = -1;
       this.flush_I = 0;
@@ -214,7 +214,7 @@ final class AutoFishStateMachine {
    }
 
    void init_V(int beforeUseHook) {
-      this.update();
+      this.clearPendingAction();
       this.init_Z = false;
       if (beforeUseHook != -1) {
          this.update_I = beforeUseHook;
@@ -246,7 +246,7 @@ final class AutoFishStateMachine {
    void load_V() {
       if (this.pendingAction != null) {
          this.state = this.resumeState;
-         this.update();
+         this.clearPendingAction();
       }
 
       if (this.state == AutoFishStateMachine.FishState.CATCH_DELAY) {
@@ -256,13 +256,13 @@ final class AutoFishStateMachine {
       this.init_Z = false;
    }
 
-   private void update() {
+   private void clearPendingAction() {
       this.pendingAction = null;
       this.actionSeq++;
    }
 
    void read() {
-      this.update();
+      this.clearPendingAction();
       this.state = AutoFishStateMachine.FishState.IDLE;
       this.update_I = this.sync_I = -1;
       this.flush_I = 0;

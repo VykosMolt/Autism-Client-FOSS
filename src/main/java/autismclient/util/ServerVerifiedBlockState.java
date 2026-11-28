@@ -12,7 +12,7 @@ public final class ServerVerifiedBlockState {
    private ServerVerifiedBlockState() {
    }
 
-   public static BlockState init(ClientLevel level, BlockPos pos) {
+   public static BlockState serverState(ClientLevel level, BlockPos pos) {
       BlockStatePredictionHandler prediction = ((AutismClientLevelPredictionAccessor)level).autism$getBlockPredictionHandler();
       Object pending = ((AutismBlockStatePredictionAccessor)prediction).autism$getServerVerifiedStates().get(pos.asLong());
       BlockState received = pending == null ? null : ((AutismServerVerifiedBlockStateAccessor)pending).autism$getBlockState();

@@ -55,7 +55,7 @@ public final class ModNamespaceCatalog {
             }
 
             read();
-            write();
+            clearCaches();
          } catch (Throwable t) {
             AutismClientAddon.LOG.warn("[AutismProtector] Failed to bootstrap mod ID set: {}", t.getMessage());
          }
@@ -74,26 +74,26 @@ public final class ModNamespaceCatalog {
       sync_Set.clear();
       serverTranslations.clear();
       load_Map.clear();
-      write();
+      clearCaches();
    }
 
    public static void init_V(String key) {
       if (key != null && !key.isBlank() && sync_Set.add(key)) {
-         write();
+         clearCaches();
       }
    }
 
    public static void init_V(String key, String value) {
       if (key != null && !key.isBlank() && value != null) {
          serverTranslations.put(key, value);
-         write();
+         clearCaches();
       }
    }
 
    public static void load(String key, String modId) {
       String normalized = normalizeModId(modId);
       if (key != null && !key.isBlank() && normalized != null && load_Map.computeIfAbsent(key, ignored -> ConcurrentHashMap.newKeySet()).add(normalized)) {
-         write();
+         clearCaches();
       }
    }
 
@@ -119,26 +119,26 @@ public final class ModNamespaceCatalog {
          }
       }
 
-      write();
+      clearCaches();
    }
 
    public static void load_V(String key) {
       if (key != null && !key.isBlank() && flush.add(key)) {
-         write();
+         clearCaches();
       }
    }
 
    public static void read(String key, String modId) {
       String normalized = normalizeModId(modId);
       if (key != null && !key.isBlank() && normalized != null && read_Map.computeIfAbsent(key, ignored -> ConcurrentHashMap.newKeySet()).add(normalized)) {
-         write();
+         clearCaches();
       }
    }
 
    public static void read_V(String modId) {
       String normalized = normalizeModId(modId);
       if (normalized != null && !BUILTIN_NAMESPACES.contains(normalized) && foreignModIds.add(normalized)) {
-         write();
+         clearCaches();
       }
    }
 
@@ -155,7 +155,7 @@ public final class ModNamespaceCatalog {
          ModNamespaceCatalog.Decision decision = decisionCache.get(key);
          if (decision == null) {
             decision = decide(key);
-            init(decisionCache, key, decision);
+            putBounded(decisionCache, key, decision);
          }
 
          String var10000;
@@ -188,7 +188,7 @@ public final class ModNamespaceCatalog {
          }
 
          boolean blocked = sync(key);
-         init(blockedCache, key, blocked);
+         putBounded(blockedCache, key, blocked);
          return blocked;
       } else {
          return false;
@@ -224,7 +224,7 @@ public final class ModNamespaceCatalog {
             }
          }
 
-         init(sync_Map, key, result);
+         putBounded(sync_Map, key, result);
          return result;
       } else {
          return false;
@@ -293,7 +293,7 @@ public final class ModNamespaceCatalog {
       }
    }
 
-   private static <T> void init(Map<String, T> cache, String key, T value) {
+   private static <T> void putBounded(Map<String, T> cache, String key, T value) {
       if (cache.size() >= 8192) {
          cache.clear();
       }
@@ -301,7 +301,7 @@ public final class ModNamespaceCatalog {
       cache.put(key, value);
    }
 
-   private static void write() {
+   private static void clearCaches() {
       decisionCache.clear();
       blockedCache.clear();
       sync_Map.clear();

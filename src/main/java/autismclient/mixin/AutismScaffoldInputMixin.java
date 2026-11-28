@@ -24,7 +24,7 @@ public abstract class AutismScaffoldInputMixin extends ClientInput {
    @ModifyExpressionValue(method = "tick", at = @At(value = "NEW", target = "(ZZZZZZZ)Lnet/minecraft/world/entity/player/Input;"))
    private Input autism$optionalScaffoldStabilization(Input original) {
       if (!AutismLiteVariant.enabled()) {
-         original = WTappingModule.init(original);
+         original = WTappingModule.filterInput(original);
       }
 
       if (!AutismLiteVariant.enabled()) {
@@ -44,7 +44,7 @@ public abstract class AutismScaffoldInputMixin extends ClientInput {
       Input bed = BedDefenderModule.overrideInput(this, aura);
       Input safe = SafeWalkModule.adjustInput(this, bed);
       if (!AutismLiteVariant.enabled()) {
-         safe = AiFallGuard.init(this, safe);
+         safe = AiFallGuard.filterInput(this, safe);
       }
 
       Input totem = AutoTotemModule.overrideInput(this, safe);

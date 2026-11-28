@@ -50,7 +50,7 @@ final class AiGuardLayer {
    boolean requiresReconciliation() {
       return this.reconciliationPending
          || this.activeGuardOp != null && this.activeGuardOp.requiresReconciliationAfterEmergency()
-         || this.fireControl != null && this.fireControl.read()
+         || this.fireControl != null && this.fireControl.isBusy()
          || this.waterDouseOp != null && this.waterDouseOp.requiresReconciliationAfterEmergency();
    }
 
@@ -78,7 +78,7 @@ final class AiGuardLayer {
             this.activeFlee = false;
             this.activeCombat = false;
             this.activeReason = "in lava";
-            this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, AiLavaEscape.init());
+            this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, AiLavaEscape.escape());
             this.activeHazardEscape = true;
             this.activeLavaEscape = true;
             AiSpeedrun.log("[AI] {}: in lava at {}; swimming out", this.ownerLabel, zoneClient.player.blockPosition().toShortString());
@@ -108,7 +108,7 @@ final class AiGuardLayer {
             this.preemptForHazard(leg, cancelLeg);
             this.activeFlee = this.activeCombat = false;
             this.activeReason = "in powder snow";
-            this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, AiPowderEscape.init());
+            this.activeGuardOp = AiRunDiagnostics.trace("survival", this.ownerLabel + ": " + this.activeReason, AiPowderEscape.escape());
             this.activeHazardEscape = this.activePowderEscape = true;
             return this.tickActiveGuardOp();
          }
@@ -235,12 +235,12 @@ final class AiGuardLayer {
             }
          }
 
-         if (!AiThreats.isLegacyCombatEnabled() && this.activeGuardOp != null && !this.activeHazardEscape && AiCombatPriority.isLowPriority(this.activeGuardAction) && AiDodge.init(zoneClient, false)) {
+         if (!AiThreats.isLegacyCombatEnabled() && this.activeGuardOp != null && !this.activeHazardEscape && AiCombatPriority.isLowPriority(this.activeGuardAction) && AiDodge.hasImminentThreat(zoneClient, false)) {
             this.preemptForHazard(leg, cancelLeg);
             this.activeCombat = this.activeFlee = false;
             this.activeReason = "incoming projectile during maintenance";
             this.activeGuardOp = AiRunDiagnostics.trace(
-               "survival", this.ownerLabel + ": " + this.activeReason, AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
+               "survival", this.ownerLabel + ": " + this.activeReason, AiDodge.dodge(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
             );
             return this.tickActiveGuardOp();
          }
@@ -275,7 +275,7 @@ final class AiGuardLayer {
          if (autismclient.ai.engine.AiMotionSafety.isPlayerSupported() && (leg == null || leg.canInterruptNow())) {
             AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
             boolean moving = motion.horizontalDistance() >= 0.12;
-            if (!AiThreats.isLegacyCombatEnabled() && !AiCover.isTakingCover(Minecraft.getInstance()) && !AiBlazeFight.init() && AiDodge.init(Minecraft.getInstance(), moving)) {
+            if (!AiThreats.isLegacyCombatEnabled() && !AiCover.isTakingCover(Minecraft.getInstance()) && !AiBlazeFight.init() && AiDodge.hasImminentThreat(Minecraft.getInstance(), moving)) {
                this.activeFlee = false;
                this.activeCombat = false;
                this.activeReason = "incoming projectile";
@@ -285,7 +285,7 @@ final class AiGuardLayer {
                }
 
                this.activeGuardOp = AiRunDiagnostics.trace(
-                  "survival", this.ownerLabel + ": projectile dodge", AiDodge.init(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
+                  "survival", this.ownerLabel + ": projectile dodge", AiDodge.dodge(AiJson.objectOf("deflect", true, "shield", true, "timeoutSeconds", 6))
                );
                return this.tickActiveGuardOp();
             } else if (!AiThreats.isLegacyCombatEnabled() && vitals.hostilesNear() > 0 && leg != null && vitals.health() >= 8.0F && AiGuard.canSprintPastThreats(Minecraft.getInstance(), motion)) {
@@ -499,11 +499,11 @@ final class AiGuardLayer {
       if (mc.player == null || mc.level == null || !AiService.isPlayerVulnerable(mc.player) || AiThreats.isLegacyCombatEnabled()) {
          return null;
       } else if (AiLavaEscape.isInLava(mc)) {
-         return AiLavaEscape.init();
+         return AiLavaEscape.escape();
       } else if (AiBreathe.needsAir(mc.player)) {
          return AiBreathe.create(AiJson.objectOf("timeoutSeconds", 25));
       } else if (AiPowderEscape.isInPowderSnow(mc)) {
-         return AiPowderEscape.init();
+         return AiPowderEscape.escape();
       } else if (mc.player.isInWater()) {
          return null;
       } else if (AiEndRun.init_Z(mc)) {

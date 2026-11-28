@@ -24,11 +24,11 @@ public final class AiDragonZones {
    private AiDragonZones() {
    }
 
-   static AABB init(AABB wing) {
+   static AABB wingDanger(AABB wing) {
       return wing.inflate(4.0, 2.0, 4.0).move(0.0, -2.0, 0.0);
    }
 
-   static AABB load(AABB part) {
+   static AABB partDanger(AABB part) {
       return part.inflate(1.0);
    }
 
@@ -42,9 +42,9 @@ public final class AiDragonZones {
                for (EnderDragonPart part : dragon.getSubEntities()) {
                   String name = part.name;
                   if (name.equals("wing")) {
-                     push.add(init(part.getBoundingBox()));
+                     push.add(wingDanger(part.getBoundingBox()));
                   } else if (name.equals("head") || name.equals("neck")) {
-                     strike.add(load(part.getBoundingBox()));
+                     strike.add(partDanger(part.getBoundingBox()));
                   }
                }
             }
@@ -122,7 +122,7 @@ public final class AiDragonZones {
       return head != null && facing != null ? new double[]{head.getX() + facing.x * 2.5, head.getZ() + facing.z * 2.5, 5.0} : null;
    }
 
-   static boolean init(AiDragonZones.DangerZones zones, double[] breath, List<double[]> clouds, int x, int y, int z) {
+   static boolean isSafeCell(AiDragonZones.DangerZones zones, double[] breath, List<double[]> clouds, int x, int y, int z) {
       if (zones.hits(cellBox(x, y, z), 1.0)) {
          return false;
       }
@@ -156,24 +156,24 @@ public final class AiDragonZones {
          final double ux = len < 0.001 ? 1.0 : dx / len;
          final double uz = len < 0.001 ? 0.0 : dz / len;
          return new AiOperation() {
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            AiOperation init_AiOperation = AiMlg.create(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
-            int init_I;
-            boolean init_Z;
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            AiOperation mlgOp = AiMlg.create(AiJson.objectOf("method", "auto", "collect", true, "timeoutSeconds", 15));
+            int ticks;
+            boolean cancelled;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.init_Z && mc.player != null) {
-                  AiOperation.Result r = this.init_AiOperation.tick();
+               if (!this.cancelled && mc.player != null) {
+                  AiOperation.Result r = this.mlgOp.tick();
                   if (!r.terminal()) {
                      if (mc.player.onGround()) {
-                        if (++this.init_I > 60) {
-                           return this.init(AiOperation.Status.FAILED, "Could not step off the pillar");
+                        if (++this.ticks > 60) {
+                           return this.finish(AiOperation.Status.FAILED, "Could not step off the pillar");
                         }
 
-                        this.init_DataUtil.aimAt(mc.player.getEyePosition().add(ux * 4.0, -1.5, uz * 4.0));
-                        this.init_DataUtil.tick();
-                        AiFallGuard.load();
+                        this.aim.aimAt(mc.player.getEyePosition().add(ux * 4.0, -1.5, uz * 4.0));
+                        this.aim.tick();
+                        AiFallGuard.stampTick();
                         mc.options.keyUp.setDown(true);
                      } else {
                         mc.options.keyUp.setDown(false);
@@ -181,23 +181,23 @@ public final class AiDragonZones {
 
                      return AiGameOperations.result(AiOperation.Status.RUNNING, "Off the pillar out of the cloud", new JsonObject());
                   } else {
-                     return this.init(r.status(), "Dropped off out of the cloud: " + r.message());
+                     return this.finish(r.status(), "Dropped off out of the cloud: " + r.message());
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Cloud drop cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Cloud drop cancelled");
                }
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                mc.options.keyUp.setDown(false);
-               this.init_DataUtil.clear();
+               this.aim.clear();
                return AiGameOperations.result(status, message, new JsonObject());
             }
 
             @Override
             public void cancel() {
-               this.init_Z = true;
-               this.init_AiOperation.cancel();
+               this.cancelled = true;
+               this.mlgOp.cancel();
                mc.options.keyUp.setDown(false);
             }
          };

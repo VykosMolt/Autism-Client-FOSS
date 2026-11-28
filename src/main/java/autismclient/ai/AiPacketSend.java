@@ -59,7 +59,7 @@ public final class AiPacketSend {
          out.addProperty("packetClass", packetClass.getName());
          out.addProperty("mode", mode);
          out.addProperty("numericPacketId", AiPacketLog.numericId(packet.type(), "C2S"));
-         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.init(packetClass);
+         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.schemaFor(packetClass);
          out.addProperty("schemaComplete", schema != null && schema.complete() && !schema.inherited());
          out.addProperty("builderSource", built.source() == null ? "" : built.source());
          switch (mode) {
@@ -69,7 +69,7 @@ public final class AiPacketSend {
                   throw new IllegalArgumentException("PacketRegenerator produced no packet for " + name);
                }
 
-               autismclient.util.DirectPacketSender.init(wire);
+               autismclient.util.DirectPacketSender.send(wire);
                out.addProperty("sent", true);
                out.addProperty("regenerated", regenerate && wire != packet);
                break;

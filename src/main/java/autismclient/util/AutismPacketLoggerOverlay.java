@@ -497,7 +497,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   if (payloadSnapshot != null) {
                      PayloadChannelFilterManager.MatchedRule match = this.channelFilters.findMatchingRuleForEntry(payloadSnapshot, direction);
                      if (match != null) {
-                        PayloadNotificationTracker.init(payloadSnapshot.channel(), direction, match);
+                        PayloadNotificationTracker.notice(payloadSnapshot.channel(), direction, match);
                      }
                   }
 
@@ -1305,7 +1305,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          autismclient.gui.ui.widgets.PanelSurfaceHelper.drawCardRow(ctx, this.windowX + 2, y, this.panelWidth - 4, this.rowHeight(), true, false);
       }
 
-      autismclient.gui.ui.widgets.GlyphIndicatorRenderer.init(
+      autismclient.gui.ui.widgets.GlyphIndicatorRenderer.render(
          ctx,
          x,
          y + (this.rowHeight() - 8) / 2,
@@ -3610,11 +3610,11 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          boolean disabled = AutismPacketLoggerOverlay.this.configurationOnly && !"Use".equals(label);
          boolean hover = !disabled && mx >= x && mx < x + 36 && my >= py && my < py + h;
          if (disabled) {
-            autismclient.gui.ui.widgets.PillBadgeRenderer.init(
+            autismclient.gui.ui.widgets.PillBadgeRenderer.render(
                autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.font, mx, my), autismclient.gui.f.NetHelper.init(x, py, 36, h), label
             );
          } else {
-            autismclient.gui.ui.widgets.PillBadgeRenderer.init(
+            autismclient.gui.ui.widgets.PillBadgeRenderer.render(
                autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.font, mx, my),
                autismclient.gui.f.NetHelper.init(x, py, 36, h),
                label,
@@ -3811,7 +3811,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       }
 
       private void renderStatusPill(GuiGraphicsExtractor ctx, int x, int y, int w, int h, String label, boolean enabled) {
-         autismclient.gui.ui.widgets.PillBadgeRenderer.init(
+         autismclient.gui.ui.widgets.PillBadgeRenderer.render(
             autismclient.gui.f.UiHelper.init(ctx, AutismPacketLoggerOverlay.this.font, -1, -1),
             autismclient.gui.f.NetHelper.init(x, y, w, h),
             label,
@@ -4507,7 +4507,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          boolean inControlsRow = button == 0 && my >= y && my < y + AutismPacketLoggerOverlay.this.controlHeight();
          if (inControlsRow && mx >= cx && mx < cx + controls.widths[0]) {
             AutismPacketLoggerOverlay.this.channelFilters.resetToDefaultsInMemory();
-            AutismPacketLoggerOverlay.this.payloadRegistrations.update();
+            AutismPacketLoggerOverlay.this.payloadRegistrations.refreshDefaults();
             this.markDirty();
             this.rebuildRows();
             AutismPacketLoggerOverlay.this.rowsDirty = true;
@@ -4611,7 +4611,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      }
 
                      this.mutateKeepingAnchor(index, () -> {
-                        AutismPacketLoggerOverlay.this.payloadRegistrations.load(row.learnedChannel, row.learnedChannel, "learned");
+                        AutismPacketLoggerOverlay.this.payloadRegistrations.register(row.learnedChannel, row.learnedChannel, "learned");
                         this.markDirty();
                      });
                      AutismPacketLoggerOverlay.this.rowsDirty = true;
@@ -4753,7 +4753,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                boolean filterChanged = AutismPacketLoggerOverlay.this.channelFilters.addRuleInMemory(label, normalized, PayloadChannelFilterManager.FilterDirection.ANY);
                boolean registrationChanged = false;
                if (PayloadRegistrationManager.isExactChannel(normalized)) {
-                  registrationChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.load(label, normalized, "custom");
+                  registrationChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.register(label, normalized, "custom");
                }
 
                if (!filterChanged && !registrationChanged) {
@@ -4790,7 +4790,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
 
                if (existing >= 0 && existing != this.editingRegistrationIndex) {
                   AutismPacketLoggerOverlay.this.payloadRegistrations.write(this.editingRegistrationIndex);
-                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(normalized, normalized, "custom");
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.register(normalized, normalized, "custom");
                } else {
                   AutismConfig.PayloadChannelRegistrationRule rule = regs.get(this.editingRegistrationIndex);
                   if (rule != null && this.isEditableRegistration(rule)) {
@@ -4831,7 +4831,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                }
 
                if (PayloadRegistrationManager.isExactChannel(normalized)) {
-                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(normalized, normalized, "custom");
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.register(normalized, normalized, "custom");
                }
             }
 
@@ -4852,7 +4852,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             if (!enabled) {
                AutismPacketLoggerOverlay.this.channelFilters.enablePresetInMemory(preset);
                if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
-                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(preset.load(), pattern, "preset");
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.register(preset.load(), pattern, "preset");
                }
 
                this.markDirty();
@@ -4877,7 +4877,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             AutismPacketLoggerOverlay.this.channelFilters.toggleRuleInMemory(ruleIndex);
             if (PayloadRegistrationManager.isExactChannel(pattern)) {
                if (enabling) {
-                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(rule.label, pattern, "custom");
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.register(rule.label, pattern, "custom");
                } else {
                   this.removeCustomRegistration(pattern);
                }
@@ -5013,7 +5013,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                if (!AutismPacketLoggerOverlay.this.payloadRegistrations.isEnabled(normalized) && !this.fitsChannelCap(List.of(normalized))) {
                   skipped++;
                } else {
-                  AutismPacketLoggerOverlay.this.payloadRegistrations.load(label, normalized, source);
+                  AutismPacketLoggerOverlay.this.payloadRegistrations.register(label, normalized, source);
                }
             }
          }
@@ -5034,7 +5034,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
             }
 
             List<String> applied = status == null ? List.of() : status.applied();
-            PayloadStudyTracker.init(label, patterns == null ? List.of() : patterns, applied);
+            PayloadStudyTracker.startStudy(label, patterns == null ? List.of() : patterns, applied);
             this.setVisible(false);
             if (AutismPacketLoggerOverlay.MC != null) {
                AutismPacketLoggerOverlay.MC.gui.setScreen(null);
@@ -5064,7 +5064,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                      } else {
                         AutismPacketLoggerOverlay.this.channelFilters.enablePresetInMemory(preset);
                         if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
-                           AutismPacketLoggerOverlay.this.payloadRegistrations.load(preset.load(), pattern, "preset");
+                           AutismPacketLoggerOverlay.this.payloadRegistrations.register(preset.load(), pattern, "preset");
                         }
                      }
                   } else {
@@ -5102,7 +5102,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                         capHit = true;
                      } else {
                         AutismPacketLoggerOverlay.this.channelFilters.enablePresetInMemory(preset);
-                        AutismPacketLoggerOverlay.this.payloadRegistrations.load(preset.load(), pattern, "preset");
+                        AutismPacketLoggerOverlay.this.payloadRegistrations.register(preset.load(), pattern, "preset");
                      }
                   } else {
                      if (AutismPacketLoggerOverlay.this.channelFilters.isPresetEnabled(preset)) {
@@ -5169,7 +5169,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   if (!AutismPacketLoggerOverlay.this.payloadRegistrations.isEnabled(normalized) && !this.fitsChannelCap(List.of(normalized))) {
                      skipped++;
                   } else {
-                     boolean regChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.load(normalized, normalized, "learned");
+                     boolean regChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.register(normalized, normalized, "learned");
                      AutismPacketLoggerOverlay.this.channelFilters.addRuleInMemory(normalized, normalized, PayloadChannelFilterManager.FilterDirection.ANY);
                      if (regChanged) {
                         added++;
@@ -5199,7 +5199,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                if (!AutismPacketLoggerOverlay.this.payloadRegistrations.isEnabled(normalized) && !this.fitsChannelCap(List.of(normalized))) {
                   skipped++;
                } else {
-                  boolean regChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.load(normalized, normalized, "learned");
+                  boolean regChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.register(normalized, normalized, "learned");
                   AutismPacketLoggerOverlay.this.channelFilters.addRuleInMemory(normalized, normalized, PayloadChannelFilterManager.FilterDirection.ANY);
                   if (regChanged) {
                      added++;
@@ -5218,7 +5218,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                   if (!AutismPacketLoggerOverlay.this.payloadRegistrations.isEnabled(normalized) && !this.fitsChannelCap(List.of(normalized))) {
                      skipped++;
                   } else {
-                     boolean regChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.load(preset.load(), normalized, "preset");
+                     boolean regChanged = AutismPacketLoggerOverlay.this.payloadRegistrations.register(preset.load(), normalized, "preset");
                      if (regChanged) {
                         added++;
                      }

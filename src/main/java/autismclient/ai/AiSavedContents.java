@@ -65,7 +65,7 @@ public final class AiSavedContents {
       }
    }
 
-   public static AiSavedContents.SlotMapping init(BlockState state, AbstractContainerMenu menu) {
+   public static AiSavedContents.SlotMapping slotMapping(BlockState state, AbstractContainerMenu menu) {
       Block block = state.getBlock();
       if (block instanceof ChestBlock && menu instanceof ChestMenu chest) {
          ChestType type = state.getValue(ChestBlock.TYPE);
@@ -84,13 +84,13 @@ public final class AiSavedContents {
       }
    }
 
-   public static AiSavedContents.FillPlan init(
+   public static AiSavedContents.FillPlan fillPlan(
       AbstractContainerMenu menu, Inventory inventory, Player player, Map<Integer, ItemStack> saved, AiSavedContents.SlotMapping layout
    ) {
-      return init(menu, inventory, player, saved, layout, slot -> false);
+      return fillPlan(menu, inventory, player, saved, layout, slot -> false);
    }
 
-   static AiSavedContents.FillPlan init(
+   static AiSavedContents.FillPlan fillPlan(
       AbstractContainerMenu menu, Inventory inventory, Player player, Map<Integer, ItemStack> saved, AiSavedContents.SlotMapping layout, IntPredicate clearing
    ) {
       LinkedHashMap<Integer, ItemStack> targets = new LinkedHashMap<>();

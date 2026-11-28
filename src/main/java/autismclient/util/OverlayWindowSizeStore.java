@@ -12,17 +12,17 @@ public final class OverlayWindowSizeStore {
       return s != null && (s.width > 0 || s.height > 0);
    }
 
-   public int init(int auto, int min, int max) {
+   public int width(int auto, int min, int max) {
       AutismConfig.WindowSize s = this.init_AutismConfig_Windo();
-      return s != null && s.width > 0 ? read(s.width, min, max) : auto;
+      return s != null && s.width > 0 ? clamp(s.width, min, max) : auto;
    }
 
-   public int load(int auto, int min, int max) {
+   public int height(int auto, int min, int max) {
       AutismConfig.WindowSize s = this.init_AutismConfig_Windo();
-      return s != null && s.height > 0 ? read(s.height, min, max) : auto;
+      return s != null && s.height > 0 ? clamp(s.height, min, max) : auto;
    }
 
-   public void init(int width, int height) {
+   public void save(int width, int height) {
       try {
          AutismConfig.WindowSize s = AutismConfig.getGlobal().windowSizes.computeIfAbsent(this.init, k -> new AutismConfig.WindowSize());
          s.width = Math.max(0, width);
@@ -38,7 +38,7 @@ public final class OverlayWindowSizeStore {
       }
    }
 
-   public void load() {
+   public void clear() {
       try {
          if (AutismConfig.getGlobal().windowSizes.remove(this.init) != null) {
             AutismConfig.getGlobal().save();
@@ -55,7 +55,7 @@ public final class OverlayWindowSizeStore {
       }
    }
 
-   static int read(int value, int min, int max) {
+   static int clamp(int value, int min, int max) {
       return Math.max(min, Math.min(value, Math.max(min, max)));
    }
 }

@@ -182,7 +182,7 @@ public class XCarryAction implements MacroAction {
       }
    }
 
-   public void load(int entryIndex, int amount) {
+   public void setEntryAmount(int entryIndex, int amount) {
       this.resizeEntryAmounts(entryIndex + 1);
       this.entryAmounts.set(entryIndex, Math.max(1, amount));
    }
@@ -320,7 +320,7 @@ public class XCarryAction implements MacroAction {
 
    private void init_V_InventoryMenu_Minecraft(InventoryMenu handler, Minecraft mc) {
       this.enableAllSources();
-      List<MacroItemTarget> targets = this.write();
+      List<MacroItemTarget> targets = this.runtimeTargets();
       if (targets.isEmpty()) {
          if (hasCarriedItems(handler, true)) {
             this.syncCarryState(handler, true);
@@ -341,7 +341,7 @@ public class XCarryAction implements MacroAction {
 
          while (safety++ < 512) {
             XCarryAction.SlotMove move = this.nextMove(handler);
-            if (move == null || !moveItems(handler, mc, move.init, move.load, move.read)) {
+            if (move == null || !moveItems(handler, mc, move.sourceSlot, move.targetSlot, move.count)) {
                break;
             }
 
@@ -400,7 +400,7 @@ public class XCarryAction implements MacroAction {
    }
 
    private boolean init_Z_Slot_I(Slot slot, int slotId) {
-      for (MacroItemTarget entryTarget : this.write()) {
+      for (MacroItemTarget entryTarget : this.runtimeTargets()) {
          if (entryTarget != null) {
             if (entryTarget.hasSlot()) {
                if (slotMatches(entryTarget.slot, slotId) && (!entryTarget.hasItemFilter() || matchesIdentity(slot.getItem(), entryTarget))) {
@@ -429,7 +429,7 @@ public class XCarryAction implements MacroAction {
       this.enableAllSources();
       Set<Integer> storageSlotSet = this.carrySlotIds();
       List<Integer> storageSlots = this.carrySlotList();
-      List<MacroItemTarget> targets = this.write();
+      List<MacroItemTarget> targets = this.runtimeTargets();
       int limit = Math.min(this.maxEntries(), targets.size());
       this.resizeEntryDestinations(limit);
       this.resizeEntryAmounts(limit);
@@ -527,12 +527,12 @@ public class XCarryAction implements MacroAction {
                                  break;
                               }
 
-                              if (init(handler, slot, row.target, storageSlotSet, sourceUsed) && slot.index != row.load) {
+                              if (init(handler, slot, row.target, storageSlotSet, sourceUsed) && slot.index != row.targetSlotId) {
                                  int used = sourceUsed.getOrDefault(slot.index, 0);
                                  int available = slot.getItem().getCount() - used;
                                  if (available > 0) {
                                     int take = Math.min(remaining, available);
-                                    moves.add(new XCarryAction.SlotMove(slot.index, row.load, take));
+                                    moves.add(new XCarryAction.SlotMove(slot.index, row.targetSlotId, take));
                                     sourceUsed.put(slot.index, used + take);
                                     remaining -= take;
                                  }
@@ -603,10 +603,10 @@ public class XCarryAction implements MacroAction {
             int available = sourceSlot.getItem().getCount() - used;
 
             for (XCarryAction.EntryRow row : rows) {
-               if (row != null && row.sync > 0 && available > 0 && row.load != sourceSlotId) {
+               if (row != null && row.sync > 0 && available > 0 && row.targetSlotId != sourceSlotId) {
                   int take = Math.min(row.sync, available);
                   if (take > 0) {
-                     moves.add(new XCarryAction.SlotMove(sourceSlotId, row.load, take));
+                     moves.add(new XCarryAction.SlotMove(sourceSlotId, row.targetSlotId, take));
                      available -= take;
                      used += take;
                   }
@@ -620,7 +620,7 @@ public class XCarryAction implements MacroAction {
 
    public boolean usesCursor() {
       this.enableAllSources();
-      List<MacroItemTarget> targets = this.write();
+      List<MacroItemTarget> targets = this.runtimeTargets();
       int limit = Math.min(this.maxEntries(), targets.size());
       boolean anyExplicit = false;
       int autoCount = 0;
@@ -651,7 +651,7 @@ public class XCarryAction implements MacroAction {
          return slotIds;
       }
 
-      List<MacroItemTarget> targets = this.write();
+      List<MacroItemTarget> targets = this.runtimeTargets();
       int limit = Math.min(this.maxEntries(), targets.size());
       Map<String, Integer> neededByKey = new LinkedHashMap<>();
       if (playerHandler != null) {
@@ -1098,7 +1098,7 @@ public class XCarryAction implements MacroAction {
             return init_Z_InventoryMenu_Minecraft(handler, mc);
          }
 
-         List<MacroItemTarget> targets = this.write();
+         List<MacroItemTarget> targets = this.runtimeTargets();
          Set<Integer> storageSlotSet = this.carrySlotIds();
          int limit = Math.min(maxTargets, targets.size());
 
@@ -1214,7 +1214,7 @@ public class XCarryAction implements MacroAction {
 
       Set<Integer> storageSlotSet = this.carrySlotIds();
       List<Integer> storageSlots = this.carrySlotList();
-      List<MacroItemTarget> targets = this.write();
+      List<MacroItemTarget> targets = this.runtimeTargets();
       int limit = Math.min(this.maxEntries(), targets.size());
       this.resizeEntryDestinations(limit);
       this.resizeEntryAmounts(limit);
@@ -1295,19 +1295,19 @@ public class XCarryAction implements MacroAction {
             int remaining = available.getOrDefault(entry.getKey(), 0);
 
             for (XCarryAction.EntryRow row : entry.getValue()) {
-               remaining += row.write;
+               remaining += row.currentCount;
             }
 
             List<XCarryAction.EntryRow> fullRows = new ArrayList<>();
 
             for (XCarryAction.EntryRow row : entry.getValue()) {
                row.sync = 0;
-               row.flush = row.write;
+               row.flush = row.currentCount;
                if (row.amountMode == XCarryAction.AmountMode.CUSTOM) {
-                  int desired = Math.min(Math.min(row.read, row.update), Math.max(0, remaining));
-                  int reserved = Math.max(row.write, desired);
+                  int desired = Math.min(Math.min(row.customCount, row.maxCount), Math.max(0, remaining));
+                  int reserved = Math.max(row.currentCount, desired);
                   row.flush = desired;
-                  row.sync = Math.max(0, desired - row.write);
+                  row.sync = Math.max(0, desired - row.currentCount);
                   remaining = Math.max(0, remaining - reserved);
                } else {
                   fullRows.add(row);
@@ -1326,7 +1326,7 @@ public class XCarryAction implements MacroAction {
                   int active = 0;
 
                   for (XCarryAction.EntryRow row : fullRows) {
-                     if (desired.get(row) < row.update) {
+                     if (desired.get(row) < row.maxCount) {
                         active++;
                      }
                   }
@@ -1344,7 +1344,7 @@ public class XCarryAction implements MacroAction {
                      }
 
                      int currentDesired = desired.get(row);
-                     int room = row.update - currentDesired;
+                     int room = row.maxCount - currentDesired;
                      if (room > 0) {
                         int take = Math.min(room, Math.min(share, totalForFull));
                         desired.put(row, currentDesired + take);
@@ -1361,7 +1361,7 @@ public class XCarryAction implements MacroAction {
                for (XCarryAction.EntryRow row : fullRows) {
                   int finalCount = desired.getOrDefault(row, 0);
                   row.flush = finalCount;
-                  row.sync = Math.max(0, finalCount - row.write);
+                  row.sync = Math.max(0, finalCount - row.currentCount);
                }
             }
          }
@@ -1580,7 +1580,7 @@ public class XCarryAction implements MacroAction {
       return this.entryTargets;
    }
 
-   private List<MacroItemTarget> write() {
+   private List<MacroItemTarget> runtimeTargets() {
       List<MacroItemTarget> runtime = new ArrayList<>();
       Minecraft mc = Minecraft.getInstance();
 
@@ -1615,46 +1615,46 @@ public class XCarryAction implements MacroAction {
    private static final class EntryRow {
       final int index;
       final MacroItemTarget target;
-      final int load;
+      final int targetSlotId;
       final XCarryAction.AmountMode amountMode;
-      final int read;
-      final int write;
-      final int update;
+      final int customCount;
+      final int currentCount;
+      final int maxCount;
       int sync;
       int flush;
 
       EntryRow(int index, MacroItemTarget target, int targetSlotId, XCarryAction.AmountMode amountMode, int customCount, int currentCount, int maxCount) {
          this.index = index;
          this.target = target;
-         this.load = targetSlotId;
+         this.targetSlotId = targetSlotId;
          this.amountMode = amountMode;
-         this.read = customCount;
-         this.write = currentCount;
-         this.update = maxCount;
+         this.customCount = customCount;
+         this.currentCount = currentCount;
+         this.maxCount = maxCount;
       }
    }
 
    public static final class SlotMove {
-      final int init;
-      final int load;
-      final int read;
+      final int sourceSlot;
+      final int targetSlot;
+      final int count;
 
       SlotMove(int sourceSlotId, int targetSlotId, int count) {
-         this.init = sourceSlotId;
-         this.load = targetSlotId;
-         this.read = count;
+         this.sourceSlot = sourceSlotId;
+         this.targetSlot = targetSlotId;
+         this.count = count;
       }
 
-      public int init() {
-         return this.init;
+      public int source() {
+         return this.sourceSlot;
       }
 
-      public int load() {
-         return this.load;
+      public int target() {
+         return this.targetSlot;
       }
 
-      public int read() {
-         return this.read;
+      public int amount() {
+         return this.count;
       }
    }
 

@@ -14,7 +14,7 @@ public final class MacroToolBridge {
    private MacroToolBridge() {
    }
 
-   public static void init(MacroToolBridge.ToolBackend value) {
+   public static void setBackend(MacroToolBridge.ToolBackend value) {
       bridge = value;
    }
 
@@ -29,7 +29,7 @@ public final class MacroToolBridge {
 
    public static List<String> waypointNames() {
       MacroToolBridge.ToolBackend b = bridge;
-      return b == null ? List.of() : List.copyOf(b.load());
+      return b == null ? List.of() : List.copyOf(b.toolIds());
    }
 
    public static MacroToolBridge.ToolInfo findTool(String id) {
@@ -47,15 +47,15 @@ public final class MacroToolBridge {
          throw new IllegalStateException("Tools requires the full client");
       }
 
-      MacroToolBridge.ToolJob job = b.init(tool, argumentsJson);
+      MacroToolBridge.ToolJob job = b.start(tool, argumentsJson);
       MacroToolBridge.ToolSession session = SESSIONS.computeIfAbsent(owner, ignored -> new MacroToolBridge.ToolSession());
       session.lastJob = job;
       session.jobs.put(job.id(), job);
-      job.load().whenComplete((result, failure) -> session.jobs.remove(job.id()));
+      job.future().whenComplete((result, failure) -> session.jobs.remove(job.id()));
       return job;
    }
 
-   public static MacroToolBridge.ToolJob load(long owner, String scope, String filter) {
+   public static MacroToolBridge.ToolJob start(long owner, String scope, String filter) {
       MacroToolBridge.ToolBackend b = bridge;
       if (b == null) {
          return null;
@@ -67,17 +67,17 @@ public final class MacroToolBridge {
    }
 
    public static CompletableFuture<MacroToolBridge.JobSnapshot> runOperation(long owner, String scope, String operation) {
-      return init(load(owner, scope, ""), operation);
+      return control(start(owner, scope, ""), operation);
    }
 
-   public static CompletableFuture<MacroToolBridge.JobSnapshot> init(MacroToolBridge.ToolJob job, String operation) {
+   public static CompletableFuture<MacroToolBridge.JobSnapshot> control(MacroToolBridge.ToolJob job, String operation) {
       MacroToolBridge.ToolBackend b = bridge;
       if (b == null) {
          return CompletableFuture.failedFuture(new IllegalStateException("Tools requires the full client"));
       } else if (job == null) {
          return CompletableFuture.failedFuture(new IllegalStateException("No matching tool has started"));
       } else {
-         return "WAIT".equals(operation) ? job.load() : b.init(job, operation);
+         return "WAIT".equals(operation) ? job.future() : b.control(job, operation);
       }
    }
 
@@ -86,7 +86,7 @@ public final class MacroToolBridge {
          return false;
       }
 
-      MacroToolBridge.ToolJob job = load(owner, scope, filter);
+      MacroToolBridge.ToolJob job = start(owner, scope, filter);
       if (job == null) {
          return "IDLE".equals(state);
       }
@@ -95,13 +95,13 @@ public final class MacroToolBridge {
       boolean var10000;
       switch (state == null ? "" : state) {
          case "FINISHED":
-            var10000 = actual.init();
+            var10000 = actual.isTerminal();
             break;
          case "ACTIVE":
-            var10000 = !actual.init();
+            var10000 = !actual.isTerminal();
             break;
          case "IDLE":
-            var10000 = actual.init();
+            var10000 = actual.isTerminal();
             break;
          case "FAILED":
             var10000 = actual == MacroToolBridge.JobState.FAILED || actual == MacroToolBridge.JobState.TIMED_OUT || actual == MacroToolBridge.JobState.UNCERTAIN;
@@ -144,7 +144,7 @@ public final class MacroToolBridge {
       TIMED_OUT,
       UNCERTAIN;
 
-      public boolean init() {
+      public boolean isTerminal() {
          return this.ordinal() >= SUCCEEDED.ordinal();
       }
    }
@@ -152,13 +152,13 @@ public final class MacroToolBridge {
    public interface ToolBackend {
       List<MacroToolBridge.ToolInfo> tools();
 
-      List<String> load();
+      List<String> toolIds();
 
-      MacroToolBridge.ToolJob init(String var1, String var2);
+      MacroToolBridge.ToolJob start(String var1, String var2);
 
       MacroToolBridge.ToolJob currentJob();
 
-      CompletableFuture<MacroToolBridge.JobSnapshot> init(MacroToolBridge.ToolJob var1, String var2);
+      CompletableFuture<MacroToolBridge.JobSnapshot> control(MacroToolBridge.ToolJob var1, String var2);
    }
 
    public static final class ToolJob {
@@ -169,7 +169,7 @@ public final class MacroToolBridge {
          new MacroToolBridge.JobSnapshot(MacroToolBridge.JobState.WAITING, "Waiting", "{}")
       );
       private final CompletableFuture<Void> started = new CompletableFuture<>();
-      private final CompletableFuture<MacroToolBridge.JobSnapshot> load = new CompletableFuture<>();
+      private final CompletableFuture<MacroToolBridge.JobSnapshot> completion = new CompletableFuture<>();
       private Runnable cancelAction;
       private boolean cancelRequested;
 
@@ -193,19 +193,19 @@ public final class MacroToolBridge {
          return this.started;
       }
 
-      public CompletableFuture<MacroToolBridge.JobSnapshot> load() {
-         return this.load;
+      public CompletableFuture<MacroToolBridge.JobSnapshot> future() {
+         return this.completion;
       }
 
       public synchronized boolean isCancelRequested() {
          return this.cancelRequested;
       }
 
-      public void init(Runnable action) {
+      public void onCancel(Runnable action) {
          boolean invoke;
          synchronized (this) {
             this.cancelAction = action;
-            invoke = this.cancelRequested && !this.load.isDone();
+            invoke = this.cancelRequested && !this.completion.isDone();
          }
 
          if (invoke && action != null) {
@@ -216,7 +216,7 @@ public final class MacroToolBridge {
       public void cancel() {
          Runnable action;
          synchronized (this) {
-            if (this.load.isDone() || this.cancelRequested) {
+            if (this.completion.isDone() || this.cancelRequested) {
                return;
             }
 
@@ -229,16 +229,16 @@ public final class MacroToolBridge {
          }
       }
 
-      public synchronized void init(MacroToolBridge.JobState state, String message, String data) {
-         if (state != null && !this.load.isDone()) {
+      public synchronized void publish(MacroToolBridge.JobState state, String message, String data) {
+         if (state != null && !this.completion.isDone()) {
             MacroToolBridge.JobSnapshot next = new MacroToolBridge.JobSnapshot(state, message == null ? "" : message, data == null ? "{}" : data);
             this.state.set(next);
-            if (state == MacroToolBridge.JobState.RUNNING || state.init()) {
+            if (state == MacroToolBridge.JobState.RUNNING || state.isTerminal()) {
                this.started.complete(null);
             }
 
-            if (state.init()) {
-               this.load.complete(next);
+            if (state.isTerminal()) {
+               this.completion.complete(next);
             }
          }
       }

@@ -196,6 +196,6 @@ public final class AiAssistant implements autismclient.util.SilentMovementCoordi
 
    @Override
    public boolean isSilentMovementActive() {
-      return autismclient.ai.engine.AiSilentAim.init(autismclient.util.SilentRotationManager.isReturningToPlayer(), true, autismclient.util.SilentMovementCoordinator.isSafeWalkActive());
+      return autismclient.ai.engine.AiSilentAim.active(autismclient.util.SilentRotationManager.isReturningToPlayer(), true, autismclient.util.SilentMovementCoordinator.isSafeWalkActive());
    }
 }

@@ -63,7 +63,7 @@ final class AiTrade {
       return true;
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation trade(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          final AiTrade.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "inspect"));

@@ -216,7 +216,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    }
 
    private boolean sync_Z_7() {
-      return this.init_aa_JsonUtil.init(AutismSessionState.getInstance().getClientTick(), this::flush_Z_6);
+      return this.init_aa_JsonUtil.valueFor(AutismSessionState.getInstance().getClientTick(), this::flush_Z_6);
    }
 
    private boolean flush_Z_6() {

@@ -61,7 +61,7 @@ public final class ManualInteractionYield {
       if (mc != null && mc.options != null) {
          KeyMapping attack = mc.options.keyAttack;
          KeyMapping use = mc.options.keyUse;
-         boolean auraUse = !AutismLiteVariant.enabled() && CombatInteractionController.sync();
+         boolean auraUse = !AutismLiteVariant.enabled() && CombatInteractionController.isActive();
          if (auraUse) {
             pendingUseClicks = 0;
          }
@@ -114,7 +114,7 @@ public final class ManualInteractionYield {
             lastTick = tick;
             if (mc.player != null && mc.level != null && mc.options != null && !autismclient.modules.FreecamController.isActive()) {
                boolean destroying = mc.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor && accessor.autism$isDestroying();
-               if (!AutismLiteVariant.enabled() && autismclient.modules.BedNukerModule.read_Z_10()) {
+               if (!AutismLiteVariant.enabled() && autismclient.modules.BedNukerModule.isMining()) {
                   destroying = false;
                }
 
@@ -133,9 +133,9 @@ public final class ManualInteractionYield {
                   attackHeldTicks = 0;
                }
 
-               boolean fighting = RecentCombatTracker.init(1500000000L);
+               boolean fighting = RecentCombatTracker.inCombatWithin(1500000000L);
                boolean mining = fighting ? attackDown && camera != null && isDeliberateMining(true, attackHeldTicks, isAutoClickerEnabled()) : destroying || attackDown && camera != null;
-               boolean auraUse = !AutismLiteVariant.enabled() && CombatInteractionController.sync();
+               boolean auraUse = !AutismLiteVariant.enabled() && CombatInteractionController.isActive();
                boolean direct = mining || useDown && !auraUse && camera != null && isUseInteraction(mc, camera);
                graceTicks = nextGrace(graceTicks, direct);
                yielding = direct || graceTicks > 0;

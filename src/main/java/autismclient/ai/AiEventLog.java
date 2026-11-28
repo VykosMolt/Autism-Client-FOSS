@@ -22,7 +22,7 @@ final class AiEventLog {
       return INSTANCE;
    }
 
-   private static long load() {
+   private static long clientTick() {
       return autismclient.util.AutismSessionState.getInstance().getClientTick();
    }
 
@@ -45,7 +45,7 @@ final class AiEventLog {
          this.load++;
       }
 
-      this.events.addLast(new AiEventLog.LoggedEvent(++this.sequence, load(), kind, data));
+      this.events.addLast(new AiEventLog.LoggedEvent(++this.sequence, clientTick(), kind, data));
    }
 
    synchronized List<AiEventLog.LoggedEvent> read(long since, Set<String> kinds, int limit) {

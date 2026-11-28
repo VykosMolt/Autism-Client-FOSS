@@ -460,7 +460,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
             int x = (int)Math.floor(this.minecraft.player.getX());
             int y = (int)Math.floor(this.minecraft.player.getY());
             int z = (int)Math.floor(this.minecraft.player.getZ());
-            store.init(this.scope, new AutismWaypoints.Waypoint(name, x, y, z, defaultWaypointColor(), System.currentTimeMillis()));
+            store.addWaypoint(this.scope, new AutismWaypoints.Waypoint(name, x, y, z, defaultWaypointColor(), System.currentTimeMillis()));
             this.setNameInput("");
             this.clampScroll();
          } else {
@@ -549,7 +549,7 @@ public class WaypointsScreen extends VirtualScaledScreen {
             String renamed = field.getValue().trim();
             if (renamed.equals(original)) {
                field.setValue(original);
-            } else if (AutismWaypoints.getInstance().init(this.scope, original, renamed)) {
+            } else if (AutismWaypoints.getInstance().rename(this.scope, original, renamed)) {
                this.renameInputs.remove(original);
                this.renameInputs.put(renamed, field);
                field.setValue(renamed);

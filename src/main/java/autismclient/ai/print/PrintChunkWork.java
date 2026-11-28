@@ -117,7 +117,7 @@ final class PrintChunkWork {
       for (PrintChunkWork.ChunkEntry chunk : this.chunks.values()) {
          if (!this.init_Z_CachePool_StreamUt(chunk)
             && (verification ? !this.init_Z || !chunk.init_Z : chunk.load != 0)
-            && (best == null || chunk.init(position) < best.init(position) || chunk.init(position) == best.init(position) && chunk.chunkKey < best.chunkKey)) {
+            && (best == null || chunk.distSqTo(position) < best.distSqTo(position) || chunk.distSqTo(position) == best.distSqTo(position) && chunk.chunkKey < best.chunkKey)) {
             best = chunk;
          }
       }
@@ -221,13 +221,13 @@ final class PrintChunkWork {
          return (int)(this.chunkKey >> 32) * 16;
       }
 
-      int load() {
+      int minBlockZ() {
          return (int)this.chunkKey * 16;
       }
 
-      double init(Vec3 p) {
+      double distSqTo(Vec3 p) {
          double dx = Math.max(Math.max(this.minBlockX() - p.x, p.x - (this.minBlockX() + 15)), 0.0);
-         double dz = Math.max(Math.max(this.load() - p.z, p.z - (this.load() + 15)), 0.0);
+         double dz = Math.max(Math.max(this.minBlockZ() - p.z, p.z - (this.minBlockZ() + 15)), 0.0);
          return dx * dx + dz * dz;
       }
 

@@ -20,11 +20,11 @@ final class ArmorFilterMatcher {
    private ArmorFilterMatcher() {
    }
 
-   static boolean init_Z_UUID(UUID uuid) {
+   static boolean isNpcUuid(UUID uuid) {
       return uuid != null && uuid.version() == 2 && uuid.variant() == 2;
    }
 
-   static int init_I_I(int vl, boolean claimsGround, boolean supported) {
+   static int groundViolation(int vl, boolean claimsGround, boolean supported) {
       if (claimsGround && !supported) {
          return vl + 1;
       } else {
@@ -32,7 +32,7 @@ final class ArmorFilterMatcher {
       }
    }
 
-   static Map<Integer, Integer> init_Map_List(List<ArmorFilterMatcher.Inner_DataUtil> identities) {
+   static Map<Integer, Integer> duplicateNameFlags(List<ArmorFilterMatcher.Inner_DataUtil> identities) {
       Map<String, List<ArmorFilterMatcher.Inner_DataUtil>> byName = new HashMap<>();
 
       for (ArmorFilterMatcher.Inner_DataUtil id : identities) {

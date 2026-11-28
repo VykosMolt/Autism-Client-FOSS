@@ -171,7 +171,7 @@ public final class PacketCommandBuilder {
          return "";
       }
 
-      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packetClass);
+      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packetClass);
       List<String> fields = new ArrayList<>();
       if (schema != null) {
          for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
@@ -731,7 +731,7 @@ public final class PacketCommandBuilder {
    }
 
    private static PacketCommandBuilder.BuildResult buildFromSchema(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
-      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packetClass);
+      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packetClass);
       if (schema != null && !schema.fields().isEmpty()) {
          String firstError = null;
 
@@ -918,7 +918,7 @@ public final class PacketCommandBuilder {
          return withRawArgs(fields);
       }
 
-      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packetClass);
+      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packetClass);
       if (schema != null && !schema.fields().isEmpty()) {
          List<String> out = new ArrayList<>();
 
@@ -1091,7 +1091,7 @@ public final class PacketCommandBuilder {
 
       if (!field.equals("direction") && !field.equals("dir") && !field.equals("face")) {
          if (!field.equals("input") && !field.equals("click") && !field.equals("containerinput")) {
-            PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.init(packetClass);
+            PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packetClass);
             if (schema == null) {
                return null;
             }

@@ -8,14 +8,14 @@ public final class RealGamemodeSender {
    private RealGamemodeSender() {
    }
 
-   public static FakeGamemodeManager.ApplyResult init(GameType mode) {
+   public static FakeGamemodeManager.ApplyResult send(GameType mode) {
       Minecraft mc = Minecraft.getInstance();
       if (mc == null || mc.player == null || mc.player.connection == null) {
-         return FakeGamemodeManager.ApplyResult.load("Not connected.");
+         return FakeGamemodeManager.ApplyResult.fail("Not connected.");
       }
 
       if (mode == null) {
-         return FakeGamemodeManager.ApplyResult.load("Unknown game mode.");
+         return FakeGamemodeManager.ApplyResult.fail("Unknown game mode.");
       }
 
       boolean clearedFake = FakeGamemodeManager.snapshot().fakeActive();
@@ -24,6 +24,6 @@ public final class RealGamemodeSender {
       }
 
       mc.player.connection.send(new ServerboundChangeGameModePacket(mode));
-      return FakeGamemodeManager.ApplyResult.init("Requested real gamemode: " + mode.getName() + (clearedFake ? " (fake cleared)" : ""));
+      return FakeGamemodeManager.ApplyResult.ok("Requested real gamemode: " + mode.getName() + (clearedFake ? " (fake cleared)" : ""));
    }
 }

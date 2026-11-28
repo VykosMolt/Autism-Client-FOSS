@@ -29,14 +29,14 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 public class DisconnectAction implements MacroAction {
-   private boolean init_Z = true;
+   private boolean enabled = true;
    public int delayMs = 0;
    public DisconnectAction.DisconnectMode mode = DisconnectAction.DisconnectMode.DISCONNECT;
    public DisconnectAction.LagMethod lagMethod = DisconnectAction.LagMethod.CLICK_SLOT;
    public DisconnectAction.KickMethod kickMethod = DisconnectAction.KickMethod.HURT;
    public int packetCount = 200;
    public boolean useNextAction = false;
-   private transient List<MacroAction> init_List = null;
+   private transient List<MacroAction> pendingActions = null;
    public DisconnectAction.DisconnectTrigger trigger = DisconnectAction.DisconnectTrigger.TELEPORT;
    public double targetX = 0.0;
    public double targetY = 0.0;
@@ -209,15 +209,15 @@ public class DisconnectAction implements MacroAction {
       if (mc.player == null || mc.getConnection() == null) {
          AutismClientMessaging.sendPrefixed("§cNo player or network connection!");
       } else if (this.read_Z(mc)) {
-         this.update(mc);
-         this.sync(mc);
-         this.update(mc);
+         this.sendLagPackets(mc);
+         this.sendKickPackets(mc);
+         this.sendLagPackets(mc);
          AutismClientMessaging.sendPrefixed("§aKick executed!");
       }
    }
 
    public void setFollowingActions(List<MacroAction> actions) {
-      this.init_List = actions;
+      this.pendingActions = actions;
    }
 
    private void write(Minecraft mc) {
@@ -225,14 +225,14 @@ public class DisconnectAction implements MacroAction {
          AutismClientMessaging.sendPrefixed("§cNo player or network connection!");
       } else if (this.read_Z(mc)) {
          if (this.useNextAction) {
-            List<MacroAction> actions = this.init_List;
-            this.init_List = null;
+            List<MacroAction> actions = this.pendingActions;
+            this.pendingActions = null;
             if (actions == null || actions.isEmpty()) {
                AutismClientMessaging.sendPrefixed("§cKick Dupe: no next action in macro! Add action(s) after this one.");
                return;
             }
 
-            this.update(mc);
+            this.sendLagPackets(mc);
 
             for (MacroAction act : actions) {
                if (blocksClientThread(act)) {
@@ -247,18 +247,18 @@ public class DisconnectAction implements MacroAction {
                }
             }
 
-            this.sync(mc);
-            this.update(mc);
+            this.sendKickPackets(mc);
+            this.sendLagPackets(mc);
             String actNames = actions.size() == 1 ? actions.get(0).getDisplayName() : actions.size() + " actions";
             AutismClientMessaging.sendPrefixed("§aKick Dupe executed! (" + actNames + ")");
          } else {
-            this.update(mc);
+            this.sendLagPackets(mc);
             if (!this.load_Z(mc)) {
                return;
             }
 
-            this.sync(mc);
-            this.update(mc);
+            this.sendKickPackets(mc);
+            this.sendLagPackets(mc);
             AutismClientMessaging.sendPrefixed("§aKick Dupe executed! (bundle)");
          }
       }
@@ -346,7 +346,7 @@ public class DisconnectAction implements MacroAction {
       return true;
    }
 
-   private void update(Minecraft mc) {
+   private void sendLagPackets(Minecraft mc) {
       switch (this.lagMethod) {
          case CLICK_SLOT:
             for (int i = 0; i < this.packetCount; i++) {
@@ -373,7 +373,7 @@ public class DisconnectAction implements MacroAction {
       }
    }
 
-   private void sync(Minecraft mc) {
+   private void sendKickPackets(Minecraft mc) {
       switch (this.kickMethod) {
          case HURT:
             mc.getConnection().send(new ServerboundInteractPacket(mc.player.getId(), InteractionHand.MAIN_HAND, Vec3.ZERO, false));
@@ -407,7 +407,7 @@ public class DisconnectAction implements MacroAction {
       tag.putString("kickMethod", this.kickMethod.name());
       tag.putInt("packetCount", this.packetCount);
       tag.putBoolean("useNextAction", this.useNextAction);
-      tag.putBoolean("enabled", this.init_Z);
+      tag.putBoolean("enabled", this.enabled);
       tag.putString("trigger", this.trigger.name());
       tag.putDouble("targetX", this.targetX);
       tag.putDouble("targetY", this.targetY);
@@ -426,7 +426,7 @@ public class DisconnectAction implements MacroAction {
       }
 
       if (tag.contains("enabled")) {
-         this.init_Z = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       if (tag.contains("mode")) {
@@ -555,12 +555,12 @@ public class DisconnectAction implements MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init_Z;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init_Z = e;
+      this.enabled = e;
    }
 
    public enum LagMethod {

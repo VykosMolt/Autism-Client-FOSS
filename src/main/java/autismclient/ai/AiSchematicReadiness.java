@@ -36,14 +36,14 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 
 final class AiSchematicReadiness {
-   private static final AiSchematicReadiness.InconclusiveCheck init_bX_JsonUtil = new AiSchematicReadiness.InconclusiveCheck();
+   private static final AiSchematicReadiness.InconclusiveCheck INCONCLUSIVE = new AiSchematicReadiness.InconclusiveCheck();
    private static final int init_I = 1048576;
-   private static final int[][] init_IArr2 = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+   private static final int[][] SIDES = new int[][]{{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
 
    private AiSchematicReadiness() {
    }
 
-   static String init(AiSchematicReadiness.ReadinessReport report) {
+   static String blockingReason(AiSchematicReadiness.ReadinessReport report) {
       if (!report.ready() && !report.issues().isEmpty()) {
          AiSchematicReadiness.ReadinessIssue first = report.issues().getFirst();
          AiBuilder.CellSpec cell = first.cell();
@@ -106,10 +106,10 @@ final class AiSchematicReadiness {
    }
 
    static List<AiSchematicReadiness.ReadinessIssue> init(AiBuilder.Blueprint blueprint) {
-      return init(blueprint, 2147483647).issues();
+      return assessBlueprint(blueprint, 2147483647).issues();
    }
 
-   static AiSchematicReadiness.ReadinessReport init(AiBuilder.Blueprint blueprint, int exampleLimit) {
+   static AiSchematicReadiness.ReadinessReport assessBlueprint(AiBuilder.Blueprint blueprint, int exampleLimit) {
       return assess(blueprint, exampleLimit, null);
    }
 
@@ -148,7 +148,7 @@ final class AiSchematicReadiness {
 
          for (AiBuilder.CellSpec cell : blueprint.cells()) {
             AiBuilder.checkNotCancelled();
-            if (omitted.contains(init(cell.dx(), cell.dy(), cell.dz()))) {
+            if (omitted.contains(packKey(cell.dx(), cell.dy(), cell.dz()))) {
                observed.putIfAbsent(blueprint.origin().offset(cell.dx(), cell.dy(), cell.dz()).asLong(), Blocks.AIR.defaultBlockState());
             } else {
                kept.add(cell);
@@ -177,7 +177,7 @@ final class AiSchematicReadiness {
          List<AiSchematicReadiness.StateProblem> problems = states.computeIfAbsent(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()), ignored -> init_List(cell));
          issueCount += problems.size();
          if (omitted != null && !problems.isEmpty()) {
-            omitted.add(init(cell.dx(), cell.dy(), cell.dz()));
+            omitted.add(packKey(cell.dx(), cell.dy(), cell.dz()));
          }
 
          for (AiSchematicReadiness.StateProblem problem : problems) {
@@ -198,7 +198,7 @@ final class AiSchematicReadiness {
             if ((partner != null || pair.needsExisting() && context != null) && (actual == null || !init(pair.wanted(), actual))) {
                issueCount++;
                if (omitted != null) {
-                  omitted.add(init(cell.dx(), cell.dy(), cell.dz()));
+                  omitted.add(packKey(cell.dx(), cell.dy(), cell.dz()));
                }
 
                if (issues.size() < exampleLimit) {
@@ -221,7 +221,7 @@ final class AiSchematicReadiness {
       return new AiSchematicReadiness.ReadinessReport(issueCount, issues, states.size());
    }
 
-   private static long init(int x, int y, int z) {
+   private static long packKey(int x, int y, int z) {
       return (long)(x + 1048576) << 42 | (long)(y + 1048576) << 21 | z + 1048576;
    }
 
@@ -252,7 +252,7 @@ final class AiSchematicReadiness {
       for (AiBuilder.CellSpec cell : cells) {
          AiBuilder.checkNotCancelled();
          BlockState state = resolved.computeIfAbsent(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()), ignored -> AiBuilder.toBlockState(cell));
-         placed.put(init(cell.dx(), cell.dy(), cell.dz()), state);
+         placed.put(packKey(cell.dx(), cell.dy(), cell.dz()), state);
          minX = Math.min(minX, cell.dx());
          maxX = Math.max(maxX, cell.dx());
          minY = Math.min(minY, cell.dy());
@@ -268,7 +268,7 @@ final class AiSchematicReadiness {
          BlockState state = resolved.get(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()));
          if (state.getBlock() instanceof PistonBaseBlock && state.getValue(PistonBaseBlock.EXTENDED)) {
             Direction facing = state.getValue(PistonBaseBlock.FACING);
-            long head = init(cell.dx() + facing.getStepX(), cell.dy() + facing.getStepY(), cell.dz() + facing.getStepZ());
+            long head = packKey(cell.dx() + facing.getStepX(), cell.dy() + facing.getStepY(), cell.dz() + facing.getStepZ());
             if (!placed.containsKey(head)) {
                placed.put(
                   head,
@@ -292,7 +292,7 @@ final class AiSchematicReadiness {
          int x = posx.getX() - origin.getX();
          int y = posx.getY() - origin.getY();
          int z = posx.getZ() - origin.getZ();
-         BlockState statex = placed.get(init(x, y, z));
+         BlockState statex = placed.get(packKey(x, y, z));
          if (statex != null) {
             return statex;
          } else if (x >= x0 && x <= x1 && y >= y0 && y <= y1 && z >= z0 && z <= z1) {
@@ -300,7 +300,7 @@ final class AiSchematicReadiness {
          } else {
             BlockState known = context == null ? null : context.get(posx.asLong());
             if (known == null) {
-               throw init_bX_JsonUtil;
+               throw INCONCLUSIVE;
             } else {
                return known;
             }
@@ -339,7 +339,7 @@ final class AiSchematicReadiness {
             if (problem != null) {
                count++;
                if (omitted != null) {
-                  omitted.add(init(cell.dx(), cell.dy(), cell.dz()));
+                  omitted.add(packKey(cell.dx(), cell.dy(), cell.dz()));
                }
 
                if (issues.size() < exampleLimit) {
@@ -376,7 +376,7 @@ final class AiSchematicReadiness {
       for (AiBuilder.CellSpec cell : cells) {
          AiBuilder.checkNotCancelled();
          FluidState fluid = resolved.get(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties())).getFluidState();
-         long start = init(cell.dx(), cell.dy(), cell.dz());
+         long start = packKey(cell.dx(), cell.dy(), cell.dz());
          if (!fluid.isEmpty() && !seen.contains(start)) {
             boolean source = false;
             boolean fedOutside = false;
@@ -405,11 +405,11 @@ final class AiSchematicReadiness {
                   source = true;
                }
 
-               for (int[] side : init_IArr2) {
+               for (int[] side : SIDES) {
                   int nx = x + side[0];
                   int ny = y + side[1];
                   int nz = z + side[2];
-                  long next = init(nx, ny, nz);
+                  long next = packKey(nx, ny, nz);
                   BlockState neighbour = placed.get(next);
                   if (neighbour == null) {
                      if (nx < x0 || nx > x1 || ny < y0 || ny > y1 || nz < z0 || nz > z1) {
@@ -474,7 +474,7 @@ final class AiSchematicReadiness {
          maxZ = Math.max(maxZ, cell.dz());
          if (cell.block().equals("minecraft:water") || cell.block().equals("minecraft:lava")) {
             placed.put(
-               init(cell.dx(), cell.dy(), cell.dz()),
+               packKey(cell.dx(), cell.dy(), cell.dz()),
                states.computeIfAbsent(new AiSchematicReadiness.BlockStateKey(cell.block(), cell.properties()), ignored -> AiBuilder.toBlockState(cell))
             );
          }
@@ -501,11 +501,11 @@ final class AiSchematicReadiness {
                   source = true;
                }
 
-               for (int[] side : init_IArr2) {
+               for (int[] side : SIDES) {
                   int nx = x + side[0];
                   int ny = y + side[1];
                   int nz = z + side[2];
-                  long next = init(nx, ny, nz);
+                  long next = packKey(nx, ny, nz);
                   BlockState neighbour = placed.get(next);
                   if (neighbour == null) {
                      if (nx < minX || nx > maxX || ny < minY || ny > maxY || nz < minZ || nz > maxZ) {
@@ -594,7 +594,7 @@ final class AiSchematicReadiness {
                break;
             case "getBlockEntity":
                if (method.getParameterCount() != 1) {
-                  throw init_bX_JsonUtil;
+                  throw INCONCLUSIVE;
                }
 
                var10000 = null;
@@ -604,7 +604,7 @@ final class AiSchematicReadiness {
                break;
             case "getHeight":
                if (args != null && args.length != 0) {
-                  throw init_bX_JsonUtil;
+                  throw INCONCLUSIVE;
                }
 
                var10000 = 4096;
@@ -620,7 +620,7 @@ final class AiSchematicReadiness {
                break;
             default:
                if (!method.isDefault()) {
-                  throw init_bX_JsonUtil;
+                  throw INCONCLUSIVE;
                }
 
                var10000 = InvocationHandler.invokeDefault(proxy, method, args);

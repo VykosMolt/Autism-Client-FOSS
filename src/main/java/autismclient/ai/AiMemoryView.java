@@ -195,7 +195,7 @@ final class AiMemoryView {
             this.expandedIds.add(id);
          }
       }, () -> copyToClipboard(memory.text()), null);
-      autismclient.gui.ui.widgets.PillBadgeRenderer.init(
+      autismclient.gui.ui.widgets.PillBadgeRenderer.render(
          kit.renderContext,
          autismclient.gui.f.NetHelper.init(row.read() + 2, row.write() + 1, chipW, rowH - 2),
          kindLabel(memory.kind()),

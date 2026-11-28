@@ -18,7 +18,7 @@ public final class PacketSchemaRegistry {
    private PacketSchemaRegistry() {
    }
 
-   public static PacketSchemaRegistry.Inner_StreamUtil init(Class<?> packetClass) {
+   public static PacketSchemaRegistry.Inner_StreamUtil schemaFor(Class<?> packetClass) {
       if (packetClass == null) {
          return null;
       }

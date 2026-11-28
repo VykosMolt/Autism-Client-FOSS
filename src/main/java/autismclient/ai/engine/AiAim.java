@@ -197,12 +197,12 @@ public final class AiAim {
             }
 
             RotationMath.applyToPlayer(player, stepped, false);
-            AiCameraTurn.putAt(player, prevYaw, prevPitch);
+            AiCameraTurn.recordTurn(player, prevYaw, prevPitch);
             this.lastInstanceStepTick = player.tickCount;
             lastGlobalStepTick = player.tickCount;
             this.settledTicks = this.angularError() <= 1.0 ? this.settledTicks + 1 : 0;
          } else {
-            AiSilentAim.init(true);
+            AiSilentAim.setEnabled(true);
             SilentRotationManager.requestRotation("ai-assistant", 1, this.targetRotation);
             SilentRotationManager.tick(
                "ai-assistant", player, this.aimProfile.yawCap, this.aimProfile.pitchCap, this.aimProfile.streamProfile

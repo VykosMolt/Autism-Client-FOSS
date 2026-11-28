@@ -122,7 +122,7 @@ public final class CrosshairModule extends Module {
    }
 
    public CrosshairPresetGeometry.Inner_NetHelper getStyle() {
-      return CrosshairPresetGeometry.Inner_NetHelper.init(this.choice("style"));
+      return CrosshairPresetGeometry.Inner_NetHelper.byLabel(this.choice("style"));
    }
 
    private boolean isCustomStyle() {
@@ -157,7 +157,7 @@ public final class CrosshairModule extends Module {
    }
 
    public static CrosshairPixelArt defaultArt() {
-      return CrosshairPresetGeometry.init(CrosshairPresetGeometry.Inner_NetHelper.TACTICAL, 16, 1.0, 2.0, -1);
+      return CrosshairPresetGeometry.pixelArt(CrosshairPresetGeometry.Inner_NetHelper.TACTICAL, 16, 1.0, 2.0, -1);
    }
 
    public CrosshairRenderState.Inner_DataUtil renderState(CrosshairPixelArt drawing) {
@@ -182,7 +182,7 @@ public final class CrosshairModule extends Module {
    }
 
    private void init_V_50() {
-      CrosshairRenderState.init(this.renderState(this.art()));
+      CrosshairRenderState.setState(this.renderState(this.art()));
    }
 
    private void openEditor() {

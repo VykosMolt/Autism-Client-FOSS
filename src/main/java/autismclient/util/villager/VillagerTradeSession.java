@@ -246,7 +246,7 @@ public final class VillagerTradeSession {
                      match = true;
                      if (!offer.isOutOfStock()) {
                         stock = true;
-                        if (TradeOfferFilter.init(TradeOfferFilter.init(offer), this.spentEmeralds, this.emeraldBudget, this.emeraldCount(), this.emeraldReserve)) {
+                        if (TradeOfferFilter.affordable(TradeOfferFilter.cost(offer), this.spentEmeralds, this.emeraldBudget, this.emeraldCount(), this.emeraldReserve)) {
                            budgetOk = true;
                            if (this.hasPayment(offer)) {
                               this.offerIndex = i;
@@ -293,8 +293,8 @@ public final class VillagerTradeSession {
                if (ItemStack.matches(output, offer.getResult())
                   && offer.satisfiedBy(this.view.slotItem(0), this.view.slotItem(1))) {
                   this.init_ItemStack = output.copy();
-                  this.offerCost = TradeOfferFilter.init(offer);
-                  if (!TradeOfferFilter.init(this.offerCost, this.spentEmeralds, this.emeraldBudget, this.emeraldCount(), this.emeraldReserve)) {
+                  this.offerCost = TradeOfferFilter.cost(offer);
+                  if (!TradeOfferFilter.affordable(this.offerCost, this.spentEmeralds, this.emeraldBudget, this.emeraldCount(), this.emeraldReserve)) {
                      return this.finish(VillagerTradeSession.Inner_CachePool.BUDGET, "Emerald limit reached");
                   }
 

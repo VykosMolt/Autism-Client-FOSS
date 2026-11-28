@@ -658,8 +658,8 @@ public final class SdfIconRenderer {
             float top = y + (h - size) * 0.5F;
             float u = (float)tile / init_CachePool_DataUtilArr.length;
             float u1 = (tile + 1.0F) / init_CachePool_DataUtilArr.length;
-            TexturedQuadRenderState element = TexturedQuadRenderState.init(
-               SdfRenderPipelines.load(),
+            TexturedQuadRenderState element = TexturedQuadRenderState.create(
+               SdfRenderPipelines.pipeline(),
                TextureSetup.singleTexture(atlas.getTextureView(), atlas.getSampler()),
                new Matrix3x2f(graphics.pose()),
                new float[]{left, top, left + size, top + size, u, 0.0F, u1, 1.0F},

@@ -44,7 +44,7 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       }
 
       WaitPacketMatchAction.Inner_CachePool legacy = this.init_aM_CachePool();
-      return legacy.packetName.isBlank() && legacy.load.isBlank() ? List.of() : List.of(legacy);
+      return legacy.packetName.isBlank() && legacy.fieldName.isBlank() ? List.of() : List.of(legacy);
    }
 
    public WaitPacketMatchAction.Inner_CachePool init_aM_CachePool_aM_DataUtil_Str(WaitPacketMatchAction.Inner_DataUtil direction, String packetName) {
@@ -61,9 +61,9 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       if (first != null) {
          this.direction = first.direction;
          this.packetName = first.packetName == null ? "" : first.packetName;
-         this.fieldName = first.load == null ? "" : first.load;
+         this.fieldName = first.fieldName == null ? "" : first.fieldName;
          this.operator = first.operator == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS : first.operator;
-         this.value = first.read == null ? "" : first.read;
+         this.value = first.value == null ? "" : first.value;
       }
    }
 
@@ -87,19 +87,19 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
          return false;
       }
 
-      if (!PacketGateManager.init(rule.packetName, packet, packetDirection)) {
+      if (!PacketGateManager.matches(rule.packetName, packet, packetDirection)) {
          return false;
       }
 
-      if (rule.load != null && !rule.load.isBlank()) {
-         Object field = this.init_Obj_Packet_Str(packet, rule.load);
+      if (rule.fieldName != null && !rule.fieldName.isBlank()) {
+         Object field = this.init_Obj_Packet_Str(packet, rule.fieldName);
          WaitPacketMatchAction.Inner_StreamUtil op = rule.operator == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS : rule.operator;
          if (op == WaitPacketMatchAction.Inner_StreamUtil.EXISTS) {
             return field != null;
          }
 
          String actual = field == null ? "" : String.valueOf(field);
-         String expected = rule.read == null ? "" : rule.read;
+         String expected = rule.value == null ? "" : rule.value;
          boolean var10000;
          switch (op) {
             case EXISTS:
@@ -128,9 +128,9 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
       WaitPacketMatchAction.Inner_CachePool rule = new WaitPacketMatchAction.Inner_CachePool();
       rule.direction = this.direction == null ? WaitPacketMatchAction.Inner_DataUtil.C2S : this.direction;
       rule.packetName = this.packetName == null ? "" : this.packetName;
-      rule.load = this.fieldName == null ? "" : this.fieldName;
+      rule.fieldName = this.fieldName == null ? "" : this.fieldName;
       rule.operator = this.operator == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS : this.operator;
-      rule.read = this.value == null ? "" : this.value;
+      rule.value = this.value == null ? "" : this.value;
       return rule;
    }
 
@@ -304,8 +304,8 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
 
       WaitPacketMatchAction.Inner_CachePool first = activeRules.get(0);
       String label = "Wait " + first.direction + " " + first.packetName;
-      if (first.load != null && !first.load.isBlank()) {
-         label = label + " " + first.load + " " + first.operator + " " + first.read;
+      if (first.fieldName != null && !first.fieldName.isBlank()) {
+         label = label + " " + first.fieldName + " " + first.operator + " " + first.value;
       }
 
       return activeRules.size() == 1 ? label : label + " (+" + (activeRules.size() - 1) + ")";
@@ -317,29 +317,29 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
    }
 
    @Override
-   public String load() {
+   public String getSaveAs() {
       return this.saveAs;
    }
 
    @Override
-   public void a_(String name) {
+   public void setSaveAs(String name) {
       this.saveAs = name == null ? "" : name;
    }
 
    public static class Inner_CachePool {
       public WaitPacketMatchAction.Inner_DataUtil direction = WaitPacketMatchAction.Inner_DataUtil.C2S;
       public String packetName = "";
-      public String load = "";
+      public String fieldName = "";
       public WaitPacketMatchAction.Inner_StreamUtil operator = WaitPacketMatchAction.Inner_StreamUtil.EXISTS;
-      public String read = "";
+      public String value = "";
 
       public WaitPacketMatchAction.Inner_CachePool copy() {
          WaitPacketMatchAction.Inner_CachePool copy = new WaitPacketMatchAction.Inner_CachePool();
          copy.direction = this.direction;
          copy.packetName = this.packetName == null ? "" : this.packetName;
-         copy.load = this.load == null ? "" : this.load;
+         copy.fieldName = this.fieldName == null ? "" : this.fieldName;
          copy.operator = this.operator;
-         copy.read = this.read == null ? "" : this.read;
+         copy.value = this.value == null ? "" : this.value;
          return copy;
       }
 
@@ -347,9 +347,9 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
          CompoundTag tag = new CompoundTag();
          tag.putString("direction", this.direction.name());
          tag.putString("packetName", this.packetName == null ? "" : this.packetName);
-         tag.putString("fieldName", this.load == null ? "" : this.load);
+         tag.putString("fieldName", this.fieldName == null ? "" : this.fieldName);
          tag.putString("operator", this.operator.name());
-         tag.putString("value", this.read == null ? "" : this.read);
+         tag.putString("value", this.value == null ? "" : this.value);
          return tag;
       }
 
@@ -357,9 +357,9 @@ public class WaitPacketMatchAction implements CaptureOutputAction, MacroAction {
          WaitPacketMatchAction.Inner_CachePool rule = new WaitPacketMatchAction.Inner_CachePool();
          rule.direction = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_DataUtil.class, tag.getStringOr("direction", "C2S"), WaitPacketMatchAction.Inner_DataUtil.C2S);
          rule.packetName = tag.getStringOr("packetName", "");
-         rule.load = tag.getStringOr("fieldName", "");
+         rule.fieldName = tag.getStringOr("fieldName", "");
          rule.operator = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_StreamUtil.class, tag.getStringOr("operator", "EXISTS"), WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
-         rule.read = tag.getStringOr("value", "");
+         rule.value = tag.getStringOr("value", "");
          return rule;
       }
    }

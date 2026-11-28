@@ -46,7 +46,7 @@ public final class MapTooltipPreview {
       ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> load());
    }
 
-   public static Optional<TooltipComponent> init(ItemStack stack, Optional<TooltipComponent> original) {
+   public static Optional<TooltipComponent> tooltip(ItemStack stack, Optional<TooltipComponent> original) {
       if (!original.isPresent() && stack != null && !stack.isEmpty() && autismclient.modules.InventoryTweaksModule.isMapPreviewEnabled()) {
          MapId id = stack.get(DataComponents.MAP_ID);
          if (mapData(id) == null) {
@@ -70,21 +70,21 @@ public final class MapTooltipPreview {
       Minecraft mc = Minecraft.getInstance();
       if (id != null && mc != null && mc.level != null && autismclient.modules.InventoryTweaksModule.isMapPreviewEnabled()) {
          MapItemSavedData data = MapItem.getSavedData(id, mc.level);
-         return nonEmptyCache.init(mc.level, id, data, AutismSessionState.getInstance().getClientTick()) ? data : null;
+         return nonEmptyCache.isNonEmpty(mc.level, id, data, AutismSessionState.getInstance().getClientTick()) ? data : null;
       } else {
          return null;
       }
    }
 
    public static void invalidate(MapId id) {
-      nonEmptyCache.init(id);
+      nonEmptyCache.invalidate(id);
       if (id != null && id.equals(cachedId)) {
          cachedData = null;
       }
    }
 
    private static void load() {
-      nonEmptyCache.init();
+      nonEmptyCache.clear();
       cachedId = null;
       cachedData = null;
       cachedLevel = null;

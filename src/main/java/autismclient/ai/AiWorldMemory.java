@@ -42,35 +42,35 @@ final class AiWorldMemory {
    private static final int init_I = 256;
    private static final int load_I = 32;
    private static final int read_I = 4096;
-   private static final LinkedHashMap<Long, AiWorldMemory.ChunkScan> init_LinkedHashMap = new LinkedHashMap<>(64, 0.75F, true);
-   private static final Map<Long, Long> init_Map = new HashMap<>();
-   private static final Map<Long, AiWorldMemory.Landmark> load_Map = new LinkedHashMap<>();
-   private static Object init_Obj;
-   private static Object load_Obj;
-   private static String init_Str = "";
-   private static String load_Str = "";
-   private static long init_J;
-   private static long load_J;
-   private static int write_I;
-   private static long read_J;
-   private static long write_J;
-   private static boolean init_Z;
-   private static boolean load_Z;
+   private static final LinkedHashMap<Long, AiWorldMemory.ChunkScan> chunkScans = new LinkedHashMap<>(64, 0.75F, true);
+   private static final Map<Long, Long> unusedChunkMap = new HashMap<>();
+   private static final Map<Long, AiWorldMemory.Landmark> savedLandmarks = new LinkedHashMap<>();
+   private static Object trackedLevel;
+   private static Object trackedConnection;
+   private static String worldKey = "";
+   private static String dimension = "";
+   private static long nextScanTick;
+   private static long worldRevision;
+   private static int rescanCursor;
+   private static long generation;
+   private static long nextSaveTick;
+   private static boolean discoveryLoaded;
+   private static boolean dirty;
 
    private AiWorldMemory() {
    }
 
    static void tick(Minecraft mc) {
       if (mc.level != null && mc.player != null) {
-         load(mc);
+         syncWorld(mc);
          long now = AiThreats.currentClientTick();
-         if (now >= write_J) {
-            write_J = now + 200L;
-            load();
+         if (now >= nextSaveTick) {
+            nextSaveTick = now + 200L;
+            saveDiscoveries();
          }
 
-         if (now >= init_J) {
-            init_J = now + 20L;
+         if (now >= nextScanTick) {
+            nextScanTick = now + 20L;
             int cx = mc.player.getBlockX() >> 4;
             int cz = mc.player.getBlockZ() >> 4;
 
@@ -80,124 +80,124 @@ final class AiWorldMemory {
                LevelChunk live = mc.level.getChunkSource().getChunk(x, z, ChunkStatus.FULL, false);
                if (live != null) {
                   long key = autismclient.ai.engine.AiGridRevisions.chunkKey(x, z);
-                  AiWorldMemory.ChunkScan remembered = init_LinkedHashMap.get(key);
+                  AiWorldMemory.ChunkScan remembered = chunkScans.get(key);
                   int revision = autismclient.ai.engine.AiGridRevisions.revisionOf(key);
                   if (remembered == null) {
-                     init_LinkedHashMap.put(key, new AiWorldMemory.ChunkScan(live, revision));
-                  } else if (remembered.init_WeakReference.get() != live || remembered.read != revision || remembered.init_Z && now - remembered.init_J > 600L) {
-                     remembered.init(live, revision);
+                     chunkScans.put(key, new AiWorldMemory.ChunkScan(live, revision));
+                  } else if (remembered.chunkRef.get() != live || remembered.revision != revision || remembered.complete && now - remembered.scannedAt > 600L) {
+                     remembered.rebind(live, revision);
                   }
                }
             }
 
-            while (init_LinkedHashMap.size() > 256) {
-               init_LinkedHashMap.remove(init_LinkedHashMap.keySet().iterator().next());
+            while (chunkScans.size() > 256) {
+               chunkScans.remove(chunkScans.keySet().iterator().next());
             }
          }
 
          long stop = System.nanoTime() + 750000L;
          int budget = 4096;
-         ArrayList<Entry<Long, AiWorldMemory.ChunkScan>> entries = new ArrayList<>(init_LinkedHashMap.entrySet());
+         ArrayList<Entry<Long, AiWorldMemory.ChunkScan>> entries = new ArrayList<>(chunkScans.entrySet());
 
          for (int examined = 0; examined < entries.size(); examined++) {
-            Entry<Long, AiWorldMemory.ChunkScan> entry = entries.get(Math.floorMod(write_I++, entries.size()));
+            Entry<Long, AiWorldMemory.ChunkScan> entry = entries.get(Math.floorMod(rescanCursor++, entries.size()));
             AiWorldMemory.ChunkScan chunk = entry.getValue();
-            if (!chunk.init_Z) {
+            if (!chunk.complete) {
                int cx = (int)(entry.getKey() >> 32);
                int cz = (int)entry.getKey().longValue();
                LevelChunk live = mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
                if (live != null) {
                   int revision = autismclient.ai.engine.AiGridRevisions.revisionOf(entry.getKey());
-                  if (chunk.init_WeakReference.get() != live || chunk.read != revision) {
-                     chunk.init(live, revision);
+                  if (chunk.chunkRef.get() != live || chunk.revision != revision) {
+                     chunk.rebind(live, revision);
                   }
 
                   LevelChunkSection[] sections = live.getSections();
 
-                  while (chunk.init_I < sections.length && budget > 0) {
-                     LevelChunkSection section = sections[chunk.init_I];
+                  while (chunk.sectionCursor < sections.length && budget > 0) {
+                     LevelChunkSection section = sections[chunk.sectionCursor];
                      if (section != null && !section.hasOnlyAir()) {
-                        while (chunk.load_I < 4096 && budget-- > 0) {
-                           if ((chunk.load_I & 63) == 0 && System.nanoTime() >= stop) {
+                        while (chunk.cellCursor < 4096 && budget-- > 0) {
+                           if ((chunk.cellCursor & 63) == 0 && System.nanoTime() >= stop) {
                               return;
                            }
 
-                           int cell = chunk.load_I++;
+                           int cell = chunk.cellCursor++;
                            int x = cell & 15;
                            int z = cell >> 4 & 15;
                            int y = cell >> 8;
-                           BlockPos pos = new BlockPos((cx << 4) + x, (live.getSectionYFromSectionIndex(chunk.init_I) << 4) + y, (cz << 4) + z);
-                           chunk.init(pos, section.getBlockState(x, y, z));
+                           BlockPos pos = new BlockPos((cx << 4) + x, (live.getSectionYFromSectionIndex(chunk.sectionCursor) << 4) + y, (cz << 4) + z);
+                           chunk.observe(pos, section.getBlockState(x, y, z));
                         }
 
-                        if (chunk.load_I >= 4096) {
-                           chunk.init_I++;
-                           chunk.load_I = 0;
+                        if (chunk.cellCursor >= 4096) {
+                           chunk.sectionCursor++;
+                           chunk.cellCursor = 0;
                         }
                      } else {
-                        chunk.init_I++;
-                        chunk.load_I = 0;
+                        chunk.sectionCursor++;
+                        chunk.cellCursor = 0;
                      }
                   }
 
-                  chunk.init_J = now;
-                  if (chunk.init_I >= sections.length) {
-                     chunk.init_Z = true;
+                  chunk.scannedAt = now;
+                  if (chunk.sectionCursor >= sections.length) {
+                     chunk.complete = true;
                   }
 
-                  load_J++;
+                  worldRevision++;
                   if (budget <= 0 || System.nanoTime() >= stop) {
                      break;
                   }
                }
             }
          }
-      } else if (init_Obj != null) {
-         init_V();
+      } else if (trackedLevel != null) {
+         saveAndClear();
       }
    }
 
    static void init(BlockPos pos) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.level == init_Obj && mc.getConnection() == load_Obj && AiTerrain.isLoaded(mc.level, pos)) {
-         AiWorldMemory.ChunkScan chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
-         if (load_Map.remove(pos.asLong()) != null) {
-            load_J++;
+      if (mc.level == trackedLevel && mc.getConnection() == trackedConnection && AiTerrain.isLoaded(mc.level, pos)) {
+         AiWorldMemory.ChunkScan chunk = chunkScans.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
+         if (savedLandmarks.remove(pos.asLong()) != null) {
+            worldRevision++;
          }
 
          if (chunk != null) {
-            chunk.init(pos, mc.level.getBlockState(pos));
-            load_J++;
+            chunk.observe(pos, mc.level.getBlockState(pos));
+            worldRevision++;
          }
       }
    }
 
-   private static void load(Minecraft mc) {
+   private static void syncWorld(Minecraft mc) {
       String current = AiWorldIdentity.currentWorldKey(mc);
       String dim = AiWorldIdentity.currentDimensionId(mc);
-      if (init_Obj != mc.level || load_Obj != mc.getConnection() || !init_Str.equals(current) || !load_Str.equals(dim)) {
-         init_V();
-         init_Obj = mc.level;
-         load_Obj = mc.getConnection();
-         init_Str = current;
-         load_Str = dim;
+      if (trackedLevel != mc.level || trackedConnection != mc.getConnection() || !worldKey.equals(current) || !dimension.equals(dim)) {
+         saveAndClear();
+         trackedLevel = mc.level;
+         trackedConnection = mc.getConnection();
+         worldKey = current;
+         dimension = dim;
       }
 
       AiService service = AiService.getExistingInstance();
-      if (!init_Z && service != null && init_Obj != null) {
-         String requestedWorld = init_Str;
-         String requestedDimension = load_Str;
-         Object requestedLevel = init_Obj;
-         Object requestedConnection = load_Obj;
-         long requestedGeneration = read_J;
-         init_Z = service.loadDiscoveryMemory(
-            init_Str,
-            load_Str,
+      if (!discoveryLoaded && service != null && trackedLevel != null) {
+         String requestedWorld = worldKey;
+         String requestedDimension = dimension;
+         Object requestedLevel = trackedLevel;
+         Object requestedConnection = trackedConnection;
+         long requestedGeneration = generation;
+         discoveryLoaded = service.loadDiscoveryMemory(
+            worldKey,
+            dimension,
             stored -> {
                Minecraft client = Minecraft.getInstance();
-               if (read_J == requestedGeneration
-                  && init_Obj == requestedLevel
-                  && load_Obj == requestedConnection
+               if (generation == requestedGeneration
+                  && trackedLevel == requestedLevel
+                  && trackedConnection == requestedConnection
                   && client.level == requestedLevel
                   && client.getConnection() == requestedConnection
                   && AiWorldIdentity.currentWorldKey(client).equals(requestedWorld)
@@ -214,10 +214,10 @@ final class AiWorldMemory {
                               if (!block.isEmpty() && !category.isEmpty() && block.length() <= 256 && category.length() <= 64) {
                                  long observed = saved.has("observedAtMs") ? saved.get("observedAtMs").getAsLong() : 0L;
                                  if (observed >= 0L && observed <= System.currentTimeMillis()) {
-                                    AiWorldMemory.ChunkScan indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
-                                    if ((indexed == null || !indexed.init_Map.containsKey(pos.asLong()))
+                                    AiWorldMemory.ChunkScan indexed = chunkScans.get(autismclient.ai.engine.AiGridRevisions.chunkKey(pos.getX() >> 4, pos.getZ() >> 4));
+                                    if ((indexed == null || !indexed.landmarks.containsKey(pos.asLong()))
                                        && (!AiTerrain.isLoaded(client.level, pos) || block.equals(AiWorldScan.blockId(client.level.getBlockState(pos))))) {
-                                       load_Map.put(pos.asLong(), new AiWorldMemory.Landmark(pos, category, block, -1L, -1L, observed));
+                                       savedLandmarks.put(pos.asLong(), new AiWorldMemory.Landmark(pos, category, block, -1L, -1L, observed));
                                     }
                                  }
                               }
@@ -227,45 +227,45 @@ final class AiWorldMemory {
                      }
                   }
 
-                  load_Z = true;
-                  load_J++;
-                  load();
+                  dirty = true;
+                  worldRevision++;
+                  saveDiscoveries();
                }
             }
          );
       }
    }
 
-   private static void init_V() {
-      if (init_Obj != null) {
-         load();
+   private static void saveAndClear() {
+      if (trackedLevel != null) {
+         saveDiscoveries();
       }
 
-      init_LinkedHashMap.clear();
-      init_Map.clear();
-      load_Map.clear();
-      load_Obj = null;
-      init_Obj = null;
-      load_Str = "";
-      init_Str = "";
-      write_J = 0L;
-      init_J = 0L;
-      write_I = 0;
-      load_Z = false;
-      init_Z = false;
-      read_J++;
-      load_J++;
+      chunkScans.clear();
+      unusedChunkMap.clear();
+      savedLandmarks.clear();
+      trackedConnection = null;
+      trackedLevel = null;
+      dimension = "";
+      worldKey = "";
+      nextSaveTick = 0L;
+      nextScanTick = 0L;
+      rescanCursor = 0;
+      dirty = false;
+      discoveryLoaded = false;
+      generation++;
+      worldRevision++;
    }
 
-   private static void load() {
+   private static void saveDiscoveries() {
       AiService service = AiService.getExistingInstance();
-      if (service != null && init_Obj != null && load_Z) {
+      if (service != null && trackedLevel != null && dirty) {
          Map<Long, AiWorldMemory.Landmark> sampled = new LinkedHashMap<>();
          int examined = 0;
 
          label49:
-         for (AiWorldMemory.ChunkScan chunk : init_LinkedHashMap.values()) {
-            for (AiWorldMemory.Landmark fact : chunk.init_Map.values()) {
+         for (AiWorldMemory.ChunkScan chunk : chunkScans.values()) {
+            for (AiWorldMemory.Landmark fact : chunk.landmarks.values()) {
                sampled.put(fact.pos.asLong(), fact);
                if (++examined >= 4096) {
                   break label49;
@@ -273,7 +273,7 @@ final class AiWorldMemory {
             }
          }
 
-         for (AiWorldMemory.Landmark fact : load_Map.values()) {
+         for (AiWorldMemory.Landmark fact : savedLandmarks.values()) {
             sampled.putIfAbsent(fact.pos.asLong(), fact);
          }
 
@@ -296,21 +296,21 @@ final class AiWorldMemory {
             }
          }
 
-         service.saveDiscoveryMemory(init_Str, load_Str, saved);
+         service.saveDiscoveryMemory(worldKey, dimension, saved);
       }
    }
 
    static void reset(String resetWorld) {
-      if (resetWorld == null || resetWorld.equals(init_Str)) {
-         load_Map.clear();
-         load_Z = true;
-         init_Z = true;
-         read_J++;
-         load_J++;
+      if (resetWorld == null || resetWorld.equals(worldKey)) {
+         savedLandmarks.clear();
+         dirty = true;
+         discoveryLoaded = true;
+         generation++;
+         worldRevision++;
       }
    }
 
-   private static String init_Str(BlockState state) {
+   private static String categoryOf(BlockState state) {
       String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
       if (id.contains("diamond_ore")) {
          return "diamond";
@@ -397,17 +397,17 @@ final class AiWorldMemory {
 
    static List<BlockPos> indexed(Predicate<BlockState> target, int radiusChunks, int perChunk, int cap) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.level != null && mc.level == init_Obj && mc.player != null && mc.getConnection() == load_Obj) {
+      if (mc.level != null && mc.level == trackedLevel && mc.player != null && mc.getConnection() == trackedConnection) {
          List<BlockPos> out = new ArrayList<>();
          int cx = mc.player.getBlockX() >> 4;
          int cz = mc.player.getBlockZ() >> 4;
 
          label41:
          for (int[] offset : AiWorldScan.sortedChunkOffsets(radiusChunks)) {
-            AiWorldMemory.ChunkScan chunk = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(cx + offset[0], cz + offset[1]));
+            AiWorldMemory.ChunkScan chunk = chunkScans.get(autismclient.ai.engine.AiGridRevisions.chunkKey(cx + offset[0], cz + offset[1]));
             if (chunk != null) {
                int found = 0;
-               Iterator var12 = chunk.init_Map.values().iterator();
+               Iterator var12 = chunk.landmarks.values().iterator();
 
                while (true) {
                   if (var12.hasNext()) {
@@ -440,7 +440,7 @@ final class AiWorldMemory {
    static JsonObject describe(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.player != null) {
-         load(mc);
+         syncWorld(mc);
          String requested = AiJson.getString(args, "category", "");
          int limit = Math.max(1, Math.min(32, AiJson.getInt(args, "limit", 12)));
          int radius = Math.max(16, Math.min(192, AiJson.getInt(args, "radius", 96)));
@@ -449,7 +449,7 @@ final class AiWorldMemory {
          int available = 0;
          int complete = 0;
 
-         for (Entry<Long, AiWorldMemory.ChunkScan> entry : init_LinkedHashMap.entrySet()) {
+         for (Entry<Long, AiWorldMemory.ChunkScan> entry : chunkScans.entrySet()) {
             int cx = (int)(entry.getKey() >> 32);
             int cz = (int)entry.getKey().longValue();
             boolean loaded = mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false) != null;
@@ -457,11 +457,11 @@ final class AiWorldMemory {
                available++;
             }
 
-            if (loaded && entry.getValue().init_Z && entry.getValue().read == autismclient.ai.engine.AiGridRevisions.revisionOf(entry.getKey())) {
+            if (loaded && entry.getValue().complete && entry.getValue().revision == autismclient.ai.engine.AiGridRevisions.revisionOf(entry.getKey())) {
                complete++;
             }
 
-            for (AiWorldMemory.Landmark fact : entry.getValue().init_Map.values()) {
+            for (AiWorldMemory.Landmark fact : entry.getValue().landmarks.values()) {
                if ((requested.isEmpty() || requested.equals(fact.category))
                   && !(fact.pos.distSqr(origin) > (double)radius * radius)
                   && (!loaded || fact.block.equals(AiWorldScan.blockId(mc.level.getBlockState(fact.pos))))) {
@@ -470,10 +470,10 @@ final class AiWorldMemory {
             }
          }
 
-         for (AiWorldMemory.Landmark fact : load_Map.values()) {
+         for (AiWorldMemory.Landmark fact : savedLandmarks.values()) {
             if ((requested.isEmpty() || requested.equals(fact.category)) && !(fact.pos.distSqr(origin) > (double)radius * radius)) {
-               AiWorldMemory.ChunkScan indexed = init_LinkedHashMap.get(autismclient.ai.engine.AiGridRevisions.chunkKey(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
-               if ((indexed == null || !indexed.init_Map.containsKey(fact.pos.asLong()))
+               AiWorldMemory.ChunkScan indexed = chunkScans.get(autismclient.ai.engine.AiGridRevisions.chunkKey(fact.pos.getX() >> 4, fact.pos.getZ() >> 4));
+               if ((indexed == null || !indexed.landmarks.containsKey(fact.pos.asLong()))
                   && (!AiTerrain.isLoaded(mc.level, fact.pos) || fact.block.equals(AiWorldScan.blockId(mc.level.getBlockState(fact.pos))))) {
                   found.add(fact);
                }
@@ -484,7 +484,7 @@ final class AiWorldMemory {
          JsonArray candidates = new JsonArray();
 
          for (AiWorldMemory.Landmark fact : found.subList(0, Math.min(limit, found.size()))) {
-            candidates.add(init(mc, fact));
+            candidates.add(landmarkJson(mc, fact));
          }
 
          JsonArray entities = new JsonArray();
@@ -495,9 +495,9 @@ final class AiWorldMemory {
                if (entity instanceof LivingEntity || AiProjectiles.isProjectile(entity) || entity instanceof EndCrystal) {
                   JsonObject observed = AiJson.objectOf(
                      "world",
-                     init_Str,
+                     worldKey,
                      "dimension",
-                     load_Str,
+                     dimension,
                      "id",
                      entity.getId(),
                      "uuid",
@@ -544,7 +544,7 @@ final class AiWorldMemory {
             "capabilities",
             snapshotJson(),
             "indexRevision",
-            load_J,
+            worldRevision,
             "terrainRevision",
             autismclient.ai.engine.AiGridRevisions.globalRevision(),
             "candidates",
@@ -552,11 +552,11 @@ final class AiWorldMemory {
             "entities",
             entities,
             "frontiers",
-            init(mc, limit),
+            scanBordersJson(mc, limit),
             "coverage",
             AiJson.objectOf(
                "indexedChunks",
-               init_LinkedHashMap.size(),
+               chunkScans.size(),
                "availableChunks",
                available,
                "fullyIndexedAvailableChunks",
@@ -574,13 +574,13 @@ final class AiWorldMemory {
       }
    }
 
-   private static JsonObject init(Minecraft mc, AiWorldMemory.Landmark fact) {
+   private static JsonObject landmarkJson(Minecraft mc, AiWorldMemory.Landmark fact) {
       boolean live = AiTerrain.isLoaded(mc.level, fact.pos);
       JsonObject out = AiJson.objectOf(
          "world",
-         init_Str,
+         worldKey,
          "dimension",
-         load_Str,
+         dimension,
          "position",
          fact.pos.toShortString(),
          "block",
@@ -644,7 +644,7 @@ final class AiWorldMemory {
          }
 
          if (List.of("diamond", "iron", "gold").contains(fact.category) && AiWorldScan.blockId(state).contains("ore")) {
-            out.add("observedVein", load(mc, fact));
+            out.add("observedVein", veinJson(mc, fact));
          }
 
          if (!state.getFluidState().isEmpty()) {
@@ -666,7 +666,7 @@ final class AiWorldMemory {
                && AiTerrain.isLoaded(mc.level, stand.below())
                && AiTerrain.isLoaded(mc.level, stand.above())
                && AiCombat.isSafeStep(mc, stand)
-               && !autismclient.ai.engine.AiEnvironmentHazards.init(mc.level, stand)
+               && !autismclient.ai.engine.AiEnvironmentHazards.isHazardous(mc.level, stand)
                && !mc.level.getBlockState(stand.below()).getCollisionShape(mc.level, stand.below()).isEmpty()
                && mc.level.getBlockState(stand).getCollisionShape(mc.level, stand).isEmpty()
                && mc.level.getBlockState(stand.above()).getCollisionShape(mc.level, stand.above()).isEmpty()
@@ -685,7 +685,7 @@ final class AiWorldMemory {
       return out;
    }
 
-   private static JsonObject load(Minecraft mc, AiWorldMemory.Landmark anchor) {
+   private static JsonObject veinJson(Minecraft mc, AiWorldMemory.Landmark anchor) {
       ArrayDeque<BlockPos> pending = new ArrayDeque<>();
       HashSet<BlockPos> examined = new HashSet<>();
       JsonArray cells = new JsonArray();
@@ -699,7 +699,7 @@ final class AiWorldMemory {
                partial = true;
             } else {
                BlockState state = mc.level.getBlockState(pos);
-               if (anchor.category.equals(init_Str(state)) && AiWorldScan.blockId(state).contains("ore")) {
+               if (anchor.category.equals(categoryOf(state)) && AiWorldScan.blockId(state).contains("ore")) {
                   cells.add(pos.toShortString());
 
                   for (Direction direction : Direction.values()) {
@@ -725,9 +725,9 @@ final class AiWorldMemory {
    }
 
    static void load(BlockPos at) {
-      init_Map.put(autismclient.ai.engine.AiGridRevisions.chunkKey(at.getX() >> 4, at.getZ() >> 4), AiThreats.currentClientTick() + 600L);
-      if (init_Map.size() > 256) {
-         init_Map.remove(init_Map.keySet().iterator().next());
+      unusedChunkMap.put(autismclient.ai.engine.AiGridRevisions.chunkKey(at.getX() >> 4, at.getZ() >> 4), AiThreats.currentClientTick() + 600L);
+      if (unusedChunkMap.size() > 256) {
+         unusedChunkMap.remove(unusedChunkMap.keySet().iterator().next());
       }
    }
 
@@ -741,12 +741,12 @@ final class AiWorldMemory {
          || state.getBlock() instanceof CampfireBlock && state.getValue(CampfireBlock.LIT);
    }
 
-   private static JsonArray init(Minecraft mc, int limit) {
+   private static JsonArray scanBordersJson(Minecraft mc, int limit) {
       JsonArray result = new JsonArray();
       List<BlockPos> borders = new ArrayList<>();
 
-      for (Entry<Long, AiWorldMemory.ChunkScan> entry : init_LinkedHashMap.entrySet()) {
-         if (entry.getValue().init_Z) {
+      for (Entry<Long, AiWorldMemory.ChunkScan> entry : chunkScans.entrySet()) {
+         if (entry.getValue().complete) {
             int cx = (int)(entry.getKey() >> 32);
             int cz = (int)entry.getKey().longValue();
             if (mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false) != null) {
@@ -754,7 +754,7 @@ final class AiWorldMemory {
                   int x = cx + direction.getStepX();
                   int z = cz + direction.getStepZ();
                   long key = autismclient.ai.engine.AiGridRevisions.chunkKey(x, z);
-                  if (init_Map.getOrDefault(key, 0L) <= AiThreats.currentClientTick() && !init_LinkedHashMap.containsKey(key)) {
+                  if (unusedChunkMap.getOrDefault(key, 0L) <= AiThreats.currentClientTick() && !chunkScans.containsKey(key)) {
                      borders.add(new BlockPos((cx << 4) + 8 + direction.getStepX() * 7, mc.player.getBlockY(), (cz << 4) + 8 + direction.getStepZ() * 7));
                   }
                }
@@ -776,48 +776,48 @@ final class AiWorldMemory {
    }
 
    private static final class ChunkScan {
-      WeakReference<LevelChunk> init_WeakReference;
-      final Map<Long, AiWorldMemory.Landmark> init_Map = new LinkedHashMap<>();
-      final Map<String, Integer> load_Map = new HashMap<>();
-      int init_I;
-      int load_I;
-      int read;
-      long init_J;
-      boolean init_Z;
+      WeakReference<LevelChunk> chunkRef;
+      final Map<Long, AiWorldMemory.Landmark> landmarks = new LinkedHashMap<>();
+      final Map<String, Integer> categoryCounts = new HashMap<>();
+      int sectionCursor;
+      int cellCursor;
+      int revision;
+      long scannedAt;
+      boolean complete;
 
       ChunkScan(LevelChunk source, int revision) {
-         this.init_WeakReference = new WeakReference<>(source);
-         this.read = revision;
+         this.chunkRef = new WeakReference<>(source);
+         this.revision = revision;
       }
 
-      void init(LevelChunk source, int revision) {
-         this.init_WeakReference = new WeakReference<>(source);
-         this.read = revision;
-         this.init_I = this.load_I = 0;
-         this.init_Z = false;
-         this.init_Map.clear();
-         this.load_Map.clear();
+      void rebind(LevelChunk source, int revision) {
+         this.chunkRef = new WeakReference<>(source);
+         this.revision = revision;
+         this.sectionCursor = this.cellCursor = 0;
+         this.complete = false;
+         this.landmarks.clear();
+         this.categoryCounts.clear();
       }
 
-      void init(BlockPos pos, BlockState state) {
-         AiWorldMemory.load_Map.remove(pos.asLong());
-         AiWorldMemory.Landmark old = this.init_Map.remove(pos.asLong());
+      void observe(BlockPos pos, BlockState state) {
+         AiWorldMemory.savedLandmarks.remove(pos.asLong());
+         AiWorldMemory.Landmark old = this.landmarks.remove(pos.asLong());
          if (old != null) {
-            this.load_Map.computeIfPresent(old.category, (key, count) -> Math.max(0, count - 1));
-            AiWorldMemory.load_J++;
+            this.categoryCounts.computeIfPresent(old.category, (key, count) -> Math.max(0, count - 1));
+            AiWorldMemory.worldRevision++;
          }
 
-         String category = AiWorldMemory.init_Str(state);
-         if (category != null && this.load_Map.getOrDefault(category, 0) < 32) {
-            this.init_Map
+         String category = AiWorldMemory.categoryOf(state);
+         if (category != null && this.categoryCounts.getOrDefault(category, 0) < 32) {
+            this.landmarks
                .put(
                   pos.asLong(),
                   new AiWorldMemory.Landmark(
                      pos.immutable(), category, AiWorldScan.blockId(state), AiThreats.currentClientTick(), autismclient.ai.engine.AiGridRevisions.globalRevision(), System.currentTimeMillis()
                   )
                );
-            AiWorldMemory.load_J++;
-            this.load_Map.merge(category, 1, Integer::sum);
+            AiWorldMemory.worldRevision++;
+            this.categoryCounts.merge(category, 1, Integer::sum);
          }
       }
    }

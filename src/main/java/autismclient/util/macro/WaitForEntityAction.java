@@ -26,7 +26,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
    public double f_z_D = 0.0;
    public boolean listenDuringPreviousAction = false;
    public String saveAs = "";
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
@@ -51,7 +51,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       tag.putDouble("z", this.f_z_D);
       tag.putBoolean("containerEntitiesOnly", this.containerEntitiesOnly);
       tag.putInt("timeoutMs", this.timeoutMs);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       tag.putString("checkMode", this.checkMode.name());
       ListenDuringPreviousSerializer.writeToTag(tag, this);
       tag.putString("saveAs", this.saveAs);
@@ -102,7 +102,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       this.f_y_D = tag.getDoubleOr("y", 0.0);
       this.f_z_D = tag.getDoubleOr("z", 0.0);
       if (tag.contains("enabled")) {
-         this.init = tag.getBooleanOr("enabled", true);
+         this.enabled = tag.getBooleanOr("enabled", true);
       }
 
       ListenDuringPreviousSerializer.readFromTag(tag, this);
@@ -153,7 +153,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
                boolean found = false;
 
                for (Entity entity : mc.level.entitiesForRendering()) {
-                  if (entity != mc.player && !(entity.distanceToSqr(center) > radiusSq) && this.init(entity)) {
+                  if (entity != mc.player && !(entity.distanceToSqr(center) > radiusSq) && this.matches(entity)) {
                      found = true;
                      break;
                   }
@@ -162,14 +162,14 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
                var10000 = found;
                break;
             case LOOKING_AT:
-               var10000 = this.init(mc.crosshairPickEntity);
+               var10000 = this.matches(mc.crosshairPickEntity);
                break;
             case WITHIN_REACH: {
                double reachSq = mc.player.blockInteractionRange() * mc.player.blockInteractionRange();
                boolean found2 = false;
 
                for (Entity entity : mc.level.entitiesForRendering()) {
-                  if (entity != mc.player && !(entity.distanceToSqr(mc.player) > reachSq) && this.init(entity)) {
+                  if (entity != mc.player && !(entity.distanceToSqr(mc.player) > reachSq) && this.matches(entity)) {
                      found2 = true;
                      break;
                   }
@@ -179,7 +179,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
                break;
             }
             case MOUNTED_IN:
-               var10000 = this.init(mc.player.getVehicle());
+               var10000 = this.matches(mc.player.getVehicle());
                break;
             default:
                throw new MatchException(null, null);
@@ -191,7 +191,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
       }
    }
 
-   public boolean init(Entity entity) {
+   public boolean matches(Entity entity) {
       if (entity == null) {
          return false;
       }
@@ -230,11 +230,11 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
    public Entity findEntity(Minecraft mc) {
       if (mc != null && mc.player != null && mc.level != null) {
          if (this.checkMode == WaitForEntityAction.CheckMode.LOOKING_AT) {
-            return this.init(mc.crosshairPickEntity) ? mc.crosshairPickEntity : null;
+            return this.matches(mc.crosshairPickEntity) ? mc.crosshairPickEntity : null;
          }
 
          if (this.checkMode == WaitForEntityAction.CheckMode.MOUNTED_IN) {
-            return this.init(mc.player.getVehicle()) ? mc.player.getVehicle() : null;
+            return this.matches(mc.player.getVehicle()) ? mc.player.getVehicle() : null;
          }
 
          Vec3 center = this.centerOnPlayer ? mc.player.position() : new Vec3(this.f_x_D, this.f_y_D, this.f_z_D);
@@ -244,7 +244,7 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
          double nearestDistance = 1.7976931348623157E308;
 
          for (Entity entity : mc.level.entitiesForRendering()) {
-            if (entity != mc.player && this.init(entity)) {
+            if (entity != mc.player && this.matches(entity)) {
                double distance = entity.distanceToSqr(center);
                if (distance <= maxDistanceSq && distance < nearestDistance) {
                   nearest = entity;
@@ -317,21 +317,21 @@ public class WaitForEntityAction implements CaptureOutputAction, MacroAction {
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override
-   public String load() {
+   public String getSaveAs() {
       return this.saveAs;
    }
 
    @Override
-   public void a_(String name) {
+   public void setSaveAs(String name) {
       this.saveAs = name == null ? "" : name;
    }
 

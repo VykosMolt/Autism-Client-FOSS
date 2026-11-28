@@ -5,40 +5,40 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class GifOverlayState {
-   private static volatile GifOverlayState.OverlaySnapshot init = GifOverlayState.OverlaySnapshot.DEFAULTS;
+   private static volatile GifOverlayState.OverlaySnapshot current = GifOverlayState.OverlaySnapshot.DEFAULTS;
 
    private GifOverlayState() {
    }
 
-   static void init(GifOverlayState.OverlaySnapshot snapshot) {
-      init = snapshot == null ? GifOverlayState.OverlaySnapshot.DEFAULTS : snapshot;
+   static void setSnapshot(GifOverlayState.OverlaySnapshot snapshot) {
+      current = snapshot == null ? GifOverlayState.OverlaySnapshot.DEFAULTS : snapshot;
    }
 
-   private static boolean update() {
+   private static boolean renderingAllowed() {
       return AutismLiteVariant.enabled() || autismclient.e.RenderState.init();
    }
 
    public static boolean isCapeActive() {
-      GifOverlayState.OverlaySnapshot s = init;
-      return s.enabled() && s.capeEnabled() && (!s.capePath().isBlank() || !s.capeOverrides().isEmpty()) && update();
+      GifOverlayState.OverlaySnapshot s = current;
+      return s.enabled() && s.capeEnabled() && (!s.capePath().isBlank() || !s.capeOverrides().isEmpty()) && renderingAllowed();
    }
 
    public static boolean isShieldActive() {
-      GifOverlayState.OverlaySnapshot s = init;
-      return s.enabled() && s.read_Z() && (!s.load_Str().isBlank() || !s.load_Map().isEmpty()) && update();
+      GifOverlayState.OverlaySnapshot s = current;
+      return s.enabled() && s.read_Z() && (!s.load_Str().isBlank() || !s.load_Map().isEmpty()) && renderingAllowed();
    }
 
    public static String capePath(String playerName) {
-      return init(init, playerName, true);
+      return init(current, playerName, true);
    }
 
    public static String shieldPath(String playerName) {
-      return init(init, playerName, false);
+      return init(current, playerName, false);
    }
 
    private static String init(GifOverlayState.OverlaySnapshot s, String playerName, boolean cape) {
       if (playerName != null && !playerName.isBlank()) {
-         if (s.enabled() && (cape ? s.capeEnabled() : s.read_Z()) && update()) {
+         if (s.enabled() && (cape ? s.capeEnabled() : s.read_Z()) && renderingAllowed()) {
             String custom = (cape ? s.capeOverrides() : s.load_Map()).get(playerName.trim().toLowerCase(Locale.ROOT));
             if (custom != null && !custom.isBlank()) {
                return custom;
@@ -47,7 +47,7 @@ public final class GifOverlayState {
                if (path.isBlank()) {
                   return null;
                } else {
-                  return init(cape ? s.read_Str() : s.write_Str(), playerName, s.update_Str()) ? path : null;
+                  return targetMatches(cape ? s.read_Str() : s.write_Str(), playerName, s.update_Str()) ? path : null;
                }
             }
          } else {
@@ -58,7 +58,7 @@ public final class GifOverlayState {
       }
    }
 
-   private static boolean init(String target, String playerName, String selfName) {
+   private static boolean targetMatches(String target, String playerName, String selfName) {
       if ("Everyone".equalsIgnoreCase(target)) {
          return true;
       }
@@ -68,31 +68,31 @@ public final class GifOverlayState {
    }
 
    public static double init_D() {
-      return init.init_D();
+      return current.init_D();
    }
 
    public static double load_D() {
-      return init.load_D();
+      return current.load_D();
    }
 
    public static boolean read_Z() {
-      return init.write_Z();
+      return current.write_Z();
    }
 
    public static boolean write_Z() {
-      return init.update_Z();
+      return current.update_Z();
    }
 
    public static double read_D() {
-      return init.read_D();
+      return current.read_D();
    }
 
    public static double write_D() {
-      return init.write_D();
+      return current.write_D();
    }
 
    public static String init_Str() {
-      return init.update_Str();
+      return current.update_Str();
    }
 
    record OverlaySnapshot(

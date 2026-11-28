@@ -171,7 +171,7 @@ public final class ModuleRuntimeManager {
          }
 
          this.initialized = true;
-         autismclient.util.PacketCaptureState.load(this);
+         autismclient.util.PacketCaptureState.refresh(this);
       }
    }
 
@@ -222,7 +222,7 @@ public final class ModuleRuntimeManager {
          al.load_V();
          this.syncConfigToSessionState();
          this.invalidatePayloadFilterCache(filtersChanged);
-         autismclient.util.PacketCaptureState.load(this);
+         autismclient.util.PacketCaptureState.refresh(this);
          autismclient.util.AutismHudManager.ensureInitialized();
          if (themeChanged) {
             ThemePaletteManager.reload();
@@ -285,7 +285,7 @@ public final class ModuleRuntimeManager {
             AutismProfileManager.getInstance().tick();
          }
 
-         autismclient.util.macro.PingSpoofScheduler.update();
+         autismclient.util.macro.PingSpoofScheduler.tick();
          BlinkPacketManager.tick();
          autismclient.util.BedSleepDesyncHelper.tick(MC);
          boolean hidden = aD.init_Z();
@@ -293,7 +293,7 @@ public final class ModuleRuntimeManager {
             this.autoProbePending = false;
             this.joinProbeWindowUntilMs = 0L;
             PayloadStudyTracker.reset();
-            PayloadNotificationTracker.load();
+            PayloadNotificationTracker.clear();
             AutismServerInfoOverlay hiddenServerInfo = this.getServerInfoOverlay();
             if (hiddenServerInfo != null) {
                hiddenServerInfo.hardLock();
@@ -301,7 +301,7 @@ public final class ModuleRuntimeManager {
          }
 
          bK.read_V();
-         PayloadNotificationTracker.init();
+         PayloadNotificationTracker.flush();
          if (!hidden) {
             PayloadSubscriptionManager.tick(MC, this.isPacketLoggerCapturing());
          }
@@ -453,7 +453,7 @@ public final class ModuleRuntimeManager {
       this.spawnedInWorld = false;
       this.autoProbePending = false;
       PluginSignatureCatalog.clear();
-      PayloadNotificationTracker.load();
+      PayloadNotificationTracker.clear();
       PayloadSubscriptionManager.reset();
       AutismServerInfoOverlay leftOverlay = this.getServerInfoOverlay();
       if (leftOverlay != null) {
@@ -461,7 +461,7 @@ public final class ModuleRuntimeManager {
       }
 
       this.joinProbeWindowUntilMs = 0L;
-      autismclient.util.PacketCaptureState.load(this);
+      autismclient.util.PacketCaptureState.refresh(this);
       AutismSessionState.getInstance().clearDetectedServerVersion();
       this.wasLoadGuiPressed = false;
       this.wasFlushQueuePressed = false;
@@ -509,7 +509,7 @@ public final class ModuleRuntimeManager {
 
       long captureState = autismclient.util.PacketCaptureState.getState();
       boolean loggerCapture = autismclient.util.PacketCaptureState.isLoggerCapture(captureState);
-      boolean passivePayloadCapture = autismclient.util.PacketCaptureState.load(captureState);
+      boolean passivePayloadCapture = autismclient.util.PacketCaptureState.isPayloadCapture(captureState);
       if (!this.isActive()) {
          return !loggerCapture && !passivePayloadCapture
             ? ModuleRuntimeManager.CapturePlan.none()
@@ -619,7 +619,7 @@ public final class ModuleRuntimeManager {
          PayloadSubscriptionManager.requestSync();
       }
 
-      autismclient.util.PacketCaptureState.load(this);
+      autismclient.util.PacketCaptureState.refresh(this);
    }
 
    private boolean hasActivePayloadFilterRule() {
@@ -716,7 +716,7 @@ public final class ModuleRuntimeManager {
                if (logger != null) {
                   logger.logPayload(System.currentTimeMillis(), this.packetLoggerTick, direction == null ? "" : direction, payloadClassForDirection(direction), snapshot);
                } else {
-                  PayloadNotificationTracker.init(snapshot.channel(), direction, filterMatch);
+                  PayloadNotificationTracker.notice(snapshot.channel(), direction, filterMatch);
                   this.bufferEarlyPayloadSnapshot(snapshot, direction, payloadClassForDirection(direction));
                }
 
@@ -785,7 +785,7 @@ public final class ModuleRuntimeManager {
                   if (logger != null) {
                      logger.logPayloadPacket(packet, direction);
                   } else {
-                     PayloadNotificationTracker.init(channel, direction, filterMatch);
+                     PayloadNotificationTracker.notice(channel, direction, filterMatch);
                      this.bufferEarlyPayloadPacket(packet, direction);
                   }
 
@@ -975,7 +975,7 @@ public final class ModuleRuntimeManager {
    private void extendJoinProbeWindow() {
       if (!aD.init_Z()) {
          this.joinProbeWindowUntilMs = Math.max(this.joinProbeWindowUntilMs, System.currentTimeMillis() + 20000L);
-         autismclient.util.PacketCaptureState.load(this);
+         autismclient.util.PacketCaptureState.refresh(this);
       }
    }
 

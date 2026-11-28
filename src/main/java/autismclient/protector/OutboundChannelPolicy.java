@@ -27,7 +27,7 @@ public final class OutboundChannelPolicy {
    private OutboundChannelPolicy() {
    }
 
-   public static OutboundChannelPolicy.Verdict init(Connection connection, Packet<?> packet) {
+   public static OutboundChannelPolicy.Verdict verdict(Connection connection, Packet<?> packet) {
       if (!(packet instanceof ServerboundCustomPayloadPacket) && !(packet instanceof ServerboundCustomQueryAnswerPacket)) {
          return init_ConfigStore_DataUt;
       } else {
@@ -103,7 +103,7 @@ public final class OutboundChannelPolicy {
 
          boolean current = ConnectionPrivacyRegistry.isActive(context);
          if (current) {
-            OutboundPacketFilterHandler.init(context.connection());
+            OutboundPacketFilterHandler.forget(context.connection());
          }
 
          ResourcePackSessionTracker.init_V(context);
@@ -127,7 +127,7 @@ public final class OutboundChannelPolicy {
          return payload instanceof BrandPayload ? init(new ServerboundCustomPayloadPacket(new BrandPayload("vanilla"))) : load_ConfigStore_DataUt;
       }
 
-      CustomPayloadFilter.Verdict verdict = CustomPayloadFilter.init(connection, packet, false);
+      CustomPayloadFilter.Verdict verdict = CustomPayloadFilter.verdict(connection, packet, false);
       OutboundChannelPolicy.Verdict var10000;
       switch (verdict.kind) {
          case PASS:
@@ -175,7 +175,7 @@ public final class OutboundChannelPolicy {
       return replacement == null ? load_ConfigStore_DataUt : new OutboundChannelPolicy.Verdict(OutboundChannelPolicy.Verdict.VerdictKind.REPLACE, replacement);
    }
 
-   static void init() {
+   static void reset() {
       synchronized (init_Map) {
          init_Map.clear();
       }

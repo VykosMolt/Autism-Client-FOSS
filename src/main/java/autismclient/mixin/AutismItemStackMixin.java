@@ -21,6 +21,6 @@ public class AutismItemStackMixin {
 
    @ModifyReturnValue(method = "getTooltipImage", at = @At("RETURN"))
    private Optional<TooltipComponent> autism$mapPreview(Optional<TooltipComponent> original) {
-      return MapTooltipPreview.init((ItemStack)(Object)this, original);
+      return MapTooltipPreview.tooltip((ItemStack)(Object)this, original);
    }
 }

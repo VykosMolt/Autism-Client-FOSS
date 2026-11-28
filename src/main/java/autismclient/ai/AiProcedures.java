@@ -83,7 +83,7 @@ final class AiProcedures {
             );
             AiMemoryStore.Memory record = this.service
                .getMemoryStore()
-               .init(
+               .remember(
                   AiMemoryStore.MemoryKind.PROCEDURE,
                   this.service.getDimensionId(),
                   name,
@@ -141,7 +141,7 @@ final class AiProcedures {
             .getMemoryStore()
             .directory()
             .resolve("procedure-runs")
-            .resolve(AiJson.sha256Hex(this.service.read_Str() + this.service.getDimensionId() + id) + ".json");
+            .resolve(AiJson.sha256Hex(this.service.currentTaskId() + this.service.getDimensionId() + id) + ".json");
          JsonArray steps = payload.getAsJsonArray("steps");
          String fingerprint = AiJson.sha256Hex(record.payload());
          AiProcedures.ResumePoint resume = init_bw_DataUtil_Path(checkpoint, fingerprint, steps.size());

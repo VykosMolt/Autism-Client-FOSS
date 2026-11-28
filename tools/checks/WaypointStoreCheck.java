@@ -56,9 +56,9 @@ public class WaypointStoreCheck {
       File bak = new File(folder, "waypoints.json.bak");
       await(primary, "Base");
       check(primary.exists() && Files.readString(primary.toPath()).contains("Base"), "backup recovery did not rewrite primary waypoints.json");
-      store.init("example.com", new AutismWaypoints.Waypoint("Later", 0, 0, 0, 0, 5L));
+      store.addWaypoint("example.com", new AutismWaypoints.Waypoint("Later", 0, 0, 0, 0, 5L));
       await(primary, "Later");
-      store.init("example.com", new AutismWaypoints.Waypoint("Latest", 0, 0, 0, 0, 6L));
+      store.addWaypoint("example.com", new AutismWaypoints.Waypoint("Latest", 0, 0, 0, 0, 6L));
       await(primary, "Latest");
       await(bak, "Later");
       check(Files.readString(bak.toPath()).contains("Later") && !Files.readString(bak.toPath()).contains("Latest"), "backup is not the previous save");

@@ -28,7 +28,7 @@ final class AiShield {
    private AiShield() {
    }
 
-   static BlockPos init(Minecraft mc, Entity shooter) {
+   static BlockPos coverCell(Minecraft mc, Entity shooter) {
       BlockPos feet = mc.player.blockPosition();
       long own1 = feet.asLong();
       long own2 = feet.above().asLong();
@@ -77,7 +77,7 @@ final class AiShield {
       return best;
    }
 
-   static BlockPos load(Minecraft mc, Entity shooter) {
+   static BlockPos behindCell(Minecraft mc, Entity shooter) {
       BlockPos feet = mc.player.blockPosition();
       double dx = mc.player.getX() - shooter.getX();
       double dz = mc.player.getZ() - shooter.getZ();
@@ -127,7 +127,7 @@ final class AiShield {
       return false;
    }
 
-   static Item init(Minecraft mc) {
+   static Item bestBlock(Minecraft mc) {
       Inventory inventory = mc.player.getInventory();
       Item best = null;
       int bestRank = 2147483647;
@@ -148,7 +148,7 @@ final class AiShield {
 
    static boolean hasEnemyWithin(Minecraft mc, double radius) {
       for (Entity entity : mc.level.entitiesForRendering()) {
-         if (entity instanceof Enemy && entity.isAlive() && !autismclient.ai.engine.AiSight.init(entity) && entity.distanceTo(mc.player) <= radius) {
+         if (entity instanceof Enemy && entity.isAlive() && !autismclient.ai.engine.AiSight.isRangedShooter(entity) && entity.distanceTo(mc.player) <= radius) {
             return true;
          }
       }
@@ -158,7 +158,7 @@ final class AiShield {
 
    static Entity rangedShooterBeyond(Minecraft mc, double beyond) {
       for (Entity entity : mc.level.entitiesForRendering()) {
-         if (entity instanceof Mob mob && mob instanceof Enemy && mob.isAlive() && autismclient.ai.engine.AiSight.init(mob)) {
+         if (entity instanceof Mob mob && mob instanceof Enemy && mob.isAlive() && autismclient.ai.engine.AiSight.isRangedShooter(mob)) {
             double d = mob.distanceTo(mc.player);
             if (!(d <= beyond)
                && !(d > 16.5)

@@ -32,7 +32,7 @@ final class OreSimWorkerPool {
       return this.workerCount;
    }
 
-   synchronized void init(Runnable task) {
+   synchronized void submit(Runnable task) {
       if (task == null) {
          throw new IllegalArgumentException("OreSim work must not be null");
       }

@@ -32,11 +32,11 @@ final class AiTelly {
       return -1;
    }
 
-   static boolean init_Z_D_D(double playerY, double walkSurfaceY) {
+   static boolean fellBelowLane(double playerY, double walkSurfaceY) {
       return playerY < walkSurfaceY - 2.0;
    }
 
-   static List<AiTelly.HotbarEntry> init_List(Minecraft mc) {
+   static List<AiTelly.HotbarEntry> hotbarBlocks(Minecraft mc) {
       List<AiTelly.HotbarEntry> view = new ArrayList<>(9);
 
       for (int i = 0; i < 9; i++) {
@@ -52,10 +52,10 @@ final class AiTelly {
       return view;
    }
 
-   static int init_I(Minecraft mc) {
+   static int hotbarBlockCount(Minecraft mc) {
       int total = 0;
 
-      for (AiTelly.HotbarEntry entry : init_List(mc)) {
+      for (AiTelly.HotbarEntry entry : hotbarBlocks(mc)) {
          total += entry.count();
       }
 
@@ -79,20 +79,20 @@ final class AiTelly {
          return new AiOperation() {
             static final int init_I = 100;
             static final int load_I = 20;
-            final BlockPos init_BlockPos = mc.player.blockPosition();
-            final long init_J = System.nanoTime() + plan.timeoutSeconds() * 1000000000L;
-            final int read = mc.player.getInventory().getSelectedSlot();
-            final autismclient.ai.engine.AiAim init_DataUtil = new autismclient.ai.engine.AiAim();
-            final List<BlockPos> init_List = new ArrayList<>();
-            autismclient.ai.engine.AiBridgeDriver init_NetHelper;
-            int write = -1;
-            int update = -1;
-            int sync;
-            double init_D = 0.0 / 0.0;
-            double load_D;
-            boolean init_Z;
+            final BlockPos startPos = mc.player.blockPosition();
+            final long deadline = System.nanoTime() + plan.timeoutSeconds() * 1000000000L;
+            final int originalSlot = mc.player.getInventory().getSelectedSlot();
+            final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
+            final List<BlockPos> placed = new ArrayList<>();
+            autismclient.ai.engine.AiBridgeDriver bridge;
+            int selectedSlot = -1;
+            int loadWait = -1;
+            int stuckTicks;
+            double lastX = 0.0 / 0.0;
+            double lastZ;
+            boolean cancelled;
 
-            autismclient.ai.engine.AiBridgeDriver init_NetHelper() {
+            autismclient.ai.engine.AiBridgeDriver createBridge() {
                BlockPos feet = mc.player.blockPosition();
                int dx;
                int dz;
@@ -117,10 +117,10 @@ final class AiTelly {
                   int[] d = autismclient.ai.engine.AiBridgeDriver.cardinalStep(plan.yawDegrees());
                   dx = d[0];
                   dz = d[1];
-                  length = plan.blocks() - this.init_List.size();
+                  length = plan.blocks() - this.placed.size();
                }
 
-               length = Math.min(length, plan.blocks() - this.init_List.size());
+               length = Math.min(length, plan.blocks() - this.placed.size());
                if (length <= 0) {
                   return null;
                }
@@ -130,69 +130,69 @@ final class AiTelly {
                );
                return new autismclient.ai.engine.AiBridgeDriver(
                   lane,
-                  autismclient.ai.engine.AiBridgeDriver.chooseStyle(plan.mode() == AiTelly.BridgeMode.TELLY, lane, mc.player, AiTelly.init_I(mc)),
-                  this.init_DataUtil
+                  autismclient.ai.engine.AiBridgeDriver.chooseStyle(plan.mode() == AiTelly.BridgeMode.TELLY, lane, mc.player, AiTelly.hotbarBlockCount(mc)),
+                  this.aim
                );
             }
 
-            void init(int slot) {
+            void selectSlot(int slot) {
                if (slot != mc.player.getInventory().getSelectedSlot()) {
                   mc.player.getInventory().setSelectedSlot(slot);
-                  this.write = slot;
+                  this.selectedSlot = slot;
                }
             }
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.init_Z && mc.player != null && mc.level != null) {
+               if (!this.cancelled && mc.player != null && mc.level != null) {
                   if (mc.player.getHealth() <= 4.0F && !AiGuard.isLowHealthOverrideActive()) {
-                     return this.init(AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("bridging", mc.player.getHealth(), mc.player.getMaxHealth()));
+                     return this.finish(AiOperation.Status.FAILED, AiGuard.formatLowHealthAbort("bridging", mc.player.getHealth(), mc.player.getMaxHealth()));
                   }
 
-                  if (System.nanoTime() > this.init_J) {
-                     return this.init(AiOperation.Status.TIMED_OUT, "Telly bridge deadline reached");
+                  if (System.nanoTime() > this.deadline) {
+                     return this.finish(AiOperation.Status.TIMED_OUT, "Telly bridge deadline reached");
                   }
 
                   if (!AiTerrain.isLoaded(mc.level, mc.player.blockPosition())) {
                      autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                      return AiGameOperations.result(
-                        AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.objectOf("placed", this.init_List.size())
+                        AiOperation.Status.RUNNING, "Waiting for current terrain to load", AiJson.objectOf("placed", this.placed.size())
                      );
                   }
 
-                  if (this.update >= 0) {
+                  if (this.loadWait >= 0) {
                      autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
-                     if (++this.update < 20) {
+                     if (++this.loadWait < 20) {
                         return AiGameOperations.result(
-                           AiOperation.Status.RUNNING, "Verifying the supports", AiJson.objectOf("placed", this.init_List.size())
+                           AiOperation.Status.RUNNING, "Verifying the supports", AiJson.objectOf("placed", this.placed.size())
                         );
                      }
 
-                     long gone = this.init_List.stream().filter(c -> mc.level.getBlockState(c).getCollisionShape(mc.level, c).isEmpty()).count();
+                     long gone = this.placed.stream().filter(c -> mc.level.getBlockState(c).getCollisionShape(mc.level, c).isEmpty()).count();
                      return gone == 0L
-                        ? this.init_AiOperation_Result_36()
-                        : this.init(AiOperation.Status.UNCERTAIN, gone + " placed supports are gone again (the server refused them)");
+                        ? this.arrived()
+                        : this.finish(AiOperation.Status.UNCERTAIN, gone + " placed supports are gone again (the server refused them)");
                   } else {
-                     if (this.init_NetHelper == null) {
-                        this.init_NetHelper = this.init_NetHelper();
-                        if (this.init_NetHelper == null) {
+                     if (this.bridge == null) {
+                        this.bridge = this.createBridge();
+                        if (this.bridge == null) {
                            if (plan.verify()) {
-                              this.update = 0;
+                              this.loadWait = 0;
                               return AiGameOperations.result(
-                                 AiOperation.Status.RUNNING, "Verifying the supports", AiJson.objectOf("placed", this.init_List.size())
+                                 AiOperation.Status.RUNNING, "Verifying the supports", AiJson.objectOf("placed", this.placed.size())
                               );
                            }
 
-                           return this.init_AiOperation_Result_36();
+                           return this.arrived();
                         }
                      }
 
-                     BlockPos support = this.init_NetHelper.nextSupport();
+                     BlockPos support = this.bridge.nextSupport();
                      if (support != null && AiTelly.init_Z_Minecraft_BlockPos(mc, support)) {
-                        return this.init(AiOperation.Status.FAILED, "Refusing to bridge over lava at " + support.toShortString());
+                        return this.finish(AiOperation.Status.FAILED, "Refusing to bridge over lava at " + support.toShortString());
                      }
 
-                     int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), AiTelly.init_List(mc));
+                     int slot = AiTelly.init_I_I_List(mc.player.getInventory().getSelectedSlot(), AiTelly.hotbarBlocks(mc));
                      if (slot < 0 && support != null) {
                         autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                         mc.options.keyUp.setDown(false);
@@ -203,91 +203,91 @@ final class AiTelly {
                         mc.options.keyShift.setDown(true);
                         Vec3 v = mc.player.getDeltaMovement();
                         return mc.player.onGround() && v.x * v.x + v.z * v.z < 1.0E-4
-                           ? this.init(AiOperation.Status.FAILED, "Out of blocks")
+                           ? this.finish(AiOperation.Status.FAILED, "Out of blocks")
                            : AiGameOperations.result(
-                              AiOperation.Status.RUNNING, "Out of blocks, stopping on the bridge", AiJson.objectOf("placed", this.init_List.size())
+                              AiOperation.Status.RUNNING, "Out of blocks, stopping on the bridge", AiJson.objectOf("placed", this.placed.size())
                            );
                      }
 
-                     autismclient.ai.engine.AiBridgeDriver.BridgeStatus step = this.init_NetHelper.init(slot, this::init, this.init_List::add);
+                     autismclient.ai.engine.AiBridgeDriver.BridgeStatus step = this.bridge.step(slot, this::selectSlot, this.placed::add);
                      if (step == autismclient.ai.engine.AiBridgeDriver.BridgeStatus.INVALID_FOOTING) {
-                        return this.init(AiOperation.Status.FAILED, "Bridge needs footing at the support's top level");
+                        return this.finish(AiOperation.Status.FAILED, "Bridge needs footing at the support's top level");
                      }
 
                      if (step != autismclient.ai.engine.AiBridgeDriver.BridgeStatus.FELL
-                        && !AiTelly.init_Z_D_D(mc.player.getY(), this.init_NetHelper.getLane().floorY() + 1)) {
-                        String style = this.init_NetHelper.getBridger().getStyle().name().toLowerCase(Locale.ROOT);
+                        && !AiTelly.fellBelowLane(mc.player.getY(), this.bridge.getLane().floorY() + 1)) {
+                        String style = this.bridge.getBridger().getStyle().name().toLowerCase(Locale.ROOT);
                         if (step == autismclient.ai.engine.AiBridgeDriver.BridgeStatus.DONE) {
-                           this.init_NetHelper = null;
+                           this.bridge = null;
                            return AiGameOperations.result(
-                              AiOperation.Status.RUNNING, "Lane done", AiJson.objectOf("placed", this.init_List.size(), "mode", style)
+                              AiOperation.Status.RUNNING, "Lane done", AiJson.objectOf("placed", this.placed.size(), "mode", style)
                            );
                         }
 
                         Vec3 pos = mc.player.position();
-                        if (Double.compare(this.init_D, pos.x) == 0 && Double.compare(this.load_D, pos.z) == 0) {
-                           if (++this.sync > 100) {
-                              return this.init(AiOperation.Status.FAILED, "Wedged against terrain; no progress");
+                        if (Double.compare(this.lastX, pos.x) == 0 && Double.compare(this.lastZ, pos.z) == 0) {
+                           if (++this.stuckTicks > 100) {
+                              return this.finish(AiOperation.Status.FAILED, "Wedged against terrain; no progress");
                            }
                         } else {
-                           this.sync = 0;
+                           this.stuckTicks = 0;
                         }
 
-                        this.init_D = pos.x;
-                        this.load_D = pos.z;
+                        this.lastX = pos.x;
+                        this.lastZ = pos.z;
                         return AiGameOperations.result(
                            AiOperation.Status.RUNNING,
-                           "Bridging (" + style + "), " + this.init_List.size() + " placed",
+                           "Bridging (" + style + "), " + this.placed.size() + " placed",
                            AiJson.objectOf(
                               "placed",
-                              this.init_List.size(),
+                              this.placed.size(),
                               "mode",
                               style,
                               "remainingBlocks",
-                              AiTelly.init_I(mc),
+                              AiTelly.hotbarBlockCount(mc),
                               "nextCell",
                               support == null ? "secured" : support.toShortString()
                            )
                         );
                      } else {
-                        return this.init(AiOperation.Status.FAILED, "Fell off the bridge");
+                        return this.finish(AiOperation.Status.FAILED, "Fell off the bridge");
                      }
                   }
                } else {
-                  return this.init(AiOperation.Status.CANCELLED, "Telly bridge cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Telly bridge cancelled");
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_36() {
+            AiOperation.Result arrived() {
                return plan.targetX() != null
-                  ? this.init(AiOperation.Status.SUCCEEDED, "Arrived at the target column")
-                  : this.init(AiOperation.Status.SUCCEEDED, "Placed the requested blocks");
+                  ? this.finish(AiOperation.Status.SUCCEEDED, "Arrived at the target column")
+                  : this.finish(AiOperation.Status.SUCCEEDED, "Placed the requested blocks");
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
+            AiOperation.Result finish(AiOperation.Status status, String message) {
                this.cancel();
                return AiGameOperations.result(
                   status,
                   message,
                   AiJson.objectOf(
                      "placed",
-                     this.init_List.size(),
+                     this.placed.size(),
                      "from",
-                     this.init_BlockPos.toShortString(),
+                     this.startPos.toShortString(),
                      "to",
-                     mc.player != null ? mc.player.blockPosition().toShortString() : this.init_BlockPos.toShortString()
+                     mc.player != null ? mc.player.blockPosition().toShortString() : this.startPos.toShortString()
                   )
                );
             }
 
             @Override
             public void cancel() {
-               if (!this.init_Z) {
-                  this.init_Z = true;
+               if (!this.cancelled) {
+                  this.cancelled = true;
                   autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
-                  this.init_DataUtil.clear();
-                  if (mc.player != null && this.write >= 0 && mc.player.getInventory().getSelectedSlot() == this.write) {
-                     mc.player.getInventory().setSelectedSlot(this.read);
+                  this.aim.clear();
+                  if (mc.player != null && this.selectedSlot >= 0 && mc.player.getInventory().getSelectedSlot() == this.selectedSlot) {
+                     mc.player.getInventory().setSelectedSlot(this.originalSlot);
                   }
                }
             }

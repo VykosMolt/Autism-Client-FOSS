@@ -59,7 +59,7 @@ public class IfAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.condition = MacroCondition.init(tag, "condition", "cond_");
+      this.condition = MacroCondition.fromTagOrFlat(tag, "condition", "cond_");
       this.thenSteps = Math.max(0, tag.getIntOr("thenSteps", 1));
       this.elseSteps = Math.max(0, tag.getIntOr("elseSteps", 0));
       if (tag.contains("enabled")) {

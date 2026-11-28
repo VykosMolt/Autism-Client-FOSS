@@ -26,7 +26,7 @@ public final class WeaponDamageCalculator {
    private WeaponDamageCalculator() {
    }
 
-   public static double init(Player player, ItemStack stack) {
+   public static double attackDamage(Player player, ItemStack stack) {
       AttributeInstance live = player.getAttribute(Attributes.ATTACK_DAMAGE);
       if (live == null) {
          return 0.0;
@@ -117,7 +117,7 @@ public final class WeaponDamageCalculator {
       return Double.isFinite(damage) && damage <= maximum && (damage == 0.0 || damage < health);
    }
 
-   public static boolean init(double target, double self, double minimumTarget, double maximumSelf, boolean efficient) {
+   public static boolean worthIt(double target, double self, double minimumTarget, double maximumSelf, boolean efficient) {
       return Double.isFinite(target)
          && Double.isFinite(self)
          && target >= 0.0

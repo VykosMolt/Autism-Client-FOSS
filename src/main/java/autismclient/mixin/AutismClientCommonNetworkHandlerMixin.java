@@ -68,7 +68,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
             }
 
             autismclient.protector.ResourcePackSessionTracker.PackPolicy selectedPolicy = ResourcePackPushValidator.selectPolicy(context.privacyMode(), sharedBypass, serializedBypass);
-            ResourcePackPushValidator.Outcome verdict = ResourcePackPushValidator.init(packet, forceDeny, selectedPolicy != null);
+            ResourcePackPushValidator.Outcome verdict = ResourcePackPushValidator.validate(packet, forceDeny, selectedPolicy != null);
             if (verdict.verdict() != ResourcePackPushValidator.OutcomeKind.PASS) {
                if (verdict.verdict() == ResourcePackPushValidator.OutcomeKind.INVALID_URL) {
                   this.send(new ServerboundResourcePackPacket(packet.id(), Action.INVALID_URL));
@@ -130,7 +130,7 @@ public abstract class AutismClientCommonNetworkHandlerMixin {
       if (Minecraft.getInstance().isSameThread()) {
          autismclient.util.SprintStateTracker.init(packet.getId());
          if (!AutismLiteVariant.enabled()) {
-            LeafDupePacketTracker.load(packet);
+            LeafDupePacketTracker.onReceive(packet);
          }
       }
    }

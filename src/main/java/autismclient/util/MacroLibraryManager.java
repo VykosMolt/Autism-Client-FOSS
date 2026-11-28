@@ -118,7 +118,7 @@ public class MacroLibraryManager {
                if (anchorIndex >= 0) {
                   folder = anchor.folder == null ? "" : anchor.folder;
                } else {
-                  folder = copy.folder != null && folderKeys.contains(MacroFolderLayout.key(copy.folder)) ? this.folderLayout.read(copy.folder) : "";
+                  folder = copy.folder != null && folderKeys.contains(MacroFolderLayout.key(copy.folder)) ? this.folderLayout.canonicalName(copy.folder) : "";
                }
 
                copy.folder = folder;
@@ -208,7 +208,7 @@ public class MacroLibraryManager {
    }
 
    public synchronized List<MacroFolderLayout.Inner_DataUtil> getFilteredFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
-      return this.folderLayout.init(this.macros.stream().filter(filter).toList(), query, includeEmpty);
+      return this.folderLayout.rows(this.macros.stream().filter(filter).toList(), query, includeEmpty);
    }
 
    public synchronized List<MacroFolderLayout.Inner_DataUtil> getOrderedFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
@@ -225,7 +225,7 @@ public class MacroLibraryManager {
    }
 
    public synchronized boolean renameFolder(String oldName, String newName) {
-      if (!this.folderLayout.init(oldName, newName, this.macros)) {
+      if (!this.folderLayout.renameFolder(oldName, newName, this.macros)) {
          return false;
       }
 
@@ -299,7 +299,7 @@ public class MacroLibraryManager {
             return false;
          }
 
-         macro.folder = this.folderLayout.read(target);
+         macro.folder = this.folderLayout.canonicalName(target);
          this.save();
          return true;
       } else {
@@ -336,7 +336,7 @@ public class MacroLibraryManager {
             return false;
          }
 
-         String canonical = this.folderLayout.read(target);
+         String canonical = this.folderLayout.canonicalName(target);
          this.detachRootFolderAnchors(block);
 
          for (AutismMacro macro : block) {
@@ -543,7 +543,7 @@ public class MacroLibraryManager {
 
          tag.put("macros", list);
          tag.put("folders", this.folderLayout.toTag());
-         DebouncedPersistenceScheduler.init("macro-library:" + target.getAbsolutePath(), AuditMacroRead.track(() -> writeAtomicNbt(target, tag), target, tag));
+         DebouncedPersistenceScheduler.schedule("macro-library:" + target.getAbsolutePath(), AuditMacroRead.track(() -> writeAtomicNbt(target, tag), target, tag));
       }
 
       if (broadcast && LanSyncManager.getInstance().isInSession()) {

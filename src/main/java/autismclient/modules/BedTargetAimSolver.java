@@ -12,7 +12,7 @@ final class BedTargetAimSolver {
    private BedTargetAimSolver() {
    }
 
-   static Vec3 init(
+   static Vec3 predictEye(
       autismclient.ai.engine.AiPhysics.MotionState state,
       autismclient.ai.engine.AiPhysics.MoveInput input,
       autismclient.ai.engine.AiPhysics.PhysicsWorld world,
@@ -21,7 +21,7 @@ final class BedTargetAimSolver {
       return autismclient.ai.engine.AiPhysics.stepCompat(state, input, world).position().add(0.0, eyeHeight, 0.0);
    }
 
-   static boolean init(List<AABB> boxes, Vec3 eye, double reach) {
+   static boolean anyInReach(List<AABB> boxes, Vec3 eye, double reach) {
       return boxes.stream().anyMatch(box -> box.distanceToSqr(eye) <= reach * reach);
    }
 

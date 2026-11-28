@@ -10,11 +10,11 @@ public final class DialogFrameRenderer {
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
       autismclient.gui.ui.UiColorScheme colors = context.init_TableIndex().colors();
       autismclient.gui.f.PacketUtil.read(graphics, bounds, 8, colors.windowSurface, colors.borderSubtle);
-      WindowHeaderHelper.init(context, bounds, headerHeight, title, false, false, true, headerHovered, true, 4, 4);
+      WindowHeaderHelper.render(context, bounds, headerHeight, title, false, false, true, headerHovered, true, 4, 4);
    }
 
    public static autismclient.gui.f.NetHelper headerBounds(autismclient.gui.f.NetHelper bounds, int headerHeight) {
-      return WindowHeaderHelper.load(bounds, headerHeight);
+      return WindowHeaderHelper.closeButton(bounds, headerHeight);
    }
 
    public static boolean isOverHeader(autismclient.gui.f.NetHelper bounds, int headerHeight, int mouseX, int mouseY) {

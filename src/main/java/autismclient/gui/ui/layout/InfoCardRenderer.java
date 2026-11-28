@@ -33,7 +33,7 @@ public final class InfoCardRenderer {
       return load(context, textRenderer, x, y, width, titleTrimmed, trimmedRows, accentColor);
    }
 
-   public static int init(int rowCount) {
+   public static int height(int rowCount) {
       int headerHeight = Math.max(init_CharEncoder.load(), init_CharEncoder.init_I_l_I(l.load, 2));
       int rowHeight = init_CharEncoder.init_I_l_I(l.read, 2);
       int contentHeight = Math.max(rowHeight, rowCount * rowHeight);
@@ -59,10 +59,10 @@ public final class InfoCardRenderer {
       boolean leftBorder,
       boolean rightBorder
    ) {
-      return init(context, textRenderer, x, y, width, title, rows, accentColor, minHeight, leftBorder, rightBorder, true, true);
+      return render(context, textRenderer, x, y, width, title, rows, accentColor, minHeight, leftBorder, rightBorder, true, true);
    }
 
-   public static int init(
+   public static int render(
       GuiGraphicsExtractor context,
       Font textRenderer,
       int x,

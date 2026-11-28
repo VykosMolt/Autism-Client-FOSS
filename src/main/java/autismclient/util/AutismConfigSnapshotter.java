@@ -15,11 +15,11 @@ final class AutismConfigSnapshotter {
    private AutismConfigSnapshotter() {
    }
 
-   static AutismConfig init(AutismConfig source) {
+   static AutismConfig snapshot(AutismConfig source) {
       return init(source, true);
    }
 
-   static AutismConfig load(AutismConfig source) {
+   static AutismConfig persistentSnapshot(AutismConfig source) {
       return init(source, false);
    }
 

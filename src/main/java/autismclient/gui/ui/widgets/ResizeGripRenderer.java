@@ -15,7 +15,7 @@ public final class ResizeGripRenderer {
    private ResizeGripRenderer() {
    }
 
-   public static boolean init(OverlayBounds b, double mx, double my) {
+   public static boolean hovered(OverlayBounds b, double mx, double my) {
       return b != null && init(b.x, b.y, b.width, b.height, mx, my);
    }
 
@@ -27,7 +27,7 @@ public final class ResizeGripRenderer {
       return w > 0 && h > 0 ? mx >= x + w - 10 && mx < x + w && my >= y + h - 10 && my < y + h : false;
    }
 
-   public static void init(GuiGraphicsExtractor graphics, autismclient.gui.ui.UiColorScheme colors, OverlayBounds b, boolean hover, boolean active) {
+   public static void render(GuiGraphicsExtractor graphics, autismclient.gui.ui.UiColorScheme colors, OverlayBounds b, boolean hover, boolean active) {
       if (b != null) {
          init(graphics, colors, b.x, b.y, b.width, b.height, hover, active);
       }
@@ -53,7 +53,7 @@ public final class ResizeGripRenderer {
       }
    }
 
-   public static void init(GuiGraphicsExtractor graphics) {
+   public static void requestCursor(GuiGraphicsExtractor graphics) {
       if (graphics != null) {
          graphics.requestCursor(init());
       }

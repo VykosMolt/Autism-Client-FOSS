@@ -22,21 +22,21 @@ public class JournalCacheCheck {
       Path dir = Files.createTempDirectory("journals");
       AiScaffold.reset();
       Path live = dir.resolve("live.json");
-      AiScaffold.JobScope open = AiScaffold.init(live, List.of());
+      AiScaffold.JobScope open = AiScaffold.openScope(live, List.of());
       BlockPos pos = new BlockPos(1, 2, 3);
       AiScaffold.recordPlaced(pos, Blocks.DIRT);
-      check(open.init(pos) == Blocks.DIRT, "live scope records the scaffold");
+      check(open.recorded(pos) == Blocks.DIRT, "live scope records the scaffold");
 
       for (int i = 0; i < 70; i++) {
          Path other = dir.resolve("other-" + i + ".json");
-         AiScaffold.init(other, List.of()).close();
+         AiScaffold.openScope(other, List.of()).close();
          check(Files.isRegularFile(other), "close() leaves the journal written");
       }
 
       // The live journal was never written, so a re-read would come back empty.
       check(!Files.exists(live), "live journal is still unsaved");
-      AiScaffold.JobScope again = AiScaffold.init(live, List.of());
-      check(again.init(pos) == Blocks.DIRT, "cache must not evict a journal a live scope still uses");
+      AiScaffold.JobScope again = AiScaffold.openScope(live, List.of());
+      check(again.recorded(pos) == Blocks.DIRT, "cache must not evict a journal a live scope still uses");
       System.out.println("PASS JournalCacheCheck");
    }
 }

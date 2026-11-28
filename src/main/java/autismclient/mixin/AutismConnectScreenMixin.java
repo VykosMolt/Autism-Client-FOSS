@@ -31,7 +31,7 @@ public abstract class AutismConnectScreenMixin {
    private static void autism$rememberConnectAttempt(
       Screen parent, Minecraft minecraft, ServerAddress hostAndPort, ServerData data, boolean isQuickPlay, TransferState transferState, CallbackInfo ci
    ) {
-      AutoReconnectController.init(data, hostAndPort);
+      AutoReconnectController.remember(data, hostAndPort);
       if (!AutismLiteVariant.enabled()) {
          try {
             AutismProfileManager.getInstance().onConnect(hostAndPort, data);

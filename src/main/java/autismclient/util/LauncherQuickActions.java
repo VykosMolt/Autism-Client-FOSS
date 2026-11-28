@@ -50,7 +50,7 @@ public final class LauncherQuickActions {
    }
 
    public static void flush() {
-      GuiDesyncHelper.init(MINECRAFT);
+      GuiDesyncHelper.saveGui(MINECRAFT);
    }
 
    public static void restoreGui() {
@@ -62,7 +62,7 @@ public final class LauncherQuickActions {
    }
 
    public static void copyScreenTitle() {
-      ScreenTitleCopier.init();
+      ScreenTitleCopier.copy();
    }
 
    public static void poll() {

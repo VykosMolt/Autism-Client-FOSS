@@ -25,7 +25,7 @@ public abstract class AutismOreSimPaleMossDecoratorMixin {
    @WrapMethod(method = "place")
    private void autism$placeInSyntheticWorld(Context context, Operation<Void> original) {
       if (context.level() instanceof SyntheticWorldGenLevel synthetic) {
-         PaleMossDecoratorShim.init(context, synthetic, this.leavesProbability, this.trunkProbability, this.groundProbability);
+         PaleMossDecoratorShim.decorate(context, synthetic, this.leavesProbability, this.trunkProbability, this.groundProbability);
       } else {
          original.call(context);
       }

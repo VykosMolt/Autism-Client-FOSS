@@ -82,7 +82,7 @@ public final class MacroCondition {
       }
    }
 
-   public static MacroCondition init(CompoundTag tag, String nestedKey, String flatPrefix) {
+   public static MacroCondition fromTagOrFlat(CompoundTag tag, String nestedKey, String flatPrefix) {
       MacroCondition nested = tag.get(nestedKey) instanceof CompoundTag c ? fromTag(c) : null;
       boolean nestedSimple = nested == null || nested.asLeaf() != null;
       if (nestedSimple && tag.contains(flatPrefix + "kind")) {
@@ -237,7 +237,7 @@ public final class MacroCondition {
                var10000 = mc.crosshairPickEntity != null;
                break;
             case VILLAGER_ITEM:
-               var10000 = autismclient.util.villagerdupe.VillagerDupeDriver.init_Z_Minecraft(
+               var10000 = autismclient.util.villagerdupe.VillagerDupeDriver.hasTrader(
                   mc, autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(resolveTemplate(this.item, mc)), true
                );
                break;
@@ -300,7 +300,7 @@ public final class MacroCondition {
       w.countMode = this.freeMode;
       w.comparison = this.freeSlotsComparison();
       w.slots = this.amount;
-      return w.init(mc);
+      return w.test(mc);
    }
 
    private boolean checkDurability(Minecraft mc) {

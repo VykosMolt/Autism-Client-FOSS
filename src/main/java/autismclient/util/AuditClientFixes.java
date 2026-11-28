@@ -34,7 +34,7 @@ public final class AuditClientFixes {
    }
 
    public static boolean isNoClipActive() {
-      return autismclient.modules.NoClipModule.init_Z_34();
+      return autismclient.modules.NoClipModule.noClipActive();
    }
 
    public static boolean isPhaseSpiderActive() {

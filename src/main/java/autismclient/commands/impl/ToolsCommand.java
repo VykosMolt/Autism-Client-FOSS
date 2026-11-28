@@ -368,7 +368,7 @@ public final class ToolsCommand extends Command {
 
       AiToolCallParser.ToolCall invocation;
       try {
-         invocation = AiToolCallParser.init(sub, args, px, py, pz);
+         invocation = AiToolCallParser.parse(sub, args, px, py, pz);
       } catch (IllegalArgumentException e) {
          return this.sync(e.getMessage());
       }

@@ -1850,7 +1850,7 @@ public final class AutismHudManager {
          isKeyDown(o == null ? null : o.keyDown),
          isKeyDown(o == null ? null : o.keyRight),
          isKeyDown(o == null ? null : o.keyAttack) || ClickRateTracker.init(120L),
-         isKeyDown(o == null ? null : o.keyUse) || ClickRateTracker.load(120L),
+         isKeyDown(o == null ? null : o.keyUse) || ClickRateTracker.recentUse(120L),
          isKeyDown(o == null ? null : o.keyJump)
       };
    }

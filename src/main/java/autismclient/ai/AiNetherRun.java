@@ -171,9 +171,9 @@ final class AiNetherRun {
             final long startDeathRevision = AiServerEvidence.deathRevision();
             final JsonArray init_JsonArray = new JsonArray();
             BlockPos portal = remembered;
-            final AiNetherRun.PortalScanCache init_aB_BufferHelper = new AiNetherRun.PortalScanCache();
+            final AiNetherRun.PortalScanCache portalScan = new AiNetherRun.PortalScanCache();
             final Set<Long> init_Set = new HashSet<>();
-            final AiNetherRun.MiningMemory init_aB_StreamUtil = new AiNetherRun.MiningMemory();
+            final AiNetherRun.MiningMemory miningMemory = new AiNetherRun.MiningMemory();
             AiOperation child;
             String label = "";
             String lastLabel = "";
@@ -318,8 +318,8 @@ final class AiNetherRun {
                      }
                   }
 
-                  autismclient.ai.engine.AiMiningCommitment vein = this.init_aB_StreamUtil.commitmentFor(block);
-                  Predicate<BlockPos> allowed = atxx -> this.init_aB_StreamUtil.isCellAvailable(atxx.asLong(), now);
+                  autismclient.ai.engine.AiMiningCommitment vein = this.miningMemory.commitmentFor(block);
+                  Predicate<BlockPos> allowed = atxx -> this.miningMemory.isCellAvailable(atxx.asLong(), now);
                   vein.extend(observed, allowed);
                   Set<Long> present = new HashSet<>();
 
@@ -420,7 +420,7 @@ final class AiNetherRun {
                      && (mc.level.getBlockState(at).isAir() || !mc.level.getBlockState(at).getFluidState().isEmpty()),
                   this::piglinWatching,
                   () -> AiServerEvidence.blockRevision(at),
-                  () -> this.init_aB_StreamUtil.deferCell(at.asLong(), System.nanoTime())
+                  () -> this.miningMemory.deferCell(at.asLong(), System.nanoTime())
                );
             }
 
@@ -522,7 +522,7 @@ final class AiNetherRun {
                               return this.startChild(
                                  "fight a blaze",
                                  AiNetherRun.fightThenPickup(
-                                    AiBlazeFight.init(
+                                    AiBlazeFight.blazeFight(
                                        AiJson.objectOf(
                                           "count", AiNetherRun.init_I_I_I(this.wantedRods, this.heldRods()), "radius", 24, "retreatHealth", 8, "timeoutSeconds", 120
                                        )
@@ -649,7 +649,7 @@ final class AiNetherRun {
                      return this.startChild(
                         "fight a blaze",
                         AiNetherRun.fightThenPickup(
-                           AiBlazeFight.init(
+                           AiBlazeFight.blazeFight(
                               AiJson.objectOf(
                                  "entityId", id, "count", AiNetherRun.init_I_I_I(this.wantedRods, this.heldRods()), "radius", 24, "retreatHealth", 8, "timeoutSeconds", 60
                               )
@@ -697,7 +697,7 @@ final class AiNetherRun {
 
                if (this.read_BlockPos != null
                   && (AiNetherRun.isRouteFailure(r) || r.status() != AiOperation.Status.SUCCEEDED && r.message() != null && r.message().contains("drop would fall into lava"))) {
-                  this.init_aB_StreamUtil.deferCell(this.read_BlockPos.asLong(), System.nanoTime());
+                  this.miningMemory.deferCell(this.read_BlockPos.asLong(), System.nanoTime());
                }
 
                this.read_BlockPos = null;
@@ -881,7 +881,7 @@ final class AiNetherRun {
                      }
                   }
 
-                  boolean committedGoldVein = this.init_aB_StreamUtil.init_FieldCache.isActive() && this.init_aB_StreamUtil.init_FieldCache.remainingCount() > 0;
+                  boolean committedGoldVein = this.miningMemory.init_FieldCache.isActive() && this.miningMemory.init_FieldCache.remainingCount() > 0;
                   boolean earlyGoldPartner = this.heldRods() < this.wantedRods && !committedGoldVein && this.hasBarterPiglinWithin(32.0);
                   if (this.heldPearls() < pearls
                      && !this.pearlsGivenUp
@@ -932,7 +932,7 @@ final class AiNetherRun {
                   }
 
                   if (mc.player.getHealth() < 10.0F && mc.player.getFoodData().getFoodLevel() >= 18) {
-                     return this.startChild("rest to heal at " + (int)mc.player.getHealth() + " health", AiCombat.init(100));
+                     return this.startChild("rest to heal at " + (int)mc.player.getHealth() + " health", AiCombat.rest(100));
                   }
 
                   if (!this.shieldAttempted && !mc.player.getOffhandItem().is(Items.SHIELD) && AiCraft.countItem("minecraft:shield") > 0) {
@@ -1021,7 +1021,7 @@ final class AiNetherRun {
                         AiNetherRun.fightThenPickup(
                            this.guardedEndermanFight(
                               huntable.getId(),
-                              AiCombat.init(
+                              AiCombat.fight(
                                  AiJson.objectOf(
                                     "entityId", huntable.getId(), "count", 1, "radius", 24, "useShield", true, "retreatHealth", 6, "timeoutSeconds", 45
                                  )
@@ -1131,7 +1131,7 @@ final class AiNetherRun {
                                  return this.startChild(
                                     "fight a blaze after a stall",
                                     AiNetherRun.fightThenPickup(
-                                       AiBlazeFight.init(
+                                       AiBlazeFight.blazeFight(
                                           AiJson.objectOf(
                                              "count", AiNetherRun.init_I_I_I(this.wantedRods, this.heldRods()), "radius", 24, "retreatHealth", 8, "timeoutSeconds", 60
                                           )
@@ -1230,7 +1230,7 @@ final class AiNetherRun {
                               return this.startChild(
                                  "fight a blaze",
                                  AiNetherRun.fightThenPickup(
-                                    AiBlazeFight.init(
+                                    AiBlazeFight.blazeFight(
                                        AiJson.objectOf(
                                           "count", AiNetherRun.init_I_I_I(this.wantedRods, this.heldRods()), "radius", 24, "retreatHealth", 8, "timeoutSeconds", 120
                                        )
@@ -1325,7 +1325,7 @@ final class AiNetherRun {
                            } else {
                               return this.canEatToHeal()
                                  ? this.startChild("eat while waiting for blazes", AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 15)))
-                                 : this.startChild("wait for blazes at the spawner", AiCombat.init(60));
+                                 : this.startChild("wait for blazes at the spawner", AiCombat.rest(60));
                            }
                         } else {
                            if (this.write_BlockPos != null) {
@@ -1470,7 +1470,7 @@ final class AiNetherRun {
                                  () -> AiNetherRun.fightThenPickup(
                                     this.guardedEndermanFight(
                                        far.getId(),
-                                       AiCombat.init(
+                                       AiCombat.fight(
                                           AiJson.objectOf(
                                              "entityId", far.getId(), "count", 1, "radius", 24, "useShield", true, "retreatHealth", 6, "timeoutSeconds", 45
                                           )
@@ -1539,12 +1539,12 @@ final class AiNetherRun {
                            }
 
                            this.endermanHuntAttempts++;
-                           return this.startChild("wait for the endermen to come round (" + this.endermanHuntAttempts + " of 24)", AiCombat.init(100));
+                           return this.startChild("wait for the endermen to come round (" + this.endermanHuntAttempts + " of 24)", AiCombat.rest(100));
                         }
 
                         if (this.load_I < 14 || this.pearlTracker.groundPhase && AiWorldScan.findEntitiesByType("minecraft:enderman", 32.0).size() >= 2) {
                            if (this.load_I >= 14 && !AiWorldScan.findEntitiesByType("minecraft:enderman", 32.0).isEmpty()) {
-                              return this.startChild("wait for the endermen to come round", AiCombat.init(40));
+                              return this.startChild("wait for the endermen to come round", AiCombat.rest(40));
                            }
 
                            return this.exploreFor("endermen");
@@ -1579,7 +1579,7 @@ final class AiNetherRun {
                BlockPos nearby = AiNetherRun.nearestPortalBlock(mc, mc.player.blockPosition(), 8);
                BlockPos loadedPortal = nearby != null
                   ? nearby
-                  : this.init_aB_BufferHelper
+                  : this.portalScan
                      .portal(
                         () -> AiWorldScan.findNearestBlock(s -> s.is(Blocks.NETHER_PORTAL), 12),
                         at -> AiTerrain.isLoaded(mc.level, at) && mc.level.getBlockState(at).is(Blocks.NETHER_PORTAL)
@@ -1613,12 +1613,12 @@ final class AiNetherRun {
                   AiRunTrace.emitServiceEvent(
                      "nether_exit_plan",
                      AiJson.objectOf(
-                        "choice", "remote_frame", "entryKnown", false, "loadedPortalSearchCompleted", this.init_aB_BufferHelper.isScanned(), "predictionOnly", true
+                        "choice", "remote_frame", "entryKnown", false, "loadedPortalSearchCompleted", this.portalScan.isScanned(), "predictionOnly", true
                      )
                   );
                   return this.startChild(
                      "build a portal home from the unknown entry",
-                     AiDimension.init(AiJson.objectOf("action", "enter", "target", "overworld", "build", true, "timeoutSeconds", buildSeconds))
+                     AiDimension.changeDimension(AiJson.objectOf("action", "enter", "target", "overworld", "build", true, "timeoutSeconds", buildSeconds))
                   );
                } else {
                   BlockPos door = AiNetherRun.nearestPortalBlock(mc, this.portal, 6);
@@ -1643,7 +1643,7 @@ final class AiNetherRun {
                         } else {
                            return !(this.horizontalDistance(door) > 2.0) && !(Math.abs(mc.player.getY() - door.getY()) > 2.0)
                               ? this.startChild(
-                                 "through the portal", AiDimension.init(AiJson.objectOf("action", "enter", "target", "overworld", "timeoutSeconds", 60))
+                                 "through the portal", AiDimension.changeDimension(AiJson.objectOf("action", "enter", "target", "overworld", "timeoutSeconds", 60))
                               )
                               : this.startChild(
                                  "walk back to the portal at " + door.toShortString(),
@@ -1693,7 +1693,7 @@ final class AiNetherRun {
                      );
                      return this.startChild(
                         "build a portal home here",
-                        AiDimension.init(AiJson.objectOf("action", "enter", "target", "overworld", "build", true, "timeoutSeconds", buildSeconds))
+                        AiDimension.changeDimension(AiJson.objectOf("action", "enter", "target", "overworld", "build", true, "timeoutSeconds", buildSeconds))
                      );
                   }
                }
@@ -2314,7 +2314,7 @@ final class AiNetherRun {
                   "entryKnown",
                   this.portal != null,
                   "loadedReturnPortalSearchCompleted",
-                  this.init_aB_BufferHelper.isScanned(),
+                  this.portalScan.isScanned(),
                   "steps",
                   this.init_JsonArray
                );

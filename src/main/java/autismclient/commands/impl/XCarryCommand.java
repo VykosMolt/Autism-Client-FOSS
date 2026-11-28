@@ -28,8 +28,8 @@ public class XCarryCommand extends Command {
          return 1;
       });
       root.then(
-         RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("slot", autismclient.commands.arguments.XCarrySlotArgumentType.init())
-            .executes(ctx -> carry(autismclient.commands.arguments.XCarrySlotArgumentType.init(ctx, "slot")))
+         RequiredArgumentBuilder.<AutismCommandSource, Integer>argument("slot", autismclient.commands.arguments.XCarrySlotArgumentType.create())
+            .executes(ctx -> carry(autismclient.commands.arguments.XCarrySlotArgumentType.getValue(ctx, "slot")))
       );
    }
 

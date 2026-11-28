@@ -207,7 +207,7 @@ public final class EntityControlModule extends Module {
       return this.bool("cancel-server-packets") && packet instanceof ClientboundMoveVehiclePacket;
    }
 
-   static Vec3 init(Entity vehicle, MoverType type, Vec3 movement) {
+   static Vec3 adjustMovement(Entity vehicle, MoverType type, Vec3 movement) {
       EntityControlModule module = INSTANCE;
       if (isActiveFor(module) && type == MoverType.SELF && module.load(vehicle)) {
          double velocityX = movement.x;
@@ -242,7 +242,7 @@ public final class EntityControlModule extends Module {
       }
    }
 
-   public static boolean init_Z_7() {
+   public static boolean locksYaw() {
       EntityControlModule module = INSTANCE;
       return isActiveFor(module) && module.bool("lock-yaw") && module.load(MC.player == null ? null : MC.player.getVehicle());
    }
@@ -258,13 +258,13 @@ public final class EntityControlModule extends Module {
       return isActiveFor(module) && module.bool("max-jump") && module.load(vehicle);
    }
 
-   public static boolean read() {
+   public static boolean isFlying() {
       EntityControlModule module = INSTANCE;
       Entity vehicle = MC.player == null ? null : MC.player.getVehicle();
       return isActiveFor(module) && module.bool("fly") && vehicle instanceof PlayerRideableJumping && module.load(vehicle);
    }
 
-   public static boolean init_Z_Entity_2(Entity entity) {
+   public static boolean controls(Entity entity) {
       EntityControlModule module = INSTANCE;
       return isActiveFor(module)
          && entity != null

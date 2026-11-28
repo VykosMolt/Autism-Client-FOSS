@@ -7,7 +7,7 @@ final class AiFoodHuntBudget {
    static final int write = 90;
    private static final long init_J = 1000000000L;
 
-   static AiFoodHuntBudget.Inner_DataUtil init(long deadlineNanos, long nowNanos, boolean graceUsed) {
+   static AiFoodHuntBudget.Inner_DataUtil admit(long deadlineNanos, long nowNanos, boolean graceUsed) {
       long proposedDeadline = deadlineNanos;
       boolean proposedGrace = graceUsed;
       long required = 35000000000L;
@@ -25,7 +25,7 @@ final class AiFoodHuntBudget {
       return new AiFoodHuntBudget.Inner_DataUtil(childSeconds, proposedDeadline, proposedGrace);
    }
 
-   static boolean init(boolean interruptible, boolean pendingEffects) {
+   static boolean canInterrupt(boolean interruptible, boolean pendingEffects) {
       return interruptible && !pendingEffects;
    }
 

@@ -708,14 +708,14 @@ public final class InventoryTweaksModule extends Module {
                      }
 
                      try {
-                        autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.CLIENT, click.slotId(), 1, ContainerInput.THROW);
+                        autismclient.util.ContainerClickExecutor.click(InventoryTweaksModule.CLIENT, click.slotId(), 1, ContainerInput.THROW);
                      } finally {
                         if (this.dropBackwards) {
                            InventoryTweaksModule.CLIENT.player.setYRot(oldYaw);
                         }
                      }
                   } else {
-                     autismclient.util.ContainerClickExecutor.init(InventoryTweaksModule.CLIENT, click.slotId(), 0, ContainerInput.QUICK_MOVE);
+                     autismclient.util.ContainerClickExecutor.click(InventoryTweaksModule.CLIENT, click.slotId(), 0, ContainerInput.QUICK_MOVE);
                   }
 
                   if (this.delayMs > 0 || this.randomMs > 0) {

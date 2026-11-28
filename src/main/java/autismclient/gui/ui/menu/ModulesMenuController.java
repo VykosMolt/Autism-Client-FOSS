@@ -422,7 +422,7 @@ public final class ModulesMenuController {
          layout.f_x_I = previousX;
          layout.f_y_I = previousY;
          AutismConfig.getGlobal().classicMenuLayoutCustom = custom;
-         this.host.load();
+         this.host.saveConfig();
       }
    }
 
@@ -468,7 +468,7 @@ public final class ModulesMenuController {
             ? this.settingsView.contentHeight(this.settingsModule)
             : (
                this.profilesView != null
-                  ? this.profilesView.init(contentWidth)
+                  ? this.profilesView.contentHeight(contentWidth)
                   : (this.isGeneralHome() ? this.generalContentHeight(contentWidth) : this.gridContentHeight(modules.size(), gridColumns(contentWidth)))
             );
          int expandedH = Math.min(Math.min(290, Math.max(1, height - 8)), this.headerHeight + Math.max(this.railContentHeight(), naturalHeight) + 1);
@@ -488,7 +488,7 @@ public final class ModulesMenuController {
          this.panelY = clampInt(this.panelY, 4, Math.max(4, height - h - 4));
          NetHelper window = NetHelper.init(this.panelX, this.panelY, w, h);
          PacketUtil.init_V_SyncManager(context, window, 8, theme.colors().windowSurface, theme.colors().borderSubtle);
-         NetHelper header = WindowHeaderHelper.init(window, this.headerHeight);
+         NetHelper header = WindowHeaderHelper.headerBounds(window, this.headerHeight);
          TitleBarRenderer.init(context, header, h <= this.headerHeight + 1, this.headerPressed);
          this.addHit(
             ModulesMenuController.HitType.WINDOW_HEADER, NetHelper.init(window.read(), window.write(), window.update(), this.headerHeight), null, null, "", -1
@@ -556,7 +556,7 @@ public final class ModulesMenuController {
       }
 
       if (this.tooltipText != null && !this.tooltipText.isBlank() && !this.init_Z_I_I(mouseX, mouseY)) {
-         TooltipRenderer.init(context, this.tooltipText, mouseX, mouseY);
+         TooltipRenderer.render(context, this.tooltipText, mouseX, mouseY);
       }
    }
 
@@ -781,7 +781,7 @@ public final class ModulesMenuController {
       }
 
       if (hasSettings) {
-         autismclient.gui.ui.widgets.IconButtonRenderer.init(
+         autismclient.gui.ui.widgets.IconButtonRenderer.renderIcon(
             context.init_GuiGraphicsExtract(),
             this.host.font(),
             settings,
@@ -862,7 +862,7 @@ public final class ModulesMenuController {
             entry,
             entryTone(entry),
             NetHelper.init(x, y, w, this.settingsRowHeight),
-            bottom ? ConnectedButtonRenderer.init(true, true) : ConnectedButtonRenderer.write
+            bottom ? ConnectedButtonRenderer.edges(true, true) : ConnectedButtonRenderer.write
          );
       }
 
@@ -872,8 +872,8 @@ public final class ModulesMenuController {
    private int renderActionRow(SyncManager context, ModulesMenuController.ActionButton[] row, int x, int y, int w) {
       if (context != null) {
          NetHelper[] cells = splitCells(x, y, w, this.settingsRowHeight);
-         this.renderActionButton(context, row[0], cells[0], ConnectedButtonRenderer.init(true, false));
-         this.renderActionButton(context, row[1], cells[1], ConnectedButtonRenderer.init(false, true));
+         this.renderActionButton(context, row[0], cells[0], ConnectedButtonRenderer.edges(true, false));
+         this.renderActionButton(context, row[1], cells[1], ConnectedButtonRenderer.edges(false, true));
          this.init_V_SyncManager(context, cells[1].read(), y, row[0].style(), row[1].style());
       }
 
@@ -940,12 +940,12 @@ public final class ModulesMenuController {
       NetHelper cell,
       ConnectedButtonRenderer.ConnectedEdges edges
    ) {
-      ConnectedButtonRenderer.init(context, cell, entryLabel(entry), entry.icon(), tone, cell.init_Z(context.read(), context.write()), edges);
+      ConnectedButtonRenderer.render(context, cell, entryLabel(entry), entry.icon(), tone, cell.init_Z(context.read(), context.write()), edges);
       this.addHit(ModulesMenuController.HitType.UTILITY, cell, null, null, entry.id(), -1);
    }
 
    private void renderActionButton(SyncManager context, ModulesMenuController.ActionButton action, NetHelper cell, ConnectedButtonRenderer.ConnectedEdges edges) {
-      ConnectedButtonRenderer.init(context, cell, action.load(), null, action.style(), cell.init_Z(context.read(), context.write()), edges);
+      ConnectedButtonRenderer.render(context, cell, action.load(), null, action.style(), cell.init_Z(context.read(), context.write()), edges);
       this.addHit(ModulesMenuController.HitType.UTILITY, cell, null, null, action.id(), -1);
    }
 
@@ -1261,7 +1261,7 @@ public final class ModulesMenuController {
          return true;
       }
 
-      if (this.sync_Z() && this.profilesView.load(mx, my, button)) {
+      if (this.sync_Z() && this.profilesView.mouseReleased(mx, my, button)) {
          return true;
       }
 
@@ -1278,7 +1278,7 @@ public final class ModulesMenuController {
 
       if (this.open_Str != null) {
          this.open_Str = null;
-         this.host.load();
+         this.host.saveConfig();
          return true;
       }
 
@@ -1313,7 +1313,7 @@ public final class ModulesMenuController {
             AutismConfig config = AutismConfig.getGlobal();
             config.menuV2X = this.panelX;
             config.menuV2Y = this.panelY;
-            this.host.load();
+            this.host.saveConfig();
          }
 
          if (button == 0 && this.close_Str != null) {
@@ -1323,7 +1323,7 @@ public final class ModulesMenuController {
                this.toggleCollapsed(releasedId);
             } else if (this.headerDragged) {
                AutismConfig.getGlobal().classicMenuLayoutCustom = true;
-               this.host.load();
+               this.host.saveConfig();
             }
          }
 
@@ -1564,7 +1564,7 @@ public final class ModulesMenuController {
             return true;
          }
       } else {
-         if (this.profilesView.read(key, scanCode, modifiers)) {
+         if (this.profilesView.keyPressed(key, scanCode, modifiers)) {
             return true;
          }
 
@@ -1817,7 +1817,7 @@ public final class ModulesMenuController {
             AutismConfig.ModuleCategoryLayout search = this.categoryLayout("search");
             if (search.collapsed) {
                search.collapsed = false;
-               this.host.load();
+               this.host.saveConfig();
             }
 
             this.bringToFront("search");
@@ -2237,7 +2237,7 @@ public final class ModulesMenuController {
    private void clearVisibleRows(String id) {
       AutismConfig.ModuleCategoryLayout layout = this.categoryLayout(id);
       layout.visibleRows = 0;
-      this.host.load();
+      this.host.saveConfig();
    }
 
    private NetHelper load_NetHelper_NetHelper_I(NetHelper viewport, int targetBody) {
@@ -2349,7 +2349,7 @@ public final class ModulesMenuController {
       }
 
       if (settings != null) {
-         autismclient.gui.ui.widgets.IconButtonRenderer.init(
+         autismclient.gui.ui.widgets.IconButtonRenderer.renderIcon(
             context.init_GuiGraphicsExtract(),
             this.host.font(),
             settings,
@@ -2438,13 +2438,13 @@ public final class ModulesMenuController {
       boolean headerHovered = WindowHeaderHelper.read(bounds, header, context.read(), context.write());
       WindowFrameRenderer.init(context, bounds, title, collapsed, collapse, close, headerHovered, true, 4, 4, header);
       this.addHit(ModulesMenuController.HitType.WINDOW_BODY, bounds, null, null, id, -1);
-      this.addHit(ModulesMenuController.HitType.WINDOW_HEADER, WindowHeaderHelper.init(bounds, header), null, null, id, -1);
+      this.addHit(ModulesMenuController.HitType.WINDOW_HEADER, WindowHeaderHelper.headerBounds(bounds, header), null, null, id, -1);
       if (collapse) {
-         this.addHit(ModulesMenuController.HitType.COLLAPSE, WindowHeaderHelper.read(bounds, header), null, null, id, -1);
+         this.addHit(ModulesMenuController.HitType.COLLAPSE, WindowHeaderHelper.collapseButton(bounds, header), null, null, id, -1);
       }
 
       if (close) {
-         this.addHit(ModulesMenuController.HitType.CLOSE, WindowHeaderHelper.load(bounds, header), null, null, id, -1);
+         this.addHit(ModulesMenuController.HitType.CLOSE, WindowHeaderHelper.closeButton(bounds, header), null, null, id, -1);
       }
    }
 
@@ -2518,7 +2518,7 @@ public final class ModulesMenuController {
          if (broken) {
             config.classicMenuLayoutCustom = false;
             this.autoArrangeClassicLayout();
-            this.host.load();
+            this.host.saveConfig();
          } else {
             AutismConfig.ModuleCategoryLayout search = this.categoryLayout("search");
             if (search.f_x_I < 0 || search.f_y_I < 0) {
@@ -2527,7 +2527,7 @@ public final class ModulesMenuController {
                search.f_y_I = Math.min(
                   Math.max(4, utility.f_y_I) + this.headerHeight + this.renderToolSection(null, 0, 0, this.mainMenuWidth - 2) + 1 + 4, Math.max(4, this.screenHeight - this.headerHeight - 40)
                );
-               this.host.load();
+               this.host.saveConfig();
             }
          }
       }
@@ -2661,7 +2661,7 @@ public final class ModulesMenuController {
       if (id != null) {
          AutismConfig.ModuleCategoryLayout layout = this.categoryLayout(id);
          layout.collapsed = !layout.collapsed;
-         this.host.load();
+         this.host.saveConfig();
       }
    }
 
@@ -2737,7 +2737,7 @@ public final class ModulesMenuController {
    }
 
    private boolean flush_Z() {
-      return this.sync_Z() && this.profilesView.init_Z();
+      return this.sync_Z() && this.profilesView.isEditing();
    }
 
    public void close() {
@@ -2891,7 +2891,7 @@ public final class ModulesMenuController {
 
       void closeScreen();
 
-      void load();
+      void saveConfig();
 
       void init(Module var1, Setting<?, ?> var2);
 
@@ -2901,7 +2901,7 @@ public final class ModulesMenuController {
 
       void write(Module var1, Setting<?, ?> var2);
 
-      void init(Module var1, Setting<?, ?> var2, AutismMacro var3);
+      void openMacroEditor(Module var1, Setting<?, ?> var2, AutismMacro var3);
 
       void init(String var1);
 

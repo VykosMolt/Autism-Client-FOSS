@@ -20,7 +20,7 @@ public final class EndPortalDisplayHelper {
       }
    }
 
-   public static EndPortalDisplayHelper.BeamColumn init(Vec3 camera, Vec3 target, double minY, double maxY) {
+   public static EndPortalDisplayHelper.BeamColumn beam(Vec3 camera, Vec3 target, double minY, double maxY) {
       if (StrongholdTriangulator.isValidPoint(camera) && StrongholdTriangulator.isValidPoint(target) && Double.isFinite(minY) && Double.isFinite(maxY) && !(maxY <= minY)) {
          double dx = target.x - camera.x;
          double dz = target.z - camera.z;
@@ -59,7 +59,7 @@ public final class EndPortalDisplayHelper {
    }
 
    public record BeamColumn(double init, double load, double read, double write, double update, double sync) {
-      public AABB init(double halfWidth, double bottom, double top) {
+      public AABB box(double halfWidth, double bottom, double top) {
          return new AABB(this.init - halfWidth, bottom, this.load - halfWidth, this.init + halfWidth, top, this.load + halfWidth);
       }
    }

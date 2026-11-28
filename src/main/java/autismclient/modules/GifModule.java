@@ -184,7 +184,7 @@ public final class GifModule extends Module {
    }
 
    private void read() {
-      GifOverlayState.init(
+      GifOverlayState.setSnapshot(
          new GifOverlayState.OverlaySnapshot(
             this.isEnabledRaw(),
             this.bool("cape-enabled"),

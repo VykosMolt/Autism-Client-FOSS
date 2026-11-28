@@ -181,7 +181,7 @@ final class AiUiKit {
    }
 
    void drawIconButton(autismclient.gui.f.NetHelper bounds, Identifier icon, boolean selected, boolean danger, String tip, Runnable action) {
-      autismclient.gui.ui.widgets.IconButtonRenderer.init(this.graphics, this.font, bounds, icon, this.isHovered(bounds), true, danger);
+      autismclient.gui.ui.widgets.IconButtonRenderer.renderIcon(this.graphics, this.font, bounds, icon, this.isHovered(bounds), true, danger);
       if (selected) {
          int radius = Math.min(3, Math.max(2, Math.min(bounds.update(), bounds.sync()) / 3));
          PacketUtil.load(this.graphics, bounds, radius, PacketUtil.init(this.colors.accent, 0.14F), this.colors.accent);
@@ -325,7 +325,7 @@ final class AiUiKit {
          AiUiKit.HitRegion hit = this.hitRegions.get(i);
          if (hit.bounds().init_Z(this.mouseX, this.mouseY)) {
             if (hit.tip() != null && !hit.tip().isBlank()) {
-               autismclient.gui.ui.widgets.TooltipRenderer.init(this.renderContext, hit.tip(), this.mouseX, this.mouseY);
+               autismclient.gui.ui.widgets.TooltipRenderer.render(this.renderContext, hit.tip(), this.mouseX, this.mouseY);
             }
 
             if (hit.tip() != null || hit.left() != null || hit.field() != null) {
@@ -365,18 +365,18 @@ final class AiUiKit {
    static AiTranscriptLayout.TextMeasurer createTextMeasurer(final Font font) {
       return new AiTranscriptLayout.TextMeasurer() {
          @Override
-         public int init(String text, int start, int end) {
-            return this.init(text, start, end, 0);
+         public int measure(String text, int start, int end) {
+            return this.measureStyled(text, start, end, 0);
          }
 
          @Override
-         public int init(String text, int start, int end, int style) {
+         public int measureStyled(String text, int start, int end, int style) {
             String part = text.substring(start, end);
             autismclient.gui.sdf.MsdfFontFace face = AiUiKit.fontFaceForStyle(style);
             if (autismclient.gui.sdf.MsdfTextRenderer.canRender(face, part)) {
                autismclient.gui.sdf.MsdfFontAtlas msdf = face.atlas();
                if (msdf != null) {
-                  return (int)Math.ceil(msdf.init(part, AiUiKit.fontSizeForStyle(style)) - 1.0E-4);
+                  return (int)Math.ceil(msdf.width(part, AiUiKit.fontSizeForStyle(style)) - 1.0E-4);
                }
             }
 

@@ -539,7 +539,7 @@ public final class GhostBlockModule extends Module {
       return "Creative".equals(this.choice("mode"));
    }
 
-   public void init(boolean creative) {
+   public void setCreativeMode(boolean creative) {
       this.setValue("mode", creative ? "Creative" : "Survival");
    }
 
@@ -585,7 +585,7 @@ public final class GhostBlockModule extends Module {
       return this.ghostBoxes;
    }
 
-   public void init(Block block, boolean announce) {
+   public void setCreativeBlock(Block block, boolean announce) {
       this.creativeBlock = block;
       if (announce) {
          AutismClientMessaging.sendPrefixed(block == null ? "§7Ghost block disarmed." : "§aGhost block: §f" + BuiltInRegistries.BLOCK.getKey(block));

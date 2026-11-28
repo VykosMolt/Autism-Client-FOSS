@@ -168,7 +168,7 @@ final class AiBlazeArena implements AiOperation {
             && (this.stairWalk == null || this.stairWalk.canInterruptNow())
             && (this.faceApproach == null || this.faceApproach.canInterruptNow())) {
             for (Entity e : AiWorldScan.findEntitiesByType("minecraft:blaze", 5.0)) {
-               if (e instanceof Blaze && AiDefense.load(this.mc, e) || e.distanceToSqr(this.mc.player) < 9.0) {
+               if (e instanceof Blaze && AiDefense.canSwingAt(this.mc, e) || e.distanceToSqr(this.mc.player) < 9.0) {
                   return this.finish(AiOperation.Status.SUCCEEDED, "A blaze is in melee range; prioritize its kill over more construction");
                }
             }
@@ -448,7 +448,7 @@ final class AiBlazeArena implements AiOperation {
    @Override
    public boolean requiresReconciliationAfterEmergency() {
       return this.placementNeedsReconciliation()
-         || this.fireControl.read()
+         || this.fireControl.isBusy()
          || this.stairWalk != null && this.stairWalk.requiresReconciliationAfterEmergency()
          || this.faceApproach != null && this.faceApproach.requiresReconciliationAfterEmergency();
    }

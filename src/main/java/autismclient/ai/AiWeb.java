@@ -73,8 +73,8 @@ final class AiWeb {
       URI uri = URI.create(url);
 
       for (int redirect = 0; redirect < 4; redirect++) {
-         InetAddress[] addresses = init(uri, checkpoint);
-         AiWeb.HttpResult exchange = init(uri, addresses, checkpoint);
+         InetAddress[] addresses = resolveAllowed(uri, checkpoint);
+         AiWeb.HttpResult exchange = fetchResolved(uri, addresses, checkpoint);
          if (exchange.status() < 300 || exchange.status() >= 400) {
             if (exchange.status() != 200) {
                throw new IOException("Page HTTP " + exchange.status());
@@ -119,13 +119,13 @@ final class AiWeb {
       throw new IOException("Too many page redirects");
    }
 
-   static void init(URI uri) throws IOException, Exception {
-      init(uri, () -> {});
+   static void validate(URI uri) throws IOException, Exception {
+      resolveAllowed(uri, () -> {});
    }
 
-   static InetAddress[] init(URI uri, Runnable checkpoint) throws IOException, Exception {
+   static InetAddress[] resolveAllowed(URI uri, Runnable checkpoint) throws IOException, Exception {
       if (Set.of("http", "https").contains(uri.getScheme()) && uri.getHost() != null && uri.getUserInfo() == null) {
-         InetAddress[] addresses = init_InetAddressArr(uri.getHost(), checkpoint);
+         InetAddress[] addresses = resolveHost(uri.getHost(), checkpoint);
          if (addresses.length == 0) {
             throw new IOException("No addresses for " + uri.getHost());
          }
@@ -203,7 +203,7 @@ final class AiWeb {
       return com.google.common.net.InetAddresses.isInetAddress(h);
    }
 
-   private static InetAddress[] init_InetAddressArr(String host, Runnable checkpoint) throws IOException, Exception, InterruptedException {
+   private static InetAddress[] resolveHost(String host, Runnable checkpoint) throws IOException, Exception, InterruptedException {
       AtomicReference<InetAddress[]> resolved = new AtomicReference<>();
       AtomicReference<Exception> failure = new AtomicReference<>();
       Thread resolver = new Thread(() -> {
@@ -234,7 +234,7 @@ final class AiWeb {
       }
    }
 
-   private static AiWeb.HttpResult init(URI uri, InetAddress[] addresses, Runnable checkpoint) throws IOException {
+   private static AiWeb.HttpResult fetchResolved(URI uri, InetAddress[] addresses, Runnable checkpoint) throws IOException {
       boolean tls = "https".equals(uri.getScheme());
       int port = uri.getPort() >= 0 ? uri.getPort() : (tls ? 443 : 80);
       IOException failure = null;
@@ -281,7 +281,7 @@ final class AiWeb {
                   .getBytes(StandardCharsets.ISO_8859_1)
             );
             out.flush();
-            return init(in, checkpoint);
+            return readResponse(in, checkpoint);
          } catch (IOException e) {
             failure = e;
          }
@@ -290,14 +290,14 @@ final class AiWeb {
       throw failure != null ? failure : new IOException("No route to " + uri.getHost());
    }
 
-   private static AiWeb.HttpResult init(InputStream input, Runnable checkpoint) throws IOException {
+   private static AiWeb.HttpResult readResponse(InputStream input, Runnable checkpoint) throws IOException {
       AiWeb.DeadlineReader reader = new AiWeb.DeadlineReader(input, System.nanoTime() + 30000000000L, checkpoint);
       Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
       int informationalCount = 0;
 
       while (true) {
-         String statusLine = reader.init(8192);
+         String statusLine = reader.readLine(8192);
          if (statusLine == null) {
             throw new IOException("Server closed before an HTTP response");
          }
@@ -320,7 +320,7 @@ final class AiWeb {
             int headerBytes = 0;
 
             String header;
-            while ((header = reader.init(8192)) != null && !header.isEmpty()) {
+            while ((header = reader.readLine(8192)) != null && !header.isEmpty()) {
                headerBytes += header.length();
                if (++headerCount > 256 || headerBytes > 65536) {
                   throw new IOException("HTTP response headers too large");
@@ -341,7 +341,7 @@ final class AiWeb {
             ByteArrayOutputStream body = new ByteArrayOutputStream();
             if (headers.getOrDefault("Transfer-Encoding", "").toLowerCase(Locale.ROOT).contains("chunked")) {
                while (true) {
-                  String sizeLine = reader.init(8192);
+                  String sizeLine = reader.readLine(8192);
                   if (sizeLine == null) {
                      throw new IOException("Truncated chunked body");
                   }
@@ -358,14 +358,14 @@ final class AiWeb {
 
                   if (size == 0) {
                      String trailer;
-                     while ((trailer = reader.init(8192)) != null && !trailer.isEmpty()) {
+                     while ((trailer = reader.readLine(8192)) != null && !trailer.isEmpty()) {
                      }
 
                      return new AiWeb.HttpResult(status, headers, body.toByteArray());
                   }
 
                   init(reader, body, size);
-                  reader.init(8192);
+                  reader.readLine(8192);
                }
             }
 
@@ -384,7 +384,7 @@ final class AiWeb {
 
                init(reader, body, (int)length);
             } else {
-               while ((c = reader.init()) != -1) {
+               while ((c = reader.read()) != -1) {
                   body.write(c);
                   if (body.size() > 1000000) {
                      throw new IOException("HTTP body exceeds 1000000 bytes");
@@ -402,7 +402,7 @@ final class AiWeb {
       int remaining = count;
 
       while (remaining > 0) {
-         int n = reader.init(chunk, 0, Math.min(chunk.length, remaining));
+         int n = reader.read(chunk, 0, Math.min(chunk.length, remaining));
          if (n < 0) {
             throw new IOException("Truncated HTTP body");
          }
@@ -422,9 +422,9 @@ final class AiWeb {
       private final InputStream input;
       private final long deadline;
       private final Runnable checkpoint;
-      private final byte[] init_BArr = new byte[8192];
-      private int init_I;
-      private int load;
+      private final byte[] buffer = new byte[8192];
+      private int pos;
+      private int limit;
 
       DeadlineReader(InputStream in, long deadline, Runnable checkpoint) {
          this.input = in;
@@ -432,34 +432,34 @@ final class AiWeb {
          this.checkpoint = checkpoint;
       }
 
-      int init() throws IOException {
-         if (this.init_I >= this.load) {
-            this.init_I = 0;
-            this.load = this.load();
-            if (this.load < 0) {
+      int read() throws IOException {
+         if (this.pos >= this.limit) {
+            this.pos = 0;
+            this.limit = this.fill();
+            if (this.limit < 0) {
                return -1;
             }
          }
 
-         return this.init_BArr[this.init_I++] & 0xFF;
+         return this.buffer[this.pos++] & 0xFF;
       }
 
-      int init(byte[] b, int off, int n) throws IOException {
-         if (this.init_I < this.load) {
-            int k = Math.min(n, this.load - this.init_I);
-            System.arraycopy(this.init_BArr, this.init_I, b, off, k);
-            this.init_I += k;
+      int read(byte[] b, int off, int n) throws IOException {
+         if (this.pos < this.limit) {
+            int k = Math.min(n, this.limit - this.pos);
+            System.arraycopy(this.buffer, this.pos, b, off, k);
+            this.pos += k;
             return k;
          } else {
-            return this.load(b, off, n);
+            return this.readRaw(b, off, n);
          }
       }
 
-      private int load() throws IOException {
-         return this.load(this.init_BArr, 0, this.init_BArr.length);
+      private int fill() throws IOException {
+         return this.readRaw(this.buffer, 0, this.buffer.length);
       }
 
-      private int load(byte[] b, int off, int n) throws IOException {
+      private int readRaw(byte[] b, int off, int n) throws IOException {
          while (true) {
             this.checkpoint.run();
             if (System.nanoTime() > this.deadline) {
@@ -473,11 +473,11 @@ final class AiWeb {
          }
       }
 
-      String init(int limit) throws IOException {
+      String readLine(int limit) throws IOException {
          StringBuilder line = new StringBuilder();
 
          int c;
-         while ((c = this.init()) != -1) {
+         while ((c = this.read()) != -1) {
             if (c == 10) {
                return line.toString();
             }

@@ -19,7 +19,7 @@ public record CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper style,
       return Math.max(this.init_D() + this.init_D / 2.0 + 0.5, 7.0 - this.init_D / 2.0);
    }
 
-   public double read() {
+   public double extent() {
       double var10000;
       switch (this.style) {
          case CROSS:
@@ -68,8 +68,8 @@ public record CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper style,
       return var10000;
    }
 
-   public double init(double pixelsPerGuiUnit, double scale, double outlineWidth) {
-      return 2.0 * pixelsPerGuiUnit * (this.read() * scale + outlineWidth) + 4.0;
+   public double span(double pixelsPerGuiUnit, double scale, double outlineWidth) {
+      return 2.0 * pixelsPerGuiUnit * (this.extent() * scale + outlineWidth) + 4.0;
    }
 
    private static double init(double x, double y, double bx, double by) {

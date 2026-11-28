@@ -206,7 +206,7 @@ public final class ProjectileBallistics {
       }
    }
 
-   static Vec3 init(float yaw, float pitch, ProjectileBallistics.ProjectileShot shot) {
+   static Vec3 shotVelocity(float yaw, float pitch, ProjectileBallistics.ProjectileShot shot) {
       Vec3 velocity = launchVelocity(yaw, pitch, shot.info());
       if (shot.init_F() == 0.0F) {
          return velocity;
@@ -240,13 +240,13 @@ public final class ProjectileBallistics {
       }
    }
 
-   public static ProjectileBallistics.Trajectory init(Level level, Entity owner, ProjectileBallistics.ProjectileInfo info, float yaw, float pitch, int maxTicks, Vec3 inherited) {
-      return init(level, owner, new ProjectileBallistics.ProjectileShot(info, 0.0F, maxTicks), yaw, pitch, inherited);
+   public static ProjectileBallistics.Trajectory simulate(Level level, Entity owner, ProjectileBallistics.ProjectileInfo info, float yaw, float pitch, int maxTicks, Vec3 inherited) {
+      return simulate(level, owner, new ProjectileBallistics.ProjectileShot(info, 0.0F, maxTicks), yaw, pitch, inherited);
    }
 
-   public static ProjectileBallistics.Trajectory init(Level level, Entity owner, ProjectileBallistics.ProjectileShot shot, float yaw, float pitch, Vec3 inherited) {
+   public static ProjectileBallistics.Trajectory simulate(Level level, Entity owner, ProjectileBallistics.ProjectileShot shot, float yaw, float pitch, Vec3 inherited) {
       if (level != null && owner != null) {
-         Vec3 velocity = init(yaw, pitch, shot);
+         Vec3 velocity = shotVelocity(yaw, pitch, shot);
          if (shot.info().init_Z() && inherited != null) {
             velocity = velocity.add(inherited);
          }

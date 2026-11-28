@@ -33,7 +33,7 @@ final class AiTidy {
    static final int update = 40;
    static final int sync = 20;
    static final int flush = 0;
-   private static final List<String> init_List = List.of(
+   private static final List<String> VALUABLE_ITEMS = List.of(
       "minecraft:diamond",
       "minecraft:emerald",
       "minecraft:ancient_debris",
@@ -61,7 +61,7 @@ final class AiTidy {
       "minecraft:nether_star",
       "minecraft:elytra"
    );
-   private static final List<String> load_List = List.of(
+   private static final List<String> UTILITY_ITEMS = List.of(
       "minecraft:bucket",
       "minecraft:water_bucket",
       "minecraft:lava_bucket",
@@ -83,7 +83,7 @@ final class AiTidy {
       "minecraft:stick",
       "minecraft:scaffolding"
    );
-   private static final List<String> read_List = List.of(
+   private static final List<String> JUNK_ITEMS = List.of(
       "minecraft:dirt",
       "minecraft:coarse_dirt",
       "minecraft:rooted_dirt",
@@ -115,7 +115,7 @@ final class AiTidy {
       "minecraft:bone_meal",
       "minecraft:ink_sac"
    );
-   private static final List<String> write_List = List.of(
+   private static final List<String> KEEP_ITEMS = List.of(
       "minecraft:water_bucket",
       "minecraft:lava_bucket",
       "minecraft:bucket",
@@ -156,45 +156,45 @@ final class AiTidy {
          }
 
          return action == AiTidy.TidyAction.INSPECT
-            ? AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Ranked " + AiItems.countFreeSlots() + " free slot(s) and the current inventory", init(mc, keep, wantFree))
+            ? AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Ranked " + AiItems.countFreeSlots() + " free slot(s) and the current inventory", rankingJson(mc, keep, wantFree))
             : new AiOperation() {
-               final long init_J = System.nanoTime() + timeoutSeconds * 1000000000L;
-               final int init_I = AiItems.countFreeSlots();
-               final Object init_Obj = mc.level;
-               final Object load_Obj = mc.getConnection();
-               final Object read_Obj = mc.player;
-               final JsonArray init_JsonArray = new JsonArray();
-               int load_I = -1;
-               int read_I;
-               long load_J;
-               int write;
+               final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
+               final int startFreeSlots = AiItems.countFreeSlots();
+               final Object startLevel = mc.level;
+               final Object startConnection = mc.getConnection();
+               final Object startPlayer = mc.player;
+               final JsonArray dropped = new JsonArray();
+               int pendingSlot = -1;
+               int confirmWaitTicks;
+               long replyBaseline;
+               int countBeforeDrop;
                AiTidy.SlotRank worst;
-               int update;
-               boolean init_Z;
+               int drops;
+               boolean cancelled;
 
                @Override
                public AiOperation.Result tick() {
-                  if (!this.init_Z && mc.player != null) {
-                     if (mc.level != this.init_Obj || mc.getConnection() != this.load_Obj || mc.player != this.read_Obj || !mc.player.isAlive()) {
-                        return this.init(AiOperation.Status.UNCERTAIN, "Tidy player or world changed; reconcile any pending drop");
+                  if (!this.cancelled && mc.player != null) {
+                     if (mc.level != this.startLevel || mc.getConnection() != this.startConnection || mc.player != this.startPlayer || !mc.player.isAlive()) {
+                        return this.finish(AiOperation.Status.UNCERTAIN, "Tidy player or world changed; reconcile any pending drop");
                      }
 
-                     if (System.nanoTime() > this.init_J) {
-                        return this.init(this.load_I >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT, "Tidy deadline reached");
+                     if (System.nanoTime() > this.deadline) {
+                        return this.finish(this.pendingSlot >= 0 ? AiOperation.Status.UNCERTAIN : AiOperation.Status.TIMED_OUT, "Tidy deadline reached");
                      }
 
                      if (mc.player.containerMenu != mc.player.inventoryMenu) {
-                        return this.init(AiOperation.Status.FAILED, "Close the open container before tidying");
+                        return this.finish(AiOperation.Status.FAILED, "Close the open container before tidying");
                      }
 
                      if (!mc.player.containerMenu.getCarried().isEmpty()) {
-                        return this.init(AiOperation.Status.FAILED, "Clear the cursor stack before tidying");
+                        return this.finish(AiOperation.Status.FAILED, "Clear the cursor stack before tidying");
                      }
 
-                     if (this.load_I >= 0) {
-                        OptionalInt confirmedCount = AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.load_J, this.worst.item());
-                        if (confirmedCount.isPresent() && confirmedCount.getAsInt() <= this.write - this.worst.count()) {
-                           this.init_JsonArray
+                     if (this.pendingSlot >= 0) {
+                        OptionalInt confirmedCount = AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.replyBaseline, this.worst.item());
+                        if (confirmedCount.isPresent() && confirmedCount.getAsInt() <= this.countBeforeDrop - this.worst.count()) {
+                           this.dropped
                               .add(
                                  AiJson.objectOf(
                                     "slot",
@@ -209,25 +209,25 @@ final class AiTidy {
                                     true
                                  )
                               );
-                           this.update++;
-                           this.load_I = -1;
+                           this.drops++;
+                           this.pendingSlot = -1;
                            this.worst = null;
-                           this.read_I = 0;
-                           return this.init("Drop confirmed");
+                           this.confirmWaitTicks = 0;
+                           return this.running("Drop confirmed");
                         } else {
-                           return ++this.read_I > 20
-                              ? this.init(AiOperation.Status.UNCERTAIN, "A drop was not confirmed by the server; reobserve before repeating")
-                              : this.init("Waiting for the drop to apply");
+                           return ++this.confirmWaitTicks > 20
+                              ? this.finish(AiOperation.Status.UNCERTAIN, "A drop was not confirmed by the server; reobserve before repeating")
+                              : this.running("Waiting for the drop to apply");
                         }
                      } else {
                         if (AiItems.countFreeSlots() >= wantFree) {
-                           return this.init(
-                              AiOperation.Status.SUCCEEDED, "Inventory has " + AiItems.countFreeSlots() + " free slot(s) after dropping " + this.update + " stack(s)"
+                           return this.finish(
+                              AiOperation.Status.SUCCEEDED, "Inventory has " + AiItems.countFreeSlots() + " free slot(s) after dropping " + this.drops + " stack(s)"
                            );
                         }
 
-                        if (this.update >= maxDrops) {
-                           return this.load(
+                        if (this.drops >= maxDrops) {
+                           return this.failFull(
                               "Dropped the allowed "
                                  + maxDrops
                                  + " stack(s) and still have only "
@@ -236,45 +236,45 @@ final class AiTidy {
                            );
                         }
 
-                        AiTidy.SlotRank worst = AiTidy.init_cx_StreamUtil(mc, keep);
+                        AiTidy.SlotRank worst = AiTidy.worstSlot(mc, keep);
                         if (worst == null) {
-                           return this.load("Nothing left is safe to drop; everything remaining is kept, equipped or high value");
+                           return this.failFull("Nothing left is safe to drop; everything remaining is kept, equipped or high value");
                         }
 
-                        this.load_J = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
-                        this.load_I = worst.slot();
+                        this.replyBaseline = AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId);
+                        this.pendingSlot = worst.slot();
                         this.worst = worst;
-                        this.write = AiCraft.countItem(worst.item());
-                        AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, AiTidy.init(mc, worst.slot()), 1, ContainerInput.THROW);
-                        return this.init("Dropping " + worst.count() + " " + worst.item());
+                        this.countBeforeDrop = AiCraft.countItem(worst.item());
+                        AiContainerTransactions.sendPredictedClick(mc.player.containerMenu.containerId, AiTidy.screenSlotOrThrow(mc, worst.slot()), 1, ContainerInput.THROW);
+                        return this.running("Dropping " + worst.count() + " " + worst.item());
                      }
                   } else {
-                     return this.init(AiOperation.Status.CANCELLED, "Tidy cancelled");
+                     return this.finish(AiOperation.Status.CANCELLED, "Tidy cancelled");
                   }
                }
 
-               JsonObject init() {
+               JsonObject progressData() {
                   JsonObject out = AiJson.objectOf(
-                     "freeSlots", AiItems.countFreeSlots(), "target", wantFree, "startedWith", this.init_I, "drops", this.update, "maxDrops", maxDrops
+                     "freeSlots", AiItems.countFreeSlots(), "target", wantFree, "startedWith", this.startFreeSlots, "drops", this.drops, "maxDrops", maxDrops
                   );
                   if (this.worst != null) {
                      out.add(
                         "pendingDrop",
                         AiJson.objectOf(
                            "slot",
-                           this.load_I,
+                           this.pendingSlot,
                            "item",
                            this.worst.item(),
                            "count",
                            this.worst.count(),
                            "beforeCount",
-                           this.write,
+                           this.countBeforeDrop,
                            "currentCount",
                            AiCraft.countItem(this.worst.item()),
                            "minimumServerCountAfterClick",
-                           AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.load_J, this.worst.item()).orElse(-1),
+                           AiServerEvidence.minItemCountAfterReply(mc.player.inventoryMenu.containerId, this.replyBaseline, this.worst.item()).orElse(-1),
                            "repliesBefore",
-                           this.load_J,
+                           this.replyBaseline,
                            "repliesNow",
                            AiServerEvidence.containerReplyCount(mc.player.inventoryMenu.containerId),
                            "confirmed",
@@ -283,34 +283,34 @@ final class AiTidy {
                      );
                   }
 
-                  out.add("dropped", this.init_JsonArray);
+                  out.add("dropped", this.dropped);
                   return out;
                }
 
-               AiOperation.Result init(String message) {
-                  return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init().toString(), List.of());
+               AiOperation.Result running(String message) {
+                  return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressData().toString(), List.of());
                }
 
-               AiOperation.Result init(AiOperation.Status status, String message) {
-                  JsonObject data = this.init();
+               AiOperation.Result finish(AiOperation.Status status, String message) {
+                  JsonObject data = this.progressData();
                   this.cancel();
                   return new AiOperation.Result(status, message, data.toString(), List.of());
                }
 
-               AiOperation.Result load(String message) {
-                  JsonObject receipt = this.init();
+               AiOperation.Result failFull(String message) {
+                  JsonObject receipt = this.progressData();
                   this.cancel();
                   return AiOperation.Result.failed(AiFailure.INVENTORY_FULL, message, receipt.toString());
                }
 
                @Override
                public void cancel() {
-                  this.init_Z = true;
+                  this.cancelled = true;
                }
 
                @Override
                public boolean canInterruptNow() {
-                  return this.load_I < 0;
+                  return this.pendingSlot < 0;
                }
             };
       } else {
@@ -318,16 +318,16 @@ final class AiTidy {
       }
    }
 
-   static JsonObject init(Minecraft mc, List<AiItems.ItemSpec> keep, int wantFree) {
+   static JsonObject rankingJson(Minecraft mc, List<AiItems.ItemSpec> keep, int wantFree) {
       JsonArray ranked = new JsonArray();
 
-      for (AiTidy.SlotRank entry : init_List(mc, keep)) {
+      for (AiTidy.SlotRank entry : rankSlots(mc, keep)) {
          ranked.add(
-            AiJson.objectOf("slot", entry.slot(), "item", entry.item(), "count", entry.count(), "rank", entry.rank(), "tier", init(entry.rank()))
+            AiJson.objectOf("slot", entry.slot(), "item", entry.item(), "count", entry.count(), "rank", entry.rank(), "tier", rankCategory(entry.rank()))
          );
       }
 
-      AiTidy.SlotRank worst = init_cx_StreamUtil(mc, keep);
+      AiTidy.SlotRank worst = worstSlot(mc, keep);
       JsonObject out = AiJson.objectOf("freeSlots", AiItems.countFreeSlots(), "wanted", wantFree, "wouldDropFirst", worst == null ? null : worst.item());
       out.add("inventory", ranked);
       out.addProperty(
@@ -337,7 +337,7 @@ final class AiTidy {
       return out;
    }
 
-   static List<AiTidy.SlotRank> init_List(Minecraft mc, List<AiItems.ItemSpec> keep) {
+   static List<AiTidy.SlotRank> rankSlots(Minecraft mc, List<AiItems.ItemSpec> keep) {
       List<AiTidy.SlotRank> ranked = new ArrayList<>();
       if (mc.player == null) {
          return ranked;
@@ -375,14 +375,14 @@ final class AiTidy {
 
       for (int slot = 0; slot < 36; slot++) {
          ItemStack stack = inventory.getItem(slot);
-         if (!stack.isEmpty() && slot != selected && !init_Z(stack, keep)) {
+         if (!stack.isEmpty() && slot != selected && !isKept(stack, keep)) {
             int reserved = Math.max(AiRunResources.totalReservedCount(stack.getItem()), autismclient.ai.engine.AiRestock.reservedItemCount(stack.getItem()));
             if ((reserved <= 0 || AiGameState.countMainInventoryItem(itemId(stack)) - stack.getCount() >= reserved) && (!init_Z(stack) || blocks - stack.getCount() >= 64)) {
                int stackWood = stack.is(ItemTags.PLANKS) ? stack.getCount() : (stack.is(ItemTags.LOGS) ? 4 * stack.getCount() : 0);
                if ((stackWood <= 0 || wood - stackWood >= keptWood)
                   && (!stack.is(Items.STICK) || sticks - stack.getCount() >= 2)
                   && (!autismclient.ai.engine.AiRestock.isStoneBlock(stack) || stone - stack.getCount() >= autismclient.ai.engine.AiRestock.baseStoneReserve())) {
-                  int rank = init_I(stack, held);
+                  int rank = rankAgainstHeld(stack, held);
                   ranked.add(new AiTidy.SlotRank(slot, itemId(stack), stack.getCount(), rank));
                }
             }
@@ -396,8 +396,8 @@ final class AiTidy {
       return ranked;
    }
 
-   static AiTidy.SlotRank init_cx_StreamUtil(Minecraft mc, List<AiItems.ItemSpec> keep) {
-      List<AiTidy.SlotRank> ranked = init_List(mc, keep);
+   static AiTidy.SlotRank worstSlot(Minecraft mc, List<AiItems.ItemSpec> keep) {
+      List<AiTidy.SlotRank> ranked = rankSlots(mc, keep);
       if (ranked.isEmpty()) {
          return null;
       }
@@ -413,13 +413,13 @@ final class AiTidy {
          String id = itemId(stack);
          if (stack.isDamageableItem()) {
             return 100;
-         } else if (read_List.contains(id)) {
+         } else if (JUNK_ITEMS.contains(id)) {
             return 0;
          } else if (stack.has(DataComponents.FOOD)) {
             return 90;
-         } else if (init_List.contains(id) || write_List.contains(id) || stack.is(ItemTags.BEDS) || stack.is(ItemTags.WOOL)) {
+         } else if (VALUABLE_ITEMS.contains(id) || KEEP_ITEMS.contains(id) || stack.is(ItemTags.BEDS) || stack.is(ItemTags.WOOL)) {
             return 80;
-         } else if (load_List.contains(id)) {
+         } else if (UTILITY_ITEMS.contains(id)) {
             return 60;
          } else {
             return stack.getItem() instanceof BlockItem ? 40 : 20;
@@ -427,10 +427,10 @@ final class AiTidy {
       }
    }
 
-   static int init_I(ItemStack stack, List<ItemStack> held) {
+   static int rankAgainstHeld(ItemStack stack, List<ItemStack> held) {
       if (AiItems.isDisposableTierTool(stack)) {
          for (ItemStack replacement : held) {
-            if (replacement != stack && init(stack, replacement)) {
+            if (replacement != stack && isReplacedBy(stack, replacement)) {
                return 0;
             }
          }
@@ -439,13 +439,13 @@ final class AiTidy {
       return init_I(stack);
    }
 
-   static boolean init(ItemStack stack, ItemStack replacement) {
+   static boolean isReplacedBy(ItemStack stack, ItemStack replacement) {
       if (AiItems.isDisposableTierTool(stack) && replacement != null && AiItems.hasEnoughDurability(replacement, 2) && stack.has(DataComponents.TOOL) && replacement.has(DataComponents.TOOL)) {
          String kind = toolKind(stack);
-         int tier = read(stack);
-         int otherTier = read(replacement);
+         int tier = toolTier(stack);
+         int otherTier = toolTier(replacement);
          if (!kind.isEmpty() && kind.equals(toolKind(replacement)) && tier >= 0 && otherTier >= tier && durabilityLeft(replacement) >= durabilityLeft(stack)) {
-            for (BlockState state : init_List(kind)) {
+            for (BlockState state : probeBlocksFor(kind)) {
                float speed = stack.getDestroySpeed(state);
                float otherSpeed = replacement.getDestroySpeed(state);
                if (!Float.isFinite(speed)
@@ -485,7 +485,7 @@ final class AiTidy {
       }
    }
 
-   private static int read(ItemStack stack) {
+   private static int toolTier(ItemStack stack) {
       String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
       byte var10000;
       switch (path.substring(0, path.indexOf(95) < 0 ? path.length() : path.indexOf(95))) {
@@ -510,7 +510,7 @@ final class AiTidy {
       return var10000;
    }
 
-   private static List<BlockState> init_List(String kind) {
+   private static List<BlockState> probeBlocksFor(String kind) {
       List var10000;
       switch (kind) {
          case "pickaxe":
@@ -540,8 +540,8 @@ final class AiTidy {
          Block block = item.getBlock();
          BlockState state = block.defaultBlockState();
          String id = itemId(stack);
-         if (init_List.contains(id)
-            || write_List.contains(id)
+         if (VALUABLE_ITEMS.contains(id)
+            || KEEP_ITEMS.contains(id)
             || stack.is(ItemTags.BEDS)
             || stack.is(ItemTags.WOOL)
             || stack.is(ItemTags.LOGS)
@@ -563,7 +563,7 @@ final class AiTidy {
       }
    }
 
-   static String init(int rank) {
+   static String rankCategory(int rank) {
       if (rank >= 100) {
          return "tool";
       } else if (rank >= 90) {
@@ -579,7 +579,7 @@ final class AiTidy {
       }
    }
 
-   private static boolean init_Z(ItemStack stack, List<AiItems.ItemSpec> keep) {
+   private static boolean isKept(ItemStack stack, List<AiItems.ItemSpec> keep) {
       for (AiItems.ItemSpec target : keep) {
          if (target.matches(stack)) {
             return true;
@@ -593,7 +593,7 @@ final class AiTidy {
       return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
    }
 
-   private static int init(Minecraft mc, int inventorySlot) {
+   private static int screenSlotOrThrow(Minecraft mc, int inventorySlot) {
       int handler = autismclient.util.InventorySlotHelper.toScreenSlot(mc, inventorySlot);
       if (handler < 0) {
          throw new IllegalStateException("Inventory slot " + inventorySlot + " has no menu slot");

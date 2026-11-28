@@ -207,7 +207,7 @@ public final class AiPaceScript {
       }
    }
 
-   static AiPhysics.PhysicsWorld fill(AiPhysics.PhysicsWorld var0, double var1) {
+   static AiPhysics.PhysicsWorld withMovementSpeed(AiPhysics.PhysicsWorld var0, double var1) {
       return Double.isFinite(var1) && !(var1 <= 0.0) && !(Math.abs(var0.movementSpeed() - var1) <= 1.0E-9) ? new AiPaceScript.Inner_EventBus(var0, var1) : var0;
    }
 
@@ -359,7 +359,7 @@ public final class AiPaceScript {
       int var11 = var3.maxNodes();
       boolean var12 = false;
       double var13 = -1.0;
-      int var15 = var6.flowTemp();
+      int var15 = var6.size();
       if (var2.plateGoal() && var1.touched() < var8) {
          var6.putAt_V_BlockPosArr(Arrays.copyOfRange(var2.checkpoints(), var1.touched(), var8));
       } else if (!var2.plateGoal() && var1.touched() < var8) {
@@ -367,7 +367,7 @@ public final class AiPaceScript {
 
          try {
             BlockPos var17 = var2.checkpoints()[var8 - 1];
-            if (var16.value_Z(var17.getX(), var17.getY(), var17.getZ())) {
+            if (var16.pressurePlateAt(var17.getX(), var17.getY(), var17.getZ())) {
                var6.putAt_V_BlockPosArr(new BlockPos[]{var17});
             }
          } finally {
@@ -398,7 +398,7 @@ public final class AiPaceScript {
 
       boolean var83;
       try {
-         var83 = !var1.state().onGround() || fill(var82, var1.state()) || putAt_Z_TokenCore_TaskStat(var82, var1.state(), 0.002);
+         var83 = !var1.state().onGround() || onClimbable(var82, var1.state()) || putAt_Z_TokenCore_TaskStat(var82, var1.state(), 0.002);
       } finally {
          var0.putAt_V_TokenCore_TaskStat(var82);
       }
@@ -684,7 +684,7 @@ public final class AiPaceScript {
       AiPaceScript.Inner_StreamState var88 = var12
          ? null
          : new AiPaceScript.Inner_StreamState(var86.putAt_D, Math.max(var25, var86.putAt_D), var86.flowState, var86.flowTemp);
-      var6.putAt(var12, var88);
+      var6.finish(var12, var88);
       var var90 = var6.fill_List();
       int[] var91 = new int[var8];
       Arrays.fill(var91, -1);
@@ -1094,17 +1094,17 @@ public final class AiPaceScript {
          if (!var6.getAsBoolean() && var7.lastError() == null) {
             var7.tickDriver(new AiPathfinder.SearchTask() {
                @Override
-               public boolean putAt_Z() {
+               public boolean isFollowing() {
                   return false;
                }
 
                @Override
-               public int flowState() {
+               public int remainingTicks() {
                   return 0;
                }
 
                @Override
-               public BlockPos putAt_BlockPos() {
+               public BlockPos currentPos() {
                   return var1;
                }
             });
@@ -1304,9 +1304,9 @@ public final class AiPaceScript {
 
    static boolean putAt_Z_TokenCore_TaskStat_2(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
       double var3 = 0.2999999;
-      return !var0.putAt_Z_D(var2.x() - var3, var2.y() + 1.0E-7, var2.z() - var3, var2.x() + var3, var2.y() + 1.8 - 1.0E-7, var2.z() + var3)
+      return !var0.boxCollides(var2.x() - var3, var2.y() + 1.0E-7, var2.z() - var3, var2.x() + var3, var2.y() + 1.8 - 1.0E-7, var2.z() + var3)
          ? false
-         : !var0.putAt_Z_D(var1.x() - var3, var1.y() + 1.0E-7, var1.z() - var3, var1.x() + var3, var1.y() + 1.8 - 1.0E-7, var1.z() + var3);
+         : !var0.boxCollides(var1.x() - var3, var1.y() + 1.0E-7, var1.z() - var3, var1.x() + var3, var1.y() + 1.8 - 1.0E-7, var1.z() + var3);
    }
 
    private static float[] putAt(float[] var0, float[] var1) {
@@ -1372,12 +1372,12 @@ public final class AiPaceScript {
       boolean var10 = !var5 && var7.fastTravel();
       float var11 = fill(var0.putAt_TokenCore_TableCac, var0.putAt_D, var1, var0.putAt_F);
       float[] var12 = var5 ? value_FArr : (var10 ? fill_FArr : putAt_FArr);
-      boolean var13 = fill(var3, var0.putAt_TokenCore_TableCac);
+      boolean var13 = onClimbable(var3, var0.putAt_TokenCore_TableCac);
       boolean var14 = putAt_Z_TextPool_TaskState(var0, var1, var3);
       int[] var15 = var10 ? (var14 ? chunkAt_IArr : prev_IArr) : prevEx_IArr;
       boolean var16 = var0.putAt_TokenCore_TableCac.onGround() && Math.hypot(var0.putAt_TokenCore_TableCac.vx(), var0.putAt_TokenCore_TableCac.vz()) > 0.02;
       boolean var17 = var13
-         && AiLadderJump.putAt(var3, BlockPos.containing(var0.putAt_TokenCore_TableCac.x(), var0.putAt_TokenCore_TableCac.y(), var0.putAt_TokenCore_TableCac.z()));
+         && AiLadderJump.canClimbAt(var3, BlockPos.containing(var0.putAt_TokenCore_TableCac.x(), var0.putAt_TokenCore_TableCac.y(), var0.putAt_TokenCore_TableCac.z()));
       boolean var18 = var13 && Math.hypot(var0.putAt_TokenCore_TableCac.vx(), var0.putAt_TokenCore_TableCac.vz()) > 0.02;
       boolean var19 = false;
 
@@ -1508,7 +1508,7 @@ public final class AiPaceScript {
       } else {
          return !putAt_Z_TokenCore_TaskStat(var0, var1, 0.14)
             ? true
-            : !var0.putAt_Z_D(var1.x() - 1.0E-4, var1.y() - 0.02, var1.z() - 1.0E-4, var1.x() + 1.0E-4, var1.y() - 1.0E-4, var1.z() + 1.0E-4);
+            : !var0.boxCollides(var1.x() - 1.0E-4, var1.y() - 0.02, var1.z() - 1.0E-4, var1.x() + 1.0E-4, var1.y() - 1.0E-4, var1.z() + 1.0E-4);
       }
    }
 
@@ -1531,7 +1531,7 @@ public final class AiPaceScript {
 
       for (int var18 = (int)Math.floor(var9.x() - var10); var18 <= (int)Math.floor(var9.x() + var10); var18++) {
          for (int var19 = (int)Math.floor(var9.z() - var10); var19 <= (int)Math.floor(var9.z() + var10); var19++) {
-            if (var4.putAt_Z_D(var18 + 0.01, var9.y() - 0.02, var19 + 0.01, var18 + 0.99, var9.y() - 1.0E-4, var19 + 0.99)) {
+            if (var4.boxCollides(var18 + 0.01, var9.y() - 0.02, var19 + 0.01, var18 + 0.99, var9.y() - 1.0E-4, var19 + 0.99)) {
                double var20 = var18 + 0.5;
                double var22 = var19 + 0.5;
                if (AiJumpSolver.canStandAt(var4, var20, var9.y(), var22)) {
@@ -1878,7 +1878,7 @@ public final class AiPaceScript {
    }
 
    private static boolean putAt_Z_TextPool_TaskState(AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.PhysicsWorld var2) {
-      if (fill(var2, var0.putAt_TokenCore_TableCac)) {
+      if (onClimbable(var2, var0.putAt_TokenCore_TableCac)) {
          return true;
       }
 
@@ -1919,7 +1919,7 @@ public final class AiPaceScript {
 
    private static boolean fill(AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.PhysicsWorld var2) {
       AiPhysics.MotionState var3 = var0.putAt_TokenCore_TableCac;
-      if (var3.onGround() && !(var3.vy() > 0.1) && !fill(var2, var3)) {
+      if (var3.onGround() && !(var3.vy() > 0.1) && !onClimbable(var2, var3)) {
          int[] var4 = var1.cellPoint();
          int var5 = 0;
          int var6 = var4.length;
@@ -1937,9 +1937,9 @@ public final class AiPaceScript {
             AiPaceScript.Inner_JsonEntry var8 = var1.planned()[var11];
             if (var8 != null) {
                BlockPos var9 = var8.from();
-               if (!var2.state(var9.getX(), var9.getY(), var9.getZ())) {
+               if (!var2.climbableAt(var9.getX(), var9.getY(), var9.getZ())) {
                   BlockPos var10 = var1.cells()[var11];
-                  if (!var2.state(var10.getX(), var10.getY(), var10.getZ())
+                  if (!var2.climbableAt(var10.getX(), var10.getY(), var10.getZ())
                      && Math.hypot(var3.x() - var9.getX() - 0.5, var3.z() - var9.getZ() - 0.5) <= 1.5
                      && Math.abs(var3.y() - var9.getY()) <= 0.6) {
                      return true;
@@ -2016,7 +2016,7 @@ public final class AiPaceScript {
       AiPaceScript.Inner_TaskState var0, AiPaceScript.Inner_JsonCache var1, AiPhysics.PhysicsWorld var2, AiPaceScript.Inner_RingUtil var3, boolean var4, float var5
    ) {
       AiPhysics.MotionState var6 = var0.putAt_TokenCore_TableCac;
-      boolean var7 = fill(var2, var6);
+      boolean var7 = onClimbable(var2, var6);
       if (var7 || var6.onGround() && !(var6.vy() > 0.1)) {
          ArrayList var8 = null;
          int[] var9 = var1.cellPoint();
@@ -2036,7 +2036,7 @@ public final class AiPaceScript {
             AiPaceScript.Inner_JsonEntry var13 = var1.planned()[var28];
             if (var13 != null) {
                BlockPos var14 = var13.from();
-               boolean var15 = var2.state(var14.getX(), var14.getY(), var14.getZ());
+               boolean var15 = var2.climbableAt(var14.getX(), var14.getY(), var14.getZ());
                if (var7 == var15) {
                   double var16 = var13.bounce() ? 1.05 : 1.5;
                   if (!(Math.hypot(var6.x() - var14.getX() - 0.5, var6.z() - var14.getZ() - 0.5) > var16)
@@ -2049,7 +2049,7 @@ public final class AiPaceScript {
                         if (var22 != null) {
                            var19 = var22;
                         } else if (var3 == null || var3.readEx_AtomicIntegerArr[var28].getAndIncrement() < 128) {
-                           for (AiSlimeBounce.Inner_JsonCache var24 : AiSlimeBounce.putAt_List_TokenCore_TaskStat(var2, var6, var13.yaw(), var18, true)) {
+                           for (AiSlimeBounce.Inner_JsonCache var24 : AiSlimeBounce.findBounces(var2, var6, var13.yaw(), var18, true)) {
                               if (var24.plan().maneuver() != null) {
                                  var19 = var24.plan().maneuver().inputs();
                               }
@@ -2064,7 +2064,7 @@ public final class AiPaceScript {
                            continue;
                         }
 
-                        boolean var29 = var2.state(var18.getX(), var18.getY(), var18.getZ());
+                        boolean var29 = var2.climbableAt(var18.getX(), var18.getY(), var18.getZ());
                         AiJumpManeuver var21 = var13.maneuver();
                         if (var21 == null
                            || (
@@ -2091,8 +2091,8 @@ public final class AiPaceScript {
                         } else {
                            var19 = var21.inputs();
                         }
-                     } else if (var2.state(var18.getX(), var18.getY(), var18.getZ())) {
-                        if (!var4 && !AiLadderJump.putAt(var2, var18)) {
+                     } else if (var2.climbableAt(var18.getX(), var18.getY(), var18.getZ())) {
+                        if (!var4 && !AiLadderJump.canClimbAt(var2, var18)) {
                            continue;
                         }
 
@@ -2218,9 +2218,9 @@ public final class AiPaceScript {
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat_3(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, BlockPos var2) {
-      boolean var3 = fill(var0, var1);
+      boolean var3 = onClimbable(var0, var1);
       BlockPos var4 = BlockPos.containing(var1.x(), var3 ? var1.y() : Math.ceil(var1.y() - 1.0E-6), var1.z());
-      return var4.equals(var2) || var3 && AiSlimeBounce.putAt(var0, var4, var2);
+      return var4.equals(var2) || var3 && AiSlimeBounce.columnReachable(var0, var4, var2);
    }
 
    private static List<List<AiPaceScript.Inner_TaskState>> putAt_List_List(
@@ -2313,7 +2313,7 @@ public final class AiPaceScript {
       double var31 = 0.0;
       double var33 = var13.bestGoalF();
       boolean var35 = false;
-      boolean var36 = fill(var8, var15);
+      boolean var36 = onClimbable(var8, var15);
       boolean var37 = !var0.putAt_Z;
       boolean var38 = false;
       int var39 = 0;
@@ -2428,7 +2428,7 @@ public final class AiPaceScript {
                return;
             }
 
-            boolean var50 = fill(var8, var47);
+            boolean var50 = onClimbable(var8, var47);
             boolean var51 = var47.onGround() && var47.vy() <= 0.1 || var50;
             double var52 = var10.readEx_D - var47.y();
             if (!var6.freeSegment(var10.flowTemp) && var52 > (var51 ? 0.3 : 1.2)) {
@@ -2639,7 +2639,7 @@ public final class AiPaceScript {
          var38 = var0.prevEx;
          var40 = 0.0;
          var31 = var0.value_I;
-         var43 = fill(var8, var23);
+         var43 = onClimbable(var8, var23);
          var42 = false;
          var30 = 0;
          var45 = false;
@@ -2790,7 +2790,7 @@ public final class AiPaceScript {
                return null;
             }
 
-            boolean var57 = fill(var8, var54);
+            boolean var57 = onClimbable(var8, var54);
             boolean var58 = var54.onGround() && var54.vy() <= 0.1 || var57;
             double var59 = var10.readEx_D - var54.y();
             if (!var6.freeSegment(var10.flowTemp) && var59 > (var58 ? 0.3 : 1.2)) {
@@ -3021,7 +3021,7 @@ public final class AiPaceScript {
       }
 
       if (var2 && putAt_Z_TokenCore_TaskStat_3(var0, var1, var3)) {
-         if (var0.value_Z(var3.getX(), var3.getY(), var3.getZ()) && !putAt_Z_TokenCore_TableCac(var1, var3, 0.14, 0.05)) {
+         if (var0.pressurePlateAt(var3.getX(), var3.getY(), var3.getZ()) && !putAt_Z_TokenCore_TableCac(var1, var3, 0.14, 0.05)) {
             return false;
          }
 
@@ -3057,17 +3057,17 @@ public final class AiPaceScript {
    }
 
    static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
-      return var1.onGround() && var1.vy() <= 0.1 || fill(var0, var1);
+      return var1.onGround() && var1.vy() <= 0.1 || onClimbable(var0, var1);
    }
 
-   static boolean fill(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
-      return var0.state((int)Math.floor(var1.x()), (int)Math.floor(var1.y()), (int)Math.floor(var1.z()));
+   static boolean onClimbable(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1) {
+      return var0.climbableAt((int)Math.floor(var1.x()), (int)Math.floor(var1.y()), (int)Math.floor(var1.z()));
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat_4(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, boolean var2) {
       if (var2 && !(var1.vy() >= 0.0)) {
          int var3 = (int)Math.floor(var1.y());
-         return var1.y() - var3 < 0.22 && !var0.state((int)Math.floor(var1.x()), var3 - 1, (int)Math.floor(var1.z()));
+         return var1.y() - var3 < 0.22 && !var0.climbableAt((int)Math.floor(var1.x()), var3 - 1, (int)Math.floor(var1.z()));
       } else {
          return false;
       }
@@ -3219,7 +3219,7 @@ public final class AiPaceScript {
 
          return var35 == 0 ? false : putAt_Z_AABBArr(var34, var35, var2, var18) || !var3 && !var4 && putAt_Z_AABBArr(var34, var35, var1, var2, var16);
       } else {
-         return !var0.putAt_Z_D(var20, var28, var24, var22, var30, var26)
+         return !var0.boxCollides(var20, var28, var24, var22, var30, var26)
             ? false
             : value(var0, var2) || !var3 && !var4 && putAt_Z_TokenCore_TaskStat_3(var0, var1, var2, var16);
       }
@@ -3329,12 +3329,12 @@ public final class AiPaceScript {
       double var2 = 0.3;
       double var4 = var1.y() + 0.001;
       double var6 = var1.y() + putAt_D_TokenCore_TableCac(var1) - 0.001;
-      if (!var0.putAt_Z_D(var1.x() - var2 - 0.002, var4, var1.z() - var2 - 0.002, var1.x() + var2 + 0.002, var6, var1.z() + var2 + 0.002)) {
+      if (!var0.boxCollides(var1.x() - var2 - 0.002, var4, var1.z() - var2 - 0.002, var1.x() + var2 + 0.002, var6, var1.z() + var2 + 0.002)) {
          return false;
       }
 
       double var8 = 1.0E-5;
-      return !var0.putAt_Z_D(var1.x() - var2 - var8, var4, var1.z() - var2 - var8, var1.x() + var2 + var8, var6, var1.z() + var2 + var8);
+      return !var0.boxCollides(var1.x() - var2 - var8, var4, var1.z() - var2 - var8, var1.x() + var2 + var8, var6, var1.z() + var2 + var8);
    }
 
    static boolean fill(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
@@ -3356,7 +3356,7 @@ public final class AiPaceScript {
    }
 
    static boolean readEx(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
-      return putAt_Z_TokenCore_TaskStat_3(var0, var1, var2, fill(var0, var1), fill(var0, var2));
+      return putAt_Z_TokenCore_TaskStat_3(var0, var1, var2, onClimbable(var0, var1), onClimbable(var0, var2));
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat_3(
@@ -3433,7 +3433,7 @@ public final class AiPaceScript {
    static boolean putAt_Z_TokenCore_TaskStat_2(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MoveInput var2, AiPhysics.MotionState var3
    ) {
-      return var3.horizontalCollision() && !fill(var0, var1) ? fill(var0, var1, var2, var3) : false;
+      return var3.horizontalCollision() && !onClimbable(var0, var1) ? fill(var0, var1, var2, var3) : false;
    }
 
    private static boolean fill(
@@ -3468,7 +3468,7 @@ public final class AiPaceScript {
    }
 
    static boolean value(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2) {
-      if (!fill(var0, var1) && !fill(var0, var2)) {
+      if (!onClimbable(var0, var1) && !onClimbable(var0, var2)) {
          if (var1.onGround() && var2.onGround() && var2.y() > var1.y() + 1.0E-6) {
             return false;
          }
@@ -3481,7 +3481,7 @@ public final class AiPaceScript {
          double var13 = putAt_D_TokenCore_TableCac(var1);
          double var15 = Math.min(var1.y(), var2.y()) + 0.001;
          double var17 = Math.max(var1.y(), var2.y()) + var13 - 0.001;
-         return !var0.putAt_Z_D(
+         return !var0.boxCollides(
                Math.min(var5, var9) - var3 - 0.002,
                var15,
                Math.min(var7, var11) - var3 - 0.002,
@@ -3544,7 +3544,7 @@ public final class AiPaceScript {
       double var26 = var8 + var10 - 0.001;
       double var28 = var2 - var14 + 1.0E-6;
       double var30 = var2 + var14 - 1.0E-6;
-      return var1 ? var0.putAt_Z_D(var28, var24, var20, var30, var26, var22) : var0.putAt_Z_D(var20, var24, var28, var22, var26, var30);
+      return var1 ? var0.boxCollides(var28, var24, var20, var30, var26, var22) : var0.boxCollides(var20, var24, var28, var22, var26, var30);
    }
 
    private static boolean putAt_Z_TokenCore_TaskStat(
@@ -3560,11 +3560,11 @@ public final class AiPaceScript {
          double var25 = var2 + var24 * var14;
          double var27 = Math.min(var25, var25 + var24 * 0.002);
          double var29 = Math.max(var25, var25 + var24 * 0.002);
-         boolean var31 = var1 ? var0.putAt_Z_D(var27, var20, var16, var29, var22, var18) : var0.putAt_Z_D(var16, var20, var27, var18, var22, var29);
+         boolean var31 = var1 ? var0.boxCollides(var27, var20, var16, var29, var22, var18) : var0.boxCollides(var16, var20, var27, var18, var22, var29);
          if (var31) {
             double var32 = Math.min(var25, var25 + var24 * 1.0E-5);
             double var34 = Math.max(var25, var25 + var24 * 1.0E-5);
-            boolean var36 = var1 ? var0.putAt_Z_D(var32, var20, var16, var34, var22, var18) : var0.putAt_Z_D(var16, var20, var32, var18, var22, var34);
+            boolean var36 = var1 ? var0.boxCollides(var32, var20, var16, var34, var22, var18) : var0.boxCollides(var16, var20, var32, var18, var22, var34);
             if (!var36) {
                return true;
             }
@@ -3596,7 +3596,7 @@ public final class AiPaceScript {
    private static boolean fill(AiPhysics.PhysicsWorld var0, boolean var1, double var2, double var4, double var6, double var8, double var10, double var12) {
       double var14 = Math.min(var2, var4);
       double var16 = Math.max(var2, var4);
-      return var1 ? var0.putAt_Z_D(var14, var10, var6 - var8, var16, var12, var6 + var8) : var0.putAt_Z_D(var6 - var8, var10, var14, var6 + var8, var12, var16);
+      return var1 ? var0.boxCollides(var14, var10, var6 - var8, var16, var12, var6 + var8) : var0.boxCollides(var6 - var8, var10, var14, var6 + var8, var12, var16);
    }
 
    static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, double var2) {
@@ -3605,7 +3605,7 @@ public final class AiPaceScript {
 
    static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, double var1, double var3, double var5, double var7) {
       double var9 = 0.3 - var7;
-      return var0.putAt_Z_D(var1 - var9, var3 - 0.02, var5 - var9, var1 + var9, var3 - 1.0E-4, var5 + var9);
+      return var0.boxCollides(var1 - var9, var3 - 0.02, var5 - var9, var1 + var9, var3 - 1.0E-4, var5 + var9);
    }
 
    private static long putAt_J_TextPool_TaskState(AiPaceScript.Inner_TaskState var0) {
@@ -3663,7 +3663,7 @@ public final class AiPaceScript {
          int var18 = var1.seg();
          double var19 = var1.progress();
          double var21 = var19;
-         boolean var23 = fill(var0, var16);
+         boolean var23 = onClimbable(var0, var16);
          if (var16.onGround() && !var23 && prevEx(var0, var16)) {
             return false;
          }
@@ -3688,7 +3688,7 @@ public final class AiPaceScript {
                double[] var67 = var2.at(Math.min(var2.length(), var19 + 1.2));
                AiPhysics.MoveInput[] var69;
                if (var67[1] > var16.y() + 0.12) {
-                  boolean var72 = AiLadderJump.putAt(var0, BlockPos.containing(var16.x(), var16.y(), var16.z()));
+                  boolean var72 = AiLadderJump.canClimbAt(var0, BlockPos.containing(var16.x(), var16.y(), var16.z()));
                   AiPhysics.MoveInput var75 = new AiPhysics.MoveInput(
                      0.0, 0.0, true, false, putAt_Z_TokenCore_TaskStat_4(var0, var16, true), var34
                   );
@@ -3712,7 +3712,7 @@ public final class AiPaceScript {
                   if (var82 != null) {
                      var35 = var80;
                      var36 = var82;
-                     var37 = fill(var0, var36);
+                     var37 = onClimbable(var0, var36);
                      var38 = var12.flowTemp;
                      var39 = var12.fill_D;
                      var41 = var12.readEx_D - var36.y();
@@ -3743,7 +3743,7 @@ public final class AiPaceScript {
                      var0, var16, var88, false, var25, var18, var19, var26, var2, var3, var12, var5
                   );
                   if (var90 != null) {
-                     boolean var92 = fill(var0, var90);
+                     boolean var92 = onClimbable(var0, var90);
                      if (putAt_Z_TokenCore_TaskStat_3(var0, var90, var60)) {
                         boolean var94 = var90.onGround() && var90.vy() <= 0.1 || var92;
                         boolean var96 = putAt(var0, var90, var94, var60, false, true);
@@ -3824,7 +3824,7 @@ public final class AiPaceScript {
                         if (var56 != null && !var56.horizontalCollision()) {
                            var35 = var55;
                            var36 = var56;
-                           var37 = fill(var0, var36);
+                           var37 = onClimbable(var0, var36);
                            var38 = var12.flowTemp;
                            var39 = var12.fill_D;
                            var41 = var12.readEx_D - var36.y();
@@ -3843,7 +3843,7 @@ public final class AiPaceScript {
 
                   var35 = var53;
                   var36 = var54;
-                  var37 = fill(var0, var36);
+                  var37 = onClimbable(var0, var36);
                   var38 = var12.flowTemp;
                   var39 = var12.fill_D;
                   var41 = var12.readEx_D - var36.y();
@@ -3860,7 +3860,7 @@ public final class AiPaceScript {
                      if (var95 != null) {
                         var35 = var93;
                         var36 = var95;
-                        var37 = fill(var0, var36);
+                        var37 = onClimbable(var0, var36);
                         var38 = var12.flowTemp;
                         var39 = var12.fill_D;
                         var41 = var12.readEx_D - var36.y();
@@ -3902,7 +3902,7 @@ public final class AiPaceScript {
                }
 
                var4.putAt(var13, var14, var15);
-               var4.putAt(true, null);
+               var4.finish(true, null);
                return true;
             }
 
@@ -3947,9 +3947,9 @@ public final class AiPaceScript {
       double var16 = Math.sqrt(fill_D_D(var14.x() - var1.x()) + fill_D_D(var14.y() - var1.y()) + fill_D_D(var14.z() - var1.z()));
       putAt_V_TokenCore_TableCac(var14, var5, var10, var6 + 1.5 * var16 + 1.0, var12);
       if (var12.flowTemp >= 0 && !(var12.putAt_D > 3.0)) {
-         boolean var18 = fill(var0, var14);
+         boolean var18 = onClimbable(var0, var14);
          boolean var19 = var14.onGround() && var14.vy() <= 0.1 || var18;
-         if (var19 && !var18 && var8 - var14.y() > var0.putAt_D() + 1.0E-5) {
+         if (var19 && !var18 && var8 - var14.y() > var0.dropLimit() + 1.0E-5) {
             return null;
          } else {
             double var20 = var12.readEx_D - var14.y();
@@ -4035,7 +4035,7 @@ public final class AiPaceScript {
          float var8 = var4.yawAt(var1.x(), var1.z(), var2 + 4.2);
          if (!Float.isNaN(var7) && !Float.isNaN(var8) && !(Math.abs(Mth.wrapDegrees(var7 - var8)) > 18.0F)) {
             double var9 = 0.3;
-            return !var0.putAt_Z_D(var1.x() - var9, var1.y() + 1.8 + 0.05, var1.z() - var9, var1.x() + var9, var1.y() + 1.8 + 0.9, var1.z() + var9);
+            return !var0.boxCollides(var1.x() - var9, var1.y() + 1.8 + 0.05, var1.z() - var9, var1.x() + var9, var1.y() + 1.8 + 0.9, var1.z() + var9);
          } else {
             return false;
          }
@@ -4084,8 +4084,8 @@ public final class AiPaceScript {
       }
 
       @Override
-      public double putAt_D() {
-         return this.putAt_TokenCore_TaskStat.putAt_D();
+      public double dropLimit() {
+         return this.putAt_TokenCore_TaskStat.dropLimit();
       }
 
       @Override
@@ -4099,12 +4099,12 @@ public final class AiPaceScript {
       }
 
       @Override
-      public Vec3 putAt_Vec3_Vec3(Vec3 var1, AABB var2, AABB var3) {
-         return this.putAt_TokenCore_TaskStat.putAt_Vec3_Vec3(var1, var2, var3);
+      public Vec3 collideMotion(Vec3 var1, AABB var2, AABB var3) {
+         return this.putAt_TokenCore_TaskStat.collideMotion(var1, var2, var3);
       }
 
       @Override
-      public Vec3 putAt(
+      public Vec3 collideMotionRaw(
          double var1,
          double var3,
          double var5,
@@ -4121,7 +4121,7 @@ public final class AiPaceScript {
          double var27,
          double var29
       ) {
-         return this.putAt_TokenCore_TaskStat.putAt(var1, var3, var5, var7, var9, var11, var13, var15, var17, var19, var21, var23, var25, var27, var29);
+         return this.putAt_TokenCore_TaskStat.collideMotionRaw(var1, var3, var5, var7, var9, var11, var13, var15, var17, var19, var21, var23, var25, var27, var29);
       }
 
       @Override
@@ -4130,48 +4130,48 @@ public final class AiPaceScript {
       }
 
       @Override
-      public boolean putAt_Z_D(double var1, double var3, double var5, double var7, double var9, double var11) {
-         return this.putAt_TokenCore_TaskStat.putAt_Z_D(var1, var3, var5, var7, var9, var11);
+      public boolean boxCollides(double var1, double var3, double var5, double var7, double var9, double var11) {
+         return this.putAt_TokenCore_TaskStat.boxCollides(var1, var3, var5, var7, var9, var11);
       }
 
       @Override
-      public long putAt_J_AABB(AABB var1, double var2, double var4, double var6) {
-         return this.putAt_TokenCore_TaskStat.putAt_J_AABB(var1, var2, var4, var6);
+      public long findSupport(AABB var1, double var2, double var4, double var6) {
+         return this.putAt_TokenCore_TaskStat.findSupport(var1, var2, var4, var6);
       }
 
       @Override
-      public long putAt(double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, double var17) {
-         return this.putAt_TokenCore_TaskStat.putAt(var1, var3, var5, var7, var9, var11, var13, var15, var17);
+      public long findSupportRaw(double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, double var17) {
+         return this.putAt_TokenCore_TaskStat.findSupportRaw(var1, var3, var5, var7, var9, var11, var13, var15, var17);
       }
 
       @Override
-      public double putAt_D_I(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.putAt_D_I(var1, var2, var3);
+      public double frictionAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.frictionAt(var1, var2, var3);
       }
 
       @Override
-      public double fill_D(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.fill_D(var1, var2, var3);
+      public double speedFactorAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.speedFactorAt(var1, var2, var3);
       }
 
       @Override
-      public boolean closeOf(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.closeOf(var1, var2, var3);
+      public boolean slimeAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.slimeAt(var1, var2, var3);
       }
 
       @Override
-      public double readEx_D(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.readEx_D(var1, var2, var3);
+      public double bounceAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.bounceAt(var1, var2, var3);
       }
 
       @Override
-      public double value_D(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.value_D(var1, var2, var3);
+      public double jumpFactorAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.jumpFactorAt(var1, var2, var3);
       }
 
       @Override
-      public boolean state(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.state(var1, var2, var3);
+      public boolean climbableAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.climbableAt(var1, var2, var3);
       }
 
       @Override
@@ -4180,7 +4180,7 @@ public final class AiPaceScript {
       }
 
       @Override
-      public boolean putAt_Z() {
+      public boolean stuckBlocksTracked() {
          return true;
       }
 
@@ -4190,33 +4190,33 @@ public final class AiPaceScript {
       }
 
       @Override
-      public boolean fill_Z(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.fill_Z(var1, var2, var3);
+      public boolean waterAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.waterAt(var1, var2, var3);
       }
 
       @Override
-      public boolean prevEx(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.prevEx(var1, var2, var3);
+      public boolean hazardAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.hazardAt(var1, var2, var3);
       }
 
       @Override
-      public boolean prev(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.prev(var1, var2, var3);
+      public boolean contactHazardAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.contactHazardAt(var1, var2, var3);
       }
 
       @Override
-      public boolean chunkAt(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.chunkAt(var1, var2, var3);
+      public boolean floorHazardAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.floorHazardAt(var1, var2, var3);
       }
 
       @Override
-      public boolean readEx_Z(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.readEx_Z(var1, var2, var3);
+      public boolean invisibleLightAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.invisibleLightAt(var1, var2, var3);
       }
 
       @Override
-      public boolean value_Z(int var1, int var2, int var3) {
-         return this.putAt_TokenCore_TaskStat.value_Z(var1, var2, var3);
+      public boolean pressurePlateAt(int var1, int var2, int var3) {
+         return this.putAt_TokenCore_TaskStat.pressurePlateAt(var1, var2, var3);
       }
 
       @Override
@@ -4304,7 +4304,7 @@ public final class AiPaceScript {
          return true;
       }
 
-      public synchronized double putAt_D_I(int var1) {
+      public synchronized double sampleAt(int var1) {
          return var1 >= 0 && var1 < this.value.size() ? this.value.get(var1) : 0.0 / 0.0;
       }
 
@@ -4342,7 +4342,7 @@ public final class AiPaceScript {
          return var1 >= 0 && var1 < this.flowState ? this.readEx.get(var1) : 0;
       }
 
-      public void putAt(boolean var1, AiPaceScript.Inner_StreamState var2) {
+      public void finish(boolean var1, AiPaceScript.Inner_StreamState var2) {
          this.fill_Z = var1;
          this.putAt_TextPool_StreamSta = var2;
          this.putAt_Z = true;
@@ -4370,7 +4370,7 @@ public final class AiPaceScript {
          return this.putAt_D;
       }
 
-      public int flowTemp() {
+      public int size() {
          return this.flowState;
       }
 
@@ -4382,11 +4382,11 @@ public final class AiPaceScript {
          return this.fill_List.get(var1);
       }
 
-      public boolean putAt_Z() {
+      public boolean isFinished() {
          return this.putAt_Z;
       }
 
-      public boolean fill_Z() {
+      public boolean finishedOk() {
          return this.fill_Z;
       }
 

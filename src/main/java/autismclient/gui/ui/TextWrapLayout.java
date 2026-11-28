@@ -7,7 +7,7 @@ public final class TextWrapLayout {
    private TextWrapLayout() {
    }
 
-   public static List<TextWrapLayout.Inner_DataUtil> init(String text, int maxWidth, TextWrapLayout.Inner_StreamUtil width) {
+   public static List<TextWrapLayout.Inner_DataUtil> wrap(String text, int maxWidth, TextWrapLayout.Inner_StreamUtil width) {
       String source = text == null ? "" : text;
       int available = Math.max(1, maxWidth);
       List<TextWrapLayout.Inner_DataUtil> lines = new ArrayList<>();
@@ -27,7 +27,7 @@ public final class TextWrapLayout {
             int cursor = paragraphStart;
 
             while (cursor < paragraphEnd) {
-               int end = init(source, cursor, paragraphEnd, available, width);
+               int end = breakIndex(source, cursor, paragraphEnd, available, width);
                int renderEnd = init(source, cursor, end);
                lines.add(new TextWrapLayout.Inner_DataUtil(cursor, end, renderEnd));
                cursor = end;
@@ -49,7 +49,7 @@ public final class TextWrapLayout {
       return lines;
    }
 
-   public static int init(String source, int start, int limit, int maxWidth, TextWrapLayout.Inner_StreamUtil width) {
+   public static int breakIndex(String source, int start, int limit, int maxWidth, TextWrapLayout.Inner_StreamUtil width) {
       if (source != null && !source.isEmpty()) {
          int safeStart = init(source, Math.max(0, Math.min(start, source.length())));
          int safeLimit = init(source, Math.max(safeStart, Math.min(limit, source.length())));

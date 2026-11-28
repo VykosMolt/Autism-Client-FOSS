@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 
 final class BedBreachRouteSolver {
    static BedBreachRouteSolver.BreachRoute init_DataPipe_BufferHel(List<BedBreachRouteSolver.BreachCell> cells, Vec3 eye, double reach, Vec3 preferred) {
-      return solve(cells, eye, reach, preferred).init(null, 0.0F, preferred);
+      return solve(cells, eye, reach, preferred).bestRoute(null, 0.0F, preferred);
    }
 
    static BedBreachRouteSolver.RouteSet solve(List<BedBreachRouteSolver.BreachCell> cells, Vec3 eye, double reach, Vec3 preferred) {
@@ -45,12 +45,12 @@ final class BedBreachRouteSolver {
 
                for (Direction side : Direction.values()) {
                   points.addAll(FaceVisibilitySolver.visiblePoints(eye, box, side, blockers, preferred));
-                  FaceVisibilitySolver.FaceProjection face = FaceVisibilitySolver.init(eye, box, side, hard);
-                  points.addAll(face.init(List.of(), preferred));
+                  FaceVisibilitySolver.FaceProjection face = FaceVisibilitySolver.project(eye, box, side, hard);
+                  points.addAll(face.visiblePoints(List.of(), preferred));
 
                   for (BedBreachRouteSolver.BreachCell cover : cells) {
                      if (!cover.init_Z && Double.isFinite(cover.ticks)) {
-                        points.addAll(face.init(cover.boxes, preferred));
+                        points.addAll(face.visiblePoints(cover.boxes, preferred));
                      }
                   }
                }
@@ -134,7 +134,7 @@ final class BedBreachRouteSolver {
    }
 
    record RouteSet(List<BedBreachRouteSolver.BreachRoute> init) {
-      BedBreachRouteSolver.BreachRoute init(BlockPos mining, float progress, Vec3 preferred) {
+      BedBreachRouteSolver.BreachRoute bestRoute(BlockPos mining, float progress, Vec3 preferred) {
          BedBreachRouteSolver.BreachRoute best = null;
 
          for (BedBreachRouteSolver.BreachRoute original : this.init) {

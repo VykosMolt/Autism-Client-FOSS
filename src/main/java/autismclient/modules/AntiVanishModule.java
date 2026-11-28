@@ -351,7 +351,7 @@ public final class AntiVanishModule extends Module {
          && player.tickCount >= 5
          && !(player.distanceToSqr(MC.player) > (double)this.integer("range") * this.integer("range"))) {
          String name = player.getGameProfile().name();
-         boolean npc = ArmorFilterMatcher.init_Z_UUID(player.getUUID()) || AntiBotTracker.isConfirmedBotUuid(player.getUUID());
+         boolean npc = ArmorFilterMatcher.isNpcUuid(player.getUUID()) || AntiBotTracker.isConfirmedBotUuid(player.getUUID());
          this.rosterTracker.init(new autismclient.util.AntiVanishRosterTracker.ActorInfo(player.getUUID(), name, true, npc), action, at);
       }
    }
@@ -369,7 +369,7 @@ public final class AntiVanishModule extends Module {
       return id != null
          && !id.equals(MC.player.getUUID())
          && TabPlayerListParser.isPlausibleName(name)
-         && !ArmorFilterMatcher.init_Z_UUID(id)
+         && !ArmorFilterMatcher.isNpcUuid(id)
          && !AntiBotTracker.isConfirmedBotUuid(id)
          && this.matchesPlayerFilter(name);
    }
@@ -424,7 +424,7 @@ public final class AntiVanishModule extends Module {
                return;
             }
 
-            if (this.connection.getPlayerInfo(id) == null && !this.seenProfiles.contains(id) && !ArmorFilterMatcher.init_Z_UUID(id) && !AntiBotTracker.isConfirmedBotUuid(id)
+            if (this.connection.getPlayerInfo(id) == null && !this.seenProfiles.contains(id) && !ArmorFilterMatcher.isNpcUuid(id) && !AntiBotTracker.isConfirmedBotUuid(id)
                )
              {
                unknown.add(id);
@@ -446,7 +446,7 @@ public final class AntiVanishModule extends Module {
    private boolean isTrackedAlert(UUID id, String name, boolean unresolved) {
       return !unresolved
          ? this.isTrackedPlayer(id, name)
-         : id != null && !id.equals(MC.player.getUUID()) && !ArmorFilterMatcher.init_Z_UUID(id) && !AntiBotTracker.isConfirmedBotUuid(id) && !this.bool("player-filter");
+         : id != null && !id.equals(MC.player.getUUID()) && !ArmorFilterMatcher.isNpcUuid(id) && !AntiBotTracker.isConfirmedBotUuid(id) && !this.bool("player-filter");
    }
 
    private void sendSuggestionProbe(long at) {

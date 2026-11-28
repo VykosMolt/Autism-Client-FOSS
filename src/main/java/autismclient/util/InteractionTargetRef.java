@@ -149,14 +149,14 @@ public final class InteractionTargetRef {
             Vec3 eyePos = mc.player.getEyePosition();
             Vec3 delta = center.subtract(eyePos);
             Direction side = Direction.getApproximateNearest(delta.x, delta.y, delta.z).getOpposite();
-            return init(blockPos, side);
+            return hitResult(blockPos, side);
          } else {
             return new BlockHitResult(center, Direction.UP, blockPos, false);
          }
       }
    }
 
-   public static BlockHitResult init(BlockPos blockPos, Direction face) {
+   public static BlockHitResult hitResult(BlockPos blockPos, Direction face) {
       if (blockPos != null && face != null) {
          Vec3 center = Vec3.atCenterOf(blockPos);
          Vec3 faceCenter = center.add(face.getStepX() * 0.5, face.getStepY() * 0.5, face.getStepZ() * 0.5);

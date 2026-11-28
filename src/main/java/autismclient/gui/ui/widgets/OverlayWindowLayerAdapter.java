@@ -133,10 +133,10 @@ public final class OverlayWindowLayerAdapter implements autismclient.gui.ui.UiLa
       if (this.overlay.isResizable() && this.overlay.isVisible() && !this.overlay.isCollapsed() && !(this.overlay instanceof OverlayLayoutBase window && window.isCollapseAnimating())) {
          OverlayBounds bounds = this.overlay.getBounds();
          boolean active = OverlayManager.getInstance().isResizing(this.overlay);
-         boolean hover = !active && ResizeGripRenderer.init(bounds, mouseX, mouseY);
-         ResizeGripRenderer.init(context.init_GuiGraphicsExtract(), context.init_TableIndex().colors(), bounds, hover, active);
+         boolean hover = !active && ResizeGripRenderer.hovered(bounds, mouseX, mouseY);
+         ResizeGripRenderer.render(context.init_GuiGraphicsExtract(), context.init_TableIndex().colors(), bounds, hover, active);
          if (hover || active) {
-            ResizeGripRenderer.init(context.init_GuiGraphicsExtract());
+            ResizeGripRenderer.requestCursor(context.init_GuiGraphicsExtract());
          }
       }
    }

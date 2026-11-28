@@ -151,12 +151,12 @@ final class ClutchBlockPlanner {
       double uncaught,
       List<Vec3> writtenEyes
    ) {
-      return init(
+      return planClutch(
          bodies, eyeHeight, reach, world, firstTick, fallSoFar, health, keep, homeRow, firstCost, blocks, damage, bestEffortReach, uncaught, writtenEyes, false
       );
    }
 
-   static ClutchBlockPlanner.ClutchPlan init(
+   static ClutchBlockPlanner.ClutchPlan planClutch(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
@@ -195,7 +195,7 @@ final class ClutchBlockPlanner {
       );
    }
 
-   static ClutchBlockPlanner.ClutchPlan init(
+   static ClutchBlockPlanner.ClutchPlan planUrgent(
       List<AABB> bodies,
       double eyeHeight,
       double reach,
@@ -296,28 +296,28 @@ final class ClutchBlockPlanner {
       ClutchBlockPlanner.ClutchPlan nearby = tower != null && tower.init_I() <= firstTick + 1
          ? null
          : nearestReachPlan(bodies, eyeHeight, reach, world, firstTick, eyes);
-      ClutchBlockPlanner.ClutchPlan first = nearby == null || tower != null && nearby.init_k_NetHelper().init_I() >= tower.init_I()
+      ClutchBlockPlanner.ClutchPlan first = nearby == null || tower != null && nearby.firstLink().init_I() >= tower.init_I()
          ? (tower == null ? null : new ClutchBlockPlanner.ClutchPlan(List.of(tower), tower.init_BlockPos(), tower.load_I() + 1, 0.0, false))
          : nearby;
       if (first == null) {
          return null;
       }
 
-      final ClutchBlockPlanner.PlacementLink root = first.init_k_NetHelper();
+      final ClutchBlockPlanner.PlacementLink root = first.firstLink();
       ClutchBlockPlanner.PlacementWorld withRoot = new ClutchBlockPlanner.PlacementWorld() {
          @Override
-         public boolean load(int x, int y, int z) {
-            return x == root.init_BlockPos().getX() && y == root.init_BlockPos().getY() && z == root.init_BlockPos().getZ() || world.load(x, y, z);
+         public boolean supportAt(int x, int y, int z) {
+            return x == root.init_BlockPos().getX() && y == root.init_BlockPos().getY() && z == root.init_BlockPos().getZ() || world.supportAt(x, y, z);
          }
 
          @Override
-         public boolean read(int x, int y, int z) {
-            return (x != root.init_BlockPos().getX() || y != root.init_BlockPos().getY() || z != root.init_BlockPos().getZ()) && world.read(x, y, z);
+         public boolean canPlaceAt(int x, int y, int z) {
+            return (x != root.init_BlockPos().getX() || y != root.init_BlockPos().getY() || z != root.init_BlockPos().getZ()) && world.canPlaceAt(x, y, z);
          }
 
          @Override
-         public boolean init(int x, int y, int z) {
-            return world.init(x, y, z);
+         public boolean allowedStart(int x, int y, int z) {
+            return world.allowedStart(x, y, z);
          }
 
          @Override
@@ -328,8 +328,8 @@ final class ClutchBlockPlanner {
       int after = root.init_I() + 1;
       ClutchBlockPlanner.PlacementLink next = towerLink(bodies, eyeHeight, reach, withRoot, after, eyes);
       ClutchBlockPlanner.ClutchPlan extra = next != null && next.init_I() <= after ? null : nearestReachPlan(bodies, eyeHeight, reach, withRoot, after, eyes);
-      if (extra != null && (next == null || extra.init_k_NetHelper().init_I() < next.init_I())) {
-         next = extra.init_k_NetHelper();
+      if (extra != null && (next == null || extra.firstLink().init_I() < next.init_I())) {
+         next = extra.firstLink();
       }
 
       return next != null && next.init_I() == after && next.load_BlockPos().equals(root.init_BlockPos())
@@ -435,14 +435,14 @@ final class ClutchBlockPlanner {
 
             for (int x = Mth.floor(body.minX + 1.0E-6); x <= Mth.floor(body.maxX - 1.0E-6); x++) {
                for (int z = Mth.floor(body.minZ + 1.0E-6); z <= Mth.floor(body.maxZ - 1.0E-6); z++) {
-                  for (int y = top; y >= top - 3 && (cell == null || y > cell.getY()) && !world.load(x, y, z); y--) {
-                     if (world.read(x, y, z) && intersectsBody(bodies, k, x, y, z)) {
+                  for (int y = top; y >= top - 3 && (cell == null || y > cell.getY()) && !world.supportAt(x, y, z); y--) {
+                     if (world.canPlaceAt(x, y, z) && intersectsBody(bodies, k, x, y, z)) {
                         for (Direction toward : DIRECTIONS) {
                            if (toward != Direction.UP) {
                               int sx = x + toward.getStepX();
                               int sy = y + toward.getStepY();
                               int sz = z + toward.getStepZ();
-                              if (world.load(sx, sy, sz)
+                              if (world.supportAt(sx, sy, sz)
                                  && (k != 0 || world.init(sx, sy, sz, toward.getOpposite()))
                                  && canReachFace(eye, sx, sy, sz, toward.getOpposite(), reach)) {
                                  cell = new BlockPos(x, y, z);
@@ -1141,7 +1141,7 @@ final class ClutchBlockPlanner {
             ClutchBlockPlanner.ClutchPlan plan = this.planToGoal(
                goal, this.flight.landingDue.get(goal), this.flight.landingFall.get(goal), search, reachOut
             );
-            double score = cheap.get(goal) + (this.firstCost == null ? 0.0 : this.firstCost.applyAsDouble(plan.init_k_NetHelper()));
+            double score = cheap.get(goal) + (this.firstCost == null ? 0.0 : this.firstCost.applyAsDouble(plan.firstLink()));
             if (score < chosenScore) {
                chosen = plan;
                chosenScore = score;
@@ -1226,7 +1226,7 @@ final class ClutchBlockPlanner {
       boolean isReplaceable(long key, int x, int y, int z) {
          byte known = this.cache.get(key);
          if (known == 0) {
-            this.cache.put(key, known = (byte)(this.world.read(x, y, z) ? 1 : 2));
+            this.cache.put(key, known = (byte)(this.world.canPlaceAt(x, y, z) ? 1 : 2));
          }
 
          return known == 1;
@@ -1235,7 +1235,7 @@ final class ClutchBlockPlanner {
       boolean isSupport(long key, int x, int y, int z) {
          byte known = this.supportCache.get(key);
          if (known == 0) {
-            this.supportCache.put(key, known = (byte)(this.world.load(x, y, z) ? 1 : 2));
+            this.supportCache.put(key, known = (byte)(this.world.supportAt(x, y, z) ? 1 : 2));
          }
 
          return known == 1;
@@ -1336,9 +1336,9 @@ final class ClutchBlockPlanner {
    }
 
    interface PlacementWorld {
-      boolean load(int var1, int var2, int var3);
+      boolean supportAt(int var1, int var2, int var3);
 
-      boolean read(int var1, int var2, int var3);
+      boolean canPlaceAt(int var1, int var2, int var3);
 
       default boolean write(int x, int y, int z) {
          return false;
@@ -1348,7 +1348,7 @@ final class ClutchBlockPlanner {
          return this.write(x, y, z);
       }
 
-      default boolean init(int x, int y, int z) {
+      default boolean allowedStart(int x, int y, int z) {
          return true;
       }
 
@@ -1362,7 +1362,7 @@ final class ClutchBlockPlanner {
          this(links, landing, landingTick, fall, reachOut, false);
       }
 
-      ClutchBlockPlanner.PlacementLink init_k_NetHelper() {
+      ClutchBlockPlanner.PlacementLink firstLink() {
          return this.init_List.getFirst();
       }
 
@@ -1517,7 +1517,7 @@ final class ClutchBlockPlanner {
                                     if ((existing || placed >= 0 && placed < k && linkable.contains(at))
                                        && (k != 0 || existing && (this.immediate || this.world.init(sx, sy, sz, direction.getOpposite())))) {
                                        Direction face = direction.getOpposite();
-                                       if ((!existing || this.world.init(x, y, z))
+                                       if ((!existing || this.world.allowedStart(x, y, z))
                                           && autismclient.modules.ClutchBlockPlanner.canReachFace(eye, sx, sy, sz, face, reach, carried ? 0.3 : 0.03)) {
                                           if (!carried || existing || placed != k - 1) {
                                              chosen = face.ordinal();
@@ -1608,7 +1608,7 @@ final class ClutchBlockPlanner {
                      for (int z = ez - radius; z <= ez + radius; z++) {
                         if (!(eye.distanceToSqr(x + 0.5, y + 0.5, z + 0.5) > (reach + 1.0) * (reach + 1.0))) {
                            long key = BlockPos.asLong(x, y, z);
-                           if (this.world.init(x, y, z)
+                           if (this.world.allowedStart(x, y, z)
                               && this.cells.isReplaceable(key, x, y, z)
                               && this.cells.hasAdjacentSupport(key, x, y, z)
                               && !new AABB(x, y, z, x + 1, y + 1, z + 1).intersects(body)) {

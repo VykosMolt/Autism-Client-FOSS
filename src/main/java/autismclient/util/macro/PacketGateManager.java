@@ -23,21 +23,21 @@ public final class PacketGateManager {
    }
 
    public static void init(PacketGateAction action) {
-      init(action, 0L);
+      open(action, 0L);
    }
 
-   public static void init(PacketGateAction action, long ownerRunId) {
+   public static void open(PacketGateAction action, long ownerRunId) {
       if (!autismclient.modules.aD.read_Z()) {
-         load(action, ownerRunId);
+         install(action, ownerRunId);
       }
    }
 
-   static void load(PacketGateAction action, long ownerRunId) {
+   static void install(PacketGateAction action, long ownerRunId) {
       if (action != null) {
          ownerRunId = Math.max(0L, ownerRunId);
          String id = action.gateId != null && !action.gateId.isBlank() ? action.gateId.trim() : "auto";
          if (action.mode == PacketGateAction.GateMode.DISABLE_GATE) {
-            init(id, ownerRunId);
+            close(id, ownerRunId);
          } else {
             String key = init(ownerRunId, id);
             init_ConcurrentHashMap.put(key, new PacketGateManager.Inner_DataUtil(ownerRunId, id, action.mode, action.packetNamesCopy(), action.flushOnDisable));
@@ -56,7 +56,7 @@ public final class PacketGateManager {
       }
    }
 
-   public static void init(String id, long ownerRunId) {
+   public static void close(String id, long ownerRunId) {
       if (ownerRunId <= 0L) {
          removeGate(id);
       } else {
@@ -71,13 +71,13 @@ public final class PacketGateManager {
       }
    }
 
-   public static void init(String id, ClientPacketListener connection, boolean flushRequested) {
-      init(id, 0L, connection, flushRequested);
+   public static void close(String id, ClientPacketListener connection, boolean flushRequested) {
+      close(id, 0L, connection, flushRequested);
    }
 
-   public static void init(String id, long ownerRunId, ClientPacketListener connection, boolean flushRequested) {
+   public static void close(String id, long ownerRunId, ClientPacketListener connection, boolean flushRequested) {
       if (autismclient.modules.aD.read_Z()) {
-         init(id, ownerRunId);
+         close(id, ownerRunId);
       } else if (ownerRunId > 0L || id != null && !id.isBlank() && !id.equalsIgnoreCase("all")) {
          ArrayList<PacketGateManager.Inner_DataUtil> removed = new ArrayList<>();
          if (id == null || id.isBlank() || id.equalsIgnoreCase("all")) {
@@ -112,7 +112,7 @@ public final class PacketGateManager {
             AutismSessionState.getInstance().flushDelayedPackets(connection);
          }
       } else {
-         init(connection);
+         onConnectionChange(connection);
       }
    }
 
@@ -124,7 +124,7 @@ public final class PacketGateManager {
          if (key != null) {
             PacketGateManager.Inner_DataUtil gate = init_ConcurrentHashMap.get(key);
             if (gate != null) {
-               init(gate.id, gate.ownerRunId, Minecraft.getInstance().getConnection(), true);
+               close(gate.id, gate.ownerRunId, Minecraft.getInstance().getConnection(), true);
             }
          }
       }
@@ -135,7 +135,7 @@ public final class PacketGateManager {
       init_Str = null;
    }
 
-   public static void init(ClientPacketListener connection) {
+   public static void onConnectionChange(ClientPacketListener connection) {
       if (autismclient.modules.aD.read_Z()) {
          clearAll();
       } else {
@@ -147,9 +147,9 @@ public final class PacketGateManager {
       }
    }
 
-   public static void init(long ownerRunId, ClientPacketListener connection) {
+   public static void closeRun(long ownerRunId, ClientPacketListener connection) {
       if (ownerRunId > 0L) {
-         init("all", ownerRunId, connection, false);
+         close("all", ownerRunId, connection, false);
       }
    }
 
@@ -179,7 +179,7 @@ public final class PacketGateManager {
       return ownerRunId + "\u0000" + normalized;
    }
 
-   static int init(long ownerRunId) {
+   static int countForRun(long ownerRunId) {
       int count = 0;
 
       for (PacketGateManager.Inner_DataUtil gate : init_ConcurrentHashMap.values()) {
@@ -191,7 +191,7 @@ public final class PacketGateManager {
       return count;
    }
 
-   public static PacketGateManager.Inner_StreamUtil init(Packet<?> packet, String direction) {
+   public static PacketGateManager.Inner_StreamUtil match(Packet<?> packet, String direction) {
       if (autismclient.modules.aD.read_Z()) {
          return PacketGateManager.Inner_StreamUtil.PASS;
       }
@@ -261,7 +261,7 @@ public final class PacketGateManager {
       return autismclient.modules.aD.read_Z() ? false : !init_ConcurrentHashMap.isEmpty();
    }
 
-   public static boolean init(String expected, Packet<?> packet, String direction) {
+   public static boolean matches(String expected, Packet<?> packet, String direction) {
       return expected != null && !expected.isBlank() ? load(resolvePacketName(expected), packet, direction) : true;
    }
 

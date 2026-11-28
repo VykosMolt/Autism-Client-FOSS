@@ -45,7 +45,7 @@ public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDu
    private static ClientLanguage autism$captureTranslations(
       ResourceManager resourceManager, List<String> languageStack, boolean defaultRightToLeft, Operation<ClientLanguage> original
    ) {
-      PackTranslationPolicyResolver.ScopeHandle token = PackTranslationPolicyResolver.init(resourceManager);
+      PackTranslationPolicyResolver.ScopeHandle token = PackTranslationPolicyResolver.enter(resourceManager);
       TranslationSnapshot.SnapshotBuilder builder = TranslationSnapshot.SnapshotBuilder.begin(resourceManager);
       boolean success = false;
 
@@ -57,7 +57,7 @@ public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDu
          return language;
       } finally {
          if (!success) {
-            PackTranslationPolicyResolver.init(token);
+            PackTranslationPolicyResolver.exit(token);
          }
 
          builder.close();
@@ -91,7 +91,7 @@ public class AutismProtectorClientLanguageMixin implements TranslationSnapshotDu
       TranslationSnapshot.SnapshotBuilder builder = TranslationSnapshot.SnapshotBuilder.current();
       return builder == null ? output : (key, value) -> {
          try {
-            builder.init(resource.source(), resource.sourcePackId(), key, value);
+            builder.putFromPack(resource.source(), resource.sourcePackId(), key, value);
          } catch (Throwable var6) {
          }
 

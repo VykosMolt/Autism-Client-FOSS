@@ -66,8 +66,8 @@ public class AutismProtectorDownloadQueueMixin {
 
    @WrapOperation(method = "runDownload", at = @At(value = "INVOKE", target = "Ljava/util/Map;forEach(Ljava/util/function/BiConsumer;)V"))
    private void autism$workerScope(Map requests, BiConsumer action, Operation<Void> original, @Local(argsOnly = true) BatchConfig config) throws IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper registered = ResourcePackDownloadScope.init(config);
-      ResourcePackDownloadScope.Inner_BufferHelper worker = ResourcePackDownloadScope.load();
+      ResourcePackDownloadScope.Inner_BufferHelper registered = ResourcePackDownloadScope.register(config);
+      ResourcePackDownloadScope.Inner_BufferHelper worker = ResourcePackDownloadScope.workerScope();
       if (registered == null && worker == null) {
          original.call(requests, action);
       } else {
@@ -95,13 +95,13 @@ public class AutismProtectorDownloadQueueMixin {
    private Path autism$scopedCacheDirectory(
       Path cacheDir, String name, Operation<Path> original, @Local(argsOnly = true) UUID packId, @Local BatchConfig config
    ) throws IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.load();
+      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.workerScope();
       if (snapshot == null) {
          return original.call(cacheDir, name);
       } else {
          snapshot.ensureCurrent();
          if (config != null && packId != null && packId.toString().equals(name)) {
-            return ResourcePackDownloadScope.init(cacheDir, snapshot, packId, config.hashFunction());
+            return ResourcePackDownloadScope.cachePath(cacheDir, snapshot, packId, config.hashFunction());
          } else {
             throw new IOException("Ambiguous resource-pack cache identity");
          }
@@ -127,19 +127,19 @@ public class AutismProtectorDownloadQueueMixin {
       DownloadProgressListener listener,
       Operation<Path> original
    ) throws InterruptedException, IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.load();
+      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.workerScope();
       if (snapshot == null) {
          return original.call(targetDir, url, headers, hashFunction, requestedHash, maxSize, proxy, listener);
       }
 
-      ReentrantLock lock = ResourcePackDownloadScope.init(targetDir);
+      ReentrantLock lock = ResourcePackDownloadScope.lockFor(targetDir);
       lock.lockInterruptibly();
 
       try {
          snapshot.ensureCurrent();
          Path result = original.call(targetDir, url, headers, hashFunction, requestedHash, maxSize, proxy, autism$guardedProgress(snapshot, listener));
          snapshot.ensureCurrent();
-         return ResourcePackDownloadScope.init(targetDir.getParent(), result);
+         return ResourcePackDownloadScope.confine(targetDir.getParent(), result);
       } finally {
          lock.unlock();
       }

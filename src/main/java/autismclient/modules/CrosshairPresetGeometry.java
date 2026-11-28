@@ -10,13 +10,13 @@ public final class CrosshairPresetGeometry {
    private CrosshairPresetGeometry() {
    }
 
-   static int init(double thickness, double unit) {
+   static int strokeWidth(double thickness, double unit) {
       return Math.max(1, (int)Math.round(thickness * unit));
    }
 
-   public static CrosshairPresetGeometry.Inner_CachePool init(CrosshairPresetGeometry.Inner_NetHelper style, double unit, double thickness, double gap, int outlinePx, int pad) {
+   public static CrosshairPresetGeometry.Inner_CachePool raster(CrosshairPresetGeometry.Inner_NetHelper style, double unit, double thickness, double gap, int outlinePx, int pad) {
       double u = Math.max(0.05, unit);
-      int t = init(thickness, u);
+      int t = strokeWidth(thickness, u);
       int s0;
       List<CrosshairPresetGeometry.Inner_ConfigStore> shapes;
       switch (style) {
@@ -123,9 +123,9 @@ public final class CrosshairPresetGeometry {
       return p;
    }
 
-   public static CrosshairPixelArt init(CrosshairPresetGeometry.Inner_NetHelper style, int size, double thickness, double gap, int argb) {
+   public static CrosshairPixelArt pixelArt(CrosshairPresetGeometry.Inner_NetHelper style, int size, double thickness, double gap, int argb) {
       int n = CrosshairPixelArt.isValidSize(size) ? size : 16;
-      CrosshairPresetGeometry.Inner_CachePool raster = init(style.isPreset() ? style : CrosshairPresetGeometry.Inner_NetHelper.CROSS, (n - 1) / 15.0, thickness, gap, 0, 0);
+      CrosshairPresetGeometry.Inner_CachePool raster = raster(style.isPreset() ? style : CrosshairPresetGeometry.Inner_NetHelper.CROSS, (n - 1) / 15.0, thickness, gap, 0, 0);
       int[] pixels = new int[n * n];
       int offset = (n - raster.pixelCount()) / 2;
       int baseAlpha = argb >>> 24;
@@ -224,7 +224,7 @@ public final class CrosshairPresetGeometry {
    }
 
    public record Inner_CachePool(int pixelCount, float[] coverage, int[] init_IArr, float[] load) {
-      public int init(int index) {
+      public int pixel(int index) {
          return this.init_IArr == null ? -1 : this.init_IArr[index];
       }
    }
@@ -259,7 +259,7 @@ public final class CrosshairPresetGeometry {
          return this != CUSTOM;
       }
 
-      public static CrosshairPresetGeometry.Inner_NetHelper init(String label) {
+      public static CrosshairPresetGeometry.Inner_NetHelper byLabel(String label) {
          if (label != null) {
             for (CrosshairPresetGeometry.Inner_NetHelper style : values()) {
                if (style.init_Str.equalsIgnoreCase(label.trim())) {

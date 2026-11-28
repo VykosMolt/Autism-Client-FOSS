@@ -20,7 +20,7 @@ public class WaitFreeSlotsAction implements MacroAction {
       return MacroActionType.WAIT_FREE_SLOTS;
    }
 
-   public boolean init(Minecraft mc) {
+   public boolean test(Minecraft mc) {
       if (mc != null && mc.player != null) {
          int free = 0;
          int filled = 0;

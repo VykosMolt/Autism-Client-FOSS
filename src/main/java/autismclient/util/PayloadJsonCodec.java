@@ -56,12 +56,12 @@ public final class PayloadJsonCodec {
    private PayloadJsonCodec() {
    }
 
-   public static void init(autismclient.util.macro.PayloadAction action, String channel, CustomPacketPayload payload) {
+   public static void captureInto(autismclient.util.macro.PayloadAction action, String channel, CustomPacketPayload payload) {
       if (action != null) {
          action.channel = channel == null ? "" : channel;
          if (payload == null) {
             action.payloadClassName = "";
-            action.payloadJson = init("", "");
+            action.payloadJson = emptyJson("", "");
          } else {
             action.payloadClassName = payload.getClass().getName();
             action.payloadJson = encode("C2S", action.channel, payload);
@@ -89,17 +89,17 @@ public final class PayloadJsonCodec {
          }
       }
 
-      root.add("payload", payload != null ? init(payload, new IdentityHashMap<>(), 0) : new JsonObject());
+      root.add("payload", payload != null ? toJsonElement(payload, new IdentityHashMap<>(), 0) : new JsonObject());
       return PRETTY_GSON.toJson(root);
    }
 
-   public static String init(String channel, CustomPacketPayload payload) {
+   public static String payloadToJson(String channel, CustomPacketPayload payload) {
       return encode("", channel, payload);
    }
 
    public static String init_Str(autismclient.util.macro.PayloadAction action) {
       if (action == null) {
-         return init("", "");
+         return emptyJson("", "");
       }
 
       if (action.payloadJson != null && !action.payloadJson.isBlank()) {
@@ -108,7 +108,7 @@ public final class PayloadJsonCodec {
 
       if (action.payloadClassName != null && !action.payloadClassName.isBlank() && action.payloadData != null && !action.payloadData.isBlank()) {
          try {
-            CustomPacketPayload payload = init(action.payloadClassName, AutismPayloadSupport.parseHexOrBase64(action.payloadData));
+            CustomPacketPayload payload = decodePayload(action.payloadClassName, AutismPayloadSupport.parseHexOrBase64(action.payloadData));
             if (payload != null) {
                return encode(action.sourceDirection, action.channel, payload);
             }
@@ -116,7 +116,7 @@ public final class PayloadJsonCodec {
          }
       }
 
-      return init(action.sourceDirection, action.channel);
+      return emptyJson(action.sourceDirection, action.channel);
    }
 
    public static String prettyPrint(String jsonText) {
@@ -127,7 +127,7 @@ public final class PayloadJsonCodec {
             return jsonText;
          }
       } else {
-         return init("", "");
+         return emptyJson("", "");
       }
    }
 
@@ -152,19 +152,19 @@ public final class PayloadJsonCodec {
          throw new IllegalArgumentException("Payload JSON must contain a non-empty channel");
       }
 
-      byte[] rawFallbackBytes = init(root);
+      byte[] rawFallbackBytes = rawBytesOf(root);
       if (rawFallbackBytes == null) {
          rawFallbackBytes = action.payloadData != null && !action.payloadData.isBlank() ? AutismPayloadSupport.parseHexOrBase64(action.payloadData) : new byte[0];
       }
 
       if (action.payloadClassName != null && !action.payloadClassName.isBlank()) {
          try {
-            return init(action, root, channel, rawFallbackBytes);
+            return encodeTyped(action, root, channel, rawFallbackBytes);
          } catch (Throwable var9) {
             Throwable primaryFailure = var9;
 
             try {
-               PayloadJsonCodec.EncodedPayload fallback = load(action, root, channel, rawFallbackBytes);
+               PayloadJsonCodec.EncodedPayload fallback = encodeRaw(action, root, channel, rawFallbackBytes);
                if (fallback.bytes().length == 0 && root.has("payload")) {
                   throw new IllegalArgumentException("Known payload rebuild failed and no raw fallback bytes were available", primaryFailure);
                } else {
@@ -187,33 +187,33 @@ public final class PayloadJsonCodec {
       return name != null && (name.startsWith("net.minecraft.") || name.startsWith("autismclient."));
    }
 
-   private static PayloadJsonCodec.EncodedPayload init(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload encodeTyped(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
       if (!init_Z(action.payloadClassName)) {
-         return load(action, root, channel, rawFallbackBytes);
+         return encodeRaw(action, root, channel, rawFallbackBytes);
       }
 
       Class<?> payloadClass;
       try {
          payloadClass = Class.forName(action.payloadClassName);
       } catch (ClassNotFoundException e) {
-         return load(action, root, channel, rawFallbackBytes);
+         return encodeRaw(action, root, channel, rawFallbackBytes);
       }
 
       if (!CustomPacketPayload.class.isAssignableFrom(payloadClass)) {
-         return load(action, root, channel, rawFallbackBytes);
+         return encodeRaw(action, root, channel, rawFallbackBytes);
       } else {
          JsonElement payloadElement = root.has("payload") ? root.get("payload") : JsonNull.INSTANCE;
-         if (AutismPayloadSupport.looksLikeCommandApiPayload(init(payloadClass, channel, rawFallbackBytes))) {
-            return init(action, root, channel, payloadClass, rawFallbackBytes);
+         if (AutismPayloadSupport.looksLikeCommandApiPayload(decodeWithCodec(payloadClass, channel, rawFallbackBytes))) {
+            return encodeCommandApiPayload(action, root, channel, payloadClass, rawFallbackBytes);
          } else {
             return payloadClass.isRecord()
-               ? init(payloadElement, payloadClass, channel, rawFallbackBytes)
-               : load(payloadElement, payloadClass, channel, rawFallbackBytes);
+               ? encodeFromJson(payloadElement, payloadClass, channel, rawFallbackBytes)
+               : encodeFromJsonOrRaw(payloadElement, payloadClass, channel, rawFallbackBytes);
          }
       }
    }
 
-   private static CustomPacketPayload init(Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
+   private static CustomPacketPayload decodeWithCodec(Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
       try {
          StreamCodec codec = AutismPayloadSupport.findStreamCodec(payloadClass);
          if (codec != null && rawFallbackBytes.length > 0) {
@@ -228,14 +228,14 @@ public final class PayloadJsonCodec {
       return null;
    }
 
-   private static PayloadJsonCodec.EncodedPayload init(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, Class<?> payloadClass, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload encodeCommandApiPayload(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, Class<?> payloadClass, byte[] rawFallbackBytes) {
       int value;
       if (root.has("commandApiValue") && root.get("commandApiValue").isJsonPrimitive()) {
          value = root.get("commandApiValue").getAsInt();
       } else if (action.commandApiRecognized && action.commandApiOverride) {
          value = action.commandApiValue;
       } else {
-         value = init(rawFallbackBytes);
+         value = leadingInt(rawFallbackBytes);
       }
 
       try {
@@ -269,10 +269,10 @@ public final class PayloadJsonCodec {
       return null;
    }
 
-   private static PayloadJsonCodec.EncodedPayload init(JsonElement payloadElement, Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload encodeFromJson(JsonElement payloadElement, Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
       try {
-         CustomPacketPayload templatePayload = init(payloadClass.getName(), rawFallbackBytes);
-         if (init(payloadElement, (Type)payloadClass, payloadClass, templatePayload, 0) instanceof CustomPacketPayload cp) {
+         CustomPacketPayload templatePayload = decodePayload(payloadClass.getName(), rawFallbackBytes);
+         if (fromJson(payloadElement, (Type)payloadClass, payloadClass, templatePayload, 0) instanceof CustomPacketPayload cp) {
             byte[] bytes = AutismPayloadSupport.encodePayloadBytes(cp);
             if (bytes.length > 0) {
                return new PayloadJsonCodec.EncodedPayload(channel, bytes);
@@ -281,14 +281,14 @@ public final class PayloadJsonCodec {
       } catch (Throwable var7) {
       }
 
-      byte[] bytes = init(payloadClass, rawFallbackBytes);
+      byte[] bytes = reencodeRaw(payloadClass, rawFallbackBytes);
       return new PayloadJsonCodec.EncodedPayload(channel, bytes != null ? bytes : rawFallbackBytes);
    }
 
-   private static PayloadJsonCodec.EncodedPayload load(JsonElement payloadElement, Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload encodeFromJsonOrRaw(JsonElement payloadElement, Class<?> payloadClass, String channel, byte[] rawFallbackBytes) {
       try {
-         CustomPacketPayload templatePayload = init(payloadClass.getName(), rawFallbackBytes);
-         if (init(payloadElement, (Type)payloadClass, payloadClass, templatePayload, 0) instanceof CustomPacketPayload cp) {
+         CustomPacketPayload templatePayload = decodePayload(payloadClass.getName(), rawFallbackBytes);
+         if (fromJson(payloadElement, (Type)payloadClass, payloadClass, templatePayload, 0) instanceof CustomPacketPayload cp) {
             byte[] bytes = AutismPayloadSupport.encodePayloadBytes(cp);
             if (bytes.length > 0) {
                return new PayloadJsonCodec.EncodedPayload(channel, bytes);
@@ -297,11 +297,11 @@ public final class PayloadJsonCodec {
       } catch (Throwable var7) {
       }
 
-      byte[] bytes = init(payloadClass, rawFallbackBytes);
+      byte[] bytes = reencodeRaw(payloadClass, rawFallbackBytes);
       return new PayloadJsonCodec.EncodedPayload(channel, bytes != null ? bytes : rawFallbackBytes);
    }
 
-   private static PayloadJsonCodec.EncodedPayload load(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
+   private static PayloadJsonCodec.EncodedPayload encodeRaw(autismclient.util.macro.PayloadAction action, JsonObject root, String channel, byte[] rawFallbackBytes) {
       if (root.has("commandApiValue") && root.get("commandApiValue").isJsonPrimitive()) {
          int value = root.get("commandApiValue").getAsInt();
          return new PayloadJsonCodec.EncodedPayload(channel, AutismPayloadSupport.withLeadingBigEndianInt(rawFallbackBytes, value));
@@ -312,13 +312,13 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static byte[] init(Class<?> payloadClass, byte[] rawFallbackBytes) {
+   private static byte[] reencodeRaw(Class<?> payloadClass, byte[] rawFallbackBytes) {
       if (rawFallbackBytes.length == 0) {
          return null;
       }
 
       try {
-         CustomPacketPayload decoded = init(payloadClass.getName(), rawFallbackBytes);
+         CustomPacketPayload decoded = decodePayload(payloadClass.getName(), rawFallbackBytes);
          if (decoded != null) {
             StreamCodec codec = AutismPayloadSupport.findStreamCodec(payloadClass);
             if (codec != null) {
@@ -333,19 +333,19 @@ public final class PayloadJsonCodec {
       return null;
    }
 
-   public static String load(String direction, String channel, CustomPacketPayload payload) {
+   public static String payloadToJsonSafe(String direction, String channel, CustomPacketPayload payload) {
       try {
          return encode(direction, channel, payload);
       } catch (Throwable t) {
-         return init(direction, channel);
+         return emptyJson(direction, channel);
       }
    }
 
-   public static String load(String channel, CustomPacketPayload payload) {
-      return load("", channel, payload);
+   public static String payloadToJsonSafe(String channel, CustomPacketPayload payload) {
+      return payloadToJsonSafe("", channel, payload);
    }
 
-   private static CustomPacketPayload init(String payloadClassName, byte[] bytes) {
+   private static CustomPacketPayload decodePayload(String payloadClassName, byte[] bytes) {
       if (payloadClassName == null || payloadClassName.isBlank()) {
          return null;
       }
@@ -368,7 +368,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static String init(String direction, String channel) {
+   private static String emptyJson(String direction, String channel) {
       JsonObject root = new JsonObject();
       root.addProperty("direction", direction == null ? "" : direction);
       root.addProperty("channel", channel == null ? "" : channel);
@@ -377,22 +377,22 @@ public final class PayloadJsonCodec {
       return PRETTY_GSON.toJson(root);
    }
 
-   private static byte[] init(JsonObject root) {
+   private static byte[] rawBytesOf(JsonObject root) {
       if (root == null) {
          return null;
       }
 
-      String hex = init(root, "payloadHex");
+      String hex = stringField(root, "payloadHex");
       if (!hex.isBlank()) {
          return AutismPayloadSupport.parseHexOrBase64(hex);
       }
 
-      String base64 = init(root, "payloadBase64");
+      String base64 = stringField(root, "payloadBase64");
       if (!base64.isBlank()) {
          return Base64.getDecoder().decode(base64);
       }
 
-      String text = init(root, "payloadText");
+      String text = stringField(root, "payloadText");
       if (!text.isBlank()) {
          return text.getBytes(StandardCharsets.UTF_8);
       }
@@ -412,7 +412,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static String init(JsonObject root, String key) {
+   private static String stringField(JsonObject root, String key) {
       if (root != null && key != null && root.has(key)) {
          JsonElement element = root.get(key);
          return element != null && element.isJsonPrimitive() ? element.getAsString().trim() : "";
@@ -421,7 +421,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static JsonElement init(Object value, IdentityHashMap<Object, Boolean> visited, int depth) {
+   private static JsonElement toJsonElement(Object value, IdentityHashMap<Object, Boolean> visited, int depth) {
       if (value == null) {
          return JsonNull.INSTANCE;
       }
@@ -443,7 +443,7 @@ public final class PayloadJsonCodec {
       if (isSimpleValue(value)) {
          return toJson(value);
       } else if (value instanceof Optional<?> optional) {
-         return optional.<JsonElement>map(v -> init(v, visited, depth + 1)).orElse(JsonNull.INSTANCE);
+         return optional.<JsonElement>map(v -> toJsonElement(v, visited, depth + 1)).orElse(JsonNull.INSTANCE);
       } else if (value instanceof Component text) {
          try {
             return ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, text).getOrThrow();
@@ -452,7 +452,7 @@ public final class PayloadJsonCodec {
          }
       } else if (value instanceof ItemStack stack) {
          try {
-            return ItemStack.CODEC.encodeStart(init().createSerializationContext(JsonOps.INSTANCE), stack).getOrThrow();
+            return ItemStack.CODEC.encodeStart(registryProvider().createSerializationContext(JsonOps.INSTANCE), stack).getOrThrow();
          } catch (Throwable t) {
             return new JsonPrimitive(stack.toString());
          }
@@ -473,7 +473,7 @@ public final class PayloadJsonCodec {
             int length = Array.getLength(value);
 
             for (int i = 0; i < length; i++) {
-               array.add(init(Array.get(value, i), visited, depth + 1));
+               array.add(toJsonElement(Array.get(value, i), visited, depth + 1));
             }
 
             return array;
@@ -481,7 +481,7 @@ public final class PayloadJsonCodec {
             JsonArray array = new JsonArray();
 
             for (Object element : collection) {
-               array.add(init(element, visited, depth + 1));
+               array.add(toJsonElement(element, visited, depth + 1));
             }
 
             return array;
@@ -490,7 +490,7 @@ public final class PayloadJsonCodec {
 
             for (Entry<?, ?> entry : map.entrySet()) {
                String key = keyString(entry.getKey());
-               object.add(key, init(entry.getValue(), visited, depth + 1));
+               object.add(key, toJsonElement(entry.getValue(), visited, depth + 1));
             }
 
             return object;
@@ -500,17 +500,17 @@ public final class PayloadJsonCodec {
                RecordComponent[] components = value.getClass().getRecordComponents();
 
                for (RecordComponent component : components) {
-                  String label = init(component);
-                  Object fieldValue = init(component.getAccessor(), value);
-                  object.add(label, init(fieldValue, visited, depth + 1));
+                  String label = componentName(component);
+                  Object fieldValue = invokeAccessor(component.getAccessor(), value);
+                  object.add(label, toJsonElement(fieldValue, visited, depth + 1));
                }
 
                return object;
             } else {
                for (Field field : instanceFields(value.getClass())) {
-                  String label = init(field);
-                  Object fieldValue = init(field, value);
-                  object.add(label, init(fieldValue, visited, depth + 1));
+                  String label = fieldName(field);
+                  Object fieldValue = readField(field, value);
+                  object.add(label, toJsonElement(fieldValue, visited, depth + 1));
                }
 
                return object;
@@ -519,7 +519,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static Object init(JsonElement element, Type genericType, Class<?> targetType, Object template, int depth) {
+   private static Object fromJson(JsonElement element, Type genericType, Class<?> targetType, Object template, int depth) {
       if (targetType == null) {
          return null;
       }
@@ -553,7 +553,7 @@ public final class PayloadJsonCodec {
          } else if (targetType == UUID.class) {
             return UUID.fromString(element.getAsString());
          } else if (targetType.isEnum()) {
-            return init(targetType, element.getAsString(), template);
+            return enumConstant(targetType, element.getAsString(), template);
          } else if (targetType == Component.class) {
             return parseComponent(element);
          } else if (targetType == BlockPos.class) {
@@ -561,32 +561,32 @@ public final class PayloadJsonCodec {
          } else if (targetType == Vec3.class) {
             return parseVec3(element);
          } else if (ItemStack.class.isAssignableFrom(targetType)) {
-            return ItemStack.CODEC.parse(init().createSerializationContext(JsonOps.INSTANCE), element).result().orElse(ItemStack.EMPTY);
+            return ItemStack.CODEC.parse(registryProvider().createSerializationContext(JsonOps.INSTANCE), element).result().orElse(ItemStack.EMPTY);
          } else if (Tag.class.isAssignableFrom(targetType)) {
             return template;
          } else if (Optional.class.isAssignableFrom(targetType)) {
-            Type innerType = init(genericType, 0);
-            Class<?> innerClass = init(innerType, template == null ? Object.class : template.getClass());
-            return Optional.ofNullable(init(element, innerType, innerClass, unwrapOptional(template), depth + 1));
+            Type innerType = typeArgument(genericType, 0);
+            Class<?> innerClass = rawClass(innerType, template == null ? Object.class : template.getClass());
+            return Optional.ofNullable(fromJson(element, innerType, innerClass, unwrapOptional(template), depth + 1));
          } else if (targetType.isArray()) {
-            return init(element, targetType.getComponentType(), init(genericType), template, depth);
+            return arrayFromJson(element, targetType.getComponentType(), componentType(genericType), template, depth);
          } else if (Collection.class.isAssignableFrom(targetType)) {
-            return load(element, genericType, targetType, template, depth);
+            return collectionFromJson(element, genericType, targetType, template, depth);
          } else if (Map.class.isAssignableFrom(targetType)) {
-            return read(element, genericType, targetType, template, depth);
+            return mapFromJson(element, genericType, targetType, template, depth);
          } else if (targetType.isRecord()) {
-            return init(element, targetType, template, depth);
+            return recordFromJson(element, targetType, template, depth);
          } else if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
             return template != null ? template : element.getAsString();
          } else {
-            return load(element, targetType, template, depth);
+            return objectFromJson(element, targetType, template, depth);
          }
       } else {
-         return targetType == Optional.class ? Optional.empty() : init(targetType, template);
+         return targetType == Optional.class ? Optional.empty() : defaultValue(targetType, template);
       }
    }
 
-   private static Object init(JsonElement element, Class<?> targetType, Object template, int depth) {
+   private static Object recordFromJson(JsonElement element, Class<?> targetType, Object template, int depth) {
       if (!element.isJsonObject()) {
          return template;
       }
@@ -600,10 +600,10 @@ public final class PayloadJsonCodec {
          for (int i = 0; i < components.length; i++) {
             RecordComponent component = components[i];
             componentTypes[i] = component.getType();
-            String label = init(component);
+            String label = componentName(component);
             JsonElement valueElement = jsonObj.has(label) ? jsonObj.get(label) : null;
-            Object templateValue = template == null ? null : init(component.getAccessor(), template);
-            args[i] = init(valueElement, component.getGenericType(), component.getType(), templateValue, depth + 1);
+            Object templateValue = template == null ? null : invokeAccessor(component.getAccessor(), template);
+            args[i] = fromJson(valueElement, component.getGenericType(), component.getType(), templateValue, depth + 1);
          }
 
          Constructor<?> ctor = targetType.getDeclaredConstructor(componentTypes);
@@ -617,7 +617,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static Object load(JsonElement element, Class<?> targetType, Object template, int depth) {
+   private static Object objectFromJson(JsonElement element, Class<?> targetType, Object template, int depth) {
       if (!element.isJsonObject()) {
          return template;
       }
@@ -626,18 +626,18 @@ public final class PayloadJsonCodec {
       JsonObject object = element.getAsJsonObject();
 
       for (Field field : instanceFields(targetType)) {
-         String label = init(field);
+         String label = fieldName(field);
          if (object.has(label)) {
-            Object currentValue = init(field, instance);
-            Object decoded = init(object.get(label), field.getGenericType(), field.getType(), currentValue, depth + 1);
-            init(field, instance, decoded);
+            Object currentValue = readField(field, instance);
+            Object decoded = fromJson(object.get(label), field.getGenericType(), field.getType(), currentValue, depth + 1);
+            writeField(field, instance, decoded);
          }
       }
 
       return instance;
    }
 
-   private static Object init(JsonElement element, Class<?> componentType, Type componentGenericType, Object template, int depth) {
+   private static Object arrayFromJson(JsonElement element, Class<?> componentType, Type componentGenericType, Object template, int depth) {
       if (!element.isJsonArray()) {
          return template;
       }
@@ -647,45 +647,45 @@ public final class PayloadJsonCodec {
 
       for (int i = 0; i < array.size(); i++) {
          Object templateValue = template != null && i < Array.getLength(template) ? Array.get(template, i) : null;
-         Array.set(out, i, init(array.get(i), componentGenericType, componentType, templateValue, depth + 1));
+         Array.set(out, i, fromJson(array.get(i), componentGenericType, componentType, templateValue, depth + 1));
       }
 
       return out;
    }
 
-   private static Object load(JsonElement element, Type genericType, Class<?> targetType, Object template, int depth) {
+   private static Object collectionFromJson(JsonElement element, Type genericType, Class<?> targetType, Object template, int depth) {
       if (!element.isJsonArray()) {
          return template;
       }
 
       Collection<Object> values = Set.class.isAssignableFrom(targetType) ? new LinkedHashSet<>() : new ArrayList<>();
-      Type itemType = init(genericType, 0);
-      Class<?> itemClass = init(itemType, Object.class);
+      Type itemType = typeArgument(genericType, 0);
+      Class<?> itemClass = rawClass(itemType, Object.class);
       int index = 0;
 
       for (JsonElement entry : element.getAsJsonArray()) {
          Object templateValue = template instanceof List<?> list && index < list.size() ? list.get(index) : null;
-         values.add(init(entry, itemType, itemClass, templateValue, depth + 1));
+         values.add(fromJson(entry, itemType, itemClass, templateValue, depth + 1));
          index++;
       }
 
       return values;
    }
 
-   private static Object read(JsonElement element, Type genericType, Class<?> targetType, Object template, int depth) {
+   private static Object mapFromJson(JsonElement element, Type genericType, Class<?> targetType, Object template, int depth) {
       if (!element.isJsonObject()) {
          return template;
       }
 
       Map<Object, Object> map = new LinkedHashMap<>();
-      Type keyType = init(genericType, 0);
-      Type valueType = init(genericType, 1);
-      Class<?> keyClass = init(keyType, String.class);
-      Class<?> valueClass = init(valueType, Object.class);
+      Type keyType = typeArgument(genericType, 0);
+      Type valueType = typeArgument(genericType, 1);
+      Class<?> keyClass = rawClass(keyType, String.class);
+      Class<?> valueClass = rawClass(valueType, Object.class);
 
       for (Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
-         Object key = init(entry.getKey(), keyClass);
-         map.put(key, init(entry.getValue(), valueType, valueClass, null, depth + 1));
+         Object key = parseMapKey(entry.getKey(), keyClass);
+         map.put(key, fromJson(entry.getValue(), valueType, valueClass, null, depth + 1));
       }
 
       return map;
@@ -704,7 +704,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static Object init(Class<?> targetType, Object template) {
+   private static Object defaultValue(Class<?> targetType, Object template) {
       if (template != null) {
          return template;
       } else if (!targetType.isPrimitive()) {
@@ -797,17 +797,17 @@ public final class PayloadJsonCodec {
       return fields;
    }
 
-   private static String init(Field field) {
+   private static String fieldName(Field field) {
       String mapped = InspectorMappingsIndex.fieldAlias(field);
       return mapped != null && !mapped.isBlank() ? mapped : field.getName();
    }
 
-   private static String init(RecordComponent component) {
+   private static String componentName(RecordComponent component) {
       String mapped = InspectorMappingsIndex.methodAlias(component.getAccessor());
       return mapped != null && !mapped.isBlank() ? mapped : component.getName();
    }
 
-   private static Object init(Method accessor, Object owner) {
+   private static Object invokeAccessor(Method accessor, Object owner) {
       try {
          if (!accessor.canAccess(owner)) {
             accessor.setAccessible(true);
@@ -819,7 +819,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static Object init(Field field, Object owner) {
+   private static Object readField(Field field, Object owner) {
       try {
          if (!field.canAccess(owner)) {
             field.setAccessible(true);
@@ -831,7 +831,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static void init(Field field, Object owner, Object value) {
+   private static void writeField(Field field, Object owner, Object value) {
       try {
          if (!field.canAccess(owner)) {
             field.setAccessible(true);
@@ -842,7 +842,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static Object init(Class<?> enumType, String name, Object template) {
+   private static Object enumConstant(Class<?> enumType, String name, Object template) {
       for (Object constant : enumType.getEnumConstants()) {
          if (constant instanceof Enum<?> enumValue && enumValue.name().equalsIgnoreCase(name)) {
             return constant;
@@ -896,13 +896,13 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static Object init(String key, Class<?> keyClass) {
+   private static Object parseMapKey(String key, Class<?> keyClass) {
       if (keyClass == Identifier.class) {
          return Identifier.parse(key);
       } else if (keyClass == UUID.class) {
          return UUID.fromString(key);
       } else if (keyClass.isEnum()) {
-         return init(keyClass, key, (Object)null);
+         return enumConstant(keyClass, key, (Object)null);
       } else if (keyClass != Integer.class && keyClass != int.class) {
          return keyClass != Long.class && keyClass != long.class ? key : Long.parseLong(key);
       } else {
@@ -910,7 +910,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static Type init(Type type, int index) {
+   private static Type typeArgument(Type type, int index) {
       if (type instanceof ParameterizedType parameterizedType) {
          Type[] args = parameterizedType.getActualTypeArguments();
          if (index >= 0 && index < args.length) {
@@ -921,7 +921,7 @@ public final class PayloadJsonCodec {
       return Object.class;
    }
 
-   private static Type init(Type type) {
+   private static Type componentType(Type type) {
       if (type instanceof Class<?> cls && cls.isArray()) {
          return cls.getComponentType();
       } else {
@@ -929,14 +929,14 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static Class<?> init(Type type, Class<?> fallback) {
+   private static Class<?> rawClass(Type type, Class<?> fallback) {
       if (type instanceof Class<?> cls) {
          return cls;
       } else if (type instanceof ParameterizedType parameterizedType) {
-         return init(parameterizedType.getRawType(), fallback);
+         return rawClass(parameterizedType.getRawType(), fallback);
       } else {
          return type instanceof GenericArrayType genericArrayType
-            ? Array.newInstance(init(genericArrayType.getGenericComponentType(), Object.class), 0).getClass()
+            ? Array.newInstance(rawClass(genericArrayType.getGenericComponentType(), Object.class), 0).getClass()
             : fallback;
       }
    }
@@ -945,7 +945,7 @@ public final class PayloadJsonCodec {
       return template instanceof Optional<?> optional ? optional.orElse(null) : null;
    }
 
-   private static Provider init() {
+   private static Provider registryProvider() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null) {
          return mc.level.registryAccess();
@@ -954,7 +954,7 @@ public final class PayloadJsonCodec {
       }
    }
 
-   private static int init(byte[] rawBytes) {
+   private static int leadingInt(byte[] rawBytes) {
       return rawBytes != null && rawBytes.length >= 4 ? ByteBuffer.wrap(rawBytes, 0, 4).order(ByteOrder.BIG_ENDIAN).getInt() : 0;
    }
 

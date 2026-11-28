@@ -8,7 +8,7 @@ public final class CrosshairRenderState {
    private CrosshairRenderState() {
    }
 
-   static void init(CrosshairRenderState.Inner_DataUtil value) {
+   static void setState(CrosshairRenderState.Inner_DataUtil value) {
       init = value;
    }
 

@@ -8,7 +8,7 @@ public final class PayloadScriptRunner {
    private PayloadScriptRunner() {
    }
 
-   public static PayloadScriptRunner.ScriptOutput init(String javaSource, PayloadScriptRunner.ScriptContext context) {
+   public static PayloadScriptRunner.ScriptOutput run(String javaSource, PayloadScriptRunner.ScriptContext context) {
       PayloadScriptRunner.ScriptContext safeContext = context == null ? new PayloadScriptRunner.ScriptContext("minecraft:empty", new byte[0], null) : context;
       String trimmed = javaSource == null ? "" : javaSource.trim();
       if (!trimmed.isEmpty()) {

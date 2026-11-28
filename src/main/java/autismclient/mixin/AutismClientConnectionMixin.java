@@ -177,7 +177,7 @@ public abstract class AutismClientConnectionMixin {
       } catch (Throwable var7) {
       }
 
-      if (!OutboundPacketFilterHandler.init((Connection)(Object)this, channel, packet, listener, flush)) {
+      if (!OutboundPacketFilterHandler.filterSend((Connection)(Object)this, channel, packet, listener, flush)) {
          ci.cancel();
       } else {
          if (!AutismLiteVariant.enabled() && !LeafDupeModule.allowSend((Connection)(Object)this, packet)) {
@@ -191,7 +191,7 @@ public abstract class AutismClientConnectionMixin {
          }
 
          if (!AutismLiteVariant.enabled()) {
-            LeafDupePacketTracker.init((Connection)(Object)this, packet);
+            LeafDupePacketTracker.onSend((Connection)(Object)this, packet);
          }
 
          ScaffoldModule.onPacketWritten(packet);
@@ -209,7 +209,7 @@ public abstract class AutismClientConnectionMixin {
       }
    )
    private ChannelFuture autism$completeReviewedPayload(Channel channel, Object packet, Operation<ChannelFuture> original) {
-      if (!OutboundPacketFilterHandler.init(packet)) {
+      if (!OutboundPacketFilterHandler.isPayloadPacket(packet)) {
          return original.call(channel, packet);
       }
 
@@ -235,7 +235,7 @@ public abstract class AutismClientConnectionMixin {
       }
    )
    private ChannelFuture autism$completeReviewedPayloadPromise(Channel channel, Object packet, ChannelPromise promise, Operation<ChannelFuture> original) {
-      if (!OutboundPacketFilterHandler.init(packet)) {
+      if (!OutboundPacketFilterHandler.isPayloadPacket(packet)) {
          return original.call(channel, packet, promise);
       }
 
@@ -420,7 +420,7 @@ public abstract class AutismClientConnectionMixin {
                               ci.cancel();
                            } else if (!forceBookOrSignPacket) {
                               if (!shared.isBypassingPacketInterception()) {
-                                 autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.init(packet, "C2S");
+                                 autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.match(packet, "C2S");
                                  if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.CANCEL) {
                                     ScaffoldModule.load_V_Packet(packet);
                                     ci.cancel();
@@ -589,7 +589,7 @@ public abstract class AutismClientConnectionMixin {
                         ci.cancel();
                      } else {
                         AutismSessionState shared = AutismSessionState.getInstance();
-                        autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.init(packet, "S2C");
+                        autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.match(packet, "S2C");
                         if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.CANCEL) {
                            ci.cancel();
                         } else if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.DELAY) {
@@ -724,7 +724,7 @@ public abstract class AutismClientConnectionMixin {
       if (autism$isDisconnectPacket(packet)) {
          ContainerCloseGuard.clear();
          autismclient.util.macro.PacketGateManager.clearAll();
-         PingSpoofScheduler.write();
+         PingSpoofScheduler.clearQueues();
          BlinkPacketManager.auditDisconnect();
          AutismSessionState s = AutismSessionState.getInstance();
          s.setXCarrySlotMask(Collections.emptySet(), false);

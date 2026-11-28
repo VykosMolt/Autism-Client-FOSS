@@ -19,7 +19,7 @@ public final class DynamicBindingManager {
    private DynamicBindingManager() {
    }
 
-   public static void init(MacroAction action, CompoundTag actionTag) {
+   public static void capture(MacroAction action, CompoundTag actionTag) {
       if (action != null) {
          Map<String, String> values = new LinkedHashMap<>();
          if (actionTag != null && actionTag.get("_dynamicBindings") instanceof CompoundTag bindings) {
@@ -39,7 +39,7 @@ public final class DynamicBindingManager {
       }
    }
 
-   public static void load(MacroAction action, CompoundTag actionTag) {
+   public static void restore(MacroAction action, CompoundTag actionTag) {
       if (action != null && actionTag != null) {
          synchronized (BINDINGS_BY_ACTION) {
             Map<String, String> values = BINDINGS_BY_ACTION.get(action);
@@ -54,7 +54,7 @@ public final class DynamicBindingManager {
       }
    }
 
-   public static String init(MacroAction action, String key) {
+   public static String binding(MacroAction action, String key) {
       synchronized (BINDINGS_BY_ACTION) {
          Map<String, String> values = BINDINGS_BY_ACTION.get(action);
          return values == null ? "" : values.getOrDefault(key, "");
@@ -86,7 +86,7 @@ public final class DynamicBindingManager {
       }
    }
 
-   public static boolean init(MacroAction action, Minecraft mc) {
+   public static boolean apply(MacroAction action, Minecraft mc) {
       if (action == null) {
          return true;
       }
@@ -170,7 +170,7 @@ public final class DynamicBindingManager {
 
    // Fields without a declared range keep the parsed value.
    static Object clampToEditorRange(MacroAction action, String key, Object value) {
-      for (FieldDef def : autismclient.gui.macro.editor.ActionFieldRegistry.init(action).fields()) {
+      for (FieldDef def : autismclient.gui.macro.editor.ActionFieldRegistry.schemaFor(action).fields()) {
          if (!key.equals(def.key())) {
             continue;
          }
@@ -251,7 +251,7 @@ public final class DynamicBindingManager {
    }
 
    public static int init_I_MacroAction(MacroAction action, String key, int fallback, Minecraft mc) {
-      String template = init(action, key);
+      String template = binding(action, key);
       if (template.isBlank()) {
          return fallback;
       }
@@ -274,7 +274,7 @@ public final class DynamicBindingManager {
    }
 
    public static double init_D_MacroAction(MacroAction action, String key, double fallback, Minecraft mc) {
-      String template = init(action, key);
+      String template = binding(action, key);
       if (template.isBlank()) {
          return fallback;
       }

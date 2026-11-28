@@ -11,7 +11,7 @@ public final class ToggleSwitchRenderer {
    private static final int init_I = -12961216;
    private static final int load_I = -1447444;
    private static final Map<String, ToggleSwitchRenderer.SwitchAnimation> STATES = new HashMap<>();
-   private static long read;
+   private static long lastPrune;
 
    private ToggleSwitchRenderer() {
    }
@@ -21,13 +21,13 @@ public final class ToggleSwitchRenderer {
    }
 
    public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, boolean enabled, boolean hovered, String animationKey) {
-      drawAt(context, bounds, init(animationKey, enabled), hovered);
+      drawAt(context, bounds, easedProgress(animationKey, enabled), hovered);
    }
 
    public static void drawAt(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, float progress, boolean hovered) {
       float eased = progress * progress * (3.0F - 2.0F * progress);
       GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
-      int track = init(-12961216, context.init_TableIndex().colors().accent, eased);
+      int track = lerpColor(-12961216, context.init_TableIndex().colors().accent, eased);
       if (hovered) {
          track = init(track, 0.12F);
       }
@@ -61,42 +61,42 @@ public final class ToggleSwitchRenderer {
       draw(context, pill, enabled, hovered, animationKey);
    }
 
-   private static float init(String key, boolean target) {
-      float t = load(key, target);
+   private static float easedProgress(String key, boolean target) {
+      float t = rawProgress(key, target);
       return t * t * (3.0F - 2.0F * t);
    }
 
-   private static float load(String key, boolean target) {
+   private static float rawProgress(String key, boolean target) {
       long now = System.nanoTime();
       ToggleSwitchRenderer.SwitchAnimation state = STATES.get(key);
       if (state == null) {
          state = new ToggleSwitchRenderer.SwitchAnimation(target ? 1.0F : 0.0F, target, now);
          STATES.put(key, state);
-         return state.init(now);
+         return state.progress(now);
       }
 
-      if (state.init_Z != target) {
-         state.init_F = state.init(now);
-         state.init_Z = target;
-         state.init_J = now;
+      if (state.target != target) {
+         state.startValue = state.progress(now);
+         state.target = target;
+         state.startedAt = now;
       }
 
-      state.load = now;
-      if (now - read > 30000000000L) {
-         read = now;
+      state.lastUsed = now;
+      if (now - lastPrune > 30000000000L) {
+         lastPrune = now;
          Iterator<ToggleSwitchRenderer.SwitchAnimation> it = STATES.values().iterator();
 
          while (it.hasNext()) {
-            if (now - it.next().load > 30000000000L) {
+            if (now - it.next().lastUsed > 30000000000L) {
                it.remove();
             }
          }
       }
 
-      return state.init(now);
+      return state.progress(now);
    }
 
-   private static int init(int from, int to, float t) {
+   private static int lerpColor(int from, int to, float t) {
       int ar = from >> 16 & 0xFF;
       int ag = from >> 8 & 0xFF;
       int ab = from & 0xFF;
@@ -123,22 +123,22 @@ public final class ToggleSwitchRenderer {
    }
 
    private static final class SwitchAnimation {
-      float init_F;
-      boolean init_Z;
-      long init_J;
-      long load;
+      float startValue;
+      boolean target;
+      long startedAt;
+      long lastUsed;
 
       SwitchAnimation(float start, boolean target, long now) {
-         this.init_F = start;
-         this.init_Z = target;
-         this.init_J = now;
-         this.load = now;
+         this.startValue = start;
+         this.target = target;
+         this.startedAt = now;
+         this.lastUsed = now;
       }
 
-      float init(long now) {
-         float elapsed = Math.min(1.0F, (float)(now - this.init_J) / 1.5E8F);
+      float progress(long now) {
+         float elapsed = Math.min(1.0F, (float)(now - this.startedAt) / 1.5E8F);
          float eased = elapsed * elapsed * (3.0F - 2.0F * elapsed);
-         return this.init_F + ((this.init_Z ? 1.0F : 0.0F) - this.init_F) * eased;
+         return this.startValue + ((this.target ? 1.0F : 0.0F) - this.startValue) * eased;
       }
    }
 }

@@ -25,8 +25,8 @@ public final class ClickItemCommand extends Command {
       RequiredArgumentBuilder<AutismCommandSource, String> item = (RequiredArgumentBuilder<AutismCommandSource, String>)RequiredArgumentBuilder.<AutismCommandSource, String>argument(
             "item-name", autismclient.commands.arguments.ContainerItemNameArgumentType.itemName()
          )
-         .executes(context -> init(context, SlotClickCommandHelper.ClickSpec.init("Left", ContainerInput.PICKUP, 0), 1));
-      SlotClickCommandHelper.init(item, ClickItemCommand::init);
+         .executes(context -> init(context, SlotClickCommandHelper.ClickSpec.of("Left", ContainerInput.PICKUP, 0), 1));
+      SlotClickCommandHelper.register(item, ClickItemCommand::init);
       root.then(item);
    }
 
@@ -39,7 +39,7 @@ public final class ClickItemCommand extends Command {
             AutismClientMessaging.sendPrefixed("§cNo visible item named §f" + requestedName + "§c exists in the current GUI.");
             return 1;
          } else {
-            return SlotClickCommandHelper.init(handlerSlot, spec, times, "\"" + requestedName + "\"");
+            return SlotClickCommandHelper.click(handlerSlot, spec, times, "\"" + requestedName + "\"");
          }
       } else {
          AutismClientMessaging.sendPrefixed("§cNo active inventory or GUI.");

@@ -10,11 +10,11 @@ import autismclient.gui.f.SyncManager;
 public final class UiLayerHost {
    private final Map<UiLayer, List<UiLayerComponent>> init = new EnumMap<>(UiLayer.class);
 
-   public void init() {
+   public void clear() {
       this.init.clear();
    }
 
-   public void init(UiLayer layer, UiLayerComponent component) {
+   public void add(UiLayer layer, UiLayerComponent component) {
       if (layer != null && component != null) {
          this.init.computeIfAbsent(layer, ignored -> new ArrayList<>()).add(component);
       }
@@ -35,7 +35,7 @@ public final class UiLayerHost {
    public void read(UiLayer layer, UiLayerComponent component) {
       if (layer != null && component != null) {
          this.load(layer, component);
-         this.init(layer, component);
+         this.add(layer, component);
       }
    }
 
@@ -73,11 +73,11 @@ public final class UiLayerHost {
       return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseClicked(mouseX, mouseY, button));
    }
 
-   public UiInputResult load(int mouseX, int mouseY, int button) {
+   public UiInputResult mouseReleased(int mouseX, int mouseY, int button) {
       return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseReleased(mouseX, mouseY, button));
    }
 
-   public UiInputResult init(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
+   public UiInputResult mouseDragged(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
       return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseDragged(mouseX, mouseY, button, deltaX, deltaY));
    }
 
@@ -85,7 +85,7 @@ public final class UiLayerHost {
       return this.init_EventBus_I_3(mouseX, mouseY, component -> component.onMouseScrolled(mouseX, mouseY, amount));
    }
 
-   public UiInputResult read(int key, int scanCode, int modifiers) {
+   public UiInputResult keyPressed(int key, int scanCode, int modifiers) {
       return this.init_EventBus_ByteReader_DataUti(component -> component.onKeyPressed(key, scanCode, modifiers));
    }
 

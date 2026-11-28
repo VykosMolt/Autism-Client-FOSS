@@ -15,11 +15,11 @@ public final class AiLowHealth {
       init_I++;
    }
 
-   public static void load() {
+   public static void exitOverride() {
       init_I--;
    }
 
-   public static String init(String activity, float health, float maxHealth) {
+   public static String refusalMessage(String activity, float health, float maxHealth) {
       return "Health too low for "
          + activity
          + " ("

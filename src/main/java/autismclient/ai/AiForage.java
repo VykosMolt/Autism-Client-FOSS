@@ -260,7 +260,7 @@ final class AiForage {
 
    static AiOperation huntFor(String type, String drop, double range) {
       return AiNetherRun.fightThenPickup(
-         AiCombat.init(
+         AiCombat.fight(
             AiJson.objectOf("target", type, "count", 1, "radius", (int)Math.ceil(range), "useShield", true, "retreatHealth", 8, "timeoutSeconds", 40)
          ),
          drop,
@@ -330,7 +330,7 @@ final class AiForage {
                         man.blockPosition().toShortString(),
                         this.init_I
                      );
-                  this.child = AiCombat.init(
+                  this.child = AiCombat.fight(
                      AiJson.objectOf(
                         "entityId", enderman, "count", 1, "radius", 48, "useShield", true, "retreatHealth", 6, "hold", true, "timeoutSeconds", 40
                      )

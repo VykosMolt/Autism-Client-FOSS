@@ -54,14 +54,14 @@ public final class PrintClockSequence implements PrintMachineJob {
       this.worldToken = env.worldToken();
       this.spec = spec;
       this.actions = actions;
-      this.currentJob = actions.init(spec.preload(), spec.source().get(spec.preload()));
+      this.currentJob = actions.containerJob(spec.preload(), spec.source().get(spec.preload()));
    }
 
    public PrintClockSpec getSpec() {
       return this.spec;
    }
 
-   public boolean flush() {
+   public boolean auditing() {
       return this.stage == PrintClockSequence.Inner_StreamUtil.AUDIT && this.jobStatus == PrintMachineJob.JobStatus.PREPARING;
    }
 
@@ -76,7 +76,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public boolean init(AABB body) {
+   public boolean bodyClear(AABB body) {
       AABB footing = body.expandTowards(0.0, -0.1, 0.0);
       if (this.spec.sweptVolume().intersects(footing)) {
          return false;
@@ -167,7 +167,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public void init(Supplier<String> guard) {
+   public void setGuard(Supplier<String> guard) {
       this.init_Supplier = Objects.requireNonNull(guard);
    }
 
@@ -270,7 +270,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          case INSPECT_FIRST:
             this.stage = PrintClockSequence.Inner_StreamUtil.INSPECT_SECOND;
             this.currentJob = this.actions
-               .init(this.spec.other(), this.spec.source().get(this.spec.other()));
+               .containerJob(this.spec.other(), this.spec.source().get(this.spec.other()));
             break;
          case INSPECT_SECOND:
             this.stage = PrintClockSequence.Inner_StreamUtil.STOCK;
@@ -285,14 +285,14 @@ public final class PrintClockSequence implements PrintMachineJob {
 
             this.stage = PrintClockSequence.Inner_StreamUtil.INSPECT_HELD_SECOND;
             this.currentJob = this.actions
-               .init(this.spec.other(), this.spec.source().get(this.spec.other()));
+               .containerJob(this.spec.other(), this.spec.source().get(this.spec.other()));
             break;
          case INSPECT_HELD_SECOND:
             this.stage = PrintClockSequence.Inner_StreamUtil.FILL;
             this.currentJob = this.actions
-               .init(this.spec.preload(), this.spec.source().get(this.spec.preload()), this.spec.preloadSlots());
+               .filledContainerJob(this.spec.preload(), this.spec.source().get(this.spec.preload()), this.spec.preloadSlots());
             this.currentJob
-               .init(
+               .setGuard(
                   () -> {
                      String changed = this.load_Str();
                      if (changed != null) {
@@ -308,7 +308,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          case FILL:
             this.read_Z = true;
             this.stage = PrintClockSequence.Inner_StreamUtil.RESTORE;
-            this.currentJob = this.actions.init(false);
+            this.currentJob = this.actions.clockControlJob(false);
             break;
          case RESTORE:
             this.load_Z = true;
@@ -332,12 +332,12 @@ public final class PrintClockSequence implements PrintMachineJob {
       int missing = this.spec.quantity() - available;
       if (missing <= 0) {
          this.stage = PrintClockSequence.Inner_StreamUtil.HOLD;
-         this.currentJob = this.actions.init(true);
+         this.currentJob = this.actions.clockControlJob(true);
          this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
          return this.prepare();
       }
 
-      if (this.actions.init()) {
+      if (this.actions.creative()) {
          if (available != this.write_I
             && ++this.read_I <= 128
             && this.actions
@@ -348,7 +348,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          } else {
             return this.init("Free inventory space for exact clock stock");
          }
-      } else if (!this.write_Z && this.actions.load(this.spec.material())) {
+      } else if (!this.write_Z && this.actions.canFetch(this.spec.material())) {
          this.init_ItemStack = this.spec.material().copyWithCount(Math.min(missing, this.spec.material().getMaxStackSize()));
          this.detail = "Fetching exact clock stock before touching its control";
          return this.jobStatus = PrintMachineJob.JobStatus.NEEDS_SUPPLY;
@@ -386,7 +386,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    private void write_V() {
       this.init_ItemStack = ItemStack.EMPTY;
       this.stage = PrintClockSequence.Inner_StreamUtil.INSPECT_FIRST;
-      this.currentJob = this.actions.init(this.spec.preload(), this.spec.source().get(this.spec.preload()));
+      this.currentJob = this.actions.containerJob(this.spec.preload(), this.spec.source().get(this.spec.preload()));
       this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
    }
 
@@ -500,7 +500,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    private boolean open() {
-      return !this.update && this.worldToken != null && this.env.worldToken() == this.worldToken && this.actions.load();
+      return !this.update && this.worldToken != null && this.env.worldToken() == this.worldToken && this.actions.contextValid();
    }
 
    private boolean poll_Z() {
@@ -532,7 +532,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    @Override
-   public boolean close() {
+   public boolean resultUncertain() {
       return this.init_Z && !this.load_Z || this.jobStatus == PrintMachineJob.JobStatus.UNCERTAIN;
    }
 
@@ -541,7 +541,7 @@ public final class PrintClockSequence implements PrintMachineJob {
       JsonObject data = new JsonObject();
       data.addProperty("clockStartup", true);
       data.addProperty("stage", this.stage.name());
-      data.addProperty("recoveryRequired", this.close());
+      data.addProperty("recoveryRequired", this.resultUncertain());
       data.addProperty("originalControlRestored", this.load_Z);
       data.addProperty("pooledStockVerified", this.read_Z);
       data.addProperty("pooledQuantity", this.spec.quantity());
@@ -573,21 +573,21 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    public interface Inner_DataUtil {
-      PrintMachineJob init(BlockPos var1, BlockState var2);
+      PrintMachineJob containerJob(BlockPos var1, BlockState var2);
 
-      PrintMachineJob init(boolean var1);
+      PrintMachineJob clockControlJob(boolean var1);
 
-      PrintMachineJob init(BlockPos var1, BlockState var2, Map<Integer, ItemStack> var3);
+      PrintMachineJob filledContainerJob(BlockPos var1, BlockState var2, Map<Integer, ItemStack> var3);
 
       int init_I(ItemStack var1);
 
-      boolean init();
+      boolean creative();
 
       boolean init_Z(ItemStack var1);
 
-      boolean load(ItemStack var1);
+      boolean canFetch(ItemStack var1);
 
-      boolean load();
+      boolean contextValid();
    }
 
    enum Inner_StreamUtil {

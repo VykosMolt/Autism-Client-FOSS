@@ -67,15 +67,15 @@ final class AiWorldReaders {
                      "row",
                      line.row(),
                      "objective",
-                     init(line.load(), 128),
+                     truncate(line.load(), 128),
                      "objectiveTitle",
-                     init(line.read(), 256),
+                     truncate(line.read(), 256),
                      "name",
-                     init(line.update(), 256),
+                     truncate(line.update(), 256),
                      "score",
-                     init(line.sync(), 64),
+                     truncate(line.sync(), 64),
                      "text",
-                     init(line.flush(), 512)
+                     truncate(line.flush(), 512)
                   )
                );
             }
@@ -90,13 +90,13 @@ final class AiWorldReaders {
       JsonArray players = new JsonArray();
 
       try {
-         for (autismclient.util.TabPlayerListParser.ParsedPlayer player : autismclient.util.TabPlayerListParser.init(mc)) {
+         for (autismclient.util.TabPlayerListParser.ParsedPlayer player : autismclient.util.TabPlayerListParser.parse(mc)) {
             if (players.size() >= 64) {
                break;
             }
 
             if (player != null && player.name() != null) {
-               players.add(AiJson.objectOf("name", init(player.name(), 64), "prefix", init(player.load(), 128)));
+               players.add(AiJson.objectOf("name", truncate(player.name(), 64), "prefix", truncate(player.load(), 128)));
             }
          }
       } catch (Throwable var4) {
@@ -114,8 +114,8 @@ final class AiWorldReaders {
          }
 
          PlayerTabOverlay overlay = mc.gui.hud.getTabList();
-         decoration.addProperty("header", init(init(AiWorldReaders.OverlayFields.init == null ? null : AiWorldReaders.OverlayFields.init.get(overlay)), 1024));
-         decoration.addProperty("footer", init(init(AiWorldReaders.OverlayFields.load == null ? null : AiWorldReaders.OverlayFields.load.get(overlay)), 1024));
+         decoration.addProperty("header", truncate(componentText(AiWorldReaders.OverlayFields.TAB_HEADER == null ? null : AiWorldReaders.OverlayFields.TAB_HEADER.get(overlay)), 1024));
+         decoration.addProperty("footer", truncate(componentText(AiWorldReaders.OverlayFields.TAB_FOOTER == null ? null : AiWorldReaders.OverlayFields.TAB_FOOTER.get(overlay)), 1024));
       } catch (Throwable var3) {
       }
 
@@ -130,14 +130,14 @@ final class AiWorldReaders {
             return bars;
          }
 
-         if ((AiWorldReaders.OverlayFields.read == null ? null : AiWorldReaders.OverlayFields.read.get(mc.gui.hud.getBossOverlay())) instanceof Map<?, ?> map) {
+         if ((AiWorldReaders.OverlayFields.BOSS_EVENTS == null ? null : AiWorldReaders.OverlayFields.BOSS_EVENTS.get(mc.gui.hud.getBossOverlay())) instanceof Map<?, ?> map) {
             for (Object value : map.values()) {
                if (bars.size() >= 8) {
                   break;
                }
 
                if (value instanceof BossEvent event) {
-                  bars.add(AiJson.objectOf("title", init(init(event.getName()), 256), "progress", event.getProgress()));
+                  bars.add(AiJson.objectOf("title", truncate(componentText(event.getName()), 256), "progress", event.getProgress()));
                }
             }
          }
@@ -176,17 +176,17 @@ final class AiWorldReaders {
 
          Component customName = stack.get(DataComponents.CUSTOM_NAME);
          if (customName != null) {
-            summary.addProperty("customName", init(customName.getString(), 64));
+            summary.addProperty("customName", truncate(customName.getString(), 64));
          }
 
          JsonArray enchants = new JsonArray();
-         init(enchants, stack.get(DataComponents.ENCHANTMENTS), 8);
+         addEnchantments(enchants, stack.get(DataComponents.ENCHANTMENTS), 8);
          if (enchants.size() > 0) {
             summary.add("enchants", enchants);
          }
 
          JsonArray stored = new JsonArray();
-         init(stored, stack.get(DataComponents.STORED_ENCHANTMENTS), 8);
+         addEnchantments(stored, stack.get(DataComponents.STORED_ENCHANTMENTS), 8);
          if (stored.size() > 0) {
             summary.add("storedEnchants", stored);
          }
@@ -201,7 +201,7 @@ final class AiWorldReaders {
             if (!modelData.floats().isEmpty() && modelData.floats().get(0) != null) {
                summary.addProperty("customModelData", modelData.floats().get(0));
             } else if (!modelData.strings().isEmpty() && modelData.strings().get(0) != null) {
-               summary.addProperty("customModelData", init(modelData.strings().get(0), 64));
+               summary.addProperty("customModelData", truncate(modelData.strings().get(0), 64));
             } else if (!modelData.flags().isEmpty() && modelData.flags().get(0) != null) {
                summary.addProperty("customModelData", modelData.flags().get(0));
             } else if (!modelData.colors().isEmpty() && modelData.colors().get(0) != null) {
@@ -211,7 +211,7 @@ final class AiWorldReaders {
 
          PotionContents potion = stack.get(DataComponents.POTION_CONTENTS);
          if (potion != null && (potion.potion().isPresent() || !potion.customEffects().isEmpty() || potion.customName().isPresent())) {
-            summary.addProperty("potion", potion.customName().map(name -> init(name, 64)).orElseGet(() -> potion.potion().map(AiWorldReaders::init).orElse("")));
+            summary.addProperty("potion", potion.customName().map(name -> truncate(name, 64)).orElseGet(() -> potion.potion().map(AiWorldReaders::holderId).orElse("")));
             JsonArray effects = new JsonArray();
 
             for (MobEffectInstance effect : potion.getAllEffects()) {
@@ -220,7 +220,7 @@ final class AiWorldReaders {
                      break;
                   }
 
-                  effects.add(init(effect.getEffect()) + " " + effect.getAmplifier());
+                  effects.add(holderId(effect.getEffect()) + " " + effect.getAmplifier());
                }
             }
 
@@ -233,7 +233,7 @@ final class AiWorldReaders {
          if (written != null) {
             summary.add(
                "writtenBook",
-               AiJson.objectOf("title", init(written.title() == null ? "" : written.title().raw(), 48), "author", init(written.author(), 48))
+               AiJson.objectOf("title", truncate(written.title() == null ? "" : written.title().raw(), 48), "author", truncate(written.author(), 48))
             );
          }
 
@@ -247,7 +247,7 @@ final class AiWorldReaders {
             }
 
             if (name != null && !name.isBlank()) {
-               summary.addProperty("profile", init(name, 64));
+               summary.addProperty("profile", truncate(name, 64));
             }
          }
 
@@ -261,7 +261,7 @@ final class AiWorldReaders {
 
          ItemContainerContents container = stack.get(DataComponents.CONTAINER);
          if (container != null) {
-            summary.addProperty("containerItems", init(container));
+            summary.addProperty("containerItems", countItems(container));
          }
 
          if (stack.get(DataComponents.FOOD) != null) {
@@ -284,7 +284,7 @@ final class AiWorldReaders {
 
       try {
          base.addProperty("item", stack != null && !stack.isEmpty() ? BuiltInRegistries.ITEM.getKey(stack.getItem()).toString() : "minecraft:air");
-         base.addProperty("name", stack != null && !stack.isEmpty() ? init(stack.getHoverName().getString(), 256) : "");
+         base.addProperty("name", stack != null && !stack.isEmpty() ? truncate(stack.getHoverName().getString(), 256) : "");
          base.addProperty("count", stack == null ? 0 : stack.getCount());
       } catch (Throwable t) {
          base.addProperty("item", "minecraft:air");
@@ -298,10 +298,10 @@ final class AiWorldReaders {
       try {
          List<Entry<String, JsonElement>> sections = new ArrayList<>();
          if (stack != null && !stack.isEmpty()) {
-            init(stack, sections);
+            describeItem(stack, sections);
          }
 
-         pages = init(base, sections);
+         pages = paginate(base, sections);
       } catch (Throwable t) {
          pages = new ArrayList<>();
          pages.add(init_JsonObject(base));
@@ -315,19 +315,19 @@ final class AiWorldReaders {
       return out;
    }
 
-   private static void init(ItemStack stack, List<Entry<String, JsonElement>> sections) {
+   private static void describeItem(ItemStack stack, List<Entry<String, JsonElement>> sections) {
       try {
          Component customName = stack.get(DataComponents.CUSTOM_NAME);
          if (customName != null) {
-            sections.add(Map.entry("customName", AiJson.GSON.toJsonTree(init(customName.getString(), 512))));
+            sections.add(Map.entry("customName", AiJson.GSON.toJsonTree(truncate(customName.getString(), 512))));
          }
       } catch (Throwable var19) {
       }
 
       try {
          JsonArray enchantments = new JsonArray();
-         init(enchantments, stack.get(DataComponents.ENCHANTMENTS), false);
-         init(enchantments, stack.get(DataComponents.STORED_ENCHANTMENTS), true);
+         addEnchantmentList(enchantments, stack.get(DataComponents.ENCHANTMENTS), false);
+         addEnchantmentList(enchantments, stack.get(DataComponents.STORED_ENCHANTMENTS), true);
          if (enchantments.size() > 0) {
             sections.add(Map.entry("enchantments", enchantments));
          }
@@ -338,7 +338,7 @@ final class AiWorldReaders {
          ItemLore lore = stack.get(DataComponents.LORE);
          if (lore != null && !lore.lines().isEmpty()) {
             JsonArray lines = new JsonArray();
-            lore.lines().stream().limit(32L).forEach(line -> lines.add(init(line.getString(), 256)));
+            lore.lines().stream().limit(32L).forEach(line -> lines.add(truncate(line.getString(), 256)));
             sections.add(Map.entry("lore", lines));
          }
       } catch (Throwable var17) {
@@ -362,7 +362,7 @@ final class AiWorldReaders {
             }
 
             JsonArray strings = new JsonArray();
-            modelData.strings().stream().limit(8L).forEach(value -> strings.add(init(value, 128)));
+            modelData.strings().stream().limit(8L).forEach(value -> strings.add(truncate(value, 128)));
             if (strings.size() > 0) {
                object.add("strings", strings);
             }
@@ -383,8 +383,8 @@ final class AiWorldReaders {
          if (potion != null
             && (potion.potion().isPresent() || !potion.customEffects().isEmpty() || potion.customName().isPresent() || potion.customColor().isPresent())) {
             JsonObject object = new JsonObject();
-            potion.potion().ifPresent(holder -> object.addProperty("name", init((Holder<?>)holder)));
-            potion.customName().ifPresent(name -> object.addProperty("customName", init(name, 256)));
+            potion.potion().ifPresent(holder -> object.addProperty("name", holderId((Holder<?>)holder)));
+            potion.customName().ifPresent(name -> object.addProperty("customName", truncate(name, 256)));
             potion.customColor().ifPresent(color -> object.addProperty("color", color));
             JsonArray effects = new JsonArray();
 
@@ -394,7 +394,7 @@ final class AiWorldReaders {
                }
 
                if (effect != null) {
-                  effects.add(AiJson.objectOf("id", init(effect.getEffect()), "amplifier", effect.getAmplifier(), "duration", effect.getDuration()));
+                  effects.add(AiJson.objectOf("id", holderId(effect.getEffect()), "amplifier", effect.getAmplifier(), "duration", effect.getDuration()));
                }
             }
 
@@ -421,7 +421,7 @@ final class AiWorldReaders {
                   entries.add(
                      AiJson.objectOf(
                         "attribute",
-                        init(entry.attribute()),
+                        holderId(entry.attribute()),
                         "amount",
                         entry.modifier().amount(),
                         "operation",
@@ -451,7 +451,7 @@ final class AiWorldReaders {
             }
 
             if (name != null && !name.isBlank()) {
-               sections.add(Map.entry("profile", AiJson.objectOf("name", init(name, 64))));
+               sections.add(Map.entry("profile", AiJson.objectOf("name", truncate(name, 64))));
             }
          }
       } catch (Throwable var16) {
@@ -459,7 +459,7 @@ final class AiWorldReaders {
 
       try {
          if (stack.get(DataComponents.TRIM) instanceof ArmorTrim armorTrim) {
-            sections.add(Map.entry("trim", AiJson.objectOf("material", init(armorTrim.material()), "pattern", init(armorTrim.pattern()))));
+            sections.add(Map.entry("trim", AiJson.objectOf("material", holderId(armorTrim.material()), "pattern", holderId(armorTrim.pattern()))));
          }
       } catch (Throwable var14) {
       }
@@ -499,7 +499,7 @@ final class AiWorldReaders {
       try {
          ItemContainerContents container = stack.get(DataComponents.CONTAINER);
          if (container != null) {
-            sections.add(Map.entry("container", AiJson.objectOf("count", init(container))));
+            sections.add(Map.entry("container", AiJson.objectOf("count", countItems(container))));
             JsonArray items = new JsonArray();
             int[] index = new int[]{0};
             container.nonEmptyItemCopyStream().limit(27L).forEach(inner -> {
@@ -507,7 +507,7 @@ final class AiWorldReaders {
                entry.addProperty("slot", Integer.valueOf((int)(index[0]++)));
                entry.addProperty("item", BuiltInRegistries.ITEM.getKey(inner.getItem()).toString());
                entry.addProperty("count", inner.getCount());
-               entry.addProperty("name", init(inner.getHoverName().getString(), 128));
+               entry.addProperty("name", truncate(inner.getHoverName().getString(), 128));
                entry.add("components", summary(inner));
                items.add(entry);
             });
@@ -524,8 +524,8 @@ final class AiWorldReaders {
          if (written != null) {
             JsonObject book = new JsonObject();
             book.addProperty("kind", "written");
-            book.addProperty("title", init(written.title() == null ? "" : written.title().raw(), 256));
-            book.addProperty("author", init(written.author(), 256));
+            book.addProperty("title", truncate(written.title() == null ? "" : written.title().raw(), 256));
+            book.addProperty("author", truncate(written.author(), 256));
             book.addProperty("generation", written.generation());
             book.addProperty("totalPages", written.pages().size());
             sections.add(Map.entry("book", book));
@@ -533,7 +533,7 @@ final class AiWorldReaders {
             written.pages()
                .stream()
                .limit(100L)
-               .forEach(bookPage -> bookPages.add(init(bookPage != null && bookPage.raw() != null ? bookPage.raw().getString() : "", 640)));
+               .forEach(bookPage -> bookPages.add(truncate(bookPage != null && bookPage.raw() != null ? bookPage.raw().getString() : "", 640)));
             sections.add(Map.entry("bookPages", bookPages));
          } else if (writable != null) {
             JsonObject book = new JsonObject();
@@ -544,38 +544,38 @@ final class AiWorldReaders {
             writable.pages()
                .stream()
                .limit(100L)
-               .forEach(bookPage -> bookPages.add(init(bookPage != null && bookPage.raw() != null ? String.valueOf(bookPage.raw()) : "", 640)));
+               .forEach(bookPage -> bookPages.add(truncate(bookPage != null && bookPage.raw() != null ? String.valueOf(bookPage.raw()) : "", 640)));
             sections.add(Map.entry("bookPages", bookPages));
          }
       } catch (Throwable var8) {
       }
    }
 
-   private static void init(JsonArray out, ItemEnchantments enchantments, int cap) {
+   private static void addEnchantments(JsonArray out, ItemEnchantments enchantments, int cap) {
       if (enchantments != null) {
          for (it.unimi.dsi.fastutil.objects.Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
             if (out.size() >= cap) {
                break;
             }
 
-            out.add(init(entry.getKey()) + " " + entry.getIntValue());
+            out.add(holderId(entry.getKey()) + " " + entry.getIntValue());
          }
       }
    }
 
-   private static void init(JsonArray out, ItemEnchantments enchantments, boolean stored) {
+   private static void addEnchantmentList(JsonArray out, ItemEnchantments enchantments, boolean stored) {
       if (enchantments != null) {
          for (it.unimi.dsi.fastutil.objects.Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
             if (out.size() >= 64) {
                break;
             }
 
-            out.add(AiJson.objectOf("id", init(entry.getKey()), "level", entry.getIntValue(), "stored", stored));
+            out.add(AiJson.objectOf("id", holderId(entry.getKey()), "level", entry.getIntValue(), "stored", stored));
          }
       }
    }
 
-   private static int init(ItemContainerContents container) {
+   private static int countItems(ItemContainerContents container) {
       int count = 0;
 
       for (Object ignored : container.nonEmptyItems()) {
@@ -590,7 +590,7 @@ final class AiWorldReaders {
    private static void init_V(JsonObject summary) {
       boolean halved = true;
 
-      while (init(summary) > 512 && halved) {
+      while (jsonLength(summary) > 512 && halved) {
          halved = false;
 
          for (String key : new String[]{"enchants", "storedEnchants", "potionEffects"}) {
@@ -611,7 +611,7 @@ final class AiWorldReaders {
       for (String key : new String[]{
          "customModelData", "writtenBook", "potionEffects", "profile", "storedEnchants", "enchants", "potion", "loreLines", "customName"
       }) {
-         if (init(summary) <= 512) {
+         if (jsonLength(summary) <= 512) {
             return;
          }
 
@@ -619,7 +619,7 @@ final class AiWorldReaders {
       }
    }
 
-   private static List<JsonObject> init(JsonObject base, List<Entry<String, JsonElement>> sections) {
+   private static List<JsonObject> paginate(JsonObject base, List<Entry<String, JsonElement>> sections) {
       List<JsonObject> pages = new ArrayList<>();
       JsonObject current = init_JsonObject(base);
 
@@ -633,11 +633,11 @@ final class AiWorldReaders {
 
             for (int i = 0; i < array.size(); i++) {
                JsonElement element = array.get(i);
-               int elementSize = init(element) + 1;
+               int elementSize = jsonLength(element) + 1;
                boolean pageHasContent = current.size() > base.size() || slice.size() > 0;
-               if (init(current) + sliceSize + key.length() + 8 + elementSize > 5700 && pageHasContent) {
+               if (jsonLength(current) + sliceSize + key.length() + 8 + elementSize > 5700 && pageHasContent) {
                   if (slice.size() > 0) {
-                     init(current, key, slice, sliceStart);
+                     addSlice(current, key, slice, sliceStart);
                      pages.add(current);
                      current = init_JsonObject(base);
                      slice = new JsonArray();
@@ -654,10 +654,10 @@ final class AiWorldReaders {
             }
 
             if (slice.size() > 0) {
-               init(current, key, slice, sliceStart);
+               addSlice(current, key, slice, sliceStart);
             }
          } else {
-            if (init(current) + key.length() + 4 + init(value) > 5700 && current.size() > base.size()) {
+            if (jsonLength(current) + key.length() + 4 + jsonLength(value) > 5700 && current.size() > base.size()) {
                pages.add(current);
                current = init_JsonObject(base);
             }
@@ -670,7 +670,7 @@ final class AiWorldReaders {
       return pages;
    }
 
-   private static void init(JsonObject page, String key, JsonArray slice, int sliceStart) {
+   private static void addSlice(JsonObject page, String key, JsonArray slice, int sliceStart) {
       page.add(key, slice);
       if ("bookPages".equals(key)) {
          page.addProperty("bookPageOffset", sliceStart);
@@ -687,11 +687,11 @@ final class AiWorldReaders {
       return page;
    }
 
-   private static int init(JsonElement element) {
+   private static int jsonLength(JsonElement element) {
       return AiJson.GSON.toJson(element).length();
    }
 
-   private static String init(Holder<?> holder) {
+   private static String holderId(Holder<?> holder) {
       if (holder == null) {
          return "[unregistered]";
       }
@@ -703,11 +703,11 @@ final class AiWorldReaders {
       }
    }
 
-   private static String init(Object value) {
+   private static String componentText(Object value) {
       return value instanceof Component component ? component.getString() : "";
    }
 
-   private static String init(String text, int max) {
+   private static String truncate(String text, int max) {
       if (text == null) {
          return "";
       } else {
@@ -716,11 +716,11 @@ final class AiWorldReaders {
    }
 
    private static final class OverlayFields {
-      private static final Field init = init(PlayerTabOverlay.class, "header");
-      private static final Field load = init(PlayerTabOverlay.class, "footer");
-      private static final Field read = init(BossHealthOverlay.class, "events");
+      private static final Field TAB_HEADER = field(PlayerTabOverlay.class, "header");
+      private static final Field TAB_FOOTER = field(PlayerTabOverlay.class, "footer");
+      private static final Field BOSS_EVENTS = field(BossHealthOverlay.class, "events");
 
-      private static Field init(Class<?> type, String name) {
+      private static Field field(Class<?> type, String name) {
          try {
             Field field = type.getDeclaredField(name);
             field.setAccessible(true);

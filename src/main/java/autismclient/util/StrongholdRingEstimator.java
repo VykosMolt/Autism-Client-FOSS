@@ -16,11 +16,11 @@ public final class StrongholdRingEstimator {
    private StrongholdRingEstimator() {
    }
 
-   public static StrongholdRingEstimator.RingEstimate init(StrongholdTriangulator.ThrowSample ray, boolean legacyTargets) {
-      return ray == null ? null : init(List.of(ray), legacyTargets);
+   public static StrongholdRingEstimator.RingEstimate estimateOne(StrongholdTriangulator.ThrowSample ray, boolean legacyTargets) {
+      return ray == null ? null : estimate(List.of(ray), legacyTargets);
    }
 
-   public static StrongholdRingEstimator.RingEstimate init(List<StrongholdTriangulator.ThrowSample> observations, boolean legacyTargets) {
+   public static StrongholdRingEstimator.RingEstimate estimate(List<StrongholdTriangulator.ThrowSample> observations, boolean legacyTargets) {
       if (observations != null && !observations.isEmpty() && observations.size() <= 8) {
          StrongholdTriangulator.ThrowSample ray = observations.getLast();
          if (ray != null

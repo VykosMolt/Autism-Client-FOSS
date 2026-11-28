@@ -37,7 +37,7 @@ public abstract class AutismPacketDecoderMixin<T extends PacketListener> {
          if (out != null && !out.isEmpty()) {
             int start = Math.max(0, Math.min(outSizeBeforeDecode, out.size()));
             boolean capturePlaintext = PacketCaptureState.isLoggerCapture(captureState) && incomingPlaintext.length > 0;
-            boolean capturePayloads = PacketCaptureState.load(captureState);
+            boolean capturePayloads = PacketCaptureState.isPayloadCapture(captureState);
             ModuleRuntimeManager module = ModuleRuntimeManager.getInstance();
             if (module != null) {
                String protocol = this.protocolInfo.id().id();

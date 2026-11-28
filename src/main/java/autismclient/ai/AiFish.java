@@ -108,7 +108,7 @@ final class AiFish {
                      if (!this.started) {
                         this.started = true;
                         if (!this.moduleWasEnabled) {
-                           this.moduleOverride = AiModuleScope.init(module, true);
+                           this.moduleOverride = AiModuleScope.borrow(module, true);
                         }
 
                         return this.running("Casting");

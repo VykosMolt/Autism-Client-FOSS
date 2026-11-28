@@ -60,7 +60,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
    private long fileModified;
    private long searchStartedAt;
    private AiPlacementSearch search;
-   private AiPlacementSearch.CandidateScore init_aQ_CachePool;
+   private AiPlacementSearch.CandidateScore bestCandidate;
    private AABB bounds;
    private Path path;
    private List<String> read_List;
@@ -125,7 +125,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
                         AiBuilder.Blueprint survival = AiBuilder.normalizeSchematicBlueprint(
                            new AiBuilder.Blueprint(BlockPos.ZERO, AiBuilder.normalizeCells(schematic.blueprint().cells(), 2097152, 4096))
                         );
-                        String impossible = AiSchematicReadiness.init(AiSchematicReadiness.assess(survival, 1, null));
+                        String impossible = AiSchematicReadiness.blockingReason(AiSchematicReadiness.assess(survival, 1, null));
                         return new AiSchematicPlacement.LoadedSchematic(path, size, modified, schematic.blueprint().cells(), schematic.entities(), impossible);
                      } else {
                         throw new IllegalArgumentException("Schematic changed while loading; select it again");
@@ -283,13 +283,13 @@ final class AiSchematicPlacement extends AiPlacementSession {
       } else if (!this.impossibleReason.isEmpty()) {
          return "Some saved cells may be skipped during construction.";
       } else {
-         return this.init_aQ_CachePool == null
+         return this.bestCandidate == null
             ? this.survivalCells.size() + " blocks; choose a placement"
-            : this.init_aQ_CachePool.place()
+            : this.bestCandidate.place()
                + " place / "
-               + this.init_aQ_CachePool.remove()
+               + this.bestCandidate.remove()
                + " clear / "
-               + this.init_aQ_CachePool.support()
+               + this.bestCandidate.support()
                + " support estimate";
       }
    }
@@ -313,11 +313,11 @@ final class AiSchematicPlacement extends AiPlacementSession {
          "cells",
          this.survivalCells.size(),
          "placedEstimate",
-         this.init_aQ_CachePool == null ? -1 : this.init_aQ_CachePool.place(),
+         this.bestCandidate == null ? -1 : this.bestCandidate.place(),
          "clearedEstimate",
-         this.init_aQ_CachePool == null ? -1 : this.init_aQ_CachePool.remove(),
+         this.bestCandidate == null ? -1 : this.bestCandidate.remove(),
          "supportEstimate",
-         this.init_aQ_CachePool == null ? -1 : this.init_aQ_CachePool.support()
+         this.bestCandidate == null ? -1 : this.bestCandidate.support()
       );
    }
 
@@ -479,8 +479,8 @@ final class AiSchematicPlacement extends AiPlacementSession {
       this.loadToken++;
       this.update_Z = false;
       this.search = null;
-      this.init_aQ_CachePool = null;
-      this.transformWorker.init(new AiSchematicPlacement.TransformRequest(this.decodedCells, this.rotation, this.mirror));
+      this.bestCandidate = null;
+      this.transformWorker.submit(new AiSchematicPlacement.TransformRequest(this.decodedCells, this.rotation, this.mirror));
    }
 
    private void onTransformed(List<AiBuilder.CellSpec> result, Throwable failure) {
@@ -511,7 +511,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
       this.update_Z = false;
       this.read_List = null;
       this.search = null;
-      this.init_aQ_CachePool = null;
+      this.bestCandidate = null;
       if (!this.failed) {
          this.loadError = "";
       }
@@ -552,7 +552,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             String selectedMirror = this.mirror;
             int token = ++this.loadToken;
             this.loadError = "";
-            this.init_aQ_CachePool = null;
+            this.bestCandidate = null;
             this.search = null;
             this.update_Z = true;
             CompletableFuture.<List<List<AiBuilder.CellSpec>>>supplyAsync(
@@ -616,7 +616,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
 
       sites.sort(Comparator.comparingDouble(AiPlacementSearch.PlacementCandidate::distance));
       this.loadError = "";
-      this.init_aQ_CachePool = null;
+      this.bestCandidate = null;
       this.searchStartedAt = System.nanoTime();
       this.search = new AiPlacementSearch(sites, this.init_aQ_ConfigStore(), this.sync);
    }
@@ -641,7 +641,7 @@ final class AiSchematicPlacement extends AiPlacementSession {
             this.rotation = found.candidate().rotation();
             this.survivalCells = found.candidate().cells();
             this.open();
-            this.init_aQ_CachePool = found;
+            this.bestCandidate = found;
          }
       }
    }

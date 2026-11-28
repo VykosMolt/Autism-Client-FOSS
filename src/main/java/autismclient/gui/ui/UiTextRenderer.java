@@ -217,7 +217,7 @@ public final class UiTextRenderer {
 
       List<String> lines = new ArrayList<>();
 
-      for (TextWrapLayout.Inner_DataUtil line : TextWrapLayout.init(safe, width, (start, end) -> this.measureWidth(safe.substring(start, end)))) {
+      for (TextWrapLayout.Inner_DataUtil line : TextWrapLayout.wrap(safe, width, (start, end) -> this.measureWidth(safe.substring(start, end)))) {
          lines.add(safe.substring(line.init(), line.read()));
       }
 

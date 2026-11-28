@@ -515,7 +515,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          List<RegistrySelectorScreen.RegistryEntry> available = new ArrayList<>();
 
          for (RegistrySelectorScreen.RegistryEntry entry : this.entries) {
-            if (!selected.contains(entry.init_Str) && (needle.isEmpty() || entry.init_Str_2().contains(needle) || entry.init_Str.contains(needle))) {
+            if (!selected.contains(entry.init_Str) && (needle.isEmpty() || entry.searchKey().contains(needle) || entry.init_Str.contains(needle))) {
                available.add(entry);
             }
          }
@@ -550,7 +550,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
       } else if (path.contains(needle)) {
          return 2;
       } else {
-         String label = entry.init_Str_2();
+         String label = entry.searchKey();
          if (label.equals(needle)) {
             return 3;
          } else {
@@ -652,11 +652,11 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          case STORAGE_LIST:
             for (StorageEspCatalog.StorageTarget target : StorageEspCatalog.TARGETS) {
                ItemStack icon = target.icon();
-               out.add(new RegistrySelectorScreen.RegistryEntry(target.id, target.label, target.read, icon, icon.isEmpty()));
+               out.add(new RegistrySelectorScreen.RegistryEntry(target.id, target.label, target.group, icon, icon.isEmpty()));
             }
       }
 
-      out.sort(Comparator.<RegistrySelectorScreen.RegistryEntry, String>comparing(entry -> entry.read).thenComparing(RegistrySelectorScreen.RegistryEntry::init_Str_2));
+      out.sort(Comparator.<RegistrySelectorScreen.RegistryEntry, String>comparing(entry -> entry.read).thenComparing(RegistrySelectorScreen.RegistryEntry::searchKey));
       return out;
    }
 
@@ -1177,7 +1177,7 @@ public class RegistrySelectorScreen extends VirtualScaledScreen {
          icon = icon == null ? ItemStack.EMPTY : icon;
       }
 
-      String init_Str_2() {
+      String searchKey() {
          return this.load.toLowerCase(Locale.ROOT);
       }
 

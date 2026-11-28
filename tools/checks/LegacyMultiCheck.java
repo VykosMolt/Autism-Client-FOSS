@@ -60,7 +60,7 @@ public final class LegacyMultiCheck {
       MacroExecutor.suppressLegacyMultiSteps(direct);
       check(!direct.get(1).isEnabled() && direct.get(3) == truncated && !direct.get(4).isEnabled(),
          "adjacent and truncated blocks keep their boundaries even when a header is disabled");
-      check(direct.get(2) == label && label.init().equals("inside multi") && !label.isEnabled(),
+      check(direct.get(2) == label && label.normalizedName().equals("inside multi") && !label.isEnabled(),
          "covered labels remain valid jump targets and are excluded from action collectors");
       direct.get(1).execute(null);
       direct.get(4).execute(null);

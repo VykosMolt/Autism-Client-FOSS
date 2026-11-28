@@ -68,9 +68,9 @@ public class AutismMultiPlayerGameModeMixin {
    private void autism$recordCombatEngagement(Player player, Entity entity, CallbackInfo ci) {
       autismclient.util.SprintStateTracker.load(player);
       if (!AutismLiteVariant.enabled()) {
-         WTappingModule.init(player, entity);
-         CombatAttackDispatcher.init(player, entity);
-         RecentCombatTracker.init(player, entity);
+         WTappingModule.onAttack(player, entity);
+         CombatAttackDispatcher.onAttack(player, entity);
+         RecentCombatTracker.onAttack(player, entity);
          AntiBotTracker.onLocalPlayerAttackEntity(entity);
       }
    }
@@ -142,7 +142,7 @@ public class AutismMultiPlayerGameModeMixin {
       )
    )
    private float autism$modifyFastBreakDestroyProgress(float original, BlockPos pos, Direction direction) {
-      return !AutismLiteVariant.enabled() && BedNukerModule.read_Z_10() ? BedNukerModule.init_F_F_BlockPos(original, pos) : al.init_F_F_BlockPos(original, pos);
+      return !AutismLiteVariant.enabled() && BedNukerModule.isMining() ? BedNukerModule.init_F_F_BlockPos(original, pos) : al.init_F_F_BlockPos(original, pos);
    }
 
    @Inject(method = "setLocalMode(Lnet/minecraft/world/level/GameType;)V", at = @At("RETURN"))

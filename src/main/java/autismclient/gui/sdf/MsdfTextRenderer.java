@@ -88,7 +88,7 @@ public final class MsdfTextRenderer {
          }
       }
 
-      float width = msdf.init(safe, size);
+      float width = msdf.width(safe, size);
       synchronized (WIDTH_CACHE) {
          WIDTH_CACHE.put(key, width);
          return width;
@@ -112,7 +112,7 @@ public final class MsdfTextRenderer {
          }
 
          MsdfFontAtlas msdf = font.atlas();
-         return msdf != null ? msdf.load(safe, size, maxWidth) : "";
+         return msdf != null ? msdf.fit(safe, size, maxWidth) : "";
       } else {
          return "";
       }
@@ -199,12 +199,12 @@ public final class MsdfTextRenderer {
       MsdfFontAtlas.Inner_DataUtil atlas = msdf.texture();
       if (atlas != null) {
          float[] quads = new float[text.length() * 8];
-         int quadCount = msdf.init(text, x, y, size, quads, 0);
+         int quadCount = msdf.layoutQuads(text, x, y, size, quads, 0);
          if (quadCount > 0) {
             AutismGuiGraphicsExtractorAccessor accessor = (AutismGuiGraphicsExtractorAccessor)graphics;
             ScreenRectangle scissor = UiScissorStack.peek();
             GuiRenderState renderState = accessor.autism$guiRenderState();
-            TexturedQuadRenderState element = TexturedQuadRenderState.init(
+            TexturedQuadRenderState element = TexturedQuadRenderState.create(
                SdfRenderPipelines.init_RenderPipeline(),
                TextureSetup.singleTexture(atlas.getTextureView(), atlas.getSampler()),
                new Matrix3x2f(graphics.pose()),

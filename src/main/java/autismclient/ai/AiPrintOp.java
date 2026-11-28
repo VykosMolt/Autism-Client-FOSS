@@ -71,7 +71,7 @@ final class AiPrintOp implements AiOperation {
    private final Consumer<BlockPos> blockObserver;
    private final LongConsumer chunkObserver;
    private final int originalSlot;
-   private boolean close;
+   private boolean closeRequested;
    private boolean open;
    private long tickCount;
    private long maxTickNanos;
@@ -128,7 +128,7 @@ final class AiPrintOp implements AiOperation {
       this.targets = preparedTargets;
       this.env.setFlightAllowed(power.assumeFly());
       this.core = autismclient.ai.print.PrintCore.create(this.env, AiPrintRules.INSTANCE, this.targets, geometry);
-      this.scaffold = AiScaffold.init(AiBuilder.checkpointPath(blueprint), List.of());
+      this.scaffold = AiScaffold.openScope(AiBuilder.checkpointPath(blueprint), List.of());
       this.revisitQueue.addAll(this.scaffold.ownedCells());
       this.core.attachRailVehicles(actions.vehicles());
       this.core.attachItemFrames(actions.frames());
@@ -159,7 +159,7 @@ final class AiPrintOp implements AiOperation {
       this.originalSlot = this.mc.player == null ? 0 : this.mc.player.getInventory().getSelectedSlot();
       AiServerEvidence.addBlockObserver(this.blockObserver);
       AiServerEvidence.addChunkObserver(this.chunkObserver);
-      AiPrintOp.PrintLog.init("[AI] print v2: {} cells", this.targets.size());
+      AiPrintOp.PrintLog.info("[AI] print v2: {} cells", this.targets.size());
    }
 
    @Override
@@ -188,7 +188,7 @@ final class AiPrintOp implements AiOperation {
    }
 
    private AiOperation.Result init_AiOperation_Result_25() {
-      if (this.close) {
+      if (this.closeRequested) {
          return this.init_AiOperation_Result_AiOperation_Status_Str_8(AiOperation.Status.CANCELLED, "Build cancelled");
       }
 
@@ -212,14 +212,14 @@ final class AiPrintOp implements AiOperation {
       if (menuClose != AiMenuClose.Inner_StreamUtil.READY) {
          this.env.releaseControls();
          return menuClose == AiMenuClose.Inner_StreamUtil.UNCERTAIN
-            ? this.init(AiOperation.Status.UNCERTAIN, "The server did not reconcile the closed storage menu. Inspect the inventory before resuming.", AiFailure.UNKNOWN)
+            ? this.fail(AiOperation.Status.UNCERTAIN, "The server did not reconcile the closed storage menu. Inspect the inventory before resuming.", AiFailure.UNKNOWN)
             : this.init_AiOperation_Result_Str_9("Waiting for the server to close the storage menu");
       }
 
       if (!this.env.isHandReady()) {
          this.env.releaseControls();
          return this.env.handSwapError() != null
-            ? this.init(this.env.hasPendingHandSwap() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.env.handSwapError(), AiFailure.UNKNOWN)
+            ? this.fail(this.env.hasPendingHandSwap() ? AiOperation.Status.UNCERTAIN : AiOperation.Status.FAILED, this.env.handSwapError(), AiFailure.UNKNOWN)
             : this.init_AiOperation_Result_Str_9("Waiting for the server to confirm the hand swap");
       }
 
@@ -228,7 +228,7 @@ final class AiPrintOp implements AiOperation {
       try {
          this.supply.prepare(16384);
       } catch (IllegalStateException failure) {
-         return this.init(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.WORLD_UNKNOWN);
+         return this.fail(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.WORLD_UNKNOWN);
       }
 
       if (!this.supply.isPrepared()) {
@@ -251,7 +251,7 @@ final class AiPrintOp implements AiOperation {
                this.env.clearRecentClick();
             }
          } catch (ReflectiveOperationException | RuntimeException failure) {
-            return this.init(AiOperation.Status.FAILED, "Could not apply the schematic's sign text", AiFailure.EXECUTION_FAILED);
+            return this.fail(AiOperation.Status.FAILED, "Could not apply the schematic's sign text", AiFailure.EXECUTION_FAILED);
          }
       }
 
@@ -266,7 +266,7 @@ final class AiPrintOp implements AiOperation {
          if (guarded != null) {
             this.flush_Z = true;
             if (guarded.terminal()) {
-               return this.init(guarded.status(), guarded.message(), guarded.failure());
+               return this.fail(guarded.status(), guarded.message(), guarded.failure());
             }
 
             return this.init_AiOperation_Result_Str_9("Survival: " + guarded.message());
@@ -275,7 +275,7 @@ final class AiPrintOp implements AiOperation {
          boolean pending = this.guard.requiresReconciliation();
          this.guard.cancel();
          if (pending) {
-            return this.init(AiOperation.Status.UNCERTAIN, "Game mode changed during an unconfirmed survival action", AiFailure.UNKNOWN);
+            return this.fail(AiOperation.Status.UNCERTAIN, "Game mode changed during an unconfirmed survival action", AiFailure.UNKNOWN);
          }
       }
 
@@ -286,7 +286,7 @@ final class AiPrintOp implements AiOperation {
       }
 
       if (this.update_Z || this.sync_Z) {
-         return this.init(AiOperation.Status.UNCERTAIN, "Build maintenance was interrupted before recovery was confirmed", AiFailure.UNKNOWN);
+         return this.fail(AiOperation.Status.UNCERTAIN, "Build maintenance was interrupted before recovery was confirmed", AiFailure.UNKNOWN);
       }
 
       if (this.child != null
@@ -315,7 +315,7 @@ final class AiPrintOp implements AiOperation {
             && !(opened instanceof InventoryScreen)
             && this.mc.player.containerMenu != this.mc.player.inventoryMenu
             && this.env.hasRecentClick()) {
-            AiPrintOp.PrintLog.init("[AI] print v2: closing {} the build opened", opened.getClass().getSimpleName());
+            AiPrintOp.PrintLog.info("[AI] print v2: closing {} the build opened", opened.getClass().getSimpleName());
             AiMenuClose.closeMenu();
             this.env.clearRecentClick();
             this.env.releaseControls();
@@ -339,7 +339,7 @@ final class AiPrintOp implements AiOperation {
             && !this.core.isRestingOnGround()) {
             AiGuard.StatusSnapshot vitals = AiGuard.sampleStatus();
             if (vitals.hasFood() && vitals.hostilesNear() == 0 && AiSurvival.shouldEat(vitals.food())) {
-               return this.load("Settling before a meal");
+               return this.runningTick("Settling before a meal");
             }
          }
 
@@ -349,12 +349,12 @@ final class AiPrintOp implements AiOperation {
                   this.terrainCell = this.supply.nextTerrainCell();
                }
             } catch (IllegalStateException failure) {
-               return this.init(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.UNREACHABLE);
+               return this.fail(AiOperation.Status.FAILED, failure.getMessage(), AiFailure.UNREACHABLE);
             }
 
             if (this.terrainCell != null) {
                if (!this.core.isRestingOnGround()) {
-                  return this.load("Settling before clearing the site");
+                  return this.runningTick("Settling before clearing the site");
                }
 
                this.load_Z = false;
@@ -399,7 +399,7 @@ final class AiPrintOp implements AiOperation {
          }
 
          if (this.core.getMissingHandItem() == Items.AIR && this.core.isRestingOnGround()) {
-            return this.init(AiOperation.Status.FAILED, "Free one inventory or offhand slot so the builder can use an empty hand", AiFailure.INVENTORY_FULL);
+            return this.fail(AiOperation.Status.FAILED, "Free one inventory or offhand slot so the builder can use an empty hand", AiFailure.INVENTORY_FULL);
          }
 
          if (!this.env.isCreativeMode() && this.core.getRequestedItem() != null) {
@@ -453,7 +453,7 @@ final class AiPrintOp implements AiOperation {
             return var10000;
          } else {
             if (!this.options.shulkerStock()) {
-               return this.init(AiOperation.Status.FAILED, "Missing material: " + itemId(this.supply.getMissingItem()), AiFailure.MISSING_MATERIALS);
+               return this.fail(AiOperation.Status.FAILED, "Missing material: " + itemId(this.supply.getMissingItem()), AiFailure.MISSING_MATERIALS);
             }
 
             this.missingItem = this.supply.getMissingItem();
@@ -472,7 +472,7 @@ final class AiPrintOp implements AiOperation {
             this.revisitQueue.addLast(position);
          } else {
             BlockState state = this.env.getBlockState(position);
-            if (AiScaffold.matches(this.scaffold.init(position), state.getBlock())) {
+            if (AiScaffold.matches(this.scaffold.recorded(position), state.getBlock())) {
                this.core.notifyBlockChanged(position, state);
             } else {
                AiScaffold.forget(position);
@@ -504,7 +504,7 @@ final class AiPrintOp implements AiOperation {
                var10000 = "Verifying build";
                break;
             default:
-               var10000 = AiTaskStatus.init(message, "Placing blocks");
+               var10000 = AiTaskStatus.phaseLabel(message, "Placing blocks");
          }
 
          phase = var10000;
@@ -514,13 +514,13 @@ final class AiPrintOp implements AiOperation {
       return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.init_JsonObject_42().toString(), List.of());
    }
 
-   private AiOperation.Result load(String message) {
+   private AiOperation.Result runningTick(String message) {
       this.tickCount++;
       this.env.advanceTick();
       this.read_Z = true;
       autismclient.ai.print.PrintControls controls = this.core.refillHereControls();
       if (controls == null) {
-         return this.init(AiOperation.Status.FAILED, "No safe landing before the next build maintenance action", AiFailure.UNREACHABLE);
+         return this.fail(AiOperation.Status.FAILED, "No safe landing before the next build maintenance action", AiFailure.UNREACHABLE);
       }
 
       this.env.applyControls(controls);
@@ -542,7 +542,7 @@ final class AiPrintOp implements AiOperation {
          && AiCarriedShulker.init_BlockPos_Minecraft_Set(this.mc, this.reservedCells()) != null;
       autismclient.ai.print.PrintControls controls = portableHere ? this.core.refillHereControls() : this.core.stockRouteControls();
       if (controls == null) {
-         return this.init(AiOperation.Status.FAILED, "No safe route from the work station to shulker stock", AiFailure.UNREACHABLE);
+         return this.fail(AiOperation.Status.FAILED, "No safe route from the work station to shulker stock", AiFailure.UNREACHABLE);
       }
 
       this.env.applyControls(controls);
@@ -562,7 +562,7 @@ final class AiPrintOp implements AiOperation {
          }
 
          if (refill == null) {
-            return this.init(
+            return this.fail(
                AiOperation.Status.FAILED,
                "No usable carried or nearby shulker could supply "
                   + itemId(this.missingItem)
@@ -609,7 +609,7 @@ final class AiPrintOp implements AiOperation {
          this.env.advanceTick();
          autismclient.ai.print.PrintControls controls = this.core.refillHereControls();
          if (controls == null) {
-            return this.init(AiOperation.Status.FAILED, "No safe landing before recovering temporary material", AiFailure.UNREACHABLE);
+            return this.fail(AiOperation.Status.FAILED, "No safe landing before recovering temporary material", AiFailure.UNREACHABLE);
          } else {
             this.env.applyControls(controls);
             if (!this.core.isRestingOnGround()) {
@@ -676,17 +676,17 @@ final class AiPrintOp implements AiOperation {
    }
 
    private AiOperation.Result init_AiOperation_Result_AiOperation_Status_Str_8(AiOperation.Status status, String message) {
-      return this.init(status, message, status == AiOperation.Status.CANCELLED ? AiFailure.CANCELLED : AiFailure.UNKNOWN);
+      return this.fail(status, message, status == AiOperation.Status.CANCELLED ? AiFailure.CANCELLED : AiFailure.UNKNOWN);
    }
 
-   private AiOperation.Result init(AiOperation.Status status, String message, AiFailure failure) {
+   private AiOperation.Result fail(AiOperation.Status status, String message, AiFailure failure) {
       this.sync_V_3();
       if (status != AiOperation.Status.SUCCEEDED && (this.core.hasUncertainMachineWork() || this.update_Z || this.sync_Z)) {
          status = AiOperation.Status.UNCERTAIN;
       }
 
       JsonObject data = this.init_JsonObject_42();
-      AiPrintOp.PrintLog.init("[AI] print v2: {} - {} ({})", status, message, data);
+      AiPrintOp.PrintLog.info("[AI] print v2: {} - {} ({})", status, message, data);
       return status == AiOperation.Status.SUCCEEDED
          ? new AiOperation.Result(status, message, data.toString(), List.of())
          : new AiOperation.Result(status, message, data.toString(), List.of(), failure);
@@ -743,7 +743,7 @@ final class AiPrintOp implements AiOperation {
          if (this.mc.level == this.level) {
             for (BlockPos p : this.jobScope.ownedCells()) {
                BlockState state = this.mc.level.getBlockState(p);
-               if (AiScaffold.matches(this.jobScope.init(p), state.getBlock())) {
+               if (AiScaffold.matches(this.jobScope.recorded(p), state.getBlock())) {
                   this.core.notifyBlockChanged(p, state);
                }
             }
@@ -775,7 +775,7 @@ final class AiPrintOp implements AiOperation {
       this.update_V_4();
       this.read_V_8();
       if (this.update_Z) {
-         return this.init(AiOperation.Status.UNCERTAIN, "External work needs reconciliation: " + result.message(), result.failure());
+         return this.fail(AiOperation.Status.UNCERTAIN, "External work needs reconciliation: " + result.message(), result.failure());
       }
 
       if (result.status() != AiOperation.Status.UNCERTAIN && result.status() != AiOperation.Status.CANCELLED && result.status() != AiOperation.Status.TIMED_OUT
@@ -797,7 +797,7 @@ final class AiPrintOp implements AiOperation {
                   this.supply.terrainCleared++;
                   return this.init_AiOperation_Result_Str_9("Terrain removed; checking the next obstruction");
                } else {
-                  return this.init(AiOperation.Status.FAILED, "Could not clear terrain at " + p.toShortString() + ": " + result.message(), result.failure());
+                  return this.fail(AiOperation.Status.FAILED, "Could not clear terrain at " + p.toShortString() + ": " + result.message(), result.failure());
                }
             }
          } else if (this.requestedItem != null) {
@@ -835,7 +835,7 @@ final class AiPrintOp implements AiOperation {
                : this.init_AiOperation_Result_Str_9("Checking the next carried shulker for optional saved contents");
          }
       } else {
-         return this.init(result.status(), "External work needs reconciliation: " + result.message(), result.failure());
+         return this.fail(result.status(), "External work needs reconciliation: " + result.message(), result.failure());
       }
    }
 
@@ -1025,7 +1025,7 @@ final class AiPrintOp implements AiOperation {
 
    @Override
    public void cancel() {
-      this.close = true;
+      this.closeRequested = true;
       this.sync_V_3();
    }
 
@@ -1054,23 +1054,23 @@ final class AiPrintOp implements AiOperation {
    }
 
    private static final class PrintLog {
-      static void init(String format, Object... args) {
+      static void info(String format, Object... args) {
          AutismClientAddon.LOG.info(format, args);
       }
    }
 
    private final class LocalSoilGather implements AiOperation {
-      private final List<BlockPos> init_List = new ArrayList<>();
+      private final List<BlockPos> candidates = new ArrayList<>();
       private final long deadline = System.nanoTime() + 600000000000L;
       private final AiPreparationReceipt receipt = new AiPreparationReceipt();
-      private int init_I;
-      private int load;
-      private int read;
-      private int write;
-      private AiOperation init_AiOperation;
-      private BlockPos init_BlockPos;
-      private boolean init_Z;
-      private final int update;
+      private int cursor;
+      private int failures;
+      private int dirtBefore;
+      private int waitTicks;
+      private AiOperation breakOp;
+      private BlockPos target;
+      private boolean finished;
+      private final int targetCount;
 
       LocalSoilGather(int target) {
          BlockPos center = AiPrintOp.this.mc.player.blockPosition();
@@ -1087,43 +1087,43 @@ final class AiPrintOp implements AiOperation {
                         || state.is(Blocks.PODZOL)
                   )
                   && state.getFluidState().isEmpty()) {
-                  this.init_List.add(pos.immutable());
+                  this.candidates.add(pos.immutable());
                }
             }
          }
 
-         this.init_List.sort(Comparator.comparingDouble(posx -> posx.distToCenterSqr(center.getX(), center.getY(), center.getZ())));
-         this.update = target;
+         this.candidates.sort(Comparator.comparingDouble(posx -> posx.distToCenterSqr(center.getX(), center.getY(), center.getZ())));
+         this.targetCount = target;
       }
 
       @Override
       public AiOperation.Result tick() {
-         if (this.init_Z) {
-            return this.init(new AiOperation.Result(AiOperation.Status.CANCELLED, "Local soil gathering cancelled", "{}", List.of(), AiFailure.CANCELLED));
+         if (this.finished) {
+            return this.finishWith(new AiOperation.Result(AiOperation.Status.CANCELLED, "Local soil gathering cancelled", "{}", List.of(), AiFailure.CANCELLED));
          }
 
          if (AiPrintOp.this.mc.player == null || AiPrintOp.this.mc.level == null || System.nanoTime() > this.deadline) {
-            return this.init(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Local soil gathering timed out", "{}", List.of(), AiFailure.TIMEOUT));
+            return this.finishWith(new AiOperation.Result(AiOperation.Status.TIMED_OUT, "Local soil gathering timed out", "{}", List.of(), AiFailure.TIMEOUT));
          }
 
-         if (AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT) >= this.update && !this.receipt.requiresReconciliation(this.init_AiOperation)) {
-            return this.init(new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Collected the required soil", "{}", List.of()));
+         if (AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT) >= this.targetCount && !this.receipt.requiresReconciliation(this.breakOp)) {
+            return this.finishWith(new AiOperation.Result(AiOperation.Status.SUCCEEDED, "Collected the required soil", "{}", List.of()));
          }
 
-         if (this.init_AiOperation == null) {
-            if (this.init_I >= this.init_List.size()) {
-               return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "No reachable local soil remains", "{}", List.of(), AiFailure.NO_REACHABLE_TARGET));
+         if (this.breakOp == null) {
+            if (this.cursor >= this.candidates.size()) {
+               return this.finishWith(new AiOperation.Result(AiOperation.Status.FAILED, "No reachable local soil remains", "{}", List.of(), AiFailure.NO_REACHABLE_TARGET));
             }
 
             if (!autismclient.ai.engine.AiBlockMine.canStore(AiPrintOp.this.mc.player.getInventory(), new ItemStack(Items.DIRT))) {
-               return this.init(new AiOperation.Result(AiOperation.Status.FAILED, "Make inventory room for local soil", "{}", List.of(), AiFailure.INVENTORY_FULL));
+               return this.finishWith(new AiOperation.Result(AiOperation.Status.FAILED, "Make inventory room for local soil", "{}", List.of(), AiFailure.INVENTORY_FULL));
             }
 
-            this.init_BlockPos = this.init_List.get(this.init_I++);
-            this.read = AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
-            this.write = 0;
-            this.init_AiOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(
-               this.init_BlockPos,
+            this.target = this.candidates.get(this.cursor++);
+            this.dirtBefore = AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
+            this.waitTicks = 0;
+            this.breakOp = autismclient.ai.engine.AiBreakBlock.breakBlock(
+               this.target,
                30,
                false,
                AiPrintOp.this.reservedCells(),
@@ -1134,59 +1134,59 @@ final class AiPrintOp implements AiOperation {
             );
          }
 
-         AiOperation.Result result = this.receipt.tickChild(this.init_AiOperation);
+         AiOperation.Result result = this.receipt.tickChild(this.breakOp);
          if (!result.terminal()) {
-            return this.init(result.message());
+            return this.running(result.message());
          }
 
-         AiOperation completed = this.init_AiOperation;
-         this.init_AiOperation = null;
+         AiOperation completed = this.breakOp;
+         this.breakOp = null;
          this.receipt.cancelChild(completed);
          if (result.status() != AiOperation.Status.SUCCEEDED) {
-            AiPrintOp.this.init_Set.add(this.init_BlockPos.asLong());
+            AiPrintOp.this.init_Set.add(this.target.asLong());
             if (AiPrintOp.this.core.trace) {
-               AiPrintOp.PrintLog.init("[AI] print v2: local soil at {} skipped: {}", this.init_BlockPos.toShortString(), result.message());
+               AiPrintOp.PrintLog.info("[AI] print v2: local soil at {} skipped: {}", this.target.toShortString(), result.message());
             }
 
-            return result.status() == AiOperation.Status.FAILED && !this.receipt.requiresReconciliation(completed) && ++this.load < 24
-               ? this.init("Skipped an unreachable soil block; trying another")
-               : this.init(result);
+            return result.status() == AiOperation.Status.FAILED && !this.receipt.requiresReconciliation(completed) && ++this.failures < 24
+               ? this.running("Skipped an unreachable soil block; trying another")
+               : this.finishWith(result);
          } else {
             AiPrintOp.this.soilBroken++;
             int held = AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
-            if (held > this.read) {
-               return this.init("Soil picked up; approaching the next block");
+            if (held > this.dirtBefore) {
+               return this.running("Soil picked up; approaching the next block");
             } else {
-               return ++this.write >= 12 ? this.init("Approaching the next soil block") : this.init("Waiting briefly for the nearby soil pickup");
+               return ++this.waitTicks >= 12 ? this.running("Approaching the next soil block") : this.running("Waiting briefly for the nearby soil pickup");
             }
          }
       }
 
-      private AiOperation.Result init(String message) {
+      private AiOperation.Result running(String message) {
          int held = AiPrintSupply.load(AiPrintOp.this.mc.player.getInventory(), Items.DIRT);
-         return new AiOperation.Result(AiOperation.Status.RUNNING, "(" + held + "/" + this.update + ") " + message, "{}", List.of());
+         return new AiOperation.Result(AiOperation.Status.RUNNING, "(" + held + "/" + this.targetCount + ") " + message, "{}", List.of());
       }
 
-      private AiOperation.Result init(AiOperation.Result result) {
+      private AiOperation.Result finishWith(AiOperation.Result result) {
          result = this.receipt.finalizeResult(result, this.requiresReconciliationAfterEmergency());
-         this.init_Z = true;
+         this.finished = true;
          return result;
       }
 
       @Override
       public void cancel() {
-         this.init_Z = true;
-         this.receipt.cancelChild(this.init_AiOperation);
+         this.finished = true;
+         this.receipt.cancelChild(this.breakOp);
       }
 
       @Override
       public boolean canInterruptNow() {
-         return !this.receipt.requiresReconciliation(this.init_AiOperation) && (this.init_AiOperation == null || this.init_AiOperation.canInterruptNow());
+         return !this.receipt.requiresReconciliation(this.breakOp) && (this.breakOp == null || this.breakOp.canInterruptNow());
       }
 
       @Override
       public boolean requiresReconciliationAfterEmergency() {
-         return this.receipt.requiresReconciliation(this.init_AiOperation);
+         return this.receipt.requiresReconciliation(this.breakOp);
       }
    }
 }

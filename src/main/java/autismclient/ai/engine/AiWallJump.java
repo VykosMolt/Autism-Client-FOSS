@@ -210,7 +210,7 @@ public final class AiWallJump {
                   AiWallJump.SearchNode var83 = var20;
 
                   for (int var85 = 0; var85 < var58; var85++) {
-                     var81 = Float.isNaN(var81) ? var79 : var81 + Math.clamp(putAt(var79 - var81), -var12, var12);
+                     var81 = Float.isNaN(var81) ? var79 : var81 + Math.clamp(wrapDegrees(var79 - var81), -var12, var12);
                      AiPhysics.MoveInput var87 = AiPhysics.MoveInput.running(var81, var66);
                      var83 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var83, var87, var9);
                      if (var83 == null || !var83.body().onGround()) {
@@ -343,10 +343,10 @@ public final class AiWallJump {
             break;
          }
 
-         var54 = putAt(var59, var10 ? 192 : 96);
+         var54 = topCandidates(var59, var10 ? 192 : 96);
       }
 
-      return putAt(var55, var7 ? 1 : (var10 ? 80 : 40));
+      return topCandidates(var55, var7 ? 1 : (var10 ? 80 : 40));
    }
 
    private static void putAt(
@@ -371,7 +371,7 @@ public final class AiWallJump {
             for (boolean var20 : var8) {
                for (float var24 : var10) {
                   float var25 = var3.yaw() + var24 * var3.side();
-                  if (Float.isNaN(var16) || !(Math.abs(putAt(var25 - var16)) > 30.01F)) {
+                  if (Float.isNaN(var16) || !(Math.abs(wrapDegrees(var25 - var16)) > 30.01F)) {
                      AiPhysics.MoveInput var26 = AiPhysics.MoveInput.running(var25, var20);
                      AiWallJump.SearchNode var27 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var15, var26, var9);
                      if (var27 != null && var27.body().onGround()) {
@@ -389,7 +389,7 @@ public final class AiWallJump {
             }
          }
 
-         var11 = putAt(var13, 20);
+         var11 = topCandidates(var13, 20);
       }
    }
 
@@ -426,7 +426,7 @@ public final class AiWallJump {
             }
          }
 
-         var7 = putAt(var11, 24);
+         var7 = topCandidates(var11, 24);
       }
    }
 
@@ -516,7 +516,7 @@ public final class AiWallJump {
 
       for (float var19 : var13) {
          float var20 = var3.yaw() + var19 * var3.side();
-         if (Float.isNaN(var14) || !(Math.abs(putAt(var20 - var14)) > var15)) {
+         if (Float.isNaN(var14) || !(Math.abs(wrapDegrees(var20 - var14)) > var15)) {
             AiPhysics.MoveInput var21 = AiPhysics.MoveInput.jump(var20, true);
             AiWallJump.SearchNode var22 = putAt_RingCodec_TableCac_TokenCore_TaskStat(var0, var1, var4, var21, var6);
             if (var22 != null && !var22.body().onGround() && var22.body().y() > var1 + 0.2) {
@@ -552,7 +552,7 @@ public final class AiWallJump {
       }
    }
 
-   private static List<AiWallJump.SearchNode> putAt(List<AiWallJump.SearchNode> var0, int var1) {
+   private static List<AiWallJump.SearchNode> topCandidates(List<AiWallJump.SearchNode> var0, int var1) {
       var0.sort(Comparator.comparingDouble(AiWallJump.SearchNode::score));
       ArrayList var2 = new ArrayList(var1);
       HashSet<Long> var3 = new HashSet<>();
@@ -574,7 +574,7 @@ public final class AiWallJump {
       return var2;
    }
 
-   private static float putAt(float var0) {
+   private static float wrapDegrees(float var0) {
       float var1 = var0 % 360.0F;
       if (var1 >= 180.0F) {
          var1 -= 360.0F;
@@ -720,8 +720,8 @@ public final class AiWallJump {
                         float var59 = ((AiPhysics.MoveInput)var58.getFirst()).yaw();
                         float var60 = var14;
 
-                        for (int var32 = 0; var32 < 8 && Math.abs(putAt(var59 - var60)) > 30.0F; var32++) {
-                           var60 += Math.clamp(putAt(var59 - var60), -30.0F, 30.0F);
+                        for (int var32 = 0; var32 < 8 && Math.abs(wrapDegrees(var59 - var60)) > 30.0F; var32++) {
+                           var60 += Math.clamp(wrapDegrees(var59 - var60), -30.0F, 30.0F);
                            AiPhysics.MoveInput var62 = AiPhysics.MoveInput.NONE.withYaw(var60);
                            AiPhysics.MotionState var34 = AiPhysics.step(var53, var62, var0);
                            if (!var34.onGround() || Math.abs(var34.y() - var1.y()) > 0.02) {

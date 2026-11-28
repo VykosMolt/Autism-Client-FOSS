@@ -269,7 +269,7 @@ public final class AiService {
       return this.performIntentStep(g, s, step, occurrence);
    }
 
-   boolean init_Z() {
+   boolean shouldVerifyOutcomes() {
       return this.verifyOutcomes;
    }
 
@@ -530,7 +530,7 @@ public final class AiService {
                      Path task = this.memoryStore.directory().resolve("task.json");
                      if (Files.exists(task)) {
                         try {
-                           AiSessions.SessionData migrated = AiSessions.init(
+                           AiSessions.SessionData migrated = AiSessions.migrateLegacy(
                               AiJson.parseObject(Files.readString(task)),
                               UUID.randomUUID().toString(),
                               System.currentTimeMillis(),
@@ -658,7 +658,7 @@ public final class AiService {
       return this.currentSession().objective;
    }
 
-   String read_Str() {
+   String currentTaskId() {
       return this.currentSession().taskId;
    }
 
@@ -1092,7 +1092,7 @@ public final class AiService {
       }
    }
 
-   void load_V() {
+   void markAttemptedAction() {
       this.currentSession().attemptedAction = true;
    }
 
@@ -1117,7 +1117,7 @@ public final class AiService {
          throw new IllegalStateException("Resolve AI settings/memory error first: " + this.storageError);
       }
 
-      JsonObject local = AiLocalRequest.init(label, capability, arguments);
+      JsonObject local = AiLocalRequest.localRequest(label, capability, arguments);
       if (capability.equals("game:build") || capability.equals("game:goto") || capability.equals("game:farm") && arguments.has("from")) {
          local.addProperty("placementWorld", AiWorldIdentity.currentWorldKey(Minecraft.getInstance()));
          local.addProperty("placementDimension", AiWorldIdentity.currentDimensionId(Minecraft.getInstance()));
@@ -1148,7 +1148,7 @@ public final class AiService {
             AiService.SessionState s = this.currentSession();
             if (this.pendingQuestion != null) {
                this.answerPendingQuestion(prompt);
-            } else if (AiChatPolicy.read(prompt) && this.isChatModeActive() && !AiChatPolicy.write(prompt)) {
+            } else if (AiChatPolicy.wantsStopChat(prompt) && this.isChatModeActive() && !AiChatPolicy.isTaskRequest(prompt)) {
                this.appendTranscript("user", prompt);
                this.stopChatMode("Chat mode stopped by user");
             } else {
@@ -1157,10 +1157,10 @@ public final class AiService {
                }
 
                if (isExecutingState(this.runState)) {
-                  if (!AiChatPolicy.load_Z(prompt) || AiChatPolicy.read(prompt) || this.isPlanPendingOrPlanning() || this.settings.planMode || this.settings.builtIn
+                  if (!AiChatPolicy.wantsChat(prompt) || AiChatPolicy.wantsStopChat(prompt) || this.isPlanPendingOrPlanning() || this.settings.planMode || this.settings.builtIn
                      )
                    {
-                     s.taskMinutes = AiTaskDuration.init(prompt, s.taskMinutes);
+                     s.taskMinutes = AiTaskDuration.estimateMinutes(prompt, s.taskMinutes);
                      s.amendments.add(prompt);
                      s.init(prompt);
                      this.appendTranscript("user", prompt);
@@ -1170,10 +1170,10 @@ public final class AiService {
                      if (script != null) {
                         Thread.ofVirtual().start(script::killProcessTree);
                      }
-                  } else if (AiChatPolicy.write(prompt)) {
+                  } else if (AiChatPolicy.isTaskRequest(prompt)) {
                      this.appendTranscript("user", prompt);
                      this.tryStartChatMode(prompt);
-                     s.taskMinutes = AiTaskDuration.init(prompt, s.taskMinutes);
+                     s.taskMinutes = AiTaskDuration.estimateMinutes(prompt, s.taskMinutes);
                      s.amendments.add(prompt);
                      s.init(prompt);
                      this.stateReason = "Chat mode updated; the work request will be planned at the next action boundary";
@@ -1184,12 +1184,12 @@ public final class AiService {
                      }
                   }
                } else {
-                  if (AiChatPolicy.load_Z(prompt)
-                     && !AiChatPolicy.read(prompt)
+                  if (AiChatPolicy.wantsChat(prompt)
+                     && !AiChatPolicy.wantsStopChat(prompt)
                      && !this.isPlanPendingOrPlanning()
                      && !this.settings.planMode
                      && !this.settings.builtIn) {
-                     if (this.runState == AiService.RunState.CHATTING && this.isChatModeActive() && !AiChatPolicy.write(prompt)) {
+                     if (this.runState == AiService.RunState.CHATTING && this.isChatModeActive() && !AiChatPolicy.isTaskRequest(prompt)) {
                         this.appendTranscript("user", prompt);
                         this.tryStartChatMode(prompt);
                         return;
@@ -1200,7 +1200,7 @@ public final class AiService {
 
                   s.taskId = UUID.randomUUID().toString();
                   s.objective = prompt;
-                  s.taskMinutes = AiTaskDuration.init(prompt, this.settings.maxMinutes);
+                  s.taskMinutes = AiTaskDuration.estimateMinutes(prompt, this.settings.maxMinutes);
                   s.taskState = "Not started";
                   this.evidenceById.clear();
                   this.evidenceCapability.clear();
@@ -1364,7 +1364,7 @@ public final class AiService {
       }
    }
 
-   JsonObject init_JsonObject_JsonObject_J(JsonObject args, long g) throws InterruptedException, ExecutionException {
+   JsonObject handleChatKeep(JsonObject args, long g) throws InterruptedException, ExecutionException {
       String action = AiJson.getString(args, "action", "status").trim().toLowerCase(Locale.ROOT);
       if (action.isEmpty()) {
          action = "status";
@@ -1389,12 +1389,12 @@ public final class AiService {
       }
    }
 
-   JsonObject load_JsonObject_JsonObject_J(JsonObject args, long g) throws InterruptedException, ExecutionException {
+   JsonObject handleChatSend(JsonObject args, long g) throws InterruptedException, ExecutionException {
       String raw = AiJson.getString(args, "text", "");
       if (raw.strip().startsWith("/")) {
          throw new IllegalArgumentException("chat_send is plain chat; a leading '/' would be a server command. Use game:command for commands.");
       } else {
-         String text = AiChatPolicy.init(raw, 256);
+         String text = AiChatPolicy.sanitize(raw, 256);
          if (text.isEmpty()) {
             throw new IllegalArgumentException("chat_send needs one non-blank chat line");
          } else {
@@ -1423,14 +1423,14 @@ public final class AiService {
    void forwardChatMessage(String text) {
       AiChatMode lane = this.chatMode;
       if (lane != null && lane.isActive()) {
-         lane.init_V_Str(text);
+         lane.noteSent(text);
       }
    }
 
    public void stopChatMode(String reason) {
       AiChatMode lane = this.chatMode;
       if (lane != null) {
-         lane.load(reason != null && !reason.isBlank() ? reason : "Chat mode stopped");
+         lane.stop(reason != null && !reason.isBlank() ? reason : "Chat mode stopped");
       }
    }
 
@@ -1681,7 +1681,7 @@ public final class AiService {
 
             if (isExecutingState(this.runState) && this.settings.autoRejoin) {
                AiService.ActiveOperation current = this.activeOperation;
-               if (current != null && !AiDirectOps.init_Z(current.id())) {
+               if (current != null && !AiDirectOps.isCampaignTool(current.id())) {
                   this.releaseOperationResources(current, true);
                   current.result()
                      .complete(AiGameOperations.result(AiOperation.Status.CANCELLED, "World/session changed during operation", new JsonObject()));
@@ -1699,7 +1699,7 @@ public final class AiService {
                String note = this.currentSession().taskState
                   + "\nThe world or session changed (kick, rejoin, or world switch); the scope re-bases automatically - re-observe before continuing.";
                this.updateTaskState(note.length() > 11900 ? note.substring(note.length() - 11900) : note);
-            } else if (isExecutingState(this.runState) && (this.activeOperation == null || !AiDirectOps.init_Z(this.activeOperation.id()))) {
+            } else if (isExecutingState(this.runState) && (this.activeOperation == null || !AiDirectOps.isCampaignTool(this.activeOperation.id()))) {
                this.transitionRunState(AiService.RunState.PAUSED, "World/session changed");
             }
 
@@ -2001,7 +2001,7 @@ public final class AiService {
                               hostiles++;
                            }
 
-                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.isActiveThreat(mc, e)) {
+                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.isRangedShooter(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.isActiveThreat(mc, e)) {
                               ranged++;
                            }
                         }
@@ -2164,7 +2164,7 @@ public final class AiService {
                               hostiles++;
                            }
 
-                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.init(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.isActiveThreat(mc, e)) {
+                           if (e instanceof Mob m && m.isAlive() && autismclient.ai.engine.AiSight.isRangedShooter(e) && e.distanceToSqr(mc.player) < 256.0 && AiThreats.isActiveThreat(mc, e)) {
                               ranged++;
                            }
                         }
@@ -2907,7 +2907,7 @@ public final class AiService {
 
          try {
             this.memoryStore
-               .init(
+               .remember(
                   AiMemoryStore.MemoryKind.WORLD,
                   this.observationScope,
                   "Observed successful capability " + id + ": " + result.message(),
@@ -3047,7 +3047,7 @@ public final class AiService {
             if (persistent) {
                m.setEnabled(desired);
             } else {
-               AiModuleScope.init(m, desired);
+               AiModuleScope.borrow(m, desired);
             }
          }
 
@@ -3130,7 +3130,7 @@ public final class AiService {
          this.memoryStore.addObservation(this.lastUserObservation);
          if (text.toLowerCase(Locale.ROOT).matches("(?s).*\\b(i prefer|remember that|from now on|always use|never use)\\b.*")) {
             this.memoryStore
-               .init(
+               .remember(
                   AiMemoryStore.MemoryKind.USER,
                   "user",
                   text,
@@ -3187,7 +3187,7 @@ public final class AiService {
       AiCatalog.Snapshot contracts = this.getCatalogSnapshot();
       List<AiMemoryStore.Memory> memories = this.memoryStore.recall(this.observationScope, s.objective + " " + String.join(" ", s.updates));
       int systemChars = (int)Math.min(2147483647L, (long)(promptBudget * 3.5 * 0.6));
-      AiContext.PromptParts prompt = AiContext.init(
+      AiContext.PromptParts prompt = AiContext.buildPrompt(
          contracts,
          s.objective,
          List.copyOf(s.updates),
@@ -3220,7 +3220,7 @@ public final class AiService {
       long total = AiContext.init(AiJson.GSON.toJsonTree(history));
       boolean keepLastThinking = transport.provider() == AiSettings.Provider.ANTHROPIC
          && AiSettings.anthropicThinking(transport.model()) == AiSettings.Thinking.BUDGET;
-      AiHistory.Inner_StreamUtil cut = AiHistory.init(
+      AiHistory.Inner_StreamUtil cut = AiHistory.compactionCut(
          transport.provider(), history, (long)(0.35 * budgetTokens * 3.5), (long)(0.6 * budgetTokens * 3.5), keepLastThinking
       );
       if (cut == null) {
@@ -3248,7 +3248,7 @@ public final class AiService {
       }
 
       history.clear();
-      history.add(transport.userMessage(AiHistory.init(s.objective, List.copyOf(s.updates), s.taskState, cut.digest())));
+      history.add(transport.userMessage(AiHistory.compactedContext(s.objective, List.copyOf(s.updates), s.taskState, cut.digest())));
       history.addAll(cut.kept());
       this.appendToSession(s, "system", "Conversation compacted to fit the context window (" + cut.dropped().size() + " older messages summarized)");
       return true;
@@ -3418,7 +3418,7 @@ public final class AiService {
                      continue;
                   }
 
-                  if (AiProvider.init_Z_Str(error) && executedCalls.isEmpty() && contextRecoveries++ < 2) {
+                  if (AiProvider.isContextOverflow(error) && executedCalls.isEmpty() && contextRecoveries++ < 2) {
                      forceCompact = true;
                      this.appendToSession(s, "system", "The conversation no longer fits the context window; compacting and retrying");
                      this.checkGeneration(g);
@@ -3698,7 +3698,7 @@ public final class AiService {
    private AiService.CompletionNote runBuiltInRequest(long g, AiService.SessionState s, boolean builtIn) {
       if (builtIn && s.structuredTask.has("builtInAction")) {
          JsonObject local = s.structuredTask.getAsJsonObject("builtInAction");
-         if (!AiLocalRequest.init(local, AiWorldIdentity.currentWorldKey(Minecraft.getInstance()), AiWorldIdentity.currentDimensionId(Minecraft.getInstance()))) {
+         if (!AiLocalRequest.matchesWorld(local, AiWorldIdentity.currentWorldKey(Minecraft.getInstance()), AiWorldIdentity.currentDimensionId(Minecraft.getInstance()))) {
             return this.endRunWith(
                g, s, AiService.RunState.BLOCKED, "warning", "This placement belongs to another world or dimension. Select the destination again."
             );
@@ -3723,7 +3723,7 @@ public final class AiService {
       }
 
       AiIntents.IntentPlan plan = builtIn && s.structuredTask.has("builtInAction")
-         ? AiLocalRequest.init(s.structuredTask.getAsJsonObject("builtInAction"))
+         ? AiLocalRequest.toPlan(s.structuredTask.getAsJsonObject("builtInAction"))
          : AiIntents.plan(s.objective, createWaypointResolver());
       if (plan.steps().isEmpty()) {
          return new AiService.CompletionNote(false, null);
@@ -3741,9 +3741,9 @@ public final class AiService {
                JsonObject args = step.arguments().deepCopy();
 
                for (AiIntents.ClarifyingQuestion ask : step.asks()) {
-                  JsonObject reply = this.write(AiJson.objectOf("question", ask.question(), "options", ask.options()), g);
+                  JsonObject reply = this.handleAskUser(AiJson.objectOf("question", ask.question(), "options", ask.options()), g);
                   String said = AiJson.getString(reply, "answer", "");
-                  if (!AiIntents.init(ask, said, args)) {
+                  if (!AiIntents.applyAnswer(ask, said, args)) {
                      if (builtIn) {
                         return this.endRunWith(
                            g,
@@ -3906,7 +3906,7 @@ public final class AiService {
          if (!targets.has(key)) {
             JsonObject requested = arguments;
             JsonObject target = this.onClientThread(
-               g, () -> AiLocalRequest.init(requested, AiItems.countInInventory(AiItems.resolveItem(AiJson.getString(requested, "item", ""))), 2304)
+               g, () -> AiLocalRequest.clampCount(requested, AiItems.countInInventory(AiItems.resolveItem(AiJson.getString(requested, "item", ""))), 2304)
             );
             synchronized (s) {
                JsonObject next = s.structuredTask.deepCopy();
@@ -4150,7 +4150,7 @@ public final class AiService {
 
    private List<AiIntents.IntentStep> farmPrerequisiteSteps(long g, AiIntents.IntentStep step) throws InterruptedException, ExecutionException {
       if (step.capability().equals("game:farm") && "plant".equals(AiJson.getString(step.arguments(), "action", ""))) {
-         String seed = AiFarm.load(AiJson.getString(step.arguments(), "crop", "minecraft:wheat"));
+         String seed = AiFarm.seedFor(AiJson.getString(step.arguments(), "crop", "minecraft:wheat"));
          int want = Math.max(1, AiJson.getInt(step.arguments(), "count", 9));
          int[] have = this.onClientThread(g, () -> new int[]{AiFarmPlant.init(Minecraft.getInstance()) ? 1 : 0, seed == null ? 0 : AiGameState.countInventoryItem(seed)});
          List<AiIntents.IntentStep> out = new ArrayList<>();
@@ -4294,7 +4294,7 @@ public final class AiService {
       return var10000;
    }
 
-   JsonObject read_JsonObject_JsonObject_J(JsonObject args, long g) throws InterruptedException, ExecutionException {
+   JsonObject handleFinish(JsonObject args, long g) throws InterruptedException, ExecutionException {
       String outcome = normalizeOutcomeWord(AiJson.getString(args, "outcome", ""));
       String text = AiJson.getString(args, "message", "");
       AiService.SessionState s = this.currentSession();
@@ -4486,7 +4486,7 @@ public final class AiService {
       }
    }
 
-   JsonObject write(JsonObject args, long g) {
+   JsonObject handleAskUser(JsonObject args, long g) {
       String text = AiJson.getString(args, "question", "").trim();
       if (text.isEmpty()) {
          throw new IllegalArgumentException("question is required");
@@ -4595,7 +4595,7 @@ public final class AiService {
       }
    }
 
-   JsonObject update(JsonObject args, long g) throws IOException, InterruptedException, TimeoutException, ExecutionException {
+   JsonObject handleScriptCheck(JsonObject args, long g) throws IOException, InterruptedException, TimeoutException, ExecutionException {
       try (AiScriptHost host = new AiScriptHost(this.memoryStore.directory(), (name, input) -> {
             throw new IllegalStateException("Fixture checks never call live game tools");
          })) {
@@ -4610,7 +4610,7 @@ public final class AiService {
       }
    }
 
-   JsonObject sync(JsonObject args, long g) throws Exception {
+   JsonObject handleScriptRun(JsonObject args, long g) throws Exception {
       if (!this.settings.unrestrictedScripts) {
          throw new IllegalStateException("Script execution disabled in AI settings");
       }
@@ -5316,7 +5316,7 @@ public final class AiService {
                   );
                   this.memoryStore.addObservation(proof);
                   AiMemoryStore.Memory saved = this.memoryStore
-                     .init(
+                     .remember(
                         old.kind() == AiMemoryStore.MemoryKind.USER ? AiMemoryStore.MemoryKind.USER : AiMemoryStore.MemoryKind.HYPOTHESIS,
                         old.scope(),
                         text,
@@ -5514,22 +5514,22 @@ public final class AiService {
       }
 
       @Override
-      public long load_J() {
+      public long ledgerRevision() {
          return AiChatLedger.revision();
       }
 
       @Override
-      public List<AiChatLedger.ChatEntry> init(int max) {
+      public List<AiChatLedger.ChatEntry> recentChat(int max) {
          return AiChatLedger.recent(max);
       }
 
       @Override
-      public void init(String text) {
-         this.init(text, () -> true);
+      public void sendChat(String text) {
+         this.sendChat(text, () -> true);
       }
 
       @Override
-      public void init(String text, BooleanSupplier valid) {
+      public void sendChat(String text, BooleanSupplier valid) {
          Minecraft mc = Minecraft.getInstance();
          mc.execute(() -> {
             if (valid.getAsBoolean() && this.canSend()) {
@@ -5542,12 +5542,12 @@ public final class AiService {
       }
 
       @Override
-      public void init(String player, String text) {
-         this.init(player, text, () -> true);
+      public void whisper(String player, String text) {
+         this.whisper(player, text, () -> true);
       }
 
       @Override
-      public void init(String player, String text, BooleanSupplier valid) {
+      public void whisper(String player, String text, BooleanSupplier valid) {
          if (AiChatPolicy.isPlayerName(player)) {
             String prefix = "msg " + player + " ";
             String body = text.length() + prefix.length() > 256 ? text.substring(0, 256 - prefix.length()).strip() : text;
@@ -5566,35 +5566,35 @@ public final class AiService {
       }
 
       @Override
-      public void load(String role, String text) {
+      public void appendTranscript(String role, String text) {
          if (this.isStillCurrent()) {
             AiService.this.appendToSession(this.session, role, text);
          }
       }
 
       @Override
-      public void init(JsonObject status) {
+      public void saveStatus(JsonObject status) {
          if (this.isStillCurrent()) {
             AiService.this.saveChatModeStatus(status);
          }
       }
 
       @Override
-      public void init_V() {
+      public void enterChatting() {
          if (this.isStillCurrent()) {
             AiService.this.enterChattingState();
          }
       }
 
       @Override
-      public void load(String reason) {
+      public void stopChat(String reason) {
          if (AiService.this.chatMode == this.boundChatMode && AiService.this.currentSession() == this.session) {
             AiService.this.get(reason);
          }
       }
 
       @Override
-      public void init(long inputTokens, long outputTokens, long requests) {
+      public void addUsage(long inputTokens, long outputTokens, long requests) {
          AiService.SessionState s = this.session;
          if (s != null) {
             synchronized (s) {

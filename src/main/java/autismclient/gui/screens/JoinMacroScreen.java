@@ -165,14 +165,14 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       List<String> methodOptions = new ArrayList<>();
 
       for (JoinMacroController.JoinTiming t : timings) {
-         methodOptions.add(t.load());
+         methodOptions.add(t.label());
       }
 
       int methodSel = JoinMacroController.timing().ordinal();
       int dropdownX = x + this.read_I_2() + 8;
       int dropdownW = this.widestOption(methodOptions);
       this.methodDropdown = this.init_SyncManager_SyncManager(
-         this.methodDropdown, dropdownX, y, dropdownW, ctl, methodOptions, methodSel, idx -> JoinMacroController.init(timings[Math.max(0, Math.min(idx, timings.length - 1))])
+         this.methodDropdown, dropdownX, y, dropdownW, ctl, methodOptions, methodSel, idx -> JoinMacroController.setTiming(timings[Math.max(0, Math.min(idx, timings.length - 1))])
       );
       this.dropdowns.add(this.methodDropdown);
       boolean keep = JoinMacroController.keepEnabled();
@@ -209,7 +209,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
          ctl,
          triggerLabels,
          triggerSel,
-         idx -> JoinMacroController.init(triggerOpts[Math.max(0, Math.min(idx, triggerOpts.length - 1))])
+         idx -> JoinMacroController.setTrigger(triggerOpts[Math.max(0, Math.min(idx, triggerOpts.length - 1))])
       );
       this.dropdowns.add(this.load_SyncManager);
    }

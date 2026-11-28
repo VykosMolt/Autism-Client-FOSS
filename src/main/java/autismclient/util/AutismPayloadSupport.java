@@ -77,7 +77,7 @@ public final class AutismPayloadSupport {
    }
 
    private static boolean isWireCaptureActive() {
-      return PacketCaptureState.load(PacketCaptureState.effectiveState());
+      return PacketCaptureState.isPayloadCapture(PacketCaptureState.effectiveState());
    }
 
    public static void rememberRawBytes(CustomPacketPayload payload, byte[] rawBytes) {
@@ -119,7 +119,7 @@ public final class AutismPayloadSupport {
       }
 
       String channel = extractChannelId(payload);
-      PacketWireCaptureStore.PacketCapture packetSnapshot = PacketWireCaptureStore.init(packet);
+      PacketWireCaptureStore.PacketCapture packetSnapshot = PacketWireCaptureStore.captureFor(packet);
       AutismPayloadSupport.EncodedBytes payloadBytes = extractBodyFromWireSnapshot(packetSnapshot, channel);
       if (payloadBytes == null) {
          payloadBytes = resolveEncodedBytes(payload);
@@ -649,7 +649,7 @@ public final class AutismPayloadSupport {
          validateOutgoingPayload(channel, bytes, sourceProtocol);
          ServerboundCustomPayloadPacket packet = buildServerboundPacket(channel, bytes);
          validatePacketEncoding(packet);
-         DirectPacketSender.init(packet);
+         DirectPacketSender.send(packet);
          return true;
       } catch (Throwable t) {
          if (notifyUser) {

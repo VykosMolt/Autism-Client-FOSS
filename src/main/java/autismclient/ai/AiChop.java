@@ -24,7 +24,7 @@ final class AiChop {
    }
 
    static boolean init(String arg, String blockId) {
-      return autismclient.ai.engine.AiMine.init(arg, blockId);
+      return autismclient.ai.engine.AiMine.matchesBlock(arg, blockId);
    }
 
    static List<BlockPos> init(Predicate<BlockPos> matches, BlockPos start, int cap) {
@@ -129,7 +129,7 @@ final class AiChop {
       }
    }
 
-   static AiOperation init(JsonObject args) {
+   static AiOperation chop(JsonObject args) {
       Minecraft client = Minecraft.getInstance();
       if (client.player != null && client.level != null) {
          String blockArg = AiJson.getString(args, "block", "log").trim();

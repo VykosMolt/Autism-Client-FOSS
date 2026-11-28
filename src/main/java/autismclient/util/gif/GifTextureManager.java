@@ -439,7 +439,7 @@ public final class GifTextureManager {
                checkCancelled(stale);
                NativeImage top = toNativeImage(argbFrames[i], width, height);
                argbFrames[i] = null;
-               chains[i] = mipmap ? NativeImageMipmapBuilder.init(top, 3072) : new NativeImage[]{top};
+               chains[i] = mipmap ? NativeImageMipmapBuilder.build(top, 3072) : new NativeImage[]{top};
             }
          } catch (Throwable t) {
             closeChains(chains);

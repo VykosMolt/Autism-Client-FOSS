@@ -144,7 +144,7 @@ final class AiPrintRepeat implements AiOperation {
             if (this.pendingCopy == null) {
                this.prepareWorker = new AiPrintPreparation.PreparationWorker();
                this.pendingCopy = this.prepareWorker
-                  .init(
+                  .submit(
                      () -> {
                         List<autismclient.ai.print.PrintTarget> targets = List.copyOf(AiPrintRules.targets(shifted));
                         return new AiPrintRepeat.PreparedCopy(
@@ -189,7 +189,7 @@ final class AiPrintRepeat implements AiOperation {
             && this.mc.player.getAbilities().instabuild;
          if (!creative) {
             if (!this.materialCheck.isDone()) {
-               this.materialCheck.init(4096, System.nanoTime() + 2000000L, this.mc.level);
+               this.materialCheck.scanSlice(4096, System.nanoTime() + 2000000L, this.mc.level);
                return this.running("Checking materials for copy " + (this.copiesBuilt + 1));
             }
 
@@ -205,7 +205,7 @@ final class AiPrintRepeat implements AiOperation {
                   }
 
                   this.stockSearch
-                     .init(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.mc.level, pos), this.mc.level::getBlockState);
+                     .scanSlice(4096, System.nanoTime() + 2000000L, pos -> AiTerrain.isLoaded(this.mc.level, pos), this.mc.level::getBlockState);
                   if (!this.stockSearch.done && !this.stockSearch.isDone()) {
                      return this.running("Checking stock for copy " + (this.copiesBuilt + 1));
                   }

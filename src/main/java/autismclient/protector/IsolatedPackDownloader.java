@@ -98,10 +98,10 @@ public final class IsolatedPackDownloader {
                   }
                } else {
                   IsolatedPackDownloader.MixedBatchCollector mixed = new IsolatedPackDownloader.MixedBatchCollector(session, controlled, omitted, output);
-                  load(session, manager, original, vanillaRequests, mixed::init);
+                  load(session, manager, original, vanillaRequests, mixed::acceptVanilla);
 
                   try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.enter(snapshot)) {
-                     original.download(controlledRequests, mixed::load);
+                     original.download(controlledRequests, mixed::acceptControlled);
                   }
                }
             } catch (IOException e) {
@@ -256,11 +256,11 @@ public final class IsolatedPackDownloader {
             }
          }
 
-         IsolatedResourcePack.Inner_DataUtil snapshot = IsolatedResourcePack.Inner_DataUtil.init(path);
+         IsolatedResourcePack.Inner_DataUtil snapshot = IsolatedResourcePack.Inner_DataUtil.fromPath(path);
          FileResourcesSupplier supplier = new IsolatedPackDownloader.IsolatedResourcesSupplier(path, snapshot, isolation);
          synchronized (LOCK) {
             if (!ResourcePackSessionTracker.isCurrent(session, packId, generation)) {
-               return new IsolatedPackDownloader.IsolatedResourcesSupplier(path, IsolatedResourcePack.Inner_DataUtil.init(), isolation);
+               return new IsolatedPackDownloader.IsolatedResourcesSupplier(path, IsolatedResourcePack.Inner_DataUtil.empty(), isolation);
             }
 
             Map<UUID, IsolatedPackDownloader.CachedSnapshot> sessionSnapshots = SNAPSHOTS.computeIfAbsent(session, ignored -> new LinkedHashMap<>());
@@ -273,7 +273,7 @@ public final class IsolatedPackDownloader {
             return supplier;
          }
       } else {
-         return new IsolatedPackDownloader.IsolatedResourcesSupplier(path, IsolatedResourcePack.Inner_DataUtil.init(), isolation);
+         return new IsolatedPackDownloader.IsolatedResourcesSupplier(path, IsolatedResourcePack.Inner_DataUtil.empty(), isolation);
       }
    }
 
@@ -282,7 +282,7 @@ public final class IsolatedPackDownloader {
          if (loaded == null) {
             ServerPackSelectionRegistry.init_V(session, null);
          } else {
-            ServerPackSelectionRegistry.init(session, requested, loaded);
+            ServerPackSelectionRegistry.recordSelection(session, requested, loaded);
          }
       } finally {
          init_V(session, null);
@@ -315,7 +315,7 @@ public final class IsolatedPackDownloader {
    }
 
    interface IsolationAware {
-      IsolatedPackDownloader.PackIsolation init();
+      IsolatedPackDownloader.PackIsolation packIsolation();
    }
 
    private static final class IsolatedResourcesSupplier extends FileResourcesSupplier {
@@ -330,17 +330,17 @@ public final class IsolatedPackDownloader {
 
       @Override
       public PackMetadataResources openMetadata(PackLocationInfo location) {
-         return this.snapshot.init(location, "", true, this.isolation);
+         return this.snapshot.toPack(location, "", true, this.isolation);
       }
 
       @Override
       public Stream<PackResources> openResources(PackLocationInfo location, Metadata metadata) {
-         PackResources primary = this.snapshot.init(location, "", false, this.isolation);
+         PackResources primary = this.snapshot.toPack(location, "", false, this.isolation);
          List<PackResources> overlays = new ArrayList<>();
 
          for (String overlay : metadata.overlays()) {
-            if (IsolatedResourcePack.Inner_DataUtil.init(overlay)) {
-               overlays.add(this.snapshot.init(location, overlay, false, this.isolation));
+            if (IsolatedResourcePack.Inner_DataUtil.isValidOverlay(overlay)) {
+               overlays.add(this.snapshot.toPack(location, overlay, false, this.isolation));
             }
          }
 
@@ -355,16 +355,16 @@ public final class IsolatedPackDownloader {
    }
 
    private static final class IsolatedOverlayResources extends OverlayedPackResources implements IsolatedPackDownloader.IsolationAware {
-      private final IsolatedPackDownloader.PackIsolation init;
+      private final IsolatedPackDownloader.PackIsolation isolation;
 
       private IsolatedOverlayResources(PackResources primary, List<PackResources> overlays, IsolatedPackDownloader.PackIsolation isolation) {
          super(primary, overlays);
-         this.init = isolation;
+         this.isolation = isolation;
       }
 
       @Override
-      public IsolatedPackDownloader.PackIsolation init() {
-         return this.init;
+      public IsolatedPackDownloader.PackIsolation packIsolation() {
+         return this.isolation;
       }
    }
 
@@ -373,11 +373,11 @@ public final class IsolatedPackDownloader {
       private final Map<UUID, Long> controlled;
       private final Set<UUID> omitted;
       private final Consumer<BatchResult> output;
-      private BatchResult init_DownloadQueue_Batc;
-      private BatchResult load_DownloadQueue_Batc;
-      private boolean init_Z;
-      private boolean load_Z;
-      private boolean read;
+      private BatchResult vanillaResult;
+      private BatchResult controlledResult;
+      private boolean vanillaDone;
+      private boolean controlledDone;
+      private boolean completed;
 
       private MixedBatchCollector(ResourcePackSessionTracker.PackSession session, Map<UUID, Long> controlled, Set<UUID> omitted, Consumer<BatchResult> output) {
          this.session = session;
@@ -386,47 +386,47 @@ public final class IsolatedPackDownloader {
          this.output = output;
       }
 
-      private void init(BatchResult result) {
-         this.init(true, result);
+      private void acceptVanilla(BatchResult result) {
+         this.accept(true, result);
       }
 
-      private void load(BatchResult result) {
-         this.init(false, result);
+      private void acceptControlled(BatchResult result) {
+         this.accept(false, result);
       }
 
-      private void init(boolean vanilla, BatchResult result) {
+      private void accept(boolean vanilla, BatchResult result) {
          BatchResult merged;
          synchronized (this) {
             if (vanilla) {
-               if (this.init_Z) {
+               if (this.vanillaDone) {
                   return;
                }
 
-               this.init_Z = true;
-               this.init_DownloadQueue_Batc = result;
+               this.vanillaDone = true;
+               this.vanillaResult = result;
             } else {
-               if (this.load_Z) {
+               if (this.controlledDone) {
                   return;
                }
 
-               this.load_Z = true;
-               this.load_DownloadQueue_Batc = result;
+               this.controlledDone = true;
+               this.controlledResult = result;
             }
 
-            if (!this.init_Z || !this.load_Z || this.read) {
+            if (!this.vanillaDone || !this.controlledDone || this.completed) {
                return;
             }
 
-            this.read = true;
+            this.completed = true;
             merged = new BatchResult();
-            if (this.init_DownloadQueue_Batc != null) {
-               merged.downloaded().putAll(this.init_DownloadQueue_Batc.downloaded());
-               merged.failed().addAll(this.init_DownloadQueue_Batc.failed());
+            if (this.vanillaResult != null) {
+               merged.downloaded().putAll(this.vanillaResult.downloaded());
+               merged.failed().addAll(this.vanillaResult.failed());
             }
 
-            if (IsolatedPackDownloader.init(this.session, this.load_DownloadQueue_Batc, this.controlled, this.omitted)) {
-               merged.downloaded().putAll(this.load_DownloadQueue_Batc.downloaded());
-               merged.failed().addAll(this.load_DownloadQueue_Batc.failed());
+            if (IsolatedPackDownloader.init(this.session, this.controlledResult, this.controlled, this.omitted)) {
+               merged.downloaded().putAll(this.controlledResult.downloaded());
+               merged.failed().addAll(this.controlledResult.failed());
             }
          }
 

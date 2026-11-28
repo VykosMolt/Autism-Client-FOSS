@@ -12,11 +12,11 @@ public final class UiLayerInputRouter {
    }
 
    public boolean mouseReleased(int mouseX, int mouseY, int button) {
-      return this.layers.load(mouseX, mouseY, button) == UiInputResult.HANDLED;
+      return this.layers.mouseReleased(mouseX, mouseY, button) == UiInputResult.HANDLED;
    }
 
    public boolean mouseDragged(int mouseX, int mouseY, int button, double deltaX, double deltaY) {
-      return this.layers.init(mouseX, mouseY, button, deltaX, deltaY) == UiInputResult.HANDLED;
+      return this.layers.mouseDragged(mouseX, mouseY, button, deltaX, deltaY) == UiInputResult.HANDLED;
    }
 
    public boolean mouseScrolled(int mouseX, int mouseY, double amount) {
@@ -24,7 +24,7 @@ public final class UiLayerInputRouter {
    }
 
    public boolean keyPressed(int key, int scanCode, int modifiers) {
-      return this.layers.read(key, scanCode, modifiers) == UiInputResult.HANDLED;
+      return this.layers.keyPressed(key, scanCode, modifiers) == UiInputResult.HANDLED;
    }
 
    public boolean charTyped(char chr) {

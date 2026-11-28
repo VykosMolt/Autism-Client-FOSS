@@ -134,7 +134,7 @@ final class AiSettingsView {
       );
    }
 
-   void init_V() {
+   void collapseAll() {
       this.collapsedSections.addAll(EnumSet.allOf(AiSettingsView.Inner_CachePool.class));
       this.collapsedSections.remove(AiSettingsView.Inner_CachePool.VISUALS);
       this.scroll.scrollToTop();
@@ -383,7 +383,7 @@ final class AiSettingsView {
             String endpointText = this.endpointField.getValue();
             Thread worker = new Thread(
                () -> {
-                  AiKeyResolver.Inner_DataUtil resolution = AiKeyResolver.init(k, p, endpointText, typed, () -> {
+                  AiKeyResolver.Inner_DataUtil resolution = AiKeyResolver.resolve(k, p, endpointText, typed, () -> {
                      if (!this.modelCatalog.isCurrent(generation)) {
                         throw new CancellationException("Model scan superseded");
                      }
@@ -419,7 +419,7 @@ final class AiSettingsView {
                                     this.selectedModel = resolution.model();
                                  }
 
-                                 String name = AiKeyResolver.init(resolution.provider());
+                                 String name = AiKeyResolver.displayName(resolution.provider());
                                  this.scanMessage = result.models().isEmpty()
                                     ? name + " returned no chat models for this key"
                                     : (detected ? "Detected " + name + " key: " : name + ": ")
@@ -480,7 +480,7 @@ final class AiSettingsView {
       return autismclient.gui.ui.widgets.DropdownWidget.handleMouseRelease(this.dropdowns) || used;
    }
 
-   boolean load(double x, double y, int button) {
+   boolean handleDrag(double x, double y, int button) {
       if (this.update_Z) {
          this.dragGhostSlider(x);
          return true;
@@ -775,7 +775,7 @@ final class AiSettingsView {
    private int init(AiUiKit kit, AiSettingsView.Inner_CachePool section, int x, int y, int w) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, w, autismclient.gui.ui.UiDensityMetrics.scaledHeight(12));
       boolean folded = this.collapsedSections.contains(section);
-      autismclient.gui.ui.widgets.GroupHeaderRenderer.init(kit.renderContext, bounds, section.init_Str, folded, kit.isHovered(bounds));
+      autismclient.gui.ui.widgets.GroupHeaderRenderer.render(kit.renderContext, bounds, section.init_Str, folded, kit.isHovered(bounds));
       kit.addClickRegion(bounds, () -> {
          if (!this.collapsedSections.remove(section)) {
             this.collapsedSections.add(section);

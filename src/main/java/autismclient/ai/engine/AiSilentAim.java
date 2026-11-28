@@ -8,7 +8,7 @@ public final class AiSilentAim {
    private AiSilentAim() {
    }
 
-   public static boolean init(boolean windingDown, boolean moduleEnabled, boolean scaffoldOwnsRotation) {
+   public static boolean active(boolean windingDown, boolean moduleEnabled, boolean scaffoldOwnsRotation) {
       return !scaffoldOwnsRotation && (windingDown || moduleEnabled && init);
    }
 
@@ -16,7 +16,7 @@ public final class AiSilentAim {
       return init;
    }
 
-   public static void init(boolean value) {
+   public static void setEnabled(boolean value) {
       init = value;
    }
 

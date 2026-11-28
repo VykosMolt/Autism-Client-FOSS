@@ -220,7 +220,7 @@ public class NbtBookAction implements MacroAction {
 
    public static List<String> wrapToPages(Font tr, String text, int maxPages) {
       if (text != null && !text.isEmpty()) {
-         String normalized = BookBotFileReader.init(text);
+         String normalized = BookBotFileReader.normalize(text);
          String[] paragraphs = normalized.split("\n", -1);
          List<String> visualLines = new ArrayList<>();
 

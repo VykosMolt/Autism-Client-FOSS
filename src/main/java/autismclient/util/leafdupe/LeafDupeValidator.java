@@ -67,7 +67,7 @@ public final class LeafDupeValidator {
    private LeafDupeValidator() {
    }
 
-   public static BlockPos init(String raw) {
+   public static BlockPos parsePos(String raw) {
       if (raw != null && !raw.isBlank()) {
          String[] parts = raw.trim().split("[\\s,]+");
          if (parts.length != 3) {
@@ -84,7 +84,7 @@ public final class LeafDupeValidator {
       }
    }
 
-   public static String init(BlockPos pos) {
+   public static String formatPos(BlockPos pos) {
       return pos.getX() + ", " + pos.getY() + ", " + pos.getZ();
    }
 
@@ -143,12 +143,12 @@ public final class LeafDupeValidator {
       return new float[]{yaw, Mth.clamp(pitch, -90.0F, 90.0F)};
    }
 
-   public static Vec3 init(Vec3 eye, BlockPos pos) {
+   public static Vec3 nearestPoint(Vec3 eye, BlockPos pos) {
       AABB box = new AABB(pos).deflate(0.2);
       return new Vec3(Mth.clamp(eye.x, box.minX, box.maxX), Mth.clamp(eye.y, box.minY, box.maxY), Mth.clamp(eye.z, box.minZ, box.maxZ));
    }
 
-   public static boolean init(Vec3 eye, float yaw, float pitch, BlockPos pos, double reach) {
+   public static boolean canSee(Vec3 eye, float yaw, float pitch, BlockPos pos, double reach) {
       AABB box = new AABB(pos);
       if (box.contains(eye)) {
          return true;
@@ -158,9 +158,9 @@ public final class LeafDupeValidator {
       return box.deflate(0.05).clip(eye, end).isPresent();
    }
 
-   public static boolean init(Vec3 eye, float[][] looks, BlockPos pos, double reach) {
+   public static boolean canSeeAny(Vec3 eye, float[][] looks, BlockPos pos, double reach) {
       for (float[] look : looks) {
-         if (init(eye, look[0], look[1], pos, reach)) {
+         if (canSee(eye, look[0], look[1], pos, reach)) {
             return true;
          }
       }
@@ -168,7 +168,7 @@ public final class LeafDupeValidator {
       return false;
    }
 
-   public static float[] init(Vec3 eye, float lastYaw, float lastPitch, BlockPos reset, BlockPos leaf, double reach) {
+   public static float[] bestLook(Vec3 eye, float lastYaw, float lastPitch, BlockPos reset, BlockPos leaf, double reach) {
       if (reset != null && leaf != null) {
          float[] best = null;
          double bestCost = 1.7976931348623157E308;
@@ -179,7 +179,7 @@ public final class LeafDupeValidator {
                   for (int z = 0; z < 5; z++) {
                      Vec3 point = new Vec3(pos.getX() + 0.1 + 0.2 * x, pos.getY() + 0.1 + 0.2 * y, pos.getZ() + 0.1 + 0.2 * z);
                      float[] look = aimAt(eye, point, lastYaw);
-                     if (init(eye, look[0], look[1], reset, reach) && init(eye, look[0], look[1], leaf, reach)) {
+                     if (canSee(eye, look[0], look[1], reset, reach) && canSee(eye, look[0], look[1], leaf, reach)) {
                         double cost = Math.abs(look[0] - lastYaw) + Math.abs(look[1] - lastPitch);
                         if (cost < bestCost) {
                            bestCost = cost;
@@ -197,7 +197,7 @@ public final class LeafDupeValidator {
       }
    }
 
-   public static Direction init(Vec3 eye, BlockPos pos, Direction preferred, boolean avoidFluids, Predicate<BlockPos> fluidAt) {
+   public static Direction bestFace(Vec3 eye, BlockPos pos, Direction preferred, boolean avoidFluids, Predicate<BlockPos> fluidAt) {
       Direction best = null;
       double bestDistance = 0.0;
 
@@ -255,7 +255,7 @@ public final class LeafDupeValidator {
       return Math.sqrt(dx * dx + dy * dy + dz * dz);
    }
 
-   public static String init(
+   public static String accessIssue(
       Vec3 serverEye, Vec3 liveEye, List<BlockPos> positions, double reach, Function<BlockPos, AABB> bounds, BiPredicate<BlockPos, Vec3> visible
    ) {
       for (BlockPos pos : positions) {

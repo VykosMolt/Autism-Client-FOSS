@@ -10,11 +10,11 @@ public final class PackFailureGuard {
       init = Math.max(init, System.currentTimeMillis() + 15000L);
    }
 
-   public static boolean init_Z() {
+   public static boolean isBlocked() {
       return System.currentTimeMillis() < init;
    }
 
-   public static void load() {
+   public static void reset() {
       init = 0L;
    }
 }

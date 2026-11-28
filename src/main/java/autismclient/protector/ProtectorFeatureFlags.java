@@ -48,43 +48,43 @@ public final class ProtectorFeatureFlags {
    }
 
    public static boolean protectorEnabled() {
-      return init(1);
+      return isSet(1);
    }
 
    public static boolean spoofClientVanilla() {
-      return init(512);
+      return isSet(512);
    }
 
    public static boolean filterChannels() {
-      return init(4);
+      return isSet(4);
    }
 
    public static boolean translationProtection() {
-      return init(8);
+      return isSet(8);
    }
 
    public static boolean open() {
-      return init(8);
+      return isSet(8);
    }
 
    public static boolean disableTelemetry() {
-      return init(16);
+      return isSet(16);
    }
 
    public static boolean push() {
-      return init(32);
+      return isSet(32);
    }
 
    public static boolean pop() {
-      return init(64);
+      return isSet(64);
    }
 
    public static boolean tick() {
-      return init(128);
+      return isSet(128);
    }
 
    public static boolean chatSigningOff() {
-      return init(256);
+      return isSet(256);
    }
 
    public static void refresh() {
@@ -103,7 +103,7 @@ public final class ProtectorFeatureFlags {
       }
    }
 
-   private static boolean init(int flag) {
+   private static boolean isSet(int flag) {
       return (currentState().load & flag) != 0;
    }
 

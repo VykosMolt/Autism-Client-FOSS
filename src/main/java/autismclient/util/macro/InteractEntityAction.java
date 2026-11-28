@@ -20,7 +20,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    public String guiName = "";
    public boolean raycast = false;
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
-   private boolean init = true;
+   private boolean enabled = true;
 
    @Override
    public boolean isRaycast() {
@@ -147,7 +147,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    }
 
    @Override
-   public void load(boolean v) {
+   public void setWaitForGuiBefore(boolean v) {
       this.waitForGuiBefore = v;
    }
 
@@ -157,7 +157,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
    }
 
    @Override
-   public void read(boolean v) {
+   public void setWaitForGuiAfter(boolean v) {
       this.waitForGuiAfter = v;
    }
 
@@ -183,12 +183,12 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
 
    @Override
    public boolean isEnabled() {
-      return this.init;
+      return this.enabled;
    }
 
    @Override
    public void setEnabled(boolean e) {
-      this.init = e;
+      this.enabled = e;
    }
 
    @Override
@@ -232,7 +232,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       tag.putBoolean("waitForGuiAfter", this.waitForGuiAfter);
       tag.putString("guiName", this.guiName);
       tag.putBoolean("raycast", this.raycast);
-      tag.putBoolean("enabled", this.init);
+      tag.putBoolean("enabled", this.enabled);
       PacketOrderAware.writePacketOrder(tag, this.packetOrder);
       return tag;
    }
@@ -272,7 +272,7 @@ public class InteractEntityAction implements PacketOrderAware, AimTargetAction, 
       this.waitForGuiAfter = GuiWaitAware.readWaitForGuiAfter(tag, false);
       this.guiName = tag.getStringOr("guiName", "");
       this.raycast = tag.getBooleanOr("raycast", false);
-      this.init = tag.getBooleanOr("enabled", true);
+      this.enabled = tag.getBooleanOr("enabled", true);
       this.packetOrder = PacketOrderAware.readPacketOrder(tag);
    }
 

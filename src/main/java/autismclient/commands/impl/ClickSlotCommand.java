@@ -22,19 +22,19 @@ public final class ClickSlotCommand extends Command {
          return 1;
       });
       RequiredArgumentBuilder<AutismCommandSource, Integer> slot = (RequiredArgumentBuilder<AutismCommandSource, Integer>)RequiredArgumentBuilder.<AutismCommandSource, Integer>argument(
-            "slot", autismclient.commands.arguments.SlotArgumentType.init()
+            "slot", autismclient.commands.arguments.SlotArgumentType.create()
          )
-         .executes(context -> init(context, SlotClickCommandHelper.ClickSpec.init("Left", ContainerInput.PICKUP, 0), 1));
-      SlotClickCommandHelper.init(slot, ClickSlotCommand::init);
+         .executes(context -> init(context, SlotClickCommandHelper.ClickSpec.of("Left", ContainerInput.PICKUP, 0), 1));
+      SlotClickCommandHelper.register(slot, ClickSlotCommand::init);
       root.then(slot);
    }
 
    private static int init(CommandContext<AutismCommandSource> context, SlotClickCommandHelper.ClickSpec spec, int times) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.player.containerMenu != null) {
-         int visibleSlot = autismclient.commands.arguments.SlotArgumentType.init(context, "slot");
+         int visibleSlot = autismclient.commands.arguments.SlotArgumentType.getValue(context, "slot");
          int handlerSlot = InventorySlotHelper.toScreenSlot(mc, visibleSlot);
-         return SlotClickCommandHelper.init(handlerSlot, spec, times, autismclient.commands.arguments.SlotArgumentType.slotName(visibleSlot));
+         return SlotClickCommandHelper.click(handlerSlot, spec, times, autismclient.commands.arguments.SlotArgumentType.slotName(visibleSlot));
       } else {
          AutismClientMessaging.sendPrefixed("§cNo active inventory or GUI.");
          return 1;

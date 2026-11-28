@@ -18,7 +18,7 @@ final class ScaffoldFailureRecorder {
    private long init_J = -9223372036854775808L;
    private boolean init_Z;
 
-   synchronized void init(ScaffoldFailureRecorder.PlacementFact fact) {
+   synchronized void recordFact(ScaffoldFailureRecorder.PlacementFact fact) {
       this.init_ArrayDeque.addLast(fact);
       if ("use".equals(fact.init_Str()) && fact.init_BlockPos() != null) {
          this.init_Map.merge(fact.init_BlockPos(), 1, Integer::sum);
@@ -36,7 +36,7 @@ final class ScaffoldFailureRecorder {
       return cell != null && this.init_Map.containsKey(cell);
    }
 
-   synchronized ScaffoldFailureRecorder.FailureCapture init(String reason, BlockPos cell, int sequence, int tick, long now) {
+   synchronized ScaffoldFailureRecorder.FailureCapture captureFailure(String reason, BlockPos cell, int sequence, int tick, long now) {
       if (this.hasFailure(cell) && (!this.init_Z || now - this.init_J >= 4000000000L)) {
          ScaffoldFailureRecorder.FailureCapture capture = new ScaffoldFailureRecorder.FailureCapture(!this.init_Z, reason, cell.immutable(), sequence, tick, List.copyOf(this.init_ArrayDeque));
          this.init_Z = true;

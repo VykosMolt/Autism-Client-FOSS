@@ -29,7 +29,7 @@ public final class CustomMenuActionPlanner {
       return "";
    }
 
-   public static CustomMenuActionPlanner.Inner_DataUtil init(CustomMenuAction action, CustomMenuSnapshot snapshot, Function<String, String> resolver) {
+   public static CustomMenuActionPlanner.Inner_DataUtil prepare(CustomMenuAction action, CustomMenuSnapshot snapshot, Function<String, String> resolver) {
       if (action != null && snapshot != null) {
          Function<String, String> safeResolver = resolver == null ? Function.identity() : resolver;
          Map<String, String> values = new LinkedHashMap<>();
@@ -147,7 +147,7 @@ public final class CustomMenuActionPlanner {
       }
    }
 
-   public static CustomMenuButton init(List<CustomMenuButton> buttons) {
+   public static CustomMenuButton acceptButton(List<CustomMenuButton> buttons) {
       if (buttons == null) {
          return null;
       }
@@ -201,7 +201,7 @@ public final class CustomMenuActionPlanner {
       return positive.size() == 1 ? positive.get(0) : null;
    }
 
-   public static CustomMenuButton read(List<CustomMenuButton> buttons) {
+   public static CustomMenuButton fallbackButton(List<CustomMenuButton> buttons) {
       if (buttons == null) {
          return null;
       }

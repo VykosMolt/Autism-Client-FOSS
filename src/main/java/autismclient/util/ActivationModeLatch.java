@@ -5,7 +5,7 @@ public final class ActivationModeLatch {
    private boolean load;
    private boolean read;
 
-   public boolean init(String mode, boolean keyDown) {
+   public boolean update(String mode, boolean keyDown) {
       boolean rising = keyDown && !this.init;
       this.init = keyDown;
       if (!keyDown) {
@@ -43,7 +43,7 @@ public final class ActivationModeLatch {
       }
    }
 
-   public void init() {
+   public void reset() {
       this.init = false;
       this.load = false;
       this.read = false;

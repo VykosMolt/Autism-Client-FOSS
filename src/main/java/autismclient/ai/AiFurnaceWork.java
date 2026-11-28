@@ -87,7 +87,7 @@ final class AiFurnaceWork implements AiOperation {
                for (Entry<String, Integer> resource : plan.resources().entrySet()) {
                   if (AiGameState.countInventoryItem(resource.getKey()) < resource.getValue()
                      && AiItems.resolveItem(resource.getKey()).items().stream().anyMatch(item -> AiItems.sourceBlocksFor(item).contains(mc.level.getBlockState(p).getBlock()))
-                     && autismclient.ai.engine.MiningCost.load(mc, mc.level.getBlockState(p), true) >= 0) {
+                     && autismclient.ai.engine.MiningCost.bestToolSlot(mc, mc.level.getBlockState(p), true) >= 0) {
                      return true;
                   }
                }
@@ -544,7 +544,7 @@ final class AiFurnaceWork implements AiOperation {
          }
 
          return this.mc.level.getBlockEntity(at) == null
-            && autismclient.ai.engine.MiningCost.load(this.mc, this.mc.level.getBlockState(at), true) >= 0;
+            && autismclient.ai.engine.MiningCost.bestToolSlot(this.mc, this.mc.level.getBlockState(at), true) >= 0;
       } else {
          return false;
       }
@@ -569,12 +569,12 @@ final class AiFurnaceWork implements AiOperation {
          }
 
          @Override
-         public boolean load(BlockPos p) {
+         public boolean mayBreak(BlockPos p) {
             return false;
          }
 
          @Override
-         public boolean read(BlockPos p) {
+         public boolean mayPlace(BlockPos p) {
             return false;
          }
 

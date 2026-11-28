@@ -12,9 +12,9 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
    public String saveAs = "";
-   private transient boolean init_Z = false;
-   private transient int init_I = 0;
-   private transient boolean load = false;
+   private transient boolean baselineTaken = false;
+   private transient int baselineCount = 0;
+   private transient boolean baselineEmpty = false;
 
    @Override
    public void execute(Minecraft mc) {
@@ -43,13 +43,13 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
                var10000 = countItem(mc, target) >= Math.max(1, this.count);
                break;
             case COUNT_CHANGED:
-               var10000 = countItem(mc, target) != this.init_I;
+               var10000 = countItem(mc, target) != this.baselineCount;
                break;
             case COUNT_INCREASED:
-               var10000 = countItem(mc, target) > this.init_I;
+               var10000 = countItem(mc, target) > this.baselineCount;
                break;
             case COUNT_DECREASED:
-               var10000 = countItem(mc, target) < this.init_I;
+               var10000 = countItem(mc, target) < this.baselineCount;
                break;
             case SLOT_EMPTY:
                var10000 = stackInSlot(mc, this.slot).isEmpty();
@@ -58,7 +58,7 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
                var10000 = !stackInSlot(mc, this.slot).isEmpty();
                break;
             case SLOT_CHANGED:
-               var10000 = stackInSlot(mc, this.slot).isEmpty() != this.load;
+               var10000 = stackInSlot(mc, this.slot).isEmpty() != this.baselineEmpty;
                break;
             case INVENTORY_FULL:
                var10000 = load(mc);
@@ -89,14 +89,14 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
    }
 
    public void init() {
-      this.init_Z = false;
+      this.baselineTaken = false;
    }
 
    private void captureBaseline(Minecraft mc, MacroItemTarget target) {
-      if (!this.init_Z) {
-         this.init_I = countItem(mc, target);
-         this.load = stackInSlot(mc, this.slot).isEmpty();
-         this.init_Z = true;
+      if (!this.baselineTaken) {
+         this.baselineCount = countItem(mc, target);
+         this.baselineEmpty = stackInSlot(mc, this.slot).isEmpty();
+         this.baselineTaken = true;
       }
    }
 
@@ -186,12 +186,12 @@ public class WaitInventoryPredicateAction implements CaptureOutputAction, MacroA
    }
 
    @Override
-   public String load() {
+   public String getSaveAs() {
       return this.saveAs;
    }
 
    @Override
-   public void a_(String name) {
+   public void setSaveAs(String name) {
       this.saveAs = name == null ? "" : name;
    }
 

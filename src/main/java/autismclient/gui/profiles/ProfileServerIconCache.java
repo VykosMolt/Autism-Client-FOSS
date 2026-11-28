@@ -65,7 +65,7 @@ final class ProfileServerIconCache {
       return this.init_Identifier_ServerData(server) != null;
    }
 
-   void init(SyncManager context, ServerData server, Identifier fallback, int x, int y, int size) {
+   void draw(SyncManager context, ServerData server, Identifier fallback, int x, int y, int size) {
       Identifier texture = this.init_Identifier_ServerData(server);
       if (texture != null) {
          context.init_GuiGraphicsExtract().blit(texture, x, y, x + size, y + size, 0.0F, 1.0F, 0.0F, 1.0F);
@@ -116,7 +116,7 @@ final class ProfileServerIconCache {
       }
    }
 
-   void init() {
+   void release() {
       TextureManager manager = Minecraft.getInstance().getTextureManager();
 
       for (ProfileServerIconCache.Inner_DataUtil cached : this.load.values()) {

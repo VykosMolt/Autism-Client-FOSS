@@ -1301,7 +1301,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
          || this.prefixWidths.length != this.value.length() + 1) {
          autismclient.gui.sdf.MsdfFontFace face = autismclient.gui.sdf.MsdfFontFace.forFont(font);
          this.prefixCacheUsesMsdf = richMetrics == null && autismclient.gui.sdf.MsdfTextRenderer.canRender(face, this.value.replace("\n", ""));
-         this.prefixWidths = Utf16TextCursor.init(
+         this.prefixWidths = Utf16TextCursor.prefixWidths(
             this.value,
             (text, start, end) -> {
                String glyph = text.substring(start, end);
@@ -1448,7 +1448,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       String safeComponent = text == null ? "" : text;
       List<TextInputWidget.WrappedLine> lines = new ArrayList<>();
 
-      for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil line : autismclient.gui.ui.TextWrapLayout.init(
+      for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil line : autismclient.gui.ui.TextWrapLayout.wrap(
          safeComponent, availableWidth, (start, end) -> this.measureRangeWidth(renderer, font, color, safeComponent, richMetrics, start, end)
       )) {
          lines.add(new TextInputWidget.WrappedLine(line.init(), line.load(), line.read()));

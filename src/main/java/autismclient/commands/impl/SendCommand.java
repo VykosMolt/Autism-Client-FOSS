@@ -28,11 +28,11 @@ public class SendCommand extends Command {
       });
       root.then(
          ((RequiredArgumentBuilder)RequiredArgumentBuilder.<AutismCommandSource, String>argument("packet", autismclient.commands.arguments.PacketNameArgumentType.packetName())
-               .executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"), "")))
+               .executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.getValue(ctx, "packet"), "")))
             .then(RequiredArgumentBuilder.<AutismCommandSource, String>argument("args", StringArgumentType.greedyString()).suggests((ctx, builder) -> {
-               Class<? extends Packet<?>> cls = PacketTypeRegistry.resolvePacketClass(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"));
+               Class<? extends Packet<?>> cls = PacketTypeRegistry.resolvePacketClass(autismclient.commands.arguments.PacketNameArgumentType.getValue(ctx, "packet"));
                return PacketCommandBuilder.suggest(cls, builder);
-            }).executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.init(ctx, "packet"), StringArgumentType.getString(ctx, "args"))))
+            }).executes(ctx -> this.init_I_Str_Str_3(autismclient.commands.arguments.PacketNameArgumentType.getValue(ctx, "packet"), StringArgumentType.getString(ctx, "args"))))
       );
    }
 

@@ -29,11 +29,11 @@ public final class SlotArgumentType implements ArgumentType<Integer> {
    private SlotArgumentType() {
    }
 
-   public static SlotArgumentType init() {
+   public static SlotArgumentType create() {
       return new SlotArgumentType();
    }
 
-   public static int init(CommandContext<AutismCommandSource> context, String name) {
+   public static int getValue(CommandContext<AutismCommandSource> context, String name) {
       return context.getArgument(name, Integer.class);
    }
 

@@ -46,8 +46,8 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    private final ScopedHttpUrlConnection.TlsSocketFactory tlsFactory;
    private final BooleanSupplier stillCurrent;
    private final LinkedHashMap<String, List<String>> requestHeaders = new LinkedHashMap<>();
-   private int update = -1;
-   private int sync = -1;
+   private int scopedConnectTimeout = -1;
+   private int scopedReadTimeout = -1;
    private volatile Socket activeSocket;
    private InputStream socketInput;
    private volatile boolean disconnected;
@@ -95,13 +95,13 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    @Override
    public void connect() throws IOException {
-      this.load();
+      this.ensureResponse();
    }
 
    @Override
    public void disconnect() {
       this.disconnected = true;
-      this.write();
+      this.closeActiveSocket();
    }
 
    @Override
@@ -120,12 +120,12 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          throw new IllegalArgumentException("timeout can not be negative");
       }
 
-      this.update = timeout;
+      this.scopedConnectTimeout = timeout;
    }
 
    @Override
    public int getConnectTimeout() {
-      return this.update == -1 ? 0 : this.update;
+      return this.scopedConnectTimeout == -1 ? 0 : this.scopedConnectTimeout;
    }
 
    @Override
@@ -134,12 +134,12 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          throw new IllegalArgumentException("timeout can not be negative");
       }
 
-      this.sync = timeout;
+      this.scopedReadTimeout = timeout;
    }
 
    @Override
    public int getReadTimeout() {
-      return this.sync == -1 ? 0 : this.sync;
+      return this.scopedReadTimeout == -1 ? 0 : this.scopedReadTimeout;
    }
 
    @Override
@@ -203,7 +203,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    @Override
    public InputStream getInputStream() throws IOException {
-      this.load();
+      this.ensureResponse();
       if (this.responseCode >= 400) {
          throw new IOException("Server returned HTTP response code: " + this.responseCode + " for URL: " + this.url);
       } else {
@@ -214,7 +214,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    @Override
    public InputStream getErrorStream() {
       try {
-         this.load();
+         this.ensureResponse();
          return this.responseCode >= 400 ? this.openResponseStream() : null;
       } catch (IOException e) {
          return null;
@@ -223,20 +223,20 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    @Override
    public int getResponseCode() throws IOException {
-      this.load();
+      this.ensureResponse();
       return this.responseCode;
    }
 
    @Override
    public String getResponseMessage() throws IOException {
-      this.load();
+      this.ensureResponse();
       return this.responseMessage;
    }
 
    @Override
    public long getContentLengthLong() {
       try {
-         this.load();
+         this.ensureResponse();
          return this.response.contentLength;
       } catch (IOException e) {
          return -1L;
@@ -252,12 +252,12 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    @Override
    public String getHeaderField(String name) {
       try {
-         this.load();
+         this.ensureResponse();
          if (name == null) {
             return this.response.statusLine;
          }
 
-         List<String> values = this.response.init(name);
+         List<String> values = this.response.header(name);
          return values.isEmpty() ? null : String.join(", ", values);
       } catch (IOException e) {
          return null;
@@ -267,7 +267,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    @Override
    public String getHeaderField(int index) {
       try {
-         this.load();
+         this.ensureResponse();
          if (index == 0) {
             return this.response.statusLine;
          }
@@ -289,7 +289,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    @Override
    public String getHeaderFieldKey(int index) {
       try {
-         this.load();
+         this.ensureResponse();
          if (index == 0) {
             return null;
          }
@@ -311,7 +311,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    @Override
    public Map<String, List<String>> getHeaderFields() {
       try {
-         this.load();
+         this.ensureResponse();
          LinkedHashMap<String, List<String>> result = new LinkedHashMap<>();
          result.put(null, List.of(this.response.statusLine));
          result.putAll(copyHeaders(this.response.headers));
@@ -321,7 +321,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private void load() throws IOException {
+   private void ensureResponse() throws IOException {
       if (this.response != null) {
          if (this.disconnected) {
             throw new IOException("Connection disconnected");
@@ -336,7 +336,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          }
 
          this.socketConnected = true;
-         this.read();
+         this.ensureCurrent();
          PackUrlValidator.ParsedTarget target = PackUrlValidator.parseUrl(this.url);
          PackUrlValidator.ParsedTarget initialTarget = target;
          PackUrlValidator.ParsedTarget previousTarget = null;
@@ -346,7 +346,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          int redirects = 0;
 
          while (true) {
-            this.read();
+            this.ensureCurrent();
             if (endpoint == null) {
                endpoint = PackUrlValidator.resolveEndpoint(target, this.scopeSnapshot, this.resolver);
             }
@@ -366,7 +366,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                }
 
                this.init(socket, target, previousTarget == null ? null : initialTarget, route);
-               ScopedHttpUrlConnection.ResponseHead response = this.init_RenderState_JsonUt_InputStream(this.socketInputFor(socket));
+               ScopedHttpUrlConnection.ResponseHead response = this.readResponseHead(this.socketInputFor(socket));
                String location = this.instanceFollowRedirects ? this.redirectLocation(response) : null;
                if (!isRedirectStatus(response.code) || location == null) {
                   this.response = this.init_RenderState_JsonUt_RenderState_JsonUt(response);
@@ -382,7 +382,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                }
 
                redirects++;
-               this.write();
+               this.closeActiveSocket();
                if (response.code == 305) {
                   if (route != null && route.init_Z()) {
                      throw new ProtocolException("HTTP 305 cannot replace the configured resource-pack proxy");
@@ -418,7 +418,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                   used305 = false;
                }
             } catch (IOException | RuntimeException e) {
-               this.write();
+               this.closeActiveSocket();
                throw e;
             }
          }
@@ -439,7 +439,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       IOException last = null;
 
       for (InetAddress address : connectionEndpoint.addresses()) {
-         this.read();
+         this.ensureCurrent();
          Socket socket = null;
 
          try {
@@ -447,9 +447,9 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             this.activeSocket = socket;
             this.socketInput = null;
             ResourcePackDownloadScope.init(this.scopeSnapshot, socket);
-            socket.setSoTimeout(timeoutOrProperty(this.sync, "sun.net.client.defaultReadTimeout"));
+            socket.setSoTimeout(timeoutOrProperty(this.scopedReadTimeout, "sun.net.client.defaultReadTimeout"));
             InetSocketAddress selected = new InetSocketAddress(address, connectionEndpoint.port());
-            socket.connect(selected, timeoutOrProperty(this.update, "sun.net.client.defaultConnectTimeout"));
+            socket.connect(selected, timeoutOrProperty(this.scopedConnectTimeout, "sun.net.client.defaultConnectTimeout"));
             this.verifyConnectedPeer(socket, selected);
             this.socketInput = new BufferedInputStream(socket.getInputStream());
             if (route != null && route.proxyType() == Type.SOCKS) {
@@ -474,7 +474,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          && inet.getAddress() != null
          && inet.getPort() == selected.getPort()
          && inet.getAddress().equals(selected.getAddress())) {
-         this.read();
+         this.ensureCurrent();
       } else {
          throw new IOException("Connected peer differs from the validated address");
       }
@@ -516,7 +516,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          ssl.startHandshake();
       }
 
-      this.read();
+      this.ensureCurrent();
       return layered;
    }
 
@@ -527,7 +527,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       if (frozen == null
          || route.init_Z()
             && frozen.port() == route.endpoint().port()
-            && frozen.host().equalsIgnoreCase(route.endpoint().load())) {
+            && frozen.host().equalsIgnoreCase(route.endpoint().host())) {
          ResourcePackDownloadScope.Inner_ConfigStore authentication = frozen == null ? ResourcePackDownloadScope.init(this.scopeSnapshot, route) : null;
          byte[] username = null;
          byte[] password = null;
@@ -557,7 +557,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                      throw new IOException("SOCKS4 resource-pack connection refused");
                   }
 
-                  this.read();
+                  this.ensureCurrent();
                   return;
                }
             }
@@ -578,7 +578,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
                if (authentication != null) {
                   username = authentication.usernameBytes();
-                  password = authentication.load();
+                  password = authentication.password();
                }
 
                if (username.length == 0 || password.length == 0) {
@@ -586,11 +586,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
                }
 
                authenticationRequest = new ScopedHttpUrlConnection.ByteBuilder(3 + username.length + password.length);
-               authenticationRequest.init(1);
-               authenticationRequest.init(username.length);
-               authenticationRequest.init(username);
-               authenticationRequest.init(password.length);
-               authenticationRequest.init(password);
+               authenticationRequest.appendByte(1);
+               authenticationRequest.appendByte(username.length);
+               authenticationRequest.appendBytes(username);
+               authenticationRequest.appendByte(password.length);
+               authenticationRequest.appendBytes(password);
                output.write(authenticationRequest.rawBytes(), 0, authenticationRequest.byteCount());
                output.flush();
                byte[] authenticationReply = readExactly(input, 2);
@@ -604,13 +604,13 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             InetAddress address = target.addresses().getFirst();
             byte[] raw = address.getAddress();
             ScopedHttpUrlConnection.ByteBuilder request = new ScopedHttpUrlConnection.ByteBuilder(7 + raw.length);
-            request.init(5);
-            request.init(1);
-            request.init(0);
-            request.init(raw.length == 4 ? 1 : 4);
-            request.init(raw);
-            request.init(target.port() >>> 8);
-            request.init(target.port() & 0xFF);
+            request.appendByte(5);
+            request.appendByte(1);
+            request.appendByte(0);
+            request.appendByte(raw.length == 4 ? 1 : 4);
+            request.appendBytes(raw);
+            request.appendByte(target.port() >>> 8);
+            request.appendByte(target.port() & 0xFF);
             output.write(request.rawBytes(), 0, request.byteCount());
             output.flush();
             byte[] reply = readExactly(input, 4);
@@ -639,7 +639,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             }
 
             readExactly(input, length + 2);
-            this.read();
+            this.ensureCurrent();
          } finally {
             if (username != null) {
                Arrays.fill(username, (byte)0);
@@ -662,18 +662,18 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       String host = target.load().indexOf(58) >= 0 ? "[" + target.load() + "]" : target.load();
       String connectAuthority = host + ":" + target.port();
       StringBuilder request = new StringBuilder("CONNECT ").append(connectAuthority).append(" HTTP/1.1\r\nHost: ").append(target.read()).append("\r\n");
-      this.init(request, "Accept", "*/*");
-      this.init(request, "Proxy-Connection", "keep-alive");
+      this.appendHeaderOrDefault(request, "Accept", "*/*");
+      this.appendHeaderOrDefault(request, "Proxy-Connection", "keep-alive");
       this.appendProxyAuthorization(request, route);
       request.append("\r\n");
       socket.getOutputStream().write(request.toString().getBytes(StandardCharsets.ISO_8859_1));
       socket.getOutputStream().flush();
-      ScopedHttpUrlConnection.ResponseHead response = this.init_RenderState_JsonUt_InputStream(this.socketInputFor(socket));
+      ScopedHttpUrlConnection.ResponseHead response = this.readResponseHead(this.socketInputFor(socket));
       if (response.code != 200) {
          throw new IOException("HTTP proxy CONNECT failed with status " + response.code);
       }
 
-      this.read();
+      this.ensureCurrent();
    }
 
    private void init(Socket socket, PackUrlValidator.ParsedTarget target, PackUrlValidator.ParsedTarget previousTarget, PackUrlValidator.PackRoute route) throws IOException {
@@ -692,7 +692,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             && !name.equalsIgnoreCase("Proxy-Authorization")
             && (!authorityChanged || !name.equalsIgnoreCase("Authorization") && !name.equalsIgnoreCase("Cookie") && !name.equalsIgnoreCase("Cookie2"))) {
             for (String value : entry.getValue()) {
-               load(request, name, value);
+               appendHeader(request, name, value);
             }
          }
       }
@@ -712,18 +712,18 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
       request.append("\r\n");
       byte[] bytes = request.toString().getBytes(StandardCharsets.ISO_8859_1);
-      this.read();
+      this.ensureCurrent();
       socket.getOutputStream().write(bytes);
       socket.getOutputStream().flush();
    }
 
-   private void init(StringBuilder request, String name, String defaultValue) {
+   private void appendHeaderOrDefault(StringBuilder request, String name, String defaultValue) {
       List<String> values = headerValues(this.requestHeaders, name);
       if (values.isEmpty()) {
-         load(request, name, defaultValue);
+         appendHeader(request, name, defaultValue);
       } else {
          for (String value : values) {
-            load(request, name, value);
+            appendHeader(request, name, value);
          }
       }
    }
@@ -731,16 +731,16 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    private void appendProxyAuthorization(StringBuilder request, PackUrlValidator.PackRoute route) {
       if (route.init_Z()) {
          for (String value : headerValues(this.requestHeaders, "Proxy-Authorization")) {
-            load(request, "Proxy-Authorization", value);
+            appendHeader(request, "Proxy-Authorization", value);
          }
       }
    }
 
-   private static void load(StringBuilder request, String name, String value) {
+   private static void appendHeader(StringBuilder request, String name, String value) {
       request.append(name).append(": ").append(value).append("\r\n");
    }
 
-   private ScopedHttpUrlConnection.ResponseHead init_RenderState_JsonUt_InputStream(InputStream input) throws IOException {
+   private ScopedHttpUrlConnection.ResponseHead readResponseHead(InputStream input) throws IOException {
       int aggregate = 0;
       int interim = 0;
 
@@ -834,8 +834,8 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private ScopedHttpUrlConnection.ResponseHead init_RenderState_JsonUt_RenderState_JsonUt(ScopedHttpUrlConnection.ResponseHead response) throws IOException {
-      List<String> transfer = response.init("Transfer-Encoding");
-      List<String> lengths = response.init("Content-Length");
+      List<String> transfer = response.header("Transfer-Encoding");
+      List<String> lengths = response.header("Content-Length");
       if (!transfer.isEmpty() && !lengths.isEmpty()) {
          throw new IOException("Ambiguous HTTP response framing");
       }
@@ -873,7 +873,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          }
       }
 
-      return response.init(contentLength, chunked, noBody);
+      return response.withBody(contentLength, chunked, noBody);
    }
 
    private InputStream openResponseStream() throws IOException {
@@ -906,7 +906,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          return null;
       }
 
-      List<String> locations = response.init("Location");
+      List<String> locations = response.header("Location");
       if (locations.isEmpty()) {
          if (response.code == 305) {
             throw new ProtocolException("HTTP 305 has no Location header");
@@ -968,13 +968,13 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       return 0;
    }
 
-   private void read() throws IOException {
+   private void ensureCurrent() throws IOException {
       if (this.disconnected || !this.stillCurrent.getAsBoolean() || !this.scopeSnapshot.isCurrent()) {
          throw new IOException("The resource-pack connection is no longer current");
       }
    }
 
-   private void write() {
+   private void closeActiveSocket() {
       Socket socket = this.activeSocket;
       this.activeSocket = null;
       this.socketInput = null;
@@ -999,7 +999,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
 
    private void releaseSocket(Socket socket, Socket expected) {
       if (this.activeSocket == expected) {
-         this.write();
+         this.closeActiveSocket();
       } else {
          this.closeSocket(socket);
       }
@@ -1050,7 +1050,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    private static void validateHeader(String name, String value) {
-      if (name == null || name.isEmpty() || !name.chars().allMatch(ScopedHttpUrlConnection::load)) {
+      if (name == null || name.isEmpty() || !name.chars().allMatch(ScopedHttpUrlConnection::isTokenChar)) {
          throw new IllegalArgumentException("Invalid HTTP header name");
       }
 
@@ -1066,7 +1066,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
    }
 
-   private static boolean load(int c) {
+   private static boolean isTokenChar(int c) {
       return c > 32 && c < 127 ? "()<>@,;:\\\"/[]?={}\t".indexOf(c) < 0 : false;
    }
 
@@ -1130,7 +1130,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
 
       @Override
-      protected int init(byte[] bytes, int offset, int length) throws EOFException, IOException {
+      protected int readBody(byte[] bytes, int offset, int length) throws EOFException, IOException {
          if (this.reachedEnd) {
             return -1;
          }
@@ -1159,7 +1159,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             }
 
             if (this.chunkRemaining == 0L) {
-               init(this.delegate);
+               skipTrailers(this.delegate);
                this.reachedEnd = true;
                return -1;
             }
@@ -1178,7 +1178,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          return read;
       }
 
-      private static void init(InputStream input) throws IOException {
+      private static void skipTrailers(InputStream input) throws IOException {
          int aggregate = 0;
 
          while (true) {
@@ -1217,14 +1217,14 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       private final Socket socket;
       protected final InputStream delegate;
       private final boolean closeOnEof;
-      private boolean load;
+      private boolean eof;
 
       private BodyStream(ScopedHttpUrlConnection owner, Socket socket, InputStream input, boolean done, boolean closeOnEof) {
          this.owner = owner;
          this.socket = socket;
          this.delegate = input;
          this.closeOnEof = closeOnEof;
-         this.load = done;
+         this.eof = done;
       }
 
       @Override
@@ -1241,14 +1241,14 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
             return 0;
          }
 
-         if (this.load) {
+         if (this.eof) {
             return -1;
          }
 
-         this.owner.read();
-         int result = this.init(bytes, offset, length);
+         this.owner.ensureCurrent();
+         int result = this.readBody(bytes, offset, length);
          if (result < 0) {
-            this.load = true;
+            this.eof = true;
             if (this.closeOnEof) {
                this.close();
             }
@@ -1257,21 +1257,21 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          return result;
       }
 
-      protected int init(byte[] bytes, int offset, int length) throws IOException {
+      protected int readBody(byte[] bytes, int offset, int length) throws IOException {
          return this.delegate.read(bytes, offset, length);
       }
 
       @Override
       public int available() throws IOException {
-         return this.load ? 0 : this.delegate.available();
+         return this.eof ? 0 : this.delegate.available();
       }
 
       @Override
       public void close() {
-         if (this.load && !this.closeOnEof) {
+         if (this.eof && !this.closeOnEof) {
             this.owner.releaseSocket(this.socket, this.socket);
          } else {
-            this.load = true;
+            this.eof = true;
             this.owner.releaseSocket(this.socket, this.socket);
          }
       }
@@ -1298,11 +1298,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          this.noBody = noBody;
       }
 
-      private List<String> init(String name) {
+      private List<String> header(String name) {
          return ScopedHttpUrlConnection.headerValues(this.headers, name);
       }
 
-      private ScopedHttpUrlConnection.ResponseHead init(long length, boolean chunked, boolean noBody) {
+      private ScopedHttpUrlConnection.ResponseHead withBody(long length, boolean chunked, boolean noBody) {
          return new ScopedHttpUrlConnection.ResponseHead(this.statusLine, this.code, this.message, this.headers, length, chunked, noBody);
       }
    }
@@ -1323,11 +1323,11 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          this.bytes = new byte[capacity];
       }
 
-      private void init(int value) {
+      private void appendByte(int value) {
          this.bytes[this.length++] = (byte)value;
       }
 
-      private void init(byte[] value) {
+      private void appendBytes(byte[] value) {
          System.arraycopy(value, 0, this.bytes, this.length, value.length);
          this.length += value.length;
       }
@@ -1355,7 +1355,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
       }
 
       @Override
-      protected int init(byte[] bytes, int offset, int length) throws EOFException, IOException {
+      protected int readBody(byte[] bytes, int offset, int length) throws EOFException, IOException {
          if (this.remaining == 0L) {
             return -1;
          }

@@ -162,7 +162,7 @@ public final class TrajectoriesModule extends Module {
                List<TrajectoriesModule.Inner_ConfigStore> flights = new ArrayList<>(3);
 
                for (ProjectileBallistics.ProjectileShot shot : ProjectileBallistics.shots(player, stack, true, true)) {
-                  ProjectileBallistics.Trajectory result = ProjectileBallistics.init(MC.level, player, shot, yaw, pitch, inherited);
+                  ProjectileBallistics.Trajectory result = ProjectileBallistics.simulate(MC.level, player, shot, yaw, pitch, inherited);
                   if (result.points().size() > 1) {
                      flights.add(
                         new TrajectoriesModule.Inner_ConfigStore(

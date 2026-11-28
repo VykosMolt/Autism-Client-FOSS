@@ -67,8 +67,8 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    long putAt_J;
 
    @Override
-   public double putAt_D() {
-      return this.cachedGrid == null ? AiPhysics.PhysicsWorld.super.putAt_D() : this.cachedGrid.fallPolicy.maxDropBlocks;
+   public double dropLimit() {
+      return this.cachedGrid == null ? AiPhysics.PhysicsWorld.super.dropLimit() : this.cachedGrid.fallPolicy.maxDropBlocks;
    }
 
    @Override
@@ -116,11 +116,11 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
 
    @Override
    public boolean putAt_Z_AABB(AABB var1) {
-      return this.putAt_Z_D(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ);
+      return this.boxCollides(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ);
    }
 
    @Override
-   public boolean putAt_Z_D(double var1, double var3, double var5, double var7, double var9, double var11) {
+   public boolean boxCollides(double var1, double var3, double var5, double var7, double var9, double var11) {
       for (AABB var16 : this.putAt_AABBArr_D(var1, var3, var5, var7, var9, var11)) {
          if (var16.intersects(var1, var3, var5, var7, var9, var11)) {
             return true;
@@ -131,18 +131,18 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public long putAt_J_AABB(AABB var1, double var2, double var4, double var6) {
-      return this.putAt(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2, var4, var6);
+   public long findSupport(AABB var1, double var2, double var4, double var6) {
+      return this.findSupportRaw(var1.minX, var1.minY, var1.minZ, var1.maxX, var1.maxY, var1.maxZ, var2, var4, var6);
    }
 
    @Override
-   public long putAt(double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, double var17) {
+   public long findSupportRaw(double var1, double var3, double var5, double var7, double var9, double var11, double var13, double var15, double var17) {
       return AiPhysics.findSupportInBoxesRaw(var1, var3, var5, var7, var9, var11, var13, var15, var17, null, this.putAt_AABBArr_D(var1, var3, var5, var7, var9, var11));
    }
 
    @Override
-   public Vec3 putAt_Vec3_Vec3(Vec3 var1, AABB var2, AABB var3) {
-      return this.putAt(
+   public Vec3 collideMotion(Vec3 var1, AABB var2, AABB var3) {
+      return this.collideMotionRaw(
          var1.x,
          var1.y,
          var1.z,
@@ -162,7 +162,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public Vec3 putAt(
+   public Vec3 collideMotionRaw(
       double var1,
       double var3,
       double var5,
@@ -232,7 +232,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       }
 
       if (var40.length >= 64) {
-         Vec3 var44 = AiPhysics.PhysicsWorld.super.putAt_Vec3_Vec3(
+         Vec3 var44 = AiPhysics.PhysicsWorld.super.collideMotion(
             new Vec3(var2, var4, var6), new AABB(var8, var10, var12, var14, var16, var18), new AABB(var20, var22, var24, var26, var28, var30)
          );
          var1[0] = var44.x;
@@ -463,7 +463,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean state(int var1, int var2, int var3) {
+   public boolean climbableAt(int var1, int var2, int var3) {
       if (this.cachedGrid == null) {
          AiPathfinder.CellInfo var9 = this.grid.probe(var1, var2, var3);
          return var9 != null && var9.climbable();
@@ -494,7 +494,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean fill_Z(int var1, int var2, int var3) {
+   public boolean waterAt(int var1, int var2, int var3) {
       this.invalidateIfMoveChanged();
       long var4 = BlockPos.asLong(var1, var2, var3);
       byte var6 = this.cachedGrid == null ? -1 : this.fill_Long2ByteOpenHashM.get(var4);
@@ -545,7 +545,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean prevEx(int var1, int var2, int var3) {
+   public boolean hazardAt(int var1, int var2, int var3) {
       this.invalidateIfMoveChanged();
       long var4 = BlockPos.asLong(var1, var2, var3);
       byte var6 = this.cachedGrid == null ? -1 : this.readEx_Long2ByteOpenHashM.get(var4);
@@ -574,7 +574,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean prev(int var1, int var2, int var3) {
+   public boolean contactHazardAt(int var1, int var2, int var3) {
       this.invalidateIfMoveChanged();
       AiPathfinder.CellInfo var4 = this.cachedGrid == null
          ? this.grid.probe(var1, var2, var3)
@@ -588,7 +588,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean readEx_Z(int var1, int var2, int var3) {
+   public boolean invisibleLightAt(int var1, int var2, int var3) {
       this.invalidateIfMoveChanged();
       AiPathfinder.CellInfo var4 = this.cachedGrid == null
          ? this.grid.probe(var1, var2, var3)
@@ -602,7 +602,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean value_Z(int var1, int var2, int var3) {
+   public boolean pressurePlateAt(int var1, int var2, int var3) {
       this.invalidateIfMoveChanged();
       AiPathfinder.CellInfo var4 = this.cachedGrid == null
          ? this.grid.probe(var1, var2, var3)
@@ -657,7 +657,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean putAt_Z() {
+   public boolean stuckBlocksTracked() {
       return this.fill_Z;
    }
 
@@ -834,7 +834,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
       long var7 = this.putAt_J;
       int var9 = this.putAt_S_I(var1, var2, var3) & '\uffff';
       var9 |= (this.putAt_B_I(var1, var2, var3) & 255) << 16;
-      if (this.state(var1, var2, var3)) {
+      if (this.climbableAt(var1, var2, var3)) {
          var9 |= 16777216;
       }
 
@@ -842,12 +842,12 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
          var9 |= 33554432;
       }
 
-      if (this.fill_Z(var1, var2, var3)) {
+      if (this.waterAt(var1, var2, var3)) {
          var9 |= 67108864;
       }
 
       var9 |= this.fill_Long2IntOpenHashMa.get(var4) << 27;
-      if (this.prevEx(var1, var2, var3)) {
+      if (this.hazardAt(var1, var2, var3)) {
          var9 |= 536870912;
       }
 
@@ -889,25 +889,25 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public double putAt_D_I(int var1, int var2, int var3) {
+   public double frictionAt(int var1, int var2, int var3) {
       byte var4 = this.putAt_B_I(var1, var2, var3);
       return var4 == 0 ? 0.6 : AiSurface.byId(var4).init_D;
    }
 
    @Override
-   public double fill_D(int var1, int var2, int var3) {
+   public double speedFactorAt(int var1, int var2, int var3) {
       byte var4 = this.putAt_B_I(var1, var2, var3);
       return var4 == 0 ? 1.0 : AiSurface.byId(var4).load_D;
    }
 
    @Override
-   public double value_D(int var1, int var2, int var3) {
+   public double jumpFactorAt(int var1, int var2, int var3) {
       byte var4 = this.putAt_B_I(var1, var2, var3);
       return var4 == 0 ? 1.0 : AiSurface.byId(var4).read_D;
    }
 
    @Override
-   public double readEx_D(int var1, int var2, int var3) {
+   public double bounceAt(int var1, int var2, int var3) {
       byte var4 = this.putAt_B_I(var1, var2, var3);
       return var4 == 0 ? 0.0 : AiSurface.byId(var4).write_D;
    }

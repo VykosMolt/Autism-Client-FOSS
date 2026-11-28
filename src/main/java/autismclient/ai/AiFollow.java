@@ -30,7 +30,7 @@ final class AiFollow {
             throw new IllegalArgumentException("entityId or type required");
          }
 
-         final Set<EntityType<?>> types = entityId >= 0 ? Set.of() : AiCombat.init(spec);
+         final Set<EntityType<?>> types = entityId >= 0 ? Set.of() : AiCombat.parseTargets(spec);
          final double distance = Math.max(1.0, Math.min(8.0, AiJson.getDouble(args, "distance", 2.5)));
          final Integer timeout = args.has("timeoutSeconds") ? Math.max(1, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 60))) : null;
          final long deadline = timeout == null ? 9223372036854775807L : System.nanoTime() + timeout.intValue() * 1000000000L;

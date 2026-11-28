@@ -25,7 +25,7 @@ public class PacketClickAction implements MacroAction {
       this.load();
    }
 
-   public void init(ContainerClickSnapshot.Inner_StreamUtil newTarget) {
+   public void setTarget(ContainerClickSnapshot.Inner_StreamUtil newTarget) {
       this.read();
       this.target = newTarget == null ? null : newTarget.withMode(this.init_bo_DataUtil());
       this.load();
@@ -35,7 +35,7 @@ public class PacketClickAction implements MacroAction {
       if (this.target != null && (this.mode == null || this.mode.isBlank())) {
          return this.target.mode() == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.target.mode();
       } else {
-         return ContainerClickSnapshot.Inner_DataUtil.init(this.mode);
+         return ContainerClickSnapshot.Inner_DataUtil.byName(this.mode);
       }
    }
 

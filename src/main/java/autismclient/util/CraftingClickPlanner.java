@@ -101,7 +101,7 @@ final class CraftingClickPlanner {
       return phases;
    }
 
-   static CraftingClickPlanner.ClickPhase init(CraftingClickPlanner.GridLayout layout, ItemStack[] slots, ItemStack carried) {
+   static CraftingClickPlanner.ClickPhase plan(CraftingClickPlanner.GridLayout layout, ItemStack[] slots, ItemStack carried) {
       CraftingClickPlanner.ClickSimulator sim = new CraftingClickPlanner.ClickSimulator(layout, null, slots, carried);
       sim.stowCarried();
       sim.clearGrid();
@@ -519,7 +519,7 @@ final class CraftingClickPlanner {
          return new CraftingClickPlanner.GridLayout(0, 2, 2, new int[]{1, 2, 3, 4}, 9, 45, 36);
       }
 
-      boolean init(int slot) {
+      boolean isInputSlot(int slot) {
          return slot >= this.inputSlots[0] && slot <= this.inputSlots[this.inputSlots.length - 1];
       }
 
@@ -860,7 +860,7 @@ final class CraftingClickPlanner {
          while (!this.slots[slot].isEmpty() && guard++ < 64) {
             ItemStack stack = this.slots[slot];
             int before = stack.getCount();
-            if (!this.layout.init(slot)) {
+            if (!this.layout.isInputSlot(slot)) {
                this.simulationInvalid = true;
                return;
             }

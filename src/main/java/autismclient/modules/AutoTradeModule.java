@@ -259,7 +259,7 @@ public final class AutoTradeModule extends Module {
 
                for (String rule : this.list("other-books")) {
                   try {
-                     desired.add(autismclient.util.villager.TradeOfferFilter.Inner_DataUtil.init(rule));
+                     desired.add(autismclient.util.villager.TradeOfferFilter.Inner_DataUtil.parse(rule));
                   } catch (IllegalArgumentException e) {
                      throw new IllegalArgumentException("Invalid book rule: " + rule.strip());
                   }

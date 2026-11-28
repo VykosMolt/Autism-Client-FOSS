@@ -506,7 +506,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       MacroActionType type = action.getType();
       if (type == null) {
-         return !ActionFieldRegistry.init(action).fields().isEmpty();
+         return !ActionFieldRegistry.schemaFor(action).fields().isEmpty();
       }
 
       boolean var10000;
@@ -523,7 +523,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             var10000 = true;
             break;
          default:
-            var10000 = !ActionFieldRegistry.init(type).fields().isEmpty();
+            var10000 = !ActionFieldRegistry.schemaForType(type).fields().isEmpty();
       }
 
       return var10000;
@@ -618,7 +618,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.onPreSave = onPreSave;
       this.onSave = onSave;
       this.actionTag = AutismMacro.serializeAction(action);
-      this.fieldSchema = ActionFieldRegistry.init(action);
+      this.fieldSchema = ActionFieldRegistry.schemaFor(action);
       this.scrollOffset = 0;
       this.rebuildInsertTokenOptions();
       this.textFields.clear();
@@ -780,7 +780,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       if (action instanceof WaitForPacketAction waitForPacketAction) {
-         this.listFields.put("packetNames", this.sanitizePacketTargets(waitForPacketAction.init()));
+         this.listFields.put("packetNames", this.sanitizePacketTargets(waitForPacketAction.targets()));
          this.toggleStates.put("listenDuringPreviousAction", waitForPacketAction.listenDuringPreviousAction);
       }
 
@@ -1380,7 +1380,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    public boolean poll_Z_2() {
-      return this.cancelPacketClickTargetCapture() ? true : this.captureSession.init(() -> this.finishCapture(false, false));
+      return this.cancelPacketClickTargetCapture() ? true : this.captureSession.end(() -> this.finishCapture(false, false));
    }
 
    public boolean push_Z_2() {
@@ -2144,7 +2144,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          entrySlotF.setY(cy);
          entrySlotF.setWidth(slotW);
          entrySlotF.render(ctx, mx, my, delta);
-         boolean capturing = this.captureSession.init("_item_entries");
+         boolean capturing = this.captureSession.isCapturing("_item_entries");
          this.renderCaptureButton(ctx, pickX, cy, addPickW, 14, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.startCapture("_item_entries"));
          this.renderActionButton(ctx, plusX, cy, addBtnW, 13, addLbl, OverlayActionButton.ButtonTone.SUCCESS, true, mx, my, () -> {
             if (this.selectedItemEntry >= 0) {
@@ -2716,7 +2716,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      this.craftEntries.removeIf(e -> fOpt.recipeKey != null && fOpt.recipeKey.equals(e.recipeKey) || fOpt.recipeKeyHash >= 0 && fOpt.recipeKeyHash == e.recipeId);
                      this.rebuildCraftAmountFields();
                   } else {
-                     autismclient.util.macro.CraftAction.CraftEntry newEntry = autismclient.util.macro.CraftAction.CraftEntry.init(fOpt, 1, false);
+                     autismclient.util.macro.CraftAction.CraftEntry newEntry = autismclient.util.macro.CraftAction.CraftEntry.create(fOpt, 1, false);
                      this.craftEntries.add(newEntry);
                      int idx = this.craftEntries.size() - 1;
                      ThemedTextInputBox f = this.newTextField(44);
@@ -2751,7 +2751,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
 
-         autismclient.util.macro.CraftAction.CraftEntry newEntry = autismclient.util.macro.CraftAction.CraftEntry.init(
+         autismclient.util.macro.CraftAction.CraftEntry newEntry = autismclient.util.macro.CraftAction.CraftEntry.create(
             this.selectedCraftOption, amount, this.tick_Z
          );
 
@@ -2920,7 +2920,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          entrySlotF.setY(cy);
          entrySlotF.setWidth(slotW);
          entrySlotF.render(ctx, mx, my, delta);
-         boolean capturing = this.captureSession.init("_drop_entries");
+         boolean capturing = this.captureSession.isCapturing("_drop_entries");
          this.renderCaptureButton(ctx, pickX, cy, addPickW, 14, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.startCapture("_drop_entries"));
          this.renderActionButton(ctx, plusX, cy, addBtnW, 13, addLbl, OverlayActionButton.ButtonTone.SUCCESS, true, mx, my, () -> {
             if (this.selectedDropEntry >= 0) {
@@ -3574,21 +3574,21 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          List<String> fieldDisplay = new ArrayList<>();
          fieldDisplay.add("Packet Only");
          fieldDisplay.addAll(fieldNames);
-         int fieldIdx = rule.load != null && !rule.load.isBlank() ? Math.max(0, fieldNames.indexOf(rule.load) + 1) : 0;
+         int fieldIdx = rule.fieldName != null && !rule.fieldName.isBlank() ? Math.max(0, fieldNames.indexOf(rule.fieldName) + 1) : 0;
          cy = this.renderLabeledDropdown(ctx, font, "Field", "_wpm_field", fieldDisplay, fieldIdx, x, cy, w, i -> {
-            rule.load = i <= 0 ? "" : fieldNames.get(i - 1);
-            if (rule.load.isBlank()) {
+            rule.fieldName = i <= 0 ? "" : fieldNames.get(i - 1);
+            if (rule.fieldName.isBlank()) {
                rule.operator = autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS;
             }
 
-            List<String> vo = autismclient.util.macro.WaitPacketMatchAction.valueOptions(packetClass, rule.load);
-            if (!vo.isEmpty() && (rule.read == null || rule.read.isBlank() || !vo.contains(rule.read))) {
-               rule.read = vo.get(0);
+            List<String> vo = autismclient.util.macro.WaitPacketMatchAction.valueOptions(packetClass, rule.fieldName);
+            if (!vo.isEmpty() && (rule.value == null || rule.value.isBlank() || !vo.contains(rule.value))) {
+               rule.value = vo.get(0);
             }
 
             this.loadPacketRuleValue();
          });
-         if (rule.load != null && !rule.load.isBlank()) {
+         if (rule.fieldName != null && !rule.fieldName.isBlank()) {
             List<String> opOpts = new ArrayList<>();
 
             for (autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil o : autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.values()) {
@@ -3608,11 +3608,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                i -> rule.operator = autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.values()[i]
             );
             if (rule.operator != autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS) {
-               List<String> valueOptions = autismclient.util.macro.WaitPacketMatchAction.valueOptions(packetClass, rule.load);
+               List<String> valueOptions = autismclient.util.macro.WaitPacketMatchAction.valueOptions(packetClass, rule.fieldName);
                if (!valueOptions.isEmpty()) {
-                  int valIdx = Math.max(0, valueOptions.indexOf(rule.read));
+                  int valIdx = Math.max(0, valueOptions.indexOf(rule.value));
                   cy = this.renderLabeledDropdown(ctx, font, "Value", "_wpm_value_dd", valueOptions, valIdx, x, cy, w, i -> {
-                     rule.read = valueOptions.get(i);
+                     rule.value = valueOptions.get(i);
                      this.loadPacketRuleValue();
                   });
                } else {
@@ -6088,7 +6088,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return null;
       }
 
-      OverlayActionButton button = autismclient.gui.macro.editor.capture.CaptureButtonRenderer.init(
+      OverlayActionButton button = autismclient.gui.macro.editor.capture.CaptureButtonRenderer.render(
          ctx, this.font, autismclient.gui.f.NetHelper.init(x, y, w, h), mode, capturing, active, mx, my, idleLabel, capturingLabel, action
       );
       this.valid_List.add(new ActionEditorOverlay.ClickRegion(button, action));
@@ -6676,7 +6676,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          slotF.setY(y + 1);
          slotF.setWidth(slotW);
          slotF.render(ctx, mx, my, delta);
-         boolean capt = this.captureSession.init("itemName");
+         boolean capt = this.captureSession.isCapturing("itemName");
          this.renderCaptureButton(ctx, pickX, y, pickW, 14, CaptureMode.ITEM_SLOT, capt, true, mx, my, () -> this.startCapture("itemName"));
       }
    }
@@ -6928,7 +6928,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (this.editingAction instanceof PacketClickAction pca) {
             ContainerClickSnapshot.Inner_DataUtil mode = this.selectedClickMode();
             pca.mode = mode.name();
-            pca.init(target.withMode(mode));
+            pca.setTarget(target.withMode(mode));
             if (this.actionTag != null) {
                this.actionTag.putString("mode", mode.name());
                this.actionTag.put("target", target.withMode(mode).toTag());
@@ -6944,9 +6944,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       FieldDef modeField = this.schemaField("mode");
       if (modeField != null && modeField.type() == FieldType.ENUM && !modeField.enumOptions().isEmpty()) {
          int idx = Math.max(0, Math.min(this.modeIndices.getOrDefault("mode", 0), modeField.enumOptions().size() - 1));
-         return ContainerClickSnapshot.Inner_DataUtil.init(modeField.enumOptions().get(idx));
+         return ContainerClickSnapshot.Inner_DataUtil.byName(modeField.enumOptions().get(idx));
       } else {
-         return ContainerClickSnapshot.Inner_DataUtil.init(this.actionTag == null ? "" : this.actionTag.getStringOr("mode", ""));
+         return ContainerClickSnapshot.Inner_DataUtil.byName(this.actionTag == null ? "" : this.actionTag.getStringOr("mode", ""));
       }
    }
 
@@ -7094,7 +7094,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                tf.setWidth(tfW);
                tf.render(ctx, mx, my, delta);
                int pkX = tfX + tfW + 2;
-               boolean capt = !packetPick && this.captureSession.init(key);
+               boolean capt = !packetPick && this.captureSession.isCapturing(key);
                String fKey = key;
                this.renderCaptureButton(
                   ctx, pkX, y + 2, pickW, 14, packetPick ? CaptureMode.PACKET_NAME : CaptureMode.ITEM_SLOT, capt, true, mx, my, () -> {
@@ -7256,7 +7256,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             }
          }
       } else if (action instanceof CaptureOutputAction output) {
-         String root = output.load();
+         String root = output.getSaveAs();
          if (action instanceof WaitForHealthAction) {
             addVariableTokens(tokens, root, "health", "max", "absorption");
          } else if (action instanceof WaitForEntityAction) {
@@ -7269,8 +7269,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                String cleanRoot = MacroVariableStore.rootKey(root);
                if (!cleanRoot.isBlank()) {
                   for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : packetMatch.effectiveRules()) {
-                     if (rule.load != null && !rule.load.isBlank()) {
-                        tokens.add("{" + cleanRoot + "." + rule.load.trim().toLowerCase(Locale.ROOT) + "}");
+                     if (rule.fieldName != null && !rule.fieldName.isBlank()) {
+                        tokens.add("{" + cleanRoot + "." + rule.fieldName.trim().toLowerCase(Locale.ROOT) + "}");
                      }
                   }
                }
@@ -7531,7 +7531,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       boolean hasSlotField = editable && this.isItemEntryListKey(key);
       int btnH = 13;
       int addY = y + 13;
-      autismclient.gui.macro.editor.capture.EditorListRowHelper.RowLayout toolbar = autismclient.gui.macro.editor.capture.EditorListRowHelper.init(
+      autismclient.gui.macro.editor.capture.EditorListRowHelper.RowLayout toolbar = autismclient.gui.macro.editor.capture.EditorListRowHelper.layout(
          autismclient.gui.f.NetHelper.init(x, addY, w, 13), hasSlotField, hasCapture
       );
       int slotW = toolbar.load() == null ? 0 : toolbar.load().update();
@@ -7593,7 +7593,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       if (hasCapture) {
          boolean isItemSlot = field.captureMode() == CaptureMode.ITEM_SLOT;
-         boolean capturing = isItemSlot && this.captureSession.init(key);
+         boolean capturing = isItemSlot && this.captureSession.isCapturing(key);
          String fKey = key;
          FieldDef fField = field;
          List<String> fLst = lst;
@@ -8080,7 +8080,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private Set<String> actionOutputVariables() {
       LinkedHashSet<String> outputs = new LinkedHashSet<>();
       if (this.editingAction instanceof CaptureOutputAction captureOutput) {
-         String root = MacroVariableStore.rootKey(captureOutput.load());
+         String root = MacroVariableStore.rootKey(captureOutput.getSaveAs());
          if (!root.isBlank()) {
             outputs.add(root);
          }
@@ -8181,7 +8181,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private void startCapture(String key) {
       if (this.ensureCaptureAvailable()) {
-         this.captureSession.init(key, this::prepareSlotCapture, () -> this.finishCapture(false, false));
+         this.captureSession.toggle(key, this::prepareSlotCapture, () -> this.finishCapture(false, false));
       }
    }
 
@@ -8297,7 +8297,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
          this.writeDraftsToActionTag();
          this.editingAction.fromTag(this.actionTag);
-         DynamicBindingManager.init(this.editingAction, this.actionTag);
+         DynamicBindingManager.capture(this.editingAction, this.actionTag);
          if (this.onSave != null) {
             this.onSave.run();
          }
@@ -8378,7 +8378,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   f.setIntegerOnlyFilter(true);
                }
 
-               String binding = DynamicBindingManager.init(action, key);
+               String binding = DynamicBindingManager.binding(action, key);
                f.setValue(binding.isBlank() ? String.valueOf(v) : binding);
                this.textFields.put(key, f);
                break;
@@ -8390,7 +8390,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   f.setFilter(sx -> sx.isEmpty() || sx.equals("-") || sx.matches("-?\\d*\\.?\\d*"));
                }
 
-               String binding = DynamicBindingManager.init(action, key);
+               String binding = DynamicBindingManager.binding(action, key);
                f.setValue(binding.isBlank() ? formatNumber(v) : binding);
                this.textFields.put(key, f);
                break;
@@ -8402,7 +8402,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                   f.setFilter(sx -> sx.isEmpty() || sx.equals("-") || sx.matches("-?\\d*"));
                }
 
-               String binding = DynamicBindingManager.init(action, key);
+               String binding = DynamicBindingManager.binding(action, key);
                f.setValue(binding.isBlank() ? String.valueOf(v) : binding);
                this.textFields.put(key, f);
                break;
@@ -8419,7 +8419,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      }
 
                      double v = this.actionTag.contains(xyzKeys[i]) ? this.actionTag.getDoubleOr(xyzKeys[i], 0.0) : 0.0;
-                     String binding = DynamicBindingManager.init(action, xyzKeys[i]);
+                     String binding = DynamicBindingManager.binding(action, xyzKeys[i]);
                      f.setValue(binding.isBlank() ? formatNumber(v) : binding);
                   } else {
                      if (!field.dynamic()) {
@@ -8427,7 +8427,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                      }
 
                      int v = this.actionTag.contains(xyzKeys[i]) ? this.actionTag.getIntOr(xyzKeys[i], 0) : 0;
-                     String binding = DynamicBindingManager.init(action, xyzKeys[i]);
+                     String binding = DynamicBindingManager.binding(action, xyzKeys[i]);
                      f.setValue(binding.isBlank() ? String.valueOf(v) : binding);
                   }
 
@@ -8449,7 +8449,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.modeIndices.put(key, Math.max(0, idx));
                if (field.dynamic()) {
                   ThemedTextInputBox bindingField = this.newTextField(80);
-                  bindingField.setValue(DynamicBindingManager.init(action, key));
+                  bindingField.setValue(DynamicBindingManager.binding(action, key));
                   this.textFields.put(key, bindingField);
                }
                break;
@@ -8525,7 +8525,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
             ToolsAction draft = new ToolsAction();
             draft.fromTag(this.actionTag);
-            DynamicBindingManager.init(draft, this.actionTag);
+            DynamicBindingManager.capture(draft, this.actionTag);
             this.fieldSchema = ToolsActionSchemaBuilder.build(draft);
             this.textFields.clear();
             this.toggleStates.clear();
@@ -8727,7 +8727,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                ListTag rules = new ListTag();
                if (this.packetMatchRules != null) {
                   for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : this.packetMatchRules) {
-                     if (rule != null && (rule.packetName != null && !rule.packetName.isBlank() || rule.load != null && !rule.load.isBlank())) {
+                     if (rule != null && (rule.packetName != null && !rule.packetName.isBlank() || rule.fieldName != null && !rule.fieldName.isBlank())) {
                         rules.add(rule.toTag());
                      }
                   }
@@ -11332,7 +11332,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
             }
          });
-         boolean capturing = this.captureSession.init("targetItems");
+         boolean capturing = this.captureSession.isCapturing("targetItems");
          this.renderCaptureButton(ctx, capBtnX, cy, pickW, 13, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.startCapture("targetItems"));
          cy += 18;
          String filter = search != null ? search.getValue().trim().toLowerCase() : "";
@@ -11461,7 +11461,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          ThemedTextInputBox fAuditSlotF = auditSlotF;
-         boolean capturing = this.captureSession.init("targetItems");
+         boolean capturing = this.captureSession.isCapturing("targetItems");
          this.renderCaptureButton(ctx, pickX, cy, pickW, 13, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.startCapture("targetItems"));
          this.renderActionButton(ctx, addBtnX, cy, addBtnW, 13, addLabel, OverlayActionButton.ButtonTone.SUCCESS, true, mx, my, () -> {
             if (search != null) {
@@ -11567,7 +11567,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (count == 0) {
          summary = "Empty list = pays EVERYONE (tab + probed hidden).";
       } else if (divide) {
-         long[] dist = PayAction.init(amount, count);
+         long[] dist = PayAction.split(amount, count);
          String per = dist[0] == dist[count - 1] ? PayAction.formatAmount(dist[0]) : PayAction.formatAmount(dist[count - 1]) + "-" + PayAction.formatAmount(dist[0]);
          summary = "Splits " + PayAction.formatAmount(amount) + " among " + count + " (" + per + " each).";
       } else {
@@ -11839,7 +11839,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          vp.setScrollOffset(0);
       }
 
-      for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.init(MC)) {
+      for (TabPlayerListParser.ParsedPlayer player : TabPlayerListParser.parse(MC)) {
          if (player != null && player.name() != null && !player.name().isBlank() && !this.containsIgnoreCase(this.playerNameOptions, player.name())) {
             this.playerNameOptions.add(player.name());
             if (player.hasPrefix()) {
@@ -11852,7 +11852,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       BackgroundTaskExecutor.submit("pay-scan-probe", () -> {
-         List<String> probed = OnlinePlayerCollector.init(MC, true);
+         List<String> probed = OnlinePlayerCollector.collect(MC, true);
          if (!probed.isEmpty()) {
             MC.execute(() -> {
                boolean changed = false;
@@ -12117,7 +12117,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          wscSlotF.setWidth(slotW);
          wscAddF.render(ctx, mx, my, delta);
          wscSlotF.render(ctx, mx, my, delta);
-         boolean capturing = this.captureSession.init("_wsc_entries");
+         boolean capturing = this.captureSession.isCapturing("_wsc_entries");
          this.renderCaptureButton(ctx, pickX, cy, pickW, 13, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.startCapture("_wsc_entries"));
       }
 
@@ -12235,7 +12235,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          slotField.setWidth(slotW);
          slotField.render(ctx, mx, my, delta);
          int pickX = slotX + slotW + gap;
-         boolean capturing = this.captureSession.init("itemName");
+         boolean capturing = this.captureSession.isCapturing("itemName");
          this.renderCaptureButton(ctx, pickX, y + 2, pickW, 14, CaptureMode.ITEM_SLOT, capturing, true, mx, my, () -> this.startCapture("itemName"));
          return y + 14 + 2;
       } else {
@@ -12542,7 +12542,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.isFieldApplicable(this.fieldByKey("slot"))) {
          int[] slotBtns = this.layoutButtons(x, w, false, "Selected", "Pick Slot", "Slot 0");
          this.renderSecondaryButton(ctx, slotBtns[0], cy, slotBtns[1], 13, "Selected", mx, my, this::useSelectedHotbarSlot);
-         boolean capturing = this.captureSession.init("wait_inventory_slot");
+         boolean capturing = this.captureSession.isCapturing("wait_inventory_slot");
          this.renderCaptureButton(
             ctx, slotBtns[2], cy, slotBtns[3], 13, CaptureMode.ITEM_SLOT, capturing, true, mx, my, "Pick Slot", "Done", this::startWaitInventorySlotCapture
          );
@@ -12716,7 +12716,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private List<String> tabPlayerNames() {
       long now = System.currentTimeMillis();
       if (this.cachedTabPlayerNames == null || now - this.tabPlayerNamesFetchedAt > 500L) {
-         List<TabPlayerListParser.ParsedPlayer> players = TabPlayerListParser.init(MC);
+         List<TabPlayerListParser.ParsedPlayer> players = TabPlayerListParser.parse(MC);
          List<String> names = new ArrayList<>(players.size());
 
          for (TabPlayerListParser.ParsedPlayer player : players) {
@@ -14879,9 +14879,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
       };
       if (c2s) {
-         this.packetSelector.load(add);
+         this.packetSelector.openC2s(add);
       } else {
-         this.packetSelector.read(add);
+         this.packetSelector.openS2c(add);
       }
    }
 
@@ -14895,11 +14895,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       };
       String direction = this.enumValue("direction");
       if ("S2C".equals(direction)) {
-         this.packetSelector.read(set);
+         this.packetSelector.openS2c(set);
       } else if ("ANY".equals(direction)) {
          this.packetSelector.openSinglePicker(set);
       } else {
-         this.packetSelector.load(set);
+         this.packetSelector.openC2s(set);
       }
    }
 
@@ -14907,7 +14907,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.packetMatchRules != null && this.selectedPacketRule >= 0 && this.selectedPacketRule < this.packetMatchRules.size()) {
          ThemedTextInputBox valueField = this.textFields.get("_wpm_value");
          if (valueField != null) {
-            this.packetMatchRules.get(this.selectedPacketRule).read = valueField.getValue();
+            this.packetMatchRules.get(this.selectedPacketRule).value = valueField.getValue();
          }
       }
    }
@@ -14916,7 +14916,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       ThemedTextInputBox valueField = this.textFields.get("_wpm_value");
       if (valueField != null) {
          if (this.packetMatchRules != null && this.selectedPacketRule >= 0 && this.selectedPacketRule < this.packetMatchRules.size()) {
-            valueField.setValue(this.packetMatchRules.get(this.selectedPacketRule).read == null ? "" : this.packetMatchRules.get(this.selectedPacketRule).read);
+            valueField.setValue(this.packetMatchRules.get(this.selectedPacketRule).value == null ? "" : this.packetMatchRules.get(this.selectedPacketRule).value);
          } else {
             valueField.setValue("");
          }
@@ -14924,7 +14924,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String ruleFilterLabel(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
-      return rule != null && rule.load != null && !rule.load.isBlank() ? rule.load : "Packet Only";
+      return rule != null && rule.fieldName != null && !rule.fieldName.isBlank() ? rule.fieldName : "Packet Only";
    }
 
    private Component ruleLabel(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
@@ -14933,8 +14933,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
 
       String label = rule.direction + " " + (rule.packetName != null && !rule.packetName.isBlank() ? PacketNameResolver.friendlyName(rule.packetName) : "Any Packet");
-      if (rule.load != null && !rule.load.isBlank()) {
-         label = label + " / " + rule.load;
+      if (rule.fieldName != null && !rule.fieldName.isBlank()) {
+         label = label + " / " + rule.fieldName;
       }
 
       return Component.literal(label);
@@ -14945,12 +14945,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          Class<? extends Packet<?>> packetClass = this.rulePacketClass(rule);
          List<String> fields = new ArrayList<>(autismclient.util.macro.WaitPacketMatchAction.fieldNames(packetClass));
          fields.add(0, "");
-         int idx = fields.indexOf(rule.load == null ? "" : rule.load);
-         rule.load = fields.get((idx + 1 + fields.size()) % fields.size());
-         rule.operator = rule.load.isBlank() ? autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS : rule.operator;
-         List<String> options = autismclient.util.macro.WaitPacketMatchAction.valueOptions(packetClass, rule.load);
-         if (!options.isEmpty() && (rule.read == null || rule.read.isBlank() || !options.contains(rule.read))) {
-            rule.read = options.get(0);
+         int idx = fields.indexOf(rule.fieldName == null ? "" : rule.fieldName);
+         rule.fieldName = fields.get((idx + 1 + fields.size()) % fields.size());
+         rule.operator = rule.fieldName.isBlank() ? autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS : rule.operator;
+         List<String> options = autismclient.util.macro.WaitPacketMatchAction.valueOptions(packetClass, rule.fieldName);
+         if (!options.isEmpty() && (rule.value == null || rule.value.isBlank() || !options.contains(rule.value))) {
+            rule.value = options.get(0);
          }
 
          this.loadPacketRuleValue();
@@ -14989,10 +14989,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String normalizeWaitPacketTarget(String target) {
-      String normalized = WaitForPacketAction.read(target);
+      String normalized = WaitForPacketAction.normalizeTarget(target);
       if (normalized.isEmpty()) {
          return "";
-      } else if (!WaitForPacketAction.init(normalized).isEmpty()) {
+      } else if (!WaitForPacketAction.directionOf(normalized).isEmpty()) {
          return normalized;
       } else {
          Class<? extends Packet<?>> packetClass = this.resolveTargetClass("", normalized);
@@ -15012,7 +15012,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       for (String target : this.waitPacketNames()) {
          String normalized = this.normalizeWaitPacketTarget(target);
-         if (!normalized.isEmpty() && direction.equalsIgnoreCase(WaitForPacketAction.init(normalized))) {
+         if (!normalized.isEmpty() && direction.equalsIgnoreCase(WaitForPacketAction.directionOf(normalized))) {
             filtered.add(normalized);
          }
       }
@@ -15021,11 +15021,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    }
 
    private String waitPacketDisplayName(String target) {
-      return WaitForPacketAction.write(target);
+      return WaitForPacketAction.describe(target);
    }
 
    private void clearPacketTargets(String direction) {
-      this.waitPacketNames().removeIf(target -> direction.equalsIgnoreCase(WaitForPacketAction.init(this.normalizeWaitPacketTarget(target))));
+      this.waitPacketNames().removeIf(target -> direction.equalsIgnoreCase(WaitForPacketAction.directionOf(this.normalizeWaitPacketTarget(target))));
       ScrollableListView vpC2s = this.entryViewports.get("wait_packet_c2s");
       if (vpC2s != null) {
          vpC2s.setScrollOffset(0);
@@ -15129,11 +15129,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          name = PacketNameResolver.nameOfClass(packetClass);
       }
 
-      return WaitForPacketAction.init(direction, name);
+      return WaitForPacketAction.target(direction, name);
    }
 
    private Class<? extends Packet<?>> resolveTargetClass(String direction, String target) {
-      String packetName = WaitForPacketAction.load(target);
+      String packetName = WaitForPacketAction.packetOf(target);
       if (packetName.isBlank()) {
          return null;
       }
@@ -15742,7 +15742,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                                  int idx = Math.max(0, Math.min(this.selectedPacketRule, this.packetMatchRules.size() - 1));
                                  autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.packetMatchRules.get(idx);
                                  h += 32;
-                                 if (rule.load != null && !rule.load.isBlank()) {
+                                 if (rule.fieldName != null && !rule.fieldName.isBlank()) {
                                     h += 16;
                                     if (rule.operator != autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS) {
                                        h += 16;
@@ -15860,8 +15860,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
    private int captureButtonWidth(CaptureMode mode, String idleLabel, String capturingLabel) {
       return Math.max(
-         this.buttonWidth(autismclient.gui.macro.editor.capture.CaptureButtonRenderer.init(mode, false, idleLabel, capturingLabel)),
-         this.buttonWidth(autismclient.gui.macro.editor.capture.CaptureButtonRenderer.init(mode, true, idleLabel, capturingLabel))
+         this.buttonWidth(autismclient.gui.macro.editor.capture.CaptureButtonRenderer.label(mode, false, idleLabel, capturingLabel)),
+         this.buttonWidth(autismclient.gui.macro.editor.capture.CaptureButtonRenderer.label(mode, true, idleLabel, capturingLabel))
       );
    }
 
@@ -15998,9 +15998,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if ("ANY".equals(direction)) {
                this.packetSelector.openSinglePicker(add);
             } else if ("S2C".equals(direction)) {
-               this.packetSelector.read(add);
+               this.packetSelector.openS2c(add);
             } else {
-               this.packetSelector.load(add);
+               this.packetSelector.openC2s(add);
             }
          } else {
             BiConsumer<Class<? extends Packet<?>>, Boolean> toggle = (packetClass, selected) -> {

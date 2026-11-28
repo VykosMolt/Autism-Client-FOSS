@@ -131,7 +131,7 @@ public class PayAction implements MacroAction {
       return this.init() * Math.max(0, this.players.size());
    }
 
-   public static long[] init(long total, int count) {
+   public static long[] split(long total, int count) {
       if (count <= 0) {
          return new long[0];
       }

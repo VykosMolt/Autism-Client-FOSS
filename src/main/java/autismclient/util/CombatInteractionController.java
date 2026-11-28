@@ -69,7 +69,7 @@ public final class CombatInteractionController {
       return aura != null && aura.isEnabled() && "kill-aura".equals(SilentRotationManager.getActiveOwnerId()) && SilentRotationManager.hasActiveRotation();
    }
 
-   public static boolean load() {
+   public static boolean isBlockMode() {
       Module aura = autismclient.modules.al.init_Module_Str("kill-aura");
       return aura != null && aura.isEnabled() && "Block".equals(aura.value("interactions"));
    }
@@ -114,7 +114,7 @@ public final class CombatInteractionController {
    public static boolean write() {
       Minecraft mc = Minecraft.getInstance();
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (open() && canInteract(mc) && !load()) {
+      if (open() && canInteract(mc) && !isBlockMode()) {
          if (trackedPlayer != null && (trackedPlayer != mc.player || trackedConnection != mc.getConnection() || trackedLevel != mc.level)) {
             reset();
          }
@@ -254,7 +254,7 @@ public final class CombatInteractionController {
          && open();
    }
 
-   public static boolean sync() {
+   public static boolean isActive() {
       return open();
    }
 
@@ -285,7 +285,7 @@ public final class CombatInteractionController {
             if (close() && update() && !flush && !update_Z(mc)) {
                update_V(mc);
             } else if (!update()) {
-               if (!load() && (key.autism$clickCount() > 0 || isUseKeyPhysicallyDown(mc))) {
+               if (!isBlockMode() && (key.autism$clickCount() > 0 || isUseKeyPhysicallyDown(mc))) {
                   trackedPlayer = mc.player;
                   trackedConnection = mc.getConnection();
                   trackedLevel = mc.level;
@@ -347,7 +347,7 @@ public final class CombatInteractionController {
 
    public static CombatInteractionController.Inner_DataUtil frame(Minecraft mc) {
       int tick = AutismSessionState.getInstance().getClientTick();
-      if (!load() && !sync_Z && canInteract(mc) && update_I != tick) {
+      if (!isBlockMode() && !sync_Z && canInteract(mc) && update_I != tick) {
          if (!close() || update_Z(mc) && !init(tick)) {
             if (update() && poll() && isSameHeldState(mc) && init_Z(mc, silentRotation)) {
                HitResult hit = raycastAt(mc, silentRotation);

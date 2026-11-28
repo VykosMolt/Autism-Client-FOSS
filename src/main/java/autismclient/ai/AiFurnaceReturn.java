@@ -35,8 +35,8 @@ final class AiFurnaceReturn implements AiOperation {
    ) {
       return new autismclient.ai.engine.AiPathfinder.PathGoal() {
          @Override
-         public autismclient.ai.engine.AiPathfinder.PathGoal init(autismclient.ai.engine.AiPathfinder.GridView grid) {
-            return AiFurnaceReturn.returnGoal(interaction.init(grid), station, origin, repairs);
+         public autismclient.ai.engine.AiPathfinder.PathGoal bindToGrid(autismclient.ai.engine.AiPathfinder.GridView grid) {
+            return AiFurnaceReturn.returnGoal(interaction.bindToGrid(grid), station, origin, repairs);
          }
 
          @Override
@@ -65,12 +65,12 @@ final class AiFurnaceReturn implements AiOperation {
          }
 
          @Override
-         public boolean load(BlockPos p) {
-            return repairs && this.allowsCell(p) && !p.equals(station) && !p.equals(station.below()) && interaction.load(p);
+         public boolean mayBreak(BlockPos p) {
+            return repairs && this.allowsCell(p) && !p.equals(station) && !p.equals(station.below()) && interaction.mayBreak(p);
          }
 
          @Override
-         public boolean read(BlockPos p) {
+         public boolean mayPlace(BlockPos p) {
             return repairs && this.allowsCell(p) && !p.equals(station) && !p.equals(station.above());
          }
 

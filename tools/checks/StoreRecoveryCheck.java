@@ -96,7 +96,7 @@ public class StoreRecoveryCheck {
       s1.ensureLoaded();
       check(s1.getItems().equals(Arrays.asList("a", "b")), "corrupt primary + good bak loads bak, got " + s1.getItems());
       check(corrupt(dir1).length == 1 && Arrays.equals(Files.readAllBytes(corrupt(dir1)[0].toPath()), garbage), "corrupt primary kept aside");
-      DebouncedPersistenceScheduler.init(5000L);
+      DebouncedPersistenceScheduler.flushAll(5000L);
       check(f1.exists(), "bak recovery writes primary back to disk");
       Store s1Second = new Store(f1);
       s1Second.ensureLoaded();
@@ -108,7 +108,7 @@ public class StoreRecoveryCheck {
       Store sMissing = new Store(fMissing);
       sMissing.ensureLoaded();
       check(sMissing.getItems().equals(Arrays.asList("m1", "m2")), "missing primary + good bak loads bak, got " + sMissing.getItems());
-      DebouncedPersistenceScheduler.init(5000L);
+      DebouncedPersistenceScheduler.flushAll(5000L);
       check(fMissing.exists(), "missing primary recovery recreates primary file");
 
       File dir2 = Files.createTempDirectory("dfcheck").toFile();
@@ -121,7 +121,7 @@ public class StoreRecoveryCheck {
       check(s2.size() == 0, "both corrupt loads empty");
       s2.items.add("new");
       s2.save();
-      DebouncedPersistenceScheduler.init(5000L);
+      DebouncedPersistenceScheduler.flushAll(5000L);
       check(corrupt(dir2).length == 1 && Arrays.equals(Files.readAllBytes(corrupt(dir2)[0].toPath()), garbage), "save kept the corrupt original");
       check(Arrays.equals(Files.readAllBytes(bak2.toPath()), garbage), "save did not clobber the bak");
       Store again = new Store(f2);
@@ -136,11 +136,11 @@ public class StoreRecoveryCheck {
       s3.ensureLoaded();
       Files.write(f3.toPath(), garbage);
       s3.save();
-      DebouncedPersistenceScheduler.init(5000L);
+      DebouncedPersistenceScheduler.flushAll(5000L);
       check(!bak3.exists(), "unparseable primary is not copied to bak");
       write(f3, "x");
       s3.save();
-      DebouncedPersistenceScheduler.init(5000L);
+      DebouncedPersistenceScheduler.flushAll(5000L);
       Store b3 = new Store(bak3);
       b3.ensureLoaded();
       check(b3.getItems().equals(Arrays.asList("x")), "parseable primary is copied to bak");

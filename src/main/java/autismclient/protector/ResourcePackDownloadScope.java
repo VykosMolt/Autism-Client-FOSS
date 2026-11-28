@@ -143,7 +143,7 @@ public final class ResourcePackDownloadScope {
                && authentication.active
                && authentication.snapshot == snapshot
                && authentication.port == route.endpoint().port()
-               && authentication.host.equalsIgnoreCase(route.endpoint().load())
+               && authentication.host.equalsIgnoreCase(route.endpoint().host())
             ? authentication
             : null;
       } else {
@@ -191,11 +191,11 @@ public final class ResourcePackDownloadScope {
       return CURRENT.get();
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper load() {
+   public static ResourcePackDownloadScope.Inner_BufferHelper workerScope() {
       return load_ThreadLocal.get();
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper init(BatchConfig config) {
+   public static ResourcePackDownloadScope.Inner_BufferHelper register(BatchConfig config) {
       synchronized (LOCK) {
          ResourcePackDownloadScope.Inner_StreamUtil token = tokensByConfig.get(config);
          return token != null && token.active ? token.snapshot : null;
@@ -300,7 +300,7 @@ public final class ResourcePackDownloadScope {
       snapshot.load(socket);
    }
 
-   public static Path init(Path cacheDir, ResourcePackDownloadScope.Inner_BufferHelper snapshot, UUID packId, HashFunction hashFunction) throws IOException {
+   public static Path cachePath(Path cacheDir, ResourcePackDownloadScope.Inner_BufferHelper snapshot, UUID packId, HashFunction hashFunction) throws IOException {
       Objects.requireNonNull(cacheDir, "cacheDir");
       Objects.requireNonNull(snapshot, "snapshot");
       Objects.requireNonNull(packId, "packId");
@@ -328,7 +328,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   public static Path init(Path cacheDir, Path candidate) throws IOException {
+   public static Path confine(Path cacheDir, Path candidate) throws IOException {
       Path base = cacheDir.normalize();
       Path normalized = candidate.normalize();
       if (normalized.startsWith(base) && !normalized.equals(base)) {
@@ -338,7 +338,7 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   public static ReentrantLock init(Path directory) {
+   public static ReentrantLock lockFor(Path directory) {
       String key = directory.toAbsolutePath().normalize().toString();
       int stripe = (key.hashCode() & 2147483647) % 256;
       return STRIPED_LOCKS[stripe];
@@ -493,7 +493,7 @@ public final class ResourcePackDownloadScope {
          return this.serverType;
       }
 
-      public boolean init_Z() {
+      public boolean isLocal() {
          return this.integrated || this.multiLoopbackFixture;
       }
 
@@ -603,7 +603,7 @@ public final class ResourcePackDownloadScope {
          return Arrays.copyOf(this.username, this.username.length);
       }
 
-      byte[] load() {
+      byte[] password() {
          return Arrays.copyOf(this.load, this.load.length);
       }
 

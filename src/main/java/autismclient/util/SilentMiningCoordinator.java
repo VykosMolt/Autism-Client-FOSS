@@ -49,7 +49,7 @@ public final class SilentMiningCoordinator {
       return "bed-nuker".equals(requester) && current != null && target != null && RotationMath.angularDistance(current, target) <= 0.05F;
    }
 
-   public static boolean init(String requester, RotationMath.Rotation current, RotationMath.Rotation target, RotationStreamPlanner.StreamState stream) {
+   public static boolean allowRotation(String requester, RotationMath.Rotation current, RotationMath.Rotation target, RotationStreamPlanner.StreamState stream) {
       if (!init(requester, current, target)) {
          return false;
       }

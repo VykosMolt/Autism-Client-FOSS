@@ -44,10 +44,10 @@ final class PrintTools {
    }
 
    static PrintTools.Inner_StreamUtil bestTool(PrintEnv env, BlockState state) {
-      return init(env, state, null);
+      return bestTool(env, state, null);
    }
 
-   static PrintTools.Inner_StreamUtil init(PrintEnv env, BlockState state, Item wantedDrop) {
+   static PrintTools.Inner_StreamUtil bestTool(PrintEnv env, BlockState state, Item wantedDrop) {
       PrintTools.Inner_StreamUtil best = null;
 
       for (int slot = 0; slot <= 40; slot++) {
@@ -224,12 +224,12 @@ final class PrintTools {
                      boolean cheap = init.contains(item);
                      if (cheap || schematicItems.contains(item)) {
                         int needed = open.applyAsInt(item);
-                        PrintTools.Inner_StreamUtil recovery = init(env, state, item);
+                        PrintTools.Inner_StreamUtil recovery = bestTool(env, state, item);
                         boolean sameItem = recovery != null;
                         if (!init(item, state, sameItem)) {
                            int held = stock.applyAsInt(item);
                            if (needed <= 0 || sameItem || held > needed) {
-                              PrintTools.Inner_StreamUtil fastest = init(env, state, null);
+                              PrintTools.Inner_StreamUtil fastest = bestTool(env, state, null);
                               float speed = fastest == null ? 1.0F : fastest.speed();
                               float hardness = state.getDestroySpeed(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
                               if (!(hardness < 0.0F)) {

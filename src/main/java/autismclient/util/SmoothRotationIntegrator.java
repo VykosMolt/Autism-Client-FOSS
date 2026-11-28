@@ -288,7 +288,7 @@ public final class SmoothRotationIntegrator {
    }
 
    public record CountStep(long init, long load) {
-      public RotationMath.Rotation init(double degreesPerCount) {
+      public RotationMath.Rotation step(double degreesPerCount) {
          return Double.isFinite(degreesPerCount) && !(degreesPerCount <= 0.0)
             ? new RotationMath.Rotation((float)(this.init * degreesPerCount), (float)(this.load * degreesPerCount))
             : new RotationMath.Rotation(0.0F, 0.0F);

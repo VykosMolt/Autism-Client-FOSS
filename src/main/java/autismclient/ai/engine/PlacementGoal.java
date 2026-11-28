@@ -92,11 +92,11 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    @Override
-   public AiPathfinder.PathGoal init(AiPathfinder.GridView grid) {
+   public AiPathfinder.PathGoal bindToGrid(AiPathfinder.GridView grid) {
       ArrayList<PlacementGoal> bound = new ArrayList<>(this.alternatives.size());
 
       for (PlacementGoal alternative : this.alternatives) {
-         bound.add((PlacementGoal)alternative.init(grid));
+         bound.add((PlacementGoal)alternative.bindToGrid(grid));
       }
 
       PlacementGoal result = new PlacementGoal(
@@ -218,7 +218,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    @Override
-   public boolean load(BlockPos cell) {
+   public boolean mayBreak(BlockPos cell) {
       if (!this.allowsEdits) {
          return false;
       } else {
@@ -247,7 +247,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
    }
 
    @Override
-   public boolean read(BlockPos cell) {
+   public boolean mayPlace(BlockPos cell) {
       if (!this.allowsEdits) {
          return false;
       }
@@ -560,7 +560,7 @@ public final class PlacementGoal implements AiPathfinder.PathGoal {
 
    public static boolean canPlace(Minecraft mc, BlockPos target, Item item, PlacementGoal.PlaceConstraint constraint) {
       return !AutismLiteVariant.enabled()
-         ? AiPlacementContext.init(item, constraint, target, mc.level::getBlockState)
+         ? AiPlacementContext.satisfies(item, constraint, target, mc.level::getBlockState)
          : constraint != null && constraint.crouchForLook();
    }
 

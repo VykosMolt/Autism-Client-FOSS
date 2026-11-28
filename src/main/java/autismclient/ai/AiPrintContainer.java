@@ -162,7 +162,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public void init(Supplier<String> guard) {
+   public void setGuard(Supplier<String> guard) {
       this.guard = Objects.requireNonNull(guard);
    }
 
@@ -580,7 +580,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
 
             if (!(this.mc.gui.screen() instanceof AbstractContainerScreen<?> screen)
                || screen.getMenu() != this.mc.player.containerMenu
-               || (this.slotLayout = AiSavedContents.init(this.state, screen.getMenu())) == null) {
+               || (this.slotLayout = AiSavedContents.slotMapping(this.state, screen.getMenu())) == null) {
                return this.setStatus(
                   autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN, "A different screen opened during the saved contents action"
                );
@@ -598,7 +598,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                      if (actor != null
                         && actor.level().dimension().equals(dimension)
                         && actor.containerMenu.containerId == id
-                        && AiSavedContents.init(this.state, actor.containerMenu) != null) {
+                        && AiSavedContents.slotMapping(this.state, actor.containerMenu) != null) {
                         BlockEntity entity = actor.level().getBlockEntity(this.pos);
                         Container attached = actor.containerMenu.getSlot(this.slotLayout.offset()).container;
                         return entity != null
@@ -678,11 +678,11 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
                   );
                }
 
-               AiSavedContents.FillPlan plan = AiSavedContents.init(
+               AiSavedContents.FillPlan plan = AiSavedContents.fillPlan(
                   this.menu, this.mc.player.getInventory(), this.mc.player, this.savedSlots, this.slotLayout
                );
                if (this.poll && !this.removed.isEmpty() && this.menu.getCarried().isEmpty()) {
-                  AiSavedContents.FillPlan recovery = AiSavedContents.init(
+                  AiSavedContents.FillPlan recovery = AiSavedContents.fillPlan(
                      this.menu,
                      this.mc.player.getInventory(),
                      this.mc.player,

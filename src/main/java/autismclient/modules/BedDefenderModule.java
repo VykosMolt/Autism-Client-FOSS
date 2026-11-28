@@ -397,7 +397,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private boolean open_Z() {
-      return this.init_aa_JsonUtil.init(AutismSessionState.getInstance().getClientTick(), this::holdsWeapon);
+      return this.init_aa_JsonUtil.valueFor(AutismSessionState.getInstance().getClientTick(), this::holdsWeapon);
    }
 
    private boolean holdsWeapon() {
@@ -517,7 +517,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                      BlockHitResult hit = MC.level
                         .clip(new ClipContext(crouchEye, end, net.minecraft.world.level.ClipContext.Block.OUTLINE, Fluid.NONE, MC.player));
                      if (hit.getType() == Type.BLOCK
-                        && request.hitValidator().init(MC.level.getBlockState(hit.getBlockPos()), hit.getBlockPos(), true)
+                        && request.hitValidator().accepts(MC.level.getBlockState(hit.getBlockPos()), hit.getBlockPos(), true)
                         && request.hitValidator().lands(hit, victim)) {
                         stillVisible = true;
                         break;
@@ -535,7 +535,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             }
          }
 
-         List<BlockPos> ordered = BlockPlacementOrderSolver.init(eye, this.planCells, rays, postureBefore);
+         List<BlockPos> ordered = BlockPlacementOrderSolver.order(eye, this.planCells, rays, postureBefore);
          this.planCells.clear();
          this.planCells.addAll(ordered);
          this.close_V_2();
@@ -1078,7 +1078,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private DyeColor resolveTeamColor() {
-      return TeamDyeColorResolver.init();
+      return TeamDyeColorResolver.ownTeamColor();
    }
 
    private BlockPos scanForBed(Vec3 eye, double radius, boolean skipCompleted) {
@@ -1496,7 +1496,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                      if (hit != null) {
                         BlockState state = MC.level.getBlockState(hit.getBlockPos());
                         boolean sneak = request.isSneaking() || option.requiresSneak() && request.allowAutoSneak();
-                        if (request.hitValidator().init(state, hit.getBlockPos(), sneak) && request.hitValidator().lands(hit, option.targetCell())) {
+                        if (request.hitValidator().accepts(state, hit.getBlockPos(), sneak) && request.hitValidator().lands(hit, option.targetCell())) {
                            autismclient.util.BlockPlacementPlanner.FaceBounds landing = autismclient.util.BlockPlacementPlanner.findHitFaceBounds(state, hit.getBlockPos(), hit);
                            if (landing != null) {
                               autismclient.util.BlockPlacementPlanner.SupportCandidate actual = new autismclient.util.BlockPlacementPlanner.SupportCandidate(

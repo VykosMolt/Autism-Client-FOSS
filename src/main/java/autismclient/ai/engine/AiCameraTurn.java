@@ -12,7 +12,7 @@ public final class AiCameraTurn {
    private AiCameraTurn() {
    }
 
-   public static void putAt(LocalPlayer var0, float var1, float var2) {
+   public static void recordTurn(LocalPlayer var0, float var1, float var2) {
       if (var0 != null) {
          float var3 = var0.getYRot();
          float var4 = var0.getXRot();
@@ -35,7 +35,7 @@ public final class AiCameraTurn {
       }
    }
 
-   public static RotationMath.Rotation putAt(LocalPlayer var0) {
+   public static RotationMath.Rotation cameraRotation(LocalPlayer var0) {
       AiCameraTurn.Inner_CacheHelper var1 = putAt_SyncPool_CacheHelp;
       if (var1 == null) {
          return null;

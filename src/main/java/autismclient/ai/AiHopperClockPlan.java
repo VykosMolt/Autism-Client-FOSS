@@ -118,8 +118,8 @@ final class AiHopperClockPlan {
          && world.getBlockState(second).getValue(BlockStateProperties.FACING) == dir.getOpposite()
          && world.getBlockState(second).getValue(PistonHeadBlock.TYPE) == PistonType.STICKY
          && !world.getBlockState(second).getValue(PistonHeadBlock.SHORT)
-         && init(world.getBlockState(a.above()))
-         && init(world.getBlockState(b.above()))) {
+         && isComposter(world.getBlockState(a.above()))
+         && isComposter(world.getBlockState(b.above()))) {
          for (BlockPos hopper : List.of(a, b)) {
             for (Direction face : Direction.values()) {
                BlockPos neighbor = hopper.relative(face);
@@ -152,7 +152,7 @@ final class AiHopperClockPlan {
                sources.add(cb);
 
                while (!sources.isEmpty()) {
-                  if (visited.size() >= 16 || world.load.size() > 2048) {
+                  if (visited.size() >= 16 || world.cache.size() > 2048) {
                      return null;
                   }
 
@@ -204,9 +204,9 @@ final class AiHopperClockPlan {
                   }
                }
 
-               return world.load.size() > 2048
+               return world.cache.size() > 2048
                   ? null
-                  : new autismclient.ai.print.PrintClockSpec(a, b, pa, pb, first, second, lever, dir, material, total, slots, world.load, outputs);
+                  : new autismclient.ai.print.PrintClockSpec(a, b, pa, pb, first, second, lever, dir, material, total, slots, world.cache, outputs);
             } else {
                return null;
             }
@@ -218,7 +218,7 @@ final class AiHopperClockPlan {
       }
    }
 
-   private static boolean init(BlockState s) {
+   private static boolean isComposter(BlockState s) {
       return s.is(Blocks.COMPOSTER) && s.getValue(ComposterBlock.LEVEL) == 0;
    }
 
@@ -231,16 +231,16 @@ final class AiHopperClockPlan {
    }
 
    private static final class SnapshotWorld implements BlockGetter {
-      final Map<BlockPos, BlockState> init;
-      final Map<BlockPos, BlockState> load = new HashMap<>();
+      final Map<BlockPos, BlockState> source;
+      final Map<BlockPos, BlockState> cache = new HashMap<>();
 
       SnapshotWorld(Map<BlockPos, BlockState> source) {
-         this.init = source;
+         this.source = source;
       }
 
       @Override
       public BlockState getBlockState(BlockPos p) {
-         return this.load.computeIfAbsent(p.immutable(), at -> this.init.getOrDefault(at, Blocks.AIR.defaultBlockState()));
+         return this.cache.computeIfAbsent(p.immutable(), at -> this.source.getOrDefault(at, Blocks.AIR.defaultBlockState()));
       }
 
       @Override

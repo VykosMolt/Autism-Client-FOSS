@@ -111,7 +111,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.windowNode.body().addChild(this.searchInput);
       this.listSpacer.withHeight(this.listHeightFor(this.filteredPackets.size()));
       this.windowNode.body().addChild(this.listSpacer);
-      this.countLabel.init(this.multiSelectMode ? this.filteredPackets.size() + " packets | Selected " + this.selectedPackets.size() : this.filteredPackets.size() + " packets");
+      this.countLabel.text(this.multiSelectMode ? this.filteredPackets.size() + " packets | Selected " + this.selectedPackets.size() : this.filteredPackets.size() + " packets");
       this.windowNode.body().addChild(this.countLabel);
       this.set = this.filteredPackets.size() * this.rowHeight();
       this.push_Z = false;
@@ -126,7 +126,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.openSelect(onSelect, this.init_List, Set.of(), true);
    }
 
-   public void load(Consumer<Class<? extends Packet<?>>> onSelect) {
+   public void openC2s(Consumer<Class<? extends Packet<?>>> onSelect) {
       this.openForC2s(onSelect, Set.of(), true);
    }
 
@@ -134,7 +134,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
       this.openSelect(onSelect, this.c2sPackets, excludedPackets, closeOnSelect);
    }
 
-   public void read(Consumer<Class<? extends Packet<?>>> onSelect) {
+   public void openS2c(Consumer<Class<? extends Packet<?>>> onSelect) {
       this.openForS2c(onSelect, Set.of(), true);
    }
 
@@ -719,7 +719,7 @@ public class AutismPacketSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private boolean isOverCloseButton(float uiMouseX, float uiMouseY) {
-      return autismclient.gui.ui.widgets.WindowHeaderHelper.init(
+      return autismclient.gui.ui.widgets.WindowHeaderHelper.overClose(
          autismclient.gui.f.NetHelper.init(this.pop, this.tick, this.run, Math.max(this.theme.load(), this.get)),
          this.theme.load(),
          uiMouseX,

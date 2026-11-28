@@ -66,8 +66,8 @@ public final class AiDigLine {
                            double[] margin = new double[]{0.0};
                            List<BlockPos> chain = rayChain(eye, dir, reach, set, shapes, margin);
                            if (!chain.isEmpty() && heads.contains(chain.get(0))) {
-                              float ly = init(dir);
-                              float lp = load(dir);
+                              float ly = yawOf(dir);
+                              float lp = pitchOf(dir);
                               double turn = Math.abs(init(ly - yaw)) + Math.abs(lp - pitch);
                               double score = chain.size() * 60.0 - turn + Math.min(margin[0], 0.3) * 10.0;
                               if (heads.size() > 1 && chain.containsAll(heads)) {
@@ -100,7 +100,7 @@ public final class AiDigLine {
       double min = 1.7976931348623157E308;
 
       while (chain.size() < targets.size()) {
-         BlockHitResult hit = init(eye, dir, reach, removed, shapes);
+         BlockHitResult hit = trace(eye, dir, reach, removed, shapes);
          if (hit == null) {
             break;
          }
@@ -110,7 +110,7 @@ public final class AiDigLine {
             break;
          }
 
-         double m = init(hit, shapes.outline(pos).bounds().move(pos));
+         double m = edgeMargin(hit, shapes.outline(pos).bounds().move(pos));
          if (m < 0.06) {
             break;
          }
@@ -127,7 +127,7 @@ public final class AiDigLine {
       return chain;
    }
 
-   public static BlockHitResult init(Vec3 eye, Vec3 dir, double reach, Set<BlockPos> removed, AiDigLine.Inner_CachePool shapes) {
+   public static BlockHitResult trace(Vec3 eye, Vec3 dir, double reach, Set<BlockPos> removed, AiDigLine.Inner_CachePool shapes) {
       Vec3 end = eye.add(dir.scale(reach));
       return BlockGetter.traverseBlocks(eye, end, removed, (gone, pos) -> {
          if (gone.contains(pos)) {
@@ -178,7 +178,7 @@ public final class AiDigLine {
       double reach,
       float pathYaw
    ) {
-      if (latched == null || init(latched, eye, remaining, shapes, reach) == null) {
+      if (latched == null || firstHit(latched, eye, remaining, shapes, reach) == null) {
          return planLine(eye, yaw, pitch, remaining, targets, shapes, reach, pathYaw);
       } else if (!changed) {
          return latched;
@@ -377,8 +377,8 @@ public final class AiDigLine {
                               double[] margin = new double[]{0.0};
                               List<BlockPos> chain = chainAlong(eye, dir, reach, left, gone, shapes, margin);
                               if (!chain.isEmpty() && heads.contains(chain.get(0))) {
-                                 float ly = init(dir);
-                                 float lp = load(dir);
+                                 float ly = yawOf(dir);
+                                 float lp = pitchOf(dir);
                                  double key = Math.abs(init(ly - yaw)) + Math.abs(lp - pitch) - Math.min(margin[0], 0.3) * 10.0;
                                  Double had = keyOf.get(chain);
                                  if (had == null || key < had) {
@@ -412,7 +412,7 @@ public final class AiDigLine {
       double min = 1.7976931348623157E308;
 
       while (chain.size() < targets.size()) {
-         BlockHitResult hit = init(eye, dir, reach, removed, shapes);
+         BlockHitResult hit = trace(eye, dir, reach, removed, shapes);
          if (hit == null) {
             break;
          }
@@ -422,7 +422,7 @@ public final class AiDigLine {
             break;
          }
 
-         double m = init(hit, shapes.outline(pos).bounds().move(pos));
+         double m = edgeMargin(hit, shapes.outline(pos).bounds().move(pos));
          if (m < 0.06) {
             break;
          }
@@ -439,8 +439,8 @@ public final class AiDigLine {
       return chain;
    }
 
-   public static BlockPos init(AiDigLine.Inner_DataUtil line, Vec3 eye, Collection<BlockPos> remaining, AiDigLine.Inner_CachePool shapes, double reach) {
-      BlockHitResult hit = init(eye, line.direction(), reach, Set.of(), shapes);
+   public static BlockPos firstHit(AiDigLine.Inner_DataUtil line, Vec3 eye, Collection<BlockPos> remaining, AiDigLine.Inner_CachePool shapes, double reach) {
+      BlockHitResult hit = trace(eye, line.direction(), reach, Set.of(), shapes);
       if (hit == null) {
          return null;
       } else {
@@ -448,14 +448,14 @@ public final class AiDigLine {
          if (!remaining.contains(pos)) {
             return null;
          } else {
-            return init(hit, shapes.outline(pos).bounds().move(pos)) >= 0.06 ? pos : null;
+            return edgeMargin(hit, shapes.outline(pos).bounds().move(pos)) >= 0.06 ? pos : null;
          }
       }
    }
 
-   public static Vec3 init(AiDigLine.Inner_DataUtil line, Vec3 eye, AiDigLine.Inner_CachePool shapes, double reach) {
+   public static Vec3 aimPoint(AiDigLine.Inner_DataUtil line, Vec3 eye, AiDigLine.Inner_CachePool shapes, double reach) {
       Vec3 dir = line.direction();
-      BlockHitResult hit = init(eye, dir, reach, Set.of(), shapes);
+      BlockHitResult hit = trace(eye, dir, reach, Set.of(), shapes);
       double t = hit == null ? 2.0 : hit.getLocation().distanceTo(eye) + 0.02;
       return eye.add(dir.scale(t));
    }
@@ -521,7 +521,7 @@ public final class AiDigLine {
       return var10000;
    }
 
-   static double init(BlockHitResult hit, AABB box) {
+   static double edgeMargin(BlockHitResult hit, AABB box) {
       Vec3 p = hit.getLocation();
       double var10000;
       switch (hit.getDirection().getAxis()) {
@@ -541,11 +541,11 @@ public final class AiDigLine {
       return var10000;
    }
 
-   public static float init(Vec3 dir) {
+   public static float yawOf(Vec3 dir) {
       return (float)(Math.toDegrees(Math.atan2(dir.z, dir.x)) - 90.0);
    }
 
-   public static float load(Vec3 dir) {
+   public static float pitchOf(Vec3 dir) {
       return (float)(-Math.toDegrees(Math.atan2(dir.y, Math.hypot(dir.x, dir.z))));
    }
 

@@ -65,7 +65,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
    }
 
    @Override
-   public void load(boolean v) {
+   public void setWaitForGuiBefore(boolean v) {
       this.waitForGuiBefore = v;
    }
 
@@ -75,7 +75,7 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
    }
 
    @Override
-   public void read(boolean v) {
+   public void setWaitForGuiAfter(boolean v) {
       this.waitForGuiAfter = v;
    }
 
@@ -144,12 +144,12 @@ public class WaitForSoundAction implements CaptureOutputAction, MacroAction, Gui
    }
 
    @Override
-   public String load() {
+   public String getSaveAs() {
       return this.saveAs;
    }
 
    @Override
-   public void a_(String name) {
+   public void setSaveAs(String name) {
       this.saveAs = name == null ? "" : name;
    }
 }

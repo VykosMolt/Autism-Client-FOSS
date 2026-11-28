@@ -3312,7 +3312,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    private void cancelScan(String reason) {
       AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
       if (session != null) {
-         session.attemptTracker.init();
+         session.attemptTracker.finish();
          this.trace(session, "cancel reason=" + reason);
       }
 
@@ -3324,7 +3324,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private void recordScanFailure(AutismServerInfoOverlay.ActiveScanSession session, String stage, Throwable error) {
-      if (session != null && !session.attemptTracker.load()) {
+      if (session != null && !session.attemptTracker.isFinished()) {
          session.processingFailures++;
          String detail = error == null ? "unknown" : error.getClass().getSimpleName() + ": " + error.getMessage();
          this.scanIssue = stage + " failed";
@@ -3339,7 +3339,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void finishScan(AutismServerInfoOverlay.ScanStatus requestedOutcome, String issue) {
       AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
-      if (session != null && session.attemptTracker.init()) {
+      if (session != null && session.attemptTracker.finish()) {
          this.flushObservations(true);
          Map<String, AutismServerInfoOverlay.PluginAccumulator> finalEntries = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
          boolean processingFailed = false;
@@ -3359,7 +3359,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
          AutismServerInfoOverlay.ScanStatus outcome = requestedOutcome;
          if (outcome == null) {
-            outcome = !processingFailed && !session.attemptTracker.init(session.processingFailures, session.failedCount, session.pendingProbeIds.size())
+            outcome = !processingFailed && !session.attemptTracker.hadFailures(session.processingFailures, session.failedCount, session.pendingProbeIds.size())
                ? AutismServerInfoOverlay.ScanStatus.COMPLETE
                : AutismServerInfoOverlay.ScanStatus.PARTIAL;
          }
@@ -3456,7 +3456,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
          this.hardLock();
       } else {
          AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
-         if (this.tick_Z && session != null && !session.attemptTracker.load() && MC.getConnection() != null) {
+         if (this.tick_Z && session != null && !session.attemptTracker.isFinished() && MC.getConnection() != null) {
             long now = System.currentTimeMillis();
             if (now >= session.nextProbeAt) {
                AutismServerInfoOverlay.QueuedProbe request = session.probeQueue.pollFirst();
@@ -3470,7 +3470,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
                      session.nextProbeAt = now + this.activeScanDelayMs;
                   } catch (Exception error) {
                      session.nextProbeAt = now + this.activeScanDelayMs;
-                     if (session.attemptTracker.init(request.attempt)) {
+                     if (session.attemptTracker.canRetry(request.attempt)) {
                         session.retryCount++;
                         this.trace(session, "retry probe=" + request.id + " reason=" + error.getClass().getSimpleName());
                         LOGGER.warn("Plugin scan {} will retry probe {}", session.generation, request.id, error);
@@ -3738,7 +3738,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
 
    private void tickActiveScanSession() {
       AutismServerInfoOverlay.ActiveScanSession session = this.activeScan;
-      if (this.tick_Z && session != null && !session.attemptTracker.load()) {
+      if (this.tick_Z && session != null && !session.attemptTracker.isFinished()) {
          try {
             this.pumpProbes();
             long now = System.currentTimeMillis();
@@ -3750,7 +3750,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
             boolean settledAfterLastResponse = session.lastResponseAt > 0L && now - session.lastResponseAt >= 700L;
             boolean timedOut = now - session.startedAt >= this.scanTimeoutMs();
             if (allProbesSent && settledAfterSend && (!allResponsesReceived || settledAfterLastResponse) || timedOut) {
-               AutismServerInfoOverlay.ScanStatus outcome = !session.attemptTracker.init(session.processingFailures, session.failedCount, session.pendingProbeIds.size())
+               AutismServerInfoOverlay.ScanStatus outcome = !session.attemptTracker.hadFailures(session.processingFailures, session.failedCount, session.pendingProbeIds.size())
                   ? AutismServerInfoOverlay.ScanStatus.COMPLETE
                   : AutismServerInfoOverlay.ScanStatus.PARTIAL;
                this.finishScan(outcome, timedOut && !allResponsesReceived ? "Some probes timed out" : "");
@@ -5347,7 +5347,7 @@ public class AutismServerInfoOverlay extends DraggableOverlayWindow {
    }
 
    private boolean isOverCloseButton(float uiMouseX, float uiMouseY) {
-      return autismclient.gui.ui.widgets.WindowHeaderHelper.init(
+      return autismclient.gui.ui.widgets.WindowHeaderHelper.overClose(
          autismclient.gui.f.NetHelper.init(this.overlayX, this.overlayY, this.overlayWidth, Math.max(this.theme.load(), this.overlayHeight)),
          this.theme.load(),
          uiMouseX,

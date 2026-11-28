@@ -499,7 +499,7 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   static boolean init_Z_Str(String message) {
+   static boolean isContextOverflow(String message) {
       if (message == null) {
          return false;
       }

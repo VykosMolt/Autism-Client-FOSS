@@ -41,7 +41,7 @@ public final class SdfShapeRenderer {
    private static final ArrayDeque<SdfShapeRenderer.ShapeAtlas> retiredAtlases = new ArrayDeque<>();
    private static boolean load_Z;
    private static boolean read_Z;
-   private static int open;
+   private static int cachedPixels;
    private static final int poll = 4194304;
    private static volatile NativeImage prewarmedImage;
 
@@ -179,7 +179,7 @@ public final class SdfShapeRenderer {
 
          if (!(h > 1024.0F)) {
             float r = Float.isFinite(radius) ? Math.clamp(radius, 0.0F, Math.min(4.0F, minHeight / 2.0F)) : 0.0F;
-            values = SteppedRowContour.init(values, r);
+            values = SteppedRowContour.smoothWidths(values, r);
             boolean equal = true;
 
             for (int i = 1; i < values.size(); i++) {
@@ -222,12 +222,12 @@ public final class SdfShapeRenderer {
                   }
 
                   shapeCache.put(key, shape);
-                  open = open + shape.init;
+                  cachedPixels = cachedPixels + shape.pixelCount;
 
-                  while (shapeCache.size() > 1 && (shapeCache.size() > 512 || open > 4194304)) {
+                  while (shapeCache.size() > 1 && (shapeCache.size() > 512 || cachedPixels > 4194304)) {
                      Iterator<SdfShapeRenderer.ShapeAtlas> iterator = shapeCache.values().iterator();
                      SdfShapeRenderer.ShapeAtlas retired = iterator.next();
-                     open = open - retired.init;
+                     cachedPixels = cachedPixels - retired.pixelCount;
                      retiredAtlases.add(retired);
                      iterator.remove();
                   }
@@ -238,8 +238,8 @@ public final class SdfShapeRenderer {
                float left = centerX - w / 2.0F - 10.0F;
                float top = y - 10.0F;
                float[] quad = new float[]{left, top, left + textureW, top + textureH, 0.0F, 0.0F, 1.0F, 1.0F};
-               TexturedQuadRenderState element = TexturedQuadRenderState.init(
-                  SdfRenderPipelines.load(),
+               TexturedQuadRenderState element = TexturedQuadRenderState.create(
+                  SdfRenderPipelines.pipeline(),
                   TextureSetup.singleTexture(shape.getTextureView(), shape.getSampler()),
                   new Matrix3x2f(graphics.pose()),
                   quad,
@@ -290,7 +290,7 @@ public final class SdfShapeRenderer {
          for (int py = minY; py <= maxY; py++) {
             for (int px = minX; px <= maxX; px++) {
                int i = py * width + px;
-               distances[i] = Math.min(distances[i], SteppedRowContour.init(edge, px + 0.5F - offsetX, py + 0.5F - offsetY));
+               distances[i] = Math.min(distances[i], SteppedRowContour.distance(edge, px + 0.5F - offsetX, py + 0.5F - offsetY));
             }
          }
       }
@@ -317,7 +317,7 @@ public final class SdfShapeRenderer {
       read_Z = false;
       shapeCache.values().forEach(AbstractTexture::close);
       shapeCache.clear();
-      open = 0;
+      cachedPixels = 0;
 
       while (!retiredAtlases.isEmpty()) {
          retiredAtlases.removeFirst().close();
@@ -421,8 +421,8 @@ public final class SdfShapeRenderer {
          AutismGuiGraphicsExtractorAccessor accessor = (AutismGuiGraphicsExtractorAccessor)graphics;
          ScreenRectangle scissor = UiScissorStack.peek();
          GuiRenderState renderState = accessor.autism$guiRenderState();
-         TexturedQuadRenderState element = TexturedQuadRenderState.init(
-            SdfRenderPipelines.load(),
+         TexturedQuadRenderState element = TexturedQuadRenderState.create(
+            SdfRenderPipelines.pipeline(),
             TextureSetup.singleTexture(atlas.getTextureView(), atlas.getSampler()),
             new Matrix3x2f(graphics.pose()),
             quads,
@@ -536,10 +536,10 @@ public final class SdfShapeRenderer {
    }
 
    private static final class ShapeAtlas extends AbstractTexture {
-      final int init;
+      final int pixelCount;
 
       ShapeAtlas(NativeImage pixels) {
-         this.init = pixels.getWidth() * pixels.getHeight();
+         this.pixelCount = pixels.getWidth() * pixels.getHeight();
          this.texture = RenderSystem.getDevice().createTexture("autismclient sdf shapes", 15, GpuFormat.R8_UNORM, pixels.getWidth(), pixels.getHeight(), 1, 1);
          this.sampler = RenderSystem.getSamplerCache()
             .getSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.LINEAR, FilterMode.LINEAR, false);

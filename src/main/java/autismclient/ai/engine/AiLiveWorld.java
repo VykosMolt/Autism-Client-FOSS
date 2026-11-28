@@ -54,7 +54,7 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    private final Long2ByteOpenHashMap pressurePlateCache = new Long2ByteOpenHashMap();
 
    @Override
-   public double putAt_D() {
+   public double dropLimit() {
       return this.putAt_D;
    }
 
@@ -159,7 +159,7 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean prevEx(int var1, int var2, int var3) {
+   public boolean hazardAt(int var1, int var2, int var3) {
       long var4 = BlockPos.asLong(var1, var2, var3);
       byte var6 = this.hazardCache.get(var4);
       if (var6 != 0) {
@@ -167,7 +167,7 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
       }
 
       BlockState var7 = this.clientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3));
-      boolean var8 = AiEnvironmentHazards.init(this.clientLevel, this.putAt_BlockPos_MutableBl)
+      boolean var8 = AiEnvironmentHazards.isHazardous(this.clientLevel, this.putAt_BlockPos_MutableBl)
          || AiPathfinder.LiveGridView.isFeetHazard(var7)
          || AiPathfinder.LiveGridView.isFloorHazard(var7)
          || var7.getBlock() instanceof SweetBerryBushBlock;
@@ -176,7 +176,7 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean prev(int var1, int var2, int var3) {
+   public boolean contactHazardAt(int var1, int var2, int var3) {
       long var4 = BlockPos.asLong(var1, var2, var3);
       byte var6 = this.contactHazardCache.get(var4);
       if (var6 != 0) {
@@ -184,7 +184,7 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
       }
 
       BlockState var7 = this.clientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3));
-      boolean var8 = AiEnvironmentHazards.init(this.clientLevel, this.putAt_BlockPos_MutableBl)
+      boolean var8 = AiEnvironmentHazards.isHazardous(this.clientLevel, this.putAt_BlockPos_MutableBl)
          || AiPathfinder.LiveGridView.isFeetHazard(var7)
          || var7.getBlock() instanceof SweetBerryBushBlock
          || var7.is(Blocks.CACTUS);
@@ -193,7 +193,7 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean chunkAt(int var1, int var2, int var3) {
+   public boolean floorHazardAt(int var1, int var2, int var3) {
       long var4 = BlockPos.asLong(var1, var2, var3);
       byte var6 = this.floorHazardCache.get(var4);
       if (var6 != 0) {
@@ -206,7 +206,7 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean readEx_Z(int var1, int var2, int var3) {
+   public boolean invisibleLightAt(int var1, int var2, int var3) {
       long var4 = BlockPos.asLong(var1, var2, var3);
       byte var6 = this.lightBlockCache.get(var4);
       if (var6 != 0) {
@@ -219,7 +219,7 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean value_Z(int var1, int var2, int var3) {
+   public boolean pressurePlateAt(int var1, int var2, int var3) {
       long var4 = BlockPos.asLong(var1, var2, var3);
       byte var6 = this.pressurePlateCache.get(var4);
       if (var6 != 0) {
@@ -232,7 +232,7 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean fill_Z(int var1, int var2, int var3) {
+   public boolean waterAt(int var1, int var2, int var3) {
       long var4 = BlockPos.asLong(var1, var2, var3);
       byte var6 = this.fill_Long2ByteOpenHashM.get(var4);
       if (var6 != 0) {
@@ -332,22 +332,22 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public double putAt_D_I(int var1, int var2, int var3) {
+   public double frictionAt(int var1, int var2, int var3) {
       return this.putAt_Block(var1, var2, var3).getFriction();
    }
 
    @Override
-   public double fill_D(int var1, int var2, int var3) {
+   public double speedFactorAt(int var1, int var2, int var3) {
       return this.putAt_Block(var1, var2, var3).getSpeedFactor();
    }
 
    @Override
-   public double value_D(int var1, int var2, int var3) {
+   public double jumpFactorAt(int var1, int var2, int var3) {
       return this.putAt_Block(var1, var2, var3).getJumpFactor();
    }
 
    @Override
-   public boolean state(int var1, int var2, int var3) {
+   public boolean climbableAt(int var1, int var2, int var3) {
       BlockState var4 = this.clientLevel.getBlockState(this.putAt_BlockPos_MutableBl.set(var1, var2, var3));
       return AiPathfinder.LiveGridView.isClimbableBlock(var4)
          ? true
@@ -359,18 +359,18 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    }
 
    @Override
-   public boolean closeOf(int var1, int var2, int var3) {
+   public boolean slimeAt(int var1, int var2, int var3) {
       return this.putAt_Block(var1, var2, var3) instanceof SlimeBlock;
    }
 
    @Override
-   public double readEx_D(int var1, int var2, int var3) {
+   public double bounceAt(int var1, int var2, int var3) {
       Block var4 = this.putAt_Block(var1, var2, var3);
       return var4 instanceof SlimeBlock ? 1.0 : (var4 instanceof BedBlock ? 0.75 : 0.0);
    }
 
    @Override
-   public boolean putAt_Z() {
+   public boolean stuckBlocksTracked() {
       return true;
    }
 
@@ -399,19 +399,19 @@ final class AiLiveWorld implements AiPhysics.PhysicsWorld {
    // 5.3 external ABI bridges
    ClientLevel getLevel() { return this.clientLevel(); }
    void clearCaches() { this.resetCaches(); }
-   @Override public double maxDropBlocks() { return this.putAt_D(); }
+   @Override public double maxDropBlocks() { return this.dropLimit(); }
    @Override public double baseMovementSpeed() { return this.movementSpeed(); }
-   @Override public double blockFriction(int x, int y, int z) { return this.putAt_D_I(x, y, z); }
-   @Override public double speedFactor(int x, int y, int z) { return this.fill_D(x, y, z); }
-   @Override public boolean isSlimeBlock(int x, int y, int z) { return this.closeOf(x, y, z); }
-   @Override public double bounceFactor(int x, int y, int z) { return this.readEx_D(x, y, z); }
-   @Override public double jumpFactor(int x, int y, int z) { return this.value_D(x, y, z); }
-   @Override public boolean isClimbable(int x, int y, int z) { return this.state(x, y, z); }
+   @Override public double blockFriction(int x, int y, int z) { return this.frictionAt(x, y, z); }
+   @Override public double speedFactor(int x, int y, int z) { return this.speedFactorAt(x, y, z); }
+   @Override public boolean isSlimeBlock(int x, int y, int z) { return this.slimeAt(x, y, z); }
+   @Override public double bounceFactor(int x, int y, int z) { return this.bounceAt(x, y, z); }
+   @Override public double jumpFactor(int x, int y, int z) { return this.jumpFactorAt(x, y, z); }
+   @Override public boolean isClimbable(int x, int y, int z) { return this.climbableAt(x, y, z); }
    @Override public int stuckBlockKindIn(AABB box) { return this.putAt_I_AABB(box); }
-   @Override public boolean tracksStuckBlocks() { return this.putAt_Z(); }
+   @Override public boolean tracksStuckBlocks() { return this.stuckBlocksTracked(); }
    @Override public boolean isLavaOrUnloaded(int x, int y, int z) { return this.putAt_Z_I_2(x, y, z); }
-   @Override public boolean isWater(int x, int y, int z) { return this.fill_Z(x, y, z); }
-   @Override public boolean isInvisibleLightBlock(int x, int y, int z) { return this.readEx_Z(x, y, z); }
-   @Override public boolean isPressurePlate(int x, int y, int z) { return this.value_Z(x, y, z); }
-   @Override public boolean isHazard(int x, int y, int z) { return this.prevEx(x, y, z); }
+   @Override public boolean isWater(int x, int y, int z) { return this.waterAt(x, y, z); }
+   @Override public boolean isInvisibleLightBlock(int x, int y, int z) { return this.invisibleLightAt(x, y, z); }
+   @Override public boolean isPressurePlate(int x, int y, int z) { return this.pressurePlateAt(x, y, z); }
+   @Override public boolean isHazard(int x, int y, int z) { return this.hazardAt(x, y, z); }
 }

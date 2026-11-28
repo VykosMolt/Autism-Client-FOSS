@@ -119,7 +119,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
       }
    }
 
-   static Vec3 init(BlockPos position, BlockState state, BaseRailBlock rail) {
+   static Vec3 cartPosition(BlockPos position, BlockState state, BaseRailBlock rail) {
       double height = state.getValue(rail.getShapeProperty()).isSlope() ? 0.5 : 0.0;
       return new Vec3(position.getX() + 0.5, position.getY() + 0.0625 + height, position.getZ() + 0.5);
    }
@@ -149,7 +149,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
             return this.status;
          }
 
-         this.targetPosition = init(this.spec.rail(), rail, block);
+         this.targetPosition = cartPosition(this.spec.rail(), rail, block);
       } else {
          if (!this.matchesSource(rail)) {
             this.status = PrintMachineJob.JobStatus.CONFLICT;

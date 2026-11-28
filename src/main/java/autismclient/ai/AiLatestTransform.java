@@ -21,7 +21,7 @@ final class AiLatestTransform<I, O> implements AutoCloseable {
       this.init_BiConsumer = completed;
    }
 
-   void init(I input) {
+   void submit(I input) {
       if (!this.load_Z) {
          this.init_Obj = input;
          this.init_J++;

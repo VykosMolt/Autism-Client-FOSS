@@ -2763,7 +2763,7 @@ final class AiTools {
    JsonObject call(String tool, JsonObject args, long generation, boolean fromScript) throws Exception {
       this.service.checkGeneration(generation);
       String key = AiRetryGuard.keyFor(tool, args);
-      this.retryGuard.beginDispatch(key, this.service.init_Z());
+      this.retryGuard.beginDispatch(key, this.service.shouldVerifyOutcomes());
       if (tool.equals("observe")) {
          this.retryGuard.load();
       }
@@ -2809,7 +2809,7 @@ final class AiTools {
    private JsonObject load(String tool, JsonObject args, long generation) throws Exception {
       this.service.checkGeneration(generation);
       if (Set.of("macro_save", "script_run", "procedure_run").contains(tool)) {
-         this.service.load_V();
+         this.service.markAttemptedAction();
       }
 
       JsonObject var10000;
@@ -2858,19 +2858,19 @@ final class AiTools {
             break;
          }
          case "ask_user": {
-            JsonObject var38 = this.service.write(args, generation);
+            JsonObject var38 = this.service.handleAskUser(args, generation);
             JsonObject var39 = var38;
             var10000 = var39;
             break;
          }
          case "chat_send": {
-            JsonObject var37 = this.service.load_JsonObject_JsonObject_J(args, generation);
+            JsonObject var37 = this.service.handleChatSend(args, generation);
             JsonObject var38 = var37;
             var10000 = var38;
             break;
          }
          case "chat_keep": {
-            JsonObject var36 = this.service.init_JsonObject_JsonObject_J(args, generation);
+            JsonObject var36 = this.service.handleChatKeep(args, generation);
             JsonObject var37 = var36;
             var10000 = var37;
             break;
@@ -2883,7 +2883,7 @@ final class AiTools {
             }
 
             String given = AiJson.getString(args, "fingerprint", "");
-            if (this.service.init_Z() && !given.isBlank() && !entry.fingerprint().equals(given)) {
+            if (this.service.shouldVerifyOutcomes() && !given.isBlank() && !entry.fingerprint().equals(given)) {
                throw new IllegalArgumentException("Stale fingerprint for " + id + "; perform again with fingerprint " + entry.fingerprint());
             }
 
@@ -2892,7 +2892,7 @@ final class AiTools {
             }
 
             if (entry.contract().classification() != AiCapabilityDescriptor.Classification.OBSERVE) {
-               this.service.load_V();
+               this.service.markAttemptedAction();
             }
 
             JsonElement supplied = args.get("arguments");
@@ -2924,7 +2924,7 @@ final class AiTools {
             JsonObject raw = supplied != null && supplied.isJsonObject() ? supplied.getAsJsonObject() : new JsonObject();
             JsonObject schema = AiJson.parseObject(entry.contract().inputSchema());
             List<String> ignored = new ArrayList<>();
-            JsonObject arguments = !schema.has("type") && !schema.has("properties") ? raw : AiSchemas.normalize(schema, raw, !this.service.init_Z(), ignored);
+            JsonObject arguments = !schema.has("type") && !schema.has("properties") ? raw : AiSchemas.normalize(schema, raw, !this.service.shouldVerifyOutcomes(), ignored);
             if (schema.has("type") || schema.has("properties")) {
                AiSchemas.validate(schema, arguments);
             }
@@ -3049,9 +3049,9 @@ final class AiTools {
 
             AiMemoryStore.Memory memory;
             try {
-               memory = this.service.getMemoryStore().init(kind, memoryScope, text, evidence, this.service.getCatalogSnapshot().revision(), payload);
+               memory = this.service.getMemoryStore().remember(kind, memoryScope, text, evidence, this.service.getCatalogSnapshot().revision(), payload);
             } catch (IllegalArgumentException e) {
-               String fallback = !this.service.init_Z() && kind != AiMemoryStore.MemoryKind.HYPOTHESIS
+               String fallback = !this.service.shouldVerifyOutcomes() && kind != AiMemoryStore.MemoryKind.HYPOTHESIS
                   ? (
                      kind == AiMemoryStore.MemoryKind.USER
                         ? this.service.lastObservationId()
@@ -3062,7 +3062,7 @@ final class AiTools {
                   throw e;
                }
 
-               memory = this.service.getMemoryStore().init(kind, memoryScope, text, fallback, this.service.getCatalogSnapshot().revision(), payload);
+               memory = this.service.getMemoryStore().remember(kind, memoryScope, text, fallback, this.service.getCatalogSnapshot().revision(), payload);
             }
 
             JsonObject var27 = AiJson.objectOf("memory", memory);
@@ -3083,19 +3083,19 @@ final class AiTools {
             break;
          }
          case "script_check": {
-            JsonObject var24 = this.service.update(args, generation);
+            JsonObject var24 = this.service.handleScriptCheck(args, generation);
             JsonObject var25 = var24;
             var10000 = var25;
             break;
          }
          case "script_run": {
-            JsonObject var23 = this.service.sync(args, generation);
+            JsonObject var23 = this.service.handleScriptRun(args, generation);
             JsonObject var24 = var23;
             var10000 = var24;
             break;
          }
          case "finish":
-            JsonObject var7 = this.service.read_JsonObject_JsonObject_J(args, generation);
+            JsonObject var7 = this.service.handleFinish(args, generation);
             JsonObject var7x = var7;
             var10000 = var7x;
             break;
@@ -3218,7 +3218,7 @@ final class AiTools {
             return old == null ? "" : macroJson(old).toString();
          });
          if (!existing.isEmpty()) {
-            if (this.service.init_Z() && !AiJson.sha256Hex(existing).equals(AiJson.getString(args, "expectedFingerprint", ""))) {
+            if (this.service.shouldVerifyOutcomes() && !AiJson.sha256Hex(existing).equals(AiJson.getString(args, "expectedFingerprint", ""))) {
                throw new IllegalArgumentException("Macro already exists or changed; inspect client:macros before editing");
             }
 
@@ -3282,13 +3282,13 @@ final class AiTools {
             return null;
          } else {
             BlockState state = block.defaultBlockState();
-            if (state.requiresCorrectToolForDrops() && autismclient.ai.engine.MiningCost.load(mc, state, true) < 0) {
-               String tool = AiCollect.init(state);
+            if (state.requiresCorrectToolForDrops() && autismclient.ai.engine.MiningCost.bestToolSlot(mc, state, true) < 0) {
+               String tool = AiCollect.requiredToolId(state);
                return AiGameOperations.immediateFailure(
                   AiOperation.Status.FAILED,
                   AiFailure.MISSING_TOOL,
                   id + " drops nothing without " + tool + " or better; get one first (game:obtain " + tool + ")",
-                  AiJson.objectOf("missing", AiCollect.init(tool))
+                  AiJson.objectOf("missing", AiCollect.missingTool(tool))
                );
             } else {
                return null;
@@ -3346,7 +3346,7 @@ final class AiTools {
             var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Events read", AiEventLog.readJson(args));
             break;
          case "game:raycast":
-            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Raycast resolved", AiRaycast.init(args));
+            var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Raycast resolved", AiRaycast.raycast(args));
             break;
          case "game:mine":
             JsonObject mineArgs = AiMiningQuota.normalizeArgs(args);
@@ -3372,14 +3372,14 @@ final class AiTools {
                            AiJson.getInt(args, "timeoutSeconds", 300)
                         )
                      )
-                     : autismclient.ai.engine.AiMine.init(mineArgs)
+                     : autismclient.ai.engine.AiMine.mine(mineArgs)
                );
             break;
          case "game:mine_area":
-            var10000 = autismclient.ai.engine.AiExcavate.init(args);
+            var10000 = autismclient.ai.engine.AiExcavate.mineArea(args);
             break;
          case "game:dig":
-            var10000 = autismclient.ai.engine.AiExcavate.load(args);
+            var10000 = autismclient.ai.engine.AiExcavate.dig(args);
             break;
          case "game:harvest_wheat":
             var10000 = AiGameOperations.farmWheat(args);
@@ -3403,7 +3403,7 @@ final class AiTools {
             var10000 = AiSurvival.flee(args);
             break;
          case "game:dodge":
-            var10000 = AiDodge.init(args);
+            var10000 = AiDodge.dodge(args);
             break;
          case "game:danger":
             var10000 = AiDanger.create(args);
@@ -3436,7 +3436,7 @@ final class AiTools {
             var10000 = AiFill.region(args);
             break;
          case "game:chop":
-            var10000 = AiChop.init(args);
+            var10000 = AiChop.chop(args);
             break;
          case "game:break":
          case "game:interact":
@@ -3488,7 +3488,7 @@ final class AiTools {
             var10000 = AiProspect.create(args);
             break;
          case "game:recover":
-            var10000 = AiRecover.init(args);
+            var10000 = AiRecover.recover(args);
             break;
          case "game:grave":
             var10000 = AiRecover.create();
@@ -3497,7 +3497,7 @@ final class AiTools {
             var10000 = AiPlan.create(args);
             break;
          case "game:burrow":
-            var10000 = AiBurrow.init(args);
+            var10000 = AiBurrow.burrow(args);
             break;
          case "game:sleep":
             var10000 = AiSleep.create(args);
@@ -3515,7 +3515,7 @@ final class AiTools {
             var10000 = AiBucket.create(args);
             break;
          case "game:ride":
-            var10000 = AiRide.init(args);
+            var10000 = AiRide.ride(args);
             break;
          case "game:redstone":
             var10000 = AiRedstone.create(args);
@@ -3530,13 +3530,13 @@ final class AiTools {
             var10000 = AiBarter.create(args);
             break;
          case "game:trade":
-            var10000 = AiTrade.init(args);
+            var10000 = AiTrade.trade(args);
             break;
          case "game:farm":
-            var10000 = AiFarm.init(args);
+            var10000 = AiFarm.farm(args);
             break;
          case "game:dimension":
-            var10000 = AiDimension.init(args);
+            var10000 = AiDimension.changeDimension(args);
             break;
          case "game:portal_cast":
             var10000 = AiPortalCast.create(args);
@@ -3554,7 +3554,7 @@ final class AiTools {
             var10000 = AiStronghold.create(args);
             break;
          case "game:end_run":
-            var10000 = AiEndRun.init(args);
+            var10000 = AiEndRun.endRun(args);
             break;
          case "game:world_memory":
             var10000 = AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Observed world memory and partial discovery coverage", AiWorldMemory.describe(args));
@@ -3580,7 +3580,7 @@ final class AiTools {
             var10000 = AiDragon.create(args);
             break;
          case "game:fight":
-            var10000 = AiCombat.init(args);
+            var10000 = AiCombat.fight(args);
             break;
          case "game:container":
             var10000 = AiContainer.create(args);
@@ -3604,7 +3604,7 @@ final class AiTools {
             var10000 = AiGameplay.write(args);
             break;
          case "game:collect":
-            var10000 = AiCollect.init(args);
+            var10000 = AiCollect.collect(args);
             break;
          case "game:smelt":
             var10000 = AiSmelt.create(args);
@@ -3636,7 +3636,7 @@ final class AiTools {
          }
 
          if (id.startsWith("command:")) {
-            return AiClientCommand.init(id.substring(8), args);
+            return AiClientCommand.run(id.substring(8), args);
          }
 
          if (id.startsWith("macro:")) {
@@ -3698,7 +3698,7 @@ final class AiTools {
          }
 
          if (id.equals("client:screen_type")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Typed into screen text field", AiScreens.write(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Typed into screen text field", AiScreens.typeText(args));
          }
 
          if (id.equals("client:screen_close")) {
@@ -3714,7 +3714,7 @@ final class AiTools {
          }
 
          if (id.equals("client:screen_store")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Stored GUI", AiScreens.read(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Stored GUI", AiScreens.storeGui(args));
          }
 
          if (id.equals("client:packet_gui")) {
@@ -3758,7 +3758,7 @@ final class AiTools {
          }
 
          if (id.equals("client:disconnect")) {
-            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Disconnected", AiScreens.sync(args));
+            return AiGameOperations.immediate(AiOperation.Status.SUCCEEDED, "Disconnected", AiScreens.disconnect(args));
          }
 
          if (id.equals("client:addon")) {
@@ -3825,7 +3825,7 @@ final class AiTools {
 
                   BlockPos p = AiGameOperations.requireBlockPos(args);
                   AutismWaypoints.getInstance()
-                     .init(scope, new AutismWaypoints.Waypoint(name, p.getX(), p.getY(), p.getZ(), -8337153, System.currentTimeMillis()));
+                     .addWaypoint(scope, new AutismWaypoints.Waypoint(name, p.getX(), p.getY(), p.getZ(), -8337153, System.currentTimeMillis()));
                   var10000 = AiGameOperations.immediate(
                      AiOperation.Status.SUCCEEDED,
                      "Added scoped waypoint",

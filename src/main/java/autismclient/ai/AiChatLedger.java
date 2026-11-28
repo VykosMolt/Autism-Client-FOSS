@@ -41,7 +41,7 @@ public final class AiChatLedger {
    private AiChatLedger() {
    }
 
-   public static void init(Component component, String source) {
+   public static void recordSystem(Component component, String source) {
       init(component, source, "");
    }
 
@@ -70,10 +70,10 @@ public final class AiChatLedger {
    }
 
    public static void init(Component component, UUID senderId) {
-      init(component, senderId, "");
+      recordPlayer(component, senderId, "");
    }
 
-   public static void init(Component component, UUID senderId, String chatType) {
+   public static void recordPlayer(Component component, UUID senderId, String chatType) {
       init(component, isPublicChat(chatType) ? "PLAYER" : "PLAYER_PRIVATE", init(senderId));
    }
 
@@ -82,7 +82,7 @@ public final class AiChatLedger {
       return !type.contains("msg") && !type.contains("team") && !type.contains("whisper");
    }
 
-   public static void load(Component component, String chatType) {
+   public static void recordDisguised(Component component, String chatType) {
       init(component, isPublicChat(chatType) ? "DISGUISED" : "PLAYER_PRIVATE", "");
    }
 

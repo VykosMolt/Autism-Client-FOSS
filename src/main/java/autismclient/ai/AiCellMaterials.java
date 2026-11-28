@@ -74,7 +74,7 @@ final class AiCellMaterials {
                   init(out, AiCellMaterials.CellAction.COMPOST, Items.PUMPKIN_PIE, feeds, AiCellMaterials.MaterialUse.CONSUME);
                   return List.copyOf(out);
                } else {
-                  if (AiSchematicActions.write(cell)) {
+                  if (AiSchematicActions.isFilledCauldron(cell)) {
                      init(cell, live, out);
                      return List.copyOf(out);
                   }
@@ -84,7 +84,7 @@ final class AiCellMaterials {
                         init(out, AiCellMaterials.CellAction.PLACE, Items.FLOWER_POT, 1, AiCellMaterials.MaterialUse.CONSUME);
                      }
 
-                     Item plant = AiSchematicActions.init(AiBuilder.toBlockState(cell).getBlock());
+                     Item plant = AiSchematicActions.pottedItem(AiBuilder.toBlockState(cell).getBlock());
                      init(out, AiCellMaterials.CellAction.PLANT, plant, 1, AiCellMaterials.MaterialUse.CONSUME);
                      return List.copyOf(out);
                   } else {
