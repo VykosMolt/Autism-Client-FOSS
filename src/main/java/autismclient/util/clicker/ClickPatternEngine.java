@@ -56,10 +56,10 @@ public final class ClickPatternEngine {
    private static final double count = 1.15;
    private static final double flags = 0.25;
    private final Random random;
-   private ClickPatternEngine.Inner_ConfigStore personality;
-   private final Map<ClickTechnique, ClickPatternEngine.Inner_CachePool> generators = new EnumMap<>(ClickTechnique.class);
+   private ClickPatternEngine.Personality personality;
+   private final Map<ClickTechnique, ClickPatternEngine.Generator> generators = new EnumMap<>(ClickTechnique.class);
    private ClickProfile profile = ClickProfile.forTechnique(ClickTechnique.NORMAL);
-   private ClickPatternEngine.Inner_CachePool activeGenerator;
+   private ClickPatternEngine.Generator activeGenerator;
    private double techniqueDrift;
    private double shortDrift;
    private long open_J = -9223372036854775808L;
@@ -90,30 +90,30 @@ public final class ClickPatternEngine {
    }
 
    public ClickPatternEngine() {
-      this(new Random(), ClickPatternEngine.Inner_ConfigStore.DEFAULT);
+      this(new Random(), ClickPatternEngine.Personality.DEFAULT);
    }
 
-   public ClickPatternEngine(Random seed, ClickPatternEngine.Inner_ConfigStore personality) {
+   public ClickPatternEngine(Random seed, ClickPatternEngine.Personality personality) {
       this.random = seed == null ? new Random() : seed;
-      this.personality = personality == null ? ClickPatternEngine.Inner_ConfigStore.DEFAULT : personality;
+      this.personality = personality == null ? ClickPatternEngine.Personality.DEFAULT : personality;
       this.techniqueDrift = ClickTechnique.NORMAL.sync_D * 2.5 * this.random.nextGaussian();
       this.shortDrift = 0.2 * this.random.nextGaussian();
-      this.generators.put(ClickTechnique.NORMAL, new ClickPatternEngine.Inner_BufferHelper(this.random.nextLong()));
-      this.generators.put(ClickTechnique.JITTER, new ClickPatternEngine.Inner_StreamUtil(this.random.nextLong()));
-      this.generators.put(ClickTechnique.BUTTERFLY, new ClickPatternEngine.Inner_DataUtil(this.random.nextLong()));
-      this.generators.put(ClickTechnique.DRAG, new ClickPatternEngine.Inner_JsonUtil(this.random.nextLong(), false));
-      this.generators.put(ClickTechnique.SCROLL, new ClickPatternEngine.Inner_JsonUtil(this.random.nextLong(), true));
-      this.generators.put(ClickTechnique.RAGE, new ClickPatternEngine.Inner_TaskQueue(this.random.nextLong()));
+      this.generators.put(ClickTechnique.NORMAL, new ClickPatternEngine.NormalGenerator(this.random.nextLong()));
+      this.generators.put(ClickTechnique.JITTER, new ClickPatternEngine.JitterGenerator(this.random.nextLong()));
+      this.generators.put(ClickTechnique.BUTTERFLY, new ClickPatternEngine.ButterflyGenerator(this.random.nextLong()));
+      this.generators.put(ClickTechnique.DRAG, new ClickPatternEngine.DragGenerator(this.random.nextLong(), false));
+      this.generators.put(ClickTechnique.SCROLL, new ClickPatternEngine.DragGenerator(this.random.nextLong(), true));
+      this.generators.put(ClickTechnique.RAGE, new ClickPatternEngine.RageGenerator(this.random.nextLong()));
       this.activeGenerator = this.generators.get(ClickTechnique.NORMAL);
    }
 
-   public void setPersonality(ClickPatternEngine.Inner_ConfigStore personality) {
+   public void setPersonality(ClickPatternEngine.Personality personality) {
       if (personality != null) {
          this.personality = personality;
       }
    }
 
-   public void init(long now, boolean active, ClickProfile profile, ClickPatternEngine.Inner_NetHelper sink) {
+   public void init(long now, boolean active, ClickProfile profile, ClickPatternEngine.ClickSink sink) {
       if (profile != null) {
          this.profile = profile;
       }
@@ -127,7 +127,7 @@ public final class ClickPatternEngine {
       if (!active) {
          this.load_V();
       } else {
-         ClickPatternEngine.Inner_CachePool wanted = this.generators.get(this.profile.technique);
+         ClickPatternEngine.Generator wanted = this.generators.get(this.profile.technique);
          if (wanted != this.activeGenerator) {
             this.activeGenerator = wanted;
             this.load_V();
@@ -141,7 +141,7 @@ public final class ClickPatternEngine {
       }
    }
 
-   public void init_V_J_DataUtil_NetHelper(long now, ClickPatternEngine.Inner_NetHelper sink) {
+   public void init_V_J_DataUtil_NetHelper(long now, ClickPatternEngine.ClickSink sink) {
       if (this.load_Z) {
          this.init_V_J(now, now, sink);
       }
@@ -154,7 +154,7 @@ public final class ClickPatternEngine {
       this.load_V();
    }
 
-   public void applyProfile(long now, ClickProfile profile, ClickPatternEngine.Inner_NetHelper sink) {
+   public void applyProfile(long now, ClickProfile profile, ClickPatternEngine.ClickSink sink) {
       if (profile != null) {
          this.profile = profile;
       }
@@ -230,7 +230,7 @@ public final class ClickPatternEngine {
       this.activeGenerator.init_V();
    }
 
-   private void fireDueClicks(long now, ClickPatternEngine.Inner_NetHelper sink) {
+   private void fireDueClicks(long now, ClickPatternEngine.ClickSink sink) {
       for (int attempt = 0; attempt < 3; attempt++) {
          if (this.tick_J == -9223372036854775808L || this.load_Z) {
             return;
@@ -352,7 +352,7 @@ public final class ClickPatternEngine {
       this.pop_J = now;
    }
 
-   private void init_V_J(long now, long due, ClickPatternEngine.Inner_NetHelper sink) {
+   private void init_V_J(long now, long due, ClickPatternEngine.ClickSink sink) {
       this.load_Z = false;
       this.get_J = -9223372036854775808L;
       this.put_J = Math.min(now, due);
@@ -492,12 +492,12 @@ public final class ClickPatternEngine {
       return w;
    }
 
-   private final class Inner_BufferHelper extends ClickPatternEngine.Inner_CachePool {
+   private final class NormalGenerator extends ClickPatternEngine.Generator {
       private long init_J;
       private double init_D = 0.15 * this.rng.nextGaussian();
       private double holdState = 0.5 * this.rng.nextGaussian();
 
-      Inner_BufferHelper(long seed) {
+      NormalGenerator(long seed) {
          super(seed);
       }
 
@@ -525,10 +525,10 @@ public final class ClickPatternEngine {
       }
    }
 
-   private abstract class Inner_CachePool {
+   private abstract class Generator {
       final Random rng;
 
-      Inner_CachePool(long seed) {
+      Generator(long seed) {
          this.rng = new Random(seed);
       }
 
@@ -563,16 +563,16 @@ public final class ClickPatternEngine {
       }
    }
 
-   public record Inner_ConfigStore(double init_D, double load, boolean init_Z) {
-      public static final ClickPatternEngine.Inner_ConfigStore DEFAULT = new ClickPatternEngine.Inner_ConfigStore(1.0, 1.0, true);
+   public record Personality(double init_D, double load, boolean init_Z) {
+      public static final ClickPatternEngine.Personality DEFAULT = new ClickPatternEngine.Personality(1.0, 1.0, true);
 
-      public Inner_ConfigStore {
+      public Personality {
          init_D = Double.isFinite(init_D) ? Math.max(0.25, Math.min(4.0, init_D)) : 1.0;
          load = Double.isFinite(load) ? Math.max(0.25, Math.min(4.0, load)) : 1.0;
       }
    }
 
-   private final class Inner_DataUtil extends ClickPatternEngine.Inner_CachePool {
+   private final class ButterflyGenerator extends ClickPatternEngine.Generator {
       private long init_J;
       private double init_D;
       private double load_D;
@@ -585,7 +585,7 @@ public final class ClickPatternEngine {
       private double holdStateB = 0.5 * this.rng.nextGaussian();
       private boolean init_Z;
 
-      Inner_DataUtil(long seed) {
+      ButterflyGenerator(long seed) {
          super(seed);
       }
 
@@ -724,7 +724,7 @@ public final class ClickPatternEngine {
       }
    }
 
-   private final class Inner_JsonUtil extends ClickPatternEngine.Inner_CachePool {
+   private final class DragGenerator extends ClickPatternEngine.Generator {
       private final boolean init_Z;
       private long init_J;
       private int init_I;
@@ -738,7 +738,7 @@ public final class ClickPatternEngine {
       private double write_D;
       private int read_I;
 
-      Inner_JsonUtil(long seed, boolean scroll) {
+      DragGenerator(long seed, boolean scroll) {
          super(seed);
          this.init_Z = scroll;
          this.init_D = 0.5 * this.rng.nextGaussian();
@@ -856,7 +856,7 @@ public final class ClickPatternEngine {
       }
    }
 
-   public interface Inner_NetHelper {
+   public interface ClickSink {
       boolean init_Z_J(long var1);
 
       void init_V_J(long var1);
@@ -869,7 +869,7 @@ public final class ClickPatternEngine {
       }
    }
 
-   private final class Inner_StreamUtil extends ClickPatternEngine.Inner_CachePool {
+   private final class JitterGenerator extends ClickPatternEngine.Generator {
       private long start;
       private long period;
       private double amplitude;
@@ -878,7 +878,7 @@ public final class ClickPatternEngine {
       private double read_D;
       private long read_J = -9223372036854775808L;
 
-      Inner_StreamUtil(long seed) {
+      JitterGenerator(long seed) {
          super(seed);
          this.read_D = 0.06 * this.rng.nextGaussian();
       }
@@ -964,10 +964,10 @@ public final class ClickPatternEngine {
       }
    }
 
-   private final class Inner_TaskQueue extends ClickPatternEngine.Inner_CachePool {
+   private final class RageGenerator extends ClickPatternEngine.Generator {
       private long init_J;
 
-      Inner_TaskQueue(long seed) {
+      RageGenerator(long seed) {
          super(seed);
       }
 

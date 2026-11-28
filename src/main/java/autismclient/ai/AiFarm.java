@@ -113,15 +113,15 @@ final class AiFarm {
    static AiOperation farm(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         AiFarm.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "harvest"));
-         if (action == AiFarm.Inner_DataUtil.HARVEST) {
+         AiFarm.FarmAction action = parseAction(AiJson.getString(args, "action", "harvest"));
+         if (action == AiFarm.FarmAction.HARVEST) {
             String spec = AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat"));
             String crop = resolveCrop(spec);
             return FIELD_CROPS.contains(crop) ? harvestField(args, crop, YIELD_BY_CROP.get(crop)) : farmCrop(args, crop, YIELD_BY_CROP.get(crop));
-         } else if (action == AiFarm.Inner_DataUtil.PLANT) {
+         } else if (action == AiFarm.FarmAction.PLANT) {
             String crop = resolveCrop(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
             return AiFarmPlant.create(args, crop, seedFor(crop));
-         } else if (action == AiFarm.Inner_DataUtil.BUILD) {
+         } else if (action == AiFarm.FarmAction.BUILD) {
             String crop = resolveCrop(AiJson.getString(args, "crop", AiJson.getString(args, "item", "minecraft:wheat")));
             return AiFarmBuild.create(args, crop, seedFor(crop));
          } else {
@@ -144,13 +144,13 @@ final class AiFarm {
       }
    }
 
-   static AiFarm.Inner_StreamUtil harvestKindFor(Block block) {
+   static AiFarm.HarvestKind harvestKindFor(Block block) {
       if (block == Blocks.SWEET_BERRY_BUSH) {
-         return AiFarm.Inner_StreamUtil.INTERACT;
+         return AiFarm.HarvestKind.INTERACT;
       } else if (autismclient.util.FarmCropCatalog.isStacking(block)) {
-         return AiFarm.Inner_StreamUtil.COLUMN;
+         return AiFarm.HarvestKind.COLUMN;
       } else {
-         return autismclient.util.FarmCropCatalog.read(block) ? AiFarm.Inner_StreamUtil.BREAK_ONLY : AiFarm.Inner_StreamUtil.BREAK_REPLANT;
+         return autismclient.util.FarmCropCatalog.read(block) ? AiFarm.HarvestKind.BREAK_ONLY : AiFarm.HarvestKind.BREAK_REPLANT;
       }
    }
 
@@ -214,7 +214,7 @@ final class AiFarm {
          final Block crop = BuiltInRegistries.BLOCK
             .getOptional(Identifier.parse(cropBlock))
             .orElseThrow(() -> new IllegalArgumentException("Unknown crop block " + cropBlock));
-         final AiFarm.Inner_StreamUtil kind = harvestKindFor(crop);
+         final AiFarm.HarvestKind kind = harvestKindFor(crop);
          final String seed = seedFor(cropBlock);
          return new AiOperation() {
             final Minecraft mc = Minecraft.getInstance();
@@ -231,9 +231,9 @@ final class AiFarm {
             final int sync = 25;
             final int minScanY = Math.max(this.mc.level.getMinY(), this.origin.getY() - 16);
             final int maxScanY = Math.min(this.mc.level.getMaxY() - 1, this.origin.getY() + 16);
-            final List<AiFarm.Inner_CachePool> matureWork = new ArrayList<>();
-            final List<AiFarm.Inner_CachePool> growingWork = new ArrayList<>();
-            final ArrayDeque<AiFarm.Inner_CachePool> followUps = new ArrayDeque<>();
+            final List<AiFarm.FarmWork> matureWork = new ArrayList<>();
+            final List<AiFarm.FarmWork> growingWork = new ArrayList<>();
+            final ArrayDeque<AiFarm.FarmWork> followUps = new ArrayDeque<>();
             final Set<Long> skippedCells = new LinkedHashSet<>();
             final List<JsonObject> skipLog = new ArrayList<>();
             final Map<String, Integer> dropBaseline = new HashMap<>();
@@ -241,7 +241,7 @@ final class AiFarm {
             final Map<Long, Long> harvestRevision = new HashMap<>();
             long startInventoryRevision = AiServerEvidence.inventoryRevision();
             BlockPos scanCentre = this.origin;
-            AiFarm.Inner_CachePool currentWork;
+            AiFarm.FarmWork currentWork;
             AiOperation approach;
             AiOperation action;
             BlockPos replantBase;
@@ -251,9 +251,9 @@ final class AiFarm {
             double walkRange;
             double lastWalkDistSqr = -1.0;
             int walkStallTicks;
-            final Deque<AiFarm.Inner_CachePool> deferredDrops = new ArrayDeque<>();
+            final Deque<AiFarm.FarmWork> deferredDrops = new ArrayDeque<>();
             final List<AiOperation> pendingReplantOps = new ArrayList<>();
-            final List<AiFarm.Inner_CachePool> pendingReplantWork = new ArrayList<>();
+            final List<AiFarm.FarmWork> pendingReplantWork = new ArrayList<>();
             final IdentityHashMap<LevelChunkSection, Boolean> sectionHasCrop = new IdentityHashMap<>();
             long sectionCacheRevision = -1L;
             int scanChunkIndex;
@@ -310,7 +310,7 @@ final class AiFarm {
                      AiOperation.Result v = this.pendingReplantOps.get(i).tick();
                      if (v.terminal()) {
                         this.pendingReplantOps.remove(i);
-                        AiFarm.Inner_CachePool vw = this.pendingReplantWork.remove(i);
+                        AiFarm.FarmWork vw = this.pendingReplantWork.remove(i);
                         if (v.status() == AiOperation.Status.SUCCEEDED) {
                            this.replantedCount++;
                         } else {
@@ -321,8 +321,8 @@ final class AiFarm {
                   }
 
                   boolean owesReplant = this.currentWork != null
-                        && (this.currentWork.kind() == AiFarm.Inner_BufferHelper.HARVEST || this.currentWork.kind() == AiFarm.Inner_BufferHelper.REPLANT)
-                     || this.followUps.stream().anyMatch(w -> w.kind() == AiFarm.Inner_BufferHelper.REPLANT);
+                        && (this.currentWork.kind() == AiFarm.WorkKind.HARVEST || this.currentWork.kind() == AiFarm.WorkKind.REPLANT)
+                     || this.followUps.stream().anyMatch(w -> w.kind() == AiFarm.WorkKind.REPLANT);
                   if (count < this.targetCount || owesReplant) {
                      this.serverConfirmTicks = 0;
                      this.verifyTicks = 0;
@@ -351,8 +351,8 @@ final class AiFarm {
                            return this.workAttemptFailed("no reachable approach");
                         }
 
-                        if (this.currentWork != null && this.currentWork.kind() != AiFarm.Inner_BufferHelper.DROP) {
-                           BlockPos cell = this.currentWork.kind() == AiFarm.Inner_BufferHelper.REPLANT
+                        if (this.currentWork != null && this.currentWork.kind() != AiFarm.WorkKind.DROP) {
+                           BlockPos cell = this.currentWork.kind() == AiFarm.WorkKind.REPLANT
                               ? this.currentWork.base()
                               : this.currentWork.cell();
                            if (!this.isWithinReach(cell) || !this.canSeeWorkFace(this.currentWork)) {
@@ -370,7 +370,7 @@ final class AiFarm {
                            AiOperation.Result r = this.action.tick();
                            if (!r.terminal()) {
                               if (this.currentWork == null
-                                 || this.currentWork.kind() != AiFarm.Inner_BufferHelper.REPLANT
+                                 || this.currentWork.kind() != AiFarm.WorkKind.REPLANT
                                  || !(this.action instanceof AiActedOperation actedOp)
                                  || !actedOp.hasActed()) {
                                  return this.running(this.activityText());
@@ -393,7 +393,7 @@ final class AiFarm {
                         }
 
                         if (this.currentWork == null || !this.stillValid(this.currentWork)) {
-                           if (this.currentWork != null && this.currentWork.kind() == AiFarm.Inner_BufferHelper.DROP) {
+                           if (this.currentWork != null && this.currentWork.kind() == AiFarm.WorkKind.DROP) {
                               this.countDrop(this.currentWork);
                            }
 
@@ -504,16 +504,16 @@ final class AiFarm {
                            if (state.is(crop)) {
                               BlockPos cell = new BlockPos(x, y, z);
                               if (!this.skippedCells.contains(cell.asLong()) && !this.isQueued(cell)) {
-                                 if (kind == AiFarm.Inner_StreamUtil.COLUMN) {
+                                 if (kind == AiFarm.HarvestKind.COLUMN) {
                                     BlockPos segment = AiFarm.harvestableColumnSegment(pos -> this.mc.level.getBlockState(pos), cell);
                                     if (segment != null && !this.skippedCells.contains(segment.asLong()) && !this.isQueued(segment)) {
                                        this.matureWork
-                                          .add(AiFarm.Inner_CachePool.harvest(segment, this.mc.player.distanceToSqr(Vec3.atCenterOf(segment))));
+                                          .add(AiFarm.FarmWork.harvest(segment, this.mc.player.distanceToSqr(Vec3.atCenterOf(segment))));
                                     }
                                  } else if (AiFarm.isRipe(state)) {
-                                    this.matureWork.add(AiFarm.Inner_CachePool.harvest(cell, this.mc.player.distanceToSqr(Vec3.atCenterOf(cell))));
+                                    this.matureWork.add(AiFarm.FarmWork.harvest(cell, this.mc.player.distanceToSqr(Vec3.atCenterOf(cell))));
                                  } else if (this.useBonemeal && AiFarm.canBonemeal(state)) {
-                                    this.growingWork.add(AiFarm.Inner_CachePool.bonemeal(cell, this.mc.player.distanceToSqr(Vec3.atCenterOf(cell))));
+                                    this.growingWork.add(AiFarm.FarmWork.bonemeal(cell, this.mc.player.distanceToSqr(Vec3.atCenterOf(cell))));
                                  }
                               }
                            }
@@ -532,7 +532,7 @@ final class AiFarm {
                }
 
                this.scanned = true;
-               Comparator<AiFarm.Inner_CachePool> nearest = Comparator.comparingDouble(AiFarm.Inner_CachePool::distanceSqr);
+               Comparator<AiFarm.FarmWork> nearest = Comparator.comparingDouble(AiFarm.FarmWork::distanceSqr);
                this.matureWork.sort(nearest);
                this.growingWork.sort(nearest);
                return this.running(
@@ -551,13 +551,13 @@ final class AiFarm {
             }
 
             boolean isQueued(BlockPos cell) {
-               for (AiFarm.Inner_CachePool w : this.matureWork) {
+               for (AiFarm.FarmWork w : this.matureWork) {
                   if (w.cell().equals(cell)) {
                      return true;
                   }
                }
 
-               for (AiFarm.Inner_CachePool w : this.growingWork) {
+               for (AiFarm.FarmWork w : this.growingWork) {
                   if (w.cell().equals(cell)) {
                      return true;
                   }
@@ -566,7 +566,7 @@ final class AiFarm {
                return this.currentWork != null && this.currentWork.cell().equals(cell);
             }
 
-            boolean stillValid(AiFarm.Inner_CachePool w) {
+            boolean stillValid(AiFarm.FarmWork w) {
                switch (w.kind()) {
                   case HARVEST:
                      if (!AiTerrain.isLoaded(this.mc.level, w.cell())) {
@@ -574,7 +574,7 @@ final class AiFarm {
                      }
 
                      BlockState state = this.mc.level.getBlockState(w.cell());
-                     return kind == AiFarm.Inner_StreamUtil.COLUMN ? state.is(crop) : state.is(crop) && AiFarm.isRipe(state);
+                     return kind == AiFarm.HarvestKind.COLUMN ? state.is(crop) : state.is(crop) && AiFarm.isRipe(state);
                   case REPLANT:
                      return seed != null && this.mc.level.getBlockState(w.cell()).isAir();
                   case BONEMEAL:
@@ -588,16 +588,16 @@ final class AiFarm {
                }
             }
 
-            AiFarm.Inner_CachePool nextWork() {
+            AiFarm.FarmWork nextWork() {
                int queued = this.followUps.size();
                boolean enough = AiGameState.countInventoryItem(cropItem) >= this.targetCount;
                boolean needsSeed = seed != null
                   && AiGameState.countInventoryItem(seed) == 0
-                  && this.followUps.stream().anyMatch(wx -> wx.kind() == AiFarm.Inner_BufferHelper.REPLANT);
+                  && this.followUps.stream().anyMatch(wx -> wx.kind() == AiFarm.WorkKind.REPLANT);
 
                while (queued-- > 0) {
-                  AiFarm.Inner_CachePool w = this.followUps.poll();
-                  if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
+                  AiFarm.FarmWork w = this.followUps.poll();
+                  if (w.kind() == AiFarm.WorkKind.REPLANT) {
                      AiServerEvidence.BlockUpdate update = AiServerEvidence.lastBlockUpdate(w.cell());
                      if (AiReplantEvidence.replantState(
                            this.mc.level.getBlockState(w.cell()),
@@ -633,16 +633,16 @@ final class AiFarm {
                      }
                   }
 
-                  if (w.kind() != AiFarm.Inner_BufferHelper.DROP || enough || needsSeed || this.matureWork.isEmpty() && (!this.useBonemeal || this.growingWork.isEmpty())) {
+                  if (w.kind() != AiFarm.WorkKind.DROP || enough || needsSeed || this.matureWork.isEmpty() && (!this.useBonemeal || this.growingWork.isEmpty())) {
                      if (this.stillValid(w)) {
                         return w;
                      }
 
-                     if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
+                     if (w.kind() == AiFarm.WorkKind.REPLANT) {
                         this.replantSkippedCount++;
                      }
 
-                     if (w.kind() == AiFarm.Inner_BufferHelper.DROP) {
+                     if (w.kind() == AiFarm.WorkKind.DROP) {
                         this.countDrop(w);
                      }
                   } else {
@@ -651,7 +651,7 @@ final class AiFarm {
                }
 
                while (!enough && !this.matureWork.isEmpty()) {
-                  AiFarm.Inner_CachePool w = this.takeNearestWork(this.matureWork);
+                  AiFarm.FarmWork w = this.takeNearestWork(this.matureWork);
                   if (!this.skippedCells.contains(w.cell().asLong()) && this.stillValid(w)) {
                      return w;
                   }
@@ -659,7 +659,7 @@ final class AiFarm {
 
                if (this.useBonemeal && !enough) {
                   while (!this.growingWork.isEmpty()) {
-                     AiFarm.Inner_CachePool w = this.takeNearestWork(this.growingWork);
+                     AiFarm.FarmWork w = this.takeNearestWork(this.growingWork);
                      if (!this.skippedCells.contains(w.cell().asLong()) && this.stillValid(w)) {
                         return w;
                      }
@@ -667,7 +667,7 @@ final class AiFarm {
                }
 
                while (!this.deferredDrops.isEmpty()) {
-                  AiFarm.Inner_CachePool w = this.deferredDrops.poll();
+                  AiFarm.FarmWork w = this.deferredDrops.poll();
                   if (this.stillValid(w)) {
                      return w;
                   }
@@ -678,7 +678,7 @@ final class AiFarm {
                return null;
             }
 
-            AiFarm.Inner_CachePool takeNearestWork(List<AiFarm.Inner_CachePool> works) {
+            AiFarm.FarmWork takeNearestWork(List<AiFarm.FarmWork> works) {
                int best = -1;
                double bestSqr = 1.7976931348623157E308;
 
@@ -693,9 +693,9 @@ final class AiFarm {
                return works.remove(best);
             }
 
-            AiOperation.Result startWork(AiFarm.Inner_CachePool w) {
-               BlockPos cell = w.kind() == AiFarm.Inner_BufferHelper.REPLANT ? w.base() : w.cell();
-               if (w.kind() == AiFarm.Inner_BufferHelper.DROP) {
+            AiOperation.Result startWork(AiFarm.FarmWork w) {
+               BlockPos cell = w.kind() == AiFarm.WorkKind.REPLANT ? w.base() : w.cell();
+               if (w.kind() == AiFarm.WorkKind.DROP) {
                   Entity entity = this.mc.level.getEntity(w.entityId());
                   if (!(entity instanceof ItemEntity)) {
                      this.countDrop(w);
@@ -717,7 +717,7 @@ final class AiFarm {
                   switch (w.kind()) {
                      case HARVEST:
                         this.harvestRevision.put(w.cell().asLong(), AiServerEvidence.blockRevision(w.cell()));
-                        if (this.replantAfter && kind == AiFarm.Inner_StreamUtil.BREAK_REPLANT && seed != null) {
+                        if (this.replantAfter && kind == AiFarm.HarvestKind.BREAK_REPLANT && seed != null) {
                            BlockState before = this.mc.level.getBlockState(w.cell());
                            if (crop == Blocks.COCOA) {
                               Direction facing = AiFarm.facingOf(before);
@@ -729,7 +729,7 @@ final class AiFarm {
                            }
                         }
 
-                        if (kind == AiFarm.Inner_StreamUtil.INTERACT) {
+                        if (kind == AiFarm.HarvestKind.INTERACT) {
                            this.action = AiGameOperations.blockAction("use", this.posJson(w.cell()));
                            return this.running("Picking " + w.cell().toShortString());
                         } else {
@@ -790,7 +790,7 @@ final class AiFarm {
                         return this.finishWork();
                   }
                } else {
-                  if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
+                  if (w.kind() == AiFarm.WorkKind.REPLANT) {
                      return this.moveToStance(AiGoto.findStandableNearCompat(w.cell(), 24), 0.45, 30, "Lining up the replant face");
                   }
 
@@ -882,7 +882,7 @@ final class AiFarm {
                }
             }
 
-            AiOperation.Result settleWork(AiFarm.Inner_CachePool w, AiOperation.Result r) {
+            AiOperation.Result settleWork(AiFarm.FarmWork w, AiOperation.Result r) {
                if (w == null) {
                   return this.running("Re-evaluating the field");
                }
@@ -893,12 +893,12 @@ final class AiFarm {
                         || r.status() == AiOperation.Status.TIMED_OUT && !this.mc.level.getBlockState(w.cell()).is(crop)) {
                         this.harvestedCount++;
                         this.queueDropsNear(w.cell());
-                        if (kind == AiFarm.Inner_StreamUtil.BREAK_REPLANT && seed != null && this.replantBase != null) {
+                        if (kind == AiFarm.HarvestKind.BREAK_REPLANT && seed != null && this.replantBase != null) {
                            ClientPacketListener connection = this.mc.getConnection();
                            PlayerInfo info = connection == null ? null : connection.getPlayerInfo(this.mc.player.getUUID());
                            this.replantNotBefore
                               .put(w.cell().asLong(), this.mc.player.tickCount + autismclient.util.BlockBreakGraceCalc.graceTicks(info == null ? 0 : info.getLatency()));
-                           this.followUps.addFirst(AiFarm.Inner_CachePool.replant(w.cell(), this.replantBase, this.replantFace));
+                           this.followUps.addFirst(AiFarm.FarmWork.replant(w.cell(), this.replantBase, this.replantFace));
                         }
 
                         this.replantBase = null;
@@ -952,7 +952,7 @@ final class AiFarm {
                }
 
                if (++this.workAttempts >= 3) {
-                  if (this.currentWork.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
+                  if (this.currentWork.kind() == AiFarm.WorkKind.REPLANT) {
                      this.replantSkippedCount++;
                   }
 
@@ -974,7 +974,7 @@ final class AiFarm {
 
             void queueDropsNear(BlockPos cell) {
                Vec3 center = Vec3.atCenterOf(cell);
-               List<AiFarm.Inner_CachePool> found = new ArrayList<>();
+               List<AiFarm.FarmWork> found = new ArrayList<>();
 
                for (Entity entity : this.mc.level.entitiesForRendering()) {
                   if (entity instanceof ItemEntity item && item.isAlive() && !(item.position().distanceToSqr(center) > 64.0)) {
@@ -985,19 +985,19 @@ final class AiFarm {
                      String id = BuiltInRegistries.ITEM.getKey(item.getItem().getItem()).toString();
                      if (id.equals(cropItem) || seed != null && id.equals(seed)) {
                         this.dropBaseline.putIfAbsent(id, AiGameState.countInventoryItem(id));
-                        found.add(AiFarm.Inner_CachePool.drop(item.getId(), id, item.blockPosition(), this.mc.player.distanceToSqr(item)));
+                        found.add(AiFarm.FarmWork.drop(item.getId(), id, item.blockPosition(), this.mc.player.distanceToSqr(item)));
                      }
                   }
                }
 
-               found.sort(Comparator.comparingDouble(AiFarm.Inner_CachePool::distanceSqr));
+               found.sort(Comparator.comparingDouble(AiFarm.FarmWork::distanceSqr));
 
-               for (AiFarm.Inner_CachePool drop : found) {
+               for (AiFarm.FarmWork drop : found) {
                   this.followUps.addLast(drop);
                }
             }
 
-            void countDrop(AiFarm.Inner_CachePool w) {
+            void countDrop(AiFarm.FarmWork w) {
                int now = AiGameState.countInventoryItem(w.item());
                int base = this.dropBaseline.getOrDefault(w.item(), now);
                if (now > base) {
@@ -1020,12 +1020,12 @@ final class AiFarm {
                return this.hasLineOfSightAt(pos, 0.5);
             }
 
-            boolean canSeeWorkFace(AiFarm.Inner_CachePool w) {
-               BlockPos cell = w.kind() == AiFarm.Inner_BufferHelper.REPLANT ? w.base() : w.cell();
-               if (w.kind() == AiFarm.Inner_BufferHelper.REPLANT) {
+            boolean canSeeWorkFace(AiFarm.FarmWork w) {
+               BlockPos cell = w.kind() == AiFarm.WorkKind.REPLANT ? w.base() : w.cell();
+               if (w.kind() == AiFarm.WorkKind.REPLANT) {
                   return autismclient.ai.engine.AiBlockInteraction.findFaceHit(this.mc, w.base(), w.face()) != null;
                } else {
-                  return w.kind() == AiFarm.Inner_BufferHelper.BONEMEAL ? this.hasLineOfSightAt(cell, this.aimHeight(cell)) : this.hasLineOfSight(cell);
+                  return w.kind() == AiFarm.WorkKind.BONEMEAL ? this.hasLineOfSightAt(cell, this.aimHeight(cell)) : this.hasLineOfSight(cell);
                }
             }
 
@@ -1058,7 +1058,7 @@ final class AiFarm {
                String var10000;
                switch (this.currentWork.kind()) {
                   case HARVEST:
-                     var10000 = (kind == AiFarm.Inner_StreamUtil.INTERACT ? "Picking " : "Breaking ") + this.currentWork.cell().toShortString();
+                     var10000 = (kind == AiFarm.HarvestKind.INTERACT ? "Picking " : "Breaking ") + this.currentWork.cell().toShortString();
                      break;
                   case REPLANT:
                      var10000 = "Replanting " + this.currentWork.cell().toShortString();
@@ -1538,18 +1538,18 @@ final class AiFarm {
       }
    }
 
-   private static AiFarm.Inner_DataUtil parseAction(String text) {
+   private static AiFarm.FarmAction parseAction(String text) {
       String t = text.trim().toLowerCase(Locale.ROOT);
       if (Set.of("sow", "till").contains(t)) {
-         return AiFarm.Inner_DataUtil.PLANT;
+         return AiFarm.FarmAction.PLANT;
       }
 
       if (Set.of("create", "make", "start", "farm").contains(t)) {
-         return AiFarm.Inner_DataUtil.BUILD;
+         return AiFarm.FarmAction.BUILD;
       }
 
       try {
-         return AiFarm.Inner_DataUtil.valueOf(t.toUpperCase(Locale.ROOT));
+         return AiFarm.FarmAction.valueOf(t.toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("action must be harvest, breed, plant or build");
       }
@@ -1571,39 +1571,39 @@ final class AiFarm {
       YIELD_BY_CROP.forEach((crop, yield) -> CROP_BY_YIELD.putIfAbsent(yield, crop));
    }
 
-   private enum Inner_BufferHelper {
+   private enum WorkKind {
       HARVEST,
       REPLANT,
       BONEMEAL,
       DROP;
    }
 
-   private record Inner_CachePool(AiFarm.Inner_BufferHelper kind, BlockPos cell, BlockPos base, Direction face, int entityId, String item, double distanceSqr) {
-      static AiFarm.Inner_CachePool harvest(BlockPos cell, double distanceSqr) {
-         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.HARVEST, cell, null, null, -1, null, distanceSqr);
+   private record FarmWork(AiFarm.WorkKind kind, BlockPos cell, BlockPos base, Direction face, int entityId, String item, double distanceSqr) {
+      static AiFarm.FarmWork harvest(BlockPos cell, double distanceSqr) {
+         return new AiFarm.FarmWork(AiFarm.WorkKind.HARVEST, cell, null, null, -1, null, distanceSqr);
       }
 
-      static AiFarm.Inner_CachePool replant(BlockPos cell, BlockPos base, Direction face) {
-         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.REPLANT, cell, base, face, -1, null, 0.0);
+      static AiFarm.FarmWork replant(BlockPos cell, BlockPos base, Direction face) {
+         return new AiFarm.FarmWork(AiFarm.WorkKind.REPLANT, cell, base, face, -1, null, 0.0);
       }
 
-      static AiFarm.Inner_CachePool bonemeal(BlockPos cell, double distanceSqr) {
-         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.BONEMEAL, cell, null, null, -1, null, distanceSqr);
+      static AiFarm.FarmWork bonemeal(BlockPos cell, double distanceSqr) {
+         return new AiFarm.FarmWork(AiFarm.WorkKind.BONEMEAL, cell, null, null, -1, null, distanceSqr);
       }
 
-      static AiFarm.Inner_CachePool drop(int entityId, String item, BlockPos cell, double distanceSqr) {
-         return new AiFarm.Inner_CachePool(AiFarm.Inner_BufferHelper.DROP, cell, null, null, entityId, item, distanceSqr);
+      static AiFarm.FarmWork drop(int entityId, String item, BlockPos cell, double distanceSqr) {
+         return new AiFarm.FarmWork(AiFarm.WorkKind.DROP, cell, null, null, entityId, item, distanceSqr);
       }
    }
 
-   enum Inner_DataUtil {
+   enum FarmAction {
       HARVEST,
       BREED,
       PLANT,
       BUILD;
    }
 
-   enum Inner_StreamUtil {
+   enum HarvestKind {
       BREAK_REPLANT,
       BREAK_ONLY,
       INTERACT,

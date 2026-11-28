@@ -1665,11 +1665,11 @@ public final class f {
          if (macro != null && macro.actions != null && !macro.actions.isEmpty() && preset != null) {
             if (preset == AutoFishMacroPresets.Preset.FREE_SLOTS && macro.actions.get(0) instanceof autismclient.util.macro.WaitFreeSlotsAction wait) {
                int slots = AuditClientFixes.autoFishMinFreeSlots(this, wait.slots);
-               boolean changed = wait.countMode != autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS
-                  || wait.comparison != autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST
+               boolean changed = wait.countMode != autismclient.util.macro.WaitFreeSlotsAction.CountMode.FREE_SLOTS
+                  || wait.comparison != autismclient.util.macro.WaitFreeSlotsAction.Comparison.AT_MOST
                   || wait.slots != slots;
-               wait.countMode = autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS;
-               wait.comparison = autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST;
+               wait.countMode = autismclient.util.macro.WaitFreeSlotsAction.CountMode.FREE_SLOTS;
+               wait.comparison = autismclient.util.macro.WaitFreeSlotsAction.Comparison.AT_MOST;
                wait.slots = slots;
                if (changed) {
                   autismclient.util.MacroLibraryManager.getInstance().scheduleSave();
@@ -4762,7 +4762,7 @@ public final class f {
          return MC.player.getMainHandItem().getItem() instanceof BlockItem || MC.player.getOffhandItem().getItem() instanceof BlockItem;
       }
 
-      private final class Inner_DataUtil implements autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper {
+      private final class Inner_DataUtil implements autismclient.util.clicker.ClickPatternEngine.ClickSink {
          @Override
          public boolean init_Z_J(long now) {
             if (!Inner_EventBus.this.update_Z_7()) {
@@ -6566,7 +6566,7 @@ public final class f {
          this.add(new BoolSetting("tracers", "Tracers", false).group("Tracers").description("Line to each spawner"));
          this.add(RegistryListSetting.entityTypes("spawner-list", "Spawners", SpawnerEspCatalog.DEFAULT_IDS).group("Spawners").description("Mobs to highlight."));
 
-         for (SpawnerEspCatalog.Inner_DataUtil target : SpawnerEspCatalog.TARGETS) {
+         for (SpawnerEspCatalog.SpawnerTarget target : SpawnerEspCatalog.TARGETS) {
             String id = target.id();
             this.add(new ColorSetting("color-" + id, target.load(), target.defaultColor()).group("Colors").visibleWhen(() -> SpawnerEspCatalog.isSelected(this, id)));
          }

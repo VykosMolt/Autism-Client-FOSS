@@ -65,7 +65,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
       this.minY = this.level.getMinY();
       this.maxY = this.level.getMaxY() - 1;
       this.nether = this.level.dimension() == Level.NETHER;
-      this.putAt_PoolStore_CacheHel = new AiLiveGrid.ToolContext(putAt_ItemStackArr_ItemStackArr(var2), MiningCost.Inner_DataUtil.of(var1), 0L);
+      this.putAt_PoolStore_CacheHel = new AiLiveGrid.ToolContext(putAt_ItemStackArr_ItemStackArr(var2), MiningCost.MiningFactors.of(var1), 0L);
    }
 
    public ClientLevel level() {
@@ -79,7 +79,7 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
 
    public void putAt_V_ItemStackArr_2(ItemStack[] var1) {
       AiLiveGrid.ToolContext var2 = this.putAt_PoolStore_CacheHel;
-      MiningCost.Inner_DataUtil var3 = MiningCost.Inner_DataUtil.of(this.mc);
+      MiningCost.MiningFactors var3 = MiningCost.MiningFactors.of(this.mc);
       if (!sameHotbar(var2.hotbar, var1) || !var3.equals(var2.putAt_ByteWorker_CacheHe)) {
          this.putAt_PoolStore_CacheHel = new AiLiveGrid.ToolContext(putAt_ItemStackArr_ItemStackArr(var1), var3, var2.revision + 1L, var2.toolPredicate);
       }
@@ -776,17 +776,17 @@ public final class AiLiveGrid implements AiPathfinder.GridView {
 
    static final class ToolContext {
       final ItemStack[] hotbar;
-      final MiningCost.Inner_DataUtil putAt_ByteWorker_CacheHe;
+      final MiningCost.MiningFactors putAt_ByteWorker_CacheHe;
       final long revision;
       final BiPredicate<BlockState, ItemStack> toolPredicate;
       final ConcurrentHashMap<BlockState, Double> breakCosts = new ConcurrentHashMap<>();
       final ConcurrentHashMap<BlockState, Boolean> correctToolCache = new ConcurrentHashMap<>();
 
-      ToolContext(ItemStack[] var1, MiningCost.Inner_DataUtil var2, long var3) {
+      ToolContext(ItemStack[] var1, MiningCost.MiningFactors var2, long var3) {
          this(var1, var2, var3, null);
       }
 
-      ToolContext(ItemStack[] var1, MiningCost.Inner_DataUtil var2, long var3, BiPredicate<BlockState, ItemStack> var5) {
+      ToolContext(ItemStack[] var1, MiningCost.MiningFactors var2, long var3, BiPredicate<BlockState, ItemStack> var5) {
          this.hotbar = var1;
          this.putAt_ByteWorker_CacheHe = var2;
          this.revision = var3;

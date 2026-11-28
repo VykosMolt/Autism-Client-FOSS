@@ -39,16 +39,16 @@ final class PrintTools {
    }
 
    static Item bestToolItem(PrintEnv env, BlockState state) {
-      PrintTools.Inner_StreamUtil best = bestTool(env, state);
+      PrintTools.ToolChoice best = bestTool(env, state);
       return best != null && !best.stack().isEmpty() ? best.stack().getItem() : null;
    }
 
-   static PrintTools.Inner_StreamUtil bestTool(PrintEnv env, BlockState state) {
+   static PrintTools.ToolChoice bestTool(PrintEnv env, BlockState state) {
       return bestTool(env, state, null);
    }
 
-   static PrintTools.Inner_StreamUtil bestTool(PrintEnv env, BlockState state, Item wantedDrop) {
-      PrintTools.Inner_StreamUtil best = null;
+   static PrintTools.ToolChoice bestTool(PrintEnv env, BlockState state, Item wantedDrop) {
+      PrintTools.ToolChoice best = null;
 
       for (int slot = 0; slot <= 40; slot++) {
          if (slot != 36 && slot != 37 && slot != 38 && slot != 39) {
@@ -59,7 +59,7 @@ final class PrintTools {
                && (wantedDrop == null || droppedItem(env, state, stack) == wantedDrop)) {
                float speed = stack.getDestroySpeed(state);
                if (best == null || speed > best.speed()) {
-                  best = new PrintTools.Inner_StreamUtil(stack, speed);
+                  best = new PrintTools.ToolChoice(stack, speed);
                }
             }
          }
@@ -68,7 +68,7 @@ final class PrintTools {
       if (wantedDrop != null && droppedItem(env, state, ItemStack.EMPTY) == wantedDrop) {
          float speed = ItemStack.EMPTY.getDestroySpeed(state);
          if (best == null || speed >= best.speed()) {
-            return new PrintTools.Inner_StreamUtil(ItemStack.EMPTY, speed);
+            return new PrintTools.ToolChoice(ItemStack.EMPTY, speed);
          }
       }
 
@@ -208,8 +208,8 @@ final class PrintTools {
       }
    }
 
-   static PrintTools.Inner_DataUtil init(PrintEnv env, Set<Item> schematicItems, ToIntFunction<Item> stock, ToIntFunction<Item> open, Set<Item> avoid) {
-      PrintTools.Inner_DataUtil best = null;
+   static PrintTools.MaterialChoice init(PrintEnv env, Set<Item> schematicItems, ToIntFunction<Item> stock, ToIntFunction<Item> open, Set<Item> avoid) {
+      PrintTools.MaterialChoice best = null;
       int bestRank = 2147483647;
       HashSet<Item> seen = new HashSet<>();
 
@@ -224,12 +224,12 @@ final class PrintTools {
                      boolean cheap = CHEAP_BLOCKS.contains(item);
                      if (cheap || schematicItems.contains(item)) {
                         int needed = open.applyAsInt(item);
-                        PrintTools.Inner_StreamUtil recovery = bestTool(env, state, item);
+                        PrintTools.ToolChoice recovery = bestTool(env, state, item);
                         boolean sameItem = recovery != null;
                         if (!isScarce(item, state, sameItem)) {
                            int held = stock.applyAsInt(item);
                            if (needed <= 0 || sameItem || held > needed) {
-                              PrintTools.Inner_StreamUtil fastest = bestTool(env, state, null);
+                              PrintTools.ToolChoice fastest = bestTool(env, state, null);
                               float speed = fastest == null ? 1.0F : fastest.speed();
                               float hardness = state.getDestroySpeed(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
                               if (!(hardness < 0.0F)) {
@@ -238,7 +238,7 @@ final class PrintTools {
                                  if (env.isCreativeMode() || !(progress < 0.005F)) {
                                     int rank = materialRank(item, needed, sameItem, state, speed);
                                     if (best == null || rank < bestRank) {
-                                       best = new PrintTools.Inner_DataUtil(
+                                       best = new PrintTools.MaterialChoice(
                                           item, state, recovery == null ? ItemStack.EMPTY : recovery.stack(), speed, sameItem, needed > 0
                                        );
                                        bestRank = rank;
@@ -283,9 +283,9 @@ final class PrintTools {
       return scarce && !sameItem;
    }
 
-   record Inner_DataUtil(Item item, BlockState state, ItemStack tool, float speed, boolean sameItemDrop, boolean loan) {
+   record MaterialChoice(Item item, BlockState state, ItemStack tool, float speed, boolean sameItemDrop, boolean loan) {
    }
 
-   record Inner_StreamUtil(ItemStack stack, float speed) {
+   record ToolChoice(ItemStack stack, float speed) {
    }
 }

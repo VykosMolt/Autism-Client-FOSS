@@ -1209,7 +1209,7 @@ public final class AutoTotemModule extends Module {
             return 0.0F;
          }
 
-         BlockPos collision = AutoTotemModule.Inner_DataUtil.predictCollision(player, 20);
+         BlockPos collision = AutoTotemModule.FallSimulation.predictCollision(player, 20);
          float multiplier = fallDamageMultiplier(collision, player);
          if (multiplier <= 0.0F) {
             return 0.0F;
@@ -1358,7 +1358,7 @@ public final class AutoTotemModule extends Module {
       return out;
    }
 
-   private static final class Inner_DataUtil {
+   private static final class FallSimulation {
       private final LocalPlayer player;
       private double x;
       private double simY;
@@ -1368,7 +1368,7 @@ public final class AutoTotemModule extends Module {
       private double velZ;
       private int ticks;
 
-      private Inner_DataUtil(LocalPlayer player) {
+      private FallSimulation(LocalPlayer player) {
          this.player = player;
          this.x = player.getX();
          this.simY = player.getY();
@@ -1380,7 +1380,7 @@ public final class AutoTotemModule extends Module {
       }
 
       static BlockPos predictCollision(LocalPlayer player, int ticks) {
-         AutoTotemModule.Inner_DataUtil sim = new AutoTotemModule.Inner_DataUtil(player);
+         AutoTotemModule.FallSimulation sim = new AutoTotemModule.FallSimulation(player);
          Vec3 rotationVec = player.getLookAngle();
 
          for (int i = 0; i < ticks; i++) {

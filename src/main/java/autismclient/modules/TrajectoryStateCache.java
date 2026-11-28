@@ -10,7 +10,7 @@ import net.minecraft.world.phys.Vec3;
 final class TrajectoryStateCache {
    private static final FireballBlastPredictor BLAST_PREDICTOR = new FireballBlastPredictor();
    private static final ThrownPearlTracker PEARL_TRACKER = new ThrownPearlTracker();
-   private static List<TrajectoriesModule.Inner_CachePool> cachedPaths = List.of();
+   private static List<TrajectoriesModule.TrajectoryPath> cachedPaths = List.of();
    private static List<FireballBlastPredictor.DestroyedBlock> blastPredictions = List.of();
    private static Level cachedLevel;
    private static Object cachedPlayer;
@@ -21,13 +21,13 @@ final class TrajectoryStateCache {
    private TrajectoryStateCache() {
    }
 
-   static void refresh(Minecraft mc, List<TrajectoriesModule.Inner_CachePool> paths) {
+   static void refresh(Minecraft mc, List<TrajectoriesModule.TrajectoryPath> paths) {
       if (ensureContext(mc)) {
          cachedPaths = paths;
          Vec3 explosion = null;
 
-         for (TrajectoriesModule.Inner_CachePool path : paths) {
-            if (path.init_aS_StreamUtil() == TrajectoriesModule.Inner_StreamUtil.FIRE && path.hit() != null) {
+         for (TrajectoriesModule.TrajectoryPath path : paths) {
+            if (path.init_aS_StreamUtil() == TrajectoriesModule.ProjectileItem.FIRE && path.hit() != null) {
                explosion = path.hit().getLocation();
             }
          }
@@ -45,12 +45,12 @@ final class TrajectoryStateCache {
             damageByPoint.clear();
          }
 
-         ThrownPearlTracker.Inner_DataUtil remembered = PEARL_TRACKER.remembered();
+         ThrownPearlTracker.PearlForecast remembered = PEARL_TRACKER.remembered();
          if (remembered != null) {
             evaluateLanding(mc, remembered.position(), threshold);
          }
 
-         for (TrajectoriesModule.Inner_CachePool path : paths) {
+         for (TrajectoriesModule.TrajectoryPath path : paths) {
             if (path.load_Vec3() != null) {
                evaluateLanding(mc, path.load_Vec3(), threshold);
             }
@@ -62,7 +62,7 @@ final class TrajectoryStateCache {
       }
    }
 
-   static List<FireballBlastPredictor.DestroyedBlock> blastPredictions(List<TrajectoriesModule.Inner_CachePool> paths) {
+   static List<FireballBlastPredictor.DestroyedBlock> blastPredictions(List<TrajectoriesModule.TrajectoryPath> paths) {
       return cachedPaths == paths ? blastPredictions : List.of();
    }
 
@@ -78,7 +78,7 @@ final class TrajectoryStateCache {
       return PEARL_TRACKER.init_D();
    }
 
-   static ThrownPearlTracker.Inner_DataUtil rememberedPearl() {
+   static ThrownPearlTracker.PearlForecast rememberedPearl() {
       Minecraft mc = Minecraft.getInstance();
       return !am.init_Z() && mc.level == cachedLevel && mc.player == cachedPlayer && mc.player != null && mc.player.isAlive() ? PEARL_TRACKER.remembered() : null;
    }

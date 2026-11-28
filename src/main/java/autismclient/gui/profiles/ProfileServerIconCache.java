@@ -20,7 +20,7 @@ final class ProfileServerIconCache {
    private static int nextTextureId;
    private ServerList serverList;
    private final Map<String, Optional<ServerData>> serversByPattern = new HashMap<>();
-   private final Map<ServerData, ProfileServerIconCache.Inner_DataUtil> iconCache = new HashMap<>();
+   private final Map<ServerData, ProfileServerIconCache.CachedIcon> iconCache = new HashMap<>();
 
    ServerData serverFor(String pattern) {
       if (pattern != null && !pattern.isBlank() && !pattern.equals("*")) {
@@ -80,7 +80,7 @@ final class ProfileServerIconCache {
       }
 
       byte[] bytes = server.getIconBytes();
-      ProfileServerIconCache.Inner_DataUtil cached = this.iconCache.get(server);
+      ProfileServerIconCache.CachedIcon cached = this.iconCache.get(server);
       if (cached != null && cached.bytes() == bytes) {
          return cached.texture();
       }
@@ -90,7 +90,7 @@ final class ProfileServerIconCache {
       }
 
       Identifier texture = bytes == null ? null : registerIcon(bytes);
-      this.iconCache.put(server, new ProfileServerIconCache.Inner_DataUtil(bytes, texture));
+      this.iconCache.put(server, new ProfileServerIconCache.CachedIcon(bytes, texture));
       return texture;
    }
 
@@ -119,7 +119,7 @@ final class ProfileServerIconCache {
    void release() {
       TextureManager manager = Minecraft.getInstance().getTextureManager();
 
-      for (ProfileServerIconCache.Inner_DataUtil cached : this.iconCache.values()) {
+      for (ProfileServerIconCache.CachedIcon cached : this.iconCache.values()) {
          if (cached.texture() != null) {
             manager.release(cached.texture());
          }
@@ -130,6 +130,6 @@ final class ProfileServerIconCache {
       this.serverList = null;
    }
 
-   private record Inner_DataUtil(byte[] bytes, Identifier texture) {
+   private record CachedIcon(byte[] bytes, Identifier texture) {
    }
 }

@@ -115,7 +115,7 @@ final class AiStronghold {
             EyeOfEnder init_EyeOfEnder;
             AiStronghold.EyeThrowReceipt init_co_StreamUtil = new AiStronghold.EyeThrowReceipt();
             Vec3 eyeFirstPos;
-            AiEyeNavigation.Inner_StreamUtil eyeLineFit;
+            AiEyeNavigation.LineFit eyeLineFit;
             int eyeFirstSeenTick;
             int throwTicks;
             int throwCount;
@@ -483,7 +483,7 @@ final class AiStronghold {
 
                   BlockPos portal = AiWorldScan.findNearestBlock(s -> s.is(Blocks.END_PORTAL), 4);
                   if (portal != null) {
-                     AiEndPortal.Inner_StreamUtil verified = AiEndPortal.inspect(portal);
+                     AiEndPortal.PortalRing verified = AiEndPortal.inspect(portal);
                      if (verified == null) {
                         if (portal.distSqr(mc.player.blockPosition()) > 36.0) {
                            return this.startChild("inspect the portal without entering", AiGoto.travelToCompat(portal, 3.0, true, true, true, 90));
@@ -635,7 +635,7 @@ final class AiStronghold {
                   }
 
                   if (portalNear) {
-                     AiEndPortal.Inner_StreamUtil openRing = AiEndPortal.inspect(portal);
+                     AiEndPortal.PortalRing openRing = AiEndPortal.inspect(portal);
                      if (openRing == null
                         || !openRing.active()
                         || Math.abs(openRing.center().getX() - portal.getX()) > 1
@@ -701,7 +701,7 @@ final class AiStronghold {
                         }
 
                         this.portalFrame = frame;
-                        AiEndPortal.Inner_StreamUtil ring = AiEndPortal.ringAt(frame);
+                        AiEndPortal.PortalRing ring = AiEndPortal.ringAt(frame);
                         if (ring != null) {
                            this.portalRoomLoadTrips = 0;
                            List<BlockPos> empty = ring.empty();
@@ -863,7 +863,7 @@ final class AiStronghold {
                            }
                         }
 
-                        AiEyeNavigation.Inner_DataUtil located = this.navigation.getLocated();
+                        AiEyeNavigation.Triangulation located = this.navigation.getLocated();
                         if (located != null && (located.uncertainty() >= 160.0 || this.corridorExplorations >= 2)) {
                            located = null;
                         }
@@ -963,7 +963,7 @@ final class AiStronghold {
                               }
                            }
 
-                           AiEyeNavigation.Inner_DataUtil estimate = this.navigation.getLocated();
+                           AiEyeNavigation.Triangulation estimate = this.navigation.getLocated();
                            if (estimate != null && estimate.uncertainty() < 160.0) {
                               Vec3 toward = estimate.position().subtract(at);
                               double length = Math.hypot(toward.x, toward.z);
@@ -1134,7 +1134,7 @@ final class AiStronghold {
                         }
                      } else {
                         this.eyeFirstPos = this.init_EyeOfEnder.position();
-                        this.eyeLineFit = new AiEyeNavigation.Inner_StreamUtil(this.eyeFirstPos);
+                        this.eyeLineFit = new AiEyeNavigation.LineFit(this.eyeFirstPos);
                         this.eyeFirstSeenTick = this.throwTicks;
                         return this.running("Watching the eye");
                      }

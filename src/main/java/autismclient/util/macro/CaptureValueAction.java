@@ -62,8 +62,8 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
    public String autofillCommand = "";
    public int autofillTimeoutMs = 5000;
    public boolean autofillCacheList = true;
-   public CandidatePoolSelector.Inner_CachePool listSelection = CandidatePoolSelector.Inner_CachePool.RANDOM;
-   public CandidatePoolSelector.Inner_DataUtil listFilter = CandidatePoolSelector.Inner_DataUtil.NONE;
+   public CandidatePoolSelector.SelectionMode listSelection = CandidatePoolSelector.SelectionMode.RANDOM;
+   public CandidatePoolSelector.FilterMode listFilter = CandidatePoolSelector.FilterMode.NONE;
    public String listFilterText = "";
    public String listExcludeText = "";
    public int listPickPosition = 1;
@@ -602,13 +602,13 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       }
 
       List<String> pool = this.filterCandidates(candidates);
-      CandidatePoolSelector.Inner_BufferHelper state = MacroExecutor.getCandidatePoolState(this);
-      Optional<CandidatePoolSelector.Inner_StreamUtil> pick = CandidatePoolSelector.init(pool, this.listSelection, this.listPickPosition, state);
+      CandidatePoolSelector.SelectionState state = MacroExecutor.getCandidatePoolState(this);
+      Optional<CandidatePoolSelector.Selection> pick = CandidatePoolSelector.init(pool, this.listSelection, this.listPickPosition, state);
       if (pick.isEmpty()) {
          return null;
       }
 
-      CandidatePoolSelector.Inner_StreamUtil picked = pick.get();
+      CandidatePoolSelector.Selection picked = pick.get();
       String value = this.listStripPrefix ? CandidatePoolSelector.init(picked.value(), this.listFilter, this.listFilterText) : picked.value();
       Map<String, MacroVarValue> props = new LinkedHashMap<>();
       props.put("index", MacroVarValue.ofNumber(picked.index() + 1));
@@ -875,8 +875,8 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       tag.putString("autofillCommand", this.autofillCommand == null ? "" : this.autofillCommand);
       tag.putInt("autofillTimeoutMs", this.autofillTimeoutMs);
       tag.putBoolean("autofillCacheList", this.autofillCacheList);
-      tag.putString("listSelection", (this.listSelection == null ? CandidatePoolSelector.Inner_CachePool.RANDOM : this.listSelection).name());
-      tag.putString("listFilter", (this.listFilter == null ? CandidatePoolSelector.Inner_DataUtil.NONE : this.listFilter).name());
+      tag.putString("listSelection", (this.listSelection == null ? CandidatePoolSelector.SelectionMode.RANDOM : this.listSelection).name());
+      tag.putString("listFilter", (this.listFilter == null ? CandidatePoolSelector.FilterMode.NONE : this.listFilter).name());
       tag.putString("listFilterText", this.listFilterText == null ? "" : this.listFilterText);
       tag.putString("listExcludeText", this.listExcludeText == null ? "" : this.listExcludeText);
       tag.putInt("listPickPosition", this.listPickPosition);
@@ -909,8 +909,8 @@ public class CaptureValueAction implements CaptureOutputAction, MacroAction {
       this.autofillCommand = tag.getStringOr("autofillCommand", "");
       this.autofillTimeoutMs = tag.getIntOr("autofillTimeoutMs", 5000);
       this.autofillCacheList = tag.getBooleanOr("autofillCacheList", true);
-      this.listSelection = MacroNbtCodecHelper.parseEnum(CandidatePoolSelector.Inner_CachePool.class, tag.getStringOr("listSelection", "RANDOM"), CandidatePoolSelector.Inner_CachePool.RANDOM);
-      this.listFilter = MacroNbtCodecHelper.parseEnum(CandidatePoolSelector.Inner_DataUtil.class, tag.getStringOr("listFilter", "NONE"), CandidatePoolSelector.Inner_DataUtil.NONE);
+      this.listSelection = MacroNbtCodecHelper.parseEnum(CandidatePoolSelector.SelectionMode.class, tag.getStringOr("listSelection", "RANDOM"), CandidatePoolSelector.SelectionMode.RANDOM);
+      this.listFilter = MacroNbtCodecHelper.parseEnum(CandidatePoolSelector.FilterMode.class, tag.getStringOr("listFilter", "NONE"), CandidatePoolSelector.FilterMode.NONE);
       this.listFilterText = tag.getStringOr("listFilterText", "");
       this.listExcludeText = tag.getStringOr("listExcludeText", "");
       this.listPickPosition = tag.getIntOr("listPickPosition", 1);

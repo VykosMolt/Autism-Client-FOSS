@@ -81,7 +81,7 @@ final class AiObtain {
             int want = AiJson.getBoolean(args, "additional", false)
                ? AiItems.countInInventory(target) + AiJson.getInt(args, "count", 1)
                : AiJson.getInt(args, "count", 1);
-            boolean equippedObsidian = only.equals("minecraft:obsidian") && AiProgression.bestTier(mc).ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal();
+            boolean equippedObsidian = only.equals("minecraft:obsidian") && AiProgression.bestTier(mc).ordinal() >= AiProgression.PickTier.DIAMOND.ordinal();
             if (equippedObsidian && want >= 1 && want <= 2304 && AiItems.countInInventory(target) < want) {
                return AiObsidian.load(want, AiJson.getInt(args, "timeoutSeconds", 600));
             }

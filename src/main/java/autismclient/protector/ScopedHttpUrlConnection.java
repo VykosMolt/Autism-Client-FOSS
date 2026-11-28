@@ -39,7 +39,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    private static final int load_I = 16384;
    private static final int read_I = 8;
    private static final int write_I = -1;
-   private final ResourcePackDownloadScope.Inner_BufferHelper scopeSnapshot;
+   private final ResourcePackDownloadScope.Snapshot scopeSnapshot;
    private final Proxy connectionProxy;
    private final PackUrlValidator.HostResolver resolver;
    private final ScopedHttpUrlConnection.PlainSocketFactory socketFactory;
@@ -58,7 +58,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    private PackUrlValidator.PackRoute route;
    private boolean routeResolved;
 
-   public ScopedHttpUrlConnection(ResourcePackDownloadScope.Inner_BufferHelper snapshot, URL url, Proxy proxy) throws IOException, UnknownHostException {
+   public ScopedHttpUrlConnection(ResourcePackDownloadScope.Snapshot snapshot, URL url, Proxy proxy) throws IOException, UnknownHostException {
       this(
          snapshot,
          url,
@@ -71,7 +71,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
    }
 
    public ScopedHttpUrlConnection(
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot,
+      ResourcePackDownloadScope.Snapshot snapshot,
       URL url,
       Proxy proxy,
       PackUrlValidator.HostResolver resolver,
@@ -528,7 +528,7 @@ public class ScopedHttpUrlConnection extends HttpURLConnection {
          || route.viaProxy()
             && frozen.port() == route.endpoint().port()
             && frozen.host().equalsIgnoreCase(route.endpoint().host())) {
-         ResourcePackDownloadScope.Inner_ConfigStore authentication = frozen == null ? ResourcePackDownloadScope.init(this.scopeSnapshot, route) : null;
+         ResourcePackDownloadScope.ProxyAuth authentication = frozen == null ? ResourcePackDownloadScope.init(this.scopeSnapshot, route) : null;
          byte[] username = null;
          byte[] password = null;
          ScopedHttpUrlConnection.ByteBuilder authenticationRequest = null;

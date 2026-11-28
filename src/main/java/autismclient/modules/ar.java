@@ -87,7 +87,7 @@ public final class ar {
    private static ar.Inner_CachePool push_ar_CachePool = ar.Inner_CachePool.init_ar_CachePool();
    private static ar.Inner_CachePool pop_ar_CachePool = ar.Inner_CachePool.init_ar_CachePool();
    private static ar.Inner_CachePool tick_ar_CachePool = ar.Inner_CachePool.init_ar_CachePool();
-   private static List<TrajectoriesModule.Inner_CachePool> read_List = List.of();
+   private static List<TrajectoriesModule.TrajectoryPath> read_List = List.of();
    private static AABB init_AABB;
    private static int write_I;
    private static List<AABB> write_List = List.of();
@@ -559,7 +559,7 @@ public final class ar {
       }
    }
 
-   public static void init_V_List(List<TrajectoriesModule.Inner_CachePool> paths) {
+   public static void init_V_List(List<TrajectoriesModule.TrajectoryPath> paths) {
       read_List = paths == null ? List.of() : paths;
    }
 
@@ -621,7 +621,7 @@ public final class ar {
       boolean tpClickWire = close_Z;
       boolean ghostFill = update_Z;
       boolean ghostWire = sync_Z;
-      List<TrajectoriesModule.Inner_CachePool> trajectories = read_List;
+      List<TrajectoriesModule.TrajectoryPath> trajectories = read_List;
       read_List = List.of();
       get_Z = false;
       pop_Z = false;
@@ -986,7 +986,7 @@ public final class ar {
             long packed = load_JArr[i];
             BlockState state = init_BlockStateArr[i];
             if (state != null) {
-               autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil template = autismclient.util.oresim.OreGhostModelCache.init(state);
+               autismclient.util.oresim.OreGhostModelCache.GhostModel template = autismclient.util.oresim.OreGhostModelCache.init(state);
                if (!template.faces().isEmpty()) {
                   int bx = BlockPos.getX(packed);
                   int by = BlockPos.getY(packed);
@@ -998,7 +998,7 @@ public final class ar {
                   double relY = cam.y - (by + 0.5);
                   double relZ = cam.z - (bz + 0.5);
 
-                  for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : template.faces()) {
+                  for (autismclient.util.oresim.OreGhostModelCache.Face face : template.faces()) {
                      Direction cull = face.cullFace();
                      if (cull == null
                         || !init_LongOpenHashSet.contains(BlockPos.asLong(bx + cull.getStepX(), by + cull.getStepY(), bz + cull.getStepZ()))

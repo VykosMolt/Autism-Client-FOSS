@@ -3,12 +3,12 @@ package autismclient.modules;
 import autismclient.util.AutismLiteVariant;
 
 public final class CrosshairRenderState {
-   private static volatile CrosshairRenderState.Inner_DataUtil activeState;
+   private static volatile CrosshairRenderState.Snapshot activeState;
 
    private CrosshairRenderState() {
    }
 
-   static void setState(CrosshairRenderState.Inner_DataUtil value) {
+   static void setState(CrosshairRenderState.Snapshot value) {
       activeState = value;
    }
 
@@ -16,8 +16,8 @@ public final class CrosshairRenderState {
       activeState = null;
    }
 
-   public static CrosshairRenderState.Inner_DataUtil current() {
-      CrosshairRenderState.Inner_DataUtil current = activeState;
+   public static CrosshairRenderState.Snapshot current() {
+      CrosshairRenderState.Snapshot current = activeState;
       return current != null && init_Z() ? current : null;
    }
 
@@ -25,8 +25,8 @@ public final class CrosshairRenderState {
       return AutismLiteVariant.enabled() || autismclient.e.PathHelper.init();
    }
 
-   public record Inner_DataUtil(
-      CrosshairPresetGeometry.Inner_NetHelper style,
+   public record Snapshot(
+      CrosshairPresetGeometry.Style style,
       double init_D,
       double load_D,
       double read_D,

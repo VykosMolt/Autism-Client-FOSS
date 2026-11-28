@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.player.Player;
 
 public final class WTappingModule extends Module {
-   private final WTapController controller = new WTapController(new WTapController.Inner_DataUtil() {
+   private final WTapController controller = new WTapController(new WTapController.Settings() {
       @Override
       public int chance() {
          return WTappingModule.this.integer("chance");

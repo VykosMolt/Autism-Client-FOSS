@@ -40,7 +40,7 @@ final class AiFurnaceWork implements AiOperation {
    private final BlockPos home;
    private final String input;
    private final int cookBudgetTicks;
-   private final AiFurnaceWork.Inner_DataUtil plan;
+   private final AiFurnaceWork.ResourcePlan plan;
    private final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
    private final autismclient.ai.engine.AiBlockDigger init_RefQueue_DataUtil;
    private final Set<BlockPos> init_Set = new HashSet<>();
@@ -68,7 +68,7 @@ final class AiFurnaceWork implements AiOperation {
    private final JsonArray load_JsonArray = new JsonArray();
    private String activity = "planning useful furnace work";
 
-   static boolean init_Z_Q_DataUtil(AiFurnaceWork.Inner_DataUtil plan) {
+   static boolean init_Z_Q_DataUtil(AiFurnaceWork.ResourcePlan plan) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          AiCraftPlanner.RecipeGraph graph = AiCraft.buildRecipeGraph();
@@ -101,10 +101,10 @@ final class AiFurnaceWork implements AiOperation {
    }
 
    AiFurnaceWork(BlockPos station, BlockPos home, String input, int cookingTicks) {
-      this(station, home, input, cookingTicks, AiFurnaceWork.Inner_DataUtil.forInput(input));
+      this(station, home, input, cookingTicks, AiFurnaceWork.ResourcePlan.forInput(input));
    }
 
-   AiFurnaceWork(BlockPos station, BlockPos home, String input, int cookingTicks, AiFurnaceWork.Inner_DataUtil plan) {
+   AiFurnaceWork(BlockPos station, BlockPos home, String input, int cookingTicks, AiFurnaceWork.ResourcePlan plan) {
       this.station = station.immutable();
       this.home = home.immutable();
       this.input = input;
@@ -692,17 +692,17 @@ final class AiFurnaceWork implements AiOperation {
       }
    }
 
-   record Inner_DataUtil(Map<String, Integer> resources, Map<String, Integer> crafts) {
-      Inner_DataUtil {
+   record ResourcePlan(Map<String, Integer> resources, Map<String, Integer> crafts) {
+      ResourcePlan {
          resources = Collections.unmodifiableMap(new LinkedHashMap<>(resources));
          crafts = Collections.unmodifiableMap(new LinkedHashMap<>(crafts));
       }
 
-      static AiFurnaceWork.Inner_DataUtil forInput(String input) {
+      static AiFurnaceWork.ResourcePlan forInput(String input) {
          Map<String, Integer> resources = new LinkedHashMap<>();
          resources.put(input, AiGameState.countInventoryItem(input) + 8);
          resources.merge("minecraft:coal", 8, Math::max);
-         return new AiFurnaceWork.Inner_DataUtil(resources, Map.of());
+         return new AiFurnaceWork.ResourcePlan(resources, Map.of());
       }
    }
 }

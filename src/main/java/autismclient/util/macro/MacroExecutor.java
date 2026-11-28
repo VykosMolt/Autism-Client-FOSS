@@ -1383,7 +1383,7 @@ public class MacroExecutor {
                                        customMenu.execute(mc);
                                     } else if (action instanceof FpsAction fps) {
                                        setRunStatus(fps.getDisplayName());
-                                       if (fps.getEndMode() == FpsAction.Inner_DataUtil.TIMEOUT) {
+                                       if (fps.getEndMode() == FpsAction.EndMode.TIMEOUT) {
                                           endFpsOverride(runState);
                                           long fpsDurationNanos = fps.getDurationMs() * 1000000L;
                                           long fpsDeadline = System.nanoTime() + fpsDurationNanos;
@@ -1400,7 +1400,7 @@ public class MacroExecutor {
                                              runState.fpsTimeoutDeadlineNanos = 0L;
                                           }
                                        } else {
-                                          int covered = fps.getEndMode() == FpsAction.Inner_DataUtil.END
+                                          int covered = fps.getEndMode() == FpsAction.EndMode.END
                                              ? macro.actions.size() - 1 - i
                                              : fps.getStepCount();
                                           int endIndex = coveredEndIndex(macro, i, covered);
@@ -1409,7 +1409,7 @@ public class MacroExecutor {
                                        }
                                     } else if (action instanceof SPingAction sping) {
                                        setRunStatus(sping.getDisplayName());
-                                       if (sping.getEndMode() == SPingAction.Inner_DataUtil.TIMEOUT) {
+                                       if (sping.getEndMode() == SPingAction.EndMode.TIMEOUT) {
                                           endPingSpoofOverride(runState);
                                           long spingDurationNanos = sping.getDurationMs() * 1000000L;
                                           long spingDeadline = System.nanoTime() + spingDurationNanos;
@@ -1426,7 +1426,7 @@ public class MacroExecutor {
                                              runState.spingTimeoutDeadlineNanos = 0L;
                                           }
                                        } else {
-                                          int covered = sping.getEndMode() == SPingAction.Inner_DataUtil.END ? macro.actions.size() - 1 - i : sping.getStepCount();
+                                          int covered = sping.getEndMode() == SPingAction.EndMode.END ? macro.actions.size() - 1 - i : sping.getStepCount();
                                           int endIndex = coveredEndIndex(macro, i, covered);
                                           startPingSpoofOverride(
                                              runState, i, endIndex, Math.max(0, sping.pingDelayMs), sping.realIncoming, sping.realOutgoing
@@ -1918,7 +1918,7 @@ public class MacroExecutor {
                                        if (action instanceof StopMacroAction) {
                                           setRunStatus("Stopping Macro");
                                           StopMacroAction stopAction = (StopMacroAction)action;
-                                          if (stopAction.target != StopMacroAction.Inner_DataUtil.SELF) {
+                                          if (stopAction.target != StopMacroAction.StopTarget.SELF) {
                                              stopAction.execute(mc);
                                           } else {
                                              reportLanProgress(runState, i + 1, macro.actions.size(), macro.name);
@@ -2559,11 +2559,11 @@ public class MacroExecutor {
       }
    }
 
-   static CandidatePoolSelector.Inner_BufferHelper getCandidatePoolState(MacroAction action) {
+   static CandidatePoolSelector.SelectionState getCandidatePoolState(MacroAction action) {
       MacroExecutor.MacroRun run = CURRENT_RUN.get();
       if (run != null && action != null) {
          synchronized (run.candidatePools) {
-            return run.candidatePools.computeIfAbsent(action, a -> new CandidatePoolSelector.Inner_BufferHelper());
+            return run.candidatePools.computeIfAbsent(action, a -> new CandidatePoolSelector.SelectionState());
          }
       } else {
          return null;
@@ -2579,13 +2579,13 @@ public class MacroExecutor {
       }
    }
 
-   static String buildSuggestionQuery(String resolvedCommand, CandidatePoolSelector.Inner_DataUtil filter, String filterText) {
+   static String buildSuggestionQuery(String resolvedCommand, CandidatePoolSelector.FilterMode filter, String filterText) {
       String query = resolvedCommand.startsWith("/") ? resolvedCommand : "/" + resolvedCommand;
       if (!query.contains(" ")) {
          query = query + " ";
       }
 
-      String prefix = filter == CandidatePoolSelector.Inner_DataUtil.PREFIX && filterText != null ? filterText.trim() : "";
+      String prefix = filter == CandidatePoolSelector.FilterMode.PREFIX && filterText != null ? filterText.trim() : "";
       if (!prefix.isEmpty() && !prefix.contains(" ") && query.endsWith(" ")) {
          int end = query.length();
 
@@ -2615,10 +2615,10 @@ public class MacroExecutor {
          union.largestSuggestionBatch = Math.max(union.largestSuggestionBatch, base.size());
          advanceProbeQueue(union, connection, action.autofillTimeoutMs);
          List<String> pool = new ArrayList<>(union.collected);
-         boolean ordered = action.listSelection == CandidatePoolSelector.Inner_CachePool.SEQUENTIAL
-            || action.listSelection == CandidatePoolSelector.Inner_CachePool.FIRST
-            || action.listSelection == CandidatePoolSelector.Inner_CachePool.LAST
-            || action.listSelection == CandidatePoolSelector.Inner_CachePool.POSITION;
+         boolean ordered = action.listSelection == CandidatePoolSelector.SelectionMode.SEQUENTIAL
+            || action.listSelection == CandidatePoolSelector.SelectionMode.FIRST
+            || action.listSelection == CandidatePoolSelector.SelectionMode.LAST
+            || action.listSelection == CandidatePoolSelector.SelectionMode.POSITION;
          if (ordered) {
             pool.sort(String.CASE_INSENSITIVE_ORDER);
          }
@@ -3023,18 +3023,18 @@ public class MacroExecutor {
    }
 
    private static void runPacedTpAction(Minecraft mc, PacedTpAction action) {
-      AtomicReference<PacedTpJobManager.Inner_StreamUtil> handleRef = new AtomicReference<>();
+      AtomicReference<PacedTpJobManager.JobHandle> handleRef = new AtomicReference<>();
       runOnClientThread(mc, () -> handleRef.set(PacedTpJobManager.init(action, "macro")));
-      PacedTpJobManager.Inner_StreamUtil handle = handleRef.get();
+      PacedTpJobManager.JobHandle handle = handleRef.get();
       if (handle != null) {
          setRunStatus("TP " + action.init());
 
          try {
-            while (isStillRunning() && PacedTpJobManager.status(handle.id()).state() == PacedTpJobManager.Inner_DataUtil.PENDING) {
+            while (isStillRunning() && PacedTpJobManager.status(handle.id()).state() == PacedTpJobManager.JobState.PENDING) {
                awaitNextTick();
             }
          } finally {
-            if (PacedTpJobManager.status(handle.id()).state() == PacedTpJobManager.Inner_DataUtil.PENDING) {
+            if (PacedTpJobManager.status(handle.id()).state() == PacedTpJobManager.JobState.PENDING) {
                mc.execute(() -> PacedTpJobManager.cancel(handle.id(), "macro stopped"));
             }
          }
@@ -4092,7 +4092,7 @@ public class MacroExecutor {
       MacroExecutor.PacketWaiter send = null;
       MacroExecutor.PacketWaiter recv = null;
       CompletableFuture<Packet<?>> matched = new CompletableFuture<>();
-      if (action.direction != WaitPacketMatchAction.Inner_DataUtil.S2C) {
+      if (action.direction != WaitPacketMatchAction.PacketDirection.S2C) {
          send = registerOutgoingPacketWaiter(packet -> action.matches(packet, "C2S"));
          send.future.thenAccept(packet -> {
             storeMatchedPacket(action, (Packet<?>)packet, "C2S");
@@ -4100,7 +4100,7 @@ public class MacroExecutor {
          });
       }
 
-      if (action.direction != WaitPacketMatchAction.Inner_DataUtil.C2S) {
+      if (action.direction != WaitPacketMatchAction.PacketDirection.C2S) {
          recv = registerIncomingPacketWaiter(packet -> action.matches(packet, "S2C"));
          recv.future.thenAccept(packet -> {
             storeMatchedPacket(action, (Packet<?>)packet, "S2C");
@@ -4139,7 +4139,7 @@ public class MacroExecutor {
          MacroExecutor.PacketWaiter recv = null;
 
          try {
-            if (action.direction != WaitPacketMatchAction.Inner_DataUtil.S2C) {
+            if (action.direction != WaitPacketMatchAction.PacketDirection.S2C) {
                send = registerOutgoingPacketWaiter(packet -> {
                   boolean matches = action.matches(packet, "C2S");
                   if (matches) {
@@ -4150,7 +4150,7 @@ public class MacroExecutor {
                });
             }
 
-            if (action.direction != WaitPacketMatchAction.Inner_DataUtil.C2S) {
+            if (action.direction != WaitPacketMatchAction.PacketDirection.C2S) {
                recv = registerIncomingPacketWaiter(packet -> {
                   boolean matches = action.matches(packet, "S2C");
                   if (matches) {
@@ -4198,16 +4198,16 @@ public class MacroExecutor {
             switch (action.durationMode) {
                case UNTIL_PACKET:
                   WaitPacketMatchAction wait = new WaitPacketMatchAction();
-                  WaitPacketMatchAction.Inner_DataUtil var10001;
+                  WaitPacketMatchAction.PacketDirection var10001;
                   switch (action.direction) {
                      case C2S:
-                        var10001 = WaitPacketMatchAction.Inner_DataUtil.C2S;
+                        var10001 = WaitPacketMatchAction.PacketDirection.C2S;
                         break;
                      case S2C:
-                        var10001 = WaitPacketMatchAction.Inner_DataUtil.S2C;
+                        var10001 = WaitPacketMatchAction.PacketDirection.S2C;
                         break;
                      case ANY:
-                        var10001 = WaitPacketMatchAction.Inner_DataUtil.ANY;
+                        var10001 = WaitPacketMatchAction.PacketDirection.ANY;
                         break;
                      default:
                         throw new MatchException(null, null);
@@ -4218,7 +4218,7 @@ public class MacroExecutor {
                      ? action.untilPacketName
                      : (action.packetNames.isEmpty() ? "" : action.packetNames.get(0));
                   wait.fieldName = action.untilPacketField;
-                  wait.operator = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.Inner_StreamUtil.class, action.untilPacketOperator, WaitPacketMatchAction.Inner_StreamUtil.EXISTS);
+                  wait.operator = MacroNbtCodecHelper.parseEnum(WaitPacketMatchAction.MatchOperator.class, action.untilPacketOperator, WaitPacketMatchAction.MatchOperator.EXISTS);
                   wait.value = action.untilPacketValue;
                   wait.timeoutMs = Math.max(0, action.durationValue);
                   waitForPacketMatch(wait);
@@ -5688,7 +5688,7 @@ public class MacroExecutor {
                         AutismClientMessaging.sendPrefixed("§cRollback failed: " + describeError(e));
                      }
                   } else if (action instanceof StopMacroAction stopAction) {
-                     if (stopAction.target == StopMacroAction.Inner_DataUtil.SELF) {
+                     if (stopAction.target == StopMacroAction.StopTarget.SELF) {
                         stopCurrentRunOrAll();
                      } else {
                         stopAction.execute(mc);
@@ -11393,7 +11393,7 @@ public class MacroExecutor {
       volatile int backwardJumpBurst = 0;
       final IdentityHashMap<MacroAction, MacroExecutor.AsyncActionHandle> asyncWaits = new IdentityHashMap<>();
       final Map<MacroAction, Map<String, MacroVarValue>> capturedValues = Collections.synchronizedMap(new IdentityHashMap<>());
-      final Map<MacroAction, CandidatePoolSelector.Inner_BufferHelper> candidatePools = Collections.synchronizedMap(new IdentityHashMap<>());
+      final Map<MacroAction, CandidatePoolSelector.SelectionState> candidatePools = Collections.synchronizedMap(new IdentityHashMap<>());
       final MacroExecutor.ExecutionFlags flags;
       final MacroVariableStore variables = new MacroVariableStore();
 

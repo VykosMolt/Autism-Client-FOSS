@@ -10,7 +10,7 @@ public final class PayloadNotificationTracker {
    private static final long init_J = 2000L;
    private static final long load = 30000L;
    private static final int init_I = -14249;
-   private static final Map<String, PayloadNotificationTracker.Inner_DataUtil> init_Map = new LinkedHashMap<>();
+   private static final Map<String, PayloadNotificationTracker.ChannelState> init_Map = new LinkedHashMap<>();
    private static volatile boolean init_Z;
 
    private PayloadNotificationTracker() {
@@ -21,7 +21,7 @@ public final class PayloadNotificationTracker {
          String normalized = normalizeChannel(channel);
          if (!normalized.isBlank()) {
             long now = System.currentTimeMillis();
-            PayloadNotificationTracker.Inner_DataUtil state = init_Map.computeIfAbsent(normalized, unused -> new PayloadNotificationTracker.Inner_DataUtil());
+            PayloadNotificationTracker.ChannelState state = init_Map.computeIfAbsent(normalized, unused -> new PayloadNotificationTracker.ChannelState());
             init_Z = true;
             state.init_Str = normalized;
             state.load_Str = labelFor(normalized, match);
@@ -53,10 +53,10 @@ public final class PayloadNotificationTracker {
                init_Z = false;
             } else {
                long now = System.currentTimeMillis();
-               Iterator<Entry<String, PayloadNotificationTracker.Inner_DataUtil>> it = init_Map.entrySet().iterator();
+               Iterator<Entry<String, PayloadNotificationTracker.ChannelState>> it = init_Map.entrySet().iterator();
 
                while (it.hasNext()) {
-                  PayloadNotificationTracker.Inner_DataUtil state = it.next().getValue();
+                  PayloadNotificationTracker.ChannelState state = it.next().getValue();
                   if (state.init_I > 0 && now >= state.init_J) {
                      announce(state);
                      state.init_I = 0;
@@ -79,7 +79,7 @@ public final class PayloadNotificationTracker {
       init_Z = false;
    }
 
-   private static void announce(PayloadNotificationTracker.Inner_DataUtil state) {
+   private static void announce(PayloadNotificationTracker.ChannelState state) {
       String label = state.load_Str != null && !state.load_Str.isBlank() ? state.load_Str : state.init_Str;
       bi.init("Payload: " + label + " +" + state.init_I, -14249);
    }
@@ -97,7 +97,7 @@ public final class PayloadNotificationTracker {
       return channel == null ? "" : channel.trim().toLowerCase(Locale.ROOT);
    }
 
-   private static final class Inner_DataUtil {
+   private static final class ChannelState {
       String init_Str = "";
       String load_Str = "";
       long init_J;

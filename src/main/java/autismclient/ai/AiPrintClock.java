@@ -18,7 +18,7 @@ final class AiPrintClock {
    static autismclient.ai.print.PrintClockSequence create(final autismclient.ai.print.LivePrintEnv env, final autismclient.ai.print.PrintClockSpec spec) {
       final Minecraft mc = Minecraft.getInstance();
       final LocalPlayer originalPlayer = mc.player;
-      return new autismclient.ai.print.PrintClockSequence(env, spec, new autismclient.ai.print.PrintClockSequence.Inner_DataUtil() {
+      return new autismclient.ai.print.PrintClockSequence(env, spec, new autismclient.ai.print.PrintClockSequence.Actions() {
          private Boolean creative;
 
          @Override

@@ -18,17 +18,17 @@ import org.joml.Matrix3x2f;
 import org.lwjgl.system.MemoryUtil;
 
 public final class SdfIconRenderer {
-   private static final SdfIconRenderer.Inner_DataUtil[] GLYPHS = new SdfIconRenderer.Inner_DataUtil[]{
-      new SdfIconRenderer.Inner_DataUtil("x", new float[]{4.0F, 4.0F, 12.0F, 12.0F, 12.0F, 4.0F, 4.0F, 12.0F}),
-      new SdfIconRenderer.Inner_DataUtil("plus", new float[]{8.0F, 3.0F, 8.0F, 13.0F, 3.0F, 8.0F, 13.0F, 8.0F}),
-      new SdfIconRenderer.Inner_DataUtil("minus", new float[]{3.0F, 8.0F, 13.0F, 8.0F}),
-      new SdfIconRenderer.Inner_DataUtil("check", new float[]{3.0F, 8.0F, 6.5F, 11.5F, 6.5F, 11.5F, 13.0F, 4.5F}),
-      new SdfIconRenderer.Inner_DataUtil("chevron_down", new float[]{3.5F, 5.5F, 8.0F, 10.0F, 8.0F, 10.0F, 12.5F, 5.5F}),
-      new SdfIconRenderer.Inner_DataUtil("chevron_up", new float[]{3.5F, 10.0F, 8.0F, 5.5F, 8.0F, 5.5F, 12.5F, 10.0F}),
-      new SdfIconRenderer.Inner_DataUtil("chevron_right", new float[]{5.5F, 3.5F, 10.0F, 8.0F, 10.0F, 8.0F, 5.5F, 12.5F}),
-      new SdfIconRenderer.Inner_DataUtil("play", new float[]{4.5F, 3.0F, 12.0F, 8.0F, 12.0F, 8.0F, 4.5F, 13.0F, 4.5F, 13.0F, 4.5F, 3.0F}),
-      new SdfIconRenderer.Inner_DataUtil("stop", new float[]{4.0F, 4.0F, 12.0F, 4.0F, 12.0F, 4.0F, 12.0F, 12.0F, 12.0F, 12.0F, 4.0F, 12.0F, 4.0F, 12.0F, 4.0F, 4.0F}),
-      new SdfIconRenderer.Inner_DataUtil(
+   private static final SdfIconRenderer.Glyph[] GLYPHS = new SdfIconRenderer.Glyph[]{
+      new SdfIconRenderer.Glyph("x", new float[]{4.0F, 4.0F, 12.0F, 12.0F, 12.0F, 4.0F, 4.0F, 12.0F}),
+      new SdfIconRenderer.Glyph("plus", new float[]{8.0F, 3.0F, 8.0F, 13.0F, 3.0F, 8.0F, 13.0F, 8.0F}),
+      new SdfIconRenderer.Glyph("minus", new float[]{3.0F, 8.0F, 13.0F, 8.0F}),
+      new SdfIconRenderer.Glyph("check", new float[]{3.0F, 8.0F, 6.5F, 11.5F, 6.5F, 11.5F, 13.0F, 4.5F}),
+      new SdfIconRenderer.Glyph("chevron_down", new float[]{3.5F, 5.5F, 8.0F, 10.0F, 8.0F, 10.0F, 12.5F, 5.5F}),
+      new SdfIconRenderer.Glyph("chevron_up", new float[]{3.5F, 10.0F, 8.0F, 5.5F, 8.0F, 5.5F, 12.5F, 10.0F}),
+      new SdfIconRenderer.Glyph("chevron_right", new float[]{5.5F, 3.5F, 10.0F, 8.0F, 10.0F, 8.0F, 5.5F, 12.5F}),
+      new SdfIconRenderer.Glyph("play", new float[]{4.5F, 3.0F, 12.0F, 8.0F, 12.0F, 8.0F, 4.5F, 13.0F, 4.5F, 13.0F, 4.5F, 3.0F}),
+      new SdfIconRenderer.Glyph("stop", new float[]{4.0F, 4.0F, 12.0F, 4.0F, 12.0F, 4.0F, 12.0F, 12.0F, 12.0F, 12.0F, 4.0F, 12.0F, 4.0F, 12.0F, 4.0F, 4.0F}),
+      new SdfIconRenderer.Glyph(
          "edit",
          new float[]{
             3.0F,
@@ -57,7 +57,7 @@ public final class SdfIconRenderer {
             7.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "duplicate",
          new float[]{
             6.0F,
@@ -86,7 +86,7 @@ public final class SdfIconRenderer {
             3.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "macros",
          new float[]{
             5.0F,
@@ -123,7 +123,7 @@ public final class SdfIconRenderer {
             10.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "fabricator",
          new float[]{
             3.0F,
@@ -152,7 +152,7 @@ public final class SdfIconRenderer {
             13.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "lansync",
          new float[]{
             2.5F,
@@ -181,11 +181,11 @@ public final class SdfIconRenderer {
             13.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "packetqeditor",
          new float[]{3.0F, 4.0F, 13.0F, 4.0F, 3.0F, 8.0F, 10.0F, 8.0F, 3.0F, 12.0F, 8.0F, 12.0F, 11.0F, 10.0F, 13.5F, 12.0F, 13.5F, 12.0F, 11.0F, 14.0F}
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "packetlogger",
          new float[]{
             3.0F,
@@ -214,7 +214,7 @@ public final class SdfIconRenderer {
             9.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "filter",
          new float[]{
             2.5F,
@@ -243,7 +243,7 @@ public final class SdfIconRenderer {
             3.5F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "serverinfo",
          new float[]{
             3.0F,
@@ -288,7 +288,7 @@ public final class SdfIconRenderer {
             11.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "keybinds",
          new float[]{
             3.0F,
@@ -317,11 +317,11 @@ public final class SdfIconRenderer {
             13.5F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "profiles",
          new float[]{3.0F, 13.0F, 3.0F, 11.0F, 3.0F, 11.0F, 5.0F, 9.5F, 5.0F, 9.5F, 11.0F, 9.5F, 11.0F, 9.5F, 13.0F, 11.0F, 13.0F, 11.0F, 13.0F, 13.0F}
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "mainmenucategory",
          new float[]{
             3.0F,
@@ -390,7 +390,7 @@ public final class SdfIconRenderer {
             10.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "packetcategory",
          new float[]{
             3.0F,
@@ -431,16 +431,16 @@ public final class SdfIconRenderer {
             13.5F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "screencategory",
          new float[]{2.5F, 3.0F, 13.5F, 3.0F, 13.5F, 3.0F, 13.5F, 11.0F, 13.5F, 11.0F, 2.5F, 11.0F, 2.5F, 11.0F, 2.5F, 3.0F, 6.0F, 13.0F, 10.0F, 13.0F}
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "chatcategory",
          new float[]{3.0F, 3.0F, 13.0F, 3.0F, 13.0F, 3.0F, 13.0F, 11.0F, 13.0F, 11.0F, 7.0F, 11.0F, 7.0F, 11.0F, 3.0F, 14.0F, 3.0F, 14.0F, 3.0F, 3.0F}
       ),
-      new SdfIconRenderer.Inner_DataUtil("pause", new float[]{5.5F, 3.5F, 5.5F, 12.5F, 10.5F, 3.5F, 10.5F, 12.5F}),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph("pause", new float[]{5.5F, 3.5F, 5.5F, 12.5F, 10.5F, 3.5F, 10.5F, 12.5F}),
+      new SdfIconRenderer.Glyph(
          "sessions",
          new float[]{
             3.0F,
@@ -469,14 +469,14 @@ public final class SdfIconRenderer {
             12.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "settings", new float[]{3.0F, 4.5F, 13.0F, 4.5F, 3.0F, 11.5F, 13.0F, 11.5F, 10.0F, 2.5F, 10.0F, 6.5F, 6.0F, 9.5F, 6.0F, 13.5F}
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "queue",
          new float[]{2.5F, 4.0F, 12.5F, 4.0F, 2.5F, 8.0F, 8.5F, 8.0F, 2.5F, 12.0F, 7.0F, 12.0F, 11.5F, 8.75F, 11.5F, 14.25F, 8.75F, 11.5F, 14.25F, 11.5F}
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "pin",
          new float[]{
             5.0F,
@@ -509,7 +509,7 @@ public final class SdfIconRenderer {
             14.0F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "refresh",
          new float[]{
             10.5F,
@@ -558,10 +558,10 @@ public final class SdfIconRenderer {
             8.93F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "cat_combat", new float[]{8.0F, 2.0F, 8.0F, 8.5F, 4.5F, 8.5F, 11.5F, 8.5F, 8.0F, 8.5F, 8.0F, 12.0F, 8.0F, 13.0F, 8.1F, 13.0F}
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "cat_movement",
          new float[]{
             8.0F,
@@ -606,23 +606,23 @@ public final class SdfIconRenderer {
             9.5F
          }
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "cat_player",
          new float[]{4.0F, 13.0F, 4.5F, 10.5F, 4.5F, 10.5F, 6.5F, 9.0F, 6.5F, 9.0F, 9.5F, 9.0F, 9.5F, 9.0F, 11.5F, 10.5F, 11.5F, 10.5F, 12.0F, 13.0F}
       ),
-      new SdfIconRenderer.Inner_DataUtil("cat_misc", new float[]{4.0F, 8.0F, 4.1F, 8.0F, 8.0F, 8.0F, 8.1F, 8.0F, 12.0F, 8.0F, 12.1F, 8.0F}),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph("cat_misc", new float[]{4.0F, 8.0F, 4.1F, 8.0F, 8.0F, 8.0F, 8.1F, 8.0F, 12.0F, 8.0F, 12.1F, 8.0F}),
+      new SdfIconRenderer.Glyph(
          "cat_render", new float[]{3.0F, 8.0F, 8.0F, 4.5F, 8.0F, 4.5F, 13.0F, 8.0F, 3.0F, 8.0F, 8.0F, 11.5F, 8.0F, 11.5F, 13.0F, 8.0F}
       ),
-      new SdfIconRenderer.Inner_DataUtil(
+      new SdfIconRenderer.Glyph(
          "cat_addon", new float[]{5.5F, 5.5F, 5.6F, 5.5F, 10.5F, 5.5F, 10.6F, 5.5F, 5.5F, 10.5F, 5.6F, 10.5F, 10.5F, 10.5F, 10.6F, 10.5F}
       ),
-      new SdfIconRenderer.Inner_DataUtil("dot", new float[0])
+      new SdfIconRenderer.Glyph("dot", new float[0])
    };
    private static final Map<String, Integer> TILE_INDEX = new HashMap<>(GLYPHS.length * 2);
    private static final int init_I = 64;
    private static final Identifier TEXTURE_ID;
-   private static volatile SdfIconRenderer.Inner_StreamUtil atlas;
+   private static volatile SdfIconRenderer.AtlasTexture atlas;
    private static volatile boolean buildFailed;
    private static volatile NativeImage prewarmedImage;
 
@@ -648,7 +648,7 @@ public final class SdfIconRenderer {
          }
 
          if (w > 0 && h > 0 && color >>> 24 != 0) {
-            SdfIconRenderer.Inner_StreamUtil atlas = ensureAtlas();
+            SdfIconRenderer.AtlasTexture atlas = ensureAtlas();
             if (atlas == null) {
                return false;
             }
@@ -697,7 +697,7 @@ public final class SdfIconRenderer {
    }
 
    public static void releaseAll() {
-      SdfIconRenderer.Inner_StreamUtil toRelease;
+      SdfIconRenderer.AtlasTexture toRelease;
       synchronized (SdfIconRenderer.class) {
          toRelease = atlas;
          atlas = null;
@@ -713,8 +713,8 @@ public final class SdfIconRenderer {
       }
    }
 
-   private static SdfIconRenderer.Inner_StreamUtil ensureAtlas() {
-      SdfIconRenderer.Inner_StreamUtil current = atlas;
+   private static SdfIconRenderer.AtlasTexture ensureAtlas() {
+      SdfIconRenderer.AtlasTexture current = atlas;
       if (current == null && !buildFailed) {
          synchronized (SdfIconRenderer.class) {
             current = atlas;
@@ -728,7 +728,7 @@ public final class SdfIconRenderer {
                      pixels = renderAtlasImage();
                   }
 
-                  current = new SdfIconRenderer.Inner_StreamUtil(pixels);
+                  current = new SdfIconRenderer.AtlasTexture(pixels);
                   ownedByAtlas = true;
                   Minecraft.getInstance().getTextureManager().register(TEXTURE_ID, current);
                   atlas = current;
@@ -755,7 +755,7 @@ public final class SdfIconRenderer {
       long base = image.getPointer();
 
       for (int tile = 0; tile < GLYPHS.length; tile++) {
-         SdfIconRenderer.Inner_DataUtil glyph = GLYPHS[tile];
+         SdfIconRenderer.Glyph glyph = GLYPHS[tile];
          float[] segments = glyph.segments();
          String name = glyph.name();
          boolean isDot = "dot".equals(name);
@@ -820,11 +820,11 @@ public final class SdfIconRenderer {
       TEXTURE_ID = Identifier.fromNamespaceAndPath("autismclient", "ui/sdf_icons");
    }
 
-   private record Inner_DataUtil(String name, float[] segments) {
+   private record Glyph(String name, float[] segments) {
    }
 
-   private static final class Inner_StreamUtil extends AbstractTexture {
-      Inner_StreamUtil(NativeImage pixels) {
+   private static final class AtlasTexture extends AbstractTexture {
+      AtlasTexture(NativeImage pixels) {
          try (pixels) {
             this.texture = RenderSystem.getDevice()
                .createTexture("autismclient vector icons", 15, GpuFormat.R8_UNORM, pixels.getWidth(), pixels.getHeight(), 1, 1);

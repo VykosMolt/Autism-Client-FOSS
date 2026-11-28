@@ -271,7 +271,7 @@ public final class PacketInspectorEngine {
       builder.line("Tick: " + entry.tick, UiColorPalette.textBody());
       builder.line("Time: " + Instant.ofEpochMilli(entry.timestampMs), UiColorPalette.textBody());
       builder.line("Inventory: " + entry.inventoryPacket + " | Movement: " + entry.movementPacket, UiColorPalette.textMuted());
-      PacketDetailFormatter.Inner_DataUtil normalAnalysis = PacketDetailFormatter.analyze(entry);
+      PacketDetailFormatter.PacketAnalysis normalAnalysis = PacketDetailFormatter.analyze(entry);
       if (entry.packet == null) {
          builder.blankLine();
          builder.section("Reality", UiColorPalette.cyan());

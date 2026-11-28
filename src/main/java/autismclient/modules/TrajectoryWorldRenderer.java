@@ -101,7 +101,7 @@ public final class TrajectoryWorldRenderer {
       rememberedPearlId = -1;
    }
 
-   public static void render(PoseStack matrices, AutismBufferSource buffers, Vec3 camera, List<TrajectoriesModule.Inner_CachePool> paths) {
+   public static void render(PoseStack matrices, AutismBufferSource buffers, Vec3 camera, List<TrajectoriesModule.TrajectoryPath> paths) {
       Minecraft mc = Minecraft.getInstance();
       CameraRenderState state = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
       if (state.initialized && mc.level != null && mc.player != null && mc.getWindow().getHeight() >= 1) {
@@ -113,7 +113,7 @@ public final class TrajectoryWorldRenderer {
          double near = mc.options.getCameraType().isFirstPerson() && camera.distanceToSqr(mc.player.getEyePosition(partial)) < 0.25 ? 0.75 : 0.06;
          List<FireballBlastPredictor.DestroyedBlock> blocks = TrajectoryStateCache.blastPredictions(paths);
          blastBlockCount = blocks.size();
-         ThrownPearlTracker.Inner_DataUtil remembered = TrajectoryStateCache.rememberedPearl();
+         ThrownPearlTracker.PearlForecast remembered = TrajectoryStateCache.rememberedPearl();
          if (remembered != null) {
             rememberedPearlId = remembered.init_I();
          }
@@ -125,7 +125,7 @@ public final class TrajectoryWorldRenderer {
                hidden ? autismclient.render.AutismRenderTypes.trajectoryPath(true) : autismclient.render.AutismRenderTypes.trajectoryPath(false)
             );
 
-            for (TrajectoriesModule.Inner_CachePool path : paths) {
+            for (TrajectoriesModule.TrajectoryPath path : paths) {
                renderPath(pose, lines, path, camera, forward, near, opacity);
             }
 
@@ -133,7 +133,7 @@ public final class TrajectoryWorldRenderer {
                hidden ? autismclient.render.AutismRenderTypes.trajectoryImpact(true) : autismclient.render.AutismRenderTypes.trajectoryImpact(false)
             );
 
-            for (TrajectoriesModule.Inner_CachePool path : paths) {
+            for (TrajectoriesModule.TrajectoryPath path : paths) {
                if (path.surface() != null) {
                   drawPath(pose, markers, path, camera, opacity);
                }
@@ -148,7 +148,7 @@ public final class TrajectoryWorldRenderer {
 
          LinkedHashSet<Entity> hitTargets = new LinkedHashSet<>();
 
-         for (TrajectoriesModule.Inner_CachePool path : paths) {
+         for (TrajectoriesModule.TrajectoryPath path : paths) {
             if (path.hit() instanceof EntityHitResult hit
                && isEntityHitItem(path.init_aS_StreamUtil())
                && hit.getEntity().isAlive()
@@ -185,7 +185,7 @@ public final class TrajectoryWorldRenderer {
          Vec3 rememberedGhost = remembered == null ? null : remembered.position();
          Vec3 heldGhost = null;
 
-         for (TrajectoriesModule.Inner_CachePool path : paths) {
+         for (TrajectoriesModule.TrajectoryPath path : paths) {
             if (path.load_Vec3() != null) {
                heldGhost = path.load_Vec3();
                break;
@@ -214,8 +214,8 @@ public final class TrajectoryWorldRenderer {
       }
    }
 
-   private static void drawPath(Pose pose, VertexConsumer buffer, TrajectoriesModule.Inner_CachePool path, Vec3 camera, double opacityScale) {
-      TrajectoriesModule.Inner_BufferHelper surface = path.surface();
+   private static void drawPath(Pose pose, VertexConsumer buffer, TrajectoriesModule.TrajectoryPath path, Vec3 camera, double opacityScale) {
+      TrajectoriesModule.Impact surface = path.surface();
       Vec3 normal = surface.normal();
       int var10000;
       switch (path.init_aS_StreamUtil()) {
@@ -242,7 +242,7 @@ public final class TrajectoryWorldRenderer {
       }
 
       int style = var10000;
-      int opacity = surface.load_Z() ? 240 : (path.init_aS_StreamUtil() == TrajectoriesModule.Inner_StreamUtil.PEARL ? 225 : 230);
+      int opacity = surface.load_Z() ? 240 : (path.init_aS_StreamUtil() == TrajectoriesModule.ProjectileItem.PEARL ? 225 : 230);
       if (!path.load_Z()) {
          opacity = (int)(opacity * 0.86);
       }
@@ -262,28 +262,28 @@ public final class TrajectoryWorldRenderer {
       quad(pose, buffer, center.subtract(camera), tangent.scale(extent), bitangent.scale(extent), color, style);
    }
 
-   private static int hitColor(TrajectoriesModule.Inner_CachePool path) {
+   private static int hitColor(TrajectoriesModule.TrajectoryPath path) {
       return path.hit() != null && path.hit().getType() == Type.ENTITY ? -44976 : path.color();
    }
 
-   private static boolean isEntityHitItem(TrajectoriesModule.Inner_StreamUtil item) {
-      return item == TrajectoriesModule.Inner_StreamUtil.BOW
-         || item == TrajectoriesModule.Inner_StreamUtil.CROSSBOW
-         || item == TrajectoriesModule.Inner_StreamUtil.TRIDENT
-         || item == TrajectoriesModule.Inner_StreamUtil.SNOWBALL
-         || item == TrajectoriesModule.Inner_StreamUtil.EGG;
+   private static boolean isEntityHitItem(TrajectoriesModule.ProjectileItem item) {
+      return item == TrajectoriesModule.ProjectileItem.BOW
+         || item == TrajectoriesModule.ProjectileItem.CROSSBOW
+         || item == TrajectoriesModule.ProjectileItem.TRIDENT
+         || item == TrajectoriesModule.ProjectileItem.SNOWBALL
+         || item == TrajectoriesModule.ProjectileItem.EGG;
    }
 
    private static AABB entityBox(Entity entity, Vec3 camera, float partial, double margin) {
       return entity.getBoundingBox().inflate(margin).move(entity.getPosition(partial).subtract(entity.position()).subtract(camera));
    }
 
-   private static Vec3 easedPoint(TrajectoriesModule.Inner_CachePool path, int index) {
+   private static Vec3 easedPoint(TrajectoriesModule.TrajectoryPath path, int index) {
       int ease = Math.min(2, path.points().size() - 1);
       return index < ease ? path.points().get(index).add(path.init_Vec3().scale(1.0 - (double)index / ease)) : path.points().get(index);
    }
 
-   private static void renderPath(Pose pose, VertexConsumer buffer, TrajectoriesModule.Inner_CachePool path, Vec3 camera, Vec3 forward, double near, double opacity) {
+   private static void renderPath(Pose pose, VertexConsumer buffer, TrajectoriesModule.TrajectoryPath path, Vec3 camera, Vec3 forward, double near, double opacity) {
       if (path.points().size() >= 2) {
          Vec3 previous = easedPoint(path, 0).subtract(camera);
          int count = path.points().size() - 1;

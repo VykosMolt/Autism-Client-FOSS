@@ -105,9 +105,9 @@ final class AiSpeedrun {
       return kit;
    }
 
-   static Map<String, Integer> ironGearTargets(AiProgression.Inner_CachePool pick, int ironPickCount, Map<String, Integer> missing) {
+   static Map<String, Integer> ironGearTargets(AiProgression.PickTier pick, int ironPickCount, Map<String, Integer> missing) {
       Map<String, Integer> targets = new LinkedHashMap<>();
-      if (pick.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()) {
+      if (pick.ordinal() < AiProgression.PickTier.IRON.ordinal()) {
          targets.put("minecraft:iron_pickaxe", Math.max(0, ironPickCount) + 1);
       }
 
@@ -1670,7 +1670,7 @@ final class AiSpeedrun {
                   return this.running("Nearby hay can provide bread");
                }
 
-               AiFoodHuntBudget.Inner_DataUtil admission = AiFoodHuntBudget.admit(this.deadline, System.nanoTime(), this.graceUsed);
+               AiFoodHuntBudget.Admission admission = AiFoodHuntBudget.admit(this.deadline, System.nanoTime(), this.graceUsed);
                if (admission.admitted()) {
                   AiOperation hunt = AiSpeedrun.hunt(48.0, Math.max(1, items - have), admission.childSeconds());
                   if (hunt != null) {

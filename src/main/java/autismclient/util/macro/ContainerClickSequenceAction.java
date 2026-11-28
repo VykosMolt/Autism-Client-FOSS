@@ -10,8 +10,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 
 public class ContainerClickSequenceAction implements MacroAction {
-   public ContainerClickSequenceAction.Inner_StreamUtil slotSource = ContainerClickSequenceAction.Inner_StreamUtil.SINGLE;
-   public ContainerClickSequenceAction.Inner_DataUtil containerSource = ContainerClickSequenceAction.Inner_DataUtil.CURRENT;
+   public ContainerClickSequenceAction.SlotSource slotSource = ContainerClickSequenceAction.SlotSource.SINGLE;
+   public ContainerClickSequenceAction.ContainerSource containerSource = ContainerClickSequenceAction.ContainerSource.CURRENT;
    public int slot = 0;
    public int startSlot = 0;
    public int endSlot = 0;
@@ -38,7 +38,7 @@ public class ContainerClickSequenceAction implements MacroAction {
 
    boolean clickSlot(Minecraft mc, int visibleSlot) {
       if (!autismclient.modules.aD.read_Z() && mc != null && mc.player != null && mc.gameMode != null && mc.player.containerMenu != null) {
-         int handlerSlot = this.containerSource != ContainerClickSequenceAction.Inner_DataUtil.CURRENT && this.containerSource != ContainerClickSequenceAction.Inner_DataUtil.PLAYER_INVENTORY
+         int handlerSlot = this.containerSource != ContainerClickSequenceAction.ContainerSource.CURRENT && this.containerSource != ContainerClickSequenceAction.ContainerSource.PLAYER_INVENTORY
             ? visibleSlot
             : autismclient.util.InventorySlotHelper.toScreenSlot(mc, visibleSlot);
          if (handlerSlot < 0) {
@@ -143,8 +143,8 @@ public class ContainerClickSequenceAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.slotSource = MacroNbtCodecHelper.parseEnum(ContainerClickSequenceAction.Inner_StreamUtil.class, tag.getStringOr("slotSource", "SINGLE"), ContainerClickSequenceAction.Inner_StreamUtil.SINGLE);
-      this.containerSource = MacroNbtCodecHelper.parseEnum(ContainerClickSequenceAction.Inner_DataUtil.class, tag.getStringOr("containerSource", "CURRENT"), ContainerClickSequenceAction.Inner_DataUtil.CURRENT);
+      this.slotSource = MacroNbtCodecHelper.parseEnum(ContainerClickSequenceAction.SlotSource.class, tag.getStringOr("slotSource", "SINGLE"), ContainerClickSequenceAction.SlotSource.SINGLE);
+      this.containerSource = MacroNbtCodecHelper.parseEnum(ContainerClickSequenceAction.ContainerSource.class, tag.getStringOr("containerSource", "CURRENT"), ContainerClickSequenceAction.ContainerSource.CURRENT);
       this.slot = tag.getIntOr("slot", 0);
       this.startSlot = tag.getIntOr("startSlot", 0);
       this.endSlot = tag.getIntOr("endSlot", 0);
@@ -182,14 +182,14 @@ public class ContainerClickSequenceAction implements MacroAction {
       return "C";
    }
 
-   public enum Inner_DataUtil {
+   public enum ContainerSource {
       CURRENT,
       SAVED_GUI,
       PLAYER_INVENTORY,
       MANUAL;
    }
 
-   public enum Inner_StreamUtil {
+   public enum SlotSource {
       SINGLE,
       RANGE,
       LIST,

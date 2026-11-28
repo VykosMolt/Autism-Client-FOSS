@@ -171,10 +171,10 @@ public final class PacketCommandBuilder {
          return "";
       }
 
-      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packetClass);
+      PacketSchemaRegistry.PacketSchema schema = PacketSchemaRegistry.schemaFor(packetClass);
       List<String> fields = new ArrayList<>();
       if (schema != null) {
-         for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
+         for (PacketSchemaRegistry.FieldSchema field : schema.fields()) {
             fields.add(field.name() + "=" + placeholderValue(field.load(), field.read()) + " (" + typeHint(field.load(), field.read()) + ")");
          }
       }
@@ -731,7 +731,7 @@ public final class PacketCommandBuilder {
    }
 
    private static PacketCommandBuilder.BuildResult buildFromSchema(Class<? extends Packet<?>> packetClass, Map<String, String> args) {
-      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packetClass);
+      PacketSchemaRegistry.PacketSchema schema = PacketSchemaRegistry.schemaFor(packetClass);
       if (schema != null && !schema.fields().isEmpty()) {
          String firstError = null;
 
@@ -918,11 +918,11 @@ public final class PacketCommandBuilder {
          return withRawArgs(fields);
       }
 
-      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packetClass);
+      PacketSchemaRegistry.PacketSchema schema = PacketSchemaRegistry.schemaFor(packetClass);
       if (schema != null && !schema.fields().isEmpty()) {
          List<String> out = new ArrayList<>();
 
-         for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
+         for (PacketSchemaRegistry.FieldSchema field : schema.fields()) {
             out.add(field.name());
          }
 
@@ -1091,12 +1091,12 @@ public final class PacketCommandBuilder {
 
       if (!field.equals("direction") && !field.equals("dir") && !field.equals("face")) {
          if (!field.equals("input") && !field.equals("click") && !field.equals("containerinput")) {
-            PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packetClass);
+            PacketSchemaRegistry.PacketSchema schema = PacketSchemaRegistry.schemaFor(packetClass);
             if (schema == null) {
                return null;
             }
 
-            for (PacketSchemaRegistry.Inner_DataUtil schemaField : schema.fields()) {
+            for (PacketSchemaRegistry.FieldSchema schemaField : schema.fields()) {
                if (normalizeArgKey(schemaField.name()).equals(field)) {
                   try {
                      Class<?> cls = Class.forName(qualifiedTypeName(schemaField.load()));

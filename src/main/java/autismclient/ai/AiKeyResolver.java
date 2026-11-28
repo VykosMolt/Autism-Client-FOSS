@@ -32,39 +32,39 @@ final class AiKeyResolver {
       return providersFor(key).size() == 1;
    }
 
-   static AiKeyResolver.Inner_DataUtil resolve(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, Runnable checkpoint) {
+   static AiKeyResolver.Resolution resolve(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, Runnable checkpoint) {
       return resolveWith(key, chosen, endpoint, raceOthers, null, checkpoint);
    }
 
-   static AiKeyResolver.Inner_DataUtil resolveWith(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, AiModels.Inner_DataUtil fetch) {
+   static AiKeyResolver.Resolution resolveWith(String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, AiModels.JsonFetcher fetch) {
       return resolveWith(key, chosen, endpoint, raceOthers, fetch, () -> {});
    }
 
-   private static AiKeyResolver.Inner_DataUtil resolveWith(
-      String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, AiModels.Inner_DataUtil fetch, Runnable checkpoint
+   private static AiKeyResolver.Resolution resolveWith(
+      String key, AiSettings.Provider chosen, String endpoint, boolean raceOthers, AiModels.JsonFetcher fetch, Runnable checkpoint
    ) {
       String k = key == null ? "" : key.trim();
       if (k.isEmpty()) {
-         return AiKeyResolver.Inner_DataUtil.failed("Add an API key to scan for models");
+         return AiKeyResolver.Resolution.failed("Add an API key to scan for models");
       }
 
       boolean custom = !AiSettings.shouldAutofillEndpoint(endpoint);
       // A key is never sent to several vendors: only one that matches a single vendor overrides the choice.
       AiSettings.Provider only = chosen == null || !custom && raceOthers && isUnambiguous(k) ? providersFor(k).getFirst() : chosen;
-      AiModels.Inner_CachePool result = probe(only, custom ? endpoint : only.endpoint, k, fetch, checkpoint);
-      return result.ok() ? toResolution(only, result) : AiKeyResolver.Inner_DataUtil.failed(result.error());
+      AiModels.FetchResult result = probe(only, custom ? endpoint : only.endpoint, k, fetch, checkpoint);
+      return result.ok() ? toResolution(only, result) : AiKeyResolver.Resolution.failed(result.error());
    }
 
-   private static AiModels.Inner_CachePool probe(AiSettings.Provider p, String endpoint, String key, AiModels.Inner_DataUtil fetch, Runnable checkpoint) {
+   private static AiModels.FetchResult probe(AiSettings.Provider p, String endpoint, String key, AiModels.JsonFetcher fetch, Runnable checkpoint) {
       return fetch == null ? AiModels.fetchModels(p, endpoint, key, checkpoint) : AiModels.fetchModelsWith(p, endpoint, key, (url, provider, credential) -> {
          checkpoint.run();
          return fetch.get(url, provider, credential);
       });
    }
 
-   private static AiKeyResolver.Inner_DataUtil toResolution(AiSettings.Provider p, AiModels.Inner_CachePool result) {
+   private static AiKeyResolver.Resolution toResolution(AiSettings.Provider p, AiModels.FetchResult result) {
       String endpoint = result.endpoint() != null && !result.endpoint().isBlank() ? result.endpoint() : p.endpoint;
-      return new AiKeyResolver.Inner_DataUtil(p, endpoint, result.models(), pickModel(p, result.models()), "");
+      return new AiKeyResolver.Resolution(p, endpoint, result.models(), pickModel(p, result.models()), "");
    }
 
    static String displayName(AiSettings.Provider p) {
@@ -140,13 +140,13 @@ final class AiKeyResolver {
       }
    }
 
-   record Inner_DataUtil(AiSettings.Provider provider, String endpoint, List<String> models, String model, String error) {
+   record Resolution(AiSettings.Provider provider, String endpoint, List<String> models, String model, String error) {
       boolean ok() {
          return this.error == null || this.error.isEmpty();
       }
 
-      static AiKeyResolver.Inner_DataUtil failed(String error) {
-         return new AiKeyResolver.Inner_DataUtil(null, "", List.of(), "", error);
+      static AiKeyResolver.Resolution failed(String error) {
+         return new AiKeyResolver.Resolution(null, "", List.of(), "", error);
       }
    }
 }

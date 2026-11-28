@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 
 public final class BacktrackPacketQueue<T> {
    public static final long init_J = 300000000L;
-   private final ArrayDeque<BacktrackPacketQueue.Inner_DataUtil<T>> queue = new ArrayDeque<>();
+   private final ArrayDeque<BacktrackPacketQueue.QueuedPacket<T>> queue = new ArrayDeque<>();
    private final int capacity;
    private Object init_Obj;
    private Object load_Obj;
@@ -33,7 +33,7 @@ public final class BacktrackPacketQueue<T> {
 
    public boolean offer(T value, long now, long delay) {
       if (this.init_Obj != null && this.load_Obj != null && this.listener != null && this.target != null && delay > 0L && this.queue.size() < this.capacity) {
-         this.queue.addLast(new BacktrackPacketQueue.Inner_DataUtil<>(value, now, Math.min(300000000L, delay)));
+         this.queue.addLast(new BacktrackPacketQueue.QueuedPacket<>(value, now, Math.min(300000000L, delay)));
          return true;
       } else {
          return false;
@@ -45,7 +45,7 @@ public final class BacktrackPacketQueue<T> {
 
       int count;
       for (count = 0; this.load_J == expected && !this.queue.isEmpty(); count++) {
-         BacktrackPacketQueue.Inner_DataUtil<T> first = this.queue.peekFirst();
+         BacktrackPacketQueue.QueuedPacket<T> first = this.queue.peekFirst();
          if (!all && now - first.receivedAt() < first.load()) {
             break;
          }
@@ -77,6 +77,6 @@ public final class BacktrackPacketQueue<T> {
       this.init_Obj = this.load_Obj = this.listener = this.target = null;
    }
 
-   private record Inner_DataUtil<T>(T packet, long receivedAt, long load) {
+   private record QueuedPacket<T>(T packet, long receivedAt, long load) {
    }
 }

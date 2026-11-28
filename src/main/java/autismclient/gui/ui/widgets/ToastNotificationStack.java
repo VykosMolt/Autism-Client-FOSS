@@ -11,7 +11,7 @@ public final class ToastNotificationStack {
    private static final int load_I = 3;
    private static final int read_I = 15;
    private static final int write_I = 10;
-   private final List<ToastNotificationStack.Inner_DataUtil> toasts = new CopyOnWriteArrayList<>();
+   private final List<ToastNotificationStack.Toast> toasts = new CopyOnWriteArrayList<>();
    private volatile boolean init_Z;
    private final long lifetimeMs;
    private final float enterMs;
@@ -41,7 +41,7 @@ public final class ToastNotificationStack {
             this.toasts.remove(0);
          }
 
-         this.toasts.add(new ToastNotificationStack.Inner_DataUtil(message, nowNanos, accentColor));
+         this.toasts.add(new ToastNotificationStack.Toast(message, nowNanos, accentColor));
          this.init_Z = true;
       }
    }
@@ -93,7 +93,7 @@ public final class ToastNotificationStack {
             int y = anchorY;
 
             for (int i = this.toasts.size() - 1; i >= 0; i--) {
-               ToastNotificationStack.Inner_DataUtil toast = this.toasts.get(i);
+               ToastNotificationStack.Toast toast = this.toasts.get(i);
                float ageMs = Math.max(0.0F, (float)(nowNanos - toast.createdAt()) / 1000000.0F);
                float alpha = Math.min(clamp01(ageMs / this.enterMs), clamp01(((float)this.lifetimeMs - ageMs) / this.exitMs));
                if (!(alpha <= 0.001F)) {
@@ -158,6 +158,6 @@ public final class ToastNotificationStack {
       return r << 16 | g << 8 | b;
    }
 
-   private record Inner_DataUtil(String text, long createdAt, int color) {
+   private record Toast(String text, long createdAt, int color) {
    }
 }

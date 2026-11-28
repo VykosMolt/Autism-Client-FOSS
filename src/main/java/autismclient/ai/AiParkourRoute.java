@@ -205,7 +205,7 @@ final class AiParkourRoute implements AiOperation {
          int var6 = AiJson.getInt(this.putAt_JsonObject, "parkourSpeed", -1);
          double var7 = autismclient.ai.engine.AiPacePlayback.putAt_D_LocalPlayer(var1);
          double var9 = var6 >= 0 ? 0.1 * (1.0 + 0.2 * var6) : var7;
-         boolean var11 = !this.waypoints.isEmpty() && autismclient.ai.engine.AiPaceScript.putAt(var4, this.waypoints.get(0));
+         boolean var11 = !this.waypoints.isEmpty() && autismclient.ai.engine.AiPaceScript.isInsideCell(var4, this.waypoints.get(0));
          this.speedOverridden = var6 >= 0;
          this.switchSpeedAtFirstCheckpoint = var6 >= 0 && this.waypoints.size() >= 2 && !var11 && Math.abs(var7 - var9) > 1.0E-4;
          this.firstLegSpeed = this.switchSpeedAtFirstCheckpoint ? var7 : var9;
@@ -261,7 +261,7 @@ final class AiParkourRoute implements AiOperation {
 
          autismclient.ai.engine.AiPhysics.MotionState var21 = autismclient.ai.engine.AiPhysics.MotionState.of(var1);
 
-         while (this.nextCheckpoint < this.waypoints.size() && autismclient.ai.engine.AiPaceScript.putAt(var21, this.waypoints.get(this.nextCheckpoint))) {
+         while (this.nextCheckpoint < this.waypoints.size() && autismclient.ai.engine.AiPaceScript.isInsideCell(var21, this.waypoints.get(this.nextCheckpoint))) {
             this.putAt_V_LocalPlayer(var1);
          }
 
@@ -353,7 +353,7 @@ final class AiParkourRoute implements AiOperation {
                boolean var40 = this.switchSpeedAtFirstCheckpoint
                   && this.nextCheckpoint == 0
                   && var34.size() >= 2
-                  && !autismclient.ai.engine.AiPaceScript.putAt(var21, (BlockPos)var34.get(0))
+                  && !autismclient.ai.engine.AiPaceScript.isInsideCell(var21, (BlockPos)var34.get(0))
                   && Math.abs(this.firstLegSpeed - this.planningSpeed) > 1.0E-4;
                if (!var40) {
                   this.switchSpeedAtFirstCheckpoint = false;
@@ -389,7 +389,7 @@ final class AiParkourRoute implements AiOperation {
             }
 
             int var31 = Math.max(0, this.nextCheckpoint - this.guideStartCheckpoint);
-            autismclient.ai.engine.AiPaceScript.Inner_IoPool var35 = autismclient.ai.engine.AiPaceScript.fill(var21, var1.getYRot(), var19, var31, this.resumeTick);
+            autismclient.ai.engine.AiPaceScript.Inner_IoPool var35 = autismclient.ai.engine.AiPaceScript.locateOnGuide(var21, var1.getYRot(), var19, var31, this.resumeTick);
             if (var35 == null) {
                return this.handOff(var1, null, this.furthestRestartProgress, "off the route after leaving the script");
             }
@@ -404,7 +404,7 @@ final class AiParkourRoute implements AiOperation {
 
          if (var26.putAt_TableUtil == null) {
             autismclient.ai.engine.AiPaceScript.Inner_IoHelper var29 = var26.putAt_TextPool_IoHelper;
-            boolean var32 = this.paceScripts >= 1 && (!this.switchSpeedAtFirstCheckpoint || this.nextCheckpoint > 0 || var29.flowState() >= 0);
+            boolean var32 = this.paceScripts >= 1 && (!this.switchSpeedAtFirstCheckpoint || this.nextCheckpoint > 0 || var29.firstSpeedChange() >= 0);
             if (!var29.isFinished() && (!var32 || var29.size() < 30)) {
                return this.planningStatus(var1);
             }
@@ -460,11 +460,11 @@ final class AiParkourRoute implements AiOperation {
                return this.handOff(var1, var26, var37.reach(), "the search found no way on");
             }
 
-            int var8 = Math.max(0, var26.putAt_TextPool_IoHelper.putAt_I_I(var30.stepIndex() - 1) - 3);
+            int var8 = Math.max(0, var26.putAt_TextPool_IoHelper.segAt(var30.stepIndex() - 1) - 3);
             int var41 = Math.max(0, this.nextCheckpoint - this.guideStartCheckpoint);
-            autismclient.ai.engine.AiPaceScript.Inner_IoPool var10 = autismclient.ai.engine.AiPaceScript.fill(var21, var1.getYRot(), var19, var41, var8);
+            autismclient.ai.engine.AiPaceScript.Inner_IoPool var10 = autismclient.ai.engine.AiPaceScript.locateOnGuide(var21, var1.getYRot(), var19, var41, var8);
             double var43 = var10 != null ? var10.progress() : var26.putAt_TextPool_IoPool.progress();
-            boolean var45 = var33 == autismclient.ai.engine.AiPacePlayback.Inner_JsonCache.prevEx && var30.putAt_Z();
+            boolean var45 = var33 == autismclient.ai.engine.AiPacePlayback.Inner_JsonCache.prevEx && var30.speedChanged();
             boolean var14 = (var33 == autismclient.ai.engine.AiPacePlayback.Inner_JsonCache.value || var33 == autismclient.ai.engine.AiPacePlayback.Inner_JsonCache.prevEx)
                && (var10 != null || var45);
             if (var14) {
@@ -515,7 +515,7 @@ final class AiParkourRoute implements AiOperation {
                      this.nextCheckpoint,
                      var48,
                      this.planningSpeed,
-                     var30.putAt_Str()
+                     var30.endReason()
                   );
                   autismclient.ai.engine.AiNavDebug.log(var50);
                   AutismClientAddon.LOG.info("[AI] " + var50);
@@ -531,7 +531,7 @@ final class AiParkourRoute implements AiOperation {
                var43,
                var33 != autismclient.ai.engine.AiPacePlayback.Inner_JsonCache.value && var33 != autismclient.ai.engine.AiPacePlayback.Inner_JsonCache.prevEx
                   ? (var33 == autismclient.ai.engine.AiPacePlayback.Inner_JsonCache.readEx ? "the search fell behind" : "the script ended")
-                  : var30.putAt_Str()
+                  : var30.endReason()
             );
          }
       } else {
@@ -624,7 +624,7 @@ final class AiParkourRoute implements AiOperation {
 
       if (var9 != null && var10 != null && !(var10.length() <= 0.0)) {
          double var11 = var9.putAt_TextPool_IoPool.progress();
-         double var7 = (var9.putAt_TextPool_IoHelper.putAt_D() - var11) / Math.max(1.0E-6, var10.length() - var11);
+         double var7 = (var9.putAt_TextPool_IoHelper.furthestProgress() - var11) / Math.max(1.0E-6, var10.length() - var11);
          return new AiOperation.Result(
             AiOperation.Status.RUNNING,
             String.format(Locale.ROOT, "Planning record script · %d%%", (int)Math.round(100.0 * Math.clamp(var7, 0.0, 1.0))),
@@ -775,7 +775,7 @@ final class AiParkourRoute implements AiOperation {
             this.targetYaw = var6;
             this.putAt_TextPool_JsonCache = var4;
             if ((var1.onGround() || var1.onClimbable()) && var1.getDeltaMovement().horizontalDistanceSqr() == 0.0) {
-               autismclient.ai.engine.AiPaceScript.Inner_IoPool var7 = autismclient.ai.engine.AiPaceScript.fill(var5, var6, var4, 0, 0);
+               autismclient.ai.engine.AiPaceScript.Inner_IoPool var7 = autismclient.ai.engine.AiPaceScript.locateOnGuide(var5, var6, var4, 0, 0);
                this.startSearch(var7 != null ? var7 : autismclient.ai.engine.AiPaceScript.Inner_IoPool.of(var5, var6), var4);
             } else {
                this.restartPending = true;

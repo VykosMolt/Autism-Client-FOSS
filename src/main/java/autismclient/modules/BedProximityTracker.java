@@ -36,11 +36,11 @@ final class BedProximityTracker {
    private String teamName;
    private BlockPos ownBed;
    private int tickCounter;
-   private final BedProximityTracker.Inner_CachePool signalTracker = new BedProximityTracker.Inner_CachePool();
+   private final BedProximityTracker.SettleTracker signalTracker = new BedProximityTracker.SettleTracker();
    private int lastSoundTick = -60;
-   private List<BedProximityTracker.Inner_DataUtil> currentGroups = List.of();
+   private List<BedProximityTracker.PlayerGroup> currentGroups = List.of();
 
-   List<BedProximityTracker.Inner_DataUtil> entries() {
+   List<BedProximityTracker.PlayerGroup> entries() {
       return this.currentGroups;
    }
 
@@ -55,27 +55,27 @@ final class BedProximityTracker {
       this.currentGroups = List.of();
    }
 
-   static List<BedProximityTracker.Inner_DataUtil> groupNearby(List<BedProximityTracker.Inner_StreamUtil> people, double radius) {
-      Map<String, List<BedProximityTracker.Inner_StreamUtil>> teams = new TreeMap<>();
+   static List<BedProximityTracker.PlayerGroup> groupNearby(List<BedProximityTracker.NearbyPlayer> people, double radius) {
+      Map<String, List<BedProximityTracker.NearbyPlayer>> teams = new TreeMap<>();
       Set<UUID> seen = new HashSet<>();
 
-      for (BedProximityTracker.Inner_StreamUtil person : people) {
+      for (BedProximityTracker.NearbyPlayer person : people) {
          if (Double.isFinite(person.distance) && person.distance >= 0.0 && person.distance <= radius && seen.add(person.uuid)) {
             teams.computeIfAbsent(person.groupKey, key -> new ArrayList<>()).add(person);
          }
       }
 
-      List<BedProximityTracker.Inner_DataUtil> result = new ArrayList<>();
+      List<BedProximityTracker.PlayerGroup> result = new ArrayList<>();
 
-      for (Entry<String, List<BedProximityTracker.Inner_StreamUtil>> entry : teams.entrySet()) {
-         BedProximityTracker.Inner_StreamUtil closest = entry.getValue()
+      for (Entry<String, List<BedProximityTracker.NearbyPlayer>> entry : teams.entrySet()) {
+         BedProximityTracker.NearbyPlayer closest = entry.getValue()
             .stream()
-            .min(Comparator.comparingDouble(BedProximityTracker.Inner_StreamUtil::distance).thenComparing(BedProximityTracker.Inner_StreamUtil::uuid))
+            .min(Comparator.comparingDouble(BedProximityTracker.NearbyPlayer::distance).thenComparing(BedProximityTracker.NearbyPlayer::uuid))
             .orElseThrow();
-         result.add(new BedProximityTracker.Inner_DataUtil(entry.getKey(), closest.displayName, closest.tint, entry.getValue().size(), closest.distance));
+         result.add(new BedProximityTracker.PlayerGroup(entry.getKey(), closest.displayName, closest.tint, entry.getValue().size(), closest.distance));
       }
 
-      result.sort(Comparator.comparingDouble(BedProximityTracker.Inner_DataUtil::distance).thenComparing(BedProximityTracker.Inner_DataUtil::groupKey));
+      result.sort(Comparator.comparingDouble(BedProximityTracker.PlayerGroup::distance).thenComparing(BedProximityTracker.PlayerGroup::groupKey));
       return List.copyOf(result);
    }
 
@@ -123,7 +123,7 @@ final class BedProximityTracker {
                   }
                }
 
-               ArrayList<BedProximityTracker.Inner_StreamUtil> people = new ArrayList<>();
+               ArrayList<BedProximityTracker.NearbyPlayer> people = new ArrayList<>();
 
                for (AbstractClientPlayer player : mc.level.players()) {
                   if (player != mc.player && player.isAlive() && !player.isSpectator() && !AntiBotTracker.isBot(player)) {
@@ -139,7 +139,7 @@ final class BedProximityTracker {
                         int tint = PlayerDisplayNameParser.displayColor(account, display, fallback);
                         String key = dye != null ? "color:" + dye.getName() : (team != null ? "team:" + team.getName() : "player:" + player.getUUID());
                         people.add(
-                           new BedProximityTracker.Inner_StreamUtil(
+                           new BedProximityTracker.NearbyPlayer(
                               player.getUUID(), key, PlayerDisplayNameParser.displayName(account, display, fallback), tint, player.position().distanceTo(center)
                            )
                         );
@@ -147,7 +147,7 @@ final class BedProximityTracker {
                   }
                }
 
-               List<BedProximityTracker.Inner_DataUtil> next = groupNearby(people, module.decimal("bed-warning-radius"));
+               List<BedProximityTracker.PlayerGroup> next = groupNearby(people, module.decimal("bed-warning-radius"));
                if (module.bool("bed-warning-sound") && this.tickCounter - this.lastSoundTick >= 60 && hasNewGroup(this.currentGroups, next)) {
                   module.playBedSound();
                   this.lastSoundTick = this.tickCounter;
@@ -161,7 +161,7 @@ final class BedProximityTracker {
       }
    }
 
-   static boolean hasNewGroup(List<BedProximityTracker.Inner_DataUtil> previous, List<BedProximityTracker.Inner_DataUtil> next) {
+   static boolean hasNewGroup(List<BedProximityTracker.PlayerGroup> previous, List<BedProximityTracker.PlayerGroup> next) {
       return next.stream().anyMatch(group -> previous.stream().noneMatch(old -> old.groupKey().equals(group.groupKey())));
    }
 
@@ -228,8 +228,8 @@ final class BedProximityTracker {
          );
    }
 
-   static final class Inner_CachePool {
-      private final Map<UUID, BedProximityTracker.Inner_CachePool.Inner_DataUtil> samples = new HashMap<>();
+   static final class SettleTracker {
+      private final Map<UUID, BedProximityTracker.SettleTracker.Inner_DataUtil> samples = new HashMap<>();
       private int lastPruneTick = -2147483648;
 
       boolean isSettled(UUID id, String team, DyeColor color, int tick, int settleTicks) {
@@ -242,10 +242,10 @@ final class BedProximityTracker {
             this.samples.remove(id);
             return false;
          } else {
-            BedProximityTracker.Inner_CachePool.Inner_StreamUtil signal = new BedProximityTracker.Inner_CachePool.Inner_StreamUtil(team, color);
-            BedProximityTracker.Inner_CachePool.Inner_DataUtil old = this.samples.get(id);
+            BedProximityTracker.SettleTracker.Inner_StreamUtil signal = new BedProximityTracker.SettleTracker.Inner_StreamUtil(team, color);
+            BedProximityTracker.SettleTracker.Inner_DataUtil old = this.samples.get(id);
             int since = old != null && old.signal().equals(signal) ? old.since() : tick;
-            this.samples.put(id, new BedProximityTracker.Inner_CachePool.Inner_DataUtil(signal, since, tick));
+            this.samples.put(id, new BedProximityTracker.SettleTracker.Inner_DataUtil(signal, since, tick));
             return tick - since >= settleTicks;
          }
       }
@@ -255,14 +255,14 @@ final class BedProximityTracker {
          this.lastPruneTick = -2147483648;
       }
 
-      private record Inner_DataUtil(BedProximityTracker.Inner_CachePool.Inner_StreamUtil signal, int since, int load) {
+      private record Inner_DataUtil(BedProximityTracker.SettleTracker.Inner_StreamUtil signal, int since, int load) {
       }
 
       private record Inner_StreamUtil(String team, DyeColor color) {
       }
    }
 
-   record Inner_DataUtil(String groupKey, Component displayName, int tint, int load, double distance) {
+   record PlayerGroup(String groupKey, Component displayName, int tint, int load, double distance) {
       Component label(boolean distances) {
          MutableComponent label = this.load == 1
             ? (as.init_Z_33() ? as.load(this.displayName).copy() : this.displayName.copy())
@@ -275,6 +275,6 @@ final class BedProximityTracker {
       }
    }
 
-   record Inner_StreamUtil(UUID uuid, String groupKey, Component displayName, int tint, double distance) {
+   record NearbyPlayer(UUID uuid, String groupKey, Component displayName, int tint, double distance) {
    }
 }

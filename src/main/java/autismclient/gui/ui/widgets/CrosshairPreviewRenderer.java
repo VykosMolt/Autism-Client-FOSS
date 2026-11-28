@@ -10,7 +10,7 @@ public final class CrosshairPreviewRenderer {
    private CrosshairPreviewRenderer() {
    }
 
-   public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, CrosshairRenderState.Inner_DataUtil look) {
+   public static void draw(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper bounds, CrosshairRenderState.Snapshot look) {
       if (bounds.update() > 8 && bounds.sync() > 8) {
          BufferHelper.init_V(context, bounds, "Preview");
          int top = BufferHelper.init_I(context, bounds, "Preview") + 2;
@@ -18,7 +18,7 @@ public final class CrosshairPreviewRenderer {
       }
    }
 
-   public static void drawPreview(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box, CrosshairRenderState.Inner_DataUtil look) {
+   public static void drawPreview(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box, CrosshairRenderState.Snapshot look) {
       if (box.update() > 0 && box.sync() > 0) {
          GuiGraphicsExtractor graphics = context.init_GuiGraphicsExtract();
          int half = box.update() / 2;

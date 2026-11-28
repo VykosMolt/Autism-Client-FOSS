@@ -67,7 +67,7 @@ public final class MiningCost {
       }
    }
 
-   public static double breakTicks(Minecraft mc, ItemStack stack, BlockState state, float hardness, MiningCost.Inner_DataUtil f) {
+   public static double breakTicks(Minecraft mc, ItemStack stack, BlockState state, float hardness, MiningCost.MiningFactors f) {
       if (f.creative()) {
          return hardness < 0.0F ? 1.0 / 0.0 : 1.0;
       }
@@ -181,14 +181,14 @@ public final class MiningCost {
       return selected;
    }
 
-   public record Inner_DataUtil(int haste, int fatigue, double blockSpeed, boolean creative, int ironReserve, boolean stonePick) {
-      public static final MiningCost.Inner_DataUtil PLAIN = new MiningCost.Inner_DataUtil(0, -1, 1.0, false);
+   public record MiningFactors(int haste, int fatigue, double blockSpeed, boolean creative, int ironReserve, boolean stonePick) {
+      public static final MiningCost.MiningFactors PLAIN = new MiningCost.MiningFactors(0, -1, 1.0, false);
 
-      public Inner_DataUtil(int haste, int fatigue, double blockSpeed, boolean creative) {
+      public MiningFactors(int haste, int fatigue, double blockSpeed, boolean creative) {
          this(haste, fatigue, blockSpeed, creative, 0, false);
       }
 
-      public static MiningCost.Inner_DataUtil of(Minecraft mc) {
+      public static MiningCost.MiningFactors of(Minecraft mc) {
          LocalPlayer player = mc.player;
          if (player == null) {
             return PLAIN;
@@ -205,7 +205,7 @@ public final class MiningCost {
             }
          }
 
-         return new MiningCost.Inner_DataUtil(
+         return new MiningCost.MiningFactors(
             haste, fatigue, player.getAttributeValue(Attributes.BLOCK_BREAK_SPEED), player.hasInfiniteMaterials(), AiRestock.reservedStrikes(), stone
          );
       }

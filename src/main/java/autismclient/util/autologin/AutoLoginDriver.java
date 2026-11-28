@@ -13,7 +13,7 @@ public final class AutoLoginDriver {
    private volatile AuthPromptParser.AuthPrompt detection;
    private volatile long pendingStartAt;
    private volatile AutoLoginTimings timings;
-   private volatile AutoLoginDriver.Inner_DataUtil state;
+   private volatile AutoLoginDriver.DriverState state;
    private long startedAt;
    private long read_J;
    private long nextCommandAt;
@@ -31,7 +31,7 @@ public final class AutoLoginDriver {
    public AutoLoginDriver(AutoLoginBackend host) {
       this.detection = AuthPromptParser.AuthPrompt.NONE;
       this.timings = AutoLoginTimings.defaults();
-      this.state = AutoLoginDriver.Inner_DataUtil.IDLE;
+      this.state = AutoLoginDriver.DriverState.IDLE;
       this.submittedMenuGeneration = -9223372036854775808L;
       this.registerCommand = "";
       this.loginCommand = "";
@@ -56,13 +56,13 @@ public final class AutoLoginDriver {
       }
    }
 
-   public AutoLoginDriver.Inner_DataUtil init_CachePool_DataUtil() {
+   public AutoLoginDriver.DriverState init_CachePool_DataUtil() {
       return this.state;
    }
 
    public boolean isFinished() {
-      AutoLoginDriver.Inner_DataUtil current = this.state;
-      return current == AutoLoginDriver.Inner_DataUtil.DONE || current == AutoLoginDriver.Inner_DataUtil.GAVE_UP;
+      AutoLoginDriver.DriverState current = this.state;
+      return current == AutoLoginDriver.DriverState.DONE || current == AutoLoginDriver.DriverState.GAVE_UP;
    }
 
    public int init_I() {
@@ -71,9 +71,9 @@ public final class AutoLoginDriver {
 
    public void tick(long now) {
       this.applyPendingStart();
-      if (this.state != AutoLoginDriver.Inner_DataUtil.IDLE && !this.isFinished()) {
+      if (this.state != AutoLoginDriver.DriverState.IDLE && !this.isFinished()) {
          if (now - this.startedAt >= this.timings.giveUpMs()) {
-            this.state = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
+            this.state = AutoLoginDriver.DriverState.GAVE_UP;
          } else if (!this.handleMenu(now)) {
             this.handleChatPrompt(now);
          }
@@ -97,7 +97,7 @@ public final class AutoLoginDriver {
          this.submittedMenuGeneration = -9223372036854775808L;
          this.registerCommand = "";
          this.loginCommand = "";
-         this.state = AutoLoginDriver.Inner_DataUtil.WATCHING;
+         this.state = AutoLoginDriver.DriverState.WATCHING;
       }
    }
 
@@ -162,7 +162,7 @@ public final class AutoLoginDriver {
 
       this.submittedMenuGeneration = snapshot.generation();
       if (hasText) {
-         this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
+         this.state = AutoLoginDriver.DriverState.LOGGING_IN;
          this.loginSettleAt = now + this.timings.loginRetryMs();
       }
 
@@ -197,12 +197,12 @@ public final class AutoLoginDriver {
                            this.nextCommandAt = now + this.timings.loginRetryMs();
                            if (detection.kind() == AuthPromptParser.PromptKind.REGISTER) {
                               this.registerCommand = detection.command();
-                              this.state = AutoLoginDriver.Inner_DataUtil.REGISTERING;
+                              this.state = AutoLoginDriver.DriverState.REGISTERING;
                               this.loginAfterRegister = true;
                               this.followUpLoginAt = now + this.timings.registerRetryMs();
                            } else {
                               this.loginCommand = detection.command();
-                              this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
+                              this.state = AutoLoginDriver.DriverState.LOGGING_IN;
                               this.loginAfterRegister = false;
                               this.loginSettleAt = now + this.timings.loginRetryMs();
                            }
@@ -212,8 +212,8 @@ public final class AutoLoginDriver {
                }
             } else if (this.loginAfterRegister && now >= this.followUpLoginAt) {
                this.sendLoginAfterRegister(now);
-            } else if (this.state == AutoLoginDriver.Inner_DataUtil.LOGGING_IN && this.loginSettleAt != 0L && now >= this.loginSettleAt) {
-               this.state = AutoLoginDriver.Inner_DataUtil.DONE;
+            } else if (this.state == AutoLoginDriver.DriverState.LOGGING_IN && this.loginSettleAt != 0L && now >= this.loginSettleAt) {
+               this.state = AutoLoginDriver.DriverState.DONE;
             }
          }
       }
@@ -233,7 +233,7 @@ public final class AutoLoginDriver {
             } else {
                this.attempts++;
                this.nextCommandAt = now + this.timings.loginRetryMs();
-               this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
+               this.state = AutoLoginDriver.DriverState.LOGGING_IN;
                this.loginSettleAt = now + this.timings.loginRetryMs();
             }
          }
@@ -246,7 +246,7 @@ public final class AutoLoginDriver {
          this.host.report("Auto login failed after " + this.timings.maxAttempts() + " attempts - check the password.");
       }
 
-      this.state = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
+      this.state = AutoLoginDriver.DriverState.GAVE_UP;
    }
 
    private void reportMissingPassword(String context) {
@@ -256,7 +256,7 @@ public final class AutoLoginDriver {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum DriverState {
       IDLE,
       WATCHING,
       REGISTERING,

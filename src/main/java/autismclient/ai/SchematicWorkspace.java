@@ -53,7 +53,7 @@ public final class SchematicWorkspace {
    private final Minecraft mc;
    final SchematicLibrary library;
    private final Map<String, SchematicLibrary.Placement> placementsById = new LinkedHashMap<>();
-   private final Map<String, SchematicWorkspace.Inner_StreamUtil> loaded = new LinkedHashMap<>();
+   private final Map<String, SchematicWorkspace.LoadedSchematic> loaded = new LinkedHashMap<>();
    private final Set<String> unavailable = new HashSet<>();
    private ClientLevel trackedLevel;
    private String scope = "";
@@ -74,10 +74,10 @@ public final class SchematicWorkspace {
    private SchematicRecording activeRecording;
    private SchematicPaste paste;
    private String activePlacementId;
-   private SchematicWorkspace.Inner_DataUtil buildJob;
+   private SchematicWorkspace.BuildJob buildJob;
    private final Object pasteVisualOwner = new Object();
    private final Object recordingVisOwner = new Object();
-   SchematicCapture.Inner_DataUtil selectedArea;
+   SchematicCapture.CaptureArea selectedArea;
    String captureName = "";
    String selectedFileId = "";
    String selectedPlacementId = "";
@@ -231,7 +231,7 @@ public final class SchematicWorkspace {
       return this.paste != null;
    }
 
-   private SchematicWorkspace.Inner_DataUtil activeBuild() {
+   private SchematicWorkspace.BuildJob activeBuild() {
       return this.buildJob != null && !this.buildJob.job().future().isDone() ? this.buildJob : null;
    }
 
@@ -240,12 +240,12 @@ public final class SchematicWorkspace {
    }
 
    private boolean isBuilding(String placementId) {
-      SchematicWorkspace.Inner_DataUtil active = this.activeBuild();
+      SchematicWorkspace.BuildJob active = this.activeBuild();
       return active != null && active.placementId().equals(placementId);
    }
 
    String activeBuildLabel() {
-      SchematicWorkspace.Inner_DataUtil active = this.activeBuild();
+      SchematicWorkspace.BuildJob active = this.activeBuild();
       SchematicLibrary.Placement placement = active == null ? null : this.placementById(active.placementId());
       return placement == null ? "" : displayName(placement);
    }
@@ -256,7 +256,7 @@ public final class SchematicWorkspace {
       }
 
       String path = file.file().toString();
-      SchematicWorkspace.Inner_DataUtil active = this.activeBuild();
+      SchematicWorkspace.BuildJob active = this.activeBuild();
       SchematicLibrary.Placement building = active == null ? null : this.placementById(active.placementId());
       if (building != null && building.visible() && building.file().equals(path)) {
          return building;
@@ -359,7 +359,7 @@ public final class SchematicWorkspace {
       } else if (p.id().equals(this.loadingPlacementId)) {
          return "Loading";
       } else {
-         SchematicWorkspace.Inner_StreamUtil data = this.loaded.get(p.id());
+         SchematicWorkspace.LoadedSchematic data = this.loaded.get(p.id());
          if (data != null && data.previewError != null) {
             return "Preview unavailable";
          } else if (p.visible() && data == null) {
@@ -584,7 +584,7 @@ public final class SchematicWorkspace {
                      previewError = SchematicLibrary.describeError(e);
                   }
 
-                  SchematicWorkspace.Inner_StreamUtil data = new SchematicWorkspace.Inner_StreamUtil(document, preview, previewError);
+                  SchematicWorkspace.LoadedSchematic data = new SchematicWorkspace.LoadedSchematic(document, preview, previewError);
                   this.mc.execute(() -> {
                      if (generation == this.loadGeneration && capturedWorld == this.trackedLevel) {
                         this.loadTask = null;
@@ -654,9 +654,9 @@ public final class SchematicWorkspace {
 
    void startMove(SchematicLibrary.Placement p) {
       if (this.canMove(p) && !this.isBusy()) {
-         SchematicWorkspace.Inner_StreamUtil data = this.loaded.get(p.id());
+         SchematicWorkspace.LoadedSchematic data = this.loaded.get(p.id());
          if (data.mover == null) {
-            data.mover = new SchematicWorkspace.Inner_CachePool(this, p.id());
+            data.mover = new SchematicWorkspace.PlacementMover(this, p.id());
          }
 
          if (!aP.init_Z_aR_Runnable(data.mover, this::queueLibrarySave)) {
@@ -693,7 +693,7 @@ public final class SchematicWorkspace {
                checkpoint
             );
             this.activePlacementId = p.id();
-            SchematicWorkspace.Inner_StreamUtil preview = this.loaded.get(p.id());
+            SchematicWorkspace.LoadedSchematic preview = this.loaded.get(p.id());
             AiVisualization.clearOwner(preview.mover == null ? preview : preview.mover);
             this.placementsById.put(p.id(), p.checkpoint(this.paste.progress.checkpoint()));
             this.queueLibrarySave();
@@ -713,7 +713,7 @@ public final class SchematicWorkspace {
    void update(SchematicLibrary.Placement p) {
       p = p == null ? null : this.placementById(p.id());
       if (p != null && p.visible() && p.paste().isEmpty() && this.isInWorld() && this.isLoaded(p) && !this.isBusy() && !this.hasActiveBuild()) {
-         SchematicWorkspace.Inner_StreamUtil data = this.loaded.get(p.id());
+         SchematicWorkspace.LoadedSchematic data = this.loaded.get(p.id());
          if (data.preview == null) {
             this.showError("This schematic exceeds the AI builder's preview limit");
          } else if (data.preview.blocks() > 2097152L) {
@@ -738,7 +738,7 @@ public final class SchematicWorkspace {
                      "mirror",
                      p.mirror()
                   );
-                  this.buildJob = new SchematicWorkspace.Inner_DataUtil(p.id(), AiDirectOps.start("game:build", args));
+                  this.buildJob = new SchematicWorkspace.BuildJob(p.id(), AiDirectOps.start("game:build", args));
                   autismclient.util.OverlayScreenController.setScreenExplicit(this.mc, null);
                } catch (Exception e) {
                   this.showError(SchematicLibrary.describeError(e));
@@ -757,7 +757,7 @@ public final class SchematicWorkspace {
    }
 
    private boolean cancelBuild() {
-      SchematicWorkspace.Inner_DataUtil active = this.activeBuild();
+      SchematicWorkspace.BuildJob active = this.activeBuild();
       this.buildJob = null;
       if (active == null) {
          return false;
@@ -913,12 +913,12 @@ public final class SchematicWorkspace {
             }
 
             long now = System.nanoTime();
-            SchematicWorkspace.Inner_StreamUtil oldest = null;
+            SchematicWorkspace.LoadedSchematic oldest = null;
             SchematicLibrary.Placement row = null;
 
-            for (Entry<String, SchematicWorkspace.Inner_StreamUtil> entry : this.loaded.entrySet()) {
+            for (Entry<String, SchematicWorkspace.LoadedSchematic> entry : this.loaded.entrySet()) {
                SchematicLibrary.Placement p = this.placementsById.get(entry.getKey());
-               SchematicWorkspace.Inner_StreamUtil data = entry.getValue();
+               SchematicWorkspace.LoadedSchematic data = entry.getValue();
                if (p != null && p.visible() && !p.id().equals(this.activePlacementId) && data.preview != null && !data.preview.cells().isEmpty()) {
                   AiVisualization.touch(data.mover == null ? data : data.mover, now);
                   if (oldest == null || data.lastUsedNanos < oldest.lastUsedNanos) {
@@ -931,7 +931,7 @@ public final class SchematicWorkspace {
             if (oldest != null) {
                oldest.lastUsedNanos = now;
                SchematicLibrary.Placement p = row;
-               SchematicWorkspace.Inner_StreamUtil data = oldest;
+               SchematicWorkspace.LoadedSchematic data = oldest;
                Object owner = data.mover == null ? data : data.mover;
                AiVisualization.showCells(
                   owner, origin(p), data.preview.cells(), at -> data.document.isSolidAt(at, p.rotation(), p.mirror())
@@ -942,7 +942,7 @@ public final class SchematicWorkspace {
    }
 
    private void unloadPlacement(String id) {
-      SchematicWorkspace.Inner_StreamUtil data = this.loaded.remove(id);
+      SchematicWorkspace.LoadedSchematic data = this.loaded.remove(id);
       if (data != null) {
          AiVisualization.clearOwner(data);
          if (data.mover != null) {
@@ -1038,15 +1038,15 @@ public final class SchematicWorkspace {
       return BlockPos.containing(end);
    }
 
-   static final class Inner_CachePool extends AiPlacementSession {
+   static final class PlacementMover extends AiPlacementSession {
       private final SchematicWorkspace workspace;
       private final String placementId;
       private double aimDepth = 4.0;
 
-      Inner_CachePool(SchematicWorkspace workspace, String id) {
+      PlacementMover(SchematicWorkspace workspace, String id) {
          this.workspace = workspace;
          this.placementId = id;
-         SchematicWorkspace.Inner_StreamUtil data = workspace.loaded.get(id);
+         SchematicWorkspace.LoadedSchematic data = workspace.loaded.get(id);
          AiVisualization.clearOwner(data);
       }
 
@@ -1146,7 +1146,7 @@ public final class SchematicWorkspace {
 
       private void applyTransform(int r, String m) {
          SchematicLibrary.Placement p = this.placement();
-         SchematicWorkspace.Inner_StreamUtil data = this.workspace.loaded.get(this.placementId);
+         SchematicWorkspace.LoadedSchematic data = this.workspace.loaded.get(this.placementId);
          if (r == p.rotation() && m.equals(p.mirror())) {
             if (this.workspace.loadingPlacementId.equals(this.placementId)) {
                this.workspace.cancelOperation();
@@ -1188,17 +1188,17 @@ public final class SchematicWorkspace {
       }
    }
 
-   private record Inner_DataUtil(String placementId, autismclient.util.macro.MacroToolBridge.ToolJob job) {
+   private record BuildJob(String placementId, autismclient.util.macro.MacroToolBridge.ToolJob job) {
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class LoadedSchematic {
       final SchematicDocument document;
       SchematicDocument.Preview preview;
       String previewError;
-      SchematicWorkspace.Inner_CachePool mover;
+      SchematicWorkspace.PlacementMover mover;
       long lastUsedNanos;
 
-      Inner_StreamUtil(SchematicDocument document, SchematicDocument.Preview preview, String previewError) {
+      LoadedSchematic(SchematicDocument document, SchematicDocument.Preview preview, String previewError) {
          this.document = document;
          this.preview = preview;
          this.previewError = previewError;

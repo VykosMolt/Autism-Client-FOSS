@@ -54,7 +54,7 @@ public final class AiVisualization {
    private static final long init_J = 450000000L;
    private static final long load_J = 200000000L;
    private static final Map<Object, AiVisualization.OverlayLayer> layers = new IdentityHashMap<>();
-   private static final Map<BlockState, autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil> ghostModelCache = new IdentityHashMap<>();
+   private static final Map<BlockState, autismclient.util.oresim.OreGhostModelCache.GhostModel> ghostModelCache = new IdentityHashMap<>();
    private static final AutismBufferSource.LazySource ghostBufferAllocator = new AutismBufferSource.LazySource(4194304);
    private static AiSettings settings = new AiSettings();
    private static boolean initialized;
@@ -192,7 +192,7 @@ public final class AiVisualization {
    public static void showDetail(Object owner, String title, String activity, String detail, int percent) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
-         l.taskStatus = new AiTaskStatus.Inner_StreamUtil(title, activity, detail, percent);
+         l.taskStatus = new AiTaskStatus.StatusContent(title, activity, detail, percent);
          l.immediateStatus = true;
          l.statusOrder = ++updateSequence;
       }
@@ -201,7 +201,7 @@ public final class AiVisualization {
    public static void showProgress(Object owner, String title, String activity, int metersAway, int percent) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
-         l.navStatus = new AiTaskStatus.Inner_StreamUtil(title, activity, metersAway + " m away", percent);
+         l.navStatus = new AiTaskStatus.StatusContent(title, activity, metersAway + " m away", percent);
          l.navPriority = 12;
          l.navOrder = ++updateSequence;
       }
@@ -210,13 +210,13 @@ public final class AiVisualization {
    static void showNavStatus(Object owner, String title, String activity, int percent) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
-         l.navStatus = new AiTaskStatus.Inner_StreamUtil(title, activity, "", percent);
+         l.navStatus = new AiTaskStatus.StatusContent(title, activity, "", percent);
          l.navPriority = 5;
          l.navOrder = ++updateSequence;
       }
    }
 
-   static void showContent(Object owner, AiTaskStatus.Inner_StreamUtil content) {
+   static void showContent(Object owner, AiTaskStatus.StatusContent content) {
       AiVisualization.OverlayLayer l = layerFor(owner);
       if (l != null) {
          l.content = content;
@@ -244,7 +244,7 @@ public final class AiVisualization {
          l.pathIndex = index;
          l.lastScriptLength = -1;
          l.lastCheckpointIndex = -1;
-         l.activityStatus = new AiTaskStatus.Inner_StreamUtil("Travelling", "Following the planned route", "");
+         l.activityStatus = new AiTaskStatus.StatusContent("Travelling", "Following the planned route", "");
          l.priority = 10;
          List<AiVisualization.RouteSegment> segments = new ArrayList<>();
          List<AiVisualization.Marker> markers = new ArrayList<>();
@@ -622,8 +622,8 @@ public final class AiVisualization {
 
          l.targets = List.copyOf(out);
          l.activityStatus = out.isEmpty()
-            ? AiTaskStatus.Inner_StreamUtil.EMPTY
-            : new AiTaskStatus.Inner_StreamUtil("Mining", "Mining " + out.getFirst().state.getBlock().getName().getString(), "");
+            ? AiTaskStatus.StatusContent.EMPTY
+            : new AiTaskStatus.StatusContent("Mining", "Mining " + out.getFirst().state.getBlock().getName().getString(), "");
       }
    }
 
@@ -635,8 +635,8 @@ public final class AiVisualization {
          l.priority = 30;
          l.targets = state.isAir() ? List.of() : List.of(ghost(target, state, true));
          l.activityStatus = state.isAir()
-            ? AiTaskStatus.Inner_StreamUtil.EMPTY
-            : new AiTaskStatus.Inner_StreamUtil("Mining", "Breaking " + state.getBlock().getName().getString(), "");
+            ? AiTaskStatus.StatusContent.EMPTY
+            : new AiTaskStatus.StatusContent("Mining", "Breaking " + state.getBlock().getName().getString(), "");
       }
    }
 
@@ -647,7 +647,7 @@ public final class AiVisualization {
          if (l.touchedNanos - l.targetUpdateNanos >= 200000000L) {
             l.targetUpdateNanos = l.touchedNanos;
             l.priority = 30;
-            l.activityStatus = new AiTaskStatus.Inner_StreamUtil("Building", "Placing " + state.getBlock().getName().getString(), "");
+            l.activityStatus = new AiTaskStatus.StatusContent("Building", "Placing " + state.getBlock().getName().getString(), "");
             l.targets = List.of(
                coloredGhost(
                   target,
@@ -707,7 +707,7 @@ public final class AiVisualization {
             int cap = preview ? cells.size() : clampGhostLimit(settings.visualizationBlocks);
             int stride = preview ? 1 : (fullPlan ? Math.max(1, (cells.size() + cap - 1) / cap) : 1);
             l.activityStatus = preview
-               ? new AiTaskStatus.Inner_StreamUtil("Schematic preview", cells.size() + " planned blocks", "Blue: place / Amber: obstruction / Green: complete")
+               ? new AiTaskStatus.StatusContent("Schematic preview", cells.size() + " planned blocks", "Blue: place / Amber: obstruction / Green: complete")
                : AiTaskStatus.progressStatus("Building", "Following the build plan", cursor, cells.size());
             List<AiVisualization.GhostBlock> out = new ArrayList<>();
             int x = 0;
@@ -767,7 +767,7 @@ public final class AiVisualization {
          l.ghosts = List.of();
       } else {
          l.activityStatus = preview
-            ? new AiTaskStatus.Inner_StreamUtil("Schematic preview", cells.size() + " planned blocks", "Blue: place / Amber: obstruction / Green: complete")
+            ? new AiTaskStatus.StatusContent("Schematic preview", cells.size() + " planned blocks", "Blue: place / Amber: obstruction / Green: complete")
             : AiTaskStatus.progressStatus("Building", "Following the build plan", cursor, cells.size());
          l.planBounds = cells.isEmpty()
             ? null
@@ -839,7 +839,7 @@ public final class AiVisualization {
          List<AiVisualization.Marker> markers = new ArrayList<>();
          AABB bounds = null;
          List<AiPlanMesh> plans = new ArrayList<>();
-         List<AiTaskStatus.Inner_DataUtil> statuses = new ArrayList<>();
+         List<AiTaskStatus.StatusCandidate> statuses = new ArrayList<>();
          long now = System.nanoTime();
          ArrayList<AiVisualization.OverlayLayer> activeLayers = new ArrayList<>(layers.values());
          activeLayers.sort(Comparator.comparingLong(l -> l.creationOrder));
@@ -895,19 +895,19 @@ public final class AiVisualization {
                   || settings.visualizeTargets && !l.targets.isEmpty()
                   || settings.visualizePaths && !l.segments.isEmpty();
                if (visible) {
-                  statuses.add(new AiTaskStatus.Inner_DataUtil(l.activityStatus, l.priority, l.creationOrder));
+                  statuses.add(new AiTaskStatus.StatusCandidate(l.activityStatus, l.priority, l.creationOrder));
                }
 
                if (l.navStatus.visible()) {
-                  statuses.add(new AiTaskStatus.Inner_DataUtil(l.navStatus, l.navPriority, l.navOrder));
+                  statuses.add(new AiTaskStatus.StatusCandidate(l.navStatus, l.navPriority, l.navOrder));
                }
 
                if (l.taskStatus.visible()) {
-                  statuses.add(new AiTaskStatus.Inner_DataUtil(l.taskStatus, 100, l.statusOrder, l.immediateStatus));
+                  statuses.add(new AiTaskStatus.StatusCandidate(l.taskStatus, 100, l.statusOrder, l.immediateStatus));
                }
 
                if (l.content.visible()) {
-                  statuses.add(new AiTaskStatus.Inner_DataUtil(l.content, 200, l.contentOrder));
+                  statuses.add(new AiTaskStatus.StatusCandidate(l.content, 200, l.contentOrder));
                }
             }
          }
@@ -1018,7 +1018,7 @@ public final class AiVisualization {
             if (alpha > 0) {
                for (AiVisualization.GhostBlock g : f.ghosts) {
                   if (!g.mining && !g.planned && !g.state.isAir()) {
-                     autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = ghostModelCache.get(g.state);
+                     autismclient.util.oresim.OreGhostModelCache.GhostModel model = ghostModelCache.get(g.state);
                      if (model == null && baked < 8 && System.nanoTime() - started < 2000000L) {
                         model = autismclient.util.oresim.OreGhostModelCache.init(g.state);
                         if (model.faces().isEmpty()) {
@@ -1039,7 +1039,7 @@ public final class AiVisualization {
                         double oy = p.getY() - f.camera.y;
                         double oz = p.getZ() - f.camera.z;
 
-                        for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : model.faces()) {
+                        for (autismclient.util.oresim.OreGhostModelCache.Face face : model.faces()) {
                            if (quads >= 16384) {
                               break;
                            }
@@ -1080,7 +1080,7 @@ public final class AiVisualization {
             Vec3 offset = f.camera.scale(-1.0);
             SchematicSelection selection = aP.init_cU();
             if (selection != null) {
-               SchematicCapture.Inner_DataUtil area = selection.getArea();
+               SchematicCapture.CaptureArea area = selection.getArea();
                if (area != null) {
                   autismclient.util.WorldLineRenderer.box(pose, lines, new AABB(area.min()).minmax(new AABB(area.max())).move(offset), -1336493569, 1.3F);
                }
@@ -1261,9 +1261,9 @@ public final class AiVisualization {
       return alpha << 24 | Math.min(255, r) << 16 | Math.min(255, g) << 8 | Math.min(255, b);
    }
 
-   private static autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil spriteGhostModel(BlockState state) {
+   private static autismclient.util.oresim.OreGhostModelCache.GhostModel spriteGhostModel(BlockState state) {
       TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager().getBlockStateModelSet().getParticleMaterial(state).sprite();
-      List<autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil> faces = new ArrayList<>();
+      List<autismclient.util.oresim.OreGhostModelCache.Face> faces = new ArrayList<>();
 
       for (Direction d : Direction.values()) {
          float[] var10000;
@@ -1301,10 +1301,10 @@ public final class AiVisualization {
             vertices[i * 5 + 4] = i < 2 ? sprite.getV1() : sprite.getV0();
          }
 
-         faces.add(new autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil(d, d, vertices, -1));
+         faces.add(new autismclient.util.oresim.OreGhostModelCache.Face(d, d, vertices, -1));
       }
 
-      return new autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil(List.copyOf(faces));
+      return new autismclient.util.oresim.OreGhostModelCache.GhostModel(List.copyOf(faces));
    }
 
    public static JsonObject statsJson() {
@@ -1402,7 +1402,7 @@ public final class AiVisualization {
       }
 
       autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(g, Minecraft.getInstance().font, 0, 0);
-      AiTaskStatus.Inner_StreamUtil status = hudFrame.status;
+      AiTaskStatus.StatusContent status = hudFrame.status;
       statHudContentWidth = AiTaskStatus.contentWidth(status, ui.init_PoolEntry()::measureWidth, 2147483647);
       int width = AiTaskStatus.contentWidth(status, ui.init_PoolEntry()::measureWidth, Math.min(ui.init_I() - 16, 360));
       statHudWidth = width;
@@ -1430,7 +1430,7 @@ public final class AiVisualization {
       } else if (isHudVisible()) {
          autismclient.gui.f.SyncManager ui = autismclient.gui.f.UiHelper.init(g, Minecraft.getInstance().font, 0, 0);
          autismclient.gui.f.NetHelper b = hudBounds(g);
-         AiTaskStatus.Inner_StreamUtil status = hudFrame.status;
+         AiTaskStatus.StatusContent status = hudFrame.status;
          autismclient.gui.ui.widgets.StatusToastCardRenderer.render(
             ui, b, status.title(), status.bannerActivity(), status.bannerDetail(), ui.init_TableIndex().colors().textPrimary, status.percent()
          );
@@ -1456,10 +1456,10 @@ public final class AiVisualization {
       int lastScriptLength = -1;
       int lastCheckpointIndex = -1;
       AABB planBounds;
-      AiTaskStatus.Inner_StreamUtil activityStatus = AiTaskStatus.Inner_StreamUtil.EMPTY;
-      AiTaskStatus.Inner_StreamUtil navStatus = AiTaskStatus.Inner_StreamUtil.EMPTY;
-      AiTaskStatus.Inner_StreamUtil taskStatus = AiTaskStatus.Inner_StreamUtil.EMPTY;
-      AiTaskStatus.Inner_StreamUtil content = AiTaskStatus.Inner_StreamUtil.EMPTY;
+      AiTaskStatus.StatusContent activityStatus = AiTaskStatus.StatusContent.EMPTY;
+      AiTaskStatus.StatusContent navStatus = AiTaskStatus.StatusContent.EMPTY;
+      AiTaskStatus.StatusContent taskStatus = AiTaskStatus.StatusContent.EMPTY;
+      AiTaskStatus.StatusContent content = AiTaskStatus.StatusContent.EMPTY;
       int priority;
       int navPriority;
       long navOrder;
@@ -1486,11 +1486,11 @@ public final class AiVisualization {
       List<AiVisualization.RouteSegment> route,
       List<AiVisualization.Marker> markers,
       AABB bounds,
-      AiTaskStatus.Inner_StreamUtil status,
+      AiTaskStatus.StatusContent status,
       List<AiPlanMesh> plans
    ) {
       static final AiVisualization.RenderFrame EMPTY = new AiVisualization.RenderFrame(
-         null, Vec3.ZERO, List.of(), List.of(), List.of(), List.of(), null, AiTaskStatus.Inner_StreamUtil.EMPTY, List.of()
+         null, Vec3.ZERO, List.of(), List.of(), List.of(), List.of(), null, AiTaskStatus.StatusContent.EMPTY, List.of()
       );
    }
 

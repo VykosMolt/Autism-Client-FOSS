@@ -63,7 +63,7 @@ final class AiCarriedShulker implements AiOperation {
    private final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer();
    private final AiPreparationReceipt receipt = new AiPreparationReceipt();
    private final long deadlineNanos = System.nanoTime() + 120000000000L;
-   private AiCarriedShulker.Inner_StreamUtil stage = AiCarriedShulker.Inner_StreamUtil.PLACE;
+   private AiCarriedShulker.Stage stage = AiCarriedShulker.Stage.PLACE;
    private BlockPos boxPos;
    private BlockState boxState;
    private BlockState supportState;
@@ -87,7 +87,7 @@ final class AiCarriedShulker implements AiOperation {
    private long inventoryRevision;
    private long blockRevision;
    private long inventoryRevisionAtPlace;
-   private AiCarriedShulker.Inner_DataUtil init_BitSetUtil_DataUti;
+   private AiCarriedShulker.RemovalWatch init_BitSetUtil_DataUti;
    private boolean placed;
    private boolean recovered;
    private boolean cancelled;
@@ -656,15 +656,15 @@ final class AiCarriedShulker implements AiOperation {
          return this.finish(AiOperation.Status.TIMED_OUT, "Portable stock recovery deadline reached");
       }
 
-      if (this.stage == AiCarriedShulker.Inner_StreamUtil.APPROACH
-         || this.stage == AiCarriedShulker.Inner_StreamUtil.PLACE
-         || this.stage == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL
-         || this.stage == AiCarriedShulker.Inner_StreamUtil.PICKUP
+      if (this.stage == AiCarriedShulker.Stage.APPROACH
+         || this.stage == AiCarriedShulker.Stage.PLACE
+         || this.stage == AiCarriedShulker.Stage.CONFIRM_REMOVAL
+         || this.stage == AiCarriedShulker.Stage.PICKUP
          || this.boxStillPlaced()
-         || this.stage == AiCarriedShulker.Inner_StreamUtil.BREAK
+         || this.stage == AiCarriedShulker.Stage.BREAK
             && this.child != null
             && this.mc.level.getBlockState(this.boxPos).isAir()) {
-         if (this.stage == AiCarriedShulker.Inner_StreamUtil.APPROACH) {
+         if (this.stage == AiCarriedShulker.Stage.APPROACH) {
             AiOperation.Result result = this.receipt.tickChild(this.child);
             if (!result.terminal()) {
                return this.running("Moving to a safe existing shulker recovery area");
@@ -676,22 +676,22 @@ final class AiCarriedShulker implements AiOperation {
                return this.finish(result.status(), "Could not reach a safe shulker recovery area");
             }
 
-            this.stage = AiCarriedShulker.Inner_StreamUtil.PLACE;
+            this.stage = AiCarriedShulker.Stage.PLACE;
             return this.running("Rechecking the shulker recovery area after arrival");
          } else {
-            if (this.stage == AiCarriedShulker.Inner_StreamUtil.PLACE) {
+            if (this.stage == AiCarriedShulker.Stage.PLACE) {
                return this.tickPlace();
             }
 
-            if (this.stage == AiCarriedShulker.Inner_StreamUtil.OPEN) {
+            if (this.stage == AiCarriedShulker.Stage.OPEN) {
                return this.tickWithdraw();
             }
 
-            if (this.stage == AiCarriedShulker.Inner_StreamUtil.WITHDRAW) {
+            if (this.stage == AiCarriedShulker.Stage.WITHDRAW) {
                return this.read_AiOperation_Result();
             }
 
-            if (this.stage == AiCarriedShulker.Inner_StreamUtil.CLOSE) {
+            if (this.stage == AiCarriedShulker.Stage.CLOSE) {
                if (this.mc.player.containerMenu != this.mc.player.inventoryMenu) {
                   return this.finish(AiOperation.Status.UNCERTAIN, "Another menu opened during shulker recovery");
                }
@@ -711,9 +711,9 @@ final class AiCarriedShulker implements AiOperation {
                this.inventoryRevision = AiServerEvidence.inventoryRevision();
                this.blockRevision = AiServerEvidence.blockRevision(this.boxPos);
                this.child = autismclient.ai.engine.AiBreakBlock.breakBlock(this.boxPos, 25, true, this.protectedCells, false);
-               this.stage = AiCarriedShulker.Inner_StreamUtil.BREAK;
+               this.stage = AiCarriedShulker.Stage.BREAK;
                return this.running("Recovering the owned stock shulker");
-            } else if (this.stage == AiCarriedShulker.Inner_StreamUtil.BREAK) {
+            } else if (this.stage == AiCarriedShulker.Stage.BREAK) {
                if (this.boxStillPlaced() && !this.read_Z()) {
                   return this.finish(
                      AiOperation.Status.UNCERTAIN, "Stock recovery is no longer safe; further breaking stopped"
@@ -733,26 +733,26 @@ final class AiCarriedShulker implements AiOperation {
                   );
                }
 
-               this.init_BitSetUtil_DataUti = new AiCarriedShulker.Inner_DataUtil(this.blockRevision, System.nanoTime());
-               this.stage = AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL;
+               this.init_BitSetUtil_DataUti = new AiCarriedShulker.RemovalWatch(this.blockRevision, System.nanoTime());
+               this.stage = AiCarriedShulker.Stage.CONFIRM_REMOVAL;
                return this.running("Waiting for the server to confirm the stock shulker removal");
-            } else if (this.stage == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL) {
-               AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 observed = this.init_BitSetUtil_DataUti
+            } else if (this.stage == AiCarriedShulker.Stage.CONFIRM_REMOVAL) {
+               AiCarriedShulker.RemovalWatch.Inner_DataUtil_2 observed = this.init_BitSetUtil_DataUti
                   .evaluate(AiTerrain.isLoaded(this.mc.level, this.boxPos), AiServerEvidence.lastBlockUpdate(this.boxPos), System.nanoTime());
-               if (observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
+               if (observed == AiCarriedShulker.RemovalWatch.Inner_DataUtil_2.WAITING) {
                   return this.running("Waiting for the server to confirm the stock shulker removal");
                }
 
-               if (observed != AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.CONFIRMED) {
+               if (observed != AiCarriedShulker.RemovalWatch.Inner_DataUtil_2.CONFIRMED) {
                   return this.finish(
                      AiOperation.Status.UNCERTAIN,
-                     observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.REJECTED
+                     observed == AiCarriedShulker.RemovalWatch.Inner_DataUtil_2.REJECTED
                         ? "The server did not confirm an empty stock shulker cell; inspect the placed box"
                         : "The stock shulker removal confirmation did not arrive"
                   );
                }
 
-               this.stage = AiCarriedShulker.Inner_StreamUtil.PICKUP;
+               this.stage = AiCarriedShulker.Stage.PICKUP;
                return this.running("Locating the observed stock shulker drop");
             } else {
                if (!isSafePlacementArea(
@@ -896,7 +896,7 @@ final class AiCarriedShulker implements AiOperation {
                         AiGoto.protectingCellsCompat(autismclient.ai.engine.AiPathfinder.PathGoal.nearCompat(stance, 0.6), this.protectedCells),
                         new AiGoto.GotoOptions(false, false, 0, true, false, false)
                      );
-                     this.stage = AiCarriedShulker.Inner_StreamUtil.APPROACH;
+                     this.stage = AiCarriedShulker.Stage.APPROACH;
                      return this.running("Moving to an existing flat area before placing the stock shulker");
                   }
                }
@@ -966,7 +966,7 @@ final class AiCarriedShulker implements AiOperation {
                   ),
                   this.protectedCells
                );
-               this.stage = AiCarriedShulker.Inner_StreamUtil.OPEN;
+               this.stage = AiCarriedShulker.Stage.OPEN;
                return this.running("Opening the placed stock shulker");
             } else {
                return this.finish(
@@ -1094,7 +1094,7 @@ final class AiCarriedShulker implements AiOperation {
                      destinations
                   )
                   : new AiInventoryController(this.menu.containerId, this.exactMaterial, inventoryTarget, sources, destinations);
-               this.stage = AiCarriedShulker.Inner_StreamUtil.WITHDRAW;
+               this.stage = AiCarriedShulker.Stage.WITHDRAW;
                return this.running("Withdrawing building material from the carried shulker");
             } else {
                return this.closeMenuForRecovery();
@@ -1150,7 +1150,7 @@ final class AiCarriedShulker implements AiOperation {
          );
       }
 
-      this.stage = AiCarriedShulker.Inner_StreamUtil.CLOSE;
+      this.stage = AiCarriedShulker.Stage.CLOSE;
       return this.running("Closing the stock shulker before recovery");
    }
 
@@ -1265,7 +1265,7 @@ final class AiCarriedShulker implements AiOperation {
    @Override
    public boolean requiresReconciliationAfterEmergency() {
       return this.placed && !this.recovered
-         || this.stage == AiCarriedShulker.Inner_StreamUtil.PLACE && this.placer.needsReconciliation()
+         || this.stage == AiCarriedShulker.Stage.PLACE && this.placer.needsReconciliation()
          || this.receipt.requiresReconciliation(this.child);
    }
 
@@ -1280,20 +1280,20 @@ final class AiCarriedShulker implements AiOperation {
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class RemovalWatch {
       private final long revisionBefore;
       private final long deadline;
 
-      Inner_DataUtil(long before, long now) {
+      RemovalWatch(long before, long now) {
          this.revisionBefore = before;
          this.deadline = now + 10000000000L;
       }
 
-      AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 evaluate(boolean loaded, AiServerEvidence.BlockUpdate update, long now) {
+      AiCarriedShulker.RemovalWatch.Inner_DataUtil_2 evaluate(boolean loaded, AiServerEvidence.BlockUpdate update, long now) {
          if (loaded && update != null && update.revision() > this.revisionBefore) {
-            return update.state().isAir() ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.CONFIRMED : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.REJECTED;
+            return update.state().isAir() ? AiCarriedShulker.RemovalWatch.Inner_DataUtil_2.CONFIRMED : AiCarriedShulker.RemovalWatch.Inner_DataUtil_2.REJECTED;
          } else {
-            return now >= this.deadline ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.TIMED_OUT : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.WAITING;
+            return now >= this.deadline ? AiCarriedShulker.RemovalWatch.Inner_DataUtil_2.TIMED_OUT : AiCarriedShulker.RemovalWatch.Inner_DataUtil_2.WAITING;
          }
       }
 
@@ -1305,7 +1305,7 @@ final class AiCarriedShulker implements AiOperation {
       }
    }
 
-   private enum Inner_StreamUtil {
+   private enum Stage {
       APPROACH,
       PLACE,
       OPEN,

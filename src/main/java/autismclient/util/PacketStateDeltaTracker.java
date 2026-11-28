@@ -51,8 +51,8 @@ import net.minecraft.world.phys.Vec3;
 
 public final class PacketStateDeltaTracker {
    private static final Minecraft MINECRAFT = Minecraft.getInstance();
-   public static final PacketStateDeltaTracker.Inner_DataUtil EMPTY_CAPTURE = new PacketStateDeltaTracker.Inner_DataUtil(
-      PacketStateDeltaTracker.Inner_CachePool.EMPTY, PacketStateDeltaTracker.Inner_CachePool.EMPTY, List.of(), false
+   public static final PacketStateDeltaTracker.DeltaCapture EMPTY_CAPTURE = new PacketStateDeltaTracker.DeltaCapture(
+      PacketStateDeltaTracker.StateSnapshot.EMPTY, PacketStateDeltaTracker.StateSnapshot.EMPTY, List.of(), false
    );
    private boolean init_Z;
    private int containerId = -1;
@@ -63,8 +63,8 @@ public final class PacketStateDeltaTracker {
    private int inventoryStart = -1;
    private String cursorItem = "unknown";
    private int selectedSlot = -1;
-   private PacketStateDeltaTracker.Inner_StreamUtil init_bq_StreamUtil;
-   private PacketStateDeltaTracker.Inner_StreamUtil load_bq_StreamUtil;
+   private PacketStateDeltaTracker.PlayerPose init_bq_StreamUtil;
+   private PacketStateDeltaTracker.PlayerPose load_bq_StreamUtil;
    private int lastPositionId = -1;
    private String dimension = "";
    private Integer chunkCenterX;
@@ -98,18 +98,18 @@ public final class PacketStateDeltaTracker {
       this.load_Map.clear();
    }
 
-   public synchronized PacketStateDeltaTracker.Inner_DataUtil capture(Packet<?> packet, String direction) {
+   public synchronized PacketStateDeltaTracker.DeltaCapture capture(Packet<?> packet, String direction) {
       if (!isTrackedPacket(packet)) {
          return EMPTY_CAPTURE;
       }
 
       this.capturePoses();
-      PacketStateDeltaTracker.Inner_CachePool before = this.snapshot();
+      PacketStateDeltaTracker.StateSnapshot before = this.snapshot();
       List<String> changes = new ArrayList<>();
       this.applyPacket(packet, direction == null ? "" : direction.toUpperCase(Locale.ROOT), changes);
-      PacketStateDeltaTracker.Inner_CachePool after = this.snapshot();
+      PacketStateDeltaTracker.StateSnapshot after = this.snapshot();
       this.init_Z = true;
-      return new PacketStateDeltaTracker.Inner_DataUtil(before, after, List.copyOf(changes), true);
+      return new PacketStateDeltaTracker.DeltaCapture(before, after, List.copyOf(changes), true);
    }
 
    public static boolean isTrackedPacket(Packet<?> packet) {
@@ -240,19 +240,19 @@ public final class PacketStateDeltaTracker {
          changes.add("Closed container #" + this.containerId);
          this.resetMenuState();
       } else if (packet instanceof ServerboundMovePlayerPacket move) {
-         PacketStateDeltaTracker.Inner_StreamUtil before = this.init_bq_StreamUtil == null ? currentPlayerPose() : this.init_bq_StreamUtil;
+         PacketStateDeltaTracker.PlayerPose before = this.init_bq_StreamUtil == null ? currentPlayerPose() : this.init_bq_StreamUtil;
          double x = move.getX(before == null ? 0.0 : before.x());
          double y = move.getY(before == null ? 0.0 : before.y());
          double z = move.getZ(before == null ? 0.0 : before.read());
          float yaw = move.getYRot(before == null ? 0.0F : before.yaw());
          float pitch = move.getXRot(before == null ? 0.0F : before.pitch());
-         this.init_bq_StreamUtil = new PacketStateDeltaTracker.Inner_StreamUtil(x, y, z, yaw, pitch, move.hasPosition(), move.hasRotation());
+         this.init_bq_StreamUtil = new PacketStateDeltaTracker.PlayerPose(x, y, z, yaw, pitch, move.hasPosition(), move.hasRotation());
          if (before != null) {
             changes.add("Client move delta " + format3(before.init(this.init_bq_StreamUtil)) + " blocks");
          }
       } else if (packet instanceof ClientboundPlayerPositionPacket position) {
-         PacketStateDeltaTracker.Inner_StreamUtil base = this.load_bq_StreamUtil == null ? currentPlayerPose() : this.load_bq_StreamUtil;
-         PacketStateDeltaTracker.Inner_StreamUtil next = applyRelative(base, position.change(), position.relatives());
+         PacketStateDeltaTracker.PlayerPose base = this.load_bq_StreamUtil == null ? currentPlayerPose() : this.load_bq_StreamUtil;
+         PacketStateDeltaTracker.PlayerPose next = applyRelative(base, position.change(), position.relatives());
          this.load_bq_StreamUtil = next;
          this.lastPositionId = position.id();
          changes.add("Server correction/teleport #" + this.lastPositionId + " -> " + formatPosition(next));
@@ -301,8 +301,8 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   private PacketStateDeltaTracker.Inner_CachePool snapshot() {
-      return new PacketStateDeltaTracker.Inner_CachePool(
+   private PacketStateDeltaTracker.StateSnapshot snapshot() {
+      return new PacketStateDeltaTracker.StateSnapshot(
          this.init_Z,
          this.containerId,
          this.stateId,
@@ -423,7 +423,7 @@ public final class PacketStateDeltaTracker {
       return value != null && !value.isBlank() && !"HashedPatchMap[hashedPatches={}]".equals(value) ? " components" : "";
    }
 
-   private static PacketStateDeltaTracker.Inner_StreamUtil applyRelative(PacketStateDeltaTracker.Inner_StreamUtil base, PositionMoveRotation change, Set<Relative> relatives) {
+   private static PacketStateDeltaTracker.PlayerPose applyRelative(PacketStateDeltaTracker.PlayerPose base, PositionMoveRotation change, Set<Relative> relatives) {
       Vec3 pos = change.position();
       Vec3 delta = change.deltaMovement();
       float yaw = change.yRot();
@@ -450,13 +450,13 @@ public final class PacketStateDeltaTracker {
          }
       }
 
-      return new PacketStateDeltaTracker.Inner_StreamUtil(pos.x, pos.y, pos.z, yaw, pitch, true, true);
+      return new PacketStateDeltaTracker.PlayerPose(pos.x, pos.y, pos.z, yaw, pitch, true, true);
    }
 
-   private static PacketStateDeltaTracker.Inner_StreamUtil currentPlayerPose() {
+   private static PacketStateDeltaTracker.PlayerPose currentPlayerPose() {
       if (MINECRAFT != null && MINECRAFT.player != null) {
          try {
-            return new PacketStateDeltaTracker.Inner_StreamUtil(
+            return new PacketStateDeltaTracker.PlayerPose(
                MINECRAFT.player.getX(),
                MINECRAFT.player.getY(),
                MINECRAFT.player.getZ(),
@@ -512,7 +512,7 @@ public final class PacketStateDeltaTracker {
       return String.format(Locale.ROOT, "%.3f", value);
    }
 
-   public static String formatPosition(PacketStateDeltaTracker.Inner_StreamUtil position) {
+   public static String formatPosition(PacketStateDeltaTracker.PlayerPose position) {
       return position == null
          ? "unknown"
          : String.format(
@@ -526,7 +526,7 @@ public final class PacketStateDeltaTracker {
          );
    }
 
-   public static String describeSlot(PacketStateDeltaTracker.Inner_CachePool snapshot, int slot) {
+   public static String describeSlot(PacketStateDeltaTracker.StateSnapshot snapshot, int slot) {
       if (slot < 0) {
          return "outside / carried item area";
       }
@@ -572,7 +572,7 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   public record Inner_CachePool(
+   public record StateSnapshot(
       boolean tracked,
       int containerId,
       int stateId,
@@ -582,8 +582,8 @@ public final class PacketStateDeltaTracker {
       int containerSlots,
       String carriedItem,
       int selectedSlot,
-      PacketStateDeltaTracker.Inner_StreamUtil clientPosition,
-      PacketStateDeltaTracker.Inner_StreamUtil serverPosition,
+      PacketStateDeltaTracker.PlayerPose clientPosition,
+      PacketStateDeltaTracker.PlayerPose serverPosition,
       int sync,
       String dimension,
       Integer chunkCenterX,
@@ -594,11 +594,11 @@ public final class PacketStateDeltaTracker {
       Map<Integer, String> slotItems,
       Map<Integer, String> inventoryItems
    ) {
-      public static final PacketStateDeltaTracker.Inner_CachePool EMPTY = new PacketStateDeltaTracker.Inner_CachePool(
+      public static final PacketStateDeltaTracker.StateSnapshot EMPTY = new PacketStateDeltaTracker.StateSnapshot(
          false, -1, -1, "", "", -1, -1, "unknown", -1, null, null, -1, "", null, null, null, null, "unknown", Map.of(), Map.of()
       );
 
-      public Inner_CachePool {
+      public StateSnapshot {
          menuType = menuType == null ? "" : menuType;
          screenTitle = screenTitle == null ? "" : screenTitle;
          carriedItem = carriedItem == null ? "unknown" : carriedItem;
@@ -618,16 +618,16 @@ public final class PacketStateDeltaTracker {
       }
    }
 
-   public record Inner_DataUtil(PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool load, List<String> changes, boolean captured) {
-      public Inner_DataUtil {
+   public record DeltaCapture(PacketStateDeltaTracker.StateSnapshot before, PacketStateDeltaTracker.StateSnapshot load, List<String> changes, boolean captured) {
+      public DeltaCapture {
          changes = changes == null ? List.of() : List.copyOf(changes);
-         before = before == null ? PacketStateDeltaTracker.Inner_CachePool.EMPTY : before;
-         load = load == null ? PacketStateDeltaTracker.Inner_CachePool.EMPTY : load;
+         before = before == null ? PacketStateDeltaTracker.StateSnapshot.EMPTY : before;
+         load = load == null ? PacketStateDeltaTracker.StateSnapshot.EMPTY : load;
       }
    }
 
-   public record Inner_StreamUtil(double x, double y, double read, float yaw, float pitch, boolean hasPosition, boolean hasRotation) {
-      public double init(PacketStateDeltaTracker.Inner_StreamUtil other) {
+   public record PlayerPose(double x, double y, double read, float yaw, float pitch, boolean hasPosition, boolean hasRotation) {
+      public double init(PacketStateDeltaTracker.PlayerPose other) {
          if (other == null) {
             return 0.0;
          }

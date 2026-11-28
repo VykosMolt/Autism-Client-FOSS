@@ -9,14 +9,14 @@ final class AiEyeNavigation {
    static final double init_D = 0.001;
    static final double load = 0.008;
    static final double read = 8.0;
-   private final List<AiEyeNavigation.Inner_CachePool> rays = new ArrayList<>();
-   private AiEyeNavigation.Inner_DataUtil located;
+   private final List<AiEyeNavigation.EyeRay> rays = new ArrayList<>();
+   private AiEyeNavigation.Triangulation located;
    private int targetChanges;
 
    void addThrow(Vec3 origin, Vec3 displacement) {
       double length = Math.hypot(displacement.x, displacement.z);
       if (!(length < 4.0)) {
-         AiEyeNavigation.Inner_CachePool ray = new AiEyeNavigation.Inner_CachePool(origin, new Vec3(displacement.x / length, 0.0, displacement.z / length));
+         AiEyeNavigation.EyeRay ray = new AiEyeNavigation.EyeRay(origin, new Vec3(displacement.x / length, 0.0, displacement.z / length));
          if (this.rays.isEmpty() || !(horizontalDistance(origin, this.rays.get(this.rays.size() - 1).origin) < 8.0)) {
             this.rays.add(ray);
             if (this.rays.size() > 8) {
@@ -25,11 +25,11 @@ final class AiEyeNavigation {
 
             this.located = this.triangulate();
             if (this.located == null && this.rays.size() >= 3) {
-               List<AiEyeNavigation.Inner_CachePool> old = new ArrayList<>(this.rays);
+               List<AiEyeNavigation.EyeRay> old = new ArrayList<>(this.rays);
                this.rays.clear();
                this.rays.add(old.get(old.size() - 2));
                this.rays.add(old.get(old.size() - 1));
-               AiEyeNavigation.Inner_DataUtil fresh = this.triangulate();
+               AiEyeNavigation.Triangulation fresh = this.triangulate();
                if (fresh != null && fresh.uncertainty < 160.0) {
                   this.targetChanges++;
                   this.located = fresh;
@@ -42,20 +42,20 @@ final class AiEyeNavigation {
       }
    }
 
-   AiEyeNavigation.Inner_DataUtil getLocated() {
+   AiEyeNavigation.Triangulation getLocated() {
       return this.located;
    }
 
-   private AiEyeNavigation.Inner_DataUtil triangulate() {
+   private AiEyeNavigation.Triangulation triangulate() {
       if (this.rays.size() < 2) {
          return null;
       }
 
-      AiEyeNavigation.Inner_CachePool last = this.rays.get(this.rays.size() - 1);
-      AiEyeNavigation.Inner_DataUtil best = null;
+      AiEyeNavigation.EyeRay last = this.rays.get(this.rays.size() - 1);
+      AiEyeNavigation.Triangulation best = null;
 
       for (int i = 0; i < this.rays.size() - 1; i++) {
-         AiEyeNavigation.Inner_CachePool first = this.rays.get(i);
+         AiEyeNavigation.EyeRay first = this.rays.get(i);
          double cross = first.direction.x * last.direction.z - first.direction.z * last.direction.x;
          double baseline = horizontalDistance(first.origin, last.origin);
          if (!(baseline < 32.0) && !(Math.abs(cross) < 0.008)) {
@@ -68,7 +68,7 @@ final class AiEyeNavigation {
                double uncertainty = Math.max(24.0, 0.0012 * (t + u) / Math.abs(cross));
                boolean consistent = true;
 
-               for (AiEyeNavigation.Inner_CachePool other : this.rays) {
+               for (AiEyeNavigation.EyeRay other : this.rays) {
                   Vec3 delta = intersection.subtract(other.origin);
                   if (delta.dot(other.direction) < -24.0 || Math.abs(delta.x * other.direction.z - delta.z * other.direction.x) > uncertainty * 2.0) {
                      consistent = false;
@@ -77,7 +77,7 @@ final class AiEyeNavigation {
                }
 
                if (consistent && (best == null || uncertainty < best.uncertainty)) {
-                  best = new AiEyeNavigation.Inner_DataUtil(intersection, uncertainty, baseline, Math.abs(cross));
+                  best = new AiEyeNavigation.Triangulation(intersection, uncertainty, baseline, Math.abs(cross));
                }
             }
          }
@@ -117,13 +117,13 @@ final class AiEyeNavigation {
       return Math.hypot(a.x - b.x, a.z - b.z);
    }
 
-   record Inner_CachePool(Vec3 origin, Vec3 direction) {
+   record EyeRay(Vec3 origin, Vec3 direction) {
    }
 
-   record Inner_DataUtil(Vec3 position, double uncertainty, double baseline, double crossing) {
+   record Triangulation(Vec3 position, double uncertainty, double baseline, double crossing) {
    }
 
-   static final class Inner_StreamUtil {
+   static final class LineFit {
       private final Vec3 origin;
       private double sumX;
       private double sumZ;
@@ -133,7 +133,7 @@ final class AiEyeNavigation {
       private double maxDistance;
       private int count;
 
-      Inner_StreamUtil(Vec3 origin) {
+      LineFit(Vec3 origin) {
          this.origin = origin;
       }
 

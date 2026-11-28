@@ -32,19 +32,19 @@ import net.minecraft.server.packs.DownloadQueue.BatchConfig;
 public final class ResourcePackDownloadScope {
    private static final int init_I = 256;
    private static final int load_I = 256;
-   private static final ThreadLocal<ResourcePackDownloadScope.Inner_BufferHelper> CURRENT = new ThreadLocal<>();
-   private static final ThreadLocal<ResourcePackDownloadScope.Inner_BufferHelper> load_ThreadLocal = new ThreadLocal<>();
+   private static final ThreadLocal<ResourcePackDownloadScope.Snapshot> CURRENT = new ThreadLocal<>();
+   private static final ThreadLocal<ResourcePackDownloadScope.Snapshot> load_ThreadLocal = new ThreadLocal<>();
    private static final Object LOCK = new Object();
-   private static final Map<BatchConfig, ResourcePackDownloadScope.Inner_StreamUtil> tokensByConfig = new IdentityHashMap<>();
+   private static final Map<BatchConfig, ResourcePackDownloadScope.BatchToken> tokensByConfig = new IdentityHashMap<>();
    private static final Map<ConnectionPrivacyRegistry.ConnectionSession, UUID> connectionIds = new WeakHashMap<>();
    private static final ReentrantLock[] STRIPED_LOCKS = new ReentrantLock[256];
    private static boolean multiLoopbackFixtureEnabled;
-   private static final ThreadLocal<ResourcePackDownloadScope.Inner_ConfigStore> PROXY_AUTH;
+   private static final ThreadLocal<ResourcePackDownloadScope.ProxyAuth> PROXY_AUTH;
 
    private ResourcePackDownloadScope() {
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper snapshot(ServerPackManager manager) throws IOException {
+   public static ResourcePackDownloadScope.Snapshot snapshot(ServerPackManager manager) throws IOException {
       Objects.requireNonNull(manager, "manager");
       ConnectionPrivacyRegistry.ConnectionSession context = ConnectionPrivacyRegistry.getByPackManager(manager);
       if (context != null
@@ -71,7 +71,7 @@ public final class ResourcePackDownloadScope {
             connectionIdentity = connectionIds.computeIfAbsent(context, ignored -> UUID.randomUUID());
          }
 
-         ResourcePackDownloadScope.Inner_BufferHelper snapshot = new ResourcePackDownloadScope.Inner_BufferHelper(
+         ResourcePackDownloadScope.Snapshot snapshot = new ResourcePackDownloadScope.Snapshot(
             context, manager, context.accountIdentity().profileId(), origin, peer, connectionIdentity, integrated, multiLoopbackFixture
          );
          snapshot.ensureCurrent();
@@ -85,18 +85,18 @@ public final class ResourcePackDownloadScope {
       return integrated && context.isLocalOrMemory() ? "integrated:" + context.lifecycleId() : PackUrlValidator.endpointKey(context.serverEndpoint());
    }
 
-   public static ResourcePackDownloadScope.Inner_CachePool enter(ResourcePackDownloadScope.Inner_BufferHelper snapshot) throws IOException {
+   public static ResourcePackDownloadScope.Scope enter(ResourcePackDownloadScope.Snapshot snapshot) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
       snapshot.ensureCurrent();
-      ResourcePackDownloadScope.Inner_BufferHelper previous = CURRENT.get();
+      ResourcePackDownloadScope.Snapshot previous = CURRENT.get();
       CURRENT.set(snapshot);
       return () -> restore(CURRENT, previous);
    }
 
-   public static ResourcePackDownloadScope.Inner_CachePool load(ResourcePackDownloadScope.Inner_BufferHelper snapshot) throws IOException {
+   public static ResourcePackDownloadScope.Scope load(ResourcePackDownloadScope.Snapshot snapshot) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
       snapshot.ensureCurrent();
-      ResourcePackDownloadScope.Inner_BufferHelper previous = load_ThreadLocal.get();
+      ResourcePackDownloadScope.Snapshot previous = load_ThreadLocal.get();
       if (previous == snapshot) {
          return () -> {};
       }
@@ -105,7 +105,7 @@ public final class ResourcePackDownloadScope {
       return () -> restore(load_ThreadLocal, previous);
    }
 
-   public static ResourcePackDownloadScope.Inner_CachePool enterProxyAuth(ResourcePackDownloadScope.Inner_BufferHelper snapshot, String host, int port, String username, String password) throws IOException {
+   public static ResourcePackDownloadScope.Scope enterProxyAuth(ResourcePackDownloadScope.Snapshot snapshot, String host, int port, String username, String password) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
       snapshot.ensureCurrent();
       PackUrlValidator.ParsedTarget target = parseProxyEndpoint(host, port);
@@ -119,8 +119,8 @@ public final class ResourcePackDownloadScope {
          throw e;
       }
 
-      ResourcePackDownloadScope.Inner_ConfigStore authentication = new ResourcePackDownloadScope.Inner_ConfigStore(snapshot, target.load(), target.port(), usernameBytes, passwordBytes);
-      ResourcePackDownloadScope.Inner_ConfigStore previous = PROXY_AUTH.get();
+      ResourcePackDownloadScope.ProxyAuth authentication = new ResourcePackDownloadScope.ProxyAuth(snapshot, target.load(), target.port(), usernameBytes, passwordBytes);
+      ResourcePackDownloadScope.ProxyAuth previous = PROXY_AUTH.get();
 
       try {
          PROXY_AUTH.set(authentication);
@@ -136,9 +136,9 @@ public final class ResourcePackDownloadScope {
       };
    }
 
-   static ResourcePackDownloadScope.Inner_ConfigStore init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.PackRoute route) {
+   static ResourcePackDownloadScope.ProxyAuth init(ResourcePackDownloadScope.Snapshot snapshot, PackUrlValidator.PackRoute route) {
       if (snapshot != null && route != null && route.proxyType() == Type.SOCKS && route.viaProxy()) {
-         ResourcePackDownloadScope.Inner_ConfigStore authentication = PROXY_AUTH.get();
+         ResourcePackDownloadScope.ProxyAuth authentication = PROXY_AUTH.get();
          return authentication != null
                && authentication.active
                && authentication.snapshot == snapshot
@@ -187,23 +187,23 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper current() {
+   public static ResourcePackDownloadScope.Snapshot current() {
       return CURRENT.get();
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper workerScope() {
+   public static ResourcePackDownloadScope.Snapshot workerScope() {
       return load_ThreadLocal.get();
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper register(BatchConfig config) {
+   public static ResourcePackDownloadScope.Snapshot register(BatchConfig config) {
       synchronized (LOCK) {
-         ResourcePackDownloadScope.Inner_StreamUtil token = tokensByConfig.get(config);
+         ResourcePackDownloadScope.BatchToken token = tokensByConfig.get(config);
          return token != null && token.active ? token.snapshot : null;
       }
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper requireBatchScope() throws IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot = CURRENT.get();
+   public static ResourcePackDownloadScope.Snapshot requireBatchScope() throws IOException {
+      ResourcePackDownloadScope.Snapshot snapshot = CURRENT.get();
       if (snapshot == null) {
          throw new IOException("Unscoped resource-pack batch creation is refused");
       }
@@ -212,8 +212,8 @@ public final class ResourcePackDownloadScope {
       return snapshot;
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper requireNetworkScope() throws IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot = load_ThreadLocal.get();
+   public static ResourcePackDownloadScope.Snapshot requireNetworkScope() throws IOException {
+      ResourcePackDownloadScope.Snapshot snapshot = load_ThreadLocal.get();
       if (snapshot == null) {
          throw new IOException("Unscoped resource-pack network access is refused");
       }
@@ -222,9 +222,9 @@ public final class ResourcePackDownloadScope {
       return snapshot;
    }
 
-   public static ResourcePackDownloadScope.Inner_BufferHelper requireBatchSnapshot(BatchConfig config) throws IOException {
+   public static ResourcePackDownloadScope.Snapshot requireBatchSnapshot(BatchConfig config) throws IOException {
       synchronized (LOCK) {
-         ResourcePackDownloadScope.Inner_StreamUtil token = tokensByConfig.get(config);
+         ResourcePackDownloadScope.BatchToken token = tokensByConfig.get(config);
          if (token != null && token.active) {
             token.snapshot.ensureCurrent();
             return token.snapshot;
@@ -234,11 +234,11 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   public static ResourcePackDownloadScope.Inner_DataUtil init(BatchConfig config, ResourcePackDownloadScope.Inner_BufferHelper snapshot) throws IOException {
+   public static ResourcePackDownloadScope.BatchScope init(BatchConfig config, ResourcePackDownloadScope.Snapshot snapshot) throws IOException {
       Objects.requireNonNull(config, "config");
       Objects.requireNonNull(snapshot, "snapshot");
       snapshot.ensureCurrent();
-      ResourcePackDownloadScope.Inner_StreamUtil token;
+      ResourcePackDownloadScope.BatchToken token;
       synchronized (LOCK) {
          if (tokensByConfig.containsKey(config)) {
             throw new IOException("Resource-pack batch is already registered");
@@ -248,14 +248,14 @@ public final class ResourcePackDownloadScope {
             throw new IOException("Too many active resource-pack batches");
          }
 
-         token = new ResourcePackDownloadScope.Inner_StreamUtil(config, snapshot);
+         token = new ResourcePackDownloadScope.BatchToken(config, snapshot);
          tokensByConfig.put(config, token);
       }
 
-      return new ResourcePackDownloadScope.Inner_DataUtil(token);
+      return new ResourcePackDownloadScope.BatchScope(token);
    }
 
-   public static <T> Consumer<T> init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, Consumer<T> output) {
+   public static <T> Consumer<T> init(ResourcePackDownloadScope.Snapshot snapshot, Consumer<T> output) {
       Objects.requireNonNull(output, "output");
       return value -> {
          if (snapshot.isCurrent()) {
@@ -264,7 +264,7 @@ public final class ResourcePackDownloadScope {
       };
    }
 
-   public static void retire(ResourcePackDownloadScope.Inner_BufferHelper snapshot) {
+   public static void retire(ResourcePackDownloadScope.Snapshot snapshot) {
       if (snapshot != null) {
          snapshot.retireSockets();
       }
@@ -272,16 +272,16 @@ public final class ResourcePackDownloadScope {
 
    public static void init_V(ServerPackManager manager) {
       if (manager != null) {
-         List<ResourcePackDownloadScope.Inner_BufferHelper> snapshots = new ArrayList<>();
+         List<ResourcePackDownloadScope.Snapshot> snapshots = new ArrayList<>();
          synchronized (LOCK) {
-            for (ResourcePackDownloadScope.Inner_StreamUtil token : tokensByConfig.values()) {
+            for (ResourcePackDownloadScope.BatchToken token : tokensByConfig.values()) {
                if (token.active && token.snapshot.manager == manager) {
                   snapshots.add(token.snapshot);
                }
             }
          }
 
-         for (ResourcePackDownloadScope.Inner_BufferHelper snapshot : snapshots) {
+         for (ResourcePackDownloadScope.Snapshot snapshot : snapshots) {
             snapshot.retireSockets();
          }
 
@@ -292,15 +292,15 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   public static void init(ResourcePackDownloadScope.Inner_BufferHelper snapshot, Socket socket) throws IOException {
+   public static void init(ResourcePackDownloadScope.Snapshot snapshot, Socket socket) throws IOException {
       snapshot.trackSocket(socket);
    }
 
-   public static void load(ResourcePackDownloadScope.Inner_BufferHelper snapshot, Socket socket) {
+   public static void load(ResourcePackDownloadScope.Snapshot snapshot, Socket socket) {
       snapshot.untrackSocket(socket);
    }
 
-   public static Path cachePath(Path cacheDir, ResourcePackDownloadScope.Inner_BufferHelper snapshot, UUID packId, HashFunction hashFunction) throws IOException {
+   public static Path cachePath(Path cacheDir, ResourcePackDownloadScope.Snapshot snapshot, UUID packId, HashFunction hashFunction) throws IOException {
       Objects.requireNonNull(cacheDir, "cacheDir");
       Objects.requireNonNull(snapshot, "snapshot");
       Objects.requireNonNull(packId, "packId");
@@ -379,7 +379,7 @@ public final class ResourcePackDownloadScope {
       multiLoopbackFixtureEnabled = false;
       CURRENT.remove();
       load_ThreadLocal.remove();
-      ResourcePackDownloadScope.Inner_ConfigStore authentication = PROXY_AUTH.get();
+      ResourcePackDownloadScope.ProxyAuth authentication = PROXY_AUTH.get();
       if (authentication != null) {
          authentication.wipe();
       }
@@ -399,7 +399,7 @@ public final class ResourcePackDownloadScope {
       PROXY_AUTH = new ThreadLocal<>();
    }
 
-   public static final class Inner_BufferHelper {
+   public static final class Snapshot {
       private final ConnectionPrivacyRegistry.ConnectionSession context;
       private final long lifecycleId;
       private final ServerPackManager manager;
@@ -418,7 +418,7 @@ public final class ResourcePackDownloadScope {
       private final Set<Socket> sockets = Collections.newSetFromMap(new IdentityHashMap<>());
       private volatile boolean retired;
 
-      private Inner_BufferHelper(
+      private Snapshot(
          ConnectionPrivacyRegistry.ConnectionSession context,
          ServerPackManager manager,
          UUID accountId,
@@ -578,20 +578,20 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   public interface Inner_CachePool extends AutoCloseable {
+   public interface Scope extends AutoCloseable {
       @Override
       void close();
    }
 
-   static final class Inner_ConfigStore {
-      private final ResourcePackDownloadScope.Inner_BufferHelper snapshot;
+   static final class ProxyAuth {
+      private final ResourcePackDownloadScope.Snapshot snapshot;
       private final String host;
       private final int port;
       private final byte[] username;
       private final byte[] password;
       private volatile boolean active = true;
 
-      private Inner_ConfigStore(ResourcePackDownloadScope.Inner_BufferHelper snapshot, String host, int port, byte[] username, byte[] password) {
+      private ProxyAuth(ResourcePackDownloadScope.Snapshot snapshot, String host, int port, byte[] username, byte[] password) {
          this.snapshot = snapshot;
          this.host = host;
          this.port = port;
@@ -619,16 +619,16 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   public static final class Inner_DataUtil implements AutoCloseable {
-      private ResourcePackDownloadScope.Inner_StreamUtil token;
+   public static final class BatchScope implements AutoCloseable {
+      private ResourcePackDownloadScope.BatchToken token;
 
-      private Inner_DataUtil(ResourcePackDownloadScope.Inner_StreamUtil token) {
+      private BatchScope(ResourcePackDownloadScope.BatchToken token) {
          this.token = token;
       }
 
       @Override
       public void close() {
-         ResourcePackDownloadScope.Inner_StreamUtil closing;
+         ResourcePackDownloadScope.BatchToken closing;
          synchronized (this) {
             closing = this.token;
             this.token = null;
@@ -643,12 +643,12 @@ public final class ResourcePackDownloadScope {
       }
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class BatchToken {
       private final BatchConfig config;
-      private final ResourcePackDownloadScope.Inner_BufferHelper snapshot;
+      private final ResourcePackDownloadScope.Snapshot snapshot;
       private boolean active = true;
 
-      private Inner_StreamUtil(BatchConfig config, ResourcePackDownloadScope.Inner_BufferHelper snapshot) {
+      private BatchToken(BatchConfig config, ResourcePackDownloadScope.Snapshot snapshot) {
          this.config = config;
          this.snapshot = snapshot;
       }

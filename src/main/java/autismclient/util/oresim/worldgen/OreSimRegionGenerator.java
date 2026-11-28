@@ -208,11 +208,11 @@ public final class OreSimRegionGenerator {
       ChunkPos targetPos = chunk.getPos();
    }
 
-   public static void scanChunk(ChunkAccess chunk, Predicate<BlockState> wanted, OreSimRegionGenerator.Inner_DataUtil sink) {
+   public static void scanChunk(ChunkAccess chunk, Predicate<BlockState> wanted, OreSimRegionGenerator.BlockSink sink) {
       scanChunk(chunk, wanted, sink, () -> false);
    }
 
-   public static void scanChunk(ChunkAccess chunk, Predicate<BlockState> wanted, OreSimRegionGenerator.Inner_DataUtil sink, BooleanSupplier cancelled) {
+   public static void scanChunk(ChunkAccess chunk, Predicate<BlockState> wanted, OreSimRegionGenerator.BlockSink sink, BooleanSupplier cancelled) {
       if (cancelled == null) {
          throw new IllegalArgumentException("Cancellation supplier must not be null");
       }
@@ -248,7 +248,7 @@ public final class OreSimRegionGenerator {
    }
 
    @FunctionalInterface
-   public interface Inner_DataUtil {
+   public interface BlockSink {
       void accept(int var1, int var2, int var3, BlockState var4);
    }
 }

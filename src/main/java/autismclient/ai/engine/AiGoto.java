@@ -3293,7 +3293,7 @@ public final class AiGoto {
                            && var5x.equals(var0)
                            && this.putAt_Minecraft.level != null
                            && AiPathfinder.LiveGridView.isPressurePlate(this.putAt_Minecraft.level.getBlockState(var0))
-                        ? AiPaceScript.putAt(AiPhysics.MotionState.of(this.putAt_Minecraft.player), var0)
+                        ? AiPaceScript.isInsideCell(AiPhysics.MotionState.of(this.putAt_Minecraft.player), var0)
                         : true;
                   }
                } else {

@@ -41,7 +41,7 @@ public final class aP {
    private autismclient.modules.ScopedToggleOverride.OverrideHandle load_aP_StreamUtil;
 
    private static boolean init_Z_aR(AiPlacementSession placement) {
-      return placement instanceof SchematicSelection || placement instanceof SchematicWorkspace.Inner_CachePool || placement instanceof AiNavigationSelection;
+      return placement instanceof SchematicSelection || placement instanceof SchematicWorkspace.PlacementMover || placement instanceof AiNavigationSelection;
    }
 
    private aP(AiPlacementSession placement, Runnable done) {

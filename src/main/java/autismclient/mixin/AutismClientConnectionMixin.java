@@ -420,14 +420,14 @@ public abstract class AutismClientConnectionMixin {
                               ci.cancel();
                            } else if (!forceBookOrSignPacket) {
                               if (!shared.isBypassingPacketInterception()) {
-                                 autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.match(packet, "C2S");
-                                 if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.CANCEL) {
+                                 autismclient.util.macro.PacketGateManager.GateVerdict gateResult = autismclient.util.macro.PacketGateManager.match(packet, "C2S");
+                                 if (gateResult == autismclient.util.macro.PacketGateManager.GateVerdict.CANCEL) {
                                     ScaffoldModule.load_V_Packet(packet);
                                     ci.cancel();
                                     return;
                                  }
 
-                                 if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.DELAY) {
+                                 if (gateResult == autismclient.util.macro.PacketGateManager.GateVerdict.DELAY) {
                                     shared.enqueueDelayedPacket(packet);
                                     ci.cancel();
                                     return;
@@ -589,10 +589,10 @@ public abstract class AutismClientConnectionMixin {
                         ci.cancel();
                      } else {
                         AutismSessionState shared = AutismSessionState.getInstance();
-                        autismclient.util.macro.PacketGateManager.Inner_StreamUtil gateResult = autismclient.util.macro.PacketGateManager.match(packet, "S2C");
-                        if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.CANCEL) {
+                        autismclient.util.macro.PacketGateManager.GateVerdict gateResult = autismclient.util.macro.PacketGateManager.match(packet, "S2C");
+                        if (gateResult == autismclient.util.macro.PacketGateManager.GateVerdict.CANCEL) {
                            ci.cancel();
-                        } else if (gateResult == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.DELAY) {
+                        } else if (gateResult == autismclient.util.macro.PacketGateManager.GateVerdict.DELAY) {
                            shared.enqueueDelayedPacket(packet);
                            ci.cancel();
                         } else if (AutismLiteVariant.enabled() || autismclient.e.CharEncoder.init()) {

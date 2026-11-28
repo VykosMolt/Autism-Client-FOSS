@@ -19,7 +19,7 @@ public final class CrosshairModule extends Module {
    public CrosshairModule() {
       super("crosshair", "Crosshair", ae.update, "Custom crosshair shapes and colors.");
       this.add(
-         new ChoiceSetting("style", "Style", CrosshairPresetGeometry.Inner_NetHelper.CROSS.init_Str, CrosshairPresetGeometry.Inner_NetHelper.ids())
+         new ChoiceSetting("style", "Style", CrosshairPresetGeometry.Style.CROSS.init_Str, CrosshairPresetGeometry.Style.ids())
             .description("Crosshair shape.")
             .group("Shape")
             .build()
@@ -48,7 +48,7 @@ public final class CrosshairModule extends Module {
          new DoubleSetting("gap", "Gap", 2.0, 0.0, 8.0, 0.5)
             .description("Space around the dot.")
             .group("Shape")
-            .visibleWhen(() -> this.getStyle() == CrosshairPresetGeometry.Inner_NetHelper.TACTICAL)
+            .visibleWhen(() -> this.getStyle() == CrosshairPresetGeometry.Style.TACTICAL)
             .build()
       );
       this.add(new BoolSetting("invert", "Invert", false).description("Negative, like vanilla's.").group("Look").build());
@@ -121,12 +121,12 @@ public final class CrosshairModule extends Module {
       }
    }
 
-   public CrosshairPresetGeometry.Inner_NetHelper getStyle() {
-      return CrosshairPresetGeometry.Inner_NetHelper.byLabel(this.choice("style"));
+   public CrosshairPresetGeometry.Style getStyle() {
+      return CrosshairPresetGeometry.Style.byLabel(this.choice("style"));
    }
 
    private boolean isCustomStyle() {
-      return this.getStyle() == CrosshairPresetGeometry.Inner_NetHelper.CUSTOM;
+      return this.getStyle() == CrosshairPresetGeometry.Style.CUSTOM;
    }
 
    public double thickness() {
@@ -157,11 +157,11 @@ public final class CrosshairModule extends Module {
    }
 
    public static CrosshairPixelArt defaultArt() {
-      return CrosshairPresetGeometry.pixelArt(CrosshairPresetGeometry.Inner_NetHelper.TACTICAL, 16, 1.0, 2.0, -1);
+      return CrosshairPresetGeometry.pixelArt(CrosshairPresetGeometry.Style.TACTICAL, 16, 1.0, 2.0, -1);
    }
 
-   public CrosshairRenderState.Inner_DataUtil renderState(CrosshairPixelArt drawing) {
-      return new CrosshairRenderState.Inner_DataUtil(
+   public CrosshairRenderState.Snapshot renderState(CrosshairPixelArt drawing) {
+      return new CrosshairRenderState.Snapshot(
          this.getStyle(),
          this.decimal("scale"),
          this.thickness(),

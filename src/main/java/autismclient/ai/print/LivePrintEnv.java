@@ -148,7 +148,7 @@ public final class LivePrintEnv implements PrintEnv {
    }
 
    @Override
-   public List<PrintRailVehicle.Inner_DataUtil> nearbyMinecarts(BlockPos rail) {
+   public List<PrintRailVehicle.ObservedCart> nearbyMinecarts(BlockPos rail) {
       if (this.mc != null && this.mc.level != null) {
          for (int x = rail.getX() - 2 >> 4; x <= rail.getX() + 2 >> 4; x++) {
             for (int z = rail.getZ() - 2 >> 4; z <= rail.getZ() + 2 >> 4; z++) {
@@ -164,7 +164,7 @@ public final class LivePrintEnv implements PrintEnv {
             .stream()
             .filter(entity -> !entity.isRemoved())
             .map(
-               entity -> new PrintRailVehicle.Inner_DataUtil(
+               entity -> new PrintRailVehicle.ObservedCart(
                   entity.getUUID(), BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString(), entity.position(), entity.getBoundingBox()
                )
             )

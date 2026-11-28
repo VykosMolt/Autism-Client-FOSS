@@ -33,7 +33,7 @@ public final class AiDecisionAudit {
    private static float startYaw;
    private static float startPitch;
    private static Vec3 startPosition;
-   private static final ArrayDeque<AiDecisionAudit.Inner_DataUtil> init_ArrayDeque = new ArrayDeque<>();
+   private static final ArrayDeque<AiDecisionAudit.AuditStep> init_ArrayDeque = new ArrayDeque<>();
    private static int tickCount;
    private static int lastBacktrackTick = -1000;
    private static int breaks;
@@ -58,7 +58,7 @@ public final class AiDecisionAudit {
    private static int ringFilled;
    private static int ringNext;
    private static int flips;
-   public static volatile AiDecisionAudit.Inner_StreamUtil init_RenderState_Stream = new AiDecisionAudit.Inner_StreamUtil(0, 0, 0, 0, 0, 0, 0);
+   public static volatile AiDecisionAudit.AuditStats init_RenderState_Stream = new AiDecisionAudit.AuditStats(0, 0, 0, 0, 0, 0, 0);
 
    public static boolean isDigging(Minecraft mc) {
       if (!(mc.gameMode instanceof AutismMultiPlayerGameModeAccessor dig && mc.level != null)) {
@@ -302,20 +302,20 @@ public final class AiDecisionAudit {
 
    private static void auditBacktrack(Vec3 pos, String step) {
       if (tickCount % 10 == 0) {
-         init_ArrayDeque.addLast(new AiDecisionAudit.Inner_DataUtil(pos, tickCount, step));
+         init_ArrayDeque.addLast(new AiDecisionAudit.AuditStep(pos, tickCount, step));
 
          while (init_ArrayDeque.size() > 60) {
             init_ArrayDeque.removeFirst();
          }
 
          if (tickCount - lastBacktrackTick >= 100) {
-            AiDecisionAudit.Inner_DataUtil[] all = init_ArrayDeque.toArray(new AiDecisionAudit.Inner_DataUtil[0]);
+            AiDecisionAudit.AuditStep[] all = init_ArrayDeque.toArray(new AiDecisionAudit.AuditStep[0]);
 
             for (int i = 0; i < all.length - 4; i++) {
-               AiDecisionAudit.Inner_DataUtil start = all[i];
+               AiDecisionAudit.AuditStep start = all[i];
                if (!(start.pos.distanceToSqr(pos) > 2.25)) {
                   double far = 0.0;
-                  AiDecisionAudit.Inner_DataUtil peak = start;
+                  AiDecisionAudit.AuditStep peak = start;
 
                   for (int j = i + 1; j < all.length - 1; j++) {
                      double d = Math.sqrt(all[j].pos.distanceToSqr(start.pos));
@@ -368,7 +368,7 @@ public final class AiDecisionAudit {
                   flips
                )
             );
-         init_RenderState_Stream = new AiDecisionAudit.Inner_StreamUtil(breaks, abandonedDigs, stares, backtracks, longGaps, longGapTicks, flips);
+         init_RenderState_Stream = new AiDecisionAudit.AuditStats(breaks, abandonedDigs, stares, backtracks, longGaps, longGapTicks, flips);
       }
 
       breakPos = null;
@@ -403,9 +403,9 @@ public final class AiDecisionAudit {
       }
    }
 
-   private record Inner_DataUtil(Vec3 pos, int tick, String step) {
+   private record AuditStep(Vec3 pos, int tick, String step) {
    }
 
-   public record Inner_StreamUtil(int breaks, int abandoned, int stares, int backtracks, int longGaps, int gapExcessTicks, int flips) {
+   public record AuditStats(int breaks, int abandoned, int stares, int backtracks, int longGaps, int gapExcessTicks, int flips) {
    }
 }

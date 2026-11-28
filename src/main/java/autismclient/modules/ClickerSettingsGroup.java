@@ -25,7 +25,7 @@ final class ClickerSettingsGroup {
    private final ValueRange defaultButterflyBand;
    private final boolean capRage;
    private final Map<autismclient.util.clicker.ClickTechnique, ClickerSettingsGroup.TechniqueSection> sections = new EnumMap<>(autismclient.util.clicker.ClickTechnique.class);
-   private autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore cachedHandTraits;
+   private autismclient.util.clicker.ClickPatternEngine.Personality cachedHandTraits;
 
    ClickerSettingsGroup(Module module, String group, autismclient.util.clicker.ClickTechnique fallback, BooleanSupplier visible) {
       this(module, group, fallback, visible, 0.0);
@@ -100,15 +100,15 @@ final class ClickerSettingsGroup {
       return section == null ? autismclient.util.clicker.ClickProfile.forTechnique(this.technique()) : section.profile();
    }
 
-   autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore personality() {
+   autismclient.util.clicker.ClickPatternEngine.Personality personality() {
       if (this.cachedHandTraits == null) {
          try {
             autismclient.util.HumanHandProfile hand = autismclient.util.HumanHandProfile.shared();
-            this.cachedHandTraits = new autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore(
+            this.cachedHandTraits = new autismclient.util.clicker.ClickPatternEngine.Personality(
                0.85 + 0.3 * traitFraction(hand.open()), 0.9 + 0.2 * traitFraction(hand.fittsSlope()), hand.curvature() >= 0.0
             );
          } catch (Throwable unavailable) {
-            this.cachedHandTraits = autismclient.util.clicker.ClickPatternEngine.Inner_ConfigStore.DEFAULT;
+            this.cachedHandTraits = autismclient.util.clicker.ClickPatternEngine.Personality.DEFAULT;
          }
       }
 

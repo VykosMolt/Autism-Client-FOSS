@@ -28,8 +28,8 @@ final class TeamDyeColorResolver {
    }
 
    static DyeColor firstAvailableColor(String name, Component tab, Component display, Integer teamRgb) {
-      TeamDyeColorResolver.Inner_DataUtil tabName = init_b_DataUtil(name, tab);
-      TeamDyeColorResolver.Inner_DataUtil shownName = init_b_DataUtil(name, display);
+      TeamDyeColorResolver.ColorMatch tabName = init_b_DataUtil(name, tab);
+      TeamDyeColorResolver.ColorMatch shownName = init_b_DataUtil(name, display);
       if (tabName != null && tabName.init_DyeColor() != null) {
          return tabName.init_DyeColor();
       } else if (shownName != null && shownName.init_DyeColor() != null) {
@@ -67,11 +67,11 @@ final class TeamDyeColorResolver {
    }
 
    static DyeColor init_DyeColor(String name, Component display) {
-      TeamDyeColorResolver.Inner_DataUtil result = init_b_DataUtil(name, display);
+      TeamDyeColorResolver.ColorMatch result = init_b_DataUtil(name, display);
       return result == null ? null : result.init_DyeColor();
    }
 
-   private static TeamDyeColorResolver.Inner_DataUtil init_b_DataUtil(String name, Component display) {
+   private static TeamDyeColorResolver.ColorMatch init_b_DataUtil(String name, Component display) {
       if (!PlayerDisplayNameParser.displayContainsName(name, display)) {
          return null;
       }
@@ -95,7 +95,7 @@ final class TeamDyeColorResolver {
 
          return Optional.empty();
       }, Style.EMPTY);
-      return new TeamDyeColorResolver.Inner_DataUtil(!ambiguous[0] && !plain[0] ? color[0] : null, plain[0] && color[0] == null);
+      return new TeamDyeColorResolver.ColorMatch(!ambiguous[0] && !plain[0] ? color[0] : null, plain[0] && color[0] == null);
    }
 
    static DyeColor fromTeamRgb(int rgb) {
@@ -183,6 +183,6 @@ final class TeamDyeColorResolver {
       return var10000;
    }
 
-   private record Inner_DataUtil(DyeColor init_DyeColor, boolean init_Z) {
+   private record ColorMatch(DyeColor init_DyeColor, boolean init_Z) {
    }
 }

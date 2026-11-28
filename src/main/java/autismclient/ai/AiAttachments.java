@@ -45,7 +45,7 @@ final class AiAttachments {
       }
    }
 
-   static AiAttachments.Inner_DataUtil attach(Path source, Path directory) throws IOException, NoSuchAlgorithmException {
+   static AiAttachments.Attachment attach(Path source, Path directory) throws IOException, NoSuchAlgorithmException {
       String name = AiSchematic.validateName(source.getFileName().toString());
       if (name.chars().anyMatch(c -> c < 32 || c == 34)) {
          throw new IllegalArgumentException("Invalid file name");
@@ -87,13 +87,13 @@ final class AiAttachments {
             Files.move(temporary, target);
          }
 
-         return new AiAttachments.Inner_DataUtil(name, decoded.format(), decoded.cells().size(), Files.size(target));
+         return new AiAttachments.Attachment(name, decoded.format(), decoded.cells().size(), Files.size(target));
       } finally {
          Files.deleteIfExists(temporary);
       }
    }
 
-   static String composeMessage(String text, List<AiAttachments.Inner_DataUtil> files) {
+   static String composeMessage(String text, List<AiAttachments.Attachment> files) {
       if (files.isEmpty()) {
          return text;
       }
@@ -101,9 +101,9 @@ final class AiAttachments {
       Matcher build = BUILD_REQUEST.matcher(text.trim());
       return files.size() == 1 && (text.isBlank() || build.matches())
          ? "build \"" + files.getFirst().name() + "\"" + (!text.isBlank() && build.group(1) != null ? " " + build.group(1) : "")
-         : text + "\nAttached schematic files: " + AiJson.GSON.toJson(files.stream().map(AiAttachments.Inner_DataUtil::name).toList());
+         : text + "\nAttached schematic files: " + AiJson.GSON.toJson(files.stream().map(AiAttachments.Attachment::name).toList());
    }
 
-   record Inner_DataUtil(String name, String format, int cells, long bytes) {
+   record Attachment(String name, String format, int cells, long bytes) {
    }
 }

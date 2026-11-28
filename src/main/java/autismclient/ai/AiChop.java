@@ -111,10 +111,10 @@ final class AiChop {
       }
    }
 
-   static List<AiChop.Inner_DataUtil.Inner_StreamUtil> orderDrops(List<AiChop.Inner_DataUtil.Inner_StreamUtil> drops) {
-      List<AiChop.Inner_DataUtil.Inner_StreamUtil> ordered = new ArrayList<>(drops);
+   static List<AiChop.ChopQueue.Inner_StreamUtil> orderDrops(List<AiChop.ChopQueue.Inner_StreamUtil> drops) {
+      List<AiChop.ChopQueue.Inner_StreamUtil> ordered = new ArrayList<>(drops);
       ordered.sort(
-         Comparator.comparingDouble(AiChop.Inner_DataUtil.Inner_StreamUtil::distanceSqr).thenComparingInt(AiChop.Inner_DataUtil.Inner_StreamUtil::entityId)
+         Comparator.comparingDouble(AiChop.ChopQueue.Inner_StreamUtil::distanceSqr).thenComparingInt(AiChop.ChopQueue.Inner_StreamUtil::entityId)
       );
       return ordered;
    }
@@ -162,27 +162,27 @@ final class AiChop {
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class ChopQueue {
       static final int init_I = 3;
-      private final LinkedList<AiChop.Inner_DataUtil.Inner_CachePool> queue = new LinkedList<>();
+      private final LinkedList<AiChop.ChopQueue.Inner_CachePool> queue = new LinkedList<>();
 
       void enqueueBlocks(List<BlockPos> ordered) {
          for (BlockPos pos : ordered) {
-            this.queue.addLast(new AiChop.Inner_DataUtil.Inner_DataUtil_2(pos, 0));
+            this.queue.addLast(new AiChop.ChopQueue.BlockTarget(pos, 0));
          }
       }
 
-      void pushDropsFirst(List<AiChop.Inner_DataUtil.Inner_StreamUtil> nearestFirst) {
+      void pushDropsFirst(List<AiChop.ChopQueue.Inner_StreamUtil> nearestFirst) {
          for (int i = nearestFirst.size() - 1; i >= 0; i--) {
             this.queue.addFirst(nearestFirst.get(i));
          }
       }
 
-      AiChop.Inner_DataUtil.Inner_CachePool peek() {
+      AiChop.ChopQueue.Inner_CachePool peek() {
          return this.queue.peek();
       }
 
-      AiChop.Inner_DataUtil.Inner_CachePool poll() {
+      AiChop.ChopQueue.Inner_CachePool poll() {
          return this.queue.poll();
       }
 
@@ -197,8 +197,8 @@ final class AiChop {
       List<BlockPos> init_List() {
          List<BlockPos> out = new ArrayList<>();
 
-         for (AiChop.Inner_DataUtil.Inner_CachePool target : this.queue) {
-            if (target instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b) {
+         for (AiChop.ChopQueue.Inner_CachePool target : this.queue) {
+            if (target instanceof AiChop.ChopQueue.BlockTarget b) {
                out.add(b.pos());
             }
          }
@@ -208,7 +208,7 @@ final class AiChop {
 
       boolean init_Z(BlockPos pos) {
          for (int i = 0; i < this.queue.size(); i++) {
-            if (this.queue.get(i) instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b && b.pos().equals(pos)) {
+            if (this.queue.get(i) instanceof AiChop.ChopQueue.BlockTarget b && b.pos().equals(pos)) {
                this.queue.remove(i);
                return true;
             }
@@ -218,14 +218,14 @@ final class AiChop {
       }
 
       int load_I() {
-         AiChop.Inner_DataUtil.Inner_CachePool head = this.queue.peek();
-         return head instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b ? this.init_I(b.pos()) : -1;
+         AiChop.ChopQueue.Inner_CachePool head = this.queue.peek();
+         return head instanceof AiChop.ChopQueue.BlockTarget b ? this.init_I(b.pos()) : -1;
       }
 
       int init_I(BlockPos pos) {
          for (int i = 0; i < this.queue.size(); i++) {
-            if (this.queue.get(i) instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b && b.pos().equals(pos)) {
-               this.queue.set(i, new AiChop.Inner_DataUtil.Inner_DataUtil_2(pos, b.failures() + 1));
+            if (this.queue.get(i) instanceof AiChop.ChopQueue.BlockTarget b && b.pos().equals(pos)) {
+               this.queue.set(i, new AiChop.ChopQueue.BlockTarget(pos, b.failures() + 1));
                return b.failures() + 1;
             }
          }
@@ -234,8 +234,8 @@ final class AiChop {
       }
 
       int failuresAt(BlockPos pos) {
-         for (AiChop.Inner_DataUtil.Inner_CachePool target : this.queue) {
-            if (target instanceof AiChop.Inner_DataUtil.Inner_DataUtil_2 b && b.pos().equals(pos)) {
+         for (AiChop.ChopQueue.Inner_CachePool target : this.queue) {
+            if (target instanceof AiChop.ChopQueue.BlockTarget b && b.pos().equals(pos)) {
                return b.failures();
             }
          }
@@ -243,13 +243,13 @@ final class AiChop {
          return 0;
       }
 
-      sealed interface Inner_CachePool permits AiChop.Inner_DataUtil.Inner_DataUtil_2, AiChop.Inner_DataUtil.Inner_StreamUtil {
+      sealed interface Inner_CachePool permits AiChop.ChopQueue.BlockTarget, AiChop.ChopQueue.Inner_StreamUtil {
       }
 
-      record Inner_DataUtil_2(BlockPos pos, int failures) implements AiChop.Inner_DataUtil.Inner_CachePool {
+      record BlockTarget(BlockPos pos, int failures) implements AiChop.ChopQueue.Inner_CachePool {
       }
 
-      record Inner_StreamUtil(int entityId, String item, BlockPos pos, double distanceSqr) implements AiChop.Inner_DataUtil.Inner_CachePool {
+      record Inner_StreamUtil(int entityId, String item, BlockPos pos, double distanceSqr) implements AiChop.ChopQueue.Inner_CachePool {
       }
    }
 }

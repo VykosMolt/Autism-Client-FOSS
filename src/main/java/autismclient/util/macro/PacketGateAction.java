@@ -15,7 +15,7 @@ public class PacketGateAction implements MacroAction {
    public int durationValue = 0;
    public String untilPacketName = "";
    public String untilPacketField = "";
-   public String untilPacketOperator = WaitPacketMatchAction.Inner_StreamUtil.EXISTS.name();
+   public String untilPacketOperator = WaitPacketMatchAction.MatchOperator.EXISTS.name();
    public String untilPacketValue = "";
    public String untilGuiType = "ANY";
    public String untilGuiTitle = "";
@@ -52,7 +52,7 @@ public class PacketGateAction implements MacroAction {
       tag.putInt("durationValue", Math.max(0, this.durationValue));
       tag.putString("untilPacketName", this.untilPacketName == null ? "" : this.untilPacketName);
       tag.putString("untilPacketField", this.untilPacketField == null ? "" : this.untilPacketField);
-      tag.putString("untilPacketOperator", this.untilPacketOperator == null ? WaitPacketMatchAction.Inner_StreamUtil.EXISTS.name() : this.untilPacketOperator);
+      tag.putString("untilPacketOperator", this.untilPacketOperator == null ? WaitPacketMatchAction.MatchOperator.EXISTS.name() : this.untilPacketOperator);
       tag.putString("untilPacketValue", this.untilPacketValue == null ? "" : this.untilPacketValue);
       tag.putString("untilGuiType", this.untilGuiType == null ? "ANY" : this.untilGuiType);
       tag.putString("untilGuiTitle", this.untilGuiTitle == null ? "" : this.untilGuiTitle);
@@ -80,7 +80,7 @@ public class PacketGateAction implements MacroAction {
       this.durationValue = Math.max(0, tag.getIntOr("durationValue", 0));
       this.untilPacketName = tag.getStringOr("untilPacketName", "");
       this.untilPacketField = tag.getStringOr("untilPacketField", "");
-      this.untilPacketOperator = tag.getStringOr("untilPacketOperator", WaitPacketMatchAction.Inner_StreamUtil.EXISTS.name());
+      this.untilPacketOperator = tag.getStringOr("untilPacketOperator", WaitPacketMatchAction.MatchOperator.EXISTS.name());
       this.untilPacketValue = tag.getStringOr("untilPacketValue", "");
       this.untilGuiType = tag.getStringOr("untilGuiType", "ANY");
       this.untilGuiTitle = tag.getStringOr("untilGuiTitle", "");

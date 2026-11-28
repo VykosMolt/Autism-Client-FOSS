@@ -57,60 +57,60 @@ final class AiPrinterCircuit {
       return Collections.unmodifiableSet(inputs);
    }
 
-   static AiPrinterCircuit.Inner_ConfigStore reachStatus(BlockGetter world, BlockPos source, BlockPos target, boolean quasi) {
+   static AiPrinterCircuit.ReachStatus reachStatus(BlockGetter world, BlockPos source, BlockPos target, boolean quasi) {
       return reachStatusWithin(world, source, target, quasi, 256);
    }
 
    static boolean reaches(BlockGetter world, BlockPos source, BlockPos target, boolean quasi) {
-      return reachStatus(world, source, target, quasi) == AiPrinterCircuit.Inner_ConfigStore.REACHES;
+      return reachStatus(world, source, target, quasi) == AiPrinterCircuit.ReachStatus.REACHES;
    }
 
-   static AiPrinterCircuit.Inner_ConfigStore reachStatusWithin(BlockGetter world, BlockPos source, BlockPos target, boolean quasi, int budget) {
+   static AiPrinterCircuit.ReachStatus reachStatusWithin(BlockGetter world, BlockPos source, BlockPos target, boolean quasi, int budget) {
       return source.equals(target)
-         ? AiPrinterCircuit.Inner_ConfigStore.NO_PATH
-         : new AiPrinterCircuit.Inner_TaskQueue(world, source.immutable(), target.immutable(), quasi, Math.max(0, budget)).search();
+         ? AiPrinterCircuit.ReachStatus.NO_PATH
+         : new AiPrinterCircuit.SignalSearch(world, source.immutable(), target.immutable(), quasi, Math.max(0, budget)).search();
    }
 
-   static Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> influences(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+   static Map<BlockPos, AiPrinterCircuit.ReachStatus> influences(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
       return reachStatuses(world, source, targets, 256);
    }
 
-   static Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> reachStatuses(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget) {
-      AiPrinterCircuit.Inner_JsonUtil trace = traceAll(world, source, targets, budget);
-      HashMap<BlockPos, AiPrinterCircuit.Inner_ConfigStore> result = new HashMap<>();
+   static Map<BlockPos, AiPrinterCircuit.ReachStatus> reachStatuses(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget) {
+      AiPrinterCircuit.Trace trace = traceAll(world, source, targets, budget);
+      HashMap<BlockPos, AiPrinterCircuit.ReachStatus> result = new HashMap<>();
 
       for (BlockPos at : targets) {
-         result.put(at.immutable(), source.equals(at) ? AiPrinterCircuit.Inner_ConfigStore.NO_PATH : trace.reached().getOrDefault(at, trace.unseen()));
+         result.put(at.immutable(), source.equals(at) ? AiPrinterCircuit.ReachStatus.NO_PATH : trace.reached().getOrDefault(at, trace.unseen()));
       }
 
       return Map.copyOf(result);
    }
 
-   static AiPrinterCircuit.Inner_JsonUtil trace(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+   static AiPrinterCircuit.Trace trace(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
       return traceAll(world, source, targets, 256);
    }
 
-   static AiPrinterCircuit.Inner_JsonUtil traceAll(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget) {
+   static AiPrinterCircuit.Trace traceAll(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget) {
       return traceTargets(world, source, targets, budget, false);
    }
 
-   static AiPrinterCircuit.Inner_JsonUtil load(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
+   static AiPrinterCircuit.Trace load(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
       return traceTargets(world, source, targets, 256, true);
    }
 
-   private static AiPrinterCircuit.Inner_JsonUtil traceTargets(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget, boolean unfinishedWire) {
-      AiPrinterCircuit.Inner_TaskQueue search = new AiPrinterCircuit.Inner_TaskQueue(world, source.immutable(), BlockPos.ZERO, false, Math.max(0, budget));
+   private static AiPrinterCircuit.Trace traceTargets(BlockGetter world, BlockPos source, Set<BlockPos> targets, int budget, boolean unfinishedWire) {
+      AiPrinterCircuit.SignalSearch search = new AiPrinterCircuit.SignalSearch(world, source.immutable(), BlockPos.ZERO, false, Math.max(0, budget));
       search.targets = targets;
       search.unfinishedWire = unfinishedWire;
       search.search();
       search.results.remove(source);
-      return new AiPrinterCircuit.Inner_JsonUtil(Map.copyOf(search.results), search.read_Z ? AiPrinterCircuit.Inner_ConfigStore.UNKNOWN : AiPrinterCircuit.Inner_ConfigStore.NO_PATH);
+      return new AiPrinterCircuit.Trace(Map.copyOf(search.results), search.read_Z ? AiPrinterCircuit.ReachStatus.UNKNOWN : AiPrinterCircuit.ReachStatus.NO_PATH);
    }
 
-   private static AiPrinterCircuit.Inner_NetHelper combineSignals(AiPrinterCircuit.Inner_NetHelper a, AiPrinterCircuit.Inner_NetHelper b) {
+   private static AiPrinterCircuit.SignalRange combineSignals(AiPrinterCircuit.SignalRange a, AiPrinterCircuit.SignalRange b) {
       int low = Math.max(a.low, b.low);
       int high = Math.max(a.high, b.high);
-      return new AiPrinterCircuit.Inner_NetHelper(low, high, low != high && (a.unknown || b.unknown));
+      return new AiPrinterCircuit.SignalRange(low, high, low != high && (a.unknown || b.unknown));
    }
 
    private static BlockState asPowered(BlockState state, int strength) {
@@ -133,55 +133,55 @@ final class AiPrinterCircuit {
       return state.getBlock() instanceof PistonBaseBlock || state.getBlock() instanceof DispenserBlock;
    }
 
-   private record Inner_BufferHelper(BlockPos at, Direction direction, boolean direct) {
+   private record PowerQuery(BlockPos at, Direction direction, boolean direct) {
    }
 
-   private record Inner_CachePool(BlockPos at, AiPrinterCircuit.Inner_StreamUtil kind, int strength, boolean wireFed, boolean unknown) {
+   private record Node(BlockPos at, AiPrinterCircuit.NodeKind kind, int strength, boolean wireFed, boolean unknown) {
    }
 
-   enum Inner_ConfigStore {
+   enum ReachStatus {
       REACHES,
       NO_PATH,
       UNKNOWN;
    }
 
-   private record Inner_DataUtil(BlockPos at, AiPrinterCircuit.Inner_StreamUtil kind, boolean wireFed, boolean unknown) {
+   private record NodeKey(BlockPos at, AiPrinterCircuit.NodeKind kind, boolean wireFed, boolean unknown) {
    }
 
-   record Inner_JsonUtil(Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> reached, AiPrinterCircuit.Inner_ConfigStore unseen) {
+   record Trace(Map<BlockPos, AiPrinterCircuit.ReachStatus> reached, AiPrinterCircuit.ReachStatus unseen) {
    }
 
-   private record Inner_NetHelper(int low, int high, boolean unknown) {
-      static final AiPrinterCircuit.Inner_NetHelper ZERO = new AiPrinterCircuit.Inner_NetHelper(0, 0, false);
-      static final AiPrinterCircuit.Inner_NetHelper VARIABLE = new AiPrinterCircuit.Inner_NetHelper(0, 15, false);
-      static final AiPrinterCircuit.Inner_NetHelper UNKNOWN = new AiPrinterCircuit.Inner_NetHelper(0, 15, true);
+   private record SignalRange(int low, int high, boolean unknown) {
+      static final AiPrinterCircuit.SignalRange ZERO = new AiPrinterCircuit.SignalRange(0, 0, false);
+      static final AiPrinterCircuit.SignalRange VARIABLE = new AiPrinterCircuit.SignalRange(0, 15, false);
+      static final AiPrinterCircuit.SignalRange UNKNOWN = new AiPrinterCircuit.SignalRange(0, 15, true);
    }
 
-   private enum Inner_StreamUtil {
+   private enum NodeKind {
       OUTPUT,
       CONDUCTOR,
       RAIL;
    }
 
-   private static final class Inner_TaskQueue {
+   private static final class SignalSearch {
       final BlockGetter world;
       final BlockPos source;
       final BlockPos target;
       final boolean quasi;
       final int budget;
-      final ArrayDeque<AiPrinterCircuit.Inner_CachePool> queue = new ArrayDeque<>();
-      final Map<AiPrinterCircuit.Inner_DataUtil, Integer> bestStrength = new HashMap<>();
-      final Map<AiPrinterCircuit.Inner_BufferHelper, AiPrinterCircuit.Inner_NetHelper> queryCache = new HashMap<>();
-      final Set<AiPrinterCircuit.Inner_BufferHelper> activeQueries = new HashSet<>();
+      final ArrayDeque<AiPrinterCircuit.Node> queue = new ArrayDeque<>();
+      final Map<AiPrinterCircuit.NodeKey, Integer> bestStrength = new HashMap<>();
+      final Map<AiPrinterCircuit.PowerQuery, AiPrinterCircuit.SignalRange> queryCache = new HashMap<>();
+      final Set<AiPrinterCircuit.PowerQuery> activeQueries = new HashSet<>();
       int visitedCount;
       int queryCount;
       boolean load_Z;
       boolean read_Z;
       boolean unfinishedWire;
       Set<BlockPos> targets;
-      final Map<BlockPos, AiPrinterCircuit.Inner_ConfigStore> results = new HashMap<>();
+      final Map<BlockPos, AiPrinterCircuit.ReachStatus> results = new HashMap<>();
 
-      Inner_TaskQueue(final BlockGetter original, BlockPos source, BlockPos target, boolean quasi, int budget) {
+      SignalSearch(final BlockGetter original, BlockPos source, BlockPos target, boolean quasi, int budget) {
          this.source = source;
          this.target = target;
          this.quasi = quasi;
@@ -216,51 +216,51 @@ final class AiPrinterCircuit {
          };
       }
 
-      AiPrinterCircuit.Inner_ConfigStore search() {
+      AiPrinterCircuit.ReachStatus search() {
          BlockState state = this.world.getBlockState(this.source);
-         AiPrinterCircuit.Inner_NetHelper initial = state.getBlock() instanceof DiodeBlock ? this.init_bl_NetHelper(this.source) : AiPrinterCircuit.Inner_NetHelper.VARIABLE;
+         AiPrinterCircuit.SignalRange initial = state.getBlock() instanceof DiodeBlock ? this.init_bl_NetHelper(this.source) : AiPrinterCircuit.SignalRange.VARIABLE;
          this.enqueue(
             this.source,
-            state.getBlock() instanceof PoweredRailBlock ? AiPrinterCircuit.Inner_StreamUtil.RAIL : AiPrinterCircuit.Inner_StreamUtil.OUTPUT,
+            state.getBlock() instanceof PoweredRailBlock ? AiPrinterCircuit.NodeKind.RAIL : AiPrinterCircuit.NodeKind.OUTPUT,
             state.getBlock() instanceof PoweredRailBlock ? 9 : initial.high,
             false,
             initial.unknown
          );
 
          while (!this.queue.isEmpty()) {
-            AiPrinterCircuit.Inner_CachePool n = this.queue.remove();
-            AiPrinterCircuit.Inner_DataUtil key = new AiPrinterCircuit.Inner_DataUtil(n.at, n.kind, n.wireFed, n.unknown);
+            AiPrinterCircuit.Node n = this.queue.remove();
+            AiPrinterCircuit.NodeKey key = new AiPrinterCircuit.NodeKey(n.at, n.kind, n.wireFed, n.unknown);
             if (this.bestStrength.getOrDefault(key, 0) < n.strength) {
                if (++this.visitedCount > this.budget) {
                   this.read_Z = true;
-                  return AiPrinterCircuit.Inner_ConfigStore.UNKNOWN;
+                  return AiPrinterCircuit.ReachStatus.UNKNOWN;
                }
 
                this.bestStrength.put(key, n.strength);
                state = this.world.getBlockState(n.at);
-               boolean wire = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && state.getBlock() instanceof RedstoneWireBlock;
-               boolean comparator = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && state.getBlock() instanceof ComparatorBlock;
+               boolean wire = n.kind == AiPrinterCircuit.NodeKind.OUTPUT && state.getBlock() instanceof RedstoneWireBlock;
+               boolean comparator = n.kind == AiPrinterCircuit.NodeKind.OUTPUT && state.getBlock() instanceof ComparatorBlock;
                BlockState signal = AiPrinterCircuit.asPowered(state, n.strength);
 
                for (Direction query : Direction.values()) {
                   BlockPos next = n.at.relative(query.getOpposite());
-                  int weak = n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR
+                  int weak = n.kind == AiPrinterCircuit.NodeKind.CONDUCTOR
                      ? n.strength
                      : (comparator ? (state.getValue(ComparatorBlock.FACING) == query ? n.strength : 0) : signal.getSignal(this.world, n.at, query));
-                  int direct = n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR ? 0 : (comparator ? weak : signal.getDirectSignal(this.world, n.at, query));
+                  int direct = n.kind == AiPrinterCircuit.NodeKind.CONDUCTOR ? 0 : (comparator ? weak : signal.getDirectSignal(this.world, n.at, query));
                   boolean possibleConnection = this.unfinishedWire && wire && query.getAxis().isHorizontal() && weak == 0;
-                  AiPrinterCircuit.Inner_CachePool output = n;
+                  AiPrinterCircuit.Node output = n;
                   if (possibleConnection) {
                      direct = n.strength;
                      weak = n.strength;
-                     output = new AiPrinterCircuit.Inner_CachePool(n.at, n.kind, n.strength, n.wireFed, true);
+                     output = new AiPrinterCircuit.Node(n.at, n.kind, n.strength, n.wireFed, true);
                   }
 
                   boolean wireInput = this.isWire(next);
-                  boolean canFeed = !wireInput || !wire && (n.kind != AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR || !n.wireFed);
+                  boolean canFeed = !wireInput || !wire && (n.kind != AiPrinterCircuit.NodeKind.CONDUCTOR || !n.wireFed);
                   if (weak > 0 && canFeed && this.init_Z(next, query, output.unknown)) {
                      if (!output.unknown) {
-                        return AiPrinterCircuit.Inner_ConfigStore.REACHES;
+                        return AiPrinterCircuit.ReachStatus.REACHES;
                      }
 
                      this.load_Z = true;
@@ -268,7 +268,7 @@ final class AiPrinterCircuit {
 
                   this.powerBlock(output, next, query, weak, direct);
                   if (direct > 0 && this.world.getBlockState(next).isRedstoneConductor(this.world, next)) {
-                     this.enqueue(next, AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR, direct, wire, output.unknown);
+                     this.enqueue(next, AiPrinterCircuit.NodeKind.CONDUCTOR, direct, wire, output.unknown);
                   }
                }
 
@@ -285,24 +285,24 @@ final class AiPrinterCircuit {
                               }
                            } else if (receiver.equals(this.target)) {
                               if (!n.unknown) {
-                                 return AiPrinterCircuit.Inner_ConfigStore.REACHES;
+                                 return AiPrinterCircuit.ReachStatus.REACHES;
                               }
 
                               this.load_Z = true;
                            }
 
-                           this.enqueue(receiver, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, n.strength - 1, false, n.unknown);
+                           this.enqueue(receiver, AiPrinterCircuit.NodeKind.OUTPUT, n.strength - 1, false, n.unknown);
                         }
                      }
                   }
                }
 
-               if (n.kind == AiPrinterCircuit.Inner_StreamUtil.RAIL && n.strength > 1) {
+               if (n.kind == AiPrinterCircuit.NodeKind.RAIL && n.strength > 1) {
                   for (Direction side : Plane.HORIZONTAL) {
                      for (int dy = -1; dy <= 1; dy++) {
                         BlockPos receiver = n.at.relative(side).offset(0, dy, 0);
                         if (this.railFeeds(receiver, n.at)) {
-                           this.enqueue(receiver, AiPrinterCircuit.Inner_StreamUtil.RAIL, n.strength - 1, false, n.unknown);
+                           this.enqueue(receiver, AiPrinterCircuit.NodeKind.RAIL, n.strength - 1, false, n.unknown);
                         }
                      }
                   }
@@ -310,12 +310,12 @@ final class AiPrinterCircuit {
             }
          }
 
-         return this.load_Z ? AiPrinterCircuit.Inner_ConfigStore.UNKNOWN : AiPrinterCircuit.Inner_ConfigStore.NO_PATH;
+         return this.load_Z ? AiPrinterCircuit.ReachStatus.UNKNOWN : AiPrinterCircuit.ReachStatus.NO_PATH;
       }
 
-      void enqueue(BlockPos at, AiPrinterCircuit.Inner_StreamUtil kind, int strength, boolean wireFed, boolean unknown) {
+      void enqueue(BlockPos at, AiPrinterCircuit.NodeKind kind, int strength, boolean wireFed, boolean unknown) {
          if (strength > 0) {
-            this.queue.add(new AiPrinterCircuit.Inner_CachePool(at.immutable(), kind, Math.min(15, strength), wireFed, unknown));
+            this.queue.add(new AiPrinterCircuit.Node(at.immutable(), kind, Math.min(15, strength), wireFed, unknown));
          }
       }
 
@@ -423,8 +423,8 @@ final class AiPrinterCircuit {
 
       private void recordReach(BlockPos at, boolean unknown) {
          if (!at.equals(this.source)) {
-            AiPrinterCircuit.Inner_ConfigStore result = unknown ? AiPrinterCircuit.Inner_ConfigStore.UNKNOWN : AiPrinterCircuit.Inner_ConfigStore.REACHES;
-            if (this.results.get(at) != AiPrinterCircuit.Inner_ConfigStore.REACHES) {
+            AiPrinterCircuit.ReachStatus result = unknown ? AiPrinterCircuit.ReachStatus.UNKNOWN : AiPrinterCircuit.ReachStatus.REACHES;
+            if (this.results.get(at) != AiPrinterCircuit.ReachStatus.REACHES) {
                this.results.put(at.immutable(), result);
             }
          }
@@ -446,31 +446,31 @@ final class AiPrinterCircuit {
          return quasi && cell.equals(target.above()) && (!(receiver.getBlock() instanceof PistonBaseBlock) || query != Direction.DOWN);
       }
 
-      void powerBlock(AiPrinterCircuit.Inner_CachePool n, BlockPos at, Direction input, int weak, int direct) {
+      void powerBlock(AiPrinterCircuit.Node n, BlockPos at, Direction input, int weak, int direct) {
          BlockState state = this.world.getBlockState(at);
          Block block = state.getBlock();
          if (block instanceof ObserverBlock) {
-            if ((n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT || n.kind == AiPrinterCircuit.Inner_StreamUtil.RAIL) && at.relative(state.getValue(ObserverBlock.FACING)).equals(n.at)) {
-               this.enqueue(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, 15, false, n.unknown);
+            if ((n.kind == AiPrinterCircuit.NodeKind.OUTPUT || n.kind == AiPrinterCircuit.NodeKind.RAIL) && at.relative(state.getValue(ObserverBlock.FACING)).equals(n.at)) {
+               this.enqueue(at, AiPrinterCircuit.NodeKind.OUTPUT, 15, false, n.unknown);
             }
          } else if (block instanceof PoweredRailBlock) {
             if (weak > 0) {
-               this.enqueue(at, AiPrinterCircuit.Inner_StreamUtil.RAIL, 9, false, n.unknown);
+               this.enqueue(at, AiPrinterCircuit.NodeKind.RAIL, 9, false, n.unknown);
             }
          } else if (block instanceof RedstoneTorchBlock) {
             BlockPos support = block instanceof RedstoneWallTorchBlock ? at.relative(state.getValue(RedstoneWallTorchBlock.FACING).getOpposite()) : at.below();
             if (weak > 0 && support.equals(n.at)) {
-               this.enqueue(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, 15, false, n.unknown);
+               this.enqueue(at, AiPrinterCircuit.NodeKind.OUTPUT, 15, false, n.unknown);
             }
          } else if (block instanceof RedstoneWireBlock) {
             if (weak > 0
                && !(this.world.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock)
-               && (n.kind != AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR || !n.wireFed)) {
-               this.enqueue(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, weak, false, n.unknown);
+               && (n.kind != AiPrinterCircuit.NodeKind.CONDUCTOR || !n.wireFed)) {
+               this.enqueue(at, AiPrinterCircuit.NodeKind.OUTPUT, weak, false, n.unknown);
             }
          } else if (block instanceof DiodeBlock) {
             Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-            boolean rawDust = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && this.world.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock;
+            boolean rawDust = n.kind == AiPrinterCircuit.NodeKind.OUTPUT && this.world.getBlockState(n.at).getBlock() instanceof RedstoneWireBlock;
             if (input == facing) {
                int strength = Math.max(weak, rawDust ? n.strength : 0);
                if (strength <= 0) {
@@ -478,10 +478,10 @@ final class AiPrinterCircuit {
                }
 
                if (block instanceof ComparatorBlock) {
-                  AiPrinterCircuit.Inner_NetHelper side = this.diodeSideInput(at, state);
+                  AiPrinterCircuit.SignalRange side = this.diodeSideInput(at, state);
                   BlockState emitter = this.world.getBlockState(n.at);
                   boolean analog = emitter.hasAnalogOutputSignal();
-                  if (n.kind == AiPrinterCircuit.Inner_StreamUtil.CONDUCTOR) {
+                  if (n.kind == AiPrinterCircuit.NodeKind.CONDUCTOR) {
                      BlockPos beyond = n.at.relative(facing);
                      BlockState farther = this.world.getBlockState(beyond);
                      analog |= farther.hasAnalogOutputSignal() || !farther.isRedstoneConductor(this.world, beyond);
@@ -489,23 +489,23 @@ final class AiPrinterCircuit {
 
                   int rear = analog ? 15 : strength;
                   int output = state.getValue(ComparatorBlock.MODE) == ComparatorMode.SUBTRACT ? Math.max(0, rear - side.low) : (rear < side.low ? 0 : rear);
-                  this.enqueue(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, output, false, n.unknown || analog || side.unknown && output > 0);
+                  this.enqueue(at, AiPrinterCircuit.NodeKind.OUTPUT, output, false, n.unknown || analog || side.unknown && output > 0);
                } else {
-                  this.enqueue(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, 15, false, n.unknown);
+                  this.enqueue(at, AiPrinterCircuit.NodeKind.OUTPUT, 15, false, n.unknown);
                }
             } else if (input.getAxis().isHorizontal() && input.getAxis() != facing.getAxis()) {
                BlockState emitter = this.world.getBlockState(n.at);
-               boolean diode = n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && emitter.getBlock() instanceof DiodeBlock;
+               boolean diode = n.kind == AiPrinterCircuit.NodeKind.OUTPUT && emitter.getBlock() instanceof DiodeBlock;
                int control = block instanceof ComparatorBlock
-                  ? (rawDust || emitter.is(Blocks.REDSTONE_BLOCK) ? n.strength : (n.kind == AiPrinterCircuit.Inner_StreamUtil.OUTPUT && emitter.isSignalSource() ? direct : 0))
+                  ? (rawDust || emitter.is(Blocks.REDSTONE_BLOCK) ? n.strength : (n.kind == AiPrinterCircuit.NodeKind.OUTPUT && emitter.isSignalSource() ? direct : 0))
                   : (diode ? direct : 0);
                if (control <= 0) {
                   return;
                }
 
-               AiPrinterCircuit.Inner_NetHelper rear = this.diodeRearInput(at, state);
+               AiPrinterCircuit.SignalRange rear = this.diodeRearInput(at, state);
                if (block instanceof ComparatorBlock) {
-                  AiPrinterCircuit.Inner_NetHelper other = this.init_bl_NetHelper(at.relative(input.getOpposite()), input.getOpposite(), false);
+                  AiPrinterCircuit.SignalRange other = this.init_bl_NetHelper(at.relative(input.getOpposite()), input.getOpposite(), false);
                   int output = 0;
                   if (state.getValue(ComparatorBlock.MODE) == ComparatorMode.SUBTRACT) {
                      if (control > other.low) {
@@ -518,19 +518,19 @@ final class AiPrinterCircuit {
                      }
                   }
 
-                  this.enqueue(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, output, false, n.unknown || rear.unknown || other.unknown);
+                  this.enqueue(at, AiPrinterCircuit.NodeKind.OUTPUT, output, false, n.unknown || rear.unknown || other.unknown);
                } else if (rear.high > 0 || state.getValue(BlockStateProperties.POWERED)) {
-                  this.enqueue(at, AiPrinterCircuit.Inner_StreamUtil.OUTPUT, 15, false, n.unknown || rear.unknown && !state.getValue(BlockStateProperties.POWERED));
+                  this.enqueue(at, AiPrinterCircuit.NodeKind.OUTPUT, 15, false, n.unknown || rear.unknown && !state.getValue(BlockStateProperties.POWERED));
                }
             }
          }
       }
 
-      AiPrinterCircuit.Inner_NetHelper init_bl_NetHelper(BlockPos at) {
+      AiPrinterCircuit.SignalRange init_bl_NetHelper(BlockPos at) {
          BlockState state = this.world.getBlockState(at);
-         AiPrinterCircuit.Inner_NetHelper rear = this.diodeRearInput(at, state);
+         AiPrinterCircuit.SignalRange rear = this.diodeRearInput(at, state);
          if (state.getBlock() instanceof ComparatorBlock) {
-            AiPrinterCircuit.Inner_NetHelper side = this.diodeSideInput(at, state);
+            AiPrinterCircuit.SignalRange side = this.diodeSideInput(at, state);
             int low;
             int high;
             if (state.getValue(ComparatorBlock.MODE) == ComparatorMode.SUBTRACT) {
@@ -542,33 +542,33 @@ final class AiPrinterCircuit {
             }
 
             return high == 0 && state.getValue(BlockStateProperties.POWERED)
-               ? AiPrinterCircuit.Inner_NetHelper.UNKNOWN
-               : new AiPrinterCircuit.Inner_NetHelper(low, high, low != high && (rear.unknown || side.unknown));
+               ? AiPrinterCircuit.SignalRange.UNKNOWN
+               : new AiPrinterCircuit.SignalRange(low, high, low != high && (rear.unknown || side.unknown));
          } else if (rear.high > 0) {
-            return new AiPrinterCircuit.Inner_NetHelper(0, 15, rear.unknown);
+            return new AiPrinterCircuit.SignalRange(0, 15, rear.unknown);
          } else {
-            return state.getValue(BlockStateProperties.POWERED) ? AiPrinterCircuit.Inner_NetHelper.VARIABLE : AiPrinterCircuit.Inner_NetHelper.ZERO;
+            return state.getValue(BlockStateProperties.POWERED) ? AiPrinterCircuit.SignalRange.VARIABLE : AiPrinterCircuit.SignalRange.ZERO;
          }
       }
 
-      AiPrinterCircuit.Inner_NetHelper diodeRearInput(BlockPos at, BlockState diode) {
+      AiPrinterCircuit.SignalRange diodeRearInput(BlockPos at, BlockState diode) {
          Direction direction = diode.getValue(BlockStateProperties.HORIZONTAL_FACING);
          BlockPos rearPos = at.relative(direction);
          BlockState rear = this.world.getBlockState(rearPos);
-         AiPrinterCircuit.Inner_NetHelper supply = this.signalInto(rearPos, direction, false);
+         AiPrinterCircuit.SignalRange supply = this.signalInto(rearPos, direction, false);
          if (rear.getBlock() instanceof RedstoneWireBlock) {
-            supply = AiPrinterCircuit.combineSignals(supply, AiPrinterCircuit.Inner_NetHelper.VARIABLE);
+            supply = AiPrinterCircuit.combineSignals(supply, AiPrinterCircuit.SignalRange.VARIABLE);
          }
 
          if (diode.getBlock() instanceof ComparatorBlock) {
             if (rear.hasAnalogOutputSignal()) {
-               return AiPrinterCircuit.Inner_NetHelper.UNKNOWN;
+               return AiPrinterCircuit.SignalRange.UNKNOWN;
             }
 
             if (rear.isRedstoneConductor(this.world, rearPos) && supply.high < 15) {
                BlockState farther = this.world.getBlockState(rearPos.relative(direction));
                if (farther.hasAnalogOutputSignal() || !farther.isRedstoneConductor(this.world, rearPos.relative(direction))) {
-                  return AiPrinterCircuit.Inner_NetHelper.UNKNOWN;
+                  return AiPrinterCircuit.SignalRange.UNKNOWN;
                }
             }
          }
@@ -576,29 +576,29 @@ final class AiPrinterCircuit {
          return supply;
       }
 
-      AiPrinterCircuit.Inner_NetHelper diodeSideInput(BlockPos at, BlockState diode) {
+      AiPrinterCircuit.SignalRange diodeSideInput(BlockPos at, BlockState diode) {
          Direction a = diode.getValue(BlockStateProperties.HORIZONTAL_FACING).getClockWise();
          Direction b = a.getOpposite();
          boolean onlyDiodes = !(diode.getBlock() instanceof ComparatorBlock);
          return AiPrinterCircuit.combineSignals(this.init_bl_NetHelper(at.relative(a), a, onlyDiodes), this.init_bl_NetHelper(at.relative(b), b, onlyDiodes));
       }
 
-      AiPrinterCircuit.Inner_NetHelper init_bl_NetHelper(BlockPos at, Direction direction, boolean onlyDiodes) {
+      AiPrinterCircuit.SignalRange init_bl_NetHelper(BlockPos at, Direction direction, boolean onlyDiodes) {
          BlockState state = this.world.getBlockState(at);
          if (onlyDiodes) {
-            return state.getBlock() instanceof DiodeBlock ? this.signalInto(at, direction, true) : AiPrinterCircuit.Inner_NetHelper.ZERO;
+            return state.getBlock() instanceof DiodeBlock ? this.signalInto(at, direction, true) : AiPrinterCircuit.SignalRange.ZERO;
          } else if (state.is(Blocks.REDSTONE_BLOCK)) {
-            return new AiPrinterCircuit.Inner_NetHelper(15, 15, false);
+            return new AiPrinterCircuit.SignalRange(15, 15, false);
          } else if (state.getBlock() instanceof RedstoneWireBlock) {
-            return AiPrinterCircuit.Inner_NetHelper.VARIABLE;
+            return AiPrinterCircuit.SignalRange.VARIABLE;
          } else {
-            return state.isSignalSource() ? this.signalInto(at, direction, true) : AiPrinterCircuit.Inner_NetHelper.ZERO;
+            return state.isSignalSource() ? this.signalInto(at, direction, true) : AiPrinterCircuit.SignalRange.ZERO;
          }
       }
 
-      AiPrinterCircuit.Inner_NetHelper signalInto(BlockPos at, Direction direction, boolean direct) {
-         AiPrinterCircuit.Inner_BufferHelper query = new AiPrinterCircuit.Inner_BufferHelper(at, direction, direct);
-         AiPrinterCircuit.Inner_NetHelper saved = this.queryCache.get(query);
+      AiPrinterCircuit.SignalRange signalInto(BlockPos at, Direction direction, boolean direct) {
+         AiPrinterCircuit.PowerQuery query = new AiPrinterCircuit.PowerQuery(at, direction, direct);
+         AiPrinterCircuit.SignalRange saved = this.queryCache.get(query);
          if (saved != null) {
             return saved;
          }
@@ -606,13 +606,13 @@ final class AiPrinterCircuit {
          if (this.activeQueries.size() < 16 && this.queryCount < 512 && this.activeQueries.add(query)) {
             this.queryCount++;
             BlockState state = this.world.getBlockState(at);
-            AiPrinterCircuit.Inner_NetHelper result;
+            AiPrinterCircuit.SignalRange result;
             if (state.getBlock() instanceof DiodeBlock) {
-               result = state.getValue(BlockStateProperties.HORIZONTAL_FACING) == direction ? this.init_bl_NetHelper(at) : AiPrinterCircuit.Inner_NetHelper.ZERO;
+               result = state.getValue(BlockStateProperties.HORIZONTAL_FACING) == direction ? this.init_bl_NetHelper(at) : AiPrinterCircuit.SignalRange.ZERO;
             } else {
                BlockState on = AiPrinterCircuit.asPowered(state, 15);
                int high = direct ? on.getDirectSignal(this.world, at, direction) : on.getSignal(this.world, at, direction);
-               result = new AiPrinterCircuit.Inner_NetHelper(state.is(Blocks.REDSTONE_BLOCK) ? high : 0, high, false);
+               result = new AiPrinterCircuit.SignalRange(state.is(Blocks.REDSTONE_BLOCK) ? high : 0, high, false);
             }
 
             if (!direct && state.isRedstoneConductor(this.world, at)) {
@@ -625,7 +625,7 @@ final class AiPrinterCircuit {
             this.queryCache.put(query, result);
             return result;
          } else {
-            return AiPrinterCircuit.Inner_NetHelper.UNKNOWN;
+            return AiPrinterCircuit.SignalRange.UNKNOWN;
          }
       }
    }

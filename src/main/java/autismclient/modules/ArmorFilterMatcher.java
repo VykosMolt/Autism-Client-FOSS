@@ -32,10 +32,10 @@ final class ArmorFilterMatcher {
       }
    }
 
-   static Map<Integer, Integer> duplicateNameFlags(List<ArmorFilterMatcher.Inner_DataUtil> identities) {
-      Map<String, List<ArmorFilterMatcher.Inner_DataUtil>> byName = new HashMap<>();
+   static Map<Integer, Integer> duplicateNameFlags(List<ArmorFilterMatcher.Identity> identities) {
+      Map<String, List<ArmorFilterMatcher.Identity>> byName = new HashMap<>();
 
-      for (ArmorFilterMatcher.Inner_DataUtil id : identities) {
+      for (ArmorFilterMatcher.Identity id : identities) {
          if (id.name() != null && id.uuid() != null) {
             byName.computeIfAbsent(id.name(), k -> new ArrayList<>()).add(id);
          }
@@ -43,11 +43,11 @@ final class ArmorFilterMatcher {
 
       Map<Integer, Integer> out = new HashMap<>();
 
-      for (List<ArmorFilterMatcher.Inner_DataUtil> group : byName.values()) {
+      for (List<ArmorFilterMatcher.Identity> group : byName.values()) {
          if (group.size() >= 2 && distinctUuidCount(group) >= 2) {
-            List<ArmorFilterMatcher.Inner_DataUtil> open = new ArrayList<>();
+            List<ArmorFilterMatcher.Identity> open = new ArrayList<>();
 
-            for (ArmorFilterMatcher.Inner_DataUtil id : group) {
+            for (ArmorFilterMatcher.Identity id : group) {
                if (!id.sync() && !id.isProven()) {
                   open.add(id);
                }
@@ -55,12 +55,12 @@ final class ArmorFilterMatcher {
 
             boolean anyProven = false;
 
-            for (ArmorFilterMatcher.Inner_DataUtil id : group) {
+            for (ArmorFilterMatcher.Identity id : group) {
                anyProven |= id.isProven() && !id.sync();
             }
 
             if (anyProven) {
-               for (ArmorFilterMatcher.Inner_DataUtil id : open) {
+               for (ArmorFilterMatcher.Identity id : open) {
                   if (id.hasEntity()) {
                      out.put(id.boundEntityId(), 2);
                   }
@@ -68,13 +68,13 @@ final class ArmorFilterMatcher {
             } else if (open.size() >= 2) {
                int best = -2147483648;
 
-               for (ArmorFilterMatcher.Inner_DataUtil id : open) {
+               for (ArmorFilterMatcher.Identity id : open) {
                   best = Math.max(best, id.evidenceScore());
                }
 
-               List<ArmorFilterMatcher.Inner_DataUtil> top = new ArrayList<>();
+               List<ArmorFilterMatcher.Identity> top = new ArrayList<>();
 
-               for (ArmorFilterMatcher.Inner_DataUtil id : open) {
+               for (ArmorFilterMatcher.Identity id : open) {
                   if (id.evidenceScore() == best) {
                      top.add(id);
                   }
@@ -82,13 +82,13 @@ final class ArmorFilterMatcher {
 
                int topEntities = 0;
 
-               for (ArmorFilterMatcher.Inner_DataUtil id : top) {
+               for (ArmorFilterMatcher.Identity id : top) {
                   if (id.hasEntity()) {
                      topEntities++;
                   }
                }
 
-               for (ArmorFilterMatcher.Inner_DataUtil id : open) {
+               for (ArmorFilterMatcher.Identity id : open) {
                   if (id.hasEntity()) {
                      boolean isTop = id.evidenceScore() == best;
                      if (!isTop || top.size() > 1 && topEntities > 1) {
@@ -103,10 +103,10 @@ final class ArmorFilterMatcher {
       return out;
    }
 
-   private static int distinctUuidCount(List<ArmorFilterMatcher.Inner_DataUtil> group) {
+   private static int distinctUuidCount(List<ArmorFilterMatcher.Identity> group) {
       Set<UUID> seen = new HashSet<>();
 
-      for (ArmorFilterMatcher.Inner_DataUtil id : group) {
+      for (ArmorFilterMatcher.Identity id : group) {
          seen.add(id.uuid());
       }
 
@@ -182,7 +182,7 @@ final class ArmorFilterMatcher {
       return id.startsWith(prefix) && isArmorPiece(id);
    }
 
-   record Inner_DataUtil(UUID uuid, String name, int init_I, boolean init_Z, boolean load, boolean read, boolean write, boolean update) {
+   record Identity(UUID uuid, String name, int init_I, boolean init_Z, boolean load, boolean read, boolean write, boolean update) {
       boolean hasEntity() {
          return this.init_I >= 0;
       }

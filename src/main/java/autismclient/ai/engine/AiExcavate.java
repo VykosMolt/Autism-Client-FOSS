@@ -159,7 +159,7 @@ public final class AiExcavate {
       return var10000;
    }
 
-   public static boolean touchesLava(AiExcavate.Inner_BufferHelper lava, int x, int y, int z) {
+   public static boolean touchesLava(AiExcavate.CellTest lava, int x, int y, int z) {
       for (int[] d : NEIGHBOR_OFFSETS) {
          if (lava.test(x + d[0], y + d[1], z + d[2])) {
             return true;
@@ -203,7 +203,7 @@ public final class AiExcavate {
          boolean backfill = AiJson.getBoolean(args, "backfill", false);
          int maxBlocks = Math.max(1, Math.min(4096, AiJson.getInt(args, "maxBlocks", 1024)));
          int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
-         return new AiExcavate.Inner_CachePool(
+         return new AiExcavate.ExcavateOp(
             "mine_area", areaCells(minX, minY, minZ, maxX, maxY, maxZ, client.player.blockPosition()), maxY - minY + 1, collect, maxBlocks, timeoutSeconds, backfill
          );
       } else {
@@ -219,7 +219,7 @@ public final class AiExcavate {
          boolean backfill = AiJson.getBoolean(args, "backfill", false);
          int timeoutSeconds = Math.max(5, Math.min(3600, AiJson.getInt(args, "timeoutSeconds", 600)));
          BlockPos origin = client.player.blockPosition();
-         AiExcavate.Inner_CachePool var10000;
+         AiExcavate.ExcavateOp var10000;
          switch (shape) {
             case "tunnel":
                int[] step = args.has("direction")
@@ -232,7 +232,7 @@ public final class AiExcavate {
                int length = Math.max(1, Math.min(128, AiJson.getInt(args, "length", 8)));
                int width = Math.max(1, Math.min(3, AiJson.getInt(args, "width", 1)));
                int height = Math.max(1, Math.min(3, AiJson.getInt(args, "height", 2)));
-               var10000 = new AiExcavate.Inner_CachePool(
+               var10000 = new AiExcavate.ExcavateOp(
                   "dig:tunnel", tunnelCells(origin, step[0], step[1], length, width, height), length, collect, length * width * height, timeoutSeconds, backfill
                );
                break;
@@ -241,7 +241,7 @@ public final class AiExcavate {
                int dy = Math.max(1, Math.min(16, AiJson.getInt(args, "dy", 4)));
                int dz = Math.max(1, Math.min(16, AiJson.getInt(args, "dz", 4)));
                int[] box = centredBox(origin.getX(), origin.getY(), origin.getZ(), dx, dy, dz);
-               var10000 = new AiExcavate.Inner_CachePool(
+               var10000 = new AiExcavate.ExcavateOp(
                   "dig:room", areaCells(box[0], box[1], box[2], box[3], box[4], box[5], origin), dy, collect, dx * dy * dz, timeoutSeconds, backfill
                );
                break;
@@ -268,7 +268,7 @@ public final class AiExcavate {
                   throw new IllegalArgumentException("direction must be north, south, east or west (or pass yaw)");
                }
 
-               var10000 = new AiExcavate.Inner_CachePool(
+               var10000 = new AiExcavate.ExcavateOp(
                   "dig:staircase",
                   staircaseCells(origin, step2[0], step2[1], targetY),
                   origin.getY() - targetY + 1,
@@ -276,7 +276,7 @@ public final class AiExcavate {
                   2 * (origin.getY() - targetY + 1),
                   timeoutSeconds,
                   false,
-                  new AiExcavate.Inner_ConfigStore(origin, step2[0], step2[1], targetY)
+                  new AiExcavate.Stair(origin, step2[0], step2[1], targetY)
                );
                break;
             default:
@@ -289,11 +289,11 @@ public final class AiExcavate {
       }
    }
 
-   public interface Inner_BufferHelper {
+   public interface CellTest {
       boolean test(int var1, int var2, int var3);
    }
 
-   private static final class Inner_CachePool implements AiOperation {
+   private static final class ExcavateOp implements AiOperation {
       final Minecraft mc = Minecraft.getInstance();
       final String label;
       final List<BlockPos> order;
@@ -302,14 +302,14 @@ public final class AiExcavate {
       final int maxBlocks;
       final long deadline;
       final int originalSlot;
-      final AiExcavate.Inner_ConfigStore stair;
+      final AiExcavate.Stair stair;
       AiOperation init_AiOperation;
       final Object startLevel = this.mc.level;
       final AiBackfill backfill;
       final Map<String, Integer> startCounts;
       final JsonArray skipped = new JsonArray();
-      final AiExcavate.Inner_StreamUtil orderCursor;
-      final AiExcavate.Inner_DataUtil init_ByteReader_DataUti = new AiExcavate.Inner_DataUtil();
+      final AiExcavate.OrderCursor orderCursor;
+      final AiExcavate.AttemptLimiter init_ByteReader_DataUti = new AiExcavate.AttemptLimiter();
       long load_J;
       AiOperation load_AiOperation;
       boolean load_Z;
@@ -332,11 +332,11 @@ public final class AiExcavate {
       boolean write_Z;
       boolean update_Z;
 
-      Inner_CachePool(String label, List<BlockPos> order, int layers, boolean collect, int maxBlocks, int timeoutSeconds, boolean backfill) {
+      ExcavateOp(String label, List<BlockPos> order, int layers, boolean collect, int maxBlocks, int timeoutSeconds, boolean backfill) {
          this(label, order, layers, collect, maxBlocks, timeoutSeconds, backfill, null);
       }
 
-      Inner_CachePool(
+      ExcavateOp(
          String label,
          List<BlockPos> order,
          int layers,
@@ -344,11 +344,11 @@ public final class AiExcavate {
          int maxBlocks,
          int timeoutSeconds,
          boolean backfill,
-         AiExcavate.Inner_ConfigStore stair
+         AiExcavate.Stair stair
       ) {
          this.label = label;
          this.order = order;
-         this.orderCursor = new AiExcavate.Inner_StreamUtil(order);
+         this.orderCursor = new AiExcavate.OrderCursor(order);
          this.layers = layers;
          this.collect = collect;
          this.maxBlocks = maxBlocks;
@@ -835,13 +835,13 @@ public final class AiExcavate {
       }
    }
 
-   record Inner_ConfigStore(BlockPos origin, int stepX, int stepZ, int targetY) {
+   record Stair(BlockPos origin, int stepX, int stepZ, int targetY) {
       int steps() {
          return Math.max(1, this.origin.getY() - this.targetY);
       }
    }
 
-   static final class Inner_DataUtil {
+   static final class AttemptLimiter {
       private final Map<BlockPos, Integer> attempts = new HashMap<>();
 
       boolean allowAttempt(BlockPos cell, int maxAttempts) {
@@ -849,14 +849,14 @@ public final class AiExcavate {
       }
    }
 
-   static final class Inner_StreamUtil {
+   static final class OrderCursor {
       private List<BlockPos> order;
       private final List<BlockPos> load_List = new ArrayList<>();
       private int cursor;
       private int dug = -1;
       private int dryPasses;
 
-      Inner_StreamUtil(List<BlockPos> order) {
+      OrderCursor(List<BlockPos> order) {
          this.order = order;
       }
 

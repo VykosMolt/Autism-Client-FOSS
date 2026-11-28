@@ -14,8 +14,8 @@ import net.minecraft.server.packs.repository.Pack;
 
 public final class ServerPackSelectionRegistry {
    private static final Object LOCK = new Object();
-   private static final Map<ResourcePackSessionTracker.PackSession, ServerPackSelectionRegistry.Inner_CachePool> SELECTIONS = new IdentityHashMap<>();
-   private static final ServerPackSelectionRegistry.Inner_DataUtil NONE = new ServerPackSelectionRegistry.Inner_DataUtil("", null, -1L, null, null);
+   private static final Map<ResourcePackSessionTracker.PackSession, ServerPackSelectionRegistry.SessionSelection> SELECTIONS = new IdentityHashMap<>();
+   private static final ServerPackSelectionRegistry.SelectedPack NONE = new ServerPackSelectionRegistry.SelectedPack("", null, -1L, null, null);
 
    private ServerPackSelectionRegistry() {
    }
@@ -26,10 +26,10 @@ public final class ServerPackSelectionRegistry {
          if (loaded.isEmpty()) {
             dropIfStale(session, revision);
          } else {
-            Map<String, ServerPackSelectionRegistry.Inner_DataUtil> replacement = new LinkedHashMap<>();
+            Map<String, ServerPackSelectionRegistry.SelectedPack> replacement = new LinkedHashMap<>();
 
             for (Pack pack : loaded) {
-               ServerPackSelectionRegistry.Inner_DataUtil entry = select(session, requested, pack);
+               ServerPackSelectionRegistry.SelectedPack entry = select(session, requested, pack);
                if (entry == NONE) {
                   return;
                }
@@ -44,7 +44,7 @@ public final class ServerPackSelectionRegistry {
 
             synchronized (LOCK) {
                if (revision >= 0L && revision == ResourcePackSessionTracker.revision(session)) {
-                  ServerPackSelectionRegistry.Inner_CachePool selection = SELECTIONS.computeIfAbsent(session, ignored -> new ServerPackSelectionRegistry.Inner_CachePool());
+                  ServerPackSelectionRegistry.SessionSelection selection = SELECTIONS.computeIfAbsent(session, ignored -> new ServerPackSelectionRegistry.SessionSelection());
                   selection.byRepository.clear();
                   selection.byRepository.putAll(replacement);
                }
@@ -53,7 +53,7 @@ public final class ServerPackSelectionRegistry {
       }
    }
 
-   private static ServerPackSelectionRegistry.Inner_DataUtil select(ResourcePackSessionTracker.PackSession session, Collection<IdAndPath> requested, Pack pack) {
+   private static ServerPackSelectionRegistry.SelectedPack select(ResourcePackSessionTracker.PackSession session, Collection<IdAndPath> requested, Pack pack) {
       if (pack != null && pack.location() != null && pack.location().id() != null) {
          String repositoryId = pack.location().id();
          if (repositoryId.length() == 52 && repositoryId.startsWith("server/") && repositoryId.charAt(15) == '/') {
@@ -117,7 +117,7 @@ public final class ServerPackSelectionRegistry {
                return null;
             }
 
-            return new ServerPackSelectionRegistry.Inner_DataUtil(repositoryId, packId, generation, policy, path);
+            return new ServerPackSelectionRegistry.SelectedPack(repositoryId, packId, generation, policy, path);
          } else {
             return null;
          }
@@ -126,9 +126,9 @@ public final class ServerPackSelectionRegistry {
       }
    }
 
-   public static ServerPackSelectionRegistry.Inner_StreamUtil provenanceOf(ResourcePackSessionTracker.PackSession session, PackResources resources) {
+   public static ServerPackSelectionRegistry.Provenance provenanceOf(ResourcePackSessionTracker.PackSession session, PackResources resources) {
       if (resources != null && resources.location() != null) {
-         ServerPackSelectionRegistry.Inner_StreamUtil provenance = init_CharEncoder_Stream(session, resources.location().id());
+         ServerPackSelectionRegistry.Provenance provenance = init_CharEncoder_Stream(session, resources.location().id());
          if (provenance != null && resources instanceof IsolatedPackDownloader.IsolationAware isolated) {
             IsolatedPackDownloader.PackIsolation binding = isolated.packIsolation();
             if (provenance.policy() != ResourcePackSessionTracker.PackPolicy.ISOLATED
@@ -145,17 +145,17 @@ public final class ServerPackSelectionRegistry {
       }
    }
 
-   public static ServerPackSelectionRegistry.Inner_StreamUtil init_CharEncoder_Stream(ResourcePackSessionTracker.PackSession session, String repositoryId) {
+   public static ServerPackSelectionRegistry.Provenance init_CharEncoder_Stream(ResourcePackSessionTracker.PackSession session, String repositoryId) {
       if (session != null && repositoryId != null) {
          synchronized (LOCK) {
             if (!ResourcePackSessionTracker.isActive(session)) {
                return null;
             } else {
-               ServerPackSelectionRegistry.Inner_CachePool selection = SELECTIONS.get(session);
+               ServerPackSelectionRegistry.SessionSelection selection = SELECTIONS.get(session);
                if (selection == null) {
                   return null;
                } else {
-                  ServerPackSelectionRegistry.Inner_DataUtil pack = selection.byRepository.get(repositoryId);
+                  ServerPackSelectionRegistry.SelectedPack pack = selection.byRepository.get(repositoryId);
                   if (pack != null
                      && pack.generation() > 0L
                      && ResourcePackSessionTracker.policyFor(session, pack.packId()) != null
@@ -164,7 +164,7 @@ public final class ServerPackSelectionRegistry {
                   } else {
                      return pack == null
                         ? null
-                        : new ServerPackSelectionRegistry.Inner_StreamUtil(pack.id(), pack.packId(), pack.generation(), pack.policy());
+                        : new ServerPackSelectionRegistry.Provenance(pack.id(), pack.packId(), pack.generation(), pack.policy());
                   }
                }
             }
@@ -180,12 +180,12 @@ public final class ServerPackSelectionRegistry {
             return false;
          }
 
-         ServerPackSelectionRegistry.Inner_CachePool selection = SELECTIONS.get(session);
+         ServerPackSelectionRegistry.SessionSelection selection = SELECTIONS.get(session);
          if (selection == null) {
             return false;
          }
 
-         for (ServerPackSelectionRegistry.Inner_DataUtil pack : selection.byRepository.values()) {
+         for (ServerPackSelectionRegistry.SelectedPack pack : selection.byRepository.values()) {
             if (pack.policy() == ResourcePackSessionTracker.PackPolicy.FULL
                && packId.equals(pack.packId())
                && path.equals(pack.path())
@@ -207,12 +207,12 @@ public final class ServerPackSelectionRegistry {
    }
 
    public static ResourcePackSessionTracker.PackPolicy init_FileCache_DataUtil(ResourcePackSessionTracker.PackSession session, PackResources resources) {
-      ServerPackSelectionRegistry.Inner_StreamUtil provenance = provenanceOf(session, resources);
+      ServerPackSelectionRegistry.Provenance provenance = provenanceOf(session, resources);
       return provenance == null ? null : provenance.policy();
    }
 
    public static ResourcePackSessionTracker.PackPolicy init_FileCache_DataUtil(ResourcePackSessionTracker.PackSession session, String repositoryId) {
-      ServerPackSelectionRegistry.Inner_StreamUtil provenance = init_CharEncoder_Stream(session, repositoryId);
+      ServerPackSelectionRegistry.Provenance provenance = init_CharEncoder_Stream(session, repositoryId);
       return provenance == null ? null : provenance.policy();
    }
 
@@ -235,12 +235,12 @@ public final class ServerPackSelectionRegistry {
    public static String init_Str(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null && packId != null) {
          synchronized (LOCK) {
-            ServerPackSelectionRegistry.Inner_CachePool selection = SELECTIONS.get(session);
+            ServerPackSelectionRegistry.SessionSelection selection = SELECTIONS.get(session);
             if (selection == null) {
                return null;
             }
 
-            for (ServerPackSelectionRegistry.Inner_DataUtil pack : selection.byRepository.values()) {
+            for (ServerPackSelectionRegistry.SelectedPack pack : selection.byRepository.values()) {
                if (packId.equals(pack.packId())) {
                   return pack.id();
                }
@@ -256,7 +256,7 @@ public final class ServerPackSelectionRegistry {
    static void init_V(ResourcePackSessionTracker.PackSession session, UUID packId) {
       if (session != null) {
          synchronized (LOCK) {
-            ServerPackSelectionRegistry.Inner_CachePool selection = SELECTIONS.get(session);
+            ServerPackSelectionRegistry.SessionSelection selection = SELECTIONS.get(session);
             if (selection != null) {
                if (packId == null) {
                   selection.byRepository.clear();
@@ -298,13 +298,13 @@ public final class ServerPackSelectionRegistry {
    public static void load() {
    }
 
-   private static final class Inner_CachePool {
-      private final Map<String, ServerPackSelectionRegistry.Inner_DataUtil> byRepository = new LinkedHashMap<>();
+   private static final class SessionSelection {
+      private final Map<String, ServerPackSelectionRegistry.SelectedPack> byRepository = new LinkedHashMap<>();
    }
 
-   public record Inner_DataUtil(String id, UUID packId, long generation, ResourcePackSessionTracker.PackPolicy policy, Path path) {
+   public record SelectedPack(String id, UUID packId, long generation, ResourcePackSessionTracker.PackPolicy policy, Path path) {
    }
 
-   public record Inner_StreamUtil(String id, UUID packId, long generation, ResourcePackSessionTracker.PackPolicy policy) {
+   public record Provenance(String id, UUID packId, long generation, ResourcePackSessionTracker.PackPolicy policy) {
    }
 }

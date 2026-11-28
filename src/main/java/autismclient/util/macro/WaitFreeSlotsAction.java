@@ -4,8 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 
 public class WaitFreeSlotsAction implements MacroAction {
-   public WaitFreeSlotsAction.Inner_StreamUtil countMode = WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS;
-   public WaitFreeSlotsAction.Inner_DataUtil comparison = WaitFreeSlotsAction.Inner_DataUtil.AT_MOST;
+   public WaitFreeSlotsAction.CountMode countMode = WaitFreeSlotsAction.CountMode.FREE_SLOTS;
+   public WaitFreeSlotsAction.Comparison comparison = WaitFreeSlotsAction.Comparison.AT_MOST;
    public int slots = 0;
    public int timeoutMs = 0;
    public boolean listenDuringPreviousAction = false;
@@ -34,7 +34,7 @@ public class WaitFreeSlotsAction implements MacroAction {
             }
          }
 
-         int actual = this.countMode == WaitFreeSlotsAction.Inner_StreamUtil.FILLED_SLOTS ? filled : free;
+         int actual = this.countMode == WaitFreeSlotsAction.CountMode.FILLED_SLOTS ? filled : free;
          return this.meetsTarget(actual, Math.max(0, Math.min(36, this.slots)));
       } else {
          return false;
@@ -81,8 +81,8 @@ public class WaitFreeSlotsAction implements MacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.countMode = MacroNbtCodecHelper.parseEnum(WaitFreeSlotsAction.Inner_StreamUtil.class, tag.getStringOr("countMode", WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS.name()), WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS);
-      this.comparison = MacroNbtCodecHelper.parseEnum(WaitFreeSlotsAction.Inner_DataUtil.class, tag.getStringOr("comparison", WaitFreeSlotsAction.Inner_DataUtil.AT_MOST.name()), WaitFreeSlotsAction.Inner_DataUtil.AT_MOST);
+      this.countMode = MacroNbtCodecHelper.parseEnum(WaitFreeSlotsAction.CountMode.class, tag.getStringOr("countMode", WaitFreeSlotsAction.CountMode.FREE_SLOTS.name()), WaitFreeSlotsAction.CountMode.FREE_SLOTS);
+      this.comparison = MacroNbtCodecHelper.parseEnum(WaitFreeSlotsAction.Comparison.class, tag.getStringOr("comparison", WaitFreeSlotsAction.Comparison.AT_MOST.name()), WaitFreeSlotsAction.Comparison.AT_MOST);
       this.slots = Math.max(0, Math.min(36, tag.getIntOr("slots", 0)));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 0));
       if (tag.contains("enabled")) {
@@ -94,7 +94,7 @@ public class WaitFreeSlotsAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      return "Wait " + (this.countMode == WaitFreeSlotsAction.Inner_StreamUtil.FILLED_SLOTS ? "Filled" : "Free") + " Slots " + this.comparisonSymbol() + " " + Math.max(0, Math.min(36, this.slots));
+      return "Wait " + (this.countMode == WaitFreeSlotsAction.CountMode.FILLED_SLOTS ? "Filled" : "Free") + " Slots " + this.comparisonSymbol() + " " + Math.max(0, Math.min(36, this.slots));
    }
 
    private String comparisonSymbol() {
@@ -137,7 +137,7 @@ public class WaitFreeSlotsAction implements MacroAction {
       this.enabled = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum Comparison {
       BELOW,
       AT_MOST,
       EXACT,
@@ -145,7 +145,7 @@ public class WaitFreeSlotsAction implements MacroAction {
       ABOVE;
    }
 
-   public enum Inner_StreamUtil {
+   public enum CountMode {
       FREE_SLOTS,
       FILLED_SLOTS;
    }

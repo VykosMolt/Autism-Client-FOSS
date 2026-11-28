@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import net.minecraft.network.protocol.Packet;
 
 public class PacketNameArgumentType implements ArgumentType<String> {
-   private static volatile List<PacketNameArgumentType.Inner_DataUtil> cachedHits;
+   private static volatile List<PacketNameArgumentType.NameEntry> cachedHits;
 
    public static PacketNameArgumentType packetName() {
       return new PacketNameArgumentType();
@@ -37,7 +37,7 @@ public class PacketNameArgumentType implements ArgumentType<String> {
    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (PacketNameArgumentType.Inner_DataUtil candidate : namesForSuggestions()) {
+      for (PacketNameArgumentType.NameEntry candidate : namesForSuggestions()) {
          if (candidate.load().contains(remaining)) {
             builder.suggest(candidate.init());
          }
@@ -46,18 +46,18 @@ public class PacketNameArgumentType implements ArgumentType<String> {
       return builder.buildFuture();
    }
 
-   private static List<PacketNameArgumentType.Inner_DataUtil> namesForSuggestions() {
-      List<PacketNameArgumentType.Inner_DataUtil> hit = cachedHits;
+   private static List<PacketNameArgumentType.NameEntry> namesForSuggestions() {
+      List<PacketNameArgumentType.NameEntry> hit = cachedHits;
       if (hit != null) {
          return hit;
       }
 
-      List<PacketNameArgumentType.Inner_DataUtil> rebuilt = new ArrayList<>();
+      List<PacketNameArgumentType.NameEntry> rebuilt = new ArrayList<>();
 
       for (Class<? extends Packet<?>> cls : PacketTypeRegistry.getC2sPackets()) {
          String name = PacketTypeRegistry.getPacketName(cls);
          if (name != null) {
-            rebuilt.add(new PacketNameArgumentType.Inner_DataUtil(name, name.toLowerCase(Locale.ROOT)));
+            rebuilt.add(new PacketNameArgumentType.NameEntry(name, name.toLowerCase(Locale.ROOT)));
          }
       }
 
@@ -66,6 +66,6 @@ public class PacketNameArgumentType implements ArgumentType<String> {
       return hit;
    }
 
-   private record Inner_DataUtil(String init, String load) {
+   private record NameEntry(String init, String load) {
    }
 }

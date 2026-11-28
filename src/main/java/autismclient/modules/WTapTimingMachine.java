@@ -3,7 +3,7 @@ package autismclient.modules;
 final class WTapTimingMachine {
    private static final long init_J = 900000000L;
    private static final long load_J = 250000000L;
-   private WTapTimingMachine.Inner_DataUtil phase = WTapTimingMachine.Inner_DataUtil.IDLE;
+   private WTapTimingMachine.Phase phase = WTapTimingMachine.Phase.IDLE;
    private long hitExpiresAt;
    private long releaseAt;
    private long releaseNanos;
@@ -17,13 +17,13 @@ final class WTapTimingMachine {
    boolean arm(long now, int tick, long delay, long duration, boolean selected) {
       this.expireStaleHit(now);
       if (selected
-         && this.phase == WTapTimingMachine.Inner_DataUtil.IDLE
+         && this.phase == WTapTimingMachine.Phase.IDLE
          && tick > this.lastFinishTick
          && delay >= 0L
          && delay <= 200000000L
          && duration >= 1L
          && duration <= 200000000L) {
-         this.phase = WTapTimingMachine.Inner_DataUtil.HIT;
+         this.phase = WTapTimingMachine.Phase.HIT;
          this.hitExpiresAt = now + 900000000L;
          this.releaseAt = delay;
          this.releaseNanos = duration;
@@ -35,11 +35,11 @@ final class WTapTimingMachine {
 
    boolean beginDelay(long now) {
       this.expireStaleHit(now);
-      if (this.phase != WTapTimingMachine.Inner_DataUtil.HIT) {
+      if (this.phase != WTapTimingMachine.Phase.HIT) {
          return false;
       }
 
-      this.phase = WTapTimingMachine.Inner_DataUtil.DELAY;
+      this.phase = WTapTimingMachine.Phase.DELAY;
       this.releaseAt += now;
       return true;
    }
@@ -51,20 +51,20 @@ final class WTapTimingMachine {
       }
 
       this.expireStaleHit(now);
-      if (this.phase == WTapTimingMachine.Inner_DataUtil.DELAY && now >= this.releaseAt) {
+      if (this.phase == WTapTimingMachine.Phase.DELAY && now >= this.releaseAt) {
          if (now - this.releaseAt > 250000000L) {
             this.reset();
             return false;
          }
 
-         this.phase = WTapTimingMachine.Inner_DataUtil.RELEASE;
+         this.phase = WTapTimingMachine.Phase.RELEASE;
          this.releaseEndsAt = now + this.releaseNanos;
          this.releaseTick = tick;
          this.releaseTicks = (int)Math.max(1L, (this.releaseNanos + 50000000L - 1L) / 50000000L);
          this.tapCount++;
       }
 
-      if (this.phase != WTapTimingMachine.Inner_DataUtil.RELEASE) {
+      if (this.phase != WTapTimingMachine.Phase.RELEASE) {
          return false;
       } else if (tick != this.releaseTick && (now >= this.releaseEndsAt || tick - this.releaseTick >= this.releaseTicks)) {
          this.reset();
@@ -76,13 +76,13 @@ final class WTapTimingMachine {
    }
 
    private void expireStaleHit(long now) {
-      if (this.phase == WTapTimingMachine.Inner_DataUtil.HIT && now > this.hitExpiresAt) {
+      if (this.phase == WTapTimingMachine.Phase.HIT && now > this.hitExpiresAt) {
          this.reset();
       }
    }
 
    boolean isActive() {
-      return this.phase != WTapTimingMachine.Inner_DataUtil.IDLE;
+      return this.phase != WTapTimingMachine.Phase.IDLE;
    }
 
    boolean activeAt(long now) {
@@ -91,7 +91,7 @@ final class WTapTimingMachine {
    }
 
    boolean isReleasing() {
-      return this.phase == WTapTimingMachine.Inner_DataUtil.RELEASE;
+      return this.phase == WTapTimingMachine.Phase.RELEASE;
    }
 
    long init_J() {
@@ -99,7 +99,7 @@ final class WTapTimingMachine {
    }
 
    void reset() {
-      this.phase = WTapTimingMachine.Inner_DataUtil.IDLE;
+      this.phase = WTapTimingMachine.Phase.IDLE;
       this.hitExpiresAt = this.releaseAt = this.releaseNanos = this.releaseEndsAt = 0L;
    }
 
@@ -109,7 +109,7 @@ final class WTapTimingMachine {
       this.tapCount = 0L;
    }
 
-   private enum Inner_DataUtil {
+   private enum Phase {
       IDLE,
       HIT,
       DELAY,

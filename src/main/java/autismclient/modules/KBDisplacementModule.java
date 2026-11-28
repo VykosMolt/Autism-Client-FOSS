@@ -101,7 +101,7 @@ public final class KBDisplacementModule extends Module implements SilentMovement
    private static final int sync_I = 12;
    private static final double init_D = 0.06;
    private static final double load_D = 62.0;
-   private final WTapController wTap = new WTapController(new WTapController.Inner_DataUtil() {
+   private final WTapController wTap = new WTapController(new WTapController.Settings() {
       @Override
       public int chance() {
          return 100;
@@ -824,8 +824,8 @@ public final class KBDisplacementModule extends Module implements SilentMovement
       Module canceller = al.init_Module_Str("packet-canceller");
       if (!BlinkPacketManager.isBlinking() && (!autismclient.util.macro.PingSpoofScheduler.isActive() || !autismclient.util.macro.PingSpoofScheduler.isRealOutgoing()) && !AutismSessionState.getInstance().isUseCustomPackets()) {
          return canceller == null || !canceller.isEnabled() || !canceller.onPacketSend(look) && !canceller.onPacketSend(attack)
-            ? autismclient.util.macro.PacketGateManager.match(look, "C2S") == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.PASS
-               && autismclient.util.macro.PacketGateManager.match(attack, "C2S") == autismclient.util.macro.PacketGateManager.Inner_StreamUtil.PASS
+            ? autismclient.util.macro.PacketGateManager.match(look, "C2S") == autismclient.util.macro.PacketGateManager.GateVerdict.PASS
+               && autismclient.util.macro.PacketGateManager.match(attack, "C2S") == autismclient.util.macro.PacketGateManager.GateVerdict.PASS
             : false;
       } else {
          return false;

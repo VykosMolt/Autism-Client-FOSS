@@ -38,7 +38,7 @@ final class CrosshairVectorPipeline {
    private CrosshairVectorPipeline() {
    }
 
-   static boolean drawPreset(GuiGraphicsExtractor graphics, CrosshairRenderState.Inner_DataUtil look, float centerX, float centerY, float pixelsPerGuiUnit, int maxPixels, int target) {
+   static boolean drawPreset(GuiGraphicsExtractor graphics, CrosshairRenderState.Snapshot look, float centerX, float centerY, float pixelsPerGuiUnit, int maxPixels, int target) {
       if (!look.style().isPreset() || !ensurePipelines()) {
          return false;
       }

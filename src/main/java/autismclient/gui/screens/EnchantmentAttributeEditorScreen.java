@@ -411,8 +411,8 @@ public final class EnchantmentAttributeEditorScreen extends VirtualScaledScreen 
                      this.module,
                      this.setting,
                      this.mode == EnchantmentAttributeEditorScreen.EditorMode.ENCHANTMENTS
-                        ? NbtTextEditorScreen.Inner_DataUtil.ENCHANTMENTS
-                        : NbtTextEditorScreen.Inner_DataUtil.ATTRIBUTES
+                        ? NbtTextEditorScreen.EditMode.ENCHANTMENTS
+                        : NbtTextEditorScreen.EditMode.ATTRIBUTES
                   )
                );
          }

@@ -13,18 +13,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class PacketSchemaRegistry {
-   private static volatile Map<String, PacketSchemaRegistry.Inner_StreamUtil> schemas;
+   private static volatile Map<String, PacketSchemaRegistry.PacketSchema> schemas;
 
    private PacketSchemaRegistry() {
    }
 
-   public static PacketSchemaRegistry.Inner_StreamUtil schemaFor(Class<?> packetClass) {
+   public static PacketSchemaRegistry.PacketSchema schemaFor(Class<?> packetClass) {
       if (packetClass == null) {
          return null;
       }
 
-      Map<String, PacketSchemaRegistry.Inner_StreamUtil> map = init_Map();
-      PacketSchemaRegistry.Inner_StreamUtil exact = map.get(packetClass.getName());
+      Map<String, PacketSchemaRegistry.PacketSchema> map = init_Map();
+      PacketSchemaRegistry.PacketSchema exact = map.get(packetClass.getName());
       if (exact != null) {
          return exact;
       }
@@ -45,11 +45,11 @@ public final class PacketSchemaRegistry {
    }
 
    public static int schemaClassCount() {
-      return init_Map().values().stream().map(PacketSchemaRegistry.Inner_StreamUtil::load_Str).collect(Collectors.toSet()).size();
+      return init_Map().values().stream().map(PacketSchemaRegistry.PacketSchema::load_Str).collect(Collectors.toSet()).size();
    }
 
-   private static Map<String, PacketSchemaRegistry.Inner_StreamUtil> init_Map() {
-      Map<String, PacketSchemaRegistry.Inner_StreamUtil> current = schemas;
+   private static Map<String, PacketSchemaRegistry.PacketSchema> init_Map() {
+      Map<String, PacketSchemaRegistry.PacketSchema> current = schemas;
       if (current != null) {
          return current;
       }
@@ -60,7 +60,7 @@ public final class PacketSchemaRegistry {
             return current;
          }
 
-         Map<String, PacketSchemaRegistry.Inner_StreamUtil> loaded = new LinkedHashMap<>();
+         Map<String, PacketSchemaRegistry.PacketSchema> loaded = new LinkedHashMap<>();
 
          try (InputStream in = PacketSchemaRegistry.class.getResourceAsStream("/autism-packet-schemas.tsv")) {
             if (in != null) {
@@ -68,7 +68,7 @@ public final class PacketSchemaRegistry {
                try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                   while ((line = reader.readLine()) != null) {
                      if (!line.isBlank() && !line.startsWith("#")) {
-                        PacketSchemaRegistry.Inner_StreamUtil schema = parseLine(line);
+                        PacketSchemaRegistry.PacketSchema schema = parseLine(line);
                         if (schema != null) {
                            loaded.put(schema.load_Str(), schema);
                            loaded.put(schema.init_Str(), schema);
@@ -86,38 +86,38 @@ public final class PacketSchemaRegistry {
       }
    }
 
-   private static PacketSchemaRegistry.Inner_StreamUtil parseLine(String line) {
+   private static PacketSchemaRegistry.PacketSchema parseLine(String line) {
       String[] parts = line.split("\t", -1);
       if (parts.length < 8) {
          return null;
       }
 
-      List<PacketSchemaRegistry.Inner_DataUtil> fields = new ArrayList<>();
+      List<PacketSchemaRegistry.FieldSchema> fields = new ArrayList<>();
       if (!parts[7].isBlank()) {
          for (String fieldRaw : parts[7].split("\\|", -1)) {
             String[] fieldParts = fieldRaw.split("~", -1);
             if (fieldParts.length >= 4) {
-               fields.add(new PacketSchemaRegistry.Inner_DataUtil(fieldParts[0], fieldParts[1], fieldParts[2].toLowerCase(Locale.ROOT), Boolean.parseBoolean(fieldParts[3])));
+               fields.add(new PacketSchemaRegistry.FieldSchema(fieldParts[0], fieldParts[1], fieldParts[2].toLowerCase(Locale.ROOT), Boolean.parseBoolean(fieldParts[3])));
             }
          }
       }
 
-      return new PacketSchemaRegistry.Inner_StreamUtil(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], Boolean.parseBoolean(parts[6]), fields, false);
+      return new PacketSchemaRegistry.PacketSchema(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], Boolean.parseBoolean(parts[6]), fields, false);
    }
 
    private static String orDefault(String value, String fallback) {
       return value != null && !value.isBlank() ? value : fallback;
    }
 
-   public record Inner_DataUtil(String name, String load, String read, boolean editableCandidate) {
-      public Inner_DataUtil {
+   public record FieldSchema(String name, String load, String read, boolean editableCandidate) {
+      public FieldSchema {
          name = PacketSchemaRegistry.orDefault(name, "field");
          load = PacketSchemaRegistry.orDefault(load, "Object");
          read = PacketSchemaRegistry.orDefault(read, "object");
       }
    }
 
-   public record Inner_StreamUtil(
+   public record PacketSchema(
       String init_Str,
       String load_Str,
       String read,
@@ -125,10 +125,10 @@ public final class PacketSchemaRegistry {
       String update,
       String sync,
       boolean complete,
-      List<PacketSchemaRegistry.Inner_DataUtil> fields,
+      List<PacketSchemaRegistry.FieldSchema> fields,
       boolean inherited
    ) {
-      public Inner_StreamUtil {
+      public PacketSchema {
          load_Str = PacketSchemaRegistry.orDefault(load_Str, "unknown");
          read = PacketSchemaRegistry.orDefault(read, "ANY");
          write = PacketSchemaRegistry.orDefault(write, "unknown");
@@ -142,10 +142,10 @@ public final class PacketSchemaRegistry {
          return name.replace('$', '.');
       }
 
-      public PacketSchemaRegistry.Inner_StreamUtil forClass(Class<?> concreteClass) {
+      public PacketSchemaRegistry.PacketSchema forClass(Class<?> concreteClass) {
          return concreteClass == null
             ? this
-            : new PacketSchemaRegistry.Inner_StreamUtil(concreteClass.getName(), this.load_Str, this.read, this.write, this.update, this.sync, this.complete, this.fields, true);
+            : new PacketSchemaRegistry.PacketSchema(concreteClass.getName(), this.load_Str, this.read, this.write, this.update, this.sync, this.complete, this.fields, true);
       }
 
       public String load_Str() {

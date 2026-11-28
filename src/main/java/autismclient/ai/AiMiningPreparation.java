@@ -457,7 +457,7 @@ public final class AiMiningPreparation {
          double before = 1.0 / 0.0;
          double after = 0.0;
          ItemStack axe = new ItemStack(Items.WOODEN_AXE);
-         autismclient.ai.engine.MiningCost.Inner_DataUtil factors = autismclient.ai.engine.MiningCost.Inner_DataUtil.of(mc);
+         autismclient.ai.engine.MiningCost.MiningFactors factors = autismclient.ai.engine.MiningCost.MiningFactors.of(mc);
 
          for (Block block : blocks) {
             BlockState state = block.defaultBlockState();

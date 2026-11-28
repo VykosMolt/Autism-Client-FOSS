@@ -93,7 +93,7 @@ public final class RemoteViewCommand extends Command {
       }
    }
 
-   private static void report(RemoteViewController.Inner_DataUtil result) {
+   private static void report(RemoteViewController.ViewResult result) {
       AutismClientMessaging.sendPrefixed((result.success() ? "§a" : "§c") + result.message());
    }
 

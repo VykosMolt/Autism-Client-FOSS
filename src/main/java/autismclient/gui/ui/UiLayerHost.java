@@ -93,7 +93,7 @@ public final class UiLayerHost {
       return this.dispatchTopDown(component -> component.onCharTyped(chr));
    }
 
-   private UiInputResult dispatchTopDown(UiLayerHost.Inner_DataUtil call) {
+   private UiInputResult dispatchTopDown(UiLayerHost.LayerCall call) {
       UiLayer[] order = UiLayer.values();
 
       for (int layerIndex = order.length - 1; layerIndex >= 0; layerIndex--) {
@@ -115,7 +115,7 @@ public final class UiLayerHost {
       return UiInputResult.IGNORED;
    }
 
-   private UiInputResult dispatchAt(int mouseX, int mouseY, UiLayerHost.Inner_DataUtil call) {
+   private UiInputResult dispatchAt(int mouseX, int mouseY, UiLayerHost.LayerCall call) {
       UiLayer[] order = UiLayer.values();
 
       for (int layerIndex = order.length - 1; layerIndex >= 0; layerIndex--) {
@@ -144,7 +144,7 @@ public final class UiLayerHost {
    }
 
    @FunctionalInterface
-   private interface Inner_DataUtil {
+   private interface LayerCall {
       UiInputResult invoke(UiLayerComponent var1);
    }
 }

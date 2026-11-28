@@ -37,18 +37,18 @@ public class AutismProtectorDownloadQueueMixin {
    private CompletableFuture autism$scopedBatch(
       Supplier supplier, Executor executor, Operation<CompletableFuture> original, @Local(argsOnly = true) BatchConfig config
    ) throws IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.current();
+      ResourcePackDownloadScope.Snapshot snapshot = ResourcePackDownloadScope.current();
       if (snapshot == null) {
          return original.call(supplier, executor);
       }
 
       snapshot.ensureCurrent();
-      ResourcePackDownloadScope.Inner_DataUtil registration = ResourcePackDownloadScope.init(config, snapshot);
+      ResourcePackDownloadScope.BatchScope registration = ResourcePackDownloadScope.init(config, snapshot);
 
       CompletableFuture future;
       try {
          Supplier scopedSupplier = () -> {
-            try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.load(snapshot)) {
+            try (ResourcePackDownloadScope.Scope ignored = ResourcePackDownloadScope.load(snapshot)) {
                return supplier.get();
             } catch (IOException e) {
                throw new CompletionException(e);
@@ -66,8 +66,8 @@ public class AutismProtectorDownloadQueueMixin {
 
    @WrapOperation(method = "runDownload", at = @At(value = "INVOKE", target = "Ljava/util/Map;forEach(Ljava/util/function/BiConsumer;)V"))
    private void autism$workerScope(Map requests, BiConsumer action, Operation<Void> original, @Local(argsOnly = true) BatchConfig config) throws IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper registered = ResourcePackDownloadScope.register(config);
-      ResourcePackDownloadScope.Inner_BufferHelper worker = ResourcePackDownloadScope.workerScope();
+      ResourcePackDownloadScope.Snapshot registered = ResourcePackDownloadScope.register(config);
+      ResourcePackDownloadScope.Snapshot worker = ResourcePackDownloadScope.workerScope();
       if (registered == null && worker == null) {
          original.call(requests, action);
       } else {
@@ -81,7 +81,7 @@ public class AutismProtectorDownloadQueueMixin {
 
          registered.ensureCurrent();
 
-         try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.load(registered)) {
+         try (ResourcePackDownloadScope.Scope ignored = ResourcePackDownloadScope.load(registered)) {
             original.call(requests, action);
          }
       }
@@ -95,7 +95,7 @@ public class AutismProtectorDownloadQueueMixin {
    private Path autism$scopedCacheDirectory(
       Path cacheDir, String name, Operation<Path> original, @Local(argsOnly = true) UUID packId, @Local BatchConfig config
    ) throws IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.workerScope();
+      ResourcePackDownloadScope.Snapshot snapshot = ResourcePackDownloadScope.workerScope();
       if (snapshot == null) {
          return original.call(cacheDir, name);
       } else {
@@ -127,7 +127,7 @@ public class AutismProtectorDownloadQueueMixin {
       DownloadProgressListener listener,
       Operation<Path> original
    ) throws InterruptedException, IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.workerScope();
+      ResourcePackDownloadScope.Snapshot snapshot = ResourcePackDownloadScope.workerScope();
       if (snapshot == null) {
          return original.call(targetDir, url, headers, hashFunction, requestedHash, maxSize, proxy, listener);
       }
@@ -145,7 +145,7 @@ public class AutismProtectorDownloadQueueMixin {
       }
    }
 
-   private static DownloadProgressListener autism$guardedProgress(final ResourcePackDownloadScope.Inner_BufferHelper snapshot, final DownloadProgressListener listener) {
+   private static DownloadProgressListener autism$guardedProgress(final ResourcePackDownloadScope.Snapshot snapshot, final DownloadProgressListener listener) {
       return new DownloadProgressListener() {
          @Override
          public void requestStart() {

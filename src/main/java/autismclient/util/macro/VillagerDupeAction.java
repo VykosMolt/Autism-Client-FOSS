@@ -10,7 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 public final class VillagerDupeAction implements ContextMacroAction {
    private static final int MAX_COUNT = 64;
    private static final int MAX_WATCH_TICKS = 10;
-   public autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.ALL;
+   public autismclient.util.villagerdupe.VillagerDupeDriver.ItemFilter filter = autismclient.util.villagerdupe.VillagerDupeDriver.ItemFilter.ALL;
    public VillagerDupeAction.TargetSelection targets = VillagerDupeAction.TargetSelection.ALL_IN_RANGE;
    public int count = 1;
    public int intervalTicks = 1;
@@ -82,7 +82,7 @@ public final class VillagerDupeAction implements ContextMacroAction {
 
    @Override
    public void fromTag(CompoundTag tag) {
-      this.filter = autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(tag.getStringOr("filter", "ALL"));
+      this.filter = autismclient.util.villagerdupe.VillagerDupeDriver.ItemFilter.parse(tag.getStringOr("filter", "ALL"));
 
       try {
          this.targets = VillagerDupeAction.TargetSelection.valueOf(tag.getStringOr("targets", "ALL_IN_RANGE"));

@@ -14,7 +14,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 
 public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWaitAware {
-   public OpenContainerAction.Inner_DataUtil targetMode = OpenContainerAction.Inner_DataUtil.BLOCK;
+   public OpenContainerAction.TargetMode targetMode = OpenContainerAction.TargetMode.BLOCK;
    public BlockPos blockPos = BlockPos.ZERO;
    public String entityTarget = "";
    public List<String> entityTargets = new ArrayList<>();
@@ -37,10 +37,10 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
    @Override
    public AimTargetAction.AimTarget getAimTarget(Minecraft mc) {
-      if (this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK) {
+      if (this.targetMode == OpenContainerAction.TargetMode.BLOCK) {
          return AimTargetAction.AimTarget.ofBlock(this.blockPos);
       } else {
-         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.LAST_TARGET ? AutismSessionState.getInstance().getLastInteractionTarget() : this.resolveTarget();
+         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.TargetMode.LAST_TARGET ? AutismSessionState.getInstance().getLastInteractionTarget() : this.resolveTarget();
          if (target == null) {
             return null;
          } else {
@@ -69,7 +69,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
    public boolean openTarget(Minecraft mc) {
       if (mc != null && mc.player != null) {
-         if (this.targetMode == OpenContainerAction.Inner_DataUtil.ENTITY) {
+         if (this.targetMode == OpenContainerAction.TargetMode.ENTITY) {
             List<String> refs = this.targetRefs();
             boolean sentAny = false;
 
@@ -88,7 +88,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
             return sentAny;
          } else {
-            autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.ofBlock(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
+            autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.TargetMode.BLOCK ? autismclient.util.InteractionTargetRef.ofBlock(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
             return target != null && (!this.waitForTarget || target.isPresent(mc)) && target.interact(mc);
          }
       } else {
@@ -101,7 +101,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
          return false;
       }
 
-      if (this.targetMode == OpenContainerAction.Inner_DataUtil.ENTITY) {
+      if (this.targetMode == OpenContainerAction.TargetMode.ENTITY) {
          List<String> refs = this.targetRefs();
          boolean hasTarget = false;
 
@@ -118,7 +118,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
 
          return hasTarget;
       } else {
-         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.Inner_DataUtil.BLOCK ? autismclient.util.InteractionTargetRef.ofBlock(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
+         autismclient.util.InteractionTargetRef target = this.targetMode == OpenContainerAction.TargetMode.BLOCK ? autismclient.util.InteractionTargetRef.ofBlock(this.blockPos) : AutismSessionState.getInstance().getLastInteractionTarget();
          return target != null && target.isPresent(mc);
       }
    }
@@ -126,13 +126,13 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
    public void captureCrosshairTarget(Minecraft mc) {
       if (mc != null) {
          if (mc.hitResult instanceof EntityHitResult entityHit && entityHit.getEntity() != null) {
-            this.targetMode = OpenContainerAction.Inner_DataUtil.ENTITY;
+            this.targetMode = OpenContainerAction.TargetMode.ENTITY;
             this.entityTarget = autismclient.util.InteractionTargetRef.refFor(entityHit.getEntity());
             if (!this.entityTarget.isBlank() && !this.entityTargets.contains(this.entityTarget)) {
                this.entityTargets.add(this.entityTarget);
             }
          } else if (mc.hitResult instanceof BlockHitResult blockHit) {
-            this.targetMode = OpenContainerAction.Inner_DataUtil.BLOCK;
+            this.targetMode = OpenContainerAction.TargetMode.BLOCK;
             this.blockPos = blockHit.getBlockPos();
             this.entityTarget = "";
             this.entityTargets.clear();
@@ -266,9 +266,9 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       this.blockPos = new BlockPos(x, y, z);
 
       try {
-         this.targetMode = OpenContainerAction.Inner_DataUtil.valueOf(tag.getStringOr("targetMode", "BLOCK"));
+         this.targetMode = OpenContainerAction.TargetMode.valueOf(tag.getStringOr("targetMode", "BLOCK"));
       } catch (IllegalArgumentException ignored) {
-         this.targetMode = OpenContainerAction.Inner_DataUtil.BLOCK;
+         this.targetMode = OpenContainerAction.TargetMode.BLOCK;
       }
 
       this.entityTargets.clear();
@@ -304,7 +304,7 @@ public class OpenContainerAction implements AimTargetAction, MacroAction, GuiWai
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum TargetMode {
       BLOCK,
       ENTITY,
       LAST_TARGET;

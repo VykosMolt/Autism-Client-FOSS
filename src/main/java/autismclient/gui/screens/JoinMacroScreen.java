@@ -556,7 +556,7 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       this.rowsDirty = false;
       this.rows.clear();
 
-      for (MacroFolderLayout.Inner_DataUtil item : MacroLibraryManager.getInstance().getFolderEntries(query)) {
+      for (MacroFolderLayout.LayoutRow item : MacroLibraryManager.getInstance().getFolderEntries(query)) {
          this.rows
             .add(
                new JoinMacroScreen.MacroRow(item.init_Str(), !item.init_Z() && item.macro().actions != null ? item.macro().actions.size() : 0, item)
@@ -804,6 +804,6 @@ public final class JoinMacroScreen extends VirtualScaledScreen {
       }
    }
 
-   private record MacroRow(String name, int steps, MacroFolderLayout.Inner_DataUtil folderRow) {
+   private record MacroRow(String name, int steps, MacroFolderLayout.LayoutRow folderRow) {
    }
 }

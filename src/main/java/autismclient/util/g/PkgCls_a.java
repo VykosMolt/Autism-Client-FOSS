@@ -182,7 +182,7 @@ public final class PkgCls_a {
       return init_Str_Vec3(request.init_Vec3(), request.init_I(), request.load(), vehicle != null);
    }
 
-   public static PkgCls_a.Inner_StateCache init_a_StateCache_w_bl_StreamUtil(PacedTpAction action, PacedTpJobManager.Inner_StreamUtil handle) {
+   public static PkgCls_a.Inner_StateCache init_a_StateCache_w_bl_StreamUtil(PacedTpAction action, PacedTpJobManager.JobHandle handle) {
       Minecraft mc = Minecraft.getInstance();
       LocalPlayer player = mc == null ? null : mc.player;
       if (handle == null || action == null || player == null || mc.getConnection() == null || player.level() == null) {
@@ -209,7 +209,7 @@ public final class PkgCls_a {
    public static void init_V_J_Str(long id, String reason) {
       PkgCls_a.Inner_ConfigStore job = init_a_ConfigStore_J(id);
       if (job != null) {
-         init_V_a_ConfigStore(job, PacedTpJobManager.Inner_DataUtil.CANCELLED, reason == null ? "macro stopped" : reason);
+         init_V_a_ConfigStore(job, PacedTpJobManager.JobState.CANCELLED, reason == null ? "macro stopped" : reason);
       }
    }
 
@@ -1422,17 +1422,17 @@ public final class PkgCls_a {
       }
 
       if (job.init_J != 0L) {
-         PacedTpJobManager.init(job.init_J, PacedTpJobManager.Inner_DataUtil.CANCELLED);
+         PacedTpJobManager.init(job.init_J, PacedTpJobManager.JobState.CANCELLED);
       }
 
       return "TP stopped";
    }
 
    private static void init_V_a_ConfigStore_3(PkgCls_a.Inner_ConfigStore job, boolean success, String reason) {
-      init_V_a_ConfigStore(job, success ? PacedTpJobManager.Inner_DataUtil.SUCCEEDED : PacedTpJobManager.Inner_DataUtil.FAILED, reason);
+      init_V_a_ConfigStore(job, success ? PacedTpJobManager.JobState.SUCCEEDED : PacedTpJobManager.JobState.FAILED, reason);
    }
 
-   private static void init_V_a_ConfigStore(PkgCls_a.Inner_ConfigStore job, PacedTpJobManager.Inner_DataUtil completion, String reason) {
+   private static void init_V_a_ConfigStore(PkgCls_a.Inner_ConfigStore job, PacedTpJobManager.JobState completion, String reason) {
       synchronized (init_Obj) {
          if (init_a_ConfigStore != job) {
             return;
@@ -1454,7 +1454,7 @@ public final class PkgCls_a {
          PacedTpJobManager.init(job.init_J, completion);
       }
 
-      boolean success = completion == PacedTpJobManager.Inner_DataUtil.SUCCEEDED;
+      boolean success = completion == PacedTpJobManager.JobState.SUCCEEDED;
       String color = success ? "§a" : "§e";
       AutismClientMessaging.sendPrefixed(color + "TP " + (success ? "complete: " : "stopped: ") + "§f" + reason);
    }

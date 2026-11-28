@@ -33,12 +33,12 @@ public final class TrajectoryOffscreenIndicator {
       Module module = al.init_Module_Str("trajectories");
       if (module instanceof TrajectoriesModule trajectories && module.isEnabled() && mc.player != null && mc.gui.screen() == null && !aD.init_Z() && WorldProjectionHelper.projection(PROJECTION)) {
          Vec3 camera = WorldProjectionHelper.cameraPosition();
-         ThrownPearlTracker.Inner_DataUtil remembered = TrajectoryStateCache.rememberedPearl();
+         ThrownPearlTracker.PearlForecast remembered = TrajectoryStateCache.rememberedPearl();
          if (remembered != null) {
             drawIndicator(graphics, mc, remembered.position(), camera, -8329771);
          }
 
-         for (TrajectoriesModule.Inner_CachePool path : trajectories.paths()) {
+         for (TrajectoriesModule.TrajectoryPath path : trajectories.paths()) {
             if (drawnCount >= 3) {
                break;
             }

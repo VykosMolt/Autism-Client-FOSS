@@ -525,7 +525,7 @@ public final class AntiBotTracker {
          }
 
          if (!entitiesByName.isEmpty()) {
-            List<ArmorFilterMatcher.Inner_DataUtil> identities = new ArrayList<>();
+            List<ArmorFilterMatcher.Identity> identities = new ArrayList<>();
             Set<UUID> withEntity = new HashSet<>();
             Collection<PlayerInfo> listed = conn.getListedOnlinePlayers();
 
@@ -539,7 +539,7 @@ public final class AntiBotTracker {
             GameProfile self = MC.player.getGameProfile();
             boolean selfNamed = self != null && entitiesByName.containsKey(self.name());
             if (selfNamed) {
-               identities.add(new ArmorFilterMatcher.Inner_DataUtil(self.id(), self.name(), -1, true, true, true, true, false));
+               identities.add(new ArmorFilterMatcher.Identity(self.id(), self.name(), -1, true, true, true, true, false));
             }
 
             for (PlayerInfo info : conn.getOnlinePlayers()) {
@@ -561,12 +561,12 @@ public final class AntiBotTracker {
       }
    }
 
-   private static ArmorFilterMatcher.Inner_DataUtil buildPlayerIdentitySnapshot(UUID uuid, String name, int entityId, PlayerInfo info, Collection<PlayerInfo> listed) {
+   private static ArmorFilterMatcher.Identity buildPlayerIdentitySnapshot(UUID uuid, String name, int entityId, PlayerInfo info, Collection<PlayerInfo> listed) {
       boolean proven = info != null && info.hasVerifiableChat();
       boolean isListed = info != null && listed.contains(info);
       boolean gameMode = info != null && receivedGameModeUuids.contains(uuid);
       boolean latency = info != null && info.getLatency() > 0;
       boolean known = confirmedBotUuids.contains(uuid) || ArmorFilterMatcher.isNpcUuid(uuid);
-      return new ArmorFilterMatcher.Inner_DataUtil(uuid, name, entityId, proven, isListed, gameMode, latency, known);
+      return new ArmorFilterMatcher.Identity(uuid, name, entityId, proven, isListed, gameMode, latency, known);
    }
 }

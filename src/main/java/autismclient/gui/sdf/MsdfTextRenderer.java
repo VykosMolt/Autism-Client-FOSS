@@ -196,7 +196,7 @@ public final class MsdfTextRenderer {
    }
 
    private static void drawAtlasQuads(GuiGraphicsExtractor graphics, MsdfFontAtlas msdf, String text, float x, float y, float size, int color) {
-      MsdfFontAtlas.Inner_DataUtil atlas = msdf.texture();
+      MsdfFontAtlas.AtlasTexture atlas = msdf.texture();
       if (atlas != null) {
          float[] quads = new float[text.length() * 8];
          int quadCount = msdf.layoutQuads(text, x, y, size, quads, 0);

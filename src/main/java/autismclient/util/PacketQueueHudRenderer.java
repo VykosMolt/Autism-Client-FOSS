@@ -27,7 +27,7 @@ public final class PacketQueueHudRenderer {
    private static int cachedRevision = -2147483648;
    private static String load_Str = "";
    private static int cachedAccent;
-   private static List<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> init_List = List.of();
+   private static List<autismclient.gui.ui.layout.InfoCardRenderer.CardRow> init_List = List.of();
    private static long load_J;
 
    private PacketQueueHudRenderer() {
@@ -88,9 +88,9 @@ public final class PacketQueueHudRenderer {
       int totalCount = snapshot.totalCount();
       int visibleCount = Math.min(packets.size(), maxLines);
       int contentWidth = panelWidth - 12;
-      ArrayList<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> rows = new ArrayList<>(visibleCount + 2);
+      ArrayList<autismclient.gui.ui.layout.InfoCardRenderer.CardRow> rows = new ArrayList<>(visibleCount + 2);
       rows.add(
-         new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
+         new autismclient.gui.ui.layout.InfoCardRenderer.CardRow(
             autismclient.gui.f.b.k.init(
                textRenderer,
                isSending ? "Sending " + totalCount + " left [" + modeStr + "]" : totalCount + " queued [" + modeStr + "]",
@@ -104,7 +104,7 @@ public final class PacketQueueHudRenderer {
       );
       if (packets.isEmpty()) {
          rows.add(
-            new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
+            new autismclient.gui.ui.layout.InfoCardRenderer.CardRow(
                autismclient.gui.f.b.k.init(textRenderer, "Queue empty", contentWidth, init_Identifier, EMPTY_TEXT_COLOR), init_Identifier, EMPTY_TEXT_COLOR
             )
          );
@@ -116,7 +116,7 @@ public final class PacketQueueHudRenderer {
             String label = "#" + qp.getId() + " " + (qp.isExactReplay() ? "[Exact] " : "") + simpleName + delayStr;
             int color = isSending && i == 0 ? -601459 : -1581859;
             rows.add(
-               new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
+               new autismclient.gui.ui.layout.InfoCardRenderer.CardRow(
                   autismclient.gui.f.b.k.init(textRenderer, label, contentWidth, load_Identifier, color), load_Identifier, color
                )
             );

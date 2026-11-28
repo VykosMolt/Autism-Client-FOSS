@@ -49,12 +49,12 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private final LabelNode countLabel = new LabelNode("", l.write).setTrimToBounds(true);
    private final autismclient.gui.ui.layout.VerticalSpacerNode listSpacer = new autismclient.gui.ui.layout.VerticalSpacerNode();
    private ScrollableListView listView;
-   private final SearchFilterList<RaceStepSelectorOverlay.Inner_DataUtil> search = new SearchFilterList<>(
+   private final SearchFilterList<RaceStepSelectorOverlay.StepOption> search = new SearchFilterList<>(
       option -> option.load() + "\n" + option.read() + "\n" + option.init() + "\n" + option.write()
    );
-   private List<RaceStepSelectorOverlay.Inner_DataUtil> options = List.of();
-   private List<RaceStepSelectorOverlay.Inner_DataUtil> filteredOptions = List.of();
-   private Consumer<RaceStepSelectorOverlay.Inner_DataUtil> onSelect;
+   private List<RaceStepSelectorOverlay.StepOption> options = List.of();
+   private List<RaceStepSelectorOverlay.StepOption> filteredOptions = List.of();
+   private Consumer<RaceStepSelectorOverlay.StepOption> onSelect;
    private boolean visible;
    private boolean update_Z;
    private boolean sync_Z;
@@ -80,7 +80,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       this.rebuildLayout();
    }
 
-   public void openSelector(String title, List<RaceStepSelectorOverlay.Inner_DataUtil> options, Consumer<RaceStepSelectorOverlay.Inner_DataUtil> onSelect) {
+   public void openSelector(String title, List<RaceStepSelectorOverlay.StepOption> options, Consumer<RaceStepSelectorOverlay.StepOption> onSelect) {
       this.visible = true;
       this.update_Z = false;
       this.sync_Z = false;
@@ -175,7 +175,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    private int preferredWidth(String title) {
       int widest = 0;
 
-      for (RaceStepSelectorOverlay.Inner_DataUtil option : this.options) {
+      for (RaceStepSelectorOverlay.StepOption option : this.options) {
          widest = Math.max(
             widest,
             k.init(
@@ -270,7 +270,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
    }
 
    private void renderOption(
-      GuiGraphicsExtractor context, RaceStepSelectorOverlay.Inner_DataUtil option, int x, int y, int width, int index, float mouseX, float mouseY
+      GuiGraphicsExtractor context, RaceStepSelectorOverlay.StepOption option, int x, int y, int width, int index, float mouseX, float mouseY
    ) {
       boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 14;
       int bg = hovered ? this.styleTheme.next() : this.styleTheme.stop();
@@ -330,7 +330,7 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
 
          int index = (int)((uiMouseY - this.listSpacer.y() + (this.listView == null ? 0 : this.listView.getScrollOffset())) / 14.0F);
          if (index >= 0 && index < this.filteredOptions.size()) {
-            RaceStepSelectorOverlay.Inner_DataUtil selected = this.filteredOptions.get(index);
+            RaceStepSelectorOverlay.StepOption selected = this.filteredOptions.get(index);
             if (this.onSelect != null) {
                this.onSelect.accept(selected);
             }
@@ -557,6 +557,6 @@ public final class RaceStepSelectorOverlay extends DraggableOverlayWindow {
       return new OverlayBounds(x, y, width, height, layout.visible, layout.collapsed);
    }
 
-   public record Inner_DataUtil(String init, String load, String read, String write) {
+   public record StepOption(String init, String load, String read, String write) {
    }
 }

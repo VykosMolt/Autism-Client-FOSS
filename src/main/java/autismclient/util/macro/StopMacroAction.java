@@ -5,14 +5,14 @@ import net.minecraft.nbt.CompoundTag;
 
 public class StopMacroAction implements MacroAction {
    public String macroName = "";
-   public StopMacroAction.Inner_DataUtil target = StopMacroAction.Inner_DataUtil.SELF;
+   public StopMacroAction.StopTarget target = StopMacroAction.StopTarget.SELF;
    private boolean enabled = true;
 
    @Override
    public void execute(Minecraft mc) {
-      if (this.target == StopMacroAction.Inner_DataUtil.ALL) {
+      if (this.target == StopMacroAction.StopTarget.ALL) {
          MacroExecutor.stopAll();
-      } else if (this.target == StopMacroAction.Inner_DataUtil.SELECTED && this.macroName != null && !this.macroName.isBlank()) {
+      } else if (this.target == StopMacroAction.StopTarget.SELECTED && this.macroName != null && !this.macroName.isBlank()) {
          MacroExecutor.stopMacroByName(this.macroName);
       }
    }
@@ -30,9 +30,9 @@ public class StopMacroAction implements MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       try {
-         this.target = StopMacroAction.Inner_DataUtil.valueOf(tag.getStringOr("target", StopMacroAction.Inner_DataUtil.SELF.name()));
+         this.target = StopMacroAction.StopTarget.valueOf(tag.getStringOr("target", StopMacroAction.StopTarget.SELF.name()));
       } catch (Exception ignored) {
-         this.target = StopMacroAction.Inner_DataUtil.SELF;
+         this.target = StopMacroAction.StopTarget.SELF;
       }
 
       this.macroName = tag.getStringOr("macroName", "");
@@ -48,10 +48,10 @@ public class StopMacroAction implements MacroAction {
 
    @Override
    public String getDisplayName() {
-      if (this.target == StopMacroAction.Inner_DataUtil.SELECTED && this.macroName != null && !this.macroName.isBlank()) {
+      if (this.target == StopMacroAction.StopTarget.SELECTED && this.macroName != null && !this.macroName.isBlank()) {
          return "Stop: " + this.macroName;
       } else {
-         return this.target == StopMacroAction.Inner_DataUtil.ALL ? "Stop All Macros" : "Stop This Macro";
+         return this.target == StopMacroAction.StopTarget.ALL ? "Stop All Macros" : "Stop This Macro";
       }
    }
 
@@ -70,7 +70,7 @@ public class StopMacroAction implements MacroAction {
       this.enabled = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum StopTarget {
       SELF,
       SELECTED,
       ALL;

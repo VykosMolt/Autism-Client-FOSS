@@ -93,11 +93,11 @@ final class AiContainer {
    static AiOperation create(JsonObject args, final Set<Long> protectedCells) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiContainer.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "inspect"));
+         final AiContainer.ContainerAction action = parseAction(AiJson.getString(args, "action", "inspect"));
          final BlockPos pos = AiGameOperations.requireBlockPos(args);
          final boolean navigate = AiJson.getBoolean(args, "navigate", true);
          final int timeoutSeconds = Math.max(5, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 120)));
-         final List<AiContainer.Inner_CachePool> requests = parseRequests(args, action);
+         final List<AiContainer.ItemRequest> requests = parseRequests(args, action);
          final List<AiItems.ItemSpec> keep = parseKeep(args);
          return new AiOperation() {
             final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
@@ -216,12 +216,12 @@ final class AiContainer {
                               return this.running("Waiting for the server to apply the transfer");
                            }
                         } else {
-                           if (action == AiContainer.Inner_DataUtil.INSPECT) {
+                           if (action == AiContainer.ContainerAction.INSPECT) {
                               return this.finish(AiOperation.Status.SUCCEEDED, "Container contents read");
                            }
 
                            for (int issued = 0; issued < 1; issued++) {
-                              AiContainer.Inner_StreamUtil next = this.nextTransfer();
+                              AiContainer.Transfer next = this.nextTransfer();
                               if (next == null) {
                                  if (this.stuckSlots.isEmpty()) {
                                     return this.finish(AiOperation.Status.SUCCEEDED, this.summary());
@@ -247,7 +247,7 @@ final class AiContainer {
                               this.sourceBefore = mc.player.containerMenu.slots.get(next.slot()).getItem().copy();
                               if (next.count() < this.sourceBefore.getCount()) {
                                  this.exactCount = next.count();
-                                 int target = AiGameState.countInventoryItem(next.item()) + (action == AiContainer.Inner_DataUtil.DEPOSIT ? -this.exactCount : this.exactCount);
+                                 int target = AiGameState.countInventoryItem(next.item()) + (action == AiContainer.ContainerAction.DEPOSIT ? -this.exactCount : this.exactCount);
                                  this.exactTransfer = new AiInventoryController(
                                     AiJson.objectOf(
                                        "item", next.item(), "count", target, "containerId", this.containerId, "timeoutSeconds", timeoutSeconds
@@ -347,17 +347,17 @@ final class AiContainer {
                return null;
             }
 
-            AiContainer.Inner_StreamUtil nextTransfer() {
+            AiContainer.Transfer nextTransfer() {
                AbstractContainerMenu menu = mc.player.containerMenu;
-               boolean depositing = action == AiContainer.Inner_DataUtil.DEPOSIT;
+               boolean depositing = action == AiContainer.ContainerAction.DEPOSIT;
                int from = depositing ? this.containerSlots : 0;
                int to = depositing ? menu.slots.size() : this.containerSlots;
 
                for (int index = from; index < to; index++) {
                   ItemStack stack = menu.slots.get(index).getItem();
                   if (!stack.isEmpty() && !this.isKept(stack) && !this.stuckSlots.contains(index)) {
-                     AiContainer.Inner_CachePool request = this.requestFor(stack);
-                     if (request != null || action != AiContainer.Inner_DataUtil.WITHDRAW && requests.isEmpty()) {
+                     AiContainer.ItemRequest request = this.requestFor(stack);
+                     if (request != null || action != AiContainer.ContainerAction.WITHDRAW && requests.isEmpty()) {
                         int requestIndex = request == null ? -1 : requests.indexOf(request);
                         int count = request == null ? stack.getCount() : Math.min(stack.getCount(), this.remainingFor(requestIndex));
                         if (depositing) {
@@ -369,7 +369,7 @@ final class AiContainer {
                               return null;
                            }
 
-                           return new AiContainer.Inner_StreamUtil(index, AiContainer.itemId(stack), count, requestIndex);
+                           return new AiContainer.Transfer(index, AiContainer.itemId(stack), count, requestIndex);
                         }
                      }
                   }
@@ -399,8 +399,8 @@ final class AiContainer {
                return false;
             }
 
-            AiContainer.Inner_CachePool requestFor(ItemStack stack) {
-               for (AiContainer.Inner_CachePool request : requests) {
+            AiContainer.ItemRequest requestFor(ItemStack stack) {
+               for (AiContainer.ItemRequest request : requests) {
                   if (request.target().matches(stack)) {
                      return request;
                   }
@@ -414,7 +414,7 @@ final class AiContainer {
                   return 2147483647;
                }
 
-               AiContainer.Inner_CachePool request = requests.get(requestIndex);
+               AiContainer.ItemRequest request = requests.get(requestIndex);
                return request.count() <= 0 ? 2147483647 : request.count() - this.movedByRequest[requestIndex];
             }
 
@@ -423,7 +423,7 @@ final class AiContainer {
                   return "Nothing matched; the container is unchanged";
                }
 
-               StringBuilder text = new StringBuilder(action == AiContainer.Inner_DataUtil.DEPOSIT ? "Deposited " : "Took ");
+               StringBuilder text = new StringBuilder(action == AiContainer.ContainerAction.DEPOSIT ? "Deposited " : "Took ");
                boolean first = true;
 
                for (Entry<String, Integer> entry : this.movedByItem.entrySet()) {
@@ -551,20 +551,20 @@ final class AiContainer {
       return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
    }
 
-   private static AiContainer.Inner_DataUtil parseAction(String text) {
+   private static AiContainer.ContainerAction parseAction(String text) {
       try {
-         return AiContainer.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
+         return AiContainer.ContainerAction.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("action must be inspect, loot, withdraw or deposit");
       }
    }
 
-   private static List<AiContainer.Inner_CachePool> parseRequests(JsonObject args, AiContainer.Inner_DataUtil action) {
-      List<AiContainer.Inner_CachePool> requests = new ArrayList<>();
+   private static List<AiContainer.ItemRequest> parseRequests(JsonObject args, AiContainer.ContainerAction action) {
+      List<AiContainer.ItemRequest> requests = new ArrayList<>();
       if (args.has("items") && args.get("items").isJsonArray()) {
          for (JsonElement element : args.getAsJsonArray("items")) {
             if (element.isJsonPrimitive()) {
-               requests.add(new AiContainer.Inner_CachePool(AiItems.resolve(element.getAsString()), 0));
+               requests.add(new AiContainer.ItemRequest(AiItems.resolve(element.getAsString()), 0));
             } else {
                if (!element.isJsonObject()) {
                   throw new IllegalArgumentException("items entries must be a spec string or {item,count}");
@@ -572,12 +572,12 @@ final class AiContainer {
 
                JsonObject entry = element.getAsJsonObject();
                String spec = AiJson.getString(entry, "item", "");
-               requests.add(new AiContainer.Inner_CachePool(AiItems.resolve(spec), Math.max(0, AiJson.getInt(entry, "count", 0))));
+               requests.add(new AiContainer.ItemRequest(AiItems.resolve(spec), Math.max(0, AiJson.getInt(entry, "count", 0))));
             }
          }
       }
 
-      if (requests.isEmpty() && action == AiContainer.Inner_DataUtil.WITHDRAW) {
+      if (requests.isEmpty() && action == AiContainer.ContainerAction.WITHDRAW) {
          throw new IllegalArgumentException("withdraw needs an items list; use action loot to take everything");
       } else {
          return List.copyOf(requests);
@@ -595,16 +595,16 @@ final class AiContainer {
       return List.copyOf(keep);
    }
 
-   record Inner_CachePool(AiItems.ItemSpec target, int count) {
+   record ItemRequest(AiItems.ItemSpec target, int count) {
    }
 
-   enum Inner_DataUtil {
+   enum ContainerAction {
       INSPECT,
       LOOT,
       WITHDRAW,
       DEPOSIT;
    }
 
-   record Inner_StreamUtil(int slot, String item, int count, int request) {
+   record Transfer(int slot, String item, int count, int request) {
    }
 }

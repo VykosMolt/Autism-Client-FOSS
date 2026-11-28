@@ -146,7 +146,7 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   public List<JsonObject> toolResults(List<AiProvider.Inner_DataUtil> calls, List<JsonObject> results) {
+   public List<JsonObject> toolResults(List<AiProvider.ToolCall> calls, List<JsonObject> results) {
       if (results.stream().anyMatch(r -> r.has("imagePngBase64"))) {
          List<JsonObject> clean = new ArrayList<>();
          List<String> pictures = new ArrayList<>();
@@ -523,49 +523,49 @@ public final class AiProvider implements AutoCloseable {
       return false;
    }
 
-   public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str(
+   public AiProvider.Reply init_bA_BufferHelper_Str(
       String system, List<JsonObject> history, JsonArray functions, Consumer<String> onText, BooleanSupplier cancelled
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
       return this.completeWithContext(AiContext.PromptParts.of(system), history, functions, null, onText, cancelled, call -> {});
    }
 
-   public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str_2(
+   public AiProvider.Reply init_bA_BufferHelper_Str_2(
       String system,
       List<JsonObject> history,
       JsonArray functions,
       Consumer<String> onText,
       BooleanSupplier cancelled,
-      Consumer<AiProvider.Inner_CachePool> onCallReady
+      Consumer<AiProvider.ReadyCall> onCallReady
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
       return this.completeWithContext(AiContext.PromptParts.of(system), history, functions, null, onText, cancelled, onCallReady);
    }
 
-   public AiProvider.Inner_BufferHelper complete(
+   public AiProvider.Reply complete(
       String system, List<JsonObject> history, JsonArray functions, String toolChoice, Consumer<String> onText, BooleanSupplier cancelled
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
       return this.completeWithContext(AiContext.PromptParts.of(system), history, functions, toolChoice, onText, cancelled, call -> {});
    }
 
-   public AiProvider.Inner_BufferHelper init_bA_BufferHelper_Str(
+   public AiProvider.Reply init_bA_BufferHelper_Str(
       String system,
       List<JsonObject> history,
       JsonArray functions,
       String toolChoice,
       Consumer<String> onText,
       BooleanSupplier cancelled,
-      Consumer<AiProvider.Inner_CachePool> onCallReady
+      Consumer<AiProvider.ReadyCall> onCallReady
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
       return this.completeWithContext(AiContext.PromptParts.of(system), history, functions, toolChoice, onText, cancelled, onCallReady);
    }
 
-   public AiProvider.Inner_BufferHelper completeWithContext(
+   public AiProvider.Reply completeWithContext(
       AiContext.PromptParts prompt,
       List<JsonObject> history,
       JsonArray functions,
       String toolChoice,
       Consumer<String> onText,
       BooleanSupplier cancelled,
-      Consumer<AiProvider.Inner_CachePool> onCallReady
+      Consumer<AiProvider.ReadyCall> onCallReady
    ) throws IOException, InterruptedException, ExecutionException, TimeoutException {
       this.settings.validate();
       boolean responses = this.load_Z;
@@ -667,7 +667,7 @@ public final class AiProvider implements AutoCloseable {
             timer.setDaemon(true);
             timer.start();
             this.timer = timer;
-            Consumer<AiProvider.Inner_CachePool> timed = ready -> {
+            Consumer<AiProvider.ReadyCall> timed = ready -> {
                executing.set(true);
 
                try {
@@ -678,12 +678,12 @@ public final class AiProvider implements AutoCloseable {
                }
             };
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new AiProvider.Inner_StreamUtil(responseBody, activity), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new AiProvider.ActivityInputStream(responseBody, activity), StandardCharsets.UTF_8))) {
                return responses
                   ? init_bA_BufferHelper_BufferedReader(reader, onText, cancelled, content, toolDeltas, timed)
                   : init_bA_BufferHelper_AiSettings_Provide(this.settings.provider, reader, onText, cancelled, content, toolDeltas, timed);
             }
-         } catch (AiProvider.Inner_ConfigStore e) {
+         } catch (AiProvider.ProviderStreamException e) {
             if (attempt >= 5 || toolDeltas.get() || this.init_Z) {
                throw e;
             }
@@ -784,44 +784,44 @@ public final class AiProvider implements AutoCloseable {
       return collapsed.length() <= max ? collapsed : collapsed.substring(0, max);
    }
 
-   public static AiProvider.Inner_BufferHelper init_bA_BufferHelper_AiSettings_Provide(
+   public static AiProvider.Reply init_bA_BufferHelper_AiSettings_Provide(
       AiSettings.Provider provider, BufferedReader reader, Consumer<String> onText, BooleanSupplier cancelled
-   ) throws AiProvider.Inner_ConfigStore, IOException {
+   ) throws AiProvider.ProviderStreamException, IOException {
       return init_bA_BufferHelper_AiSettings_Provide(provider, reader, onText, cancelled, new AtomicBoolean());
    }
 
-   static AiProvider.Inner_BufferHelper init_bA_BufferHelper_AiSettings_Provide(
+   static AiProvider.Reply init_bA_BufferHelper_AiSettings_Provide(
       AiSettings.Provider provider, BufferedReader reader, Consumer<String> onText, BooleanSupplier cancelled, AtomicBoolean content
-   ) throws AiProvider.Inner_ConfigStore, IOException {
+   ) throws AiProvider.ProviderStreamException, IOException {
       return init_bA_BufferHelper_AiSettings_Provide(provider, reader, onText, cancelled, content, call -> {});
    }
 
-   static AiProvider.Inner_BufferHelper init_bA_BufferHelper_AiSettings_Provide(
+   static AiProvider.Reply init_bA_BufferHelper_AiSettings_Provide(
       AiSettings.Provider provider,
       BufferedReader reader,
       Consumer<String> onText,
       BooleanSupplier cancelled,
       AtomicBoolean content,
-      Consumer<AiProvider.Inner_CachePool> onCallReady
-   ) throws AiProvider.Inner_ConfigStore, IOException {
+      Consumer<AiProvider.ReadyCall> onCallReady
+   ) throws AiProvider.ProviderStreamException, IOException {
       return init_bA_BufferHelper_AiSettings_Provide(provider, reader, onText, cancelled, content, new AtomicBoolean(), onCallReady);
    }
 
-   static AiProvider.Inner_BufferHelper init_bA_BufferHelper_AiSettings_Provide(
+   static AiProvider.Reply init_bA_BufferHelper_AiSettings_Provide(
       AiSettings.Provider provider,
       BufferedReader reader,
       Consumer<String> onText,
       BooleanSupplier cancelled,
       AtomicBoolean content,
       AtomicBoolean toolDeltas,
-      Consumer<AiProvider.Inner_CachePool> onCallReady
-   ) throws AiProvider.Inner_ConfigStore, IOException {
+      Consumer<AiProvider.ReadyCall> onCallReady
+   ) throws AiProvider.ProviderStreamException, IOException {
       StringBuilder text = new StringBuilder();
       StringBuilder reasoning = new StringBuilder();
       TreeMap<Integer, JsonObject> blocks = new TreeMap<>();
       TreeMap<Integer, StringBuilder> arguments = new TreeMap<>();
-      TreeMap<Integer, AiProvider.Inner_DataUtil> ready = new TreeMap<>();
-      List<AiProvider.Inner_DataUtil> geminiCalls = new ArrayList<>();
+      TreeMap<Integer, AiProvider.ToolCall> ready = new TreeMap<>();
+      List<AiProvider.ToolCall> geminiCalls = new ArrayList<>();
       JsonArray geminiParts = new JsonArray();
       long[] meter = new long[5];
       String finish = "";
@@ -893,13 +893,13 @@ public final class AiProvider implements AutoCloseable {
                               JsonObject f = copy.getAsJsonObject().getAsJsonObject("functionCall");
                               String callName = AiJson.getString(f, "name", "");
                               JsonObject callArgs = f.has("args") && f.get("args").isJsonObject() ? f.getAsJsonObject("args") : new JsonObject();
-                              AiProvider.Inner_DataUtil call = new AiProvider.Inner_DataUtil(AiJson.getString(f, "id", ""), callName, callArgs);
+                              AiProvider.ToolCall call = new AiProvider.ToolCall(AiJson.getString(f, "id", ""), callName, callArgs);
                               geminiCalls.add(call);
                               if (geminiCalls.size() > 32) {
                                  throw new IOException("Too many tool calls");
                               }
 
-                              onCallReady.accept(new AiProvider.Inner_CachePool(geminiCalls.size() - 1, call));
+                              onCallReady.accept(new AiProvider.ReadyCall(geminiCalls.size() - 1, call));
                            }
                         }
                      }
@@ -1065,7 +1065,7 @@ public final class AiProvider implements AutoCloseable {
       }
 
       if (finish.isBlank()) {
-         throw new AiProvider.Inner_ConfigStore("Provider stream ended before a completion marker");
+         throw new AiProvider.ProviderStreamException("Provider stream ended before a completion marker");
       }
 
       if (Set.of("length", "max_tokens", "MAX_TOKENS").contains(finish)) {
@@ -1076,7 +1076,7 @@ public final class AiProvider implements AutoCloseable {
          throw new IOException("Model context window exceeded before a complete response");
       }
 
-      List<AiProvider.Inner_DataUtil> calls = new ArrayList<>();
+      List<AiProvider.ToolCall> calls = new ArrayList<>();
       JsonObject wire;
       if (provider == AiSettings.Provider.GEMINI) {
          wire = AiJson.objectOf("role", "model", "parts", geminiParts);
@@ -1105,9 +1105,9 @@ public final class AiProvider implements AutoCloseable {
          for (Entry<Integer, JsonObject> entry : blocks.entrySet()) {
             JsonObject b = entry.getValue();
             if ("tool_use".equals(AiJson.getString(b, "type", ""))) {
-               AiProvider.Inner_DataUtil call = ready.get(entry.getKey());
+               AiProvider.ToolCall call = ready.get(entry.getKey());
                if (call == null) {
-                  call = new AiProvider.Inner_DataUtil(
+                  call = new AiProvider.ToolCall(
                      AiJson.getString(b, "id", ""),
                      AiJson.getString(b, "name", ""),
                      b.has("input") && b.get("input").isJsonObject() ? b.getAsJsonObject("input") : new JsonObject(),
@@ -1139,21 +1139,21 @@ public final class AiProvider implements AutoCloseable {
          throw new IOException("Too many tool calls");
       }
 
-      AiProvider.Inner_TaskQueue usage = new AiProvider.Inner_TaskQueue(meter[0], meter[1], meter[2], meter[3]);
-      return new AiProvider.Inner_BufferHelper(wire, text.toString(), List.copyOf(calls), usage.reported() ? usage.total() : meter[4], finish, usage);
+      AiProvider.TokenUsage usage = new AiProvider.TokenUsage(meter[0], meter[1], meter[2], meter[3]);
+      return new AiProvider.Reply(wire, text.toString(), List.copyOf(calls), usage.reported() ? usage.total() : meter[4], finish, usage);
    }
 
-   static AiProvider.Inner_BufferHelper init_bA_BufferHelper_BufferedReader(
+   static AiProvider.Reply init_bA_BufferHelper_BufferedReader(
       BufferedReader reader,
       Consumer<String> onText,
       BooleanSupplier cancelled,
       AtomicBoolean content,
       AtomicBoolean toolDeltas,
-      Consumer<AiProvider.Inner_CachePool> onCallReady
-   ) throws AiProvider.Inner_ConfigStore, IOException {
+      Consumer<AiProvider.ReadyCall> onCallReady
+   ) throws AiProvider.ProviderStreamException, IOException {
       StringBuilder text = new StringBuilder();
       TreeMap<Integer, JsonObject> blocks = new TreeMap<>();
-      TreeMap<Integer, AiProvider.Inner_DataUtil> ready = new TreeMap<>();
+      TreeMap<Integer, AiProvider.ToolCall> ready = new TreeMap<>();
       Set<Integer> streamedText = new HashSet<>();
       long[] meter = new long[5];
       String finish = "";
@@ -1270,7 +1270,7 @@ public final class AiProvider implements AutoCloseable {
       }
 
       if (finish.isBlank()) {
-         throw new AiProvider.Inner_ConfigStore("Provider stream ended before a completion marker");
+         throw new AiProvider.ProviderStreamException("Provider stream ended before a completion marker");
       }
 
       if (finish.equals("length")) {
@@ -1283,7 +1283,7 @@ public final class AiProvider implements AutoCloseable {
          wire.add("tool_calls", AiJson.GSON.toJsonTree(blocks.values()));
       }
 
-      List<AiProvider.Inner_DataUtil> calls = new ArrayList<>();
+      List<AiProvider.ToolCall> calls = new ArrayList<>();
 
       for (int index : blocks.keySet()) {
          calls.add(ready.get(index));
@@ -1293,8 +1293,8 @@ public final class AiProvider implements AutoCloseable {
          throw new IOException("Too many tool calls");
       }
 
-      AiProvider.Inner_TaskQueue usage = new AiProvider.Inner_TaskQueue(meter[0], meter[1], meter[2], meter[3]);
-      return new AiProvider.Inner_BufferHelper(wire, text.toString(), List.copyOf(calls), usage.reported() ? usage.total() : meter[4], finish, usage);
+      AiProvider.TokenUsage usage = new AiProvider.TokenUsage(meter[0], meter[1], meter[2], meter[3]);
+      return new AiProvider.Reply(wire, text.toString(), List.copyOf(calls), usage.reported() ? usage.total() : meter[4], finish, usage);
    }
 
    private static JsonObject toToolCall(JsonObject item) {
@@ -1378,30 +1378,30 @@ public final class AiProvider implements AutoCloseable {
       m[4] = longOrZero(u, "totalTokenCount");
    }
 
-   private static AiProvider.Inner_DataUtil parseToolCall(String id, String name, String rawArguments) {
+   private static AiProvider.ToolCall parseToolCall(String id, String name, String rawArguments) {
       if (rawArguments.isBlank()) {
-         return new AiProvider.Inner_DataUtil(id, name, new JsonObject());
+         return new AiProvider.ToolCall(id, name, new JsonObject());
       }
 
       try {
-         return new AiProvider.Inner_DataUtil(id, name, AiJson.parseObject(rawArguments));
+         return new AiProvider.ToolCall(id, name, AiJson.parseObject(rawArguments));
       } catch (RuntimeException e) {
-         return new AiProvider.Inner_DataUtil(id, name, new JsonObject(), snippet(rawArguments, 1000));
+         return new AiProvider.ToolCall(id, name, new JsonObject(), snippet(rawArguments, 1000));
       }
    }
 
-   private static void markCallReady(TreeMap<Integer, AiProvider.Inner_DataUtil> ready, int index, AiProvider.Inner_DataUtil call, Consumer<AiProvider.Inner_CachePool> onCallReady) throws IOException {
+   private static void markCallReady(TreeMap<Integer, AiProvider.ToolCall> ready, int index, AiProvider.ToolCall call, Consumer<AiProvider.ReadyCall> onCallReady) throws IOException {
       if (ready.putIfAbsent(index, call) == null) {
          if (ready.size() > 32) {
             throw new IOException("Too many tool calls");
          }
 
-         onCallReady.accept(new AiProvider.Inner_CachePool(index, call));
+         onCallReady.accept(new AiProvider.ReadyCall(index, call));
       }
    }
 
    private static void markBlockReady(
-      TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.Inner_DataUtil> ready, int index, Consumer<AiProvider.Inner_CachePool> onCallReady
+      TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.ToolCall> ready, int index, Consumer<AiProvider.ReadyCall> onCallReady
    ) throws IOException {
       if (!ready.containsKey(index)) {
          JsonObject b = blocks.get(index);
@@ -1417,7 +1417,7 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   private static void emitToolCall(TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.Inner_DataUtil> ready, int index, Consumer<AiProvider.Inner_CachePool> onCallReady) throws IOException {
+   private static void emitToolCall(TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.ToolCall> ready, int index, Consumer<AiProvider.ReadyCall> onCallReady) throws IOException {
       if (!ready.containsKey(index)) {
          JsonObject b = blocks.get(index);
          if (b != null) {
@@ -1437,13 +1437,13 @@ public final class AiProvider implements AutoCloseable {
       }
    }
 
-   private static void markAllBlocksReady(TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.Inner_DataUtil> ready, Consumer<AiProvider.Inner_CachePool> onCallReady) throws IOException {
+   private static void markAllBlocksReady(TreeMap<Integer, JsonObject> blocks, TreeMap<Integer, AiProvider.ToolCall> ready, Consumer<AiProvider.ReadyCall> onCallReady) throws IOException {
       for (int index : blocks.keySet()) {
          markBlockReady(blocks, ready, index, onCallReady);
       }
    }
 
-   private static AiProvider.Inner_DataUtil init_bA_DataUtil_JsonObject_Str(JsonObject block, String raw) {
+   private static AiProvider.ToolCall init_bA_DataUtil_JsonObject_Str(JsonObject block, String raw) {
       String error = null;
       if (raw != null) {
          try {
@@ -1454,7 +1454,7 @@ public final class AiProvider implements AutoCloseable {
          }
       }
 
-      return new AiProvider.Inner_DataUtil(
+      return new AiProvider.ToolCall(
          AiJson.getString(block, "id", ""),
          AiJson.getString(block, "name", ""),
          block.has("input") && block.get("input").isJsonObject() ? block.getAsJsonObject("input") : new JsonObject(),
@@ -1490,41 +1490,41 @@ public final class AiProvider implements AutoCloseable {
       this.http.shutdownNow();
    }
 
-   public record Inner_BufferHelper(JsonObject wireMessage, String text, List<AiProvider.Inner_DataUtil> calls, long tokens, String finish, AiProvider.Inner_TaskQueue usage) {
-      public Inner_BufferHelper(JsonObject wireMessage, String text, List<AiProvider.Inner_DataUtil> calls, long tokens, String finish) {
-         this(wireMessage, text, calls, tokens, finish, AiProvider.Inner_TaskQueue.NONE);
+   public record Reply(JsonObject wireMessage, String text, List<AiProvider.ToolCall> calls, long tokens, String finish, AiProvider.TokenUsage usage) {
+      public Reply(JsonObject wireMessage, String text, List<AiProvider.ToolCall> calls, long tokens, String finish) {
+         this(wireMessage, text, calls, tokens, finish, AiProvider.TokenUsage.NONE);
       }
    }
 
-   public record Inner_CachePool(int index, AiProvider.Inner_DataUtil call) {
+   public record ReadyCall(int index, AiProvider.ToolCall call) {
    }
 
-   private static final class Inner_ConfigStore extends IOException {
-      Inner_ConfigStore(String message) {
+   private static final class ProviderStreamException extends IOException {
+      ProviderStreamException(String message) {
          super(message);
       }
 
-      Inner_ConfigStore(String message, Throwable cause) {
+      ProviderStreamException(String message, Throwable cause) {
          super(message, cause);
       }
    }
 
-   public record Inner_DataUtil(String id, String name, JsonObject arguments, String argumentsError) {
-      public Inner_DataUtil(String id, String name, JsonObject arguments) {
+   public record ToolCall(String id, String name, JsonObject arguments, String argumentsError) {
+      public ToolCall(String id, String name, JsonObject arguments) {
          this(id, name, arguments, null);
       }
    }
 
-   private static final class Inner_StreamUtil extends FilterInputStream {
+   private static final class ActivityInputStream extends FilterInputStream {
       private final AtomicLong lastActivity;
 
-      Inner_StreamUtil(InputStream in, AtomicLong activity) {
+      ActivityInputStream(InputStream in, AtomicLong activity) {
          super(in);
          this.lastActivity = activity;
       }
 
       @Override
-      public int read() throws AiProvider.Inner_ConfigStore {
+      public int read() throws AiProvider.ProviderStreamException {
          try {
             int r = super.read();
             if (r >= 0) {
@@ -1533,12 +1533,12 @@ public final class AiProvider implements AutoCloseable {
 
             return r;
          } catch (IOException e) {
-            throw new AiProvider.Inner_ConfigStore("Provider stream read failed", e);
+            throw new AiProvider.ProviderStreamException("Provider stream read failed", e);
          }
       }
 
       @Override
-      public int read(byte[] b, int off, int len) throws AiProvider.Inner_ConfigStore {
+      public int read(byte[] b, int off, int len) throws AiProvider.ProviderStreamException {
          try {
             int n = super.read(b, off, len);
             if (n > 0) {
@@ -1547,13 +1547,13 @@ public final class AiProvider implements AutoCloseable {
 
             return n;
          } catch (IOException e) {
-            throw new AiProvider.Inner_ConfigStore("Provider stream read failed", e);
+            throw new AiProvider.ProviderStreamException("Provider stream read failed", e);
          }
       }
    }
 
-   public record Inner_TaskQueue(long inputTokens, long cachedInputTokens, long cacheWriteTokens, long outputTokens) {
-      public static final AiProvider.Inner_TaskQueue NONE = new AiProvider.Inner_TaskQueue(0L, 0L, 0L, 0L);
+   public record TokenUsage(long inputTokens, long cachedInputTokens, long cacheWriteTokens, long outputTokens) {
+      public static final AiProvider.TokenUsage NONE = new AiProvider.TokenUsage(0L, 0L, 0L, 0L);
 
       public long promptTokens() {
          return this.inputTokens + this.cachedInputTokens + this.cacheWriteTokens;

@@ -72,16 +72,16 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 public final class BedDefenderModule extends Module implements SilentMovementCoordinator.Participant {
    static final String WOOL_BLOCKS = Arrays.stream(DyeColor.values()).map(color -> "minecraft:" + color.getName() + "_wool").collect(Collectors.joining("|"));
    static final String DEFAULT_BLOCKS = "minecraft:end_stone|" + WOOL_BLOCKS + "|minecraft:oak_planks|minecraft:obsidian";
-   private List<BedDefenderModule.Inner_CachePool> ghosts = List.of();
-   private BedDefenderModule.Inner_ConfigStore layoutKey;
-   private List<BedDefenderModule.Inner_TaskQueue> steps = List.of();
+   private List<BedDefenderModule.GhostCell> ghosts = List.of();
+   private BedDefenderModule.LayoutKey layoutKey;
+   private List<BedDefenderModule.LayerStep> steps = List.of();
    private Set<BlockPos> visited = Set.of();
    private int currentLayer;
    private final ExternalBreakTracker externalBreaks = new ExternalBreakTracker();
    private final Map<BlockPos, Integer> init_Map = new ConcurrentHashMap<>();
    private final Set<BlockPos> load_Set = new HashSet<>();
    private Set<BlockPos> stepCells = Set.of();
-   private final ConcurrentLinkedQueue<BedDefenderModule.Inner_NetHelper> blockEdits = new ConcurrentLinkedQueue<>();
+   private final ConcurrentLinkedQueue<BedDefenderModule.BlockEdit> blockEdits = new ConcurrentLinkedQueue<>();
    private DyeColor teamColor;
    private final int[] layerSlots = new int[6];
    private final Map<String, Set<Block>> layerBlockCache = new HashMap<>();
@@ -112,7 +112,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private BlockPos candidateBed;
    private BlockPos candidatePartner;
    private int candidateConfirmCount;
-   private final Map<BlockPos, BedDefenderModule.Inner_DataUtil> stalls = new LinkedHashMap<>();
+   private final Map<BlockPos, BedDefenderModule.StallState> stalls = new LinkedHashMap<>();
    private int lastPlaceTick = -2147483648;
    private int lastRotationRequestTick = -2147483648;
    private boolean needsSneak;
@@ -131,7 +131,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    private final Map<autismclient.util.BlockPlacementPlanner.SupportCandidate, Integer> flush_Map = new HashMap<>();
    private final Map<BlockPos, List<autismclient.util.BlockPlacementPlanner.PlacementPlan>> confirmedPlans = new HashMap<>();
    private int raysThisTick;
-   private BedDefenderModule.Inner_StreamUtil[] candidatePlans = new BedDefenderModule.Inner_StreamUtil[0];
+   private BedDefenderModule.CandidatePlan[] candidatePlans = new BedDefenderModule.CandidatePlan[0];
    private int[] read_IArr = new int[0];
    private final autismclient.util.BlockPlacementPlanner.RayBudget tickRayBudget = new autismclient.util.BlockPlacementPlanner.RayBudget(16);
    private int lastCacheTick = -2147483648;
@@ -146,9 +146,9 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    @Override
    public boolean onPacketReceive(Packet<?> packet) {
       if (packet instanceof ClientboundBlockUpdatePacket edit) {
-         this.blockEdits.add(new BedDefenderModule.Inner_NetHelper(edit.getPos().immutable(), !edit.getBlockState().canBeReplaced()));
+         this.blockEdits.add(new BedDefenderModule.BlockEdit(edit.getPos().immutable(), !edit.getBlockState().canBeReplaced()));
       } else if (packet instanceof ClientboundSectionBlocksUpdatePacket edits) {
-         edits.runUpdates((pos, state) -> this.blockEdits.add(new BedDefenderModule.Inner_NetHelper(pos.immutable(), !state.canBeReplaced())));
+         edits.runUpdates((pos, state) -> this.blockEdits.add(new BedDefenderModule.BlockEdit(pos.immutable(), !state.canBeReplaced())));
       }
 
       while (this.blockEdits.size() > 8192) {
@@ -177,7 +177,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       return false;
    }
 
-   public List<BedDefenderModule.Inner_CachePool> ghostCells() {
+   public List<BedDefenderModule.GhostCell> ghostCells() {
       return this.ghosts;
    }
 
@@ -581,7 +581,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       this.flush_Map.clear();
       this.candidateRays.clear();
       this.candidateRanks = new int[0];
-      this.candidatePlans = new BedDefenderModule.Inner_StreamUtil[0];
+      this.candidatePlans = new BedDefenderModule.CandidatePlan[0];
       this.read_IArr = new int[0];
       this.load_Z = false;
       this.optionCursor = 0;
@@ -614,19 +614,19 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             Direction outward = other.getOpposite();
             Direction[] perps = other.getAxis() == Axis.X ? new Direction[]{Direction.NORTH, Direction.SOUTH} : new Direction[]{Direction.WEST, Direction.EAST};
             BlockPos partner = bedPos.relative(other);
-            BedDefenderModule.Inner_ConfigStore key = new BedDefenderModule.Inner_ConfigStore(bedPos, other, layers, this.bool("defend-under"));
+            BedDefenderModule.LayoutKey key = new BedDefenderModule.LayoutKey(bedPos, other, layers, this.bool("defend-under"));
             if (!key.equals(this.layoutKey)) {
                Set<BlockPos> visited = new HashSet<>();
-               List<BedDefenderModule.Inner_TaskQueue> steps = new ArrayList<>();
+               List<BedDefenderModule.LayerStep> steps = new ArrayList<>();
                floodLayers(bedPos, layers, new Direction[]{outward, Direction.UP, perps[0], perps[1]}, visited, steps);
                floodLayers(partner, layers, new Direction[]{other, Direction.UP, perps[0], perps[1]}, visited, steps);
                if (this.bool("defend-under")) {
                   if (visited.add(bedPos.below())) {
-                     steps.add(new BedDefenderModule.Inner_TaskQueue(bedPos.below(), 1));
+                     steps.add(new BedDefenderModule.LayerStep(bedPos.below(), 1));
                   }
 
                   if (visited.add(partner.below())) {
-                     steps.add(new BedDefenderModule.Inner_TaskQueue(partner.below(), 1));
+                     steps.add(new BedDefenderModule.LayerStep(partner.below(), 1));
                   }
                }
 
@@ -636,7 +636,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             }
 
             Set<BlockPos> visited = new HashSet<>(this.visited);
-            List<BedDefenderModule.Inner_TaskQueue> steps = this.steps;
+            List<BedDefenderModule.LayerStep> steps = this.steps;
             int now = AutismSessionState.getInstance().getClientTick();
             this.init_Map.entrySet().removeIf(entry -> entry.getValue() < now);
             BlockPos mining = MC.gameMode instanceof AutismMultiPlayerGameModeAccessor accessor && MC.gameMode.isDestroying()
@@ -646,7 +646,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                this.init_Map.put(mining.immutable(), now + 10);
             }
 
-            BedDefenderModule.Inner_NetHelper edit;
+            BedDefenderModule.BlockEdit edit;
             while ((edit = this.blockEdits.poll()) != null) {
                this.load_Set.remove(edit.pos());
                if (this.stepCells.contains(edit.pos())) {
@@ -654,9 +654,9 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                }
             }
 
-            this.stepCells = steps.stream().map(BedDefenderModule.Inner_TaskQueue::cell).collect(Collectors.toUnmodifiableSet());
+            this.stepCells = steps.stream().map(BedDefenderModule.LayerStep::cell).collect(Collectors.toUnmodifiableSet());
 
-            for (BedDefenderModule.Inner_TaskQueue step : steps) {
+            for (BedDefenderModule.LayerStep step : steps) {
                if (MC.level.isLoaded(step.cell()) && !this.load_Set.contains(step.cell())) {
                   BlockState existing = MC.level.getBlockState(step.cell());
                   this.externalBreaks
@@ -673,10 +673,10 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             double limitSq = limit * limit;
             int bedY = bedPos.getY();
             boolean sneaking = this.tick_Z_2() || this.shouldSneakForBed();
-            List<BedDefenderModule.Inner_BufferHelper> pool = new ArrayList<>(steps.size());
-            List<BedDefenderModule.Inner_CachePool> ghosts = new ArrayList<>();
+            List<BedDefenderModule.Candidate> pool = new ArrayList<>(steps.size());
+            List<BedDefenderModule.GhostCell> ghosts = new ArrayList<>();
 
-            for (BedDefenderModule.Inner_TaskQueue step : steps) {
+            for (BedDefenderModule.LayerStep step : steps) {
                ItemStack layerMaterial = repairing && this.externalBreaks.wasExternallyBroken(step.cell()) ? repairMaterial : materials[step.layer()];
                if (MC.level.isLoaded(step.cell())
                   && !MC.level.isOutsideBuildHeight(step.cell())
@@ -684,7 +684,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                   ghosts.add(this.init_ListPool_CachePool_BlockPos(step.cell(), step.layer(), layerMaterial));
                }
 
-               BedDefenderModule.Inner_BufferHelper candidate = this.candidateAt(
+               BedDefenderModule.Candidate candidate = this.candidateAt(
                   step.cell(), step.layer(), bedPos, partner, bedY, eye, limitSq, layerMaterial, sneaking
                );
                if (candidate != null) {
@@ -696,7 +696,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                         ghosts.add(this.init_ListPool_CachePool_BlockPos(capped, step.layer(), layerMaterial));
                      }
 
-                     BedDefenderModule.Inner_BufferHelper above = this.candidateAt(capped, step.layer(), bedPos, partner, bedY, eye, limitSq, layerMaterial, sneaking);
+                     BedDefenderModule.Candidate above = this.candidateAt(capped, step.layer(), bedPos, partner, bedY, eye, limitSq, layerMaterial, sneaking);
                      if (above != null) {
                         pool.add(above);
                      }
@@ -706,7 +706,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
             this.addTopCandidates(pool, visited, bedPos, partner, outward, other, layers, bedY, eye, limitSq, materials[1], sneaking);
 
-            for (BedDefenderModule.Inner_BufferHelper cell : pool) {
+            for (BedDefenderModule.Candidate cell : pool) {
                if (cell.layer() > layers) {
                   ghosts.add(this.init_ListPool_CachePool_BlockPos(cell.cell(), 1, materials[1]));
                }
@@ -715,7 +715,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             this.ghosts = List.copyOf(ghosts);
             this.currentLayer = ghosts.stream()
                .filter(cell -> !repairing || this.externalBreaks.wasExternallyBroken(cell.pos()))
-               .mapToInt(BedDefenderModule.Inner_CachePool::layer)
+               .mapToInt(BedDefenderModule.GhostCell::layer)
                .min()
                .orElse(0);
             if (repairing && this.currentLayer > 0) {
@@ -724,11 +724,11 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
             Set<BlockPos> requiredRisers = new HashSet<>();
             if (!repairing && this.currentLayer == 1 && layers > 1 && !sneaking) {
-               List<BedDefenderModule.Inner_BufferHelper> inner = pool.stream().filter(cell -> cell.layer() == 1).toList();
+               List<BedDefenderModule.Candidate> inner = pool.stream().filter(cell -> cell.layer() == 1).toList();
                if (!inner.isEmpty()
-                  && inner.stream().noneMatch(BedDefenderModule.Inner_BufferHelper::load_Z)
+                  && inner.stream().noneMatch(BedDefenderModule.Candidate::load_Z)
                   && inner.stream().allMatch(cell -> cell.cell().equals(bedPos.above()) || cell.cell().equals(partner.above()))) {
-                  for (BedDefenderModule.Inner_BufferHelper cell : pool) {
+                  for (BedDefenderModule.Candidate cell : pool) {
                      if (cell.layer() == 2 && cell.load_Z() && inner.stream().anyMatch(top -> top.cell().distManhattan(cell.cell()) == 1)) {
                         requiredRisers.add(cell.cell());
                      }
@@ -748,16 +748,16 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
 
             Set<BlockPos> blocked = new HashSet<>();
 
-            for (BedDefenderModule.Inner_BufferHelper candidate : pool) {
+            for (BedDefenderModule.Candidate candidate : pool) {
                if (!candidate.load_Z()) {
                   blocked.add(candidate.cell());
                }
             }
 
             Axis bedAxis = other.getAxis();
-            List<BedDefenderModule.Inner_BufferHelper> candidates = new ArrayList<>(pool.size());
+            List<BedDefenderModule.Candidate> candidates = new ArrayList<>(pool.size());
 
-            for (BedDefenderModule.Inner_BufferHelper candidate : pool) {
+            for (BedDefenderModule.Candidate candidate : pool) {
                int unlocks = 0;
 
                for (Direction direction : Direction.values()) {
@@ -767,7 +767,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                }
 
                candidates.add(
-                  new BedDefenderModule.Inner_BufferHelper(
+                  new BedDefenderModule.Candidate(
                      candidate.cell(),
                      candidate.layer(),
                      candidate.init_Z(),
@@ -816,7 +816,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                }
             });
 
-            for (BedDefenderModule.Inner_BufferHelper candidate : candidates) {
+            for (BedDefenderModule.Candidate candidate : candidates) {
                this.planCells.add(candidate.cell());
             }
 
@@ -870,7 +870,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private BedDefenderModule.Inner_BufferHelper candidateAt(
+   private BedDefenderModule.Candidate candidateAt(
       BlockPos pos, int layer, BlockPos bedPos, BlockPos partner, int bedY, Vec3 eye, double limitSq, ItemStack material, boolean sneaking
    ) {
       if (pos.equals(bedPos) || pos.equals(partner)) {
@@ -888,7 +888,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       double distSq = pos.distToCenterSqr(eye);
       return distSq > limitSq
          ? null
-         : new BedDefenderModule.Inner_BufferHelper(pos.immutable(), layer, pos.getY() > bedY, this.init_Z_BlockPos_3(pos, eye, material, sneaking), 0, false, distSq);
+         : new BedDefenderModule.Candidate(pos.immutable(), layer, pos.getY() > bedY, this.init_Z_BlockPos_3(pos, eye, material, sneaking), 0, false, distSq);
    }
 
    private BlockPos init_BlockPos_BlockPos(BlockPos pos, int bedY, ItemStack material, Set<BlockPos> visited) {
@@ -917,7 +917,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private void addTopCandidates(
-      List<BedDefenderModule.Inner_BufferHelper> pool,
+      List<BedDefenderModule.Candidate> pool,
       Set<BlockPos> visited,
       BlockPos bedPos,
       BlockPos partner,
@@ -937,7 +937,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private void addBedTopCell(
-      List<BedDefenderModule.Inner_BufferHelper> pool,
+      List<BedDefenderModule.Candidate> pool,
       Set<BlockPos> visited,
       BlockPos top,
       BlockPos riser,
@@ -949,10 +949,10 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       ItemStack material,
       boolean sneaking
    ) {
-      for (BedDefenderModule.Inner_BufferHelper candidate : pool) {
+      for (BedDefenderModule.Candidate candidate : pool) {
          if (candidate.cell().equals(top)) {
             if (!candidate.load_Z() && visited.add(riser)) {
-               BedDefenderModule.Inner_BufferHelper promoted = this.candidateAt(riser, 2, bedPos, partner, bedY, eye, limitSq, material, sneaking);
+               BedDefenderModule.Candidate promoted = this.candidateAt(riser, 2, bedPos, partner, bedY, eye, limitSq, material, sneaking);
                if (promoted != null) {
                   pool.add(promoted);
                }
@@ -1021,13 +1021,13 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private static void floodLayers(BlockPos seed, int layers, Direction[] directions, Set<BlockPos> visited, List<BedDefenderModule.Inner_TaskQueue> out) {
-      ArrayDeque<BedDefenderModule.Inner_TaskQueue> queue = new ArrayDeque<>();
-      queue.add(new BedDefenderModule.Inner_TaskQueue(seed, 0));
+   private static void floodLayers(BlockPos seed, int layers, Direction[] directions, Set<BlockPos> visited, List<BedDefenderModule.LayerStep> out) {
+      ArrayDeque<BedDefenderModule.LayerStep> queue = new ArrayDeque<>();
+      queue.add(new BedDefenderModule.LayerStep(seed, 0));
       visited.add(seed);
 
       while (!queue.isEmpty()) {
-         BedDefenderModule.Inner_TaskQueue step = queue.poll();
+         BedDefenderModule.LayerStep step = queue.poll();
          if (step.layer() > 0) {
             out.add(step);
          }
@@ -1036,7 +1036,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             for (Direction direction : directions) {
                BlockPos next = step.cell().relative(direction);
                if (visited.add(next)) {
-                  queue.add(new BedDefenderModule.Inner_TaskQueue(next, step.layer() + 1));
+                  queue.add(new BedDefenderModule.LayerStep(next, step.layer() + 1));
                }
             }
          }
@@ -1125,7 +1125,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       } else {
          boolean sneaking = this.tick_Z_2();
          this.flush_V_2();
-         BedDefenderModule.Inner_StreamUtil plan = this.init_ListPool_StreamUti_ce_DataUtil(from, material, null, sneaking);
+         BedDefenderModule.CandidatePlan plan = this.init_ListPool_StreamUti_ce_DataUtil(from, material, null, sneaking);
          if (plan == null) {
             this.releaseRotation();
             this.tickSwitchBack();
@@ -1151,7 +1151,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
                } else {
                   this.switchBackDelay = 0;
                   boolean fire = hit != null && slotReady && this.notPlacedThisTick();
-                  BedDefenderModule.Inner_StreamUtil next = null;
+                  BedDefenderModule.CandidatePlan next = null;
                   boolean aimed;
                   if (fire) {
                      next = this.init_ListPool_StreamUti_ce_DataUtil(from, material, plan.cell(), sneaking);
@@ -1184,7 +1184,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       return true;
    }
 
-   private boolean init_Z_ListPool_StreamUti_ce_DataUtil(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Rotation wire) {
+   private boolean init_Z_ListPool_StreamUti_ce_DataUtil(BedDefenderModule.CandidatePlan plan, RotationMath.Rotation wire) {
       double band = autismclient.util.RotationStreamPlanner.pitchMargin(RotationMath.gcdStep());
       if (RotationMath.angularDistance(wire, plan.goalRotation()) > band * 2.0) {
          return false;
@@ -1196,7 +1196,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          this.stalls.remove(this.stalls.keySet().iterator().next());
       }
 
-      BedDefenderModule.Inner_DataUtil stall = this.stalls.computeIfAbsent(key, k -> new BedDefenderModule.Inner_DataUtil());
+      BedDefenderModule.StallState stall = this.stalls.computeIfAbsent(key, k -> new BedDefenderModule.StallState());
       if (stall.stallAttempts > 1) {
          stall.init_I = 0;
       }
@@ -1221,10 +1221,10 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
    }
 
    private void flush_V_2() {
-      Iterator<Entry<BlockPos, BedDefenderModule.Inner_DataUtil>> entries = this.stalls.entrySet().iterator();
+      Iterator<Entry<BlockPos, BedDefenderModule.StallState>> entries = this.stalls.entrySet().iterator();
 
       while (entries.hasNext()) {
-         BedDefenderModule.Inner_DataUtil stall = entries.next().getValue();
+         BedDefenderModule.StallState stall = entries.next().getValue();
          if (stall.refusedCooldown > 0) {
             stall.refusedCooldown--;
          }
@@ -1280,7 +1280,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          }
 
          this.candidateRanks = Arrays.copyOf(ranks, count);
-         this.candidatePlans = new BedDefenderModule.Inner_StreamUtil[this.supportCandidates.size()];
+         this.candidatePlans = new BedDefenderModule.CandidatePlan[this.supportCandidates.size()];
          this.read_IArr = new int[this.supportCandidates.size()];
          Arrays.fill(this.read_IArr, -2147483648);
       }
@@ -1311,7 +1311,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private BedDefenderModule.Inner_StreamUtil init_ListPool_StreamUti_ce_DataUtil(RotationMath.Rotation from, ItemStack material, BlockPos skip, boolean sneaking) {
+   private BedDefenderModule.CandidatePlan init_ListPool_StreamUti_ce_DataUtil(RotationMath.Rotation from, ItemStack material, BlockPos skip, boolean sneaking) {
       int size = this.supportCandidates.size();
       if (size == 0) {
          return null;
@@ -1328,7 +1328,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       StringBuilder trace = null;
       autismclient.util.BlockPlacementPlanner.Query request = this.init_U_StateCache_ce_DataUtil(from, material, sneaking, trace);
       autismclient.util.BlockPlacementPlanner.RejectReason[] refusal = new autismclient.util.BlockPlacementPlanner.RejectReason[1];
-      BedDefenderModule.Inner_StreamUtil best = null;
+      BedDefenderModule.CandidatePlan best = null;
       float bestAngle = 3.4028235E38F;
       int bestRank = 2147483647;
       int start = this.optionCursor;
@@ -1339,12 +1339,12 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          BlockPos cell = option.targetCell();
          int rank = index < this.candidateRanks.length ? this.candidateRanks[index] : 2147483647;
          if (!cell.equals(skip) && rank <= bestRank && !this.init_Z_BlockPos_2(cell, placed, playerBox, delta)) {
-            BedDefenderModule.Inner_DataUtil stall = this.stalls.get(cell);
+            BedDefenderModule.StallState stall = this.stalls.get(cell);
             if (stall != null && stall.refusedCooldown > 0 && stall.refusedFaces.contains(option.supportFace())) {
                appendRejection(trace, option.face(), autismclient.util.BlockPlacementPlanner.RejectReason.BANNED);
                this.optionCursor = index + 1 == size ? 0 : index + 1;
             } else {
-               BedDefenderModule.Inner_StreamUtil plan;
+               BedDefenderModule.CandidatePlan plan;
                if (this.read_IArr[index] == tick) {
                   plan = this.candidatePlans[index];
                } else {
@@ -1378,15 +1378,15 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
 
       for (int pass = 0; best != null && pass < this.confirmedPlans.size(); pass++) {
-         BedDefenderModule.Inner_StreamUtil earlier = null;
+         BedDefenderModule.CandidatePlan earlier = null;
 
          for (BlockPos cell : this.read_Map.getOrDefault(best.cell(), Set.of())) {
             if (!cell.equals(skip) && !this.init_Z_BlockPos_2(cell, placed, playerBox, delta)) {
-               BedDefenderModule.Inner_DataUtil stall = this.stalls.get(cell);
+               BedDefenderModule.StallState stall = this.stalls.get(cell);
 
                for (autismclient.util.BlockPlacementPlanner.PlacementPlan candidate : this.confirmedPlans.getOrDefault(cell, List.of())) {
                   if (stall == null || stall.refusedCooldown <= 0 || !stall.refusedFaces.contains(candidate.support().supportFace())) {
-                     BedDefenderModule.Inner_StreamUtil alternative = new BedDefenderModule.Inner_StreamUtil(cell, candidate.support().supportFace(), candidate);
+                     BedDefenderModule.CandidatePlan alternative = new BedDefenderModule.CandidatePlan(cell, candidate.support().supportFace(), candidate);
                      if (earlier == null || RotationMath.angularDistance(from, alternative.goalRotation()) < RotationMath.angularDistance(from, earlier.goalRotation())) {
                         earlier = alternative;
                      }
@@ -1405,7 +1405,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       return best;
    }
 
-   private BedDefenderModule.Inner_StreamUtil init_ListPool_StreamUti_U_TaskQueue(
+   private BedDefenderModule.CandidatePlan init_ListPool_StreamUti_U_TaskQueue(
       autismclient.util.BlockPlacementPlanner.SupportCandidate option, autismclient.util.BlockPlacementPlanner.Query request, autismclient.util.BlockPlacementPlanner.RejectReason[] refusal
    ) {
       this.rayBudgetExhausted = false;
@@ -1419,7 +1419,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
             this.rayBudgetExhausted = refusal[0] == autismclient.util.BlockPlacementPlanner.RejectReason.NO_BUDGET;
             return null;
          } else {
-            return new BedDefenderModule.Inner_StreamUtil(option.targetCell(), candidate.support().supportFace(), candidate);
+            return new BedDefenderModule.CandidatePlan(option.targetCell(), candidate.support().supportFace(), candidate);
          }
       } else {
          return null;
@@ -1602,7 +1602,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private static boolean isBetterCandidate(boolean up, float angle, BedDefenderModule.Inner_StreamUtil best, float bestAngle) {
+   private static boolean isBetterCandidate(boolean up, float angle, BedDefenderModule.CandidatePlan best, float bestAngle) {
       boolean bestUp = best.face() == Direction.UP;
       return up != bestUp ? up : angle < bestAngle;
    }
@@ -1627,7 +1627,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          : false;
    }
 
-   private BlockHitResult init_BlockHitResult_ListPool_StreamUti(BedDefenderModule.Inner_StreamUtil plan, RotationMath.Rotation rotation, boolean sneaking) {
+   private BlockHitResult init_BlockHitResult_ListPool_StreamUti(BedDefenderModule.CandidatePlan plan, RotationMath.Rotation rotation, boolean sneaking) {
       ItemStack held = MC.player.getItemInHand(InteractionHand.MAIN_HAND);
       autismclient.util.BlockPlacementPlanner.Query gate = this.init_U_StateCache_ce_DataUtil(rotation, held, sneaking, null)
          .withTargetCell(plan.cell());
@@ -1640,7 +1640,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       return AutismSessionState.getInstance().getClientTick() != this.lastPlaceTick;
    }
 
-   private void init_V_ListPool_StreamUti_BlockHitResult(BedDefenderModule.Inner_StreamUtil plan, BlockHitResult hit) {
+   private void init_V_ListPool_StreamUti_BlockHitResult(BedDefenderModule.CandidatePlan plan, BlockHitResult hit) {
       InteractionHand hand = InteractionHand.MAIN_HAND;
       if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
@@ -1841,7 +1841,7 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       });
    }
 
-   private BedDefenderModule.Inner_CachePool init_ListPool_CachePool_BlockPos(BlockPos pos, int layer, ItemStack material) {
+   private BedDefenderModule.GhostCell init_ListPool_CachePool_BlockPos(BlockPos pos, int layer, ItemStack material) {
       BlockState state = material.getItem() instanceof BlockItem item ? item.getBlock().defaultBlockState() : null;
       if (state == null && (this.bool("layer-materials") || "Whitelist".equals(this.choice("filter-mode")))) {
          for (Block block : this.bool("layer-materials") ? this.layerBlocks(layer) : this.configuredBlocks()) {
@@ -1856,29 +1856,29 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
          state = Blocks.GLASS.defaultBlockState();
       }
 
-      return new BedDefenderModule.Inner_CachePool(pos.immutable(), state, layer, !material.isEmpty());
+      return new BedDefenderModule.GhostCell(pos.immutable(), state, layer, !material.isEmpty());
    }
 
-   private record Inner_BufferHelper(BlockPos cell, int layer, boolean init_Z, boolean load_Z, int load_I, boolean read, double init_D) {
+   private record Candidate(BlockPos cell, int layer, boolean init_Z, boolean load_Z, int load_I, boolean read, double init_D) {
    }
 
-   public record Inner_CachePool(BlockPos pos, BlockState state, int layer, boolean init_Z) {
+   public record GhostCell(BlockPos pos, BlockState state, int layer, boolean init_Z) {
    }
 
-   private record Inner_ConfigStore(BlockPos init_BlockPos, Direction init_Direction, int init_I, boolean init_Z) {
+   private record LayoutKey(BlockPos init_BlockPos, Direction init_Direction, int init_I, boolean init_Z) {
    }
 
-   private static final class Inner_DataUtil {
+   private static final class StallState {
       private int init_I;
       private int refusedCooldown;
       private int stallAttempts;
       private final List<autismclient.util.BlockPlacementPlanner.SupportFace> refusedFaces = new ArrayList<>();
    }
 
-   private record Inner_NetHelper(BlockPos pos, boolean solid) {
+   private record BlockEdit(BlockPos pos, boolean solid) {
    }
 
-   private record Inner_StreamUtil(
+   private record CandidatePlan(
       BlockPos cell, autismclient.util.BlockPlacementPlanner.SupportFace supportFace, autismclient.util.BlockPlacementPlanner.PlacementPlan plan
    ) {
       Direction face() {
@@ -1894,6 +1894,6 @@ public final class BedDefenderModule extends Module implements SilentMovementCoo
       }
    }
 
-   private record Inner_TaskQueue(BlockPos cell, int layer) {
+   private record LayerStep(BlockPos cell, int layer) {
    }
 }

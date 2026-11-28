@@ -236,36 +236,36 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    public boolean isPlayerInventoryOnly(int index) {
-      return this.getItemSearchScope(index) == ItemAction.Inner_DataUtil.PLAYER_INVENTORY;
+      return this.getItemSearchScope(index) == ItemAction.SearchScope.PLAYER_INVENTORY;
    }
 
    public void setPlayerInventoryOnly(int index, boolean value) {
-      this.setItemSearchScope(index, value ? ItemAction.Inner_DataUtil.PLAYER_INVENTORY : ItemAction.Inner_DataUtil.BOTH);
+      this.setItemSearchScope(index, value ? ItemAction.SearchScope.PLAYER_INVENTORY : ItemAction.SearchScope.BOTH);
    }
 
-   public ItemAction.Inner_DataUtil getItemSearchScope(int index) {
+   public ItemAction.SearchScope getItemSearchScope(int index) {
       if (index >= 0 && index < this.itemSearchScopes.size()) {
-         return ItemAction.Inner_DataUtil.values()[sanitizeSearchScope(this.itemSearchScopes.get(index))];
+         return ItemAction.SearchScope.values()[sanitizeSearchScope(this.itemSearchScopes.get(index))];
       } else {
          return index >= 0 && index < this.preferPlayerInventory.size() && Boolean.TRUE.equals(this.preferPlayerInventory.get(index))
-            ? ItemAction.Inner_DataUtil.PLAYER_INVENTORY
-            : ItemAction.Inner_DataUtil.BOTH;
+            ? ItemAction.SearchScope.PLAYER_INVENTORY
+            : ItemAction.SearchScope.BOTH;
       }
    }
 
    public void cycleSearchScope(int index, int direction) {
       if (index >= 0) {
-         int next = Math.floorMod(this.getItemSearchScope(index).ordinal() + direction, ItemAction.Inner_DataUtil.values().length);
-         this.setItemSearchScope(index, ItemAction.Inner_DataUtil.values()[next]);
+         int next = Math.floorMod(this.getItemSearchScope(index).ordinal() + direction, ItemAction.SearchScope.values().length);
+         this.setItemSearchScope(index, ItemAction.SearchScope.values()[next]);
       }
    }
 
-   public void setItemSearchScope(int index, ItemAction.Inner_DataUtil scope) {
+   public void setItemSearchScope(int index, ItemAction.SearchScope scope) {
       if (index >= 0) {
-         ItemAction.Inner_DataUtil safe = scope == null ? ItemAction.Inner_DataUtil.BOTH : scope;
+         ItemAction.SearchScope safe = scope == null ? ItemAction.SearchScope.BOTH : scope;
 
          while (this.itemSearchScopes.size() <= index) {
-            this.itemSearchScopes.add(ItemAction.Inner_DataUtil.BOTH.ordinal());
+            this.itemSearchScopes.add(ItemAction.SearchScope.BOTH.ordinal());
          }
 
          this.itemSearchScopes.set(index, safe.ordinal());
@@ -274,35 +274,35 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             this.preferPlayerInventory.add(false);
          }
 
-         this.preferPlayerInventory.set(index, safe == ItemAction.Inner_DataUtil.PLAYER_INVENTORY);
+         this.preferPlayerInventory.set(index, safe == ItemAction.SearchScope.PLAYER_INVENTORY);
       }
    }
 
-   public ItemAction.Inner_CachePool getItemStackAmountMode(int index) {
+   public ItemAction.AmountMode getItemStackAmountMode(int index) {
       int raw = index >= 0 && index < this.stackAmountModes.size()
          ? this.stackAmountModes.get(index)
-         : ItemAction.Inner_CachePool.DEFAULT.ordinal();
-      return ItemAction.Inner_CachePool.values()[sanitizeAmountMode(raw)];
+         : ItemAction.AmountMode.DEFAULT.ordinal();
+      return ItemAction.AmountMode.values()[sanitizeAmountMode(raw)];
    }
 
    public void cycleStackAmountMode(int index, int direction) {
       if (index >= 0) {
          while (this.stackAmountModes.size() <= index) {
-            this.stackAmountModes.add(ItemAction.Inner_CachePool.DEFAULT.ordinal());
+            this.stackAmountModes.add(ItemAction.AmountMode.DEFAULT.ordinal());
          }
 
          int current = sanitizeAmountMode(this.stackAmountModes.get(index));
-         int next = (current + direction) % ItemAction.Inner_CachePool.values().length;
+         int next = (current + direction) % ItemAction.AmountMode.values().length;
          if (next < 0) {
-            next += ItemAction.Inner_CachePool.values().length;
+            next += ItemAction.AmountMode.values().length;
          }
 
          this.stackAmountModes.set(index, next);
       }
    }
 
-   private List<ItemAction.Inner_StreamUtil> init_List_Minecraft_AbstractContainerM(Minecraft mc, AbstractContainerMenu handler) {
-      List<ItemAction.Inner_StreamUtil> out = new ArrayList<>();
+   private List<ItemAction.ClickStep> init_List_Minecraft_AbstractContainerM(Minecraft mc, AbstractContainerMenu handler) {
+      List<ItemAction.ClickStep> out = new ArrayList<>();
       if (!this.itemNames.isEmpty()) {
          for (int ei = 0; ei < this.itemNames.size(); ei++) {
             int clickCount = this.getItemTimes(ei);
@@ -317,7 +317,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                String entryName = entryItemName(entryTarget.toSpecString());
                int configuredEntrySlot = entryTarget.hasSlot() ? entryTarget.slot : -1;
                if (eiAction == autismclient.util.ContainerClickType.PICKUP_ALL && this.useCursorItemForPickupAll) {
-                  out.add(new ItemAction.Inner_StreamUtil(eiAction, eiButton, -1, entryTarget, clickCount));
+                  out.add(new ItemAction.ClickStep(eiAction, eiButton, -1, entryTarget, clickCount));
                } else {
                   int slotToUse;
                   if (configuredEntrySlot >= 0 && !entryName.isEmpty()) {
@@ -341,7 +341,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
                   }
 
                   if (slotToUse >= 0) {
-                     out.add(new ItemAction.Inner_StreamUtil(eiAction, eiButton, slotToUse, null, clickCount));
+                     out.add(new ItemAction.ClickStep(eiAction, eiButton, slotToUse, null, clickCount));
                   }
                }
             }
@@ -354,7 +354,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
          }
 
          if (action == autismclient.util.ContainerClickType.PICKUP_ALL && this.useCursorItemForPickupAll) {
-            out.add(new ItemAction.Inner_StreamUtil(action, effectiveButton, -1, MacroItemTarget.ofSlot(this.targetSlot), this.times));
+            out.add(new ItemAction.ClickStep(action, effectiveButton, -1, MacroItemTarget.ofSlot(this.targetSlot), this.times));
             return out;
          }
 
@@ -363,15 +363,15 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             return out;
          }
 
-         out.add(new ItemAction.Inner_StreamUtil(action, effectiveButton, resolvedTargetSlot, null, this.times));
+         out.add(new ItemAction.ClickStep(action, effectiveButton, resolvedTargetSlot, null, this.times));
       } else if (this.currentClickType() == autismclient.util.ContainerClickType.PICKUP_ALL && this.useCursorItemForPickupAll) {
-         out.add(new ItemAction.Inner_StreamUtil(this.currentClickType(), this.effectiveButton(), -1, null, this.times));
+         out.add(new ItemAction.ClickStep(this.currentClickType(), this.effectiveButton(), -1, null, this.times));
       }
 
       return out;
    }
 
-   private static void init_V_Minecraft_MapStore_StreamUti(Minecraft mc, ItemAction.Inner_StreamUtil e) {
+   private static void init_V_Minecraft_MapStore_StreamUti(Minecraft mc, ItemAction.ClickStep e) {
       boolean cursorPickupAll = e.pickupTarget() != null || e.clickType() == autismclient.util.ContainerClickType.PICKUP_ALL && e.load() < 0;
       if (cursorPickupAll) {
          autismclient.util.ContainerPickUpAllHelper.pickUpAll(mc, e.pickupTarget(), e.read());
@@ -389,7 +389,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       if (mc.player != null && mc.getConnection() != null) {
          AbstractContainerMenu handler = mc.player.containerMenu;
          if (handler != null) {
-            for (ItemAction.Inner_StreamUtil e : this.init_List_Minecraft_AbstractContainerM(mc, handler)) {
+            for (ItemAction.ClickStep e : this.init_List_Minecraft_AbstractContainerM(mc, handler)) {
                init_V_Minecraft_MapStore_StreamUti(mc, e);
             }
          }
@@ -404,7 +404,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             return plan;
          }
 
-         for (ItemAction.Inner_StreamUtil e : this.init_List_Minecraft_AbstractContainerM(mc, handler)) {
+         for (ItemAction.ClickStep e : this.init_List_Minecraft_AbstractContainerM(mc, handler)) {
             boolean cursorPickupAll = e.pickupTarget() != null || e.clickType() == autismclient.util.ContainerClickType.PICKUP_ALL && e.load() < 0;
             if (cursorPickupAll) {
                MacroItemTarget t = e.pickupTarget();
@@ -443,16 +443,16 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    private int findSlotForTarget(AbstractContainerMenu handler, MacroItemTarget target) {
-      return this.findSlotInScope(handler, target, ItemAction.Inner_DataUtil.BOTH, ItemAction.Inner_CachePool.DEFAULT);
+      return this.findSlotInScope(handler, target, ItemAction.SearchScope.BOTH, ItemAction.AmountMode.DEFAULT);
    }
 
-   private int findSlotInScope(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.Inner_DataUtil searchScope, ItemAction.Inner_CachePool amountMode) {
+   private int findSlotInScope(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.SearchScope searchScope, ItemAction.AmountMode amountMode) {
       if (!target.hasItemFilter()) {
          return -1;
       }
 
-      ItemAction.Inner_CachePool mode = amountMode == null ? ItemAction.Inner_CachePool.DEFAULT : amountMode;
-      ItemAction.Inner_DataUtil scope = searchScope == null ? ItemAction.Inner_DataUtil.BOTH : searchScope;
+      ItemAction.AmountMode mode = amountMode == null ? ItemAction.AmountMode.DEFAULT : amountMode;
+      ItemAction.SearchScope scope = searchScope == null ? ItemAction.SearchScope.BOTH : searchScope;
       int var10000;
       switch (scope) {
          case BOTH:
@@ -471,10 +471,10 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return var10000;
    }
 
-   private int findBestSlot(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.Inner_CachePool mode, Boolean playerInventoryOnly) {
+   private int findBestSlot(AbstractContainerMenu handler, MacroItemTarget target, ItemAction.AmountMode mode, Boolean playerInventoryOnly) {
       int bestSlot = -1;
       int bestScore = -1;
-      int bestCount = mode == ItemAction.Inner_CachePool.LEAST ? 2147483647 : -1;
+      int bestCount = mode == ItemAction.AmountMode.LEAST ? 2147483647 : -1;
 
       for (Slot slot : handler.slots) {
          if (slot != null && !slot.getItem().isEmpty()) {
@@ -501,12 +501,12 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       return bestScore >= 0 ? bestSlot : -1;
    }
 
-   private boolean isBetterMatch(ItemAction.Inner_CachePool mode, int score, int count, int bestScore, int bestCount) {
+   private boolean isBetterMatch(ItemAction.AmountMode mode, int score, int count, int bestScore, int bestCount) {
       if (bestScore < 0) {
          return true;
-      } else if (mode == ItemAction.Inner_CachePool.LEAST) {
+      } else if (mode == ItemAction.AmountMode.LEAST) {
          return count != bestCount ? count < bestCount : score > bestScore;
-      } else if (mode == ItemAction.Inner_CachePool.MOST) {
+      } else if (mode == ItemAction.AmountMode.MOST) {
          return count != bestCount ? count > bestCount : score > bestScore;
       } else {
          return score > bestScore;
@@ -722,7 +722,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             try {
                this.itemSearchScopes.add(sanitizeSearchScope(Integer.parseInt(el.asString().orElse("0"))));
             } catch (NumberFormatException ignored) {
-               this.itemSearchScopes.add(ItemAction.Inner_DataUtil.BOTH.ordinal());
+               this.itemSearchScopes.add(ItemAction.SearchScope.BOTH.ordinal());
             }
          }
       } else {
@@ -730,14 +730,14 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             this.itemSearchScopes
                .add(
                   Boolean.TRUE.equals(this.preferPlayerInventory.get(i))
-                     ? ItemAction.Inner_DataUtil.PLAYER_INVENTORY.ordinal()
-                     : ItemAction.Inner_DataUtil.BOTH.ordinal()
+                     ? ItemAction.SearchScope.PLAYER_INVENTORY.ordinal()
+                     : ItemAction.SearchScope.BOTH.ordinal()
                );
          }
       }
 
       while (this.itemSearchScopes.size() < this.itemNames.size()) {
-         this.itemSearchScopes.add(ItemAction.Inner_DataUtil.BOTH.ordinal());
+         this.itemSearchScopes.add(ItemAction.SearchScope.BOTH.ordinal());
       }
 
       while (this.itemSearchScopes.size() > this.itemNames.size()) {
@@ -745,7 +745,7 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
 
       for (int i = 0; i < this.itemSearchScopes.size(); i++) {
-         this.setItemSearchScope(i, ItemAction.Inner_DataUtil.values()[sanitizeSearchScope(this.itemSearchScopes.get(i))]);
+         this.setItemSearchScope(i, ItemAction.SearchScope.values()[sanitizeSearchScope(this.itemSearchScopes.get(i))]);
       }
 
       this.stackAmountModes.clear();
@@ -754,13 +754,13 @@ public class ItemAction implements MacroAction, GuiWaitAware {
             try {
                this.stackAmountModes.add(sanitizeAmountMode(Integer.parseInt(el.asString().orElse("0"))));
             } catch (NumberFormatException ignored) {
-               this.stackAmountModes.add(ItemAction.Inner_CachePool.DEFAULT.ordinal());
+               this.stackAmountModes.add(ItemAction.AmountMode.DEFAULT.ordinal());
             }
          }
       }
 
       while (this.stackAmountModes.size() < this.itemNames.size()) {
-         this.stackAmountModes.add(ItemAction.Inner_CachePool.DEFAULT.ordinal());
+         this.stackAmountModes.add(ItemAction.AmountMode.DEFAULT.ordinal());
       }
 
       while (this.stackAmountModes.size() > this.itemNames.size()) {
@@ -948,11 +948,11 @@ public class ItemAction implements MacroAction, GuiWaitAware {
    }
 
    private static int sanitizeAmountMode(int rawMode) {
-      return rawMode >= 0 && rawMode < ItemAction.Inner_CachePool.values().length ? rawMode : ItemAction.Inner_CachePool.DEFAULT.ordinal();
+      return rawMode >= 0 && rawMode < ItemAction.AmountMode.values().length ? rawMode : ItemAction.AmountMode.DEFAULT.ordinal();
    }
 
    private static int sanitizeSearchScope(int rawScope) {
-      return rawScope >= 0 && rawScope < ItemAction.Inner_DataUtil.values().length ? rawScope : ItemAction.Inner_DataUtil.BOTH.ordinal();
+      return rawScope >= 0 && rawScope < ItemAction.SearchScope.values().length ? rawScope : ItemAction.SearchScope.BOTH.ordinal();
    }
 
    private static int cycleActionIndex(int current, int direction) {
@@ -1034,30 +1034,30 @@ public class ItemAction implements MacroAction, GuiWaitAware {
       }
    }
 
-   public enum Inner_CachePool {
+   public enum AmountMode {
       DEFAULT("Default"),
       LEAST("Least"),
       MOST("Most");
 
       public final String init_Str;
 
-      Inner_CachePool(String label) {
+      AmountMode(String label) {
          this.init_Str = label;
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum SearchScope {
       BOTH("Both"),
       GUI("GUI"),
       PLAYER_INVENTORY("Player Inventory");
 
       public final String init_Str;
 
-      Inner_DataUtil(String label) {
+      SearchScope(String label) {
          this.init_Str = label;
       }
    }
 
-   private record Inner_StreamUtil(autismclient.util.ContainerClickType clickType, int button, int load, MacroItemTarget pickupTarget, int read) {
+   private record ClickStep(autismclient.util.ContainerClickType clickType, int button, int load, MacroItemTarget pickupTarget, int read) {
    }
 }

@@ -80,12 +80,12 @@ final class PrintAccess {
    LongArrayList placeCells;
    private BlockState placeState;
    private Item placeItem;
-   private PrintClicks.Inner_StreamUtil unusedPlaceClick;
+   private PrintClicks.Click unusedPlaceClick;
    private boolean standOnTemps;
    private boolean explicitStandingTemps;
    private LongOpenHashSet standingTemps;
    private long avoidSwap = -9223372036854775808L;
-   private PrintClicks.Inner_StreamUtil removalClick;
+   private PrintClicks.Click removalClick;
    boolean retrying;
    private IntArrayList indexedGoals;
    private PrintSpatialIndex goalIndex;
@@ -269,7 +269,7 @@ final class PrintAccess {
       this.rootCanEscapeDown = null;
       best.put(root.key, 0.0);
       open.add(new Object[]{this.heuristicWeight * this.estimateCost(root.key, goals), root});
-      PrintClicks.Inner_DataUtil budget = new PrintClicks.Inner_DataUtil(120000);
+      PrintClicks.RaycastBudget budget = new PrintClicks.RaycastBudget(120000);
       int expanded = 0;
       PrintAccess.SearchNode closest = root;
       double closestH = this.estimateCost(root.key, goals);
@@ -432,7 +432,7 @@ final class PrintAccess {
       }
    }
 
-   private long findPlaceCell(PrintAccess.SearchNode n, PrintClicks.Inner_DataUtil budget) {
+   private long findPlaceCell(PrintAccess.SearchNode n, PrintClicks.RaycastBudget budget) {
       this.unusedPlaceClick = null;
       long started = this.view.workUnits();
       int x = BlockPos.getX(n.key);
@@ -453,13 +453,13 @@ final class PrintAccess {
                   PrintTarget probe = new PrintTarget(-1, p, this.placeState, PrintTarget.TargetKind.PLACE, this.placeItem, null);
 
                   for (Vec3 feet : points) {
-                     PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                     PrintClicks.Click click = PrintClicks.findClick(
                         this.view,
                         this.core.env,
                         this.core.rules,
                         probe,
                         this.placeItem,
-                        PrintClicks.Inner_CachePool.PLACE,
+                        PrintClicks.ClickMode.PLACE,
                         feet,
                         true,
                         false,
@@ -497,11 +497,11 @@ final class PrintAccess {
       }
    }
 
-   PrintClicks.Inner_StreamUtil lastRemovalClick() {
+   PrintClicks.Click lastRemovalClick() {
       return this.removalClick;
    }
 
-   private long load(PrintAccess.SearchNode n, PrintClicks.Inner_DataUtil budget) {
+   private long load(PrintAccess.SearchNode n, PrintClicks.RaycastBudget budget) {
       this.removalClick = null;
       if (this.retrying && n.key == this.rootKey) {
          return -9223372036854775808L;
@@ -548,7 +548,7 @@ final class PrintAccess {
                if (!this.view.getBlockState(p).isAir()
                   && (n.temps <= 0 || t != this.avoidSwap || this.core.canEscape(BlockPos.of(n.key), p, Blocks.AIR.defaultBlockState(), true))) {
                   PrintTarget probe = new PrintTarget(-1, p, this.view.getBlockState(p), PrintTarget.TargetKind.PLACE, Items.AIR, null);
-                  PrintClicks.Inner_StreamUtil click = this.core.findClickFrom(n.key, n.feet, probe, budget, n.key == this.rootKey);
+                  PrintClicks.Click click = this.core.findClickFrom(n.key, n.feet, probe, budget, n.key == this.rootKey);
                   if (click != null && this.core.canEscapeFromDugStance(BlockPos.of(n.key), p)) {
                      this.removalClick = click;
                      return t;
@@ -899,7 +899,7 @@ final class PrintAccess {
    }
 
    private int findGoalAt(
-      PrintAccess.SearchNode n, IntArrayList goals, Long2ObjectOpenHashMap<Boolean> cache, PrintClicks.Inner_DataUtil budget
+      PrintAccess.SearchNode n, IntArrayList goals, Long2ObjectOpenHashMap<Boolean> cache, PrintClicks.RaycastBudget budget
    ) {
       int x = BlockPos.getX(n.key);
       int y = BlockPos.getY(n.key);
@@ -966,7 +966,7 @@ final class PrintAccess {
             if (!pour && !waterlog || this.core.isPourStanceSafe(n.key, tg)) {
                for (Vec3 feet : points) {
                   boolean exact = !pour && !waterlog && this.view.hasNoHypothesisInNeighborhood(p);
-                  PrintClicks.Inner_StreamUtil geo = !pour && !waterlog
+                  PrintClicks.Click geo = !pour && !waterlog
                      ? PrintClicks.findPlacementClick(
                         this.view,
                         this.core.env,
@@ -984,7 +984,7 @@ final class PrintAccess {
                         this.core.rules,
                         tg,
                         PrintClicks.getFluidBucketItem(tg),
-                        waterlog ? PrintClicks.Inner_CachePool.WATERLOG : PrintClicks.Inner_CachePool.POUR,
+                        waterlog ? PrintClicks.ClickMode.WATERLOG : PrintClicks.ClickMode.POUR,
                         feet,
                         !waterlog,
                         false,
@@ -1008,7 +1008,7 @@ final class PrintAccess {
       }
    }
 
-   private boolean reachableWithSupport(PrintTarget tg, BlockPos p, List<Vec3> points, PrintClicks.Inner_DataUtil budget) {
+   private boolean reachableWithSupport(PrintTarget tg, BlockPos p, List<Vec3> points, PrintClicks.RaycastBudget budget) {
       if (!this.hasTempState) {
          return false;
       }
@@ -1028,7 +1028,7 @@ final class PrintAccess {
                      this.core.rules,
                      probe,
                      temp,
-                     PrintClicks.Inner_CachePool.PLACE,
+                     PrintClicks.ClickMode.PLACE,
                      feet,
                      true,
                      false,
@@ -1039,7 +1039,7 @@ final class PrintAccess {
                   this.view.pushHypothesis(sn, tempState);
 
                   try {
-                     PrintClicks.Inner_StreamUtil targetClick = PrintClicks.findPlacementClick(
+                     PrintClicks.Click targetClick = PrintClicks.findPlacementClick(
                         this.view,
                         this.core.env,
                         this.core.rules,
@@ -1280,11 +1280,11 @@ final class PrintAccess {
                            this.core.rules,
                            probe,
                            probe.item(),
-                           PrintClicks.Inner_CachePool.PLACE,
+                           PrintClicks.ClickMode.PLACE,
                            lean,
                            true,
                            false,
-                           new PrintClicks.Inner_DataUtil(1000),
+                           new PrintClicks.RaycastBudget(1000),
                            4.1000000000000005
                         )
                         != null) {
@@ -1683,7 +1683,7 @@ final class PrintAccess {
       private PrintAccess.AccessSearch.WayOutProof wayOutProof;
       private PrintAccess.AccessSearch.WayOutProof bestWayOutProof;
       private PrintAccess.AccessSearch.CandidateProof bestProof;
-      PrintClicks.Inner_StreamUtil click;
+      PrintClicks.Click click;
       long stanceKey;
       boolean solved;
       long expandedNodes;
@@ -2062,7 +2062,7 @@ final class PrintAccess {
       }
 
       private final class PlacementCheck {
-         final PrintClicks.Inner_StreamUtil click;
+         final PrintClicks.Click click;
          final BlockPos support;
          final BlockState supportState;
          final PrintCore.PlacementSafetyProof neighborProof;
@@ -2072,11 +2072,11 @@ final class PrintAccess {
          boolean invalidated;
          boolean trapBlocked;
 
-         PlacementCheck(PrintClicks.Inner_StreamUtil click, BlockPos support) {
+         PlacementCheck(PrintClicks.Click click, BlockPos support) {
             this(click, support, null);
          }
 
-         PlacementCheck(PrintClicks.Inner_StreamUtil click, BlockPos support, PrintCore.EscapeStarts starts) {
+         PlacementCheck(PrintClicks.Click click, BlockPos support, PrintCore.EscapeStarts starts) {
             this.click = click;
             this.support = support;
             this.supportState = support == null ? null : PrintAccess.this.tempState();
@@ -2230,7 +2230,7 @@ final class PrintAccess {
          final PrintAccess.AccessSearch.EscapeCheck candidateEscape;
          final PrintCore.PlannerPolicy candidateSupport;
          final PrintAccess.AccessSearch.PlacementCheck candidatePlacement;
-         final PrintClicks.Inner_StreamUtil candidateDig;
+         final PrintClicks.Click candidateDig;
 
          CandidateProof(
             PrintAccess.SearchNode node,
@@ -2238,7 +2238,7 @@ final class PrintAccess {
             PrintAccess.AccessSearch.EscapeCheck escape,
             PrintCore.PlannerPolicy support,
             PrintAccess.AccessSearch.PlacementCheck placement,
-            PrintClicks.Inner_StreamUtil dig
+            PrintClicks.Click dig
          ) {
             this.candidateNode = node;
             this.withoutPath = withoutPath;
@@ -2293,11 +2293,11 @@ final class PrintAccess {
          int foundGoal = -1;
          boolean finished;
          boolean viaTempSupport;
-         PrintClicks.Inner_StreamUtil nodeClick;
+         PrintClicks.Click nodeClick;
          List<Vec3> poses;
          List<Vec3> orientedPoses;
          List<Vec3> plainPoses;
-         final PrintClicks.Inner_DataUtil clickBudget = new PrintClicks.Inner_DataUtil();
+         final PrintClicks.RaycastBudget clickBudget = new PrintClicks.RaycastBudget();
          Iterator<Vec3> poseIterator;
          LongArrayList pathAssumed;
          long contextHash;
@@ -2314,7 +2314,7 @@ final class PrintAccess {
          boolean escapeWithoutPath;
          final boolean walkReachable;
 
-         private PrintAccess.AccessSearch.PlacementCheck placementCheck(PrintClicks.Inner_StreamUtil click) {
+         private PrintAccess.AccessSearch.PlacementCheck placementCheck(PrintClicks.Click click) {
             if (this.nodeTrapStarts == null) {
                this.nodeTrapStarts = PrintAccess.this.core.new EscapeStarts();
             }
@@ -2565,7 +2565,7 @@ final class PrintAccess {
                                     PrintAccess.this.core.rules,
                                     target,
                                     target.item(),
-                                    PrintClicks.Inner_CachePool.PLACE,
+                                    PrintClicks.ClickMode.PLACE,
                                     position,
                                     true,
                                     exact,
@@ -2589,7 +2589,7 @@ final class PrintAccess {
                                     PrintAccess.this.core.rules,
                                     target,
                                     target.item(),
-                                    PrintClicks.Inner_CachePool.PLACE,
+                                    PrintClicks.ClickMode.PLACE,
                                     position,
                                     false,
                                     exact,
@@ -2610,7 +2610,7 @@ final class PrintAccess {
                               PrintAccess.this.core.rules,
                               target,
                               PrintClicks.getFluidBucketItem(target),
-                              waterlog ? PrintClicks.Inner_CachePool.WATERLOG : PrintClicks.Inner_CachePool.POUR,
+                              waterlog ? PrintClicks.ClickMode.WATERLOG : PrintClicks.ClickMode.POUR,
                               position,
                               !waterlog,
                               false,
@@ -2766,7 +2766,7 @@ final class PrintAccess {
                            PrintAccess.this.core.rules,
                            probe,
                            this.tempSupportItem,
-                           PrintClicks.Inner_CachePool.PLACE,
+                           PrintClicks.ClickMode.PLACE,
                            feet,
                            true,
                            false,
@@ -2779,7 +2779,7 @@ final class PrintAccess {
 
                      PrintAccess.this.view.pushTemporaryHypothesis(this.supportCell, this.tempSupportState);
 
-                     PrintClicks.Inner_StreamUtil sourceClick;
+                     PrintClicks.Click sourceClick;
                      try {
                         sourceClick = PrintClicks.findPlacementClick(
                            PrintAccess.this.view,
@@ -2830,7 +2830,7 @@ final class PrintAccess {
             boolean removalStarted;
             boolean standingRemoval;
             long removalCell = -9223372036854775808L;
-            PrintClicks.Inner_StreamUtil probeRemovalClick;
+            PrintClicks.Click probeRemovalClick;
             PrintAccess.AccessSearch.EscapeCheck removalEscape;
 
             void advance() {
@@ -3063,7 +3063,7 @@ final class PrintAccess {
                         PrintAccess.this.core.rules,
                         this.cellTarget,
                         PrintAccess.this.placeItem,
-                        PrintClicks.Inner_CachePool.PLACE,
+                        PrintClicks.ClickMode.PLACE,
                         this.cellPoses.get(this.poseCursor++),
                         true,
                         false,

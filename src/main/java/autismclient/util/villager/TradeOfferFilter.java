@@ -11,7 +11,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.trading.MerchantOffer;
 
-public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<String> costIds, List<TradeOfferFilter.Inner_DataUtil> read, boolean init_Z, int maxPrice) {
+public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<String> costIds, List<TradeOfferFilter.BookFilter> read, boolean init_Z, int maxPrice) {
    public TradeOfferFilter {
       resultIds = List.copyOf(resultIds);
       costIds = List.copyOf(costIds);
@@ -46,7 +46,7 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
          for (Holder<Enchantment> enchantment : enchants.keySet()) {
             String key = enchantment.unwrapKey().map(k -> k.identifier().toString()).orElse("");
 
-            for (TradeOfferFilter.Inner_DataUtil book : this.read) {
+            for (TradeOfferFilter.BookFilter book : this.read) {
                if (key.equals(book.enchantment()) && levelMatches(enchants.getLevel(enchantment), book.minLevel(), this.init_Z) && withinPriceLimit(price, book.load())) {
                   return true;
                }
@@ -97,8 +97,8 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
       }
    }
 
-   public record Inner_DataUtil(String enchantment, int minLevel, int load) {
-      public Inner_DataUtil(String enchantment, int minLevel, int load) {
+   public record BookFilter(String enchantment, int minLevel, int load) {
+      public BookFilter(String enchantment, int minLevel, int load) {
          enchantment = TradeOfferFilter.normalizeItem(enchantment);
          if (!enchantment.isBlank() && minLevel >= 1 && minLevel <= 255 && load >= 0 && load <= 128) {
             this.enchantment = enchantment;
@@ -109,11 +109,11 @@ public record TradeOfferFilter(int tradeIndex, List<String> resultIds, List<Stri
          }
       }
 
-      public static TradeOfferFilter.Inner_DataUtil parse(String value) {
+      public static TradeOfferFilter.BookFilter parse(String value) {
          String[] parts = value.strip().split("\\s+");
          if (parts.length >= 1 && parts.length <= 3) {
             try {
-               return new TradeOfferFilter.Inner_DataUtil(
+               return new TradeOfferFilter.BookFilter(
                   parts[0], parts.length > 1 ? Integer.parseInt(parts[1]) : 1, parts.length > 2 ? Integer.parseInt(parts[2]) : 0
                );
             } catch (NumberFormatException e) {

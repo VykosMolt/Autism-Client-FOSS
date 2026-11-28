@@ -206,7 +206,7 @@ public final class AiMacroValidator {
          if (id.equals("RACE")) {
             if (input.has("triggerType")) {
                try {
-                  autismclient.util.macro.RaceAction.Inner_DataUtil.valueOf(AiJson.getString(input, "triggerType", "").trim().toUpperCase(Locale.ROOT));
+                  autismclient.util.macro.RaceAction.ConditionType.valueOf(AiJson.getString(input, "triggerType", "").trim().toUpperCase(Locale.ROOT));
                } catch (IllegalArgumentException e) {
                   throw new IllegalArgumentException("Unknown RACE triggerType " + AiJson.getString(input, "triggerType", ""));
                }
@@ -314,10 +314,10 @@ public final class AiMacroValidator {
          throw new IllegalArgumentException("Condition nesting exceeds 16");
       }
 
-      MacroCondition.Inner_BufferHelper type = MacroCondition.Inner_BufferHelper.valueOf(AiJson.getString(node, "node", "GROUP"));
+      MacroCondition.NodeType type = MacroCondition.NodeType.valueOf(AiJson.getString(node, "node", "GROUP"));
       AiJson.getBoolean(node, "negate", false);
-      if (type == MacroCondition.Inner_BufferHelper.GROUP) {
-         MacroCondition.Inner_StreamUtil.valueOf(AiJson.getString(node, "combine", "ALL"));
+      if (type == MacroCondition.NodeType.GROUP) {
+         MacroCondition.Combine.valueOf(AiJson.getString(node, "combine", "ALL"));
          if (!node.has("children") || !node.get("children").isJsonArray() || node.getAsJsonArray("children").isEmpty()) {
             throw new IllegalArgumentException("Condition group must contain at least one explicit child");
          }
@@ -330,9 +330,9 @@ public final class AiMacroValidator {
             validateCondition(child.getAsJsonObject(), depth + 1);
          }
       } else {
-         MacroCondition.Inner_CachePool.valueOf(AiJson.getString(node, "kind", "ALWAYS"));
-         MacroCondition.Inner_ConfigStore.valueOf(AiJson.getString(node, "op", "EQ"));
-         MacroCondition.Inner_DataUtil.valueOf(AiJson.getString(node, "cmp", "AT_LEAST"));
+         MacroCondition.ConditionKind.valueOf(AiJson.getString(node, "kind", "ALWAYS"));
+         MacroCondition.Operator.valueOf(AiJson.getString(node, "op", "EQ"));
+         MacroCondition.Comparison.valueOf(AiJson.getString(node, "cmp", "AT_LEAST"));
          if (node.has("range") && AiJson.getDouble(node, "range", 0.0) < 0.0) {
             throw new IllegalArgumentException("Condition range cannot be negative");
          }

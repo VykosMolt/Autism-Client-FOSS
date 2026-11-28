@@ -145,7 +145,7 @@ public final class VillagerDupeDriver {
       return emerald != null ? emerald : this.shearsStatus(mc, player, opts, player.hasInfiniteMaterials(), AutismSessionState.getInstance().getClientTick());
    }
 
-   public static boolean hasTrader(Minecraft mc, VillagerDupeDriver.Inner_DataUtil filter, boolean traders) {
+   public static boolean hasTrader(Minecraft mc, VillagerDupeDriver.ItemFilter filter, boolean traders) {
       if (!isClientReady(mc)) {
          return false;
       }
@@ -156,7 +156,7 @@ public final class VillagerDupeDriver {
          return false;
       }
 
-      VillagerDupeDriver.Inner_DataUtil wanted = filter == null ? VillagerDupeDriver.Inner_DataUtil.ALL : filter;
+      VillagerDupeDriver.ItemFilter wanted = filter == null ? VillagerDupeDriver.ItemFilter.ALL : filter;
 
       for (AbstractVillager villager : mc.level.getEntitiesOfClass(AbstractVillager.class, player.getBoundingBox().inflate(reach), Entity::isAlive)) {
          if (isEligibleVillager(player, villager, traders) && wanted.matchesFilter(villager.getMainHandItem())) {
@@ -879,11 +879,11 @@ public final class VillagerDupeDriver {
    }
 
    public record CachePool(
-      VillagerDupeDriver.Inner_DataUtil itemFilter, boolean includeTraders, boolean load, boolean read, boolean write, boolean update, boolean sync, int init_I
+      VillagerDupeDriver.ItemFilter itemFilter, boolean includeTraders, boolean load, boolean read, boolean write, boolean update, boolean sync, int init_I
    ) {
       public CachePool {
          if (itemFilter == null) {
-            itemFilter = VillagerDupeDriver.Inner_DataUtil.ALL;
+            itemFilter = VillagerDupeDriver.ItemFilter.ALL;
          }
 
          init_I = Math.max(1, init_I);
@@ -947,7 +947,7 @@ public final class VillagerDupeDriver {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum ItemFilter {
       ALL("All"),
       SADDLE("Saddles"),
       HORSE_ARMOR("Horse Armor"),
@@ -956,7 +956,7 @@ public final class VillagerDupeDriver {
       private static volatile Set<Item> init_Set;
       private final String init_Str;
 
-      Inner_DataUtil(String label) {
+      ItemFilter(String label) {
          this.init_Str = label;
       }
 
@@ -995,7 +995,7 @@ public final class VillagerDupeDriver {
          return var10000;
       }
 
-      public static VillagerDupeDriver.Inner_DataUtil parse(String token) {
+      public static VillagerDupeDriver.ItemFilter parse(String token) {
          if (token == null) {
             return ALL;
          }

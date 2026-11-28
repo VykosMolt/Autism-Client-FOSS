@@ -29,7 +29,7 @@ public final class CustomMenuActionPlanner {
       return "";
    }
 
-   public static CustomMenuActionPlanner.Inner_DataUtil prepare(CustomMenuAction action, CustomMenuSnapshot snapshot, Function<String, String> resolver) {
+   public static CustomMenuActionPlanner.PreparedSubmission prepare(CustomMenuAction action, CustomMenuSnapshot snapshot, Function<String, String> resolver) {
       if (action != null && snapshot != null) {
          Function<String, String> safeResolver = resolver == null ? Function.identity() : resolver;
          Map<String, String> values = new LinkedHashMap<>();
@@ -55,11 +55,11 @@ public final class CustomMenuActionPlanner {
                try {
                   out = safeResolver.apply(init_Str(fields.get(i)));
                } catch (RuntimeException error) {
-                  return CustomMenuActionPlanner.Inner_DataUtil.ofError("Text field value " + (i + 1) + " is unavailable");
+                  return CustomMenuActionPlanner.PreparedSubmission.ofError("Text field value " + (i + 1) + " is unavailable");
                }
 
                if (out == null) {
-                  return CustomMenuActionPlanner.Inner_DataUtil.ofError("Text field value " + (i + 1) + " is unavailable");
+                  return CustomMenuActionPlanner.PreparedSubmission.ofError("Text field value " + (i + 1) + " is unavailable");
                }
 
                resolved.add(out);
@@ -78,14 +78,14 @@ public final class CustomMenuActionPlanner {
 
          CustomMenuButton button = pickButton(action, snapshot.buttons());
          return button == null
-            ? CustomMenuActionPlanner.Inner_DataUtil.ofError(
+            ? CustomMenuActionPlanner.PreparedSubmission.ofError(
                init_Str(action.clickButton).isBlank()
                   ? "No obvious button to press; type the button's text (e.g. Register)"
                   : "No button matched \"" + action.clickButton + "\" on this screen"
             )
-            : CustomMenuActionPlanner.Inner_DataUtil.ofSubmission(new CustomMenuSubmission(values, button));
+            : CustomMenuActionPlanner.PreparedSubmission.ofSubmission(new CustomMenuSubmission(values, button));
       } else {
-         return CustomMenuActionPlanner.Inner_DataUtil.ofError("No custom screen is open");
+         return CustomMenuActionPlanner.PreparedSubmission.ofError("No custom screen is open");
       }
    }
 
@@ -286,17 +286,17 @@ public final class CustomMenuActionPlanner {
       return value == null ? "" : value;
    }
 
-   public record Inner_DataUtil(CustomMenuSubmission submission, String error) {
+   public record PreparedSubmission(CustomMenuSubmission submission, String error) {
       public boolean isReady() {
          return this.submission != null && this.error.isEmpty();
       }
 
-      static CustomMenuActionPlanner.Inner_DataUtil ofSubmission(CustomMenuSubmission submission) {
-         return new CustomMenuActionPlanner.Inner_DataUtil(submission, "");
+      static CustomMenuActionPlanner.PreparedSubmission ofSubmission(CustomMenuSubmission submission) {
+         return new CustomMenuActionPlanner.PreparedSubmission(submission, "");
       }
 
-      static CustomMenuActionPlanner.Inner_DataUtil ofError(String error) {
-         return new CustomMenuActionPlanner.Inner_DataUtil(null, error == null ? "Custom screen failed" : error);
+      static CustomMenuActionPlanner.PreparedSubmission ofError(String error) {
+         return new CustomMenuActionPlanner.PreparedSubmission(null, error == null ? "Custom screen failed" : error);
       }
    }
 }

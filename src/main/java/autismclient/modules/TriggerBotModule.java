@@ -47,7 +47,7 @@ final class TriggerBotModule extends Module {
    private final HeldItemFilter heldItemFilter;
    private final autismclient.util.clicker.ClickPatternEngine patternEngine = new autismclient.util.clicker.ClickPatternEngine();
    private final autismclient.util.clicker.KeyClickOutput keyOutput = autismclient.util.clicker.KeyClickOutput.attack();
-   private final autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper crosshairGatedSink = new autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper() {
+   private final autismclient.util.clicker.ClickPatternEngine.ClickSink crosshairGatedSink = new autismclient.util.clicker.ClickPatternEngine.ClickSink() {
       @Override
       public boolean init_Z_J(long now) {
          return Module.MC.hitResult != null && Module.MC.hitResult.getType() != Type.MISS || TriggerBotModule.this.keyOutput.init_Z_J(now);

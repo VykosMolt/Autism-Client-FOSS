@@ -28,8 +28,8 @@ public final class PrintClockSequence implements PrintMachineJob {
    private final PrintEnv env;
    private final Object worldToken;
    private final PrintClockSpec spec;
-   private final PrintClockSequence.Inner_DataUtil actions;
-   private PrintClockSequence.Inner_StreamUtil stage = PrintClockSequence.Inner_StreamUtil.INSPECT_FIRST;
+   private final PrintClockSequence.Actions actions;
+   private PrintClockSequence.Stage stage = PrintClockSequence.Stage.INSPECT_FIRST;
    private PrintMachineJob currentJob;
    private PrintMachineJob.JobStatus jobStatus = PrintMachineJob.JobStatus.PREPARING;
    private boolean init_Z;
@@ -49,7 +49,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    private Supplier<String> init_Supplier = () -> null;
    private final ArrayList<JsonObject> receipts = new ArrayList<>();
 
-   public PrintClockSequence(PrintEnv env, PrintClockSpec spec, PrintClockSequence.Inner_DataUtil actions) {
+   public PrintClockSequence(PrintEnv env, PrintClockSpec spec, PrintClockSequence.Actions actions) {
       this.env = env;
       this.worldToken = env.worldToken();
       this.spec = spec;
@@ -62,7 +62,7 @@ public final class PrintClockSequence implements PrintMachineJob {
    }
 
    public boolean auditing() {
-      return this.stage == PrintClockSequence.Inner_StreamUtil.AUDIT && this.jobStatus == PrintMachineJob.JobStatus.PREPARING;
+      return this.stage == PrintClockSequence.Stage.AUDIT && this.jobStatus == PrintMachineJob.JobStatus.PREPARING;
    }
 
    public BlockPos firstUnloadedCell() {
@@ -181,9 +181,9 @@ public final class PrintClockSequence implements PrintMachineJob {
          String changed = this.load_Str();
          if (changed != null) {
             return this.report(changed);
-         } else if (this.stage == PrintClockSequence.Inner_StreamUtil.STOCK) {
+         } else if (this.stage == PrintClockSequence.Stage.STOCK) {
             return this.read_BitSetUtil_DataUti();
-         } else if (this.stage == PrintClockSequence.Inner_StreamUtil.AUDIT) {
+         } else if (this.stage == PrintClockSequence.Stage.AUDIT) {
             return this.write_BitSetUtil_DataUti();
          } else {
             PrintMachineJob.JobStatus result = this.currentJob.prepare();
@@ -208,15 +208,15 @@ public final class PrintClockSequence implements PrintMachineJob {
          return false;
       }
 
-      if (this.stage == PrintClockSequence.Inner_StreamUtil.HOLD
+      if (this.stage == PrintClockSequence.Stage.HOLD
          && this.actions.countHeld(this.spec.material()) < this.spec.quantity()) {
-         this.stage = PrintClockSequence.Inner_StreamUtil.STOCK;
+         this.stage = PrintClockSequence.Stage.STOCK;
          this.currentJob = null;
          this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
          return false;
       }
 
-      if ((this.stage == PrintClockSequence.Inner_StreamUtil.FILL || this.stage == PrintClockSequence.Inner_StreamUtil.INSPECT_HELD_SECOND)
+      if ((this.stage == PrintClockSequence.Stage.FILL || this.stage == PrintClockSequence.Stage.INSPECT_HELD_SECOND)
          && !this.spec.holding(this.env::getBlockState)) {
          this.report("The protected holding phase changed before clock preload");
          return false;
@@ -226,7 +226,7 @@ public final class PrintClockSequence implements PrintMachineJob {
          return false;
       }
 
-      if (this.stage == PrintClockSequence.Inner_StreamUtil.HOLD) {
+      if (this.stage == PrintClockSequence.Stage.HOLD) {
          this.init_Z = true;
          this.load_J = this.env.currentTick();
       }
@@ -268,12 +268,12 @@ public final class PrintClockSequence implements PrintMachineJob {
       this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
       switch (this.stage) {
          case INSPECT_FIRST:
-            this.stage = PrintClockSequence.Inner_StreamUtil.INSPECT_SECOND;
+            this.stage = PrintClockSequence.Stage.INSPECT_SECOND;
             this.currentJob = this.actions
                .containerJob(this.spec.other(), this.spec.source().get(this.spec.other()));
             break;
          case INSPECT_SECOND:
-            this.stage = PrintClockSequence.Inner_StreamUtil.STOCK;
+            this.stage = PrintClockSequence.Stage.STOCK;
             break;
          case STOCK:
          default:
@@ -283,12 +283,12 @@ public final class PrintClockSequence implements PrintMachineJob {
                return this.report("Native lever receipt did not establish the protected clock phase");
             }
 
-            this.stage = PrintClockSequence.Inner_StreamUtil.INSPECT_HELD_SECOND;
+            this.stage = PrintClockSequence.Stage.INSPECT_HELD_SECOND;
             this.currentJob = this.actions
                .containerJob(this.spec.other(), this.spec.source().get(this.spec.other()));
             break;
          case INSPECT_HELD_SECOND:
-            this.stage = PrintClockSequence.Inner_StreamUtil.FILL;
+            this.stage = PrintClockSequence.Stage.FILL;
             this.currentJob = this.actions
                .filledContainerJob(this.spec.preload(), this.spec.source().get(this.spec.preload()), this.spec.preloadSlots());
             this.currentJob
@@ -307,12 +307,12 @@ public final class PrintClockSequence implements PrintMachineJob {
             break;
          case FILL:
             this.read_Z = true;
-            this.stage = PrintClockSequence.Inner_StreamUtil.RESTORE;
+            this.stage = PrintClockSequence.Stage.RESTORE;
             this.currentJob = this.actions.clockControlJob(false);
             break;
          case RESTORE:
             this.load_Z = true;
-            this.stage = PrintClockSequence.Inner_StreamUtil.AUDIT;
+            this.stage = PrintClockSequence.Stage.AUDIT;
             this.init_J = this.env.currentTick();
             this.load_I = -1;
             this.init_I = 0;
@@ -331,7 +331,7 @@ public final class PrintClockSequence implements PrintMachineJob {
       int available = this.actions.countHeld(this.spec.material());
       int missing = this.spec.quantity() - available;
       if (missing <= 0) {
-         this.stage = PrintClockSequence.Inner_StreamUtil.HOLD;
+         this.stage = PrintClockSequence.Stage.HOLD;
          this.currentJob = this.actions.clockControlJob(true);
          this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
          return this.prepare();
@@ -385,7 +385,7 @@ public final class PrintClockSequence implements PrintMachineJob {
 
    private void write_V() {
       this.init_ItemStack = ItemStack.EMPTY;
-      this.stage = PrintClockSequence.Inner_StreamUtil.INSPECT_FIRST;
+      this.stage = PrintClockSequence.Stage.INSPECT_FIRST;
       this.currentJob = this.actions.containerJob(this.spec.preload(), this.spec.source().get(this.spec.preload()));
       this.jobStatus = PrintMachineJob.JobStatus.PREPARING;
    }
@@ -409,7 +409,7 @@ public final class PrintClockSequence implements PrintMachineJob {
       }
 
       if (this.init_I >= 5) {
-         this.stage = PrintClockSequence.Inner_StreamUtil.COMPLETE;
+         this.stage = PrintClockSequence.Stage.COMPLETE;
          this.detail = "Exact pooled clock stock loaded, source control restored, two native cycles observed";
          return this.jobStatus = PrintMachineJob.JobStatus.SUCCEEDED;
       }
@@ -474,7 +474,7 @@ public final class PrintClockSequence implements PrintMachineJob {
 
          if ((
                !this.init_Z
-                  || this.stage != PrintClockSequence.Inner_StreamUtil.HOLD
+                  || this.stage != PrintClockSequence.Stage.HOLD
                   || this.env.currentTick() - this.load_J > 20L
                   || !at.equals(this.spec.secondPayload())
                   || !actual.isAir()
@@ -487,7 +487,7 @@ public final class PrintClockSequence implements PrintMachineJob {
             if ((
                   !this.init_Z
                      || !at.equals(this.spec.lever())
-                     || this.stage != PrintClockSequence.Inner_StreamUtil.HOLD && this.stage != PrintClockSequence.Inner_StreamUtil.RESTORE
+                     || this.stage != PrintClockSequence.Stage.HOLD && this.stage != PrintClockSequence.Stage.RESTORE
                      || actual != entry.getValue()
                )
                && !this.spec.allows(at, actual, this.init_Z && !this.load_Z, this.init_Z)) {
@@ -572,7 +572,7 @@ public final class PrintClockSequence implements PrintMachineJob {
       return receipt;
    }
 
-   public interface Inner_DataUtil {
+   public interface Actions {
       PrintMachineJob containerJob(BlockPos var1, BlockState var2);
 
       PrintMachineJob clockControlJob(boolean var1);
@@ -590,7 +590,7 @@ public final class PrintClockSequence implements PrintMachineJob {
       boolean contextValid();
    }
 
-   enum Inner_StreamUtil {
+   enum Stage {
       INSPECT_FIRST,
       INSPECT_SECOND,
       STOCK,

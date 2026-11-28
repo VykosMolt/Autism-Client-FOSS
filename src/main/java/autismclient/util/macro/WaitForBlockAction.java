@@ -11,8 +11,8 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
 public class WaitForBlockAction implements MacroAction {
-   public WaitForBlockAction.Inner_DataUtil checkMode = WaitForBlockAction.Inner_DataUtil.AT_POSITION;
-   public WaitForBlockAction.Inner_StreamUtil waitBehavior = WaitForBlockAction.Inner_StreamUtil.PLACED;
+   public WaitForBlockAction.CheckMode checkMode = WaitForBlockAction.CheckMode.AT_POSITION;
+   public WaitForBlockAction.WaitBehavior waitBehavior = WaitForBlockAction.WaitBehavior.PLACED;
    public boolean anyBlock = true;
    public List<String> blockIds = new ArrayList<>();
    public BlockPos blockPos = BlockPos.ZERO;
@@ -34,7 +34,7 @@ public class WaitForBlockAction implements MacroAction {
    public String getDisplayName() {
       String blockDesc;
       if (this.anyBlock) {
-         blockDesc = this.waitBehavior == WaitForBlockAction.Inner_StreamUtil.DESTROYED ? "any block gone" : "any block";
+         blockDesc = this.waitBehavior == WaitForBlockAction.WaitBehavior.DESTROYED ? "any block gone" : "any block";
       } else if (this.blockIds.isEmpty()) {
          blockDesc = "no blocks set";
       } else {
@@ -44,7 +44,7 @@ public class WaitForBlockAction implements MacroAction {
          }
       }
 
-      String verb = this.waitBehavior == WaitForBlockAction.Inner_StreamUtil.DESTROYED ? "Destroyed" : "Placed";
+      String verb = this.waitBehavior == WaitForBlockAction.WaitBehavior.DESTROYED ? "Destroyed" : "Placed";
       String var10000;
       switch (this.checkMode) {
          case AT_POSITION:
@@ -106,17 +106,17 @@ public class WaitForBlockAction implements MacroAction {
    public void fromTag(CompoundTag tag) {
       if (tag.contains("checkMode")) {
          try {
-            this.checkMode = WaitForBlockAction.Inner_DataUtil.valueOf(tag.getStringOr("checkMode", "AT_POSITION"));
+            this.checkMode = WaitForBlockAction.CheckMode.valueOf(tag.getStringOr("checkMode", "AT_POSITION"));
          } catch (IllegalArgumentException ignored) {
-            this.checkMode = WaitForBlockAction.Inner_DataUtil.AT_POSITION;
+            this.checkMode = WaitForBlockAction.CheckMode.AT_POSITION;
          }
       }
 
       if (tag.contains("waitBehavior")) {
          try {
-            this.waitBehavior = WaitForBlockAction.Inner_StreamUtil.valueOf(tag.getStringOr("waitBehavior", "PLACED"));
+            this.waitBehavior = WaitForBlockAction.WaitBehavior.valueOf(tag.getStringOr("waitBehavior", "PLACED"));
          } catch (IllegalArgumentException ignored) {
-            this.waitBehavior = WaitForBlockAction.Inner_StreamUtil.PLACED;
+            this.waitBehavior = WaitForBlockAction.WaitBehavior.PLACED;
          }
       }
 
@@ -154,13 +154,13 @@ public class WaitForBlockAction implements MacroAction {
       ListenDuringPreviousSerializer.readFromTag(tag, this);
    }
 
-   public enum Inner_DataUtil {
+   public enum CheckMode {
       AT_POSITION,
       IN_REACH,
       LOOKING_AT;
    }
 
-   public enum Inner_StreamUtil {
+   public enum WaitBehavior {
       PLACED,
       DESTROYED;
    }

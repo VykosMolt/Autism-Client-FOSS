@@ -76,7 +76,7 @@ public final class AiMine {
             final Map<Long, Integer> strikesByCell = new HashMap<>();
             final Map<Block, Boolean> blockMatchCache = new HashMap<>();
             final Map<Long, String> blockIdByCell = new HashMap<>();
-            final Map<AiMine.Inner_DataUtil, Double> breakTicksCache = new HashMap<>();
+            final Map<AiMine.BreakKey, Double> breakTicksCache = new HashMap<>();
             long breakTicksInventoryRevision = -1L;
             final JsonArray blacklistJson = new JsonArray();
             final AiAim aim = new AiAim();
@@ -558,7 +558,7 @@ public final class AiMine {
                         double cost = 1.0 / 0.0;
 
                         for (ItemStack stack : tools) {
-                           AiMine.Inner_DataUtil key = new AiMine.Inner_DataUtil(state.getBlock(), stack.getItem());
+                           AiMine.BreakKey key = new AiMine.BreakKey(state.getBlock(), stack.getItem());
                            Double memoized = this.breakTicksCache.get(key);
                            if (memoized == null) {
                               memoized = state.requiresCorrectToolForDrops() && !stack.isCorrectToolForDrops(state)
@@ -956,6 +956,6 @@ public final class AiMine {
       return var10000;
    }
 
-   private record Inner_DataUtil(Block block, Item item) {
+   private record BreakKey(Block block, Item item) {
    }
 }

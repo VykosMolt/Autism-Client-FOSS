@@ -46,13 +46,13 @@ final class AiCollect {
    private AiCollect() {
    }
 
-   static List<AiCollect.Inner_DataUtil> orderTargets(List<AiCollect.Inner_DataUtil> targets) {
-      List<AiCollect.Inner_DataUtil> ordered = new ArrayList<>(targets);
+   static List<AiCollect.CollectTarget> orderTargets(List<AiCollect.CollectTarget> targets) {
+      List<AiCollect.CollectTarget> ordered = new ArrayList<>(targets);
       ordered.sort(
-         Comparator.<AiCollect.Inner_DataUtil, Boolean>comparing(t -> t.drop())
+         Comparator.<AiCollect.CollectTarget, Boolean>comparing(t -> t.drop())
             .reversed()
-            .thenComparingDouble(AiCollect.Inner_DataUtil::distanceSqr)
-            .thenComparingInt(AiCollect.Inner_DataUtil::entityId)
+            .thenComparingDouble(AiCollect.CollectTarget::distanceSqr)
+            .thenComparingInt(AiCollect.CollectTarget::entityId)
             .thenComparingInt(t -> t.pos().getX())
             .thenComparingInt(t -> t.pos().getY())
             .thenComparingInt(t -> t.pos().getZ())
@@ -80,7 +80,7 @@ final class AiCollect {
       return "No more reachable sources for " + item + " (collected " + count + " of " + target + ")";
    }
 
-   static boolean recordSkip(List<JsonObject> skipped, AiCollect.Inner_DataUtil target, String reason) {
+   static boolean recordSkip(List<JsonObject> skipped, AiCollect.CollectTarget target, String reason) {
       if (skipped.size() >= 32) {
          return false;
       }
@@ -262,17 +262,17 @@ final class AiCollect {
       return false;
    }
 
-   record Inner_DataUtil(BlockPos pos, int entityId, double distanceSqr) {
+   record CollectTarget(BlockPos pos, int entityId, double distanceSqr) {
       boolean drop() {
          return this.entityId >= 0;
       }
 
-      static AiCollect.Inner_DataUtil drop(int entityId, BlockPos pos, double distanceSqr) {
-         return new AiCollect.Inner_DataUtil(pos, entityId, distanceSqr);
+      static AiCollect.CollectTarget drop(int entityId, BlockPos pos, double distanceSqr) {
+         return new AiCollect.CollectTarget(pos, entityId, distanceSqr);
       }
 
-      static AiCollect.Inner_DataUtil ofBlock(BlockPos pos, double distanceSqr) {
-         return new AiCollect.Inner_DataUtil(pos, -1, distanceSqr);
+      static AiCollect.CollectTarget ofBlock(BlockPos pos, double distanceSqr) {
+         return new AiCollect.CollectTarget(pos, -1, distanceSqr);
       }
    }
 }

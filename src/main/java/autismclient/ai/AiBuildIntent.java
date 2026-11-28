@@ -42,25 +42,25 @@ final class AiBuildIntent {
    private AiBuildIntent() {
    }
 
-   static AiBuildSite.Inner_CachePool kindOf(AiBuilder.CellSpec cell) {
+   static AiBuildSite.CellKind kindOf(AiBuilder.CellSpec cell) {
       if (AiBuilder.isTransientPistonCell(cell)) {
-         return AiBuildSite.Inner_CachePool.DERIVED;
+         return AiBuildSite.CellKind.DERIVED;
       } else if (AiBuilder.isOmittedSchematicCell(cell)) {
-         return AiBuildSite.Inner_CachePool.SKIP;
+         return AiBuildSite.CellKind.SKIP;
       } else if (AiBuilder.fluidOfCell(cell) != null) {
-         return AiBuildSite.Inner_CachePool.FLUID;
+         return AiBuildSite.CellKind.FLUID;
       } else if (!unsupportedProperties(cell).isEmpty()) {
-         return AiBuildSite.Inner_CachePool.SKIP;
+         return AiBuildSite.CellKind.SKIP;
       } else if (AiSchematicActions.isBedHead(cell) || "upper".equals(cell.properties().get("half")) || "head".equals(cell.properties().get("part"))) {
-         return AiBuildSite.Inner_CachePool.PARTNER;
+         return AiBuildSite.CellKind.PARTNER;
       } else if (AiSchematicActions.needsAction(cell)) {
-         return AiBuildSite.Inner_CachePool.SPECIAL;
+         return AiBuildSite.CellKind.SPECIAL;
       } else if (isDoubleChestCell(cell)) {
-         return AiBuildSite.Inner_CachePool.INTERACT;
+         return AiBuildSite.CellKind.INTERACT;
       } else if (isPoweredLever(cell)) {
-         return AiBuildSite.Inner_CachePool.SIMPLE;
+         return AiBuildSite.CellKind.SIMPLE;
       } else {
-         return needsInteraction(cell) ? AiBuildSite.Inner_CachePool.INTERACT : AiBuildSite.Inner_CachePool.SIMPLE;
+         return needsInteraction(cell) ? AiBuildSite.CellKind.INTERACT : AiBuildSite.CellKind.SIMPLE;
       }
    }
 
@@ -68,19 +68,19 @@ final class AiBuildIntent {
       return itemFor(cell, kindOf(cell));
    }
 
-   static Item itemFor(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
-      if (kind == AiBuildSite.Inner_CachePool.DERIVED || kind == AiBuildSite.Inner_CachePool.SKIP) {
+   static Item itemFor(AiBuilder.CellSpec cell, AiBuildSite.CellKind kind) {
+      if (kind == AiBuildSite.CellKind.DERIVED || kind == AiBuildSite.CellKind.SKIP) {
          return Items.AIR;
       }
 
-      if (kind == AiBuildSite.Inner_CachePool.FLUID) {
+      if (kind == AiBuildSite.CellKind.FLUID) {
          if (AiBuilder.isFlowingFluidCell(cell)) {
             return Items.AIR;
          } else {
             return cell.block().equals("minecraft:lava") ? Items.LAVA_BUCKET : Items.WATER_BUCKET;
          }
       } else {
-         if (kind == AiBuildSite.Inner_CachePool.SPECIAL) {
+         if (kind == AiBuildSite.CellKind.SPECIAL) {
             for (Item material : AiSchematicActions.materials(cell)) {
                if (material != Items.AIR) {
                   return material;
@@ -88,7 +88,7 @@ final class AiBuildIntent {
             }
          }
 
-         if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
+         if (kind == AiBuildSite.CellKind.PARTNER) {
             return AiBuilder.itemCountForCell(cell) == 0 ? Items.AIR : AiBuilder.toBlockState(cell).getBlock().asItem();
          } else {
             return AiBuilder.toBlockState(cell).getBlock().asItem();
@@ -104,15 +104,15 @@ final class AiBuildIntent {
       return offsetsFor(cell, kindOf(cell));
    }
 
-   static List<BlockPos> offsetsFor(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
-      if (kind == AiBuildSite.Inner_CachePool.DERIVED || kind == AiBuildSite.Inner_CachePool.SKIP) {
+   static List<BlockPos> offsetsFor(AiBuilder.CellSpec cell, AiBuildSite.CellKind kind) {
+      if (kind == AiBuildSite.CellKind.DERIVED || kind == AiBuildSite.CellKind.SKIP) {
          return List.of();
-      } else if (kind == AiBuildSite.Inner_CachePool.FLUID) {
+      } else if (kind == AiBuildSite.CellKind.FLUID) {
          return AiBuilder.isFlowingFluidCell(cell) ? List.of() : NEIGHBOR_OFFSETS;
-      } else if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
+      } else if (kind == AiBuildSite.CellKind.PARTNER) {
          Direction provider = supportProviderFace(cell);
          return provider == null ? List.of() : List.of(offsetOf(provider));
-      } else if (kind == AiBuildSite.Inner_CachePool.SPECIAL) {
+      } else if (kind == AiBuildSite.CellKind.SPECIAL) {
          return List.of();
       } else {
          Block block = blockOf(cell);
@@ -136,8 +136,8 @@ final class AiBuildIntent {
    }
 
    static Float requiredYaw(AiBuilder.CellSpec cell) {
-      AiBuildSite.Inner_CachePool kind = kindOf(cell);
-      if (kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT) {
+      AiBuildSite.CellKind kind = kindOf(cell);
+      if (kind != AiBuildSite.CellKind.SIMPLE && kind != AiBuildSite.CellKind.INTERACT) {
          return null;
       }
 
@@ -151,8 +151,8 @@ final class AiBuildIntent {
    }
 
    static Predicate<Direction> allowedFaces(AiBuilder.CellSpec cell, BlockPos target) {
-      AiBuildSite.Inner_CachePool kind = kindOf(cell);
-      if (kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT) {
+      AiBuildSite.CellKind kind = kindOf(cell);
+      if (kind != AiBuildSite.CellKind.SIMPLE && kind != AiBuildSite.CellKind.INTERACT) {
          return null;
       } else {
          autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = placeConstraint(cell, target == null ? BlockPos.ZERO : target);
@@ -167,8 +167,8 @@ final class AiBuildIntent {
    }
 
    static Boolean needsUpperHalfClick(AiBuilder.CellSpec cell) {
-      AiBuildSite.Inner_CachePool kind = kindOf(cell);
-      return kind != AiBuildSite.Inner_CachePool.SIMPLE && kind != AiBuildSite.Inner_CachePool.INTERACT ? null : AiBuilder.requiresUpperHalfClick(cell, blockOf(cell));
+      AiBuildSite.CellKind kind = kindOf(cell);
+      return kind != AiBuildSite.CellKind.SIMPLE && kind != AiBuildSite.CellKind.INTERACT ? null : AiBuilder.requiresUpperHalfClick(cell, blockOf(cell));
    }
 
    static boolean matches(AiBuilder.CellSpec cell, BlockState live) {
@@ -197,8 +197,8 @@ final class AiBuildIntent {
    }
 
    static boolean isPlainOrInteract(AiBuilder.CellSpec cell) {
-      AiBuildSite.Inner_CachePool kind = kindOf(cell);
-      return kind == AiBuildSite.Inner_CachePool.SIMPLE || kind == AiBuildSite.Inner_CachePool.INTERACT;
+      AiBuildSite.CellKind kind = kindOf(cell);
+      return kind == AiBuildSite.CellKind.SIMPLE || kind == AiBuildSite.CellKind.INTERACT;
    }
 
    static boolean isSatisfied(BlockPos target, BlockGetter world, Map<Long, AiBuilder.CellSpec> wanted) {

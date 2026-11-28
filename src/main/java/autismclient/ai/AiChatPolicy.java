@@ -95,7 +95,7 @@ final class AiChatPolicy {
       return Math.max(0L, revision);
    }
 
-   static AiChatPolicy.Inner_StreamUtil admit(AiChatLedger.ChatEntry entry, String selfName, AiChatPolicy.Inner_DataUtil config) {
+   static AiChatPolicy.IncomingLine admit(AiChatLedger.ChatEntry entry, String selfName, AiChatPolicy.ChatConfig config) {
       if (entry != null && config != null) {
          String source = entry.source() == null ? "" : entry.source().toUpperCase(Locale.ROOT);
          boolean privateSource = source.equals("PLAYER_PRIVATE");
@@ -141,7 +141,7 @@ final class AiChatPolicy {
             }
 
             text = stripSenderPrefix(text, resolvedSender);
-            return new AiChatPolicy.Inner_StreamUtil(entry.revision(), source, resolvedSender, text);
+            return new AiChatPolicy.IncomingLine(entry.revision(), source, resolvedSender, text);
          } else {
             return null;
          }
@@ -150,7 +150,7 @@ final class AiChatPolicy {
       }
    }
 
-   static AiChatPolicy.Inner_StreamUtil incomingLine(AiChatLedger.ChatEntry entry, String selfName) {
+   static AiChatPolicy.IncomingLine incomingLine(AiChatLedger.ChatEntry entry, String selfName) {
       if (entry == null) {
          return null;
       }
@@ -174,7 +174,7 @@ final class AiChatPolicy {
       }
 
       String resolved = sender.isEmpty() ? "someone" : sender;
-      return new AiChatPolicy.Inner_StreamUtil(entry.revision(), entry.source(), resolved, stripSenderPrefix(text, resolved));
+      return new AiChatPolicy.IncomingLine(entry.revision(), entry.source(), resolved, stripSenderPrefix(text, resolved));
    }
 
    static String stripSenderPrefix(String text, String sender) {
@@ -326,7 +326,7 @@ final class AiChatPolicy {
       }
    }
 
-   static String systemPrompt(AiChatPolicy.Inner_DataUtil config, String selfName) {
+   static String systemPrompt(AiChatPolicy.ChatConfig config, String selfName) {
       String name = selfName != null && !selfName.isBlank() ? selfName : "the player";
       StringBuilder out = new StringBuilder(1200);
       out.append("You are ")
@@ -355,10 +355,10 @@ final class AiChatPolicy {
       return out.toString();
    }
 
-   static String userPrompt(List<AiChatPolicy.Inner_StreamUtil> history, List<AiChatPolicy.Inner_StreamUtil> batch, String selfName) {
+   static String userPrompt(List<AiChatPolicy.IncomingLine> history, List<AiChatPolicy.IncomingLine> batch, String selfName) {
       StringBuilder out = new StringBuilder(2048);
       out.append("RECENT CHAT (oldest first, for context):\n");
-      List<AiChatPolicy.Inner_StreamUtil> recent = history == null ? List.of() : history;
+      List<AiChatPolicy.IncomingLine> recent = history == null ? List.of() : history;
       int from = Math.max(0, recent.size() - 20);
       int used = 0;
 
@@ -377,7 +377,7 @@ final class AiChatPolicy {
       }
 
       out.append("\nNEW MESSAGES TO ANSWER (oldest first):\n");
-      List<AiChatPolicy.Inner_StreamUtil> newest = batch == null ? List.of() : batch;
+      List<AiChatPolicy.IncomingLine> newest = batch == null ? List.of() : batch;
       int start = Math.max(0, newest.size() - 12);
       if (start == newest.size()) {
          out.append("(none)\n");
@@ -393,7 +393,7 @@ final class AiChatPolicy {
       return out.toString();
    }
 
-   private static String formatLine(AiChatPolicy.Inner_StreamUtil line, String selfName) {
+   private static String formatLine(AiChatPolicy.IncomingLine line, String selfName) {
       String text = line.text();
       if (text.length() > 400) {
          text = text.substring(0, 400) + "...";
@@ -462,7 +462,7 @@ final class AiChatPolicy {
       return value.equals("SKIP") || value.equals("NOREPLY") || value.equals("NO_REPLY") || value.equals("NO-REPLY");
    }
 
-   static long replyDelay(AiChatPolicy.Inner_DataUtil config, List<AiChatPolicy.Inner_StreamUtil> pending, String selfName) {
+   static long replyDelay(AiChatPolicy.ChatConfig config, List<AiChatPolicy.IncomingLine> pending, String selfName) {
       if (config == null) {
          return 1200L;
       } else {
@@ -470,7 +470,7 @@ final class AiChatPolicy {
       }
    }
 
-   static boolean withinRateLimit(long now, Deque<Long> replyTimes, long lastReplyAt, Map<String, Long> lastBySender, String sender, AiChatPolicy.Inner_DataUtil config) {
+   static boolean withinRateLimit(long now, Deque<Long> replyTimes, long lastReplyAt, Map<String, Long> lastBySender, String sender, AiChatPolicy.ChatConfig config) {
       if (config == null) {
          return false;
       }
@@ -496,7 +496,7 @@ final class AiChatPolicy {
       return text == null ? "" : text.replace('\r', ' ').replace('\n', ' ').replaceAll("\\s+", " ").strip();
    }
 
-   record Inner_DataUtil(
+   record ChatConfig(
       String instructions,
       List<String> players,
       boolean onlyMentions,
@@ -507,7 +507,7 @@ final class AiChatPolicy {
       int debounceMs,
       int maxReplyChars
    ) {
-      Inner_DataUtil(
+      ChatConfig(
          String instructions,
          List<String> players,
          boolean onlyMentions,
@@ -520,7 +520,7 @@ final class AiChatPolicy {
          this(instructions, players, onlyMentions, includeServerChat, false, maxRepliesPerMinute, minGapMs, debounceMs, maxReplyChars);
       }
 
-      Inner_DataUtil {
+      ChatConfig {
          instructions = instructions == null ? "" : instructions.trim();
          if (instructions.length() > 4000) {
             instructions = instructions.substring(0, 4000);
@@ -533,11 +533,11 @@ final class AiChatPolicy {
          maxReplyChars = Math.max(40, Math.min(256, maxReplyChars));
       }
 
-      static AiChatPolicy.Inner_DataUtil defaults(String instructions) {
-         return new AiChatPolicy.Inner_DataUtil(instructions, List.of(), false, false, false, 8, 2000, 1200, 220);
+      static AiChatPolicy.ChatConfig defaults(String instructions) {
+         return new AiChatPolicy.ChatConfig(instructions, List.of(), false, false, false, 8, 2000, 1200, 220);
       }
 
-      static AiChatPolicy.Inner_DataUtil parse(JsonObject args) {
+      static AiChatPolicy.ChatConfig parse(JsonObject args) {
          if (args == null) {
             return defaults("");
          }
@@ -551,7 +551,7 @@ final class AiChatPolicy {
          double minGapSeconds = AiJson.getDouble(args, "minGapSeconds", 2.0);
          int debounceMs = AiJson.getInt(args, "debounceMs", 1200);
          int maxReplyChars = AiJson.getInt(args, "maxReplyChars", 220);
-         return new AiChatPolicy.Inner_DataUtil(
+         return new AiChatPolicy.ChatConfig(
             instructions,
             players,
             onlyMentions,
@@ -620,8 +620,8 @@ final class AiChatPolicy {
       }
    }
 
-   record Inner_StreamUtil(long revision, String source, String sender, String text) {
-      Inner_StreamUtil {
+   record IncomingLine(long revision, String source, String sender, String text) {
+      IncomingLine {
          source = source == null ? "" : source;
          sender = sender != null && !sender.isBlank() ? sender : "someone";
          text = text == null ? "" : text;

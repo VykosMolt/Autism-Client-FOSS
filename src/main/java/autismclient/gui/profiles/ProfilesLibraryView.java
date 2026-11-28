@@ -33,13 +33,13 @@ public final class ProfilesLibraryView {
    private final CharEncoder theme = new CharEncoder();
    private final AutismProfileManager profileManager = AutismProfileManager.getInstance();
    private final ProfileServerIconCache serverIconCache = new ProfileServerIconCache();
-   private final List<ProfilesLibraryView.Inner_DataUtil> hitRegions = new ArrayList<>();
+   private final List<ProfilesLibraryView.HitRegion> hitRegions = new ArrayList<>();
    private final List<TextInputWidget> inputs = new ArrayList<>();
    private final TextInputWidget searchInput = createInput("Find a profile or server", 80);
    private final TextInputWidget nameInput = createInput("Profile name", 48);
    private final TextInputWidget serverInput = createInput("Server address or *.domain", 80);
    private String selectedProfileId;
-   private ProfilesLibraryView.Inner_StreamUtil mode = ProfilesLibraryView.Inner_StreamUtil.NONE;
+   private ProfilesLibraryView.EditMode mode = ProfilesLibraryView.EditMode.NONE;
    private AutismProfile pendingSwitch;
    private boolean autoSave = true;
    private boolean ownMacroLibrary = true;
@@ -161,7 +161,7 @@ public final class ProfilesLibraryView {
             "New profile",
             GuiIconAtlas.PLUS,
             CachePool.Inner_DataUtil.read,
-            () -> this.setMode(ProfilesLibraryView.Inner_StreamUtil.CREATE)
+            () -> this.setMode(ProfilesLibraryView.EditMode.CREATE)
          );
          this.renderInput(ctx, this.searchInput, NetHelper.init(bar.read(), bar.write(), right - 4 - bar.read(), bar.sync()));
       }
@@ -309,8 +309,8 @@ public final class ProfilesLibraryView {
       };
       Runnable[] actions = new Runnable[]{
          active ? null : () -> this.switchToProfile(p),
-         () -> this.setMode(ProfilesLibraryView.Inner_StreamUtil.RENAME),
-         () -> this.setMode(ProfilesLibraryView.Inner_StreamUtil.DUPLICATE),
+         () -> this.setMode(ProfilesLibraryView.EditMode.RENAME),
+         () -> this.setMode(ProfilesLibraryView.EditMode.DUPLICATE),
          canDelete ? () -> this.deleteProfile(p) : null
       };
 
@@ -374,7 +374,7 @@ public final class ProfilesLibraryView {
    }
 
    private void drawModal(autismclient.gui.f.SyncManager ctx) {
-      boolean create = this.mode == ProfilesLibraryView.Inner_StreamUtil.CREATE;
+      boolean create = this.mode == ProfilesLibraryView.EditMode.CREATE;
       NetHelper box = this.centeredModalBox(220, this.load_I());
       this.drawModalSurface(ctx, box);
       String var10000;
@@ -476,7 +476,7 @@ public final class ProfilesLibraryView {
 
    private int load_I() {
       int h = 12 + sync_I() + 8 + 2 * inputHeight();
-      if (this.mode == ProfilesLibraryView.Inner_StreamUtil.CREATE) {
+      if (this.mode == ProfilesLibraryView.EditMode.CREATE) {
          h += 3 * sync_I() + 4 + 4;
       }
 
@@ -526,7 +526,7 @@ public final class ProfilesLibraryView {
    }
 
    public boolean isEditing() {
-      return this.mode != ProfilesLibraryView.Inner_StreamUtil.NONE || this.pendingSwitch != null;
+      return this.mode != ProfilesLibraryView.EditMode.NONE || this.pendingSwitch != null;
    }
 
    public void reset() {
@@ -576,10 +576,10 @@ public final class ProfilesLibraryView {
       }
    }
 
-   private void setMode(ProfilesLibraryView.Inner_StreamUtil mode) {
+   private void setMode(ProfilesLibraryView.EditMode mode) {
       this.blurInputs();
       this.mode = mode;
-      if (mode == ProfilesLibraryView.Inner_StreamUtil.CREATE) {
+      if (mode == ProfilesLibraryView.EditMode.CREATE) {
          this.autoSave = true;
          this.ownMacroLibrary = true;
          this.ownThemeColor = true;
@@ -588,15 +588,15 @@ public final class ProfilesLibraryView {
       AutismProfile sel = this.profileManager.byId(this.selectedProfileId);
       this.nameInput
          .setValue(
-            mode == ProfilesLibraryView.Inner_StreamUtil.RENAME && sel != null
+            mode == ProfilesLibraryView.EditMode.RENAME && sel != null
                ? sel.displayName
-               : (mode == ProfilesLibraryView.Inner_StreamUtil.DUPLICATE && sel != null ? sel.displayName + " copy" : "")
+               : (mode == ProfilesLibraryView.EditMode.DUPLICATE && sel != null ? sel.displayName + " copy" : "")
          );
       this.nameInput.setFocused(true);
    }
 
    private void cancelCreate() {
-      this.mode = ProfilesLibraryView.Inner_StreamUtil.NONE;
+      this.mode = ProfilesLibraryView.EditMode.NONE;
       this.nameInput.setFocused(false);
       this.nameInput.setValue("");
    }
@@ -606,7 +606,7 @@ public final class ProfilesLibraryView {
       if (name.isEmpty()) {
          bi.read("Enter a name.");
       } else {
-         String exclude = this.mode == ProfilesLibraryView.Inner_StreamUtil.RENAME ? this.selectedProfileId : null;
+         String exclude = this.mode == ProfilesLibraryView.EditMode.RENAME ? this.selectedProfileId : null;
          if (this.profileManager.isNameTaken(name, exclude)) {
             bi.read("Name already in use.");
          } else {
@@ -702,7 +702,7 @@ public final class ProfilesLibraryView {
 
          this.blurInputs();
 
-         for (ProfilesLibraryView.Inner_DataUtil hit : this.hitRegions) {
+         for (ProfilesLibraryView.HitRegion hit : this.hitRegions) {
             if (hit.bounds().init_Z(mx, my)) {
                hit.action().run();
                return true;
@@ -877,15 +877,15 @@ public final class ProfilesLibraryView {
          int y = Math.max(box.write(), this.clipArea.write());
          NetHelper clipped = NetHelper.init(x, y, Math.min(box.init(), this.clipArea.init()) - x, Math.min(box.load(), this.clipArea.load()) - y);
          if (clipped.update() > 0 && clipped.sync() > 0) {
-            this.hitRegions.add(new ProfilesLibraryView.Inner_DataUtil(clipped, action));
+            this.hitRegions.add(new ProfilesLibraryView.HitRegion(clipped, action));
          }
       }
    }
 
-   private record Inner_DataUtil(NetHelper bounds, Runnable action) {
+   private record HitRegion(NetHelper bounds, Runnable action) {
    }
 
-   private enum Inner_StreamUtil {
+   private enum EditMode {
       NONE,
       CREATE,
       RENAME,

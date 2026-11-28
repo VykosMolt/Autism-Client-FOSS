@@ -156,20 +156,20 @@ public final class AiInventoryController implements AiOperation {
             }
 
             if (this.savedDestination >= 0) {
-               AiInventoryController.Inner_StreamUtil transfer = planTransferTo(
+               AiInventoryController.TransferPlan transfer = planTransferTo(
                   menu, this.mc.player.getInventory(), this.mc.player, this.savedDestination, this.savedStack
                );
-               if (transfer.state() == AiInventoryController.Inner_DataUtil.SATISFIED) {
+               if (transfer.state() == AiInventoryController.TransferState.SATISFIED) {
                   return this.finish(AiOperation.Status.SUCCEEDED, "Saved storage slot and empty cursor verified");
                }
 
-               if (transfer.state() == AiInventoryController.Inner_DataUtil.CONFLICT) {
+               if (transfer.state() == AiInventoryController.TransferState.CONFLICT) {
                   return this.finish(
                      AiOperation.Status.FAILED, "Saved storage slot has incompatible contents or capacity; existing items retained"
                   );
                }
 
-               if (transfer.state() == AiInventoryController.Inner_DataUtil.MISSING_STOCK) {
+               if (transfer.state() == AiInventoryController.TransferState.MISSING_STOCK) {
                   return this.finish(
                      AiOperation.Status.FAILED, "Player inventory lacks the saved item's exact components"
                   );
@@ -232,7 +232,7 @@ public final class AiInventoryController implements AiOperation {
             }
 
             if (this.transferAmount > 0) {
-               AiInventoryController.Inner_CachePool choice = planMove(menu, this.destinationSlot, this.transferAmount);
+               AiInventoryController.MoveChoice choice = planMove(menu, this.destinationSlot, this.transferAmount);
                if (choice == null) {
                   return this.finish(
                      AiOperation.Status.UNCERTAIN, "Storage or cursor changed before the next transfer; inspect before continuing"
@@ -283,7 +283,7 @@ public final class AiInventoryController implements AiOperation {
       }
    }
 
-   static AiInventoryController.Inner_CachePool planMove(AbstractContainerMenu menu, int destination, int remaining) {
+   static AiInventoryController.MoveChoice planMove(AbstractContainerMenu menu, int destination, int remaining) {
       if (remaining > 0 && destination >= 0 && destination < menu.slots.size()) {
          ItemStack cursor = menu.getCarried();
          Slot slot = menu.getSlot(destination);
@@ -294,7 +294,7 @@ public final class AiInventoryController implements AiOperation {
             if (merged <= 0) {
                return null;
             } else {
-               return merged == remaining ? new AiInventoryController.Inner_CachePool(0, merged) : new AiInventoryController.Inner_CachePool(1, 1);
+               return merged == remaining ? new AiInventoryController.MoveChoice(0, merged) : new AiInventoryController.MoveChoice(1, 1);
             }
          } else {
             return null;
@@ -304,7 +304,7 @@ public final class AiInventoryController implements AiOperation {
       }
    }
 
-   public static AiInventoryController.Inner_StreamUtil planTransferTo(
+   public static AiInventoryController.TransferPlan planTransferTo(
       AbstractContainerMenu menu, Inventory inventory, Player player, int destination, ItemStack wanted
    ) {
       if (!wanted.isEmpty() && destination >= 0 && destination < menu.slots.size() && menu.getCarried().isEmpty()) {
@@ -316,22 +316,22 @@ public final class AiInventoryController implements AiOperation {
             && (current.isEmpty() || ItemStack.isSameItemSameComponents(current, wanted))
             && current.getCount() <= wanted.getCount()) {
             if (current.getCount() == wanted.getCount()) {
-               return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.SATISFIED, -1, 0);
+               return new AiInventoryController.TransferPlan(AiInventoryController.TransferState.SATISFIED, -1, 0);
             }
 
             for (Slot candidate : menu.slots) {
                ItemStack stack = candidate.getItem();
                if (candidate.container == inventory && !stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, wanted) && candidate.mayPickup(player)) {
-                  return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.READY, candidate.index, Math.min(wanted.getCount() - current.getCount(), stack.getCount()));
+                  return new AiInventoryController.TransferPlan(AiInventoryController.TransferState.READY, candidate.index, Math.min(wanted.getCount() - current.getCount(), stack.getCount()));
                }
             }
 
-            return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.MISSING_STOCK, -1, 0);
+            return new AiInventoryController.TransferPlan(AiInventoryController.TransferState.MISSING_STOCK, -1, 0);
          } else {
-            return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.CONFLICT, -1, 0);
+            return new AiInventoryController.TransferPlan(AiInventoryController.TransferState.CONFLICT, -1, 0);
          }
       } else {
-         return new AiInventoryController.Inner_StreamUtil(AiInventoryController.Inner_DataUtil.CONFLICT, -1, 0);
+         return new AiInventoryController.TransferPlan(AiInventoryController.TransferState.CONFLICT, -1, 0);
       }
    }
 
@@ -517,16 +517,16 @@ public final class AiInventoryController implements AiOperation {
       this.cancelled = true;
    }
 
-   record Inner_CachePool(int button, int amount) {
+   record MoveChoice(int button, int amount) {
    }
 
-   public enum Inner_DataUtil {
+   public enum TransferState {
       READY,
       SATISFIED,
       CONFLICT,
       MISSING_STOCK;
    }
 
-   public record Inner_StreamUtil(AiInventoryController.Inner_DataUtil state, int source, int amount) {
+   public record TransferPlan(AiInventoryController.TransferState state, int source, int amount) {
    }
 }

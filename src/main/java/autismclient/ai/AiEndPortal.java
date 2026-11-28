@@ -25,12 +25,12 @@ final class AiEndPortal {
    private AiEndPortal() {
    }
 
-   static AiEndPortal.Inner_StreamUtil inspect(BlockPos portal) {
+   static AiEndPortal.PortalRing inspect(BlockPos portal) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && portal != null) {
          for (BlockPos p : BlockPos.betweenClosed(portal.offset(-3, 0, -3), portal.offset(3, 0, 3))) {
             if (AiTerrain.isLoaded(mc.level, p) && mc.level.getBlockState(p).is(Blocks.END_PORTAL_FRAME)) {
-               AiEndPortal.Inner_StreamUtil ring = ringAt(p);
+               AiEndPortal.PortalRing ring = ringAt(p);
                if (ring != null
                   && ring.active
                   && ring.empty.isEmpty()
@@ -48,7 +48,7 @@ final class AiEndPortal {
       }
    }
 
-   static AiEndPortal.Inner_StreamUtil ringAt(BlockPos seen) {
+   static AiEndPortal.PortalRing ringAt(BlockPos seen) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == null) {
          return null;
@@ -96,7 +96,7 @@ final class AiEndPortal {
                }
 
                empty.sort(Comparator.comparingDouble(p -> p.distSqr(mc.player.blockPosition())));
-               return new AiEndPortal.Inner_StreamUtil(center, List.copyOf(frames), List.copyOf(empty), active);
+               return new AiEndPortal.PortalRing(center, List.copyOf(frames), List.copyOf(empty), active);
             }
          }
       }
@@ -145,7 +145,7 @@ final class AiEndPortal {
       return new AiOperation() {
          final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
          final Object startLevel = mc.level;
-         final AiEndPortal.Inner_DataUtil eyePlacement = new AiEndPortal.Inner_DataUtil();
+         final AiEndPortal.EyePlacement eyePlacement = new AiEndPortal.EyePlacement();
          int init_I;
          int obstructedRays;
          BlockHitResult init_BlockHitResult;
@@ -247,7 +247,7 @@ final class AiEndPortal {
       };
    }
 
-   static final class Inner_DataUtil {
+   static final class EyePlacement {
       private int eyesBefore;
       private long blockRevision;
       private long inventoryRevision;
@@ -282,6 +282,6 @@ final class AiEndPortal {
       }
    }
 
-   record Inner_StreamUtil(BlockPos center, List<BlockPos> frames, List<BlockPos> empty, boolean active) {
+   record PortalRing(BlockPos center, List<BlockPos> frames, List<BlockPos> empty, boolean active) {
    }
 }

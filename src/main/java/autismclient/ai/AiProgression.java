@@ -50,25 +50,25 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 final class AiProgression {
-   static final Map<String, AiProgression.Inner_StreamUtil> ORE_SOURCES = Map.of(
+   static final Map<String, AiProgression.OreSource> ORE_SOURCES = Map.of(
       "minecraft:raw_iron",
-      new AiProgression.Inner_StreamUtil("iron_ore", "minecraft:raw_iron", 16, AiProgression.Inner_CachePool.STONE, 1),
+      new AiProgression.OreSource("iron_ore", "minecraft:raw_iron", 16, AiProgression.PickTier.STONE, 1),
       "minecraft:diamond",
-      new AiProgression.Inner_StreamUtil("diamond_ore", "minecraft:diamond", -58, AiProgression.Inner_CachePool.IRON, 1),
+      new AiProgression.OreSource("diamond_ore", "minecraft:diamond", -58, AiProgression.PickTier.IRON, 1),
       "minecraft:coal",
-      new AiProgression.Inner_StreamUtil("coal_ore", "minecraft:coal", 48, AiProgression.Inner_CachePool.WOOD, 1),
+      new AiProgression.OreSource("coal_ore", "minecraft:coal", 48, AiProgression.PickTier.WOOD, 1),
       "minecraft:raw_gold",
-      new AiProgression.Inner_StreamUtil("gold_ore", "minecraft:raw_gold", -16, AiProgression.Inner_CachePool.IRON, 1),
+      new AiProgression.OreSource("gold_ore", "minecraft:raw_gold", -16, AiProgression.PickTier.IRON, 1),
       "minecraft:redstone",
-      new AiProgression.Inner_StreamUtil("redstone_ore", "minecraft:redstone", -58, AiProgression.Inner_CachePool.IRON, 4),
+      new AiProgression.OreSource("redstone_ore", "minecraft:redstone", -58, AiProgression.PickTier.IRON, 4),
       "minecraft:lapis_lazuli",
-      new AiProgression.Inner_StreamUtil("lapis_ore", "minecraft:lapis_lazuli", 0, AiProgression.Inner_CachePool.STONE, 4),
+      new AiProgression.OreSource("lapis_ore", "minecraft:lapis_lazuli", 0, AiProgression.PickTier.STONE, 4),
       "minecraft:raw_copper",
-      new AiProgression.Inner_StreamUtil("copper_ore", "minecraft:raw_copper", 48, AiProgression.Inner_CachePool.STONE, 2),
+      new AiProgression.OreSource("copper_ore", "minecraft:raw_copper", 48, AiProgression.PickTier.STONE, 2),
       "minecraft:ancient_debris",
-      new AiProgression.Inner_StreamUtil("ancient_debris", "minecraft:ancient_debris", 15, AiProgression.Inner_CachePool.DIAMOND, 1, true),
+      new AiProgression.OreSource("ancient_debris", "minecraft:ancient_debris", 15, AiProgression.PickTier.DIAMOND, 1, true),
       "minecraft:obsidian",
-      new AiProgression.Inner_StreamUtil("obsidian", "minecraft:obsidian", -54, AiProgression.Inner_CachePool.DIAMOND, 1)
+      new AiProgression.OreSource("obsidian", "minecraft:obsidian", -54, AiProgression.PickTier.DIAMOND, 1)
    );
    static final Map<String, String> SMELT_INPUTS = Map.of(
       "minecraft:iron_ingot",
@@ -103,7 +103,7 @@ final class AiProgression {
    }
 
    static boolean isNetherMaterial(String material) {
-      AiProgression.Inner_StreamUtil ore = ORE_SOURCES.get(material);
+      AiProgression.OreSource ore = ORE_SOURCES.get(material);
       if (ore == null && SMELT_INPUTS.containsKey(material)) {
          ore = ORE_SOURCES.get(SMELT_INPUTS.get(material));
       }
@@ -137,20 +137,20 @@ final class AiProgression {
          && !itemId.equals("minecraft:netherite_upgrade_smithing_template");
    }
 
-   static AiProgression.Inner_CachePool tierToMine(String material) {
-      AiProgression.Inner_StreamUtil ore = ORE_SOURCES.get(material);
+   static AiProgression.PickTier tierToMine(String material) {
+      AiProgression.OreSource ore = ORE_SOURCES.get(material);
       if (ore == null && SMELT_INPUTS.containsKey(material)) {
          ore = ORE_SOURCES.get(SMELT_INPUTS.get(material));
       }
 
-      return ore == null ? AiProgression.Inner_CachePool.NONE : ore.pick();
+      return ore == null ? AiProgression.PickTier.NONE : ore.pick();
    }
 
    static boolean needsCrafting(String target, String oreDrop) {
       return !KEEP_ITEMS.contains(target) || !target.equals(oreDrop);
    }
 
-   static String pickaxeFor(AiProgression.Inner_CachePool tier) {
+   static String pickaxeFor(AiProgression.PickTier tier) {
       String var10000;
       switch (tier) {
          case NONE:
@@ -176,42 +176,42 @@ final class AiProgression {
       return var10000;
    }
 
-   static AiProgression.Inner_CachePool pickaxeTier(String itemId) {
-      AiProgression.Inner_CachePool var10000;
+   static AiProgression.PickTier pickaxeTier(String itemId) {
+      AiProgression.PickTier var10000;
       switch (itemId) {
          case "minecraft:wooden_pickaxe":
          case "minecraft:golden_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.WOOD;
+            var10000 = AiProgression.PickTier.WOOD;
             break;
          case "minecraft:stone_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.STONE;
+            var10000 = AiProgression.PickTier.STONE;
             break;
          case "minecraft:iron_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.IRON;
+            var10000 = AiProgression.PickTier.IRON;
             break;
          case "minecraft:diamond_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.DIAMOND;
+            var10000 = AiProgression.PickTier.DIAMOND;
             break;
          case "minecraft:netherite_pickaxe":
-            var10000 = AiProgression.Inner_CachePool.NETHERITE;
+            var10000 = AiProgression.PickTier.NETHERITE;
             break;
          default:
-            var10000 = AiProgression.Inner_CachePool.NONE;
+            var10000 = AiProgression.PickTier.NONE;
       }
 
       return var10000;
    }
 
-   static String nextPickaxeToward(AiProgression.Inner_CachePool have, AiProgression.Inner_CachePool needed) {
-      return have.ordinal() >= needed.ordinal() ? null : pickaxeFor(AiProgression.Inner_CachePool.values()[Math.max(AiProgression.Inner_CachePool.WOOD.ordinal(), have.ordinal() + 1)]);
+   static String nextPickaxeToward(AiProgression.PickTier have, AiProgression.PickTier needed) {
+      return have.ordinal() >= needed.ordinal() ? null : pickaxeFor(AiProgression.PickTier.values()[Math.max(AiProgression.PickTier.WOOD.ordinal(), have.ordinal() + 1)]);
    }
 
-   static int oresForDrops(AiProgression.Inner_StreamUtil ore, int drops) {
+   static int oresForDrops(AiProgression.OreSource ore, int drops) {
       return Math.max(1, (drops + ore.yieldPerOre() - 1) / ore.yieldPerOre());
    }
 
    static boolean needsToolTier(String itemId, int goal) {
-      if (PICKAXES.contains(itemId) && pickaxeTier(itemId).ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()) {
+      if (PICKAXES.contains(itemId) && pickaxeTier(itemId).ordinal() >= AiProgression.PickTier.IRON.ordinal()) {
          return true;
       }
 
@@ -221,7 +221,7 @@ final class AiProgression {
 
       try {
          for (String material : keepItemsFor(itemId, goal).keySet()) {
-            if (tierToMine(material).ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()) {
+            if (tierToMine(material).ordinal() >= AiProgression.PickTier.STONE.ordinal()) {
                return true;
             }
          }
@@ -280,7 +280,7 @@ final class AiProgression {
       return out;
    }
 
-   static AiProgression.Inner_DataUtil woodForKit(AiCraftPlanner.RecipeGraph live, Map<String, Integer> kit, String main, int target) {
+   static AiProgression.WoodNeed woodForKit(AiCraftPlanner.RecipeGraph live, Map<String, Integer> kit, String main, int target) {
       Map<String, Integer> goals = new LinkedHashMap<>(kit);
       if (!PICKAXES.contains(main) && !KEEP_ITEMS.contains(main)) {
          goals.merge(main, target, Math::max);
@@ -289,7 +289,7 @@ final class AiProgression {
       return woodForGoals(live, goals);
    }
 
-   static AiProgression.Inner_DataUtil woodForGoals(final AiCraftPlanner.RecipeGraph live, Map<String, Integer> goals) {
+   static AiProgression.WoodNeed woodForGoals(final AiCraftPlanner.RecipeGraph live, Map<String, Integer> goals) {
       AiCraftPlanner.RecipeGraph raw = new AiCraftPlanner.RecipeGraph() {
          boolean treatAsLeaf(String id) {
             return AiProgression.KEEP_ITEMS.contains(id) || AiProgression.isPlanks(id) || id.equals("minecraft:stick");
@@ -335,7 +335,7 @@ final class AiProgression {
          }
       }
 
-      return new AiProgression.Inner_DataUtil(planks, sticks);
+      return new AiProgression.WoodNeed(planks, sticks);
    }
 
    private static boolean isPlanks(String id) {
@@ -384,15 +384,15 @@ final class AiProgression {
       }
    }
 
-   static AiProgression.Inner_CachePool bestTier(Minecraft mc) {
-      AiProgression.Inner_CachePool best = AiProgression.Inner_CachePool.NONE;
+   static AiProgression.PickTier bestTier(Minecraft mc) {
+      AiProgression.PickTier best = AiProgression.PickTier.NONE;
       Inventory inventory = mc.player.getInventory();
 
       for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
          ItemStack stack = inventory.getItem(slot);
          if (!stack.isEmpty()) {
-            AiProgression.Inner_CachePool tier = pickaxeTier(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-            if (tier != AiProgression.Inner_CachePool.NONE
+            AiProgression.PickTier tier = pickaxeTier(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+            if (tier != AiProgression.PickTier.NONE
                && (!stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() > 3)
                && tier.ordinal() > best.ordinal()) {
                best = tier;
@@ -442,49 +442,49 @@ final class AiProgression {
       return free;
    }
 
-   static int plankNeed(AiProgression.Inner_CachePool have, AiProgression.Inner_CachePool last, boolean tableHeld, boolean weapon, int sticksHeld, int smelts, boolean coal) {
+   static int plankNeed(AiProgression.PickTier have, AiProgression.PickTier last, boolean tableHeld, boolean weapon, int sticksHeld, int smelts, boolean coal) {
       return plankNeed(have, last, tableHeld, weapon, sticksHeld, smelts, coal, false);
    }
 
    static int plankNeed(
-      AiProgression.Inner_CachePool have, AiProgression.Inner_CachePool last, boolean tableHeld, boolean weapon, int sticksHeld, int smelts, boolean coal, boolean oneTable
+      AiProgression.PickTier have, AiProgression.PickTier last, boolean tableHeld, boolean weapon, int sticksHeld, int smelts, boolean coal, boolean oneTable
    ) {
-      return plankNeed(have, last, tableHeld, weapon, sticksHeld, smelts, coal, oneTable, new AiProgression.Inner_DataUtil(0, 0));
+      return plankNeed(have, last, tableHeld, weapon, sticksHeld, smelts, coal, oneTable, new AiProgression.WoodNeed(0, 0));
    }
 
    static int plankNeed(
-      AiProgression.Inner_CachePool have,
-      AiProgression.Inner_CachePool last,
+      AiProgression.PickTier have,
+      AiProgression.PickTier last,
       boolean tableHeld,
       boolean weapon,
       int sticksHeld,
       int smelts,
       boolean coal,
       boolean oneTable,
-      AiProgression.Inner_DataUtil kit
+      AiProgression.WoodNeed kit
    ) {
       int tables = tableHeld ? 0 : 1;
-      if (!oneTable && have.ordinal() < AiProgression.Inner_CachePool.WOOD.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()) {
+      if (!oneTable && have.ordinal() < AiProgression.PickTier.WOOD.ordinal() && last.ordinal() >= AiProgression.PickTier.STONE.ordinal()) {
          tables++;
       }
 
-      if (!oneTable && have.ordinal() < AiProgression.Inner_CachePool.STONE.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()) {
+      if (!oneTable && have.ordinal() < AiProgression.PickTier.STONE.ordinal() && last.ordinal() >= AiProgression.PickTier.IRON.ordinal()) {
          tables++;
       }
 
-      if (!oneTable && have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()) {
+      if (!oneTable && have.ordinal() < AiProgression.PickTier.IRON.ordinal() && last.ordinal() >= AiProgression.PickTier.DIAMOND.ordinal()) {
          tables++;
       }
 
       int planks = 4 * tables + kit.planks();
-      if (have.ordinal() < AiProgression.Inner_CachePool.WOOD.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.WOOD.ordinal()) {
+      if (have.ordinal() < AiProgression.PickTier.WOOD.ordinal() && last.ordinal() >= AiProgression.PickTier.WOOD.ordinal()) {
          planks += 3;
       }
 
-      int sticks = kit.sticks() + (!weapon && last.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal() ? 2 : 0);
+      int sticks = kit.sticks() + (!weapon && last.ordinal() >= AiProgression.PickTier.STONE.ordinal() ? 2 : 0);
 
-      for (AiProgression.Inner_CachePool t : new AiProgression.Inner_CachePool[]{
-         AiProgression.Inner_CachePool.WOOD, AiProgression.Inner_CachePool.STONE, AiProgression.Inner_CachePool.IRON, AiProgression.Inner_CachePool.DIAMOND
+      for (AiProgression.PickTier t : new AiProgression.PickTier[]{
+         AiProgression.PickTier.WOOD, AiProgression.PickTier.STONE, AiProgression.PickTier.IRON, AiProgression.PickTier.DIAMOND
       }) {
          if (t.ordinal() > have.ordinal() && t.ordinal() <= last.ordinal()) {
             sticks += 2;
@@ -500,8 +500,8 @@ final class AiProgression {
       return planks;
    }
 
-   static int stoneBatchFor(AiProgression.Inner_CachePool have, int remaining) {
-      return have == AiProgression.Inner_CachePool.WOOD ? Math.min(3, remaining) : remaining;
+   static int stoneBatchFor(AiProgression.PickTier have, int remaining) {
+      return have == AiProgression.PickTier.WOOD ? Math.min(3, remaining) : remaining;
    }
 
    static boolean shouldReclaimTable(boolean carryOneTable, int wood, int futureWood) {
@@ -656,15 +656,15 @@ final class AiProgression {
             return total[0];
          }
 
-         AiProgression.Inner_CachePool effectiveTier() {
-            AiProgression.Inner_CachePool have = AiProgression.bestTier(mc);
-            AiProgression.Inner_CachePool worn = AiProgression.Inner_CachePool.NONE;
+         AiProgression.PickTier effectiveTier() {
+            AiProgression.PickTier have = AiProgression.bestTier(mc);
+            AiProgression.PickTier worn = AiProgression.PickTier.NONE;
             Inventory inventory = mc.player.getInventory();
 
             for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
                ItemStack stack = inventory.getItem(slot);
                if (!stack.isEmpty()) {
-                  AiProgression.Inner_CachePool tier = AiProgression.pickaxeTier(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+                  AiProgression.PickTier tier = AiProgression.pickaxeTier(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
                   if (tier.ordinal() > worn.ordinal()) {
                      worn = tier;
                   }
@@ -695,19 +695,19 @@ final class AiProgression {
          }
 
          int stoneNeeded() {
-            AiProgression.Inner_CachePool have = this.effectiveTier();
-            AiProgression.Inner_CachePool last = this.finalTier();
+            AiProgression.PickTier have = this.effectiveTier();
+            AiProgression.PickTier last = this.finalTier();
             int need = 0;
-            if (have.ordinal() < AiProgression.Inner_CachePool.STONE.ordinal() && last.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()) {
+            if (have.ordinal() < AiProgression.PickTier.STONE.ordinal() && last.ordinal() >= AiProgression.PickTier.STONE.ordinal()) {
                need += 3;
             }
 
-            if (!AiProgression.hasWeapon(mc) && last.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()) {
+            if (!AiProgression.hasWeapon(mc) && last.ordinal() >= AiProgression.PickTier.STONE.ordinal()) {
                need += 3;
             }
 
-            if (have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()
-               && last.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()
+            if (have.ordinal() < AiProgression.PickTier.IRON.ordinal()
+               && last.ordinal() >= AiProgression.PickTier.IRON.ordinal()
                && AiCraft.countItem("minecraft:furnace") == 0
                && this.ironStillNeeded()) {
                need += 8;
@@ -816,8 +816,8 @@ final class AiProgression {
 
                autismclient.ai.engine.AiRestock.reserveWoodForJob(this.reservedWood);
                autismclient.ai.engine.AiRestock.reserveStoneForJob(this.reservedStone);
-               boolean preservingIron = this.finalTier().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
-                  && AiProgression.bestTier(mc) == AiProgression.Inner_CachePool.IRON;
+               boolean preservingIron = this.finalTier().ordinal() >= AiProgression.PickTier.DIAMOND.ordinal()
+                  && AiProgression.bestTier(mc) == AiProgression.PickTier.IRON;
                autismclient.ai.engine.AiRestock.reserveStrikesForJob(preservingIron ? 48 : 0);
                if (System.nanoTime() > this.deadline) {
                   return this.finish(
@@ -1001,7 +1001,7 @@ final class AiProgression {
                            }
                         } else {
                            String drop = this.stepKey.substring("ore:".length());
-                           AiProgression.Inner_StreamUtil ore = AiProgression.ORE_SOURCES.get(drop);
+                           AiProgression.OreSource ore = AiProgression.ORE_SOURCES.get(drop);
                            JsonObject detail = AiJson.parseObject(r.dataJson());
                            if (ore != null && detail.has("targetX") && detail.has("targetY") && detail.has("targetZ")) {
                               this.oreTargetByFamily
@@ -1071,15 +1071,15 @@ final class AiProgression {
                return this.startStep("recover", "go back for the items dropped at " + death.position().toShortString(), AiRecover.recover(new JsonObject()));
             }
 
-            AiProgression.Inner_CachePool have = this.effectiveTier();
-            if (have.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()
+            AiProgression.PickTier have = this.effectiveTier();
+            if (have.ordinal() >= AiProgression.PickTier.STONE.ordinal()
                && !AiProgression.hasWeapon(mc)
-               && (AiProgression.countStoneToolBlocks() >= 3 || have.ordinal() > AiProgression.Inner_CachePool.STONE.ordinal())
+               && (AiProgression.countStoneToolBlocks() >= 3 || have.ordinal() > AiProgression.PickTier.STONE.ordinal())
                && this.failuresByStep.getOrDefault("axe", 0) == 0) {
                return this.startStep("axe", "make a stone axe for mobs and crafting tables", this.obtainOp("minecraft:stone_axe", 1));
             }
 
-            if (have.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() && kit.containsKey("minecraft:shield")) {
+            if (have.ordinal() >= AiProgression.PickTier.IRON.ordinal() && kit.containsKey("minecraft:shield")) {
                if (AiCraft.countItem("minecraft:shield") == 0 && AiCraft.countItem("minecraft:iron_ingot") >= 1 && this.failuresByStep.getOrDefault("shield-early", 0) == 0) {
                   return this.startStep("shield-early", "make the kit's shield now", this.obtainOp("minecraft:shield", 1));
                }
@@ -1102,7 +1102,7 @@ final class AiProgression {
             }
 
             int waterWanted = Math.min(2, kit.getOrDefault("minecraft:bucket", 0));
-            if (have.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()
+            if (have.ordinal() >= AiProgression.PickTier.IRON.ordinal()
                && waterWanted > 0
                && !this.waterEarlyTried
                && AiCraft.countItem("minecraft:water_bucket") < waterWanted
@@ -1112,9 +1112,9 @@ final class AiProgression {
                return this.startStep("water-early", "fill the water buckets close by before going deep", AiObsidian.init(waterWanted, 90));
             }
 
-            if (have.ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal()
-               && have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()
-               && this.finalTier().ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal()
+            if (have.ordinal() >= AiProgression.PickTier.STONE.ordinal()
+               && have.ordinal() < AiProgression.PickTier.IRON.ordinal()
+               && this.finalTier().ordinal() >= AiProgression.PickTier.IRON.ordinal()
                && this.ironStillNeeded()
                && AiCraft.countItem("minecraft:furnace") == 0
                && AiProgression.countStoneToolBlocks() >= 8
@@ -1132,9 +1132,9 @@ final class AiProgression {
             }
 
             Map<String, Integer> needs = this.materialNeeds();
-            AiProgression.Inner_CachePool needed = AiProgression.PICKAXES.contains(itemId)
-               ? AiProgression.Inner_CachePool.values()[Math.max(AiProgression.Inner_CachePool.NONE.ordinal(), AiProgression.pickaxeTier(itemId).ordinal() - 1)]
-               : AiProgression.Inner_CachePool.NONE;
+            AiProgression.PickTier needed = AiProgression.PICKAXES.contains(itemId)
+               ? AiProgression.PickTier.values()[Math.max(AiProgression.PickTier.NONE.ordinal(), AiProgression.pickaxeTier(itemId).ordinal() - 1)]
+               : AiProgression.PickTier.NONE;
 
             for (String material : needs.keySet()) {
                if (AiProgression.tierToMine(material).ordinal() > needed.ordinal()) {
@@ -1144,7 +1144,7 @@ final class AiProgression {
 
             String pick = AiProgression.nextPickaxeToward(have, needed);
             int woodNeed = this.plankNeedFor(needed, AiCraft.countItem("minecraft:crafting_table") > 0);
-            if (this.stockWoodTried && !this.singleTable && have.ordinal() <= AiProgression.Inner_CachePool.STONE.ordinal() && AiProgression.plankEquivalents() < woodNeed) {
+            if (this.stockWoodTried && !this.singleTable && have.ordinal() <= AiProgression.PickTier.STONE.ordinal() && AiProgression.plankEquivalents() < woodNeed) {
                this.singleTable = true;
                AutismClientAddon.LOG
                   .info(
@@ -1157,7 +1157,7 @@ final class AiProgression {
             }
 
             if (pick != null
-               && have.ordinal() <= AiProgression.Inner_CachePool.STONE.ordinal()
+               && have.ordinal() <= AiProgression.PickTier.STONE.ordinal()
                && AiProgression.plankEquivalents() < woodNeed
                && this.failuresByStep.getOrDefault("stock-wood", 0) == 0
                && !this.stockWoodTried) {
@@ -1174,7 +1174,7 @@ final class AiProgression {
             int stoneBatch = AiProgression.stoneBatchFor(have, this.stoneNeeded());
             if (this.singleTable
                && pick != null
-               && (have == AiProgression.Inner_CachePool.WOOD || have == AiProgression.Inner_CachePool.STONE)
+               && (have == AiProgression.PickTier.WOOD || have == AiProgression.PickTier.STONE)
                && AiProgression.countStoneToolBlocks() < stoneBatch
                && AiCraft.countItem("minecraft:crafting_table") == 0) {
                BlockPos table = this.findNearbyBlock(Blocks.CRAFTING_TABLE, 6);
@@ -1184,7 +1184,7 @@ final class AiProgression {
             }
 
             String stoneKey = "stock-stone:" + have;
-            if ((have == AiProgression.Inner_CachePool.WOOD || have == AiProgression.Inner_CachePool.STONE) && AiProgression.countStoneToolBlocks() < stoneBatch && this.failuresByStep.getOrDefault(stoneKey, 0) == 0) {
+            if ((have == AiProgression.PickTier.WOOD || have == AiProgression.PickTier.STONE) && AiProgression.countStoneToolBlocks() < stoneBatch && this.failuresByStep.getOrDefault(stoneKey, 0) == 0) {
                int seconds = Math.min(240, this.secondsLeft());
                Supplier<AiOperation> gather = () -> autismclient.ai.engine.AiBlockMine.create(
                   AiJson.objectOf(
@@ -1203,7 +1203,7 @@ final class AiProgression {
                AiOperation stairs = this.stoneStaircase(seconds, stoneBatch);
                return this.startStep(
                   stoneKey,
-                  have == AiProgression.Inner_CachePool.WOOD ? "dig stone for a faster pickaxe" : "dig stone for the axe and furnace",
+                  have == AiProgression.PickTier.WOOD ? "dig stone for a faster pickaxe" : "dig stone for the axe and furnace",
                   stairs == null ? gather.get() : this.firstUntilEnough(stairs, () -> AiProgression.countStoneToolBlocks() >= stoneBatch, gather)
                );
             }
@@ -1248,18 +1248,18 @@ final class AiProgression {
                }
             } else {
                Map<String, Integer> pickNeeds = AiProgression.keepItemsFor(pick, 1);
-               return !pickNeeds.isEmpty() && AiProgression.pickaxeTier(pick).ordinal() > AiProgression.Inner_CachePool.STONE.ordinal()
+               return !pickNeeds.isEmpty() && AiProgression.pickaxeTier(pick).ordinal() > AiProgression.PickTier.STONE.ordinal()
                   ? this.obtainMaterial(this.addKitNeeds(pick, pickNeeds), "for a " + AiProgression.displayName(pick))
                   : this.startStep("pick:" + pick, "make a " + AiProgression.displayName(pick), this.obtainOp(pick, AiCraft.countItem(pick) + 1));
             }
          }
 
-         AiProgression.Inner_CachePool finalTier() {
+         AiProgression.PickTier finalTier() {
             if (AiProgression.PICKAXES.contains(itemId)) {
-               return AiProgression.pickaxeTier(itemId) == AiProgression.Inner_CachePool.NETHERITE ? AiProgression.Inner_CachePool.DIAMOND : AiProgression.pickaxeTier(itemId);
+               return AiProgression.pickaxeTier(itemId) == AiProgression.PickTier.NETHERITE ? AiProgression.PickTier.DIAMOND : AiProgression.pickaxeTier(itemId);
             }
 
-            AiProgression.Inner_CachePool needed = AiProgression.Inner_CachePool.NONE;
+            AiProgression.PickTier needed = AiProgression.PickTier.NONE;
 
             for (String material : this.materialNeeds().keySet()) {
                if (AiProgression.tierToMine(material).ordinal() > needed.ordinal()) {
@@ -1270,20 +1270,20 @@ final class AiProgression {
             return needed;
          }
 
-         int plankNeedFor(AiProgression.Inner_CachePool neededTier, boolean tableHeld) {
+         int plankNeedFor(AiProgression.PickTier neededTier, boolean tableHeld) {
             return this.plankNeedFor(neededTier, tableHeld, AiCraft.countItem("minecraft:stick"));
          }
 
-         int plankNeedFor(AiProgression.Inner_CachePool neededTier, boolean tableHeld, int sticksHeld) {
-            AiProgression.Inner_CachePool have = this.effectiveTier();
-            AiProgression.Inner_CachePool last = AiProgression.PICKAXES.contains(itemId) ? this.finalTier() : neededTier;
+         int plankNeedFor(AiProgression.PickTier neededTier, boolean tableHeld, int sticksHeld) {
+            AiProgression.PickTier have = this.effectiveTier();
+            AiProgression.PickTier last = AiProgression.PICKAXES.contains(itemId) ? this.finalTier() : neededTier;
             int smelts = 0;
-            if (last.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() && have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()) {
+            if (last.ordinal() >= AiProgression.PickTier.IRON.ordinal() && have.ordinal() < AiProgression.PickTier.IRON.ordinal()) {
                smelts += Math.max(0, (this.obsidianNeedsBucket() ? 6 : 3) - AiCraft.countItem("minecraft:iron_ingot"));
             }
 
             Map<String, Integer> pending = new LinkedHashMap<>(this.materialNeeds());
-            if (last.ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() && have.ordinal() < AiProgression.Inner_CachePool.IRON.ordinal()) {
+            if (last.ordinal() >= AiProgression.PickTier.IRON.ordinal() && have.ordinal() < AiProgression.PickTier.IRON.ordinal()) {
                AiProgression.keepItemsFor("minecraft:iron_pickaxe", 1)
                   .forEach((id, n) -> pending.merge(id, n, itemId.equals("minecraft:iron_pickaxe") ? Math::max : Integer::sum));
             }
@@ -1298,7 +1298,7 @@ final class AiProgression {
 
             smelts = Math.max(smelts, jointSmelts);
             boolean coal = AiCraft.countItem("minecraft:coal") + AiCraft.countItem("minecraft:charcoal") > 0;
-            AiProgression.Inner_DataUtil remainingWood = AiProgression.woodForKit(AiCraft.buildRecipeGraph(), kit, itemId, goal);
+            AiProgression.WoodNeed remainingWood = AiProgression.woodForKit(AiCraft.buildRecipeGraph(), kit, itemId, goal);
             return remainingWood != null
                ? AiProgression.plankNeed(have, last, tableHeld, AiProgression.hasWeapon(mc), sticksHeld, smelts, coal, this.singleTable, remainingWood)
                : AiProgression.plankNeed(have, last, tableHeld, AiProgression.hasWeapon(mc), sticksHeld, smelts, coal, this.singleTable) + (this.kitComplete() ? 0 : kitPlanks);
@@ -1467,21 +1467,21 @@ final class AiProgression {
             }
          }
 
-         AiProgression.Inner_StreamUtil oreWhileSmelting(String material) {
+         AiProgression.OreSource oreWhileSmelting(String material) {
             if (AiRunResources.isCampaignActive() && AiCraft.countItem("minecraft:water_bucket") < 2) {
                return null;
             }
 
             if (material.equals("minecraft:iron_ingot")
-               && this.finalTier().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
-               && AiProgression.bestTier(mc).ordinal() < AiProgression.Inner_CachePool.DIAMOND.ordinal()
+               && this.finalTier().ordinal() >= AiProgression.PickTier.DIAMOND.ordinal()
+               && AiProgression.bestTier(mc).ordinal() < AiProgression.PickTier.DIAMOND.ordinal()
                && AiCraft.countItem("minecraft:diamond") < 3) {
                return AiProgression.ORE_SOURCES.get("minecraft:diamond");
             }
 
             for (String m : AiProgression.orderOverworldFirst(this.materialNeeds().keySet())) {
                if (!m.equals(material)) {
-                  AiProgression.Inner_StreamUtil o = AiProgression.ORE_SOURCES.get(m);
+                  AiProgression.OreSource o = AiProgression.ORE_SOURCES.get(m);
                   if (o == null && AiProgression.SMELT_INPUTS.containsKey(m)) {
                      o = AiProgression.ORE_SOURCES.get(AiProgression.SMELT_INPUTS.get(m));
                   }
@@ -1540,7 +1540,7 @@ final class AiProgression {
             }
          }
 
-         AiFurnaceWork.Inner_DataUtil preworkResources(String input, int committed) {
+         AiFurnaceWork.ResourcePlan preworkResources(String input, int committed) {
             Map<String, Integer> resources = new LinkedHashMap<>();
 
             for (Entry<String, Integer> need : this.materialNeeds().entrySet()) {
@@ -1551,14 +1551,14 @@ final class AiProgression {
                }
             }
 
-            if (this.finalTier().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal()
-               && AiProgression.bestTier(mc).ordinal() < AiProgression.Inner_CachePool.DIAMOND.ordinal()) {
+            if (this.finalTier().ordinal() >= AiProgression.PickTier.DIAMOND.ordinal()
+               && AiProgression.bestTier(mc).ordinal() < AiProgression.PickTier.DIAMOND.ordinal()) {
                resources.merge("minecraft:diamond", 3, Math::max);
             }
 
             resources.put("minecraft:coal", Math.max(2, Math.min(8, this.smeltBatch)));
             Map<String, Integer> crafts = this.finalTier().ordinal() > AiProgression.bestTier(mc).ordinal() ? Map.of("minecraft:stick", 2) : Map.of();
-            return new AiFurnaceWork.Inner_DataUtil(resources, crafts);
+            return new AiFurnaceWork.ResourcePlan(resources, crafts);
          }
 
          AiOperation.Result smeltWaitStep() {
@@ -1616,7 +1616,7 @@ final class AiProgression {
             );
          }
 
-         AiOperation stairsToOre(AiProgression.Inner_StreamUtil next) {
+         AiOperation stairsToOre(AiProgression.OreSource next) {
             BlockPos feet = mc.player.blockPosition();
             Predicate<BlockState> matches = autismclient.ai.engine.AiStaircase.matchesFamily(next.family());
             BlockPos target = this.oreTargetByFamily.get(next.family());
@@ -1654,7 +1654,7 @@ final class AiProgression {
 
          AiOperation stoneStaircase(int seconds, int stockGoal) {
             BlockPos feet = mc.player.blockPosition();
-            AiProgression.Inner_StreamUtil next = this.finalTier().ordinal() >= AiProgression.Inner_CachePool.IRON.ordinal() ? AiProgression.ORE_SOURCES.get("minecraft:raw_iron") : null;
+            AiProgression.OreSource next = this.finalTier().ordinal() >= AiProgression.PickTier.IRON.ordinal() ? AiProgression.ORE_SOURCES.get("minecraft:raw_iron") : null;
             Predicate<BlockState> ore = next == null ? state -> false : autismclient.ai.engine.AiStaircase.matchesFamily(next.family());
             BlockPos target = next == null ? null : this.oreTargetByFamily.get(next.family());
             if (target != null && (!ore.test(mc.level.getBlockState(target)) || !this.safeToMine(target))) {
@@ -1763,7 +1763,7 @@ final class AiProgression {
                return null;
             }
 
-            boolean toTheIron = this.effectiveTier() != AiProgression.Inner_CachePool.WOOD
+            boolean toTheIron = this.effectiveTier() != AiProgression.PickTier.WOOD
                && toOre
                && !steps.isEmpty()
                && steps.size() <= Math.min(24, Math.max(0, enough) + 5)
@@ -1984,7 +1984,7 @@ final class AiProgression {
          }
 
          AiOperation.Result obtainOreDrop(String drop, int count, String why) {
-            AiProgression.Inner_StreamUtil ore = AiProgression.ORE_SOURCES.get(drop);
+            AiProgression.OreSource ore = AiProgression.ORE_SOURCES.get(drop);
             if (AiRunResources.isCampaignActive() && drop.equals("minecraft:diamond") && !this.inNether() && AiCraft.countItem("minecraft:water_bucket") < 2) {
                if (this.failuresByStep.getOrDefault("expedition-water", 0) >= 3) {
                   return this.finish(AiOperation.Status.FAILED, "Diamond descent blocked: both water buckets could not be filled");
@@ -2009,7 +2009,7 @@ final class AiProgression {
                }
 
                if (!ore.nether() || this.inNether()) {
-                  AiProgression.Inner_CachePool last = this.finalTier();
+                  AiProgression.PickTier last = this.finalTier();
                   if (AiProgression.needsCrafting(itemId, drop) && AiCraft.countItem("minecraft:crafting_table") == 0) {
                      BlockPos table = this.findNearbyBlock(Blocks.CRAFTING_TABLE, 6);
                      if (table != null && AiProgression.shouldReclaimTable(this.singleTable, AiProgression.plankEquivalents(), this.plankNeedFor(last, true))) {
@@ -2147,7 +2147,7 @@ final class AiProgression {
             this.reservedWood = this.plankNeedFor(this.finalTier(), AiCraft.countItem("minecraft:crafting_table") > 0);
             autismclient.ai.engine.AiRestock.reserveWoodForJob(this.reservedWood);
             this.reservedStone = this.stoneNeeded()
-               + (this.finalTier().ordinal() >= AiProgression.Inner_CachePool.DIAMOND.ordinal() && AiProgression.bestTier(mc) == AiProgression.Inner_CachePool.IRON ? 3 : 0);
+               + (this.finalTier().ordinal() >= AiProgression.PickTier.DIAMOND.ordinal() && AiProgression.bestTier(mc) == AiProgression.PickTier.IRON ? 3 : 0);
             autismclient.ai.engine.AiRestock.reserveStoneForJob(this.reservedStone);
             this.stepOp = AiRunDiagnostics.trace("progression", key + ": " + label, op);
             this.stepKey = key;
@@ -2696,7 +2696,7 @@ final class AiProgression {
       KEEP_ITEMS = Set.copyOf(base);
    }
 
-   enum Inner_CachePool {
+   enum PickTier {
       NONE,
       WOOD,
       STONE,
@@ -2705,11 +2705,11 @@ final class AiProgression {
       NETHERITE;
    }
 
-   record Inner_DataUtil(int planks, int sticks) {
+   record WoodNeed(int planks, int sticks) {
    }
 
-   record Inner_StreamUtil(String family, String drop, int bestY, AiProgression.Inner_CachePool pick, int yieldPerOre, boolean nether) {
-      Inner_StreamUtil(String family, String drop, int bestY, AiProgression.Inner_CachePool pick, int yield) {
+   record OreSource(String family, String drop, int bestY, AiProgression.PickTier pick, int yieldPerOre, boolean nether) {
+      OreSource(String family, String drop, int bestY, AiProgression.PickTier pick, int yield) {
          this(family, drop, bestY, pick, yield, false);
       }
    }

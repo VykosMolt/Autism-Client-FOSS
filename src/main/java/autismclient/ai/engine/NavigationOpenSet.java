@@ -4,7 +4,7 @@ import java.util.Arrays;
 import net.minecraft.core.BlockPos;
 
 final class NavigationOpenSet {
-   private NavigationOpenSet.Inner_DataUtil[] init_t_DataUtilArr = new NavigationOpenSet.Inner_DataUtil[128];
+   private NavigationOpenSet.Node[] init_t_DataUtilArr = new NavigationOpenSet.Node[128];
    private int init_I;
    private double init_D = 1.0;
 
@@ -28,7 +28,7 @@ final class NavigationOpenSet {
       return this.isEmpty() ? 1.0 / 0.0 : this.priority(this.init_t_DataUtilArr[0].cost, this.init_t_DataUtilArr[0].heuristic);
    }
 
-   private boolean isBefore(NavigationOpenSet.Inner_DataUtil a, NavigationOpenSet.Inner_DataUtil b) {
+   private boolean isBefore(NavigationOpenSet.Node a, NavigationOpenSet.Node b) {
       int order = Double.compare(this.priority(a.cost, a.heuristic), this.priority(b.cost, b.heuristic));
       if (order == 0) {
          order = Double.compare(a.heuristic, b.heuristic);
@@ -45,7 +45,7 @@ final class NavigationOpenSet {
       return order < 0;
    }
 
-   void insertOrUpdate(NavigationOpenSet.Inner_DataUtil node) {
+   void insertOrUpdate(NavigationOpenSet.Node node) {
       int i = node.init_I;
       if (i < 0) {
          if (this.init_I == this.init_t_DataUtilArr.length) {
@@ -70,9 +70,9 @@ final class NavigationOpenSet {
       node.init_I = i;
    }
 
-   NavigationOpenSet.Inner_DataUtil poll() {
-      NavigationOpenSet.Inner_DataUtil result = this.init_t_DataUtilArr[0];
-      NavigationOpenSet.Inner_DataUtil tail = this.init_t_DataUtilArr[--this.init_I];
+   NavigationOpenSet.Node poll() {
+      NavigationOpenSet.Node result = this.init_t_DataUtilArr[0];
+      NavigationOpenSet.Node tail = this.init_t_DataUtilArr[--this.init_I];
       this.init_t_DataUtilArr[this.init_I] = null;
       result.init_I = -1;
       if (this.init_I == 0) {
@@ -101,18 +101,18 @@ final class NavigationOpenSet {
       return result;
    }
 
-   static final class Inner_DataUtil {
+   static final class Node {
       final BlockPos pos;
       final double heuristic;
       double cost = 1.0 / 0.0;
-      NavigationOpenSet.Inner_DataUtil parent;
+      NavigationOpenSet.Node parent;
       AiPathfinder.PathStep move;
       int init_I = -1;
       int load_I;
-      NavigationOpenSet.Inner_DataUtil nextInCell;
+      NavigationOpenSet.Node nextInCell;
       boolean closed;
 
-      Inner_DataUtil(BlockPos cell, double heuristic) {
+      Node(BlockPos cell, double heuristic) {
          this.pos = cell;
          this.heuristic = heuristic;
       }

@@ -368,12 +368,12 @@ public final class AiSchematicMachinePlan {
       return List.copyOf(result);
    }
 
-   List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> railVehicles(BlockPos origin) {
+   List<autismclient.ai.print.PrintRailVehicle.VehicleSpec> railVehicles(BlockPos origin) {
       Vec3 offset = Vec3.atLowerCornerOf(origin);
       return this.vehicles
          .stream()
          .map(
-            value -> new autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil(value.id(), value.position().add(offset), !this.offRailCells.contains(value.rail().asLong()))
+            value -> new autismclient.ai.print.PrintRailVehicle.VehicleSpec(value.id(), value.position().add(offset), !this.offRailCells.contains(value.rail().asLong()))
          )
          .toList();
    }
@@ -410,7 +410,7 @@ public final class AiSchematicMachinePlan {
    }
 
    public record MachineSpec(
-      List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
+      List<autismclient.ai.print.PrintRailVehicle.VehicleSpec> vehicles,
       List<AiSchematicMachinePlan.ContainerPlan> containers,
       Map<BlockPos, BlockState> outcomes,
       List<autismclient.ai.print.PrintSkippedContents> unavailable,
@@ -420,7 +420,7 @@ public final class AiSchematicMachinePlan {
       static final AiSchematicMachinePlan.MachineSpec EMPTY = new AiSchematicMachinePlan.MachineSpec(List.of(), List.of(), Map.of());
 
       MachineSpec(
-         List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
+         List<autismclient.ai.print.PrintRailVehicle.VehicleSpec> vehicles,
          List<AiSchematicMachinePlan.ContainerPlan> containers,
          Map<BlockPos, BlockState> outcomes,
          List<autismclient.ai.print.PrintSkippedContents> unavailable,
@@ -429,12 +429,12 @@ public final class AiSchematicMachinePlan {
          this(vehicles, containers, outcomes, unavailable, clocks, List.of());
       }
 
-      MachineSpec(List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles, List<AiSchematicMachinePlan.ContainerPlan> containers, Map<BlockPos, BlockState> outcomes) {
+      MachineSpec(List<autismclient.ai.print.PrintRailVehicle.VehicleSpec> vehicles, List<AiSchematicMachinePlan.ContainerPlan> containers, Map<BlockPos, BlockState> outcomes) {
          this(vehicles, containers, outcomes, List.of(), List.of());
       }
 
       MachineSpec(
-         List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
+         List<autismclient.ai.print.PrintRailVehicle.VehicleSpec> vehicles,
          List<AiSchematicMachinePlan.ContainerPlan> containers,
          Map<BlockPos, BlockState> outcomes,
          List<autismclient.ai.print.PrintSkippedContents> unavailable

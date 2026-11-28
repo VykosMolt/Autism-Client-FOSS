@@ -19,29 +19,29 @@ import net.minecraft.server.packs.resources.Resource;
 public final class MsdfFontAtlas {
    private final String name;
    private final Identifier textureId;
-   private final Int2ObjectOpenHashMap<MsdfFontAtlas.Inner_StreamUtil> glyphs;
+   private final Int2ObjectOpenHashMap<MsdfFontAtlas.Glyph> glyphs;
    private final double lineHeight;
    private final double ascender;
    private final double descender;
    private final double capHeight;
    private final int atlasWidth;
    private final int atlasHeight;
-   private final MsdfFontAtlas.Inner_StreamUtil spaceGlyph;
+   private final MsdfFontAtlas.Glyph spaceGlyph;
    private NativeImage pixels;
-   private MsdfFontAtlas.Inner_DataUtil init_StreamUtil_DataUti;
+   private MsdfFontAtlas.AtlasTexture init_StreamUtil_DataUti;
    private boolean init_Z;
 
    private MsdfFontAtlas(
       String name,
       Identifier textureId,
-      Int2ObjectOpenHashMap<MsdfFontAtlas.Inner_StreamUtil> glyphs,
+      Int2ObjectOpenHashMap<MsdfFontAtlas.Glyph> glyphs,
       double lineHeight,
       double ascender,
       double descender,
       double capHeight,
       int atlasWidth,
       int atlasHeight,
-      MsdfFontAtlas.Inner_StreamUtil spaceAdvance,
+      MsdfFontAtlas.Glyph spaceAdvance,
       NativeImage pixels
    ) {
       this.name = name;
@@ -89,18 +89,18 @@ public final class MsdfFontAtlas {
          double lineHeight = metrics.get("lineHeight").getAsDouble();
          double ascender = metrics.get("ascender").getAsDouble();
          double descender = metrics.has("descender") ? Math.abs(metrics.get("descender").getAsDouble()) : 0.3;
-         Int2ObjectOpenHashMap<MsdfFontAtlas.Inner_StreamUtil> glyphs = new Int2ObjectOpenHashMap<>();
+         Int2ObjectOpenHashMap<MsdfFontAtlas.Glyph> glyphs = new Int2ObjectOpenHashMap<>();
          JsonArray glyphArray = root.getAsJsonArray("glyphs");
 
          for (int i = 0; i < glyphArray.size(); i++) {
             JsonObject g = glyphArray.get(i).getAsJsonObject();
             int unicode = g.get("unicode").getAsInt();
             double advance = g.get("advance").getAsDouble();
-            MsdfFontAtlas.Inner_StreamUtil glyph;
+            MsdfFontAtlas.Glyph glyph;
             if (g.has("planeBounds") && g.has("atlasBounds")) {
                JsonObject plane = g.getAsJsonObject("planeBounds");
                JsonObject bounds = g.getAsJsonObject("atlasBounds");
-               glyph = new MsdfFontAtlas.Inner_StreamUtil(
+               glyph = new MsdfFontAtlas.Glyph(
                   advance,
                   plane.get("left").getAsDouble(),
                   plane.get("top").getAsDouble(),
@@ -113,14 +113,14 @@ public final class MsdfFontAtlas {
                   true
                );
             } else {
-               glyph = new MsdfFontAtlas.Inner_StreamUtil(advance, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false);
+               glyph = new MsdfFontAtlas.Glyph(advance, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false);
             }
 
             glyphs.put(unicode, glyph);
          }
 
-         MsdfFontAtlas.Inner_StreamUtil space = glyphs.get(32);
-         MsdfFontAtlas.Inner_StreamUtil capital = glyphs.get(72);
+         MsdfFontAtlas.Glyph space = glyphs.get(32);
+         MsdfFontAtlas.Glyph capital = glyphs.get(72);
          double capHeight = capital != null && capital.init_Z && capital.read < 0.0 ? -capital.read : 0.7;
          Identifier textureId = Identifier.fromNamespaceAndPath("autismclient", "font/msdf/" + baseName);
          return new MsdfFontAtlas(baseName, textureId, glyphs, lineHeight, ascender, descender, capHeight, atlasWidth, atlasHeight, space, pixels);
@@ -170,7 +170,7 @@ public final class MsdfFontAtlas {
 
       while (i < text.length()) {
          int cp = text.codePointAt(i);
-         MsdfFontAtlas.Inner_StreamUtil g = this.glyphs.get(cp);
+         MsdfFontAtlas.Glyph g = this.glyphs.get(cp);
          if (g == null) {
             g = this.spaceGlyph;
          }
@@ -193,7 +193,7 @@ public final class MsdfFontAtlas {
 
          while (i < text.length()) {
             int cp = text.codePointAt(i);
-            MsdfFontAtlas.Inner_StreamUtil glyph = this.glyphs.get(cp);
+            MsdfFontAtlas.Glyph glyph = this.glyphs.get(cp);
             if (glyph == null) {
                glyph = this.spaceGlyph;
             }
@@ -217,7 +217,7 @@ public final class MsdfFontAtlas {
 
       while (end < text.length()) {
          int cp = text.codePointAt(end);
-         MsdfFontAtlas.Inner_StreamUtil g = this.glyphs.get(cp);
+         MsdfFontAtlas.Glyph g = this.glyphs.get(cp);
          if (g == null) {
             g = this.spaceGlyph;
          }
@@ -251,7 +251,7 @@ public final class MsdfFontAtlas {
 
       while (i < text.length()) {
          int cp = text.codePointAt(i);
-         MsdfFontAtlas.Inner_StreamUtil g = this.glyphs.get(cp);
+         MsdfFontAtlas.Glyph g = this.glyphs.get(cp);
          if (g == null) {
             g = this.spaceGlyph;
          }
@@ -283,10 +283,10 @@ public final class MsdfFontAtlas {
       return this.textureId;
    }
 
-   public MsdfFontAtlas.Inner_DataUtil texture() {
+   public MsdfFontAtlas.AtlasTexture texture() {
       if (this.init_StreamUtil_DataUti == null && !this.init_Z) {
          try {
-            this.init_StreamUtil_DataUti = new MsdfFontAtlas.Inner_DataUtil(this.pixels != null ? this.pixels : new NativeImage(1, 1, false));
+            this.init_StreamUtil_DataUti = new MsdfFontAtlas.AtlasTexture(this.pixels != null ? this.pixels : new NativeImage(1, 1, false));
             Minecraft.getInstance().getTextureManager().register(this.textureId, this.init_StreamUtil_DataUti);
          } catch (Throwable t) {
             this.init_Z = true;
@@ -313,8 +313,8 @@ public final class MsdfFontAtlas {
       }
    }
 
-   public static final class Inner_DataUtil extends AbstractTexture {
-      Inner_DataUtil(NativeImage pixels) {
+   public static final class AtlasTexture extends AbstractTexture {
+      AtlasTexture(NativeImage pixels) {
          int width = pixels.getWidth();
          int height = pixels.getHeight();
          this.texture = RenderSystem.getDevice().createTexture("autismclient msdf font", 15, GpuFormat.RGBA8_UNORM, width, height, 1, 1);
@@ -333,7 +333,7 @@ public final class MsdfFontAtlas {
       }
    }
 
-   public record Inner_StreamUtil(
+   public record Glyph(
       double init_D, double load, double read, double write, double update, double sync, double flush, double close, double open, boolean init_Z
    ) {
    }

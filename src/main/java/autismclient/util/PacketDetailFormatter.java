@@ -57,14 +57,14 @@ public final class PacketDetailFormatter {
    private PacketDetailFormatter() {
    }
 
-   public static PacketDetailFormatter.Inner_DataUtil analyze(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      PacketDetailFormatter.Inner_StreamUtil out = new PacketDetailFormatter.Inner_StreamUtil();
+   public static PacketDetailFormatter.PacketAnalysis analyze(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+      PacketDetailFormatter.AnalysisBuilder out = new PacketDetailFormatter.AnalysisBuilder();
       if (entry == null) {
          return out.build(false, "fallback");
       }
 
       init_V_AutismPacketLogger_bh_StreamUtil(entry, out);
-      PacketDetailFormatter.Inner_CachePool wireDecode = init_bh_CachePool_AutismPacketLogger(entry);
+      PacketDetailFormatter.WireDecode wireDecode = init_bh_CachePool_AutismPacketLogger(entry);
       Packet<?> packet = wireDecode.packet != null ? wireDecode.packet : entry.packet;
       if (packet == null) {
          if (wireDecode.init_Str != null && !wireDecode.init_Str.isBlank()) {
@@ -79,7 +79,7 @@ public final class PacketDetailFormatter {
    }
 
    public static String describe(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      PacketDetailFormatter.Inner_DataUtil analysis = analyze(entry);
+      PacketDetailFormatter.PacketAnalysis analysis = analyze(entry);
       if (!analysis.init_Z() && !analysis.hasMeaning()) {
          return "";
       }
@@ -106,13 +106,13 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static PacketDetailFormatter.Inner_CachePool init_bh_CachePool_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
+   private static PacketDetailFormatter.WireDecode init_bh_CachePool_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry == null || entry.packet == null || entry.packetClass == null) {
-         return PacketDetailFormatter.Inner_CachePool.none();
+         return PacketDetailFormatter.WireDecode.none();
       }
 
       if (!Packet.class.isAssignableFrom(entry.packetClass)) {
-         return PacketDetailFormatter.Inner_CachePool.none();
+         return PacketDetailFormatter.WireDecode.none();
       }
 
       PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.captureFor(entry.packet);
@@ -120,16 +120,16 @@ public final class PacketDetailFormatter {
          try {
             Class<? extends Packet<?>> packetClass = (Class<? extends Packet<?>>)entry.packetClass;
             PacketStreamCodecDecoder.DecodedFrame decoded = PacketStreamCodecDecoder.decodeFrame(packetClass, snapshot.plaintext(), snapshot.protocol());
-            return PacketDetailFormatter.Inner_CachePool.ofDecoded(decoded.packet(), "decoded from captured plaintext with Minecraft STREAM_CODEC");
+            return PacketDetailFormatter.WireDecode.ofDecoded(decoded.packet(), "decoded from captured plaintext with Minecraft STREAM_CODEC");
          } catch (Throwable t) {
-            return PacketDetailFormatter.Inner_CachePool.ofFailure("captured plaintext was kept, but STREAM_CODEC decode failed: " + describeValue(t));
+            return PacketDetailFormatter.WireDecode.ofFailure("captured plaintext was kept, but STREAM_CODEC decode failed: " + describeValue(t));
          }
       } else {
-         return PacketDetailFormatter.Inner_CachePool.none();
+         return PacketDetailFormatter.WireDecode.none();
       }
    }
 
-   private static boolean init_Z_Packet(Packet<?> packet, PacketDetailFormatter.Inner_StreamUtil out, PacketDetailFormatter.Inner_CachePool wireDecode) {
+   private static boolean init_Z_Packet(Packet<?> packet, PacketDetailFormatter.AnalysisBuilder out, PacketDetailFormatter.WireDecode wireDecode) {
       if (wireDecode != null && wireDecode.init_Str != null && !wireDecode.init_Str.isBlank()) {
          out.addLine("Wire Decode: " + wireDecode.init_Str, wireDecode.decoded ? UiColorPalette.mint() : UiColorPalette.warningYellow());
       }
@@ -140,12 +140,12 @@ public final class PacketDetailFormatter {
       return view.read();
    }
 
-   private static void init_V_br_bh_StreamUtil(PacketSchemaSnapshot view, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static void init_V_br_bh_StreamUtil(PacketSchemaSnapshot view, PacketDetailFormatter.AnalysisBuilder out) {
       if (view == null) {
          out.addLine("Status: fallback", UiColorPalette.warningYellow());
          out.addLine("No packet object was available.", UiColorPalette.errorText());
       } else {
-         PacketSchemaRegistry.Inner_StreamUtil schema = view.schema();
+         PacketSchemaRegistry.PacketSchema schema = view.schema();
          out.addLine("Status: " + view.status(), view.read() ? UiColorPalette.mint() : UiColorPalette.warningYellow());
          if (schema != null) {
             out.addLine("Schema: " + (view.load_Z() ? "Minecraft source-backed schema" : "reflection fallback"), UiColorPalette.textBright());
@@ -183,7 +183,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static void init_V_Packet(Packet<?> packet, PacketSchemaSnapshot view, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static void init_V_Packet(Packet<?> packet, PacketSchemaSnapshot view, PacketDetailFormatter.AnalysisBuilder out) {
       if (packet instanceof ClientboundOpenScreenPacket open) {
          out.addSemantic("Server opens a handled screen.", UiColorPalette.textBright());
          out.addSemantic("Container: #" + open.getContainerId() + " type=" + describeValue(open.getType()), UiColorPalette.blue());
@@ -335,7 +335,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static void init_V_List_bh_StreamUtil(List<ItemStack> items, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static void init_V_List_bh_StreamUtil(List<ItemStack> items, PacketDetailFormatter.AnalysisBuilder out) {
       int shown = 0;
 
       for (int i = 0; i < items.size(); i++) {
@@ -356,10 +356,10 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static boolean init_Z_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry, Packet<?> packet, PacketDetailFormatter.Inner_StreamUtil out) {
-      PacketStateDeltaTracker.Inner_DataUtil capture = entry.packetContext;
-      PacketStateDeltaTracker.Inner_CachePool before = capture == null ? PacketStateDeltaTracker.Inner_CachePool.EMPTY : capture.before();
-      PacketStateDeltaTracker.Inner_CachePool after = capture == null ? PacketStateDeltaTracker.Inner_CachePool.EMPTY : capture.load();
+   private static boolean init_Z_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry, Packet<?> packet, PacketDetailFormatter.AnalysisBuilder out) {
+      PacketStateDeltaTracker.DeltaCapture capture = entry.packetContext;
+      PacketStateDeltaTracker.StateSnapshot before = capture == null ? PacketStateDeltaTracker.StateSnapshot.EMPTY : capture.before();
+      PacketStateDeltaTracker.StateSnapshot after = capture == null ? PacketStateDeltaTracker.StateSnapshot.EMPTY : capture.load();
       if (packet instanceof ClientboundOpenScreenPacket open) {
          out.addLine("Status: complete", UiColorPalette.mint());
          out.addLine("Meaning: server opened a handled screen", UiColorPalette.textBright());
@@ -550,7 +550,7 @@ public final class PacketDetailFormatter {
    }
 
    private static void init_V_ServerboundContain(
-      ServerboundContainerClickPacket click, PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool after, PacketDetailFormatter.Inner_StreamUtil out
+      ServerboundContainerClickPacket click, PacketStateDeltaTracker.StateSnapshot before, PacketStateDeltaTracker.StateSnapshot after, PacketDetailFormatter.AnalysisBuilder out
    ) {
       out.addLine("Status: context-aware", UiColorPalette.mint());
       out.addLine("Meaning: client clicked inside a handled screen", UiColorPalette.textBright());
@@ -581,7 +581,7 @@ public final class PacketDetailFormatter {
    }
 
    private static void init_V_ClientboundPlayerP(
-      ClientboundPlayerPositionPacket position, PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool after, PacketDetailFormatter.Inner_StreamUtil out
+      ClientboundPlayerPositionPacket position, PacketStateDeltaTracker.StateSnapshot before, PacketStateDeltaTracker.StateSnapshot after, PacketDetailFormatter.AnalysisBuilder out
    ) {
       PositionMoveRotation change = position.change();
       out.addLine("Status: context-aware", UiColorPalette.mint());
@@ -602,7 +602,7 @@ public final class PacketDetailFormatter {
       out.addLine("Ack Expected: ServerboundAcceptTeleportation #" + position.id(), UiColorPalette.amber());
    }
 
-   private static void init_V_ServerboundMovePla(ServerboundMovePlayerPacket move, PacketStateDeltaTracker.Inner_CachePool before, PacketStateDeltaTracker.Inner_CachePool after, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static void init_V_ServerboundMovePla(ServerboundMovePlayerPacket move, PacketStateDeltaTracker.StateSnapshot before, PacketStateDeltaTracker.StateSnapshot after, PacketDetailFormatter.AnalysisBuilder out) {
       out.addLine("Status: context-aware", UiColorPalette.mint());
       out.addLine("Meaning: client player movement update", UiColorPalette.textBright());
       out.addLine("Variant: " + move.getClass().getSimpleName().replace("ServerboundMovePlayerPacket$", ""), UiColorPalette.textBright());
@@ -622,7 +622,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static void init_V_ClientboundLoginPa_bh_StreamUtil(ClientboundLoginPacket login, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static void init_V_ClientboundLoginPa_bh_StreamUtil(ClientboundLoginPacket login, PacketDetailFormatter.AnalysisBuilder out) {
       out.addLine("Status: complete", UiColorPalette.mint());
       out.addLine("Meaning: entered play world", UiColorPalette.textBright());
       out.addLine("Player Entity Id: " + login.playerId(), UiColorPalette.blue());
@@ -636,10 +636,10 @@ public final class PacketDetailFormatter {
       out.addLine("Secure Chat Enforced: " + login.enforcesSecureChat(), UiColorPalette.textBright());
    }
 
-   private static void init_V_bq_DataUtil_bh_StreamUtil(PacketStateDeltaTracker.Inner_DataUtil capture, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static void init_V_bq_DataUtil_bh_StreamUtil(PacketStateDeltaTracker.DeltaCapture capture, PacketDetailFormatter.AnalysisBuilder out) {
       if (capture != null && capture.captured()) {
-         PacketStateDeltaTracker.Inner_CachePool before = capture.before();
-         PacketStateDeltaTracker.Inner_CachePool after = capture.load();
+         PacketStateDeltaTracker.StateSnapshot before = capture.before();
+         PacketStateDeltaTracker.StateSnapshot after = capture.load();
          out.addSemantic("Context Status: " + (before.tracked() ? "tracked" : "started mid-stream / partial"), before.tracked() ? UiColorPalette.mint() : UiColorPalette.warningYellow());
          if (!after.protocolState().isBlank()) {
             out.addSemantic("Protocol State: " + after.protocolState(), UiColorPalette.textBright());
@@ -679,7 +679,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static void init_V_AutismPacketLogger_bh_StreamUtil(AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static void init_V_AutismPacketLogger_bh_StreamUtil(AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketDetailFormatter.AnalysisBuilder out) {
       if (entry != null && entry.packet != null) {
          PacketWireCaptureStore.PacketCapture snapshot = PacketWireCaptureStore.captureFor(entry.packet);
          if (snapshot != null) {
@@ -699,7 +699,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static void appendItemPreview(List<ItemStack> items, PacketDetailFormatter.Inner_StreamUtil out) {
+   private static void appendItemPreview(List<ItemStack> items, PacketDetailFormatter.AnalysisBuilder out) {
       int shown = 0;
 
       for (int i = 0; i < items.size(); i++) {
@@ -720,7 +720,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static String init_Str_bq_CachePool(PacketStateDeltaTracker.Inner_CachePool snapshot) {
+   private static String init_Str_bq_CachePool(PacketStateDeltaTracker.StateSnapshot snapshot) {
       if (snapshot != null && snapshot.totalSlots() >= 0) {
          int containerSlots = Math.max(0, snapshot.containerSlots());
          int playerSlots = Math.max(0, snapshot.totalSlots() - containerSlots);
@@ -857,17 +857,17 @@ public final class PacketDetailFormatter {
       return "\"" + trimmed + "\"";
    }
 
-   private record Inner_CachePool(Packet<?> packet, boolean decoded, String init_Str) {
-      static PacketDetailFormatter.Inner_CachePool none() {
-         return new PacketDetailFormatter.Inner_CachePool(null, false, "");
+   private record WireDecode(Packet<?> packet, boolean decoded, String init_Str) {
+      static PacketDetailFormatter.WireDecode none() {
+         return new PacketDetailFormatter.WireDecode(null, false, "");
       }
 
-      static PacketDetailFormatter.Inner_CachePool ofDecoded(Packet<?> packet, String message) {
-         return new PacketDetailFormatter.Inner_CachePool(packet, true, message);
+      static PacketDetailFormatter.WireDecode ofDecoded(Packet<?> packet, String message) {
+         return new PacketDetailFormatter.WireDecode(packet, true, message);
       }
 
-      static PacketDetailFormatter.Inner_CachePool ofFailure(String message) {
-         return new PacketDetailFormatter.Inner_CachePool(null, false, message);
+      static PacketDetailFormatter.WireDecode ofFailure(String message) {
+         return new PacketDetailFormatter.WireDecode(null, false, message);
       }
 
       String sourceLabel() {
@@ -879,10 +879,10 @@ public final class PacketDetailFormatter {
       }
    }
 
-   public record Inner_DataUtil(
+   public record PacketAnalysis(
       List<PacketInspectorEngine.ColoredLine> lines, List<PacketInspectorEngine.ColoredLine> load, List<PacketInspectorEngine.ColoredLine> read, boolean init_Z, String init_Str
    ) {
-      public Inner_DataUtil {
+      public PacketAnalysis {
          lines = lines == null ? List.of() : List.copyOf(lines);
          load = load == null ? List.of() : List.copyOf(load);
          read = read == null ? List.of() : List.copyOf(read);
@@ -914,7 +914,7 @@ public final class PacketDetailFormatter {
       }
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class AnalysisBuilder {
       private final List<PacketInspectorEngine.ColoredLine> lines = new ArrayList<>();
       private final List<PacketInspectorEngine.ColoredLine> semanticLines = new ArrayList<>();
       private final List<PacketInspectorEngine.ColoredLine> wireLines = new ArrayList<>();
@@ -935,8 +935,8 @@ public final class PacketDetailFormatter {
          return !this.lines.isEmpty();
       }
 
-      PacketDetailFormatter.Inner_DataUtil build(boolean complete, String status) {
-         return new PacketDetailFormatter.Inner_DataUtil(this.lines, this.semanticLines, this.wireLines, complete, status);
+      PacketDetailFormatter.PacketAnalysis build(boolean complete, String status) {
+         return new PacketDetailFormatter.PacketAnalysis(this.lines, this.semanticLines, this.wireLines, complete, status);
       }
    }
 }

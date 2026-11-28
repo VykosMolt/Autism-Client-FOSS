@@ -16,7 +16,7 @@ public final class ContainerCloseGuard {
    private static final Map<Integer, AtomicInteger> holdCounts = new ConcurrentHashMap<>();
    private static final Map<Integer, ServerboundContainerClosePacket> deferredCloses = new ConcurrentHashMap<>();
    private static final Map<Integer, Long> lastTouched = new ConcurrentHashMap<>();
-   private static volatile Consumer<ContainerClickSnapshot.Inner_StreamUtil> snapshotConsumer = null;
+   private static volatile Consumer<ContainerClickSnapshot.Snapshot> snapshotConsumer = null;
 
    private ContainerCloseGuard() {
    }
@@ -126,7 +126,7 @@ public final class ContainerCloseGuard {
       return !lastTouched.isEmpty();
    }
 
-   public static void setSnapshotConsumer(Consumer<ContainerClickSnapshot.Inner_StreamUtil> consumer) {
+   public static void setSnapshotConsumer(Consumer<ContainerClickSnapshot.Snapshot> consumer) {
       snapshotConsumer = consumer;
    }
 
@@ -134,8 +134,8 @@ public final class ContainerCloseGuard {
       return snapshotConsumer != null;
    }
 
-   public static boolean offerSnapshot(ContainerClickSnapshot.Inner_StreamUtil target) {
-      Consumer<ContainerClickSnapshot.Inner_StreamUtil> consumer = snapshotConsumer;
+   public static boolean offerSnapshot(ContainerClickSnapshot.Snapshot target) {
+      Consumer<ContainerClickSnapshot.Snapshot> consumer = snapshotConsumer;
       if (consumer != null && target != null) {
          snapshotConsumer = null;
 

@@ -19,7 +19,7 @@ final class PrintWitnessCache {
    private final int maxLinks;
    private final int maxDependencies;
    private final IntConsumer onEvict;
-   private final Int2ObjectLinkedOpenHashMap<PrintWitnessCache.Inner_DataUtil> entries = new Int2ObjectLinkedOpenHashMap<>();
+   private final Int2ObjectLinkedOpenHashMap<PrintWitnessCache.CachedWitness> entries = new Int2ObjectLinkedOpenHashMap<>();
    private final Long2ObjectOpenHashMap<IntOpenHashSet> idsByCell = new Long2ObjectOpenHashMap<>();
    private int linkCount;
 
@@ -39,12 +39,12 @@ final class PrintWitnessCache {
    }
 
    PrintCore.StanceWitness witness(int id) {
-      PrintWitnessCache.Inner_DataUtil entry = this.entries.getAndMoveToLast(id);
+      PrintWitnessCache.CachedWitness entry = this.entries.getAndMoveToLast(id);
       return entry == null ? null : entry.witness();
    }
 
    PrintCore.StanceWitness peek(int id) {
-      PrintWitnessCache.Inner_DataUtil entry = this.entries.get(id);
+      PrintWitnessCache.CachedWitness entry = this.entries.get(id);
       return entry == null ? null : entry.witness();
    }
 
@@ -69,7 +69,7 @@ final class PrintWitnessCache {
    }
 
    int cellCount(int id) {
-      PrintWitnessCache.Inner_DataUtil entry = this.entries.get(id);
+      PrintWitnessCache.CachedWitness entry = this.entries.get(id);
       return entry == null ? 0 : entry.cells().length;
    }
 
@@ -100,7 +100,7 @@ final class PrintWitnessCache {
          }
 
          long[] indexed = cells.toLongArray();
-         this.entries.put(id, new PrintWitnessCache.Inner_DataUtil(witness, indexed));
+         this.entries.put(id, new PrintWitnessCache.CachedWitness(witness, indexed));
 
          for (long cell : indexed) {
             this.idsByCell.computeIfAbsent(cell, ignored -> new IntOpenHashSet()).add(id);
@@ -114,7 +114,7 @@ final class PrintWitnessCache {
    }
 
    PrintCore.StanceWitness touch(int id) {
-      PrintWitnessCache.Inner_DataUtil removed = this.entries.remove(id);
+      PrintWitnessCache.CachedWitness removed = this.entries.remove(id);
       if (removed == null) {
          return null;
       }
@@ -123,7 +123,7 @@ final class PrintWitnessCache {
       return removed.witness();
    }
 
-   private void unlinkCells(int id, PrintWitnessCache.Inner_DataUtil entry) {
+   private void unlinkCells(int id, PrintWitnessCache.CachedWitness entry) {
       for (long cell : entry.cells()) {
          IntOpenHashSet ids = this.idsByCell.get(cell);
          ids.remove(id);
@@ -142,10 +142,10 @@ final class PrintWitnessCache {
    }
 
    void init_V_UiHelper_aM(PrintCore.StanceWitness marker) {
-      ObjectBidirectionalIterator<Entry<PrintWitnessCache.Inner_DataUtil>> iterator = this.entries.int2ObjectEntrySet().fastIterator();
+      ObjectBidirectionalIterator<Entry<PrintWitnessCache.CachedWitness>> iterator = this.entries.int2ObjectEntrySet().fastIterator();
 
       while (iterator.hasNext()) {
-         Entry<PrintWitnessCache.Inner_DataUtil> entry = iterator.next();
+         Entry<PrintWitnessCache.CachedWitness> entry = iterator.next();
          if (entry.getValue().witness() == marker) {
             this.unlinkCells(entry.getIntKey(), entry.getValue());
             iterator.remove();
@@ -167,7 +167,7 @@ final class PrintWitnessCache {
 
          @Override
          public Iterator<PrintCore.StanceWitness> iterator() {
-            final ObjectIterator<PrintWitnessCache.Inner_DataUtil> iterator = PrintWitnessCache.this.entries.values().iterator();
+            final ObjectIterator<PrintWitnessCache.CachedWitness> iterator = PrintWitnessCache.this.entries.values().iterator();
             return new Iterator<PrintCore.StanceWitness>() {
                @Override
                public boolean hasNext() {
@@ -186,6 +186,6 @@ final class PrintWitnessCache {
       };
    }
 
-   private record Inner_DataUtil(PrintCore.StanceWitness witness, long[] cells) {
+   private record CachedWitness(PrintCore.StanceWitness witness, long[] cells) {
    }
 }

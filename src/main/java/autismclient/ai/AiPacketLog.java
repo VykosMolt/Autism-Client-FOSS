@@ -222,11 +222,11 @@ public final class AiPacketLog {
 
    private static void appendPacketDetail(JsonObject out, AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
       if (entry.packetClass != null) {
-         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.schemaFor(entry.packetClass);
+         autismclient.util.PacketSchemaRegistry.PacketSchema schema = autismclient.util.PacketSchemaRegistry.schemaFor(entry.packetClass);
          if (schema != null) {
             JsonArray fields = new JsonArray();
 
-            for (autismclient.util.PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
+            for (autismclient.util.PacketSchemaRegistry.FieldSchema field : schema.fields()) {
                fields.add(
                   AiJson.objectOf("name", field.name(), "javaType", field.load(), "valueKind", field.read(), "editableCandidate", field.editableCandidate())
                );
@@ -313,14 +313,14 @@ public final class AiPacketLog {
       for (int i = offset; i < end; i++) {
          Class<? extends Packet<?>> packetClass = matched.get(i);
          String flow = directionOf(packetClass);
-         autismclient.util.PacketSchemaRegistry.Inner_StreamUtil schema = autismclient.util.PacketSchemaRegistry.schemaFor(packetClass);
+         autismclient.util.PacketSchemaRegistry.PacketSchema schema = autismclient.util.PacketSchemaRegistry.schemaFor(packetClass);
          JsonObject entry = AiJson.objectOf("name", autismclient.util.PacketTypeRegistry.getPacketName(packetClass), "schema", schema);
          entry.addProperty("direction", flow);
          entry.addProperty("numericPacketId", packetIdFor(packetClass, "BOTH".equals(flow) ? "C2S" : flow));
          if (schema != null) {
             JsonArray editable = new JsonArray();
 
-            for (autismclient.util.PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
+            for (autismclient.util.PacketSchemaRegistry.FieldSchema field : schema.fields()) {
                if (field.editableCandidate()) {
                   editable.add(field.name());
                }

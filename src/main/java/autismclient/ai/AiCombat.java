@@ -341,21 +341,21 @@ final class AiCombat {
       }
    }
 
-   static Comparator<AiCombat.Inner_StreamUtil> targetOrder(AiCombat.Inner_CachePool priority) {
+   static Comparator<AiCombat.TargetCandidate> targetOrder(AiCombat.TargetPriority priority) {
       Comparator var10000;
       switch (priority) {
          case NEAREST:
-            var10000 = Comparator.<AiCombat.Inner_StreamUtil>comparingDouble(c -> c.distanceSqr() - (c.hurtPlayer() ? 64 : 0));
+            var10000 = Comparator.<AiCombat.TargetCandidate>comparingDouble(c -> c.distanceSqr() - (c.hurtPlayer() ? 64 : 0));
             break;
          case WEAKEST:
-            var10000 = Comparator.comparingDouble(AiCombat.Inner_StreamUtil::health).thenComparingDouble(AiCombat.Inner_StreamUtil::distanceSqr);
+            var10000 = Comparator.comparingDouble(AiCombat.TargetCandidate::health).thenComparingDouble(AiCombat.TargetCandidate::distanceSqr);
             break;
          case STRONGEST:
-            var10000 = Comparator.<AiCombat.Inner_StreamUtil>comparingDouble(c -> -c.maxHealth()).thenComparingDouble(AiCombat.Inner_StreamUtil::distanceSqr);
+            var10000 = Comparator.<AiCombat.TargetCandidate>comparingDouble(c -> -c.maxHealth()).thenComparingDouble(AiCombat.TargetCandidate::distanceSqr);
             break;
          case ATTACKER:
-            var10000 = Comparator.<AiCombat.Inner_StreamUtil, Boolean>comparing(c -> !c.attacking())
-               .thenComparingDouble(AiCombat.Inner_StreamUtil::distanceSqr);
+            var10000 = Comparator.<AiCombat.TargetCandidate, Boolean>comparing(c -> !c.attacking())
+               .thenComparingDouble(AiCombat.TargetCandidate::distanceSqr);
             break;
          default:
             throw new MatchException(null, null);
@@ -368,17 +368,17 @@ final class AiCombat {
       return healAttempted ? "healed_and_reengaging_exhausted" : "health_threshold";
    }
 
-   static AiCombat.Inner_DataUtil reachPlan(boolean targetOnGround, double horizontal, double verticalGap, double reach) {
+   static AiCombat.ReachPlan reachPlan(boolean targetOnGround, double horizontal, double verticalGap, double reach) {
       if (!targetOnGround && !(verticalGap <= 1.0)) {
          if (Math.hypot(horizontal, verticalGap) <= reach * 0.92) {
-            return AiCombat.Inner_DataUtil.GROUND;
+            return AiCombat.ReachPlan.GROUND;
          } else if (pillarHeightToReach(verticalGap, reach) < 0) {
-            return AiCombat.Inner_DataUtil.UNREACHABLE;
+            return AiCombat.ReachPlan.UNREACHABLE;
          } else {
-            return horizontal <= 1.4 ? AiCombat.Inner_DataUtil.PILLAR : AiCombat.Inner_DataUtil.APPROACH_UNDER;
+            return horizontal <= 1.4 ? AiCombat.ReachPlan.PILLAR : AiCombat.ReachPlan.APPROACH_UNDER;
          }
       } else {
-         return AiCombat.Inner_DataUtil.GROUND;
+         return AiCombat.ReachPlan.GROUND;
       }
    }
 
@@ -544,7 +544,7 @@ final class AiCombat {
          final int eatBelow = Math.max(0, Math.min(20, AiJson.getInt(args, "eatBelow", 0)));
          final String healWith = AiJson.getString(args, "healWith", "");
          final AiItems.ItemSpec healTarget = healWith.isBlank() ? null : AiItems.resolveItem(healWith);
-         final AiCombat.Inner_CachePool priority = AiCombat.Inner_CachePool.parse(AiJson.getString(args, "priority", "nearest"));
+         final AiCombat.TargetPriority priority = AiCombat.TargetPriority.parse(AiJson.getString(args, "priority", "nearest"));
          AiService service = AiService.getExistingInstance();
          final boolean silentAim = service != null && service.getSettings().aiSilentAim;
          final Set<EntityType<?>> types = explicitId >= 0 ? Set.of() : parseTargets(spec);
@@ -1408,10 +1408,10 @@ final class AiCombat {
                   || this.target instanceof Phantom
                   || this.target instanceof Vex
                   || this.target.isNoGravity();
-               AiCombat.Inner_DataUtil plan = goalCell != this.target.blockPosition() || !AiThreats.isLegacyCombatEnabled() && !flier
-                  ? AiCombat.Inner_DataUtil.GROUND
+               AiCombat.ReachPlan plan = goalCell != this.target.blockPosition() || !AiThreats.isLegacyCombatEnabled() && !flier
+                  ? AiCombat.ReachPlan.GROUND
                   : AiCombat.reachPlan(this.target.onGround(), horizontal, this.target.getY() - mc.player.getY(), reach);
-               if (plan == AiCombat.Inner_DataUtil.UNREACHABLE) {
+               if (plan == AiCombat.ReachPlan.UNREACHABLE) {
                   if (!AiThreats.isLegacyCombatEnabled() && this.target instanceof Blaze) {
                      this.cancelChild();
                      this.releaseMovementKeys();
@@ -1430,7 +1430,7 @@ final class AiCombat {
                      return this.failAirborne("hovering above the 3-block pillar cap");
                   }
                } else {
-                  if (plan != AiCombat.Inner_DataUtil.GROUND) {
+                  if (plan != AiCombat.ReachPlan.GROUND) {
                      return this.reachElevatedTarget(plan, distance, reach);
                   }
 
@@ -1544,14 +1544,14 @@ final class AiCombat {
                return (float)(Math.toDegrees(Math.atan2(entity.getZ() - mc.player.getZ(), entity.getX() - mc.player.getX())) - 90.0);
             }
 
-            AiOperation.Result reachElevatedTarget(AiCombat.Inner_DataUtil plan, double distance, double reach) {
+            AiOperation.Result reachElevatedTarget(AiCombat.ReachPlan plan, double distance, double reach) {
                if (this.travelLeg == null) {
                   BlockPos under = this.groundUnder(this.target);
                   if (under == null) {
                      return this.failAirborne("no standable, lava-free ground under the target");
                   }
 
-                  if (plan == AiCombat.Inner_DataUtil.PILLAR) {
+                  if (plan == AiCombat.ReachPlan.PILLAR) {
                      int needed = AiCombat.pillarHeightToReach(this.target.getY() - mc.player.getY(), reach);
                      if (needed < 0 || this.pillarBlocksUsed + needed > 3) {
                         return this.failAirborne("the target out-climbs the 3-block pillar cap");
@@ -1939,7 +1939,7 @@ final class AiCombat {
                   }
                } else {
                   List<Entity> found = new ArrayList<>();
-                  List<AiCombat.Inner_StreamUtil> candidates = new ArrayList<>();
+                  List<AiCombat.TargetCandidate> candidates = new ArrayList<>();
                   double eyeReach = AiDefense.attackReach(mc) * 0.8;
                   long now = System.nanoTime();
                   this.ignoredTargets.values().removeIf(until -> until < now);
@@ -1957,7 +1957,7 @@ final class AiCombat {
 
                               found.add(entity);
                               candidates.add(
-                                 new AiCombat.Inner_StreamUtil(distanceSq, living.getHealth(), living.getMaxHealth(), AiThreats.isActiveThreat(mc, entity), AiThreats.recentlyDamagedPlayer(entity))
+                                 new AiCombat.TargetCandidate(distanceSq, living.getHealth(), living.getMaxHealth(), AiThreats.isActiveThreat(mc, entity), AiThreats.recentlyDamagedPlayer(entity))
                               );
                            }
                         }
@@ -1968,7 +1968,7 @@ final class AiCombat {
                      return null;
                   }
 
-                  Comparator<AiCombat.Inner_StreamUtil> order = AiCombat.targetOrder(priority);
+                  Comparator<AiCombat.TargetCandidate> order = AiCombat.targetOrder(priority);
                   int best = 0;
                   double range = AiCombat.effectiveReach(AiDefense.attackReach(mc), true);
 
@@ -2723,13 +2723,13 @@ final class AiCombat {
       }
    }
 
-   enum Inner_CachePool {
+   enum TargetPriority {
       NEAREST,
       WEAKEST,
       STRONGEST,
       ATTACKER;
 
-      static AiCombat.Inner_CachePool parse(String text) {
+      static AiCombat.TargetPriority parse(String text) {
          try {
             return valueOf(text.trim().toUpperCase(Locale.ROOT));
          } catch (IllegalArgumentException | NullPointerException e) {
@@ -2738,13 +2738,13 @@ final class AiCombat {
       }
    }
 
-   enum Inner_DataUtil {
+   enum ReachPlan {
       GROUND,
       APPROACH_UNDER,
       PILLAR,
       UNREACHABLE;
    }
 
-   record Inner_StreamUtil(double distanceSqr, float health, float maxHealth, boolean attacking, boolean hurtPlayer) {
+   record TargetCandidate(double distanceSqr, float health, float maxHealth, boolean attacking, boolean hurtPlayer) {
    }
 }

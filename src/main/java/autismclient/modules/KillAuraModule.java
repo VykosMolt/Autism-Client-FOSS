@@ -3319,7 +3319,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
          long now,
          boolean active,
          autismclient.util.clicker.ClickProfile profile,
-         autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper sink
+         autismclient.util.clicker.ClickPatternEngine.ClickSink sink
       ) {
          if (active && this.lastFrameNanos != -9223372036854775808L && now >= this.lastFrameNanos && now - this.lastFrameNanos <= 150000000L) {
             while (this.lastFrameNanos < now) {
@@ -4063,7 +4063,7 @@ public final class KillAuraModule extends Module implements SilentMovementCoordi
       }
    }
 
-   static final class CarriedClicks implements autismclient.util.clicker.ClickPatternEngine.Inner_NetHelper {
+   static final class CarriedClicks implements autismclient.util.clicker.ClickPatternEngine.ClickSink {
       private static final long STALE_NANOS = 150000000L;
       int capacity = 1;
       private int count;

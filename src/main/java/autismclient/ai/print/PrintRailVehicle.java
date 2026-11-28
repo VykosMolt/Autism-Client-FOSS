@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 
 public final class PrintRailVehicle implements PrintMachineJob {
    private final PrintEnv env;
-   private final PrintRailVehicle.Inner_StreamUtil spec;
+   private final PrintRailVehicle.VehicleSpec spec;
    private final Object worldToken;
    private final Item item;
    private final EntityType<?> entityType;
@@ -33,7 +33,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
    private AABB bounds;
    private String failure = "Waiting for observed rail and entity state";
 
-   public PrintRailVehicle(PrintEnv env, PrintRailVehicle.Inner_StreamUtil spec) {
+   public PrintRailVehicle(PrintEnv env, PrintRailVehicle.VehicleSpec spec) {
       this.env = env;
       this.spec = spec;
       this.worldToken = env.worldToken();
@@ -45,7 +45,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
       }
    }
 
-   public PrintRailVehicle.Inner_StreamUtil getSpec() {
+   public PrintRailVehicle.VehicleSpec getSpec() {
       return this.spec;
    }
 
@@ -109,7 +109,7 @@ public final class PrintRailVehicle implements PrintMachineJob {
       return this.worldToken != null && this.worldToken == this.env.worldToken();
    }
 
-   private boolean matchesSpec(PrintRailVehicle.Inner_DataUtil observed) {
+   private boolean matchesSpec(PrintRailVehicle.ObservedCart observed) {
       if (observed.uuid() != null && this.spec.entityId().equals(observed.entityId()) && observed.position() != null) {
          return this.spec.railPlacement()
             ? observed.position().distanceToSqr(this.targetPosition) <= 0.25
@@ -161,16 +161,16 @@ public final class PrintRailVehicle implements PrintMachineJob {
       }
 
       this.bounds = this.entityType.getDimensions().makeBoundingBox(this.targetPosition);
-      List<PrintRailVehicle.Inner_DataUtil> observations = this.env.nearbyMinecarts(this.spec.rail());
+      List<PrintRailVehicle.ObservedCart> observations = this.env.nearbyMinecarts(this.spec.rail());
       if (observations == null) {
          this.status = PrintMachineJob.JobStatus.PREPARING;
          return this.status;
       }
 
       HashSet<UUID> ids = new HashSet<>();
-      PrintRailVehicle.Inner_DataUtil existing = null;
+      PrintRailVehicle.ObservedCart existing = null;
 
-      for (PrintRailVehicle.Inner_DataUtil observed : observations) {
+      for (PrintRailVehicle.ObservedCart observed : observations) {
          if (observed.uuid() == null || observed.position() == null || observed.bounds() == null) {
             this.status = PrintMachineJob.JobStatus.PREPARING;
             return this.status;
@@ -241,10 +241,10 @@ public final class PrintRailVehicle implements PrintMachineJob {
          return this.status;
       }
 
-      List<PrintRailVehicle.Inner_DataUtil> observations = this.env.nearbyMinecarts(this.spec.rail());
-      PrintRailVehicle.Inner_DataUtil created = null;
+      List<PrintRailVehicle.ObservedCart> observations = this.env.nearbyMinecarts(this.spec.rail());
+      PrintRailVehicle.ObservedCart created = null;
       if (observations != null) {
-         for (PrintRailVehicle.Inner_DataUtil observed : observations) {
+         for (PrintRailVehicle.ObservedCart observed : observations) {
             if (this.matchesSpec(observed) && !this.existingIds.contains(observed.uuid())) {
                if (created != null) {
                   this.status = PrintMachineJob.JobStatus.UNCERTAIN;
@@ -288,9 +288,9 @@ public final class PrintRailVehicle implements PrintMachineJob {
          return PrintMachineJob.JobStatus.PREPARING;
       }
 
-      List<PrintRailVehicle.Inner_DataUtil> observations = this.env.nearbyMinecarts(this.spec.rail());
+      List<PrintRailVehicle.ObservedCart> observations = this.env.nearbyMinecarts(this.spec.rail());
       if (observations != null) {
-         for (PrintRailVehicle.Inner_DataUtil observed : observations) {
+         for (PrintRailVehicle.ObservedCart observed : observations) {
             if (this.vehicleId.equals(observed.uuid())) {
                if (!this.matchesSpec(observed)) {
                   this.failure = "The verified vehicle left its saved placement at " + this.spec.rail().toShortString();
@@ -328,15 +328,15 @@ public final class PrintRailVehicle implements PrintMachineJob {
       }
    }
 
-   public record Inner_DataUtil(UUID uuid, String entityId, Vec3 position, AABB bounds) {
+   public record ObservedCart(UUID uuid, String entityId, Vec3 position, AABB bounds) {
    }
 
-   public record Inner_StreamUtil(String entityId, Vec3 position, boolean railPlacement) {
-      public Inner_StreamUtil(String entityId, Vec3 position) {
+   public record VehicleSpec(String entityId, Vec3 position, boolean railPlacement) {
+      public VehicleSpec(String entityId, Vec3 position) {
          this(entityId, position, true);
       }
 
-      public Inner_StreamUtil(String entityId, Vec3 position, boolean railPlacement) {
+      public VehicleSpec(String entityId, Vec3 position, boolean railPlacement) {
          if (entityId != null
             && position != null
             && Double.isFinite(position.x)

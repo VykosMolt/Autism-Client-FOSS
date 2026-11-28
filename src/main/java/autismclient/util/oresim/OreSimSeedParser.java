@@ -3,13 +3,13 @@ package autismclient.util.oresim;
 import java.util.Objects;
 
 public final class OreSimSeedParser {
-   private static final OreSimSeedParser.Inner_DataUtil EMPTY = new OreSimSeedParser.Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil.EMPTY, null);
-   private static final OreSimSeedParser.Inner_DataUtil INVALID = new OreSimSeedParser.Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil.INVALID, null);
+   private static final OreSimSeedParser.ParseResult EMPTY = new OreSimSeedParser.ParseResult(OreSimSeedParser.Status.EMPTY, null);
+   private static final OreSimSeedParser.ParseResult INVALID = new OreSimSeedParser.ParseResult(OreSimSeedParser.Status.INVALID, null);
 
    private OreSimSeedParser() {
    }
 
-   public static OreSimSeedParser.Inner_DataUtil parse(String raw) {
+   public static OreSimSeedParser.ParseResult parse(String raw) {
       if (raw == null) {
          return EMPTY;
       }
@@ -20,26 +20,26 @@ public final class OreSimSeedParser {
       }
 
       try {
-         return new OreSimSeedParser.Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil.VALID, Long.parseLong(input));
+         return new OreSimSeedParser.ParseResult(OreSimSeedParser.Status.VALID, Long.parseLong(input));
       } catch (NumberFormatException ignored) {
          return INVALID;
       }
    }
 
-   public record Inner_DataUtil(OreSimSeedParser.Inner_StreamUtil status, Long seed) {
-      public Inner_DataUtil {
+   public record ParseResult(OreSimSeedParser.Status status, Long seed) {
+      public ParseResult {
          Objects.requireNonNull(status, "status");
-         if (status == OreSimSeedParser.Inner_StreamUtil.VALID != (seed != null)) {
+         if (status == OreSimSeedParser.Status.VALID != (seed != null)) {
             throw new IllegalArgumentException("Only a valid seed may carry a value");
          }
       }
 
       public boolean isValid() {
-         return this.status == OreSimSeedParser.Inner_StreamUtil.VALID;
+         return this.status == OreSimSeedParser.Status.VALID;
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum Status {
       EMPTY,
       VALID,
       INVALID;

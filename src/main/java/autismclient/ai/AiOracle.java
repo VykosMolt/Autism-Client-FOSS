@@ -329,7 +329,7 @@ final class AiOracle {
    static AiOracle.ResolvedSeed resolveSeed(String seedArg, AiOracle.SeedProbe probe) {
       String raw = seedArg == null ? "" : seedArg.strip();
       if (!raw.isEmpty()) {
-         autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.parse(raw);
+         autismclient.util.oresim.OreSimSeedParser.ParseResult parsed = autismclient.util.oresim.OreSimSeedParser.parse(raw);
          if (!parsed.isValid()) {
             throw new IllegalArgumentException("seed must be a signed decimal long, got \"" + raw + "\"");
          } else {
@@ -340,10 +340,10 @@ final class AiOracle {
          if (local != null) {
             return new AiOracle.ResolvedSeed(local, "singleplayer");
          } else {
-            autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil stored = autismclient.util.oresim.OreSimSeedParser.parse(probe.storedSeed());
+            autismclient.util.oresim.OreSimSeedParser.ParseResult stored = autismclient.util.oresim.OreSimSeedParser.parse(probe.storedSeed());
             if (stored.isValid()) {
                return new AiOracle.ResolvedSeed(stored.seed(), "stored");
-            } else if (stored.status() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
+            } else if (stored.status() == autismclient.util.oresim.OreSimSeedParser.Status.INVALID) {
                throw new IllegalArgumentException(
                   "The stored oresim-seed for this server is not a signed decimal long; fix the xray module's oresim-seed setting or pass the seed argument"
                );

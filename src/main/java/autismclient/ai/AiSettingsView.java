@@ -16,28 +16,28 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 final class AiSettingsView {
-   private static final List<AiSettingsView.Inner_DataUtil> MODE_FLAGS = List.of(
-      new AiSettingsView.Inner_DataUtil("plan", "Plan mode (approve before acting)", s -> s.planMode, (s, v) -> s.planMode = v),
-      new AiSettingsView.Inner_DataUtil("verify", "Verify outcomes (strict, slower)", s -> s.verifyOutcomes, (s, v) -> s.verifyOutcomes = v),
-      new AiSettingsView.Inner_DataUtil("quick", "Use built-in when possible", s -> s.hostIntents, (s, v) -> s.hostIntents = v),
-      new AiSettingsView.Inner_DataUtil("vision", "Vision (screenshots)", s -> s.vision, (s, v) -> s.vision = v),
-      new AiSettingsView.Inner_DataUtil("search", "Provider web search", s -> s.nativeSearch, (s, v) -> s.nativeSearch = v),
-      new AiSettingsView.Inner_DataUtil("respawn", "Auto-respawn", s -> s.autoRespawn, (s, v) -> s.autoRespawn = v),
-      new AiSettingsView.Inner_DataUtil("rejoin", "Auto-rejoin", s -> s.autoRejoin, (s, v) -> s.autoRejoin = v),
-      new AiSettingsView.Inner_DataUtil("input", "Stop on input", s -> s.stopOnInput, (s, v) -> s.stopOnInput = v)
+   private static final List<AiSettingsView.ModeFlag> MODE_FLAGS = List.of(
+      new AiSettingsView.ModeFlag("plan", "Plan mode (approve before acting)", s -> s.planMode, (s, v) -> s.planMode = v),
+      new AiSettingsView.ModeFlag("verify", "Verify outcomes (strict, slower)", s -> s.verifyOutcomes, (s, v) -> s.verifyOutcomes = v),
+      new AiSettingsView.ModeFlag("quick", "Use built-in when possible", s -> s.hostIntents, (s, v) -> s.hostIntents = v),
+      new AiSettingsView.ModeFlag("vision", "Vision (screenshots)", s -> s.vision, (s, v) -> s.vision = v),
+      new AiSettingsView.ModeFlag("search", "Provider web search", s -> s.nativeSearch, (s, v) -> s.nativeSearch = v),
+      new AiSettingsView.ModeFlag("respawn", "Auto-respawn", s -> s.autoRespawn, (s, v) -> s.autoRespawn = v),
+      new AiSettingsView.ModeFlag("rejoin", "Auto-rejoin", s -> s.autoRejoin, (s, v) -> s.autoRejoin = v),
+      new AiSettingsView.ModeFlag("input", "Stop on input", s -> s.stopOnInput, (s, v) -> s.stopOnInput = v)
    );
-   private static final List<AiSettingsView.Inner_DataUtil> PERMISSION_FLAGS = List.of(
-      new AiSettingsView.Inner_DataUtil("teleport", "Teleport", s -> s.allowTeleport, (s, v) -> s.allowTeleport = v),
-      new AiSettingsView.Inner_DataUtil("clips", "Clips", s -> s.allowClips, (s, v) -> s.allowClips = v),
-      new AiSettingsView.Inner_DataUtil("fly", "Flight", s -> s.allowFly, (s, v) -> s.allowFly = v),
-      new AiSettingsView.Inner_DataUtil("aim", "Silent aim", s -> s.aiSilentAim, (s, v) -> s.aiSilentAim = v)
+   private static final List<AiSettingsView.ModeFlag> PERMISSION_FLAGS = List.of(
+      new AiSettingsView.ModeFlag("teleport", "Teleport", s -> s.allowTeleport, (s, v) -> s.allowTeleport = v),
+      new AiSettingsView.ModeFlag("clips", "Clips", s -> s.allowClips, (s, v) -> s.allowClips = v),
+      new AiSettingsView.ModeFlag("fly", "Flight", s -> s.allowFly, (s, v) -> s.allowFly = v),
+      new AiSettingsView.ModeFlag("aim", "Silent aim", s -> s.aiSilentAim, (s, v) -> s.aiSilentAim = v)
    );
-   private static final List<AiSettingsView.Inner_DataUtil> VISUAL_FLAGS = List.of(
-      new AiSettingsView.Inner_DataUtil("paths", "Calculated paths", s -> s.visualizePaths, (s, v) -> s.visualizePaths = v),
-      new AiSettingsView.Inner_DataUtil("targets", "Mining outlines and active placement", s -> s.visualizeTargets, (s, v) -> s.visualizeTargets = v),
-      new AiSettingsView.Inner_DataUtil("ghosts", "Textured schematic previews", s -> s.visualizeGhosts, (s, v) -> s.visualizeGhosts = v)
+   private static final List<AiSettingsView.ModeFlag> VISUAL_FLAGS = List.of(
+      new AiSettingsView.ModeFlag("paths", "Calculated paths", s -> s.visualizePaths, (s, v) -> s.visualizePaths = v),
+      new AiSettingsView.ModeFlag("targets", "Mining outlines and active placement", s -> s.visualizeTargets, (s, v) -> s.visualizeTargets = v),
+      new AiSettingsView.ModeFlag("ghosts", "Textured schematic previews", s -> s.visualizeGhosts, (s, v) -> s.visualizeGhosts = v)
    );
-   private static final AiSettingsView.Inner_DataUtil SCRIPTS_FLAG = new AiSettingsView.Inner_DataUtil(
+   private static final AiSettingsView.ModeFlag SCRIPTS_FLAG = new AiSettingsView.ModeFlag(
       "scripts", "Unrestricted scripts", s -> s.unrestrictedScripts, (s, v) -> s.unrestrictedScripts = v
    );
    private static final Set<String> init_Set = Set.of("plan", "verify", "quick", "vision", "search");
@@ -73,8 +73,8 @@ final class AiSettingsView {
    private long read_J;
    private long write_J;
    private String write_Str = "";
-   private final EnumSet<AiSettingsView.Inner_CachePool> collapsedSections = EnumSet.of(AiSettingsView.Inner_CachePool.LIMITS, AiSettingsView.Inner_CachePool.ADVANCED);
-   private final Map<String, AiSettingsView.Inner_StreamUtil> pendingFlags = new HashMap<>();
+   private final EnumSet<AiSettingsView.Section> collapsedSections = EnumSet.of(AiSettingsView.Section.LIMITS, AiSettingsView.Section.ADVANCED);
+   private final Map<String, AiSettingsView.PendingFlag> pendingFlags = new HashMap<>();
    private final AiUiKit.ScrollPane scroll = new AiUiKit.ScrollPane(false);
    private AiSettings.Provider provider = AiSettings.Provider.OPENAI;
    private boolean builtIn;
@@ -135,8 +135,8 @@ final class AiSettingsView {
    }
 
    void collapseAll() {
-      this.collapsedSections.addAll(EnumSet.allOf(AiSettingsView.Inner_CachePool.class));
-      this.collapsedSections.remove(AiSettingsView.Inner_CachePool.VISUALS);
+      this.collapsedSections.addAll(EnumSet.allOf(AiSettingsView.Section.class));
+      this.collapsedSections.remove(AiSettingsView.Section.VISUALS);
       this.scroll.scrollToTop();
    }
 
@@ -374,7 +374,7 @@ final class AiSettingsView {
          autismclient.gui.ui.widgets.DropdownWidget.closeAll(this.dropdowns);
          this.refreshModels();
          if (k.isBlank()) {
-            this.modelCatalog.acceptResult(generation, identity, new AiModels.Inner_CachePool(List.of(), "Add an API key to scan for models"));
+            this.modelCatalog.acceptResult(generation, identity, new AiModels.FetchResult(List.of(), "Add an API key to scan for models"));
             this.scanMessage = this.modelCatalog.message();
             this.init_Z = true;
             this.refreshModels();
@@ -383,12 +383,12 @@ final class AiSettingsView {
             String endpointText = this.endpointField.getValue();
             Thread worker = new Thread(
                () -> {
-                  AiKeyResolver.Inner_DataUtil resolution = AiKeyResolver.resolve(k, p, endpointText, typed, () -> {
+                  AiKeyResolver.Resolution resolution = AiKeyResolver.resolve(k, p, endpointText, typed, () -> {
                      if (!this.modelCatalog.isCurrent(generation)) {
                         throw new CancellationException("Model scan superseded");
                      }
                   });
-                  AiModels.Inner_CachePool result = new AiModels.Inner_CachePool(resolution.models(), resolution.error(), resolution.endpoint(), resolution.provider());
+                  AiModels.FetchResult result = new AiModels.FetchResult(resolution.models(), resolution.error(), resolution.endpoint(), resolution.provider());
                   Minecraft.getInstance()
                      .execute(
                         () -> {
@@ -563,8 +563,8 @@ final class AiSettingsView {
       int start = y;
       AiSettings live = this.view.settings;
       boolean hasKey = this.service.hasProviderKey(this.provider);
-      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.PROVIDER, x, y, w);
-      if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.PROVIDER)) {
+      y = this.drawSection(kit, AiSettingsView.Section.PROVIDER, x, y, w);
+      if (!this.collapsedSections.contains(AiSettingsView.Section.PROVIDER)) {
          autismclient.gui.f.NetHelper field = this.labelRow(kit, "Provider", x, y, w, labelW);
          this.providerDropdown.setBounds(field.read(), field.write(), field.update(), field.sync());
          if (kit.isVisibleInClip(field)) {
@@ -585,7 +585,7 @@ final class AiSettingsView {
          }
       }
 
-      if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.PROVIDER) && !this.builtIn) {
+      if (!this.collapsedSections.contains(AiSettingsView.Section.PROVIDER) && !this.builtIn) {
          this.apiKeyField.setPlaceholder(hasKey ? "Key saved - type to replace" : "Paste your API key");
          kit.drawTextInput(this.apiKeyField, this.labelRow(kit, "API key", x, y, w, labelW));
          y += ctrl + 2;
@@ -621,9 +621,9 @@ final class AiSettingsView {
          y += 2;
       }
 
-      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.BEHAVIOR, x, y, w);
-      if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.BEHAVIOR)) {
-         for (AiSettingsView.Inner_DataUtil flag : MODE_FLAGS) {
+      y = this.drawSection(kit, AiSettingsView.Section.BEHAVIOR, x, y, w);
+      if (!this.collapsedSections.contains(AiSettingsView.Section.BEHAVIOR)) {
+         for (AiSettingsView.ModeFlag flag : MODE_FLAGS) {
             if (!this.builtIn || !init_Set.contains(flag.key())) {
                y = this.drawFlagRow(kit, flag, live, x, y, w, now);
             }
@@ -631,9 +631,9 @@ final class AiSettingsView {
       }
 
       y += 2;
-      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.VISUALS, x, y, w);
-      if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.VISUALS)) {
-         for (AiSettingsView.Inner_DataUtil flag : VISUAL_FLAGS) {
+      y = this.drawSection(kit, AiSettingsView.Section.VISUALS, x, y, w);
+      if (!this.collapsedSections.contains(AiSettingsView.Section.VISUALS)) {
+         for (AiSettingsView.ModeFlag flag : VISUAL_FLAGS) {
             y = this.drawFlagRow(kit, flag, live, x, y, w, now);
          }
 
@@ -683,9 +683,9 @@ final class AiSettingsView {
       }
 
       y += 2;
-      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.MOVEMENT, x, y, w);
-      if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.MOVEMENT)) {
-         for (AiSettingsView.Inner_DataUtil flag : PERMISSION_FLAGS) {
+      y = this.drawSection(kit, AiSettingsView.Section.MOVEMENT, x, y, w);
+      if (!this.collapsedSections.contains(AiSettingsView.Section.MOVEMENT)) {
+         for (AiSettingsView.ModeFlag flag : PERMISSION_FLAGS) {
             y = this.drawFlagRow(kit, flag, live, x, y, w, now);
          }
 
@@ -695,8 +695,8 @@ final class AiSettingsView {
 
       y += 2;
       if (!this.builtIn) {
-         y = this.drawSection(kit, AiSettingsView.Inner_CachePool.LIMITS, x, y, w);
-         if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.LIMITS)) {
+         y = this.drawSection(kit, AiSettingsView.Section.LIMITS, x, y, w);
+         if (!this.collapsedSections.contains(AiSettingsView.Section.LIMITS)) {
             y = this.drawFieldRow(kit, "Context", this.contextField, x, y, w, labelW);
             y = this.drawFieldRow(kit, "Output", this.outputField, x, y, w, labelW);
             y = this.drawFieldRow(kit, "Requests", this.requestsField, x, y, w, labelW);
@@ -707,8 +707,8 @@ final class AiSettingsView {
          y += 2;
       }
 
-      y = this.drawSection(kit, AiSettingsView.Inner_CachePool.ADVANCED, x, y, w);
-      if (!this.collapsedSections.contains(AiSettingsView.Inner_CachePool.ADVANCED)) {
+      y = this.drawSection(kit, AiSettingsView.Section.ADVANCED, x, y, w);
+      if (!this.collapsedSections.contains(AiSettingsView.Section.ADVANCED)) {
          if (!this.builtIn) {
             this.endpointField.setPlaceholder(this.provider.endpoint);
             kit.drawTextInput(this.endpointField, this.labelRow(kit, "Endpoint", x, y, w, labelW));
@@ -772,7 +772,7 @@ final class AiSettingsView {
       return y + AiUiKit.toolbarHeight() + 2;
    }
 
-   private int drawSection(AiUiKit kit, AiSettingsView.Inner_CachePool section, int x, int y, int w) {
+   private int drawSection(AiUiKit kit, AiSettingsView.Section section, int x, int y, int w) {
       autismclient.gui.f.NetHelper bounds = autismclient.gui.f.NetHelper.init(x, y, w, autismclient.gui.ui.UiDensityMetrics.scaledHeight(12));
       boolean folded = this.collapsedSections.contains(section);
       autismclient.gui.ui.widgets.GroupHeaderRenderer.render(kit.renderContext, bounds, section.init_Str, folded, kit.isHovered(bounds));
@@ -786,12 +786,12 @@ final class AiSettingsView {
       return y + bounds.sync() + 2;
    }
 
-   private int drawFlagRow(AiUiKit kit, AiSettingsView.Inner_DataUtil flag, AiSettings live, int x, int y, int w, long now) {
+   private int drawFlagRow(AiUiKit kit, AiSettingsView.ModeFlag flag, AiSettings live, int x, int y, int w, long now) {
       boolean value = this.flagValue(flag, live, now);
       autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(x, y, w, AiUiKit.inputHeight());
       kit.drawToggleSwitch(row, flag.label(), value, flag.key(), () -> {
          boolean next = !value;
-         this.pendingFlags.put(flag.key(), new AiSettingsView.Inner_StreamUtil(next, System.currentTimeMillis() + 1500L));
+         this.pendingFlags.put(flag.key(), new AiSettingsView.PendingFlag(next, System.currentTimeMillis() + 1500L));
          this.service.editSettingsAsync(s -> flag.set().accept(s, next));
          this.view.invalidate();
       });
@@ -803,9 +803,9 @@ final class AiSettingsView {
       AiVisualization.setGhostLimit(this.ghostLimit);
    }
 
-   private boolean flagValue(AiSettingsView.Inner_DataUtil flag, AiSettings live, long now) {
+   private boolean flagValue(AiSettingsView.ModeFlag flag, AiSettings live, long now) {
       boolean actual = flag.get().test(live);
-      AiSettingsView.Inner_StreamUtil p = this.pendingFlags.get(flag.key());
+      AiSettingsView.PendingFlag p = this.pendingFlags.get(flag.key());
       if (p == null) {
          return actual;
       }
@@ -918,8 +918,8 @@ final class AiSettingsView {
       if (this.isDirty()) {
          AiSettings next = this.service.getSettings();
 
-         for (AiSettingsView.Inner_DataUtil flag : allFlags()) {
-            AiSettingsView.Inner_StreamUtil p = this.pendingFlags.get(flag.key());
+         for (AiSettingsView.ModeFlag flag : allFlags()) {
+            AiSettingsView.PendingFlag p = this.pendingFlags.get(flag.key());
             if (p != null) {
                flag.set().accept(next, p.value());
             }
@@ -989,8 +989,8 @@ final class AiSettingsView {
       }
    }
 
-   private static List<AiSettingsView.Inner_DataUtil> allFlags() {
-      List<AiSettingsView.Inner_DataUtil> all = new ArrayList<>(MODE_FLAGS);
+   private static List<AiSettingsView.ModeFlag> allFlags() {
+      List<AiSettingsView.ModeFlag> all = new ArrayList<>(MODE_FLAGS);
       all.addAll(PERMISSION_FLAGS);
       all.addAll(VISUAL_FLAGS);
       all.add(SCRIPTS_FLAG);
@@ -1057,7 +1057,7 @@ final class AiSettingsView {
       }
    }
 
-   private enum Inner_CachePool {
+   private enum Section {
       PROVIDER("Provider"),
       BEHAVIOR("Behavior"),
       VISUALS("World visualization"),
@@ -1067,14 +1067,14 @@ final class AiSettingsView {
 
       final String init_Str;
 
-      Inner_CachePool(String title) {
+      Section(String title) {
          this.init_Str = title;
       }
    }
 
-   private record Inner_DataUtil(String key, String label, Predicate<AiSettings> get, BiConsumer<AiSettings, Boolean> set) {
+   private record ModeFlag(String key, String label, Predicate<AiSettings> get, BiConsumer<AiSettings, Boolean> set) {
    }
 
-   private record Inner_StreamUtil(boolean value, long until) {
+   private record PendingFlag(boolean value, long until) {
    }
 }

@@ -62,7 +62,7 @@ public final class OreSimEspScanner {
    private static boolean espStyle;
    private static int colorRevision = -2147483648;
    private static final Object2IntOpenHashMap<Block> blockMaskCache = new Object2IntOpenHashMap<>();
-   private static volatile autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil seedParse = autismclient.util.oresim.OreSimSeedParser.parse(null);
+   private static volatile autismclient.util.oresim.OreSimSeedParser.ParseResult seedParse = autismclient.util.oresim.OreSimSeedParser.parse(null);
    private static final long PAUSE_RESET_NANOS = TimeUnit.MINUTES.toNanos(2L);
    private static OreSimEspScanner.BlockSelection tableSelection;
    private static boolean[] stateTable = new boolean[0];
@@ -217,12 +217,12 @@ public final class OreSimEspScanner {
    }
 
    static Long seedFor(Module xray) {
-      autismclient.util.oresim.OreSimSeedParser.Inner_DataUtil parsed = autismclient.util.oresim.OreSimSeedParser.parse(xray == null ? null : xray.value("oresim-seed"));
+      autismclient.util.oresim.OreSimSeedParser.ParseResult parsed = autismclient.util.oresim.OreSimSeedParser.parse(xray == null ? null : xray.value("oresim-seed"));
       seedParse = parsed;
       return parsed.seed();
    }
 
-   public static autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedInfo(Module xray) {
+   public static autismclient.util.oresim.OreSimSeedParser.Status seedInfo(Module xray) {
       seedFor(xray);
       return seedParse.status();
    }
@@ -694,7 +694,7 @@ public final class OreSimEspScanner {
       if (xray != null && xray.isEnabled() && isOreSimMode(xray)) {
          boolean shaderCullMode = !isEspStyle(xray) && am.pop();
          Long parsedSeed = seedFor(xray);
-         if (seedParse.status() == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID) {
+         if (seedParse.status() == autismclient.util.oresim.OreSimSeedParser.Status.INVALID) {
             return "invalid seed";
          } else if (parsedSeed == null) {
             return "no seed";

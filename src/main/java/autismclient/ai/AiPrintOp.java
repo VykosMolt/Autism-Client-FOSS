@@ -208,10 +208,10 @@ final class AiPrintOp implements AiOperation {
          return this.fail(AiOperation.Status.TIMED_OUT, "Requested build deadline reached");
       }
 
-      AiMenuClose.Inner_StreamUtil menuClose = AiMenuClose.receiptState();
-      if (menuClose != AiMenuClose.Inner_StreamUtil.READY) {
+      AiMenuClose.ReceiptState menuClose = AiMenuClose.receiptState();
+      if (menuClose != AiMenuClose.ReceiptState.READY) {
          this.env.releaseControls();
-         return menuClose == AiMenuClose.Inner_StreamUtil.UNCERTAIN
+         return menuClose == AiMenuClose.ReceiptState.UNCERTAIN
             ? this.fail(AiOperation.Status.UNCERTAIN, "The server did not reconcile the closed storage menu. Inspect the inventory before resuming.", AiFailure.UNKNOWN)
             : this.runningStatus("Waiting for the server to close the storage menu");
       }

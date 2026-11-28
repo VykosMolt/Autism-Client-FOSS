@@ -345,13 +345,13 @@ public final class CombatInteractionController {
       }
    }
 
-   public static CombatInteractionController.Inner_DataUtil frame(Minecraft mc) {
+   public static CombatInteractionController.SavedView frame(Minecraft mc) {
       int tick = AutismSessionState.getInstance().getClientTick();
       if (!isBlockMode() && !sync_Z && canInteract(mc) && update_I != tick) {
          if (!isLegitAura() || update_Z(mc) && !captureExpired(tick)) {
             if (update() && wireMatchesSilent() && isSameHeldState(mc) && init_Z(mc, silentRotation)) {
                HitResult hit = raycastAt(mc, silentRotation);
-               CombatInteractionController.Inner_DataUtil frame = new CombatInteractionController.Inner_DataUtil(
+               CombatInteractionController.SavedView frame = new CombatInteractionController.SavedView(
                   trackedPlayer, mc.hitResult, trackedPlayer.getYRot(), trackedPlayer.getXRot()
                );
                trackedPlayer.setYRot(silentRotation.yaw());
@@ -594,7 +594,7 @@ public final class CombatInteractionController {
       write_I = -2147483648;
    }
 
-   public record Inner_DataUtil(LocalPlayer player, HitResult hit, float yaw, float load) {
+   public record SavedView(LocalPlayer player, HitResult hit, float yaw, float load) {
       public void init(Minecraft mc) {
          this.player.setYRot(this.yaw);
          this.player.setXRot(this.load);

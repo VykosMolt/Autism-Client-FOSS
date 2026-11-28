@@ -20,9 +20,9 @@ import org.joml.Vector3fc;
 public final class OreGhostModelCache {
    public static final int init_I = 5;
    private static final RandomSource RANDOM = RandomSource.create(42L);
-   private static final Map<BlockState, OreGhostModelCache.Inner_StreamUtil> MODELS = new LinkedHashMap<BlockState, OreGhostModelCache.Inner_StreamUtil>(128, 0.75F, true) {
+   private static final Map<BlockState, OreGhostModelCache.GhostModel> MODELS = new LinkedHashMap<BlockState, OreGhostModelCache.GhostModel>(128, 0.75F, true) {
       @Override
-      protected boolean removeEldestEntry(Entry<BlockState, OreGhostModelCache.Inner_StreamUtil> eldest) {
+      protected boolean removeEldestEntry(Entry<BlockState, OreGhostModelCache.GhostModel> eldest) {
          return this.size() > 4096;
       }
    };
@@ -37,19 +37,19 @@ public final class OreGhostModelCache {
       modelSet = null;
    }
 
-   public static OreGhostModelCache.Inner_StreamUtil init(BlockState state) {
+   public static OreGhostModelCache.GhostModel init(BlockState state) {
       if (state == null) {
-         return OreGhostModelCache.Inner_StreamUtil.EMPTY;
+         return OreGhostModelCache.GhostModel.EMPTY;
       }
 
       Minecraft mc = Minecraft.getInstance();
       if (mc == null) {
-         return OreGhostModelCache.Inner_StreamUtil.EMPTY;
+         return OreGhostModelCache.GhostModel.EMPTY;
       }
 
       BlockStateModelSet set = mc.getModelManager().getBlockStateModelSet();
       if (set == null) {
-         return OreGhostModelCache.Inner_StreamUtil.EMPTY;
+         return OreGhostModelCache.GhostModel.EMPTY;
       }
 
       if (set != modelSet) {
@@ -57,28 +57,28 @@ public final class OreGhostModelCache {
          modelSet = set;
       }
 
-      OreGhostModelCache.Inner_StreamUtil cached = MODELS.get(state);
+      OreGhostModelCache.GhostModel cached = MODELS.get(state);
       if (cached != null) {
          return cached;
       }
 
-      OreGhostModelCache.Inner_StreamUtil built;
+      OreGhostModelCache.GhostModel built;
       try {
          built = buildModel(set, state);
       } catch (Throwable error) {
          AutismClientAddon.LOG.debug("OreSim ghost model build failed", error);
-         built = OreGhostModelCache.Inner_StreamUtil.EMPTY;
+         built = OreGhostModelCache.GhostModel.EMPTY;
       }
 
       MODELS.put(state, built);
       return built;
    }
 
-   private static OreGhostModelCache.Inner_StreamUtil buildModel(BlockStateModelSet set, BlockState state) {
+   private static OreGhostModelCache.GhostModel buildModel(BlockStateModelSet set, BlockState state) {
       PARTS.clear();
       RANDOM.setSeed(42L);
       set.get(state).collectParts(RANDOM, PARTS);
-      List<OreGhostModelCache.Inner_DataUtil> faces = new ArrayList<>();
+      List<OreGhostModelCache.Face> faces = new ArrayList<>();
 
       for (BlockStateModelPart part : PARTS) {
          for (Direction direction : Direction.values()) {
@@ -89,10 +89,10 @@ public final class OreGhostModelCache {
       }
 
       PARTS.clear();
-      return faces.isEmpty() ? OreGhostModelCache.Inner_StreamUtil.EMPTY : new OreGhostModelCache.Inner_StreamUtil(List.copyOf(faces));
+      return faces.isEmpty() ? OreGhostModelCache.GhostModel.EMPTY : new OreGhostModelCache.GhostModel(List.copyOf(faces));
    }
 
-   private static void collectQuads(List<BakedQuad> quads, Direction cull, List<OreGhostModelCache.Inner_DataUtil> out) {
+   private static void collectQuads(List<BakedQuad> quads, Direction cull, List<OreGhostModelCache.Face> out) {
       if (quads != null && !quads.isEmpty()) {
          for (BakedQuad quad : quads) {
             float[] data = new float[20];
@@ -109,15 +109,15 @@ public final class OreGhostModelCache {
             }
 
             Direction facing = Compat263.materialInfoShade(quad.materialInfo()) ? quad.direction() : null;
-            out.add(new OreGhostModelCache.Inner_DataUtil(cull, facing, data, quad.materialInfo().tintIndex()));
+            out.add(new OreGhostModelCache.Face(cull, facing, data, quad.materialInfo().tintIndex()));
          }
       }
    }
 
-   public record Inner_DataUtil(Direction cullFace, Direction load, float[] vertices, int tintIndex) {
+   public record Face(Direction cullFace, Direction load, float[] vertices, int tintIndex) {
    }
 
-   public record Inner_StreamUtil(List<OreGhostModelCache.Inner_DataUtil> faces) {
-      static final OreGhostModelCache.Inner_StreamUtil EMPTY = new OreGhostModelCache.Inner_StreamUtil(List.of());
+   public record GhostModel(List<OreGhostModelCache.Face> faces) {
+      static final OreGhostModelCache.GhostModel EMPTY = new OreGhostModelCache.GhostModel(List.of());
    }
 }

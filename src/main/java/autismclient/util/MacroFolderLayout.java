@@ -302,27 +302,27 @@ public final class MacroFolderLayout {
       return folders;
    }
 
-   public List<MacroFolderLayout.Inner_DataUtil> rows(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
+   public List<MacroFolderLayout.LayoutRow> rows(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
       return rows(macros, this.folders(), this::load_Z_Str, query, includeEmpty);
    }
 
-   public List<MacroFolderLayout.Inner_DataUtil> load(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
+   public List<MacroFolderLayout.LayoutRow> load(Collection<AutismMacro> macros, String query, boolean includeEmpty) {
       return buildRows(macros, this.folders(), this::load_Z_Str, query, includeEmpty, true, this.macroByFolder);
    }
 
-   public static List<MacroFolderLayout.Inner_DataUtil> rows(
+   public static List<MacroFolderLayout.LayoutRow> rows(
       Collection<AutismMacro> macros, Collection<String> folders, Predicate<String> collapsed, String query, boolean includeEmpty
    ) {
       return buildRows(macros, folders, collapsed, query, includeEmpty, false);
    }
 
-   public static List<MacroFolderLayout.Inner_DataUtil> buildRows(
+   public static List<MacroFolderLayout.LayoutRow> buildRows(
       Collection<AutismMacro> macros, Collection<String> folders, Predicate<String> collapsed, String query, boolean includeEmpty, boolean preserveOrder
    ) {
       return buildRows(macros, folders, collapsed, query, includeEmpty, preserveOrder, Map.of());
    }
 
-   private static List<MacroFolderLayout.Inner_DataUtil> buildRows(
+   private static List<MacroFolderLayout.LayoutRow> buildRows(
       Collection<AutismMacro> macros,
       Collection<String> folders,
       Predicate<String> collapsed,
@@ -365,7 +365,7 @@ public final class MacroFolderLayout {
 
       List<String> folderKeys = new ArrayList<>(order);
       folderKeys.addAll(extra.keySet());
-      List<MacroFolderLayout.Inner_DataUtil> rows = new ArrayList<>();
+      List<MacroFolderLayout.LayoutRow> rows = new ArrayList<>();
       List<AutismMacro> loose = groups.getOrDefault("", List.of());
       if (anchors.isEmpty()) {
          appendFolder(rows, "", loose, needle, collapsed, includeEmpty, preserveOrder);
@@ -397,7 +397,7 @@ public final class MacroFolderLayout {
             }
 
             if (i < loose.size() && (needle.isEmpty() || loose.get(i).name.toLowerCase(Locale.ROOT).contains(needle))) {
-               rows.add(new MacroFolderLayout.Inner_DataUtil("", loose.get(i), 0, false));
+               rows.add(new MacroFolderLayout.LayoutRow("", loose.get(i), 0, false));
             }
          }
 
@@ -406,7 +406,7 @@ public final class MacroFolderLayout {
    }
 
    private static void appendFolder(
-      List<MacroFolderLayout.Inner_DataUtil> rows, String folder, List<AutismMacro> all, String needle, Predicate<String> collapsed, boolean includeEmpty, boolean preserveOrder
+      List<MacroFolderLayout.LayoutRow> rows, String folder, List<AutismMacro> all, String needle, Predicate<String> collapsed, boolean includeEmpty, boolean preserveOrder
    ) {
       boolean folderMatch = folder.toLowerCase(Locale.ROOT).contains(needle);
       Stream<AutismMacro> matching = all.stream().filter(m -> folderMatch || m.name.toLowerCase(Locale.ROOT).contains(needle));
@@ -414,18 +414,18 @@ public final class MacroFolderLayout {
       if (!matches.isEmpty() || includeEmpty && all.isEmpty() && folderMatch) {
          boolean shut = needle.isEmpty() && collapsed.test(folder);
          if (!folder.isEmpty()) {
-            rows.add(new MacroFolderLayout.Inner_DataUtil(folder, null, matches.size(), shut));
+            rows.add(new MacroFolderLayout.LayoutRow(folder, null, matches.size(), shut));
          }
 
          if (folder.isEmpty() || !shut) {
             for (AutismMacro macro : matches) {
-               rows.add(new MacroFolderLayout.Inner_DataUtil(folder, macro, 0, false));
+               rows.add(new MacroFolderLayout.LayoutRow(folder, macro, 0, false));
             }
          }
       }
    }
 
-   public record Inner_DataUtil(String init_Str, AutismMacro macro, int init_I, boolean init_Z) {
+   public record LayoutRow(String init_Str, AutismMacro macro, int init_I, boolean init_Z) {
       public boolean init_Z() {
          return this.macro == null;
       }

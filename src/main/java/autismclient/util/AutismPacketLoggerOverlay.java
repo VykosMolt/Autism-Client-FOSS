@@ -491,7 +491,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
                boolean isMovement = containsAny(name, MOVEMENT_PACKET_KEYWORDS);
                boolean isPayload = isPayloadPacket(cls, name);
                if ((payloadOnly && isPayload || !this.isBlocked(cls, name)) && (!payloadOnly || isPayload)) {
-                  PacketStateDeltaTracker.Inner_DataUtil packetContext = this.stateDeltaTracker.capture(packet, direction);
+                  PacketStateDeltaTracker.DeltaCapture packetContext = this.stateDeltaTracker.capture(packet, direction);
                   AutismPacketLoggerOverlay.CaptureContext captureContext = captureContext(packet);
                   AutismPayloadSupport.PayloadEntry payloadSnapshot = isPayload ? AutismPayloadSupport.inspectPacket(packet, direction) : null;
                   if (payloadSnapshot != null) {
@@ -2597,7 +2597,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
       public final String capturedBlockState;
       public final String capturedScreen;
       public final AutismPayloadSupport.PayloadEntry payloadSnapshot;
-      public final PacketStateDeltaTracker.Inner_DataUtil packetContext;
+      public final PacketStateDeltaTracker.DeltaCapture packetContext;
 
       public LoggedPacketEntry(
          long ts,
@@ -2612,7 +2612,7 @@ public class AutismPacketLoggerOverlay extends DraggableOverlayWindow {
          String capturedBlockState,
          String capturedScreen,
          AutismPayloadSupport.PayloadEntry payloadSnapshot,
-         PacketStateDeltaTracker.Inner_DataUtil packetContext
+         PacketStateDeltaTracker.DeltaCapture packetContext
       ) {
          this.timestampMs = ts;
          this.tick = tick;

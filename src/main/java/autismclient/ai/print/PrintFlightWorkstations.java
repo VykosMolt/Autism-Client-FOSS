@@ -32,7 +32,7 @@ final class PrintFlightWorkstations {
       return cells;
    }
 
-   static List<Vec3> init(PrintView view, PrintTarget target, PrintClicks.Inner_CachePool mode, long key) {
+   static List<Vec3> init(PrintView view, PrintTarget target, PrintClicks.ClickMode mode, long key) {
       Vec3 center = PrintFlight.cellFlightPoint(key);
       if (!PrintFlight.isFlightPointSafe(view, center)) {
          return List.of(center);
@@ -49,13 +49,13 @@ final class PrintFlightWorkstations {
       return List.copyOf(connected);
    }
 
-   static List<Vec3> load(PrintView view, PrintTarget target, PrintClicks.Inner_CachePool mode, long key) {
+   static List<Vec3> load(PrintView view, PrintTarget target, PrintClicks.ClickMode mode, long key) {
       Vec3 center = PrintFlight.cellFlightPoint(key);
       double low = BlockPos.getY(key);
       double high = low + 1.0;
       AABB column = new AABB(center.x - 0.3, low, center.z - 0.3, center.x + 0.3, high + 1.8, center.z + 0.3);
       ArrayList<AABB> boxes = new ArrayList<>(view.collectCollisions(column));
-      if (mode == PrintClicks.Inner_CachePool.PLACE) {
+      if (mode == PrintClicks.ClickMode.PLACE) {
          BlockState placed = target.wanted();
          if (placed.hasProperty(BlockStateProperties.OPEN)) {
             placed = placed.setValue(BlockStateProperties.OPEN, false);

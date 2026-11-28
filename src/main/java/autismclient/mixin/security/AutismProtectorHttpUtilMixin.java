@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public class AutismProtectorHttpUtilMixin {
    @WrapOperation(method = "downloadFile", at = @At(value = "INVOKE", target = "Ljava/net/URL;openConnection(Ljava/net/Proxy;)Ljava/net/URLConnection;"))
    private static URLConnection autism$scopedConnection(URL url, Proxy proxy, Operation<URLConnection> original) throws IOException {
-      ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.workerScope();
+      ResourcePackDownloadScope.Snapshot snapshot = ResourcePackDownloadScope.workerScope();
       return snapshot == null ? original.call(url, proxy) : new ScopedHttpUrlConnection(snapshot, url, proxy);
    }
 }

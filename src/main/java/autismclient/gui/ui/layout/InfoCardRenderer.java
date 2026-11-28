@@ -17,14 +17,14 @@ public final class InfoCardRenderer {
    }
 
    public static int drawCard(
-      GuiGraphicsExtractor context, Font textRenderer, int x, int y, int width, String title, List<InfoCardRenderer.Inner_DataUtil> rows, int accentColor
+      GuiGraphicsExtractor context, Font textRenderer, int x, int y, int width, String title, List<InfoCardRenderer.CardRow> rows, int accentColor
    ) {
       String titleTrimmed = k.init(textRenderer, title, width - 12, THEME.init_Identifier_l(l.load), THEME.load(l.read));
-      ArrayList<InfoCardRenderer.Inner_DataUtil> trimmedRows = new ArrayList<>(rows.size());
+      ArrayList<InfoCardRenderer.CardRow> trimmedRows = new ArrayList<>(rows.size());
 
-      for (InfoCardRenderer.Inner_DataUtil row : rows) {
+      for (InfoCardRenderer.CardRow row : rows) {
          trimmedRows.add(
-            new InfoCardRenderer.Inner_DataUtil(
+            new InfoCardRenderer.CardRow(
                k.init(textRenderer, row.text(), width - 12, row.font(), row.color()), row.font(), row.color()
             )
          );
@@ -41,7 +41,7 @@ public final class InfoCardRenderer {
    }
 
    public static int drawBorderedCard(
-      GuiGraphicsExtractor context, Font textRenderer, int x, int y, int width, String title, List<InfoCardRenderer.Inner_DataUtil> rows, int accentColor
+      GuiGraphicsExtractor context, Font textRenderer, int x, int y, int width, String title, List<InfoCardRenderer.CardRow> rows, int accentColor
    ) {
       return drawCard(context, textRenderer, x, y, width, title, rows, accentColor, 0, true, true);
    }
@@ -53,7 +53,7 @@ public final class InfoCardRenderer {
       int y,
       int width,
       String title,
-      List<InfoCardRenderer.Inner_DataUtil> rows,
+      List<InfoCardRenderer.CardRow> rows,
       int accentColor,
       int minHeight,
       boolean leftBorder,
@@ -69,7 +69,7 @@ public final class InfoCardRenderer {
       int y,
       int width,
       String title,
-      List<InfoCardRenderer.Inner_DataUtil> rows,
+      List<InfoCardRenderer.CardRow> rows,
       int accentColor,
       int minHeight,
       boolean leftBorder,
@@ -105,7 +105,7 @@ public final class InfoCardRenderer {
       k.init(context, textRenderer, title, THEME.init_Identifier_l(l.load), THEME.load(l.read), x + padX, titleY, false);
       int rowY = y + headerHeight + 3;
 
-      for (InfoCardRenderer.Inner_DataUtil row : rows) {
+      for (InfoCardRenderer.CardRow row : rows) {
          k.init(
             context,
             textRenderer,
@@ -122,13 +122,13 @@ public final class InfoCardRenderer {
       return height;
    }
 
-   public record Inner_DataUtil(String text, Identifier font, int color) {
-      public static InfoCardRenderer.Inner_DataUtil coloredRow(String text, int color) {
-         return new InfoCardRenderer.Inner_DataUtil(text, InfoCardRenderer.THEME.init_Identifier_l(l.read), color);
+   public record CardRow(String text, Identifier font, int color) {
+      public static InfoCardRenderer.CardRow coloredRow(String text, int color) {
+         return new InfoCardRenderer.CardRow(text, InfoCardRenderer.THEME.init_Identifier_l(l.read), color);
       }
 
-      public static InfoCardRenderer.Inner_DataUtil plainRow(String text) {
-         return new InfoCardRenderer.Inner_DataUtil(text, InfoCardRenderer.THEME.init_Identifier_l(l.write), InfoCardRenderer.THEME.load(l.write));
+      public static InfoCardRenderer.CardRow plainRow(String text) {
+         return new InfoCardRenderer.CardRow(text, InfoCardRenderer.THEME.init_Identifier_l(l.write), InfoCardRenderer.THEME.load(l.write));
       }
    }
 }

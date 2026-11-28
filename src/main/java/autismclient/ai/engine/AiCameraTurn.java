@@ -7,7 +7,7 @@ import net.minecraft.util.Mth;
 
 public final class AiCameraTurn {
    private static WeakReference<LocalPlayer> putAt_WeakReference = new WeakReference<>(null);
-   private static AiCameraTurn.Inner_CacheHelper putAt_SyncPool_CacheHelp;
+   private static AiCameraTurn.ActiveTurn putAt_SyncPool_CacheHelp;
 
    private AiCameraTurn() {
    }
@@ -23,20 +23,20 @@ public final class AiCameraTurn {
                putAt_SyncPool_CacheHelp = null;
             }
 
-            AiCameraTurn.Inner_CacheHelper var7 = putAt_SyncPool_CacheHelp;
+            AiCameraTurn.ActiveTurn var7 = putAt_SyncPool_CacheHelp;
             if (var7 != null && var7.hasTarget(var1, var2)) {
                var7.putAt_V_F(var3, var4, var5);
             } else if (Math.abs(Mth.wrapDegrees(var3 - var1)) < 0.12F && Math.abs(var4 - var2) < 0.12F) {
                putAt_SyncPool_CacheHelp = null;
             } else {
-               putAt_SyncPool_CacheHelp = new AiCameraTurn.Inner_CacheHelper(var1, var2, var3, var4, var5);
+               putAt_SyncPool_CacheHelp = new AiCameraTurn.ActiveTurn(var1, var2, var3, var4, var5);
             }
          }
       }
    }
 
    public static RotationMath.Rotation cameraRotation(LocalPlayer var0) {
-      AiCameraTurn.Inner_CacheHelper var1 = putAt_SyncPool_CacheHelp;
+      AiCameraTurn.ActiveTurn var1 = putAt_SyncPool_CacheHelp;
       if (var1 == null) {
          return null;
       }
@@ -56,7 +56,7 @@ public final class AiCameraTurn {
       }
    }
 
-   static final class Inner_CacheHelper {
+   static final class ActiveTurn {
       static final double putAt_D = 23.0;
       static final double fill_D = 36.0;
       static final double readEx_D = 21.0;
@@ -80,7 +80,7 @@ public final class AiCameraTurn {
       private long lastStepNanos;
       private long lastTargetNanos;
 
-      Inner_CacheHelper(float var1, float var2, float var3, float var4, long var5) {
+      ActiveTurn(float var1, float var2, float var3, float var4, long var5) {
          this.cameraYaw = Mth.wrapDegrees(var1);
          this.cameraPitch = Math.clamp(var2, -90.0, 90.0);
          this.value_F = var3;

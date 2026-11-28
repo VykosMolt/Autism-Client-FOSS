@@ -11,9 +11,9 @@ public final class PacedTpJobManager {
    private PacedTpJobManager() {
    }
 
-   public static PacedTpJobManager.Inner_StreamUtil init(autismclient.util.macro.PacedTpAction action, String owner) {
+   public static PacedTpJobManager.JobHandle init(autismclient.util.macro.PacedTpAction action, String owner) {
       long id = JOB_IDS.incrementAndGet();
-      PacedTpJobManager.Inner_StreamUtil handle = new PacedTpJobManager.Inner_StreamUtil(id, owner == null ? "" : owner);
+      PacedTpJobManager.JobHandle handle = new PacedTpJobManager.JobHandle(id, owner == null ? "" : owner);
       JOBS.register(id, handle.owner(), 300000L);
 
       autismclient.util.g.PkgCls_a.Inner_StateCache result;
@@ -33,17 +33,17 @@ public final class PacedTpJobManager {
       return handle;
    }
 
-   public static PacedTpJobManager.Inner_CachePool status(long id) {
+   public static PacedTpJobManager.JobStatus status(long id) {
       AsyncJobRegistry.JobState state = JOBS.state(id);
-      return new PacedTpJobManager.Inner_CachePool(state.id(), state.label(), fromRegistryStatus(state.status()), state.load_Z(), state.read(), state.deadline());
+      return new PacedTpJobManager.JobStatus(state.id(), state.label(), fromRegistryStatus(state.status()), state.load_Z(), state.read(), state.deadline());
    }
 
-   public static PacedTpJobManager.Inner_DataUtil stateOf(long id) {
+   public static PacedTpJobManager.JobState stateOf(long id) {
       return status(id).state();
    }
 
    public static void cancel(long id, String reason) {
-      if (stateOf(id) == PacedTpJobManager.Inner_DataUtil.PENDING) {
+      if (stateOf(id) == PacedTpJobManager.JobState.PENDING) {
          autismclient.util.g.PkgCls_a.init_V_J_Str(id, reason);
          JOBS.complete(id, AsyncJobRegistry.JobStatus.CANCELLED);
       }
@@ -66,28 +66,28 @@ public final class PacedTpJobManager {
       }
    }
 
-   public static void init(long id, PacedTpJobManager.Inner_DataUtil completion) {
+   public static void init(long id, PacedTpJobManager.JobState completion) {
       JOBS.complete(id, toRegistryStatus(completion));
    }
 
-   private static AsyncJobRegistry.JobStatus toRegistryStatus(PacedTpJobManager.Inner_DataUtil completion) {
+   private static AsyncJobRegistry.JobStatus toRegistryStatus(PacedTpJobManager.JobState completion) {
       return completion == null ? null : AsyncJobRegistry.JobStatus.valueOf(completion.name());
    }
 
-   private static PacedTpJobManager.Inner_DataUtil fromRegistryStatus(AsyncJobRegistry.JobStatus completion) {
-      return PacedTpJobManager.Inner_DataUtil.valueOf(completion.name());
+   private static PacedTpJobManager.JobState fromRegistryStatus(AsyncJobRegistry.JobStatus completion) {
+      return PacedTpJobManager.JobState.valueOf(completion.name());
    }
 
-   public record Inner_CachePool(long id, String label, PacedTpJobManager.Inner_DataUtil state, boolean init_Z, boolean load_Z, long deadline) {
+   public record JobStatus(long id, String label, PacedTpJobManager.JobState state, boolean init_Z, boolean load_Z, long deadline) {
    }
 
-   public enum Inner_DataUtil {
+   public enum JobState {
       PENDING,
       SUCCEEDED,
       FAILED,
       CANCELLED;
    }
 
-   public record Inner_StreamUtil(long id, String owner) {
+   public record JobHandle(long id, String owner) {
    }
 }

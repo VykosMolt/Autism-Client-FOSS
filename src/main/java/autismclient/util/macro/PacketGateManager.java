@@ -16,7 +16,7 @@ import net.minecraft.network.protocol.common.ServerboundKeepAlivePacket;
 import net.minecraft.network.protocol.common.ServerboundPongPacket;
 
 public final class PacketGateManager {
-   private static final ConcurrentHashMap<String, PacketGateManager.Inner_DataUtil> GATES = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<String, PacketGateManager.Gate> GATES = new ConcurrentHashMap<>();
    private static volatile String newestKey = null;
 
    private PacketGateManager() {
@@ -40,7 +40,7 @@ public final class PacketGateManager {
             close(id, ownerRunId);
          } else {
             String key = gateKey(ownerRunId, id);
-            GATES.put(key, new PacketGateManager.Inner_DataUtil(ownerRunId, id, action.mode, action.packetNamesCopy(), action.flushOnDisable));
+            GATES.put(key, new PacketGateManager.Gate(ownerRunId, id, action.mode, action.packetNamesCopy(), action.flushOnDisable));
             newestKey = key;
          }
       }
@@ -79,7 +79,7 @@ public final class PacketGateManager {
       if (autismclient.modules.aD.read_Z()) {
          close(id, ownerRunId);
       } else if (ownerRunId > 0L || id != null && !id.isBlank() && !id.equalsIgnoreCase("all")) {
-         ArrayList<PacketGateManager.Inner_DataUtil> removed = new ArrayList<>();
+         ArrayList<PacketGateManager.Gate> removed = new ArrayList<>();
          if (id == null || id.isBlank() || id.equalsIgnoreCase("all")) {
             GATES.entrySet().removeIf(entry -> {
                if (entry.getValue().ownerRunId != ownerRunId) {
@@ -90,7 +90,7 @@ public final class PacketGateManager {
                return true;
             });
          } else if (ownerRunId > 0L) {
-            PacketGateManager.Inner_DataUtil gate = GATES.remove(gateKey(ownerRunId, id));
+            PacketGateManager.Gate gate = GATES.remove(gateKey(ownerRunId, id));
             if (gate != null) {
                removed.add(gate);
             }
@@ -122,7 +122,7 @@ public final class PacketGateManager {
       } else {
          String key = newestKey;
          if (key != null) {
-            PacketGateManager.Inner_DataUtil gate = GATES.get(key);
+            PacketGateManager.Gate gate = GATES.get(key);
             if (gate != null) {
                close(gate.id, gate.ownerRunId, Minecraft.getInstance().getConnection(), true);
             }
@@ -182,7 +182,7 @@ public final class PacketGateManager {
    static int countForRun(long ownerRunId) {
       int count = 0;
 
-      for (PacketGateManager.Inner_DataUtil gate : GATES.values()) {
+      for (PacketGateManager.Gate gate : GATES.values()) {
          if (gate.ownerRunId == ownerRunId) {
             count++;
          }
@@ -191,22 +191,22 @@ public final class PacketGateManager {
       return count;
    }
 
-   public static PacketGateManager.Inner_StreamUtil match(Packet<?> packet, String direction) {
+   public static PacketGateManager.GateVerdict match(Packet<?> packet, String direction) {
       if (autismclient.modules.aD.read_Z()) {
-         return PacketGateManager.Inner_StreamUtil.PASS;
+         return PacketGateManager.GateVerdict.PASS;
       }
 
       if (packet != null && !GATES.isEmpty()) {
          if (isKeepAlivePacket(packet)) {
-            return PacketGateManager.Inner_StreamUtil.PASS;
+            return PacketGateManager.GateVerdict.PASS;
          }
 
-         PacketGateManager.Inner_StreamUtil result = PacketGateManager.Inner_StreamUtil.PASS;
+         PacketGateManager.GateVerdict result = PacketGateManager.GateVerdict.PASS;
          ClientPacketListener current = Minecraft.getInstance().getConnection();
-         Iterator<PacketGateManager.Inner_DataUtil> gates = GATES.values().iterator();
+         Iterator<PacketGateManager.Gate> gates = GATES.values().iterator();
 
          while (gates.hasNext()) {
-            PacketGateManager.Inner_DataUtil gate = gates.next();
+            PacketGateManager.Gate gate = gates.next();
             // Gates without a run owner end with the connection they were made on.
             if (gate.ownerRunId == 0L && gate.connection != current) {
                gates.remove();
@@ -218,17 +218,17 @@ public final class PacketGateManager {
             switch (gate.mode) {
                case CANCEL:
                   if (packetMatches) {
-                     return PacketGateManager.Inner_StreamUtil.CANCEL;
+                     return PacketGateManager.GateVerdict.CANCEL;
                   }
                   break;
                case DELAY:
                   if (packetMatches) {
-                     result = PacketGateManager.Inner_StreamUtil.DELAY;
+                     result = PacketGateManager.GateVerdict.DELAY;
                   }
                   break;
                case ALLOW_ONLY:
                   if (!packetMatches) {
-                     return PacketGateManager.Inner_StreamUtil.CANCEL;
+                     return PacketGateManager.GateVerdict.CANCEL;
                   }
                case DISABLE_GATE:
             }
@@ -236,7 +236,7 @@ public final class PacketGateManager {
 
          return result;
       } else {
-         return PacketGateManager.Inner_StreamUtil.PASS;
+         return PacketGateManager.GateVerdict.PASS;
       }
    }
 
@@ -294,7 +294,7 @@ public final class PacketGateManager {
       return PacketNameResolver.normalizeCached(value);
    }
 
-   public static final class Inner_DataUtil {
+   public static final class Gate {
       public final long ownerRunId;
       public final String id;
       public final PacketGateAction.GateMode mode;
@@ -304,7 +304,7 @@ public final class PacketGateManager {
       final boolean matchAll;
       final ClientPacketListener connection;
 
-      Inner_DataUtil(long ownerRunId, String id, PacketGateAction.GateMode mode, ArrayList<String> packets, boolean flushOnDisable) {
+      Gate(long ownerRunId, String id, PacketGateAction.GateMode mode, ArrayList<String> packets, boolean flushOnDisable) {
          this.connection = Minecraft.getInstance().getConnection();
          this.ownerRunId = ownerRunId;
          this.id = id;
@@ -329,7 +329,7 @@ public final class PacketGateManager {
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum GateVerdict {
       PASS,
       CANCEL,
       DELAY;

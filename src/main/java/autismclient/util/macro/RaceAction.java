@@ -14,14 +14,14 @@ public class RaceAction implements MacroAction {
    public MacroAction triggerAction = new DelayAction(0);
    public int bodyCount = 0;
    public int timeoutMs = 10000;
-   public String conditionType = RaceAction.Inner_DataUtil.WAIT_PACKET.name();
+   public String conditionType = RaceAction.ConditionType.WAIT_PACKET.name();
    public String actionType = MacroActionType.PACKET_CLICK.name();
    public ArrayList<String> raceSteps = new ArrayList<>();
    public ArrayList<String> conditionTypes = new ArrayList<>();
    public ArrayList<String> actionTypes = new ArrayList<>();
    private transient boolean legacyFormat = false;
    private transient boolean legacyUseNextAction = false;
-   private transient ContainerClickSnapshot.Inner_StreamUtil legacyClickTarget = null;
+   private transient ContainerClickSnapshot.Snapshot legacyClickTarget = null;
    private transient int legacyTimes = 1;
 
    @Override
@@ -35,7 +35,7 @@ public class RaceAction implements MacroAction {
       tag.putString("label", this.label == null ? "" : this.label);
       tag.putInt("bodyCount", Math.max(0, this.bodyCount));
       tag.putInt("timeoutMs", Math.max(0, this.timeoutMs));
-      tag.putString("conditionType", this.conditionType == null ? RaceAction.Inner_DataUtil.WAIT_PACKET.name() : this.conditionType);
+      tag.putString("conditionType", this.conditionType == null ? RaceAction.ConditionType.WAIT_PACKET.name() : this.conditionType);
       tag.putString("actionType", this.actionType == null ? MacroActionType.PACKET_CLICK.name() : this.actionType);
       tag.put("raceSteps", MacroNbtCodecHelper.toStringListTag(this.read()));
       tag.put("conditionTypes", MacroNbtCodecHelper.toStringListTag(this.canonicalConditionTypes()));
@@ -54,7 +54,7 @@ public class RaceAction implements MacroAction {
       this.label = tag.getStringOr("label", "Race");
       this.bodyCount = Math.max(0, tag.getIntOr("bodyCount", 0));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 10000));
-      this.conditionType = canonicalConditionType(tag.getStringOr("conditionType", tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.WAIT_PACKET.name())));
+      this.conditionType = canonicalConditionType(tag.getStringOr("conditionType", tag.getStringOr("triggerType", RaceAction.ConditionType.WAIT_PACKET.name())));
       this.actionType = tag.getStringOr("actionType", MacroActionType.PACKET_CLICK.name());
       this.raceSteps = MacroNbtCodecHelper.fromStringListTag(tag.getList("raceSteps").orElse(new ListTag()));
       this.raceSteps.removeIf(s -> s == null || s.isBlank());
@@ -107,7 +107,7 @@ public class RaceAction implements MacroAction {
          this.legacyFormat = true;
          this.legacyUseNextAction = tag.getBooleanOr("useNextAction", false);
          this.legacyTimes = Math.max(1, tag.getIntOr("times", 1));
-         this.legacyClickTarget = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::fromTag).orElse(null);
+         this.legacyClickTarget = tag.getCompound("target").map(ContainerClickSnapshot.Snapshot::fromTag).orElse(null);
       }
 
       if (!isRaceCondition(this.triggerAction)) {
@@ -435,49 +435,49 @@ public class RaceAction implements MacroAction {
       return load(action) ? action : new PacketClickAction();
    }
 
-   public static RaceAction.Inner_DataUtil conditionTypeOf(MacroAction action) {
+   public static RaceAction.ConditionType conditionTypeOf(MacroAction action) {
       if (action instanceof WaitForGuiAction) {
-         return RaceAction.Inner_DataUtil.WAIT_GUI;
+         return RaceAction.ConditionType.WAIT_GUI;
       } else if (action instanceof WaitForChatAction) {
-         return RaceAction.Inner_DataUtil.WAIT_CHAT;
+         return RaceAction.ConditionType.WAIT_CHAT;
       } else if (action instanceof WaitForPacketAction) {
-         return RaceAction.Inner_DataUtil.WAIT_PACKET;
+         return RaceAction.ConditionType.WAIT_PACKET;
       } else if (action instanceof WaitForHealthAction) {
-         return RaceAction.Inner_DataUtil.WAIT_HEALTH;
+         return RaceAction.ConditionType.WAIT_HEALTH;
       } else if (action instanceof WaitForSlotChangeAction) {
-         return RaceAction.Inner_DataUtil.WAIT_SLOT_CHANGE;
+         return RaceAction.ConditionType.WAIT_SLOT_CHANGE;
       } else if (action instanceof WaitForBlockAction) {
-         return RaceAction.Inner_DataUtil.WAIT_BLOCK;
+         return RaceAction.ConditionType.WAIT_BLOCK;
       } else if (action instanceof WaitForEntityAction) {
-         return RaceAction.Inner_DataUtil.WAIT_ENTITY;
+         return RaceAction.ConditionType.WAIT_ENTITY;
       } else if (action instanceof WaitForCooldownAction) {
-         return RaceAction.Inner_DataUtil.WAIT_COOLDOWN;
+         return RaceAction.ConditionType.WAIT_COOLDOWN;
       } else if (action instanceof WaitForSoundAction) {
-         return RaceAction.Inner_DataUtil.WAIT_SOUND;
+         return RaceAction.ConditionType.WAIT_SOUND;
       } else if (action instanceof WaitPacketMatchAction) {
-         return RaceAction.Inner_DataUtil.WAIT_PACKET_MATCH;
+         return RaceAction.ConditionType.WAIT_PACKET_MATCH;
       } else if (action instanceof WaitInventoryPredicateAction) {
-         return RaceAction.Inner_DataUtil.WAIT_INVENTORY_PREDICATE;
+         return RaceAction.ConditionType.WAIT_INVENTORY_PREDICATE;
       } else if (action instanceof WaitDurabilityAction) {
-         return RaceAction.Inner_DataUtil.WAIT_DURABILITY;
+         return RaceAction.ConditionType.WAIT_DURABILITY;
       } else if (action instanceof WaitFreeSlotsAction) {
-         return RaceAction.Inner_DataUtil.WAIT_FREE_SLOTS;
+         return RaceAction.ConditionType.WAIT_FREE_SLOTS;
       } else if (action instanceof WaitMovementAction) {
-         return RaceAction.Inner_DataUtil.WAIT_MOVEMENT;
+         return RaceAction.ConditionType.WAIT_MOVEMENT;
       } else if (action instanceof WaitForLanStepAction) {
-         return RaceAction.Inner_DataUtil.WAIT_LAN_STEP;
+         return RaceAction.ConditionType.WAIT_LAN_STEP;
       } else if (action instanceof WaitForMacroStepAction) {
-         return RaceAction.Inner_DataUtil.WAIT_MACRO_STEP;
+         return RaceAction.ConditionType.WAIT_MACRO_STEP;
       } else if (action instanceof WaitGamemodeChangeAction) {
-         return RaceAction.Inner_DataUtil.WAIT_GAMEMODE_CHANGE;
+         return RaceAction.ConditionType.WAIT_GAMEMODE_CHANGE;
       } else if (action instanceof WaitPosAction || action instanceof WaitForWorldChangeAction || action instanceof WaitForPositionDeltaAction || action instanceof WaitForTeleportAction) {
-         return RaceAction.Inner_DataUtil.WAIT_MOVEMENT;
+         return RaceAction.ConditionType.WAIT_MOVEMENT;
       } else if (action instanceof TickSyncAction) {
-         return RaceAction.Inner_DataUtil.TICK_SYNC;
+         return RaceAction.ConditionType.TICK_SYNC;
       } else if (action instanceof RevisionSyncAction) {
-         return RaceAction.Inner_DataUtil.REVISION_SYNC;
+         return RaceAction.ConditionType.REVISION_SYNC;
       } else {
-         return action instanceof ServerTickSyncAction ? RaceAction.Inner_DataUtil.SERVER_TICK_SYNC : RaceAction.Inner_DataUtil.DELAY;
+         return action instanceof ServerTickSyncAction ? RaceAction.ConditionType.SERVER_TICK_SYNC : RaceAction.ConditionType.DELAY;
       }
    }
 
@@ -485,7 +485,7 @@ public class RaceAction implements MacroAction {
       return newConditionOfType(parseConditionType(typeName));
    }
 
-   private static MacroAction newConditionOfType(RaceAction.Inner_DataUtil type) {
+   private static MacroAction newConditionOfType(RaceAction.ConditionType type) {
       MacroAction var10000;
       switch (type) {
          case DELAY:
@@ -571,7 +571,7 @@ public class RaceAction implements MacroAction {
    }
 
    private static MacroAction readTrigger(CompoundTag tag) {
-      RaceAction.Inner_DataUtil type = parseConditionType(tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.DELAY.name()));
+      RaceAction.ConditionType type = parseConditionType(tag.getStringOr("triggerType", RaceAction.ConditionType.DELAY.name()));
       MacroAction action = newConditionOfType(type);
       CompoundTag actionTag = autismclient.util.AutismMacro.serializeAction(action);
       switch (type) {
@@ -662,46 +662,46 @@ public class RaceAction implements MacroAction {
       CompoundTag flat = new CompoundTag();
       switch (legacy) {
          case "POSITION_JUMP":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_POSITION_DELTA.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_POSITION_DELTA.name());
             flat.putDouble("distance", tag.getDoubleOr("positionTolerance", 5.0));
             break;
          case "WORLD_CHANGE":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_WORLD_CHANGE.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_WORLD_CHANGE.name());
             break;
          case "GUI_OPEN_BY_TITLE":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_GUI.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_GUI.name());
             flat.putString("waitMode", "OPEN");
             flat.putString("guiTitle", tag.getStringOr("guiTitleSubstr", ""));
             break;
          case "GUI_CLOSE_BY_TITLE":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_GUI.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_GUI.name());
             flat.putString("waitMode", "CLOSE");
             flat.putString("guiTitle", tag.getStringOr("guiTitleSubstr", ""));
             break;
          case "TELEPORT_PACKET":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_PACKET.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_PACKET.name());
             flat.putString("packetName", "S2C:ClientboundPlayerPositionPacket");
             break;
          case "CHAT_MATCH":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_CHAT.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_CHAT.name());
             flat.putString("pattern", tag.getStringOr("chatPattern", ""));
             flat.putBoolean("useRegex", tag.getBooleanOr("chatUseRegex", false));
             break;
          case "S2C_PACKET_CLASS":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_PACKET.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_PACKET.name());
             flat.putString("packetName", "S2C:" + tag.getStringOr("s2cPacketClassName", ""));
             break;
          case "HEALTH_BELOW":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_HEALTH.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_HEALTH.name());
             flat.putDouble("healthThreshold", tag.getDoubleOr("healthBelowThreshold", 10.0));
             flat.putString("comparison", "Drops Below");
             break;
          case "SLOT_CHANGE":
          case "ITEM_FOUND":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_SLOT_CHANGE.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_SLOT_CHANGE.name());
             break;
          case "BLOCK_STATE":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_BLOCK.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_BLOCK.name());
             ListTag blockIds = new ListTag();
             String blockId = tag.getStringOr("blockId", "");
             if (!blockId.isBlank()) {
@@ -714,16 +714,16 @@ public class RaceAction implements MacroAction {
             flat.putInt("blockZ", tag.getIntOr("blockZ", 0));
             break;
          case "ENTITY_NEAR":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_ENTITY.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_ENTITY.name());
             copyStringList(tag, flat, "entityNearIds", "entityIds");
             flat.putDouble("radius", tag.getDoubleOr("entityNearRadius", 8.0));
             break;
          case "COOLDOWN_READY":
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_COOLDOWN.name());
+            flat.putString("triggerType", RaceAction.ConditionType.WAIT_COOLDOWN.name());
             flat.putString("itemName", tag.getStringOr("cooldownItemName", ""));
             break;
          default:
-            flat.putString("triggerType", RaceAction.Inner_DataUtil.DELAY.name());
+            flat.putString("triggerType", RaceAction.ConditionType.DELAY.name());
             flat.putInt("delayMs", tag.getIntOr("manualDelayMs", 0));
       }
 
@@ -731,7 +731,7 @@ public class RaceAction implements MacroAction {
    }
 
    private static void writeTrigger(CompoundTag tag, MacroAction action) {
-      RaceAction.Inner_DataUtil type = conditionTypeOf(action);
+      RaceAction.ConditionType type = conditionTypeOf(action);
       tag.putString("triggerType", type.name());
       CompoundTag src = autismclient.util.AutismMacro.serializeAction(action);
 
@@ -755,11 +755,11 @@ public class RaceAction implements MacroAction {
       }
    }
 
-   private static RaceAction.Inner_DataUtil parseConditionType(String raw) {
+   private static RaceAction.ConditionType parseConditionType(String raw) {
       try {
-         return RaceAction.Inner_DataUtil.valueOf(raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT));
+         return RaceAction.ConditionType.valueOf(raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException ignored) {
-         return RaceAction.Inner_DataUtil.DELAY;
+         return RaceAction.ConditionType.DELAY;
       }
    }
 
@@ -771,7 +771,7 @@ public class RaceAction implements MacroAction {
          case "WAIT_WORLD_CHANGE":
          case "WAIT_POSITION_DELTA":
          case "WAIT_TELEPORT":
-            var10000 = RaceAction.Inner_DataUtil.WAIT_MOVEMENT.name();
+            var10000 = RaceAction.ConditionType.WAIT_MOVEMENT.name();
             break;
          default:
             var10000 = key;
@@ -805,7 +805,7 @@ public class RaceAction implements MacroAction {
          String condition = canonicalConditionType(type);
 
          try {
-            RaceAction.Inner_DataUtil.valueOf(condition);
+            RaceAction.ConditionType.valueOf(condition);
             return "CONDITION:" + condition;
          } catch (IllegalArgumentException ignored) {
             return "ACTION:" + normalizeKey(type);
@@ -900,7 +900,7 @@ public class RaceAction implements MacroAction {
       return "Rce";
    }
 
-   public enum Inner_DataUtil {
+   public enum ConditionType {
       DELAY,
       WAIT_GUI,
       WAIT_CHAT,

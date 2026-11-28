@@ -688,7 +688,7 @@ public final class OreSimEngine {
 
    private static void promoteReadyPending() {
       if (!pendingChunkOres.isEmpty()) {
-         NearestChunkSelector.Inner_DataUtil missing = nearestMissingChunk();
+         NearestChunkSelector.ChunkDistance missing = nearestMissingChunk();
          boolean changed = false;
          Iterator<Entry<Long, OreSimEngine.ChunkOres>> iterator = pendingChunkOres.entrySet().iterator();
 
@@ -709,7 +709,7 @@ public final class OreSimEngine {
       }
    }
 
-   private static NearestChunkSelector.Inner_DataUtil nearestMissingChunk() {
+   private static NearestChunkSelector.ChunkDistance nearestMissingChunk() {
       int centerX = SectionPos.blockToSectionCoord(trackedCenterX);
       int centerZ = SectionPos.blockToSectionCoord(trackedCenterZ);
       return NearestChunkSelector.select(

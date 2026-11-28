@@ -40,7 +40,7 @@ final class AiModelCatalog {
       return token;
    }
 
-   boolean acceptResult(long token, AiModelCatalog.CatalogKey identity, AiModels.Inner_CachePool result) {
+   boolean acceptResult(long token, AiModelCatalog.CatalogKey identity, AiModels.FetchResult result) {
       if (token == this.requestToken && Objects.equals(this.currentKey, identity)) {
          this.loading = false;
          this.models = result.ok() ? List.copyOf(result.models()) : List.of();

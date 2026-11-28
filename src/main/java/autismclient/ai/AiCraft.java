@@ -465,14 +465,14 @@ final class AiCraft {
                      }
                   }
 
-                  AiStationPlacer.Inner_DataUtil status = this.tablePlacer.tick();
-                  if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
+                  AiStationPlacer.PlaceStatus status = this.tablePlacer.tick();
+                  if (status == AiStationPlacer.PlaceStatus.PLACED) {
                      this.tablePlacer = null;
                      this.placedTable = true;
                      this.tablePlaceMs = this.elapsedMs(this.tablePlaceStartNanos);
                      AutismClientAddon.LOG.info("[AI] craft {}: crafting table placed in {} ms", outputId, this.tablePlaceMs);
                      return this.running("Crafting table placed");
-                  } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
+                  } else if (status == AiStationPlacer.PlaceStatus.FAILED) {
                      String why = this.tablePlacer.getFailureReason();
                      this.tablePlacer = null;
                      return this.finish(AiOperation.Status.FAILED, "Could not place a crafting table: " + why);
@@ -789,12 +789,12 @@ final class AiCraft {
                   this.aimTicks = 0;
                }
 
-               AiStationPlacer.Inner_DataUtil status = this.stonecutterPlacer.tick();
-               if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
+               AiStationPlacer.PlaceStatus status = this.stonecutterPlacer.tick();
+               if (status == AiStationPlacer.PlaceStatus.PLACED) {
                   this.stonecutterPos = this.stonecutterPlacer.getPlaced();
                   this.placingStonecutter = false;
                   return this.running("Stonecutter placed");
-               } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
+               } else if (status == AiStationPlacer.PlaceStatus.FAILED) {
                   this.placingStonecutter = false;
                   return this.finish(AiOperation.Status.FAILED, "Could not place a stonecutter: " + this.stonecutterPlacer.getFailureReason());
                } else {

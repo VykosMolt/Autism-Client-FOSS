@@ -100,7 +100,7 @@ public final class VillagerDupeModule extends Module {
 
    private autismclient.util.villagerdupe.VillagerDupeDriver.CachePool driverConfig() {
       return new autismclient.util.villagerdupe.VillagerDupeDriver.CachePool(
-         autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(this.choice("filter")),
+         autismclient.util.villagerdupe.VillagerDupeDriver.ItemFilter.parse(this.choice("filter")),
          this.bool("traders"),
          this.bool("auto-emerald"),
          this.bool("auto-shears"),

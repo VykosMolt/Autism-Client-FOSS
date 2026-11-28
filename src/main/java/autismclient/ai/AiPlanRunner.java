@@ -16,10 +16,10 @@ final class AiPlanRunner {
    private AiPlanRunner() {
    }
 
-   static List<AiPlanRunner.Inner_BufferHelper> orderSteps(List<AiPlanRunner.Inner_BufferHelper> steps) {
-      Map<String, AiPlanRunner.Inner_BufferHelper> byId = new LinkedHashMap<>();
+   static List<AiPlanRunner.Step> orderSteps(List<AiPlanRunner.Step> steps) {
+      Map<String, AiPlanRunner.Step> byId = new LinkedHashMap<>();
 
-      for (AiPlanRunner.Inner_BufferHelper step : steps) {
+      for (AiPlanRunner.Step step : steps) {
          if (step.id().isBlank()) {
             throw new IllegalArgumentException("Every plan step needs a non-empty id");
          }
@@ -29,7 +29,7 @@ final class AiPlanRunner {
          }
       }
 
-      for (AiPlanRunner.Inner_BufferHelper step : steps) {
+      for (AiPlanRunner.Step step : steps) {
          for (String need : step.needs()) {
             if (!byId.containsKey(need)) {
                throw new IllegalArgumentException("Step '" + step.id() + "' needs unknown step '" + need + "'");
@@ -44,7 +44,7 @@ final class AiPlanRunner {
       Map<String, Integer> remaining = new HashMap<>();
       Map<String, List<String>> dependents = new HashMap<>();
 
-      for (AiPlanRunner.Inner_BufferHelper step : steps) {
+      for (AiPlanRunner.Step step : steps) {
          remaining.put(step.id(), step.needs().size());
 
          for (String need : step.needs()) {
@@ -54,13 +54,13 @@ final class AiPlanRunner {
 
       Deque<String> ready = new ArrayDeque<>();
 
-      for (AiPlanRunner.Inner_BufferHelper step : steps) {
+      for (AiPlanRunner.Step step : steps) {
          if (remaining.get(step.id()) == 0) {
             ready.addLast(step.id());
          }
       }
 
-      List<AiPlanRunner.Inner_BufferHelper> ordered = new ArrayList<>(steps.size());
+      List<AiPlanRunner.Step> ordered = new ArrayList<>(steps.size());
 
       while (!ready.isEmpty()) {
          String id = ready.pollFirst();
@@ -82,20 +82,20 @@ final class AiPlanRunner {
       }
    }
 
-   static AiPlanRunner.Inner_StreamUtil nextRunnable(List<AiPlanRunner.Inner_StreamUtil> plan) {
-      Map<String, AiPlanRunner.Inner_StreamUtil> byId = new LinkedHashMap<>();
+   static AiPlanRunner.StepProgress nextRunnable(List<AiPlanRunner.StepProgress> plan) {
+      Map<String, AiPlanRunner.StepProgress> byId = new LinkedHashMap<>();
 
-      for (AiPlanRunner.Inner_StreamUtil progress : plan) {
+      for (AiPlanRunner.StepProgress progress : plan) {
          byId.put(progress.step.id(), progress);
       }
 
-      for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.state == AiPlanRunner.Inner_CachePool.PENDING) {
+      for (AiPlanRunner.StepProgress progress : plan) {
+         if (progress.state == AiPlanRunner.StepState.PENDING) {
             for (String need : progress.step.needs()) {
-               AiPlanRunner.Inner_StreamUtil dependency = byId.get(need);
+               AiPlanRunner.StepProgress dependency = byId.get(need);
                if (dependency != null
-                  && (dependency.state == AiPlanRunner.Inner_CachePool.FAILED || dependency.state == AiPlanRunner.Inner_CachePool.SKIPPED)) {
-                  progress.state = AiPlanRunner.Inner_CachePool.SKIPPED;
+                  && (dependency.state == AiPlanRunner.StepState.FAILED || dependency.state == AiPlanRunner.StepState.SKIPPED)) {
+                  progress.state = AiPlanRunner.StepState.SKIPPED;
                   progress.message = "skipped: step '" + need + "' it depends on did not complete";
                   break;
                }
@@ -103,13 +103,13 @@ final class AiPlanRunner {
          }
       }
 
-      for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.state == AiPlanRunner.Inner_CachePool.PENDING) {
+      for (AiPlanRunner.StepProgress progress : plan) {
+         if (progress.state == AiPlanRunner.StepState.PENDING) {
             boolean blocked = false;
 
             for (String need : progress.step.needs()) {
-               AiPlanRunner.Inner_StreamUtil dependency = byId.get(need);
-               if (dependency != null && dependency.state != AiPlanRunner.Inner_CachePool.DONE) {
+               AiPlanRunner.StepProgress dependency = byId.get(need);
+               if (dependency != null && dependency.state != AiPlanRunner.StepState.DONE) {
                   blocked = true;
                }
             }
@@ -123,9 +123,9 @@ final class AiPlanRunner {
       return null;
    }
 
-   static boolean isFinished(List<AiPlanRunner.Inner_StreamUtil> plan) {
-      for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.state == AiPlanRunner.Inner_CachePool.PENDING || progress.state == AiPlanRunner.Inner_CachePool.RUNNING) {
+   static boolean isFinished(List<AiPlanRunner.StepProgress> plan) {
+      for (AiPlanRunner.StepProgress progress : plan) {
+         if (progress.state == AiPlanRunner.StepState.PENDING || progress.state == AiPlanRunner.StepState.RUNNING) {
             return false;
          }
       }
@@ -133,34 +133,34 @@ final class AiPlanRunner {
       return true;
    }
 
-   static boolean recordResult(AiPlanRunner.Inner_StreamUtil progress, boolean succeeded, String message, AiPlanRunner.Inner_DataUtil policy) {
+   static boolean recordResult(AiPlanRunner.StepProgress progress, boolean succeeded, String message, AiPlanRunner.FailurePolicy policy) {
       progress.message = message;
       if (succeeded) {
-         progress.state = AiPlanRunner.Inner_CachePool.DONE;
+         progress.state = AiPlanRunner.StepState.DONE;
          return false;
-      } else if (policy == AiPlanRunner.Inner_DataUtil.RETRY && progress.attempts < 2) {
-         progress.state = AiPlanRunner.Inner_CachePool.PENDING;
+      } else if (policy == AiPlanRunner.FailurePolicy.RETRY && progress.attempts < 2) {
+         progress.state = AiPlanRunner.StepState.PENDING;
          return false;
       } else {
-         progress.state = AiPlanRunner.Inner_CachePool.FAILED;
-         return policy == AiPlanRunner.Inner_DataUtil.STOP;
+         progress.state = AiPlanRunner.StepState.FAILED;
+         return policy == AiPlanRunner.FailurePolicy.STOP;
       }
    }
 
-   static boolean init(AiPlanRunner.Inner_StreamUtil progress, String message, AiPlanRunner.Inner_DataUtil policy) {
+   static boolean init(AiPlanRunner.StepProgress progress, String message, AiPlanRunner.FailurePolicy policy) {
       progress.message = message;
-      progress.state = AiPlanRunner.Inner_CachePool.FAILED;
-      return policy == AiPlanRunner.Inner_DataUtil.STOP;
+      progress.state = AiPlanRunner.StepState.FAILED;
+      return policy == AiPlanRunner.FailurePolicy.STOP;
    }
 
-   static Map<String, Integer> tally(List<AiPlanRunner.Inner_StreamUtil> plan) {
+   static Map<String, Integer> tally(List<AiPlanRunner.StepProgress> plan) {
       Map<String, Integer> counts = new LinkedHashMap<>();
 
-      for (AiPlanRunner.Inner_CachePool state : AiPlanRunner.Inner_CachePool.values()) {
+      for (AiPlanRunner.StepState state : AiPlanRunner.StepState.values()) {
          counts.put(state.name().toLowerCase(Locale.ROOT), 0);
       }
 
-      for (AiPlanRunner.Inner_StreamUtil progress : plan) {
+      for (AiPlanRunner.StepProgress progress : plan) {
          counts.merge(progress.state.name().toLowerCase(Locale.ROOT), 1, Integer::sum);
       }
 
@@ -175,11 +175,11 @@ final class AiPlanRunner {
       }
    }
 
-   static Set<String> pendingIds(List<AiPlanRunner.Inner_StreamUtil> plan) {
+   static Set<String> pendingIds(List<AiPlanRunner.StepProgress> plan) {
       Set<String> ids = new LinkedHashSet<>();
 
-      for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.state == AiPlanRunner.Inner_CachePool.PENDING || progress.state == AiPlanRunner.Inner_CachePool.SKIPPED) {
+      for (AiPlanRunner.StepProgress progress : plan) {
+         if (progress.state == AiPlanRunner.StepState.PENDING || progress.state == AiPlanRunner.StepState.SKIPPED) {
             ids.add(progress.step.id());
          }
       }
@@ -187,11 +187,11 @@ final class AiPlanRunner {
       return ids;
    }
 
-   static Set<String> doneIds(List<AiPlanRunner.Inner_StreamUtil> plan) {
+   static Set<String> doneIds(List<AiPlanRunner.StepProgress> plan) {
       Set<String> ids = new HashSet<>();
 
-      for (AiPlanRunner.Inner_StreamUtil progress : plan) {
-         if (progress.state == AiPlanRunner.Inner_CachePool.DONE) {
+      for (AiPlanRunner.StepProgress progress : plan) {
+         if (progress.state == AiPlanRunner.StepState.DONE) {
             ids.add(progress.step.id());
          }
       }
@@ -199,13 +199,13 @@ final class AiPlanRunner {
       return ids;
    }
 
-   record Inner_BufferHelper(String id, String capability, String argumentsJson, List<String> needs) {
-      Inner_BufferHelper {
+   record Step(String id, String capability, String argumentsJson, List<String> needs) {
+      Step {
          needs = List.copyOf(needs);
       }
    }
 
-   enum Inner_CachePool {
+   enum StepState {
       PENDING,
       RUNNING,
       DONE,
@@ -213,19 +213,19 @@ final class AiPlanRunner {
       SKIPPED;
    }
 
-   enum Inner_DataUtil {
+   enum FailurePolicy {
       STOP,
       CONTINUE,
       RETRY;
    }
 
-   static final class Inner_StreamUtil {
-      final AiPlanRunner.Inner_BufferHelper step;
-      AiPlanRunner.Inner_CachePool state = AiPlanRunner.Inner_CachePool.PENDING;
+   static final class StepProgress {
+      final AiPlanRunner.Step step;
+      AiPlanRunner.StepState state = AiPlanRunner.StepState.PENDING;
       String message = "";
       int attempts;
 
-      Inner_StreamUtil(AiPlanRunner.Inner_BufferHelper step) {
+      StepProgress(AiPlanRunner.Step step) {
          this.step = step;
       }
    }

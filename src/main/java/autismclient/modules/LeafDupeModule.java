@@ -89,7 +89,7 @@ public final class LeafDupeModule extends Module {
    private String status = "";
    private volatile LeafDupeModule.BreakAttempt breakAttempt;
    private boolean breakStartPending;
-   private autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil cycleReceipt;
+   private autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt cycleReceipt;
    private int cycleDelayTicks;
    private int cycleCount;
    private final autismclient.util.leafdupe.LeafDupeRateLimiter rateLimiter = new autismclient.util.leafdupe.LeafDupeRateLimiter();
@@ -626,7 +626,7 @@ public final class LeafDupeModule extends Module {
          && (!stack.isDamageableItem() || stack.getMaxDamage() - stack.getDamageValue() > 2);
    }
 
-   private boolean selectSlotTracked(int slot, LeafDupeModule.BreakAttempt owner, autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil previous) {
+   private boolean selectSlotTracked(int slot, LeafDupeModule.BreakAttempt owner, autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt previous) {
       if (slot >= 0 && slot <= 8 && !autismclient.util.InventorySlotArbiter.isSlotClaimedByOther(slot, "leaf-dupe")) {
          MC.player.getInventory().setSelectedSlot(slot);
          ((AutismMultiPlayerGameModeAccessor)MC.gameMode).autism$setCarriedIndex(slot);
@@ -639,7 +639,7 @@ public final class LeafDupeModule extends Module {
             && owner.sentSlot == slot
             && !owner.slotReceipt.load()
             && !owner.slotReceipt.isStale(System.nanoTime())
-            && owner.slotReceipt.proof() instanceof autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proof
+            && owner.slotReceipt.proof() instanceof autismclient.util.leafdupe.LeafDupePacketTracker.EyeProof proof
             && proof.init(owner, MC.player.getEyePosition(), this.eyePosition())) {
             return true;
          }
@@ -706,18 +706,18 @@ public final class LeafDupeModule extends Module {
       }
    }
 
-   private autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proofFor(LeafDupeModule.BreakAttempt owner) {
-      return new autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool(owner, MC.player.getEyePosition(), this.eyePosition());
+   private autismclient.util.leafdupe.LeafDupePacketTracker.EyeProof proofFor(LeafDupeModule.BreakAttempt owner) {
+      return new autismclient.util.leafdupe.LeafDupePacketTracker.EyeProof(owner, MC.player.getEyePosition(), this.eyePosition());
    }
 
    public static boolean allowSend(Connection connection, Packet<?> packet) {
-      autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil receipt = autismclient.util.leafdupe.LeafDupePacketTracker.receiptFor(packet);
+      autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt receipt = autismclient.util.leafdupe.LeafDupePacketTracker.receiptFor(packet);
       if (receipt == null) {
          return true;
       }
 
       LeafDupeModule module = instance;
-      autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool proof = receipt.proof() instanceof autismclient.util.leafdupe.LeafDupePacketTracker.Inner_CachePool value ? value : null;
+      autismclient.util.leafdupe.LeafDupePacketTracker.EyeProof proof = receipt.proof() instanceof autismclient.util.leafdupe.LeafDupePacketTracker.EyeProof value ? value : null;
       LeafDupeModule.BreakAttempt owner = proof != null && proof.init() instanceof LeafDupeModule.BreakAttempt value ? value : null;
       boolean valid = module != null
          && owner != null
@@ -1021,8 +1021,8 @@ public final class LeafDupeModule extends Module {
                return false;
             }
 
-            autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil resetWrite = this.sendTrackedUse(hand, reset, mealSlot, current, null);
-            autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil leafWrite = this.sendTrackedUse(hand, leaf, mealSlot, current, resetWrite);
+            autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt resetWrite = this.sendTrackedUse(hand, reset, mealSlot, current, null);
+            autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt leafWrite = this.sendTrackedUse(hand, leaf, mealSlot, current, resetWrite);
             if (!this.selectSlotTracked(current.slot, current, leafWrite)) {
                return false;
             }
@@ -1140,14 +1140,14 @@ public final class LeafDupeModule extends Module {
       }
    }
 
-   private autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil sendTrackedUse(
-      InteractionHand hand, BlockHitResult hit, int slot, LeafDupeModule.BreakAttempt owner, autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil previous
+   private autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt sendTrackedUse(
+      InteractionHand hand, BlockHitResult hit, int slot, LeafDupeModule.BreakAttempt owner, autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt previous
    ) {
       this.rateLimiter.recordUse(this.packetWindowMs.get(), System.currentTimeMillis());
 
       try (BlockStatePredictionHandler prediction = this.predictionHandler().startPredicting()) {
          ServerboundUseItemOnPacket packet = new ServerboundUseItemOnPacket(hand, hit, prediction.currentSequence());
-         autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil receipt = autismclient.util.leafdupe.LeafDupePacketTracker.trackUse(
+         autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt receipt = autismclient.util.leafdupe.LeafDupePacketTracker.trackUse(
             packet, this.proofFor(owner), slot, previous
          );
          MC.getConnection().send(packet);
@@ -1502,8 +1502,8 @@ public final class LeafDupeModule extends Module {
       final int slot;
       ItemStack heldStack;
       final long createdNanos = System.nanoTime();
-      volatile autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil breakReceipt;
-      volatile autismclient.util.leafdupe.LeafDupePacketTracker.Inner_StreamUtil slotReceipt;
+      volatile autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt breakReceipt;
+      volatile autismclient.util.leafdupe.LeafDupePacketTracker.BreakReceipt slotReceipt;
       int sentSlot = -1;
       volatile boolean cancelled;
 

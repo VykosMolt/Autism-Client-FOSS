@@ -10,7 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.EntityHitResult;
 
-public final class KeyClickOutput implements ClickPatternEngine.Inner_NetHelper {
+public final class KeyClickOutput implements ClickPatternEngine.ClickSink {
    private static final Minecraft MINECRAFT = Minecraft.getInstance();
    private static final List<KeyClickOutput> OUTPUTS = new ArrayList<>();
    private static long generation;

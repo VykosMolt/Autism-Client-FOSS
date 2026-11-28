@@ -253,7 +253,7 @@ public final class AiSlimeBounce {
       for (int var11 = 0; var11 < 38; var11++) {
          AiPhysics.MoveInput var12 = var11 == var3 ? var10 : var9;
          AiPhysics.MotionState var13 = AiPhysics.step(var6, var12, var0);
-         if (!putAt_Z_TokenCore_TaskStat(var0, var6, var13, var7, var1.y()) || AiJumpSolver.isInFluid(var0, var13)) {
+         if (!isSafeStep(var0, var6, var13, var7, var1.y()) || AiJumpSolver.isInFluid(var0, var13)) {
             return null;
          }
 
@@ -316,7 +316,7 @@ public final class AiSlimeBounce {
          boolean var31 = var28 == var21 && var5 || var23 && var9 && var10.onGround() && var10.vy() > 0.2;
          AiPhysics.MoveInput var32 = new AiPhysics.MoveInput(1.0, 0.0, var31, var4, false, var17);
          AiPhysics.MotionState var33 = AiPhysics.step(var10, var32, var0);
-         if (!putAt_Z_TokenCore_TaskStat(var0, var10, var33, var13, var1.y())) {
+         if (!isSafeStep(var0, var10, var33, var13, var1.y())) {
             return new AiSlimeBounce.Inner_TableCache(null, !var24 && var15 > var11 + 4.5, var27, var25, var26);
          }
 
@@ -402,7 +402,7 @@ public final class AiSlimeBounce {
          var15 = putAt_F_F_F(var15, var24);
          AiPhysics.MoveInput var25 = new AiPhysics.MoveInput(1.0, 0.0, var22 == var18 && var5, var4, false, var15);
          AiPhysics.MotionState var26 = AiPhysics.step(var8, var25, var0);
-         if (!putAt_Z_TokenCore_TaskStat(var0, var8, var26, var11, var1.y())) {
+         if (!isSafeStep(var0, var8, var26, var11, var1.y())) {
             return null;
          }
 
@@ -462,7 +462,7 @@ public final class AiSlimeBounce {
          boolean var19 = var6 && var7.onGround() && var7.vy() > 0.2;
          AiPhysics.MoveInput var20 = new AiPhysics.MoveInput(1.0, 0.0, var19, var5, false, var12);
          AiPhysics.MotionState var21 = AiPhysics.step(var7, var20, var0);
-         if (!putAt_Z_TokenCore_TaskStat(var0, var7, var21, var10, var1.y())) {
+         if (!isSafeStep(var0, var7, var21, var10, var1.y())) {
             return new AiSlimeBounce.Inner_TableCache(null, false, true, var16, var17);
          }
 
@@ -509,7 +509,7 @@ public final class AiSlimeBounce {
       boolean var10
    ) {
       BlockPos var11 = BlockPos.containing(var4.x(), var9 ? var4.y() : Math.ceil(var4.y() - 1.0E-6), var4.z());
-      if (var9 && AiLadderJump.canClimbAt(var0, var11) && !AiLadderJump.putAt_Z_TokenCore_TaskStat(var0, var4, var11, var7)) {
+      if (var9 && AiLadderJump.canClimbAt(var0, var11) && !AiLadderJump.latchesOnLadder(var0, var4, var11, var7)) {
          return null;
       }
 
@@ -534,10 +534,10 @@ public final class AiSlimeBounce {
       );
    }
 
-   static boolean putAt(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiJumpManeuver var2, int var3, BlockPos var4, double var5) {
+   static boolean maneuverReaches(AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiJumpManeuver var2, int var3, BlockPos var4, double var5) {
       for (int var7 = var3; var7 < var2.inputs().size() + 4; var7++) {
          AiPhysics.MotionState var8 = AiPhysics.step(var1, putAt_TokenCore_CacheHel_TaskStore_I(var2, var7), var0);
-         if (!putAt_Z_TokenCore_TaskStat(var0, var1, var8, var5, var2.start().y())) {
+         if (!isSafeStep(var0, var1, var8, var5, var2.start().y())) {
             return false;
          }
 
@@ -546,7 +546,7 @@ public final class AiSlimeBounce {
             return columnReachable(var0, var9, var4)
                && (
                   !AiLadderJump.canClimbAt(var0, var9)
-                     || AiLadderJump.putAt_Z_TokenCore_TaskStat(var0, var8, var4, putAt_TokenCore_CacheHel_TaskStore_I(var2, var7).yaw())
+                     || AiLadderJump.latchesOnLadder(var0, var8, var4, putAt_TokenCore_CacheHel_TaskStore_I(var2, var7).yaw())
                );
          }
 
@@ -586,7 +586,7 @@ public final class AiSlimeBounce {
       }
    }
 
-   private static boolean putAt_Z_TokenCore_TaskStat(
+   private static boolean isSafeStep(
       AiPhysics.PhysicsWorld var0, AiPhysics.MotionState var1, AiPhysics.MotionState var2, double var3, double var5
    ) {
       return var2.y() >= var5 - 24.0

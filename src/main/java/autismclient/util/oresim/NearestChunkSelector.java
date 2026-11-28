@@ -7,17 +7,17 @@ final class NearestChunkSelector {
    private NearestChunkSelector() {
    }
 
-   static NearestChunkSelector.Inner_DataUtil select(
+   static NearestChunkSelector.ChunkDistance select(
       double playerX, double playerZ, int centerChunkX, int centerChunkZ, int radius, LongPredicate completed
    ) {
-      NearestChunkSelector.Inner_DataUtil nearest = null;
+      NearestChunkSelector.ChunkDistance nearest = null;
 
       for (int chunkX = centerChunkX - radius; chunkX <= centerChunkX + radius; chunkX++) {
          for (int chunkZ = centerChunkZ - radius; chunkZ <= centerChunkZ + radius; chunkZ++) {
             if (!completed.test(ChunkPos.pack(chunkX, chunkZ))) {
                double distance = distanceToChunk(playerX, playerZ, chunkX, chunkZ);
                if (nearest == null || compareCandidates(distance, chunkX, chunkZ, nearest.distance(), nearest.chunkX(), nearest.load()) < 0) {
-                  nearest = new NearestChunkSelector.Inner_DataUtil(chunkX, chunkZ, distance);
+                  nearest = new NearestChunkSelector.ChunkDistance(chunkX, chunkZ, distance);
                }
             }
          }
@@ -26,7 +26,7 @@ final class NearestChunkSelector {
       return nearest;
    }
 
-   static boolean isCloser(double playerX, double playerZ, int chunkX, int chunkZ, NearestChunkSelector.Inner_DataUtil nearestMissing) {
+   static boolean isCloser(double playerX, double playerZ, int chunkX, int chunkZ, NearestChunkSelector.ChunkDistance nearestMissing) {
       return nearestMissing == null
          ? true
          : compareCandidates(distanceToChunk(playerX, playerZ, chunkX, chunkZ), chunkX, chunkZ, nearestMissing.distance(), nearestMissing.chunkX(), nearestMissing.load()) <= 0;
@@ -52,6 +52,6 @@ final class NearestChunkSelector {
       return xOrder != 0 ? xOrder : Integer.compare(leftZ, rightZ);
    }
 
-   record Inner_DataUtil(int chunkX, int load, double distance) {
+   record ChunkDistance(int chunkX, int load, double distance) {
    }
 }

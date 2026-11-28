@@ -16,15 +16,15 @@ public final class AiTaskStatus {
    private AiTaskStatus() {
    }
 
-   static AiTaskStatus.Inner_StreamUtil progressStatus(String title, String activity, int completed, int target) {
+   static AiTaskStatus.StatusContent progressStatus(String title, String activity, int completed, int target) {
       String heading = singleLine(title);
       if (heading.isEmpty()) {
-         return AiTaskStatus.Inner_StreamUtil.EMPTY;
+         return AiTaskStatus.StatusContent.EMPTY;
       }
 
       String action = singleLine(activity);
       int percent = target > 0 ? (int)(100L * Math.clamp(completed, 0, target) / target) : -1;
-      return new AiTaskStatus.Inner_StreamUtil(heading, action.isEmpty() ? "In progress" : action, "", percent);
+      return new AiTaskStatus.StatusContent(heading, action.isEmpty() ? "In progress" : action, "", percent);
    }
 
    public static String phaseLabel(String diagnostic, String fallback) {
@@ -102,16 +102,16 @@ public final class AiTaskStatus {
       }
    }
 
-   static AiTaskStatus.Inner_StreamUtil pickStatus(Collection<AiTaskStatus.Inner_DataUtil> candidates, long now) {
-      AiTaskStatus.Inner_DataUtil chosen = choose(candidates);
+   static AiTaskStatus.StatusContent pickStatus(Collection<AiTaskStatus.StatusCandidate> candidates, long now) {
+      AiTaskStatus.StatusCandidate chosen = choose(candidates);
       if (chosen == null) {
          init_W_StreamUtil.reset();
          load.reset();
-         return AiTaskStatus.Inner_StreamUtil.EMPTY;
+         return AiTaskStatus.StatusContent.EMPTY;
       } else if (!chosen.immediate && chosen.priority < 200) {
          String title = init_W_StreamUtil.stabilize(chosen.content.title, now, 1500000000L);
          String activity = load.stabilize(chosen.content.activity, now, 1500000000L);
-         return new AiTaskStatus.Inner_StreamUtil(title, activity, chosen.content.detail, chosen.content.percent);
+         return new AiTaskStatus.StatusContent(title, activity, chosen.content.detail, chosen.content.percent);
       } else {
          init_W_StreamUtil.reset();
          load.reset();
@@ -119,15 +119,15 @@ public final class AiTaskStatus {
       }
    }
 
-   static AiTaskStatus.Inner_StreamUtil chosenContent(Collection<AiTaskStatus.Inner_DataUtil> candidates) {
-      AiTaskStatus.Inner_DataUtil chosen = choose(candidates);
-      return chosen == null ? AiTaskStatus.Inner_StreamUtil.EMPTY : chosen.content;
+   static AiTaskStatus.StatusContent chosenContent(Collection<AiTaskStatus.StatusCandidate> candidates) {
+      AiTaskStatus.StatusCandidate chosen = choose(candidates);
+      return chosen == null ? AiTaskStatus.StatusContent.EMPTY : chosen.content;
    }
 
-   private static AiTaskStatus.Inner_DataUtil choose(Collection<AiTaskStatus.Inner_DataUtil> candidates) {
-      AiTaskStatus.Inner_DataUtil chosen = null;
+   private static AiTaskStatus.StatusCandidate choose(Collection<AiTaskStatus.StatusCandidate> candidates) {
+      AiTaskStatus.StatusCandidate chosen = null;
 
-      for (AiTaskStatus.Inner_DataUtil candidate : candidates) {
+      for (AiTaskStatus.StatusCandidate candidate : candidates) {
          if (candidate.content.visible()
             && (chosen == null || candidate.priority > chosen.priority || candidate.priority == chosen.priority && candidate.publication > chosen.publication)) {
             chosen = candidate;
@@ -137,7 +137,7 @@ public final class AiTaskStatus {
       return chosen;
    }
 
-   static int contentWidth(AiTaskStatus.Inner_StreamUtil content, ToIntFunction<String> measure, int available) {
+   static int contentWidth(AiTaskStatus.StatusContent content, ToIntFunction<String> measure, int available) {
       int titleW = measure.applyAsInt(content.title);
       if (content.percent >= 0) {
          titleW += measure.applyAsInt("100%") + 12;
@@ -151,16 +151,16 @@ public final class AiTaskStatus {
       return value == null ? "" : value.strip().replaceAll("[\\r\\n\\t]+", " ");
    }
 
-   record Inner_DataUtil(AiTaskStatus.Inner_StreamUtil content, int priority, long publication, boolean immediate) {
-      Inner_DataUtil(AiTaskStatus.Inner_StreamUtil content, int priority, long publication) {
+   record StatusCandidate(AiTaskStatus.StatusContent content, int priority, long publication, boolean immediate) {
+      StatusCandidate(AiTaskStatus.StatusContent content, int priority, long publication) {
          this(content, priority, publication, false);
       }
    }
 
-   record Inner_StreamUtil(String title, String activity, String detail, int percent) {
-      static final AiTaskStatus.Inner_StreamUtil EMPTY = new AiTaskStatus.Inner_StreamUtil("", "", "");
+   record StatusContent(String title, String activity, String detail, int percent) {
+      static final AiTaskStatus.StatusContent EMPTY = new AiTaskStatus.StatusContent("", "", "");
 
-      Inner_StreamUtil(String title, String activity, String detail) {
+      StatusContent(String title, String activity, String detail) {
          this(title, activity, detail, -1);
       }
 

@@ -11,7 +11,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
    public int slot = 0;
    public String itemName = "";
    public MacroItemTarget itemTarget = new MacroItemTarget();
-   public SelectSlotAction.Inner_DataUtil strategy = SelectSlotAction.Inner_DataUtil.FIRST_MATCH;
+   public SelectSlotAction.SlotStrategy strategy = SelectSlotAction.SlotStrategy.FIRST_MATCH;
    public String outputVariable = "";
    public volatile PacketOrderMode packetOrder = PacketOrderMode.INSTANT;
 
@@ -27,7 +27,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
             }
          }
 
-         if (this.strategy == SelectSlotAction.Inner_DataUtil.EMPTY_SLOT) {
+         if (this.strategy == SelectSlotAction.SlotStrategy.EMPTY_SLOT) {
             int empty = this.firstEmptyHotbar(mc);
             if (empty >= 0) {
                autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, empty);
@@ -37,7 +37,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
          }
 
          if (!targets.isEmpty()) {
-            if (this.strategy != SelectSlotAction.Inner_DataUtil.FIRST_MATCH) {
+            if (this.strategy != SelectSlotAction.SlotStrategy.FIRST_MATCH) {
                int best = this.bestHotbarSlot(mc, targets);
                if (best >= 0) {
                   autismclient.util.InventorySlotHelper.selectHotbarSlot(mc, best);
@@ -90,7 +90,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
    @Override
    public void fromTag(CompoundTag tag) {
       this.slot = tag.getIntOr("slot", 0);
-      this.strategy = MacroNbtCodecHelper.parseEnum(SelectSlotAction.Inner_DataUtil.class, tag.getStringOr("strategy", "FIRST_MATCH"), SelectSlotAction.Inner_DataUtil.FIRST_MATCH);
+      this.strategy = MacroNbtCodecHelper.parseEnum(SelectSlotAction.SlotStrategy.class, tag.getStringOr("strategy", "FIRST_MATCH"), SelectSlotAction.SlotStrategy.FIRST_MATCH);
       this.outputVariable = tag.getStringOr("outputVariable", "");
       this.itemTarget = tag.getCompound("itemName")
          .map(MacroItemTarget::fromTag)
@@ -183,7 +183,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
 
    private int bestHotbarSlot(Minecraft mc, List<MacroItemTarget> targets) {
       int bestSlot = -1;
-      int bestMetric = this.strategy == SelectSlotAction.Inner_DataUtil.WORST_DURABILITY ? 2147483647 : -2147483648;
+      int bestMetric = this.strategy == SelectSlotAction.SlotStrategy.WORST_DURABILITY ? 2147483647 : -2147483648;
 
       for (int i = 0; i < 9; i++) {
          ItemStack stack = mc.player.getInventory().getItem(i);
@@ -213,7 +213,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
             }
 
             int metric = var10000;
-            if (this.strategy == SelectSlotAction.Inner_DataUtil.WORST_DURABILITY && metric < bestMetric || this.strategy != SelectSlotAction.Inner_DataUtil.WORST_DURABILITY && metric > bestMetric) {
+            if (this.strategy == SelectSlotAction.SlotStrategy.WORST_DURABILITY && metric < bestMetric || this.strategy != SelectSlotAction.SlotStrategy.WORST_DURABILITY && metric > bestMetric) {
                bestMetric = metric;
                bestSlot = i;
             }
@@ -223,7 +223,7 @@ public class SelectSlotAction implements PacketOrderAware, MacroAction {
       return bestSlot;
    }
 
-   public enum Inner_DataUtil {
+   public enum SlotStrategy {
       FIRST_MATCH,
       BEST_DURABILITY,
       WORST_DURABILITY,

@@ -81,7 +81,7 @@ final class AiScreens {
 
                   autismclient.gui.f.NetHelper b = entry.getValue();
                   widgets.add(
-                     new AiScreens.Inner_CachePool(index++, "button", truncate(entry.getKey(), 256), "", true, true, b.read(), b.write(), b.update(), b.sync()).json()
+                     new AiScreens.WidgetInfo(index++, "button", truncate(entry.getKey(), 256), "", true, true, b.read(), b.write(), b.update(), b.sync()).json()
                   );
                }
             }
@@ -129,9 +129,9 @@ final class AiScreens {
 
    static JsonObject click(JsonObject args) {
       Minecraft mc = Minecraft.getInstance();
-      AiScreens.Inner_DataUtil live = captureScreen(mc);
+      AiScreens.CapturedScreen live = captureScreen(mc);
       int position = selectWidgetIndex(live.infos(), args);
-      AiScreens.Inner_CachePool target = live.infos().get(position);
+      AiScreens.WidgetInfo target = live.infos().get(position);
       if (position >= live.widgets().size()) {
          autismclient.gui.f.NetHelper b = live.customBounds().get(position - live.widgets().size());
          double centerX = b.read() + b.update() / 2.0;
@@ -227,7 +227,7 @@ final class AiScreens {
       String text = textArg(args);
       boolean append = AiJson.getBoolean(args, "append", false);
       Minecraft mc = Minecraft.getInstance();
-      AiScreens.Inner_DataUtil live = captureScreen(mc);
+      AiScreens.CapturedScreen live = captureScreen(mc);
       int position = selectWidgetIndex(live.infos(), args);
       if (position < 0 || position >= live.widgets().size()) {
          throw new IllegalArgumentException("Widget " + position + " is not a standard text field");
@@ -405,7 +405,7 @@ final class AiScreens {
       return out;
    }
 
-   static int selectWidgetIndex(List<AiScreens.Inner_CachePool> widgets, JsonObject args) {
+   static int selectWidgetIndex(List<AiScreens.WidgetInfo> widgets, JsonObject args) {
       boolean hasIndex = args.has("index") && args.get("index").isJsonPrimitive();
       String label = args.has("label") && !args.get("label").isJsonNull() ? args.get("label").getAsString() : "";
       if (hasIndex == !label.isBlank()) {
@@ -489,10 +489,10 @@ final class AiScreens {
       }
    }
 
-   private static String describeLabels(List<AiScreens.Inner_CachePool> widgets) {
+   private static String describeLabels(List<AiScreens.WidgetInfo> widgets) {
       List<String> labels = new ArrayList<>();
 
-      for (AiScreens.Inner_CachePool widget : widgets) {
+      for (AiScreens.WidgetInfo widget : widgets) {
          if (!widget.label().isBlank() && labels.size() < 16) {
             labels.add("\"" + truncate(widget.label(), 48) + "\"");
          }
@@ -501,14 +501,14 @@ final class AiScreens {
       return labels.isEmpty() ? "(none)" : String.join(", ", labels);
    }
 
-   private static AiScreens.Inner_DataUtil captureScreen(Minecraft mc) {
+   private static AiScreens.CapturedScreen captureScreen(Minecraft mc) {
       Screen screen = mc.gui.screen();
       if (screen == null) {
          throw new IllegalArgumentException("No screen is open; nothing to interact with");
       }
 
       List<AbstractWidget> widgets = new ArrayList<>();
-      List<AiScreens.Inner_CachePool> infos = new ArrayList<>();
+      List<AiScreens.WidgetInfo> infos = new ArrayList<>();
       List<autismclient.gui.f.NetHelper> customBounds = new ArrayList<>();
 
       for (Object child : screen.children()) {
@@ -531,18 +531,18 @@ final class AiScreens {
             }
 
             autismclient.gui.f.NetHelper b = entry.getValue();
-            infos.add(new AiScreens.Inner_CachePool(index++, "button", truncate(entry.getKey(), 256), "", true, true, b.read(), b.write(), b.update(), b.sync()));
+            infos.add(new AiScreens.WidgetInfo(index++, "button", truncate(entry.getKey(), 256), "", true, true, b.read(), b.write(), b.update(), b.sync()));
             customBounds.add(b);
          }
       }
 
-      return new AiScreens.Inner_DataUtil(screen, widgets, infos, customBounds);
+      return new AiScreens.CapturedScreen(screen, widgets, infos, customBounds);
    }
 
-   private static AiScreens.Inner_CachePool describeWidget(AbstractWidget widget, int index) {
+   private static AiScreens.WidgetInfo describeWidget(AbstractWidget widget, int index) {
       String type = widget instanceof EditBox ? "edit" : (widget instanceof Checkbox ? "checkbox" : (widget instanceof AbstractButton ? "button" : "other"));
       String value = widget instanceof EditBox box ? truncate(box.getValue(), 256) : "";
-      return new AiScreens.Inner_CachePool(
+      return new AiScreens.WidgetInfo(
          index,
          type,
          truncate(textOf(widget.getMessage()), 256),
@@ -615,7 +615,7 @@ final class AiScreens {
 
    private static String disconnectDetails(DisconnectedScreen screen) {
       try {
-         Field field = AiScreens.Inner_StreamUtil.DETAILS_FIELD;
+         Field field = AiScreens.DisconnectDetails.DETAILS_FIELD;
          if (field == null) {
             return "";
          } else {
@@ -630,7 +630,7 @@ final class AiScreens {
       return component == null ? "" : component.getString();
    }
 
-   record Inner_CachePool(int index, String type, String label, String value, boolean active, boolean visible, int x, int y, int width, int height) {
+   record WidgetInfo(int index, String type, String label, String value, boolean active, boolean visible, int x, int y, int width, int height) {
       JsonObject json() {
          JsonObject out = AiJson.objectOf(
             "index",
@@ -660,10 +660,10 @@ final class AiScreens {
       }
    }
 
-   private record Inner_DataUtil(Screen screen, List<AbstractWidget> widgets, List<AiScreens.Inner_CachePool> infos, List<autismclient.gui.f.NetHelper> customBounds) {
+   private record CapturedScreen(Screen screen, List<AbstractWidget> widgets, List<AiScreens.WidgetInfo> infos, List<autismclient.gui.f.NetHelper> customBounds) {
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class DisconnectDetails {
       private static final Field DETAILS_FIELD = accessibleField(DisconnectedScreen.class, "details");
 
       private static Field accessibleField(Class<?> type, String name) {

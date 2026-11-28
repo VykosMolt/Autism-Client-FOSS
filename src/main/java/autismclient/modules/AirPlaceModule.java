@@ -47,7 +47,7 @@ public final class AirPlaceModule extends Module {
       this.init_BlockPos = null;
       if (MC != null && MC.level != null) {
          Player player = MC.player;
-         AirPlaceModule.Inner_DataUtil placement = targetWithin(player, MC.hitResult, this.decimal("range"));
+         AirPlaceModule.Placement placement = targetWithin(player, MC.hitResult, this.decimal("range"));
          if (placement != null && !al.init_Z_HitResult(placement.hit(), placement.hand(), this.id())) {
             if (this.bool("guide")) {
                this.init_BlockPos = placement.hit().getBlockPos().immutable();
@@ -64,7 +64,7 @@ public final class AirPlaceModule extends Module {
          && MC.level != null
          && MC.player != null
          && MC.gameMode != null) {
-         AirPlaceModule.Inner_DataUtil placement = targetWithin(MC.player, hitResult, this.decimal("range"));
+         AirPlaceModule.Placement placement = targetWithin(MC.player, hitResult, this.decimal("range"));
          if (placement == null) {
             return false;
          } else if (MC.player.isHandsBusy()) {
@@ -77,7 +77,7 @@ public final class AirPlaceModule extends Module {
       }
    }
 
-   private void init_V_StreamUtil_DataUti(AirPlaceModule.Inner_DataUtil placement) {
+   private void init_V_StreamUtil_DataUti(AirPlaceModule.Placement placement) {
       if (MC.player != null
          && MC.gameMode != null
          && MC.options.keyUse.isDown()
@@ -156,13 +156,13 @@ public final class AirPlaceModule extends Module {
       }
    }
 
-   public static AirPlaceModule.Inner_DataUtil targetFor(Player player, HitResult currentHit) {
+   public static AirPlaceModule.Placement targetFor(Player player, HitResult currentHit) {
       return al.init_Module_Str("air-place") instanceof AirPlaceModule airPlace && airPlace.isEnabled()
          ? targetWithin(player, currentHit, airPlace.decimal("range"))
          : null;
    }
 
-   static AirPlaceModule.Inner_DataUtil targetWithin(Player player, HitResult currentHit, double range) {
+   static AirPlaceModule.Placement targetWithin(Player player, HitResult currentHit, double range) {
       if (player != null && player.level() != null && currentHit != null && currentHit.getType() == Type.MISS && !isHandsBusy(player)) {
          InteractionHand hand = init_InteractionHand_Player(player);
          if (hand == null) {
@@ -172,7 +172,7 @@ public final class AirPlaceModule extends Module {
             if (bothMissed(currentHit, picked) && picked instanceof BlockHitResult blockHit) {
                BlockPos pos = blockHit.getBlockPos();
                return !player.level().isOutsideBuildHeight(pos) && player.level().getBlockState(pos).canBeReplaced()
-                  ? new AirPlaceModule.Inner_DataUtil(blockHit, hand)
+                  ? new AirPlaceModule.Placement(blockHit, hand)
                   : null;
             } else {
                return null;
@@ -214,6 +214,6 @@ public final class AirPlaceModule extends Module {
       return List.of("Set placement reach", "Show placement guide", "Fill placement guide", "Set guide color");
    }
 
-   public record Inner_DataUtil(BlockHitResult hit, InteractionHand hand) {
+   public record Placement(BlockHitResult hit, InteractionHand hand) {
    }
 }

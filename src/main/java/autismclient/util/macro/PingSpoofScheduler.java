@@ -54,7 +54,7 @@ public final class PingSpoofScheduler {
    private static volatile boolean globalRealOutgoing;
    private static volatile boolean write_Z;
    private static final long init_J = 0L;
-   private static final ConcurrentHashMap<Long, PingSpoofScheduler.Inner_StreamUtil> runOverrides = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<Long, PingSpoofScheduler.RunOverride> runOverrides = new ConcurrentHashMap<>();
    private static final Queue<PingSpoofScheduler.Inner_DataUtil> init_Queue = new ConcurrentLinkedQueue<>();
    private static final Queue<PingSpoofScheduler.Inner_DataUtil> load_Queue = new ConcurrentLinkedQueue<>();
    // ConcurrentLinkedQueue.size() walks the whole queue, so the tick reads these counters instead.
@@ -104,7 +104,7 @@ public final class PingSpoofScheduler {
          stop(ownerRunId);
       } else {
          runOverrides.put(
-            ownerRunId, new PingSpoofScheduler.Inner_StreamUtil(Math.max(0, delayMs), realIncoming, realOutgoing, System.nanoTime() + durationNanos, false)
+            ownerRunId, new PingSpoofScheduler.RunOverride(Math.max(0, delayMs), realIncoming, realOutgoing, System.nanoTime() + durationNanos, false)
          );
          write_Z = true;
       }
@@ -115,7 +115,7 @@ public final class PingSpoofScheduler {
    }
 
    public static void setRunOverride(long ownerRunId, int delayMs, boolean realIncoming, boolean realOutgoing) {
-      runOverrides.put(ownerRunId, new PingSpoofScheduler.Inner_StreamUtil(Math.max(0, delayMs), realIncoming, realOutgoing, 0L, true));
+      runOverrides.put(ownerRunId, new PingSpoofScheduler.RunOverride(Math.max(0, delayMs), realIncoming, realOutgoing, 0L, true));
       write_Z = true;
    }
 
@@ -158,7 +158,7 @@ public final class PingSpoofScheduler {
 
       int effective = 0;
 
-      for (PingSpoofScheduler.Inner_StreamUtil override : runOverrides.values()) {
+      for (PingSpoofScheduler.RunOverride override : runOverrides.values()) {
          effective = Math.max(effective, override.delayMs);
       }
 
@@ -172,7 +172,7 @@ public final class PingSpoofScheduler {
 
       pruneExpiredOverrides();
       if (!runOverrides.isEmpty()) {
-         for (PingSpoofScheduler.Inner_StreamUtil override : runOverrides.values()) {
+         for (PingSpoofScheduler.RunOverride override : runOverrides.values()) {
             if (override.realIncoming) {
                return true;
             }
@@ -191,7 +191,7 @@ public final class PingSpoofScheduler {
 
       pruneExpiredOverrides();
       if (!runOverrides.isEmpty()) {
-         for (PingSpoofScheduler.Inner_StreamUtil override : runOverrides.values()) {
+         for (PingSpoofScheduler.RunOverride override : runOverrides.values()) {
             if (override.load) {
                return true;
             }
@@ -213,7 +213,7 @@ public final class PingSpoofScheduler {
       } else {
          long now = System.nanoTime();
 
-         for (Entry<Long, PingSpoofScheduler.Inner_StreamUtil> entry : runOverrides.entrySet()) {
+         for (Entry<Long, PingSpoofScheduler.RunOverride> entry : runOverrides.entrySet()) {
             if (!entry.getValue().isLive(now)) {
                runOverrides.remove(entry.getKey(), entry.getValue());
             }
@@ -529,7 +529,7 @@ public final class PingSpoofScheduler {
    private record Inner_DataUtil(Packet<?> packet, long queuedAtMs) {
    }
 
-   private record Inner_StreamUtil(int delayMs, boolean realIncoming, boolean load, long expiresAtMs, boolean read) {
+   private record RunOverride(int delayMs, boolean realIncoming, boolean load, long expiresAtMs, boolean read) {
       boolean isLive(long now) {
          return this.read || now - this.expiresAtMs < 0L;
       }

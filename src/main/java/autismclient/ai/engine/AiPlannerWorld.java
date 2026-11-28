@@ -62,7 +62,7 @@ final class AiPlannerWorld implements AiPhysics.PhysicsWorld {
    private final IntArrayList putAt_IntArrayList = new IntArrayList();
    private final LongOpenHashSet putAt_LongOpenHashSet = new LongOpenHashSet();
    private AiPathfinder.PathStep seenIncomingMove;
-   private NavigationOpenSet.Inner_DataUtil seenActiveNode;
+   private NavigationOpenSet.Node seenActiveNode;
    private boolean readEx_Z;
    long pendingCellsMet;
 

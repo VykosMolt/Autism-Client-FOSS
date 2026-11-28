@@ -100,8 +100,8 @@ final class AiGameOperations {
                      placer.cancel();
                      return AiGameOperations.result(AiOperation.Status.TIMED_OUT, "No spot for " + id + " before the timeout", new JsonObject());
                   } else {
-                     AiStationPlacer.Inner_DataUtil status = placer.tick();
-                     if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
+                     AiStationPlacer.PlaceStatus status = placer.tick();
+                     if (status == AiStationPlacer.PlaceStatus.PLACED) {
                         BlockPos at = placer.getPlaced();
                         return AiGameOperations.result(
                            AiOperation.Status.SUCCEEDED,
@@ -109,7 +109,7 @@ final class AiGameOperations {
                            AiJson.objectOf("item", id, "x", at.getX(), "y", at.getY(), "z", at.getZ())
                         );
                      } else {
-                        return status == AiStationPlacer.Inner_DataUtil.FAILED
+                        return status == AiStationPlacer.PlaceStatus.FAILED
                            ? AiGameOperations.result(AiOperation.Status.FAILED, "Could not place " + id + ": " + placer.getFailureReason(), new JsonObject())
                            : AiGameOperations.result(AiOperation.Status.RUNNING, placer.getStatus(), new JsonObject());
                      }

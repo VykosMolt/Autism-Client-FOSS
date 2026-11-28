@@ -49,8 +49,8 @@ import net.minecraft.world.level.storage.TagValueOutput;
 final class SchematicCapture {
    private final ClientLevel level;
    private final IntegratedServer server;
-   private final List<SchematicCapture.Inner_CachePool> chunks;
-   private final Map<Long, SchematicCapture.Inner_CachePool> chunksByPos = new HashMap<>();
+   private final List<SchematicCapture.ChunkCapture> chunks;
+   private final Map<Long, SchematicCapture.ChunkCapture> chunksByPos = new HashMap<>();
    private final Path folder;
    private final String name;
    private final boolean includeEntities;
@@ -74,7 +74,7 @@ final class SchematicCapture {
    volatile Path savedPath;
    private Future<?> saveTask;
 
-   SchematicCapture(Minecraft mc, Path folder, String name, SchematicCapture.Inner_DataUtil selection, boolean includeEntities) {
+   SchematicCapture(Minecraft mc, Path folder, String name, SchematicCapture.CaptureArea selection, boolean includeEntities) {
       if (mc.level != null && mc.player != null) {
          this.level = mc.level;
          this.server = mc.getSingleplayerServer();
@@ -107,18 +107,18 @@ final class SchematicCapture {
             chunks.sort(Comparator.<LevelChunk>comparingInt(c -> c.getPos().x()).thenComparingInt(c -> c.getPos().z()));
          }
 
-         ArrayList<SchematicCapture.Inner_CachePool> captured = new ArrayList<>(chunks.size());
+         ArrayList<SchematicCapture.ChunkCapture> captured = new ArrayList<>(chunks.size());
 
          for (LevelChunk live : chunks) {
             ChunkPos chunkPos = live.getPos();
             int x0 = chunkPos.x() << 4;
             int z0 = chunkPos.z() << 4;
-            SchematicCapture.Inner_DataUtil fullArea = new SchematicCapture.Inner_DataUtil(
+            SchematicCapture.CaptureArea fullArea = new SchematicCapture.CaptureArea(
                new BlockPos(x0, this.level.getMinY(), z0), new BlockPos(x0 + 15, this.level.getMaxY(), z0 + 15)
             );
-            SchematicCapture.Inner_DataUtil area = selection == null ? fullArea : fullArea.intersection(selection);
+            SchematicCapture.CaptureArea area = selection == null ? fullArea : fullArea.intersection(selection);
             if (area != null) {
-               SchematicCapture.Inner_CachePool chunk = new SchematicCapture.Inner_CachePool(chunkPos, area);
+               SchematicCapture.ChunkCapture chunk = new SchematicCapture.ChunkCapture(chunkPos, area);
                captured.add(chunk);
                this.chunksByPos.put(chunkPos.pack(), chunk);
             }
@@ -154,7 +154,7 @@ final class SchematicCapture {
             try {
                do {
                   if (this.chunkIndex < this.chunks.size()) {
-                     SchematicCapture.Inner_CachePool target = this.chunks.get(this.chunkIndex);
+                     SchematicCapture.ChunkCapture target = this.chunks.get(this.chunkIndex);
                      LevelChunk live = this.level
                         .getChunkSource()
                         .getChunk(target.chunkPos.x(), target.chunkPos.z(), ChunkStatus.FULL, false);
@@ -252,7 +252,7 @@ final class SchematicCapture {
 
                      Entity entity = this.level.getEntity(this.entityIds.get(this.entityIndex++));
                      if (entity != null) {
-                        SchematicCapture.Inner_CachePool target = this.chunksByPos.get(ChunkPos.pack(entity.getBlockX() >> 4, entity.getBlockZ() >> 4));
+                        SchematicCapture.ChunkCapture target = this.chunksByPos.get(ChunkPos.pack(entity.getBlockX() >> 4, entity.getBlockZ() >> 4));
                         if (target != null && target.area.contains(entity.getX(), entity.getY(), entity.getZ())) {
                            TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, this.level.registryAccess());
                            if (entity.save(output)) {
@@ -282,7 +282,7 @@ final class SchematicCapture {
       long deadline = System.nanoTime() + 1200000L;
 
       while (this.serverChunkIndex < this.chunks.size() && !this.cancelled && System.nanoTime() < deadline) {
-         SchematicCapture.Inner_CachePool target = this.chunks.get(this.serverChunkIndex);
+         SchematicCapture.ChunkCapture target = this.chunks.get(this.serverChunkIndex);
          ChunkAccess live = level.getChunkSource().getChunk(target.chunkPos.x(), target.chunkPos.z(), ChunkStatus.FULL, false);
          if (live == null) {
             throw new IllegalStateException("A chunk unloaded during capture; save again");
@@ -340,7 +340,7 @@ final class SchematicCapture {
       });
    }
 
-   static Path save(Path folder, String name, List<SchematicCapture.Inner_CachePool> chunks, boolean trimAir, IntConsumer progress) throws IOException {
+   static Path save(Path folder, String name, List<SchematicCapture.ChunkCapture> chunks, boolean trimAir, IntConsumer progress) throws IOException {
       Files.createDirectories(folder);
       CompoundTag root = packSchematic(chunks, trimAir, progress);
       SchematicDocument.checkInterrupted();
@@ -375,15 +375,15 @@ final class SchematicCapture {
       }
    }
 
-   static CompoundTag packSchematic(List<SchematicCapture.Inner_CachePool> chunks, boolean trimAir, IntConsumer progress) {
-      SchematicCapture.Inner_StreamUtil bounds = new SchematicCapture.Inner_StreamUtil();
-      IdentityHashMap<SchematicCapture.Inner_CachePool, SchematicCapture.Inner_StreamUtil> perChunkBounds = trimAir ? new IdentityHashMap<>() : null;
+   static CompoundTag packSchematic(List<SchematicCapture.ChunkCapture> chunks, boolean trimAir, IntConsumer progress) {
+      SchematicCapture.Bounds bounds = new SchematicCapture.Bounds();
+      IdentityHashMap<SchematicCapture.ChunkCapture, SchematicCapture.Bounds> perChunkBounds = trimAir ? new IdentityHashMap<>() : null;
       if (trimAir) {
          int checked = 0;
 
-         for (SchematicCapture.Inner_CachePool chunk : chunks) {
+         for (SchematicCapture.ChunkCapture chunk : chunks) {
             SchematicDocument.checkInterrupted();
-            SchematicCapture.Inner_StreamUtil chunkBounds = new SchematicCapture.Inner_StreamUtil();
+            SchematicCapture.Bounds chunkBounds = new SchematicCapture.Bounds();
             chunkBounds.includeNonAirBlocks(chunk);
             chunkBounds.includeBlockEntities(chunk);
             if (!chunkBounds.init_Z()) {
@@ -395,7 +395,7 @@ final class SchematicCapture {
             progress.accept(checked * 20 / chunks.size());
          }
       } else {
-         for (SchematicCapture.Inner_CachePool chunk : chunks) {
+         for (SchematicCapture.ChunkCapture chunk : chunks) {
             BlockPos lo = chunk.area.min;
             BlockPos hi = chunk.area.max;
             bounds.include(lo.getX(), lo.getY(), lo.getZ());
@@ -403,14 +403,14 @@ final class SchematicCapture {
          }
       }
 
-      SchematicCapture.Inner_DataUtil enclosing = bounds.toArea();
-      LinkedHashMap<SchematicCapture.Inner_CachePool, SchematicCapture.Inner_DataUtil> areas = new LinkedHashMap<>();
+      SchematicCapture.CaptureArea enclosing = bounds.toArea();
+      LinkedHashMap<SchematicCapture.ChunkCapture, SchematicCapture.CaptureArea> areas = new LinkedHashMap<>();
       long capturedVolume = 0L;
 
-      for (SchematicCapture.Inner_CachePool chunk : chunks) {
-         SchematicCapture.Inner_DataUtil area;
+      for (SchematicCapture.ChunkCapture chunk : chunks) {
+         SchematicCapture.CaptureArea area;
          if (trimAir) {
-            SchematicCapture.Inner_StreamUtil chunkBounds = perChunkBounds.get(chunk);
+            SchematicCapture.Bounds chunkBounds = perChunkBounds.get(chunk);
             if (chunkBounds == null) {
                continue;
             }
@@ -437,10 +437,10 @@ final class SchematicCapture {
       long nonAir = 0L;
       int done = 0;
 
-      for (Entry<SchematicCapture.Inner_CachePool, SchematicCapture.Inner_DataUtil> entry : areas.entrySet()) {
+      for (Entry<SchematicCapture.ChunkCapture, SchematicCapture.CaptureArea> entry : areas.entrySet()) {
          SchematicDocument.checkInterrupted();
-         SchematicCapture.Inner_CachePool chunk = entry.getKey();
-         SchematicCapture.Inner_DataUtil a = entry.getValue();
+         SchematicCapture.ChunkCapture chunk = entry.getKey();
+         SchematicCapture.CaptureArea a = entry.getValue();
          int w = a.max.getX() - a.min.getX() + 1;
          int h = a.max.getY() - a.min.getY() + 1;
          int l = a.max.getZ() - a.min.getZ() + 1;
@@ -582,22 +582,22 @@ final class SchematicCapture {
       }
    }
 
-   static final class Inner_CachePool {
+   static final class ChunkCapture {
       final ChunkPos chunkPos;
-      final SchematicCapture.Inner_DataUtil area;
+      final SchematicCapture.CaptureArea area;
       final Int2ObjectOpenHashMap<PalettedContainer<BlockState>> init_Map = new Int2ObjectOpenHashMap<>();
       final List<CompoundTag> blockEntityTags = new ArrayList<>();
       final List<CompoundTag> entityTags = new ArrayList<>();
 
-      Inner_CachePool(ChunkPos pos, SchematicCapture.Inner_DataUtil area) {
+      ChunkCapture(ChunkPos pos, SchematicCapture.CaptureArea area) {
          this.chunkPos = pos;
          this.area = area;
       }
    }
 
-   record Inner_DataUtil(BlockPos min, BlockPos max) {
-      static SchematicCapture.Inner_DataUtil between(BlockPos a, BlockPos b) {
-         return new SchematicCapture.Inner_DataUtil(
+   record CaptureArea(BlockPos min, BlockPos max) {
+      static SchematicCapture.CaptureArea between(BlockPos a, BlockPos b) {
+         return new SchematicCapture.CaptureArea(
             new BlockPos(Math.min(a.getX(), b.getX()), Math.min(a.getY(), b.getY()), Math.min(a.getZ(), b.getZ())),
             new BlockPos(Math.max(a.getX(), b.getX()), Math.max(a.getY(), b.getY()), Math.max(a.getZ(), b.getZ()))
          );
@@ -612,14 +612,14 @@ final class SchematicCapture {
             && z < this.max.getZ() + 1.0;
       }
 
-      SchematicCapture.Inner_DataUtil intersection(SchematicCapture.Inner_DataUtil other) {
+      SchematicCapture.CaptureArea intersection(SchematicCapture.CaptureArea other) {
          int x0 = Math.max(this.min.getX(), other.min.getX());
          int x1 = Math.min(this.max.getX(), other.max.getX());
          int y0 = Math.max(this.min.getY(), other.min.getY());
          int y1 = Math.min(this.max.getY(), other.max.getY());
          int z0 = Math.max(this.min.getZ(), other.min.getZ());
          int z1 = Math.min(this.max.getZ(), other.max.getZ());
-         return x0 <= x1 && y0 <= y1 && z0 <= z1 ? new SchematicCapture.Inner_DataUtil(new BlockPos(x0, y0, z0), new BlockPos(x1, y1, z1)) : null;
+         return x0 <= x1 && y0 <= y1 && z0 <= z1 ? new SchematicCapture.CaptureArea(new BlockPos(x0, y0, z0), new BlockPos(x1, y1, z1)) : null;
       }
 
       long volume() {
@@ -633,7 +633,7 @@ final class SchematicCapture {
       }
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class Bounds {
       private int minX = 2147483647;
       private int minY = 2147483647;
       private int minZ = 2147483647;
@@ -650,7 +650,7 @@ final class SchematicCapture {
          this.maxZ = Math.max(this.maxZ, z);
       }
 
-      void includeBounds(SchematicCapture.Inner_StreamUtil other) {
+      void includeBounds(SchematicCapture.Bounds other) {
          if (!other.init_Z()) {
             this.include(other.minX, other.minY, other.minZ);
             this.include(other.maxX, other.maxY, other.maxZ);
@@ -661,16 +661,16 @@ final class SchematicCapture {
          return this.minX > this.maxX;
       }
 
-      SchematicCapture.Inner_DataUtil toArea() {
+      SchematicCapture.CaptureArea toArea() {
          if (this.init_Z()) {
             throw new IllegalArgumentException("The captured area contains only air");
          } else {
-            return new SchematicCapture.Inner_DataUtil(new BlockPos(this.minX, this.minY, this.minZ), new BlockPos(this.maxX, this.maxY, this.maxZ));
+            return new SchematicCapture.CaptureArea(new BlockPos(this.minX, this.minY, this.minZ), new BlockPos(this.maxX, this.maxY, this.maxZ));
          }
       }
 
-      void includeNonAirBlocks(SchematicCapture.Inner_CachePool chunk) {
-         SchematicCapture.Inner_DataUtil a = chunk.area;
+      void includeNonAirBlocks(SchematicCapture.ChunkCapture chunk) {
+         SchematicCapture.CaptureArea a = chunk.area;
          int x0 = a.min.getX();
          int x1 = a.max.getX();
          int z0 = a.min.getZ();
@@ -705,7 +705,7 @@ final class SchematicCapture {
          }
       }
 
-      void includeBlockEntities(SchematicCapture.Inner_CachePool chunk) {
+      void includeBlockEntities(SchematicCapture.ChunkCapture chunk) {
          BlockPos at = chunk.area.min;
 
          for (CompoundTag tag : chunk.blockEntityTags) {

@@ -36,7 +36,7 @@ final class SchematicRecording {
    private final boolean includeEntities;
    private final int minY;
    private final int maxY;
-   private final Long2ObjectOpenHashMap<SchematicCapture.Inner_CachePool> chunks = new Long2ObjectOpenHashMap<>();
+   private final Long2ObjectOpenHashMap<SchematicCapture.ChunkCapture> chunks = new Long2ObjectOpenHashMap<>();
    private final Long2ObjectLinkedOpenHashMap<LevelChunk> putAt_Long2ObjectLinkedO = new Long2ObjectLinkedOpenHashMap<>();
    private int minChunkX = 2147483647;
    private int maxChunkX = -2147483648;
@@ -174,7 +174,7 @@ final class SchematicRecording {
                      try {
                         this.status = "Trimming recording";
                         var2.sort(
-                           Comparator.<SchematicCapture.Inner_CachePool>comparingInt(var0 -> var0.chunkPos.z())
+                           Comparator.<SchematicCapture.ChunkCapture>comparingInt(var0 -> var0.chunkPos.z())
                               .thenComparingInt(var0 -> var0.chunkPos.x())
                         );
                         this.putAt_Path = SchematicCapture.save(this.fill_Path, var1, var2, true, var1xx -> this.progress = 5 + var1xx * 85 / 100);
@@ -224,7 +224,7 @@ final class SchematicRecording {
       }
    }
 
-   private void putAt_V_NetHelper_JsonCach(SchematicCapture.Inner_CachePool var1) {
+   private void putAt_V_NetHelper_JsonCach(SchematicCapture.ChunkCapture var1) {
       boolean var2 = !var1.init_Map.isEmpty() || !var1.blockEntityTags.isEmpty() || !var1.entityTags.isEmpty();
       if (var2) {
          int var3 = Math.min(this.minChunkX, var1.chunkPos.x());
@@ -275,13 +275,13 @@ final class SchematicRecording {
       return var1 < var0 ? 0L : 256L * ((long)var1 - var0 + 1L) * 16L;
    }
 
-   private SchematicCapture.Inner_CachePool putAt_NetHelper_JsonCach_LevelChunk(LevelChunk var1) {
+   private SchematicCapture.ChunkCapture putAt_NetHelper_JsonCach_LevelChunk(LevelChunk var1) {
       int var2 = var1.getPos().x();
       int var3 = var1.getPos().z();
-      SchematicCapture.Inner_DataUtil var4 = new SchematicCapture.Inner_DataUtil(
+      SchematicCapture.CaptureArea var4 = new SchematicCapture.CaptureArea(
          new BlockPos(var2 << 4, this.minY, var3 << 4), new BlockPos((var2 << 4) + 15, this.maxY, (var3 << 4) + 15)
       );
-      SchematicCapture.Inner_CachePool var5 = new SchematicCapture.Inner_CachePool(new ChunkPos(var2, var3), var4);
+      SchematicCapture.ChunkCapture var5 = new SchematicCapture.ChunkCapture(new ChunkPos(var2, var3), var4);
       LevelChunkSection[] var6 = var1.getSections();
 
       for (int var7 = 0; var7 < var6.length; var7++) {
@@ -315,7 +315,7 @@ final class SchematicRecording {
       return var5;
    }
 
-   private void putAt_V_NetHelper_JsonCach(SchematicCapture.Inner_CachePool var1, SchematicCapture.Inner_DataUtil var2, List<Entity> var3) {
+   private void putAt_V_NetHelper_JsonCach(SchematicCapture.ChunkCapture var1, SchematicCapture.CaptureArea var2, List<Entity> var3) {
       for (Entity var5 : var3) {
          if (var2.contains(var5.getX(), var5.getY(), var5.getZ())) {
             TagValueOutput var6 = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, this.level.registryAccess());

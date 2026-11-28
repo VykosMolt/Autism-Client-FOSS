@@ -259,7 +259,7 @@ public final class AiBlockMine {
       return spawned;
    }
 
-   static BlockPos nextChainBlock(AiDigLine.Inner_DataUtil next, Vec3 eye, BlockPos current, AiDigLine.Inner_CachePool shapes, double reach) {
+   static BlockPos nextChainBlock(AiDigLine.DigLine next, Vec3 eye, BlockPos current, AiDigLine.ShapeSource shapes, double reach) {
       List<BlockPos> chain = AiDigLine.chainAlong(eye, next.direction(), reach, new HashSet<>(next.chain()), Set.of(current), shapes, null);
       return chain.isEmpty() ? null : chain.get(0);
    }
@@ -637,9 +637,9 @@ public final class AiBlockMine {
             boolean steppingToDrop;
             final Map<Long, Double> diveCostCache = new HashMap<>();
             long diveCostTick = -1L;
-            AiDigLine.Inner_DataUtil digLine;
+            AiDigLine.DigLine digLine;
             Set<BlockPos> unusedDigCells = Set.of();
-            final List<AiDigLine.Inner_DataUtil> digLines = new ArrayList<>();
+            final List<AiDigLine.DigLine> digLines = new ArrayList<>();
             Set<BlockPos> digLinesCells = Set.of();
             BlockPos aimCacheEnd;
             List<BlockPos> aimCacheBlocks = List.of();
@@ -2454,7 +2454,7 @@ public final class AiBlockMine {
                return out;
             }
 
-            AiDigLine.Inner_CachePool blockShapes() {
+            AiDigLine.ShapeSource blockShapes() {
                return pos -> mc.level.getBlockState(pos).getShape(mc.level, pos);
             }
 
@@ -2511,7 +2511,7 @@ public final class AiBlockMine {
                      }
                   }
 
-                  AiDigLine.Inner_DataUtil next = this.digLines.get(1);
+                  AiDigLine.DigLine next = this.digLines.get(1);
                   BlockPos led = AiBlockMine.nextChainBlock(next, mc.player.getEyePosition(), cell, this.blockShapes(), mc.player.blockInteractionRange());
                   if (led != null
                      && !this.blacklistedCells.contains(led.asLong())
@@ -2548,7 +2548,7 @@ public final class AiBlockMine {
                      }
                   }
 
-                  AiDigLine.Inner_DataUtil again = AiDigLine.planLine(
+                  AiDigLine.DigLine again = AiDigLine.planLine(
                      from, mc.player.getYRot(), mc.player.getXRot(), List.of(cell), rest, this.blockShapes(), reach
                   );
                   if (again != null && again.chain().get(0).equals(cell)) {
@@ -2582,7 +2582,7 @@ public final class AiBlockMine {
                }
 
                rest.add(cell);
-               AiDigLine.Inner_DataUtil here = AiDigLine.planLine(
+               AiDigLine.DigLine here = AiDigLine.planLine(
                   eye, mc.player.getYRot(), mc.player.getXRot(), List.of(cell), rest, this.blockShapes(), reach
                );
                if (here != null && here.chain().get(0).equals(cell) && !this.read_RefQueue_DataUtil.isDiggingTargetCompat(cell)) {
@@ -2620,7 +2620,7 @@ public final class AiBlockMine {
                if (!beside.isEmpty()) {
                   Vec3 eye = new Vec3(end.getX() + 0.5, end.getY() + mc.player.getEyeHeight(), end.getZ() + 0.5);
                   double reach = mc.player.blockInteractionRange();
-                  List<AiDigLine.Inner_DataUtil> lines = AiDigLine.planLines(
+                  List<AiDigLine.DigLine> lines = AiDigLine.planLines(
                      eye, mc.player.getYRot(), mc.player.getXRot(), beside, beside, this.blockShapes(), reach, 1, this.breakCost()
                   );
                   if (!lines.isEmpty()) {
@@ -3565,7 +3565,7 @@ public final class AiBlockMine {
          return 1.0 / 0.0;
       }
 
-      double dryTicks = MiningCost.breakTicks(mc, mc.player.getInventory().getItem(slot), state, state.getDestroySpeed(mc.level, pos), MiningCost.Inner_DataUtil.of(mc));
+      double dryTicks = MiningCost.breakTicks(mc, mc.player.getInventory().getItem(slot), state, state.getDestroySpeed(mc.level, pos), MiningCost.MiningFactors.of(mc));
       double submergedSpeed = mc.player.getAttributeValue(Attributes.SUBMERGED_MINING_SPEED);
       double slowdown = submergedSpeed > 0.0 && submergedSpeed < 1.0 ? 1.0 / submergedSpeed : 1.0;
       return swim + dryTicks / 20.0 * (slowdown - 1.0);

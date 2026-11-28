@@ -1250,8 +1250,8 @@ public final class AiService {
       this.appendTranscript("user", "Keep chatting: " + text);
 
       try {
-         AiChatPolicy.Inner_DataUtil base = AiChatPolicy.Inner_DataUtil.defaults(text);
-         AiChatPolicy.Inner_DataUtil config = new AiChatPolicy.Inner_DataUtil(
+         AiChatPolicy.ChatConfig base = AiChatPolicy.ChatConfig.defaults(text);
+         AiChatPolicy.ChatConfig config = new AiChatPolicy.ChatConfig(
             base.instructions(),
             AiChatPolicy.chatPartners(text),
             base.onlyMentions(),
@@ -1275,8 +1275,8 @@ public final class AiService {
       }
 
       try {
-         AiChatPolicy.Inner_DataUtil base = AiChatPolicy.Inner_DataUtil.defaults(objective);
-         AiChatPolicy.Inner_DataUtil config = new AiChatPolicy.Inner_DataUtil(
+         AiChatPolicy.ChatConfig base = AiChatPolicy.ChatConfig.defaults(objective);
+         AiChatPolicy.ChatConfig config = new AiChatPolicy.ChatConfig(
             base.instructions(),
             AiChatPolicy.chatPartners(objective),
             base.onlyMentions(),
@@ -1294,7 +1294,7 @@ public final class AiService {
       }
    }
 
-   private JsonObject launchChatMode(AiChatPolicy.Inner_DataUtil config, String note, boolean auto) {
+   private JsonObject launchChatMode(AiChatPolicy.ChatConfig config, String note, boolean auto) {
       if (config == null || config.instructions().isBlank()) {
          throw new IllegalArgumentException("chat mode needs instructions describing the persona and what to keep talking about");
       }
@@ -1331,7 +1331,7 @@ public final class AiService {
 
          AiService.ChatModeHost host = new AiService.ChatModeHost();
          AiSettings chatSettings = live.copy();
-         AiChatMode fresh = new AiChatMode(config, host, () -> new AiChatMode.Inner_ConfigStore(chatSettings), this.chatExecutor);
+         AiChatMode fresh = new AiChatMode(config, host, () -> new AiChatMode.ProviderBrain(chatSettings), this.chatExecutor);
          host.boundChatMode = fresh;
          this.chatMode = fresh;
 
@@ -1378,7 +1378,7 @@ public final class AiService {
       } else if (!action.equals("start")) {
          throw new IllegalArgumentException("chat_keep action must be start, stop or status (got '" + action + "')");
       } else {
-         AiChatPolicy.Inner_DataUtil config = AiChatPolicy.Inner_DataUtil.parse(args);
+         AiChatPolicy.ChatConfig config = AiChatPolicy.ChatConfig.parse(args);
          if (config.instructions().isBlank()) {
             throw new IllegalArgumentException("chat_keep start needs instructions: the persona and what to keep talking about");
          } else {
@@ -3220,7 +3220,7 @@ public final class AiService {
       long total = AiContext.measureChars(AiJson.GSON.toJsonTree(history));
       boolean keepLastThinking = transport.provider() == AiSettings.Provider.ANTHROPIC
          && AiSettings.anthropicThinking(transport.model()) == AiSettings.Thinking.BUDGET;
-      AiHistory.Inner_StreamUtil cut = AiHistory.compactionCut(
+      AiHistory.Compaction cut = AiHistory.compactionCut(
          transport.provider(), history, (long)(0.35 * budgetTokens * 3.5), (long)(0.6 * budgetTokens * 3.5), keepLastThinking
       );
       if (cut == null) {
@@ -3390,7 +3390,7 @@ public final class AiService {
                List<String> executedCalls = new ArrayList<>();
                long providerStarted = System.nanoTime();
 
-               AiProvider.Inner_BufferHelper reply;
+               AiProvider.Reply reply;
                try {
                   reply = transport.completeWithContext(epoch.prompt(), history, AiTools.toolDefinitions(this.verifyOutcomes), toolChoice, delta -> {
                      live.append(delta);
@@ -3438,7 +3438,7 @@ public final class AiService {
                outputLimitRecoveries = 0;
                contextRecoveries = 0;
                streamRecoveries = 0;
-               AiProvider.Inner_TaskQueue usage = reply.usage();
+               AiProvider.TokenUsage usage = reply.usage();
                long sent = epoch.prompt().stable().length() + epoch.prompt().objective().length() + AiContext.measureChars(AiJson.GSON.toJsonTree(history));
                long transcriptChars = sent + reply.wireMessage().toString().length();
                long estTokens = reply.tokens() > 0L ? reply.tokens() : Math.max(1L, (transcriptChars - s.unusedResetTime) / 2L);
@@ -3596,7 +3596,7 @@ public final class AiService {
       return note;
    }
 
-   static String describeToolResult(AiProvider.Inner_DataUtil call, JsonObject result) {
+   static String describeToolResult(AiProvider.ToolCall call, JsonObject result) {
       String what = call.name();
       if ("perform".equals(call.name()) && call.arguments() != null) {
          what = what + " " + AiJson.getString(call.arguments(), "id", "");
@@ -3636,7 +3636,7 @@ public final class AiService {
          : "Your last reply had no tool call, and a reply without one ends the run. Do not tell the user how to do it or list steps for them: you operate the game, so carry out the next step now with a tool call. If the objective is already done, call finish; if the user only asked a question, call finish with outcome answered and the answer as the message; if you need a decision, call ask_user.";
    }
 
-   private JsonObject executeToolCall(AiService.SessionState s, String sid, AiProvider.Inner_DataUtil call, long g) {
+   private JsonObject executeToolCall(AiService.SessionState s, String sid, AiProvider.ToolCall call, long g) {
       this.checkGeneration(g);
       AiRunTrace trace = AiRunTrace.current();
       long toolStarted = System.nanoTime();
@@ -3929,7 +3929,7 @@ public final class AiService {
          r = this.executeToolCall(
             s,
             s.id,
-            new AiProvider.Inner_DataUtil("host-" + UUID.randomUUID(), "perform", AiJson.objectOf("id", step.capability(), "arguments", arguments)),
+            new AiProvider.ToolCall("host-" + UUID.randomUUID(), "perform", AiJson.objectOf("id", step.capability(), "arguments", arguments)),
             g
          );
          if (isSucceededResult(r) || !isResumableInterruption(r)) {
@@ -5091,7 +5091,7 @@ public final class AiService {
          );
          String token = UUID.randomUUID().toString();
          String system = "Call the connection_probe tool exactly once with the token from the user message, without answering in text. After the tool result arrives, reply with a short confirmation and no tools.";
-         AiProvider.Inner_BufferHelper reply = p.complete(system, List.of(p.userMessage(token)), declarations, "required", s -> {}, expired);
+         AiProvider.Reply reply = p.complete(system, List.of(p.userMessage(token)), declarations, "required", s -> {}, expired);
          if (reply.calls().size() != 1
             || !reply.calls().get(0).name().equals("connection_probe")
             || !AiJson.getString(reply.calls().get(0).arguments(), "token", "").equals(token)) {
@@ -5102,7 +5102,7 @@ public final class AiService {
          history.add(p.userMessage(token));
          history.add(reply.wireMessage());
          history.addAll(p.toolResults(reply.calls(), List.of(AiJson.objectOf("verified", true))));
-         AiProvider.Inner_BufferHelper confirmation = p.complete(system, history, declarations, "none", s -> {}, expired);
+         AiProvider.Reply confirmation = p.complete(system, history, declarations, "none", s -> {}, expired);
          if (confirmation.text().isBlank() || !confirmation.calls().isEmpty()) {
             throw new IllegalStateException("Model did not acknowledge the completed tool round trip");
          }
@@ -5473,7 +5473,7 @@ public final class AiService {
    ) {
    }
 
-   private final class ChatModeHost implements AiChatMode.Inner_BufferHelper {
+   private final class ChatModeHost implements AiChatMode.Host {
       private final AiService.SessionState session = AiService.this.currentSession();
       private final ClientLevel level = Minecraft.getInstance().level;
       private final ClientPacketListener connection = Minecraft.getInstance().getConnection();
@@ -5773,7 +5773,7 @@ public final class AiService {
       }
    }
 
-   private record PendingToolBatch(List<AiProvider.Inner_DataUtil> calls, AiService.ToolCallGate gate) {
+   private record PendingToolBatch(List<AiProvider.ToolCall> calls, AiService.ToolCallGate gate) {
    }
 
    private record SettingDelta(String module, String key, String before, String after, long revision) {

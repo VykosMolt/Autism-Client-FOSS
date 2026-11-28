@@ -13,8 +13,8 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 
 public final class AiEnvironmentHazards {
-   private static final ThreadLocal<AiEnvironmentHazards.Inner_DataUtil> CACHE = ThreadLocal.withInitial(AiEnvironmentHazards.Inner_DataUtil::new);
-   private static final AiEnvironmentHazards.Inner_ConfigStore CLIENT_WORLD = new AiEnvironmentHazards.Inner_ConfigStore() {
+   private static final ThreadLocal<AiEnvironmentHazards.HazardCache> CACHE = ThreadLocal.withInitial(AiEnvironmentHazards.HazardCache::new);
+   private static final AiEnvironmentHazards.WorldSource CLIENT_WORLD = new AiEnvironmentHazards.WorldSource() {
       @Override
       public boolean isInBuildHeight(Object world, BlockPos at) {
          return ((ClientLevel)world).isInsideBuildHeight(at);
@@ -42,16 +42,16 @@ public final class AiEnvironmentHazards {
       }
 
       @Override
-      public List<AiEnvironmentHazards.Inner_BufferHelper> hazardRanges(Object chunk, int x, int z) {
+      public List<AiEnvironmentHazards.HeightRange> hazardRanges(Object chunk, int x, int z) {
          LevelChunk loaded = (LevelChunk)chunk;
          LevelChunkSection[] sections = loaded.getSections();
-         List<AiEnvironmentHazards.Inner_BufferHelper> ranges = new ArrayList<>();
+         List<AiEnvironmentHazards.HeightRange> ranges = new ArrayList<>();
 
          for (int section = 0; section < sections.length; section++) {
             LevelChunkSection data = sections[section];
             if (data != null && !data.hasOnlyAir() && data.maybeHas(state -> state.getBlock() instanceof PotentSulfurBlock)) {
                for (int y = 0; y < 16; y++) {
-                  AiEnvironmentHazards.Inner_BufferHelper range = AiEnvironmentHazards.sulfurBand(
+                  AiEnvironmentHazards.HeightRange range = AiEnvironmentHazards.sulfurBand(
                      (loaded.getSectionYFromSectionIndex(section) << 4) + y, data.getBlockState(x & 15, y, z & 15)
                   );
                   if (range != null) {
@@ -72,12 +72,12 @@ public final class AiEnvironmentHazards {
       return mayBeHazardous(level, CLIENT_WORLD, at);
    }
 
-   static boolean mayBeHazardous(Object world, AiEnvironmentHazards.Inner_ConfigStore source, BlockPos at) {
+   static boolean mayBeHazardous(Object world, AiEnvironmentHazards.WorldSource source, BlockPos at) {
       if (world == null) {
          return true;
       }
 
-      AiEnvironmentHazards.Inner_DataUtil cache = CACHE.get();
+      AiEnvironmentHazards.HazardCache cache = CACHE.get();
       cache.bindWorld(world);
 
       try {
@@ -99,7 +99,7 @@ public final class AiEnvironmentHazards {
                }
 
                int revision = AiGridRevisions.revisionOf(AiGridRevisions.chunkKey(cx, cz));
-               AiEnvironmentHazards.Inner_StreamUtil summary = chunkSummary(cache, world, source, chunk, cx, cz, revision, tick);
+               AiEnvironmentHazards.ChunkSummary summary = chunkSummary(cache, world, source, chunk, cx, cz, revision, tick);
                if (summary == null) {
                   return true;
                }
@@ -125,9 +125,9 @@ public final class AiEnvironmentHazards {
    }
 
    private static boolean chunkMayBeHazardous(
-      AiEnvironmentHazards.Inner_DataUtil cache,
+      AiEnvironmentHazards.HazardCache cache,
       Object world,
-      AiEnvironmentHazards.Inner_ConfigStore source,
+      AiEnvironmentHazards.WorldSource source,
       Object chunk,
       int cx,
       int cz,
@@ -138,14 +138,14 @@ public final class AiEnvironmentHazards {
       int z
    ) {
       long key = BlockPos.asLong(x, 0, z);
-      AiEnvironmentHazards.Inner_CachePool cached = cache.chunkCache.get(key);
+      AiEnvironmentHazards.CachedRanges cached = cache.chunkCache.get(key);
       if (cached == null || cached.chunk.get() != chunk || cached.revision != revision || tick - cached.tick > 200L || tick < cached.tick) {
-         List<AiEnvironmentHazards.Inner_BufferHelper> ranges = List.copyOf(source.hazardRanges(chunk, x, z));
+         List<AiEnvironmentHazards.HeightRange> ranges = List.copyOf(source.hazardRanges(chunk, x, z));
          if (!isChunkCurrent(world, source, chunk, cx, cz, revision)) {
             return true;
          }
 
-         cached = new AiEnvironmentHazards.Inner_CachePool(new WeakReference<>(chunk), revision, tick, ranges);
+         cached = new AiEnvironmentHazards.CachedRanges(new WeakReference<>(chunk), revision, tick, ranges);
          cache.chunkCache.put(key, cached);
 
          while (cache.chunkCache.size() > 1024) {
@@ -153,7 +153,7 @@ public final class AiEnvironmentHazards {
          }
       }
 
-      for (AiEnvironmentHazards.Inner_BufferHelper range : cached.ranges) {
+      for (AiEnvironmentHazards.HeightRange range : cached.ranges) {
          if (y >= range.bottom && y <= range.top) {
             return true;
          }
@@ -162,18 +162,18 @@ public final class AiEnvironmentHazards {
       return false;
    }
 
-   private static AiEnvironmentHazards.Inner_StreamUtil chunkSummary(
-      AiEnvironmentHazards.Inner_DataUtil cache, Object world, AiEnvironmentHazards.Inner_ConfigStore source, Object chunk, int cx, int cz, int revision, long tick
+   private static AiEnvironmentHazards.ChunkSummary chunkSummary(
+      AiEnvironmentHazards.HazardCache cache, Object world, AiEnvironmentHazards.WorldSource source, Object chunk, int cx, int cz, int revision, long tick
    ) {
       long key = AiGridRevisions.chunkKey(cx, cz);
-      AiEnvironmentHazards.Inner_StreamUtil summary = cache.summaries.get(key);
+      AiEnvironmentHazards.ChunkSummary summary = cache.summaries.get(key);
       if (summary == null || summary.chunk.get() != chunk || summary.revision != revision || tick - summary.tick > 200L || tick < summary.tick) {
          boolean contains = source.hasSulfur(chunk);
          if (!isChunkCurrent(world, source, chunk, cx, cz, revision)) {
             return null;
          }
 
-         summary = new AiEnvironmentHazards.Inner_StreamUtil(new WeakReference<>(chunk), revision, tick, contains);
+         summary = new AiEnvironmentHazards.ChunkSummary(new WeakReference<>(chunk), revision, tick, contains);
          cache.summaries.put(key, summary);
 
          while (cache.summaries.size() > 384) {
@@ -184,23 +184,23 @@ public final class AiEnvironmentHazards {
       return summary;
    }
 
-   private static boolean isChunkCurrent(Object world, AiEnvironmentHazards.Inner_ConfigStore source, Object chunk, int cx, int cz, int revision) {
+   private static boolean isChunkCurrent(Object world, AiEnvironmentHazards.WorldSource source, Object chunk, int cx, int cz, int revision) {
       return AiGridRevisions.revisionOf(AiGridRevisions.chunkKey(cx, cz)) == revision && source.loadedChunk(world, cx, cz) == chunk;
    }
 
-   static AiEnvironmentHazards.Inner_BufferHelper sulfurBand(int bottom, BlockState state) {
+   static AiEnvironmentHazards.HeightRange sulfurBand(int bottom, BlockState state) {
       return state.getBlock() instanceof PotentSulfurBlock && !state.getValue(PotentSulfurBlock.STATE).toString().equalsIgnoreCase("dry")
-         ? new AiEnvironmentHazards.Inner_BufferHelper(bottom - 1, bottom + 24)
+         ? new AiEnvironmentHazards.HeightRange(bottom - 1, bottom + 24)
          : null;
    }
 
-   record Inner_BufferHelper(int bottom, int top) {
+   record HeightRange(int bottom, int top) {
    }
 
-   private record Inner_CachePool(WeakReference<Object> chunk, int revision, long tick, List<AiEnvironmentHazards.Inner_BufferHelper> ranges) {
+   private record CachedRanges(WeakReference<Object> chunk, int revision, long tick, List<AiEnvironmentHazards.HeightRange> ranges) {
    }
 
-   interface Inner_ConfigStore {
+   interface WorldSource {
       boolean isInBuildHeight(Object var1, BlockPos var2);
 
       long gameTime(Object var1);
@@ -209,12 +209,12 @@ public final class AiEnvironmentHazards {
 
       boolean hasSulfur(Object var1);
 
-      List<AiEnvironmentHazards.Inner_BufferHelper> hazardRanges(Object var1, int var2, int var3);
+      List<AiEnvironmentHazards.HeightRange> hazardRanges(Object var1, int var2, int var3);
    }
 
-   private static final class Inner_DataUtil {
-      final LinkedHashMap<Long, AiEnvironmentHazards.Inner_CachePool> chunkCache = new LinkedHashMap<>(64, 0.75F, true);
-      final LinkedHashMap<Long, AiEnvironmentHazards.Inner_StreamUtil> summaries = new LinkedHashMap<>(64, 0.75F, true);
+   private static final class HazardCache {
+      final LinkedHashMap<Long, AiEnvironmentHazards.CachedRanges> chunkCache = new LinkedHashMap<>(64, 0.75F, true);
+      final LinkedHashMap<Long, AiEnvironmentHazards.ChunkSummary> summaries = new LinkedHashMap<>(64, 0.75F, true);
       WeakReference<Object> world = new WeakReference<>(null);
 
       void bindWorld(Object world) {
@@ -226,6 +226,6 @@ public final class AiEnvironmentHazards {
       }
    }
 
-   private record Inner_StreamUtil(WeakReference<Object> chunk, int revision, long tick, boolean containsSulfur) {
+   private record ChunkSummary(WeakReference<Object> chunk, int revision, long tick, boolean containsSulfur) {
    }
 }

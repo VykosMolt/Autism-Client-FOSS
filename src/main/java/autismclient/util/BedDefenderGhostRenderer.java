@@ -33,24 +33,24 @@ public final class BedDefenderGhostRenderer {
                      && mc.level != null
                      && mc.player != null
                      && !mc.gui.hud.isHidden()) {
-                     List<autismclient.modules.BedDefenderModule.Inner_CachePool> cells = bed.ghostCells();
+                     List<autismclient.modules.BedDefenderModule.GhostCell> cells = bed.ghostCells();
                      if (!cells.isEmpty()) {
                         ClientLevel level = mc.level;
                         Vec3 camera = context.levelState().cameraRenderState.pos;
-                        ArrayList<autismclient.modules.BedDefenderModule.Inner_CachePool> sorted = new ArrayList<>(cells);
+                        ArrayList<autismclient.modules.BedDefenderModule.GhostCell> sorted = new ArrayList<>(cells);
                         sorted.sort(
-                           Comparator.<autismclient.modules.BedDefenderModule.Inner_CachePool>comparingDouble(cell -> cell.pos().distToCenterSqr(camera))
+                           Comparator.<autismclient.modules.BedDefenderModule.GhostCell>comparingDouble(cell -> cell.pos().distToCenterSqr(camera))
                               .reversed()
                         );
-                        Map<BlockPos, autismclient.modules.BedDefenderModule.Inner_CachePool> solid = new HashMap<>();
+                        Map<BlockPos, autismclient.modules.BedDefenderModule.GhostCell> solid = new HashMap<>();
 
-                        for (autismclient.modules.BedDefenderModule.Inner_CachePool cell : sorted) {
+                        for (autismclient.modules.BedDefenderModule.GhostCell cell : sorted) {
                            solid.put(cell.pos(), cell);
                         }
 
                         int alpha = Math.clamp(Integer.parseInt(bed.value("ghost-opacity")), 5, 80) * 255 / 100;
                         int ghostTint = bed.ghostTint();
-                        int nextLayer = sorted.stream().mapToInt(autismclient.modules.BedDefenderModule.Inner_CachePool::layer).min().orElse(1);
+                        int nextLayer = sorted.stream().mapToInt(autismclient.modules.BedDefenderModule.GhostCell::layer).min().orElse(1);
                         context.submitNodeCollector()
                            .submitCustomGeometry(
                               context.poseStack(),
@@ -58,23 +58,23 @@ public final class BedDefenderGhostRenderer {
                               (pose, buffer) -> {
                                  int quads = 0;
 
-                                 for (autismclient.modules.BedDefenderModule.Inner_CachePool cell : sorted) {
+                                 for (autismclient.modules.BedDefenderModule.GhostCell cell : sorted) {
                                     BlockPos p = cell.pos();
                                     if (level.isLoaded(p) && level.getBlockState(p).canBeReplaced()) {
                                        float fade = cell.layer() <= nextLayer ? 1.0F : DistanceFadeCurve.fade(Math.sqrt(new AABB(p).distanceToSqr(camera)));
                                        int layerAlpha = Math.round(alpha * fade);
                                        if (layerAlpha != 0) {
-                                          autismclient.util.oresim.OreGhostModelCache.Inner_StreamUtil model = autismclient.util.oresim.OreGhostModelCache.init(
+                                          autismclient.util.oresim.OreGhostModelCache.GhostModel model = autismclient.util.oresim.OreGhostModelCache.init(
                                              cell.state()
                                           );
 
-                                          for (autismclient.util.oresim.OreGhostModelCache.Inner_DataUtil face : model.faces()) {
+                                          for (autismclient.util.oresim.OreGhostModelCache.Face face : model.faces()) {
                                              if (++quads > 4096) {
                                                 return;
                                              }
 
                                              Direction d = face.cullFace();
-                                             autismclient.modules.BedDefenderModule.Inner_CachePool neighbour = d == null ? null : solid.get(p.relative(d));
+                                             autismclient.modules.BedDefenderModule.GhostCell neighbour = d == null ? null : solid.get(p.relative(d));
                                              if (neighbour == null || cell.layer() < neighbour.layer()) {
                                                 float shade = face.load() == null ? 1.0F : level.cardinalLighting().byFace(face.load());
                                                 BlockTintSource tintSource = face.tintIndex() < 0

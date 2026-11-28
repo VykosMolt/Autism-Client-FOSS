@@ -383,7 +383,7 @@ final class AiTranscriptLayout {
             byte[] styles = block.styles();
             int first = out.size();
 
-            for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil w : autismclient.gui.ui.TextWrapLayout.wrap(
+            for (autismclient.gui.ui.TextWrapLayout.WrappedLine w : autismclient.gui.ui.TextWrapLayout.wrap(
                safe, Math.max(1, width - indent), (s, e) -> styledWidth(safe, styles, s, e, measure)
             )) {
                String rowText = safe.substring(w.init(), w.read());
@@ -464,7 +464,7 @@ final class AiTranscriptLayout {
       String safe = text == null ? "" : text.replace("\r", "").replace('\t', ' ');
       List<String> out = new ArrayList<>();
 
-      for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil line : autismclient.gui.ui.TextWrapLayout.wrap(
+      for (autismclient.gui.ui.TextWrapLayout.WrappedLine line : autismclient.gui.ui.TextWrapLayout.wrap(
          safe, Math.max(1, width), (s, e) -> measure.measure(safe, s, e)
       )) {
          out.add(safe.substring(line.init(), line.read()));

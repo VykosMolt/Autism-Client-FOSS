@@ -1448,7 +1448,7 @@ public class TextInputWidget extends autismclient.gui.ui.layout.LayoutNode imple
       String safeComponent = text == null ? "" : text;
       List<TextInputWidget.WrappedLine> lines = new ArrayList<>();
 
-      for (autismclient.gui.ui.TextWrapLayout.Inner_DataUtil line : autismclient.gui.ui.TextWrapLayout.wrap(
+      for (autismclient.gui.ui.TextWrapLayout.WrappedLine line : autismclient.gui.ui.TextWrapLayout.wrap(
          safeComponent, availableWidth, (start, end) -> this.measureRangeWidth(renderer, font, color, safeComponent, richMetrics, start, end)
       )) {
          lines.add(new TextInputWidget.WrappedLine(line.init(), line.load(), line.read()));

@@ -9,8 +9,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 
 public class PacketClickAction implements MacroAction {
-   public ContainerClickSnapshot.Inner_StreamUtil target;
-   public String mode = ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK.name();
+   public ContainerClickSnapshot.Snapshot target;
+   public String mode = ContainerClickSnapshot.ClickMode.LEFT_CLICK.name();
    public int times = 1;
    public boolean queue = false;
    private transient boolean holdingOpen = false;
@@ -18,24 +18,24 @@ public class PacketClickAction implements MacroAction {
    public PacketClickAction() {
    }
 
-   public PacketClickAction(ContainerClickSnapshot.Inner_StreamUtil target, int times, boolean queue) {
+   public PacketClickAction(ContainerClickSnapshot.Snapshot target, int times, boolean queue) {
       this.target = target;
       this.times = Math.max(1, times);
       this.queue = queue;
       this.holdContainerOpen();
    }
 
-   public void setTarget(ContainerClickSnapshot.Inner_StreamUtil newTarget) {
+   public void setTarget(ContainerClickSnapshot.Snapshot newTarget) {
       this.releaseHoldOffline();
       this.target = newTarget == null ? null : newTarget.withMode(this.effectiveMode());
       this.holdContainerOpen();
    }
 
-   private ContainerClickSnapshot.Inner_DataUtil effectiveMode() {
+   private ContainerClickSnapshot.ClickMode effectiveMode() {
       if (this.target != null && (this.mode == null || this.mode.isBlank())) {
-         return this.target.mode() == null ? ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK : this.target.mode();
+         return this.target.mode() == null ? ContainerClickSnapshot.ClickMode.LEFT_CLICK : this.target.mode();
       } else {
-         return ContainerClickSnapshot.Inner_DataUtil.byName(this.mode);
+         return ContainerClickSnapshot.ClickMode.byName(this.mode);
       }
    }
 
@@ -73,7 +73,7 @@ public class PacketClickAction implements MacroAction {
             AutismClientMessaging.sendPrefixed("§cPacket Click has no captured target.");
          } else {
             int count = Math.max(1, this.times);
-            ContainerClickSnapshot.Inner_StreamUtil effectiveTarget = this.target.withMode(this.effectiveMode());
+            ContainerClickSnapshot.Snapshot effectiveTarget = this.target.withMode(this.effectiveMode());
 
             for (int i = 0; i < count; i++) {
                ServerboundContainerClickPacket packet = effectiveTarget.toPacket();
@@ -116,11 +116,11 @@ public class PacketClickAction implements MacroAction {
       this.times = Math.max(1, tag.getIntOr("times", 1));
       this.queue = tag.getBooleanOr("queue", false);
       this.mode = tag.getStringOr("mode", "");
-      this.target = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::fromTag).orElse(null);
+      this.target = tag.getCompound("target").map(ContainerClickSnapshot.Snapshot::fromTag).orElse(null);
       if (this.mode == null || this.mode.isBlank()) {
          this.mode = this.target != null && this.target.mode() != null
             ? this.target.mode().name()
-            : ContainerClickSnapshot.Inner_DataUtil.LEFT_CLICK.name();
+            : ContainerClickSnapshot.ClickMode.LEFT_CLICK.name();
       }
 
       if (this.target != null) {

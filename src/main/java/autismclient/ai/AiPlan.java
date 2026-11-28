@@ -20,17 +20,17 @@ final class AiPlan {
    static AiOperation create(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         List<AiPlanRunner.Inner_BufferHelper> declared = parseSteps(args);
-         final List<AiPlanRunner.Inner_BufferHelper> ordered = AiPlanRunner.orderSteps(declared);
-         final AiPlanRunner.Inner_DataUtil policy = parseFailurePolicy(AiJson.getString(args, "onFailure", "stop"));
+         List<AiPlanRunner.Step> declared = parseSteps(args);
+         final List<AiPlanRunner.Step> ordered = AiPlanRunner.orderSteps(declared);
+         final AiPlanRunner.FailurePolicy policy = parseFailurePolicy(AiJson.getString(args, "onFailure", "stop"));
          final int timeoutSeconds = Math.max(30, Math.min(7200, AiJson.getInt(args, "timeoutSeconds", 1800)));
          final boolean guarded = AiJson.getBoolean(args, "survival", true);
          return new AiOperation() {
             final long deadline = System.nanoTime() + timeoutSeconds * 1000000000L;
-            final List<AiPlanRunner.Inner_StreamUtil> steps = AiPlan.toRuntimeSteps(ordered);
+            final List<AiPlanRunner.StepProgress> steps = AiPlan.toRuntimeSteps(ordered);
             final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard();
             AiOperation child;
-            AiPlanRunner.Inner_StreamUtil current;
+            AiPlanRunner.StepProgress current;
             AiOperation guardOp;
             String guardReason = "";
             int guardInterrupts;
@@ -82,7 +82,7 @@ final class AiPlan {
                         return this.finishPlan();
                      }
 
-                     this.current.state = AiPlanRunner.Inner_CachePool.RUNNING;
+                     this.current.state = AiPlanRunner.StepState.RUNNING;
                      this.current.attempts++;
 
                      try {
@@ -185,7 +185,7 @@ final class AiPlan {
             JsonObject progressJson() {
                JsonArray steps = new JsonArray();
 
-               for (AiPlanRunner.Inner_StreamUtil progress : this.steps) {
+               for (AiPlanRunner.StepProgress progress : this.steps) {
                   steps.add(
                      AiJson.objectOf(
                         "id",
@@ -248,17 +248,17 @@ final class AiPlan {
       }
    }
 
-   private static List<AiPlanRunner.Inner_StreamUtil> toRuntimeSteps(List<AiPlanRunner.Inner_BufferHelper> ordered) {
-      List<AiPlanRunner.Inner_StreamUtil> plan = new ArrayList<>(ordered.size());
+   private static List<AiPlanRunner.StepProgress> toRuntimeSteps(List<AiPlanRunner.Step> ordered) {
+      List<AiPlanRunner.StepProgress> plan = new ArrayList<>(ordered.size());
 
-      for (AiPlanRunner.Inner_BufferHelper step : ordered) {
-         plan.add(new AiPlanRunner.Inner_StreamUtil(step));
+      for (AiPlanRunner.Step step : ordered) {
+         plan.add(new AiPlanRunner.StepProgress(step));
       }
 
       return plan;
    }
 
-   static List<AiPlanRunner.Inner_BufferHelper> parseSteps(JsonObject args) {
+   static List<AiPlanRunner.Step> parseSteps(JsonObject args) {
       if (args.has("steps") && args.get("steps").isJsonArray()) {
          JsonArray raw = args.getAsJsonArray("steps");
          if (raw.isEmpty()) {
@@ -269,7 +269,7 @@ final class AiPlan {
             throw new IllegalArgumentException("A plan may hold at most 32 steps; split a longer objective into several plans");
          }
 
-         List<AiPlanRunner.Inner_BufferHelper> steps = new ArrayList<>(raw.size());
+         List<AiPlanRunner.Step> steps = new ArrayList<>(raw.size());
          int index = 0;
 
          for (JsonElement element : raw) {
@@ -290,7 +290,7 @@ final class AiPlan {
                }
             }
 
-            steps.add(new AiPlanRunner.Inner_BufferHelper(id, capability, arguments.toString(), needs));
+            steps.add(new AiPlanRunner.Step(id, capability, arguments.toString(), needs));
          }
 
          return steps;
@@ -340,7 +340,7 @@ final class AiPlan {
       }
    }
 
-   static AiPlanRunner.Inner_DataUtil parseFailurePolicy(String text) {
+   static AiPlanRunner.FailurePolicy parseFailurePolicy(String text) {
       String word = text.trim().toLowerCase(Locale.ROOT);
       String var10000;
       switch (word) {
@@ -367,7 +367,7 @@ final class AiPlan {
       word = var10000;
 
       try {
-         return AiPlanRunner.Inner_DataUtil.valueOf(word.toUpperCase(Locale.ROOT));
+         return AiPlanRunner.FailurePolicy.valueOf(word.toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("onFailure must be stop, continue or retry (got '" + text + "')");
       }

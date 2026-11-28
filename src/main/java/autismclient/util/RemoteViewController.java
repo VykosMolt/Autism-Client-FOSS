@@ -26,24 +26,24 @@ public final class RemoteViewController {
       return targetName;
    }
 
-   public static RemoteViewController.Inner_DataUtil startViewing(Player player) {
+   public static RemoteViewController.ViewResult startViewing(Player player) {
       Minecraft mc = Minecraft.getInstance();
       if (mc != null && mc.player != null && mc.level != null && mc.getConnection() != null) {
          if (player == null || player.isRemoved() || player.level() != mc.level) {
-            return new RemoteViewController.Inner_DataUtil(false, "That player is not loaded.");
+            return new RemoteViewController.ViewResult(false, "That player is not loaded.");
          }
 
          if (player == mc.player) {
-            return new RemoteViewController.Inner_DataUtil(false, "You cannot remote-view yourself.");
+            return new RemoteViewController.ViewResult(false, "You cannot remote-view yourself.");
          }
 
          if (autismclient.modules.FreecamController.isActive()) {
-            return new RemoteViewController.Inner_DataUtil(false, "Disable Freecam first.");
+            return new RemoteViewController.ViewResult(false, "Disable Freecam first.");
          }
 
          if (isActive() && player.getUUID().equals(targetUuid)) {
             stop(false);
-            return new RemoteViewController.Inner_DataUtil(true, "Remote view stopped.");
+            return new RemoteViewController.ViewResult(true, "Remote view stopped.");
          }
 
          if (isActive()) {
@@ -58,9 +58,9 @@ public final class RemoteViewController {
          level = mc.level;
          mc.options.setCameraType(CameraType.FIRST_PERSON);
          mc.setCameraEntity(player);
-         return new RemoteViewController.Inner_DataUtil(true, "Viewing " + targetName + ". Use " + autismclient.commands.CommandManager.getPrefix() + "rv stop to leave.");
+         return new RemoteViewController.ViewResult(true, "Viewing " + targetName + ". Use " + autismclient.commands.CommandManager.getPrefix() + "rv stop to leave.");
       } else {
-         return new RemoteViewController.Inner_DataUtil(false, "Join a world first.");
+         return new RemoteViewController.ViewResult(false, "Join a world first.");
       }
    }
 
@@ -151,6 +151,6 @@ public final class RemoteViewController {
       wasThirdPerson = false;
    }
 
-   public record Inner_DataUtil(boolean success, String message) {
+   public record ViewResult(boolean success, String message) {
    }
 }

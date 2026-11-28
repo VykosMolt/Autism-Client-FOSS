@@ -318,7 +318,7 @@ public class AutismMinecraftClientMixin {
                client.hitResult = previous;
             }
          } else if (CombatInteractionController.init_Z(client)) {
-            CombatInteractionController.Inner_DataUtil frame = CombatInteractionController.frame(client);
+            CombatInteractionController.SavedView frame = CombatInteractionController.frame(client);
             if (frame != null) {
                try {
                   original.call();

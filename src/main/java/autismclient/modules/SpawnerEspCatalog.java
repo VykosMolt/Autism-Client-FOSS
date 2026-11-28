@@ -31,21 +31,21 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class SpawnerEspCatalog {
    private static final int init_I = 512;
-   public static final List<SpawnerEspCatalog.Inner_DataUtil> TARGETS = List.of(
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:zombie", "Zombie", -865361062),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:skeleton", "Skeleton", -857151256),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:spider", "Spider", -863290822),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:cave_spider", "Cave Spider", -868243019),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:blaze", "Blaze", -855667686),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:silverfish", "Silverfish", -859190839),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:breeze", "Breeze", -861287456),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:husk", "Husk", -861368214),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:stray", "Stray", -861943842),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:bogged", "Bogged", -866222769),
-      new SpawnerEspCatalog.Inner_DataUtil("minecraft:slime", "Slime", -864299446)
+   public static final List<SpawnerEspCatalog.SpawnerTarget> TARGETS = List.of(
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:zombie", "Zombie", -865361062),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:skeleton", "Skeleton", -857151256),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:spider", "Spider", -863290822),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:cave_spider", "Cave Spider", -868243019),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:blaze", "Blaze", -855667686),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:silverfish", "Silverfish", -859190839),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:breeze", "Breeze", -861287456),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:husk", "Husk", -861368214),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:stray", "Stray", -861943842),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:bogged", "Bogged", -866222769),
+      new SpawnerEspCatalog.SpawnerTarget("minecraft:slime", "Slime", -864299446)
    );
    public static final String DEFAULT_IDS;
-   private static final Map<String, SpawnerEspCatalog.Inner_DataUtil> MOBS_BY_ID = new LinkedHashMap<>();
+   private static final Map<String, SpawnerEspCatalog.SpawnerTarget> MOBS_BY_ID = new LinkedHashMap<>();
    private static volatile String cachedListValue;
    private static volatile List<String> cachedIds = List.of();
    private static final int load_I = -855688389;
@@ -91,7 +91,7 @@ public final class SpawnerEspCatalog {
          return am.init_I_Module(module, key, -855688389);
       }
 
-      SpawnerEspCatalog.Inner_DataUtil natural = MOBS_BY_ID.get(entityId);
+      SpawnerEspCatalog.SpawnerTarget natural = MOBS_BY_ID.get(entityId);
       return natural != null ? natural.defaultColor() : -855688389;
    }
 
@@ -227,7 +227,7 @@ public final class SpawnerEspCatalog {
    static {
       StringBuilder def = new StringBuilder();
 
-      for (SpawnerEspCatalog.Inner_DataUtil target : TARGETS) {
+      for (SpawnerEspCatalog.SpawnerTarget target : TARGETS) {
          MOBS_BY_ID.put(target.id(), target);
          if (def.length() > 0) {
             def.append('|');
@@ -239,6 +239,6 @@ public final class SpawnerEspCatalog {
       DEFAULT_IDS = def.toString();
    }
 
-   public record Inner_DataUtil(String id, String load, int defaultColor) {
+   public record SpawnerTarget(String id, String load, int defaultColor) {
    }
 }

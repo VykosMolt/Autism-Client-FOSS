@@ -87,9 +87,9 @@ public final class IsolatedPackDownloader {
             }
          } else {
             try {
-               ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.snapshot(manager);
+               ResourcePackDownloadScope.Snapshot snapshot = ResourcePackDownloadScope.snapshot(manager);
                if (vanillaRequests.isEmpty()) {
-                  try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.enter(snapshot)) {
+                  try (ResourcePackDownloadScope.Scope ignored = ResourcePackDownloadScope.enter(snapshot)) {
                      original.download(controlledRequests, ResourcePackDownloadScope.init(snapshot, result -> {
                         if (init(session, result, controlled, omitted)) {
                            output.accept(result);
@@ -100,7 +100,7 @@ public final class IsolatedPackDownloader {
                   IsolatedPackDownloader.MixedBatchCollector mixed = new IsolatedPackDownloader.MixedBatchCollector(session, controlled, omitted, output);
                   load(session, manager, original, vanillaRequests, mixed::acceptVanilla);
 
-                  try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.enter(snapshot)) {
+                  try (ResourcePackDownloadScope.Scope ignored = ResourcePackDownloadScope.enter(snapshot)) {
                      original.download(controlledRequests, mixed::acceptControlled);
                   }
                }
@@ -133,9 +133,9 @@ public final class IsolatedPackDownloader {
          original.download(requests, output);
       } else {
          try {
-            ResourcePackDownloadScope.Inner_BufferHelper snapshot = ResourcePackDownloadScope.snapshot(manager);
+            ResourcePackDownloadScope.Snapshot snapshot = ResourcePackDownloadScope.snapshot(manager);
 
-            try (ResourcePackDownloadScope.Inner_CachePool ignored = ResourcePackDownloadScope.enter(snapshot)) {
+            try (ResourcePackDownloadScope.Scope ignored = ResourcePackDownloadScope.enter(snapshot)) {
                original.download(requests, ResourcePackDownloadScope.init(snapshot, result -> {
                   if (result != null) {
                      for (Entry<UUID, Long> entry : generations.entrySet()) {
@@ -256,11 +256,11 @@ public final class IsolatedPackDownloader {
             }
          }
 
-         IsolatedResourcePack.Inner_DataUtil snapshot = IsolatedResourcePack.Inner_DataUtil.fromPath(path);
+         IsolatedResourcePack.PackSnapshot snapshot = IsolatedResourcePack.PackSnapshot.fromPath(path);
          FileResourcesSupplier supplier = new IsolatedPackDownloader.IsolatedResourcesSupplier(path, snapshot, isolation);
          synchronized (LOCK) {
             if (!ResourcePackSessionTracker.isCurrent(session, packId, generation)) {
-               return new IsolatedPackDownloader.IsolatedResourcesSupplier(path, IsolatedResourcePack.Inner_DataUtil.empty(), isolation);
+               return new IsolatedPackDownloader.IsolatedResourcesSupplier(path, IsolatedResourcePack.PackSnapshot.empty(), isolation);
             }
 
             Map<UUID, IsolatedPackDownloader.CachedSnapshot> sessionSnapshots = SNAPSHOTS.computeIfAbsent(session, ignored -> new LinkedHashMap<>());
@@ -273,7 +273,7 @@ public final class IsolatedPackDownloader {
             return supplier;
          }
       } else {
-         return new IsolatedPackDownloader.IsolatedResourcesSupplier(path, IsolatedResourcePack.Inner_DataUtil.empty(), isolation);
+         return new IsolatedPackDownloader.IsolatedResourcesSupplier(path, IsolatedResourcePack.PackSnapshot.empty(), isolation);
       }
    }
 
@@ -319,10 +319,10 @@ public final class IsolatedPackDownloader {
    }
 
    private static final class IsolatedResourcesSupplier extends FileResourcesSupplier {
-      private final IsolatedResourcePack.Inner_DataUtil snapshot;
+      private final IsolatedResourcePack.PackSnapshot snapshot;
       private final IsolatedPackDownloader.PackIsolation isolation;
 
-      private IsolatedResourcesSupplier(Path path, IsolatedResourcePack.Inner_DataUtil snapshot, IsolatedPackDownloader.PackIsolation isolation) {
+      private IsolatedResourcesSupplier(Path path, IsolatedResourcePack.PackSnapshot snapshot, IsolatedPackDownloader.PackIsolation isolation) {
          super(path);
          this.snapshot = snapshot;
          this.isolation = isolation;
@@ -339,7 +339,7 @@ public final class IsolatedPackDownloader {
          List<PackResources> overlays = new ArrayList<>();
 
          for (String overlay : metadata.overlays()) {
-            if (IsolatedResourcePack.Inner_DataUtil.isValidOverlay(overlay)) {
+            if (IsolatedResourcePack.PackSnapshot.isValidOverlay(overlay)) {
                overlays.add(this.snapshot.toPack(location, overlay, false, this.isolation));
             }
          }

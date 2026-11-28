@@ -24,20 +24,20 @@ public final class MapTooltipPreview {
    private static int lastLoadTick = -2147483648;
    private static MapItemSavedData cachedData;
    private static Object cachedLevel;
-   private static MapTooltipPreview.Inner_StreamUtil cachedTooltip;
-   private static MapTooltipPreview.Inner_DataUtil cachedComponent;
+   private static MapTooltipPreview.MapTooltip cachedTooltip;
+   private static MapTooltipPreview.MapTooltipComponent cachedComponent;
 
    private MapTooltipPreview() {
    }
 
    public static void register() {
       ClientTooltipComponentCallback.EVENT.register(data -> {
-         if (!(data instanceof MapTooltipPreview.Inner_StreamUtil tooltip)) {
+         if (!(data instanceof MapTooltipPreview.MapTooltip tooltip)) {
             return null;
          } else {
             if (cachedComponent == null || !tooltip.equals(cachedTooltip)) {
                cachedTooltip = tooltip;
-               cachedComponent = new MapTooltipPreview.Inner_DataUtil(tooltip.init());
+               cachedComponent = new MapTooltipPreview.MapTooltipComponent(tooltip.init());
             }
 
             return cachedComponent;
@@ -53,8 +53,8 @@ public final class MapTooltipPreview {
             return original;
          }
 
-         MapTooltipPreview.Inner_StreamUtil cached = cachedTooltip;
-         return Optional.of(cached != null && cached.init().equals(id) ? cached : new MapTooltipPreview.Inner_StreamUtil(id));
+         MapTooltipPreview.MapTooltip cached = cachedTooltip;
+         return Optional.of(cached != null && cached.init().equals(id) ? cached : new MapTooltipPreview.MapTooltip(id));
       } else {
          return original;
       }
@@ -115,10 +115,10 @@ public final class MapTooltipPreview {
       return data;
    }
 
-   static final class Inner_DataUtil implements ClientTooltipComponent {
+   static final class MapTooltipComponent implements ClientTooltipComponent {
       private final MapId mapId;
 
-      Inner_DataUtil(MapId id) {
+      MapTooltipComponent(MapId id) {
          this.mapId = id;
       }
 
@@ -154,6 +154,6 @@ public final class MapTooltipPreview {
       }
    }
 
-   public record Inner_StreamUtil(MapId init) implements TooltipComponent {
+   public record MapTooltip(MapId init) implements TooltipComponent {
    }
 }

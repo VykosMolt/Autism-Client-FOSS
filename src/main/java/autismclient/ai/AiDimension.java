@@ -134,7 +134,7 @@ final class AiDimension {
    static AiOperation changeDimension(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiDimension.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "enter"));
+         final AiDimension.DimensionAction action = parseAction(AiJson.getString(args, "action", "enter"));
          refreshWorld();
          final String target = normalizeDimension(AiJson.getString(args, "target", "minecraft:the_nether"));
          final boolean build = AiJson.getBoolean(args, "build", false);
@@ -152,10 +152,10 @@ final class AiDimension {
                final Vec3 startPos = mc.player.position();
                final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
                final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer();
-               final AiDimension.Inner_StreamUtil children = new AiDimension.Inner_StreamUtil();
-               final AiDimension.Inner_CachePool ignitionReceipt = new AiDimension.Inner_CachePool();
+               final AiDimension.ChildTracker children = new AiDimension.ChildTracker();
+               final AiDimension.IgnitionReceipt ignitionReceipt = new AiDimension.IgnitionReceipt();
                final List<BlockPos> frameCells = new ArrayList<>();
-               AiDimension.Inner_BufferHelper framePlacement;
+               AiDimension.FramePlacementOp framePlacement;
                Block placingBlock;
                JsonObject lastPlacementReceipt;
                BlockPos ignitionPos;
@@ -286,7 +286,7 @@ final class AiDimension {
                         return this.finish(AiOperation.Status.UNCERTAIN, "Portal work has pending changes that need observation");
                      }
 
-                     if (action == AiDimension.Inner_DataUtil.FIND) {
+                     if (action == AiDimension.DimensionAction.FIND) {
                         return this.finish(AiOperation.Status.SUCCEEDED, "Read portals in loaded terrain");
                      }
 
@@ -923,7 +923,7 @@ final class AiDimension {
                      long before = AiServerEvidence.blockRevision(cell);
                      this.placer.start(cell, item);
                      this.placingBlock = item instanceof BlockItem block ? block.getBlock() : null;
-                     this.framePlacement = new AiDimension.Inner_BufferHelper(
+                     this.framePlacement = new AiDimension.FramePlacementOp(
                         this.placer::tick,
                         this.placer::needsReconciliation,
                         () -> AiJson.objectOf(
@@ -1485,7 +1485,7 @@ final class AiDimension {
                      out.add("lightingReceipt", receipt);
                   }
 
-                  if (action == AiDimension.Inner_DataUtil.FIND) {
+                  if (action == AiDimension.DimensionAction.FIND) {
                      out.add("portalsNearby", this.nearbyPortals());
                   }
 
@@ -1662,9 +1662,9 @@ final class AiDimension {
       return mc.level == null ? "" : mc.level.dimension().identifier().toString();
    }
 
-   private static AiDimension.Inner_DataUtil parseAction(String text) {
+   private static AiDimension.DimensionAction parseAction(String text) {
       try {
-         return AiDimension.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
+         return AiDimension.DimensionAction.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("action must be enter or find");
       }
@@ -1676,7 +1676,7 @@ final class AiDimension {
       PORTAL_BLOCKS.put("minecraft:the_end", Blocks.END_PORTAL);
    }
 
-   static final class Inner_BufferHelper implements AiOperation {
+   static final class FramePlacementOp implements AiOperation {
       private final Supplier<autismclient.ai.engine.AiPlacer.PlaceStatus> work;
       private final BooleanSupplier pending;
       private final Supplier<JsonObject> receipt;
@@ -1686,7 +1686,7 @@ final class AiDimension {
       private boolean started;
       private int ackWaitTicks;
 
-      Inner_BufferHelper(
+      FramePlacementOp(
          Supplier<autismclient.ai.engine.AiPlacer.PlaceStatus> work,
          BooleanSupplier pending,
          Supplier<JsonObject> receipt,
@@ -1750,7 +1750,7 @@ final class AiDimension {
       }
    }
 
-   static final class Inner_CachePool {
+   static final class IgnitionReceipt {
       private int sequence;
       private int sentSequence = -1;
       private long revision;
@@ -1807,12 +1807,12 @@ final class AiDimension {
       }
    }
 
-   enum Inner_DataUtil {
+   enum DimensionAction {
       ENTER,
       FIND;
    }
 
-   static final class Inner_StreamUtil {
+   static final class ChildTracker {
       private final IdentityHashMap<AiOperation, AiOperation.Result> lastResults = new IdentityHashMap<>();
       private AiOperation child;
       private AiOperation.Result actual;

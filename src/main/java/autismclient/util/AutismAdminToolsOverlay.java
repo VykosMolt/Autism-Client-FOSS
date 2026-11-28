@@ -1272,7 +1272,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                this.startItemCapture(module);
                break;
             case "edit-lore":
-               this.openNbtTextEditor(module, "nbt-item-lore", autismclient.gui.screens.NbtTextEditorScreen.Inner_DataUtil.LORE);
+               this.openNbtTextEditor(module, "nbt-item-lore", autismclient.gui.screens.NbtTextEditorScreen.EditMode.LORE);
                break;
             case "edit-enchants":
                this.openEnchantmentEditor(module, "nbt-enchants", autismclient.gui.screens.EnchantmentAttributeEditorScreen.EditorMode.ENCHANTMENTS);
@@ -1281,11 +1281,11 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
                this.openEnchantmentEditor(module, "nbt-attributes", autismclient.gui.screens.EnchantmentAttributeEditorScreen.EditorMode.ATTRIBUTES);
                break;
             case "edit-custom-data":
-               this.openNbtTextEditor(module, "nbt-custom-data", autismclient.gui.screens.NbtTextEditorScreen.Inner_DataUtil.RAW);
+               this.openNbtTextEditor(module, "nbt-custom-data", autismclient.gui.screens.NbtTextEditorScreen.EditMode.RAW);
                break;
             case "edit-item-stack":
                module.sync_V_9();
-               this.openNbtTextEditor(module, "nbt-item-stack", autismclient.gui.screens.NbtTextEditorScreen.Inner_DataUtil.FULL_NBT);
+               this.openNbtTextEditor(module, "nbt-item-stack", autismclient.gui.screens.NbtTextEditorScreen.EditMode.FULL_NBT);
                break;
             case "copy-item-stack-snbt":
                Minecraft mcx = Minecraft.getInstance();
@@ -1319,7 +1319,7 @@ public final class AutismAdminToolsOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void openNbtTextEditor(Module module, String optionId, autismclient.gui.screens.NbtTextEditorScreen.Inner_DataUtil mode) {
+   private void openNbtTextEditor(Module module, String optionId, autismclient.gui.screens.NbtTextEditorScreen.EditMode mode) {
       Minecraft mc = Minecraft.getInstance();
       Setting<?, ?> option = this.findSetting(module, optionId);
       if (mc != null && option != null) {

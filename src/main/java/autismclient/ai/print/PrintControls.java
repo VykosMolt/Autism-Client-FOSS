@@ -41,7 +41,7 @@ public final class PrintControls {
       return this;
    }
 
-   public PrintControls withMoveKeys(PrintMover.Inner_StreamUtil keys) {
+   public PrintControls withMoveKeys(PrintMover.KeyState keys) {
       if (keys == null) {
          return this;
       }

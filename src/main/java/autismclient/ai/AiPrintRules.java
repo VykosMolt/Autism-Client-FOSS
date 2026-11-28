@@ -437,7 +437,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
 
    @Override
    public autismclient.ai.print.PrintRules.SignalTrace traceSignals(BlockGetter world, BlockPos source, Set<BlockPos> targets) {
-      AiPrinterCircuit.Inner_JsonUtil trace = AiPrinterCircuit.trace(world, source, targets);
+      AiPrinterCircuit.Trace trace = AiPrinterCircuit.trace(world, source, targets);
       HashMap<BlockPos, autismclient.ai.print.PrintRules.SignalReach> reached = new HashMap<>();
       trace.reached().forEach((at, result) -> reached.put(at, autismclient.ai.print.PrintRules.SignalReach.valueOf(result.name())));
       return new autismclient.ai.print.PrintRules.SignalTrace(reached, autismclient.ai.print.PrintRules.SignalReach.valueOf(trace.unseen().name()));
@@ -452,7 +452,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
          return normal;
       }
 
-      AiPrinterCircuit.Inner_JsonUtil construction = AiPrinterCircuit.load(world, source, configurationTargets);
+      AiPrinterCircuit.Trace construction = AiPrinterCircuit.load(world, source, configurationTargets);
       HashMap<BlockPos, autismclient.ai.print.PrintRules.SignalReach> reached = new HashMap<>(normal.reached());
       construction.reached()
          .forEach(
@@ -463,7 +463,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
             )
          );
       return new autismclient.ai.print.PrintRules.SignalTrace(
-         Map.copyOf(reached), construction.unseen() == AiPrinterCircuit.Inner_ConfigStore.UNKNOWN ? autismclient.ai.print.PrintRules.SignalReach.UNKNOWN : normal.unseen()
+         Map.copyOf(reached), construction.unseen() == AiPrinterCircuit.ReachStatus.UNKNOWN ? autismclient.ai.print.PrintRules.SignalReach.UNKNOWN : normal.unseen()
       );
    }
 
@@ -578,7 +578,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
 
    public record PrintInputs(
       List<autismclient.ai.print.PrintTarget> targets,
-      List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
+      List<autismclient.ai.print.PrintRailVehicle.VehicleSpec> vehicles,
       List<AiSchematicMachinePlan.ContainerPlan> hoppers,
       Map<BlockPos, BlockState> outcomes,
       Map<Long, ListTag> fixtureContents,
@@ -586,7 +586,7 @@ public final class AiPrintRules implements autismclient.ai.print.PrintRules {
    ) {
       public PrintInputs(
          List<autismclient.ai.print.PrintTarget> targets,
-         List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles,
+         List<autismclient.ai.print.PrintRailVehicle.VehicleSpec> vehicles,
          List<AiSchematicMachinePlan.ContainerPlan> hoppers,
          Map<BlockPos, BlockState> outcomes,
          Map<Long, ListTag> fixtureContents

@@ -39,7 +39,7 @@ final class AiFastPath {
    private AiFastPath() {
    }
 
-   static AiFastPath.Inner_DataUtil parse(String objective, Function<String, int[]> waypoint) {
+   static AiFastPath.ParsedObjective parse(String objective, Function<String, int[]> waypoint) {
       if (objective == null) {
          return null;
       }
@@ -58,7 +58,7 @@ final class AiFastPath {
                applyParkourDefaults(args, true);
             }
 
-            return new AiFastPath.Inner_DataUtil(args, (parkour ? "parkour to " : "go to ") + x + " " + y + " " + z);
+            return new AiFastPath.ParsedObjective(args, (parkour ? "parkour to " : "go to ") + x + " " + y + " " + z);
          } else {
             m = GOTO_XZ.matcher(text);
             if (m.matches()) {
@@ -70,7 +70,7 @@ final class AiFastPath {
                   applyParkourDefaults(args, true);
                }
 
-               return new AiFastPath.Inner_DataUtil(args, (parkour ? "parkour to " : "go to ") + "x=" + x + " z=" + z + " (nearest standable height)");
+               return new AiFastPath.ParsedObjective(args, (parkour ? "parkour to " : "go to ") + "x=" + x + " z=" + z + " (nearest standable height)");
             } else {
                m = MOVE_AMOUNT_DIRECTION.matcher(text);
                if (m.matches()) {
@@ -100,7 +100,7 @@ final class AiFastPath {
                      applyParkourDefaults(args, true);
                   }
 
-                  return new AiFastPath.Inner_DataUtil(args, (parkour ? "parkour to " : "go to ") + "waypoint '" + name + "' at " + at[0] + " " + at[1] + " " + at[2]);
+                  return new AiFastPath.ParsedObjective(args, (parkour ? "parkour to " : "go to ") + "waypoint '" + name + "' at " + at[0] + " " + at[1] + " " + at[2]);
                } else {
                   return null;
                }
@@ -111,7 +111,7 @@ final class AiFastPath {
       }
    }
 
-   private static AiFastPath.Inner_DataUtil relativeMove(boolean parkour, String direction, String amount) {
+   private static AiFastPath.ParsedObjective relativeMove(boolean parkour, String direction, String amount) {
       double distance = Double.parseDouble(amount);
       if (distance > 0.0 && !(distance > 512.0)) {
          String dir = direction.toLowerCase(Locale.ROOT);
@@ -136,7 +136,7 @@ final class AiFastPath {
             applyParkourDefaults(args, false);
          }
 
-         return new AiFastPath.Inner_DataUtil(args, (parkour ? "parkour " : "go ") + (int)distance + " blocks " + canonical);
+         return new AiFastPath.ParsedObjective(args, (parkour ? "parkour " : "go ") + (int)distance + " blocks " + canonical);
       } else {
          return null;
       }
@@ -156,6 +156,6 @@ final class AiFastPath {
       return (int)Math.floor(Double.parseDouble(number));
    }
 
-   record Inner_DataUtil(JsonObject args, String describe) {
+   record ParsedObjective(JsonObject args, String describe) {
    }
 }

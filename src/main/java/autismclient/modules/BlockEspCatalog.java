@@ -32,7 +32,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 final class BlockEspCatalog {
-   private static volatile BlockEspCatalog.Inner_DataUtil cachedSelection = new BlockEspCatalog.Inner_DataUtil("", Set.of());
+   private static volatile BlockEspCatalog.Selection cachedSelection = new BlockEspCatalog.Selection("", Set.of());
    private static volatile String cachedIdsValue;
    private static volatile List<String> cachedIds = List.of();
    static final int DEFAULT_COLOR = -855688389;
@@ -95,7 +95,7 @@ final class BlockEspCatalog {
 
    static void init(Module module, ClientLevel level, Player player, BiConsumer<AABB, Integer> boxEmit, BiConsumer<Vec3, Integer> traceEmit) {
       if (module != null && level != null && player != null && (boxEmit != null || traceEmit != null)) {
-         BlockEspCatalog.Inner_DataUtil selection = parseSelection(module.value("blocks"));
+         BlockEspCatalog.Selection selection = parseSelection(module.value("blocks"));
          if (!selection.targets().isEmpty()) {
             int maxTargets = parseIntClamped(module.value("max-targets"), 1024, 64, 8192);
             Map<Block, Integer> colors = new IdentityHashMap<>();
@@ -305,9 +305,9 @@ final class BlockEspCatalog {
       }
    }
 
-   private static BlockEspCatalog.Inner_DataUtil parseSelection(String value) {
+   private static BlockEspCatalog.Selection parseSelection(String value) {
       String safe = value == null ? "" : value;
-      BlockEspCatalog.Inner_DataUtil cached = cachedSelection;
+      BlockEspCatalog.Selection cached = cachedSelection;
       if (cached.source().equals(safe)) {
          return cached;
       }
@@ -327,7 +327,7 @@ final class BlockEspCatalog {
          }
       }
 
-      BlockEspCatalog.Inner_DataUtil next = new BlockEspCatalog.Inner_DataUtil(safe, Set.copyOf(blocks));
+      BlockEspCatalog.Selection next = new BlockEspCatalog.Selection(safe, Set.copyOf(blocks));
       cachedSelection = next;
       return next;
    }
@@ -360,6 +360,6 @@ final class BlockEspCatalog {
       }
    }
 
-   private record Inner_DataUtil(String source, Set<Block> targets) {
+   private record Selection(String source, Set<Block> targets) {
    }
 }

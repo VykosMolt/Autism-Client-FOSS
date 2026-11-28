@@ -8,7 +8,7 @@ import java.util.List;
 final class SteppedRowContour {
    private static final float read = 2.0F;
    final java.awt.geom.Path2D.Float path;
-   final List<SteppedRowContour.Inner_DataUtil> edges;
+   final List<SteppedRowContour.Edge> edges;
    final float width;
    final float load;
 
@@ -90,7 +90,7 @@ final class SteppedRowContour {
       }
 
       this.path.closePath();
-      ArrayList<SteppedRowContour.Inner_DataUtil> lines = new ArrayList<>();
+      ArrayList<SteppedRowContour.Edge> lines = new ArrayList<>();
       float[] p = new float[6];
       float startX = 0.0F;
       float startY = 0.0F;
@@ -108,7 +108,7 @@ final class SteppedRowContour {
             float dx = nextX - x;
             float dy = nextY - y;
             if (dx * dx + dy * dy > 1.0E-10) {
-               lines.add(new SteppedRowContour.Inner_DataUtil(x, y, dx, dy, dx * dx + dy * dy));
+               lines.add(new SteppedRowContour.Edge(x, y, dx, dy, dx * dx + dy * dy));
             }
 
             x = nextX;
@@ -145,13 +145,13 @@ final class SteppedRowContour {
       return List.copyOf(aligned);
    }
 
-   static float distance(SteppedRowContour.Inner_DataUtil segment, float x, float y) {
+   static float distance(SteppedRowContour.Edge segment, float x, float y) {
       float t = Math.clamp(((x - segment.init) * segment.read + (y - segment.load) * segment.write) / segment.update, 0.0F, 1.0F);
       float dx = x - segment.init - segment.read * t;
       float dy = y - segment.load - segment.write * t;
       return dx * dx + dy * dy;
    }
 
-   record Inner_DataUtil(float init, float load, float read, float write, float update) {
+   record Edge(float init, float load, float read, float write, float update) {
    }
 }

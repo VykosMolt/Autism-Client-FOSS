@@ -281,7 +281,7 @@ public final class SdfShapeRenderer {
       float offsetX = shape.width / 2.0F + 10.0F;
       float offsetY = 10.0F;
 
-      for (SteppedRowContour.Inner_DataUtil edge : shape.edges) {
+      for (SteppedRowContour.Edge edge : shape.edges) {
          int minX = Math.max(0, (int)Math.floor(Math.min(edge.init(), edge.init() + edge.read()) + offsetX - 8.0F));
          int maxX = Math.min(width - 1, (int)Math.ceil(Math.max(edge.init(), edge.init() + edge.read()) + offsetX + 8.0F));
          int minY = Math.max(0, (int)Math.floor(Math.min(edge.load(), edge.load() + edge.write()) + offsetY - 8.0F));

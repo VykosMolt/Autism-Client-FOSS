@@ -111,8 +111,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private int bridgeRunEnd;
    private int bridgeTickBudget;
    private final Set<BlockPos> pendingBreakCells;
-   private AiDigLine.Inner_DataUtil putAt_EventBus_CacheHelp;
-   private AiDigLine.Inner_DataUtil fill_EventBus_CacheHelp;
+   private AiDigLine.DigLine putAt_EventBus_CacheHelp;
+   private AiDigLine.DigLine fill_EventBus_CacheHelp;
    private AiPathfinder.PathStep readEx_FileStore_PacketHe;
    private AiPathfinder.PathStep value_FileStore_PacketHe;
    private AiPathfinder.PathStep prevEx_FileStore_PacketHe;
@@ -836,7 +836,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                      BlockPos var11 = this.moves.get(var3 - 1).to();
                      boolean var7 = this.endsAtGoal && var3 == this.moves.size();
                      if (var3 - this.moveIndex == 1
-                        && AiPaceScript.putAt_Z_TokenCore_TaskStat_4(this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), var11, false, var7)) {
+                        && AiPaceScript.touchesCheckpoint(this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), var11, false, var7)) {
                         this.elapsedCostTicks = this.elapsedCostTicks + this.moves.get(this.moveIndex).costTicks();
                         this.moveIndex = var3;
                         if (++var2 >= 16) {
@@ -1005,13 +1005,13 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          if (!var4
             && !var13
             && var22.length() <= 35.0
-            && AiPaceScript.putAt_Z_TokenCore_TaskStat_2(this.putAt_NetEntry(), var27, var22, var25, var26.putAt_TextPool_IoHelper)) {
+            && AiPaceScript.tryDirectRun(this.putAt_NetEntry(), var27, var22, var25, var26.putAt_TextPool_IoHelper)) {
             var26.searchDone = true;
          } else {
             var var28 = AiPaceScript.putAt_Supplier_FileStore_TextStor(var20, var14, this.fallPolicy);
             Thread.ofVirtual().name("autism-wr-travel").start(() -> {
                try {
-                  AiPaceScript.putAt(var28, var27, var22, var25, () -> var26.cancelled, var26.putAt_TextPool_IoHelper);
+                  AiPaceScript.searchParallel(var28, var27, var22, var25, () -> var26.cancelled, var26.putAt_TextPool_IoHelper);
                } catch (Throwable var9x) {
                   if (navigationDebug) {
                      AiNavDebug.log("wr travel search failed: " + var9x);
@@ -1128,7 +1128,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          Vec3 var14 = var1.getDeltaMovement();
          if (needsGoalBrake(this.endsAtGoal && this.nextBy_Z, var2.endIndex >= this.moves.size(), var1.onGround(), var1.isInWater(), var14.x, var14.z)
             && ++var2.brakeTicks <= 6) {
-            AiPhysics.MoveInput var17 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
+            AiPhysics.MoveInput var17 = AiPaceScript.inputAlongVelocity(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
             this.putAt_V_LocalPlayer_TokenCore_CacheHel(var1, new AiPhysics.MoveInput(var17.forward(), var17.strafe(), false, false, true, var17.yaw()));
             return true;
          } else {
@@ -1249,7 +1249,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                      if (needsGoalBrake(this.endsAtGoal && this.nextBy_Z, var2.endIndex >= this.moves.size(), var1.onGround(), var1.isInWater(), var19.x, var19.z)) {
                         var2.braking = true;
                         var2.brakeTicks = 0;
-                        AiPhysics.MoveInput var9 = AiPaceScript.putAt(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
+                        AiPhysics.MoveInput var9 = AiPaceScript.inputAlongVelocity(var1.getYRot(), putAt_TokenCore_TableCac_LocalPlayer(var1));
                         this.putAt_V_LocalPlayer_TokenCore_CacheHel(
                            var1, new AiPhysics.MoveInput(var9.forward(), var9.strafe(), false, false, true, var9.yaw())
                         );
@@ -1269,7 +1269,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
                      }
                   }
 
-                  String var18 = var2.putAt_TableUtil.putAt_Str() != null ? var2.putAt_TableUtil.putAt_Str() : var7.name();
+                  String var18 = var2.putAt_TableUtil.endReason() != null ? var2.putAt_TableUtil.endReason() : var7.name();
                   return this.putAt_Z_LocalPlayer_2(var1, var2, "wr " + var7.name().toLowerCase(Locale.ROOT) + ": " + var18);
                default:
                   return true;
@@ -1289,7 +1289,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
    private void putAt_V_LocalPlayer_RingCache_TaskStat(LocalPlayer var1, AiWrExecutor.PaceRun var2) {
       if (var2.putAt_TextPool_JsonCache != null) {
          int var3 = Math.max(0, var2.putAt_TableUtil.stepIndex() - 1);
-         int var4 = var2.putAt_TextPool_IoHelper.putAt_I_I(var3);
+         int var4 = var2.putAt_TextPool_IoHelper.segAt(var3);
          if (var4 >= 0) {
             int[] var5 = var2.putAt_TextPool_JsonCache.cellPoint();
             int var6 = var2.cellCursor;
@@ -1338,7 +1338,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
 
       if (var2.endIndex > this.moveIndex && var2.endIndex <= this.moves.size()) {
          BlockPos var5 = this.moves.get(var2.endIndex - 1).to();
-         if (AiPaceScript.putAt_Z_TokenCore_TaskStat_4(
+         if (AiPaceScript.touchesCheckpoint(
             this.putAt_NetEntry(), putAt_TokenCore_TableCac_LocalPlayer(var1), var5, false, this.endsAtGoal && var2.endIndex == this.moves.size()
          )) {
             this.putAt_V_RingCache_TaskStat(var2);
@@ -1771,7 +1771,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
          if (!this.putAt_CacheHelper.isSilent()) {
             Vec3 var8 = var1.getEyePosition();
             double var9 = var1.blockInteractionRange();
-            AiDigLine.Inner_CachePool var11 = this.putAt_EventBus_JsonCache();
+            AiDigLine.ShapeSource var11 = this.putAt_EventBus_JsonCache();
             Vec3 var12 = var3 && var2.type() == AiPathfinder.MoveType.DIG_ASCEND ? AiRoutePolicy.putAt_Vec3_Vec3_FileStore_PacketHe(var8, var2) : var8;
             this.putAt_EventBus_CacheHelp = this.putAt_EventBus_CacheHelp_FileStore_PacketHe(var2, var5, var12, var1, var11, var9);
             BlockPos var13 = this.putAt_EventBus_CacheHelp == null ? null : AiDigLine.firstHit(this.putAt_EventBus_CacheHelp, var8, var5, var11, var9);
@@ -1904,8 +1904,8 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private AiDigLine.Inner_DataUtil putAt_EventBus_CacheHelp_FileStore_PacketHe(
-      AiPathfinder.PathStep var1, List<BlockPos> var2, Vec3 var3, LocalPlayer var4, AiDigLine.Inner_CachePool var5, double var6
+   private AiDigLine.DigLine putAt_EventBus_CacheHelp_FileStore_PacketHe(
+      AiPathfinder.PathStep var1, List<BlockPos> var2, Vec3 var3, LocalPlayer var4, AiDigLine.ShapeSource var5, double var6
    ) {
       var var8 = new ArrayList<>(var2);
       var8.addAll(this.putAt_List_List(var2));
@@ -1977,7 +1977,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
    }
 
-   private AiDigLine.Inner_CachePool putAt_EventBus_JsonCache() {
+   private AiDigLine.ShapeSource putAt_EventBus_JsonCache() {
       return var1 -> this.client.level.getBlockState(var1).getShape(this.client.level, var1);
    }
 
@@ -2002,7 +2002,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
 
          Vec3 var15 = new Vec3(var2.from().getX() + 0.5, var2.from().getY() + var1.getEyeHeight(), var2.from().getZ() + 0.5);
          double var16 = var1.blockInteractionRange();
-         AiDigLine.Inner_CachePool var7 = this.putAt_EventBus_JsonCache();
+         AiDigLine.ShapeSource var7 = this.putAt_EventBus_JsonCache();
          ArrayList var8 = new ArrayList(var3);
          var8.addAll(this.putAt_List_List(var3));
          var var9 = Set.copyOf(var8);
@@ -2302,7 +2302,7 @@ public final class AiWrExecutor implements AiPathfinder.SearchTask {
       }
 
       int var3 = this.placeSlotFor(this.putAt_TokenCodec.nextSupport());
-      if (var3 < 0 && var1.onGround() && this.putAt_TokenCodec.getBridger().putAt_I_TokenCore_TaskStat(this.putAt_NetEntry()) <= var2.length()) {
+      if (var3 < 0 && var1.onGround() && this.putAt_TokenCodec.getBridger().nextSupport(this.putAt_NetEntry()) <= var2.length()) {
          this.releaseDirectionKeys();
          this.client.options.keyShift.setDown(true);
          if (this.plankCraftOp != null) {

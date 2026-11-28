@@ -108,12 +108,12 @@ public final class PackUrlValidator {
       }
    }
 
-   public static PackUrlValidator.ResolvedEndpoint resolveUrlEndpoint(URL url, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.HostResolver resolver) throws IOException {
+   public static PackUrlValidator.ResolvedEndpoint resolveUrlEndpoint(URL url, ResourcePackDownloadScope.Snapshot snapshot, PackUrlValidator.HostResolver resolver) throws IOException {
       return resolveEndpoint(parseUrl(url), snapshot, resolver);
    }
 
    public static PackUrlValidator.ResolvedEndpoint resolveEndpoint(
-      PackUrlValidator.ParsedTarget target, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.HostResolver resolver
+      PackUrlValidator.ParsedTarget target, ResourcePackDownloadScope.Snapshot snapshot, PackUrlValidator.HostResolver resolver
    ) throws IOException {
       Objects.requireNonNull(snapshot, "snapshot");
       List<InetAddress> addresses = resolveHost(target.load(), resolver);
@@ -153,7 +153,7 @@ public final class PackUrlValidator {
    }
 
    public static PackUrlValidator.PackRoute routeForLocation(
-      String location, ResourcePackDownloadScope.Inner_BufferHelper snapshot, PackUrlValidator.HostResolver resolver
+      String location, ResourcePackDownloadScope.Snapshot snapshot, PackUrlValidator.HostResolver resolver
    ) throws IOException, MalformedURLException {
       if (location != null && !location.isBlank()) {
          URI uri;
@@ -306,7 +306,7 @@ public final class PackUrlValidator {
       }
    }
 
-   private static boolean isAllowedAddress(InetAddress address, int port, PackUrlValidator.AddressKind kind, ResourcePackDownloadScope.Inner_BufferHelper snapshot) {
+   private static boolean isAllowedAddress(InetAddress address, int port, PackUrlValidator.AddressKind kind, ResourcePackDownloadScope.Snapshot snapshot) {
       if (kind == PackUrlValidator.AddressKind.PUBLIC) {
          return true;
       }

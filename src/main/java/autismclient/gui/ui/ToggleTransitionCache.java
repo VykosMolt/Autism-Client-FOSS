@@ -8,7 +8,7 @@ import autismclient.gui.f.NetHelper;
 public final class ToggleTransitionCache {
    private static final long init_J = 150000000L;
    private static final long load = 30000000000L;
-   private static final Map<String, ToggleTransitionCache.Inner_DataUtil> STATES = new HashMap<>();
+   private static final Map<String, ToggleTransitionCache.Transition> STATES = new HashMap<>();
    private static long lastPruneNanos;
 
    private ToggleTransitionCache() {
@@ -16,9 +16,9 @@ public final class ToggleTransitionCache {
 
    public static float init(String key, boolean on) {
       long now = System.nanoTime();
-      ToggleTransitionCache.Inner_DataUtil state = STATES.get(key);
+      ToggleTransitionCache.Transition state = STATES.get(key);
       if (state == null) {
-         state = new ToggleTransitionCache.Inner_DataUtil(on ? 1.0F : 0.0F, on, now);
+         state = new ToggleTransitionCache.Transition(on ? 1.0F : 0.0F, on, now);
          STATES.put(key, state);
          return state.load_F;
       }
@@ -32,7 +32,7 @@ public final class ToggleTransitionCache {
       state.load_J = now;
       if (now - lastPruneNanos > 30000000000L) {
          lastPruneNanos = now;
-         Iterator<ToggleTransitionCache.Inner_DataUtil> it = STATES.values().iterator();
+         Iterator<ToggleTransitionCache.Transition> it = STATES.values().iterator();
 
          while (it.hasNext()) {
             if (now - it.next().load_J > 30000000000L) {
@@ -48,14 +48,14 @@ public final class ToggleTransitionCache {
       return bounds.read() + ":" + bounds.write() + ":" + bounds.update() + ":" + bounds.sync();
    }
 
-   private static final class Inner_DataUtil {
+   private static final class Transition {
       float init_F;
       float load_F;
       boolean init_Z;
       long init_J;
       long load_J;
 
-      Inner_DataUtil(float value, boolean target, long now) {
+      Transition(float value, boolean target, long now) {
          this.load_F = value;
          this.init_F = value;
          this.init_Z = target;

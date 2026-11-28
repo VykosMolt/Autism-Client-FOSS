@@ -148,12 +148,12 @@ final class AiSchematicBatchPlan {
       return Collections.unmodifiableSet(result);
    }
 
-   record Inner_BufferHelper(BlockPos feet, long jobs, long[] blockers, int supports, int clearance, long requires) {
-      Inner_BufferHelper(BlockPos feet, long jobs, long[] blockers, int supports, int clearance) {
+   record Station(BlockPos feet, long jobs, long[] blockers, int supports, int clearance, long requires) {
+      Station(BlockPos feet, long jobs, long[] blockers, int supports, int clearance) {
          this(feet, jobs, blockers, supports, clearance, 0L);
       }
 
-      Inner_BufferHelper(BlockPos feet, long jobs, long[] blockers, int supports, int clearance, long requires) {
+      Station(BlockPos feet, long jobs, long[] blockers, int supports, int clearance, long requires) {
          if (blockers.length <= 32 && supports >= 0 && clearance >= 0) {
             blockers = (long[])blockers.clone();
             this.feet = feet;
@@ -172,22 +172,22 @@ final class AiSchematicBatchPlan {
       }
    }
 
-   static final class Inner_CachePool {
+   static final class BeamSearch {
       private static final int init_I = 16;
-      private final List<AiSchematicBatchPlan.Inner_BufferHelper> stations;
+      private final List<AiSchematicBatchPlan.Station> stations;
       private final int targets;
       private final long all;
       private final double[][] legCost;
       private final double[] startLegCost;
       private final double[] continuationCost;
       private final long[][][] blockedViews;
-      private List<AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil> beam;
-      private final Map<AiSchematicBatchPlan.Inner_CachePool.Inner_DataUtil, AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil> nextBeam = new HashMap<>();
-      private AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil bestComplete;
-      private AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil mostCovered;
-      private final AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil rootState;
-      private AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil greedyState;
-      private AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil greedyBest;
+      private List<AiSchematicBatchPlan.BeamSearch.BeamState> beam;
+      private final Map<AiSchematicBatchPlan.BeamSearch.Inner_DataUtil, AiSchematicBatchPlan.BeamSearch.BeamState> nextBeam = new HashMap<>();
+      private AiSchematicBatchPlan.BeamSearch.BeamState bestComplete;
+      private AiSchematicBatchPlan.BeamSearch.BeamState mostCovered;
+      private final AiSchematicBatchPlan.BeamSearch.BeamState rootState;
+      private AiSchematicBatchPlan.BeamSearch.BeamState greedyState;
+      private AiSchematicBatchPlan.BeamSearch.BeamState greedyBest;
       private double greedyBestValue;
       private int greedyPass;
       private int greedyStation;
@@ -196,14 +196,14 @@ final class AiSchematicBatchPlan {
       private int beamDepth;
       private boolean searchFinished;
 
-      Inner_CachePool(List<AiSchematicBatchPlan.Inner_BufferHelper> stations, Vec3 worker, BlockPos continuation, int targets, long available) {
+      BeamSearch(List<AiSchematicBatchPlan.Station> stations, Vec3 worker, BlockPos continuation, int targets, long available) {
          if (targets >= 0 && targets <= 32 && stations.size() <= 128 && (available & ~((1L << targets) - 1L)) == 0L) {
             this.stations = List.copyOf(stations);
             this.targets = targets;
             int count = stations.size();
             long all = 0L;
 
-            for (AiSchematicBatchPlan.Inner_BufferHelper station : stations) {
+            for (AiSchematicBatchPlan.Station station : stations) {
                if (station.blockers.length != targets || (station.jobs & ~available) != 0L) {
                   throw new IllegalArgumentException("Unknown route target");
                }
@@ -248,7 +248,7 @@ final class AiSchematicBatchPlan {
                }
             }
 
-            this.rootState = new AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil(0L, -1, 0.0, 0L, 0L, views, List.of(), 0, 0.0);
+            this.rootState = new AiSchematicBatchPlan.BeamSearch.BeamState(0L, -1, 0.0, 0L, 0L, views, List.of(), 0, 0.0);
             this.beam = List.of(this.rootState);
             this.mostCovered = this.rootState;
             this.greedyState = this.rootState;
@@ -269,13 +269,13 @@ final class AiSchematicBatchPlan {
                this.greedyStep();
             } else if (this.beamIndex >= this.beam.size()) {
                if (!this.nextBeam.isEmpty() && ++this.beamDepth < this.targets) {
-                  ArrayList<AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil> ranked = new ArrayList<>(this.nextBeam.values());
+                  ArrayList<AiSchematicBatchPlan.BeamSearch.BeamState> ranked = new ArrayList<>(this.nextBeam.values());
                   ranked.sort(
-                     Comparator.comparingInt(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil::supports)
-                        .thenComparingDouble(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil::bound)
-                        .thenComparingDouble(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil::cost)
-                        .thenComparingLong(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil::done)
-                        .thenComparingInt(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil::at)
+                     Comparator.comparingInt(AiSchematicBatchPlan.BeamSearch.BeamState::supports)
+                        .thenComparingDouble(AiSchematicBatchPlan.BeamSearch.BeamState::bound)
+                        .thenComparingDouble(AiSchematicBatchPlan.BeamSearch.BeamState::cost)
+                        .thenComparingLong(AiSchematicBatchPlan.BeamSearch.BeamState::done)
+                        .thenComparingInt(AiSchematicBatchPlan.BeamSearch.BeamState::at)
                   );
                   this.beam = List.copyOf(ranked.subList(0, Math.min(16, ranked.size())));
                   this.nextBeam.clear();
@@ -284,13 +284,13 @@ final class AiSchematicBatchPlan {
                   this.searchFinished = true;
                }
             } else {
-               AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil state = this.beam.get(this.beamIndex);
+               AiSchematicBatchPlan.BeamSearch.BeamState state = this.beam.get(this.beamIndex);
                if (this.beamStation >= this.stations.size()) {
                   this.beamIndex++;
                   this.beamStation = 0;
                } else {
                   int at = this.beamStation++;
-                  AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil candidate = this.expand(state, at);
+                  AiSchematicBatchPlan.BeamSearch.BeamState candidate = this.expand(state, at);
                   if (candidate != null) {
                      if (Long.bitCount(candidate.done) > Long.bitCount(this.mostCovered.done)
                         || Long.bitCount(candidate.done) == Long.bitCount(this.mostCovered.done)
@@ -305,10 +305,10 @@ final class AiSchematicBatchPlan {
                      } else if (this.bestComplete == null
                         || candidate.supports <= this.bestComplete.supports
                            && (candidate.supports != this.bestComplete.supports || !(candidate.bound >= this.costWithContinuation(this.bestComplete)))) {
-                        AiSchematicBatchPlan.Inner_CachePool.Inner_DataUtil key = new AiSchematicBatchPlan.Inner_CachePool.Inner_DataUtil(
+                        AiSchematicBatchPlan.BeamSearch.Inner_DataUtil key = new AiSchematicBatchPlan.BeamSearch.Inner_DataUtil(
                            candidate.done, at, candidate.visitedLow, candidate.visitedHigh
                         );
-                        AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil prior = this.nextBeam.get(key);
+                        AiSchematicBatchPlan.BeamSearch.BeamState prior = this.nextBeam.get(key);
                         if (prior == null || candidate.cost < prior.cost) {
                            this.nextBeam.put(key, candidate);
                         }
@@ -345,7 +345,7 @@ final class AiSchematicBatchPlan {
             this.greedyBest = null;
             this.greedyBestValue = 1.0 / 0.0;
          } else {
-            AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil candidate = this.expand(this.greedyState, this.greedyStation++);
+            AiSchematicBatchPlan.BeamSearch.BeamState candidate = this.expand(this.greedyState, this.greedyStation++);
             if (candidate != null) {
                if (Long.bitCount(candidate.done) > Long.bitCount(this.mostCovered.done)) {
                   this.mostCovered = candidate;
@@ -379,8 +379,8 @@ final class AiSchematicBatchPlan {
          }
       }
 
-      private AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil expand(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil state, int at) {
-         AiSchematicBatchPlan.Inner_BufferHelper station = this.stations.get(at);
+      private AiSchematicBatchPlan.BeamSearch.BeamState expand(AiSchematicBatchPlan.BeamSearch.BeamState state, int at) {
+         AiSchematicBatchPlan.Station station = this.stations.get(at);
          if ((station.requires & ~state.done) != 0L) {
             return null;
          }
@@ -454,9 +454,9 @@ final class AiSchematicBatchPlan {
          long bit = 1L << (at & 63);
          boolean visited = ((at < 64 ? state.visitedLow : state.visitedHigh) & bit) != 0L;
          double cost = state.cost + (state.at < 0 ? this.startLegCost[at] : this.legCost[state.at][at]) + 24.0 + (visited ? 0.0 : station.constructionTicks());
-         ArrayList<AiSchematicBatchPlan.Inner_ConfigStore> stops = new ArrayList<>(state.stops);
-         stops.add(new AiSchematicBatchPlan.Inner_ConfigStore(at, List.copyOf(clicks)));
-         return new AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil(
+         ArrayList<AiSchematicBatchPlan.Stop> stops = new ArrayList<>(state.stops);
+         stops.add(new AiSchematicBatchPlan.Stop(at, List.copyOf(clicks)));
+         return new AiSchematicBatchPlan.BeamSearch.BeamState(
             done,
             at,
             cost,
@@ -487,7 +487,7 @@ final class AiSchematicBatchPlan {
             }
          }
 
-         for (AiSchematicBatchPlan.Inner_BufferHelper station : this.stations) {
+         for (AiSchematicBatchPlan.Station station : this.stations) {
             maxCover = Math.max(maxCover, Long.bitCount(station.jobs & ~done));
          }
 
@@ -495,17 +495,17 @@ final class AiSchematicBatchPlan {
          return reach + stops * 24.0;
       }
 
-      private double costWithContinuation(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil state) {
+      private double costWithContinuation(AiSchematicBatchPlan.BeamSearch.BeamState state) {
          return state.cost + (state.at < 0 ? 0.0 : this.continuationCost[state.at]);
       }
 
-      private boolean isBetterCandidate(AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil candidate, AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil prior) {
+      private boolean isBetterCandidate(AiSchematicBatchPlan.BeamSearch.BeamState candidate, AiSchematicBatchPlan.BeamSearch.BeamState prior) {
          return prior == null || candidate.supports < prior.supports || candidate.supports == prior.supports && this.costWithContinuation(candidate) < this.costWithContinuation(prior);
       }
 
-      AiSchematicBatchPlan.Inner_StreamUtil getChoice() {
-         AiSchematicBatchPlan.Inner_CachePool.Inner_StreamUtil chosen = this.bestComplete == null ? this.mostCovered : this.bestComplete;
-         return new AiSchematicBatchPlan.Inner_StreamUtil(chosen.stops, chosen.done, this.all, this.costWithContinuation(chosen) + Long.bitCount(chosen.done) * 10.0, chosen.supports);
+      AiSchematicBatchPlan.Choice getChoice() {
+         AiSchematicBatchPlan.BeamSearch.BeamState chosen = this.bestComplete == null ? this.mostCovered : this.bestComplete;
+         return new AiSchematicBatchPlan.Choice(chosen.stops, chosen.done, this.all, this.costWithContinuation(chosen) + Long.bitCount(chosen.done) * 10.0, chosen.supports);
       }
 
       private static double directionalHeuristic(BlockPos from, BlockPos to) {
@@ -515,22 +515,22 @@ final class AiSchematicBatchPlan {
       private record Inner_DataUtil(long done, int at, long visitedLow, long visitedHigh) {
       }
 
-      private record Inner_StreamUtil(
-         long done, int at, double cost, long visitedLow, long visitedHigh, long[][] views, List<AiSchematicBatchPlan.Inner_ConfigStore> stops, int supports, double bound
+      private record BeamState(
+         long done, int at, double cost, long visitedLow, long visitedHigh, long[][] views, List<AiSchematicBatchPlan.Stop> stops, int supports, double bound
       ) {
       }
    }
 
-   record Inner_ConfigStore(int station, List<Integer> jobs) {
+   record Stop(int station, List<Integer> jobs) {
    }
 
-   static final class Inner_DataUtil {
+   static final class Budget {
       private final LongSupplier clock;
       private final long startedAt;
       private long deadlineAt;
       private long startMarkedAt = -9223372036854775808L;
 
-      Inner_DataUtil(LongSupplier clock, long nanos) {
+      Budget(LongSupplier clock, long nanos) {
          if (nanos > 0L && nanos <= 10000000000L) {
             this.clock = clock;
             this.startedAt = clock.getAsLong();
@@ -563,7 +563,7 @@ final class AiSchematicBatchPlan {
       }
    }
 
-   record Inner_StreamUtil(List<AiSchematicBatchPlan.Inner_ConfigStore> stops, long covered, long required, double ticks, int supports) {
+   record Choice(List<AiSchematicBatchPlan.Stop> stops, long covered, long required, double ticks, int supports) {
       boolean complete() {
          return this.covered == this.required;
       }
@@ -572,8 +572,8 @@ final class AiSchematicBatchPlan {
          return this.stops.stream().flatMap(stop -> stop.jobs.stream()).toList();
       }
 
-      AiSchematicBatchPlan.Inner_ConfigStore nextStop(long completed) {
-         for (AiSchematicBatchPlan.Inner_ConfigStore stop : this.stops) {
+      AiSchematicBatchPlan.Stop nextStop(long completed) {
+         for (AiSchematicBatchPlan.Stop stop : this.stops) {
             if (stop.jobs.stream().anyMatch(i -> (completed & 1L << i) == 0L)) {
                return stop;
             }

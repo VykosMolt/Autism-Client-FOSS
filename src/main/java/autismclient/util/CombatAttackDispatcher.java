@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.EntityHitResult;
 
 public final class CombatAttackDispatcher {
-   private static final CombatAttackDispatcher.Inner_DataUtil DISPATCHER = new CombatAttackDispatcher.Inner_DataUtil();
+   private static final CombatAttackDispatcher.Dispatcher DISPATCHER = new CombatAttackDispatcher.Dispatcher();
 
    private CombatAttackDispatcher() {
    }
@@ -59,15 +59,15 @@ public final class CombatAttackDispatcher {
       DISPATCHER.clearAll();
    }
 
-   static final class Inner_DataUtil {
+   static final class Dispatcher {
       private final Deque<Runnable> queue = new ArrayDeque<>();
       private final Deque<Runnable> boundReceipts = new ArrayDeque<>();
       private Object init_Obj;
-      private CombatAttackDispatcher.Inner_DataUtil.Inner_DataUtil_2 init_r_DataUtil_DataUti;
+      private CombatAttackDispatcher.Dispatcher.Inner_DataUtil_2 init_r_DataUtil_DataUti;
 
       void runWithReceipt(Object target, Runnable attack, Runnable dispatched) {
-         CombatAttackDispatcher.Inner_DataUtil.Inner_DataUtil_2 previous = this.init_r_DataUtil_DataUti;
-         this.init_r_DataUtil_DataUti = new CombatAttackDispatcher.Inner_DataUtil.Inner_DataUtil_2(target, Objects.requireNonNull(dispatched));
+         CombatAttackDispatcher.Dispatcher.Inner_DataUtil_2 previous = this.init_r_DataUtil_DataUti;
+         this.init_r_DataUtil_DataUti = new CombatAttackDispatcher.Dispatcher.Inner_DataUtil_2(target, Objects.requireNonNull(dispatched));
 
          try {
             attack.run();

@@ -77,7 +77,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    private int clickModeIndex = 0;
    private final String[] clickLabels = new String[]{"Left Click", "Right Click", "Quick Move"};
    private boolean dropWholeStack = false;
-   private ContainerClickSnapshot.Inner_StreamUtil capturedClick = null;
+   private ContainerClickSnapshot.Snapshot capturedClick = null;
    private Integer capturedSlotId = null;
    private String statusMessage = "";
    private ChatFormatting statusColor = ChatFormatting.GRAY;
@@ -294,11 +294,11 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
    }
 
    private int unusedClickButtonCount() {
-      return this.action.isPacket() ? ContainerClickSnapshot.Inner_DataUtil.values().length : 2;
+      return this.action.isPacket() ? ContainerClickSnapshot.ClickMode.values().length : 2;
    }
 
-   private ContainerClickSnapshot.Inner_DataUtil selectedPacketClick() {
-      return ContainerClickSnapshot.Inner_DataUtil.byIndex(this.clickModeIndex);
+   private ContainerClickSnapshot.ClickMode selectedPacketClick() {
+      return ContainerClickSnapshot.ClickMode.byIndex(this.clickModeIndex);
    }
 
    private boolean isDropAction() {
@@ -1837,7 +1837,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
             } else {
                String screenTitle = this.parentScreen != null ? this.parentScreen.getTitle().getString() : "";
                String menuClass = handler.getClass().getName();
-               this.capturedClick = new ContainerClickSnapshot.Inner_StreamUtil(
+               this.capturedClick = new ContainerClickSnapshot.Snapshot(
                   handler.containerId,
                   handler.getStateId(),
                   slot.index,
@@ -1907,7 +1907,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          }
 
          if (this.action.isPacket()) {
-            ContainerClickSnapshot.Inner_StreamUtil target = this.getCapturedClick();
+            ContainerClickSnapshot.Snapshot target = this.getCapturedClick();
             if (target == null) {
                this.showStatus("Right-click a GUI slot to capture a Packet target first!", ChatFormatting.RED);
                return;
@@ -1929,7 +1929,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          if (this.action == AutismFabricatorOverlay.FabricatorAction.DROP) {
             autismclient.util.macro.DropAction dropAction = new autismclient.util.macro.DropAction();
             dropAction.useHandlerSlots = true;
-            dropAction.mode = this.dropWholeStack ? autismclient.util.macro.DropAction.Inner_DataUtil.ALL : autismclient.util.macro.DropAction.Inner_DataUtil.TIMES;
+            dropAction.mode = this.dropWholeStack ? autismclient.util.macro.DropAction.DropMode.ALL : autismclient.util.macro.DropAction.DropMode.TIMES;
             dropAction.dropCount = this.dropWholeStack ? 0 : repeats;
             String entry = enteredSlot != null ? "#" + enteredSlot + (!itemName.isEmpty() ? "|" + itemName : "") : itemName;
             if (!entry.isBlank()) {
@@ -1982,12 +1982,12 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
       return target;
    }
 
-   private ContainerClickSnapshot.Inner_StreamUtil getCapturedClick() {
+   private ContainerClickSnapshot.Snapshot getCapturedClick() {
       return this.capturedClick == null ? null : this.capturedClick.withMode(this.selectedPacketClick());
    }
 
    private Packet<?> capturedPacket() {
-      ContainerClickSnapshot.Inner_StreamUtil target = this.getCapturedClick();
+      ContainerClickSnapshot.Snapshot target = this.getCapturedClick();
       return target == null ? null : target.toPacket();
    }
 
@@ -2068,7 +2068,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
 
    private void sendPacketAction(boolean queue) {
       try {
-         ContainerClickSnapshot.Inner_StreamUtil target = this.getCapturedClick();
+         ContainerClickSnapshot.Snapshot target = this.getCapturedClick();
          if (target == null) {
             this.showStatus("Right-click a GUI slot to capture a Packet target first", ChatFormatting.RED);
             return;
@@ -2272,7 +2272,7 @@ public class AutismFabricatorOverlay extends DraggableOverlayWindow {
          String amountMode = this.useMaxAmount ? "Max" : "x" + Math.max(1, this.enteredAmount());
          return planInfo + " | Recipe: " + this.selectedOutput.getHoverName().getString() + " | " + source + " | " + availability + " | " + amountMode;
       } else if (this.action.isPacket()) {
-         ContainerClickSnapshot.Inner_StreamUtil target = this.getCapturedClick();
+         ContainerClickSnapshot.Snapshot target = this.getCapturedClick();
          return target == null ? "Packet: right-click a GUI slot to capture" : "Packet: " + target.init_Str();
       } else {
          Integer slot = this.enteredSlot();

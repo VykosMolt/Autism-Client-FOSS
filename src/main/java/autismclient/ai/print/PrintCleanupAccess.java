@@ -28,7 +28,7 @@ final class PrintCleanupAccess {
    private static final int init_I = 128;
    private static final int load_I = 8192;
    final PrintCore core;
-   final Long2ObjectOpenHashMap<PrintCleanupAccess.Inner_StreamUtil> entries = new Long2ObjectOpenHashMap<>();
+   final Long2ObjectOpenHashMap<PrintCleanupAccess.CellEntry> entries = new Long2ObjectOpenHashMap<>();
    final Int2ObjectOpenHashMap<LongOpenHashSet> keysByOwner = new Int2ObjectOpenHashMap<>();
    final Long2ObjectOpenHashMap<LongOpenHashSet> dependentsByRead = new Long2ObjectOpenHashMap<>();
    final LongOpenHashSet dirtyKeys = new LongOpenHashSet();
@@ -41,14 +41,14 @@ final class PrintCleanupAccess {
    private long invalidationEpoch;
    private long fullScanEpoch;
    private boolean creativeMode;
-   private final LinkedHashMap<Long, PrintCleanupAccess.Inner_CachePool> blockGuards = new LinkedHashMap<>(16, 0.75F, true);
+   private final LinkedHashMap<Long, PrintCleanupAccess.CleanupProof> blockGuards = new LinkedHashMap<>(16, 0.75F, true);
 
    PrintCleanupAccess(PrintCore core) {
       this.core = core;
    }
 
    void claim(long key, int owner) {
-      PrintCleanupAccess.Inner_StreamUtil entry = this.entries.get(key);
+      PrintCleanupAccess.CellEntry entry = this.entries.get(key);
       if (entry != null && entry.owner == owner) {
          if (this.core.env.isCreativeMode()) {
             entry.init_Z = true;
@@ -58,7 +58,7 @@ final class PrintCleanupAccess {
             this.release(key);
          }
 
-         this.entries.put(key, new PrintCleanupAccess.Inner_StreamUtil(key, owner));
+         this.entries.put(key, new PrintCleanupAccess.CellEntry(key, owner));
          this.entries.get(key).init_Z = this.core.env.isCreativeMode();
          this.entries.get(key).createdCreativeEpoch = this.creativeEpoch;
          this.keysByOwner.computeIfAbsent(owner, ignored -> new LongOpenHashSet()).add(key);
@@ -68,7 +68,7 @@ final class PrintCleanupAccess {
    }
 
    void markEntryDirty(long key) {
-      PrintCleanupAccess.Inner_StreamUtil entry = this.entries.get(key);
+      PrintCleanupAccess.CellEntry entry = this.entries.get(key);
       if (entry != null && this.core.env.isCreativeMode()) {
          entry.init_Z = true;
       }
@@ -91,7 +91,7 @@ final class PrintCleanupAccess {
    }
 
    void release(long key) {
-      PrintCleanupAccess.Inner_StreamUtil entry = this.entries.remove(key);
+      PrintCleanupAccess.CellEntry entry = this.entries.remove(key);
       if (entry != null) {
          this.unlinkCertificate(entry);
          LongOpenHashSet keys = this.keysByOwner.get(entry.owner);
@@ -119,14 +119,14 @@ final class PrintCleanupAccess {
       this.revision++;
    }
 
-   private boolean isOwnedTemporary(PrintCleanupAccess.Inner_StreamUtil entry) {
+   private boolean isOwnedTemporary(PrintCleanupAccess.CellEntry entry) {
       return entry.owner >= 0
          && entry.owner < this.core.cellStates.length
          && this.core.cellStates[entry.owner] == 3
          && this.core.temporaryBlocks.containsKey(entry.cellKey);
    }
 
-   private void unlinkCertificate(PrintCleanupAccess.Inner_StreamUtil entry) {
+   private void unlinkCertificate(PrintCleanupAccess.CellEntry entry) {
       if (entry.certificate != null) {
          for (long key : entry.certificate.reads.keySet()) {
             LongOpenHashSet keys = this.dependentsByRead.get(key);
@@ -137,7 +137,7 @@ final class PrintCleanupAccess {
       }
    }
 
-   private void attachCertificate(PrintCleanupAccess.Inner_StreamUtil entry, PrintCleanupAccess.Inner_DataUtil certificate) {
+   private void attachCertificate(PrintCleanupAccess.CellEntry entry, PrintCleanupAccess.Certificate certificate) {
       this.unlinkCertificate(entry);
       entry.certificate = certificate;
 
@@ -154,7 +154,7 @@ final class PrintCleanupAccess {
       }
    }
 
-   PrintCleanupAccess.Inner_CachePool newCleanupProof(BlockPos position, BlockState state) {
+   PrintCleanupAccess.CleanupProof newCleanupProof(BlockPos position, BlockState state) {
       if (this.creativeMode != this.core.env.isCreativeMode()) {
          this.creativeMode = this.core.env.isCreativeMode();
          if (this.creativeMode) {
@@ -165,7 +165,7 @@ final class PrintCleanupAccess {
          this.revision++;
       }
 
-      return new PrintCleanupAccess.Inner_CachePool(position, state);
+      return new PrintCleanupAccess.CleanupProof(position, state);
    }
 
    boolean wouldBlockCleanup(BlockPos position, BlockState state) {
@@ -173,7 +173,7 @@ final class PrintCleanupAccess {
          return false;
       }
 
-      PrintCleanupAccess.Inner_CachePool guard = this.blockGuards.get(position.asLong());
+      PrintCleanupAccess.CleanupProof guard = this.blockGuards.get(position.asLong());
       if (guard == null || guard.state != state || !guard.proofValid()) {
          guard = this.newCleanupProof(position, state);
          if (this.blockGuards.size() >= 64) {
@@ -200,9 +200,9 @@ final class PrintCleanupAccess {
          || block instanceof ChestBlock;
    }
 
-   final class Inner_BufferHelper {
+   final class CertificateBuilder {
       final long key;
-      final PrintCleanupAccess.Inner_DataUtil certificate;
+      final PrintCleanupAccess.Certificate certificate;
       final Long2ObjectOpenHashMap<BlockState> init_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
       final LongOpenHashSet init_LongOpenHashSet = new LongOpenHashSet();
       LongIterator init_LongIterator;
@@ -215,14 +215,14 @@ final class PrintCleanupAccess {
       boolean invalidated;
       boolean stable = true;
 
-      Inner_BufferHelper(long key, PrintCleanupAccess.Inner_DataUtil certificate) {
+      CertificateBuilder(long key, PrintCleanupAccess.Certificate certificate) {
          this.key = key;
          this.certificate = certificate;
          PrintCleanupAccess.this.read_J++;
       }
 
-      PrintCleanupAccess.Inner_DataUtil toCertificate() {
-         return new PrintCleanupAccess.Inner_DataUtil(
+      PrintCleanupAccess.Certificate toCertificate() {
+         return new PrintCleanupAccess.Certificate(
             this.certificate.point,
             this.certificate.before,
             this.certificate.after,
@@ -290,11 +290,11 @@ final class PrintCleanupAccess {
                            PrintCleanupAccess.this.core.rules,
                            target,
                            Items.DIAMOND_PICKAXE,
-                           PrintClicks.Inner_CachePool.DIG,
+                           PrintClicks.ClickMode.DIG,
                            this.certificate.point,
                            false,
                            false,
-                           new PrintClicks.Inner_DataUtil(2000),
+                           new PrintClicks.RaycastBudget(2000),
                            4.1000000000000005
                         )
                         == null) {
@@ -369,7 +369,7 @@ final class PrintCleanupAccess {
       }
    }
 
-   final class Inner_CachePool {
+   final class CleanupProof {
       final BlockPos position;
       final BlockState state;
       final long worldRevision = PrintCleanupAccess.this.core.view.worldMutationRevision();
@@ -388,16 +388,16 @@ final class PrintCleanupAccess {
       int init_I;
       int candidateCursor;
       int stage;
-      PrintCleanupAccess.Inner_StreamUtil currentEntry;
-      PrintCleanupAccess.Inner_ConfigStore init_BufferHelper_Confi;
-      PrintCleanupAccess.Inner_BufferHelper init_BufferHelper_Buffe;
-      PrintCleanupAccess.Inner_DataUtil certificate;
+      PrintCleanupAccess.CellEntry currentEntry;
+      PrintCleanupAccess.WorkstationSearch init_BufferHelper_Confi;
+      PrintCleanupAccess.CertificateBuilder init_BufferHelper_Buffe;
+      PrintCleanupAccess.Certificate certificate;
       boolean needsRecheck;
       boolean update;
       boolean sync;
       boolean flush;
 
-      Inner_CachePool(BlockPos position, BlockState state) {
+      CleanupProof(BlockPos position, BlockState state) {
          this.load_Z = PrintCleanupAccess.this.entries.isEmpty();
          this.init_ArrayUtil_StreamUt = PrintCleanupAccess.this.core.view.new DynamicShapeTracker();
          this.hypotheses = new Long2ObjectOpenHashMap<>();
@@ -426,7 +426,7 @@ final class PrintCleanupAccess {
             );
       }
 
-      private boolean readsSpeculativeState(PrintCleanupAccess.Inner_DataUtil certificate) {
+      private boolean readsSpeculativeState(PrintCleanupAccess.Certificate certificate) {
          for (long key : this.hypotheses.keySet()) {
             if (certificate.reads.containsKey(key)) {
                return true;
@@ -569,9 +569,9 @@ final class PrintCleanupAccess {
 
                   this.stage = 0;
                   if (this.certificate != null) {
-                     this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new Inner_BufferHelper(this.currentEntry.cellKey, this.certificate);
+                     this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new CertificateBuilder(this.currentEntry.cellKey, this.certificate);
                   } else {
-                     this.init_BufferHelper_Confi = PrintCleanupAccess.this.new Inner_ConfigStore(this.currentEntry.cellKey, null);
+                     this.init_BufferHelper_Confi = PrintCleanupAccess.this.new WorkstationSearch(this.currentEntry.cellKey, null);
                   }
                }
 
@@ -590,7 +590,7 @@ final class PrintCleanupAccess {
                      if (this.init_BufferHelper_Buffe.load_Z) {
                         this.certificate = this.init_BufferHelper_Buffe.toCertificate();
                      } else {
-                        this.init_BufferHelper_Confi = PrintCleanupAccess.this.new Inner_ConfigStore(
+                        this.init_BufferHelper_Confi = PrintCleanupAccess.this.new WorkstationSearch(
                            this.currentEntry.cellKey, this.certificate.point
                         );
                         this.certificate = null;
@@ -644,7 +644,7 @@ final class PrintCleanupAccess {
                      this.currentEntry = null;
                   } else {
                      this.stage = 1;
-                     this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new Inner_BufferHelper(this.currentEntry.cellKey, this.certificate);
+                     this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new CertificateBuilder(this.currentEntry.cellKey, this.certificate);
                   }
                } else {
                   PrintCleanupAccess.this.core.view.pushHypothesis(this.position, this.state);
@@ -659,7 +659,7 @@ final class PrintCleanupAccess {
                                  this.currentEntry = null;
                               } else {
                                  this.init_BufferHelper_Buffe = null;
-                                 this.init_BufferHelper_Confi = PrintCleanupAccess.this.new Inner_ConfigStore(
+                                 this.init_BufferHelper_Confi = PrintCleanupAccess.this.new WorkstationSearch(
                                     this.currentEntry.cellKey, this.certificate.point
                                  );
                               }
@@ -700,16 +700,16 @@ final class PrintCleanupAccess {
       }
    }
 
-   final class Inner_ConfigStore {
+   final class WorkstationSearch {
       final long key;
       final PrintTarget target;
       final ArrayList<Long> workstations = new ArrayList<>();
-      final PrintClicks.Inner_DataUtil clickBudget = new PrintClicks.Inner_DataUtil(18000);
+      final PrintClicks.RaycastBudget clickBudget = new PrintClicks.RaycastBudget(18000);
       List<Vec3> init_List;
       Vec3 init_Vec3;
       PrintCore.FlightExitSearch init_UiHelper_h;
       PrintCore.FlightExitSearch load_UiHelper_h;
-      PrintCleanupAccess.Inner_BufferHelper init_BufferHelper_Buffe;
+      PrintCleanupAccess.CertificateBuilder init_BufferHelper_Buffe;
       int init_I;
       int load_I;
       int read_I;
@@ -718,9 +718,9 @@ final class PrintCleanupAccess {
       boolean load_Z;
       boolean read_Z;
       boolean started;
-      PrintCleanupAccess.Inner_DataUtil init_BufferHelper_DataU;
+      PrintCleanupAccess.Certificate init_BufferHelper_DataU;
 
-      Inner_ConfigStore(long key, Vec3 preferred) {
+      WorkstationSearch(long key, Vec3 preferred) {
          this.key = key;
          BlockPos pos = BlockPos.of(key);
          this.target = new PrintTarget(
@@ -808,7 +808,7 @@ final class PrintCleanupAccess {
                      this.load_Z = true;
                   }
 
-                  this.init_List = PrintFlightWorkstations.init(PrintCleanupAccess.this.core.view, this.target, PrintClicks.Inner_CachePool.DIG, at);
+                  this.init_List = PrintFlightWorkstations.init(PrintCleanupAccess.this.core.view, this.target, PrintClicks.ClickMode.DIG, at);
                   this.load_I = 0;
                   continue;
                }
@@ -819,13 +819,13 @@ final class PrintCleanupAccess {
                   continue;
                }
 
-               PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+               PrintClicks.Click click = PrintClicks.findClick(
                   PrintCleanupAccess.this.core.view,
                   PrintCleanupAccess.this.core.env,
                   PrintCleanupAccess.this.core.rules,
                   this.target,
                   Items.DIAMOND_PICKAXE,
-                  PrintClicks.Inner_CachePool.DIG,
+                  PrintClicks.ClickMode.DIG,
                   this.init_Vec3,
                   false,
                   false,
@@ -878,9 +878,9 @@ final class PrintCleanupAccess {
                }
 
                if (this.load_UiHelper_h.result != null) {
-                  this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new Inner_BufferHelper(
+                  this.init_BufferHelper_Buffe = PrintCleanupAccess.this.new CertificateBuilder(
                      this.key,
-                     new PrintCleanupAccess.Inner_DataUtil(
+                     new PrintCleanupAccess.Certificate(
                         this.init_Vec3,
                         this.init_UiHelper_h.result,
                         this.load_UiHelper_h.result,
@@ -907,7 +907,7 @@ final class PrintCleanupAccess {
       }
    }
 
-   record Inner_DataUtil(
+   record Certificate(
       Vec3 point,
       PrintFlight.FlightPath before,
       PrintFlight.FlightPath after,
@@ -917,15 +917,15 @@ final class PrintCleanupAccess {
    ) {
    }
 
-   static final class Inner_StreamUtil {
+   static final class CellEntry {
       final long cellKey;
       int owner;
-      PrintCleanupAccess.Inner_DataUtil certificate;
+      PrintCleanupAccess.Certificate certificate;
       long cleanWorldRevision = -9223372036854775808L;
       long createdCreativeEpoch;
       boolean init_Z;
 
-      Inner_StreamUtil(long key, int owner) {
+      CellEntry(long key, int owner) {
          this.cellKey = key;
          this.owner = owner;
       }

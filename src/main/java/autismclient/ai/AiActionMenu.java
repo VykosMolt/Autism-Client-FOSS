@@ -1367,7 +1367,7 @@ final class AiActionMenu {
    private void pickAttachment() {
       if (!this.attachmentLoading) {
          this.attachmentLoading = true;
-         CompletableFuture.<AiAttachments.Inner_DataUtil>supplyAsync(() -> {
+         CompletableFuture.<AiAttachments.Attachment>supplyAsync(() -> {
             try {
                String path = AiAttachments.pickFile();
                return path != null && !path.isBlank() ? AiAttachments.attach(Path.of(path), AiSchematic.directory()) : null;

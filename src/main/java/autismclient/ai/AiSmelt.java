@@ -116,7 +116,7 @@ final class AiSmelt {
       return smelt(args, null);
    }
 
-   static AiOperation smelt(final JsonObject args, final AiFurnaceWork.Inner_DataUtil workPlan) {
+   static AiOperation smelt(final JsonObject args, final AiFurnaceWork.ResourcePlan workPlan) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
          String outputSpec = AiJson.getString(args, "item", "");
@@ -459,12 +459,12 @@ final class AiSmelt {
                         this.placingStation = true;
                      }
 
-                     AiStationPlacer.Inner_DataUtil status = this.stationPlacer.tick();
-                     if (status == AiStationPlacer.Inner_DataUtil.PLACED) {
+                     AiStationPlacer.PlaceStatus status = this.stationPlacer.tick();
+                     if (status == AiStationPlacer.PlaceStatus.PLACED) {
                         this.station = this.stationPlacer.getPlaced();
                         this.placingStation = false;
                         return this.running(resolved.stationId() + " placed");
-                     } else if (status == AiStationPlacer.Inner_DataUtil.FAILED) {
+                     } else if (status == AiStationPlacer.PlaceStatus.FAILED) {
                         this.placingStation = false;
                         return this.finish(AiOperation.Status.FAILED, "Could not place a " + resolved.stationId() + ": " + this.stationPlacer.getFailureReason());
                      } else {
@@ -719,7 +719,7 @@ final class AiSmelt {
       }
    }
 
-   static AiOperation fetchFuelThenSmelt(JsonObject args, final AiFurnaceWork.Inner_DataUtil workPlan, int items) {
+   static AiOperation fetchFuelThenSmelt(JsonObject args, final AiFurnaceWork.ResourcePlan workPlan, int items) {
       int seconds = Math.max(30, Math.min(300, AiJson.getInt(args, "timeoutSeconds", 600) / 2));
       final AiOperation fuel = AiObtain.nearestSourceDistance("minecraft:coal") != 1.7976931348623157E308 && AiItems.hasUsableToolFor(Blocks.COAL_ORE.defaultBlockState())
          ? AiObtain.obtain(AiJson.objectOf("item", "minecraft:coal", "count", (int)Math.ceil(items / 8.0), "additional", true, "timeoutSeconds", seconds))

@@ -8,7 +8,7 @@ public class SPingAction implements MacroAction {
    public int pingDelayMs = 250;
    public boolean realIncoming = false;
    public boolean realOutgoing = false;
-   public String endMode = SPingAction.Inner_DataUtil.TIMEOUT.name();
+   public String endMode = SPingAction.EndMode.TIMEOUT.name();
    public int stepCount = 1;
    public boolean useTicks = false;
    public int durationMs = 1000;
@@ -24,8 +24,8 @@ public class SPingAction implements MacroAction {
       this.durationMs = Math.max(0, durationMs);
    }
 
-   public SPingAction.Inner_DataUtil getEndMode() {
-      return SPingAction.Inner_DataUtil.parse(this.endMode);
+   public SPingAction.EndMode getEndMode() {
+      return SPingAction.EndMode.parse(this.endMode);
    }
 
    public int getStepCount() {
@@ -74,7 +74,7 @@ public class SPingAction implements MacroAction {
       }
 
       if (tag.contains("endMode")) {
-         this.endMode = SPingAction.Inner_DataUtil.parse(tag.getStringOr("endMode", SPingAction.Inner_DataUtil.TIMEOUT.name())).name();
+         this.endMode = SPingAction.EndMode.parse(tag.getStringOr("endMode", SPingAction.EndMode.TIMEOUT.name())).name();
       }
 
       if (tag.contains("stepCount")) {
@@ -126,7 +126,7 @@ public class SPingAction implements MacroAction {
 
       String window = var10000;
       String real = this.realIncoming && this.realOutgoing ? " [real]" : (this.realIncoming ? " [real in]" : (this.realOutgoing ? " [real out]" : ""));
-      String suffix = this.getEndMode() == SPingAction.Inner_DataUtil.TIMEOUT && this.continueNextActions ? " [cont]" : "";
+      String suffix = this.getEndMode() == SPingAction.EndMode.TIMEOUT && this.continueNextActions ? " [cont]" : "";
       return "Ping: +" + Math.max(0, this.pingDelayMs) + " ms (" + window + ")" + real + suffix;
    }
 
@@ -145,12 +145,12 @@ public class SPingAction implements MacroAction {
       this.enabled = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum EndMode {
       TIMEOUT,
       STEPS,
       END;
 
-      public static SPingAction.Inner_DataUtil parse(String raw) {
+      public static SPingAction.EndMode parse(String raw) {
          if (raw == null) {
             return TIMEOUT;
          }

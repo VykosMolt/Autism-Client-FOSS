@@ -44,8 +44,8 @@ final class SchematicSelection extends AiPlacementSession {
       }
    }
 
-   SchematicCapture.Inner_DataUtil getArea() {
-      return this.isReadyToConfirm() ? SchematicCapture.Inner_DataUtil.between(this.cornerA, this.cornerB) : null;
+   SchematicCapture.CaptureArea getArea() {
+      return this.isReadyToConfirm() ? SchematicCapture.CaptureArea.between(this.cornerA, this.cornerB) : null;
    }
 
    @Override

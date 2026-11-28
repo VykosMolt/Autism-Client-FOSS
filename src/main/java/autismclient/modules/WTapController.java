@@ -24,7 +24,7 @@ final class WTapController {
    private static final Minecraft MC = Minecraft.getInstance();
    private final WTapTimingMachine timing = new WTapTimingMachine();
    private final Random random = new Random();
-   private final WTapController.Inner_DataUtil settings;
+   private final WTapController.Settings settings;
    private ClientLevel level;
    private ClientPacketListener connection;
    private Player attacker;
@@ -34,7 +34,7 @@ final class WTapController {
    private Item weapon;
    private double drift;
 
-   WTapController(WTapController.Inner_DataUtil settings) {
+   WTapController(WTapController.Settings settings) {
       this.settings = settings;
    }
 
@@ -234,7 +234,7 @@ final class WTapController {
       this.weapon = null;
    }
 
-   interface Inner_DataUtil {
+   interface Settings {
       int chance();
 
       ValueRange delayRange();

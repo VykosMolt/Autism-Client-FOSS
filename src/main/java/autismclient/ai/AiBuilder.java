@@ -3067,9 +3067,9 @@ final class AiBuilder {
             final autismclient.ai.engine.AiAim placementAim = new autismclient.ai.engine.AiAim();
             AiOperation activeSubtask;
             AiOperation batchApproachOp;
-            AiSchematicApproach.Inner_DataUtil prefetchedApproachJob;
-            AiSchematicApproach.Inner_DataUtil activeApproachJob;
-            AiSchematicApproach.Inner_DataUtil lastApproachJob;
+            AiSchematicApproach.Draft prefetchedApproachJob;
+            AiSchematicApproach.Draft activeApproachJob;
+            AiSchematicApproach.Draft lastApproachJob;
             int prefetchStartCursor = -1;
             int prefetchCooldown;
             int prefetchScanStart;
@@ -3720,7 +3720,7 @@ final class AiBuilder {
                               }
 
                               AiBuilder.CellSpec previous = this.cellCursor < this.orderedCells.size() ? this.orderedCells.get(this.cellCursor) : null;
-                              AiSchematicApproach.Inner_DataUtil.fillBatch(this.orderedCells, this.cellCursor, scheduled);
+                              AiSchematicApproach.Draft.fillBatch(this.orderedCells, this.cellCursor, scheduled);
                               if (this.cellCursor < this.orderedCells.size() && !this.orderedCells.get(this.cellCursor).equals(previous)) {
                                  this.resetCellState();
                               }
@@ -7024,7 +7024,7 @@ final class AiBuilder {
             Vec3 planWalkingPlacement(Predicate<AABB> clear) {
                this.walkingClearCheck = clear;
                this.walkingPlacementPlan = null;
-               AiSchematicApproach.Inner_DataUtil job = this.activeApproachJob != null ? this.activeApproachJob : this.lastApproachJob;
+               AiSchematicApproach.Draft job = this.activeApproachJob != null ? this.activeApproachJob : this.lastApproachJob;
                Set<Long> excluded = new HashSet<>(this.confirmedPlacements);
                excluded.addAll(this.abandonedPlacements);
                this.readyQueue
@@ -7080,7 +7080,7 @@ final class AiBuilder {
                }
             }
 
-            boolean prepareWalkingPlacement(AiBuilder.CellSpec cell, BlockPos pos, AiSchematicApproach.Inner_DataUtil job, Predicate<AABB> clear) {
+            boolean prepareWalkingPlacement(AiBuilder.CellSpec cell, BlockPos pos, AiSchematicApproach.Draft job, Predicate<AABB> clear) {
                if (job.read(pos)
                   && this.isWalkingPlaceable(cell, pos)
                   && AiTerrain.isLoaded(mc.level, pos)
@@ -7127,7 +7127,7 @@ final class AiBuilder {
                   BlockPos pos = blueprint.origin()
                      .offset(this.walkingPlacementCell.dx(), this.walkingPlacementCell.dy(), this.walkingPlacementCell.dz());
                   AiBuilder.CellSpec cell = this.load_Map.get(pos.asLong());
-                  AiSchematicApproach.Inner_DataUtil job = this.activeApproachJob != null ? this.activeApproachJob : this.lastApproachJob;
+                  AiSchematicApproach.Draft job = this.activeApproachJob != null ? this.activeApproachJob : this.lastApproachJob;
                   if (cell != null && job != null && pos.equals(this.readyQueue.activePos()) && this.prepareWalkingPlacement(cell, pos, job, this.walkingClearCheck)) {
                      BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                      if (hit != null
@@ -7316,7 +7316,7 @@ final class AiBuilder {
                            }
 
                            if (schematic) {
-                              Set<Long> batchKeep = AiSchematicApproach.Inner_DataUtil.batchKeepCells(
+                              Set<Long> batchKeep = AiSchematicApproach.Draft.batchKeepCells(
                                  this.orderedCells, this.cellCursor, this.cachedProtectedCells(), next -> blueprint.origin().offset(next.dx(), next.dy(), next.dz()).asLong()
                               );
                               if (this.lastApproachJob != null && this.lastApproachJob.load(pos)) {
@@ -7337,7 +7337,7 @@ final class AiBuilder {
                                  }
 
                                  List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets = this.batchRequests(cell, pos, block, constraint);
-                                 this.activeApproachJob = new AiSchematicApproach.Inner_DataUtil(
+                                 this.activeApproachJob = new AiSchematicApproach.Draft(
                                     targets, this.buildBounds, batchKeep, this.batchAvoidCells(cell, pos), this.nearestPendingRequest(targets)
                                  );
                                  this.activeApproachJob.init_V_Set(this.close_Set);
@@ -7413,7 +7413,7 @@ final class AiBuilder {
                   }
                }
 
-               return AiSchematicApproach.Inner_DataUtil.orderByRoute(batch, mc.player.position());
+               return AiSchematicApproach.Draft.orderByRoute(batch, mc.player.position());
             }
 
             boolean prefetchCoversLayer(AiBuilder.CellSpec currentCell) {
@@ -7468,10 +7468,10 @@ final class AiBuilder {
 
                      if (this.prefetchScanCursor >= end) {
                         if (!this.prefetchRequests.isEmpty()) {
-                           List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets = AiSchematicApproach.Inner_DataUtil.orderByRoute(this.prefetchRequests, this.prefetchStartPosition());
+                           List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets = AiSchematicApproach.Draft.orderByRoute(this.prefetchRequests, this.prefetchStartPosition());
                            autismclient.ai.engine.PlacementGoal.PlacementRequest first = targets.getFirst();
                            AiBuilder.CellSpec wanted = this.load_Map.get(first.pos().asLong());
-                           this.prefetchedApproachJob = new AiSchematicApproach.Inner_DataUtil(
+                           this.prefetchedApproachJob = new AiSchematicApproach.Draft(
                               targets,
                               this.buildBounds,
                               Collections.unmodifiableSet(this.close_Set),

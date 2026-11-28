@@ -28,7 +28,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
    private final Screen parent;
    private final Module module;
    private final Setting<?, ?> setting;
-   private final NbtTextEditorScreen.Inner_DataUtil mode;
+   private final NbtTextEditorScreen.EditMode mode;
    private final autismclient.gui.ui.widgets.TextInputWidget editor = new autismclient.gui.ui.widgets.TextInputWidget()
       .setMultiline(true)
       .setMaxLength(1048576)
@@ -46,13 +46,13 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
    private String errorText = "";
    private boolean init_Z;
 
-   public NbtTextEditorScreen(Screen parent, Module module, Setting<?, ?> option, NbtTextEditorScreen.Inner_DataUtil mode) {
+   public NbtTextEditorScreen(Screen parent, Module module, Setting<?, ?> option, NbtTextEditorScreen.EditMode mode) {
       super(Component.literal("Edit " + (mode == null ? "Value" : mode.init_Str)));
       this.parent = parent;
       this.module = module;
       this.setting = option;
-      this.mode = mode == null ? NbtTextEditorScreen.Inner_DataUtil.RAW : mode;
-      if (this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
+      this.mode = mode == null ? NbtTextEditorScreen.EditMode.RAW : mode;
+      if (this.mode == NbtTextEditorScreen.EditMode.FULL_NBT) {
          this.editor.setDisplayTextProvider(this::highlightSnbt);
          this.editor.setBackgroundColorOverride(1376389388);
          this.editor.setHoverEffectsEnabled(false);
@@ -93,7 +93,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
             ui, panel, headerH, "Edit " + this.mode.init_Str, mx >= x && mx < x + w && my >= y && my < y + headerH
          );
          this.init_NetHelper = autismclient.gui.ui.widgets.DialogFrameRenderer.headerBounds(panel, headerH);
-         int footerRows = this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT ? 2 : 1;
+         int footerRows = this.mode == NbtTextEditorScreen.EditMode.FULL_NBT ? 2 : 1;
          int footerHeight = pad * 2 + footerRows * ctrlH + (footerRows - 1) * 2;
          int footerTop = y + h - footerHeight;
          int tipY = y + headerH + 2;
@@ -116,7 +116,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          int cancelW = autismclient.gui.ui.UiDensityMetrics.buttonWidthForText(ui.init_PoolEntry().measureWidth("Cancel"));
          int cancelX = x + w - pad - cancelW;
          int saveX = cancelX - 2 - saveW;
-         if (this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
+         if (this.mode == NbtTextEditorScreen.EditMode.FULL_NBT) {
             int toolbarX = x + pad;
             int toolbarW = Math.max(1, w - pad * 2);
             int cellW = Math.max(1, (toolbarW - 6) / 4);
@@ -222,20 +222,20 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
    public boolean keyPressed(KeyEvent input) {
       boolean ctrl = (Compat263.keyEventGlfwModifiers(input) & 10) != 0;
       boolean shift = (Compat263.keyEventGlfwModifiers(input) & 1) != 0;
-      if (this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT && ctrl && Compat263.keyEventGlfwKey(input) == 83) {
+      if (this.mode == NbtTextEditorScreen.EditMode.FULL_NBT && ctrl && Compat263.keyEventGlfwKey(input) == 83) {
          this.load_V_3();
          return true;
       }
 
-      if (this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT && ctrl && shift && Compat263.keyEventGlfwKey(input) == 70) {
+      if (this.mode == NbtTextEditorScreen.EditMode.FULL_NBT && ctrl && shift && Compat263.keyEventGlfwKey(input) == 70) {
          this.formatEditor();
          return true;
       }
 
-      if (this.mode != NbtTextEditorScreen.Inner_DataUtil.FULL_NBT
+      if (this.mode != NbtTextEditorScreen.EditMode.FULL_NBT
          || !ctrl
          || Compat263.keyEventGlfwKey(input) != 257 && Compat263.keyEventGlfwKey(input) != 335) {
-         if (this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT && Compat263.keyEventGlfwKey(input) == 258 && this.editor.isFocused()) {
+         if (this.mode == NbtTextEditorScreen.EditMode.FULL_NBT && Compat263.keyEventGlfwKey(input) == 258 && this.editor.isFocused()) {
             this.editor.insertText("  ");
             return true;
          } else if (Compat263.keyEventGlfwKey(input) == 256) {
@@ -290,7 +290,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
    }
 
    private boolean validateForMode() {
-      if (this.mode != NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
+      if (this.mode != NbtTextEditorScreen.EditMode.FULL_NBT) {
          return true;
       }
 
@@ -315,7 +315,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
    }
 
    private void formatEditor() {
-      if (this.mode == NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
+      if (this.mode == NbtTextEditorScreen.EditMode.FULL_NBT) {
          String repaired = SnbtBraceRepairer.repair(this.editor.getValue());
          ItemStack stack = ItemSnbtCodec.parseStack(repaired);
          if (stack.isEmpty()) {
@@ -523,7 +523,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       }
    }
 
-   public enum Inner_DataUtil {
+   public enum EditMode {
       LORE("Lore", "One lore line per row. Order is preserved."),
       ENCHANTMENTS("Enchantments", "One enchantment per row: minecraft:id:level"),
       ATTRIBUTES("Attributes", "Raw attribute component rows. Advanced values stay exact."),
@@ -533,7 +533,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       private final String init_Str;
       private final String load_Str;
 
-      Inner_DataUtil(String title, String tip) {
+      EditMode(String title, String tip) {
          this.init_Str = title;
          this.load_Str = tip;
       }

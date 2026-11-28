@@ -98,8 +98,8 @@ final class AiLavaEscape {
             return Math.abs(cell.getX() - shore.getX()) + Math.abs(cell.getZ() - shore.getZ()) + Math.max(0, shore.getY() - cell.getY()) * 2;
          }
       };
-      PriorityQueue<AiLavaEscape.Inner_DataUtil> queue = new PriorityQueue<>(
-         Comparator.comparingDouble(AiLavaEscape.Inner_DataUtil::priority).thenComparingInt(AiLavaEscape.Inner_DataUtil::cost)
+      PriorityQueue<AiLavaEscape.SearchNode> queue = new PriorityQueue<>(
+         Comparator.comparingDouble(AiLavaEscape.SearchNode::priority).thenComparingInt(AiLavaEscape.SearchNode::cost)
       );
       Map<BlockPos, BlockPos> parent = new HashMap<>();
       Map<BlockPos, Integer> costs = new HashMap<>();
@@ -107,13 +107,13 @@ final class AiLavaEscape {
       BlockPos closest = start;
       double bestScore = 1.7976931348623157E308;
       double closestScore = 1.7976931348623157E308;
-      queue.add(new AiLavaEscape.Inner_DataUtil(start, 0, guide.applyAsDouble(start)));
+      queue.add(new AiLavaEscape.SearchNode(start, 0, guide.applyAsDouble(start)));
       parent.put(start, start);
       costs.put(start, 0);
       int searched = 0;
 
       while (!queue.isEmpty() && searched++ < 2048) {
-         AiLavaEscape.Inner_DataUtil node = queue.poll();
+         AiLavaEscape.SearchNode node = queue.poll();
          if (costs.getOrDefault(node.cell(), 2147483647) == node.cost()) {
             if (best != null && node.cost() >= bestScore) {
                break;
@@ -149,7 +149,7 @@ final class AiLavaEscape {
                   if (next < costs.getOrDefault(side, 2147483647)) {
                      costs.put(side, next);
                      parent.put(side, n);
-                     queue.add(new AiLavaEscape.Inner_DataUtil(side, next, next + guide.applyAsDouble(side)));
+                     queue.add(new AiLavaEscape.SearchNode(side, next, next + guide.applyAsDouble(side)));
                   }
                }
             }
@@ -160,7 +160,7 @@ final class AiLavaEscape {
                if (next < costs.getOrDefault(up, 2147483647)) {
                   costs.put(up, next);
                   parent.put(up, n);
-                  queue.add(new AiLavaEscape.Inner_DataUtil(up, next, next + guide.applyAsDouble(up)));
+                  queue.add(new AiLavaEscape.SearchNode(up, next, next + guide.applyAsDouble(up)));
                }
             }
          }
@@ -399,6 +399,6 @@ final class AiLavaEscape {
       };
    }
 
-   record Inner_DataUtil(BlockPos cell, int cost, double priority) {
+   record SearchNode(BlockPos cell, int cost, double priority) {
    }
 }

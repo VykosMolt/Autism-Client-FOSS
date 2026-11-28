@@ -45,13 +45,13 @@ final class AiBurrow {
    private AiBurrow() {
    }
 
-   static AiBurrow.Inner_StreamUtil digDecision(boolean loaded, boolean fluid, boolean unbreakable, boolean open, boolean safeFloorBelow) {
+   static AiBurrow.DigDecision digDecision(boolean loaded, boolean fluid, boolean unbreakable, boolean open, boolean safeFloorBelow) {
       if (!loaded || fluid || unbreakable) {
-         return AiBurrow.Inner_StreamUtil.STOP;
+         return AiBurrow.DigDecision.STOP;
       } else if (open) {
-         return safeFloorBelow ? AiBurrow.Inner_StreamUtil.OPEN : AiBurrow.Inner_StreamUtil.STOP;
+         return safeFloorBelow ? AiBurrow.DigDecision.OPEN : AiBurrow.DigDecision.STOP;
       } else {
-         return AiBurrow.Inner_StreamUtil.DIG;
+         return AiBurrow.DigDecision.DIG;
       }
    }
 
@@ -243,7 +243,7 @@ final class AiBurrow {
             final BlockPos startPos = mc.player.blockPosition().immutable();
             final autismclient.ai.engine.AiPlacer placer = new autismclient.ai.engine.AiPlacer().fast();
             final autismclient.ai.engine.AiRestock restock = new autismclient.ai.engine.AiRestock(mc);
-            AiBurrow.Inner_DataUtil stage = AiBurrow.Inner_DataUtil.SHAFT;
+            AiBurrow.Stage stage = AiBurrow.Stage.SHAFT;
             AiOperation childOperation;
             AiOperation mealOperation;
             BlockPos nearby = this.startPos;
@@ -290,7 +290,7 @@ final class AiBurrow {
                   float previousHealth = this.health;
                   boolean hurt = health < previousHealth - 0.01F;
                   this.health = health;
-                  if (this.stage == AiBurrow.Inner_DataUtil.SHAFT
+                  if (this.stage == AiBurrow.Stage.SHAFT
                      && this.childOperation == null
                      && AiBurrow.canHealInShelter(
                         healTo,
@@ -302,12 +302,12 @@ final class AiBurrow {
                      this.shelterFeet = feet.immutable();
                      this.currentCell = AiBurrow.roofOf(this.shelterFeet);
                      this.capPlaced = this.isCentredOver(this.shelterFeet);
-                     this.stage = this.capPlaced ? AiBurrow.Inner_DataUtil.WAIT : AiBurrow.Inner_DataUtil.CAP;
+                     this.stage = this.capPlaced ? AiBurrow.Stage.WAIT : AiBurrow.Stage.CAP;
                   }
 
-                  boolean exiting = this.stage == AiBurrow.Inner_DataUtil.EXIT_DIG
-                     || this.stage == AiBurrow.Inner_DataUtil.EXIT_TRAVEL;
-                  if (!exiting && this.stage != AiBurrow.Inner_DataUtil.TOWER && mc.player.isInWater()) {
+                  boolean exiting = this.stage == AiBurrow.Stage.EXIT_DIG
+                     || this.stage == AiBurrow.Stage.EXIT_TRAVEL;
+                  if (!exiting && this.stage != AiBurrow.Stage.TOWER && mc.player.isInWater()) {
                      this.reconcileRequired = this.reconcileRequired | this.requiresReconciliationAfterEmergency();
                      if (this.childOperation != null) {
                         this.childOperation.cancel();
@@ -322,23 +322,23 @@ final class AiBurrow {
                      this.placer.reset();
                      this.placing = false;
                      this.waterEscape = true;
-                     this.stage = this.capPlaced ? AiBurrow.Inner_DataUtil.EXIT_DIG : AiBurrow.Inner_DataUtil.EXIT_TRAVEL;
+                     this.stage = this.capPlaced ? AiBurrow.Stage.EXIT_DIG : AiBurrow.Stage.EXIT_TRAVEL;
                      return this.running("Water in the burrow; climbing out");
                   } else {
-                     boolean building = this.stage == AiBurrow.Inner_DataUtil.SHAFT
-                        || this.stage == AiBurrow.Inner_DataUtil.RELOCATE
-                        || this.stage == AiBurrow.Inner_DataUtil.CAP
-                        || this.stage == AiBurrow.Inner_DataUtil.TOWER
-                        || this.stage == AiBurrow.Inner_DataUtil.ROOF;
+                     boolean building = this.stage == AiBurrow.Stage.SHAFT
+                        || this.stage == AiBurrow.Stage.RELOCATE
+                        || this.stage == AiBurrow.Stage.CAP
+                        || this.stage == AiBurrow.Stage.TOWER
+                        || this.stage == AiBurrow.Stage.ROOF;
                      boolean residualBurn = hurt
                         && AiBurrow.shouldWaitOutBurning(
                            healTo > 0.0F,
-                           this.stage == AiBurrow.Inner_DataUtil.WAIT,
+                           this.stage == AiBurrow.Stage.WAIT,
                            mc.player.isOnFire(),
                            AiServerEvidence.matchesRecentBurnDamage(mc.player.getUUID(), mc.player.tickCount, previousHealth, health),
                            autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
-                           this.stage == AiBurrow.Inner_DataUtil.WAIT && this.isShelterSealed(),
-                           this.stage == AiBurrow.Inner_DataUtil.WAIT && this.hasHostileInside(this.shelterFeet),
+                           this.stage == AiBurrow.Stage.WAIT && this.isShelterSealed(),
+                           this.stage == AiBurrow.Stage.WAIT && this.hasHostileInside(this.shelterFeet),
                            mc.player.isInLava() || AiEndRun.isInFire(mc)
                         );
                      if (hurt && !exiting && (!(healTo > 0.0F) || !building) && !residualBurn) {
@@ -347,12 +347,12 @@ final class AiBurrow {
                         );
                      }
 
-                     if (this.stage != AiBurrow.Inner_DataUtil.WAIT || this.isShelterSealed() && !this.hasHostileInside(this.shelterFeet)) {
-                        if (this.stage == AiBurrow.Inner_DataUtil.CAP && !this.capPlaced && this.hostileNear(feet, 1.0)) {
+                     if (this.stage != AiBurrow.Stage.WAIT || this.isShelterSealed() && !this.hasHostileInside(this.shelterFeet)) {
+                        if (this.stage == AiBurrow.Stage.CAP && !this.capPlaced && this.hostileNear(feet, 1.0)) {
                            return this.finish(AiOperation.Status.FAILED, "burrow compromised (a hostile in the shaft before the cap)");
                         }
 
-                        if (System.nanoTime() > this.deadline && !exiting && this.stage != AiBurrow.Inner_DataUtil.WAIT) {
+                        if (System.nanoTime() > this.deadline && !exiting && this.stage != AiBurrow.Stage.WAIT) {
                            return this.finish(AiOperation.Status.TIMED_OUT, "Burrow deadline reached before cover");
                         }
 
@@ -410,7 +410,7 @@ final class AiBurrow {
             AiOperation.Result tickShaft(BlockPos feet) {
                int descended = this.nearby.getY() - feet.getY();
                if (descended >= 3) {
-                  this.stage = AiBurrow.Inner_DataUtil.CAP;
+                  this.stage = AiBurrow.Stage.CAP;
                   return this.running("In the shaft; capping");
                }
 
@@ -454,7 +454,7 @@ final class AiBurrow {
                   if (nearby != null) {
                      this.nearby = nearby;
                      this.childOperation = AiGoto.travelToCompat(nearby, 0.2, false, false, false, 10);
-                     this.stage = AiBurrow.Inner_DataUtil.RELOCATE;
+                     this.stage = AiBurrow.Stage.RELOCATE;
                      return this.running(why + "; moving a few steps to a safe shaft");
                   }
                }
@@ -462,10 +462,10 @@ final class AiBurrow {
                if (descended < 2 && !towerOk) {
                   return this.finish(AiOperation.Status.FAILED, why + "; no cover here");
                } else if (descended < 2) {
-                  this.stage = AiBurrow.Inner_DataUtil.TOWER;
+                  this.stage = AiBurrow.Stage.TOWER;
                   return this.running(why + "; towering instead");
                } else {
-                  this.stage = AiBurrow.Inner_DataUtil.CAP;
+                  this.stage = AiBurrow.Stage.CAP;
                   return this.running(why + "; capping the shallow cover");
                }
             }
@@ -487,7 +487,7 @@ final class AiBurrow {
                   return this.finish(r.status(), "Nearby shelter could not be reached: " + r.message());
                }
 
-               this.stage = AiBurrow.Inner_DataUtil.SHAFT;
+               this.stage = AiBurrow.Stage.SHAFT;
                return this.running("On safe ground; digging the shelter");
             }
 
@@ -561,7 +561,7 @@ final class AiBurrow {
 
                         this.currentCell = AiBurrow.roofOf(this.shelterFeet);
                         this.capPlaced = true;
-                        this.stage = AiBurrow.Inner_DataUtil.WAIT;
+                        this.stage = AiBurrow.Stage.WAIT;
                         return this.running("Shelter sealed; waiting safely until dawn");
                      }
 
@@ -656,7 +656,7 @@ final class AiBurrow {
                   return this.finish(AiOperation.Status.FAILED, "Could not tower up (" + r.message() + ")");
                }
 
-               this.stage = AiBurrow.Inner_DataUtil.ROOF;
+               this.stage = AiBurrow.Stage.ROOF;
                return this.running("Tower up; roofing");
             }
 
@@ -713,8 +713,8 @@ final class AiBurrow {
                      }
 
                      this.stage = this.feet == null && !this.capPlaced
-                        ? AiBurrow.Inner_DataUtil.EXIT_TRAVEL
-                        : AiBurrow.Inner_DataUtil.EXIT_DIG;
+                        ? AiBurrow.Stage.EXIT_TRAVEL
+                        : AiBurrow.Stage.EXIT_DIG;
                      return this.running("No mob in sight; leaving cover");
                   } else {
                      if (healTo > 0.0F && this.isThreatNearby()) {
@@ -727,8 +727,8 @@ final class AiBurrow {
                         }
 
                         this.stage = this.feet == null && !this.capPlaced
-                           ? AiBurrow.Inner_DataUtil.EXIT_TRAVEL
-                           : AiBurrow.Inner_DataUtil.EXIT_DIG;
+                           ? AiBurrow.Stage.EXIT_TRAVEL
+                           : AiBurrow.Stage.EXIT_DIG;
                         return this.running("Healed to " + (int)mc.player.getHealth() + "; leaving cover");
                      } else {
                         if (!AiBurrow.isDoneWaiting(healTo, AiSleep.dayTime()) && System.nanoTime() <= this.deadline) {
@@ -740,8 +740,8 @@ final class AiBurrow {
                         }
 
                         this.stage = this.feet == null && !this.capPlaced
-                           ? AiBurrow.Inner_DataUtil.EXIT_TRAVEL
-                           : AiBurrow.Inner_DataUtil.EXIT_DIG;
+                           ? AiBurrow.Stage.EXIT_TRAVEL
+                           : AiBurrow.Stage.EXIT_DIG;
                         return this.running(healTo > 0.0F ? "Shelter healing budget ended; leaving cover" : "Dawn; leaving cover");
                      }
                   }
@@ -770,7 +770,7 @@ final class AiBurrow {
                      return this.finish(r.status(), "Could not open the shelter cap: " + r.message());
                   }
 
-                  this.stage = AiBurrow.Inner_DataUtil.EXIT_TRAVEL;
+                  this.stage = AiBurrow.Stage.EXIT_TRAVEL;
                   return this.running("Cap open; climbing out");
                } else {
                   if (AiBurrow.isDescended(feet.getY(), this.feet.getY(), autismclient.ai.engine.AiMotionSafety.isPlayerSupported())) {
@@ -930,7 +930,7 @@ final class AiBurrow {
                   },
                   pos -> {
                      for (int down = 1; down <= 3; down++) {
-                        if (!this.isSolidFloor(pos.below(down)) || this.classifyBelow(pos.below(down)) != AiBurrow.Inner_StreamUtil.DIG) {
+                        if (!this.isSolidFloor(pos.below(down)) || this.classifyBelow(pos.below(down)) != AiBurrow.DigDecision.DIG) {
                            return false;
                         }
                      }
@@ -941,9 +941,9 @@ final class AiBurrow {
                );
             }
 
-            AiBurrow.Inner_StreamUtil classifyBelow(BlockPos pos) {
+            AiBurrow.DigDecision classifyBelow(BlockPos pos) {
                if (!AiTerrain.isLoaded(mc.level, pos)) {
-                  return AiBurrow.Inner_StreamUtil.STOP;
+                  return AiBurrow.DigDecision.STOP;
                }
 
                BlockState state = mc.level.getBlockState(pos);
@@ -962,11 +962,11 @@ final class AiBurrow {
                for (Direction side : Plane.HORIZONTAL) {
                   BlockPos wall = pos.relative(side);
                   if (!this.isSolidFloor(wall)) {
-                     return AiBurrow.Inner_StreamUtil.STOP;
+                     return AiBurrow.DigDecision.STOP;
                   }
                }
 
-               return open && healTo > 0.0F ? AiBurrow.Inner_StreamUtil.STOP : AiBurrow.digDecision(true, fluid, unbreakable, open, safeFloor);
+               return open && healTo > 0.0F ? AiBurrow.DigDecision.STOP : AiBurrow.digDecision(true, fluid, unbreakable, open, safeFloor);
             }
 
             boolean isThreatNearby() {
@@ -1193,7 +1193,7 @@ final class AiBurrow {
       }
    }
 
-   private enum Inner_DataUtil {
+   private enum Stage {
       SHAFT,
       RELOCATE,
       CAP,
@@ -1204,7 +1204,7 @@ final class AiBurrow {
       EXIT_TRAVEL;
    }
 
-   enum Inner_StreamUtil {
+   enum DigDecision {
       DIG,
       OPEN,
       STOP;

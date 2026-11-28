@@ -13,7 +13,7 @@ final class OreSimWorkerPool {
    private final int workerCount;
    private final ThreadPoolExecutor executor;
    private final Set<Future<?>> activeTasks = Collections.newSetFromMap(new IdentityHashMap<>());
-   private OreSimWorkerPool.Inner_DataUtil work;
+   private OreSimWorkerPool.Work work;
 
    OreSimWorkerPool(String threadName) {
       this.workerCount = Math.max(2, Math.min(4, Runtime.getRuntime().availableProcessors() / 2));
@@ -38,7 +38,7 @@ final class OreSimWorkerPool {
       }
 
       this.cancelPending();
-      OreSimWorkerPool.Inner_DataUtil work = new OreSimWorkerPool.Inner_DataUtil();
+      OreSimWorkerPool.Work work = new OreSimWorkerPool.Work();
       this.work = work;
       Future<?> future = this.executor.submit(() -> {
          try {
@@ -87,7 +87,7 @@ final class OreSimWorkerPool {
    }
 
    private void cancelPending() {
-      OreSimWorkerPool.Inner_DataUtil work = this.work;
+      OreSimWorkerPool.Work work = this.work;
       this.work = null;
       this.executor.getQueue().clear();
       if (work != null && work.future != null) {
@@ -105,7 +105,7 @@ final class OreSimWorkerPool {
       }
    }
 
-   private synchronized void finishWork(OreSimWorkerPool.Inner_DataUtil work) {
+   private synchronized void finishWork(OreSimWorkerPool.Work work) {
       if (work != null && work.future != null) {
          this.activeTasks.remove(work.future);
       }
@@ -120,7 +120,7 @@ final class OreSimWorkerPool {
       this.executor.shutdownNow();
    }
 
-   private static final class Inner_DataUtil {
+   private static final class Work {
       volatile Future<?> future;
    }
 }

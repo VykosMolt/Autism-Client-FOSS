@@ -7,7 +7,7 @@ final class AiFoodHuntBudget {
    static final int write = 90;
    private static final long init_J = 1000000000L;
 
-   static AiFoodHuntBudget.Inner_DataUtil admit(long deadlineNanos, long nowNanos, boolean graceUsed) {
+   static AiFoodHuntBudget.Admission admit(long deadlineNanos, long nowNanos, boolean graceUsed) {
       long proposedDeadline = deadlineNanos;
       boolean proposedGrace = graceUsed;
       long required = 35000000000L;
@@ -18,11 +18,11 @@ final class AiFoodHuntBudget {
 
       long remaining = proposedDeadline - nowNanos;
       if (remaining < required) {
-         return new AiFoodHuntBudget.Inner_DataUtil(0, deadlineNanos, graceUsed);
+         return new AiFoodHuntBudget.Admission(0, deadlineNanos, graceUsed);
       }
 
       int childSeconds = (int)Math.min(90L, remaining / 1000000000L - 5L);
-      return new AiFoodHuntBudget.Inner_DataUtil(childSeconds, proposedDeadline, proposedGrace);
+      return new AiFoodHuntBudget.Admission(childSeconds, proposedDeadline, proposedGrace);
    }
 
    static boolean canInterrupt(boolean interruptible, boolean pendingEffects) {
@@ -32,7 +32,7 @@ final class AiFoodHuntBudget {
    private AiFoodHuntBudget() {
    }
 
-   record Inner_DataUtil(int childSeconds, long deadlineNanos, boolean graceUsed) {
+   record Admission(int childSeconds, long deadlineNanos, boolean graceUsed) {
       boolean admitted() {
          return this.childSeconds >= 30;
       }

@@ -34,7 +34,7 @@ final class AiChatView {
    private int wrappedPlanEpoch;
    private List<String[]> taskRows = List.of();
    private autismclient.gui.f.NetHelper transcriptArea = autismclient.gui.f.NetHelper.init(0, 0, 0, 0);
-   private final ArrayList<AiAttachments.Inner_DataUtil> attachments = new ArrayList<>();
+   private final ArrayList<AiAttachments.Attachment> attachments = new ArrayList<>();
    private boolean attachmentPending;
    private boolean attachmentsEnabled;
    private final Map<AiService.TranscriptEntry, String> toolStatusCache = new IdentityHashMap<>();
@@ -133,8 +133,8 @@ final class AiChatView {
       }
 
       if (this.attachmentsEnabled && this.attachments.isEmpty()) {
-         this.attachments.add(new AiAttachments.Inner_DataUtil("31774.litematic", "litematic-v7", 1060, 3201L));
-         this.attachments.add(new AiAttachments.Inner_DataUtil("31669.schem", "sponge-v3", 23031, 12606L));
+         this.attachments.add(new AiAttachments.Attachment("31774.litematic", "litematic-v7", 1060, 3201L));
+         this.attachments.add(new AiAttachments.Attachment("31669.schem", "sponge-v3", 23031, 12606L));
       }
 
       if (this.lastPollCount != this.view.pollCount) {
@@ -163,7 +163,7 @@ final class AiChatView {
          int bottom = composer.write() - 2;
 
          for (int i = this.attachments.size() - 1; i >= 0; i--) {
-            AiAttachments.Inner_DataUtil file = this.attachments.get(i);
+            AiAttachments.Attachment file = this.attachments.get(i);
             autismclient.gui.f.NetHelper row = autismclient.gui.f.NetHelper.init(area.read(), bottom - ctrl, area.update(), ctrl);
             int remove = ctrl;
             kit.drawButton(
@@ -811,7 +811,7 @@ final class AiChatView {
       if (!this.attachmentPending && this.attachments.size() < 4) {
          this.attachmentPending = true;
          String draftSession = this.lastSessionId;
-         CompletableFuture.<AiAttachments.Inner_DataUtil>supplyAsync(() -> {
+         CompletableFuture.<AiAttachments.Attachment>supplyAsync(() -> {
             try {
                String path = AiAttachments.pickFile();
                return path != null && !path.isBlank() ? AiAttachments.attach(Path.of(path), AiSchematic.directory()) : null;

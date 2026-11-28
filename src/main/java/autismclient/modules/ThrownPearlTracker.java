@@ -17,14 +17,14 @@ final class ThrownPearlTracker {
    private Object trackedLevel;
    private Object trackedPlayer;
    private long lastGameTime = -9223372036854775808L;
-   private ThrownPearlTracker.Inner_DataUtil remembered;
+   private ThrownPearlTracker.PearlForecast remembered;
    private double scanMillis;
    private final List<ThrownEnderpearl> ownPearls = new ArrayList<>();
-   private final Map<UUID, ThrownPearlTracker.Inner_DataUtil> forecasts = new HashMap<>();
+   private final Map<UUID, ThrownPearlTracker.PearlForecast> forecasts = new HashMap<>();
    private final Set<UUID> liveIds = new HashSet<>();
    private static final int init_I = 32;
 
-   ThrownPearlTracker.Inner_DataUtil remembered() {
+   ThrownPearlTracker.PearlForecast remembered() {
       return this.remembered;
    }
 
@@ -71,13 +71,13 @@ final class ThrownPearlTracker {
                ThrownEnderpearl pearl = this.ownPearls.get(i);
                IncomingProjectileScanner.ProjectilePath flight = IncomingProjectileScanner.traceProjectile(mc.level, pearl, IncomingProjectileScanner.ProjectileKind.PEARL);
                if (flight.load() != null) {
-                  this.forecasts.put(pearl.getUUID(), new ThrownPearlTracker.Inner_DataUtil(pearl.getUUID(), pearl.getId(), flight.load(), now + flight.impactTicks()));
+                  this.forecasts.put(pearl.getUUID(), new ThrownPearlTracker.PearlForecast(pearl.getUUID(), pearl.getId(), flight.load(), now + flight.impactTicks()));
                }
             }
 
-            ThrownPearlTracker.Inner_DataUtil latest = null;
+            ThrownPearlTracker.PearlForecast latest = null;
 
-            for (ThrownPearlTracker.Inner_DataUtil forecast : this.forecasts.values()) {
+            for (ThrownPearlTracker.PearlForecast forecast : this.forecasts.values()) {
                latest = laterForecast(latest, forecast);
             }
 
@@ -89,7 +89,7 @@ final class ThrownPearlTracker {
       }
    }
 
-   static ThrownPearlTracker.Inner_DataUtil laterForecast(ThrownPearlTracker.Inner_DataUtil a, ThrownPearlTracker.Inner_DataUtil b) {
+   static ThrownPearlTracker.PearlForecast laterForecast(ThrownPearlTracker.PearlForecast a, ThrownPearlTracker.PearlForecast b) {
       if (b != null
          && b.position() != null
          && Double.isFinite(b.landingTime())
@@ -102,6 +102,6 @@ final class ThrownPearlTracker {
       }
    }
 
-   record Inner_DataUtil(UUID pearlId, int init_I, Vec3 position, double landingTime) {
+   record PearlForecast(UUID pearlId, int init_I, Vec3 position, double landingTime) {
    }
 }

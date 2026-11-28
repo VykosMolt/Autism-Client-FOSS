@@ -252,13 +252,13 @@ public final class TeamsModule extends Module {
       }
 
       UUID id = suspected.getUUID();
-      TeamsModule.Inner_DataUtil verdict = relationTo(self, suspected);
-      if (verdict == TeamsModule.Inner_DataUtil.TEAMMATE) {
+      TeamsModule.Relation verdict = relationTo(self, suspected);
+      if (verdict == TeamsModule.Relation.TEAMMATE) {
          this.knownTeammates.add(id);
          return true;
       } else if (!this.knownTeammates.contains(id)) {
          return false;
-      } else if (verdict == TeamsModule.Inner_DataUtil.OPPONENT && !isUnsettled(self) && !isUnsettled(suspected)) {
+      } else if (verdict == TeamsModule.Relation.OPPONENT && !isUnsettled(self) && !isUnsettled(suspected)) {
          this.knownTeammates.remove(id);
          return false;
       } else {
@@ -266,21 +266,21 @@ public final class TeamsModule extends Module {
       }
    }
 
-   static TeamsModule.Inner_DataUtil relation(boolean allied, Object ownColor, Object theirColor, Integer ownHelmet, Integer theirHelmet) {
+   static TeamsModule.Relation relation(boolean allied, Object ownColor, Object theirColor, Integer ownHelmet, Integer theirHelmet) {
       if (allied) {
-         return TeamsModule.Inner_DataUtil.TEAMMATE;
+         return TeamsModule.Relation.TEAMMATE;
       } else if (ownColor != null && ownColor.equals(theirColor)) {
-         return TeamsModule.Inner_DataUtil.TEAMMATE;
+         return TeamsModule.Relation.TEAMMATE;
       } else if (ownHelmet != null && ownHelmet.equals(theirHelmet)) {
-         return TeamsModule.Inner_DataUtil.TEAMMATE;
+         return TeamsModule.Relation.TEAMMATE;
       } else if (ownColor != null && theirColor != null) {
-         return TeamsModule.Inner_DataUtil.OPPONENT;
+         return TeamsModule.Relation.OPPONENT;
       } else {
-         return ownHelmet != null && theirHelmet != null ? TeamsModule.Inner_DataUtil.OPPONENT : TeamsModule.Inner_DataUtil.UNKNOWN;
+         return ownHelmet != null && theirHelmet != null ? TeamsModule.Relation.OPPONENT : TeamsModule.Relation.UNKNOWN;
       }
    }
 
-   private static TeamsModule.Inner_DataUtil relationTo(LocalPlayer self, Player suspected) {
+   private static TeamsModule.Relation relationTo(LocalPlayer self, Player suspected) {
       Component ownName = self.getDisplayName();
       Component theirName = suspected.getDisplayName();
       Integer ownColor = nameColorOf(self, ownName);
@@ -334,7 +334,7 @@ public final class TeamsModule extends Module {
       }
    }
 
-   enum Inner_DataUtil {
+   enum Relation {
       TEAMMATE,
       OPPONENT,
       UNKNOWN;

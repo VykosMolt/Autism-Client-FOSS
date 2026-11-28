@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 
 public class FpsAction implements MacroAction {
    public int maxFps = 60;
-   public String endMode = FpsAction.Inner_DataUtil.TIMEOUT.name();
+   public String endMode = FpsAction.EndMode.TIMEOUT.name();
    public int stepCount = 1;
    public boolean useTicks = false;
    public int durationMs = 1000;
@@ -22,8 +22,8 @@ public class FpsAction implements MacroAction {
       this.durationMs = Math.max(0, durationMs);
    }
 
-   public FpsAction.Inner_DataUtil getEndMode() {
-      return FpsAction.Inner_DataUtil.parse(this.endMode);
+   public FpsAction.EndMode getEndMode() {
+      return FpsAction.EndMode.parse(this.endMode);
    }
 
    public int getStepCount() {
@@ -62,7 +62,7 @@ public class FpsAction implements MacroAction {
       }
 
       if (tag.contains("endMode")) {
-         this.endMode = FpsAction.Inner_DataUtil.parse(tag.getStringOr("endMode", FpsAction.Inner_DataUtil.TIMEOUT.name())).name();
+         this.endMode = FpsAction.EndMode.parse(tag.getStringOr("endMode", FpsAction.EndMode.TIMEOUT.name())).name();
       }
 
       if (tag.contains("stepCount")) {
@@ -114,7 +114,7 @@ public class FpsAction implements MacroAction {
       }
 
       String window = var10000;
-      String suffix = this.getEndMode() == FpsAction.Inner_DataUtil.TIMEOUT && this.continueNextActions ? " [cont]" : "";
+      String suffix = this.getEndMode() == FpsAction.EndMode.TIMEOUT && this.continueNextActions ? " [cont]" : "";
       return "FPS: " + cap + " (" + window + ")" + suffix;
    }
 
@@ -133,12 +133,12 @@ public class FpsAction implements MacroAction {
       this.enabled = e;
    }
 
-   public enum Inner_DataUtil {
+   public enum EndMode {
       TIMEOUT,
       STEPS,
       END;
 
-      public static FpsAction.Inner_DataUtil parse(String raw) {
+      public static FpsAction.EndMode parse(String raw) {
          if (raw == null) {
             return TIMEOUT;
          }

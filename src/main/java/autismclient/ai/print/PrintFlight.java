@@ -203,7 +203,7 @@ final class PrintFlight {
    }
 
    static AiPhysics.MotionState simulateFlightTick(
-      AiPhysics.MotionState body, PrintMover.Inner_StreamUtil keys, float yaw, float speed, AiPhysics.PhysicsWorld world
+      AiPhysics.MotionState body, PrintMover.KeyState keys, float yaw, float speed, AiPhysics.PhysicsWorld world
    ) {
       AiPhysics.MoveInput input = PrintMover.toMoveInput(keys, yaw);
       double forward = input.forward() * 0.98;
@@ -266,31 +266,31 @@ final class PrintFlight {
       return body.position().distanceToSqr(goal) < 0.16 && body.speed() < 0.015 && Math.abs(body.vy()) < 0.015;
    }
 
-   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal) {
+   static PrintMover.KeyState chooseFlightInput(PrintEnv env, Vec3 goal) {
       return chooseFlightInput(env, goal, env.playerYaw());
    }
 
-   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal, float yaw) {
+   static PrintMover.KeyState chooseFlightInput(PrintEnv env, Vec3 goal, float yaw) {
       return chooseFlightInput(env, goal, yaw, 0.4);
    }
 
-   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance) {
+   static PrintMover.KeyState chooseFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance) {
       return chooseFlightInput(env, goal, yaw, tolerance, null);
    }
 
-   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation) {
+   static PrintMover.KeyState chooseFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation) {
       return chooseFlightInput(env, goal, yaw, tolerance, continuation, null);
    }
 
-   static PrintMover.Inner_StreamUtil chooseFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep) {
+   static PrintMover.KeyState chooseFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep) {
       return solveFlightInput(env, goal, yaw, tolerance, continuation, nextStep, false);
    }
 
-   static PrintMover.Inner_StreamUtil chooseTransitFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep) {
+   static PrintMover.KeyState chooseTransitFlightInput(PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep) {
       return solveFlightInput(env, goal, yaw, tolerance, continuation, nextStep, true);
    }
 
-   private static PrintMover.Inner_StreamUtil chooseCruiseFlightInput(PrintEnv env, Vec3 goal, float yaw, Predicate<Vec3> nextStep) {
+   private static PrintMover.KeyState chooseCruiseFlightInput(PrintEnv env, Vec3 goal, float yaw, Predicate<Vec3> nextStep) {
       AiPhysics.MotionState body = env.playerMotionState();
       double dx = goal.x - body.x();
       double dz = goal.z - body.z();
@@ -304,7 +304,7 @@ final class PrintFlight {
          double vy = Math.copySign(Math.min(speed * 4.5, Math.abs(goal.y - body.y()) * 0.55), goal.y - body.y());
          boolean sprintAllowed = env.canSprint() && distance > 1.0 && (-Math.sin(Math.toRadians(yaw)) * dx + Math.cos(Math.toRadians(yaw)) * dz) / distance > 0.7;
 
-         record Inner_DataUtil(PrintMover.Inner_StreamUtil keys, AiPhysics.MotionState next, double score) {
+         record Inner_DataUtil(PrintMover.KeyState keys, AiPhysics.MotionState next, double score) {
          }
 
          ArrayList<Inner_DataUtil> candidates = new ArrayList<>(36);
@@ -313,7 +313,7 @@ final class PrintFlight {
             for (int side = -1; side <= 1; side++) {
                for (int vertical = -1; vertical <= 1; vertical++) {
                   for (int sprint = 0; sprint <= (forward > 0 && vertical >= 0 && sprintAllowed ? 1 : 0); sprint++) {
-                     PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
+                     PrintMover.KeyState keys = new PrintMover.KeyState(
                         forward > 0, forward < 0, side > 0, side < 0, vertical > 0, vertical < 0, sprint > 0
                      );
                      AiPhysics.MotionState next = simulateFlightTick(body, keys, yaw, env.flyingSpeed(), env.livePhysicsWorld());
@@ -342,7 +342,7 @@ final class PrintFlight {
                   }
 
                   prior = next;
-                  next = simulateFlightTick(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), env.livePhysicsWorld());
+                  next = simulateFlightTick(next, PrintMover.KeyState.NONE, yaw, env.flyingSpeed(), env.livePhysicsWorld());
                }
 
                if (safe) {
@@ -377,13 +377,13 @@ final class PrintFlight {
       return false;
    }
 
-   private static PrintMover.Inner_StreamUtil solveFlightInput(
+   private static PrintMover.KeyState solveFlightInput(
       PrintEnv env, Vec3 goal, float yaw, double tolerance, Predicate<Vec3> continuation, Predicate<Vec3> nextStep, boolean transit
    ) {
       AiPhysics.MotionState body = env.playerMotionState();
       AiPhysics.PhysicsWorld world = env.livePhysicsWorld();
       if (body.position().distanceToSqr(goal) > 4.0) {
-         PrintMover.Inner_StreamUtil travel = chooseCruiseFlightInput(env, goal, yaw, nextStep);
+         PrintMover.KeyState travel = chooseCruiseFlightInput(env, goal, yaw, nextStep);
          if (travel != null) {
             return travel;
          }
@@ -397,7 +397,7 @@ final class PrintFlight {
 
          while (true) {
             if (tick < 25) {
-               coast = simulateFlightTick(coast, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
+               coast = simulateFlightTick(coast, PrintMover.KeyState.NONE, yaw, env.flyingSpeed(), world);
                if (!PrintMover.safeStep(world, body, coast) && (tick != 0 || nextStep == null || nextStep.test(coast.position()))) {
                   tick++;
                   continue;
@@ -407,25 +407,25 @@ final class PrintFlight {
             }
 
             if (safe && coast.position().distanceToSqr(goal) < tolerance * tolerance && (continuation == null || continuation.test(coast.position()))) {
-               return PrintMover.Inner_StreamUtil.NONE;
+               return PrintMover.KeyState.NONE;
             }
             break;
          }
       }
 
-      PrintMover.Inner_StreamUtil best = PrintMover.Inner_StreamUtil.NONE;
-      PrintMover.Inner_StreamUtil fine = PrintMover.Inner_StreamUtil.NONE;
+      PrintMover.KeyState best = PrintMover.KeyState.NONE;
+      PrintMover.KeyState fine = PrintMover.KeyState.NONE;
       double score = 1.0 / 0.0;
       double fineScore = 1.0 / 0.0;
       boolean bestContinues = false;
-      PrintMover.Inner_StreamUtil opensTurn = null;
+      PrintMover.KeyState opensTurn = null;
       double turnScore = 1.0 / 0.0;
       double arrivalRadius = Math.max(0.4, tolerance);
 
       for (int forward = -1; forward <= 1; forward++) {
          for (int side = -1; side <= 1; side++) {
             for (int vertical = -1; vertical <= 1; vertical++) {
-               PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
+               PrintMover.KeyState keys = new PrintMover.KeyState(
                   forward > 0, forward < 0, side > 0, side < 0, vertical > 0, vertical < 0, false
                );
                AiPhysics.MotionState next = simulateFlightTick(body, keys, yaw, env.flyingSpeed(), world);
@@ -436,7 +436,7 @@ final class PrintFlight {
                   boolean safe = true;
 
                   for (int i = 0; i < 25; i++) {
-                     next = simulateFlightTick(next, PrintMover.Inner_StreamUtil.NONE, yaw, env.flyingSpeed(), world);
+                     next = simulateFlightTick(next, PrintMover.KeyState.NONE, yaw, env.flyingSpeed(), world);
                      if (PrintMover.safeStep(world, body, next)) {
                         safe = false;
                         break;
@@ -472,7 +472,7 @@ final class PrintFlight {
          return opensTurn;
       } else {
          return body.position().distanceToSqr(goal) < 1.0
-               && (!bestContinues || !transit && best.equals(PrintMover.Inner_StreamUtil.NONE) && score > tolerance * tolerance)
+               && (!bestContinues || !transit && best.equals(PrintMover.KeyState.NONE) && score > tolerance * tolerance)
             ? fine
             : best;
       }

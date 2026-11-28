@@ -27,17 +27,17 @@ final class AiModels {
    private AiModels() {
    }
 
-   static AiModels.Inner_CachePool init_aw_CachePool(AiSettings.Provider provider, String endpoint, String key) {
+   static AiModels.FetchResult init_aw_CachePool(AiSettings.Provider provider, String endpoint, String key) {
       return fetchModels(provider, endpoint, key, () -> {});
    }
 
-   static AiModels.Inner_CachePool fetchModels(AiSettings.Provider provider, String endpoint, String key, Runnable checkpoint) {
+   static AiModels.FetchResult fetchModels(AiSettings.Provider provider, String endpoint, String key, Runnable checkpoint) {
       return fetchModelsWith(provider, endpoint, key, (url, p, k) -> getJson(url, p, k, checkpoint));
    }
 
-   static AiModels.Inner_CachePool fetchModelsWith(AiSettings.Provider provider, String endpoint, String key, AiModels.Inner_DataUtil fetch) {
+   static AiModels.FetchResult fetchModelsWith(AiSettings.Provider provider, String endpoint, String key, AiModels.JsonFetcher fetch) {
       if (provider == null) {
-         return new AiModels.Inner_CachePool(List.of(), "No provider selected");
+         return new AiModels.FetchResult(List.of(), "No provider selected");
       }
 
       if (key != null && !key.isBlank()) {
@@ -57,8 +57,8 @@ final class AiModels {
                   List<String> ring = new ArrayList<>();
                   ring.add(base);
                   ring.addAll(init_List(provider, base, key));
-                  AiModels.Inner_StreamUtil worth = null;
-                  AiModels.Inner_StreamUtil last = null;
+                  AiModels.HttpStatusException worth = null;
+                  AiModels.HttpStatusException last = null;
 
                   for (int i = 0; i < ring.size(); i++) {
                      try {
@@ -72,7 +72,7 @@ final class AiModels {
                         base = ring.get(i);
                         last = null;
                         break;
-                     } catch (AiModels.Inner_StreamUtil failure) {
+                     } catch (AiModels.HttpStatusException failure) {
                         boolean rejection = failure.status == 401 || failure.status == 403;
                         if (!rejection && worth == null) {
                            worth = failure;
@@ -94,7 +94,7 @@ final class AiModels {
 
             List<String> models = new ArrayList<>(ids);
             models.sort(AiModels::compareVersions);
-            return new AiModels.Inner_CachePool(List.copyOf(models), "", base, provider);
+            return new AiModels.FetchResult(List.copyOf(models), "", base, provider);
          } catch (Exception e) {
             if (e instanceof InterruptedException) {
                Thread.currentThread().interrupt();
@@ -107,10 +107,10 @@ final class AiModels {
                .replaceAll("sk-[A-Za-z0-9_-]+", "[redacted]")
                .replace('\n', ' ')
                .replace('\r', ' ');
-            return new AiModels.Inner_CachePool(List.of(), reason.length() > 200 ? reason.substring(0, 200) : reason);
+            return new AiModels.FetchResult(List.of(), reason.length() > 200 ? reason.substring(0, 200) : reason);
          }
       } else {
-         return new AiModels.Inner_CachePool(List.of(), "Add an API key to scan for models");
+         return new AiModels.FetchResult(List.of(), "Add an API key to scan for models");
       }
    }
 
@@ -167,7 +167,7 @@ final class AiModels {
       return others.isEmpty() ? null : others.getFirst();
    }
 
-   private static void listPagedModels(String base, String key, AiSettings.Provider provider, Set<String> out, AiModels.Inner_DataUtil fetch, boolean anthropic) throws Exception {
+   private static void listPagedModels(String base, String key, AiSettings.Provider provider, Set<String> out, AiModels.JsonFetcher fetch, boolean anthropic) throws Exception {
       String after = "";
       Set<String> seen = new HashSet<>();
 
@@ -211,7 +211,7 @@ final class AiModels {
       throw new IllegalStateException("Model list exceeded the pagination limit; narrow the endpoint catalog");
    }
 
-   private static void listTokenPagedModels(String base, String key, Set<String> out, AiModels.Inner_DataUtil fetch) throws Exception {
+   private static void listTokenPagedModels(String base, String key, Set<String> out, AiModels.JsonFetcher fetch) throws Exception {
       String token = "";
       Set<String> seen = new HashSet<>();
 
@@ -242,12 +242,12 @@ final class AiModels {
       throw new IllegalStateException("Model list exceeded the pagination limit");
    }
 
-   private static void listOpenRouterModels(String base, String key, Set<String> out, AiModels.Inner_DataUtil fetch) throws Exception {
+   private static void listOpenRouterModels(String base, String key, Set<String> out, AiModels.JsonFetcher fetch) throws Exception {
       if (!base.endsWith("/api/v1")) {
          try {
             listPagedModels(base, key, AiSettings.Provider.DASHSCOPE, out, fetch, false);
             return;
-         } catch (AiModels.Inner_StreamUtil failure) {
+         } catch (AiModels.HttpStatusException failure) {
             if (failure.status != 404 && failure.status != 405 || !base.endsWith("/compatible-mode/v1")) {
                throw failure;
             }
@@ -322,7 +322,7 @@ final class AiModels {
       HttpResponse<byte[]> response = AiHttp.send(request.build(), 2097152, checkpoint);
       String body = new String(response.body(), StandardCharsets.UTF_8);
       if (response.statusCode() != 200) {
-         throw new AiModels.Inner_StreamUtil(response.statusCode(), AiHttp.errorMessage(provider, response.statusCode(), body, key));
+         throw new AiModels.HttpStatusException(response.statusCode(), AiHttp.errorMessage(provider, response.statusCode(), body, key));
       }
 
       JsonElement parsed;
@@ -464,12 +464,12 @@ final class AiModels {
       }
    }
 
-   record Inner_CachePool(List<String> models, String error, String endpoint, AiSettings.Provider provider) {
-      Inner_CachePool(List<String> models, String error) {
+   record FetchResult(List<String> models, String error, String endpoint, AiSettings.Provider provider) {
+      FetchResult(List<String> models, String error) {
          this(models, error, "", null);
       }
 
-      Inner_CachePool(List<String> models, String error, String endpoint) {
+      FetchResult(List<String> models, String error, String endpoint) {
          this(models, error, endpoint, null);
       }
 
@@ -479,14 +479,14 @@ final class AiModels {
    }
 
    @FunctionalInterface
-   interface Inner_DataUtil {
+   interface JsonFetcher {
       JsonObject get(String var1, AiSettings.Provider var2, String var3) throws Exception;
    }
 
-   static final class Inner_StreamUtil extends IllegalStateException {
+   static final class HttpStatusException extends IllegalStateException {
       final int status;
 
-      Inner_StreamUtil(int status, String message) {
+      HttpStatusException(int status, String message) {
          super(message);
          this.status = status;
       }

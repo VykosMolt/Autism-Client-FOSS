@@ -37,7 +37,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
 public record PacketSchemaSnapshot(
-   Packet<?> packet, PacketSchemaRegistry.Inner_StreamUtil schema, List<PacketFieldSnapshot> fields, boolean init_Z, boolean load_Z, String status, String fallbackNote
+   Packet<?> packet, PacketSchemaRegistry.PacketSchema schema, List<PacketFieldSnapshot> fields, boolean init_Z, boolean load_Z, String status, String fallbackNote
 ) {
    private static final int init_I = 12;
    private static final int MAX_VALUE_LENGTH = 220;
@@ -54,9 +54,9 @@ public record PacketSchemaSnapshot(
          return new PacketSchemaSnapshot(null, null, List.of(), false, false, "fallback", "packet object missing");
       }
 
-      PacketSchemaRegistry.Inner_StreamUtil schema = PacketSchemaRegistry.schemaFor(packet.getClass());
+      PacketSchemaRegistry.PacketSchema schema = PacketSchemaRegistry.schemaFor(packet.getClass());
       if (schema == null) {
-         List<PacketFieldSnapshot> reflected = reflectFields(packet, (PacketSchemaRegistry.Inner_StreamUtil)null);
+         List<PacketFieldSnapshot> reflected = reflectFields(packet, (PacketSchemaRegistry.PacketSchema)null);
          return new PacketSchemaSnapshot(packet, null, reflected, false, false, "fallback", "no generated schema for packet class");
       }
 
@@ -71,7 +71,7 @@ public record PacketSchemaSnapshot(
          List<PacketFieldSnapshot> values = new ArrayList<>();
          boolean allReadable = true;
 
-         for (PacketSchemaRegistry.Inner_DataUtil field : schema.fields()) {
+         for (PacketSchemaRegistry.FieldSchema field : schema.fields()) {
             Object value = readMember(packet, field.name());
             boolean readable = value != UNREADABLE;
             if (!readable) {
@@ -145,12 +145,12 @@ public record PacketSchemaSnapshot(
       return List.of(name, "get" + capitalized, "is" + capitalized);
    }
 
-   private static List<PacketFieldSnapshot> reflectFields(Object packet, PacketSchemaRegistry.Inner_StreamUtil schema) {
-      List<PacketSchemaRegistry.Inner_DataUtil> fieldSchemas = new ArrayList<>();
+   private static List<PacketFieldSnapshot> reflectFields(Object packet, PacketSchemaRegistry.PacketSchema schema) {
+      List<PacketSchemaRegistry.FieldSchema> fieldSchemas = new ArrayList<>();
       if (packet.getClass().isRecord()) {
          for (RecordComponent component : packet.getClass().getRecordComponents()) {
             String type = component.getGenericType().getTypeName();
-            fieldSchemas.add(new PacketSchemaRegistry.Inner_DataUtil(component.getName(), type, schemaKind(type), isScalarKind(schemaKind(type))));
+            fieldSchemas.add(new PacketSchemaRegistry.FieldSchema(component.getName(), type, schemaKind(type), isScalarKind(schemaKind(type))));
          }
       } else {
          List<Field> fields = new ArrayList<>();
@@ -169,14 +169,14 @@ public record PacketSchemaSnapshot(
          for (Field field : fields) {
             if (seen.add(field.getName())) {
                String type = field.getGenericType().getTypeName();
-               fieldSchemas.add(new PacketSchemaRegistry.Inner_DataUtil(field.getName(), type, schemaKind(type), isScalarKind(schemaKind(type))));
+               fieldSchemas.add(new PacketSchemaRegistry.FieldSchema(field.getName(), type, schemaKind(type), isScalarKind(schemaKind(type))));
             }
          }
       }
 
       List<PacketFieldSnapshot> values = new ArrayList<>();
 
-      for (PacketSchemaRegistry.Inner_DataUtil field : fieldSchemas) {
+      for (PacketSchemaRegistry.FieldSchema field : fieldSchemas) {
          Object value = readMember(packet, field.name());
          boolean readable = value != UNREADABLE;
          values.add(
@@ -230,7 +230,7 @@ public record PacketSchemaSnapshot(
       return Set.of("number", "boolean", "string", "identifier", "enum", "uuid").contains(kind);
    }
 
-   private static List<String> describeValue(Object value, PacketSchemaRegistry.Inner_DataUtil field, IdentityHashMap<Object, Boolean> seen, int depth) {
+   private static List<String> describeValue(Object value, PacketSchemaRegistry.FieldSchema field, IdentityHashMap<Object, Boolean> seen, int depth) {
       List<String> lines = new ArrayList<>();
       appendValue(lines, value, seen, depth);
       if (lines.isEmpty()) {

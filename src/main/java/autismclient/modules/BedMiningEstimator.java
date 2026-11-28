@@ -26,7 +26,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 final class BedMiningEstimator {
    private static final Minecraft MC = Minecraft.getInstance();
-   private static final Map<BlockPos, BedMiningEstimator.Inner_DataUtil> cache = new LinkedHashMap<>();
+   private static final Map<BlockPos, BedMiningEstimator.CachedRoute> cache = new LinkedHashMap<>();
    private static Object trackedLevel;
 
    static void clearCache() {
@@ -118,9 +118,9 @@ final class BedMiningEstimator {
 
       double reach = MC.player.blockInteractionRange();
       Vec3 preferred = eye.add(Vec3.directionFromRotation(MC.player.getXRot(), MC.player.getYRot()).scale(reach));
-      BedMiningEstimator.Inner_DataUtil cached = cache.get(bed);
+      BedMiningEstimator.CachedRoute cached = cache.get(bed);
       if (cached == null || !eye.equals(cached.eye) || reach != cached.reach || !cells.equals(cached.cells)) {
-         cached = new BedMiningEstimator.Inner_DataUtil(eye, reach, List.copyOf(cells), BedBreachRouteSolver.solve(cells, eye, reach, preferred));
+         cached = new BedMiningEstimator.CachedRoute(eye, reach, List.copyOf(cells), BedBreachRouteSolver.solve(cells, eye, reach, preferred));
          if (cache.size() >= 16 && !cache.containsKey(bed)) {
             cache.remove(cache.keySet().iterator().next());
          }
@@ -146,7 +146,7 @@ final class BedMiningEstimator {
       }
    }
 
-   static BedMiningEstimator.Inner_StreamUtil track(BlockPos pos, Vec3 preferred, float progress, Vec3 nextEye) {
+   static BedMiningEstimator.TrackedCell track(BlockPos pos, Vec3 preferred, float progress, Vec3 nextEye) {
       if (!MC.level.isLoaded(pos)) {
          return null;
       }
@@ -187,7 +187,7 @@ final class BedMiningEstimator {
          double remaining = Math.max(1.0, Math.ceil(breakTicks(state, pos, MC.player.getMainHandItem()) * (1.0F - Math.clamp(progress, 0.0F, 1.0F))));
          Vec3 visible = BedTargetAimSolver.visibleAimPoint(boxes, blockers, eye, reach, preferred);
          Vec3 future = BedTargetAimSolver.visibleAimPoint(boxes, blockers, nextEye, reach, preferred);
-         return new BedMiningEstimator.Inner_StreamUtil(
+         return new BedMiningEstimator.TrackedCell(
             new BedBreachRouteSolver.BreachCell(pos, boxes, remaining, MC.player.getInventory().getSelectedSlot(), state.getBlock() instanceof BedBlock),
             future == null ? visible : future,
             visible != null
@@ -270,9 +270,9 @@ final class BedMiningEstimator {
       );
    }
 
-   private record Inner_DataUtil(Vec3 eye, double reach, List<BedBreachRouteSolver.BreachCell> cells, BedBreachRouteSolver.RouteSet solver) {
+   private record CachedRoute(Vec3 eye, double reach, List<BedBreachRouteSolver.BreachCell> cells, BedBreachRouteSolver.RouteSet solver) {
    }
 
-   record Inner_StreamUtil(BedBreachRouteSolver.BreachCell init_DataPipe_DataUtil, Vec3 init_Vec3, boolean init_Z) {
+   record TrackedCell(BedBreachRouteSolver.BreachCell init_DataPipe_DataUtil, Vec3 init_Vec3, boolean init_Z) {
    }
 }

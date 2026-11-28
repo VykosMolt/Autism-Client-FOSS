@@ -42,7 +42,7 @@ final class AiBuildSite {
    private static final int open = 4096;
    private static final int poll = 8192;
    private static final int push = 8;
-   private static final AiBuildSite.Inner_CachePool[] KINDS = AiBuildSite.Inner_CachePool.values();
+   private static final AiBuildSite.CellKind[] KINDS = AiBuildSite.CellKind.values();
    private static final Direction[] DIRECTIONS = Direction.values();
    private static final int[] EMPTY_INTS = new int[0];
    private final AiBuilder.Blueprint blueprint;
@@ -124,8 +124,8 @@ final class AiBuildSite {
       this.flowingFluidCells = new BitSet(this.cellCount);
       this.standableCells = new BitSet(this.cellCount);
       this.frontierCells = new BitSet(this.cellCount);
-      HashMap<String, Map<Map<String, String>, AiBuildSite.Inner_DataUtil>> classified = new HashMap<>();
-      AiBuildSite.Inner_StreamUtil observedIndices = new AiBuildSite.Inner_StreamUtil();
+      HashMap<String, Map<Map<String, String>, AiBuildSite.CellClass>> classified = new HashMap<>();
+      AiBuildSite.IntList observedIndices = new AiBuildSite.IntList();
       int classificationFailures = 0;
 
       for (int i = 0; i < this.cellCount; i++) {
@@ -133,11 +133,11 @@ final class AiBuildSite {
          this.specs[i] = cell;
          this.deltas[i] = packDelta(cell.dx(), cell.dy(), cell.dz());
          this.positions[i] = BlockPos.asLong(this.originX + cell.dx(), this.originY + cell.dy(), this.originZ + cell.dz());
-         AiBuildSite.Inner_DataUtil entry = classified.computeIfAbsent(cell.block(), ignored -> new HashMap<>()).get(cell.properties());
+         AiBuildSite.CellClass entry = classified.computeIfAbsent(cell.block(), ignored -> new HashMap<>()).get(cell.properties());
          if (entry == null) {
             boolean standable = false;
 
-            AiBuildSite.Inner_CachePool kind;
+            AiBuildSite.CellKind kind;
             Item item;
             byte dependencies;
             try {
@@ -150,12 +150,12 @@ final class AiBuildSite {
                   AutismClientAddon.LOG.warn("[AI] build site could not classify {}, treating it as SKIP", cell, unknown);
                }
 
-               kind = AiBuildSite.Inner_CachePool.SKIP;
+               kind = AiBuildSite.CellKind.SKIP;
                item = Items.AIR;
                dependencies = 0;
             }
 
-            entry = new AiBuildSite.Inner_DataUtil((byte)kind.ordinal(), item, dependencies, standable);
+            entry = new AiBuildSite.CellClass((byte)kind.ordinal(), item, dependencies, standable);
             classified.get(cell.block()).put(cell.properties(), entry);
          }
 
@@ -166,8 +166,8 @@ final class AiBuildSite {
             this.standableCells.set(i);
          }
 
-         boolean placeable = this.kindOrdinals[i] != (byte)AiBuildSite.Inner_CachePool.DERIVED.ordinal()
-            && this.kindOrdinals[i] != (byte)AiBuildSite.Inner_CachePool.SKIP.ordinal();
+         boolean placeable = this.kindOrdinals[i] != (byte)AiBuildSite.CellKind.DERIVED.ordinal()
+            && this.kindOrdinals[i] != (byte)AiBuildSite.CellKind.SKIP.ordinal();
          if (placeable) {
             this.pending.set(i);
             this.pendingTotal++;
@@ -287,7 +287,7 @@ final class AiBuildSite {
       return this.specs[index];
    }
 
-   AiBuildSite.Inner_CachePool kindAt(int index) {
+   AiBuildSite.CellKind kindAt(int index) {
       return KINDS[this.kindOrdinals[index] & 0xFF];
    }
 
@@ -369,8 +369,8 @@ final class AiBuildSite {
    }
 
    boolean isPlaceableNonFluid(int index) {
-      AiBuildSite.Inner_CachePool kind = this.kindAt(index);
-      return kind != AiBuildSite.Inner_CachePool.DERIVED && kind != AiBuildSite.Inner_CachePool.SKIP && !this.flowingFluidCells.get(index);
+      AiBuildSite.CellKind kind = this.kindAt(index);
+      return kind != AiBuildSite.CellKind.DERIVED && kind != AiBuildSite.CellKind.SKIP && !this.flowingFluidCells.get(index);
    }
 
    boolean unusedIsFlowingFluid(int index) {
@@ -408,7 +408,7 @@ final class AiBuildSite {
 
    int[] unusedPoweredLevers() {
       if (this.poweredLeverCache.length == 0) {
-         AiBuildSite.Inner_StreamUtil found = new AiBuildSite.Inner_StreamUtil();
+         AiBuildSite.IntList found = new AiBuildSite.IntList();
 
          for (int i = 0; i < this.cellCount; i++) {
             if (AiBuildIntent.isPoweredLever(this.specs[i])) {
@@ -698,7 +698,7 @@ final class AiBuildSite {
 
    Set<Long> unusedCellKeySet() {
       if (this.cellKeySetCache == null) {
-         this.cellKeySetCache = new AiBuildSite.Inner_BufferHelper();
+         this.cellKeySetCache = new AiBuildSite.CellKeySet();
       }
 
       return this.cellKeySetCache;
@@ -723,7 +723,7 @@ final class AiBuildSite {
          if (this.pending.get(index) && this.isPlaceableNonFluid(index)) {
             int mask = this.dependencyMasks[index] & 255;
             if (mask != 0) {
-               boolean fluid = this.kindAt(index) == AiBuildSite.Inner_CachePool.FLUID;
+               boolean fluid = this.kindAt(index) == AiBuildSite.CellKind.FLUID;
                BlockPos base = this.posAt(index);
 
                for (int ordinal = 0; ordinal < DIRECTIONS.length; ordinal++) {
@@ -808,7 +808,7 @@ final class AiBuildSite {
          }
       }
 
-      AiBuildSite.Inner_StreamUtil out = new AiBuildSite.Inner_StreamUtil();
+      AiBuildSite.IntList out = new AiBuildSite.IntList();
       int budget = Math.max(512, max * 64);
 
       for (int at = start; at < this.walkableByRank.length && out.size() < max && budget-- > 0; at++) {
@@ -880,7 +880,7 @@ final class AiBuildSite {
 
    Set<Long> unusedWalkableKeySet() {
       if (this.walkableKeySetCache == null) {
-         this.walkableKeySetCache = new AiBuildSite.Inner_ConfigStore();
+         this.walkableKeySetCache = new AiBuildSite.WalkableKeySet();
       }
 
       return this.walkableKeySetCache;
@@ -1073,13 +1073,13 @@ final class AiBuildSite {
 
       for (int rankx = 0; rankx < this.cellCount; rankx++) {
          int index = base[rankx];
-         AiBuildSite.Inner_CachePool kind = this.kindAt(index);
-         if (kind == AiBuildSite.Inner_CachePool.PARTNER) {
+         AiBuildSite.CellKind kind = this.kindAt(index);
+         if (kind == AiBuildSite.CellKind.PARTNER) {
             int found = this.partnerProvider(index, this.dependencyMasks[index] & 255, baseRank, 2147483647);
             if (found >= 0) {
                provider[index] = found;
             }
-         } else if (kind == AiBuildSite.Inner_CachePool.SIMPLE || kind == AiBuildSite.Inner_CachePool.INTERACT) {
+         } else if (kind == AiBuildSite.CellKind.SIMPLE || kind == AiBuildSite.CellKind.INTERACT) {
             int found = this.horizontalProvider(index, baseRank);
             if (found >= 0) {
                provider[index] = found;
@@ -1194,8 +1194,8 @@ final class AiBuildSite {
          if ((mask & 1 << ordinal) != 0) {
             int found = this.indexOfKey(base.relative(DIRECTIONS[ordinal]).asLong());
             if (found >= 0 && found != index) {
-               AiBuildSite.Inner_CachePool kind = this.kindAt(found);
-               if (kind != AiBuildSite.Inner_CachePool.FLUID && kind != AiBuildSite.Inner_CachePool.DERIVED && kind != AiBuildSite.Inner_CachePool.SKIP && found != ignore
+               AiBuildSite.CellKind kind = this.kindAt(found);
+               if (kind != AiBuildSite.CellKind.FLUID && kind != AiBuildSite.CellKind.DERIVED && kind != AiBuildSite.CellKind.SKIP && found != ignore
                   )
                 {
                   int rank = baseRank[found];
@@ -1227,8 +1227,8 @@ final class AiBuildSite {
             if (direction.getAxis().isHorizontal()) {
                int found = this.indexOfKey(base.relative(direction).asLong());
                if (found >= 0 && found != index) {
-                  AiBuildSite.Inner_CachePool kind = this.kindAt(found);
-                  if (kind != AiBuildSite.Inner_CachePool.FLUID && kind != AiBuildSite.Inner_CachePool.DERIVED && kind != AiBuildSite.Inner_CachePool.SKIP) {
+                  AiBuildSite.CellKind kind = this.kindAt(found);
+                  if (kind != AiBuildSite.CellKind.FLUID && kind != AiBuildSite.CellKind.DERIVED && kind != AiBuildSite.CellKind.SKIP) {
                      int rank = baseRank[found];
                      if (rank < bestRank) {
                         best = found;
@@ -1287,7 +1287,7 @@ final class AiBuildSite {
          return false;
       }
 
-      if (this.kindAt(dependent) == AiBuildSite.Inner_CachePool.PARTNER) {
+      if (this.kindAt(dependent) == AiBuildSite.CellKind.PARTNER) {
          int mask = this.dependencyMasks[dependent] & 255;
          BlockPos base = this.posAt(dependent);
 
@@ -1357,7 +1357,7 @@ final class AiBuildSite {
       }
    }
 
-   private static byte offsetMask(AiBuilder.CellSpec cell, AiBuildSite.Inner_CachePool kind) {
+   private static byte offsetMask(AiBuilder.CellSpec cell, AiBuildSite.CellKind kind) {
       List<BlockPos> offsets = AiBuildIntent.offsetsFor(cell, kind);
       if (offsets.isEmpty()) {
          return 0;
@@ -1421,17 +1421,17 @@ final class AiBuildSite {
          return Map.of();
       }
 
-      HashMap<Long, AiBuildSite.Inner_StreamUtil> grouped = new HashMap<>();
+      HashMap<Long, AiBuildSite.IntList> grouped = new HashMap<>();
 
       for (int i = 0; i < this.cellCount; i++) {
          long delta = this.deltas[i];
          long key = sectionKey(this.originX + unpackDx(delta), this.originY + unpackDy(delta), this.originZ + unpackDz(delta));
-         grouped.computeIfAbsent(key, ignored -> new AiBuildSite.Inner_StreamUtil()).add(i);
+         grouped.computeIfAbsent(key, ignored -> new AiBuildSite.IntList()).add(i);
       }
 
       HashMap<Long, int[]> out = new HashMap<>(Math.max(16, grouped.size() * 2));
 
-      for (Entry<Long, AiBuildSite.Inner_StreamUtil> entry : grouped.entrySet()) {
+      for (Entry<Long, AiBuildSite.IntList> entry : grouped.entrySet()) {
          out.put(entry.getKey(), entry.getValue().toArray());
       }
 
@@ -1443,7 +1443,7 @@ final class AiBuildSite {
    }
 
    private int[] indicesNear(Vec3 center, double radius) {
-      AiBuildSite.Inner_StreamUtil found = new AiBuildSite.Inner_StreamUtil();
+      AiBuildSite.IntList found = new AiBuildSite.IntList();
       double radiusSq = radius * radius;
       int minSectionX = (int)Math.floor(center.x - radius) >> 4;
       int maxSectionX = (int)Math.floor(center.x + radius) >> 4;
@@ -1494,17 +1494,17 @@ final class AiBuildSite {
          int mask = this.dependencyMasks[index] & 255;
          if (mask != 0 && level != null) {
             BlockPos base = this.posAt(index);
-            boolean fluid = this.kindAt(index) == AiBuildSite.Inner_CachePool.FLUID;
+            boolean fluid = this.kindAt(index) == AiBuildSite.CellKind.FLUID;
 
             for (int ordinal = 0; ordinal < DIRECTIONS.length; ordinal++) {
                if ((mask & 1 << ordinal) != 0) {
                   BlockPos at = base.relative(DIRECTIONS[ordinal]);
                   int other = this.indexOfKey(at.asLong());
                   if (other >= 0) {
-                     AiBuildSite.Inner_CachePool otherKind = this.kindAt(other);
-                     if (otherKind != AiBuildSite.Inner_CachePool.FLUID
-                        && otherKind != AiBuildSite.Inner_CachePool.DERIVED
-                        && otherKind != AiBuildSite.Inner_CachePool.SKIP
+                     AiBuildSite.CellKind otherKind = this.kindAt(other);
+                     if (otherKind != AiBuildSite.CellKind.FLUID
+                        && otherKind != AiBuildSite.CellKind.DERIVED
+                        && otherKind != AiBuildSite.CellKind.SKIP
                         && !this.placed.get(other)) {
                         return false;
                      }
@@ -1642,7 +1642,7 @@ final class AiBuildSite {
       return (int)(delta >>> 0 & 2097151L) - 1048576;
    }
 
-   private final class Inner_BufferHelper extends AbstractSet<Long> {
+   private final class CellKeySet extends AbstractSet<Long> {
       @Override
       public int size() {
          return AiBuildSite.this.cellCount;
@@ -1678,7 +1678,7 @@ final class AiBuildSite {
       }
    }
 
-   enum Inner_CachePool {
+   enum CellKind {
       SIMPLE,
       INTERACT,
       SPECIAL,
@@ -1688,7 +1688,7 @@ final class AiBuildSite {
       SKIP;
    }
 
-   private final class Inner_ConfigStore extends AbstractSet<Long> {
+   private final class WalkableKeySet extends AbstractSet<Long> {
       @Override
       public int size() {
          return AiBuildSite.this.walkablePositions.length;
@@ -1746,10 +1746,10 @@ final class AiBuildSite {
       }
    }
 
-   private record Inner_DataUtil(byte kindOrdinal, Item item, byte dependencies, boolean standable) {
+   private record CellClass(byte kindOrdinal, Item item, byte dependencies, boolean standable) {
    }
 
-   private static final class Inner_StreamUtil {
+   private static final class IntList {
       private int[] buffer = new int[8];
       private int size;
 

@@ -158,8 +158,8 @@ public final class AutoFishMacroPresets {
 
    private static autismclient.util.macro.WaitFreeSlotsAction freeSlotsWait() {
       autismclient.util.macro.WaitFreeSlotsAction action = new autismclient.util.macro.WaitFreeSlotsAction();
-      action.countMode = autismclient.util.macro.WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS;
-      action.comparison = autismclient.util.macro.WaitFreeSlotsAction.Inner_DataUtil.AT_MOST;
+      action.countMode = autismclient.util.macro.WaitFreeSlotsAction.CountMode.FREE_SLOTS;
+      action.comparison = autismclient.util.macro.WaitFreeSlotsAction.Comparison.AT_MOST;
       action.slots = 0;
       action.timeoutMs = 0;
       return action;

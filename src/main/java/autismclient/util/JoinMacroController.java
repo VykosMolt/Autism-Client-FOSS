@@ -224,7 +224,7 @@ public final class JoinMacroController {
                Minecraft mc = Minecraft.getInstance();
                CustomMenuSnapshot snapshot = null;
                long seenGeneration = 0L;
-               autismclient.util.macro.CustomMenuActionPlanner.Inner_DataUtil prepared = null;
+               autismclient.util.macro.CustomMenuActionPlanner.PreparedSubmission prepared = null;
                String lastError = "";
 
                while (System.currentTimeMillis() <= deadline && !Thread.currentThread().isInterrupted()) {

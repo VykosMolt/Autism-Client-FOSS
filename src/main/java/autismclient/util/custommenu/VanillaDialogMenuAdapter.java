@@ -96,7 +96,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       }
 
       return new CustomMenuSnapshot(
-         "minecraft:dialog", phase, 0L, dialog.common().title().getString(), inputs, buttons, new VanillaDialogMenuAdapter.Inner_DataUtil(dialog, actions)
+         "minecraft:dialog", phase, 0L, dialog.common().title().getString(), inputs, buttons, new VanillaDialogMenuAdapter.DialogState(dialog, actions)
       );
    }
 
@@ -224,7 +224,7 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
 
    @Override
    public CustomMenuSubmitResult submit(CustomMenuSnapshot snapshot, CustomMenuSubmission submission) {
-      if (!(snapshot.adapterState() instanceof VanillaDialogMenuAdapter.Inner_DataUtil state)) {
+      if (!(snapshot.adapterState() instanceof VanillaDialogMenuAdapter.DialogState state)) {
          return CustomMenuSubmitResult.failure("Invalid dialog state");
       } else if (submission != null && submission.button() != null) {
          int index = submission.button().index() - 1;
@@ -360,6 +360,6 @@ public final class VanillaDialogMenuAdapter implements CustomMenuAdapter {
       return integer == value ? Integer.toString(integer) : Float.toString(value);
    }
 
-   private record Inner_DataUtil(Dialog init_Dialog, List<ActionButton> init_List) {
+   private record DialogState(Dialog init_Dialog, List<ActionButton> init_List) {
    }
 }

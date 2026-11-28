@@ -9,42 +9,42 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 public final class MacroCondition {
-   public MacroCondition.Inner_BufferHelper nodeType = MacroCondition.Inner_BufferHelper.GROUP;
+   public MacroCondition.NodeType nodeType = MacroCondition.NodeType.GROUP;
    public boolean negate = false;
-   public MacroCondition.Inner_StreamUtil combine = MacroCondition.Inner_StreamUtil.ALL;
+   public MacroCondition.Combine combine = MacroCondition.Combine.ALL;
    public List<MacroCondition> children = new ArrayList<>();
-   public MacroCondition.Inner_CachePool kind = MacroCondition.Inner_CachePool.ALWAYS;
+   public MacroCondition.ConditionKind kind = MacroCondition.ConditionKind.ALWAYS;
    public String item = "";
    public String value = "";
    public String toolScope = "THIS_MACRO";
    public String toolState = "SUCCEEDED";
    public String toolFilter = "";
-   public MacroCondition.Inner_ConfigStore op = MacroCondition.Inner_ConfigStore.EQ;
-   public MacroCondition.Inner_DataUtil cmp = MacroCondition.Inner_DataUtil.AT_LEAST;
+   public MacroCondition.Operator op = MacroCondition.Operator.EQ;
+   public MacroCondition.Comparison cmp = MacroCondition.Comparison.AT_LEAST;
    public int amount = 0;
    public int slot = 0;
    public double range = 5.0;
    public WaitDurabilityAction.TargetMode durMode = WaitDurabilityAction.TargetMode.HELD;
    public WaitDurabilityAction.Measurement durMeasure = WaitDurabilityAction.Measurement.PERCENT_REMAINING;
-   public WaitFreeSlotsAction.Inner_StreamUtil freeMode = WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS;
+   public WaitFreeSlotsAction.CountMode freeMode = WaitFreeSlotsAction.CountMode.FREE_SLOTS;
 
-   public static MacroCondition group(MacroCondition.Inner_StreamUtil c) {
+   public static MacroCondition group(MacroCondition.Combine c) {
       MacroCondition m = new MacroCondition();
-      m.nodeType = MacroCondition.Inner_BufferHelper.GROUP;
+      m.nodeType = MacroCondition.NodeType.GROUP;
       m.combine = c;
       return m;
    }
 
-   public static MacroCondition leaf(MacroCondition.Inner_CachePool k) {
+   public static MacroCondition leaf(MacroCondition.ConditionKind k) {
       MacroCondition m = new MacroCondition();
-      m.nodeType = MacroCondition.Inner_BufferHelper.LEAF;
+      m.nodeType = MacroCondition.NodeType.LEAF;
       m.kind = k;
       return m;
    }
 
    public static MacroCondition createDefault() {
-      MacroCondition root = group(MacroCondition.Inner_StreamUtil.ALL);
-      root.children.add(leaf(MacroCondition.Inner_CachePool.ALWAYS));
+      MacroCondition root = group(MacroCondition.Combine.ALL);
+      root.children.add(leaf(MacroCondition.ConditionKind.ALWAYS));
       return root;
    }
 
@@ -53,13 +53,13 @@ public final class MacroCondition {
    }
 
    public MacroCondition asLeaf() {
-      if (this.nodeType == MacroCondition.Inner_BufferHelper.LEAF) {
+      if (this.nodeType == MacroCondition.NodeType.LEAF) {
          return this;
       } else {
          return !this.negate
-               && this.nodeType == MacroCondition.Inner_BufferHelper.GROUP
+               && this.nodeType == MacroCondition.NodeType.GROUP
                && this.children.size() == 1
-               && this.children.get(0).nodeType == MacroCondition.Inner_BufferHelper.LEAF
+               && this.children.get(0).nodeType == MacroCondition.NodeType.LEAF
             ? this.children.get(0)
             : null;
       }
@@ -93,19 +93,19 @@ public final class MacroCondition {
    }
 
    public static MacroCondition readFlat(CompoundTag t, String p) {
-      MacroCondition leaf = leaf(MacroCondition.Inner_CachePool.ALWAYS);
-      leaf.kind = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_CachePool.class, t.getStringOr(p + "kind", "ALWAYS"), MacroCondition.Inner_CachePool.ALWAYS);
+      MacroCondition leaf = leaf(MacroCondition.ConditionKind.ALWAYS);
+      leaf.kind = MacroNbtCodecHelper.parseEnum(MacroCondition.ConditionKind.class, t.getStringOr(p + "kind", "ALWAYS"), MacroCondition.ConditionKind.ALWAYS);
       leaf.negate = t.getBooleanOr(p + "negate", false);
       leaf.item = t.getStringOr(p + "item", "");
-      leaf.op = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_ConfigStore.class, t.getStringOr(p + "op", "EQ"), MacroCondition.Inner_ConfigStore.EQ);
+      leaf.op = MacroNbtCodecHelper.parseEnum(MacroCondition.Operator.class, t.getStringOr(p + "op", "EQ"), MacroCondition.Operator.EQ);
       leaf.value = t.getStringOr(p + "value", "");
-      leaf.cmp = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_DataUtil.class, t.getStringOr(p + "cmp", "AT_LEAST"), MacroCondition.Inner_DataUtil.AT_LEAST);
+      leaf.cmp = MacroNbtCodecHelper.parseEnum(MacroCondition.Comparison.class, t.getStringOr(p + "cmp", "AT_LEAST"), MacroCondition.Comparison.AT_LEAST);
       leaf.amount = t.getIntOr(p + "amount", 0);
       leaf.slot = t.getIntOr(p + "slot", 0);
       leaf.toolScope = t.getStringOr(p + "toolScope", "THIS_MACRO");
       leaf.toolState = t.getStringOr(p + "toolState", "SUCCEEDED");
       leaf.toolFilter = t.getStringOr(p + "toolFilter", "");
-      MacroCondition root = group(MacroCondition.Inner_StreamUtil.ALL);
+      MacroCondition root = group(MacroCondition.Combine.ALL);
       root.children.add(leaf);
       return root;
    }
@@ -115,8 +115,8 @@ public final class MacroCondition {
          return false;
       }
 
-      if (this.nodeType == MacroCondition.Inner_BufferHelper.LEAF) {
-         return this.kind == MacroCondition.Inner_CachePool.ALWAYS;
+      if (this.nodeType == MacroCondition.NodeType.LEAF) {
+         return this.kind == MacroCondition.ConditionKind.ALWAYS;
       }
 
       if (this.children.isEmpty()) {
@@ -133,7 +133,7 @@ public final class MacroCondition {
    }
 
    public boolean evaluate(Minecraft mc) {
-      boolean result = this.nodeType == MacroCondition.Inner_BufferHelper.GROUP ? this.evaluateGroup(mc) : this.evaluateLeaf(mc);
+      boolean result = this.nodeType == MacroCondition.NodeType.GROUP ? this.evaluateGroup(mc) : this.evaluateLeaf(mc);
       return this.negate != result;
    }
 
@@ -142,7 +142,7 @@ public final class MacroCondition {
          return true;
       }
 
-      if (this.combine == MacroCondition.Inner_StreamUtil.ANY) {
+      if (this.combine == MacroCondition.Combine.ANY) {
          for (MacroCondition c : this.children) {
             if (c.evaluate(mc)) {
                return true;
@@ -162,7 +162,7 @@ public final class MacroCondition {
    }
 
    private boolean evaluateLeaf(Minecraft mc) {
-      if (this.kind == MacroCondition.Inner_CachePool.TOOLS) {
+      if (this.kind == MacroCondition.ConditionKind.TOOLS) {
          return MacroToolBridge.matchesJobState(MacroExecutor.getCurrentRunId(), this.toolScope, this.toolFilter, this.toolState);
       }
 
@@ -238,7 +238,7 @@ public final class MacroCondition {
                break;
             case VILLAGER_ITEM:
                var10000 = autismclient.util.villagerdupe.VillagerDupeDriver.hasTrader(
-                  mc, autismclient.util.villagerdupe.VillagerDupeDriver.Inner_DataUtil.parse(resolveTemplate(this.item, mc)), true
+                  mc, autismclient.util.villagerdupe.VillagerDupeDriver.ItemFilter.parse(resolveTemplate(this.item, mc)), true
                );
                break;
             case CONNECTION:
@@ -324,11 +324,11 @@ public final class MacroCondition {
 
    private boolean checkVariable(Minecraft mc) {
       String a = resolveTemplate(this.item, mc);
-      if (this.op == autismclient.util.macro.MacroCondition.Inner_ConfigStore.IS_EMPTY) {
+      if (this.op == autismclient.util.macro.MacroCondition.Operator.IS_EMPTY) {
          return a.isBlank();
       }
 
-      if (this.op == autismclient.util.macro.MacroCondition.Inner_ConfigStore.IS_TRUE) {
+      if (this.op == autismclient.util.macro.MacroCondition.Operator.IS_TRUE) {
          return isTruthy(a);
       }
 
@@ -466,23 +466,23 @@ public final class MacroCondition {
       return var10000;
    }
 
-   private WaitFreeSlotsAction.Inner_DataUtil freeSlotsComparison() {
-      WaitFreeSlotsAction.Inner_DataUtil var10000;
+   private WaitFreeSlotsAction.Comparison freeSlotsComparison() {
+      WaitFreeSlotsAction.Comparison var10000;
       switch (this.cmp) {
          case BELOW:
-            var10000 = WaitFreeSlotsAction.Inner_DataUtil.BELOW;
+            var10000 = WaitFreeSlotsAction.Comparison.BELOW;
             break;
          case AT_MOST:
-            var10000 = WaitFreeSlotsAction.Inner_DataUtil.AT_MOST;
+            var10000 = WaitFreeSlotsAction.Comparison.AT_MOST;
             break;
          case EXACT:
-            var10000 = WaitFreeSlotsAction.Inner_DataUtil.EXACT;
+            var10000 = WaitFreeSlotsAction.Comparison.EXACT;
             break;
          case AT_LEAST:
-            var10000 = WaitFreeSlotsAction.Inner_DataUtil.AT_LEAST;
+            var10000 = WaitFreeSlotsAction.Comparison.AT_LEAST;
             break;
          case ABOVE:
-            var10000 = WaitFreeSlotsAction.Inner_DataUtil.ABOVE;
+            var10000 = WaitFreeSlotsAction.Comparison.ABOVE;
             break;
          default:
             throw new MatchException(null, null);
@@ -518,7 +518,7 @@ public final class MacroCondition {
    }
 
    public String describe() {
-      String s = this.nodeType == MacroCondition.Inner_BufferHelper.GROUP ? this.describeGroup() : this.describeLeaf();
+      String s = this.nodeType == MacroCondition.NodeType.GROUP ? this.describeGroup() : this.describeLeaf();
       return this.negate ? "NOT(" + s + ")" : s;
    }
 
@@ -528,7 +528,7 @@ public final class MacroCondition {
       }
 
       StringBuilder sb = new StringBuilder();
-      String join = this.combine == MacroCondition.Inner_StreamUtil.ANY ? " OR " : " AND ";
+      String join = this.combine == MacroCondition.Combine.ANY ? " OR " : " AND ";
 
       for (int i = 0; i < this.children.size(); i++) {
          if (i > 0) {
@@ -577,7 +577,7 @@ public final class MacroCondition {
             var10000 = this.kind.name().toLowerCase(Locale.ROOT);
             break;
          case FREE_SLOTS:
-            var10000 = (this.freeMode == WaitFreeSlotsAction.Inner_StreamUtil.FILLED_SLOTS ? "filled" : "free") + " " + this.cmpSymbol() + " " + this.amount;
+            var10000 = (this.freeMode == WaitFreeSlotsAction.CountMode.FILLED_SLOTS ? "filled" : "free") + " " + this.cmpSymbol() + " " + this.amount;
             break;
          case DURABILITY:
             var10000 = "dura " + this.cmpSymbol() + " " + this.amount;
@@ -702,7 +702,7 @@ public final class MacroCondition {
       CompoundTag t = new CompoundTag();
       t.putString("node", this.nodeType.name());
       t.putBoolean("negate", this.negate);
-      if (this.nodeType == MacroCondition.Inner_BufferHelper.GROUP) {
+      if (this.nodeType == MacroCondition.NodeType.GROUP) {
          t.putString("combine", this.combine.name());
          ListTag list = new ListTag();
 
@@ -739,10 +739,10 @@ public final class MacroCondition {
          return createDefault();
       }
 
-      m.nodeType = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_BufferHelper.class, t.getStringOr("node", "GROUP"), MacroCondition.Inner_BufferHelper.GROUP);
+      m.nodeType = MacroNbtCodecHelper.parseEnum(MacroCondition.NodeType.class, t.getStringOr("node", "GROUP"), MacroCondition.NodeType.GROUP);
       m.negate = t.getBooleanOr("negate", false);
-      if (m.nodeType == MacroCondition.Inner_BufferHelper.GROUP) {
-         m.combine = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_StreamUtil.class, t.getStringOr("combine", "ALL"), MacroCondition.Inner_StreamUtil.ALL);
+      if (m.nodeType == MacroCondition.NodeType.GROUP) {
+         m.combine = MacroNbtCodecHelper.parseEnum(MacroCondition.Combine.class, t.getStringOr("combine", "ALL"), MacroCondition.Combine.ALL);
          m.children = new ArrayList<>();
          Tag var3 = t.get("children");
          if (var3 instanceof ListTag) {
@@ -753,11 +753,11 @@ public final class MacroCondition {
             }
          }
       } else {
-         m.kind = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_CachePool.class, t.getStringOr("kind", "ALWAYS"), MacroCondition.Inner_CachePool.ALWAYS);
+         m.kind = MacroNbtCodecHelper.parseEnum(MacroCondition.ConditionKind.class, t.getStringOr("kind", "ALWAYS"), MacroCondition.ConditionKind.ALWAYS);
          m.item = t.getStringOr("item", "");
          m.value = t.getStringOr("varB", "");
-         m.op = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_ConfigStore.class, t.getStringOr("op", "EQ"), MacroCondition.Inner_ConfigStore.EQ);
-         m.cmp = MacroNbtCodecHelper.parseEnum(MacroCondition.Inner_DataUtil.class, t.getStringOr("cmp", "AT_LEAST"), MacroCondition.Inner_DataUtil.AT_LEAST);
+         m.op = MacroNbtCodecHelper.parseEnum(MacroCondition.Operator.class, t.getStringOr("op", "EQ"), MacroCondition.Operator.EQ);
+         m.cmp = MacroNbtCodecHelper.parseEnum(MacroCondition.Comparison.class, t.getStringOr("cmp", "AT_LEAST"), MacroCondition.Comparison.AT_LEAST);
          m.amount = t.getIntOr("amount", 0);
          m.slot = t.getIntOr("slot", 0);
          m.toolScope = t.getStringOr("toolScope", "THIS_MACRO");
@@ -766,18 +766,18 @@ public final class MacroCondition {
          m.range = t.getDoubleOr("range", 5.0);
          m.durMode = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.TargetMode.class, t.getStringOr("durMode", "HELD"), WaitDurabilityAction.TargetMode.HELD);
          m.durMeasure = MacroNbtCodecHelper.parseEnum(WaitDurabilityAction.Measurement.class, t.getStringOr("durMeasure", "PERCENT_REMAINING"), WaitDurabilityAction.Measurement.PERCENT_REMAINING);
-         m.freeMode = MacroNbtCodecHelper.parseEnum(WaitFreeSlotsAction.Inner_StreamUtil.class, t.getStringOr("freeMode", "FREE_SLOTS"), WaitFreeSlotsAction.Inner_StreamUtil.FREE_SLOTS);
+         m.freeMode = MacroNbtCodecHelper.parseEnum(WaitFreeSlotsAction.CountMode.class, t.getStringOr("freeMode", "FREE_SLOTS"), WaitFreeSlotsAction.CountMode.FREE_SLOTS);
       }
 
       return m;
    }
 
-   public enum Inner_BufferHelper {
+   public enum NodeType {
       GROUP,
       LEAF;
    }
 
-   public enum Inner_CachePool {
+   public enum ConditionKind {
       ALWAYS,
       HELD_ITEM,
       INVENTORY_ITEM,
@@ -809,7 +809,7 @@ public final class MacroCondition {
       TOOLS;
    }
 
-   public enum Inner_ConfigStore {
+   public enum Operator {
       EQ,
       NEQ,
       LT,
@@ -824,7 +824,7 @@ public final class MacroCondition {
       IS_TRUE;
    }
 
-   public enum Inner_DataUtil {
+   public enum Comparison {
       BELOW,
       AT_MOST,
       EXACT,
@@ -832,7 +832,7 @@ public final class MacroCondition {
       ABOVE;
    }
 
-   public enum Inner_StreamUtil {
+   public enum Combine {
       ALL,
       ANY;
    }

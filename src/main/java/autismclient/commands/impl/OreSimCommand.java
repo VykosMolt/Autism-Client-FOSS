@@ -40,11 +40,11 @@ public class OreSimCommand extends Command {
             "§7enabled: §f" + xray.isEnabled() + "§7  mode: §f" + xray.value("mode") + "§7  style: §f" + xray.value("render-style")
          );
          Long seed = OreSimEspScanner.seed(xray);
-         autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil seedStatus = OreSimEspScanner.seedInfo(xray);
+         autismclient.util.oresim.OreSimSeedParser.Status seedStatus = OreSimEspScanner.seedInfo(xray);
          AutismClientMessaging.sendPrefixed(
             "§7seed: "
                + (
-                  seedStatus == autismclient.util.oresim.OreSimSeedParser.Inner_StreamUtil.INVALID
+                  seedStatus == autismclient.util.oresim.OreSimSeedParser.Status.INVALID
                      ? "§cINVALID"
                      : (seed == null ? "§cNONE - enter a signed 64-bit value" : "§f" + seed)
                )

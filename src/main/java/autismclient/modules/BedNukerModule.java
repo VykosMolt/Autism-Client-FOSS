@@ -316,7 +316,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
          DyeColor own = TeamDyeColorResolver.ownTeamColor();
          BedEspModule.EspPolicy policy = BedEspModule.policy();
          Vec3 nextEye = this.init_Vec3_2();
-         BedMiningEstimator.Inner_StreamUtil tracking = null;
+         BedMiningEstimator.TrackedCell tracking = null;
          if (current != null
             && current.equals(this.miningPos)
             && this.route != null
@@ -416,7 +416,7 @@ public final class BedNukerModule extends Module implements SilentMovementCoordi
             double budget = KillAuraModule.bedBreakBudget();
             boolean critical = MC.player.getHealth() + MC.player.getAbsorptionAmount() <= 6.0F;
             RotationMath.Rotation at = autismclient.util.SilentRotationManager.getCurrentRotation();
-            BedMiningEstimator.Inner_StreamUtil follow = tracking == null
+            BedMiningEstimator.TrackedCell follow = tracking == null
                ? BedMiningEstimator.track(this.route.first().pos(), this.route.eye(), 0.0F, nextEye)
                : tracking;
             Vec3 point = follow != null && follow.init_Vec3() != null ? follow.init_Vec3() : this.route.eye();

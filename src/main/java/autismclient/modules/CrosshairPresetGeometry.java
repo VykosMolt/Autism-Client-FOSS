@@ -14,11 +14,11 @@ public final class CrosshairPresetGeometry {
       return Math.max(1, (int)Math.round(thickness * unit));
    }
 
-   public static CrosshairPresetGeometry.Inner_CachePool raster(CrosshairPresetGeometry.Inner_NetHelper style, double unit, double thickness, double gap, int outlinePx, int pad) {
+   public static CrosshairPresetGeometry.Raster raster(CrosshairPresetGeometry.Style style, double unit, double thickness, double gap, int outlinePx, int pad) {
       double u = Math.max(0.05, unit);
       int t = strokeWidth(thickness, u);
       int s0;
-      List<CrosshairPresetGeometry.Inner_ConfigStore> shapes;
+      List<CrosshairPresetGeometry.Shape> shapes;
       switch (style) {
          case TACTICAL: {
             int g = Math.max(0, (int)Math.round(gap * u));
@@ -26,11 +26,11 @@ public final class CrosshairPresetGeometry {
             int c = g + l;
             s0 = 2 * c + t;
             shapes = List.of(
-               new CrosshairPresetGeometry.Inner_DataUtil(0.0, c, l, c + t),
-               new CrosshairPresetGeometry.Inner_DataUtil(c + t + g, c, s0, c + t),
-               new CrosshairPresetGeometry.Inner_DataUtil(c, 0.0, c + t, l),
-               new CrosshairPresetGeometry.Inner_DataUtil(c, c + t + g, c + t, s0),
-               new CrosshairPresetGeometry.Inner_DataUtil(c, c, c + t, c + t)
+               new CrosshairPresetGeometry.Rect(0.0, c, l, c + t),
+               new CrosshairPresetGeometry.Rect(c + t + g, c, s0, c + t),
+               new CrosshairPresetGeometry.Rect(c, 0.0, c + t, l),
+               new CrosshairPresetGeometry.Rect(c, c + t + g, c + t, s0),
+               new CrosshairPresetGeometry.Rect(c, c, c + t, c + t)
             );
             break;
          }
@@ -41,7 +41,7 @@ public final class CrosshairPresetGeometry {
             double radius = Math.max(dot + half + 1.0, outer - half);
             s0 = 2 * (int)Math.ceil(radius + half) + (t & 1);
             double c = s0 / 2.0;
-            shapes = List.of(new CrosshairPresetGeometry.Inner_BufferHelper(c, c, radius, half), new CrosshairPresetGeometry.Inner_StreamUtil(c, c, dot));
+            shapes = List.of(new CrosshairPresetGeometry.Ring(c, c, radius, half), new CrosshairPresetGeometry.Circle(c, c, dot));
             break;
          }
          case CHEVRON: {
@@ -51,19 +51,19 @@ public final class CrosshairPresetGeometry {
             double dy = length * Math.sin(Math.toRadians(45.0));
             s0 = 2 * (int)Math.ceil(Math.max(dx, dy) + half) + (t & 1);
             double c = s0 / 2.0;
-            shapes = List.of(new CrosshairPresetGeometry.Inner_TaskQueue(c, c, c - dx, c + dy, half), new CrosshairPresetGeometry.Inner_TaskQueue(c, c, c + dx, c + dy, half));
+            shapes = List.of(new CrosshairPresetGeometry.Segment(c, c, c - dx, c + dy, half), new CrosshairPresetGeometry.Segment(c, c, c + dx, c + dy, half));
             break;
          }
          default:
             int a = Math.max(1, (int)Math.round(7.0 * u));
             s0 = 2 * a + t;
-            shapes = List.of(new CrosshairPresetGeometry.Inner_DataUtil(0.0, a, s0, a + t), new CrosshairPresetGeometry.Inner_DataUtil(a, 0.0, a + t, s0));
+            shapes = List.of(new CrosshairPresetGeometry.Rect(0.0, a, s0, a + t), new CrosshairPresetGeometry.Rect(a, 0.0, a + t, s0));
       }
 
       return rasterizeShapes(shapes, s0, Math.max(0, outlinePx), Math.max(0, pad));
    }
 
-   public static CrosshairPresetGeometry.Inner_CachePool rasterize(CrosshairPixelArt art, double unit, int outlinePx, int pad) {
+   public static CrosshairPresetGeometry.Raster rasterize(CrosshairPixelArt art, double unit, int outlinePx, int pad) {
       int n = art.size();
       int s0 = Math.max(1, (int)Math.round(16.0 * Math.max(0.05, unit)));
       pad = Math.max(0, pad);
@@ -99,7 +99,7 @@ public final class CrosshairPresetGeometry {
          }
       }
 
-      return new CrosshairPresetGeometry.Inner_CachePool(size, fill, color, outline);
+      return new CrosshairPresetGeometry.Raster(size, fill, color, outline);
    }
 
    private static int pixelCoverage(CrosshairPixelArt art, int x, int y, double unit) {
@@ -123,9 +123,9 @@ public final class CrosshairPresetGeometry {
       return p;
    }
 
-   public static CrosshairPixelArt pixelArt(CrosshairPresetGeometry.Inner_NetHelper style, int size, double thickness, double gap, int argb) {
+   public static CrosshairPixelArt pixelArt(CrosshairPresetGeometry.Style style, int size, double thickness, double gap, int argb) {
       int n = CrosshairPixelArt.isValidSize(size) ? size : 16;
-      CrosshairPresetGeometry.Inner_CachePool raster = raster(style.isPreset() ? style : CrosshairPresetGeometry.Inner_NetHelper.CROSS, (n - 1) / 15.0, thickness, gap, 0, 0);
+      CrosshairPresetGeometry.Raster raster = raster(style.isPreset() ? style : CrosshairPresetGeometry.Style.CROSS, (n - 1) / 15.0, thickness, gap, 0, 0);
       int[] pixels = new int[n * n];
       int offset = (n - raster.pixelCount()) / 2;
       int baseAlpha = argb >>> 24;
@@ -151,7 +151,7 @@ public final class CrosshairPresetGeometry {
       return new CrosshairPixelArt(n, pixels);
    }
 
-   private static CrosshairPresetGeometry.Inner_CachePool rasterizeShapes(List<CrosshairPresetGeometry.Inner_ConfigStore> shapes, int s0, int outlinePx, int pad) {
+   private static CrosshairPresetGeometry.Raster rasterizeShapes(List<CrosshairPresetGeometry.Shape> shapes, int s0, int outlinePx, int pad) {
       int size = s0 + 2 * pad;
       float[] fill = new float[size * size];
       float[] outline = new float[size * size];
@@ -168,13 +168,13 @@ public final class CrosshairPresetGeometry {
          }
       }
 
-      return new CrosshairPresetGeometry.Inner_CachePool(size, fill, null, outline);
+      return new CrosshairPresetGeometry.Raster(size, fill, null, outline);
    }
 
-   private static double nearestDistance(List<CrosshairPresetGeometry.Inner_ConfigStore> shapes, double x, double y) {
+   private static double nearestDistance(List<CrosshairPresetGeometry.Shape> shapes, double x, double y) {
       double best = 1.7976931348623157E308;
 
-      for (CrosshairPresetGeometry.Inner_ConfigStore shape : shapes) {
+      for (CrosshairPresetGeometry.Shape shape : shapes) {
          best = Math.min(best, shape.signedDistance(x, y));
       }
 
@@ -216,24 +216,24 @@ public final class CrosshairPresetGeometry {
       return out;
    }
 
-   private record Inner_BufferHelper(double init, double load, double read, double write) implements CrosshairPresetGeometry.Inner_ConfigStore {
+   private record Ring(double init, double load, double read, double write) implements CrosshairPresetGeometry.Shape {
       @Override
       public double signedDistance(double x, double y) {
          return Math.abs(Math.hypot(x - this.init, y - this.load) - this.read) - this.write;
       }
    }
 
-   public record Inner_CachePool(int pixelCount, float[] coverage, int[] init_IArr, float[] load) {
+   public record Raster(int pixelCount, float[] coverage, int[] init_IArr, float[] load) {
       public int pixel(int index) {
          return this.init_IArr == null ? -1 : this.init_IArr[index];
       }
    }
 
-   private interface Inner_ConfigStore {
+   private interface Shape {
       double signedDistance(double var1, double var3);
    }
 
-   private record Inner_DataUtil(double init, double load, double read, double write) implements CrosshairPresetGeometry.Inner_ConfigStore {
+   private record Rect(double init, double load, double read, double write) implements CrosshairPresetGeometry.Shape {
       @Override
       public double signedDistance(double x, double y) {
          double dx = Math.max(this.init - x, x - this.read);
@@ -242,7 +242,7 @@ public final class CrosshairPresetGeometry {
       }
    }
 
-   public enum Inner_NetHelper {
+   public enum Style {
       CROSS("Cross"),
       TACTICAL("Tactical"),
       CIRCLE("Circle"),
@@ -251,7 +251,7 @@ public final class CrosshairPresetGeometry {
 
       public final String init_Str;
 
-      Inner_NetHelper(String label) {
+      Style(String label) {
          this.init_Str = label;
       }
 
@@ -259,9 +259,9 @@ public final class CrosshairPresetGeometry {
          return this != CUSTOM;
       }
 
-      public static CrosshairPresetGeometry.Inner_NetHelper byLabel(String label) {
+      public static CrosshairPresetGeometry.Style byLabel(String label) {
          if (label != null) {
-            for (CrosshairPresetGeometry.Inner_NetHelper style : values()) {
+            for (CrosshairPresetGeometry.Style style : values()) {
                if (style.init_Str.equalsIgnoreCase(label.trim())) {
                   return style;
                }
@@ -272,7 +272,7 @@ public final class CrosshairPresetGeometry {
       }
 
       public static String[] ids() {
-         CrosshairPresetGeometry.Inner_NetHelper[] all = values();
+         CrosshairPresetGeometry.Style[] all = values();
          String[] out = new String[all.length];
 
          for (int i = 0; i < all.length; i++) {
@@ -288,14 +288,14 @@ public final class CrosshairPresetGeometry {
       }
    }
 
-   private record Inner_StreamUtil(double init, double load, double read) implements CrosshairPresetGeometry.Inner_ConfigStore {
+   private record Circle(double init, double load, double read) implements CrosshairPresetGeometry.Shape {
       @Override
       public double signedDistance(double x, double y) {
          return Math.hypot(x - this.init, y - this.load) - this.read;
       }
    }
 
-   private record Inner_TaskQueue(double init, double load, double read, double write, double update) implements CrosshairPresetGeometry.Inner_ConfigStore {
+   private record Segment(double init, double load, double read, double write, double update) implements CrosshairPresetGeometry.Shape {
       @Override
       public double signedDistance(double x, double y) {
          double vx = this.read - this.init;

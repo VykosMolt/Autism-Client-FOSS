@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class MacroNameArgumentType implements ArgumentType<String> {
    private static volatile long cachedRevision = -9223372036854775808L;
-   private static volatile List<MacroNameArgumentType.Inner_DataUtil> cachedNames = List.of();
+   private static volatile List<MacroNameArgumentType.NameEntry> cachedNames = List.of();
 
    public static MacroNameArgumentType macroName() {
       return new MacroNameArgumentType();
@@ -38,7 +38,7 @@ public class MacroNameArgumentType implements ArgumentType<String> {
    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (MacroNameArgumentType.Inner_DataUtil candidate : namesForSuggestions()) {
+      for (MacroNameArgumentType.NameEntry candidate : namesForSuggestions()) {
          if (candidate.load().startsWith(remaining)) {
             builder.suggest(candidate.init());
          }
@@ -47,21 +47,21 @@ public class MacroNameArgumentType implements ArgumentType<String> {
       return builder.buildFuture();
    }
 
-   private static List<MacroNameArgumentType.Inner_DataUtil> namesForSuggestions() {
+   private static List<MacroNameArgumentType.NameEntry> namesForSuggestions() {
       MacroLibraryManager manager = MacroLibraryManager.getInstance();
       long revision = manager.getRevision();
-      List<MacroNameArgumentType.Inner_DataUtil> hit = cachedNames;
+      List<MacroNameArgumentType.NameEntry> hit = cachedNames;
       if (cachedRevision == revision) {
          return hit;
       }
 
-      List<MacroNameArgumentType.Inner_DataUtil> rebuilt = new ArrayList<>();
+      List<MacroNameArgumentType.NameEntry> rebuilt = new ArrayList<>();
 
       for (AutismMacro macro : manager.getMacros()) {
          if (macro != null && macro.name != null) {
             String name = macro.name;
             String value = name.contains(" ") ? "\"" + name + "\"" : name;
-            rebuilt.add(new MacroNameArgumentType.Inner_DataUtil(value, name.toLowerCase(Locale.ROOT)));
+            rebuilt.add(new MacroNameArgumentType.NameEntry(value, name.toLowerCase(Locale.ROOT)));
          }
       }
 
@@ -71,6 +71,6 @@ public class MacroNameArgumentType implements ArgumentType<String> {
       return hit;
    }
 
-   private record Inner_DataUtil(String init, String load) {
+   private record NameEntry(String init, String load) {
    }
 }

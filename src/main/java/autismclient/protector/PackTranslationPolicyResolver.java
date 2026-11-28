@@ -88,7 +88,7 @@ public final class PackTranslationPolicyResolver {
          IdentityHashMap<PackResources, PackTranslationPolicyResolver.ServerBinding> serverBindings = new IdentityHashMap<>();
 
          for (PackResources pack : selectedPacks) {
-            ServerPackSelectionRegistry.Inner_StreamUtil provenance = ServerPackSelectionRegistry.provenanceOf(session, pack);
+            ServerPackSelectionRegistry.Provenance provenance = ServerPackSelectionRegistry.provenanceOf(session, pack);
             if (provenance != null) {
                serverBindings.put(
                   pack, new PackTranslationPolicyResolver.ServerBinding(context, context.lifecycleId(), listener, context.serverEndpoint(), session, provenance)
@@ -175,7 +175,7 @@ public final class PackTranslationPolicyResolver {
       PacketListener packetListener,
       ConnectionPrivacyRegistry.ServerEndpoint endpoint,
       ResourcePackSessionTracker.PackSession packSession,
-      ServerPackSelectionRegistry.Inner_StreamUtil provenance
+      ServerPackSelectionRegistry.Provenance provenance
    ) {
    }
 
@@ -303,7 +303,7 @@ public final class PackTranslationPolicyResolver {
             && Objects.equals(context.serverEndpoint(), server.endpoint())) {
             ResourcePackSessionTracker.PackSession session = server.packSession();
             if (ResourcePackSessionTracker.sessionFor(context) == session && ResourcePackSessionTracker.isActive(session)) {
-               ServerPackSelectionRegistry.Inner_StreamUtil captured = server.provenance();
+               ServerPackSelectionRegistry.Provenance captured = server.provenance();
                return captured.equals(ServerPackSelectionRegistry.provenanceOf(session, pack));
             } else {
                return false;

@@ -22,11 +22,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 final class AiNetherStructures {
-   private static AiNetherStructures.Inner_DataUtil bastionAt;
+   private static AiNetherStructures.Bastion bastionAt;
    private static WeakReference<Object> trackedLevel = new WeakReference<>(null);
    private static long lastScanTick;
    static final long init_J = 120000000000L;
-   private static final AiNetherStructures.Inner_StreamUtil skippedTargets = new AiNetherStructures.Inner_StreamUtil();
+   private static final AiNetherStructures.TargetSkips skippedTargets = new AiNetherStructures.TargetSkips();
    private static String worldKey = "";
    private static Object connection;
 
@@ -105,7 +105,7 @@ final class AiNetherStructures {
       return false;
    }
 
-   static AiNetherStructures.Inner_DataUtil bastionAt(BlockPos at) {
+   static AiNetherStructures.Bastion bastionAt(BlockPos at) {
       Minecraft mc = Minecraft.getInstance();
       if (bastionAt != null
          && trackedLevel.get() == mc.level
@@ -190,7 +190,7 @@ final class AiNetherStructures {
       }
 
       lastScanTick = AiThreats.currentClientTick();
-      bastionAt = new AiNetherStructures.Inner_DataUtil(
+      bastionAt = new AiNetherStructures.Bastion(
          at.immutable(),
          bricks,
          gold,
@@ -212,11 +212,11 @@ final class AiNetherStructures {
       return bastionAt;
    }
 
-   static double structureCost(AiNetherStructures.Inner_DataUtil e, double distance) {
+   static double structureCost(AiNetherStructures.Bastion e, double distance) {
       return distance / 0.22 + e.brutes * 1200 + e.hoglins * 400 + Math.min(800, e.lava * 3) + (e.partial ? 300 : 0) + (1.0 - e.confidence) * 200.0;
    }
 
-   record Inner_DataUtil(
+   record Bastion(
       BlockPos at,
       int bricks,
       int gold,
@@ -282,7 +282,7 @@ final class AiNetherStructures {
       }
    }
 
-   static final class Inner_StreamUtil {
+   static final class TargetSkips {
       private final Map<UUID, Long> skipUntil = new LinkedHashMap<>();
 
       void skip(UUID identity, long now) {

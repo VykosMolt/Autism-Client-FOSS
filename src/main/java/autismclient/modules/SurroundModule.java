@@ -56,7 +56,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
    private static final int write_I = 256;
    private static final long init_J = 2000000000L;
    private static final int update_I = 64;
-   private final Map<Integer, SurroundModule.Inner_DataUtil> breakProgress = new ConcurrentHashMap<>();
+   private final Map<Integer, SurroundModule.BreakProgress> breakProgress = new ConcurrentHashMap<>();
    private final Set<BlockPos> init_Set = new HashSet<>();
    private final List<BlockPos> toPlace = new ArrayList<>();
    private final Set<BlockPos> recentPlacements = new LinkedHashSet<>();
@@ -252,7 +252,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
                return false;
             }
 
-            this.breakProgress.put(destruction.getId(), new SurroundModule.Inner_DataUtil(destruction.getPos().asLong(), progress, System.nanoTime()));
+            this.breakProgress.put(destruction.getId(), new SurroundModule.BreakProgress(destruction.getPos().asLong(), progress, System.nanoTime()));
             return false;
          } else {
             this.breakProgress.remove(destruction.getId());
@@ -272,7 +272,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
          int minStage = this.integer("min-destroy-progress");
          this.breakProgress.values().removeIf(entryx -> now - entryx.load() > 2000000000L);
 
-         for (SurroundModule.Inner_DataUtil entry : this.breakProgress.values()) {
+         for (SurroundModule.BreakProgress entry : this.breakProgress.values()) {
             if (entry.progress() >= minStage) {
                this.init_Set.add(BlockPos.of(entry.posKey()));
             }
@@ -483,7 +483,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             RotationMath.Rotation wireRotation = wire.initialized() ? new RotationMath.Rotation(wire.currentYaw(), wire.currentPitch()) : null;
             RotationMath.Rotation from = wireRotation != null ? wireRotation : RotationMath.ofPlayer(MC.player);
             ItemStack material = MC.player.getInventory().getItem(slot);
-            SurroundModule.Inner_StreamUtil plan = this.findPlacement(from, material, null);
+            SurroundModule.PlacementChoice plan = this.findPlacement(from, material, null);
             if (plan == null) {
                this.releaseRotation();
                this.restoreSlot();
@@ -494,7 +494,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
                boolean fire = hit != null && slotReady && !BedDefenderModule.init_Z_10() && this.isNewTick();
                boolean aimed;
                if (fire) {
-                  SurroundModule.Inner_StreamUtil next = this.findPlacement(from, material, plan.cell());
+                  SurroundModule.PlacementChoice next = this.findPlacement(from, material, plan.cell());
                   aimed = this.requestRotation(next != null ? next.goalRotation() : plan.goalRotation(), true);
                } else {
                   aimed = this.requestRotation(plan.goalRotation(), false);
@@ -569,7 +569,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return var10000;
    }
 
-   private SurroundModule.Inner_StreamUtil findPlacement(RotationMath.Rotation from, ItemStack material, BlockPos skip) {
+   private SurroundModule.PlacementChoice findPlacement(RotationMath.Rotation from, ItemStack material, BlockPos skip) {
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
       AABB playerBox = MC.player.getBoundingBox();
@@ -588,7 +588,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
             this.rayBudget.reset(4);
             autismclient.util.BlockPlacementPlanner.PlacementPlan candidate = autismclient.util.BlockPlacementPlanner.plan(request.withTargetCell(cell));
             if (candidate != null) {
-               return new SurroundModule.Inner_StreamUtil(cell, candidate);
+               return new SurroundModule.PlacementChoice(cell, candidate);
             }
          }
       }
@@ -607,7 +607,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       }
    }
 
-   private BlockHitResult hitFor(SurroundModule.Inner_StreamUtil plan, RotationMath.Rotation rotation) {
+   private BlockHitResult hitFor(SurroundModule.PlacementChoice plan, RotationMath.Rotation rotation) {
       double reach = Math.max(MC.player.blockInteractionRange(), MC.player.entityInteractionRange());
       Vec3 eye = MC.player.getEyePosition();
       autismclient.util.BlockPlacementPlanner.Query gate = new autismclient.util.BlockPlacementPlanner.Query(
@@ -624,7 +624,7 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return AutismSessionState.getInstance().getClientTick() != this.lastTick;
    }
 
-   private void placeAt(SurroundModule.Inner_StreamUtil plan, BlockHitResult hit) {
+   private void placeAt(SurroundModule.PlacementChoice plan, BlockHitResult hit) {
       InteractionHand hand = InteractionHand.MAIN_HAND;
       if (!al.init_Z_HitResult(hit, hand, this.id()) && autismclient.util.InventorySlotArbiter.beginActionGroup(this.id())) {
          try {
@@ -773,10 +773,10 @@ public final class SurroundModule extends Module implements SilentMovementCoordi
       return this.allowedBlocks;
    }
 
-   private record Inner_DataUtil(long posKey, int progress, long load) {
+   private record BreakProgress(long posKey, int progress, long load) {
    }
 
-   private record Inner_StreamUtil(BlockPos cell, autismclient.util.BlockPlacementPlanner.PlacementPlan plan) {
+   private record PlacementChoice(BlockPos cell, autismclient.util.BlockPlacementPlanner.PlacementPlan plan) {
       RotationMath.Rotation goalRotation() {
          return this.plan.aim().goalRotation();
       }

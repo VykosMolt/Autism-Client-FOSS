@@ -537,9 +537,9 @@ public class MacroWaitRegistry {
             AbstractContainerMenu handler = mc.player.containerMenu;
 
             for (int i = 0; i < action.entries.size(); i++) {
-               WaitForSlotChangeAction.Inner_DataUtil e = action.entries.get(i);
+               WaitForSlotChangeAction.SlotEntry e = action.entries.get(i);
                MacroItemTarget entryTarget = e.resolveItemTarget();
-               if (e.mode == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE && entryTarget != null && entryTarget.hasSlot()) {
+               if (e.mode == WaitForSlotChangeAction.WaitMode.ANY_CHANGE && entryTarget != null && entryTarget.hasSlot()) {
                   int slotNum = entryTarget.slot;
                   int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slotNum);
                   if (handler != null && handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
@@ -554,7 +554,7 @@ public class MacroWaitRegistry {
       CompletableFuture<Void> future = new CompletableFuture<>();
       MacroWaitRegistry.WaitSlotChangeEntry condition = new MacroWaitRegistry.WaitSlotChangeEntry(action, initialNames, initialCounts, future);
       PENDING_WAITS.add(condition);
-      boolean hasAnyChange = action.entries.stream().anyMatch(e -> e.mode == WaitForSlotChangeAction.Inner_StreamUtil.ANY_CHANGE);
+      boolean hasAnyChange = action.entries.stream().anyMatch(e -> e.mode == WaitForSlotChangeAction.WaitMode.ANY_CHANGE);
       if (!hasAnyChange && evaluateOnClientThread(mc, condition)) {
          condition.completeWait();
          PENDING_WAITS.remove(condition);
@@ -832,7 +832,7 @@ public class MacroWaitRegistry {
          return true;
       }
 
-      private boolean entrySatisfied(Minecraft mc, AbstractContainerMenu handler, WaitForSlotChangeAction.Inner_DataUtil e, int entryIdx) {
+      private boolean entrySatisfied(Minecraft mc, AbstractContainerMenu handler, WaitForSlotChangeAction.SlotEntry e, int entryIdx) {
          MacroItemTarget entryTarget = e.resolveItemTarget();
          if (entryTarget == null) {
             entryTarget = new MacroItemTarget();
@@ -841,17 +841,17 @@ public class MacroWaitRegistry {
          if (entryTarget.hasSlot()) {
             int slotNum = entryTarget.slot;
             if (handler == null) {
-               return e.mode == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
+               return e.mode == WaitForSlotChangeAction.WaitMode.IS_EMPTY;
             } else {
                int handlerSlot = autismclient.util.InventorySlotHelper.resolveConfiguredSlot(mc, slotNum);
                if (handlerSlot >= 0 && handlerSlot < handler.slots.size()) {
                   ItemStack stack = handler.slots.get(handlerSlot).getItem();
                   return this.stackSatisfies(stack, entryTarget, slotNum, e, entryIdx);
                } else {
-                  return e.mode == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY;
+                  return e.mode == WaitForSlotChangeAction.WaitMode.IS_EMPTY;
                }
             }
-         } else if (e.mode == WaitForSlotChangeAction.Inner_StreamUtil.IS_EMPTY) {
+         } else if (e.mode == WaitForSlotChangeAction.WaitMode.IS_EMPTY) {
             if (handler != null) {
                for (Slot s : handler.slots) {
                   if (s != null && !s.getItem().isEmpty()) {
@@ -896,7 +896,7 @@ public class MacroWaitRegistry {
          }
       }
 
-      private boolean stackSatisfies(ItemStack stack, MacroItemTarget target, int visibleSlot, WaitForSlotChangeAction.Inner_DataUtil e, int entryIdx) {
+      private boolean stackSatisfies(ItemStack stack, MacroItemTarget target, int visibleSlot, WaitForSlotChangeAction.SlotEntry e, int entryIdx) {
          boolean nameMatches = target == null || !target.hasItemFilter() || !stack.isEmpty() && target.matches(stack, visibleSlot);
          boolean var10000;
          switch (e.mode) {
@@ -1628,7 +1628,7 @@ public class MacroWaitRegistry {
       @Override
       public boolean isWaitSatisfied(Minecraft mc) {
          if (mc.level != null && mc.player != null) {
-            boolean destroyed = this.action.waitBehavior == WaitForBlockAction.Inner_StreamUtil.DESTROYED;
+            boolean destroyed = this.action.waitBehavior == WaitForBlockAction.WaitBehavior.DESTROYED;
             boolean anyBlock = this.action.anyBlock;
             switch (this.action.checkMode) {
                case AT_POSITION:

@@ -33,7 +33,7 @@ public final class TradeAction implements ContextMacroAction {
          this.selection == TradeAction.TradeSelection.ITEM ? List.of(autismclient.util.villager.TradeOfferFilter.normalizeItem(this.resultItem)) : List.of(),
          List.of(),
          this.selection == TradeAction.TradeSelection.BOOK
-            ? List.of(new autismclient.util.villager.TradeOfferFilter.Inner_DataUtil(this.enchantment, clamp(this.minLevel, 1, 255), 0))
+            ? List.of(new autismclient.util.villager.TradeOfferFilter.BookFilter(this.enchantment, clamp(this.minLevel, 1, 255), 0))
             : List.of(),
          this.exactLevel,
          clamp(this.maxEmeralds, 0, 128)
@@ -59,8 +59,8 @@ public final class TradeAction implements ContextMacroAction {
 
             if (this.target == TradeAction.MerchantTarget.OPEN_SCREEN || this.init(ctx)) {
                while (ctx.isActive()) {
-                  autismclient.util.villager.VillagerTradeSession.Inner_CachePool state = ctx.callOnClientThread(
-                     () -> ctx.isActive() ? session.tick(ctx.mc()) : autismclient.util.villager.VillagerTradeSession.Inner_CachePool.CANCELLED
+                  autismclient.util.villager.VillagerTradeSession.Status state = ctx.callOnClientThread(
+                     () -> ctx.isActive() ? session.tick(ctx.mc()) : autismclient.util.villager.VillagerTradeSession.Status.CANCELLED
                   );
                   if (state == null) {
                      return;
@@ -71,7 +71,7 @@ public final class TradeAction implements ContextMacroAction {
                      ctx.setVariable("trade_count", session.traded());
                      ctx.setVariable("trade_spent", session.spent());
                      ctx.setVariable("trade_status", session.status().name());
-                     if (session.status() != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.COMPLETE) {
+                     if (session.status() != autismclient.util.villager.VillagerTradeSession.Status.COMPLETE) {
                         ctx.runOnClientThread(
                            () -> AutismClientMessaging.sendPrefixed("Trade: " + session.message() + " (" + session.traded() + " completed)")
                         );

@@ -7,12 +7,12 @@ public final class TextWrapLayout {
    private TextWrapLayout() {
    }
 
-   public static List<TextWrapLayout.Inner_DataUtil> wrap(String text, int maxWidth, TextWrapLayout.Inner_StreamUtil width) {
+   public static List<TextWrapLayout.WrappedLine> wrap(String text, int maxWidth, TextWrapLayout.WidthMeasure width) {
       String source = text == null ? "" : text;
       int available = Math.max(1, maxWidth);
-      List<TextWrapLayout.Inner_DataUtil> lines = new ArrayList<>();
+      List<TextWrapLayout.WrappedLine> lines = new ArrayList<>();
       if (source.isEmpty()) {
-         lines.add(new TextWrapLayout.Inner_DataUtil(0, 0, 0));
+         lines.add(new TextWrapLayout.WrappedLine(0, 0, 0));
          return lines;
       }
 
@@ -22,20 +22,20 @@ public final class TextWrapLayout {
          int newline = source.indexOf(10, paragraphStart);
          int paragraphEnd = newline >= 0 ? newline : source.length();
          if (paragraphStart == paragraphEnd) {
-            lines.add(new TextWrapLayout.Inner_DataUtil(paragraphStart, newline + 1, paragraphStart));
+            lines.add(new TextWrapLayout.WrappedLine(paragraphStart, newline + 1, paragraphStart));
          } else {
             int cursor = paragraphStart;
 
             while (cursor < paragraphEnd) {
                int end = breakIndex(source, cursor, paragraphEnd, available, width);
                int renderEnd = trimTrailing(source, cursor, end);
-               lines.add(new TextWrapLayout.Inner_DataUtil(cursor, end, renderEnd));
+               lines.add(new TextWrapLayout.WrappedLine(cursor, end, renderEnd));
                cursor = end;
             }
 
             if (newline >= 0) {
-               TextWrapLayout.Inner_DataUtil last = lines.remove(lines.size() - 1);
-               lines.add(new TextWrapLayout.Inner_DataUtil(last.init(), newline + 1, last.read()));
+               TextWrapLayout.WrappedLine last = lines.remove(lines.size() - 1);
+               lines.add(new TextWrapLayout.WrappedLine(last.init(), newline + 1, last.read()));
             }
          }
 
@@ -43,13 +43,13 @@ public final class TextWrapLayout {
       }
 
       if (source.endsWith("\n")) {
-         lines.add(new TextWrapLayout.Inner_DataUtil(source.length(), source.length(), source.length()));
+         lines.add(new TextWrapLayout.WrappedLine(source.length(), source.length(), source.length()));
       }
 
       return lines;
    }
 
-   public static int breakIndex(String source, int start, int limit, int maxWidth, TextWrapLayout.Inner_StreamUtil width) {
+   public static int breakIndex(String source, int start, int limit, int maxWidth, TextWrapLayout.WidthMeasure width) {
       if (source != null && !source.isEmpty()) {
          int safeStart = safeSplit(source, Math.max(0, Math.min(start, source.length())));
          int safeLimit = safeSplit(source, Math.max(safeStart, Math.min(limit, source.length())));
@@ -121,11 +121,11 @@ public final class TextWrapLayout {
       return Character.isWhitespace(ch) || ch == 44 || ch == 59 || ch == 58 || ch == 47 || ch == 41 || ch == 93 || ch == 125 || ch == 62;
    }
 
-   public record Inner_DataUtil(int init, int load, int read) {
+   public record WrappedLine(int init, int load, int read) {
    }
 
    @FunctionalInterface
-   public interface Inner_StreamUtil {
+   public interface WidthMeasure {
       int width(int var1, int var2);
    }
 }

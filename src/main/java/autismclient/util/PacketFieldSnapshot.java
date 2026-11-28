@@ -2,7 +2,7 @@ package autismclient.util;
 
 import java.util.List;
 
-public record PacketFieldSnapshot(PacketSchemaRegistry.Inner_DataUtil init_bx_DataUtil, Object init_Obj, List<String> init_List, boolean readable, boolean load) {
+public record PacketFieldSnapshot(PacketSchemaRegistry.FieldSchema init_bx_DataUtil, Object init_Obj, List<String> init_List, boolean readable, boolean load) {
    public PacketFieldSnapshot {
       init_List = init_List == null ? List.of() : List.copyOf(init_List);
    }

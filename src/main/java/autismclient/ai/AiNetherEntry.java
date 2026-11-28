@@ -2137,7 +2137,7 @@ final class AiNetherEntry {
             }
 
             boolean hasStoneTier() {
-               return AiProgression.bestTier(mc).ordinal() >= AiProgression.Inner_CachePool.STONE.ordinal();
+               return AiProgression.bestTier(mc).ordinal() >= AiProgression.PickTier.STONE.ordinal();
             }
 
             boolean needsFood() {

@@ -39,16 +39,16 @@ final class AiStationPlacer {
       this.name = name;
    }
 
-   AiStationPlacer.Inner_DataUtil tick() {
+   AiStationPlacer.PlaceStatus tick() {
       if (this.placed != null) {
-         return AiStationPlacer.Inner_DataUtil.PLACED;
+         return AiStationPlacer.PlaceStatus.PLACED;
       }
 
       if (this.clearOp != null) {
          AiOperation.Result r = this.clearOp.tick();
          if (!r.terminal()) {
             this.statusText = "Making room for the " + this.name + ": " + r.message();
-            return AiStationPlacer.Inner_DataUtil.WORKING;
+            return AiStationPlacer.PlaceStatus.WORKING;
          }
 
          this.clearOp.cancel();
@@ -61,7 +61,7 @@ final class AiStationPlacer {
          AiOperation.Result r = this.travel.tick();
          if (!r.terminal()) {
             this.statusText = "Moving to open ground for the " + this.name + ": " + r.message();
-            return AiStationPlacer.Inner_DataUtil.WORKING;
+            return AiStationPlacer.PlaceStatus.WORKING;
          }
 
          this.travel.cancel();
@@ -71,7 +71,7 @@ final class AiStationPlacer {
 
       if (!this.placing) {
          if (this.candidates == null && !this.relocationTried && AiCraft.isStandingOnLeaves() && this.moveToOpenSpot()) {
-            return AiStationPlacer.Inner_DataUtil.WORKING;
+            return AiStationPlacer.PlaceStatus.WORKING;
          }
 
          if (this.candidates == null) {
@@ -94,7 +94,7 @@ final class AiStationPlacer {
 
             if (allOurs && this.digOutSpot()) {
                this.candidates = null;
-               return AiStationPlacer.Inner_DataUtil.WORKING;
+               return AiStationPlacer.PlaceStatus.WORKING;
             }
          }
 
@@ -104,22 +104,22 @@ final class AiStationPlacer {
                && mc.level != null
                && isWalledIn(mc.player.blockPosition(), cell -> !mc.level.getBlockState(cell).getCollisionShape(mc.level, cell).isEmpty())
                && this.digOutSpot()) {
-               return AiStationPlacer.Inner_DataUtil.WORKING;
+               return AiStationPlacer.PlaceStatus.WORKING;
             }
 
             if (this.moveToOpenSpot()) {
-               return AiStationPlacer.Inner_DataUtil.WORKING;
+               return AiStationPlacer.PlaceStatus.WORKING;
             }
 
             if (this.digOutSpot()) {
-               return AiStationPlacer.Inner_DataUtil.WORKING;
+               return AiStationPlacer.PlaceStatus.WORKING;
             }
 
             if (this.failureReason.isEmpty()) {
                this.failureReason = "no free supported spot within two blocks";
             }
 
-            return AiStationPlacer.Inner_DataUtil.FAILED;
+            return AiStationPlacer.PlaceStatus.FAILED;
          }
 
          this.placer.start(this.candidates.get(this.candidateIndex), this.item);
@@ -131,10 +131,10 @@ final class AiStationPlacer {
       if (status == autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
          this.placing = false;
          this.placed = this.placer.targetPos();
-         return AiStationPlacer.Inner_DataUtil.PLACED;
+         return AiStationPlacer.PlaceStatus.PLACED;
       } else if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED && ++this.placeTicks <= 60) {
          this.statusText = "Placing a " + this.name;
-         return AiStationPlacer.Inner_DataUtil.WORKING;
+         return AiStationPlacer.PlaceStatus.WORKING;
       } else {
          this.placing = false;
          this.failureReason = status == autismclient.ai.engine.AiPlacer.PlaceStatus.FAILED
@@ -145,7 +145,7 @@ final class AiStationPlacer {
             .info("[AI] {} spot {} unusable after {} ticks: {}", this.name, this.candidates.get(this.candidateIndex).toShortString(), this.placeTicks, this.failureReason);
          this.candidateIndex++;
          this.statusText = this.name + " spot unusable (" + this.failureReason + "); trying the next spot";
-         return AiStationPlacer.Inner_DataUtil.WORKING;
+         return AiStationPlacer.PlaceStatus.WORKING;
       }
    }
 
@@ -351,7 +351,7 @@ final class AiStationPlacer {
       }
    }
 
-   enum Inner_DataUtil {
+   enum PlaceStatus {
       WORKING,
       PLACED,
       FAILED;

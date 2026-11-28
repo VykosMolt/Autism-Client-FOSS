@@ -14,8 +14,8 @@ public final class CandidatePoolSelector {
    private CandidatePoolSelector() {
    }
 
-   public static String init(CandidatePoolSelector.Inner_DataUtil mode, String text) {
-      if (mode == CandidatePoolSelector.Inner_DataUtil.REGEX && text != null && !text.isBlank()) {
+   public static String init(CandidatePoolSelector.FilterMode mode, String text) {
+      if (mode == CandidatePoolSelector.FilterMode.REGEX && text != null && !text.isBlank()) {
          try {
             Pattern.compile(text);
             return "";
@@ -27,11 +27,11 @@ public final class CandidatePoolSelector {
       }
    }
 
-   public static List<String> init(List<String> candidates, CandidatePoolSelector.Inner_DataUtil mode, String text) {
+   public static List<String> init(List<String> candidates, CandidatePoolSelector.FilterMode mode, String text) {
       if (candidates != null && !candidates.isEmpty()) {
-         CandidatePoolSelector.Inner_DataUtil effective = mode == null ? CandidatePoolSelector.Inner_DataUtil.NONE : mode;
-         if (effective != CandidatePoolSelector.Inner_DataUtil.NONE && text != null && !text.isBlank()) {
-            if (effective == CandidatePoolSelector.Inner_DataUtil.REGEX) {
+         CandidatePoolSelector.FilterMode effective = mode == null ? CandidatePoolSelector.FilterMode.NONE : mode;
+         if (effective != CandidatePoolSelector.FilterMode.NONE && text != null && !text.isBlank()) {
+            if (effective == CandidatePoolSelector.FilterMode.REGEX) {
                Pattern pattern;
                try {
                   pattern = Pattern.compile(text);
@@ -131,15 +131,15 @@ public final class CandidatePoolSelector {
       }
    }
 
-   public static String init(String value, CandidatePoolSelector.Inner_DataUtil mode, String text) {
+   public static String init(String value, CandidatePoolSelector.FilterMode mode, String text) {
       if (value != null && text != null) {
          String match = text.trim();
          if (match.isEmpty()) {
             return value;
-         } else if (mode == CandidatePoolSelector.Inner_DataUtil.PREFIX && value.regionMatches(true, 0, match, 0, match.length())) {
+         } else if (mode == CandidatePoolSelector.FilterMode.PREFIX && value.regionMatches(true, 0, match, 0, match.length())) {
             return value.substring(match.length());
          } else {
-            return mode == CandidatePoolSelector.Inner_DataUtil.SUFFIX
+            return mode == CandidatePoolSelector.FilterMode.SUFFIX
                   && value.length() >= match.length()
                   && value.regionMatches(true, value.length() - match.length(), match, 0, match.length())
                ? value.substring(0, value.length() - match.length())
@@ -150,15 +150,15 @@ public final class CandidatePoolSelector {
       }
    }
 
-   public static Optional<CandidatePoolSelector.Inner_StreamUtil> select(List<String> pool, CandidatePoolSelector.Inner_CachePool selection, CandidatePoolSelector.Inner_BufferHelper state) {
+   public static Optional<CandidatePoolSelector.Selection> select(List<String> pool, CandidatePoolSelector.SelectionMode selection, CandidatePoolSelector.SelectionState state) {
       return init(pool, selection, 1, state);
    }
 
-   public static Optional<CandidatePoolSelector.Inner_StreamUtil> init(
-      List<String> pool, CandidatePoolSelector.Inner_CachePool selection, int position, CandidatePoolSelector.Inner_BufferHelper state
+   public static Optional<CandidatePoolSelector.Selection> init(
+      List<String> pool, CandidatePoolSelector.SelectionMode selection, int position, CandidatePoolSelector.SelectionState state
    ) {
       if (pool != null && !pool.isEmpty()) {
-         CandidatePoolSelector.Inner_CachePool effective = selection == null ? CandidatePoolSelector.Inner_CachePool.RANDOM : selection;
+         CandidatePoolSelector.SelectionMode effective = selection == null ? CandidatePoolSelector.SelectionMode.RANDOM : selection;
          int var10000;
          switch (effective) {
             case RANDOM:
@@ -212,7 +212,7 @@ public final class CandidatePoolSelector {
          }
 
          int index = var10000;
-         return Optional.of(new CandidatePoolSelector.Inner_StreamUtil(pool.get(index), index, pool));
+         return Optional.of(new CandidatePoolSelector.Selection(pool.get(index), index, pool));
       } else {
          return Optional.empty();
       }
@@ -222,12 +222,12 @@ public final class CandidatePoolSelector {
       return value == null ? "" : value.toLowerCase(Locale.ROOT);
    }
 
-   public static final class Inner_BufferHelper {
+   public static final class SelectionState {
       int nextIndex;
       final Set<String> used = new HashSet<>();
    }
 
-   public enum Inner_CachePool {
+   public enum SelectionMode {
       RANDOM,
       SEQUENTIAL,
       RANDOM_NO_REPEAT,
@@ -236,7 +236,7 @@ public final class CandidatePoolSelector {
       POSITION;
    }
 
-   public enum Inner_DataUtil {
+   public enum FilterMode {
       NONE,
       PREFIX,
       SUFFIX,
@@ -245,6 +245,6 @@ public final class CandidatePoolSelector {
       REGEX;
    }
 
-   public record Inner_StreamUtil(String value, int index, List<String> pool) {
+   public record Selection(String value, int index, List<String> pool) {
    }
 }

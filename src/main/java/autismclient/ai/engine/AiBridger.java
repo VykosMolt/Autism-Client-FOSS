@@ -6,24 +6,24 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class AiBridger {
-   public static final float putAt_F = 100.0F;
-   static final double putAt_D = 1.62;
-   static final double fill_D = 1.27;
-   static final float fill_F = 179.5F;
-   static final float readEx_F = 25.0F;
-   static final double readEx_D = 0.14;
-   static final double value_D = 0.04;
+   public static final float FLICK_TURN_PER_TICK = 100.0F;
+   static final double EYE_HEIGHT = 1.62;
+   static final double SNEAK_EYE_HEIGHT = 1.27;
+   static final float BACK_YAW = 179.5F;
+   static final float RUN_PITCH = 25.0F;
+   static final double STRAFE_START_OFFSET = 0.14;
+   static final double STRAFE_STOP_OFFSET = 0.04;
    static final float value_F = 12.0F;
-   static final double prevEx = 0.3;
-   static final int flowState = 30;
-   static final int flowTemp = 8;
-   static final int readEx_I = 6;
+   static final double FAR_MARGIN = 0.3;
+   static final int FLIGHT_HORIZON_TICKS = 30;
+   static final int SNEAK_HORIZON_TICKS = 8;
+   static final int TURN_HORIZON_TICKS = 6;
    private final AiBridger.Inner_CachePool putAt_TextStore_JsonCach;
-   private final boolean putAt_Z;
+   private final boolean stopOnLastSupport;
    private AiBridger.Inner_ConfigStore putAt_TextStore_BitCore;
-   private boolean fill_Z;
-   private boolean readEx_Z;
-   private boolean value_Z = true;
+   private boolean committedForward;
+   private boolean steeringBack;
+   private boolean blockInHand = true;
    public static final double prev = 4.5;
 
    public AiBridger(AiBridger.Inner_CachePool var1, AiBridger.Inner_ConfigStore var2) {
@@ -33,7 +33,7 @@ public final class AiBridger {
    public AiBridger(AiBridger.Inner_CachePool var1, AiBridger.Inner_ConfigStore var2, boolean var3) {
       this.putAt_TextStore_JsonCach = var1;
       this.putAt_TextStore_BitCore = var2;
-      this.putAt_Z = var3;
+      this.stopOnLastSupport = var3;
    }
 
    public AiBridger.Inner_CachePool putAt_TextStore_JsonCach() {
@@ -48,9 +48,9 @@ public final class AiBridger {
       this.putAt_TextStore_BitCore = var1;
    }
 
-   public int putAt_I_TokenCore_TaskStat(AiPhysics.PhysicsWorld var1) {
+   public int nextSupport(AiPhysics.PhysicsWorld var1) {
       for (int var2 = 1; var2 <= this.putAt_TextStore_JsonCach.length(); var2++) {
-         if (!putAt_Z_TokenCore_TaskStat(
+         if (!supportStands(
             var1, this.putAt_TextStore_JsonCach.cellX(var2), this.putAt_TextStore_JsonCach.floorY(), this.putAt_TextStore_JsonCach.cellZ(var2)
          )) {
             return var2;
@@ -60,7 +60,7 @@ public final class AiBridger {
       return this.putAt_TextStore_JsonCach.length() + 1;
    }
 
-   static boolean putAt_Z_TokenCore_TaskStat(AiPhysics.PhysicsWorld var0, int var1, int var2, int var3) {
+   static boolean supportStands(AiPhysics.PhysicsWorld var0, int var1, int var2, int var3) {
       AABB var4 = new AABB(var1, var2, var3, var1 + 1, var2 + 1, var3 + 1).deflate(1.0E-4);
 
       for (AABB var6 : var0.collisions(var4)) {
@@ -81,10 +81,10 @@ public final class AiBridger {
    public AiBridger.Inner_StreamUtil putAt_TextStore_TableCac_TokenCore_TableCac_2(
       AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4, boolean var5
    ) {
-      return this.putAt(var1, var2, var2, var3, var4, var5);
+      return this.decide(var1, var2, var2, var3, var4, var5);
    }
 
-   AiBridger.Inner_StreamUtil putAt(
+   AiBridger.Inner_StreamUtil decide(
       AiPhysics.MotionState var1,
       AiBridger.Inner_DataUtil var2,
       AiBridger.Inner_DataUtil var3,
@@ -92,12 +92,12 @@ public final class AiBridger {
       AiPhysics.PhysicsWorld var5,
       boolean var6
    ) {
-      this.value_Z = var6;
+      this.blockInHand = var6;
       double var7 = this.putAt_TextStore_JsonCach.lateral(var1.x(), var1.z());
       if (Math.abs(var7) > 0.14) {
-         this.readEx_Z = true;
+         this.steeringBack = true;
       } else if (Math.abs(var7) < 0.04) {
-         this.readEx_Z = false;
+         this.steeringBack = false;
       }
 
       return this.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var2, var3, var4, var5);
@@ -106,11 +106,11 @@ public final class AiBridger {
    private AiBridger.Inner_StreamUtil putAt_TextStore_TableCac_TokenCore_TableCac(
       AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiBridger.Inner_DataUtil var3, boolean var4, AiPhysics.PhysicsWorld var5
    ) {
-      int var6 = this.putAt_I_TokenCore_TaskStat(var5);
+      int var6 = this.nextSupport(var5);
       double var7 = this.putAt_TextStore_JsonCach.along(var1.x(), var1.z());
       float var9 = this.putAt_TextStore_JsonCach.yaw();
       if (var1.onGround()) {
-         this.fill_Z = false;
+         this.committedForward = false;
       }
 
       if (var6 <= this.putAt_TextStore_JsonCach.length()
@@ -120,23 +120,23 @@ public final class AiBridger {
                || !putAt_Z_TokenCore_TableCac_2(var1, var5, this.putAt_TextStore_JsonCach.floorY())
          )) {
          if (!var1.onGround()) {
-            return this.putAt(var1, var2, var3, var4, var5, var6);
+            return this.airborneCommand(var1, var2, var3, var4, var5, var6);
          }
 
          if (this.putAt_TextStore_BitCore == AiBridger.Inner_ConfigStore.TELLY) {
             AiBridger.Inner_DataUtil var10 = var2.stepToward(var9, 25.0F);
             if (putAt_Z_F_F(var2.yaw(), var9)) {
-               if (this.putAt_Z_TokenCore_TableCac(var1, var10, var5)) {
+               if (this.jumpLandsOnSupport(var1, var10, var5)) {
                   return this.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var10, true);
                }
 
                AiBridger.Inner_StreamUtil var11 = this.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var10, false);
                AiPhysics.MotionState var12 = AiPhysics.step(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var11, var10), var5);
                if (putAt_Z_TokenCore_TableCac_2(var12, var5, this.putAt_TextStore_JsonCach.floorY())
-                  && (this.putAt_Z_TokenCore_TableCac(var12, var10, var5) || this.value(var12, var10, var5))) {
+                  && (this.jumpLandsOnSupport(var12, var10, var5) || this.sneakHoldsOnSupport(var12, var10, var5))) {
                   return var11;
                }
-            } else if (this.readEx(var1, var2, var5)) {
+            } else if (this.turnForwardThenJumpLands(var1, var2, var5)) {
                int[] var13 = this.putAt_IArr_F(var10.yaw(), var1, var9);
                AiBridger.Inner_StreamUtil var14 = new AiBridger.Inner_StreamUtil(var9, 25.0F, var13[0], var13[1], false, var13[0] > 0, false, -1, false);
                if (putAt_Z_F_F(var10.yaw(), var9)
@@ -152,7 +152,7 @@ public final class AiBridger {
             }
          }
 
-         return this.fill(var1, var2, var3, var4, var5, var6);
+         return this.backWalkCommand(var1, var2, var3, var4, var5, var6);
       } else {
          return this.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var2, var5, var7);
       }
@@ -162,13 +162,13 @@ public final class AiBridger {
       AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3, double var4
    ) {
       int var6 = this.putAt_TextStore_JsonCach.length();
-      boolean var7 = !this.putAt_Z
-         && fill(var3, this.putAt_TextStore_JsonCach.cellX(var6 + 1), this.putAt_TextStore_JsonCach.floorY(), this.putAt_TextStore_JsonCach.cellZ(var6 + 1));
+      boolean var7 = !this.stopOnLastSupport
+         && cellHasCollision(var3, this.putAt_TextStore_JsonCach.cellX(var6 + 1), this.putAt_TextStore_JsonCach.floorY(), this.putAt_TextStore_JsonCach.cellZ(var6 + 1));
       double var8 = var1.vx() * this.putAt_TextStore_JsonCach.dx() + var1.vz() * this.putAt_TextStore_JsonCach.dz();
-      boolean var10 = this.putAt_Z ? var1.vx() * var1.vx() + var1.vz() * var1.vz() < 9.0E-4 : Math.abs(var8) < 0.03;
-      if (!var1.onGround() || !(var4 >= var6) || !var7 && (this.putAt_Z || !(var4 >= var6 + 1)) && !var10) {
+      boolean var10 = this.stopOnLastSupport ? var1.vx() * var1.vx() + var1.vz() * var1.vz() < 9.0E-4 : Math.abs(var8) < 0.03;
+      if (!var1.onGround() || !(var4 >= var6) || !var7 && (this.stopOnLastSupport || !(var4 >= var6 + 1)) && !var10) {
          if (!var1.onGround()) {
-            if (!var7 && !this.prevEx(var1, var2, var3)) {
+            if (!var7 && !this.coastHoldsOnLane(var1, var2, var3)) {
                int[] var21 = this.putAt_IArr_F(var2.yaw(), var1, this.putAt_TextStore_JsonCach.yaw() + 179.5F);
                return new AiBridger.Inner_StreamUtil(var2.yaw(), var2.pitch(), var21[0], var21[1], false, false, false, -1, false);
             } else {
@@ -191,7 +191,7 @@ public final class AiBridger {
                   if (var18 < var13
                      && this.putAt_TextStore_JsonCach.along(var17.x(), var17.z()) >= var6
                      && putAt_Z_TokenCore_TableCac_2(var17, var3, this.putAt_TextStore_JsonCach.floorY())
-                     && this.value(var17, var2, var3)) {
+                     && this.sneakHoldsOnSupport(var17, var2, var3)) {
                      var13 = var18;
                      var11 = var15;
                      var12 = var16;
@@ -206,7 +206,7 @@ public final class AiBridger {
       }
    }
 
-   private boolean prevEx(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
+   private boolean coastHoldsOnLane(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       for (int var4 = 0; var4 < 30; var4++) {
          var1 = AiPhysics.step(var1, AiPhysics.MoveInput.NONE, var3);
          if (var1.y() < this.putAt_TextStore_JsonCach.floorY() + 1 - 0.01) {
@@ -214,7 +214,7 @@ public final class AiBridger {
          }
 
          if (var1.onGround()) {
-            return putAt_Z_TokenCore_TableCac_2(var1, var3, this.putAt_TextStore_JsonCach.floorY()) && this.value(var1, var2, var3);
+            return putAt_Z_TokenCore_TableCac_2(var1, var3, this.putAt_TextStore_JsonCach.floorY()) && this.sneakHoldsOnSupport(var1, var2, var3);
          }
       }
 
@@ -228,7 +228,7 @@ public final class AiBridger {
       return new AiBridger.Inner_StreamUtil(this.putAt_TextStore_JsonCach.yaw(), 25.0F, var4[0], var4[1], var3, var4[0] > 0, false, -1, false);
    }
 
-   private AiBridger.Inner_StreamUtil putAt(
+   private AiBridger.Inner_StreamUtil airborneCommand(
       AiPhysics.MotionState var1,
       AiBridger.Inner_DataUtil var2,
       AiBridger.Inner_DataUtil var3,
@@ -237,16 +237,16 @@ public final class AiBridger {
       int var6
    ) {
       float var7 = this.putAt_TextStore_JsonCach.yaw();
-      if (!this.fill_Z) {
-         int var8 = this.putAt_Z_TokenCore_TableCac(var1, var3, var4, var5, var6) ? var6 : -1;
-         if (var8 >= 0 || this.putAt_TextStore_BitCore != AiBridger.Inner_ConfigStore.TELLY || !this.fill(var1, var2, var5)) {
-            float[] var13 = this.putAt(var1, var2, var4, var5, var8 < 0 ? var6 : var6 + 1, 0.0 / 0.0, true);
+      if (!this.committedForward) {
+         int var8 = this.clicksNextSupport(var1, var3, var4, var5, var6) ? var6 : -1;
+         if (var8 >= 0 || this.putAt_TextStore_BitCore != AiBridger.Inner_ConfigStore.TELLY || !this.forwardLandsOnSupport(var1, var2, var5)) {
+            float[] var13 = this.steppedLook(var1, var2, var4, var5, var8 < 0 ? var6 : var6 + 1, 0.0 / 0.0, true);
             AiBridger.Inner_DataUtil var10 = var2.stepToward(var13[0], var13[1]);
             int[] var11 = this.putAt_IArr_F(var10.yaw(), var1, var7);
             return new AiBridger.Inner_StreamUtil(var13[0], var13[1], var11[0], var11[1], false, var11[0] > 0, false, var8, false);
          }
 
-         this.fill_Z = true;
+         this.committedForward = true;
       }
 
       AiBridger.Inner_DataUtil var12 = var2.stepToward(var7, 25.0F);
@@ -254,7 +254,7 @@ public final class AiBridger {
       return new AiBridger.Inner_StreamUtil(var7, 25.0F, var9[0], var9[1], false, var9[0] > 0, false, -1, false);
    }
 
-   private AiBridger.Inner_StreamUtil fill(
+   private AiBridger.Inner_StreamUtil backWalkCommand(
       AiPhysics.MotionState var1,
       AiBridger.Inner_DataUtil var2,
       AiBridger.Inner_DataUtil var3,
@@ -263,9 +263,9 @@ public final class AiBridger {
       int var6
    ) {
       double var7 = var6 <= this.putAt_TextStore_JsonCach.length() ? this.putAt_D_TokenCore_TaskStat_I(var5, var6) : 0.0 / 0.0;
-      int var9 = this.putAt_Z_TokenCore_TableCac(var1, var3, var4, var5, var6) ? var6 : -1;
+      int var9 = this.clicksNextSupport(var1, var3, var4, var5, var6) ? var6 : -1;
       int var10 = var9 < 0 ? var6 : var6 + 1;
-      float[] var11 = this.putAt(var1, var2, var4, var5, var10, var9 < 0 ? var7 : this.putAt_D_TokenCore_TaskStat_I(var5, var10), false);
+      float[] var11 = this.steppedLook(var1, var2, var4, var5, var10, var9 < 0 ? var7 : this.putAt_D_TokenCore_TaskStat_I(var5, var10), false);
       AiBridger.Inner_DataUtil var12 = var2.stepToward(var11[0], var11[1]);
       int[] var13 = this.putAt_IArr_F(var12.yaw(), var1, this.putAt_TextStore_JsonCach.yaw());
       if (!Double.isNaN(var7)
@@ -287,7 +287,7 @@ public final class AiBridger {
       return new AiBridger.Inner_StreamUtil(var11[0], var11[1], var13[0], var13[1], false, false, var14, var9, false);
    }
 
-   private float[] putAt(
+   private float[] steppedLook(
       AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4, int var5, double var6, boolean var8
    ) {
       float[] var9 = Double.isNaN(var6) ? this.putAt_FArr_TokenCore_TableCac(var1, var3, var5) : this.putAt_FArr_TokenCore_TableCac(var1, var3, var5, var6);
@@ -324,8 +324,8 @@ public final class AiBridger {
       return new float[]{var12, Math.min(89.5F, var13)};
    }
 
-   boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4, int var5) {
-      if (this.value_Z && var2 != null) {
+   boolean clicksNextSupport(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4, int var5) {
+      if (this.blockInHand && var2 != null) {
          Vec3 var6 = new Vec3(var1.x(), var1.y() + (var3 ? 1.27 : 1.62), var1.z());
          int[] var7 = putAt_IArr_TokenCore_TaskStat(var4, var6, var2.yaw(), var2.pitch(), 4.5);
          if (var7 == null) {
@@ -348,13 +348,13 @@ public final class AiBridger {
       }
    }
 
-   boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
+   boolean jumpLandsOnSupport(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       AiBridger.Inner_StreamUtil var4 = this.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var2, true);
       AiPhysics.MotionState var5 = AiPhysics.step(var1, putAt_TokenCore_CacheHel_TextStore_TableCac_TextStore_CacheHel(var4, var2), var3);
-      return this.putAt_Z_TokenCore_TableCac(var5, var2, false, var3);
+      return this.flightTouchesDown(var5, var2, false, var3);
    }
 
-   boolean fill(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
+   boolean forwardLandsOnSupport(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       float var4 = this.putAt_TextStore_JsonCach.yaw();
       AiBridger.Inner_DataUtil var5 = var2;
       AiPhysics.MotionState var6 = var1;
@@ -364,7 +364,7 @@ public final class AiBridger {
          int[] var8 = this.putAt_IArr_F(var5.yaw(), var6, var4);
          var6 = AiPhysics.step(var6, new AiPhysics.MoveInput(var8[0], var8[1], false, var8[0] > 0, false, var5.yaw()), var3);
          if (var6.onGround()) {
-            return this.putAt_Z_TokenCore_TableCac_TokenCore_TaskStat(var6, var3) && this.value(var6, var5, var3);
+            return this.putAt_Z_TokenCore_TableCac_TokenCore_TaskStat(var6, var3) && this.sneakHoldsOnSupport(var6, var5, var3);
          }
 
          if (var6.y() < this.putAt_TextStore_JsonCach.floorY()) {
@@ -375,14 +375,14 @@ public final class AiBridger {
       return false;
    }
 
-   boolean readEx(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
+   boolean turnForwardThenJumpLands(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       float var4 = this.putAt_TextStore_JsonCach.yaw();
       AiBridger.Inner_DataUtil var5 = var2;
       AiPhysics.MotionState var6 = var1;
 
       for (int var7 = 0; var7 < 6; var7++) {
          var5 = var5.stepToward(var4, 25.0F);
-         if (var6.onGround() && putAt_Z_F_F(var5.yaw(), var4) && this.putAt_Z_TokenCore_TableCac(var6, var5, var3)) {
+         if (var6.onGround() && putAt_Z_F_F(var5.yaw(), var4) && this.jumpLandsOnSupport(var6, var5, var3)) {
             return true;
          }
 
@@ -396,7 +396,7 @@ public final class AiBridger {
       return false;
    }
 
-   boolean value(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
+   boolean sneakHoldsOnSupport(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, AiPhysics.PhysicsWorld var3) {
       AiPhysics.MotionState var4 = var1;
 
       for (int var5 = 0; var5 < 8; var5++) {
@@ -409,25 +409,25 @@ public final class AiBridger {
       return true;
    }
 
-   private boolean putAt_Z_TokenCore_TableCac(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4) {
+   private boolean flightTouchesDown(AiPhysics.MotionState var1, AiBridger.Inner_DataUtil var2, boolean var3, AiPhysics.PhysicsWorld var4) {
       AiBridger.Inner_BufferHelper var5 = new AiBridger.Inner_BufferHelper(var4);
-      AiBridger var6 = new AiBridger(this.putAt_TextStore_JsonCach, this.putAt_TextStore_BitCore, this.putAt_Z);
-      var6.readEx_Z = this.readEx_Z;
+      AiBridger var6 = new AiBridger(this.putAt_TextStore_JsonCach, this.putAt_TextStore_BitCore, this.stopOnLastSupport);
+      var6.steeringBack = this.steeringBack;
       AiBridger.Inner_DataUtil var7 = var2;
 
       for (int var8 = 0; var8 < 30; var8++) {
          if (var1.onGround()) {
-            return this.putAt_Z_TokenCore_TableCac_TokenCore_TaskStat(var1, var5) && this.value(var1, var7, var5);
+            return this.putAt_Z_TokenCore_TableCac_TokenCore_TaskStat(var1, var5) && this.sneakHoldsOnSupport(var1, var7, var5);
          }
 
          if (var1.y() < this.putAt_TextStore_JsonCach.floorY()) {
             return false;
          }
 
-         int var9 = var6.putAt_I_TokenCore_TaskStat(var5);
+         int var9 = var6.nextSupport(var5);
          AiBridger.Inner_StreamUtil var10 = var9 > this.putAt_TextStore_JsonCach.length()
             ? var6.putAt_TextStore_TableCac_TokenCore_TableCac(var1, var7, var7, var3, var5)
-            : var6.putAt(var1, var7, var7, var3, var5, var9);
+            : var6.airborneCommand(var1, var7, var7, var3, var5, var9);
          var7 = var7.stepToward(var10.yaw(), var10.pitch());
          if (var10.place() > 0) {
             var5.addBlock(
@@ -443,12 +443,12 @@ public final class AiBridger {
 
    private boolean putAt_Z_TokenCore_TableCac_TokenCore_TaskStat(AiPhysics.MotionState var1, AiPhysics.PhysicsWorld var2) {
       if (var1.onGround() && !(var1.y() < this.putAt_TextStore_JsonCach.floorY() + 1 - 0.01)) {
-         int var3 = this.putAt_I_TokenCore_TaskStat(var2);
+         int var3 = this.nextSupport(var2);
          double var4 = this.putAt_TextStore_JsonCach.along(var1.x(), var1.z());
          if (var3 <= this.putAt_TextStore_JsonCach.length() && !(var4 < var3 + 1)) {
             int var6 = (int)Math.floor(var4 - 0.3);
             return var6 > var3
-               && fill(var2, this.putAt_TextStore_JsonCach.cellX(var6), this.putAt_TextStore_JsonCach.floorY(), this.putAt_TextStore_JsonCach.cellZ(var6));
+               && cellHasCollision(var2, this.putAt_TextStore_JsonCach.cellX(var6), this.putAt_TextStore_JsonCach.floorY(), this.putAt_TextStore_JsonCach.cellZ(var6));
          } else {
             return true;
          }
@@ -495,7 +495,7 @@ public final class AiBridger {
       double var6 = Math.toRadians(var3);
       double var8 = -Math.sin(var6);
       double var10 = Math.cos(var6);
-      if (this.readEx_Z) {
+      if (this.steeringBack) {
          double var12 = Math.cos(Math.toRadians(this.putAt_TextStore_JsonCach.yaw()));
          double var14 = Math.sin(Math.toRadians(this.putAt_TextStore_JsonCach.yaw()));
          var8 -= Math.signum(var4) * var12 * 0.75;
@@ -543,7 +543,7 @@ public final class AiBridger {
       return Math.max(-var1, Math.min(var1, var0));
    }
 
-   static boolean fill(AiPhysics.PhysicsWorld var0, int var1, int var2, int var3) {
+   static boolean cellHasCollision(AiPhysics.PhysicsWorld var0, int var1, int var2, int var3) {
       AABB var4 = new AABB(var1, var2, var3, var1 + 1, var2 + 1, var3 + 1).deflate(1.0E-4);
 
       for (AABB var6 : var0.collisions(var4)) {
@@ -774,7 +774,7 @@ public final class AiBridger {
    public AiBridger.Inner_CachePool getLane() { return this.putAt_TextStore_JsonCach(); }
    public AiBridger.Inner_ConfigStore getStyle() { return this.putAt_TextStore_BitCore(); }
    public void init_V_JsonUtil_ConfigSto(AiBridger.Inner_ConfigStore value) { this.putAt_V_TextStore_BitCore(value); }
-   public int init_I_NodeWalker_CachePo(AiPhysics.PhysicsWorld world) { return this.putAt_I_TokenCore_TaskStat(world); }
+   public int init_I_NodeWalker_CachePo(AiPhysics.PhysicsWorld world) { return this.nextSupport(world); }
    public AiBridger.Inner_StreamUtil init_JsonUtil_StreamUti_NodeWalker_StreamU_2(AiPhysics.MotionState s, AiBridger.Inner_DataUtil r, boolean sneaking, AiPhysics.PhysicsWorld world) {
       return this.putAt_TextStore_TableCac_TokenCore_TableCac_2(s, r, sneaking, world);
    }

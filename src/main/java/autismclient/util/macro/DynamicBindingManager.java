@@ -258,7 +258,7 @@ public final class DynamicBindingManager {
 
       MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(template, mc);
       if (!resolution.success()) {
-         throw new DynamicBindingManager.Inner_DataUtil();
+         throw new DynamicBindingManager.MissingValueException();
       }
 
       try {
@@ -268,7 +268,7 @@ public final class DynamicBindingManager {
          if (compact <= 2147483647L && compact >= -2147483648L) {
             return (int)compact;
          } else {
-            throw new DynamicBindingManager.Inner_DataUtil();
+            throw new DynamicBindingManager.MissingValueException();
          }
       }
    }
@@ -281,18 +281,18 @@ public final class DynamicBindingManager {
 
       MacroTemplateResolver.ResolveResult resolution = MacroVariableContext.resolveTemplate(template, mc);
       if (!resolution.success()) {
-         throw new DynamicBindingManager.Inner_DataUtil();
+         throw new DynamicBindingManager.MissingValueException();
       }
 
       try {
          return Double.parseDouble(resolution.value().trim());
       } catch (NumberFormatException ignored) {
-         throw new DynamicBindingManager.Inner_DataUtil();
+         throw new DynamicBindingManager.MissingValueException();
       }
    }
 
-   public static final class Inner_DataUtil extends RuntimeException {
-      private Inner_DataUtil() {
+   public static final class MissingValueException extends RuntimeException {
+      private MissingValueException() {
          super("Missing or invalid dynamic value", null, false, false);
       }
    }

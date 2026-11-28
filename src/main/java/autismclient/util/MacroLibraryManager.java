@@ -203,15 +203,15 @@ public class MacroLibraryManager {
       return this.folderLayout.folders();
    }
 
-   public synchronized List<MacroFolderLayout.Inner_DataUtil> getFolderEntries(String query) {
+   public synchronized List<MacroFolderLayout.LayoutRow> getFolderEntries(String query) {
       return this.getFilteredFolderEntries(query, false, macro -> true);
    }
 
-   public synchronized List<MacroFolderLayout.Inner_DataUtil> getFilteredFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
+   public synchronized List<MacroFolderLayout.LayoutRow> getFilteredFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
       return this.folderLayout.rows(this.macros.stream().filter(filter).toList(), query, includeEmpty);
    }
 
-   public synchronized List<MacroFolderLayout.Inner_DataUtil> getOrderedFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
+   public synchronized List<MacroFolderLayout.LayoutRow> getOrderedFolderEntries(String query, boolean includeEmpty, Predicate<AutismMacro> filter) {
       return this.folderLayout.load(this.macros.stream().filter(filter).toList(), query, includeEmpty);
    }
 

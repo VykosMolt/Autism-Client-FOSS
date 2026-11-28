@@ -114,7 +114,7 @@ public class HClipCommand extends Command {
       );
    }
 
-   private static RequiredArgumentBuilder<AutismCommandSource, Double> doubleArg(String name, HClipCommand.Inner_DataUtil customizer) {
+   private static RequiredArgumentBuilder<AutismCommandSource, Double> doubleArg(String name, HClipCommand.OptionsCustomizer customizer) {
       return (RequiredArgumentBuilder<AutismCommandSource, Double>)RequiredArgumentBuilder.<AutismCommandSource, Double>argument(name, DoubleArgumentType.doubleArg())
          .suggests(autismclient.commands.CommandSuggestions::suggestVclipBlocks)
          .executes(
@@ -147,7 +147,7 @@ public class HClipCommand extends Command {
       autismclient.util.macro.HClipAction.clip(Minecraft.getInstance(), options);
    }
 
-   private interface Inner_DataUtil {
+   private interface OptionsCustomizer {
       autismclient.util.macro.HClipAction.ClipOptions apply(autismclient.util.macro.HClipAction.ClipOptions var1);
    }
 }

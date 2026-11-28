@@ -19,9 +19,9 @@ public class ReportAction implements MacroAction {
    public ReportAction.EndEvent endEvent = ReportAction.EndEvent.GUI_OPEN;
    public ReportAction.EndCondition endCondition = ReportAction.EndCondition.GUI_OPEN;
    public String reportLabel = "Report";
-   public String startConditionType = RaceAction.Inner_DataUtil.DELAY.name();
+   public String startConditionType = RaceAction.ConditionType.DELAY.name();
    public String startActionType = MacroActionType.ITEM.name();
-   public String endConditionType = RaceAction.Inner_DataUtil.WAIT_GUI.name();
+   public String endConditionType = RaceAction.ConditionType.WAIT_GUI.name();
    public int conditionCount = 0;
    public String commandText = "";
    public String endGuiTitle = "";
@@ -184,9 +184,9 @@ public class ReportAction implements MacroAction {
       tag.putString("startEvent", this.startEvent.name());
       tag.putString("endEvent", this.endEventOf().name());
       tag.putString("endCondition", this.endCondition.name());
-      tag.putString("startConditionType", this.startConditionType == null ? RaceAction.Inner_DataUtil.DELAY.name() : this.startConditionType);
+      tag.putString("startConditionType", this.startConditionType == null ? RaceAction.ConditionType.DELAY.name() : this.startConditionType);
       tag.putString("startActionType", this.startActionType == null ? MacroActionType.ITEM.name() : this.startActionType);
-      tag.putString("endConditionType", this.endConditionType == null ? RaceAction.Inner_DataUtil.WAIT_GUI.name() : this.endConditionType);
+      tag.putString("endConditionType", this.endConditionType == null ? RaceAction.ConditionType.WAIT_GUI.name() : this.endConditionType);
       tag.putInt("conditionCount", Math.max(0, this.conditionCount));
       tag.putString("reportLabel", this.reportLabel == null ? "" : this.reportLabel);
       tag.putString("commandText", this.commandText == null ? "" : this.commandText);
@@ -211,7 +211,7 @@ public class ReportAction implements MacroAction {
       }
 
       this.reportLabel = tag.getStringOr("reportLabel", "Report");
-      this.startConditionType = tag.getStringOr("startConditionType", RaceAction.Inner_DataUtil.DELAY.name());
+      this.startConditionType = tag.getStringOr("startConditionType", RaceAction.ConditionType.DELAY.name());
       this.startActionType = tag.getStringOr("startActionType", MacroActionType.ITEM.name());
       this.endConditionType = tag.getStringOr("endConditionType", "");
       this.conditionCount = Math.max(0, tag.getIntOr("conditionCount", 0));
@@ -370,19 +370,19 @@ public class ReportAction implements MacroAction {
       switch (this.endCondition) {
          case GUI_OPEN:
          case GUI_CLOSE:
-            var10000 = RaceAction.Inner_DataUtil.WAIT_GUI.name();
+            var10000 = RaceAction.ConditionType.WAIT_GUI.name();
             break;
          case TELEPORT_PACKET:
-            var10000 = RaceAction.Inner_DataUtil.WAIT_TELEPORT.name();
+            var10000 = RaceAction.ConditionType.WAIT_TELEPORT.name();
             break;
          case WORLD_CHANGE:
-            var10000 = RaceAction.Inner_DataUtil.WAIT_WORLD_CHANGE.name();
+            var10000 = RaceAction.ConditionType.WAIT_WORLD_CHANGE.name();
             break;
          case POSITION_DELTA:
-            var10000 = RaceAction.Inner_DataUtil.WAIT_POSITION_DELTA.name();
+            var10000 = RaceAction.ConditionType.WAIT_POSITION_DELTA.name();
             break;
          case PACKET:
-            var10000 = RaceAction.Inner_DataUtil.WAIT_PACKET.name();
+            var10000 = RaceAction.ConditionType.WAIT_PACKET.name();
             break;
          default:
             throw new MatchException(null, null);

@@ -1,7 +1,7 @@
 package autismclient.modules;
 
-public record CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper style, double init_D, double load) {
-   public CrosshairVectorSpec(CrosshairPresetGeometry.Inner_NetHelper style, double init_D, double load) {
+public record CrosshairVectorSpec(CrosshairPresetGeometry.Style style, double init_D, double load) {
+   public CrosshairVectorSpec(CrosshairPresetGeometry.Style style, double init_D, double load) {
       if (style != null && style.isPreset() && Double.isFinite(init_D) && !(init_D <= 0.0) && Double.isFinite(load) && !(load < 0.0)) {
          this.style = style;
          this.init_D = init_D;

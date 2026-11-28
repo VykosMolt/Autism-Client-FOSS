@@ -116,7 +116,7 @@ public final class AiBridgeDriver {
          ? (wire.initialized() ? new AiBridger.Inner_DataUtil(wire.currentYaw(), wire.currentPitch()) : null)
          : currentRot;
       AiBridger.Inner_StreamUtil cmd = this.bridger
-         .putAt(
+         .decide(
             AiPhysics.MotionState.of(player),
             currentRot,
             wireRot,

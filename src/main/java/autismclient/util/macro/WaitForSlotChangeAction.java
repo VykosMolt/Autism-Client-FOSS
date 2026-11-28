@@ -8,7 +8,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction {
-   public List<WaitForSlotChangeAction.Inner_DataUtil> entries = new ArrayList<>();
+   public List<WaitForSlotChangeAction.SlotEntry> entries = new ArrayList<>();
    public boolean listenDuringPreviousAction = false;
    public String saveAs = "";
    private boolean enabled = true;
@@ -17,7 +17,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
    }
 
    public WaitForSlotChangeAction(int slotNumber) {
-      WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil();
+      WaitForSlotChangeAction.SlotEntry entry = new WaitForSlotChangeAction.SlotEntry();
       entry.target = slotNumber >= 0 ? "#" + slotNumber : "";
       entry.itemTarget = MacroItemTarget.parse(entry.target);
       this.entries.add(entry);
@@ -29,7 +29,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       tag.putString("type", this.getType().name());
       ListTag list = new ListTag();
 
-      for (WaitForSlotChangeAction.Inner_DataUtil entry : this.entries) {
+      for (WaitForSlotChangeAction.SlotEntry entry : this.entries) {
          CompoundTag entryTag = new CompoundTag();
          MacroItemTarget target = entry.resolveItemTarget();
          if (target.hasSlot() || target.hasItemFilter()) {
@@ -54,7 +54,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       if (tag.contains("entries")) {
          for (Tag element : tag.getList("entries").orElse(new ListTag())) {
             if (element instanceof CompoundTag entryTag) {
-               WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil();
+               WaitForSlotChangeAction.SlotEntry entry = new WaitForSlotChangeAction.SlotEntry();
                entry.itemTarget = entryTag.getCompound("target")
                   .map(MacroItemTarget::fromTag)
                   .orElseGet(() -> MacroItemTarget.parse(entryTag.getStringOr("target", "")));
@@ -62,16 +62,16 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
                entry.count = entryTag.getIntOr("count", 1);
 
                try {
-                  entry.mode = WaitForSlotChangeAction.Inner_StreamUtil.valueOf(entryTag.getStringOr("mode", "NOT_EMPTY"));
+                  entry.mode = WaitForSlotChangeAction.WaitMode.valueOf(entryTag.getStringOr("mode", "NOT_EMPTY"));
                } catch (IllegalArgumentException ignored) {
-                  entry.mode = WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY;
+                  entry.mode = WaitForSlotChangeAction.WaitMode.NOT_EMPTY;
                }
 
                this.entries.add(entry);
             }
          }
       } else {
-         WaitForSlotChangeAction.Inner_StreamUtil globalMode = WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY;
+         WaitForSlotChangeAction.WaitMode globalMode = WaitForSlotChangeAction.WaitMode.NOT_EMPTY;
          int globalCount = 1;
          if (tag.contains("waitMode")) {
             try {
@@ -80,7 +80,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
                   mode = "NOT_EMPTY";
                }
 
-               globalMode = WaitForSlotChangeAction.Inner_StreamUtil.valueOf(mode);
+               globalMode = WaitForSlotChangeAction.WaitMode.valueOf(mode);
             } catch (IllegalArgumentException var8) {
             }
          }
@@ -93,7 +93,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
             for (Tag element : tag.getList("targetEntries").orElse(new ListTag())) {
                String value = element.asString().orElse("").strip();
                if (!value.isBlank()) {
-                  this.entries.add(new WaitForSlotChangeAction.Inner_DataUtil(value, globalMode, globalCount));
+                  this.entries.add(new WaitForSlotChangeAction.SlotEntry(value, globalMode, globalCount));
                }
             }
          } else {
@@ -114,7 +114,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
                target = itemName;
             }
 
-            this.entries.add(new WaitForSlotChangeAction.Inner_DataUtil(target, globalMode, globalCount));
+            this.entries.add(new WaitForSlotChangeAction.SlotEntry(target, globalMode, globalCount));
          }
       }
 
@@ -141,7 +141,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
          target = itemName;
       }
 
-      this.entries.add(new WaitForSlotChangeAction.Inner_DataUtil(target, WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY, 1));
+      this.entries.add(new WaitForSlotChangeAction.SlotEntry(target, WaitForSlotChangeAction.WaitMode.NOT_EMPTY, 1));
       this.enabled = true;
    }
 
@@ -161,7 +161,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       }
 
       if (this.entries.size() == 1) {
-         WaitForSlotChangeAction.Inner_DataUtil entry = this.entries.get(0);
+         WaitForSlotChangeAction.SlotEntry entry = this.entries.get(0);
          String display = StoreItemAction.formatTarget(entry.target.isEmpty() ? "" : entry.target);
          if (display.isEmpty()) {
             display = "any slot";
@@ -198,24 +198,24 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       this.saveAs = name == null ? "" : name;
    }
 
-   public static class Inner_DataUtil {
+   public static class SlotEntry {
       public String target = "";
       public MacroItemTarget itemTarget = new MacroItemTarget();
-      public WaitForSlotChangeAction.Inner_StreamUtil mode = WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY;
+      public WaitForSlotChangeAction.WaitMode mode = WaitForSlotChangeAction.WaitMode.NOT_EMPTY;
       public int count = 1;
 
-      public Inner_DataUtil() {
+      public SlotEntry() {
       }
 
-      public Inner_DataUtil(String target, WaitForSlotChangeAction.Inner_StreamUtil waitMode, int targetCount) {
+      public SlotEntry(String target, WaitForSlotChangeAction.WaitMode waitMode, int targetCount) {
          this.target = target;
          this.itemTarget = MacroItemTarget.parse(target);
          this.mode = waitMode;
          this.count = targetCount;
       }
 
-      public WaitForSlotChangeAction.Inner_DataUtil copy() {
-         WaitForSlotChangeAction.Inner_DataUtil copy = new WaitForSlotChangeAction.Inner_DataUtil(this.target, this.mode, this.count);
+      public WaitForSlotChangeAction.SlotEntry copy() {
+         WaitForSlotChangeAction.SlotEntry copy = new WaitForSlotChangeAction.SlotEntry(this.target, this.mode, this.count);
          copy.itemTarget = this.itemTarget == null ? new MacroItemTarget() : this.itemTarget.copy();
          return copy;
       }
@@ -246,12 +246,12 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       }
 
       public void nextMode() {
-         WaitForSlotChangeAction.Inner_StreamUtil[] modes = WaitForSlotChangeAction.Inner_StreamUtil.values();
+         WaitForSlotChangeAction.WaitMode[] modes = WaitForSlotChangeAction.WaitMode.values();
          this.mode = modes[(this.mode.ordinal() + 1) % modes.length];
       }
 
       public void previousMode() {
-         WaitForSlotChangeAction.Inner_StreamUtil[] modes = WaitForSlotChangeAction.Inner_StreamUtil.values();
+         WaitForSlotChangeAction.WaitMode[] modes = WaitForSlotChangeAction.WaitMode.values();
          this.mode = modes[(this.mode.ordinal() - 1 + modes.length) % modes.length];
       }
 
@@ -265,7 +265,7 @@ public class WaitForSlotChangeAction implements CaptureOutputAction, MacroAction
       }
    }
 
-   public enum Inner_StreamUtil {
+   public enum WaitMode {
       NOT_EMPTY,
       IS_EMPTY,
       COUNT_AT_LEAST,

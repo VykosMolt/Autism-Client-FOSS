@@ -32,7 +32,7 @@ public final class MacroStatusHudRenderer {
    private static int cachedThemeGeneration = -2147483648;
    private static String title = null;
    private static String cachedTitle = "";
-   private static List<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> cachedLines = List.of();
+   private static List<autismclient.gui.ui.layout.InfoCardRenderer.CardRow> cachedLines = List.of();
    private static long lastRefreshNanos;
    private static Font cachedFont;
    private static int visibilityPanelWidth = -2147483648;
@@ -156,7 +156,7 @@ public final class MacroStatusHudRenderer {
    private static void rebuildCache(Font textRenderer, List<MacroExecutor.ActiveRunSnapshot> runs, int rowsPerRun, int panelWidth, long now) {
       int contentWidth = panelWidth - 12;
       int nowColor = accentColor();
-      ArrayList<autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil> rows = new ArrayList<>();
+      ArrayList<autismclient.gui.ui.layout.InfoCardRenderer.CardRow> rows = new ArrayList<>();
 
       for (MacroExecutor.ActiveRunSnapshot run : runs) {
          AutismMacro macro = run.macro();
@@ -167,7 +167,7 @@ public final class MacroStatusHudRenderer {
             int visibleRows = visibleRowCount(total, rowsPerRun);
             int scroll = scrollStart(current, total, rowsPerRun);
             rows.add(
-               new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
+               new autismclient.gui.ui.layout.InfoCardRenderer.CardRow(
                   autismclient.gui.f.b.k.init(
                      textRenderer, run.macroName() + "  " + Math.min(current + 1, total) + "/" + total, contentWidth, TITLE_FONT, TITLE_COLOR
                   ),
@@ -180,7 +180,7 @@ public final class MacroStatusHudRenderer {
                MacroAction action = actions.get(i);
                int color = MacroStepColorHelper.stepColor(i, current, run.lastCompletedStep(), nowColor);
                rows.add(
-                  new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
+                  new autismclient.gui.ui.layout.InfoCardRenderer.CardRow(
                      autismclient.gui.f.b.k.init(textRenderer, i + 1 + ". " + action.getDisplayName(), contentWidth, ACTION_FONT, color),
                      ACTION_FONT,
                      color
@@ -190,7 +190,7 @@ public final class MacroStatusHudRenderer {
 
             if (run.statusText() != null && !run.statusText().isBlank()) {
                rows.add(
-                  new autismclient.gui.ui.layout.InfoCardRenderer.Inner_DataUtil(
+                  new autismclient.gui.ui.layout.InfoCardRenderer.CardRow(
                      autismclient.gui.f.b.k.init(textRenderer, run.statusText(), contentWidth, STATUS_FONT, STATUS_COLOR), STATUS_FONT, STATUS_COLOR
                   )
                );

@@ -268,7 +268,7 @@ public final class BlockInspectionService {
                }
             }
 
-            BlockNbtFormatter.Inner_DataUtil inspection = BlockNbtFormatter.format(displayRoot, displayItems, note);
+            BlockNbtFormatter.BlockInspection inspection = BlockNbtFormatter.format(displayRoot, displayItems, note);
             if (!AutismItemNbtInspectOverlay.inspectSource(inspection)) {
                bi.write("NBT overlay unavailable.");
             } else {

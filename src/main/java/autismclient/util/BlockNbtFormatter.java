@@ -12,7 +12,7 @@ public final class BlockNbtFormatter {
    private BlockNbtFormatter() {
    }
 
-   public static BlockNbtFormatter.Inner_DataUtil format(CompoundTag source, List<ItemStack> containerItems, String note) {
+   public static BlockNbtFormatter.BlockInspection format(CompoundTag source, List<ItemStack> containerItems, String note) {
       CompoundTag root = source == null ? new CompoundTag() : source.copy();
       List<ItemStack> items = copyStacks(containerItems);
       CompoundTag state = root.getCompound("state").orElse(new CompoundTag());
@@ -79,7 +79,7 @@ public final class BlockNbtFormatter {
          pretty.append('\n').append(inspectionLine.text());
       }
 
-      return new BlockNbtFormatter.Inner_DataUtil(blockId, List.copyOf(nice), List.copyOf(rawLines), pretty.toString(), raw);
+      return new BlockNbtFormatter.BlockInspection(blockId, List.copyOf(nice), List.copyOf(rawLines), pretty.toString(), raw);
    }
 
    private static List<ItemStack> copyStacks(List<ItemStack> source) {
@@ -112,7 +112,7 @@ public final class BlockNbtFormatter {
       addLine(lines, "", UiColorPalette.textMuted());
    }
 
-   public record Inner_DataUtil(String init_Str, List<ItemNbtInspector.InspectLine> lines, List<ItemNbtInspector.InspectLine> rawLines, String load_Str, String read)
+   public record BlockInspection(String init_Str, List<ItemNbtInspector.InspectLine> lines, List<ItemNbtInspector.InspectLine> rawLines, String load_Str, String read)
       implements ItemNbtInspector.NbtInspection {
       @Override
       public String init_Str() {

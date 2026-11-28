@@ -29,7 +29,7 @@ public class PacketGateCheck {
       PacketGateManager.install(gate("g", PacketGateAction.GateMode.CANCEL), 0L);
       PacketGateManager.install(gate("run", PacketGateAction.GateMode.CANCEL), 7L);
       CompatSwingPacket packet = new CompatSwingPacket(InteractionHand.MAIN_HAND);
-      check(PacketGateManager.match(packet, "C2S") == PacketGateManager.Inner_StreamUtil.CANCEL, "gates block on the connection they were made on");
+      check(PacketGateManager.match(packet, "C2S") == PacketGateManager.GateVerdict.CANCEL, "gates block on the connection they were made on");
 
       net.minecraft.SharedConstants.tryDetectVersion();
       net.minecraft.server.Bootstrap.bootStrap();

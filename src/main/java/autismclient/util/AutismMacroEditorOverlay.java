@@ -2515,9 +2515,9 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       if (action == null || !action.isEnabled()) {
          return false;
       } else if (action instanceof autismclient.util.macro.FpsAction fps) {
-         return fps.getEndMode() != autismclient.util.macro.FpsAction.Inner_DataUtil.TIMEOUT;
+         return fps.getEndMode() != autismclient.util.macro.FpsAction.EndMode.TIMEOUT;
       } else {
-         return action instanceof autismclient.util.macro.SPingAction sping ? sping.getEndMode() != autismclient.util.macro.SPingAction.Inner_DataUtil.TIMEOUT : false;
+         return action instanceof autismclient.util.macro.SPingAction sping ? sping.getEndMode() != autismclient.util.macro.SPingAction.EndMode.TIMEOUT : false;
       }
    }
 
@@ -2527,13 +2527,13 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          int last = this.macro.actions.size() - 1;
          int covered;
          if (action instanceof autismclient.util.macro.FpsAction fps) {
-            covered = fps.getEndMode() == autismclient.util.macro.FpsAction.Inner_DataUtil.END ? last - headerIndex : fps.getStepCount();
+            covered = fps.getEndMode() == autismclient.util.macro.FpsAction.EndMode.END ? last - headerIndex : fps.getStepCount();
          } else {
             if (!(action instanceof autismclient.util.macro.SPingAction sping)) {
                return headerIndex;
             }
 
-            covered = sping.getEndMode() == autismclient.util.macro.SPingAction.Inner_DataUtil.END ? last - headerIndex : sping.getStepCount();
+            covered = sping.getEndMode() == autismclient.util.macro.SPingAction.EndMode.END ? last - headerIndex : sping.getStepCount();
          }
 
          long end = (long)headerIndex + Math.max(0, covered);
@@ -2712,7 +2712,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       mine.delayTicks = 0;
       actions.add(mine);
       autismclient.util.macro.ContainerClickSequenceAction clicks = new autismclient.util.macro.ContainerClickSequenceAction();
-      clicks.slotSource = autismclient.util.macro.ContainerClickSequenceAction.Inner_StreamUtil.RANGE;
+      clicks.slotSource = autismclient.util.macro.ContainerClickSequenceAction.SlotSource.RANGE;
       clicks.startSlot = 100;
       clicks.endSlot = 126;
       clicks.containerInput = "QUICK_MOVE";
@@ -2724,7 +2724,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       List<MacroAction> actions = new ArrayList<>();
       autismclient.util.macro.SelectSlotAction select = new autismclient.util.macro.SelectSlotAction();
       select.itemName = "Trident or bow";
-      select.strategy = autismclient.util.macro.SelectSlotAction.Inner_DataUtil.BEST_DURABILITY;
+      select.strategy = autismclient.util.macro.SelectSlotAction.SlotStrategy.BEST_DURABILITY;
       actions.add(select);
       autismclient.util.macro.UseItemPhaseAction phase = new autismclient.util.macro.UseItemPhaseAction();
       phase.phase = autismclient.util.macro.UseItemPhaseAction.UsePhase.START_USE;

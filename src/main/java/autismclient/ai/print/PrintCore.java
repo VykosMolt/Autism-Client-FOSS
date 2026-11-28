@@ -618,7 +618,7 @@ public final class PrintCore {
    private BlockPos cleanupTarget;
    private PrintCore.PlacementSafetyProof proof;
    private int activeWorkCell = -1;
-   private PrintClicks.Inner_CachePool activeWorkMode;
+   private PrintClicks.ClickMode activeWorkMode;
    private PrintCore.WalkRouteStep takeoffWalk;
    private PrintCore.PrintStep refill;
    private long takeoffSearchStance = -9223372036854775808L;
@@ -1645,8 +1645,8 @@ public final class PrintCore {
       }
    }
 
-   public void attachRailVehicles(List<autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil> vehicles) {
-      for (autismclient.ai.print.PrintRailVehicle.Inner_StreamUtil vehicle : vehicles) {
+   public void attachRailVehicles(List<autismclient.ai.print.PrintRailVehicle.VehicleSpec> vehicles) {
+      for (autismclient.ai.print.PrintRailVehicle.VehicleSpec vehicle : vehicles) {
          this.attachMachineJob(new PrintRailVehicle(this.env, vehicle));
       }
    }
@@ -4991,7 +4991,7 @@ public final class PrintCore {
       }
 
       sealed.sort(highestNearestFirst(this.env.playerMotionState()));
-      PrintCore.PrintStep pick = this.removalStep(reach, sealed, new autismclient.ai.print.PrintClicks.Inner_DataUtil(40000));
+      PrintCore.PrintStep pick = this.removalStep(reach, sealed, new autismclient.ai.print.PrintClicks.RaycastBudget(40000));
       if (pick != null) {
          this.logTrace("floor: " + sealed.size() + " of our blocks under the floor at layer " + (lowest - this.baseY) + " come down first");
          this.reason = "Clearing under the floor (" + sealed.size() + " left)";
@@ -6063,7 +6063,7 @@ public final class PrintCore {
       }
 
       try {
-         autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(3000);
+         autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(3000);
          PrintCore.StanceWitness found = this.floorCandidatesWitness(r, blocked, budget);
          if (found != null) {
             return found;
@@ -6108,7 +6108,7 @@ public final class PrintCore {
       }
    }
 
-   private PrintCore.StanceWitness floorCandidatesWitness(int r, long blocked, autismclient.ai.print.PrintClicks.Inner_DataUtil budget) {
+   private PrintCore.StanceWitness floorCandidatesWitness(int r, long blocked, autismclient.ai.print.PrintClicks.RaycastBudget budget) {
       PrintTarget target = this.targets[r];
       BlockPos c = target.pos();
       IntArrayList floors = this.init_IntArrayList_I_2(r, blocked, this.stanceFilter);
@@ -6131,7 +6131,7 @@ public final class PrintCore {
                      double height = this.view.standingHeightAt(floor.pos().getX(), sy, floor.pos().getZ());
                      if (!Double.isNaN(height) && PrintClicks.isCellWithinStanceReach(key, height, c, 4.1000000000000005) && (!ENCLOSED_WITNESSES || this.read_Z_J_J(key, blocked))) {
                         for (Vec3 feet : PrintClicks.getCandidateFeetPositions(this.view, key, height, true)) {
-                           autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findPlacementClick(
+                           autismclient.ai.print.PrintClicks.Click click = PrintClicks.findPlacementClick(
                               this.view, this.env, this.rules, target, feet, false, budget, 4.1000000000000005, con
                            );
                            if (click != null) {
@@ -7374,14 +7374,14 @@ public final class PrintCore {
       return this.failedDigStances.contains(cellStanceKey((int)(block & 2147483647L), stance));
    }
 
-   private autismclient.ai.print.PrintClicks.Inner_StreamUtil findClickAt(
-      PrintNav.ReachResult reach, long stance, PrintTarget target, autismclient.ai.print.PrintClicks.Inner_DataUtil budget
+   private autismclient.ai.print.PrintClicks.Click findClickAt(
+      PrintNav.ReachResult reach, long stance, PrintTarget target, autismclient.ai.print.PrintClicks.RaycastBudget budget
    ) {
       return this.findClickFrom(stance, reach.feetYOf(stance), target, budget, stance == reach.startKey);
    }
 
-   autismclient.ai.print.PrintClicks.Inner_StreamUtil findClickFrom(
-      long stance, double height, PrintTarget target, autismclient.ai.print.PrintClicks.Inner_DataUtil budget, boolean current
+   autismclient.ai.print.PrintClicks.Click findClickFrom(
+      long stance, double height, PrintTarget target, autismclient.ai.print.PrintClicks.RaycastBudget budget, boolean current
    ) {
       Vec3 center = PrintNav.cellCenterAtY(stance, height);
 
@@ -7390,13 +7390,13 @@ public final class PrintCore {
       )) {
          for (boolean crouch : new boolean[]{false, true}) {
             if ((crouch || point.equals(center)) && !this.failedClicks.contains(new PrintCore.ClickAttempt(target.pos().asLong(), stance, point, crouch))) {
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+               autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                   this.view,
                   this.env,
                   this.rules,
                   target,
                   Items.AIR,
-                  PrintClicks.Inner_CachePool.INTERACT,
+                  PrintClicks.ClickMode.INTERACT,
                   point,
                   crouch,
                   false,
@@ -7438,11 +7438,11 @@ public final class PrintCore {
    }
 
    private PrintCore.StanceRouteCandidate stanceRouteFor(PrintNav.ReachResult reach, int i) {
-      return this.stanceRouteFor(reach, i, new autismclient.ai.print.PrintClicks.Inner_DataUtil(20000));
+      return this.stanceRouteFor(reach, i, new autismclient.ai.print.PrintClicks.RaycastBudget(20000));
    }
 
    private PrintCore.StanceRouteCandidate stanceRouteFor(
-      PrintNav.ReachResult reach, int i, autismclient.ai.print.PrintClicks.Inner_DataUtil budget
+      PrintNav.ReachResult reach, int i, autismclient.ai.print.PrintClicks.RaycastBudget budget
    ) {
       PrintTarget t = this.targets[i];
       BlockPos c = t.pos();
@@ -7485,13 +7485,13 @@ public final class PrintCore {
                      .containsKey(BlockPos.asLong(BlockPos.getX(key), (int)Math.floor(reach.feetYOf(key) - 0.001), BlockPos.getZ(key)))
             )) {
             for (Vec3 feet : PrintClicks.getCandidateFeetPositions(this.view, key, reach.feetYOf(key), PrintClicks.isOrientationSensitive(t, this.constraintFor(i)))) {
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+               autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                   this.view,
                   this.env,
                   this.rules,
                   t,
                   t.item(),
-                  PrintClicks.Inner_CachePool.PLACE,
+                  PrintClicks.ClickMode.PLACE,
                   feet,
                   false,
                   true,
@@ -7577,17 +7577,17 @@ public final class PrintCore {
          if (this.flush_Z_I(i)) {
             if (body.onGround() && !this.init_Z_I(i, body.y(), reach.startKey) && !this.refusedCellStances.contains(cellStanceKey(i, reach.startKey))) {
                PrintTarget target = this.targets[i];
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil paired = PrintClicks.findClick(
+               autismclient.ai.print.PrintClicks.Click paired = PrintClicks.findClick(
                   this.view,
                   this.env,
                   this.rules,
                   target,
                   target.item(),
-                  PrintClicks.Inner_CachePool.PLACE,
+                  PrintClicks.ClickMode.PLACE,
                   body.position(),
                   true,
                   true,
-                  new autismclient.ai.print.PrintClicks.Inner_DataUtil(),
+                  new autismclient.ai.print.PrintClicks.RaycastBudget(),
                   4.4
                );
                if (paired != null) {
@@ -7614,7 +7614,7 @@ public final class PrintCore {
       }
 
       if (body.onGround()) {
-         autismclient.ai.print.PrintClicks.Inner_DataUtil standingBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000);
+         autismclient.ai.print.PrintClicks.RaycastBudget standingBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(4000);
 
          for (int i : cells) {
             PrintTarget t = this.targets[i];
@@ -7626,13 +7626,13 @@ public final class PrintCore {
                      || !(t.pos().getY() >= body.y() + 2.0)
                      || !this.temporaryBlocks.containsKey(BlockPos.containing(body.x(), body.y() - 0.001, body.z()).asLong())
                )) {
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+               autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                   this.view,
                   this.env,
                   this.rules,
                   t,
                   t.item(),
-                  PrintClicks.Inner_CachePool.PLACE,
+                  PrintClicks.ClickMode.PLACE,
                   bodyPos,
                   false,
                   true,
@@ -7652,7 +7652,7 @@ public final class PrintCore {
 
       Long2ObjectOpenHashMap<IntArrayList> byStance = new Long2ObjectOpenHashMap<>();
       Long2ObjectOpenHashMap<Vec3> feetOf = new Long2ObjectOpenHashMap<>();
-      autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(60000);
+      autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(60000);
       int lowestY = 2147483647;
 
       for (int i : cells) {
@@ -7726,13 +7726,13 @@ public final class PrintCore {
                   for (Vec3 feet : known != null
                      ? List.of(known)
                      : PrintClicks.getCandidateFeetPositions(this.view, key, reach.feetYOf(key), PrintClicks.isOrientationSensitive(t, this.constraintFor(i)), current)) {
-                     autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                     autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                         this.view,
                         this.env,
                         this.rules,
                         t,
                         item,
-                        PrintClicks.Inner_CachePool.PLACE,
+                        PrintClicks.ClickMode.PLACE,
                         feet,
                         true,
                         true,
@@ -7786,7 +7786,7 @@ public final class PrintCore {
       }
 
       if (byStance.isEmpty()) {
-         autismclient.ai.print.PrintClicks.Inner_DataUtil standingBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(20000);
+         autismclient.ai.print.PrintClicks.RaycastBudget standingBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(20000);
 
          for (int i : cells) {
             PrintCore.StanceRouteCandidate standing = this.stanceRouteFor(reach, i, standingBudget);
@@ -7844,7 +7844,7 @@ public final class PrintCore {
             return this.orderedCandidate(reach, best, feetOf.get(best), byStance.get(best), bestScore);
          }
 
-         autismclient.ai.print.PrintClicks.Inner_DataUtil standingBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(20000);
+         autismclient.ai.print.PrintClicks.RaycastBudget standingBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(20000);
 
          for (int i : cells) {
             PrintCore.StanceRouteCandidate standing = this.stanceRouteFor(reach, i, standingBudget);
@@ -7871,7 +7871,7 @@ public final class PrintCore {
 
       Vec3 feet = new Vec3(body.x(), body.y(), body.z());
       IntArrayList ready = new IntArrayList();
-      autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000);
+      autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(2000);
 
       for (int i : cells) {
          PrintTarget target = this.targets[i];
@@ -7898,7 +7898,7 @@ public final class PrintCore {
                   this.rules,
                   target,
                   target.item(),
-                  PrintClicks.Inner_CachePool.PLACE,
+                  PrintClicks.ClickMode.PLACE,
                   feet,
                   true,
                   true,
@@ -7976,7 +7976,7 @@ public final class PrintCore {
                   );
             }
          );
-         autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000);
+         autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(2000);
          int added = 0;
 
          for (int i : candidates) {
@@ -7987,7 +7987,7 @@ public final class PrintCore {
                   this.rules,
                   target,
                   target.item(),
-                  PrintClicks.Inner_CachePool.PLACE,
+                  PrintClicks.ClickMode.PLACE,
                   feet,
                   true,
                   true,
@@ -8035,7 +8035,7 @@ public final class PrintCore {
          IntArrayList ordered = new IntArrayList(chosen.size());
          IntArrayList left = new IntArrayList(chosen);
          List<BlockPos> assumed = new ArrayList<>();
-         autismclient.ai.print.PrintClicks.Inner_DataUtil orderBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(40000);
+         autismclient.ai.print.PrintClicks.RaycastBudget orderBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(40000);
          float yawNow = this.env.playerYaw();
          Boolean outHere = null;
          long searches0 = this.routeSearches;
@@ -8044,17 +8044,17 @@ public final class PrintCore {
             while (!left.isEmpty() && ordered.size() < 16 && !orderBudget.isExhausted()) {
                int pickIdx = -1;
                double pickKey = 1.0 / 0.0;
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil pickClick = null;
+               autismclient.ai.print.PrintClicks.Click pickClick = null;
 
                for (int m = 0; m < left.size(); m++) {
                   PrintTarget t = this.targets[left.getInt(m)];
-                  autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                  autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                      this.view,
                      this.env,
                      this.rules,
                      t,
                      t.item(),
-                     PrintClicks.Inner_CachePool.PLACE,
+                     PrintClicks.ClickMode.PLACE,
                      standAt,
                      true,
                      true,
@@ -8304,7 +8304,7 @@ public final class PrintCore {
       long bestKey = 0L;
       int bestHeight = 0;
       BlockPos bestBase = null;
-      autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(80000);
+      autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(80000);
 
       label420:
       for (it.unimi.dsi.fastutil.longs.Long2DoubleMap.Entry e : reach.costByCell.long2DoubleEntrySet()) {
@@ -8380,13 +8380,13 @@ public final class PrintCore {
                                              BlockPos gp = this.targets[g].pos();
                                              if ((gp.getX() != x || gp.getZ() != z || gp.getY() < y0 || gp.getY() >= y0 + k)
                                                 && !this.refusedCellStances.contains(cellStanceKey(g, top))) {
-                                                autismclient.ai.print.PrintClicks.Inner_StreamUtil geo = PrintClicks.findClick(
+                                                autismclient.ai.print.PrintClicks.Click geo = PrintClicks.findClick(
                                                    this.view,
                                                    this.env,
                                                    this.rules,
                                                    this.targets[g],
                                                    this.targets[g].item(),
-                                                   PrintClicks.Inner_CachePool.PLACE,
+                                                   PrintClicks.ClickMode.PLACE,
                                                    feet,
                                                    true,
                                                    false,
@@ -8405,13 +8405,13 @@ public final class PrintCore {
                                                    }
 
                                                    this.view.clearHypotheses();
-                                                   autismclient.ai.print.PrintClicks.Inner_StreamUtil exact = PrintClicks.findClick(
+                                                   autismclient.ai.print.PrintClicks.Click exact = PrintClicks.findClick(
                                                       this.view,
                                                       this.env,
                                                       this.rules,
                                                       this.targets[g],
                                                       this.targets[g].item(),
-                                                      PrintClicks.Inner_CachePool.PLACE,
+                                                      PrintClicks.ClickMode.PLACE,
                                                       feet,
                                                       true,
                                                       true,
@@ -8483,7 +8483,7 @@ public final class PrintCore {
    }
 
    private boolean hasWorkNear(BlockPos here) {
-      autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(6000);
+      autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(6000);
       int own = this.cellIndexByPos.get(here.asLong());
       if (own >= 0 && this.cellStates[own] == 0 && this.isRideCompatible(own)) {
          return true;
@@ -8522,7 +8522,7 @@ public final class PrintCore {
                            this.rules,
                            this.targets[i],
                            this.targets[i].item(),
-                           PrintClicks.Inner_CachePool.PLACE,
+                           PrintClicks.ClickMode.PLACE,
                            feet,
                            true,
                            false,
@@ -8677,7 +8677,7 @@ public final class PrintCore {
          cells = cells.subList(0, 24);
       }
 
-      autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(60000);
+      autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(60000);
       long work0 = this.view.workUnits();
 
       for (int i : cells) {
@@ -8774,7 +8774,7 @@ public final class PrintCore {
                                  label565:
                                  for (long key : this.stancesNear(reach, t.pos(), false)) {
                                     for (Vec3 feet : PrintClicks.getCandidateFeetPositions(this.view, key, reach.feetYOf(key))) {
-                                       autismclient.ai.print.PrintClicks.Inner_StreamUtil c = PrintClicks.findPlacementClick(
+                                       autismclient.ai.print.PrintClicks.Click c = PrintClicks.findPlacementClick(
                                           this.view,
                                           this.env,
                                           this.rules,
@@ -8825,13 +8825,13 @@ public final class PrintCore {
                                     if ((!permanent || !this.init_Z_I(ni, reach.feetYOf(key), key))
                                        && (!permanent || !this.refusedCellStances.contains(cellStanceKey(ni, key)))) {
                                        for (Vec3 feet : PrintClicks.getCandidateFeetPositions(this.view, key, reach.feetYOf(key))) {
-                                          autismclient.ai.print.PrintClicks.Inner_StreamUtil c = PrintClicks.findClick(
+                                          autismclient.ai.print.PrintClicks.Click c = PrintClicks.findClick(
                                              this.view,
                                              this.env,
                                              this.rules,
                                              probe,
                                              supportItem,
-                                             PrintClicks.Inner_CachePool.PLACE,
+                                             PrintClicks.ClickMode.PLACE,
                                              feet,
                                              true,
                                              permanent,
@@ -8943,7 +8943,7 @@ public final class PrintCore {
    }
 
    private PrintCore.PrintStep tempChainStep(
-      PrintNav.ReachResult reach, int i, Item temp, BlockState tempState, autismclient.ai.print.PrintClicks.Inner_DataUtil budget
+      PrintNav.ReachResult reach, int i, Item temp, BlockState tempState, autismclient.ai.print.PrintClicks.RaycastBudget budget
    ) {
       PrintTarget t = this.targets[i];
       if (t.kind() == autismclient.ai.print.PrintTarget.TargetKind.PLACE && this.env.canBlockSurvive(t.wanted(), t.pos())) {
@@ -8994,7 +8994,7 @@ public final class PrintCore {
                         for (Vec3 feet : PrintClicks.getCandidateFeetPositions(
                            this.view, key, reach.feetYOf(key), PrintClicks.isOrientationSensitive(t, this.constraintFor(i))
                         )) {
-                           autismclient.ai.print.PrintClicks.Inner_StreamUtil c = PrintClicks.findPlacementClick(
+                           autismclient.ai.print.PrintClicks.Click c = PrintClicks.findPlacementClick(
                               this.view,
                               this.env,
                               this.rules,
@@ -9036,13 +9036,13 @@ public final class PrintCore {
 
                      for (long key : this.stancesNear(reach, first, true)) {
                         for (Vec3 feet : PrintClicks.getCandidateFeetPositions(this.view, key, reach.feetYOf(key))) {
-                           autismclient.ai.print.PrintClicks.Inner_StreamUtil c = PrintClicks.findClick(
+                           autismclient.ai.print.PrintClicks.Click c = PrintClicks.findClick(
                               this.view,
                               this.env,
                               this.rules,
                               probe,
                               temp,
-                              PrintClicks.Inner_CachePool.PLACE,
+                              PrintClicks.ClickMode.PLACE,
                               feet,
                               true,
                               false,
@@ -9179,7 +9179,7 @@ public final class PrintCore {
             }
 
             PrintTarget probe = new PrintTarget(-1, support, temporary, autismclient.ai.print.PrintTarget.TargetKind.PLACE, Items.AIR, null);
-            autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000);
+            autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(4000);
             this.view.pushTemporaryHypothesis(support, temporary);
 
             try {
@@ -9196,7 +9196,7 @@ public final class PrintCore {
                                  long key = BlockPos.asLong(x, y, z);
 
                                  for (Vec3 feet : PrintClicks.getCandidateFeetPositions(this.view, key, height, true)) {
-                                    autismclient.ai.print.PrintClicks.Inner_StreamUtil place = PrintClicks.findPlacementClick(
+                                    autismclient.ai.print.PrintClicks.Click place = PrintClicks.findPlacementClick(
                                        this.view,
                                        this.env,
                                        this.rules,
@@ -9212,13 +9212,13 @@ public final class PrintCore {
                                        this.view.pushHypothesis(owner, wanted);
 
                                        try {
-                                          autismclient.ai.print.PrintClicks.Inner_StreamUtil dig = PrintClicks.findClick(
+                                          autismclient.ai.print.PrintClicks.Click dig = PrintClicks.findClick(
                                              this.view,
                                              this.env,
                                              this.rules,
                                              probe,
                                              Items.AIR,
-                                             PrintClicks.Inner_CachePool.DIG,
+                                             PrintClicks.ClickMode.DIG,
                                              feet,
                                              place.crouch(),
                                              false,
@@ -9236,7 +9236,7 @@ public final class PrintCore {
 
                                                 for (int tick = 0; tick < 40; tick++) {
                                                    body = autismclient.ai.engine.AiPhysics.stepCompat(
-                                                      body, PrintMover.toMoveInput(autismclient.ai.print.PrintMover.Inner_StreamUtil.CROUCH, 0.0F), world
+                                                      body, PrintMover.toMoveInput(autismclient.ai.print.PrintMover.KeyState.CROUCH, 0.0F), world
                                                    );
                                                    if (feet.y - body.y() > 3.0 || !this.read_Z_NodeWalker_StreamU(body)) {
                                                       break;
@@ -9478,7 +9478,7 @@ public final class PrintCore {
       }
    }
 
-   private boolean init_Z_ListPool(PrintTarget open, PrintTarget closed, PrintTarget support, long key, Vec3 point, autismclient.ai.print.PrintClicks.Inner_DataUtil budget) {
+   private boolean init_Z_ListPool(PrintTarget open, PrintTarget closed, PrintTarget support, long key, Vec3 point, autismclient.ai.print.PrintClicks.RaycastBudget budget) {
       AABB upright = PrintGeometry.bodyBox(point.x, point.y, point.z, false);
       boolean alreadyClosed = this.view.getBlockState(open.pos()) == closed.wanted();
       if (this.view.isBoxClear(upright.deflate(0.001))
@@ -9491,7 +9491,7 @@ public final class PrintCore {
                      this.rules,
                      closed,
                      Items.AIR,
-                     PrintClicks.Inner_CachePool.INTERACT,
+                     PrintClicks.ClickMode.INTERACT,
                      point,
                      false,
                      true,
@@ -9510,7 +9510,7 @@ public final class PrintCore {
                      this.rules,
                      support,
                      Items.AIR,
-                     PrintClicks.Inner_CachePool.DIG,
+                     PrintClicks.ClickMode.DIG,
                      point,
                      true,
                      true,
@@ -9531,7 +9531,7 @@ public final class PrintCore {
                         this.rules,
                         open,
                         Items.AIR,
-                        PrintClicks.Inner_CachePool.INTERACT,
+                        PrintClicks.ClickMode.INTERACT,
                         point,
                         false,
                         true,
@@ -9575,7 +9575,7 @@ public final class PrintCore {
 
       autismclient.ai.engine.AiPhysics.MotionState body = autismclient.ai.engine.AiPhysics.MotionState.standing(point.x, point.y, point.z);
       autismclient.ai.engine.AiPhysics.MotionState next = autismclient.ai.engine.AiPhysics.stepCompat(
-         body, PrintMover.toMoveInput(autismclient.ai.print.PrintMover.Inner_StreamUtil.NONE, 0.0F), this.view.asPhysicsWorld()
+         body, PrintMover.toMoveInput(autismclient.ai.print.PrintMover.KeyState.NONE, 0.0F), this.view.asPhysicsWorld()
       );
       return next.onGround() && next.position().distanceToSqr(point) < 1.0E-6 && !this.view.intersectsHazard(next.box(false));
    }
@@ -9631,7 +9631,7 @@ public final class PrintCore {
       }
 
       PrintTarget probe = new PrintTarget(-1, p, this.view.getBlockState(p), autismclient.ai.print.PrintTarget.TargetKind.PLACE, Items.AIR, null);
-      autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(6000);
+      autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(6000);
       LongArrayList candidates = new LongArrayList();
 
       for (int dx = -4; dx <= 4; dx++) {
@@ -9653,7 +9653,7 @@ public final class PrintCore {
             && !this.failedDigStances.contains(cellStanceKey((int)(key & 2147483647L), sk))
             && this.hasWayOut(reach, sk)
             && sk != BlockPos.asLong(p.getX(), p.getY() + 1, p.getZ())) {
-            autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.findClickAt(reach, sk, probe, budget);
+            autismclient.ai.print.PrintClicks.Click click = this.findClickAt(reach, sk, probe, budget);
             if (click != null) {
                boolean keepDown = this.isAboveBase(BlockPos.of(sk)) && (this.hasHighComponents() || p.distChessboard(BlockPos.of(sk)) <= 8);
                if (keepDown ? this.canEscapeFromDugStance(BlockPos.of(sk), p) : this.canEscapeAfterDig(BlockPos.of(sk), p)) {
@@ -9685,17 +9685,17 @@ public final class PrintCore {
                         + (this.failedWalkStances.contains(key) ? "S" : "")
                         + (isBodyCell(key, c) ? "B" : "");
                      Vec3 feet = PrintNav.cellCenterAtY(key, reach.feetYOf(key));
-                     autismclient.ai.print.PrintClicks.Inner_StreamUtil geo = PrintClicks.findClick(
+                     autismclient.ai.print.PrintClicks.Click geo = PrintClicks.findClick(
                         this.view,
                         this.env,
                         this.rules,
                         t,
                         t.item(),
-                        PrintClicks.Inner_CachePool.PLACE,
+                        PrintClicks.ClickMode.PLACE,
                         feet,
                         true,
                         false,
-                        new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000),
+                        new autismclient.ai.print.PrintClicks.RaycastBudget(4000),
                         4.1000000000000005,
                         this.constraintFor(i)
                      );
@@ -10219,7 +10219,7 @@ public final class PrintCore {
          return Items.DIRT;
       }
 
-      autismclient.ai.print.PrintTools.Inner_DataUtil choice = PrintTools.init(
+      autismclient.ai.print.PrintTools.MaterialChoice choice = PrintTools.init(
          this.env, this.targetItems, this::inventoryCount, this.openCountByItem::getInt, avoid
       );
       if (choice != null) {
@@ -10297,13 +10297,13 @@ public final class PrintCore {
                   }
                }
 
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil at = null;
+               autismclient.ai.print.PrintClicks.Click at = null;
                if (!this.refusedCellStances.contains(cellStanceKey(i, hereKey)) && feet.distanceToSqr(PrintView.blockCenter(t.pos())) <= 36.0) {
-                  at = this.findInteractionClick(t, step, feet, new autismclient.ai.print.PrintClicks.Inner_DataUtil(500));
+                  at = this.findInteractionClick(t, step, feet, new autismclient.ai.print.PrintClicks.RaycastBudget(500));
                   if (at == null) {
                      double hereFeet = this.view.standingHeightAt(BlockPos.getX(hereKey), BlockPos.getY(hereKey), BlockPos.getZ(hereKey));
                      if (!Double.isNaN(hereFeet)) {
-                        autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000);
+                        autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(2000);
 
                         for (Vec3 point : PrintClicks.getCandidateFeetPositions(this.view, hereKey, hereFeet, true)) {
                            if ((at = this.findInteractionClick(t, step, point, budget)) != null || budget.isExhausted()) {
@@ -10388,20 +10388,20 @@ public final class PrintCore {
       }
 
       PrintNav.ReachResult reach = this.reachFrom(here);
-      autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(40000);
+      autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(40000);
       boolean holdLava = this.shouldHoldLava();
 
       for (int i : this.fluidWorkByHeight()) {
          PrintTarget t = this.targets[i];
          if (this.env.hasChunkAt(t.pos()) && this.cellStates[i] != 3 && this.cellStates[i] != 5) {
-            PrintClicks.Inner_CachePool mode;
+            PrintClicks.ClickMode mode;
             if (t.kind() == autismclient.ai.print.PrintTarget.TargetKind.FLUID) {
                boolean lava = t.wanted().getFluidState().getType().isSame(Fluids.LAVA);
                if (lava && holdLava) {
                   continue;
                }
 
-               mode = PrintClicks.Inner_CachePool.POUR;
+               mode = PrintClicks.ClickMode.POUR;
                PrintCore.PrintStep preparation = this.prepareFluidCellStep(reach, i);
                if (preparation == this.waitOneTick) {
                   continue;
@@ -10459,7 +10459,7 @@ public final class PrintCore {
                   continue;
                }
 
-               mode = PrintClicks.Inner_CachePool.WATERLOG;
+               mode = PrintClicks.ClickMode.WATERLOG;
                this.predictFlow(t.pos(), t.wanted().getFluidState().getType());
                PrintCore.PrintStep shaping = this.fallingFlowStep(reach);
                if (shaping == this.waitOneTick) {
@@ -10487,7 +10487,7 @@ public final class PrintCore {
                for (long key : this.stancesNear(reach, c, true)) {
                   if (!this.refusedCellStances.contains(cellStanceKey(i, key))) {
                      for (Vec3 feet : PrintClicks.getCandidateFeetPositions(this.view, key, reach.feetYOf(key))) {
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                        autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                            this.view,
                            this.env,
                            this.rules,
@@ -10495,7 +10495,7 @@ public final class PrintCore {
                            bucket,
                            mode,
                            feet,
-                           mode != PrintClicks.Inner_CachePool.WATERLOG,
+                           mode != PrintClicks.ClickMode.WATERLOG,
                            false,
                            budget,
                            4.1000000000000005
@@ -10919,7 +10919,7 @@ public final class PrintCore {
          this.waterloggedCells = cells.toIntArray();
       }
 
-      autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000);
+      autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(4000);
 
       for (int i : this.waterloggedCells) {
          PrintTarget target = this.targets[i];
@@ -10930,13 +10930,13 @@ public final class PrintCore {
             for (long key : this.stancesNear(reach, target.pos(), true)) {
                if (!this.refusedCellStances.contains(cellStanceKey(i, key))) {
                   for (Vec3 point : PrintClicks.getCandidateFeetPositions(this.view, key, reach.feetYOf(key))) {
-                     autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                     autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                         this.view,
                         this.env,
                         this.rules,
                         target,
                         PrintClicks.getFluidBucketItem(target),
-                        PrintClicks.Inner_CachePool.WATERLOG,
+                        PrintClicks.ClickMode.WATERLOG,
                         point,
                         false,
                         false,
@@ -10962,7 +10962,7 @@ public final class PrintCore {
                               }
 
                               this.logTrace("waterlog: completing nearby " + target.pos().toShortString());
-                              PrintCore.PrintStep pour = new PrintCore.PourStep(i, PrintClicks.Inner_CachePool.WATERLOG, key, point);
+                              PrintCore.PrintStep pour = new PrintCore.PourStep(i, PrintClicks.ClickMode.WATERLOG, key, point);
                               return key == reach.startKey ? pour : new PrintCore.WalkRouteStep(reach.reconstructPath(key), reach, pour);
                            }
                         }
@@ -11168,7 +11168,7 @@ public final class PrintCore {
          BlockState state = tempBlock.getBlock().defaultBlockState();
          List<Long> cells = new ArrayList<>(this.confirmedAirCells);
          cells.sort(Comparator.comparingInt(BlockPos::getY));
-         autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(20000);
+         autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(20000);
 
          for (long cellKey : cells) {
             BlockPos p = BlockPos.of(cellKey);
@@ -11195,7 +11195,7 @@ public final class PrintCore {
                                        this.rules,
                                        probe,
                                        temp,
-                                       PrintClicks.Inner_CachePool.PLACE,
+                                       PrintClicks.ClickMode.PLACE,
                                        feet,
                                        true,
                                        false,
@@ -11364,7 +11364,7 @@ public final class PrintCore {
          sideWork.sort(highestNearestFirst(b1));
          if (!sideWork.isEmpty()) {
             PrintCore.PrintStep sideRemoval = this.removalStep(
-               this.reachFrom(here), sideWork, new autismclient.ai.print.PrintClicks.Inner_DataUtil(40000), b1.y() - 0.6
+               this.reachFrom(here), sideWork, new autismclient.ai.print.PrintClicks.RaycastBudget(40000), b1.y() - 0.6
             );
             if (sideRemoval != null) {
                return sideRemoval;
@@ -11389,7 +11389,7 @@ public final class PrintCore {
             if (!high.isEmpty()) {
                high.sort(highestNearestFirst(b1));
                PrintCore.PrintStep a = this.removalStep(
-                  this.reachFrom(here), high, new autismclient.ai.print.PrintClicks.Inner_DataUtil(40000)
+                  this.reachFrom(here), high, new autismclient.ai.print.PrintClicks.RaycastBudget(40000)
                );
                if (a != null) {
                   return a;
@@ -11429,7 +11429,7 @@ public final class PrintCore {
 
             localWork.sort(highestNearestFirst(b1));
             PrintCore.PrintStep localRemoval = this.removalStep(
-               this.reachFrom(here), localWork, new autismclient.ai.print.PrintClicks.Inner_DataUtil(40000), b1.y() - 0.6
+               this.reachFrom(here), localWork, new autismclient.ai.print.PrintClicks.RaycastBudget(40000), b1.y() - 0.6
             );
             if (localRemoval != null) {
                return localRemoval;
@@ -11445,7 +11445,7 @@ public final class PrintCore {
 
             others.sort(highestNearestFirst(b1));
             PrintCore.PrintStep a = this.removalStep(
-               this.reachFrom(here), others, new autismclient.ai.print.PrintClicks.Inner_DataUtil(40000)
+               this.reachFrom(here), others, new autismclient.ai.print.PrintClicks.RaycastBudget(40000)
             );
             if (a != null) {
                return a;
@@ -11484,7 +11484,7 @@ public final class PrintCore {
          List<Long> order = new ArrayList<>(this.temporaryBlocks.keySet());
          order.sort(Comparator.comparingInt(kx -> -BlockPos.getY(kx)));
          PrintCore.PrintStep pick = this.removalStep(
-            reach, order, new autismclient.ai.print.PrintClicks.Inner_DataUtil(40000)
+            reach, order, new autismclient.ai.print.PrintClicks.RaycastBudget(40000)
          );
          if (pick != null) {
             return pick;
@@ -11664,13 +11664,13 @@ public final class PrintCore {
    }
 
    private PrintCore.PrintStep removalStep(
-      PrintNav.ReachResult reach, List<Long> order, autismclient.ai.print.PrintClicks.Inner_DataUtil budget
+      PrintNav.ReachResult reach, List<Long> order, autismclient.ai.print.PrintClicks.RaycastBudget budget
    ) {
       return this.removalStep(reach, order, budget, -1.0 / 0.0);
    }
 
    private PrintCore.PrintStep removalStep(
-      PrintNav.ReachResult reach, List<Long> order, autismclient.ai.print.PrintClicks.Inner_DataUtil budget, double minimumFeet
+      PrintNav.ReachResult reach, List<Long> order, autismclient.ai.print.PrintClicks.RaycastBudget budget, double minimumFeet
    ) {
       if (this.phase == PrintCore.PrintPhase.TEARDOWN) {
          if (order.isEmpty()) {
@@ -11722,7 +11722,7 @@ public final class PrintCore {
                            }
                         }
                      } else if (!this.failedDigStances.contains(cellStanceKey((int)(p.asLong() & 2147483647L), sk))) {
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.findClickAt(reach, sk, probe, budget);
+                        autismclient.ai.print.PrintClicks.Click click = this.findClickAt(reach, sk, probe, budget);
                         PrintCore.PrintStep removal = this.removalFromStation(reach, sk, probe, click);
                         if (removal != null) {
                            return removal;
@@ -11738,7 +11738,7 @@ public final class PrintCore {
    }
 
    private PrintCore.PrintStep removalFromStation(
-      PrintNav.ReachResult reach, long station, PrintTarget target, autismclient.ai.print.PrintClicks.Inner_StreamUtil click
+      PrintNav.ReachResult reach, long station, PrintTarget target, autismclient.ai.print.PrintClicks.Click click
    ) {
       return click == null ? null : this.removalAt(reach, station, target.pos(), false, click);
    }
@@ -11754,7 +11754,7 @@ public final class PrintCore {
    }
 
    private PrintCore.PrintStep removalAt(
-      PrintNav.ReachResult reach, long station, BlockPos position, boolean under, autismclient.ai.print.PrintClicks.Inner_StreamUtil click
+      PrintNav.ReachResult reach, long station, BlockPos position, boolean under, autismclient.ai.print.PrintClicks.Click click
    ) {
       if (this.phase != PrintCore.PrintPhase.TEARDOWN) {
          if (this.hasWayOut(reach, station) && this.canEscapeFromDugStance(under ? position : BlockPos.of(station), position)) {
@@ -12308,8 +12308,8 @@ public final class PrintCore {
       PrintRules.Interaction step = new PrintRules.Interaction(job.item(), job.description());
       long station = PrintNav.resolveStandingCell(this.view, this.feetPosition()).asLong();
       if (!this.refusedCellStances.contains(cellStanceKey(cell, station))) {
-         autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.findInteractionClick(
-            this.targets[cell], step, this.feetPosition(), new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000)
+         autismclient.ai.print.PrintClicks.Click click = this.findInteractionClick(
+            this.targets[cell], step, this.feetPosition(), new autismclient.ai.print.PrintClicks.RaycastBudget(2000)
          );
          if (click != null) {
             return new PrintCore.InteractStep(cell, step, station, click.feet(), click.crouch());
@@ -12594,8 +12594,8 @@ public final class PrintCore {
    private PrintCore.PrintStep landedWorkStep(int cell, PrintCore.WorkGoal goal, PrintNav.ReachResult reach) {
       if (cell < 0) {
          BlockPos position = goal.click.target().pos();
-         if (goal.click.mode() != PrintClicks.Inner_CachePool.DIG || !this.temporaryBlocks.containsKey(position.asLong())) {
-            return this.load_UiHelper_NetHelper_Z(goal.click.mode() != PrintClicks.Inner_CachePool.DIG);
+         if (goal.click.mode() != PrintClicks.ClickMode.DIG || !this.temporaryBlocks.containsKey(position.asLong())) {
+            return this.load_UiHelper_NetHelper_Z(goal.click.mode() != PrintClicks.ClickMode.DIG);
          }
 
          if (this.isHeldByUnsettledFlow(position.asLong())) {
@@ -12610,17 +12610,17 @@ public final class PrintCore {
             && (station == local.startKey || !this.failedWalkStances.contains(station))
             && !this.failedDigStances.contains(cellStanceKey((int)(position.asLong() & 2147483647L), station))
             && !this.failedClicks.contains(new PrintCore.ClickAttempt(position.asLong(), station, goal.click.feet(), goal.click.crouch()))) {
-            autismclient.ai.print.PrintClicks.Inner_StreamUtil ray = PrintClicks.findClick(
+            autismclient.ai.print.PrintClicks.Click ray = PrintClicks.findClick(
                this.view,
                this.env,
                this.rules,
                goal.click.target(),
                Items.AIR,
-               PrintClicks.Inner_CachePool.DIG,
+               PrintClicks.ClickMode.DIG,
                goal.click.feet(),
                goal.click.crouch(),
                false,
-               new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000),
+               new autismclient.ai.print.PrintClicks.RaycastBudget(4000),
                4.4
             );
             removal = this.removalFromStation(local, station, goal.click.target(), ray);
@@ -12628,7 +12628,7 @@ public final class PrintCore {
 
          if (removal == null) {
             removal = this.removalStep(
-               local, List.of(position.asLong()), new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000)
+               local, List.of(position.asLong()), new autismclient.ai.print.PrintClicks.RaycastBudget(4000)
             );
          }
 
@@ -12657,9 +12657,9 @@ public final class PrintCore {
             return this.load_UiHelper_NetHelper_Z(true);
          }
 
-         PrintClicks.Inner_CachePool mode = this.clickModeFor(cell);
+         PrintClicks.ClickMode mode = this.clickModeFor(cell);
          this.activeWorkMode = mode;
-         autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findGroundedClickAndPredict(
+         autismclient.ai.print.PrintClicks.Click click = PrintClicks.findGroundedClickAndPredict(
             this.view,
             this.env,
             this.rules,
@@ -12667,8 +12667,8 @@ public final class PrintCore {
             this.clickItemFor(cell, mode),
             mode,
             goal.click.feet(),
-            mode == PrintClicks.Inner_CachePool.PLACE || mode == PrintClicks.Inner_CachePool.POUR,
-            new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000),
+            mode == PrintClicks.ClickMode.PLACE || mode == PrintClicks.ClickMode.POUR,
+            new autismclient.ai.print.PrintClicks.RaycastBudget(4000),
             4.1000000000000005,
             this.constraintFor(cell),
             null
@@ -12679,8 +12679,8 @@ public final class PrintCore {
          }
 
          PrintCore.PrintStep work;
-         if (mode != PrintClicks.Inner_CachePool.POUR && mode != PrintClicks.Inner_CachePool.WATERLOG) {
-            if (mode == PrintClicks.Inner_CachePool.INTERACT) {
+         if (mode != PrintClicks.ClickMode.POUR && mode != PrintClicks.ClickMode.WATERLOG) {
+            if (mode == PrintClicks.ClickMode.INTERACT) {
                PrintMachineJob rail = this.machineJobAt(cell);
                PrintRules.Interaction step = rail == null
                   ? this.rules
@@ -12707,7 +12707,7 @@ public final class PrintCore {
                work = new PrintCore.MultiCellPlaceStep(station, click.feet(), click.crouch(), IntArrayList.of(cell));
             }
          } else {
-            if (mode == PrintClicks.Inner_CachePool.POUR && !this.isPourStanceSafe(station, this.targets[cell])) {
+            if (mode == PrintClicks.ClickMode.POUR && !this.isPourStanceSafe(station, this.targets[cell])) {
                return this.load_UiHelper_NetHelper_Z(true);
             }
 
@@ -12747,7 +12747,7 @@ public final class PrintCore {
    private boolean read_Z_I_BlockState(int cell, BlockState proposed) {
       PrintCore.PlacementSafetyProof proof = this.proof;
       return cell == this.activeWorkCell
-         && this.activeWorkMode == PrintClicks.Inner_CachePool.PLACE
+         && this.activeWorkMode == PrintClicks.ClickMode.PLACE
          && this.env.isFlightPermitted()
          && !this.env.canUseFlight()
          && this.activeWorkGoal != null
@@ -12787,8 +12787,8 @@ public final class PrintCore {
       }
    }
 
-   private boolean init_Z_ListPool(PrintTarget target, PrintClicks.Inner_CachePool mode, long station, Vec3 point) {
-      return mode != PrintClicks.Inner_CachePool.PLACE
+   private boolean init_Z_ListPool(PrintTarget target, PrintClicks.ClickMode mode, long station, Vec3 point) {
+      return mode != PrintClicks.ClickMode.PLACE
          || target.index() < 0
          || !this.init_Z_I(target.index(), point.y, station)
          || this.init_Z_I_Vec3(target.index(), point);
@@ -12911,35 +12911,35 @@ public final class PrintCore {
       this.landingFailures.addTo(key, 1);
    }
 
-   private PrintClicks.Inner_CachePool clickModeFor(int i) {
+   private PrintClicks.ClickMode clickModeFor(int i) {
       if (this.machineJobAt(i) != null) {
-         return PrintClicks.Inner_CachePool.INTERACT;
+         return PrintClicks.ClickMode.INTERACT;
       }
 
       if (this.cellStates[i] == 0 && this.targets[i].kind() == autismclient.ai.print.PrintTarget.TargetKind.FLUID) {
-         return PrintClicks.Inner_CachePool.POUR;
+         return PrintClicks.ClickMode.POUR;
       }
 
       if (this.cellStates[i] == 2) {
          BlockState state = this.view.getBlockState(this.targets[i].pos());
          if (this.rules.nextInteraction(this.targets[i], state) != null) {
-            return PrintClicks.Inner_CachePool.INTERACT;
+            return PrintClicks.ClickMode.INTERACT;
          }
 
          if (this.rules.isWaterlogMissing(this.targets[i], state)) {
-            return PrintClicks.Inner_CachePool.WATERLOG;
+            return PrintClicks.ClickMode.WATERLOG;
          }
       }
 
-      return PrintClicks.Inner_CachePool.PLACE;
+      return PrintClicks.ClickMode.PLACE;
    }
 
-   private Item clickItemFor(int i, PrintClicks.Inner_CachePool mode) {
-      if (mode == PrintClicks.Inner_CachePool.POUR || mode == PrintClicks.Inner_CachePool.WATERLOG) {
+   private Item clickItemFor(int i, PrintClicks.ClickMode mode) {
+      if (mode == PrintClicks.ClickMode.POUR || mode == PrintClicks.ClickMode.WATERLOG) {
          return PrintClicks.getFluidBucketItem(this.targets[i]);
       }
 
-      if (mode == PrintClicks.Inner_CachePool.INTERACT) {
+      if (mode == PrintClicks.ClickMode.INTERACT) {
          PrintMachineJob rail = this.machineJobAt(i);
          if (rail != null) {
             return rail.item();
@@ -12953,7 +12953,7 @@ public final class PrintCore {
       }
    }
 
-   private PrintCore.WorkGoal clickGoal(PrintTarget target, PrintClicks.Inner_CachePool mode, Item item, BlockPos via, boolean rememberFailures) {
+   private PrintCore.WorkGoal clickGoal(PrintTarget target, PrintClicks.ClickMode mode, Item item, BlockPos via, boolean rememberFailures) {
       if (!rememberFailures && this.previousProof != null) {
          return this.previousProof.cachedClickGoal(target, mode, item, via);
       }
@@ -12980,14 +12980,14 @@ public final class PrintCore {
       return new PrintFlight.FlightPath(List.copyOf(points), route.goal());
    }
 
-   private PrintCore.WorkGoal clickGoalSearch(PrintTarget target, PrintClicks.Inner_CachePool mode, Item item, BlockPos via) {
+   private PrintCore.WorkGoal clickGoalSearch(PrintTarget target, PrintClicks.ClickMode mode, Item item, BlockPos via) {
       PrintCore.ClickGoalSearch search = new PrintCore.ClickGoalSearch(target, mode, item, via, this.feetPosition());
       search.advance(9223372036854775807L);
       return search.clickGoalSearch;
    }
 
    private PrintCore.StanceWitness flightWitness(int i, BlockPos via) {
-      PrintClicks.Inner_CachePool mode = this.clickModeFor(i);
+      PrintClicks.ClickMode mode = this.clickModeFor(i);
       PrintCore.WorkGoal goal = this.clickGoal(this.targets[i], mode, this.clickItemFor(i, mode), via, false);
       return goal == null ? null : this.witnessForGoal(i, goal);
    }
@@ -13066,7 +13066,7 @@ public final class PrintCore {
 
    boolean replayFlightWitness(PrintCore.StanceWitness witness) {
       if (witness.flightAccess() != null && witness.futureViable(this)) {
-         autismclient.ai.print.PrintClicks.Inner_StreamUtil click = witness.flightAccess().click;
+         autismclient.ai.print.PrintClicks.Click click = witness.flightAccess().click;
          int owner = click.target().index();
          if (owner < 0 || this.clickModeFor(owner) == click.mode() && this.clickItemFor(owner, click.mode()) == click.item()) {
             LongArrayList installed = new LongArrayList();
@@ -13309,13 +13309,13 @@ public final class PrintCore {
    }
 
    private PrintCore.PrintStep init_UiHelper_NetHelper_UiHelper_NetHelper(PrintCore.PrintStep next) {
-      if (next instanceof PrintCore.FlightWorkStep work && work.cell >= 0 && work.goal.click.mode() == PrintClicks.Inner_CachePool.PLACE) {
+      if (next instanceof PrintCore.FlightWorkStep work && work.cell >= 0 && work.goal.click.mode() == PrintClicks.ClickMode.PLACE) {
          return new PrintCore.CellGoalStep(work.cell, work.goal, next);
       } else {
          return next instanceof PrintCore.FlightLandingStep landing
                && landing.cell >= 0
                && landing.workGoal != null
-               && landing.workGoal.click.mode() == PrintClicks.Inner_CachePool.PLACE
+               && landing.workGoal.click.mode() == PrintClicks.ClickMode.PLACE
             ? new PrintCore.CellGoalStep(landing.cell, landing.workGoal, next)
             : next;
       }
@@ -13342,18 +13342,18 @@ public final class PrintCore {
    }
 
    private PrintCore.PreviewActions previewActions(
-      Vec3 pose, autismclient.ai.print.PrintClicks.Inner_StreamUtil first, IntArrayList pool, autismclient.ai.print.PrintClicks.Inner_DataUtil budget
+      Vec3 pose, autismclient.ai.print.PrintClicks.Click first, IntArrayList pool, autismclient.ai.print.PrintClicks.RaycastBudget budget
    ) {
       return this.previewActions(pose, first, pool, budget, 24);
    }
 
    private PrintCore.PreviewActions previewActions(
-      Vec3 pose, autismclient.ai.print.PrintClicks.Inner_StreamUtil first, IntArrayList pool, autismclient.ai.print.PrintClicks.Inner_DataUtil budget, int maxActions
+      Vec3 pose, autismclient.ai.print.PrintClicks.Click first, IntArrayList pool, autismclient.ai.print.PrintClicks.RaycastBudget budget, int maxActions
    ) {
       ArrayList<Integer> cells = new ArrayList<>();
       LongArrayList assumed = new LongArrayList();
       HashMap<Item, Integer> used = new HashMap<>();
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil click = first;
+      autismclient.ai.print.PrintClicks.Click click = first;
       int ticks = 0;
       float yaw = first.yaw();
       float pitch = first.pitch();
@@ -13392,7 +13392,7 @@ public final class PrintCore {
             Vec3 eye = PrintGeometry.eyePos(pose, false);
             BlockHitResult ray = this.view.raycastBlock(eye, eye.add(PrintGeometry.lookDirection(yaw, pitch).scale(4.4)));
             int aligned = ray == null ? -1 : this.cellIndexByPos.get(ray.getBlockPos().relative(ray.getDirection()).asLong());
-            autismclient.ai.print.PrintClicks.Inner_StreamUtil next = null;
+            autismclient.ai.print.PrintClicks.Click next = null;
             if (aligned >= 0
                && pool.contains(aligned)
                && !this.view.hasHypothesisAt(this.targets[aligned].pos())
@@ -13457,13 +13457,13 @@ public final class PrintCore {
                for (int tested = 0; tested < Math.min(8, choices.size()) && !budget.isExhausted(); tested++) {
                   int candidate = choices.get(tested);
                   PrintTarget target = this.targets[candidate];
-                  autismclient.ai.print.PrintClicks.Inner_StreamUtil option = PrintClicks.findClick(
+                  autismclient.ai.print.PrintClicks.Click option = PrintClicks.findClick(
                      this.view,
                      this.env,
                      this.rules,
                      target,
                      target.item(),
-                     PrintClicks.Inner_CachePool.PLACE,
+                     PrintClicks.ClickMode.PLACE,
                      pose,
                      true,
                      false,
@@ -13632,15 +13632,15 @@ public final class PrintCore {
    }
 
    private boolean hasSupportClick(int owner, PrintTarget support, Vec3 feet) {
-      return this.hasSupportClick(owner, support, feet, new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000));
+      return this.hasSupportClick(owner, support, feet, new autismclient.ai.print.PrintClicks.RaycastBudget(2000));
    }
 
-   private boolean hasSupportClick(int owner, PrintTarget support, Vec3 feet, autismclient.ai.print.PrintClicks.Inner_DataUtil budget) {
+   private boolean hasSupportClick(int owner, PrintTarget support, Vec3 feet, autismclient.ai.print.PrintClicks.RaycastBudget budget) {
       return this.supportClick(owner, support, feet, budget) != null;
    }
 
-   private autismclient.ai.print.PrintClicks.Inner_StreamUtil supportClick(
-      int owner, PrintTarget support, Vec3 feet, autismclient.ai.print.PrintClicks.Inner_DataUtil budget
+   private autismclient.ai.print.PrintClicks.Click supportClick(
+      int owner, PrintTarget support, Vec3 feet, autismclient.ai.print.PrintClicks.RaycastBudget budget
    ) {
       PrintTarget target = this.targets[owner];
       this.view.pushTemporaryHypothesis(support.pos(), support.wanted());
@@ -13652,7 +13652,7 @@ public final class PrintCore {
             this.rules,
             target,
             target.item(),
-            PrintClicks.Inner_CachePool.PLACE,
+            PrintClicks.ClickMode.PLACE,
             feet,
             true,
             false,
@@ -13676,8 +13676,8 @@ public final class PrintCore {
          return null;
       }
 
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil source = this.supportClick(
-         owner, support, goal.click.feet(), new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000)
+      autismclient.ai.print.PrintClicks.Click source = this.supportClick(
+         owner, support, goal.click.feet(), new autismclient.ai.print.PrintClicks.RaycastBudget(2000)
       );
       if (source == null) {
          return null;
@@ -13857,8 +13857,8 @@ public final class PrintCore {
          || b instanceof LightningRodBlock;
    }
 
-   private autismclient.ai.print.PrintMover.Inner_DataUtil moverGoal(Vec3 feet, double tolerance, double floor, boolean crouch, boolean stop) {
-      return new autismclient.ai.print.PrintMover.Inner_DataUtil(feet, tolerance, floor, crouch, stop, this.airPeakY);
+   private autismclient.ai.print.PrintMover.Goal moverGoal(Vec3 feet, double tolerance, double floor, boolean crouch, boolean stop) {
+      return new autismclient.ai.print.PrintMover.Goal(feet, tolerance, floor, crouch, stop, this.airPeakY);
    }
 
    private void trackAim() {
@@ -14496,8 +14496,8 @@ public final class PrintCore {
          || step.item() != Items.AIR && step.item() == t.wanted().getBlock().asItem();
    }
 
-   autismclient.ai.print.PrintClicks.Inner_StreamUtil findInteractionClick(
-      PrintTarget t, PrintRules.Interaction step, Vec3 feet, autismclient.ai.print.PrintClicks.Inner_DataUtil budget
+   autismclient.ai.print.PrintClicks.Click findInteractionClick(
+      PrintTarget t, PrintRules.Interaction step, Vec3 feet, autismclient.ai.print.PrintClicks.RaycastBudget budget
    ) {
       PrintMachineJob job = this.machineJobAt(this.cellIndexByPos.get(t.pos().asLong()));
       if (job != null) {
@@ -14508,7 +14508,7 @@ public final class PrintCore {
       }
 
       boolean crouchOnly = job instanceof PrintItemFrame frame && frame.frameEntityUuid() == null && PrintClicks.isInteractableBlock(this.view.getBlockState(t.pos()));
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil c = crouchOnly
+      autismclient.ai.print.PrintClicks.Click c = crouchOnly
          ? null
          : PrintClicks.findClick(
             this.view,
@@ -14516,7 +14516,7 @@ public final class PrintCore {
             this.rules,
             t,
             step.item(),
-            PrintClicks.Inner_CachePool.INTERACT,
+            PrintClicks.ClickMode.INTERACT,
             feet,
             false,
             false,
@@ -14530,7 +14530,7 @@ public final class PrintCore {
             this.rules,
             t,
             step.item(),
-            PrintClicks.Inner_CachePool.INTERACT,
+            PrintClicks.ClickMode.INTERACT,
             feet,
             true,
             false,
@@ -15394,7 +15394,7 @@ public final class PrintCore {
          return null;
       } else {
          PrintTarget probe = new PrintTarget(-1, p, tempBlock.getBlock().defaultBlockState(), autismclient.ai.print.PrintTarget.TargetKind.PLACE, temp, null);
-         autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(20000);
+         autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(20000);
 
          for (int dx = -4; dx <= 4; dx++) {
             for (int dz = -4; dz <= 4; dz++) {
@@ -15412,7 +15412,7 @@ public final class PrintCore {
                               this.rules,
                               probe,
                               temp,
-                              PrintClicks.Inner_CachePool.PLACE,
+                              PrintClicks.ClickMode.PLACE,
                               feet,
                               true,
                               false,
@@ -15459,7 +15459,7 @@ public final class PrintCore {
       final autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint;
       final PrintRules.Interaction interaction;
       final boolean orientationSensitive;
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil clickBudget;
+      final autismclient.ai.print.PrintClicks.RaycastBudget clickBudget;
       int ring;
       int ringDx;
       int ringDz;
@@ -15475,7 +15475,7 @@ public final class PrintCore {
 
       GroundWitnessSearch(int cell, long blocked, boolean anywhere, BlockPos via, BlockPos near) {
          this.startReach = PrintCore.this.reachable;
-         this.clickBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(3000);
+         this.clickBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(3000);
          this.ringDy = 3;
          this.cell = cell;
          this.target = PrintCore.this.targets[cell];
@@ -15607,14 +15607,14 @@ public final class PrintCore {
                }
 
                if (this.anywhere || !keep.contains(this.blocked)) {
-                  autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.target.kind() == autismclient.ai.print.PrintTarget.TargetKind.FLUID
+                  autismclient.ai.print.PrintClicks.Click click = this.target.kind() == autismclient.ai.print.PrintTarget.TargetKind.FLUID
                      ? PrintClicks.findClick(
                         PrintCore.this.view,
                         PrintCore.this.env,
                         PrintCore.this.rules,
                         this.target,
                         PrintClicks.getFluidBucketItem(this.target),
-                        PrintClicks.Inner_CachePool.POUR,
+                        PrintClicks.ClickMode.POUR,
                         feet,
                         true,
                         false,
@@ -15643,7 +15643,7 @@ public final class PrintCore {
                               PrintCore.this.rules,
                               this.target,
                               this.interaction.item(),
-                              PrintClicks.Inner_CachePool.INTERACT,
+                              PrintClicks.ClickMode.INTERACT,
                               feet,
                               false,
                               false,
@@ -15680,7 +15680,7 @@ public final class PrintCore {
       final PrintRules.Interaction step;
       int ticks;
       boolean finished;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil pendingClick;
+      autismclient.ai.print.PrintClicks.Click pendingClick;
       PrintCore.PrintStep resultStep;
       final long stanceKey;
       final Vec3 workFeet;
@@ -15721,7 +15721,7 @@ public final class PrintCore {
 
             autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.env.playerMotionState();
             if (this.workFeet != null && this.pendingClick == null) {
-               autismclient.ai.print.PrintMover.Inner_DataUtil goal = PrintCore.this.moverGoal(
+               autismclient.ai.print.PrintMover.Goal goal = PrintCore.this.moverGoal(
                   this.workFeet, 0.08, this.workFeet.y - 0.01, this.crouch, true
                );
                if (!PrintMover.atGoal(b, goal) || this.crouch && PrintCore.this.env.playerEyeHeight() >= 1.4) {
@@ -15738,7 +15738,7 @@ public final class PrintCore {
 
             if (this.pendingClick == null) {
                this.pendingClick = PrintCore.this.findInteractionClick(
-                  t, this.step, PrintCore.this.feetPosition(), new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000)
+                  t, this.step, PrintCore.this.feetPosition(), new autismclient.ai.print.PrintClicks.RaycastBudget(2000)
                );
                if (this.pendingClick == null) {
                   PrintCore.this.logTrace("interact: no click for " + t.pos().toShortString() + " from " + PrintCore.formatVec(PrintCore.this.feetPosition()));
@@ -15903,7 +15903,7 @@ public final class PrintCore {
       final PrintCore.GoalEvalSession flightSession = PrintCore.this.env.canUseFlight() ? PrintCore.this.new GoalEvalSession() : null;
       final PrintCore.BlockedCellCache floodCache = this.flightSession == null ? PrintCore.this.new BlockedCellCache() : null;
       final PrintCore.GroundWitnessCache groundCache = this.flightSession == null ? PrintCore.this.new GroundWitnessCache() : null;
-      final PrintCleanupAccess.Inner_CachePool cleanup;
+      final PrintCleanupAccess.CleanupProof cleanup;
 
       PlacementSafetyProof(BlockPos position, BlockState state) {
          this(position, state, PrintCore.this.view::workUnits);
@@ -16359,7 +16359,7 @@ public final class PrintCore {
       final List<BlockState> acceptedStates = new ArrayList<>();
       final List<PrintCore.StanceClickEvaluation.ScoredClick> scoredClicks = new ArrayList<>();
       final LongOpenHashSet trappedCellStances = new LongOpenHashSet();
-      final PrintClicks.Inner_DataUtil clickBudget = new PrintClicks.Inner_DataUtil(40000);
+      final PrintClicks.RaycastBudget clickBudget = new PrintClicks.RaycastBudget(40000);
       final int low;
       int stage;
       int scanCursor;
@@ -16439,7 +16439,7 @@ public final class PrintCore {
                            int at = this.scanCursor++;
                            PrintTarget t = PrintCore.this.targets[this.remainingCells.getInt(at)];
 
-                           autismclient.ai.print.PrintClicks.Inner_StreamUtil click;
+                           autismclient.ai.print.PrintClicks.Click click;
                            try (ShapeAttachment geometry = this.trialPolicy.geometry.attach()) {
                               click = PrintClicks.findClick(
                                  PrintCore.this.view,
@@ -16447,7 +16447,7 @@ public final class PrintCore {
                                  PrintCore.this.rules,
                                  t,
                                  t.item(),
-                                 PrintClicks.Inner_CachePool.PLACE,
+                                 PrintClicks.ClickMode.PLACE,
                                  this.feet,
                                  true,
                                  true,
@@ -16567,7 +16567,7 @@ public final class PrintCore {
          }
       }
 
-      record ScoredClick(int index, double score, autismclient.ai.print.PrintClicks.Inner_StreamUtil click) {
+      record ScoredClick(int index, double score, autismclient.ai.print.PrintClicks.Click click) {
       }
    }
 
@@ -16936,7 +16936,7 @@ public final class PrintCore {
                               material,
                               null
                            );
-                           this.clickPlanner = PrintCore.this.new ClickCandidatePlanner(probe, PrintClicks.Inner_CachePool.PLACE, material, null, true);
+                           this.clickPlanner = PrintCore.this.new ClickCandidatePlanner(probe, PrintClicks.ClickMode.PLACE, material, null, true);
                         }
                      }
                   }
@@ -17156,7 +17156,7 @@ public final class PrintCore {
                         Items.AIR,
                         null
                      ),
-                     PrintClicks.Inner_CachePool.DIG,
+                     PrintClicks.ClickMode.DIG,
                      Items.AIR,
                      null,
                      true
@@ -17323,7 +17323,7 @@ public final class PrintCore {
                && this.cellsInReach(pose) >= 3
                && PrintFlight.isFlightPointSafe(PrintCore.this.view, pose)
                && PrintFlight.isFlightSegmentClear(PrintCore.this.view, this.origin, pose)) {
-               autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(1200);
+               autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(1200);
 
                for (int checked = 0; checked < Math.min(64, this.ready.size()) && !budget.isExhausted(); checked++) {
                   int i = this.ready.get(checked);
@@ -17332,13 +17332,13 @@ public final class PrintCore {
                      && PrintCore.this.belowPendingQuietInputs(i)
                      && !PrintCore.this.refusedCellStances.contains(PrintCore.cellStanceKey(i, BlockPos.containing(pose).asLong()))) {
                      PrintTarget target = PrintCore.this.targets[i];
-                     autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                     autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                         PrintCore.this.view,
                         PrintCore.this.env,
                         PrintCore.this.rules,
                         target,
                         target.item(),
-                        PrintClicks.Inner_CachePool.PLACE,
+                        PrintClicks.ClickMode.PLACE,
                         pose,
                         true,
                         false,
@@ -17381,7 +17381,7 @@ public final class PrintCore {
          for (int tick = 0; tick < 26; tick++) {
             coast = PrintFlight.simulateFlightTick(
                coast,
-               autismclient.ai.print.PrintMover.Inner_StreamUtil.NONE,
+               autismclient.ai.print.PrintMover.KeyState.NONE,
                PrintCore.this.env.playerYaw(),
                PrintCore.this.env.flyingSpeed(),
                PrintCore.this.env.livePhysicsWorld()
@@ -17629,10 +17629,10 @@ public final class PrintCore {
       final Long2ObjectOpenHashMap<Vec3> feetByStance = new Long2ObjectOpenHashMap<>();
       final Long2DoubleOpenHashMap stanceScores = new Long2DoubleOpenHashMap();
       final LongArrayList rankedStances = new LongArrayList();
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil hereBatchBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000);
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil hereSingleBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000);
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil stanceGatherBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(60000);
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil cellSearchBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(20000);
+      final autismclient.ai.print.PrintClicks.RaycastBudget hereBatchBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(2000);
+      final autismclient.ai.print.PrintClicks.RaycastBudget hereSingleBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(4000);
+      final autismclient.ai.print.PrintClicks.RaycastBudget stanceGatherBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(60000);
+      final autismclient.ai.print.PrintClicks.RaycastBudget cellSearchBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(20000);
       final LongOpenHashSet trappedCellStances = new LongOpenHashSet();
       final int low;
       int stage;
@@ -17811,17 +17811,17 @@ public final class PrintCore {
                                        && !PrintCore.this.refusedCellStances
                                           .contains(PrintCore.cellStanceKey(i, this.safety.reach.startKey))) {
                                        PrintTarget t = PrintCore.this.targets[i];
-                                       autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                                       autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                                           PrintCore.this.view,
                                           PrintCore.this.env,
                                           PrintCore.this.rules,
                                           t,
                                           t.item(),
-                                          PrintClicks.Inner_CachePool.PLACE,
+                                          PrintClicks.ClickMode.PLACE,
                                           this.body.position(),
                                           true,
                                           true,
-                                          new autismclient.ai.print.PrintClicks.Inner_DataUtil(),
+                                          new autismclient.ai.print.PrintClicks.RaycastBudget(),
                                           4.4
                                        );
                                        if (click != null) {
@@ -17839,7 +17839,7 @@ public final class PrintCore {
                                     }
 
                                     this.cellStanceSearch = PrintCore.this.new CellStanceSearch(
-                                       this.safety, i, new autismclient.ai.print.PrintClicks.Inner_DataUtil(20000)
+                                       this.safety, i, new autismclient.ai.print.PrintClicks.RaycastBudget(20000)
                                     );
                                     break;
                                  }
@@ -17876,7 +17876,7 @@ public final class PrintCore {
                                           PrintCore.this.rules,
                                           target,
                                           target.item(),
-                                          PrintClicks.Inner_CachePool.PLACE,
+                                          PrintClicks.ClickMode.PLACE,
                                           feet,
                                           true,
                                           true,
@@ -17931,7 +17931,7 @@ public final class PrintCore {
                                           PrintCore.this.rules,
                                           t,
                                           t.item(),
-                                          PrintClicks.Inner_CachePool.PLACE,
+                                          PrintClicks.ClickMode.PLACE,
                                           this.body.position(),
                                           false,
                                           true,
@@ -18208,7 +18208,7 @@ public final class PrintCore {
                      PrintCore.this.rules,
                      target,
                      target.item(),
-                     PrintClicks.Inner_CachePool.PLACE,
+                     PrintClicks.ClickMode.PLACE,
                      feet,
                      true,
                      true,
@@ -18518,7 +18518,7 @@ public final class PrintCore {
          }
       }
 
-      private PrintCore.GoalEvalKey keyFor(int kind, PrintTarget target, PrintClicks.Inner_CachePool mode, Item item, BlockPos via, long destination, int owner) {
+      private PrintCore.GoalEvalKey keyFor(int kind, PrintTarget target, PrintClicks.ClickMode mode, Item item, BlockPos via, long destination, int owner) {
          if (PrintCore.this.feetPosition().distanceToSqr(this.origin) > 1.0E-12
             && !PrintFlight.isFlightSegmentClear(PrintCore.this.view, PrintCore.this.feetPosition(), this.origin)) {
             this.stale = true;
@@ -18532,7 +18532,7 @@ public final class PrintCore {
          }
       }
 
-      PrintCore.WorkGoal cachedClickGoal(PrintTarget target, PrintClicks.Inner_CachePool mode, Item item, BlockPos via) {
+      PrintCore.WorkGoal cachedClickGoal(PrintTarget target, PrintClicks.ClickMode mode, Item item, BlockPos via) {
          PrintCore.GoalEvalKey key = this.keyFor(0, target, mode, item, via, 0L, -1);
          PrintCore.GoalEvalSession.GoalEvalEntry query = this.entries.computeIfAbsent(key, ignored -> {
             PrintCore.GoalEvalSession.GoalEvalEntry q = new PrintCore.GoalEvalSession.GoalEvalEntry();
@@ -18792,22 +18792,22 @@ public final class PrintCore {
 
    final class ClickCandidatePlanner {
       final PrintTarget target;
-      final PrintClicks.Inner_CachePool mode;
+      final PrintClicks.ClickMode mode;
       final Item item;
       final BlockPos via;
       final boolean rememberFailures;
       final boolean placingMode;
       final Vec3 origin = PrintCore.this.planningOrigin();
       final ArrayList<Long> candidateCells = new ArrayList<>();
-      final LinkedHashMap<Long, autismclient.ai.print.PrintClicks.Inner_StreamUtil> clicksByCell = new LinkedHashMap<>();
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil clickBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(18000);
+      final LinkedHashMap<Long, autismclient.ai.print.PrintClicks.Click> clicksByCell = new LinkedHashMap<>();
+      final autismclient.ai.print.PrintClicks.RaycastBudget clickBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(18000);
       PrintFlight.FlightSearch flightSearch;
       PrintCore.ClickGoalSearch fallbackSearch;
       int cellCursor;
       int pointCursor;
       long currentCell;
       List<Vec3> candidatePoints;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil click;
+      autismclient.ai.print.PrintClicks.Click click;
       long directCell;
       int segmentStep;
       int segmentCount;
@@ -18819,13 +18819,13 @@ public final class PrintCore {
       boolean finished;
       PrintCore.WorkGoal clickGoal;
 
-      ClickCandidatePlanner(PrintTarget target, PrintClicks.Inner_CachePool mode, Item item, BlockPos via, boolean rememberFailures) {
+      ClickCandidatePlanner(PrintTarget target, PrintClicks.ClickMode mode, Item item, BlockPos via, boolean rememberFailures) {
          this.target = target;
          this.mode = mode;
          this.item = item;
          this.via = via;
          this.rememberFailures = rememberFailures;
-         this.placingMode = mode == PrintClicks.Inner_CachePool.PLACE || mode == PrintClicks.Inner_CachePool.POUR;
+         this.placingMode = mode == PrintClicks.ClickMode.PLACE || mode == PrintClicks.ClickMode.POUR;
       }
 
       void advance(long allowance) {
@@ -18833,7 +18833,7 @@ public final class PrintCore {
             long start = PrintCore.this.view.workUnits();
             if (!this.initialized) {
                this.initialized = true;
-               if (this.mode == PrintClicks.Inner_CachePool.PLACE
+               if (this.mode == PrintClicks.ClickMode.PLACE
                   && !PrintClicks.hasPlaceableSupport(
                      PrintCore.this.view,
                      this.target,
@@ -18844,7 +18844,7 @@ public final class PrintCore {
                   return;
                }
 
-               if (this.mode == PrintClicks.Inner_CachePool.DIG) {
+               if (this.mode == PrintClicks.ClickMode.DIG) {
                   this.candidateCells.addAll(PrintFlightWorkstations.init(this.target.pos()));
                } else {
                   for (int x = -3; x <= 3; x++) {
@@ -18871,7 +18871,7 @@ public final class PrintCore {
                   if (!this.originChecked) {
                      this.originChecked = true;
                      if (!PrintFlight.isFlightPointSafe(PrintCore.this.view, this.origin)) {
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil candidate = this.click;
+                        autismclient.ai.print.PrintClicks.Click candidate = this.click;
                         this.click = null;
                         this.rememberClick(this.directCell, candidate);
                         continue;
@@ -18882,7 +18882,7 @@ public final class PrintCore {
                   Vec3 from = this.origin.lerp(point, (double)this.segmentStep / this.segmentCount);
                   Vec3 to = this.origin.lerp(point, (double)(++this.segmentStep) / this.segmentCount);
                   if (!PrintFlight.isFlightSegmentClear(PrintCore.this.view, from, to)) {
-                     autismclient.ai.print.PrintClicks.Inner_StreamUtil candidate = this.click;
+                     autismclient.ai.print.PrintClicks.Click candidate = this.click;
                      this.click = null;
                      this.rememberClick(this.directCell, candidate);
                   } else if (this.segmentStep == this.segmentCount) {
@@ -18909,7 +18909,7 @@ public final class PrintCore {
                      }
 
                      if (this.flightSearch.result != null) {
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.clicksByCell
+                        autismclient.ai.print.PrintClicks.Click click = this.clicksByCell
                            .get(this.flightSearch.result.goal());
                         this.clickGoal = new PrintCore.WorkGoal(
                            PrintCore.this.appendWorkPoint(this.flightSearch.result, click.feet()),
@@ -18934,14 +18934,14 @@ public final class PrintCore {
                      if (PrintCore.this.env.isFlying()
                         && PrintFlight.isFlightPointSafe(PrintCore.this.view, this.origin)
                         && (
-                           this.mode != PrintClicks.Inner_CachePool.POUR
+                           this.mode != PrintClicks.ClickMode.POUR
                               || PrintCore.this.init_Z_Vec3_ListPool(this.origin, this.target)
                         )
                         && (
                            !this.rememberFailures
                               || !PrintCore.this.refusedCellStances.contains(PrintCore.cellStanceKey(PrintCore.this.cellIndexOf(this.target), here))
                         )) {
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                        autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                            PrintCore.this.view,
                            PrintCore.this.env,
                            PrintCore.this.rules,
@@ -18951,7 +18951,7 @@ public final class PrintCore {
                            this.origin,
                            this.placingMode,
                            false,
-                           new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000),
+                           new autismclient.ai.print.PrintClicks.RaycastBudget(2000),
                            4.1000000000000005,
                            this.target.index() < 0 ? null : PrintCore.this.constraintFor(this.target.index()),
                            this.via
@@ -18982,9 +18982,9 @@ public final class PrintCore {
                         Vec3 point = this.candidatePoints.get(this.pointCursor++);
                         if (PrintFlight.isFlightPointSafe(PrintCore.this.view, point)
                            && (
-                              this.mode != PrintClicks.Inner_CachePool.POUR || PrintCore.this.init_Z_Vec3_ListPool(point, this.target)
+                              this.mode != PrintClicks.ClickMode.POUR || PrintCore.this.init_Z_Vec3_ListPool(point, this.target)
                            )) {
-                           autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                           autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                               PrintCore.this.view,
                               PrintCore.this.env,
                               PrintCore.this.rules,
@@ -19019,7 +19019,7 @@ public final class PrintCore {
          }
       }
 
-      private void rememberClick(long key, autismclient.ai.print.PrintClicks.Inner_StreamUtil click) {
+      private void rememberClick(long key, autismclient.ai.print.PrintClicks.Click click) {
          Vec3 center = PrintFlight.cellFlightPoint(key);
          if (PrintFlight.isFlightPointSafe(PrintCore.this.view, center) && PrintFlight.isFlightSegmentClear(PrintCore.this.view, center, click.feet())) {
             this.clicksByCell.put(key, click);
@@ -19126,7 +19126,7 @@ public final class PrintCore {
             }
 
             if (this.pointIndex + 1 == this.route.points().size() && PrintFlight.hasSettledAtGoal(PrintCore.this.env.playerMotionState(), next)) {
-               if (this.cell >= 0 && this.workGoal != null && this.workGoal.click.mode() == PrintClicks.Inner_CachePool.PLACE) {
+               if (this.cell >= 0 && this.workGoal != null && this.workGoal.click.mode() == PrintClicks.ClickMode.PLACE) {
                   if (this.landingProof == null || !this.landingProof.proofValid()) {
                      this.landingProof = PrintCore.this.new PlacementSafetyProof(this.workTarget, this.workGoal.click.predicted());
                   }
@@ -19285,7 +19285,7 @@ public final class PrintCore {
       int aimTicks;
       int lookMisses;
       int settleTicks;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil click;
+      autismclient.ai.print.PrintClicks.Click click;
       boolean finished;
       PrintCore.PlacementSafetyProof safety;
       PrintCore.RecoveryNavContext returnCheck;
@@ -19378,7 +19378,7 @@ public final class PrintCore {
          PrintControls c = PrintControls.idle();
          autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.env.playerMotionState();
          Vec3 feet = new Vec3(b.x(), b.y(), b.z());
-         autismclient.ai.print.PrintMover.Inner_DataUtil hold = PrintCore.this.moverGoal(
+         autismclient.ai.print.PrintMover.Goal hold = PrintCore.this.moverGoal(
             this.feet, 0.08, this.feet.y - 0.01, this.crouch, true
          );
          boolean atStance = PrintMover.atGoal(b, hold) && PrintCore.this.env.playerEyeHeight() < (this.crouch ? 1.4 : 9.0);
@@ -19418,17 +19418,17 @@ public final class PrintCore {
                   this.cellCursor++;
                } else if (PrintCore.this.cellStates[i] == 0 && PrintCore.this.isCellReady(i)) {
                   if (!atStance && nearWork && (!PrintCore.this.init_Z_I(i, feet.y, this.stanceKey) || PrintCore.this.load_Z_I_Vec3(i, feet))) {
-                     autismclient.ai.print.PrintClicks.Inner_StreamUtil actual = PrintClicks.findClick(
+                     autismclient.ai.print.PrintClicks.Click actual = PrintClicks.findClick(
                         PrintCore.this.view,
                         PrintCore.this.env,
                         PrintCore.this.rules,
                         PrintCore.this.targets[i],
                         PrintCore.this.targets[i].item(),
-                        PrintClicks.Inner_CachePool.PLACE,
+                        PrintClicks.ClickMode.PLACE,
                         feet,
                         this.crouch,
                         true,
-                        new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000)
+                        new autismclient.ai.print.PrintClicks.RaycastBudget(4000)
                      );
                      if (actual != null) {
                         c.sneak = this.crouch;
@@ -19470,28 +19470,28 @@ public final class PrintCore {
                         PrintCore.this.rules,
                         t,
                         t.item(),
-                        PrintClicks.Inner_CachePool.PLACE,
+                        PrintClicks.ClickMode.PLACE,
                         feet,
                         this.crouch,
                         true,
-                        new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000)
+                        new autismclient.ai.print.PrintClicks.RaycastBudget(4000)
                      );
                      if (this.click == null) {
                         if (nearWork && !feet.equals(this.feet)) {
-                           autismclient.ai.print.PrintClicks.Inner_StreamUtil proved = PrintClicks.findClick(
+                           autismclient.ai.print.PrintClicks.Click proved = PrintClicks.findClick(
                               PrintCore.this.view,
                               PrintCore.this.env,
                               PrintCore.this.rules,
                               t,
                               t.item(),
-                              PrintClicks.Inner_CachePool.PLACE,
+                              PrintClicks.ClickMode.PLACE,
                               this.feet,
                               this.crouch,
                               true,
-                              new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000)
+                              new autismclient.ai.print.PrintClicks.RaycastBudget(4000)
                            );
                            if (proved != null && ++this.approachTicks <= 80) {
-                              autismclient.ai.print.PrintMover.Inner_DataUtil exactWork = PrintCore.this.moverGoal(
+                              autismclient.ai.print.PrintMover.Goal exactWork = PrintCore.this.moverGoal(
                                  this.feet, 0.0, this.feet.y - 0.01, this.crouch, true
                               );
                               float[] aimed = PrintCore.this.stepLookToward(c, proved.yaw(), proved.pitch());
@@ -19509,11 +19509,11 @@ public final class PrintCore {
                                              PrintCore.this.rules,
                                              t,
                                              t.item(),
-                                             PrintClicks.Inner_CachePool.PLACE,
+                                             PrintClicks.ClickMode.PLACE,
                                              next.position(),
                                              this.crouch,
                                              true,
-                                             new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000)
+                                             new autismclient.ai.print.PrintClicks.RaycastBudget(4000)
                                           )
                                           != null
                                  )
@@ -19584,7 +19584,7 @@ public final class PrintCore {
             float[] look = PrintCore.this.stepLookToward(c, this.click.yaw(), this.click.pitch());
             c.withMoveKeys(
                atStance
-                  ? new autismclient.ai.print.PrintMover.Inner_StreamUtil(false, false, false, false, false, this.crouch, false)
+                  ? new autismclient.ai.print.PrintMover.KeyState(false, false, false, false, false, this.crouch, false)
                   : PrintMover.planKeys(b, PrintCore.this.env.livePhysicsWorld(), look[0], hold)
             );
             c.sneak = this.crouch;
@@ -19795,17 +19795,17 @@ public final class PrintCore {
             if (PrintCore.this.isCellReady(i)) {
                PrintTarget t = PrintCore.this.targets[i];
                if (!PrintCore.isBodyCell(this.stanceKey, t.pos())) {
-                  autismclient.ai.print.PrintClicks.Inner_StreamUtil next = PrintClicks.findClick(
+                  autismclient.ai.print.PrintClicks.Click next = PrintClicks.findClick(
                      PrintCore.this.view,
                      PrintCore.this.env,
                      PrintCore.this.rules,
                      t,
                      t.item(),
-                     PrintClicks.Inner_CachePool.PLACE,
+                     PrintClicks.ClickMode.PLACE,
                      feet,
                      this.crouch,
                      true,
-                     new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000)
+                     new autismclient.ai.print.PrintClicks.RaycastBudget(4000)
                   );
                   if (next != null
                      && (!PrintCore.this.hasUnownedTemporaryBelow(t.pos()) || t.wanted().getCollisionShape(PrintCore.this.view, t.pos()).isEmpty())
@@ -19833,7 +19833,7 @@ public final class PrintCore {
       int clickMisses;
       boolean finished;
       boolean clicked;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil pendingClick;
+      autismclient.ai.print.PrintClicks.Click pendingClick;
 
       AccessPlaceStep(PrintAccess.AccessStep step, Item temp) {
          this.step = step;
@@ -19853,7 +19853,7 @@ public final class PrintCore {
          autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.env.playerMotionState();
          Vec3 standFeet = PrintNav.cellCenterAtY(this.step.to(), this.step.toFeet());
          if (!PrintCore.this.view.getBlockState(cell).isAir() && !PrintCore.this.view.getBlockState(cell).canBeReplaced()) {
-            autismclient.ai.print.PrintMover.Inner_DataUtil g = PrintCore.this.moverGoal(
+            autismclient.ai.print.PrintMover.Goal g = PrintCore.this.moverGoal(
                standFeet, 0.25, this.step.toFeet() - 0.05, false, true
             );
             if (PrintMover.atGoal(b, g)) {
@@ -19875,7 +19875,7 @@ public final class PrintCore {
                b.y(),
                BlockPos.getZ(fromKey) + 0.5 + this.step.dir().getStepZ() * off
             );
-            autismclient.ai.print.PrintMover.Inner_DataUtil hold = PrintCore.this.moverGoal(
+            autismclient.ai.print.PrintMover.Goal hold = PrintCore.this.moverGoal(
                lean, 0.1, Math.floor(b.y() + 1.0E-6) - 0.01, true, true
             );
             c.sneak = true;
@@ -19898,11 +19898,11 @@ public final class PrintCore {
                      PrintCore.this.rules,
                      t,
                      item,
-                     PrintClicks.Inner_CachePool.PLACE,
+                     PrintClicks.ClickMode.PLACE,
                      PrintCore.this.feetPosition(),
                      true,
                      own,
-                     new autismclient.ai.print.PrintClicks.Inner_DataUtil(3000)
+                     new autismclient.ai.print.PrintClicks.RaycastBudget(3000)
                   );
                   if (this.pendingClick == null) {
                      if (++this.clickMisses > 20) {
@@ -20218,8 +20218,8 @@ public final class PrintCore {
                               Items.AIR,
                               null
                            );
-                           autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintCore.this.findClickFrom(
-                              step.to(), step.toFeet(), probe, new autismclient.ai.print.PrintClicks.Inner_DataUtil(3000), true
+                           autismclient.ai.print.PrintClicks.Click click = PrintCore.this.findClickFrom(
+                              step.to(), step.toFeet(), probe, new autismclient.ai.print.PrintClicks.RaycastBudget(3000), true
                            );
                            return click == null ? null : PrintCore.this.new DigStep(previous, false, step.to(), click.crouch(), click.feet());
                         } else {
@@ -20847,7 +20847,7 @@ public final class PrintCore {
          this.finished = true;
       }
 
-      private int admitSourceClick(autismclient.ai.print.PrintClicks.Inner_StreamUtil click, long allowance) {
+      private int admitSourceClick(autismclient.ai.print.PrintClicks.Click click, long allowance) {
          if (click == null) {
             this.invalidated = this.finished = true;
             return -1;
@@ -20958,7 +20958,7 @@ public final class PrintCore {
                      if (this.supportGoalSearch.supportGoal != null) {
                         int admitted = this.admitSourceClick(
                            PrintCore.this.supportClick(
-                              this.owner, this.supportTarget, this.supportGoalSearch.supportGoal.click.feet(), new PrintClicks.Inner_DataUtil(2000)
+                              this.owner, this.supportTarget, this.supportGoalSearch.supportGoal.click.feet(), new PrintClicks.RaycastBudget(2000)
                            ),
                            allowance - (PrintCore.this.view.workUnits() - started)
                         );
@@ -20985,7 +20985,7 @@ public final class PrintCore {
                            try {
                               if (this.ownerClickPlanner == null) {
                                  this.ownerClickPlanner = PrintCore.this.new ClickCandidatePlanner(
-                                    this.ownerTarget, PrintClicks.Inner_CachePool.PLACE, this.ownerTarget.item(), this.neededSupport, false
+                                    this.ownerTarget, PrintClicks.ClickMode.PLACE, this.ownerTarget.item(), this.neededSupport, false
                                  );
                               }
 
@@ -21020,7 +21020,7 @@ public final class PrintCore {
 
                         if (this.supportClickPlanner == null) {
                            this.supportClickPlanner = PrintCore.this.new ClickCandidatePlanner(
-                              this.supportTarget, PrintClicks.Inner_CachePool.PLACE, this.tempItem, null, true
+                              this.supportTarget, PrintClicks.ClickMode.PLACE, this.tempItem, null, true
                            );
                         }
 
@@ -21074,7 +21074,7 @@ public final class PrintCore {
       final Item tempItem = PrintCore.this.tempItem();
       final BlockState tempState;
       final IntArrayList nearestGoals;
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil clickBudget;
+      final autismclient.ai.print.PrintClicks.RaycastBudget clickBudget;
       Iterator<it.unimi.dsi.fastutil.longs.Long2DoubleMap.Entry> stanceIterator;
       int stage;
       int nextWorkableCell;
@@ -21101,7 +21101,7 @@ public final class PrintCore {
       PrintCore.PlannerPolicy bestPolicy;
       PrintCore.PlacementPurpose purpose;
       PrintCore.PlacementPurpose bestPurpose;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil click;
+      autismclient.ai.print.PrintClicks.Click click;
       PrintCore.CellExitProof ride;
       PrintCore.CellExitProof bestRide;
       PrintCore.PlacementSafetyProof proof;
@@ -21124,7 +21124,7 @@ public final class PrintCore {
       ShortColumnSearch(PrintCore.ReachGridCache safety, int lowest, IntArrayList requestedGoals, int temporaryLimit) {
          this.tempState = this.tempItem instanceof BlockItem block ? block.getBlock().defaultBlockState() : null;
          this.nearestGoals = new IntArrayList(48);
-         this.clickBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(80000);
+         this.clickBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(80000);
          this.nextWorkableCell = PrintCore.this.workableCells.nextSetBit(0);
          this.bestCost = 1.0 / 0.0;
          this.safety = safety;
@@ -21264,13 +21264,13 @@ public final class PrintCore {
                            } else if (this.stage != 2) {
                               if (this.stage == 5) {
                                  PrintTarget target = PrintCore.this.targets[this.pendingGoal];
-                                 autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                                 autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                                     PrintCore.this.view,
                                     PrintCore.this.env,
                                     PrintCore.this.rules,
                                     target,
                                     target.item(),
-                                    PrintClicks.Inner_CachePool.PLACE,
+                                    PrintClicks.ClickMode.PLACE,
                                     this.feet,
                                     true,
                                     true,
@@ -21432,13 +21432,13 @@ public final class PrintCore {
             if ((pos.getX() != this.columnX || pos.getZ() != this.columnZ || pos.getY() < this.columnBaseY || pos.getY() >= this.columnBaseY + this.installedHeight)
                && !PrintCore.this.refusedCellStances.contains(PrintCore.cellStanceKey(i, top))) {
                Vec3 feet = this.candidateFeet.get(this.feetCursor);
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+               autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                   PrintCore.this.view,
                   PrintCore.this.env,
                   PrintCore.this.rules,
                   target,
                   target.item(),
-                  PrintClicks.Inner_CachePool.PLACE,
+                  PrintClicks.ClickMode.PLACE,
                   feet,
                   true,
                   false,
@@ -21460,7 +21460,7 @@ public final class PrintCore {
          }
       }
 
-      private void beginCandidateProof(PrintTarget target, autismclient.ai.print.PrintClicks.Inner_StreamUtil click, boolean ride) {
+      private void beginCandidateProof(PrintTarget target, autismclient.ai.print.PrintClicks.Click click, boolean ride) {
          this.targetPos = target.pos();
          this.targetState = click != null && click.predicted() != null ? click.predicted() : target.wanted();
          this.click = ride ? null : click;
@@ -21693,7 +21693,7 @@ public final class PrintCore {
    final class PitAccessSearch {
       final PrintCore.ReachGridCache safety;
       final IntArrayList frontier;
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil clickBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(40000);
+      final autismclient.ai.print.PrintClicks.RaycastBudget clickBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(40000);
       final Item tempItem;
       final BlockState tempState;
       final Direction[] placementSides = new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.UP};
@@ -21893,13 +21893,13 @@ public final class PrintCore {
                                  this.candidateFeet = null;
                               } else {
                                  this.tempFeet = this.candidateFeet.get(this.feetCursor++);
-                                 autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                                 autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                                     PrintCore.this.view,
                                     PrintCore.this.env,
                                     PrintCore.this.rules,
                                     this.tempTarget,
                                     this.tempItem,
-                                    PrintClicks.Inner_CachePool.PLACE,
+                                    PrintClicks.ClickMode.PLACE,
                                     this.tempFeet,
                                     true,
                                     false,
@@ -21996,13 +21996,13 @@ public final class PrintCore {
 
                      try (ShapeAttachment geometry = this.pitShapes.attach()) {
                         Vec3 feet = new Vec3(x + 0.5, y - this.pitDepth, z + 0.5);
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                        autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                            PrintCore.this.view,
                            PrintCore.this.env,
                            PrintCore.this.rules,
                            target,
                            target.item(),
-                           PrintClicks.Inner_CachePool.PLACE,
+                           PrintClicks.ClickMode.PLACE,
                            feet,
                            true,
                            false,
@@ -22129,9 +22129,9 @@ public final class PrintCore {
       final LongOpenHashSet ownedTemporariesSnapshot;
       BlockState placedState;
       BlockState finalState;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil placeClick;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil openClick;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil digClick;
+      autismclient.ai.print.PrintClicks.Click placeClick;
+      autismclient.ai.print.PrintClicks.Click openClick;
+      autismclient.ai.print.PrintClicks.Click digClick;
       PrintCore.FlightExitSearch exitSearch;
       int stage;
       boolean finished;
@@ -22187,11 +22187,11 @@ public final class PrintCore {
                            PrintCore.this.rules,
                            this.ownerTarget,
                            this.ownerTarget.item(),
-                           PrintClicks.Inner_CachePool.PLACE,
+                           PrintClicks.ClickMode.PLACE,
                            this.point,
                            true,
                            false,
-                           new autismclient.ai.print.PrintClicks.Inner_DataUtil(),
+                           new autismclient.ai.print.PrintClicks.RaycastBudget(),
                            4.1000000000000005,
                            PrintCore.this.constraintFor(this.owner),
                            this.support.pos()
@@ -22234,11 +22234,11 @@ public final class PrintCore {
                                  PrintCore.this.rules,
                                  this.ownerTarget,
                                  step.item(),
-                                 PrintClicks.Inner_CachePool.INTERACT,
+                                 PrintClicks.ClickMode.INTERACT,
                                  this.point,
                                  false,
                                  false,
-                                 new autismclient.ai.print.PrintClicks.Inner_DataUtil(),
+                                 new autismclient.ai.print.PrintClicks.RaycastBudget(),
                                  4.1000000000000005
                               );
                               if (this.openClick == null) {
@@ -22301,11 +22301,11 @@ public final class PrintCore {
                               PrintCore.this.rules,
                               this.support,
                               Items.AIR,
-                              PrintClicks.Inner_CachePool.DIG,
+                              PrintClicks.ClickMode.DIG,
                               this.point,
                               false,
                               false,
-                              new autismclient.ai.print.PrintClicks.Inner_DataUtil(),
+                              new autismclient.ai.print.PrintClicks.RaycastBudget(),
                               4.1000000000000005
                            );
                            if (this.digClick == null) {
@@ -22354,7 +22354,7 @@ public final class PrintCore {
       int ticks;
       int clickMisses;
       boolean finished;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil pendingClick;
+      autismclient.ai.print.PrintClicks.Click pendingClick;
 
       TempBlockPlaceStep(BlockPos pos, Item item, long stanceKey, Vec3 stance) {
          this.pos = pos;
@@ -22394,7 +22394,7 @@ public final class PrintCore {
          }
 
          autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.env.playerMotionState();
-         autismclient.ai.print.PrintMover.Inner_DataUtil hold = PrintCore.this.moverGoal(
+         autismclient.ai.print.PrintMover.Goal hold = PrintCore.this.moverGoal(
             this.stance, 0.08, this.stance.y - 0.01, true, true
          );
          c.sneak = true;
@@ -22414,11 +22414,11 @@ public final class PrintCore {
                   PrintCore.this.rules,
                   probe,
                   this.item,
-                  PrintClicks.Inner_CachePool.PLACE,
+                  PrintClicks.ClickMode.PLACE,
                   PrintCore.this.feetPosition(),
                   true,
                   false,
-                  new autismclient.ai.print.PrintClicks.Inner_DataUtil(3000)
+                  new autismclient.ai.print.PrintClicks.RaycastBudget(3000)
                );
                if (this.pendingClick == null) {
                   if (++this.clickMisses > 10) {
@@ -22488,7 +22488,7 @@ public final class PrintCore {
    }
 
    final class PlacementPurpose {
-      final autismclient.ai.print.PrintClicks.Inner_StreamUtil click;
+      final autismclient.ai.print.PrintClicks.Click click;
       final PrintCore.PlacementTrapCheck trapCheck;
       final PrintCore.PlacementSafetyProof safety;
       boolean complete;
@@ -22496,7 +22496,7 @@ public final class PrintCore {
       boolean invalidated;
       boolean trapBlocked;
 
-      PlacementPurpose(autismclient.ai.print.PrintClicks.Inner_StreamUtil click, PrintNav.ReachResult beforeReach) {
+      PlacementPurpose(autismclient.ai.print.PrintClicks.Click click, PrintNav.ReachResult beforeReach) {
          this.click = click;
          BlockState proposed = click.predicted() == null ? click.target().wanted() : click.predicted();
          this.trapCheck = PrintCore.this.env.canUseFlight() ? null : PrintCore.this.new PlacementTrapCheck(click.feet(), beforeReach, click.target().pos(), proposed);
@@ -22848,9 +22848,9 @@ public final class PrintCore {
          PrintCore.this.accessStartPlacements = PrintCore.this.firstPlacements;
          PrintCore.this.solvedAccessGoal = solved.solved ? plan.goal() : -1;
          PrintCore.PrintStep work = null;
-         autismclient.ai.print.PrintClicks.Inner_StreamUtil click = solved.click;
+         autismclient.ai.print.PrintClicks.Click click = solved.click;
          if (!solved.solved && click != null) {
-            if (click.mode() == PrintClicks.Inner_CachePool.INTERACT) {
+            if (click.mode() == PrintClicks.ClickMode.INTERACT) {
                PrintMachineJob job = PrintCore.this.machineJobAt(plan.goal());
                PrintRules.Interaction step = job == null
                   ? PrintCore.this.rules
@@ -23264,17 +23264,17 @@ public final class PrintCore {
                               int i = this.stanceRoute.cells().getInt(0);
                               if (this.trap == null) {
                                  PrintTarget target = PrintCore.this.targets[i];
-                                 autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                                 autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                                     PrintCore.this.view,
                                     PrintCore.this.env,
                                     PrintCore.this.rules,
                                     target,
                                     target.item(),
-                                    PrintClicks.Inner_CachePool.PLACE,
+                                    PrintClicks.ClickMode.PLACE,
                                     this.stanceRoute.feet(),
                                     this.stanceRoute.crouch(),
                                     true,
-                                    new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000),
+                                    new autismclient.ai.print.PrintClicks.RaycastBudget(4000),
                                     this.stanceRoute.feet().equals(this.body.position()) ? 4.4 : 4.1000000000000005
                                  );
                                  if (click == null) {
@@ -23842,7 +23842,7 @@ public final class PrintCore {
             if (!state.isAir() && (state.getFluidState().isEmpty() || !(state.getBlock() instanceof LiquidBlock))) {
                if (this.under && this.stanceKey != -9223372036854775808L && this.aimPoint == null) {
                   Vec3 center = Vec3.atBottomCenterOf(this.pos.above());
-                  autismclient.ai.print.PrintMover.Inner_DataUtil goal = PrintCore.this.moverGoal(center, 0.08, center.y - 0.01, true, true);
+                  autismclient.ai.print.PrintMover.Goal goal = PrintCore.this.moverGoal(center, 0.08, center.y - 0.01, true, true);
                   autismclient.ai.engine.AiPhysics.MotionState body = PrintCore.this.env.playerMotionState();
                   if (!PrintMover.atGoal(body, goal)) {
                      if (++this.approachTicks > 60) {
@@ -23860,7 +23860,7 @@ public final class PrintCore {
                   if (!this.under && this.stanceKey != -9223372036854775808L && !this.stanceVerified) {
                      autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.env.playerMotionState();
                      Vec3 home = this.plannedFeet != null ? this.plannedFeet : PrintNav.cellCenterAtY(this.stanceKey, b.y());
-                     autismclient.ai.print.PrintMover.Inner_DataUtil g = PrintCore.this.moverGoal(home, 0.08, home.y - 0.01, this.crouch, true);
+                     autismclient.ai.print.PrintMover.Goal g = PrintCore.this.moverGoal(home, 0.08, home.y - 0.01, this.crouch, true);
                      if (!PrintMover.atGoal(b, g)) {
                         if (++this.approachTicks <= 60) {
                            c.withMoveKeys(PrintMover.planKeys(b, PrintCore.this.env.livePhysicsWorld(), PrintCore.this.env.playerYaw(), g));
@@ -23903,17 +23903,17 @@ public final class PrintCore {
                         this.aimFace = Direction.UP;
                      } else {
                         PrintTarget probe = new PrintTarget(-1, this.pos, state, autismclient.ai.print.PrintTarget.TargetKind.PLACE, Items.AIR, null);
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                        autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                            PrintCore.this.view,
                            PrintCore.this.env,
                            PrintCore.this.rules,
                            probe,
                            Items.AIR,
-                           PrintClicks.Inner_CachePool.INTERACT,
+                           PrintClicks.ClickMode.INTERACT,
                            PrintCore.this.feetPosition(),
                            PrintCore.this.env.playerEyeHeight() < 1.4,
                            false,
-                           new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000)
+                           new autismclient.ai.print.PrintClicks.RaycastBudget(2000)
                         );
                         if (click == null) {
                            if (this.stanceKey != -9223372036854775808L) {
@@ -23989,7 +23989,7 @@ public final class PrintCore {
                      }
 
                      BlockState temporary = PrintCore.this.temporaryBlocks.get(this.pos.asLong());
-                     autismclient.ai.print.PrintTools.Inner_StreamUtil toolChoice = temporary == null
+                     autismclient.ai.print.PrintTools.ToolChoice toolChoice = temporary == null
                         ? PrintTools.bestTool(PrintCore.this.env, state)
                         : PrintTools.bestTool(PrintCore.this.env, state, temporary.getBlock().asItem());
                      if (toolChoice == null) {
@@ -24456,7 +24456,7 @@ public final class PrintCore {
             "teardown: native access plan " + plan.steps().size() + " steps, " + plan.temps() + " temporary toward " + BlockPos.of(target).toShortString()
          );
          PrintCore.this.trackLocalTemporaries = true;
-         autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.search.click;
+         autismclient.ai.print.PrintClicks.Click click = this.search.click;
          PrintCore.PrintStep dig = on
             ? PrintCore.this.init_UiHelper_NetHelper_J_BlockPos(end, BlockPos.of(target))
             : PrintCore.this.new DigStep(BlockPos.of(target), false, end, click != null && click.crouch(), click == null ? null : click.feet());
@@ -24597,8 +24597,8 @@ public final class PrintCore {
                         this.removal = PrintCore.this.new CleanupDescentStep(this.safety, station, this.candidatePos, true, null);
                      }
                   } else if (!PrintCore.this.failedDigStances.contains(PrintCore.cellStanceKey((int)(this.candidatePos.asLong() & 2147483647L), station))) {
-                     autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintCore.this.findClickAt(
-                        this.reach, station, this.candidateTarget, new autismclient.ai.print.PrintClicks.Inner_DataUtil(5000)
+                     autismclient.ai.print.PrintClicks.Click click = PrintCore.this.findClickAt(
+                        this.reach, station, this.candidateTarget, new autismclient.ai.print.PrintClicks.RaycastBudget(5000)
                      );
                      if (click != null) {
                         this.removal = PrintCore.this.new CleanupDescentStep(this.safety, station, this.candidatePos, false, click);
@@ -24859,9 +24859,9 @@ public final class PrintCore {
                            : !PrintCore.this.isCellFinished(this.cell, PrintCore.this.view.getBlockState(this.workTarget.pos()))
                      )
                )) {
-               PrintClicks.Inner_CachePool mode = this.cell >= 0
+               PrintClicks.ClickMode mode = this.cell >= 0
                   ? PrintCore.this.clickModeFor(this.cell)
-                  : (this.dug == null ? PrintClicks.Inner_CachePool.PLACE : PrintClicks.Inner_CachePool.DIG);
+                  : (this.dug == null ? PrintClicks.ClickMode.PLACE : PrintClicks.ClickMode.DIG);
                if (this.awaitingOpen) {
                   BlockState live = PrintCore.this.view.getBlockState(this.workTarget.pos());
                   if (!PrintCore.this.rules.isPlacedCorrectly(this.workTarget, live)) {
@@ -24873,7 +24873,7 @@ public final class PrintCore {
                      return null;
                   }
 
-                  mode = PrintClicks.Inner_CachePool.INTERACT;
+                  mode = PrintClicks.ClickMode.INTERACT;
                }
 
                if (this.cell >= 0 && !PrintCore.this.isCellReady(this.cell)) {
@@ -24900,11 +24900,11 @@ public final class PrintCore {
                }
 
                boolean sharedPose = this.goal.supportOwner >= 0 && this.pointIndex + 1 == this.route.points().size();
-               boolean fractionalPose = mode == PrintClicks.Inner_CachePool.PLACE
+               boolean fractionalPose = mode == PrintClicks.ClickMode.PLACE
                   && this.pointIndex + 1 == this.route.points().size()
                   && this.goal.click.feet().distanceToSqr(PrintFlight.cellFlightPoint(this.goal.route.goal())) > 1.0E-10;
-               boolean pourPose = mode == PrintClicks.Inner_CachePool.POUR && this.pointIndex + 1 == this.route.points().size();
-               boolean placePose = mode == PrintClicks.Inner_CachePool.PLACE && this.pointIndex + 1 == this.route.points().size();
+               boolean pourPose = mode == PrintClicks.ClickMode.POUR && this.pointIndex + 1 == this.route.points().size();
+               boolean placePose = mode == PrintClicks.ClickMode.PLACE && this.pointIndex + 1 == this.route.points().size();
                boolean faceWindow = !placePose
                   || PrintClicks.isClickValidFromFeet(
                      PrintCore.this.view,
@@ -24927,9 +24927,9 @@ public final class PrintCore {
                   return null;
                }
 
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil movingClick = null;
+               autismclient.ai.print.PrintClicks.Click movingClick = null;
                if (this.cell >= 0
-                  && mode == PrintClicks.Inner_CachePool.PLACE
+                  && mode == PrintClicks.ClickMode.PLACE
                   && machineJob == null
                   && !sharedPose
                   && !this.awaitingOpen
@@ -24937,8 +24937,8 @@ public final class PrintCore {
                   && PrintCore.this.env.isFlying()
                   && PrintCore.this.env.playerMotionState().y() <= this.ceiling
                   && this.pointIndex + 1 == this.route.points().size()) {
-                  autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(600);
-                  autismclient.ai.print.PrintClicks.Inner_StreamUtil candidate = PrintClicks.tryClickWithLook(
+                  autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(600);
+                  autismclient.ai.print.PrintClicks.Click candidate = PrintClicks.tryClickWithLook(
                      PrintCore.this.view,
                      PrintCore.this.env,
                      PrintCore.this.rules,
@@ -24987,9 +24987,9 @@ public final class PrintCore {
                            || PrintCore.this.clearOfPlacedState(this.workTarget, this.goal.click.predicted(), PrintCore.this.feetPosition())
                      )
                      && (!pourPose || PrintCore.this.init_Z_Vec3_ListPool(PrintCore.this.feetPosition(), this.workTarget))) {
-                  boolean sneak = (mode == PrintClicks.Inner_CachePool.PLACE || mode == PrintClicks.Inner_CachePool.POUR)
+                  boolean sneak = (mode == PrintClicks.ClickMode.PLACE || mode == PrintClicks.ClickMode.POUR)
                         && (!placingInMotion || PrintClicks.isInteractableBlock(PrintCore.this.view.getBlockState(movingClick.support())))
-                     || mode == PrintClicks.Inner_CachePool.INTERACT && machineJob instanceof PrintItemFrame frame && frame.frameEntityUuid() == null;
+                     || mode == PrintClicks.ClickMode.INTERACT && machineJob instanceof PrintItemFrame frame && frame.frameEntityUuid() == null;
                   c.sneak = sneak;
                   c.jump = sneak;
                   if (PrintCore.this.env.isFlying()
@@ -25009,7 +25009,7 @@ public final class PrintCore {
                         item = PrintCore.this.env.getInventoryItem(PrintCore.this.env.getSelectedHotbarSlot()).getItem();
                      }
 
-                     autismclient.ai.print.PrintClicks.Inner_StreamUtil click = placingInMotion
+                     autismclient.ai.print.PrintClicks.Click click = placingInMotion
                         ? movingClick
                         : PrintClicks.findClick(
                            PrintCore.this.view,
@@ -25021,7 +25021,7 @@ public final class PrintCore {
                            PrintCore.this.feetPosition(),
                            sneak,
                            true,
-                           new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000),
+                           new autismclient.ai.print.PrintClicks.RaycastBudget(4000),
                            4.4
                         );
                      if (click == null) {
@@ -25053,7 +25053,7 @@ public final class PrintCore {
                      if ((
                            placingInMotion
                               || (
-                                 mode == PrintClicks.Inner_CachePool.PLACE
+                                 mode == PrintClicks.ClickMode.PLACE
                                     ? PrintCore.this.isAimReadyFor(this.workTarget, click.yaw(), click.pitch())
                                     : PrintCore.this.isAimAligned(click.yaw(), click.pitch(), false)
                               )
@@ -25065,13 +25065,13 @@ public final class PrintCore {
                            .raycastBlock(
                               eye, eye.add(PrintGeometry.lookDirection(PrintCore.this.env.serverYaw(), PrintCore.this.env.serverPitch()).scale(4.5))
                            );
-                        if (mode == PrintClicks.Inner_CachePool.POUR
-                           || mode == PrintClicks.Inner_CachePool.WATERLOG
+                        if (mode == PrintClicks.ClickMode.POUR
+                           || mode == PrintClicks.ClickMode.WATERLOG
                            || wire != null
                               && wire.getBlockPos().equals(click.support())
                               && wire.getDirection() == click.face()
                               && !(wire.getLocation().distanceTo(eye) > 4.4)) {
-                           if (mode == PrintClicks.Inner_CachePool.INTERACT
+                           if (mode == PrintClicks.ClickMode.INTERACT
                               && this.workTarget.wanted().getBlock() instanceof MultifaceBlock
                               && !PrintClicks.canExtendMultifaceBlock(
                                  PrintCore.this.view,
@@ -25089,7 +25089,7 @@ public final class PrintCore {
                               return null;
                            }
 
-                           if (mode == PrintClicks.Inner_CachePool.PLACE) {
+                           if (mode == PrintClicks.ClickMode.PLACE) {
                               BlockState actual = PrintCore.this.env
                                  .predictPlacedState(
                                     item, wire, PrintCore.this.env.serverYaw(), PrintCore.this.env.serverPitch(), sneak, this.workTarget.pos()
@@ -25202,11 +25202,11 @@ public final class PrintCore {
                                           PrintCore.this.rules,
                                           this.workTarget,
                                           step.item(),
-                                          PrintClicks.Inner_CachePool.INTERACT,
+                                          PrintClicks.ClickMode.INTERACT,
                                           PrintCore.this.feetPosition(),
                                           false,
                                           false,
-                                          new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000),
+                                          new autismclient.ai.print.PrintClicks.RaycastBudget(4000),
                                           4.1000000000000005
                                        )
                                        == null) {
@@ -25244,7 +25244,7 @@ public final class PrintCore {
                            }
 
                            if (this.cell >= 0
-                              && mode == PrintClicks.Inner_CachePool.INTERACT
+                              && mode == PrintClicks.ClickMode.INTERACT
                               && machineJob == null
                               && PrintCore.isBulbPulseItem(this.workTarget, item)) {
                               BlockPos pulse = this.workTarget.pos().relative(wire.getDirection());
@@ -25268,20 +25268,20 @@ public final class PrintCore {
                                  return c;
                               }
                            } else {
-                              if (mode != PrintClicks.Inner_CachePool.POUR && mode != PrintClicks.Inner_CachePool.WATERLOG) {
-                                 if (mode == PrintClicks.Inner_CachePool.DIG) {
+                              if (mode != PrintClicks.ClickMode.POUR && mode != PrintClicks.ClickMode.WATERLOG) {
+                                 if (mode == PrintClicks.ClickMode.DIG) {
                                     c.digPos = this.dug;
                                     c.digFace = click.face();
                                  } else {
                                     c.clickHit = wire;
-                                    c.trackInteractionReceipt = mode == PrintClicks.Inner_CachePool.INTERACT;
+                                    c.trackInteractionReceipt = mode == PrintClicks.ClickMode.INTERACT;
                                  }
                               } else {
                                  if (!PrintClicks.isServerLookAlignedWithTarget(PrintCore.this.view, PrintCore.this.env, this.workTarget, mode)) {
                                     return c;
                                  }
 
-                                 if (mode == PrintClicks.Inner_CachePool.POUR
+                                 if (mode == PrintClicks.ClickMode.POUR
                                     && (
                                        !PrintCore.this.init_Z_Vec3_ListPool(PrintCore.this.feetPosition(), this.goal.click.target())
                                           || PrintCore.this.spillShapeOf(this.cell) != null
@@ -25337,7 +25337,7 @@ public final class PrintCore {
                                  }
                               }
 
-                              if (mode != PrintClicks.Inner_CachePool.DIG || !this.digCounted) {
+                              if (mode != PrintClicks.ClickMode.DIG || !this.digCounted) {
                                  PrintCore.this.clicks++;
                               }
 
@@ -25349,22 +25349,22 @@ public final class PrintCore {
                                  PrintCore.this.movingPlacements++;
                               }
 
-                              if (mode == PrintClicks.Inner_CachePool.DIG) {
+                              if (mode == PrintClicks.ClickMode.DIG) {
                                  this.digCounted = true;
                               }
 
-                              this.awaitingOpen = this.openAfterPlace && mode == PrintClicks.Inner_CachePool.PLACE;
-                              this.finished = !this.awaitingOpen && (mode != PrintClicks.Inner_CachePool.DIG || PrintCore.this.env.isCreativeMode());
+                              this.awaitingOpen = this.openAfterPlace && mode == PrintClicks.ClickMode.PLACE;
+                              this.finished = !this.awaitingOpen && (mode != PrintClicks.ClickMode.DIG || PrintCore.this.env.isCreativeMode());
                               if (this.finished
                                  && this.cell >= 0
-                                 && mode == PrintClicks.Inner_CachePool.PLACE
+                                 && mode == PrintClicks.ClickMode.PLACE
                                  && machineJob == null
                                  && this.goal.supportOwner < 0) {
                                  this.chainNextPlacement(c, click.predicted());
                               }
 
                               if (c.clickHit != null
-                                 && mode == PrintClicks.Inner_CachePool.PLACE
+                                 && mode == PrintClicks.ClickMode.PLACE
                                  && this.cell >= 0
                                  && PrintCore.this.isPlainCube(this.cell)) {
                                  this.steerToFollowPoint(c, click.predicted());
@@ -25408,7 +25408,7 @@ public final class PrintCore {
                      this.flightWork = null;
                      return c;
                   } else {
-                     if (this.cell >= 0 && machineJob == null && mode == PrintClicks.Inner_CachePool.PLACE) {
+                     if (this.cell >= 0 && machineJob == null && mode == PrintClicks.ClickMode.PLACE) {
                         if (PrintCore.this.env.isCreativeMode() || PrintCore.this.inventoryCount(this.workTarget.item()) > 0) {
                            PrintCore.this.prepareHandItem(this.workTarget.item(), c);
                         }
@@ -25496,10 +25496,10 @@ public final class PrintCore {
       }
 
       private boolean driftsClear(BlockState proposed) {
-         return this.simulatesClear(proposed, autismclient.ai.print.PrintMover.Inner_StreamUtil.NONE, PrintCore.this.env.playerYaw());
+         return this.simulatesClear(proposed, autismclient.ai.print.PrintMover.KeyState.NONE, PrintCore.this.env.playerYaw());
       }
 
-      private boolean simulatesClear(BlockState proposed, autismclient.ai.print.PrintMover.Inner_StreamUtil first, float yaw) {
+      private boolean simulatesClear(BlockState proposed, autismclient.ai.print.PrintMover.KeyState first, float yaw) {
          if (proposed != null
             && !PrintClicks.collidesWithPlacedState(PrintCore.this.view, proposed, this.workTarget.pos(), PrintCore.this.env.serverPlayerBox())) {
             autismclient.ai.engine.AiPhysics.MotionState body = PrintCore.this.env.playerMotionState();
@@ -25509,7 +25509,7 @@ public final class PrintCore {
                for (int tick = 0; tick < 26; tick++) {
                   autismclient.ai.engine.AiPhysics.MotionState next = PrintFlight.simulateFlightTick(
                      body,
-                     tick == 0 ? first : autismclient.ai.print.PrintMover.Inner_StreamUtil.NONE,
+                     tick == 0 ? first : autismclient.ai.print.PrintMover.KeyState.NONE,
                      yaw,
                      PrintCore.this.env.flyingSpeed(),
                      PrintCore.this.env.livePhysicsWorld()
@@ -25539,7 +25539,7 @@ public final class PrintCore {
             Vec3 destination = this.followPoint;
             PrintCore.this.view.pushHypothesis(this.workTarget.pos(), proposed);
 
-            autismclient.ai.print.PrintMover.Inner_StreamUtil keys;
+            autismclient.ai.print.PrintMover.KeyState keys;
             try {
                if (!PrintFlight.isFlightSegmentClear(PrintCore.this.view, PrintCore.this.feetPosition(), destination)) {
                   return;
@@ -25553,7 +25553,7 @@ public final class PrintCore {
             }
 
             if (controls.sneak) {
-               keys = new autismclient.ai.print.PrintMover.Inner_StreamUtil(keys.forward(), keys.back(), keys.left(), keys.right(), true, true, keys.sprint());
+               keys = new autismclient.ai.print.PrintMover.KeyState(keys.forward(), keys.back(), keys.left(), keys.right(), true, true, keys.sprint());
             }
 
             if (this.simulatesClear(proposed, keys, yaw)) {
@@ -25567,7 +25567,7 @@ public final class PrintCore {
             PrintCore.this.view.pushHypothesis(this.workTarget.pos(), placed);
 
             try {
-               autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(1200);
+               autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(1200);
                Vec3 origin = PrintCore.this.feetPosition();
                if (this.followPoint != null) {
                   IntArrayList local = new IntArrayList();
@@ -25596,13 +25596,13 @@ public final class PrintCore {
                         && !PrintCore.this.view.hasHypothesisAt(PrintCore.this.targets[i].pos())
                         && PrintCore.this.isOpenFlightWork(i)
                         && PrintCore.this.isBatchPlaceable(i)) {
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil seed = PrintClicks.findClick(
+                        autismclient.ai.print.PrintClicks.Click seed = PrintClicks.findClick(
                            PrintCore.this.view,
                            PrintCore.this.env,
                            PrintCore.this.rules,
                            PrintCore.this.targets[i],
                            PrintCore.this.targets[i].item(),
-                           PrintClicks.Inner_CachePool.PLACE,
+                           PrintClicks.ClickMode.PLACE,
                            origin,
                            true,
                            false,
@@ -25677,7 +25677,7 @@ public final class PrintCore {
                   }
                }
 
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil best = null;
+               autismclient.ai.print.PrintClicks.Click best = null;
                double bestScore = -1.0 / 0.0;
                Vec3 eye = PrintGeometry.eyePos(origin, false);
                BlockHitResult ray = PrintCore.this.view
@@ -25697,10 +25697,10 @@ public final class PrintCore {
                      && PrintCore.this.isOpenFlightWork(next)
                      && PrintCore.this.isBatchPlaceable(next)
                      && PrintCore.this.belowPendingQuietInputs(next)
-                     && PrintCore.this.clickModeFor(next) == PrintClicks.Inner_CachePool.PLACE) {
+                     && PrintCore.this.clickModeFor(next) == PrintClicks.ClickMode.PLACE) {
                      PrintTarget candidate = PrintCore.this.targets[next];
                      if (!(candidate.pos().distToCenterSqr(eye) > 36.0)) {
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = next == aligned
+                        autismclient.ai.print.PrintClicks.Click click = next == aligned
                            ? PrintClicks.tryClickWithLook(
                               PrintCore.this.view,
                               PrintCore.this.env,
@@ -25725,7 +25725,7 @@ public final class PrintCore {
                               PrintCore.this.rules,
                               candidate,
                               candidate.item(),
-                              PrintClicks.Inner_CachePool.PLACE,
+                              PrintClicks.ClickMode.PLACE,
                               origin,
                               true,
                               false,
@@ -25806,7 +25806,7 @@ public final class PrintCore {
       final long station;
       final BlockPos position;
       final boolean under;
-      final autismclient.ai.print.PrintClicks.Inner_StreamUtil click;
+      final autismclient.ai.print.PrintClicks.Click click;
       final PrintCore.ReachGridCache safety;
       final PrintCore.StanceExitSearch exitSearch;
       final PrintCore.RemovalEscapeProof removalEscape;
@@ -25814,11 +25814,11 @@ public final class PrintCore {
       PrintAccess.SearchStatus status = PrintAccess.SearchStatus.SEARCHING;
       PrintCore.PrintStep resultStep;
 
-      CleanupDescentStep(PrintNav.ReachResult reach, long station, BlockPos position, boolean under, autismclient.ai.print.PrintClicks.Inner_StreamUtil click) {
+      CleanupDescentStep(PrintNav.ReachResult reach, long station, BlockPos position, boolean under, autismclient.ai.print.PrintClicks.Click click) {
          this(PrintCore.this.new ReachGridCache(reach), station, position, under, click);
       }
 
-      CleanupDescentStep(PrintCore.ReachGridCache safety, long station, BlockPos position, boolean under, autismclient.ai.print.PrintClicks.Inner_StreamUtil click) {
+      CleanupDescentStep(PrintCore.ReachGridCache safety, long station, BlockPos position, boolean under, autismclient.ai.print.PrintClicks.Click click) {
          this.safety = safety;
          this.reach = safety.reach;
          this.station = station;
@@ -25995,7 +25995,7 @@ public final class PrintCore {
                   PrintTarget probe = new PrintTarget(
                      -1, helper, ((BlockItem)item).getBlock().defaultBlockState(), autismclient.ai.print.PrintTarget.TargetKind.PLACE, item, null
                   );
-                  this.clickPlanner = PrintCore.this.new ClickCandidatePlanner(probe, PrintClicks.Inner_CachePool.PLACE, item, null, true);
+                  this.clickPlanner = PrintCore.this.new ClickCandidatePlanner(probe, PrintClicks.ClickMode.PLACE, item, null, true);
                }
 
                if (!PrintCore.this.isBudgetSpent()) {
@@ -26167,7 +26167,7 @@ public final class PrintCore {
                                     Items.AIR,
                                     null
                                  ),
-                                 PrintClicks.Inner_CachePool.DIG,
+                                 PrintClicks.ClickMode.DIG,
                                  Items.AIR,
                                  null,
                                  true
@@ -26234,7 +26234,7 @@ public final class PrintCore {
                               new PrintTarget(
                                  -1, at, PrintCore.this.view.getBlockState(at), autismclient.ai.print.PrintTarget.TargetKind.PLACE, Items.AIR, null
                               ),
-                              PrintClicks.Inner_CachePool.DIG,
+                              PrintClicks.ClickMode.DIG,
                               Items.AIR,
                               null,
                               true
@@ -26360,19 +26360,19 @@ public final class PrintCore {
                         && PrintCore.this.isOpenFlightWork(i)
                         && PrintCore.this.isPlainCube(i)
                         && PrintCore.this.belowPendingQuietInputs(i)
-                        && PrintCore.this.clickModeFor(i) == PrintClicks.Inner_CachePool.PLACE
+                        && PrintCore.this.clickModeFor(i) == PrintClicks.ClickMode.PLACE
                         && !(PrintCore.this.targets[i].pos().distToCenterSqr(this.origin.add(0.0, 1.62, 0.0)) > 36.0)) {
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                        autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                            PrintCore.this.view,
                            PrintCore.this.env,
                            PrintCore.this.rules,
                            PrintCore.this.targets[i],
                            PrintCore.this.targets[i].item(),
-                           PrintClicks.Inner_CachePool.PLACE,
+                           PrintClicks.ClickMode.PLACE,
                            this.origin,
                            true,
                            false,
-                           new autismclient.ai.print.PrintClicks.Inner_DataUtil(600),
+                           new autismclient.ai.print.PrintClicks.RaycastBudget(600),
                            4.4,
                            PrintCore.this.constraintFor(i),
                            null
@@ -26411,7 +26411,7 @@ public final class PrintCore {
                         int i = this.planCells.get(this.cursor);
                         if (this.clickPlanner == null) {
                            PrintCore.this.reason = "Checking flight access to " + PrintCore.this.targets[i].pos().toShortString();
-                           PrintClicks.Inner_CachePool mode = PrintCore.this.clickModeFor(i);
+                           PrintClicks.ClickMode mode = PrintCore.this.clickModeFor(i);
                            this.clickPlanner = PrintCore.this.new ClickCandidatePlanner(
                               PrintCore.this.targets[i], mode, PrintCore.this.clickItemFor(i, mode), null, true
                            );
@@ -26452,7 +26452,7 @@ public final class PrintCore {
                         this.shapePlacement = null;
                      } else if (this.cursor < this.planCells.size() && this.clickAttempts > 0) {
                         int i = this.planCells.get(this.cursor);
-                        if (PrintCore.this.clickModeFor(i) != PrintClicks.Inner_CachePool.PLACE) {
+                        if (PrintCore.this.clickModeFor(i) != PrintClicks.ClickMode.PLACE) {
                            this.cursor++;
                         } else {
                            if (this.supportSearch == null) {
@@ -26476,7 +26476,7 @@ public final class PrintCore {
 
                            if (this.supportSearch.sourcePurpose != null
                               && this.supportSearch.sourcePurpose.safety.cleanup.sync) {
-                              autismclient.ai.print.PrintCleanupAccess.Inner_StreamUtil entry = this.supportSearch
+                              autismclient.ai.print.PrintCleanupAccess.CellEntry entry = this.supportSearch
                                  .sourcePurpose
                                  .safety
                                  .cleanup
@@ -26750,7 +26750,7 @@ public final class PrintCore {
                         PrintCore.this.logTrace(this.why + ": native graph exhausted to dig " + this.target.toShortString());
                      } else {
                         PrintAccess.AccessPlan plan = this.search.getPlan();
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.search.click;
+                        autismclient.ai.print.PrintClicks.Click click = this.search.click;
                         PrintCore.this.accessAttempts.remove(this.target.asLong());
                         if (click != null) {
                            PrintCore.PrintStep dig = PrintCore.this.new DigStep(
@@ -26841,7 +26841,7 @@ public final class PrintCore {
    final class CellStanceSearch {
       final PrintCore.ReachGridCache safety;
       final int cell;
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil budget;
+      final autismclient.ai.print.PrintClicks.RaycastBudget budget;
       final LongArrayList stances = new LongArrayList();
       final boolean cacheableMiss;
       final long missSignature;
@@ -26856,7 +26856,7 @@ public final class PrintCore {
       boolean sawRejection;
       PrintCore.StanceRouteCandidate chosenCandidate;
 
-      CellStanceSearch(PrintCore.ReachGridCache safety, int cell, autismclient.ai.print.PrintClicks.Inner_DataUtil budget) {
+      CellStanceSearch(PrintCore.ReachGridCache safety, int cell, autismclient.ai.print.PrintClicks.RaycastBudget budget) {
          this.safety = safety;
          this.cell = cell;
          this.budget = budget;
@@ -27016,13 +27016,13 @@ public final class PrintCore {
                         } else {
                            this.clickFeet = this.candidateFeet.get(this.feetCursor++);
                            PrintTarget t = PrintCore.this.targets[this.cell];
-                           autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                           autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                               PrintCore.this.view,
                               PrintCore.this.env,
                               PrintCore.this.rules,
                               t,
                               t.item(),
-                              PrintClicks.Inner_CachePool.PLACE,
+                              PrintClicks.ClickMode.PLACE,
                               this.clickFeet,
                               false,
                               true,
@@ -27467,7 +27467,7 @@ public final class PrintCore {
       final int owner;
       final Item item;
       final BlockState tempState;
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil budget;
+      final autismclient.ai.print.PrintClicks.RaycastBudget budget;
       final Long2LongOpenHashMap parents = new Long2LongOpenHashMap();
       final ArrayDeque<long[]> openNodes = new ArrayDeque<>();
       final List<BlockPos> chain = new ArrayList<>();
@@ -27489,7 +27489,7 @@ public final class PrintCore {
       boolean invalidated;
       PrintCore.PrintStep resultStep;
 
-      TempSupportSearch(PrintCore.ReachGridCache safety, int owner, Item item, BlockState state, autismclient.ai.print.PrintClicks.Inner_DataUtil budget) {
+      TempSupportSearch(PrintCore.ReachGridCache safety, int owner, Item item, BlockState state, autismclient.ai.print.PrintClicks.RaycastBudget budget) {
          this.safety = safety;
          this.owner = owner;
          this.item = item;
@@ -27634,13 +27634,13 @@ public final class PrintCore {
 
                               if (this.feetCursor != this.candidateFeet.size()) {
                                  this.chainFeet = this.candidateFeet.get(this.feetCursor++);
-                                 autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                                 autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                                     PrintCore.this.view,
                                     PrintCore.this.env,
                                     PrintCore.this.rules,
                                     this.chainTarget,
                                     this.item,
-                                    PrintClicks.Inner_CachePool.PLACE,
+                                    PrintClicks.ClickMode.PLACE,
                                     this.chainFeet,
                                     true,
                                     false,
@@ -27715,7 +27715,7 @@ public final class PrintCore {
                                        continue;
                                     }
 
-                                    autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findPlacementClick(
+                                    autismclient.ai.print.PrintClicks.Click click = PrintClicks.findPlacementClick(
                                        PrintCore.this.view,
                                        PrintCore.this.env,
                                        PrintCore.this.rules,
@@ -27926,7 +27926,7 @@ public final class PrintCore {
       final boolean forced;
       final Item tempItem;
       final BlockState tempState;
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil clickBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(60000);
+      final autismclient.ai.print.PrintClicks.RaycastBudget clickBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(60000);
       int frontierCursor;
       int stage = -1;
       int supportPass;
@@ -28170,7 +28170,7 @@ public final class PrintCore {
                                        continue;
                                     }
 
-                                    autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findPlacementClick(
+                                    autismclient.ai.print.PrintClicks.Click click = PrintClicks.findPlacementClick(
                                        PrintCore.this.view,
                                        PrintCore.this.env,
                                        PrintCore.this.rules,
@@ -28342,13 +28342,13 @@ public final class PrintCore {
                               this.candidateFeet = null;
                            } else {
                               this.supportFeet = this.candidateFeet.get(this.feetCursor++);
-                              autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                              autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                                  PrintCore.this.view,
                                  PrintCore.this.env,
                                  PrintCore.this.rules,
                                  this.supportTarget,
                                  this.supportItem,
-                                 PrintClicks.Inner_CachePool.PLACE,
+                                 PrintClicks.ClickMode.PLACE,
                                  this.supportFeet,
                                  true,
                                  this.supportIsTarget,
@@ -28402,7 +28402,7 @@ public final class PrintCore {
          }
       }
 
-      private boolean isKnownRefused(IdentityHashMap<BlockState, PrintCore.PlacementSafetyProof> refusals, autismclient.ai.print.PrintClicks.Inner_StreamUtil click) {
+      private boolean isKnownRefused(IdentityHashMap<BlockState, PrintCore.PlacementSafetyProof> refusals, autismclient.ai.print.PrintClicks.Click click) {
          BlockState state = click.predicted() == null ? click.target().wanted() : click.predicted();
          PrintCore.PlacementSafetyProof proof = refusals.get(state);
          if (proof == null) {
@@ -28890,7 +28890,7 @@ public final class PrintCore {
                if (this.centerTicks > 0 ? off > 0.25 : off > 0.45 && b0.onGround()) {
                   this.centerTicks++;
                   PrintControls c = PrintControls.idle();
-                  autismclient.ai.print.PrintMover.Inner_DataUtil g = PrintCore.this.moverGoal(home, 0.2, home.y - 0.01, true, false);
+                  autismclient.ai.print.PrintMover.Goal g = PrintCore.this.moverGoal(home, 0.2, home.y - 0.01, true, false);
                   c.withMoveKeys(PrintMover.planKeys(b0, PrintCore.this.env.livePhysicsWorld(), PrintCore.this.env.playerYaw(), g));
                   c.sneak = true;
                   return c;
@@ -29039,10 +29039,10 @@ public final class PrintCore {
                }
 
                boolean landing = goal.y < prevFeet - 0.6;
-               autismclient.ai.print.PrintMover.Inner_DataUtil g = PrintCore.this.moverGoal(
+               autismclient.ai.print.PrintMover.Goal g = PrintCore.this.moverGoal(
                   goal, last ? Math.min(0.2, this.arrivalTolerance * 0.8) : 0.4, floor, narrow, last || landing
                );
-               autismclient.ai.print.PrintMover.Inner_StreamUtil keys = PrintMover.planKeys(b, PrintCore.this.env.livePhysicsWorld(), look[0], g);
+               autismclient.ai.print.PrintMover.KeyState keys = PrintMover.planKeys(b, PrintCore.this.env.livePhysicsWorld(), look[0], g);
                if (PrintCore.this.env.isFallGuardActive() && b.onGround()) {
                   PrintCore.this.logTrace(
                      "walk: the fall guard holds the body at " + PrintCore.formatVec(PrintCore.this.feetPosition()) + " toward " + PrintCore.formatVec(goal)
@@ -29391,11 +29391,11 @@ public final class PrintCore {
                                  PrintCore.this.rules,
                                  target,
                                  this.interactItem,
-                                 PrintClicks.Inner_CachePool.INTERACT,
+                                 PrintClicks.ClickMode.INTERACT,
                                  workFeet,
                                  false,
                                  false,
-                                 new PrintClicks.Inner_DataUtil(500),
+                                 new PrintClicks.RaycastBudget(500),
                                  4.1000000000000005
                               )
                               != null) {
@@ -29460,7 +29460,7 @@ public final class PrintCore {
             this.finished = true;
          } else if (state == PrintAccess.SearchStatus.FOUND) {
             PrintAccess.AccessPlan plan = this.accessSearch.getPlan();
-            autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.accessSearch.click;
+            autismclient.ai.print.PrintClicks.Click click = this.accessSearch.click;
             if (click == null) {
                throw new IllegalStateException("Fluid access found no native pour");
             }
@@ -29548,7 +29548,7 @@ public final class PrintCore {
                );
                this.finished = true;
             } else if (state == PrintAccess.SearchStatus.FOUND) {
-               autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.removalSearch.click;
+               autismclient.ai.print.PrintClicks.Click click = this.removalSearch.click;
                if (click == null) {
                   throw new IllegalStateException("Fluid preparation access has no native dig");
                }
@@ -29642,7 +29642,7 @@ public final class PrintCore {
                      this.support,
                      this.currentStance,
                      point,
-                     new autismclient.ai.print.PrintClicks.Inner_DataUtil(250)
+                     new autismclient.ai.print.PrintClicks.RaycastBudget(250)
                   )) {
                      Vec3 side = Vec3.atLowerCornerOf(this.closed.pos().subtract(this.support.pos()));
                      Vec3 inset = point.add(side.scale(0.08));
@@ -29652,7 +29652,7 @@ public final class PrintCore {
                            this.support,
                            this.currentStance,
                            inset,
-                           new autismclient.ai.print.PrintClicks.Inner_DataUtil(250)
+                           new autismclient.ai.print.PrintClicks.RaycastBudget(250)
                         )
                         && PrintCore.this.init_Z_ListPool(
                            PrintCore.this.targets[this.owner],
@@ -29660,7 +29660,7 @@ public final class PrintCore {
                            this.support,
                            this.currentStance,
                            point.add(side.scale(0.035)),
-                           new autismclient.ai.print.PrintClicks.Inner_DataUtil(250)
+                           new autismclient.ai.print.PrintClicks.RaycastBudget(250)
                         )) {
                         point = inset;
                      }
@@ -29866,7 +29866,7 @@ public final class PrintCore {
 
                   this.finished = true;
                } else if (answer == PrintAccess.SearchStatus.FOUND) {
-                  autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.railSearch.click;
+                  autismclient.ai.print.PrintClicks.Click click = this.railSearch.click;
                   if (click == null) {
                      throw new IllegalStateException("Rail access has no native placement");
                   }
@@ -30075,7 +30075,7 @@ public final class PrintCore {
       MachineFlightStep(int cell) {
          this.cell = cell;
          this.clickPlanner = PrintCore.this.new ClickCandidatePlanner(
-            PrintCore.this.targets[cell], PrintClicks.Inner_CachePool.INTERACT, PrintCore.this.machineJobAt(cell).item(), null, true
+            PrintCore.this.targets[cell], PrintClicks.ClickMode.INTERACT, PrintCore.this.machineJobAt(cell).item(), null, true
          );
       }
 
@@ -30338,11 +30338,11 @@ public final class PrintCore {
                                        PrintCore.this.rules,
                                        target,
                                        PrintClicks.getFluidBucketItem(target),
-                                       PrintClicks.Inner_CachePool.POUR,
+                                       PrintClicks.ClickMode.POUR,
                                        this.pourFeet,
                                        true,
                                        false,
-                                       new PrintClicks.Inner_DataUtil(),
+                                       new PrintClicks.RaycastBudget(),
                                        4.1000000000000005
                                     )
                                     != null) {
@@ -30453,7 +30453,7 @@ public final class PrintCore {
                               }
 
                               PrintCore.this.logTrace("pour: " + target.pos().toShortString() + " is held in");
-                              PrintCore.PrintStep pour = PrintCore.this.new PourStep(i, PrintClicks.Inner_CachePool.POUR, this.pourStance, this.pourFeet);
+                              PrintCore.PrintStep pour = PrintCore.this.new PourStep(i, PrintClicks.ClickMode.POUR, this.pourStance, this.pourFeet);
                               if (this.only != null) {
                                  PrintCore.this.chainedPours++;
                                  PrintCore.this.logTrace("pour: chained into the flowing pool");
@@ -30585,7 +30585,7 @@ public final class PrintCore {
             PrintCore.this.exhaustedFloorSearches.put(this.floor.asLong(), new long[]{this.startRevision, this.startStance});
             this.finished = true;
          } else if (state == PrintAccess.SearchStatus.FOUND) {
-            autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.cellSearch.click;
+            autismclient.ai.print.PrintClicks.Click click = this.cellSearch.click;
             if (click == null) {
                throw new IllegalStateException("Flow-shaping access has no native placement");
             }
@@ -30613,14 +30613,14 @@ public final class PrintCore {
 
    final class PourStep implements PrintCore.PrintStep {
       final int cell;
-      final PrintClicks.Inner_CachePool mode;
+      final PrintClicks.ClickMode mode;
       final long stanceKey;
       final Vec3 stance;
       int ticks;
       boolean finished;
       int aimTicks;
 
-      PourStep(int cell, PrintClicks.Inner_CachePool mode, long stanceKey, Vec3 stance) {
+      PourStep(int cell, PrintClicks.ClickMode mode, long stanceKey, Vec3 stance) {
          this.cell = cell;
          this.mode = mode;
          this.stanceKey = stanceKey;
@@ -30651,10 +30651,10 @@ public final class PrintCore {
          }
 
          autismclient.ai.engine.AiPhysics.MotionState b = PrintCore.this.env.playerMotionState();
-         autismclient.ai.print.PrintMover.Inner_DataUtil g = PrintCore.this.moverGoal(this.stance, 0.2, this.stance.y - 0.01, true, true);
+         autismclient.ai.print.PrintMover.Goal g = PrintCore.this.moverGoal(this.stance, 0.2, this.stance.y - 0.01, true, true);
          c.sneak = true;
          if (!PrintMover.atGoal(b, g)) {
-            autismclient.ai.print.PrintMover.Inner_StreamUtil keys = PrintMover.planKeys(
+            autismclient.ai.print.PrintMover.KeyState keys = PrintMover.planKeys(
                b, PrintCore.this.env.livePhysicsWorld(), PrintCore.this.env.playerYaw(), g
             );
             c.withMoveKeys(keys);
@@ -30689,12 +30689,12 @@ public final class PrintCore {
                }
             }
 
-            boolean standing = this.mode == PrintClicks.Inner_CachePool.WATERLOG;
+            boolean standing = this.mode == PrintClicks.ClickMode.WATERLOG;
             if (standing && !PrintCore.this.settlesInPlace(b)) {
                return c;
             }
 
-            autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+            autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                PrintCore.this.view,
                PrintCore.this.env,
                PrintCore.this.rules,
@@ -30704,7 +30704,7 @@ public final class PrintCore {
                PrintCore.this.feetPosition(),
                !standing,
                false,
-               new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000),
+               new autismclient.ai.print.PrintClicks.RaycastBudget(2000),
                4.1000000000000005
             );
             if (click == null) {
@@ -30744,7 +30744,7 @@ public final class PrintCore {
                   return c;
                }
             } else {
-               if (this.mode == PrintClicks.Inner_CachePool.POUR
+               if (this.mode == PrintClicks.ClickMode.POUR
                   && PrintCore.this.findSpill(t.pos(), t.wanted().getFluidState().getType()) != null) {
                   this.finished = true;
                   return null;
@@ -30755,7 +30755,7 @@ public final class PrintCore {
                PrintCore.this.dispatchCell(this.cell);
                PrintCore.this.lastPourTick = PrintCore.this.env.currentTick();
                PrintCore.this.lastPourPos = t.pos();
-               if (this.mode == PrintClicks.Inner_CachePool.WATERLOG) {
+               if (this.mode == PrintClicks.ClickMode.WATERLOG) {
                   PrintCore.this.refusedCellStances.add(PrintCore.cellStanceKey(this.cell, this.stanceKey));
                   PrintCore.this.pendingWaterlogs.add(this.cell);
                }
@@ -31739,7 +31739,7 @@ public final class PrintCore {
                      if (candidate >= 0
                         && PrintCore.this.cellStates[candidate] == 0
                         && PrintCore.this.targets[candidate].kind() == PrintTarget.TargetKind.PLACE
-                        && PrintCore.this.clickModeFor(candidate) == PrintClicks.Inner_CachePool.PLACE
+                        && PrintCore.this.clickModeFor(candidate) == PrintClicks.ClickMode.PLACE
                         && !PrintCore.this.isLatePassage(candidate)
                         && !PrintCore.this.heldBackCells.contains(candidate)
                         && !PrintCore.this.cellCooldowns.isCoolingDown(candidate)
@@ -31747,7 +31747,7 @@ public final class PrintCore {
                         this.ownerCell = candidate;
                         this.clickPlanner = PrintCore.this.new ClickCandidatePlanner(
                            PrintCore.this.targets[this.ownerCell],
-                           PrintClicks.Inner_CachePool.PLACE,
+                           PrintClicks.ClickMode.PLACE,
                            PrintCore.this.targets[this.ownerCell].item(),
                            this.support.pos(),
                            true
@@ -32004,15 +32004,15 @@ public final class PrintCore {
       final Long2ObjectOpenHashMap<BlockState> hypothesesSnapshot;
       final LongOpenHashSet ownedTemporariesSnapshot;
       final ArrayList<Long> candidateCells;
-      final LinkedHashMap<Long, autismclient.ai.print.PrintClicks.Inner_StreamUtil> clicksByCell;
+      final LinkedHashMap<Long, autismclient.ai.print.PrintClicks.Click> clicksByCell;
       final HashMap<Long, PrintFlight.FlightPath> exitRoutesByCell;
       final HashMap<Long, LongOpenHashSet> recoveryKeepByCell;
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil clickBudget;
+      final autismclient.ai.print.PrintClicks.RaycastBudget clickBudget;
       int cellCursor;
       int pointCursor;
       long currentCell;
       List<Vec3> candidatePoints;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil click;
+      autismclient.ai.print.PrintClicks.Click click;
       PrintCore.FlightExitSearch exitSearch;
       PrintCore.SupportFlightProbe recoveryProbe;
       PrintFlight.FlightSearch flightSearch;
@@ -32040,7 +32040,7 @@ public final class PrintCore {
          this.clicksByCell = new LinkedHashMap<>();
          this.exitRoutesByCell = new HashMap<>();
          this.recoveryKeepByCell = new HashMap<>();
-         this.clickBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(18000);
+         this.clickBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(18000);
          this.owner = owner;
          this.support = support;
          this.requireRecovery = requireRecovery;
@@ -32094,7 +32094,7 @@ public final class PrintCore {
                }
 
                if (this.flightSearch.result != null) {
-                  autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.clicksByCell
+                  autismclient.ai.print.PrintClicks.Click click = this.clicksByCell
                      .get(this.flightSearch.result.goal());
                   this.supportGoal = new PrintCore.WorkGoal(
                      PrintCore.this.appendWorkPoint(this.flightSearch.result, click.feet()),
@@ -32203,12 +32203,12 @@ public final class PrintCore {
                   }
 
                   LinkedHashSet<Vec3> alternatives = new LinkedHashSet<>(
-                     PrintFlightWorkstations.init(PrintCore.this.view, this.support, PrintClicks.Inner_CachePool.PLACE, this.currentCell)
+                     PrintFlightWorkstations.init(PrintCore.this.view, this.support, PrintClicks.ClickMode.PLACE, this.currentCell)
                   );
                   PrintCore.this.view.pushTemporaryHypothesis(this.support.pos(), this.support.wanted());
 
                   try {
-                     alternatives.addAll(PrintFlightWorkstations.init(PrintCore.this.view, this.ownerTarget, PrintClicks.Inner_CachePool.PLACE, this.currentCell));
+                     alternatives.addAll(PrintFlightWorkstations.init(PrintCore.this.view, this.ownerTarget, PrintClicks.ClickMode.PLACE, this.currentCell));
                   } finally {
                      PrintCore.this.view.popHypothesis(this.support.pos());
                   }
@@ -32223,13 +32223,13 @@ public final class PrintCore {
                   Vec3 point = this.candidatePoints.get(this.pointCursor++);
                   if (PrintFlight.isFlightPointSafe(PrintCore.this.view, point)
                      && PrintFlight.isFlightSegmentClear(PrintCore.this.view, PrintFlight.cellFlightPoint(this.currentCell), point)) {
-                     autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                     autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                         PrintCore.this.view,
                         PrintCore.this.env,
                         PrintCore.this.rules,
                         this.support,
                         this.support.item(),
-                        PrintClicks.Inner_CachePool.PLACE,
+                        PrintClicks.ClickMode.PLACE,
                         point,
                         true,
                         false,
@@ -32793,7 +32793,7 @@ public final class PrintCore {
       }
    }
 
-   private record PosePreview(Vec3 pose, autismclient.ai.print.PrintClicks.Inner_StreamUtil first, PrintCore.PreviewActions preview) {
+   private record PosePreview(Vec3 pose, autismclient.ai.print.PrintClicks.Click first, PrintCore.PreviewActions preview) {
    }
 
    final class FlightExitSearch {
@@ -32840,7 +32840,7 @@ public final class PrintCore {
 
    private record WorkGoal(
       PrintFlight.FlightPath route,
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil click,
+      autismclient.ai.print.PrintClicks.Click click,
       PrintCore.GroundAccess ground,
       int supportOwner,
       PrintFlight.FlightPath supportEscape,
@@ -32848,7 +32848,7 @@ public final class PrintCore {
    ) {
       WorkGoal(
          PrintFlight.FlightPath route,
-         autismclient.ai.print.PrintClicks.Inner_StreamUtil click,
+         autismclient.ai.print.PrintClicks.Click click,
          PrintCore.GroundAccess ground,
          int supportOwner,
          PrintFlight.FlightPath supportEscape
@@ -32856,11 +32856,11 @@ public final class PrintCore {
          this(route, click, ground, supportOwner, supportEscape, null);
       }
 
-      WorkGoal(PrintFlight.FlightPath route, autismclient.ai.print.PrintClicks.Inner_StreamUtil click) {
+      WorkGoal(PrintFlight.FlightPath route, autismclient.ai.print.PrintClicks.Click click) {
          this(route, click, null, -1, null);
       }
 
-      WorkGoal(PrintFlight.FlightPath route, autismclient.ai.print.PrintClicks.Inner_StreamUtil click, PrintCore.GroundAccess ground) {
+      WorkGoal(PrintFlight.FlightPath route, autismclient.ai.print.PrintClicks.Click click, PrintCore.GroundAccess ground) {
          this(route, click, ground, -1, null);
       }
    }
@@ -32868,7 +32868,7 @@ public final class PrintCore {
    private record GoalEvalKey(
       int kind,
       PrintTarget target,
-      PrintClicks.Inner_CachePool mode,
+      PrintClicks.ClickMode mode,
       Item item,
       BlockPos via,
       long destination,
@@ -32992,7 +32992,7 @@ public final class PrintCore {
       final List<Vec3> routePoints;
       final List<PrintCore.StanceStep> groundSteps;
       final List<PrintCore.StanceStep> backSteps;
-      final autismclient.ai.print.PrintClicks.Inner_StreamUtil click;
+      final autismclient.ai.print.PrintClicks.Click click;
       final LongOpenHashSet ownedTemporaries = new LongOpenHashSet();
 
       FlightAccess(Vec3 origin, PrintCore.WorkGoal goal) {
@@ -33283,7 +33283,7 @@ public final class PrintCore {
                            }
                         }
                      } else if (this.stage != 5 && this.stage != 9) {
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.access.click;
+                        autismclient.ai.print.PrintClicks.Click click = this.access.click;
                         if (!this.access.groundSteps.isEmpty()) {
                            PrintCore.StanceStep station = this.access.groundSteps.getLast();
                            if (!PrintClicks.getCandidateFeetPositions(PrintCore.this.view, station.cell(), station.height(), true).contains(click.feet())
@@ -33292,7 +33292,7 @@ public final class PrintCore {
                               continue;
                            }
                         } else if (!PrintFlight.isFlightPointSafe(PrintCore.this.view, click.feet())
-                           || click.mode() == PrintClicks.Inner_CachePool.POUR && !PrintCore.this.init_Z_Vec3_ListPool(click.feet(), click.target())) {
+                           || click.mode() == PrintClicks.ClickMode.POUR && !PrintCore.this.init_Z_Vec3_ListPool(click.feet(), click.target())) {
                            this.conclude(false);
                            continue;
                         }
@@ -33300,8 +33300,8 @@ public final class PrintCore {
                         autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = click.target().index() < 0
                            ? null
                            : PrintCore.this.constraintFor(click.target().index());
-                        autismclient.ai.print.PrintClicks.Inner_DataUtil budget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(4000);
-                        autismclient.ai.print.PrintClicks.Inner_StreamUtil now = this.access.groundSteps.isEmpty()
+                        autismclient.ai.print.PrintClicks.RaycastBudget budget = new autismclient.ai.print.PrintClicks.RaycastBudget(4000);
+                        autismclient.ai.print.PrintClicks.Click now = this.access.groundSteps.isEmpty()
                            ? PrintClicks.findClick(
                               PrintCore.this.view,
                               PrintCore.this.env,
@@ -33637,7 +33637,7 @@ public final class PrintCore {
                }
 
                PrintControls c = PrintControls.idle();
-               autismclient.ai.print.PrintMover.Inner_DataUtil goal = PrintCore.this.moverGoal(
+               autismclient.ai.print.PrintMover.Goal goal = PrintCore.this.moverGoal(
                   this.point, 0.045, this.point.y - 0.01, true, true
                );
                if (!PrintMover.atGoal(PrintCore.this.env.playerMotionState(), goal)) {
@@ -33658,17 +33658,17 @@ public final class PrintCore {
 
                if (!this.firstOpen || this.restoring) {
                   PrintTarget target = this.restoring ? open : this.closed;
-                  autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findClick(
+                  autismclient.ai.print.PrintClicks.Click click = PrintClicks.findClick(
                      PrintCore.this.view,
                      PrintCore.this.env,
                      PrintCore.this.rules,
                      target,
                      Items.AIR,
-                     PrintClicks.Inner_CachePool.INTERACT,
+                     PrintClicks.ClickMode.INTERACT,
                      PrintCore.this.feetPosition(),
                      false,
                      true,
-                     new autismclient.ai.print.PrintClicks.Inner_DataUtil(1000)
+                     new autismclient.ai.print.PrintClicks.RaycastBudget(1000)
                   );
                   if (click == null) {
                      this.nudgeTowardPoint(c, target);
@@ -33701,7 +33701,7 @@ public final class PrintCore {
                                  this.support,
                                  this.key,
                                  PrintCore.this.env.serverFeetPos(),
-                                 new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000)
+                                 new autismclient.ai.print.PrintClicks.RaycastBudget(2000)
                               )) {
                               this.nudgeTowardPoint(c, target);
                               return c;
@@ -33738,7 +33738,7 @@ public final class PrintCore {
                      this.support,
                      this.key,
                      PrintCore.this.feetPosition(),
-                     new autismclient.ai.print.PrintClicks.Inner_DataUtil(2000)
+                     new autismclient.ai.print.PrintClicks.RaycastBudget(2000)
                   )) {
                      this.nudgeTowardPoint(c, open);
                      return c;
@@ -33760,7 +33760,7 @@ public final class PrintCore {
       }
 
       private void nudgeTowardPoint(PrintControls controls, PrintTarget target) {
-         autismclient.ai.print.PrintMover.Inner_DataUtil goal = PrintCore.this.moverGoal(
+         autismclient.ai.print.PrintMover.Goal goal = PrintCore.this.moverGoal(
             this.point, 0.0, this.point.y - 0.01, true, true
          );
          controls.withMoveKeys(
@@ -33777,11 +33777,11 @@ public final class PrintCore {
                         PrintCore.this.rules,
                         target,
                         Items.AIR,
-                        PrintClicks.Inner_CachePool.INTERACT,
+                        PrintClicks.ClickMode.INTERACT,
                         next.position(),
                         false,
                         true,
-                        new autismclient.ai.print.PrintClicks.Inner_DataUtil(250)
+                        new autismclient.ai.print.PrintClicks.RaycastBudget(250)
                      )
                      != null
             )
@@ -33970,7 +33970,7 @@ public final class PrintCore {
             if (this.candidateCursor < Math.min(8, this.candidates.size())) {
                int i = this.candidates.get(this.candidateCursor);
                if (this.goalSearch == null) {
-                  PrintClicks.Inner_CachePool mode = PrintCore.this.clickModeFor(i);
+                  PrintClicks.ClickMode mode = PrintCore.this.clickModeFor(i);
                   this.goalSearch = PrintCore.this.new ClickGoalSearch(
                      PrintCore.this.targets[i], mode, PrintCore.this.clickItemFor(i, mode), null, PrintCore.this.feetPosition()
                   );
@@ -34036,13 +34036,13 @@ public final class PrintCore {
 
    final class ClickGoalSearch {
       final PrintTarget target;
-      final PrintClicks.Inner_CachePool mode;
+      final PrintClicks.ClickMode mode;
       final Item item;
       final BlockPos via;
       final Vec3 origin;
       final ArrayList<Long> landingKeys = new ArrayList<>();
       final ArrayList<PrintNav.ReachResult> reaches = new ArrayList<>();
-      final autismclient.ai.print.PrintClicks.Inner_DataUtil clickBudget = new autismclient.ai.print.PrintClicks.Inner_DataUtil(18000);
+      final autismclient.ai.print.PrintClicks.RaycastBudget clickBudget = new autismclient.ai.print.PrintClicks.RaycastBudget(18000);
       int scanOrdinal;
       int landingsTried;
       int landingCursor;
@@ -34056,9 +34056,9 @@ public final class PrintCore {
       double standingHeight;
       PrintFlight.FlightSearch flightSearch;
       PrintFlight.FlightPath flightRoute;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil stationClick;
+      autismclient.ai.print.PrintClicks.Click stationClick;
       PrintNav.ReachSearch returnSearch;
-      autismclient.ai.print.PrintClicks.Inner_StreamUtil stanceClick;
+      autismclient.ai.print.PrintClicks.Click stanceClick;
       long clickStance;
       boolean returnFailed;
       PrintNav.ReachResult landingReach;
@@ -34066,13 +34066,13 @@ public final class PrintCore {
       ArrayList<Long> stances;
       List<Vec3> candidateFeet;
 
-      ClickGoalSearch(PrintTarget target, PrintClicks.Inner_CachePool mode, Item item, BlockPos via, Vec3 origin) {
+      ClickGoalSearch(PrintTarget target, PrintClicks.ClickMode mode, Item item, BlockPos via, Vec3 origin) {
          this.target = target;
          this.mode = mode;
          this.item = item;
          this.via = via;
          this.origin = origin;
-         if (target.index() < 0 && mode != PrintClicks.Inner_CachePool.DIG) {
+         if (target.index() < 0 && mode != PrintClicks.ClickMode.DIG) {
             this.finished = true;
          }
       }
@@ -34082,7 +34082,7 @@ public final class PrintCore {
             long start = PrintCore.this.view.workUnits();
             if (!this.initialized) {
                this.initialized = true;
-               if (this.mode == PrintClicks.Inner_CachePool.PLACE
+               if (this.mode == PrintClicks.ClickMode.PLACE
                   && !PrintClicks.hasPlaceableSupport(
                      PrintCore.this.view,
                      this.target,
@@ -34258,7 +34258,7 @@ public final class PrintCore {
                         } else {
                            Vec3 point = this.candidateFeet.get(this.feetCursor++);
                            if (PrintCore.this.init_Z_ListPool(this.target, this.mode, key, point)) {
-                              autismclient.ai.print.PrintClicks.Inner_StreamUtil click = PrintClicks.findGroundedClickAndPredict(
+                              autismclient.ai.print.PrintClicks.Click click = PrintClicks.findGroundedClickAndPredict(
                                  PrintCore.this.view,
                                  PrintCore.this.env,
                                  PrintCore.this.rules,
@@ -34266,8 +34266,8 @@ public final class PrintCore {
                                  this.item,
                                  this.mode,
                                  point,
-                                 this.mode == PrintClicks.Inner_CachePool.PLACE
-                                    || this.mode == PrintClicks.Inner_CachePool.POUR,
+                                 this.mode == PrintClicks.ClickMode.PLACE
+                                    || this.mode == PrintClicks.ClickMode.POUR,
                                  this.clickBudget,
                                  4.1000000000000005,
                                  this.target.index() < 0 ? null : PrintCore.this.constraintFor(this.target.index()),
@@ -34333,8 +34333,8 @@ public final class PrintCore {
                               this.item,
                               this.mode,
                               new Vec3(this.stationPos.getX() + 0.5, this.standingHeight, this.stationPos.getZ() + 0.5),
-                              this.mode == PrintClicks.Inner_CachePool.PLACE
-                                 || this.mode == PrintClicks.Inner_CachePool.POUR,
+                              this.mode == PrintClicks.ClickMode.PLACE
+                                 || this.mode == PrintClicks.ClickMode.POUR,
                               this.clickBudget,
                               4.1000000000000005,
                               this.target.index() < 0 ? null : PrintCore.this.constraintFor(this.target.index()),

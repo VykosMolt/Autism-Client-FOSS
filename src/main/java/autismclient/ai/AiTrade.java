@@ -66,7 +66,7 @@ final class AiTrade {
    static AiOperation trade(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiTrade.Inner_DataUtil action = parseAction(AiJson.getString(args, "action", "inspect"));
+         final AiTrade.TradeAction action = parseAction(AiJson.getString(args, "action", "inspect"));
          final int entityId = AiJson.getInt(args, "entityId", -1);
          final int tradeIndex = AiJson.getInt(args, "tradeIndex", -1);
          final String wanted = AiJson.getString(args, "item", "");
@@ -75,7 +75,7 @@ final class AiTrade {
          final boolean waitRestock = AiJson.getBoolean(args, "waitRestock", false);
          final boolean reroll = AiJson.getBoolean(args, "reroll", false);
          final int rerollAttempts = Math.max(1, Math.min(8, AiJson.getInt(args, "rerollAttempts", 3)));
-         if (action == AiTrade.Inner_DataUtil.TRADE && tradeIndex < 0 && wanted.isBlank()) {
+         if (action == AiTrade.TradeAction.TRADE && tradeIndex < 0 && wanted.isBlank()) {
             throw new IllegalArgumentException("trade needs tradeIndex from an inspect listing, or item to select the offer by its result");
          }
 
@@ -135,7 +135,7 @@ final class AiTrade {
                      return this.finish(AiOperation.Status.FAILED, "This trader has no offers");
                   }
 
-                  if (action == AiTrade.Inner_DataUtil.INSPECT) {
+                  if (action == AiTrade.TradeAction.INSPECT) {
                      return this.finish(AiOperation.Status.SUCCEEDED, "Read " + menu.getOffers().size() + " offer(s)");
                   }
 
@@ -685,15 +685,15 @@ final class AiTrade {
       return stack.isEmpty() ? "none" : stack.getCount() + "x " + BuiltInRegistries.ITEM.getKey(stack.getItem());
    }
 
-   private static AiTrade.Inner_DataUtil parseAction(String text) {
+   private static AiTrade.TradeAction parseAction(String text) {
       try {
-         return AiTrade.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
+         return AiTrade.TradeAction.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("action must be inspect or trade");
       }
    }
 
-   enum Inner_DataUtil {
+   enum TradeAction {
       INSPECT,
       TRADE;
    }

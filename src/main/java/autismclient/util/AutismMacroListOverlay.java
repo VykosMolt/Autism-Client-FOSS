@@ -1522,21 +1522,21 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       String filter = this.searchInput.getValue().trim().toLowerCase(Locale.ROOT);
       List<AutismMacroListOverlay.ListItem> items = new ArrayList<>();
 
-      for (MacroFolderLayout.Inner_DataUtil row : MacroLibraryManager.getInstance().getOrderedFolderEntries(filter, true, macro -> !AutoFishMacroPresets.isStopMacro(macro))) {
+      for (MacroFolderLayout.LayoutRow row : MacroLibraryManager.getInstance().getOrderedFolderEntries(filter, true, macro -> !AutoFishMacroPresets.isStopMacro(macro))) {
          items.add(row.init_Z() ? AutismMacroListOverlay.ListItem.folderItem(row, null) : AutismMacroListOverlay.ListItem.localMacroItem(row.macro()));
       }
 
       if (sync.isInSession()) {
          for (Entry<String, Map<String, AutismMacro>> entry : remoteMacros.entrySet()) {
             List<AutismMacro> available = entry.getValue().values().stream().filter(m -> !AutoFishMacroPresets.isStopMacro(m)).filter(m -> MacroLibraryManager.getInstance().findByName(m.name) == null).toList();
-            List<MacroFolderLayout.Inner_DataUtil> remoteRows = MacroFolderLayout.rows(
+            List<MacroFolderLayout.LayoutRow> remoteRows = MacroFolderLayout.rows(
                available, List.of(), folder -> this.collapsedPeerFolders.contains(entry.getKey() + "\u0000" + MacroFolderLayout.key(folder)), filter, false
             );
             if (!remoteRows.isEmpty()) {
                items.add(AutismMacroListOverlay.ListItem.sectionHeaderItem(entry.getKey(), -12122));
             }
 
-            for (MacroFolderLayout.Inner_DataUtil row : remoteRows) {
+            for (MacroFolderLayout.LayoutRow row : remoteRows) {
                items.add(
                   row.init_Z()
                      ? AutismMacroListOverlay.ListItem.folderItem(row, entry.getKey())
@@ -2737,9 +2737,9 @@ public class AutismMacroListOverlay extends DraggableOverlayWindow {
       private int unusedColor;
       private AutismMacro macro;
       private String source;
-      private MacroFolderLayout.Inner_DataUtil folderRow;
+      private MacroFolderLayout.LayoutRow folderRow;
 
-      private static AutismMacroListOverlay.ListItem folderItem(MacroFolderLayout.Inner_DataUtil row, String source) {
+      private static AutismMacroListOverlay.ListItem folderItem(MacroFolderLayout.LayoutRow row, String source) {
          AutismMacroListOverlay.ListItem item = new AutismMacroListOverlay.ListItem();
          item.kind = AutismMacroListOverlay.ItemKind.FOLDER;
          item.label = row.folderName();

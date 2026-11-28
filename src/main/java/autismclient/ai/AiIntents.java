@@ -443,7 +443,7 @@ final class AiIntents {
          return null;
       }
 
-      AiFastPath.Inner_DataUtil move = AiFastPath.parse(c, lookups.waypoint());
+      AiFastPath.ParsedObjective move = AiFastPath.parse(c, lookups.waypoint());
       if (move != null) {
          return new AiIntents.IntentStep(raw, "game:goto", move.args(), move.describe());
       }

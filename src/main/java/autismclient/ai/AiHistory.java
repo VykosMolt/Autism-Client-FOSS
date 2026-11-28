@@ -103,8 +103,8 @@ final class AiHistory {
       return repairToolPairs(provider, out);
    }
 
-   static List<AiHistory.Inner_DataUtil> toolCallsOf(AiSettings.Provider provider, JsonObject assistant) {
-      List<AiHistory.Inner_DataUtil> out = new ArrayList<>();
+   static List<AiHistory.ToolCallInfo> toolCallsOf(AiSettings.Provider provider, JsonObject assistant) {
+      List<AiHistory.ToolCallInfo> out = new ArrayList<>();
       if (!isAssistant(assistant)) {
          return out;
       }
@@ -117,7 +117,7 @@ final class AiHistory {
                   JsonObject b = block.getAsJsonObject();
                   String name = AiJson.getString(b, "name", "");
                   out.add(
-                     new AiHistory.Inner_DataUtil(
+                     new AiHistory.ToolCallInfo(
                         AiJson.getString(b, "id", ""),
                         name,
                         callLabel(name, b.has("input") && b.get("input").isJsonObject() ? b.getAsJsonObject("input") : null)
@@ -134,7 +134,7 @@ final class AiHistory {
                   JsonObject f = part.getAsJsonObject().getAsJsonObject("functionCall");
                   String name = AiJson.getString(f, "name", "");
                   out.add(
-                     new AiHistory.Inner_DataUtil(
+                     new AiHistory.ToolCallInfo(
                         AiJson.getString(f, "id", ""), name, callLabel(name, f.has("args") && f.get("args").isJsonObject() ? f.getAsJsonObject("args") : null)
                      )
                   );
@@ -156,7 +156,7 @@ final class AiHistory {
                   } catch (RuntimeException var11) {
                   }
 
-                  out.add(new AiHistory.Inner_DataUtil(AiJson.getString(c, "id", ""), name, callLabel(name, args)));
+                  out.add(new AiHistory.ToolCallInfo(AiJson.getString(c, "id", ""), name, callLabel(name, args)));
                }
             }
          }
@@ -196,7 +196,7 @@ final class AiHistory {
          JsonObject m = history.get(i);
          Set<String> expected = new LinkedHashSet<>();
          if (!out.isEmpty() && isAssistant(out.getLast())) {
-            for (AiHistory.Inner_DataUtil c : toolCallsOf(AiSettings.Provider.ANTHROPIC, out.getLast())) {
+            for (AiHistory.ToolCallInfo c : toolCallsOf(AiSettings.Provider.ANTHROPIC, out.getLast())) {
                expected.add(c.id());
             }
          }
@@ -283,7 +283,7 @@ final class AiHistory {
       if (!out.isEmpty() && isAssistant(out.getLast())) {
          Set<String> expected = new LinkedHashSet<>();
 
-         for (AiHistory.Inner_DataUtil c : toolCallsOf(AiSettings.Provider.ANTHROPIC, out.getLast())) {
+         for (AiHistory.ToolCallInfo c : toolCallsOf(AiSettings.Provider.ANTHROPIC, out.getLast())) {
             expected.add(c.id());
          }
 
@@ -359,7 +359,7 @@ final class AiHistory {
             open.clear();
             out.add(m);
             if (isAssistant(m)) {
-               for (AiHistory.Inner_DataUtil c : toolCallsOf(AiSettings.Provider.OPENAI, m)) {
+               for (AiHistory.ToolCallInfo c : toolCallsOf(AiSettings.Provider.OPENAI, m)) {
                   open.add(c.id());
                }
             }
@@ -387,7 +387,7 @@ final class AiHistory {
 
       for (int i = 0; i < history.size(); i++) {
          JsonObject m = history.get(i);
-         List<AiHistory.Inner_DataUtil> expected = !out.isEmpty() && isAssistant(out.getLast()) ? toolCallsOf(AiSettings.Provider.GEMINI, out.getLast()) : List.of();
+         List<AiHistory.ToolCallInfo> expected = !out.isEmpty() && isAssistant(out.getLast()) ? toolCallsOf(AiSettings.Provider.GEMINI, out.getLast()) : List.of();
          if (!isUser(m)) {
             if (!expected.isEmpty()) {
                out.add(init_JsonObject(expected));
@@ -432,7 +432,7 @@ final class AiHistory {
       }
 
       if (!out.isEmpty() && isAssistant(out.getLast())) {
-         List<AiHistory.Inner_DataUtil> expected = toolCallsOf(AiSettings.Provider.GEMINI, out.getLast());
+         List<AiHistory.ToolCallInfo> expected = toolCallsOf(AiSettings.Provider.GEMINI, out.getLast());
          if (!expected.isEmpty()) {
             out.add(init_JsonObject(expected));
          }
@@ -441,7 +441,7 @@ final class AiHistory {
       return out;
    }
 
-   private static JsonObject interruptedFunctionResponse(AiHistory.Inner_DataUtil call) {
+   private static JsonObject interruptedFunctionResponse(AiHistory.ToolCallInfo call) {
       JsonObject response = AiJson.objectOf(
          "name",
          call.name(),
@@ -457,21 +457,21 @@ final class AiHistory {
       return AiJson.objectOf("functionResponse", response);
    }
 
-   private static JsonObject init_JsonObject(List<AiHistory.Inner_DataUtil> calls) {
+   private static JsonObject init_JsonObject(List<AiHistory.ToolCallInfo> calls) {
       JsonArray parts = new JsonArray();
 
-      for (AiHistory.Inner_DataUtil c : calls) {
+      for (AiHistory.ToolCallInfo c : calls) {
          parts.add(interruptedFunctionResponse(c));
       }
 
       return AiJson.objectOf("role", "user", "parts", parts);
    }
 
-   static AiHistory.Inner_StreamUtil compact(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars) {
+   static AiHistory.Compaction compact(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars) {
       return compactionCut(provider, history, keepChars, hardChars, false);
    }
 
-   static AiHistory.Inner_StreamUtil compactionCut(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars, boolean keepLastThinking) {
+   static AiHistory.Compaction compactionCut(AiSettings.Provider provider, List<JsonObject> history, long keepChars, long hardChars, boolean keepLastThinking) {
       List<Integer> starts = new ArrayList<>();
 
       for (int i = 0; i < history.size(); i++) {
@@ -535,7 +535,7 @@ final class AiHistory {
          digest = digest + "\nEARLIER COMPACTIONS: " + (prior.length() > 3000 ? prior.substring(0, 3000) + " ..." : prior);
       }
 
-      return new AiHistory.Inner_StreamUtil(kept, dropped, digest);
+      return new AiHistory.Compaction(kept, dropped, digest);
    }
 
    static String init_Str(List<JsonObject> dropped) {
@@ -584,7 +584,7 @@ final class AiHistory {
    static String init_Str(AiSettings.Provider provider, List<JsonObject> dropped) {
       Map<String, String> labels = new HashMap<>();
       Map<String, Map<String, Integer>> byTool = new TreeMap<>();
-      List<AiHistory.Inner_DataUtil> geminiPending = new ArrayList<>();
+      List<AiHistory.ToolCallInfo> geminiPending = new ArrayList<>();
       int rounds = 0;
       int calls = 0;
       String lastText = "";
@@ -592,10 +592,10 @@ final class AiHistory {
       for (JsonObject m : dropped) {
          if (isAssistant(m)) {
             rounds++;
-            List<AiHistory.Inner_DataUtil> found = toolCallsOf(provider, m);
+            List<AiHistory.ToolCallInfo> found = toolCallsOf(provider, m);
             calls += found.size();
 
-            for (AiHistory.Inner_DataUtil c : found) {
+            for (AiHistory.ToolCallInfo c : found) {
                labels.put(c.id(), c.label());
                byTool.computeIfAbsent(c.label(), k -> new TreeMap<>());
             }
@@ -729,9 +729,9 @@ final class AiHistory {
       return out.toString();
    }
 
-   record Inner_DataUtil(String id, String name, String label) {
+   record ToolCallInfo(String id, String name, String label) {
    }
 
-   record Inner_StreamUtil(List<JsonObject> kept, List<JsonObject> dropped, String digest) {
+   record Compaction(List<JsonObject> kept, List<JsonObject> dropped, String digest) {
    }
 }

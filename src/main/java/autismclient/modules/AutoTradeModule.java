@@ -37,13 +37,13 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.HitResult.Type;
 
 public final class AutoTradeModule extends Module {
-   private AutoTradeModule.Inner_DataUtil phase = AutoTradeModule.Inner_DataUtil.SEARCH;
+   private AutoTradeModule.Phase phase = AutoTradeModule.Phase.SEARCH;
    private Entity villager;
    private MerchantMenu menu;
    private Object level;
    private autismclient.util.villager.VillagerTradeSession session;
    private autismclient.util.villager.TradeOfferFilter offerFilter;
-   private AutoTradeModule.Inner_StreamUtil profession;
+   private AutoTradeModule.Profession profession;
    private BlockPos workstationPos;
    private Block workstation;
    private boolean rerollMode;
@@ -162,7 +162,7 @@ public final class AutoTradeModule extends Module {
             .visibleWhen(() -> !this.isRerollMode() && !this.choice("target").equals("Open screen"))
       );
       this.add(
-         new ChoiceSetting("profession", "Profession", "LIBRARIAN", Arrays.stream(AutoTradeModule.Inner_StreamUtil.values()).map(Enum::name).toList())
+         new ChoiceSetting("profession", "Profession", "LIBRARIAN", Arrays.stream(AutoTradeModule.Profession.values()).map(Enum::name).toList())
             .group("Reroll")
             .visibleWhen(this::isRerollMode)
       );
@@ -216,7 +216,7 @@ public final class AutoTradeModule extends Module {
    }
 
    public static boolean isWorkstation(Block block) {
-      return Arrays.stream(AutoTradeModule.Inner_StreamUtil.values()).anyMatch(p -> p.init_Block == block);
+      return Arrays.stream(AutoTradeModule.Profession.values()).anyMatch(p -> p.init_Block == block);
    }
 
    public static boolean canChangeProfession(boolean baby, boolean nitwit, int level, int xp, boolean usedOffer) {
@@ -239,7 +239,7 @@ public final class AutoTradeModule extends Module {
       this.rerollMode = this.isRerollMode();
       this.matchProfession = this.choice("match").equals("Profession");
       this.lockTrades = this.bool("lock");
-      this.phase = AutoTradeModule.Inner_DataUtil.SEARCH;
+      this.phase = AutoTradeModule.Phase.SEARCH;
       this.status = "Searching";
       this.level = MC.level;
       if (MC.player != null && MC.level != null) {
@@ -248,18 +248,18 @@ public final class AutoTradeModule extends Module {
                throw new IllegalArgumentException("Choose Items, Books or Offer for trading");
             }
 
-            List<autismclient.util.villager.TradeOfferFilter.Inner_DataUtil> desired = new ArrayList<>();
+            List<autismclient.util.villager.TradeOfferFilter.BookFilter> desired = new ArrayList<>();
             if (this.matchesBooks()) {
                String book = this.choice("enchantment").equals("Custom") ? this.text("custom-enchantment") : this.choice("enchantment");
                if (book.isBlank()) {
                   throw new IllegalArgumentException("Enter a custom enchantment");
                }
 
-               desired.add(new autismclient.util.villager.TradeOfferFilter.Inner_DataUtil(book, this.integer("level"), 0));
+               desired.add(new autismclient.util.villager.TradeOfferFilter.BookFilter(book, this.integer("level"), 0));
 
                for (String rule : this.list("other-books")) {
                   try {
-                     desired.add(autismclient.util.villager.TradeOfferFilter.Inner_DataUtil.parse(rule));
+                     desired.add(autismclient.util.villager.TradeOfferFilter.BookFilter.parse(rule));
                   } catch (IllegalArgumentException e) {
                      throw new IllegalArgumentException("Invalid book rule: " + rule.strip());
                   }
@@ -278,9 +278,9 @@ public final class AutoTradeModule extends Module {
                this.bool("exact-level"),
                this.integer("max-price")
             );
-            this.profession = AutoTradeModule.Inner_StreamUtil.valueOf(this.choice("profession"));
+            this.profession = AutoTradeModule.Profession.valueOf(this.choice("profession"));
             if (this.rerollMode) {
-               if (this.matchesBooks() && this.profession != AutoTradeModule.Inner_StreamUtil.LIBRARIAN) {
+               if (this.matchesBooks() && this.profession != AutoTradeModule.Profession.LIBRARIAN) {
                   throw new IllegalArgumentException("Choose Librarian for enchanted books");
                }
 
@@ -373,7 +373,7 @@ public final class AutoTradeModule extends Module {
             } else if (this.rerollMode
                && this.menu == null
                && MC.player.containerMenu instanceof MerchantMenu
-               && this.phase != AutoTradeModule.Inner_DataUtil.OPEN) {
+               && this.phase != AutoTradeModule.Phase.OPEN) {
                this.status = "Close the current trade screen";
             } else if (this.rerollMode) {
                this.tickReroll();
@@ -386,7 +386,7 @@ public final class AutoTradeModule extends Module {
 
    private void handleMerchantMenu() {
       if (MC.player.containerMenu instanceof MerchantMenu menu) {
-         if (this.menu == null && !this.choice("target").equals("Open screen") && this.phase != AutoTradeModule.Inner_DataUtil.OPEN) {
+         if (this.menu == null && !this.choice("target").equals("Open screen") && this.phase != AutoTradeModule.Phase.OPEN) {
             this.status = "Close the current trade screen";
          } else if (menu.getOffers().isEmpty() && ++this.offerWaitTicks < this.integer("timeout")) {
             this.status = "Loading offers";
@@ -396,7 +396,7 @@ public final class AutoTradeModule extends Module {
          }
       } else if (this.choice("target").equals("Open screen")) {
          this.status = "Open a trade screen";
-      } else if (this.phase == AutoTradeModule.Inner_DataUtil.OPEN) {
+      } else if (this.phase == AutoTradeModule.Phase.OPEN) {
          if (++this.offerWaitTicks >= this.integer("timeout")) {
             this.finishVillager();
          } else {
@@ -438,23 +438,23 @@ public final class AutoTradeModule extends Module {
       this.session.tick(MC);
       this.status = this.session.message();
       if (this.session.isFinished()) {
-         autismclient.util.villager.VillagerTradeSession.Inner_CachePool result = this.session.status();
+         autismclient.util.villager.VillagerTradeSession.Status result = this.session.status();
          this.tradesDone = this.tradesDone + this.session.traded();
          this.emeraldsSpent = this.emeraldsSpent + this.session.spent();
          this.session.abortSession(MC);
          this.session = null;
          if (this.rerollMode) {
             this.stopWith(
-               result == autismclient.util.villager.VillagerTradeSession.Inner_CachePool.COMPLETE ? "Match purchased and locked" : "Match found; " + this.status,
-               result == autismclient.util.villager.VillagerTradeSession.Inner_CachePool.COMPLETE
+               result == autismclient.util.villager.VillagerTradeSession.Status.COMPLETE ? "Match purchased and locked" : "Match found; " + this.status,
+               result == autismclient.util.villager.VillagerTradeSession.Status.COMPLETE
             );
-         } else if (result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.UNCERTAIN
-            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.REJECTED
-            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.CURSOR_BUSY
-            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.INVENTORY_FULL
-            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.BUDGET
-            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.CANCELLED
-            && result != autismclient.util.villager.VillagerTradeSession.Inner_CachePool.NO_MENU) {
+         } else if (result != autismclient.util.villager.VillagerTradeSession.Status.UNCERTAIN
+            && result != autismclient.util.villager.VillagerTradeSession.Status.REJECTED
+            && result != autismclient.util.villager.VillagerTradeSession.Status.CURSOR_BUSY
+            && result != autismclient.util.villager.VillagerTradeSession.Status.INVENTORY_FULL
+            && result != autismclient.util.villager.VillagerTradeSession.Status.BUDGET
+            && result != autismclient.util.villager.VillagerTradeSession.Status.CANCELLED
+            && result != autismclient.util.villager.VillagerTradeSession.Status.NO_MENU) {
             if (this.integer("trade-limit") > 0 && this.tradesDone >= this.integer("trade-limit")) {
                this.stopWith("Trade limit reached", true);
             } else if (this.choice("target").equals("Open screen")) {
@@ -475,7 +475,7 @@ public final class AutoTradeModule extends Module {
 
       this.closeMenu();
       this.villager = null;
-      this.phase = AutoTradeModule.Inner_DataUtil.SEARCH;
+      this.phase = AutoTradeModule.Phase.SEARCH;
       this.offerWaitTicks = 0;
       this.nextActionTick = this.ticks + this.integer("delay");
    }
@@ -498,9 +498,9 @@ public final class AutoTradeModule extends Module {
 
                      if (MC.level.getBlockState(this.workstationPos).isAir()) {
                         this.write_Z = true;
-                        this.setPhase(AutoTradeModule.Inner_DataUtil.PLACE, "Placing workstation");
+                        this.setPhase(AutoTradeModule.Phase.PLACE, "Placing workstation");
                      } else {
-                        this.setPhase(AutoTradeModule.Inner_DataUtil.BREAK, "Removing selected workstation");
+                        this.setPhase(AutoTradeModule.Phase.BREAK, "Removing selected workstation");
                      }
                   } else {
                      this.openVillager();
@@ -510,7 +510,7 @@ public final class AutoTradeModule extends Module {
                   if (MC.player.containerMenu instanceof MerchantMenu menu) {
                      this.menu = menu;
                      if (!menu.getOffers().isEmpty()) {
-                        this.setPhase(AutoTradeModule.Inner_DataUtil.INSPECT, "Inspecting offers");
+                        this.setPhase(AutoTradeModule.Phase.INSPECT, "Inspecting offers");
                      }
                   } else if (this.offerWaitTicks >= this.integer("timeout")) {
                      this.stopWith("Villager did not open", false);
@@ -521,7 +521,7 @@ public final class AutoTradeModule extends Module {
                   boolean match = this.hasProfession(villager) && (this.matchProfession || this.matchingOfferIndex(menu) >= 0);
                   if (match) {
                      if (this.lockTrades) {
-                        this.setPhase(AutoTradeModule.Inner_DataUtil.LOCK, "Locking match");
+                        this.setPhase(AutoTradeModule.Phase.LOCK, "Locking match");
                         this.init_V_I_4(1);
                      } else {
                         this.stopWith("Match found; trade once to lock it", true);
@@ -544,7 +544,7 @@ public final class AutoTradeModule extends Module {
 
                   this.closeMenu();
                   this.lastJobTick = this.ticks;
-                  this.setPhase(AutoTradeModule.Inner_DataUtil.BREAK, "Removing selected workstation");
+                  this.setPhase(AutoTradeModule.Phase.BREAK, "Removing selected workstation");
                   break;
                case BREAK:
                   if (this.bool("work-hours") && !isWorkTime(MC.level.getOverworldClockTime())) {
@@ -568,7 +568,7 @@ public final class AutoTradeModule extends Module {
                      MC.gameMode.stopDestroyBlock();
                      this.update_Z = false;
                      this.write_Z = true;
-                     this.setPhase(AutoTradeModule.Inner_DataUtil.LOSE_JOB, "Waiting for unemployment");
+                     this.setPhase(AutoTradeModule.Phase.LOSE_JOB, "Waiting for unemployment");
                      return;
                   }
 
@@ -604,15 +604,15 @@ public final class AutoTradeModule extends Module {
                   break;
                case LOSE_JOB:
                   if (villager.getVillagerData().profession().is(VillagerProfession.NONE)) {
-                     this.setPhase(AutoTradeModule.Inner_DataUtil.PLACE, "Placing workstation");
+                     this.setPhase(AutoTradeModule.Phase.PLACE, "Placing workstation");
                   } else if (!MC.level.getBlockState(this.workstationPos).isAir()) {
                      this.write_Z = false;
-                     this.setPhase(AutoTradeModule.Inner_DataUtil.BREAK, "Workstation break rejected");
+                     this.setPhase(AutoTradeModule.Phase.BREAK, "Workstation break rejected");
                   }
                   break;
                case PLACE:
                   if (MC.level.getBlockState(this.workstationPos).is(this.profession.init_Block)) {
-                     this.setPhase(AutoTradeModule.Inner_DataUtil.ACQUIRE_JOB, "Waiting for profession");
+                     this.setPhase(AutoTradeModule.Phase.ACQUIRE_JOB, "Waiting for profession");
                      return;
                   }
 
@@ -622,7 +622,7 @@ public final class AutoTradeModule extends Module {
                   }
 
                   if (this.load_Z(this.profession.init_Block)) {
-                     this.setPhase(AutoTradeModule.Inner_DataUtil.ACQUIRE_JOB, "Waiting for profession");
+                     this.setPhase(AutoTradeModule.Phase.ACQUIRE_JOB, "Waiting for profession");
                   }
                   break;
                case ACQUIRE_JOB:
@@ -630,7 +630,7 @@ public final class AutoTradeModule extends Module {
                      || !MC.level.getBlockState(this.workstationPos).is(this.profession.init_Block)
                      || this.placeSequence >= 0 && !autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(MC.level, this.placeSequence)) {
                      if (this.placeSequence >= 0 && autismclient.util.villager.BlockChangeAckTracker.isAcknowledged(MC.level, this.placeSequence) && MC.level.getBlockState(this.workstationPos).isAir()) {
-                        this.setPhase(AutoTradeModule.Inner_DataUtil.PLACE, "Retrying workstation placement");
+                        this.setPhase(AutoTradeModule.Phase.PLACE, "Retrying workstation placement");
                      } else if (!villager.getVillagerData().profession().is(VillagerProfession.NONE) && !this.hasProfession(villager)) {
                         this.stopWith("Villager claimed another workstation", false);
                      }
@@ -639,7 +639,7 @@ public final class AutoTradeModule extends Module {
                      this.rerollCount++;
                      this.lastJobTick = this.ticks;
                      this.restoreSlot();
-                     this.setPhase(AutoTradeModule.Inner_DataUtil.SEARCH, "Inspecting new profession");
+                     this.setPhase(AutoTradeModule.Phase.SEARCH, "Inspecting new profession");
                      this.openVillager();
                   }
                case LOCK:
@@ -673,7 +673,7 @@ public final class AutoTradeModule extends Module {
       return -1;
    }
 
-   private void setPhase(AutoTradeModule.Inner_DataUtil value, String message) {
+   private void setPhase(AutoTradeModule.Phase value, String message) {
       this.phase = value;
       this.offerWaitTicks = 0;
       this.status = message;
@@ -716,7 +716,7 @@ public final class AutoTradeModule extends Module {
                .interact(
                   MC.player, this.villager, new EntityHitResult(this.villager, this.villager.getBoundingBox().getCenter()), InteractionHand.MAIN_HAND
                );
-            this.setPhase(AutoTradeModule.Inner_DataUtil.OPEN, "Opening villager");
+            this.setPhase(AutoTradeModule.Phase.OPEN, "Opening villager");
          }
       }
    }
@@ -969,7 +969,7 @@ public final class AutoTradeModule extends Module {
       this.switchedSlot = -1;
       this.breakSequence = -1;
       this.placeSequence = -1;
-      this.phase = AutoTradeModule.Inner_DataUtil.SEARCH;
+      this.phase = AutoTradeModule.Phase.SEARCH;
       this.status = "Stopped";
       Map var2 = this.revisitAt;
       if (var2 != null) {
@@ -977,7 +977,7 @@ public final class AutoTradeModule extends Module {
       }
    }
 
-   private enum Inner_DataUtil {
+   private enum Phase {
       SEARCH,
       OPEN,
       INSPECT,
@@ -988,7 +988,7 @@ public final class AutoTradeModule extends Module {
       LOCK;
    }
 
-   public enum Inner_StreamUtil {
+   public enum Profession {
       ARMORER(Blocks.BLAST_FURNACE),
       BUTCHER(Blocks.SMOKER),
       CARTOGRAPHER(Blocks.CARTOGRAPHY_TABLE),
@@ -1005,7 +1005,7 @@ public final class AutoTradeModule extends Module {
 
       final Block init_Block;
 
-      Inner_StreamUtil(Block block) {
+      Profession(Block block) {
          this.init_Block = block;
       }
    }

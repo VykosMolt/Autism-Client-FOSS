@@ -365,8 +365,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private int selectedItemEntry = -1;
    private int selectedDropEntry = -1;
    private int selectedSlotChangeEntry = -1;
-   private List<WaitForSlotChangeAction.Inner_DataUtil> slotChangeEntries;
-   private WaitForSlotChangeAction.Inner_StreamUtil slotChangeCondition = WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY;
+   private List<WaitForSlotChangeAction.SlotEntry> slotChangeEntries;
+   private WaitForSlotChangeAction.WaitMode slotChangeCondition = WaitForSlotChangeAction.WaitMode.NOT_EMPTY;
    private int slotChangeCount = 1;
    private boolean suppressItemAddListener = false;
    private boolean suppressDropAddListener = false;
@@ -426,7 +426,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       PayloadFieldCodec.EncodingMode.ADVANCED_MIXED
    );
    private List<WaitForLanStepAction.StepEntry> lanStepEntries;
-   private List<autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool> packetMatchRules;
+   private List<autismclient.util.macro.WaitPacketMatchAction.MatchRule> packetMatchRules;
    private int selectedPacketRule = -1;
    private final List<String> playerNameOptions = new ArrayList<>();
    private final Map<String, String> playerPrefixes = new HashMap<>();
@@ -722,10 +722,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       this.selectedSlotChangeEntry = -1;
       this.slotChangeEntries = new ArrayList<>();
-      this.slotChangeCondition = WaitForSlotChangeAction.Inner_StreamUtil.NOT_EMPTY;
+      this.slotChangeCondition = WaitForSlotChangeAction.WaitMode.NOT_EMPTY;
       this.slotChangeCount = 1;
       if (action instanceof WaitForSlotChangeAction wsc) {
-         for (WaitForSlotChangeAction.Inner_DataUtil e : wsc.entries) {
+         for (WaitForSlotChangeAction.SlotEntry e : wsc.entries) {
             this.slotChangeEntries.add(e.copy());
          }
       }
@@ -789,12 +789,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (action instanceof autismclient.util.macro.WaitPacketMatchAction packetMatchAction) {
          this.packetMatchRules = new ArrayList<>();
 
-         for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : packetMatchAction.effectiveRules()) {
+         for (autismclient.util.macro.WaitPacketMatchAction.MatchRule rule : packetMatchAction.effectiveRules()) {
             this.packetMatchRules.add(rule.copy());
          }
 
          if (this.packetMatchRules.isEmpty()) {
-            this.packetMatchRules.add(new autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool());
+            this.packetMatchRules.add(new autismclient.util.macro.WaitPacketMatchAction.MatchRule());
          }
 
          this.selectedPacketRule = 0;
@@ -849,7 +849,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          this.toggleStates.put("drop_waitForGuiBefore", da.waitForGuiBefore);
          this.toggleStates.put("drop_waitForGuiAfter", da.waitForGuiAfter);
          this.toggleStates.put("drop_useHandlerSlots", da.useHandlerSlots);
-         DropAction.Inner_DataUtil[] modes = DropAction.Inner_DataUtil.values();
+         DropAction.DropMode[] modes = DropAction.DropMode.values();
          int mi = 0;
 
          for (int i = 0; i < modes.length; i++) {
@@ -1439,7 +1439,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                String disp = StoreItemAction.formatTarget(norm);
                if (this.selectedSlotChangeEntry >= 0 && this.selectedSlotChangeEntry < this.slotChangeEntries.size()) {
                   if (!this.hasSlotChangeTargetExcept(norm, this.selectedSlotChangeEntry)) {
-                     WaitForSlotChangeAction.Inner_DataUtil entry = this.slotChangeEntries.get(this.selectedSlotChangeEntry);
+                     WaitForSlotChangeAction.SlotEntry entry = this.slotChangeEntries.get(this.selectedSlotChangeEntry);
                      entry.target = norm;
                      entry.itemTarget = capturedTarget.copy();
                      this.loadSlotChangeEntry(entry);
@@ -1450,7 +1450,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                } else if (this.hasSlotChangeTarget(norm)) {
                   this.showToast("Already added: " + disp, -38037);
                } else {
-                  WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil(norm, this.slotChangeCondition, this.slotChangeCount);
+                  WaitForSlotChangeAction.SlotEntry entry = new WaitForSlotChangeAction.SlotEntry(norm, this.slotChangeCondition, this.slotChangeCount);
                   entry.itemTarget = capturedTarget.copy();
                   entry.target = norm;
                   this.slotChangeEntries.add(entry);
@@ -2288,11 +2288,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void renderSelectedItemScope(GuiGraphicsExtractor ctx, int x, int y, int w, int mx, int my) {
       if (this.itemActionDraft != null && this.selectedItemEntry >= 0 && this.selectedItemEntry < this.itemActionDraft.itemNames.size()) {
          int gap = 4;
-         ItemAction.Inner_DataUtil scope = this.itemActionDraft.getItemSearchScope(this.selectedItemEntry);
-         ItemAction.Inner_DataUtil[] scopes = ItemAction.Inner_DataUtil.values();
+         ItemAction.SearchScope scope = this.itemActionDraft.getItemSearchScope(this.selectedItemEntry);
+         ItemAction.SearchScope[] scopes = ItemAction.SearchScope.values();
          List<String> scopeOptions = new ArrayList<>();
 
-         for (ItemAction.Inner_DataUtil s : scopes) {
+         for (ItemAction.SearchScope s : scopes) {
             scopeOptions.add(s.init_Str);
          }
 
@@ -2307,11 +2307,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             13,
             idx -> this.itemActionDraft.setItemSearchScope(this.selectedItemEntry, scopes[Math.max(0, Math.min(idx, scopes.length - 1))])
          );
-         ItemAction.Inner_CachePool mode = this.itemActionDraft.getItemStackAmountMode(this.selectedItemEntry);
-         ItemAction.Inner_CachePool[] stackModes = ItemAction.Inner_CachePool.values();
+         ItemAction.AmountMode mode = this.itemActionDraft.getItemStackAmountMode(this.selectedItemEntry);
+         ItemAction.AmountMode[] stackModes = ItemAction.AmountMode.values();
          List<String> stackOptions = new ArrayList<>();
 
-         for (ItemAction.Inner_CachePool m : stackModes) {
+         for (ItemAction.AmountMode m : stackModes) {
             stackOptions.add("Stack: " + m.init_Str);
          }
 
@@ -2319,7 +2319,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int stackX = x + invW + gap;
          this.renderDropdown("item_stack", stackOptions, mode.ordinal(), stackX, y + 2, stackW, 13, idx -> {
             while (this.itemActionDraft.stackAmountModes.size() <= this.selectedItemEntry) {
-               this.itemActionDraft.stackAmountModes.add(ItemAction.Inner_CachePool.DEFAULT.ordinal());
+               this.itemActionDraft.stackAmountModes.add(ItemAction.AmountMode.DEFAULT.ordinal());
             }
 
             this.itemActionDraft.stackAmountModes.set(this.selectedItemEntry, stackModes[Math.max(0, Math.min(idx, stackModes.length - 1))].ordinal());
@@ -2940,14 +2940,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          : (
             noDropTargets
                ? (
-                  this.dropActionDraft.mode == DropAction.Inner_DataUtil.ALL
+                  this.dropActionDraft.mode == DropAction.DropMode.ALL
                      ? "No items selected: Drop All drops the entire main inventory and hotbar."
                      : "No items selected: Times drops the currently held item by the count below."
                )
                : "No row selected. These controls set defaults for newly added rows."
          );
       cy = this.renderHint(ctx, x, cy, w, dropHint);
-      boolean dropAllSelected = editingSelectedDrop ? this.dropCountAt(this.selectedDropEntry) == 0 : this.dropActionDraft.mode == DropAction.Inner_DataUtil.ALL;
+      boolean dropAllSelected = editingSelectedDrop ? this.dropCountAt(this.selectedDropEntry) == 0 : this.dropActionDraft.mode == DropAction.DropMode.ALL;
       String modeLabel = editingSelectedDrop ? "Selected Row" : (noDropTargets ? "No Items" : "Default Mode");
       int lw = this.labelWidth(w, modeLabel, font);
       this.drawTrimmedText(ctx, modeLabel, x, cy, lw, font);
@@ -2970,7 +2970,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.setDropCountAt(this.selectedDropEntry, 0);
             } else {
                this.modeIndices.put("drop_mode", 0);
-               this.dropActionDraft.mode = DropAction.Inner_DataUtil.ALL;
+               this.dropActionDraft.mode = DropAction.DropMode.ALL;
             }
 
             this.syncDropCountField();
@@ -2992,7 +2992,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.setDropCountAt(this.selectedDropEntry, Math.max(1, this.dropCountAt(this.selectedDropEntry)));
             } else {
                this.modeIndices.put("drop_mode", 1);
-               this.dropActionDraft.mode = DropAction.Inner_DataUtil.TIMES;
+               this.dropActionDraft.mode = DropAction.DropMode.TIMES;
             }
 
             this.syncDropCountField();
@@ -3245,7 +3245,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ThemedTextInputBox countField = this.textFields.get("drop_globalCount");
          if (countField != null) {
             boolean editingSelectedDrop = this.selectedDropEntry >= 0 && this.selectedDropEntry < this.dropActionDraft.itemNames.size();
-            boolean dropAll = editingSelectedDrop ? this.dropCountAt(this.selectedDropEntry) == 0 : this.dropActionDraft.mode == DropAction.Inner_DataUtil.ALL;
+            boolean dropAll = editingSelectedDrop ? this.dropCountAt(this.selectedDropEntry) == 0 : this.dropActionDraft.mode == DropAction.DropMode.ALL;
             int displayCount = editingSelectedDrop ? Math.max(1, this.dropCountAt(this.selectedDropEntry)) : Math.max(1, this.dropActionDraft.dropCount);
             this.suppressDropCountListener = true;
             countField.setValue(String.valueOf(displayCount));
@@ -3260,7 +3260,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          ThemedTextInputBox countField = this.textFields.get("drop_globalCount");
          if (countField != null) {
             boolean editingSelectedDrop = this.selectedDropEntry >= 0 && this.selectedDropEntry < this.dropActionDraft.itemNames.size();
-            boolean dropAll = editingSelectedDrop ? this.dropCountAt(this.selectedDropEntry) == 0 : this.dropActionDraft.mode == DropAction.Inner_DataUtil.ALL;
+            boolean dropAll = editingSelectedDrop ? this.dropCountAt(this.selectedDropEntry) == 0 : this.dropActionDraft.mode == DropAction.DropMode.ALL;
             if (!dropAll) {
                try {
                   int value = Math.max(1, Integer.parseInt(countField.getValue().strip()));
@@ -3550,10 +3550,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       if (this.packetMatchRules.isEmpty()) {
          this.renderHint(ctx, x, cy, w, "No packet rules yet. Add C2S or S2C.");
       } else {
-         autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.packetMatchRules.get(Math.max(0, this.selectedPacketRule));
+         autismclient.util.macro.WaitPacketMatchAction.MatchRule rule = this.packetMatchRules.get(Math.max(0, this.selectedPacketRule));
          List<String> dirOpts = new ArrayList<>();
 
-         for (autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil d : autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.values()) {
+         for (autismclient.util.macro.WaitPacketMatchAction.PacketDirection d : autismclient.util.macro.WaitPacketMatchAction.PacketDirection.values()) {
             dirOpts.add(d.name());
          }
 
@@ -3567,7 +3567,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             x,
             cy,
             w,
-            i -> rule.direction = autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.values()[i]
+            i -> rule.direction = autismclient.util.macro.WaitPacketMatchAction.PacketDirection.values()[i]
          );
          Class<? extends Packet<?>> packetClass = this.rulePacketClass(rule);
          List<String> fieldNames = new ArrayList<>(autismclient.util.macro.WaitPacketMatchAction.fieldNames(packetClass));
@@ -3578,7 +3578,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          cy = this.renderLabeledDropdown(ctx, font, "Field", "_wpm_field", fieldDisplay, fieldIdx, x, cy, w, i -> {
             rule.fieldName = i <= 0 ? "" : fieldNames.get(i - 1);
             if (rule.fieldName.isBlank()) {
-               rule.operator = autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS;
+               rule.operator = autismclient.util.macro.WaitPacketMatchAction.MatchOperator.EXISTS;
             }
 
             List<String> vo = autismclient.util.macro.WaitPacketMatchAction.valueOptions(packetClass, rule.fieldName);
@@ -3591,7 +3591,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (rule.fieldName != null && !rule.fieldName.isBlank()) {
             List<String> opOpts = new ArrayList<>();
 
-            for (autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil o : autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.values()) {
+            for (autismclient.util.macro.WaitPacketMatchAction.MatchOperator o : autismclient.util.macro.WaitPacketMatchAction.MatchOperator.values()) {
                opOpts.add(o.name());
             }
 
@@ -3605,9 +3605,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                x,
                cy,
                w,
-               i -> rule.operator = autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.values()[i]
+               i -> rule.operator = autismclient.util.macro.WaitPacketMatchAction.MatchOperator.values()[i]
             );
-            if (rule.operator != autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS) {
+            if (rule.operator != autismclient.util.macro.WaitPacketMatchAction.MatchOperator.EXISTS) {
                List<String> valueOptions = autismclient.util.macro.WaitPacketMatchAction.valueOptions(packetClass, rule.fieldName);
                if (!valueOptions.isEmpty()) {
                   int valIdx = Math.max(0, valueOptions.indexOf(rule.value));
@@ -3699,7 +3699,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          for (int i = viewport.getFirstVisibleRow(); i < this.packetMatchRules.size() && i <= viewport.getLastVisibleRow(); i++) {
             int iy = viewport.getRowY(i);
             if (iy != -2147483648) {
-               autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.packetMatchRules.get(i);
+               autismclient.util.macro.WaitPacketMatchAction.MatchRule rule = this.packetMatchRules.get(i);
                boolean selected = i == this.selectedPacketRule;
                boolean hovered = mx >= x && mx < x + rowW && my >= iy && my < iy + 13;
                autismclient.gui.macro.editor.capture.EditorListRowHelper.drawRow(
@@ -6856,7 +6856,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          actions.add("Tools / TOOLS");
       }
 
-      List<RaceStepSelectorOverlay.Inner_DataUtil> options = condition
+      List<RaceStepSelectorOverlay.StepOption> options = condition
          ? this.raceStepOptions(CONDITION_TYPE_OPTIONS, "CONDITION")
          : this.raceStepOptions(actions, "ACTION");
       this.raceStepSelector.openSelector(condition ? "Condition Selector" : "Action Selector", options, option -> {
@@ -6867,8 +6867,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       });
    }
 
-   private List<RaceStepSelectorOverlay.Inner_DataUtil> raceStepOptions(List<String> choices, String role) {
-      ArrayList<RaceStepSelectorOverlay.Inner_DataUtil> out = new ArrayList<>();
+   private List<RaceStepSelectorOverlay.StepOption> raceStepOptions(List<String> choices, String role) {
+      ArrayList<RaceStepSelectorOverlay.StepOption> out = new ArrayList<>();
 
       for (String choice : choices) {
          String[] parts = choice == null ? new String[0] : choice.split("/", 2);
@@ -6876,7 +6876,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          String id = this.choiceName(choice);
          if (!id.isBlank()) {
             String label = id.replace('_', ' ');
-            out.add(new RaceStepSelectorOverlay.Inner_DataUtil(category, id, label, role));
+            out.add(new RaceStepSelectorOverlay.StepOption(category, id, label, role));
          }
       }
 
@@ -6923,10 +6923,10 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void applyPacketClickTarget(ContainerClickSnapshot.Inner_StreamUtil target) {
+   private void applyPacketClickTarget(ContainerClickSnapshot.Snapshot target) {
       if (target != null) {
          if (this.editingAction instanceof PacketClickAction pca) {
-            ContainerClickSnapshot.Inner_DataUtil mode = this.selectedClickMode();
+            ContainerClickSnapshot.ClickMode mode = this.selectedClickMode();
             pca.mode = mode.name();
             pca.setTarget(target.withMode(mode));
             if (this.actionTag != null) {
@@ -6940,13 +6940,13 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private ContainerClickSnapshot.Inner_DataUtil selectedClickMode() {
+   private ContainerClickSnapshot.ClickMode selectedClickMode() {
       FieldDef modeField = this.schemaField("mode");
       if (modeField != null && modeField.type() == FieldType.ENUM && !modeField.enumOptions().isEmpty()) {
          int idx = Math.max(0, Math.min(this.modeIndices.getOrDefault("mode", 0), modeField.enumOptions().size() - 1));
-         return ContainerClickSnapshot.Inner_DataUtil.byName(modeField.enumOptions().get(idx));
+         return ContainerClickSnapshot.ClickMode.byName(modeField.enumOptions().get(idx));
       } else {
-         return ContainerClickSnapshot.Inner_DataUtil.byName(this.actionTag == null ? "" : this.actionTag.getStringOr("mode", ""));
+         return ContainerClickSnapshot.ClickMode.byName(this.actionTag == null ? "" : this.actionTag.getStringOr("mode", ""));
       }
    }
 
@@ -7268,7 +7268,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             if (action instanceof autismclient.util.macro.WaitPacketMatchAction packetMatch) {
                String cleanRoot = MacroVariableStore.rootKey(root);
                if (!cleanRoot.isBlank()) {
-                  for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : packetMatch.effectiveRules()) {
+                  for (autismclient.util.macro.WaitPacketMatchAction.MatchRule rule : packetMatch.effectiveRules()) {
                      if (rule.fieldName != null && !rule.fieldName.isBlank()) {
                         tokens.add("{" + cleanRoot + "." + rule.fieldName.trim().toLowerCase(Locale.ROOT) + "}");
                      }
@@ -7309,9 +7309,9 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
    private void renderMacroSelectField(GuiGraphicsExtractor ctx, FieldDef field, ThemedTextInputBox backingField, int x, int y, int w, int mx, int my) {
       backingField.setX(-10000);
       backingField.setY(-10000);
-      List<MacroFolderLayout.Inner_DataUtil> macros = new ArrayList<>(autismclient.util.MacroLibraryManager.getInstance().getFolderEntries(""));
+      List<MacroFolderLayout.LayoutRow> macros = new ArrayList<>(autismclient.util.MacroLibraryManager.getInstance().getFolderEntries(""));
       if (backingField.getValue() != null && !backingField.getValue().isBlank() && autismclient.util.MacroLibraryManager.getInstance().findByName(backingField.getValue()) == null) {
-         macros.add(0, new MacroFolderLayout.Inner_DataUtil("", new AutismMacro(backingField.getValue()), 0, false));
+         macros.add(0, new MacroFolderLayout.LayoutRow("", new AutismMacro(backingField.getValue()), 0, false));
       }
 
       Identifier font = this.styleTheme.init_Identifier_l(l.read);
@@ -7338,7 +7338,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          int first = viewport.getFirstVisibleRow();
 
          for (int i = first; i < macros.size() && i <= viewport.getLastVisibleRow(); i++) {
-            MacroFolderLayout.Inner_DataUtil folderRow = macros.get(i);
+            MacroFolderLayout.LayoutRow folderRow = macros.get(i);
             String macroName = folderRow.init_Str();
             int iy = viewport.getRowY(i);
             if (iy != -2147483648) {
@@ -8640,7 +8640,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                }
             }
 
-            DropAction.Inner_DataUtil[] modes = DropAction.Inner_DataUtil.values();
+            DropAction.DropMode[] modes = DropAction.DropMode.values();
             this.dropActionDraft.mode = modes[Math.min(this.modeIndices.getOrDefault("drop_mode", 0), modes.length - 1)];
             this.dropActionDraft.waitForGuiBefore = this.toggleStates.getOrDefault("drop_waitForGuiBefore", false);
             this.dropActionDraft.waitForGuiAfter = this.toggleStates.getOrDefault("drop_waitForGuiAfter", false);
@@ -8726,7 +8726,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.applyPacketRuleValue();
                ListTag rules = new ListTag();
                if (this.packetMatchRules != null) {
-                  for (autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule : this.packetMatchRules) {
+                  for (autismclient.util.macro.WaitPacketMatchAction.MatchRule rule : this.packetMatchRules) {
                      if (rule != null && (rule.packetName != null && !rule.packetName.isBlank() || rule.fieldName != null && !rule.fieldName.isBlank())) {
                         rules.add(rule.toTag());
                      }
@@ -8870,7 +8870,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                if (this.editingAction != null && this.editingAction.getType() == MacroActionType.WAIT_SLOT_CHANGE) {
                   ListTag nbtEntries = new ListTag();
                   if (this.slotChangeEntries != null) {
-                     for (WaitForSlotChangeAction.Inner_DataUtil e : this.slotChangeEntries) {
+                     for (WaitForSlotChangeAction.SlotEntry e : this.slotChangeEntries) {
                         CompoundTag ec = new CompoundTag();
                         MacroItemTarget target = e.resolveItemTarget();
                         if (target.hasSlot() || target.hasItemFilter()) {
@@ -10125,7 +10125,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private void loadSlotChangeEntry(WaitForSlotChangeAction.Inner_DataUtil e) {
+   private void loadSlotChangeEntry(WaitForSlotChangeAction.SlotEntry e) {
       ThemedTextInputBox addF = this.internalTextFields.get("_wsc_add");
       ThemedTextInputBox slotF = this.textFields.get("wsc_slot");
       ThemedTextInputBox countF = this.textFields.get("wsc_count");
@@ -10169,7 +10169,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          if (addF != null && slotF != null) {
             String nameText = addF.getValue().strip();
             String slotText = slotF.getValue().strip();
-            WaitForSlotChangeAction.Inner_DataUtil entry = this.slotChangeEntries.get(this.selectedSlotChangeEntry);
+            WaitForSlotChangeAction.SlotEntry entry = this.slotChangeEntries.get(this.selectedSlotChangeEntry);
             MacroItemTarget target = this.parseItemTarget(nameText, slotText, entry.resolveItemTarget());
             String rawTarget = target.toSpecString();
             String norm = rawTarget.isEmpty() ? "" : StoreItemAction.normalizeTarget(rawTarget);
@@ -10218,7 +10218,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          }
 
          if (!this.hasSlotChangeTarget(norm)) {
-            WaitForSlotChangeAction.Inner_DataUtil entry = new WaitForSlotChangeAction.Inner_DataUtil(norm, this.slotChangeCondition, this.slotChangeCount);
+            WaitForSlotChangeAction.SlotEntry entry = new WaitForSlotChangeAction.SlotEntry(norm, this.slotChangeCondition, this.slotChangeCount);
             entry.itemTarget = target;
             entry.target = norm;
             this.slotChangeEntries.add(entry);
@@ -10233,7 +10233,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          return false;
       }
 
-      for (WaitForSlotChangeAction.Inner_DataUtil e : this.slotChangeEntries) {
+      for (WaitForSlotChangeAction.SlotEntry e : this.slotChangeEntries) {
          if (e.target.equals(normTarget)) {
             return true;
          }
@@ -12030,7 +12030,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       this.renderToggleRow(ctx, font, "listenDuringPreviousAction", "Listen During Previous", x, cy, w, mx, my);
       cy += 16;
       cy = this.renderFieldByKey(ctx, "saveAs", x, cy, w, mx, my, delta);
-      List<WaitForSlotChangeAction.Inner_DataUtil> entries = this.slotChangeEntries != null ? this.slotChangeEntries : new ArrayList<>();
+      List<WaitForSlotChangeAction.SlotEntry> entries = this.slotChangeEntries != null ? this.slotChangeEntries : new ArrayList<>();
       if (this.selectedSlotChangeEntry >= entries.size()) {
          this.selectedSlotChangeEntry = -1;
       }
@@ -12058,7 +12058,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
             int iy = wscViewport.getRowY(i);
             if (iy != -2147483648) {
                boolean selected = i == this.selectedSlotChangeEntry;
-               WaitForSlotChangeAction.Inner_DataUtil e = entries.get(i);
+               WaitForSlotChangeAction.SlotEntry e = entries.get(i);
                Component targetDisp = this.describeItemTarget(e.resolveItemTarget(), "(any slot)");
                String modeSummary = " • " + e.describeMode();
                Component rowLabel = Component.empty().append(targetDisp).append(Component.literal(modeSummary).withStyle(s -> s.withColor(-7829368)));
@@ -12123,20 +12123,20 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
 
       cy += 16;
       boolean editing = this.selectedSlotChangeEntry >= 0 && this.selectedSlotChangeEntry < entries.size();
-      WaitForSlotChangeAction.Inner_StreamUtil curMode = editing ? entries.get(this.selectedSlotChangeEntry).mode : this.slotChangeCondition;
+      WaitForSlotChangeAction.WaitMode curMode = editing ? entries.get(this.selectedSlotChangeEntry).mode : this.slotChangeCondition;
       int curCount = editing ? entries.get(this.selectedSlotChangeEntry).count : this.slotChangeCount;
       int addBtnW = this.buttonWidth("+Add");
       int cntW = 36;
-      WaitForSlotChangeAction.Inner_StreamUtil[] modes = WaitForSlotChangeAction.Inner_StreamUtil.values();
+      WaitForSlotChangeAction.WaitMode[] modes = WaitForSlotChangeAction.WaitMode.values();
       List<String> modeOptions = new ArrayList<>();
 
-      for (WaitForSlotChangeAction.Inner_StreamUtil m : modes) {
+      for (WaitForSlotChangeAction.WaitMode m : modes) {
          modeOptions.add(m.name().replace("_", " "));
       }
 
       int modBtnW = this.dropdownWidth(modeOptions, w - addBtnW - 2 - cntW - 2);
       this.renderDropdown("wsc_mode", modeOptions, curMode.ordinal(), x, cy, modBtnW, 13, idx -> {
-         WaitForSlotChangeAction.Inner_StreamUtil chosen = modes[Math.max(0, Math.min(idx, modes.length - 1))];
+         WaitForSlotChangeAction.WaitMode chosen = modes[Math.max(0, Math.min(idx, modes.length - 1))];
          if (this.selectedSlotChangeEntry >= 0 && this.selectedSlotChangeEntry < entries.size()) {
             entries.get(this.selectedSlotChangeEntry).mode = chosen;
          } else {
@@ -12145,7 +12145,7 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       });
       int cntX = x + modBtnW + 2;
       ThemedTextInputBox countF = this.textFields.get("wsc_count");
-      boolean countRelevant = curMode == WaitForSlotChangeAction.Inner_StreamUtil.COUNT_AT_LEAST || curMode == WaitForSlotChangeAction.Inner_StreamUtil.COUNT_BELOW;
+      boolean countRelevant = curMode == WaitForSlotChangeAction.WaitMode.COUNT_AT_LEAST || curMode == WaitForSlotChangeAction.WaitMode.COUNT_BELOW;
       if (countF != null) {
          if (countRelevant) {
             countF.setX(cntX);
@@ -13045,12 +13045,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
          .getOrDefault("autofillCacheList", this.actionTag != null && this.actionTag.getBooleanOr("autofillCacheList", false));
 
       try {
-         draft.listSelection = autismclient.util.macro.CandidatePoolSelector.Inner_CachePool.valueOf(this.enumValue("listSelection"));
+         draft.listSelection = autismclient.util.macro.CandidatePoolSelector.SelectionMode.valueOf(this.enumValue("listSelection"));
       } catch (IllegalArgumentException | NullPointerException var5) {
       }
 
       try {
-         draft.listFilter = autismclient.util.macro.CandidatePoolSelector.Inner_DataUtil.valueOf(this.enumValue("listFilter"));
+         draft.listFilter = autismclient.util.macro.CandidatePoolSelector.FilterMode.valueOf(this.enumValue("listFilter"));
       } catch (IllegalArgumentException | NullPointerException var4) {
       }
 
@@ -14869,8 +14869,8 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                this.packetMatchRules = new ArrayList<>();
             }
 
-            autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = new autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool();
-            rule.direction = c2s ? autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.C2S : autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.S2C;
+            autismclient.util.macro.WaitPacketMatchAction.MatchRule rule = new autismclient.util.macro.WaitPacketMatchAction.MatchRule();
+            rule.direction = c2s ? autismclient.util.macro.WaitPacketMatchAction.PacketDirection.C2S : autismclient.util.macro.WaitPacketMatchAction.PacketDirection.S2C;
             String name = PacketTypeRegistry.getPacketName(packetClass);
             rule.packetName = name != null && !name.isBlank() ? name : PacketNameResolver.nameOfClass(packetClass);
             this.packetMatchRules.add(rule);
@@ -14923,11 +14923,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private String ruleFilterLabel(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
+   private String ruleFilterLabel(autismclient.util.macro.WaitPacketMatchAction.MatchRule rule) {
       return rule != null && rule.fieldName != null && !rule.fieldName.isBlank() ? rule.fieldName : "Packet Only";
    }
 
-   private Component ruleLabel(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
+   private Component ruleLabel(autismclient.util.macro.WaitPacketMatchAction.MatchRule rule) {
       if (rule == null) {
          return Component.literal("(empty)");
       }
@@ -14940,14 +14940,14 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       return Component.literal(label);
    }
 
-   private void unusedRuleFields(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
+   private void unusedRuleFields(autismclient.util.macro.WaitPacketMatchAction.MatchRule rule) {
       if (rule != null) {
          Class<? extends Packet<?>> packetClass = this.rulePacketClass(rule);
          List<String> fields = new ArrayList<>(autismclient.util.macro.WaitPacketMatchAction.fieldNames(packetClass));
          fields.add(0, "");
          int idx = fields.indexOf(rule.fieldName == null ? "" : rule.fieldName);
          rule.fieldName = fields.get((idx + 1 + fields.size()) % fields.size());
-         rule.operator = rule.fieldName.isBlank() ? autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS : rule.operator;
+         rule.operator = rule.fieldName.isBlank() ? autismclient.util.macro.WaitPacketMatchAction.MatchOperator.EXISTS : rule.operator;
          List<String> options = autismclient.util.macro.WaitPacketMatchAction.valueOptions(packetClass, rule.fieldName);
          if (!options.isEmpty() && (rule.value == null || rule.value.isBlank() || !options.contains(rule.value))) {
             rule.value = options.get(0);
@@ -14957,12 +14957,12 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
       }
    }
 
-   private Class<? extends Packet<?>> rulePacketClass(autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule) {
+   private Class<? extends Packet<?>> rulePacketClass(autismclient.util.macro.WaitPacketMatchAction.MatchRule rule) {
       if (rule == null) {
          return null;
       }
 
-      String direction = rule.direction == autismclient.util.macro.WaitPacketMatchAction.Inner_DataUtil.ANY ? "" : rule.direction.name();
+      String direction = rule.direction == autismclient.util.macro.WaitPacketMatchAction.PacketDirection.ANY ? "" : rule.direction.name();
       return this.resolveTargetClass(direction, rule.packetName == null ? "" : rule.packetName);
    }
 
@@ -15740,11 +15740,11 @@ public class ActionEditorOverlay extends DraggableOverlayWindow {
                               int h = 82 + rows * 14 + 5;
                               if (this.packetMatchRules != null && !this.packetMatchRules.isEmpty()) {
                                  int idx = Math.max(0, Math.min(this.selectedPacketRule, this.packetMatchRules.size() - 1));
-                                 autismclient.util.macro.WaitPacketMatchAction.Inner_CachePool rule = this.packetMatchRules.get(idx);
+                                 autismclient.util.macro.WaitPacketMatchAction.MatchRule rule = this.packetMatchRules.get(idx);
                                  h += 32;
                                  if (rule.fieldName != null && !rule.fieldName.isBlank()) {
                                     h += 16;
-                                    if (rule.operator != autismclient.util.macro.WaitPacketMatchAction.Inner_StreamUtil.EXISTS) {
+                                    if (rule.operator != autismclient.util.macro.WaitPacketMatchAction.MatchOperator.EXISTS) {
                                        h += 16;
                                     }
                                  }

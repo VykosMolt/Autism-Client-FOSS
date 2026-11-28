@@ -292,13 +292,13 @@ final class AiParallelSmelt implements AiOperation {
 
    private AiOperation.Result placeFurnaceStep() {
       if (this.stationPlacer != null) {
-         AiStationPlacer.Inner_DataUtil state = this.stationPlacer.tick();
-         if (state == AiStationPlacer.Inner_DataUtil.PLACED) {
+         AiStationPlacer.PlaceStatus state = this.stationPlacer.tick();
+         if (state == AiStationPlacer.PlaceStatus.PLACED) {
             this.furnaces.add(this.stationPlacer.getPlaced());
             this.stationPlacer = null;
             this.builtFurnaces++;
          } else {
-            if (state != AiStationPlacer.Inner_DataUtil.FAILED) {
+            if (state != AiStationPlacer.PlaceStatus.FAILED) {
                return this.running(this.stationPlacer.getStatus());
             }
 

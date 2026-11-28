@@ -21,13 +21,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
 final class AiChatMode {
-   private volatile AiChatPolicy.Inner_DataUtil config;
-   private final AiChatMode.Inner_BufferHelper host;
-   private final AiChatMode.Inner_CachePool brains;
+   private volatile AiChatPolicy.ChatConfig config;
+   private final AiChatMode.Host host;
+   private final AiChatMode.BrainFactory brains;
    private final Executor executor;
-   private final Deque<AiChatPolicy.Inner_StreamUtil> history = new ArrayDeque<>();
-   private final Deque<AiChatPolicy.Inner_StreamUtil> pendingLines = new ArrayDeque<>();
-   private final Deque<AiChatPolicy.Inner_StreamUtil> read_Deque = new ArrayDeque<>();
+   private final Deque<AiChatPolicy.IncomingLine> history = new ArrayDeque<>();
+   private final Deque<AiChatPolicy.IncomingLine> pendingLines = new ArrayDeque<>();
+   private final Deque<AiChatPolicy.IncomingLine> read_Deque = new ArrayDeque<>();
    private final Deque<Long> replyTimes = new ArrayDeque<>();
    private final Map<String, Long> lastReplyBySender = new HashMap<>();
    private final Deque<String> recentSent = new ArrayDeque<>();
@@ -46,10 +46,10 @@ final class AiChatMode {
    private long outputTokens;
    private String init_Str = "";
    private String lastSender = "";
-   private AiChatMode.Inner_StreamUtil brain;
+   private AiChatMode.Brain brain;
    private volatile long version;
 
-   AiChatMode(AiChatPolicy.Inner_DataUtil config, AiChatMode.Inner_BufferHelper host, AiChatMode.Inner_CachePool brains, Executor executor) {
+   AiChatMode(AiChatPolicy.ChatConfig config, AiChatMode.Host host, AiChatMode.BrainFactory brains, Executor executor) {
       this.config = Objects.requireNonNull(config, "config");
       this.host = Objects.requireNonNull(host, "host");
       this.brains = Objects.requireNonNull(brains, "brains");
@@ -79,7 +79,7 @@ final class AiChatMode {
          Collections.reverse(oldestFirst);
 
          for (AiChatLedger.ChatEntry entry : oldestFirst) {
-            AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.incomingLine(entry, this.host.playerName());
+            AiChatPolicy.IncomingLine line = AiChatPolicy.incomingLine(entry, this.host.playerName());
             if (line != null) {
                this.history.addLast(line);
             }
@@ -106,13 +106,13 @@ final class AiChatMode {
                this.recentSent.removeFirst();
             }
 
-            this.history.addLast(new AiChatPolicy.Inner_StreamUtil(0L, "SELF", this.host.playerName(), clean));
+            this.history.addLast(new AiChatPolicy.IncomingLine(0L, "SELF", this.host.playerName(), clean));
             this.trimHistory();
          }
       }
    }
 
-   void applyPolicy(AiChatPolicy.Inner_DataUtil next) {
+   void applyPolicy(AiChatPolicy.ChatConfig next) {
       if (next != null) {
          synchronized (this) {
             if (this.config.equals(next)) {
@@ -158,7 +158,7 @@ final class AiChatMode {
 
                for (AiChatLedger.ChatEntry entry : fresh) {
                   this.ledgerRevision = Math.max(this.ledgerRevision, entry.revision());
-                  AiChatPolicy.Inner_StreamUtil line = AiChatPolicy.admit(entry, self, this.config);
+                  AiChatPolicy.IncomingLine line = AiChatPolicy.admit(entry, self, this.config);
                   if (line != null && (!AiChatPolicy.senderOf(entry).isEmpty() || !this.wasRecentlySent(line.text()))) {
                      boolean wasEmpty = this.pendingLines.isEmpty();
                      this.pendingLines.addLast(line);
@@ -186,7 +186,7 @@ final class AiChatMode {
    }
 
    void stop(String reason) {
-      AiChatMode.Inner_StreamUtil closing;
+      AiChatMode.Brain closing;
       synchronized (this) {
          if (!this.active) {
             return;
@@ -326,23 +326,23 @@ final class AiChatMode {
    }
 
    private void runReply() {
-      List<AiChatPolicy.Inner_StreamUtil> batch = List.of();
+      List<AiChatPolicy.IncomingLine> batch = List.of();
       long requestVersion = -1L;
       boolean committed = false;
       long deadline = System.nanoTime() + 90000000000L;
 
       try {
          try {
-            List<AiChatPolicy.Inner_StreamUtil> historySnapshot;
-            AiChatMode.Inner_StreamUtil model;
+            List<AiChatPolicy.IncomingLine> historySnapshot;
+            AiChatMode.Brain model;
             String self;
-            AiChatPolicy.Inner_DataUtil requestConfig;
+            AiChatPolicy.ChatConfig requestConfig;
             synchronized (this) {
                if (!this.active || this.pendingLines.isEmpty() && this.read_Deque.isEmpty()) {
                   return;
                }
 
-               List<AiChatPolicy.Inner_StreamUtil> combined = new ArrayList<>(this.read_Deque.size() + this.pendingLines.size());
+               List<AiChatPolicy.IncomingLine> combined = new ArrayList<>(this.read_Deque.size() + this.pendingLines.size());
                combined.addAll(this.read_Deque);
                combined.addAll(this.pendingLines);
                String recipient = init_Str_PathHelper_StreamU(combined.getFirst());
@@ -367,7 +367,7 @@ final class AiChatMode {
             String user = AiChatPolicy.userPrompt(historySnapshot, batch, self);
             long version = requestVersion;
             BooleanSupplier current = () -> this.active && this.version == version;
-            AiChatMode.Inner_DataUtil answer = model.complete(system, user, () -> !current.getAsBoolean() || System.nanoTime() > deadline);
+            AiChatMode.Completion answer = model.complete(system, user, () -> !current.getAsBoolean() || System.nanoTime() > deadline);
             if (answer != null) {
                runQuietly(
                   () -> this.host
@@ -401,11 +401,11 @@ final class AiChatMode {
                this.read_I = 0;
                this.init_Str = "";
                String recipient = init_Str_PathHelper_StreamU(batch.getFirst());
-               Iterator<AiChatPolicy.Inner_StreamUtil> previous = this.history.descendingIterator();
+               Iterator<AiChatPolicy.IncomingLine> previous = this.history.descendingIterator();
 
                while (true) {
                   if (!skip && previous.hasNext()) {
-                     AiChatPolicy.Inner_StreamUtil line = previous.next();
+                     AiChatPolicy.IncomingLine line = previous.next();
                      if (!line.source().startsWith("SELF") || !init_Str_PathHelper_StreamU(line).equalsIgnoreCase(recipient)) {
                         continue;
                      }
@@ -423,7 +423,7 @@ final class AiChatMode {
 
                      this.history
                         .addLast(
-                           new AiChatPolicy.Inner_StreamUtil(
+                           new AiChatPolicy.IncomingLine(
                               0L, privateTarget == null ? "SELF" : "SELF_PRIVATE", privateTarget == null ? self : privateTarget, clean
                            )
                         );
@@ -504,15 +504,15 @@ final class AiChatMode {
       }
    }
 
-   private void enqueueBatch(List<AiChatPolicy.Inner_StreamUtil> batch) {
-      for (AiChatPolicy.Inner_StreamUtil line : batch) {
+   private void enqueueBatch(List<AiChatPolicy.IncomingLine> batch) {
+      for (AiChatPolicy.IncomingLine line : batch) {
          this.history.addLast(line);
       }
 
       this.trimHistory();
    }
 
-   private void requeueRelevant(List<AiChatPolicy.Inner_StreamUtil> batch) {
+   private void requeueRelevant(List<AiChatPolicy.IncomingLine> batch) {
       for (int i = batch.size() - 1; i >= 0; i--) {
          if (this.init_Z_PathHelper_StreamU(batch.get(i))) {
             this.read_Deque.addFirst(batch.get(i));
@@ -524,7 +524,7 @@ final class AiChatMode {
       }
    }
 
-   private boolean init_Z_PathHelper_StreamU(AiChatPolicy.Inner_StreamUtil line) {
+   private boolean init_Z_PathHelper_StreamU(AiChatPolicy.IncomingLine line) {
       return AiChatPolicy.admit(
             new AiChatLedger.ChatEntry(0L, line.revision(), line.source(), line.sender(), line.text(), List.of(), ""),
             this.host.playerName(),
@@ -533,7 +533,7 @@ final class AiChatMode {
          != null;
    }
 
-   private static String init_Str_PathHelper_StreamU(AiChatPolicy.Inner_StreamUtil line) {
+   private static String init_Str_PathHelper_StreamU(AiChatPolicy.IncomingLine line) {
       return !line.source().equalsIgnoreCase("PLAYER_PRIVATE") && !line.source().equals("SELF_PRIVATE") ? "" : line.sender();
    }
 
@@ -574,7 +574,7 @@ final class AiChatMode {
       return message.length() > 300 ? message.substring(0, 300) : message;
    }
 
-   interface Inner_BufferHelper {
+   interface Host {
       long now();
 
       String playerName();
@@ -614,14 +614,14 @@ final class AiChatMode {
       }
    }
 
-   interface Inner_CachePool {
-      AiChatMode.Inner_StreamUtil create();
+   interface BrainFactory {
+      AiChatMode.Brain create();
    }
 
-   static final class Inner_ConfigStore implements AiChatMode.Inner_StreamUtil {
+   static final class ProviderBrain implements AiChatMode.Brain {
       private final AiProvider provider;
 
-      Inner_ConfigStore(AiSettings settings) {
+      ProviderBrain(AiSettings settings) {
          AiSettings chat = settings.copy();
          chat.builtIn = false;
          chat.outputTokens = Math.min(2048, Math.max(1024, chat.outputTokens));
@@ -635,19 +635,19 @@ final class AiChatMode {
       }
 
       @Override
-      public AiChatMode.Inner_DataUtil complete(String system, String user, BooleanSupplier cancelled) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-         AiProvider.Inner_BufferHelper reply = this.provider
+      public AiChatMode.Completion complete(String system, String user, BooleanSupplier cancelled) throws IOException, InterruptedException, ExecutionException, TimeoutException {
+         AiProvider.Reply reply = this.provider
             .completeWithContext(
                AiContext.PromptParts.of(system), List.of(this.provider.userMessage(user)), new JsonArray(), "none", delta -> {}, cancelled, call -> {}
             );
-         AiProvider.Inner_TaskQueue usage = reply.usage();
+         AiProvider.TokenUsage usage = reply.usage();
          String text = reply.text();
          String finish = reply.finish();
          if (finish != null && !finish.isBlank() && !Set.of("stop", "STOP", "end_turn", "tool_calls", "tool_use").contains(finish)) {
             text = "";
          }
 
-         return new AiChatMode.Inner_DataUtil(text, usage.promptTokens(), usage.outputTokens(), 1L);
+         return new AiChatMode.Completion(text, usage.promptTokens(), usage.outputTokens(), 1L);
       }
 
       @Override
@@ -656,14 +656,14 @@ final class AiChatMode {
       }
    }
 
-   record Inner_DataUtil(String text, long inputTokens, long outputTokens, long requests) {
-      static AiChatMode.Inner_DataUtil text(String text) {
-         return new AiChatMode.Inner_DataUtil(text, 0L, 0L, 1L);
+   record Completion(String text, long inputTokens, long outputTokens, long requests) {
+      static AiChatMode.Completion text(String text) {
+         return new AiChatMode.Completion(text, 0L, 0L, 1L);
       }
    }
 
-   interface Inner_StreamUtil extends AutoCloseable {
-      AiChatMode.Inner_DataUtil complete(String var1, String var2, BooleanSupplier var3) throws IOException, InterruptedException, ExecutionException, TimeoutException;
+   interface Brain extends AutoCloseable {
+      AiChatMode.Completion complete(String var1, String var2, BooleanSupplier var3) throws IOException, InterruptedException, ExecutionException, TimeoutException;
 
       @Override
       default void close() {

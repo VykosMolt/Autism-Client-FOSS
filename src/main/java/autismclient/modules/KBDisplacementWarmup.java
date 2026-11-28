@@ -31,7 +31,7 @@ final class KBDisplacementWarmup {
 
          for (int run = 0; run < 400; run++) {
             int width = 1 + 2 * (run % 3);
-            KBDisplacementWarmup.Inner_DataUtil world = new KBDisplacementWarmup.Inner_DataUtil(width);
+            KBDisplacementWarmup.PlatformWorld world = new KBDisplacementWarmup.PlatformWorld(width);
             KnockbackThrowPlanner.ThrowInput input = new KnockbackThrowPlanner.ThrowInput(body, new Vec3(0.5, 10.0, -0.8), new Vec3(0.0, -0.0784, 0.0), true, 0.0, 0.5, 10.0, false);
             KnockbackThrowPlanner.plan(input, 0.0F, 0.15, new KnockbackThrowPlanner.PlanSettings(100.0, 3.0, false, 0, 1 + run % 10), hypotheses, world);
             if ((run & 31) == 31) {
@@ -44,11 +44,11 @@ final class KBDisplacementWarmup {
       }
    }
 
-   private static final class Inner_DataUtil implements KnockbackThrowPlanner.ThrowWorld {
+   private static final class PlatformWorld implements KnockbackThrowPlanner.ThrowWorld {
       final AABB platform;
       final List<VoxelShape> shapes;
 
-      Inner_DataUtil(int width) {
+      PlatformWorld(int width) {
          this.platform = new AABB(0.5 - width / 2.0, 9.0, -40.0, 0.5 + width / 2.0, 10.0, 40.0);
          this.shapes = List.of(Shapes.create(this.platform));
       }

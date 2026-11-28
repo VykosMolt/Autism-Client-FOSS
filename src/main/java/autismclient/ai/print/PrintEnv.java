@@ -31,7 +31,7 @@ public interface PrintEnv {
       return PrintEnv.ReceiptState.NONE;
    }
 
-   default List<PrintRailVehicle.Inner_DataUtil> nearbyMinecarts(BlockPos rail) {
+   default List<PrintRailVehicle.ObservedCart> nearbyMinecarts(BlockPos rail) {
       return null;
    }
 

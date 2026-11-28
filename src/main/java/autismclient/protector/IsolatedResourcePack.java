@@ -23,12 +23,12 @@ import net.minecraft.server.packs.PackResources.ResourceOutput;
 import net.minecraft.server.packs.resources.IoSupplier;
 
 public final class IsolatedResourcePack extends CompatAbstractPackResources implements IsolatedPackDownloader.IsolationAware {
-   private final IsolatedResourcePack.Inner_DataUtil snapshot;
+   private final IsolatedResourcePack.PackSnapshot snapshot;
    private final String prefix;
    private final boolean metadataOnly;
    private final IsolatedPackDownloader.PackIsolation isolation;
 
-   private IsolatedResourcePack(PackLocationInfo location, IsolatedResourcePack.Inner_DataUtil snapshot, String prefix, boolean metadataOnly, IsolatedPackDownloader.PackIsolation isolation) {
+   private IsolatedResourcePack(PackLocationInfo location, IsolatedResourcePack.PackSnapshot snapshot, String prefix, boolean metadataOnly, IsolatedPackDownloader.PackIsolation isolation) {
       super(location);
       this.snapshot = snapshot;
       this.prefix = prefix;
@@ -116,7 +116,7 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
       return path.equals("lang") || path.startsWith("lang/") && path.length() > "lang/".length();
    }
 
-   public static final class Inner_DataUtil {
+   public static final class PackSnapshot {
       private static final int init_I = 1048576;
       private static final int load = 8388608;
       private static final int read = 67108864;
@@ -124,12 +124,12 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
       private final byte[] packMetadata;
       private final Map<String, byte[]> languages;
 
-      private Inner_DataUtil(byte[] packMetadata, Map<String, byte[]> languages) {
+      private PackSnapshot(byte[] packMetadata, Map<String, byte[]> languages) {
          this.packMetadata = packMetadata;
          this.languages = languages;
       }
 
-      static IsolatedResourcePack.Inner_DataUtil fromPath(Path path) {
+      static IsolatedResourcePack.PackSnapshot fromPath(Path path) {
          byte[] metadata = null;
          Map<String, byte[]> languages = new HashMap<>();
          long languageBytes = 0L;
@@ -175,11 +175,11 @@ public final class IsolatedResourcePack extends CompatAbstractPackResources impl
             return empty();
          }
 
-         return new IsolatedResourcePack.Inner_DataUtil(metadata, Collections.unmodifiableMap(new TreeMap<>(languages)));
+         return new IsolatedResourcePack.PackSnapshot(metadata, Collections.unmodifiableMap(new TreeMap<>(languages)));
       }
 
-      static IsolatedResourcePack.Inner_DataUtil empty() {
-         return new IsolatedResourcePack.Inner_DataUtil(null, Map.of());
+      static IsolatedResourcePack.PackSnapshot empty() {
+         return new IsolatedResourcePack.PackSnapshot(null, Map.of());
       }
 
       IsolatedResourcePack toPack(PackLocationInfo location, String overlay, boolean metadataOnly, IsolatedPackDownloader.PackIsolation isolation) {

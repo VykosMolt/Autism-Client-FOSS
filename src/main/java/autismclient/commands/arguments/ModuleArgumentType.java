@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class ModuleArgumentType implements ArgumentType<String> {
    private static volatile int cachedRevision = -2147483648;
-   private static volatile List<ModuleArgumentType.Inner_DataUtil> cachedEntries = List.of();
+   private static volatile List<ModuleArgumentType.NameEntry> cachedEntries = List.of();
 
    public static ModuleArgumentType module() {
       return new ModuleArgumentType();
@@ -37,7 +37,7 @@ public class ModuleArgumentType implements ArgumentType<String> {
    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
       String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
 
-      for (ModuleArgumentType.Inner_DataUtil candidate : entries()) {
+      for (ModuleArgumentType.NameEntry candidate : entries()) {
          if (candidate.load().startsWith(remaining)) {
             builder.suggest(candidate.init());
          }
@@ -54,19 +54,19 @@ public class ModuleArgumentType implements ArgumentType<String> {
       return builder.buildFuture();
    }
 
-   private static List<ModuleArgumentType.Inner_DataUtil> entries() {
+   private static List<ModuleArgumentType.NameEntry> entries() {
       int revision = al.init_I();
-      List<ModuleArgumentType.Inner_DataUtil> hit = cachedEntries;
+      List<ModuleArgumentType.NameEntry> hit = cachedEntries;
       if (cachedRevision == revision) {
          return hit;
       }
 
-      List<ModuleArgumentType.Inner_DataUtil> rebuilt = new ArrayList<>();
+      List<ModuleArgumentType.NameEntry> rebuilt = new ArrayList<>();
 
       for (String name : al.init_List()) {
          if (name != null) {
             String commandName = name.replace(' ', '-');
-            rebuilt.add(new ModuleArgumentType.Inner_DataUtil(commandName, commandName.toLowerCase(Locale.ROOT)));
+            rebuilt.add(new ModuleArgumentType.NameEntry(commandName, commandName.toLowerCase(Locale.ROOT)));
          }
       }
 
@@ -76,6 +76,6 @@ public class ModuleArgumentType implements ArgumentType<String> {
       return hit;
    }
 
-   private record Inner_DataUtil(String init, String load) {
+   private record NameEntry(String init, String load) {
    }
 }

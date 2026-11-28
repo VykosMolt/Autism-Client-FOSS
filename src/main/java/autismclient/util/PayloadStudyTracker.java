@@ -17,7 +17,7 @@ public final class PayloadStudyTracker {
    private static long studyStartedAt;
    private static final List<String> init_List = new ArrayList<>();
    private static final LinkedHashSet<String> ignoredChannels = new LinkedHashSet<>();
-   private static final LinkedHashMap<String, PayloadStudyTracker.Inner_DataUtil> statsByChannel = new LinkedHashMap<>();
+   private static final LinkedHashMap<String, PayloadStudyTracker.ChannelStats> statsByChannel = new LinkedHashMap<>();
    private static final LinkedHashSet<String> load_LinkedHashSet = new LinkedHashSet<>();
    private static final LinkedHashSet<String> seenFingerprints = new LinkedHashSet<>();
    private static int payloadCount;
@@ -81,12 +81,12 @@ public final class PayloadStudyTracker {
          return "Interact with the plugin GUI/commands now.";
       }
 
-      List<PayloadStudyTracker.Inner_DataUtil> sorted = new ArrayList<>(statsByChannel.values());
+      List<PayloadStudyTracker.ChannelStats> sorted = new ArrayList<>(statsByChannel.values());
       sorted.sort((a, b) -> Integer.compare(b.count, a.count));
       StringBuilder sb = new StringBuilder("Top: ");
       int shown = 0;
 
-      for (PayloadStudyTracker.Inner_DataUtil stats : sorted) {
+      for (PayloadStudyTracker.ChannelStats stats : sorted) {
          if (shown >= 3) {
             break;
          }
@@ -142,7 +142,7 @@ public final class PayloadStudyTracker {
 
          PayloadSubscriptionManager.observe(snapshot);
          payloadCount++;
-         PayloadStudyTracker.Inner_DataUtil stats = statsByChannel.computeIfAbsent(channel, PayloadStudyTracker.Inner_DataUtil::new);
+         PayloadStudyTracker.ChannelStats stats = statsByChannel.computeIfAbsent(channel, PayloadStudyTracker.ChannelStats::new);
          stats.count++;
          stats.init_J = stats.init_J + Math.max(0, snapshot.byteLength());
          String direction = snapshot.direction() == null ? "" : snapshot.direction().trim().toUpperCase(Locale.ROOT);
@@ -188,7 +188,7 @@ public final class PayloadStudyTracker {
          return false;
       }
 
-      PayloadStudyTracker.Inner_StreamUtil summary = init_bI_StreamUtil();
+      PayloadStudyTracker.StudySummary summary = init_bI_StreamUtil();
       if (summary.payloads() == 0) {
          bi.read("Payload study finished: no payloads captured.");
          return true;
@@ -206,10 +206,10 @@ public final class PayloadStudyTracker {
       return true;
    }
 
-   public static synchronized PayloadStudyTracker.Inner_StreamUtil init_bI_StreamUtil() {
+   public static synchronized PayloadStudyTracker.StudySummary init_bI_StreamUtil() {
       long durationMs = studying ? Math.max(0L, System.currentTimeMillis() - studyStartedAt) : 0L;
       studying = false;
-      List<PayloadStudyTracker.Inner_DataUtil> sorted = new ArrayList<>(statsByChannel.values());
+      List<PayloadStudyTracker.ChannelStats> sorted = new ArrayList<>(statsByChannel.values());
       sorted.sort((a, b) -> {
          int count = Integer.compare(b.count, a.count);
          return count != 0 ? count : a.channel.compareToIgnoreCase(b.channel);
@@ -217,7 +217,7 @@ public final class PayloadStudyTracker {
       StringBuilder top = new StringBuilder();
       int shown = 0;
 
-      for (PayloadStudyTracker.Inner_DataUtil stats : sorted) {
+      for (PayloadStudyTracker.ChannelStats stats : sorted) {
          if (shown >= 6) {
             break;
          }
@@ -235,7 +235,7 @@ public final class PayloadStudyTracker {
       }
 
       int learned = collectLearned().size();
-      PayloadStudyTracker.Inner_StreamUtil summary = new PayloadStudyTracker.Inner_StreamUtil(currentLabel, durationMs, payloadCount, statsByChannel.size(), write, update, learned, top.toString());
+      PayloadStudyTracker.StudySummary summary = new PayloadStudyTracker.StudySummary(currentLabel, durationMs, payloadCount, statsByChannel.size(), write, update, learned, top.toString());
       PacketCaptureState.write();
       return summary;
    }
@@ -267,7 +267,7 @@ public final class PayloadStudyTracker {
          + Arrays.hashCode(bytes);
    }
 
-   private static final class Inner_DataUtil {
+   private static final class ChannelStats {
       private final String channel;
       private final Set<String> patterns = new LinkedHashSet<>();
       private int count;
@@ -275,11 +275,11 @@ public final class PayloadStudyTracker {
       private int s2cCount;
       private long init_J;
 
-      private Inner_DataUtil(String channel) {
+      private ChannelStats(String channel) {
          this.channel = channel;
       }
    }
 
-   public record Inner_StreamUtil(String label, long durationMs, int payloads, int channels, int read, int write, int update, String load_Str) {
+   public record StudySummary(String label, long durationMs, int payloads, int channels, int read, int write, int update, String load_Str) {
    }
 }

@@ -12,7 +12,7 @@ final class PrintMover {
    private static final int[][] NEIGHBOR_OFFSETS = new int[][]{{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
    static final boolean BRAKING = !"false".equals(System.getProperty("autism.ai.print.braking", "true"));
 
-   static boolean atGoal(AiPhysics.MotionState s, PrintMover.Inner_DataUtil goal) {
+   static boolean atGoal(AiPhysics.MotionState s, PrintMover.Goal goal) {
       double dx = s.x() - goal.feet().x;
       double dz = s.z() - goal.feet().z;
       double dy = s.y() - goal.feet().y;
@@ -21,11 +21,11 @@ final class PrintMover {
          : false;
    }
 
-   static PrintMover.Inner_StreamUtil planKeys(AiPhysics.MotionState start, AiPhysics.PhysicsWorld world, float yaw, PrintMover.Inner_DataUtil goal) {
+   static PrintMover.KeyState planKeys(AiPhysics.MotionState start, AiPhysics.PhysicsWorld world, float yaw, PrintMover.Goal goal) {
       double needRise = goal.feet().y - start.y();
       boolean tryJump = start.onGround() && (needRise > 0.65 || start.horizontalCollision());
       boolean tapDrop = start.onGround() && needRise < -1.0;
-      PrintMover.Inner_StreamUtil best = PrintMover.Inner_StreamUtil.NONE;
+      PrintMover.KeyState best = PrintMover.KeyState.NONE;
       double bestCost = 1.0 / 0.0;
 
       for (int sneak = 0; sneak <= 1; sneak++) {
@@ -33,7 +33,7 @@ final class PrintMover {
          if (!goal.crouch() || crouched) {
             for (int jump = 0; jump <= (tryJump ? 1 : 0); jump++) {
                for (int[] d : NEIGHBOR_OFFSETS) {
-                  PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(d[0] > 0, d[0] < 0, d[1] > 0, d[1] < 0, jump == 1, crouched, false);
+                  PrintMover.KeyState keys = new PrintMover.KeyState(d[0] > 0, d[0] < 0, d[1] > 0, d[1] < 0, jump == 1, crouched, false);
                   if (!keys.moving() || !autismclient.ai.engine.AiFallGuard.isSafeStep(world, start, toMoveInput(keys, yaw))) {
                      double cost = moveCost(start, world, yaw, keys, goal, false);
                      if (tapDrop && keys.moving() && jump == 0) {
@@ -57,29 +57,29 @@ final class PrintMover {
          }
       }
 
-      return bestCost == 1.0 / 0.0 ? (goal.crouch() ? PrintMover.Inner_StreamUtil.CROUCH : PrintMover.Inner_StreamUtil.NONE) : best;
+      return bestCost == 1.0 / 0.0 ? (goal.crouch() ? PrintMover.KeyState.CROUCH : PrintMover.KeyState.NONE) : best;
    }
 
-   static PrintMover.Inner_StreamUtil planKeys(
+   static PrintMover.KeyState planKeys(
       AiPhysics.MotionState start,
       AiPhysics.PhysicsWorld world,
       float yaw,
-      PrintMover.Inner_DataUtil goal,
+      PrintMover.Goal goal,
       Predicate<AiPhysics.MotionState> works
    ) {
-      PrintMover.Inner_StreamUtil best = goal.crouch() ? PrintMover.Inner_StreamUtil.CROUCH : PrintMover.Inner_StreamUtil.NONE;
+      PrintMover.KeyState best = goal.crouch() ? PrintMover.KeyState.CROUCH : PrintMover.KeyState.NONE;
       double bestCost = 1.0 / 0.0;
       boolean bestWorks = false;
 
       for (int[] direction : NEIGHBOR_OFFSETS) {
-         PrintMover.Inner_StreamUtil keys = new PrintMover.Inner_StreamUtil(
+         PrintMover.KeyState keys = new PrintMover.KeyState(
             direction[0] > 0, direction[0] < 0, direction[1] > 0, direction[1] < 0, false, goal.crouch(), false
          );
          if ((!keys.moving() || !autismclient.ai.engine.AiFallGuard.isSafeStep(world, start, toMoveInput(keys, yaw)))
             && Double.isFinite(moveCost(start, world, yaw, keys, goal, true))) {
             AiPhysics.MotionState state = AiPhysics.stepCompat(start, toMoveInput(keys, yaw), world);
             boolean workable = works.test(state);
-            AiPhysics.MoveInput coast = toMoveInput(goal.crouch() ? PrintMover.Inner_StreamUtil.CROUCH : PrintMover.Inner_StreamUtil.NONE, yaw);
+            AiPhysics.MoveInput coast = toMoveInput(goal.crouch() ? PrintMover.KeyState.CROUCH : PrintMover.KeyState.NONE, yaw);
 
             for (int tick = 1; tick < 7; tick++) {
                state = AiPhysics.stepCompat(state, coast, world);
@@ -102,8 +102,8 @@ final class PrintMover {
       AiPhysics.MotionState start,
       AiPhysics.PhysicsWorld world,
       float yaw,
-      PrintMover.Inner_StreamUtil keys,
-      PrintMover.Inner_DataUtil goal,
+      PrintMover.KeyState keys,
+      PrintMover.Goal goal,
       boolean tap
    ) {
       return simulateApproach(start, world, yaw, keys, goal, tap ? 1 : 7, false);
@@ -113,17 +113,17 @@ final class PrintMover {
       AiPhysics.MotionState start,
       AiPhysics.PhysicsWorld world,
       float yaw,
-      PrintMover.Inner_StreamUtil keys,
-      PrintMover.Inner_DataUtil goal,
+      PrintMover.KeyState keys,
+      PrintMover.Goal goal,
       int heldTicks,
       boolean crouchedCoast
    ) {
       AiPhysics.MotionState s = start;
       AiPhysics.MoveInput held = toMoveInput(keys, yaw);
       AiPhysics.MoveInput moving = toMoveInput(
-         new PrintMover.Inner_StreamUtil(keys.forward(), keys.back(), keys.left(), keys.right(), false, keys.sneak(), false), yaw
+         new PrintMover.KeyState(keys.forward(), keys.back(), keys.left(), keys.right(), false, keys.sneak(), false), yaw
       );
-      AiPhysics.MoveInput released = toMoveInput(new PrintMover.Inner_StreamUtil(false, false, false, false, false, keys.sneak() || crouchedCoast, false), yaw);
+      AiPhysics.MoveInput released = toMoveInput(new PrintMover.KeyState(false, false, false, false, false, keys.sneak() || crouchedCoast, false), yaw);
       AiPhysics.MoveInput jumpless = heldTicks < 7 ? released : moving;
       double best = 1.0 / 0.0;
       double peak = Double.isFinite(goal.fallPeak()) ? Math.max(start.y(), goal.fallPeak()) : start.y();
@@ -237,21 +237,21 @@ final class PrintMover {
       return k != skipA && k != skipB && world.isInvisibleLightBlock(bx, by, bz);
    }
 
-   static AiPhysics.MoveInput toMoveInput(PrintMover.Inner_StreamUtil k, float yaw) {
+   static AiPhysics.MoveInput toMoveInput(PrintMover.KeyState k, float yaw) {
       double forward = (k.forward() ? 1 : 0) - (k.back() ? 1 : 0);
       double strafe = (k.left() ? 1 : 0) - (k.right() ? 1 : 0);
       return new AiPhysics.MoveInput(forward, strafe, k.jump(), k.sprint(), k.sneak(), yaw);
    }
 
-   record Inner_DataUtil(Vec3 feet, double tolerance, double floor, boolean crouch, boolean stop, double fallPeak) {
-      Inner_DataUtil(Vec3 feet, double tolerance, double floor, boolean crouch, boolean stop) {
+   record Goal(Vec3 feet, double tolerance, double floor, boolean crouch, boolean stop, double fallPeak) {
+      Goal(Vec3 feet, double tolerance, double floor, boolean crouch, boolean stop) {
          this(feet, tolerance, floor, crouch, stop, 0.0 / 0.0);
       }
    }
 
-   record Inner_StreamUtil(boolean forward, boolean back, boolean left, boolean right, boolean jump, boolean sneak, boolean sprint) {
-      static final PrintMover.Inner_StreamUtil NONE = new PrintMover.Inner_StreamUtil(false, false, false, false, false, false, false);
-      static final PrintMover.Inner_StreamUtil CROUCH = new PrintMover.Inner_StreamUtil(false, false, false, false, false, true, false);
+   record KeyState(boolean forward, boolean back, boolean left, boolean right, boolean jump, boolean sneak, boolean sprint) {
+      static final PrintMover.KeyState NONE = new PrintMover.KeyState(false, false, false, false, false, false, false);
+      static final PrintMover.KeyState CROUCH = new PrintMover.KeyState(false, false, false, false, false, true, false);
 
       boolean moving() {
          return this.forward || this.back || this.left || this.right || this.jump;

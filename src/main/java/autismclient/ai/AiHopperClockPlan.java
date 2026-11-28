@@ -142,8 +142,8 @@ final class AiHopperClockPlan {
             && !control.getValue(LeverBlock.POWERED)
             && world.getBlockState(mount).isRedstoneConductor(world, mount)
             && world.getBlockState(mount.relative(side)).is(Blocks.REDSTONE_WIRE)) {
-            AiPrinterCircuit.Inner_JsonUtil controlTrace = AiPrinterCircuit.trace(world, lever, states.keySet());
-            if (controlTrace.unseen() == AiPrinterCircuit.Inner_ConfigStore.NO_PATH && controlTrace.reached().get(pb) == AiPrinterCircuit.Inner_ConfigStore.REACHES) {
+            AiPrinterCircuit.Trace controlTrace = AiPrinterCircuit.trace(world, lever, states.keySet());
+            if (controlTrace.unseen() == AiPrinterCircuit.ReachStatus.NO_PATH && controlTrace.reached().get(pb) == AiPrinterCircuit.ReachStatus.REACHES) {
                HashSet<BlockPos> outputs = new HashSet<>();
                ArrayDeque<BlockPos> sources = new ArrayDeque<>();
                HashSet<BlockPos> visited = new HashSet<>();
@@ -162,8 +162,8 @@ final class AiHopperClockPlan {
                         outputs.add(from);
                      }
 
-                     AiPrinterCircuit.Inner_JsonUtil trace = AiPrinterCircuit.trace(world, from, states.keySet());
-                     if (trace.unseen() != AiPrinterCircuit.Inner_ConfigStore.NO_PATH) {
+                     AiPrinterCircuit.Trace trace = AiPrinterCircuit.trace(world, from, states.keySet());
+                     if (trace.unseen() != AiPrinterCircuit.ReachStatus.NO_PATH) {
                         return null;
                      }
 

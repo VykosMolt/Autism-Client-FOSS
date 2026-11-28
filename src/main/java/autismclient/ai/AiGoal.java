@@ -11,7 +11,7 @@ public final class AiGoal {
    private static final Map<Object, AiGoal.GoalEntry> goals = new ConcurrentHashMap<>();
    private static final Object VIS_OWNER = new Object();
    private static final AiGoal.StableLabel LABEL = new AiGoal.StableLabel();
-   private static volatile AiTaskStatus.Inner_StreamUtil status = AiTaskStatus.Inner_StreamUtil.EMPTY;
+   private static volatile AiTaskStatus.StatusContent status = AiTaskStatus.StatusContent.EMPTY;
    private static volatile long statusAt;
    private static String detail = "";
 
@@ -38,12 +38,12 @@ public final class AiGoal {
       }
    }
 
-   static AiTaskStatus.Inner_StreamUtil currentStatus() {
-      return System.nanoTime() - statusAt > 1500000000L ? AiTaskStatus.Inner_StreamUtil.EMPTY : status;
+   static AiTaskStatus.StatusContent currentStatus() {
+      return System.nanoTime() - statusAt > 1500000000L ? AiTaskStatus.StatusContent.EMPTY : status;
    }
 
    static String statusLine(String fallback) {
-      AiTaskStatus.Inner_StreamUtil shown = currentStatus();
+      AiTaskStatus.StatusContent shown = currentStatus();
       return !shown.visible() ? fallback : shown.activity() + (shown.detail().isEmpty() ? "" : " (" + shown.detail() + ")");
    }
 
@@ -65,7 +65,7 @@ public final class AiGoal {
       if (deepest == null) {
          LABEL.reset();
          detail = "";
-         status = AiTaskStatus.Inner_StreamUtil.EMPTY;
+         status = AiTaskStatus.StatusContent.EMPTY;
          AiVisualization.clearOwner(VIS_OWNER);
       } else {
          String goal = LABEL.stabilize(deepest.goal, now, 3000000000L);
@@ -78,7 +78,7 @@ public final class AiGoal {
          }
 
          String title = shallowest.objective.isEmpty() ? deepest.objective : shallowest.objective;
-         status = new AiTaskStatus.Inner_StreamUtil(title.isEmpty() ? goal : title, goal, detail);
+         status = new AiTaskStatus.StatusContent(title.isEmpty() ? goal : title, goal, detail);
          statusAt = now;
          AiVisualization.showContent(VIS_OWNER, status);
       }

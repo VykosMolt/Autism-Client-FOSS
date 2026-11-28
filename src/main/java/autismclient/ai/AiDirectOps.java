@@ -22,9 +22,9 @@ public final class AiDirectOps {
       "game:dimension", "game:plan", "game:nether_entry", "game:speedrun", "game:dragon_fight", "game:nether_run", "game:stronghold", "game:end_run"
    );
    private static final AiCatalog CATALOG = new AiCatalog();
-   private static volatile AiDirectOps.Inner_DataUtil active;
+   private static volatile AiDirectOps.DirectOp active;
    private static volatile autismclient.util.macro.MacroToolBridge.ToolJob latestJob;
-   private static final List<AiDirectOps.Inner_DataUtil> waiters = new ArrayList<>();
+   private static final List<AiDirectOps.DirectOp> waiters = new ArrayList<>();
    private static volatile AiToolSettings cachedToolSettings;
    private static int pendingInputCleanups;
    private static int tickCount;
@@ -49,11 +49,11 @@ public final class AiDirectOps {
             CATALOG.refresh();
          }
 
-         for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(waiters)) {
+         for (AiDirectOps.DirectOp waiter : List.copyOf(waiters)) {
             tickOp(client, waiter);
          }
 
-         AiDirectOps.Inner_DataUtil body = active;
+         AiDirectOps.DirectOp body = active;
          if (body != null) {
             tickOp(client, body);
          }
@@ -108,7 +108,7 @@ public final class AiDirectOps {
    }
 
    public static String activeToolId() {
-      AiDirectOps.Inner_DataUtil a = active;
+      AiDirectOps.DirectOp a = active;
       return a == null ? "" : a.id;
    }
 
@@ -117,7 +117,7 @@ public final class AiDirectOps {
    }
 
    public static autismclient.util.macro.MacroToolBridge.ToolJob start(String id, JsonObject args) {
-      AiDirectOps.Inner_DataUtil running = active;
+      AiDirectOps.DirectOp running = active;
       if (running != null && !id.equals("client:run_macro")) {
          throw new IllegalStateException("Already running " + running.id + " (" + elapsedText(running) + ") - " + toolsCommand() + " stop first");
       }
@@ -168,7 +168,7 @@ public final class AiDirectOps {
             return AiTools.operationFor(id, effective, ai, null);
          });
          Minecraft mc = Minecraft.getInstance();
-         AiDirectOps.Inner_DataUtil created = new AiDirectOps.Inner_DataUtil(id, op, lease, requiredResources, mc.level, ai.emergencyKey);
+         AiDirectOps.DirectOp created = new AiDirectOps.DirectOp(id, op, lease, requiredResources, mc.level, ai.emergencyKey);
          if (id.equals("client:run_macro")) {
             waiters.add(created);
             latestJob = created.job;
@@ -196,16 +196,16 @@ public final class AiDirectOps {
    }
 
    public static autismclient.util.macro.MacroToolBridge.ToolJob currentHandle() {
-      AiDirectOps.Inner_DataUtil a = active;
+      AiDirectOps.DirectOp a = active;
       return a != null ? a.job : (latestJob != null ? latestJob : lastJob);
    }
 
    public static void cancelJob(autismclient.util.macro.MacroToolBridge.ToolJob job) {
-      AiDirectOps.Inner_DataUtil a = active;
+      AiDirectOps.DirectOp a = active;
       if (a != null && a.job == job) {
          failOp(a, AiFailure.CANCELLED, "Cancelled by its owner");
       } else {
-         for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(waiters)) {
+         for (AiDirectOps.DirectOp waiter : List.copyOf(waiters)) {
             if (waiter.job == job) {
                failOp(waiter, AiFailure.CANCELLED, "Cancelled by its owner");
             }
@@ -268,9 +268,9 @@ public final class AiDirectOps {
 
    public static void stopAll(String reason) {
       AiMacroTools.cancelAll("Tools stopped");
-      AiDirectOps.Inner_DataUtil a = active;
+      AiDirectOps.DirectOp a = active;
 
-      for (AiDirectOps.Inner_DataUtil waiter : List.copyOf(waiters)) {
+      for (AiDirectOps.DirectOp waiter : List.copyOf(waiters)) {
          failOp(waiter, AiFailure.CANCELLED, "Macro tool stopped");
       }
 
@@ -283,7 +283,7 @@ public final class AiDirectOps {
    }
 
    public static void pause() {
-      AiDirectOps.Inner_DataUtil a = active;
+      AiDirectOps.DirectOp a = active;
       if (a == null) {
          AutismClientMessaging.sendPrefixed("§7No tool operation running.");
       } else if (a.paused) {
@@ -299,7 +299,7 @@ public final class AiDirectOps {
    }
 
    public static void resume() {
-      AiDirectOps.Inner_DataUtil a = active;
+      AiDirectOps.DirectOp a = active;
       if (a == null) {
          AutismClientMessaging.sendPrefixed("§7No tool operation running.");
       } else if (!a.paused) {
@@ -317,7 +317,7 @@ public final class AiDirectOps {
    }
 
    public static List<String> statusLines() {
-      AiDirectOps.Inner_DataUtil a = active;
+      AiDirectOps.DirectOp a = active;
       if (a == null) {
          return List.of("§7No tool operation running.");
       }
@@ -335,7 +335,7 @@ public final class AiDirectOps {
       return lines;
    }
 
-   private static void tickOp(Minecraft mc, AiDirectOps.Inner_DataUtil a) {
+   private static void tickOp(Minecraft mc, AiDirectOps.DirectOp a) {
       if (autismclient.modules.aD.init_Z()) {
          stopAll("client panic mode");
       } else if (!autismclient.modules.AutoTotemModule.init_Z_6()) {
@@ -486,7 +486,7 @@ public final class AiDirectOps {
       }
    }
 
-   private static void interruptForDefense(AiDirectOps.Inner_DataUtil a, AiOperation defense, String kind, AiFailure cause, String reason) {
+   private static void interruptForDefense(AiDirectOps.DirectOp a, AiOperation defense, String kind, AiFailure cause, String reason) {
       if (a.interrupted == null) {
          a.interrupted = AiService.interruptedFailureResult(a.op, cause, "Work interrupted: " + reason);
       }
@@ -527,7 +527,7 @@ public final class AiDirectOps {
          );
    }
 
-   private static void recordProgress(AiDirectOps.Inner_DataUtil a, AiOperation.Result result) {
+   private static void recordProgress(AiDirectOps.DirectOp a, AiOperation.Result result) {
       String data = result.dataJson();
       a.lastMessage = result.message();
       a.lastData = data == null ? "{}" : data;
@@ -559,7 +559,7 @@ public final class AiDirectOps {
       );
    }
 
-   private static void failOp(AiDirectOps.Inner_DataUtil a, AiFailure cause, String message) {
+   private static void failOp(AiDirectOps.DirectOp a, AiFailure cause, String message) {
       if (active == a || waiters.contains(a)) {
          AiOperation.Result result = failureResult(a.op, a.defense, a.interrupted, cause, message, a.lastData);
          removeOp(a);
@@ -578,7 +578,7 @@ public final class AiDirectOps {
       }
    }
 
-   private static void completeOp(AiDirectOps.Inner_DataUtil a, AiOperation.Result result) {
+   private static void completeOp(AiDirectOps.DirectOp a, AiOperation.Result result) {
       if (active == a || waiters.contains(a)) {
          removeOp(a);
          lastResult = result;
@@ -623,11 +623,11 @@ public final class AiDirectOps {
    }
 
    public static boolean isDrivingInput() {
-      AiDirectOps.Inner_DataUtil a = active;
+      AiDirectOps.DirectOp a = active;
       return pendingInputCleanups > 0 || a != null && a.lease != null && a.resources.contains("INPUT");
    }
 
-   private static void finishOp(AiDirectOps.Inner_DataUtil a, boolean cancel, AiOperation.Result result) {
+   private static void finishOp(AiDirectOps.DirectOp a, boolean cancel, AiOperation.Result result) {
       boolean input = a.lease != null && a.resources.contains("INPUT");
       if (input) {
          pendingInputCleanups++;
@@ -647,7 +647,7 @@ public final class AiDirectOps {
       });
    }
 
-   private static void removeOp(AiDirectOps.Inner_DataUtil a) {
+   private static void removeOp(AiDirectOps.DirectOp a) {
       AiVisualization.clearOwner(a);
       if (active == a) {
          active = null;
@@ -657,7 +657,7 @@ public final class AiDirectOps {
       latestJob = waiters.isEmpty() ? null : waiters.getLast().job;
    }
 
-   private static void stopOp(AiDirectOps.Inner_DataUtil a, boolean cancel) {
+   private static void stopOp(AiDirectOps.DirectOp a, boolean cancel) {
       try {
          if (a.defense != null) {
             try {
@@ -687,7 +687,7 @@ public final class AiDirectOps {
       }
    }
 
-   private static void releaseInputs(AiDirectOps.Inner_DataUtil a) {
+   private static void releaseInputs(AiDirectOps.DirectOp a) {
       if (a.lease != null && a.resources.contains("INPUT")) {
          autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
          Minecraft mc = Minecraft.getInstance();
@@ -766,13 +766,13 @@ public final class AiDirectOps {
       }
    }
 
-   private static String elapsedText(AiDirectOps.Inner_DataUtil a) {
+   private static String elapsedText(AiDirectOps.DirectOp a) {
       long seconds = Math.max(0L, (System.nanoTime() - a.startedAt) / 1000000000L);
       return seconds < 60L ? seconds + "s" : String.format(Locale.ROOT, "%dm%02ds", seconds / 60L, seconds % 60L);
    }
 
    private static String cancelHint() {
-      AiDirectOps.Inner_DataUtil a = active;
+      AiDirectOps.DirectOp a = active;
       int key = a == null ? settings().emergencyKey : a.emergencyKey;
       return toolsCommand() + " stop or " + (key == 299 ? "F10" : "key " + key);
    }
@@ -827,7 +827,7 @@ public final class AiDirectOps {
       return var10000;
    }
 
-   private static final class Inner_DataUtil {
+   private static final class DirectOp {
       final String id;
       final AiOperation op;
       AutoCloseable lease;
@@ -844,7 +844,7 @@ public final class AiDirectOps {
       String lastData = "{}";
       long unusedLongField;
 
-      Inner_DataUtil(String id, AiOperation op, AutoCloseable lease, List<String> resources, Object world, int emergencyKey) {
+      DirectOp(String id, AiOperation op, AutoCloseable lease, List<String> resources, Object world, int emergencyKey) {
          this.id = id;
          this.op = op;
          this.lease = lease;

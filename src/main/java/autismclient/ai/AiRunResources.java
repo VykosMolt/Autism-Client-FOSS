@@ -42,13 +42,13 @@ public final class AiRunResources {
    private AiRunResources() {
    }
 
-   static AiRunResources.Inner_DataUtil eyeBudget(int target, int activation, int mobilityPearls) {
+   static AiRunResources.EyeBudget eyeBudget(int target, int activation, int mobilityPearls) {
       int e = countUsableItem("minecraft:ender_eye", 0);
       int p = Math.max(0, countUsableItem("minecraft:ender_pearl", 0) - mobilityPearls);
       int b = countUsableItem("minecraft:blaze_powder", 0);
       int r = countUsableItem("minecraft:blaze_rod", 0);
       int equivalents = e + Math.min(p, b + 2 * r);
-      return new AiRunResources.Inner_DataUtil(
+      return new AiRunResources.EyeBudget(
          e, p, b, r, target, equivalents, Math.max(0, target - e - p), Math.max(0, target - e - b - 2 * r), Math.max(0, equivalents - activation)
       );
    }
@@ -444,7 +444,7 @@ public final class AiRunResources {
       );
    }
 
-   record Inner_DataUtil(int eyes, int pearls, int powder, int rods, int target, int equivalents, int pearlDeficit, int powderDeficit, int navigationSpare) {
+   record EyeBudget(int eyes, int pearls, int powder, int rods, int target, int equivalents, int pearlDeficit, int powderDeficit, int navigationSpare) {
       JsonObject data() {
          return AiJson.objectOf(
             "eyes",

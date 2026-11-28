@@ -38,7 +38,7 @@ public final class BookBotFileReader {
 
    static String decode(byte[] bytes) {
       if (bytes != null && bytes.length != 0) {
-         BookBotFileReader.Inner_DataUtil encoding = detectBom(bytes);
+         BookBotFileReader.BomEncoding encoding = detectBom(bytes);
          String decoded;
          if (encoding != null) {
             decoded = new String(bytes, encoding.bomLength(), bytes.length - encoding.bomLength(), encoding.charset());
@@ -75,26 +75,26 @@ public final class BookBotFileReader {
       }
    }
 
-   private static BookBotFileReader.Inner_DataUtil detectBom(byte[] bytes) {
+   private static BookBotFileReader.BomEncoding detectBom(byte[] bytes) {
       int length = bytes.length;
       if (length >= 4 && unsigned(bytes[0]) == 0 && unsigned(bytes[1]) == 0 && unsigned(bytes[2]) == 254 && unsigned(bytes[3]) == 255) {
-         return new BookBotFileReader.Inner_DataUtil(UTF_32BE, 4);
+         return new BookBotFileReader.BomEncoding(UTF_32BE, 4);
       }
 
       if (length >= 4 && unsigned(bytes[0]) == 255 && unsigned(bytes[1]) == 254 && unsigned(bytes[2]) == 0 && unsigned(bytes[3]) == 0) {
-         return new BookBotFileReader.Inner_DataUtil(UTF_32LE, 4);
+         return new BookBotFileReader.BomEncoding(UTF_32LE, 4);
       }
 
       if (length >= 3 && unsigned(bytes[0]) == 239 && unsigned(bytes[1]) == 187 && unsigned(bytes[2]) == 191) {
-         return new BookBotFileReader.Inner_DataUtil(StandardCharsets.UTF_8, 3);
+         return new BookBotFileReader.BomEncoding(StandardCharsets.UTF_8, 3);
       }
 
       if (length >= 2 && unsigned(bytes[0]) == 254 && unsigned(bytes[1]) == 255) {
-         return new BookBotFileReader.Inner_DataUtil(StandardCharsets.UTF_16BE, 2);
+         return new BookBotFileReader.BomEncoding(StandardCharsets.UTF_16BE, 2);
       }
 
       if (length >= 2 && unsigned(bytes[0]) == 255 && unsigned(bytes[1]) == 254) {
-         return new BookBotFileReader.Inner_DataUtil(StandardCharsets.UTF_16LE, 2);
+         return new BookBotFileReader.BomEncoding(StandardCharsets.UTF_16LE, 2);
       }
 
       int sample = Math.min(length & -2, 8192);
@@ -115,11 +115,11 @@ public final class BookBotFileReader {
 
          int threshold = Math.max(3, pairs / 3);
          if (oddNuls >= threshold && oddNuls >= evenNuls * 3) {
-            return new BookBotFileReader.Inner_DataUtil(StandardCharsets.UTF_16LE, 0);
+            return new BookBotFileReader.BomEncoding(StandardCharsets.UTF_16LE, 0);
          }
 
          if (evenNuls >= threshold && evenNuls >= oddNuls * 3) {
-            return new BookBotFileReader.Inner_DataUtil(StandardCharsets.UTF_16BE, 0);
+            return new BookBotFileReader.BomEncoding(StandardCharsets.UTF_16BE, 0);
          }
       }
 
@@ -130,6 +130,6 @@ public final class BookBotFileReader {
       return value & 0xFF;
    }
 
-   private record Inner_DataUtil(Charset charset, int bomLength) {
+   private record BomEncoding(Charset charset, int bomLength) {
    }
 }

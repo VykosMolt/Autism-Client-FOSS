@@ -31,23 +31,23 @@ public final class AiDigLine {
    private AiDigLine() {
    }
 
-   public static AiDigLine.Inner_DataUtil planLineFor(
-      Vec3 eye, float yaw, float pitch, Collection<BlockPos> targets, AiDigLine.Inner_CachePool shapes, double reach
+   public static AiDigLine.DigLine planLineFor(
+      Vec3 eye, float yaw, float pitch, Collection<BlockPos> targets, AiDigLine.ShapeSource shapes, double reach
    ) {
       return planLine(eye, yaw, pitch, targets, targets, shapes, reach);
    }
 
-   public static AiDigLine.Inner_DataUtil planLine(
-      Vec3 eye, float yaw, float pitch, Collection<BlockPos> heads, Collection<BlockPos> targets, AiDigLine.Inner_CachePool shapes, double reach
+   public static AiDigLine.DigLine planLine(
+      Vec3 eye, float yaw, float pitch, Collection<BlockPos> heads, Collection<BlockPos> targets, AiDigLine.ShapeSource shapes, double reach
    ) {
       return planLine(eye, yaw, pitch, heads, targets, shapes, reach, 0.0F / 0.0F);
    }
 
-   public static AiDigLine.Inner_DataUtil planLine(
-      Vec3 eye, float yaw, float pitch, Collection<BlockPos> heads, Collection<BlockPos> targets, AiDigLine.Inner_CachePool shapes, double reach, float pathYaw
+   public static AiDigLine.DigLine planLine(
+      Vec3 eye, float yaw, float pitch, Collection<BlockPos> heads, Collection<BlockPos> targets, AiDigLine.ShapeSource shapes, double reach, float pathYaw
    ) {
       Set<BlockPos> set = new HashSet<>(targets);
-      AiDigLine.Inner_DataUtil best = null;
+      AiDigLine.DigLine best = null;
       double bestScore = -1.7976931348623157E308;
 
       for (BlockPos cell : targets) {
@@ -80,7 +80,7 @@ public final class AiDigLine {
 
                               if (score > bestScore) {
                                  bestScore = score;
-                                 best = new AiDigLine.Inner_DataUtil(ly, lp, List.copyOf(chain), margin[0]);
+                                 best = new AiDigLine.DigLine(ly, lp, List.copyOf(chain), margin[0]);
                               }
                            }
                         }
@@ -94,7 +94,7 @@ public final class AiDigLine {
       return best;
    }
 
-   public static List<BlockPos> rayChain(Vec3 eye, Vec3 dir, double reach, Set<BlockPos> targets, AiDigLine.Inner_CachePool shapes, double[] marginOut) {
+   public static List<BlockPos> rayChain(Vec3 eye, Vec3 dir, double reach, Set<BlockPos> targets, AiDigLine.ShapeSource shapes, double[] marginOut) {
       Set<BlockPos> removed = new HashSet<>();
       List<BlockPos> chain = new ArrayList<>();
       double min = 1.7976931348623157E308;
@@ -127,7 +127,7 @@ public final class AiDigLine {
       return chain;
    }
 
-   public static BlockHitResult trace(Vec3 eye, Vec3 dir, double reach, Set<BlockPos> removed, AiDigLine.Inner_CachePool shapes) {
+   public static BlockHitResult trace(Vec3 eye, Vec3 dir, double reach, Set<BlockPos> removed, AiDigLine.ShapeSource shapes) {
       Vec3 end = eye.add(dir.scale(reach));
       return BlockGetter.traverseBlocks(eye, end, removed, (gone, pos) -> {
          if (gone.contains(pos)) {
@@ -139,42 +139,42 @@ public final class AiDigLine {
       }, gone -> null);
    }
 
-   public static AiDigLine.Inner_DataUtil relatch(
-      AiDigLine.Inner_DataUtil latched,
+   public static AiDigLine.DigLine relatch(
+      AiDigLine.DigLine latched,
       boolean changed,
       Vec3 eye,
       float yaw,
       float pitch,
       Collection<BlockPos> remaining,
-      AiDigLine.Inner_CachePool shapes,
+      AiDigLine.ShapeSource shapes,
       double reach
    ) {
       return relatch(latched, changed, eye, yaw, pitch, remaining, remaining, shapes, reach);
    }
 
-   public static AiDigLine.Inner_DataUtil relatch(
-      AiDigLine.Inner_DataUtil latched,
+   public static AiDigLine.DigLine relatch(
+      AiDigLine.DigLine latched,
       boolean changed,
       Vec3 eye,
       float yaw,
       float pitch,
       Collection<BlockPos> remaining,
       Collection<BlockPos> targets,
-      AiDigLine.Inner_CachePool shapes,
+      AiDigLine.ShapeSource shapes,
       double reach
    ) {
       return updateLatched(latched, changed, eye, yaw, pitch, remaining, targets, shapes, reach, 0.0F / 0.0F);
    }
 
-   public static AiDigLine.Inner_DataUtil updateLatched(
-      AiDigLine.Inner_DataUtil latched,
+   public static AiDigLine.DigLine updateLatched(
+      AiDigLine.DigLine latched,
       boolean changed,
       Vec3 eye,
       float yaw,
       float pitch,
       Collection<BlockPos> remaining,
       Collection<BlockPos> targets,
-      AiDigLine.Inner_CachePool shapes,
+      AiDigLine.ShapeSource shapes,
       double reach,
       float pathYaw
    ) {
@@ -184,7 +184,7 @@ public final class AiDigLine {
          return latched;
       } else {
          List<BlockPos> keptChain = rayChain(eye, latched.direction(), reach, new HashSet<>(targets), shapes, null);
-         AiDigLine.Inner_DataUtil best = planLine(eye, yaw, pitch, remaining, targets, shapes, reach, pathYaw);
+         AiDigLine.DigLine best = planLine(eye, yaw, pitch, remaining, targets, shapes, reach, pathYaw);
          if (best == null) {
             return latched;
          } else {
@@ -199,22 +199,22 @@ public final class AiDigLine {
       }
    }
 
-   public static List<AiDigLine.Inner_DataUtil> candidateLines(
-      Vec3 eye, float yaw, float pitch, Collection<BlockPos> heads, Collection<BlockPos> targets, AiDigLine.Inner_CachePool shapes, double reach
+   public static List<AiDigLine.DigLine> candidateLines(
+      Vec3 eye, float yaw, float pitch, Collection<BlockPos> heads, Collection<BlockPos> targets, AiDigLine.ShapeSource shapes, double reach
    ) {
       Map<BlockPos, VoxelShape> cache = new HashMap<>();
-      AiDigLine.Inner_CachePool cached = pos -> cache.computeIfAbsent(pos.immutable(), shapes::outline);
+      AiDigLine.ShapeSource cached = pos -> cache.computeIfAbsent(pos.immutable(), shapes::outline);
       Set<BlockPos> all = new LinkedHashSet<>(targets);
       all.addAll(heads);
-      List<AiDigLine.Inner_StreamUtil> beam = List.of(new AiDigLine.Inner_StreamUtil(List.of(), Set.of(), yaw, pitch, 0.0));
-      AiDigLine.Inner_StreamUtil best = null;
+      List<AiDigLine.BeamState> beam = List.of(new AiDigLine.BeamState(List.of(), Set.of(), yaw, pitch, 0.0));
+      AiDigLine.BeamState best = null;
       int depthCap = Math.min(all.size(), 8);
 
       for (int depth = 0; depth < depthCap && !beam.isEmpty(); depth++) {
-         List<AiDigLine.Inner_StreamUtil> next = new ArrayList<>();
+         List<AiDigLine.BeamState> next = new ArrayList<>();
 
-         for (AiDigLine.Inner_StreamUtil state : beam) {
-            List<AiDigLine.Inner_DataUtil> options = candidateLines(
+         for (AiDigLine.BeamState state : beam) {
+            List<AiDigLine.DigLine> options = candidateLines(
                eye, state.yaw(), state.pitch(), depth == 0 ? heads : all, all, state.gone(), cached, reach, depth == 0 ? HEAD_GRID : DEEP_GRID
             );
             if (options.isEmpty()) {
@@ -222,23 +222,23 @@ public final class AiDigLine {
                   best = state;
                }
             } else {
-               for (AiDigLine.Inner_DataUtil line : options) {
-                  List<AiDigLine.Inner_DataUtil> lines = new ArrayList<>(state.lines());
+               for (AiDigLine.DigLine line : options) {
+                  List<AiDigLine.DigLine> lines = new ArrayList<>(state.lines());
                   lines.add(line);
                   Set<BlockPos> gone = new HashSet<>(state.gone());
                   gone.addAll(line.chain());
                   next.add(
-                     new AiDigLine.Inner_StreamUtil(List.copyOf(lines), gone, line.yaw(), line.pitch(), state.turn() + aimError(state.yaw(), state.pitch(), line))
+                     new AiDigLine.BeamState(List.copyOf(lines), gone, line.yaw(), line.pitch(), state.turn() + aimError(state.yaw(), state.pitch(), line))
                   );
                }
             }
          }
 
-         next.sort(Comparator.comparingDouble(AiDigLine.Inner_StreamUtil::score));
-         List<AiDigLine.Inner_StreamUtil> kept = new ArrayList<>();
+         next.sort(Comparator.comparingDouble(AiDigLine.BeamState::score));
+         List<AiDigLine.BeamState> kept = new ArrayList<>();
          Set<Set<BlockPos>> seen = new HashSet<>();
 
-         for (AiDigLine.Inner_StreamUtil state : next) {
+         for (AiDigLine.BeamState state : next) {
             if (kept.size() >= 5) {
                break;
             }
@@ -250,7 +250,7 @@ public final class AiDigLine {
 
          beam = kept;
 
-         for (AiDigLine.Inner_StreamUtil state : beam) {
+         for (AiDigLine.BeamState state : beam) {
             if ((state.gone().size() == all.size() || depth + 1 == depthCap) && (best == null || state.score() < best.score())) {
                best = state;
             }
@@ -260,43 +260,43 @@ public final class AiDigLine {
       return best == null ? List.of() : best.lines();
    }
 
-   public static List<AiDigLine.Inner_DataUtil> planLines(
+   public static List<AiDigLine.DigLine> planLines(
       Vec3 eye,
       float yaw,
       float pitch,
       Collection<BlockPos> heads,
       Collection<BlockPos> targets,
-      AiDigLine.Inner_CachePool shapes,
+      AiDigLine.ShapeSource shapes,
       double reach,
       int remaining,
       ToDoubleFunction<BlockPos> breakTicks
    ) {
       Map<BlockPos, VoxelShape> cache = new HashMap<>();
-      AiDigLine.Inner_CachePool cached = pos -> cache.computeIfAbsent(pos.immutable(), shapes::outline);
+      AiDigLine.ShapeSource cached = pos -> cache.computeIfAbsent(pos.immutable(), shapes::outline);
       Set<BlockPos> all = new LinkedHashSet<>(targets);
       all.addAll(heads);
       Set<BlockPos> gone = new HashSet<>();
-      List<AiDigLine.Inner_DataUtil> plan = new ArrayList<>();
+      List<AiDigLine.DigLine> plan = new ArrayList<>();
       float lookYaw = yaw;
       float lookPitch = pitch;
       int needed = Math.max(1, remaining);
 
       for (int depth = 0; depth < Math.min(all.size(), 8) && needed > 0; depth++) {
          Collection<BlockPos> visible = depth == 0 ? heads : all;
-         List<AiDigLine.Inner_DataUtil> options = new ArrayList<>(
+         List<AiDigLine.DigLine> options = new ArrayList<>(
             candidateLines(eye, lookYaw, lookPitch, visible, all, gone, cached, reach, depth == 0 ? HEAD_GRID : DEEP_GRID, 2147483647)
          );
          Vec3 direction = Vec3.directionFromRotation(lookPitch, lookYaw);
          double[] margin = new double[]{0.0};
          List<BlockPos> alreadyAimed = chainAlong(eye, direction, reach, all, gone, cached, margin);
          if (!alreadyAimed.isEmpty() && visible.contains(alreadyAimed.get(0))) {
-            options.add(new AiDigLine.Inner_DataUtil(lookYaw, lookPitch, List.copyOf(alreadyAimed), margin[0]));
+            options.add(new AiDigLine.DigLine(lookYaw, lookPitch, List.copyOf(alreadyAimed), margin[0]));
          }
 
          List<AiMiningTargetCost.TargetChoice> choices = new ArrayList<>();
 
          for (int i = 0; i < options.size(); i++) {
-            AiDigLine.Inner_DataUtil line = options.get(i);
+            AiDigLine.DigLine line = options.get(i);
             List<Double> costs = new ArrayList<>();
 
             for (BlockPos cell : line.chain()) {
@@ -314,7 +314,7 @@ public final class AiDigLine {
             break;
          }
 
-         AiDigLine.Inner_DataUtil line = options.get(chosen);
+         AiDigLine.DigLine line = options.get(chosen);
          plan.add(line);
          gone.addAll(line.chain());
          needed -= line.chain().size();
@@ -325,37 +325,37 @@ public final class AiDigLine {
       return List.copyOf(plan);
    }
 
-   static double aimError(float yaw, float pitch, AiDigLine.Inner_DataUtil line) {
+   static double aimError(float yaw, float pitch, AiDigLine.DigLine line) {
       return Math.abs(wrapDegrees(line.yaw() - yaw)) + Math.abs(line.pitch() - pitch);
    }
 
-   static List<AiDigLine.Inner_DataUtil> candidateLines(
+   static List<AiDigLine.DigLine> candidateLines(
       Vec3 eye,
       float yaw,
       float pitch,
       Collection<BlockPos> heads,
       Set<BlockPos> targets,
       Set<BlockPos> gone,
-      AiDigLine.Inner_CachePool shapes,
+      AiDigLine.ShapeSource shapes,
       double reach,
       double[] grid
    ) {
       return candidateLines(eye, yaw, pitch, heads, targets, gone, shapes, reach, grid, 6);
    }
 
-   private static List<AiDigLine.Inner_DataUtil> candidateLines(
+   private static List<AiDigLine.DigLine> candidateLines(
       Vec3 eye,
       float yaw,
       float pitch,
       Collection<BlockPos> heads,
       Set<BlockPos> targets,
       Set<BlockPos> gone,
-      AiDigLine.Inner_CachePool shapes,
+      AiDigLine.ShapeSource shapes,
       double reach,
       double[] grid,
       int limit
    ) {
-      Map<List<BlockPos>, AiDigLine.Inner_DataUtil> byChain = new HashMap<>();
+      Map<List<BlockPos>, AiDigLine.DigLine> byChain = new HashMap<>();
       Map<List<BlockPos>, Double> keyOf = new HashMap<>();
       Set<BlockPos> left = new HashSet<>(targets);
       left.removeAll(gone);
@@ -383,7 +383,7 @@ public final class AiDigLine {
                                  Double had = keyOf.get(chain);
                                  if (had == null || key < had) {
                                     keyOf.put(chain, key);
-                                    byChain.put(chain, new AiDigLine.Inner_DataUtil(ly, lp, List.copyOf(chain), margin[0]));
+                                    byChain.put(chain, new AiDigLine.DigLine(ly, lp, List.copyOf(chain), margin[0]));
                                  }
                               }
                            }
@@ -395,13 +395,13 @@ public final class AiDigLine {
          }
       }
 
-      List<AiDigLine.Inner_DataUtil> out = new ArrayList<>(byChain.values());
+      List<AiDigLine.DigLine> out = new ArrayList<>(byChain.values());
       out.sort(Comparator.comparingDouble(line -> keyOf.get(line.chain()) - line.chain().size() * 60.0));
       return out.size() > limit ? List.copyOf(out.subList(0, limit)) : out;
    }
 
    static List<BlockPos> chainAlong(
-      Vec3 eye, Vec3 dir, double reach, Set<BlockPos> targets, Set<BlockPos> gone, AiDigLine.Inner_CachePool shapes, double[] marginOut
+      Vec3 eye, Vec3 dir, double reach, Set<BlockPos> targets, Set<BlockPos> gone, AiDigLine.ShapeSource shapes, double[] marginOut
    ) {
       if (gone.isEmpty()) {
          return rayChain(eye, dir, reach, targets, shapes, marginOut);
@@ -439,7 +439,7 @@ public final class AiDigLine {
       return chain;
    }
 
-   public static BlockPos firstHit(AiDigLine.Inner_DataUtil line, Vec3 eye, Collection<BlockPos> remaining, AiDigLine.Inner_CachePool shapes, double reach) {
+   public static BlockPos firstHit(AiDigLine.DigLine line, Vec3 eye, Collection<BlockPos> remaining, AiDigLine.ShapeSource shapes, double reach) {
       BlockHitResult hit = trace(eye, line.direction(), reach, Set.of(), shapes);
       if (hit == null) {
          return null;
@@ -453,7 +453,7 @@ public final class AiDigLine {
       }
    }
 
-   public static Vec3 aimPoint(AiDigLine.Inner_DataUtil line, Vec3 eye, AiDigLine.Inner_CachePool shapes, double reach) {
+   public static Vec3 aimPoint(AiDigLine.DigLine line, Vec3 eye, AiDigLine.ShapeSource shapes, double reach) {
       Vec3 dir = line.direction();
       BlockHitResult hit = trace(eye, dir, reach, Set.of(), shapes);
       double t = hit == null ? 2.0 : hit.getLocation().distanceTo(eye) + 0.02;
@@ -562,17 +562,17 @@ public final class AiDigLine {
       return d;
    }
 
-   public interface Inner_CachePool {
+   public interface ShapeSource {
       VoxelShape outline(BlockPos var1);
    }
 
-   public record Inner_DataUtil(float yaw, float pitch, List<BlockPos> chain, double margin) {
+   public record DigLine(float yaw, float pitch, List<BlockPos> chain, double margin) {
       public Vec3 direction() {
          return Vec3.directionFromRotation(this.pitch, this.yaw);
       }
    }
 
-   private record Inner_StreamUtil(List<AiDigLine.Inner_DataUtil> lines, Set<BlockPos> gone, float yaw, float pitch, double turn) {
+   private record BeamState(List<AiDigLine.DigLine> lines, Set<BlockPos> gone, float yaw, float pitch, double turn) {
       double score() {
          return this.turn - this.gone.size() * 60.0;
       }

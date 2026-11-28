@@ -216,12 +216,12 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       ty += ctl + 6;
       this.startFromLabelY = ty;
       ty += rowText;
-      CrosshairPresetGeometry.Inner_NetHelper[] presets = new CrosshairPresetGeometry.Inner_NetHelper[]{
-         CrosshairPresetGeometry.Inner_NetHelper.CROSS, CrosshairPresetGeometry.Inner_NetHelper.TACTICAL, CrosshairPresetGeometry.Inner_NetHelper.CIRCLE, CrosshairPresetGeometry.Inner_NetHelper.CHEVRON
+      CrosshairPresetGeometry.Style[] presets = new CrosshairPresetGeometry.Style[]{
+         CrosshairPresetGeometry.Style.CROSS, CrosshairPresetGeometry.Style.TACTICAL, CrosshairPresetGeometry.Style.CIRCLE, CrosshairPresetGeometry.Style.CHEVRON
       };
 
       for (int i = 0; i < presets.length; i++) {
-         CrosshairPresetGeometry.Inner_NetHelper preset = presets[i];
+         CrosshairPresetGeometry.Style preset = presets[i];
          this.controls
             .add(
                new CrosshairEditorScreen.EditorControl(
@@ -542,9 +542,9 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
    }
 
    private void init(autismclient.gui.f.SyncManager context, autismclient.gui.f.NetHelper box) {
-      CrosshairRenderState.Inner_DataUtil look = this.module.renderState(this.currentArt());
-      CrosshairRenderState.Inner_DataUtil shown = new CrosshairRenderState.Inner_DataUtil(
-         CrosshairPresetGeometry.Inner_NetHelper.CUSTOM,
+      CrosshairRenderState.Snapshot look = this.module.renderState(this.currentArt());
+      CrosshairRenderState.Snapshot shown = new CrosshairRenderState.Snapshot(
+         CrosshairPresetGeometry.Style.CUSTOM,
          look.init_D(),
          look.load_D(),
          look.read_D(),
@@ -1122,7 +1122,7 @@ public final class CrosshairEditorScreen extends VirtualScaledScreen {
       }
    }
 
-   private void applyPreset(CrosshairPresetGeometry.Inner_NetHelper style) {
+   private void applyPreset(CrosshairPresetGeometry.Style style) {
       this.pushUndo(new CrosshairEditorScreen.CanvasSnapshot(this.canvasSize, (int[])this.pixels.clone()));
       this.pixels = CrosshairPresetGeometry.pixelArt(style, this.canvasSize, this.module.thickness(), this.module.gap(), this.currentArgb()).pixels();
       this.markCanvasDirty();

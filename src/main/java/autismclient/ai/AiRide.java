@@ -33,7 +33,7 @@ final class AiRide {
    static AiOperation ride(JsonObject args) {
       final Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && mc.level != null) {
-         final AiRide.Inner_DataUtil action = parseMode(AiJson.getString(args, "action", "mount"));
+         final AiRide.RideAction action = parseMode(AiJson.getString(args, "action", "mount"));
          final int entityId = AiJson.getInt(args, "entityId", -1);
          final boolean place = AiJson.getBoolean(args, "place", true);
          final int timeoutSeconds = Math.max(5, Math.min(1800, AiJson.getInt(args, "timeoutSeconds", 180)));
@@ -41,7 +41,7 @@ final class AiRide {
          final BlockPos destination = hasTarget
             ? new BlockPos(AiJson.getInt(args, "x", 0), AiJson.getInt(args, "y", 64), AiJson.getInt(args, "z", 0))
             : null;
-         if (action == AiRide.Inner_DataUtil.TRAVEL && destination == null) {
+         if (action == AiRide.RideAction.TRAVEL && destination == null) {
             throw new IllegalArgumentException("travel needs x and z (y is optional for a boat)");
          } else {
             return new AiOperation() {
@@ -62,7 +62,7 @@ final class AiRide {
                         return this.finish(AiOperation.Status.TIMED_OUT, "Ride deadline reached");
                      }
 
-                     if (action == AiRide.Inner_DataUtil.DISMOUNT) {
+                     if (action == AiRide.RideAction.DISMOUNT) {
                         if (mc.player.getVehicle() == null) {
                            return this.finish(AiOperation.Status.SUCCEEDED, "Not riding anything");
                         }
@@ -77,7 +77,7 @@ final class AiRide {
                         mc.player.stopRiding();
                         return mc.player.getVehicle() == null ? this.finish(AiOperation.Status.SUCCEEDED, "Dismounted") : this.running("Dismounting");
                      } else {
-                        if (action == AiRide.Inner_DataUtil.TRAVEL) {
+                        if (action == AiRide.RideAction.TRAVEL) {
                            return this.tickRide();
                         }
 
@@ -371,15 +371,15 @@ final class AiRide {
       }
    }
 
-   private static AiRide.Inner_DataUtil parseMode(String text) {
+   private static AiRide.RideAction parseMode(String text) {
       try {
-         return AiRide.Inner_DataUtil.valueOf(text.trim().toUpperCase(Locale.ROOT));
+         return AiRide.RideAction.valueOf(text.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException e) {
          throw new IllegalArgumentException("action must be mount, travel or dismount");
       }
    }
 
-   enum Inner_DataUtil {
+   enum RideAction {
       MOUNT,
       TRAVEL,
       DISMOUNT;

@@ -20,8 +20,8 @@ public final class PlacedBlockTrailRenderer {
    private static final PlacedBlockTrailRenderer.Inner_DataUtil[] SOURCES = new PlacedBlockTrailRenderer.Inner_DataUtil[32];
    private static final int[] trailColor = new int[32];
    private static final boolean[] CUSTOM_COLOR = new boolean[32];
-   private static final PlacedBlockTrailRenderer.Inner_StreamUtil[] STYLES = new PlacedBlockTrailRenderer.Inner_StreamUtil[]{
-      new PlacedBlockTrailRenderer.Inner_StreamUtil(false, false, -50373), new PlacedBlockTrailRenderer.Inner_StreamUtil(false, false, -50373)
+   private static final PlacedBlockTrailRenderer.TrailStyle[] STYLES = new PlacedBlockTrailRenderer.TrailStyle[]{
+      new PlacedBlockTrailRenderer.TrailStyle(false, false, -50373), new PlacedBlockTrailRenderer.TrailStyle(false, false, -50373)
    };
    private static int nextIndex;
 
@@ -33,7 +33,7 @@ public final class PlacedBlockTrailRenderer {
    }
 
    public static void configure(PlacedBlockTrailRenderer.Inner_DataUtil source, boolean enabled, boolean custom, int customArgb) {
-      STYLES[source.ordinal()] = new PlacedBlockTrailRenderer.Inner_StreamUtil(enabled, custom, customArgb);
+      STYLES[source.ordinal()] = new PlacedBlockTrailRenderer.TrailStyle(enabled, custom, customArgb);
       if (!enabled) {
          clearSource(source);
       }
@@ -44,7 +44,7 @@ public final class PlacedBlockTrailRenderer {
    }
 
    public static void recordPlacement(PlacedBlockTrailRenderer.Inner_DataUtil source) {
-      PlacedBlockTrailRenderer.Inner_StreamUtil style = STYLES[source.ordinal()];
+      PlacedBlockTrailRenderer.TrailStyle style = STYLES[source.ordinal()];
       configure(source, false, style.load(), style.argb());
    }
 
@@ -61,7 +61,7 @@ public final class PlacedBlockTrailRenderer {
    }
 
    public static void mark(PlacedBlockTrailRenderer.Inner_DataUtil source, BlockPos pos) {
-      PlacedBlockTrailRenderer.Inner_StreamUtil style = STYLES[source.ordinal()];
+      PlacedBlockTrailRenderer.TrailStyle style = STYLES[source.ordinal()];
       if (style.enabled() && pos != null) {
          XS[nextIndex] = pos.getX();
          YS[nextIndex] = pos.getY();
@@ -197,6 +197,6 @@ public final class PlacedBlockTrailRenderer {
       CLUTCH;
    }
 
-   private record Inner_StreamUtil(boolean enabled, boolean load, int argb) {
+   private record TrailStyle(boolean enabled, boolean load, int argb) {
    }
 }

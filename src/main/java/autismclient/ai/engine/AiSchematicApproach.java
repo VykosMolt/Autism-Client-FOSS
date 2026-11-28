@@ -51,12 +51,12 @@ import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class AiSchematicApproach implements AiOperation {
-   private final AiSchematicApproach.Inner_DataUtil draft;
+   private final AiSchematicApproach.Draft draft;
    private final long deadline;
    private final Set<Long> keepCells;
    private final Set<Long> avoidCells;
    private final Vec3 startPosition;
-   private final AiSchematicBatchPlan.Inner_DataUtil init_c_DataUtil = new AiSchematicBatchPlan.Inner_DataUtil(System::nanoTime, 10000000000L);
+   private final AiSchematicBatchPlan.Budget init_c_DataUtil = new AiSchematicBatchPlan.Budget(System::nanoTime, 10000000000L);
    private boolean movedSinceStart;
    private AiOperation child;
    private boolean load_Z;
@@ -77,10 +77,10 @@ public final class AiSchematicApproach implements AiOperation {
    }
 
    AiSchematicApproach(List<PlacementGoal.PlacementRequest> targets, int seconds, AABB volume, Set<Long> protectedCells, Set<Long> avoid) {
-      this(new AiSchematicApproach.Inner_DataUtil(targets, volume, protectedCells, avoid), seconds, protectedCells, avoid);
+      this(new AiSchematicApproach.Draft(targets, volume, protectedCells, avoid), seconds, protectedCells, avoid);
    }
 
-   private AiSchematicApproach(AiSchematicApproach.Inner_DataUtil draft, int seconds, Set<Long> keep, Set<Long> avoid) {
+   private AiSchematicApproach(AiSchematicApproach.Draft draft, int seconds, Set<Long> keep, Set<Long> avoid) {
       this.draft = draft;
       this.keepCells = Set.copyOf(keep);
       this.avoidCells = Set.copyOf(avoid);
@@ -140,11 +140,11 @@ public final class AiSchematicApproach implements AiOperation {
                   return this.finish(AiOperation.Status.SUCCEEDED, "Prepared batch already satisfied; reobserving");
                }
 
-               AiSchematicBatchPlan.Inner_ConfigStore scheduled = this.draft.init_c_ConfigStore();
+               AiSchematicBatchPlan.Stop scheduled = this.draft.init_c_ConfigStore();
                if (scheduled != null) {
                   Map<Long, PlacementGoal.ClickGeometry> proofs = this.draft.init_Map_c_ConfigStore(scheduled, this.keepCells, this.avoidCells);
                   if (!proofs.isEmpty()) {
-                     AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station = this.draft.update.get(scheduled.station());
+                     AiSchematicApproach.Draft.StationCandidate station = this.draft.update.get(scheduled.station());
                      PlacementGoal.PlacementRequest next = scheduled.jobs()
                         .stream()
                         .map(i -> this.draft.targetRequests.get(i))
@@ -198,7 +198,7 @@ public final class AiSchematicApproach implements AiOperation {
                && r.status() != AiOperation.Status.SUCCEEDED
                && r.status() != AiOperation.Status.CANCELLED
                && r.status() != AiOperation.Status.UNCERTAIN) {
-               AiSchematicBatchPlan.Inner_ConfigStore failed = this.draft.init_c_ConfigStore();
+               AiSchematicBatchPlan.Stop failed = this.draft.init_c_ConfigStore();
                if (failed != null) {
                   this.draft.rejected = this.draft.update.get(failed.station()).probe.feet;
                }
@@ -248,11 +248,11 @@ public final class AiSchematicApproach implements AiOperation {
    }
 
    static boolean init(VoxelShape shape) {
-      return AiSchematicApproach.Inner_DataUtil.init_Z_VoxelShape(shape);
+      return AiSchematicApproach.Draft.init_Z_VoxelShape(shape);
    }
 
    static LevelReader simulatedView(LevelReader world, Set<BlockPos> clear) {
-      return AiSchematicApproach.Inner_DataUtil.simulatedView(world, clear);
+      return AiSchematicApproach.Draft.simulatedView(world, clear);
    }
 
    static boolean matchesExpected(BlockGetter world, Map<BlockPos, BlockState> expected) {
@@ -272,41 +272,41 @@ public final class AiSchematicApproach implements AiOperation {
       }, states -> null);
    }
 
-   public static final class Inner_DataUtil {
+   public static final class Draft {
       private final Minecraft mc = Minecraft.getInstance();
       private final ClientLevel level;
       private final List<PlacementGoal.PlacementRequest> targetRequests;
       private final PlacementGoal placementGoal;
       private final AABB volume;
       private final List<BlockPos> load_List;
-      private final List<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> read_List = new ArrayList<>();
-      private final List<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> write_List = new ArrayList<>();
+      private final List<AiSchematicApproach.Draft.StationCandidate> read_List = new ArrayList<>();
+      private final List<AiSchematicApproach.Draft.StationCandidate> write_List = new ArrayList<>();
       private final Set<BlockPos> targets;
       private final Set<BlockPos> load_Set = new HashSet<>();
       private final double eyeHeight;
-      private final AiSchematicBatchPlan.Inner_DataUtil planningBudget = new AiSchematicBatchPlan.Inner_DataUtil(System::nanoTime, 8000000000L);
+      private final AiSchematicBatchPlan.Budget planningBudget = new AiSchematicBatchPlan.Budget(System::nanoTime, 8000000000L);
       private int init_I;
       private int clickCheckCount;
-      private AiSchematicApproach.Inner_DataUtil.Inner_DataUtil_2 activeProbe;
+      private AiSchematicApproach.Draft.Inner_DataUtil_2 activeProbe;
       private boolean init_Z;
       private boolean load_Z;
       private boolean read_Z;
       private final BlockPos continuation;
-      private AiSchematicBatchPlan.Inner_CachePool init_c_CachePool;
-      private AiSchematicBatchPlan.Inner_StreamUtil batchChoice;
-      private List<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> update = List.of();
+      private AiSchematicBatchPlan.BeamSearch init_c_CachePool;
+      private AiSchematicBatchPlan.Choice batchChoice;
+      private List<AiSchematicApproach.Draft.StationCandidate> update = List.of();
       private BlockPos rejected;
       private Vec3 worker;
       private Set<Long> read_Set = Set.of();
-      private AiSchematicBatchPlan.Inner_DataUtil load_c_DataUtil;
+      private AiSchematicBatchPlan.Budget load_c_DataUtil;
       private Vec3 workerPosition;
       private boolean write_Z;
 
-      public Inner_DataUtil(List<PlacementGoal.PlacementRequest> targets, AABB volume, Set<Long> keep, Set<Long> avoid) {
+      public Draft(List<PlacementGoal.PlacementRequest> targets, AABB volume, Set<Long> keep, Set<Long> avoid) {
          this(targets, volume, keep, avoid, null);
       }
 
-      public Inner_DataUtil(List<PlacementGoal.PlacementRequest> targets, AABB volume, Set<Long> keep, Set<Long> avoid, BlockPos continuation) {
+      public Draft(List<PlacementGoal.PlacementRequest> targets, AABB volume, Set<Long> keep, Set<Long> avoid, BlockPos continuation) {
          if (AutismLiteVariant.enabled()) {
             throw new IllegalStateException();
          }
@@ -424,7 +424,7 @@ public final class AiSchematicApproach implements AiOperation {
             this.write_Z = true;
             if (this.workerPosition != null && !(this.workerPosition.distanceToSqr(worker) <= 2.25) && this.batchChoice != null) {
                long remaining = Math.max(1L, (long)((10000.0 - this.elapsedMs()) * 1000000.0));
-               this.load_c_DataUtil = new AiSchematicBatchPlan.Inner_DataUtil(System::nanoTime, Math.min(2000000000L, remaining));
+               this.load_c_DataUtil = new AiSchematicBatchPlan.Budget(System::nanoTime, Math.min(2000000000L, remaining));
                this.init_c_CachePool = null;
                this.batchChoice = null;
                this.init_Z = this.read_Z = false;
@@ -445,7 +445,7 @@ public final class AiSchematicApproach implements AiOperation {
 
                while (units++ < 256 && System.nanoTime() < stop) {
                   if (this.init_c_CachePool != null) {
-                     AiSchematicBatchPlan.Inner_DataUtil activeBudget = this.load_c_DataUtil == null ? this.planningBudget : this.load_c_DataUtil;
+                     AiSchematicBatchPlan.Budget activeBudget = this.load_c_DataUtil == null ? this.planningBudget : this.load_c_DataUtil;
                      if (activeBudget.isExpired() || this.init_c_CachePool.isDone()) {
                         this.read_Z = this.read_Z | activeBudget.isExpired();
                         this.read();
@@ -528,9 +528,9 @@ public final class AiSchematicApproach implements AiOperation {
          }
 
          long completed = (1L << this.targetRequests.size()) - 1L & ~available;
-         ArrayList<AiSchematicBatchPlan.Inner_BufferHelper> inputs = new ArrayList<>();
+         ArrayList<AiSchematicBatchPlan.Station> inputs = new ArrayList<>();
 
-         for (AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station : this.update) {
+         for (AiSchematicApproach.Draft.StationCandidate station : this.update) {
             long jobs = 0L;
 
             for (int i : station.probe.init_Map.keySet()) {
@@ -540,7 +540,7 @@ public final class AiSchematicApproach implements AiOperation {
             }
 
             inputs.add(
-               new AiSchematicBatchPlan.Inner_BufferHelper(
+               new AiSchematicBatchPlan.Station(
                   station.probe.feet,
                   jobs & available,
                   station.blockers,
@@ -552,7 +552,7 @@ public final class AiSchematicApproach implements AiOperation {
          }
 
          this.workerPosition = this.worker == null ? this.mc.player.position() : this.worker;
-         this.init_c_CachePool = new AiSchematicBatchPlan.Inner_CachePool(inputs, this.workerPosition, this.continuation, this.targetRequests.size(), available);
+         this.init_c_CachePool = new AiSchematicBatchPlan.BeamSearch(inputs, this.workerPosition, this.continuation, this.targetRequests.size(), available);
       }
 
       private boolean load_Z() {
@@ -569,7 +569,7 @@ public final class AiSchematicApproach implements AiOperation {
             }
          }
 
-         for (AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station : this.read_List) {
+         for (AiSchematicApproach.Draft.StationCandidate station : this.read_List) {
             if (station.probe.foundationJob < 0) {
                for (int job : station.probe.init_Map.keySet()) {
                   covered |= 1L << job;
@@ -580,7 +580,7 @@ public final class AiSchematicApproach implements AiOperation {
          return (needed & ~covered) == 0L;
       }
 
-      private AiSchematicApproach.Inner_DataUtil.Inner_DataUtil_2 probeStation(BlockPos feet) {
+      private AiSchematicApproach.Draft.Inner_DataUtil_2 probeStation(BlockPos feet) {
          if (this.level.getChunkSource().getChunk(feet.getX() >> 4, feet.getZ() >> 4, ChunkStatus.FULL, false) == null) {
             return null;
          }
@@ -673,7 +673,7 @@ public final class AiSchematicApproach implements AiOperation {
                this.load_Set.add(feet);
             }
 
-            return new AiSchematicApproach.Inner_DataUtil.Inner_DataUtil_2(
+            return new AiSchematicApproach.Draft.Inner_DataUtil_2(
                feet, position, body, Set.copyOf(clear), view, supported, supported && clear.isEmpty(), top, foundationJob
             );
          } else {
@@ -681,7 +681,7 @@ public final class AiSchematicApproach implements AiOperation {
          }
       }
 
-      private void init_V_b_DataUtil_DataUti_I(AiSchematicApproach.Inner_DataUtil.Inner_DataUtil_2 probe, int targetIndex) {
+      private void init_V_b_DataUtil_DataUti_I(AiSchematicApproach.Draft.Inner_DataUtil_2 probe, int targetIndex) {
          if (targetIndex != probe.foundationJob) {
             PlacementGoal.PlacementRequest target = this.targetRequests.get(targetIndex);
             if (this.init_Z_u_CachePool(target)
@@ -719,7 +719,7 @@ public final class AiSchematicApproach implements AiOperation {
          }
       }
 
-      private void init_V_b_DataUtil_DataUti(AiSchematicApproach.Inner_DataUtil.Inner_DataUtil_2 probe) {
+      private void init_V_b_DataUtil_DataUti(AiSchematicApproach.Draft.Inner_DataUtil_2 probe) {
          if (!probe.init_Map.isEmpty()) {
             long available = 0L;
             long[] before = new long[this.targetRequests.size()];
@@ -788,15 +788,15 @@ public final class AiSchematicApproach implements AiOperation {
                      .min()
                      .orElse(1)
                );
-            AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station = new AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil(probe, order, blockers, Map.copyOf(observed), supports);
-            List<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> list = probe.walk ? this.read_List : this.write_List;
+            AiSchematicApproach.Draft.StationCandidate station = new AiSchematicApproach.Draft.StationCandidate(probe, order, blockers, Map.copyOf(observed), supports);
+            List<AiSchematicApproach.Draft.StationCandidate> list = probe.walk ? this.read_List : this.write_List;
             list.add(station);
             list.sort(
-               Comparator.<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil>comparingDouble(s -> s.score(this.mc.player.position()))
+               Comparator.<AiSchematicApproach.Draft.StationCandidate>comparingDouble(s -> s.score(this.mc.player.position()))
                   .thenComparingLong(s -> s.probe.feet.asLong())
             );
             if (list.size() > 64) {
-               LinkedHashSet<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> retained = new LinkedHashSet<>(list.subList(0, 24));
+               LinkedHashSet<AiSchematicApproach.Draft.StationCandidate> retained = new LinkedHashSet<>(list.subList(0, 24));
 
                for (int i = 0; i < this.targetRequests.size(); i++) {
                   int job = i;
@@ -811,7 +811,7 @@ public final class AiSchematicApproach implements AiOperation {
                   .limit(8L)
                   .forEach(retained::add);
 
-               for (AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil s : list) {
+               for (AiSchematicApproach.Draft.StationCandidate s : list) {
                   if (retained.size() < 64) {
                      retained.add(s);
                   }
@@ -832,7 +832,7 @@ public final class AiSchematicApproach implements AiOperation {
          return this.targetRequests.stream().filter(this::init_Z_u_CachePool).toList();
       }
 
-      private boolean init_Z_b_DataUtil_StreamU(AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station, Set<Long> keep, Set<Long> avoid) {
+      private boolean init_Z_b_DataUtil_StreamU(AiSchematicApproach.Draft.StationCandidate station, Set<Long> keep, Set<Long> avoid) {
          if (avoid.contains(station.probe.feet.asLong())) {
             return false;
          }
@@ -870,19 +870,19 @@ public final class AiSchematicApproach implements AiOperation {
       }
 
       private Map<Long, PlacementGoal.ClickGeometry> init_Map_Z(boolean edits, boolean preferred, Set<Long> keep, Set<Long> avoid) {
-         ArrayList<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> stations = new ArrayList<>(this.read_List);
+         ArrayList<AiSchematicApproach.Draft.StationCandidate> stations = new ArrayList<>(this.read_List);
          if (edits) {
             stations.addAll(this.write_List);
          }
 
          stations.removeIf(stationx -> !this.init_Z_b_DataUtil_StreamU(stationx, keep, avoid));
          stations.sort(
-            Comparator.<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil>comparingDouble(s -> s.score(this.mc.player.position()))
+            Comparator.<AiSchematicApproach.Draft.StationCandidate>comparingDouble(s -> s.score(this.mc.player.position()))
                .thenComparingLong(s -> s.probe.feet.asLong())
          );
          LinkedHashMap<Long, PlacementGoal.ClickGeometry> result = new LinkedHashMap<>();
 
-         for (AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station : stations) {
+         for (AiSchematicApproach.Draft.StationCandidate station : stations) {
             if (preferred && result.size() >= 4) {
                break;
             }
@@ -899,7 +899,7 @@ public final class AiSchematicApproach implements AiOperation {
       }
 
       public List<BlockPos> positionsFrom(BlockPos feet) {
-         AiSchematicBatchPlan.Inner_ConfigStore stop = this.init_c_ConfigStore();
+         AiSchematicBatchPlan.Stop stop = this.init_c_ConfigStore();
          if (stop != null && this.update.get(stop.station()).probe.feet.equals(feet)) {
             return this.batchChoice
                .order()
@@ -918,8 +918,8 @@ public final class AiSchematicApproach implements AiOperation {
             return this.batchChoice.ticks() / 20.0;
          }
 
-         for (List<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> list : List.of(this.read_List, this.write_List)) {
-            for (AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station : list) {
+         for (List<AiSchematicApproach.Draft.StationCandidate> list : List.of(this.read_List, this.write_List)) {
+            for (AiSchematicApproach.Draft.StationCandidate station : list) {
                if (station.probe.feet.equals(feet)) {
                   return AiSchematicBatchPlan.stationScore(feet, this.mc.player.position(), station.order.size(), station.supports, station.probe.clearCells.size());
                }
@@ -934,8 +934,8 @@ public final class AiSchematicApproach implements AiOperation {
             return this.batchChoice.supports();
          }
 
-         for (List<AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil> list : List.of(this.read_List, this.write_List)) {
-            for (AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station : list) {
+         for (List<AiSchematicApproach.Draft.StationCandidate> list : List.of(this.read_List, this.write_List)) {
+            for (AiSchematicApproach.Draft.StationCandidate station : list) {
                if (station.probe.feet.equals(feet)) {
                   return station.supports;
                }
@@ -945,7 +945,7 @@ public final class AiSchematicApproach implements AiOperation {
          return 0;
       }
 
-      private AiSchematicBatchPlan.Inner_ConfigStore init_c_ConfigStore() {
+      private AiSchematicBatchPlan.Stop init_c_ConfigStore() {
          if (this.batchChoice == null) {
             return null;
          }
@@ -990,8 +990,8 @@ public final class AiSchematicApproach implements AiOperation {
             if (placed >= 0 && this.init_Z_u_CachePool(this.targetRequests.get(placed))) {
                long bit = 1L << placed;
 
-               for (AiSchematicBatchPlan.Inner_ConfigStore stop : this.batchChoice.stops()) {
-                  AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station = this.update.get(stop.station());
+               for (AiSchematicBatchPlan.Stop stop : this.batchChoice.stops()) {
+                  AiSchematicApproach.Draft.StationCandidate station = this.update.get(stop.station());
 
                   for (int job : stop.jobs()) {
                      if (job != placed && this.init_Z_u_CachePool(this.targetRequests.get(job)) && (station.blockers[job] & bit) != 0L) {
@@ -1009,8 +1009,8 @@ public final class AiSchematicApproach implements AiOperation {
          }
       }
 
-      private Map<Long, PlacementGoal.ClickGeometry> init_Map_c_ConfigStore(AiSchematicBatchPlan.Inner_ConfigStore stop, Set<Long> keep, Set<Long> avoid) {
-         AiSchematicApproach.Inner_DataUtil.Inner_StreamUtil station = this.update.get(stop.station());
+      private Map<Long, PlacementGoal.ClickGeometry> init_Map_c_ConfigStore(AiSchematicBatchPlan.Stop stop, Set<Long> keep, Set<Long> avoid) {
+         AiSchematicApproach.Draft.StationCandidate station = this.update.get(stop.station());
          if (avoid.contains(station.probe.feet.asLong())) {
             return Map.of();
          }
@@ -1027,7 +1027,7 @@ public final class AiSchematicApproach implements AiOperation {
             }
          }
 
-         AiSchematicApproach.Inner_DataUtil.Inner_DataUtil_2 fresh = this.probeStation(station.probe.feet);
+         AiSchematicApproach.Draft.Inner_DataUtil_2 fresh = this.probeStation(station.probe.feet);
          if (fresh != null
             && !(Math.abs(fresh.top - station.probe.top) > 0.001)
             && !fresh.clearCells.stream().anyMatch(cellx -> keep.contains(cellx.asLong()))) {
@@ -1246,8 +1246,8 @@ public final class AiSchematicApproach implements AiOperation {
          }
       }
 
-      private record Inner_StreamUtil(
-         AiSchematicApproach.Inner_DataUtil.Inner_DataUtil_2 probe, List<Integer> order, long[] blockers, Map<BlockPos, BlockState> observed, int supports
+      private record StationCandidate(
+         AiSchematicApproach.Draft.Inner_DataUtil_2 probe, List<Integer> order, long[] blockers, Map<BlockPos, BlockState> observed, int supports
       ) {
          double score(Vec3 worker) {
             return AiSchematicBatchPlan.stationCost(this.probe.feet, worker, this.order.size(), this.supports, this.probe.clearCells.size());
