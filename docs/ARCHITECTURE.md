@@ -101,7 +101,7 @@ All source renames and package moves are executed mechanically via JDK 25's comp
   - **Phase 10N (`e2ba963`):** Second pass over members left in earlier phases: `17` members (`13` methods, `4` record components; `31` AST-verified token edits across `16` Java files, including `1` edit in `AggressiveWiringCheck`) — the `SilentMovementCoordinator.Participant` predicate (`isSilentMovementActive`: whether the owner's silent rotation should currently drive movement) with its `12` implementors in `AiAssistant` and the combat/utility modules, and the `RecipeCatalogLoader$Inner_DataUtil` cooking-recipe components (`recipeKey`, `inputs`, `result`, `cookTimeTicks`). `mappings/disambig.tsv` unchanged at `49,494` lines; `4,074/4,074` classes + `94/94` resources semantically bytecode-identical vs the Phase 10M build (`DIFFS=0`, `EXCLUDED_IDENTICAL=50`) and cumulatively vs `d5df056` (`DIFFS=0`, `LAMBDA_BIJECTIONS=69`). Remaining cross-file surface after 10N: `582` members (`17` locked, `14` shifted record components, `2` interface methods implemented only by shifted accessors, `549` whose purpose was not established, including the `KnockbackThrowPlanner$Inner_UiHelper` family).
 
 ## Related Docs
-- [Engineering & Verification Workflow](../GEMINI.md)
+- [Engineering & Verification Workflow](../AGENTS.md)
 - [ABI & Silent-Breakage Hazards](./ABI_AND_HAZARDS.md)
 - [61-Package Directory](./PACKAGES.md)
 - [Deobfuscation Ledger](./DEOBFUSCATION_LEDGER.tsv)

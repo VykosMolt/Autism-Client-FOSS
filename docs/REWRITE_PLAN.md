@@ -20,7 +20,7 @@ Today's safety net only works for renames. The build maps names back to the jar'
 4. In-game smoke tests are the owner's; agents never launch the game.
 
 Constraints that do not move:
-- Integrity classes and everything in GEMINI.md §1 stay untouched until bright's removal.
+- Integrity classes and everything in AGENTS.md §1 stay untouched until bright's removal.
 - ABI-pinned classes stay frozen: `modules/f` (8,595 lines), `as`, `aD`, `ae`, `am`, `ar`, `util/L`, `gui/f/*`,
   and the rest of the FROZEN list. The same goes for `autismclient.api.*`, Gson DTO fields, public `MacroAction`
   fields (reflection binding and addon API), and members that `tools/checks` reflects on.

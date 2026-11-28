@@ -112,7 +112,7 @@ Keep these files in lockstep with any class/package rename:
   - Check-local subclasses (e.g. `StoreRecoveryCheck$Store extends AtomicNbtListStore`) must carry the same override renames in the plan; class-file override scans of `build/classes/java/main` miss them, and `AstBatchRenamer` writes no `mappings/disambig.tsv` rows for them since they never ship.
 
 ## 9. Mandatory Verification Chain & Adversarial Convergence Gate
-See [GEMINI.md](../GEMINI.md) (Sections 3–4) for the authoritative workflow. Every deobfuscation batch MUST pass all 5 gates and independent adversarial review before pushing:
+See [AGENTS.md](../AGENTS.md) (Sections 3–4) for the authoritative workflow. Every deobfuscation batch MUST pass all 5 gates and independent adversarial review before pushing:
 1. **Clean Build & Tool Env:** `./gradle.sh --offline clean assemble prepareToolEnv` (`0` errors; verifies untouched `.java` files compile cleanly and `ReverseRemapJar` succeeds)
 2. **Bytecode & Resource Equivalence:** `VerifyBytecodeEquiv` vs pre-wave baseline JAR (`DIFFS=0`, `RES_DIFFS=0`, `ONLY_BASE=0`, `ONLY_CAND=0`, expected `EXCLUDED_IDENTICAL`)
 3. **Regression Checks:** `AUTISM_TOOL_ENV_PREPARED=1 bash tools/checks/run.sh` (`44/44 PASS`)
