@@ -20,8 +20,9 @@ Companion to [REWRITE_PLAN.md](./REWRITE_PLAN.md).
 
 ## 1. Where the size is (verified)
 
-625,298 source lines in 1,520 files. 341,924 of them carry bytecode; the rest is declarations, braces and decompiler
-formatting.
+625,298 source lines in 1,520 files. 329,745 distinct lines carry bytecode; the rest is declarations, braces and
+decompiler formatting. Where this audit gives the "lines" of a method or class, it means lines that carry bytecode
+(from the `LineNumberTable`), not its span in the source. Long string tables span many more source lines than that.
 
 | Area | Lines | Share | Files |
 |---|---:|---:|---:|
@@ -46,33 +47,36 @@ Areas are assigned by package and class name, so the borders are approximate.
 - **Counts:** 63 module classes, 105 `*Action.java` files in `util.macro` (102 classes, 3 interfaces), 251 mixins (254 files under `mixin/`).
 - **Concentration:** the 100 largest files hold 51% of the code, and the 46 files over 2,000 lines hold 38%.
 - **String literals:** 1.1M characters in all. The largest holders are `AiTools` (138k characters, mostly LLM tool
-  descriptions and JSON schemas), `AiContext` (62k, prompt text), `ActionEditorOverlay` (36k) and
-  `ActionFieldRegistry` (22k).
+  descriptions and JSON schemas), `AiContext` (62k, prompt text), `ActionEditorOverlay` (36k), `modules/f` (28k),
+  `AiService` (25k) and `ActionFieldRegistry` (22k). Measured by a regex over the source files.
 
 ## 2. Dead and vestigial code (verified unless marked)
 
 Dead code is about 1% of the client. Deleting it is worth doing but does not change the picture.
 
-- **Unreachable classes: 7, 212 lines.**
+- **Unreachable classes: 4, 128 lines.**
   - `modules/ViewmodelModule` (98) is a `Module` that nothing registers; `ViewmodelState` is the live one.
-  - Also unreachable: `util/mm/StateCache`, `ai/engine/AiStrafe`, `ai/engine/AiBridgeCadence`,
-    `ai/AiPrintHopper` and `util/Q`.
+  - Also unreachable: `ai/engine/AiStrafe`, `ai/engine/AiBridgeCadence` and `ai/AiPrintHopper`.
   - Each was checked by name across all non-excluded sources: only its own file mentions it.
-- **Unreferenced methods: 903, 4,260 lines.** Overrides, annotated methods, record and enum members, and names that
-  appear as string literals were excluded. Notable:
-  - `AiJumpSolver`: unused jump strategies, 279 lines. These are `solveSharpCornerJump`, `solveChainedExit`,
-    `solveCurvedLiveJump` and `solveStrideJump`.
+  - Not dead, although nothing visible references them: `util/Q` and `util/mm/StateCache`. Both are frozen, and
+    excluded code uses them (`docs/ABI_AND_HAZARDS.md`).
+- **Unreferenced methods: 838, 3,933 lines**, not counting frozen owners. Overrides, annotated methods, record and
+  enum members, and names that appear as string literals were excluded. Notable:
+  - `AiJumpSolver`: 16 unreferenced methods, 279 lines. Among them are 4 jump strategies totalling 152 lines:
+    `solveSharpCornerJump`, `solveChainedExit`, `solveCurvedLiveJump` and `solveStrideJump`.
   - `PrintCore.nearbyCellsStep` (125 lines).
   - A private 183-line `PacketDetailFormatter` formatter.
-  - `modules/f.init_V` (109 lines; a frozen class).
+  - Unknown: another 65 methods (327 lines) sit in frozen owners, which excluded code references. They are not
+    counted as dead. For example, `modules/f.init_V` is the module registration routine; its caller is excluded.
 - **Fields that are written and never read: 124**, plus 7 that are never touched. Some are named that way:
   `AutismMacroEditorOverlay.unusedText`, `AiNetherRun.unusedRouteCounter`, `AiIntents.UNUSED_FARM_SIZE_LABELS`.
 - **Exact duplicate method bodies: 434 lines.**
   - Examples: `lerpColor` copied into 4 widget renderers, `wrapDegrees` into 5 rotation classes (plus 3 more `F`
     variants), `encodeVarInt` twice, and `DirectPacketSender.send`/`sendAlias`.
-  - Same-shape clones (names and constants ignored, 40+ instructions) add 864 lines.
-- **Stale mapping rows:** 6,743 rows in `mappings/disambig.tsv` that nothing looks up. They are removed on branch
-  `cleanup/stale-rows`; the jar is byte-identical without them.
+  - Structural clones of 40+ instructions (same shape, names and constants ignored): 864 lines. That includes the
+    126 lines of exact copies at that size.
+- **Stale mapping rows:** 6,743 rows in `mappings/disambig.tsv` that nothing looks up. They are removed on `dev`
+  (`558f609`); the jar is byte-identical without them.
 - **Vestigial by purpose:**
   - `AiSchematic.legacyBlock` (551 lines) maps pre-1.13 numeric block IDs for old MCEdit schematics. It is live and
     belongs in a data file.
@@ -82,12 +86,12 @@ Dead code is about 1% of the client. Deleting it is worth doing but does not cha
 
 | Finding | Count | Notes |
 |---|---:|---|
-| `catch (Throwable)` | 1,510 in 238 files | Also catches `OutOfMemoryError`, `StackOverflowError` and `LinkageError`. Top: `MacroExecutor` 42, `PrintCore` 34, `PacketInspectorEngine` 29. |
-| Handlers that swallow the exception (store or pop, then continue or return) | 767 in 268 files | Example: `MacroExecutor.reportLanProgress`, `catch (Exception var5) {}`. Failures disappear without a trace. |
-| Mutable static fields | 1,427 | Global state everywhere. Example: `NoRenderState` mirrors module settings into 59 `static volatile` booleans so mixins can read them, and each one has to be kept in sync by hand. |
+| `catch (Throwable)` | 697 handlers in 199 files | Also catches `OutOfMemoryError`, `StackOverflowError` and `LinkageError`. Counted as distinct handlers, without try-with-resources; the source has 701 in 199 files. Top: `MacroExecutor` 53, `PacketInspectorEngine` 29, `AiWorldReaders` 26 (source counts). |
+| Handlers that swallow the exception (store or pop, then continue or return) | 563 distinct handlers in 268 files | Example: `MacroExecutor.reportLanProgress`, `catch (Exception var5) {}`. Failures disappear without a trace. |
+| Mutable static fields | 1,427 | Global state everywhere. Example: `NoRenderState` mirrors module settings into 54 `static volatile` booleans so mixins can read them, and each one has to be kept in sync by hand. |
 | Raw `new Thread` | 69 in 38 files | No shared lifecycle. |
 | Executor creation sites | 24 | 13 single-thread executors, 4 fixed pools, 1 cached pool, 5 scheduled, 1 virtual-thread. Several persistence stores each run their own scheduler thread. |
-| `synchronized` blocks | 502 in 89 files | |
+| `synchronized` blocks | 484 in source (502 `monitorenter` instructions) | |
 | `CompletableFuture` on the common pool | 9 call sites | AI views, schematic placement, packet inspect, clipboard. |
 | Reflection | 64 `setAccessible` (24 files), 92 lookups (34 files) | Mostly packet and payload tooling reflecting on packet classes, and macro field binding. Breaks silently on Minecraft updates. |
 | `System.out` | 10 sites | Debug leftovers in `AiBuilder$2.tickBuild`, `AiCombat$2`, `AiLavaEscape$1`, `AiService`, `AiNavDebug`, `AutismServerInfoOverlay.trace`. |
@@ -98,7 +102,8 @@ Dead code is about 1% of the client. Deleting it is worth doing but does not cha
 Checked and fine:
 - The `Thread.sleep` calls in `AutoCraftingEngine` (guarded by `!onClient`) and `PayAllModule`
   (`BackgroundTaskExecutor`) run off the client thread.
-- Crypto is AES/GCM and SHA-256. SHA-1 is only a GIF cache key.
+- Crypto is AES/GCM and SHA-256. SHA-1 is only a GIF cache key. One exception: `util/RefQueue` gets its
+  `MessageDigest` algorithm from a string decoded at runtime by excluded code, so that site is unknown.
 
 ## 4. Design decisions worth questioning
 
@@ -130,7 +135,8 @@ Checked and fine:
      `CombatAimSpeedController`).
    - HTTP: `AiHttp` (`HttpClient`), `AutismHttp` (`URLConnection`), `protector/ScopedHttpUrlConnection` and `AiWeb`
      (raw `Socket`).
-   - Clipboard: GLFW plus process fallbacks (`wl-copy`, `wl-paste`, `xclip`, `xsel`), about 1,950 lines in 3 files.
+   - Clipboard: `SystemClipboardHelper` (348 lines) uses GLFW plus process fallbacks (`wl-copy`, `wl-paste`, `xclip`,
+     `xsel`).
    - Persistence: several stores, each with its own debounce scheduler thread.
 5. **Hand-rolled overlays next to a UI toolkit.**
    - 23 `*Overlay` files hold 56,853 lines.
@@ -188,6 +194,6 @@ The two "yes" rows are about 17.5k lines, about 3% of the client. The leverage i
 7. **Data out of code:**
    - `ActionFieldRegistry`, `AiSchematic.legacyBlock`, and the prompt and schema text, into resources.
    - Build `worker.jar` from source in the repo.
-8. **Delete the dead code** in section 2 (about 4.5k lines). Do it only once the rewritten-class gate policy exists,
+8. **Delete the dead code** in section 2 (about 4k lines, frozen owners excluded). Do it only once the rewritten-class gate policy exists,
    since deletions change bytecode.
 9. **Rust** for R3, and for schematic planning after R2. Profile first.

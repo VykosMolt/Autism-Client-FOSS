@@ -64,9 +64,10 @@ Fan-in counts the other top-level classes that reference this one. Smells that w
 ### Where the size comes from (measured at `deecfd9`)
 An ASM pass over all 4,024 non-excluded classes (`autism-deobf-plans` scratch tool `Bloat.java`):
 - **Not copy-paste:** exact duplicate method bodies (8+ instructions) account for 434 lines. Structural clones
-  (40+ instructions, same shape with names and constants ignored) add 864 more.
+  (40+ instructions, same shape with names and constants ignored) total 864 lines, including 126 lines of
+  exact copies at that size.
 - **Not dead private code:** 208 private methods that nothing references, 1,603 lines in all.
-- **Size:** 341,924 of the 625,298 source lines carry bytecode. The rest is declarations, braces and decompiler
+- **Size:** 329,745 of the 625,298 source lines carry bytecode. The rest is declarations, braces and decompiler
   formatting.
 - **Breadth and concentration:** `ai` is 255k lines (41%), `util` 175k (28%), `modules` 94k, `gui` 60k. The 46 files
   over 2,000 lines hold 236,614 lines (38%); the 100 largest hold 51%.
@@ -164,8 +165,9 @@ Integration, if adopted:
 1. The gate policy for rewritten classes (section 1, item 1).
 2. ~~Deobfuscation of rewrite targets~~ Decided (owner, 2026-11-28): rewrite targets that are readable are not
    deobfuscated further; their remaining names get settled during the rewrite. At `deecfd9` most targets have 2-9
-   obfuscated members per 1,000 lines (`PrintCore` 177 of 3,212 members). The exceptions are `ScaffoldModule` (531
-   non-constant of 1,973, 27%) and `AiGoto` (120 of 461, 26%).
+   obfuscated members per 1,000 lines (`PrintCore` 177 of 3,212 members). The two least readable,
+   `ScaffoldModule` (531 non-constant of 1,973, 27%) and `AiGoto` (120 of 461, 26%), were also left for their
+   rewrites (integrator's call under this decision; the owner can reverse it).
 3. The target platforms for native libraries, and whether the native-access warning is acceptable.
 4. Whether rewrites wait for bright's integrity removal. Only the frozen classes strictly have to.
 5. Feature scope: which features to keep (section 2, "Where the size comes from"). This is the largest lever on size.
