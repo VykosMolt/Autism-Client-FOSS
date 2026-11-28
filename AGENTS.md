@@ -71,7 +71,7 @@ Every code or deobfuscation batch **MUST** pass all 5 gates before committing:
 
 Before pushing any wave of commits to `dev`:
 
-1. **Launch an Independent Read-Only Adversarial Reviewer Subagent** across the entire unpushed commit range (`origin/dev..HEAD`), armed with strict read-only and excluded-path rules.
+1. **Launch an Independent Read-Only Adversarial Reviewer Subagent** across the entire unpushed commit range (`<remote>/dev..HEAD`; the remote is named `github` in the main checkout), armed with strict read-only and excluded-path rules.
 2. **Required Audit Scope:**
    - Independent bytecode equivalence check + side-by-side inspection of every `$SwitchMap$` bijection and any behavioral diff.
    - Independent ASM link & classfile metadata audit on **both** `build/libs/AUTISM-Client-5.8-26.3.jar` and `build/classes/java/main` (`BROKEN_REFS=0`, `InnerClasses`, `NestHost`/`NestMembers`, generic `Signature`, `BootstrapMethods`, `RecordComponents` vs `record-names.tsv`, `<clinit>` `Enum.name()` vs `enum-names.tsv`).
@@ -112,7 +112,7 @@ Everything in Sections 1–5 applies. These rules come from running Claude Code 
 
 **Boundaries in practice**
 - Never grep or glob recursively over `src/main/java/autismclient`, or use a directory wildcard such as `util/*.java`. Both reach the excluded paths in Section 1. Build an explicit file list once, with `git ls-files` and a `:!` pathspec for every excluded path, and read files by exact path.
-- `cp26.3.txt` contains `stubs/integrity-stubs.jar`. Any tool that builds a class loader or ASM classpath from it must drop every entry that contains `integrity`.
+- `$CHECK_CP` from `build/tool-env.sh` contains `stubs/integrity-stubs.jar` (`cp26.3.txt` does not). Any tool that builds a class loader or ASM classpath from `$CHECK_CP`, or from any list derived from it, must drop every entry that contains `integrity`.
 - Tools that walk `build/classes/java/main` must skip excluded owners before reading any bytes.
 
 **Unattended runs stop at permission prompts**

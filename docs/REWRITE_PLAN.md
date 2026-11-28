@@ -52,9 +52,9 @@ methods that touch game or platform types directly.
 | `modules/KillAuraModule` | 4,112 | 312 | 8 | 79 | 15 | kill aura |
 
 Fan-in counts the other top-level classes that reference this one. Smells that were measured:
-- `MacroExecutor` has 287 `instanceof <X>Action` checks. Action behaviour lives in the executor, not in the
-  102 action classes.
-- `ActionEditorOverlay` has 73 `instanceof <X>Action` checks and 109 `MacroActionType.` references, though an
+- `MacroExecutor` has 304 `instanceof <X>Action` checks on 287 lines (`grep -o 'instanceof [A-Za-z.]*Action\b'`).
+  Action behaviour lives in the executor, not in the 105 action classes of `util.macro`.
+- `ActionEditorOverlay` has 88 `instanceof <X>Action` checks (same grep) and 109 `MacroActionType.` references, though an
   editor schema already exists (`ActionFieldRegistry`, `ActionFieldSchema`).
 - `PrintCore` reaches the world through `PrintEnv`, a 198-line interface with one implementation
   (`LivePrintEnv`). That is a ready-made seam for a fake world.
