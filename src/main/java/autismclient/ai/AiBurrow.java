@@ -155,11 +155,11 @@ final class AiBurrow {
       return healing && waiting && burning && onFireDamage && supported && sealed && !hostileInside && !touchingFireOrLava;
    }
 
-   static boolean init_Z_Z_BooleanSupplier(boolean placing, BooleanSupplier pending) {
+   static boolean isPlacementPending(boolean placing, BooleanSupplier pending) {
       return placing && pending.getAsBoolean();
    }
 
-   static boolean init_Z_F_J(float healTo, long dayTime) {
+   static boolean isDoneWaiting(float healTo, long dayTime) {
       return healTo <= 0.0F && isMorning(dayTime);
    }
 
@@ -245,33 +245,33 @@ final class AiBurrow {
             final autismclient.ai.engine.AiRestock restock = new autismclient.ai.engine.AiRestock(mc);
             AiBurrow.Inner_DataUtil stage = AiBurrow.Inner_DataUtil.SHAFT;
             AiOperation childOperation;
-            AiOperation load_AiOperation;
+            AiOperation mealOperation;
             BlockPos nearby = this.startPos;
             BlockPos feet;
             BlockPos currentCell;
             BlockPos shelterFeet;
             List<BlockPos> shellCells;
-            Item init_Item;
+            Item placingItem;
             int shellIndex;
-            int load_I;
+            int shaftEntryTicks;
             int hidTicks;
-            int write_I;
-            int update_I;
-            int sync_I;
-            boolean init_Z;
+            int descentCentringTicks;
+            int mealAttempts;
+            int recentreAttempts;
+            boolean placing;
             boolean capPlaced;
-            boolean read_Z;
-            boolean write_Z;
-            boolean update_Z;
-            boolean sync_Z;
-            boolean flush_Z;
-            JsonObject init_JsonObject = new JsonObject();
+            boolean cancelled;
+            boolean waterEscape;
+            boolean relocateTried;
+            boolean jumpHeld;
+            boolean reconcileRequired;
+            JsonObject pendingChildEvidence = new JsonObject();
             float health = mc.player.getHealth();
-            int flush_I;
+            int lastMealTick;
 
             @Override
             public AiOperation.Result tick() {
-               if (!this.read_Z && mc.player != null && mc.level != null) {
+               if (!this.cancelled && mc.player != null && mc.level != null) {
                   if (mc.level != this.startLevel || mc.player != this.startPlayer || mc.getConnection() != this.startConnection) {
                      return this.finish(AiOperation.Status.FAILED, "World/player changed during burrow");
                   }
@@ -280,9 +280,9 @@ final class AiBurrow {
                      return this.finish(AiOperation.Status.FAILED, "Player died during burrow");
                   }
 
-                  if (this.sync_Z) {
+                  if (this.jumpHeld) {
                      mc.options.keyJump.setDown(false);
-                     this.sync_Z = false;
+                     this.jumpHeld = false;
                   }
 
                   BlockPos feet = mc.player.blockPosition();
@@ -296,32 +296,32 @@ final class AiBurrow {
                         healTo,
                         autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
                         AiBurrow.isSealed(feet, this::isSolidFloor) && this.isInteriorClear(feet),
-                        this.update_Z(feet),
+                        this.hasHostileInside(feet),
                         mc.player.isInWater() || mc.player.isInLava() || AiEndRun.init_Z(mc)
                      )) {
                      this.shelterFeet = feet.immutable();
                      this.currentCell = AiBurrow.roofOf(this.shelterFeet);
-                     this.capPlaced = this.read_Z(this.shelterFeet);
+                     this.capPlaced = this.isCentredOver(this.shelterFeet);
                      this.stage = this.capPlaced ? AiBurrow.Inner_DataUtil.WAIT : AiBurrow.Inner_DataUtil.CAP;
                   }
 
                   boolean exiting = this.stage == AiBurrow.Inner_DataUtil.EXIT_DIG
                      || this.stage == AiBurrow.Inner_DataUtil.EXIT_TRAVEL;
                   if (!exiting && this.stage != AiBurrow.Inner_DataUtil.TOWER && mc.player.isInWater()) {
-                     this.flush_Z = this.flush_Z | this.requiresReconciliationAfterEmergency();
+                     this.reconcileRequired = this.reconcileRequired | this.requiresReconciliationAfterEmergency();
                      if (this.childOperation != null) {
                         this.childOperation.cancel();
                         this.childOperation = null;
                      }
 
-                     if (this.load_AiOperation != null) {
-                        this.load_AiOperation.cancel();
-                        this.load_AiOperation = null;
+                     if (this.mealOperation != null) {
+                        this.mealOperation.cancel();
+                        this.mealOperation = null;
                      }
 
                      this.placer.reset();
-                     this.init_Z = false;
-                     this.write_Z = true;
+                     this.placing = false;
+                     this.waterEscape = true;
                      this.stage = this.capPlaced ? AiBurrow.Inner_DataUtil.EXIT_DIG : AiBurrow.Inner_DataUtil.EXIT_TRAVEL;
                      return this.running("Water in the burrow; climbing out");
                   } else {
@@ -337,8 +337,8 @@ final class AiBurrow {
                            mc.player.isOnFire(),
                            AiServerEvidence.matchesRecentBurnDamage(mc.player.getUUID(), mc.player.tickCount, previousHealth, health),
                            autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
-                           this.stage == AiBurrow.Inner_DataUtil.WAIT && this.init_Z_6(),
-                           this.stage == AiBurrow.Inner_DataUtil.WAIT && this.update_Z(this.shelterFeet),
+                           this.stage == AiBurrow.Inner_DataUtil.WAIT && this.isShelterSealed(),
+                           this.stage == AiBurrow.Inner_DataUtil.WAIT && this.hasHostileInside(this.shelterFeet),
                            mc.player.isInLava() || AiEndRun.init_Z(mc)
                         );
                      if (hurt && !exiting && (!(healTo > 0.0F) || !building) && !residualBurn) {
@@ -347,7 +347,7 @@ final class AiBurrow {
                         );
                      }
 
-                     if (this.stage != AiBurrow.Inner_DataUtil.WAIT || this.init_Z_6() && !this.update_Z(this.shelterFeet)) {
+                     if (this.stage != AiBurrow.Inner_DataUtil.WAIT || this.isShelterSealed() && !this.hasHostileInside(this.shelterFeet)) {
                         if (this.stage == AiBurrow.Inner_DataUtil.CAP && !this.capPlaced && this.hostileNear(feet, 1.0)) {
                            return this.finish(AiOperation.Status.FAILED, "burrow compromised (a hostile in the shaft before the cap)");
                         }
@@ -371,26 +371,26 @@ final class AiBurrow {
                            AiOperation.Result var10000;
                            switch (this.stage) {
                               case SHAFT:
-                                 var10000 = this.init_AiOperation_Result(feet);
+                                 var10000 = this.tickShaft(feet);
                                  break;
                               case RELOCATE:
-                                 var10000 = this.init_AiOperation_Result_7();
+                                 var10000 = this.tickRelocate();
                                  break;
                               case CAP:
                               case ROOF:
-                                 var10000 = this.load_AiOperation_Result(feet);
+                                 var10000 = this.tickCap(feet);
                                  break;
                               case TOWER:
-                                 var10000 = this.read_AiOperation_Result(feet);
+                                 var10000 = this.tickTower(feet);
                                  break;
                               case WAIT:
-                                 var10000 = this.write_AiOperation_Result(feet);
+                                 var10000 = this.tickWait(feet);
                                  break;
                               case EXIT_DIG:
-                                 var10000 = this.update_AiOperation_Result(feet);
+                                 var10000 = this.tickExitDig(feet);
                                  break;
                               case EXIT_TRAVEL:
-                                 var10000 = this.load_AiOperation_Result_6();
+                                 var10000 = this.tickExitTravel();
                                  break;
                               default:
                                  throw new MatchException(null, null);
@@ -407,7 +407,7 @@ final class AiBurrow {
                }
             }
 
-            AiOperation.Result init_AiOperation_Result(BlockPos feet) {
+            AiOperation.Result tickShaft(BlockPos feet) {
                int descended = this.nearby.getY() - feet.getY();
                if (descended >= 3) {
                   this.stage = AiBurrow.Inner_DataUtil.CAP;
@@ -431,12 +431,12 @@ final class AiBurrow {
                      ? this.handleShaftBlocked(feet, descended, "a shaft cell would not break")
                      : this.running("Digging the shaft");
                } else {
-                  switch (this.init_RingBuffer_StreamU(feet.below())) {
+                  switch (this.classifyBelow(feet.below())) {
                      case DIG:
                         this.childOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(feet.below(), 20);
                         return this.running("Digging the shaft");
                      case OPEN:
-                        if (++this.load_I > 40) {
+                        if (++this.shaftEntryTicks > 40) {
                            return this.handleShaftBlocked(feet, descended, "the shaft would not swallow the player");
                         }
 
@@ -448,9 +448,9 @@ final class AiBurrow {
             }
 
             AiOperation.Result handleShaftBlocked(BlockPos feet, int descended, String why) {
-               if (descended == 0 && !this.update_Z) {
-                  this.update_Z = true;
-                  BlockPos nearby = this.init_BlockPos_2(feet);
+               if (descended == 0 && !this.relocateTried) {
+                  this.relocateTried = true;
+                  BlockPos nearby = this.findRelocateStand(feet);
                   if (nearby != null) {
                      this.nearby = nearby;
                      this.childOperation = AiGoto.travelToCompat(nearby, 0.2, false, false, false, 10);
@@ -470,7 +470,7 @@ final class AiBurrow {
                }
             }
 
-            AiOperation.Result init_AiOperation_Result_7() {
+            AiOperation.Result tickRelocate() {
                boolean pending = this.childOperation.requiresReconciliationAfterEmergency();
                AiOperation.Result r = this.childOperation.tick();
                if (!r.terminal()) {
@@ -491,8 +491,8 @@ final class AiBurrow {
                return this.running("On safe ground; digging the shelter");
             }
 
-            AiOperation.Result load_AiOperation_Result(BlockPos feet) {
-               boolean beamInFlight = this.init_Z
+            AiOperation.Result tickCap(BlockPos feet) {
+               boolean beamInFlight = this.placing
                   && this.shelterFeet != null
                   && this.currentCell.getY() == this.shelterFeet.getY() + 2
                   && !this.currentCell.equals(AiBurrow.roofOf(this.shelterFeet))
@@ -523,21 +523,21 @@ final class AiBurrow {
                   }
                }
 
-               if (!this.read_Z(this.shelterFeet)) {
-                  if (++this.sync_I > 3) {
+               if (!this.isCentredOver(this.shelterFeet)) {
+                  if (++this.recentreAttempts > 3) {
                      return this.finish(AiOperation.Status.FAILED, "Could not settle into the shelter's own cell");
                   }
 
                   this.childOperation = AiGoto.travelToCompat(this.shelterFeet, 0.15, false, false, false, 5);
                   return this.running("Centering inside the shelter");
                } else {
-                  if (this.update_Z(this.shelterFeet)) {
+                  if (this.hasHostileInside(this.shelterFeet)) {
                      return this.finish(AiOperation.Status.FAILED, "A hostile occupies the shelter interior");
                   }
 
                   if (this.shellCells == null) {
                      this.shellCells = AiBurrow.plannedShell(this.shelterFeet, this::isSolidFloor);
-                     if (this.load_I_5() < this.shellCells.size()) {
+                     if (this.spareShellBlocks() < this.shellCells.size()) {
                         return this.finishWith(AiOperation.Status.FAILED, "Not enough spare blocks to close the shelter", this.missingBlocksJson(this.shellCells.size()));
                      }
 
@@ -549,13 +549,13 @@ final class AiBurrow {
                      }
                   }
 
-                  if (!this.init_Z) {
+                  if (!this.placing) {
                      while (this.shellIndex < this.shellCells.size() && this.isSolidFloor(this.shellCells.get(this.shellIndex))) {
                         this.shellIndex++;
                      }
 
                      if (this.shellIndex >= this.shellCells.size()) {
-                        if (!this.init_Z_6()) {
+                        if (!this.isShelterSealed()) {
                            return this.finish(AiOperation.Status.FAILED, "Shelter boundary is still open after construction");
                         }
 
@@ -578,9 +578,9 @@ final class AiBurrow {
 
                      this.currentCell = this.shellCells.get(this.shellIndex);
                      autismclient.ai.engine.AiEditLedger.forgetBreak(this.currentCell);
-                     this.init_Item = mc.player.getInventory().getItem(slot).getItem();
-                     this.placer.start(this.currentCell, this.init_Item);
-                     this.init_Z = true;
+                     this.placingItem = mc.player.getInventory().getItem(slot).getItem();
+                     this.placer.start(this.currentCell, this.placingItem);
+                     this.placing = true;
                   }
 
                   if (this.currentCell.getY() == this.shelterFeet.getY() + 2
@@ -589,9 +589,9 @@ final class AiBurrow {
                      && this.hasWalls(this.shelterFeet)
                      && !this.placer.needsReconciliation()
                      && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()
-                     && !autismclient.ai.engine.AiPlacer.canPlaceFromHere(this.currentCell, this.init_Item)) {
+                     && !autismclient.ai.engine.AiPlacer.canPlaceFromHere(this.currentCell, this.placingItem)) {
                      mc.options.keyJump.setDown(true);
-                     this.sync_Z = true;
+                     this.jumpHeld = true;
                   }
 
                   autismclient.ai.engine.AiPlacer.PlaceStatus status = this.placer.tick();
@@ -600,9 +600,9 @@ final class AiBurrow {
                   } else {
                      boolean pending = this.placer.needsReconciliation();
                      this.placer.reset();
-                     this.init_Z = false;
+                     this.placing = false;
                      if (status != autismclient.ai.engine.AiPlacer.PlaceStatus.PLACED) {
-                        this.flush_Z |= pending;
+                        this.reconcileRequired |= pending;
                         return this.finish(AiOperation.Status.FAILED, "Shelter placement failed: " + this.placer.failureReason());
                      } else {
                         this.shellIndex++;
@@ -612,12 +612,12 @@ final class AiBurrow {
                }
             }
 
-            AiOperation.Result read_AiOperation_Result(BlockPos feet) {
+            AiOperation.Result tickTower(BlockPos feet) {
                if (this.feet == null) {
                   BlockPos top = feet.above(4);
                   List<BlockPos> boundary = AiBurrow.plannedShell(top, pos -> pos.equals(top.below()) || this.isSolidFloor(pos));
                   int needed = 4 + boundary.size();
-                  if (this.load_I_5() < needed) {
+                  if (this.spareShellBlocks() < needed) {
                      return this.finishWith(AiOperation.Status.FAILED, "Unsafe column and insufficient spare stock for a closed tower shelter", this.missingBlocksJson(needed));
                   }
 
@@ -660,7 +660,7 @@ final class AiBurrow {
                return this.running("Tower up; roofing");
             }
 
-            AiOperation.Result write_AiOperation_Result(BlockPos feet) {
+            AiOperation.Result tickWait(BlockPos feet) {
                this.hidTicks++;
                if (this.hidTicks % 200 == 0) {
                   AutismClientAddon.LOG
@@ -672,39 +672,39 @@ final class AiBurrow {
                      );
                }
 
-               if (this.load_AiOperation != null) {
-                  boolean pending = this.load_AiOperation.requiresReconciliationAfterEmergency();
-                  AiOperation.Result r = this.load_AiOperation.tick();
+               if (this.mealOperation != null) {
+                  boolean pending = this.mealOperation.requiresReconciliationAfterEmergency();
+                  AiOperation.Result r = this.mealOperation.tick();
                   if (!r.terminal()) {
                      return this.running("Eating in the sealed shelter to enable regeneration");
                   }
 
-                  if (AiBurrow.needsReconcileAfter(r.status(), pending, this.load_AiOperation.requiresReconciliationAfterEmergency())) {
+                  if (AiBurrow.needsReconcileAfter(r.status(), pending, this.mealOperation.requiresReconciliationAfterEmergency())) {
                      return this.recordChildFailure(r, "Shelter meal");
                   }
 
-                  this.load_AiOperation.cancel();
-                  this.load_AiOperation = null;
+                  this.mealOperation.cancel();
+                  this.mealOperation = null;
                   return this.running("Shelter meal observed; waiting safely");
                } else {
-                  if (this.update_I < 3
+                  if (this.mealAttempts < 3
                      && this.deadline - System.nanoTime() >= 10000000000L
                      && AiBurrow.canEatInShelter(
                         mc.player.getHealth(),
                         mc.player.getMaxHealth(),
                         mc.player.getFoodData().getFoodLevel(),
                         AiSurvival.bestFoodSlot(mc.player.getInventory()) >= 0,
-                        this.init_Z_6(),
+                        this.isShelterSealed(),
                         autismclient.ai.engine.AiMotionSafety.isPlayerSupported(),
                         this.canInterruptNow(),
                         this.requiresReconciliationAfterEmergency()
                      )) {
-                     this.update_I++;
-                     this.load_AiOperation = AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
+                     this.mealAttempts++;
+                     this.mealOperation = AiSurvival.eat(AiJson.objectOf("food", 20, "timeoutSeconds", 10));
                      return this.running("Eating in the sealed shelter to enable regeneration");
                   }
 
-                  if (healTo > 0.0F && mc.player.getFoodData().getFoodLevel() < 18 && mc.player.getHealth() < healTo && this.hidTicks - this.flush_I >= 100) {
+                  if (healTo > 0.0F && mc.player.getFoodData().getFoodLevel() < 18 && mc.player.getHealth() < healTo && this.hidTicks - this.lastMealTick >= 100) {
                      if (stay && this.feet == null) {
                         return this.finish(
                            AiOperation.Status.SUCCEEDED,
@@ -718,10 +718,10 @@ final class AiBurrow {
                      return this.running("No mob in sight; leaving cover");
                   } else {
                      if (healTo > 0.0F && this.isThreatNearby()) {
-                        this.flush_I = this.hidTicks;
+                        this.lastMealTick = this.hidTicks;
                      }
 
-                     if (healTo > 0.0F && mc.player.getHealth() >= healTo && this.hidTicks - this.flush_I >= 60) {
+                     if (healTo > 0.0F && mc.player.getHealth() >= healTo && this.hidTicks - this.lastMealTick >= 60) {
                         if (stay && this.feet == null) {
                            return this.finish(AiOperation.Status.SUCCEEDED, "Healed to " + (int)mc.player.getHealth() + " in the hole; going on from here");
                         }
@@ -731,7 +731,7 @@ final class AiBurrow {
                            : AiBurrow.Inner_DataUtil.EXIT_DIG;
                         return this.running("Healed to " + (int)mc.player.getHealth() + "; leaving cover");
                      } else {
-                        if (!AiBurrow.init_Z_F_J(healTo, AiSleep.dayTime()) && System.nanoTime() <= this.deadline) {
+                        if (!AiBurrow.isDoneWaiting(healTo, AiSleep.dayTime()) && System.nanoTime() <= this.deadline) {
                            return this.running(
                               healTo > 0.0F
                                  ? "Healing in the sealed shelter (" + (int)mc.player.getHealth() + "/" + (int)healTo + ")"
@@ -748,7 +748,7 @@ final class AiBurrow {
                }
             }
 
-            AiOperation.Result update_AiOperation_Result(BlockPos feet) {
+            AiOperation.Result tickExitDig(BlockPos feet) {
                if (this.feet == null) {
                   if (this.childOperation == null) {
                      this.childOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(this.currentCell, 20);
@@ -784,7 +784,7 @@ final class AiBurrow {
                   if (mc.level.getBlockState(feet.below()).isAir()) {
                      if (!mc.player.onGround()) {
                         return this.running("Stepping down the tower");
-                     } else if (++this.write_I > 40) {
+                     } else if (++this.descentCentringTicks > 40) {
                         this.restoreMovementKeys();
                         return this.finish(AiOperation.Status.FAILED, "Could not center over the shelter column for a safe descent");
                      } else {
@@ -801,14 +801,14 @@ final class AiBurrow {
                         return this.running("Stepping back over the tower");
                      }
                   } else {
-                     if (this.write_I > 0) {
+                     if (this.descentCentringTicks > 0) {
                         mc.options.keyUp.setDown(false);
                         mc.options.keyDown.setDown(false);
                         mc.options.keyLeft.setDown(false);
                         mc.options.keyRight.setDown(false);
                      }
 
-                     this.write_I = 0;
+                     this.descentCentringTicks = 0;
                      if (this.childOperation == null) {
                         this.childOperation = autismclient.ai.engine.AiBreakBlock.breakBlock(feet.below(), 20);
                      }
@@ -832,7 +832,7 @@ final class AiBurrow {
                }
             }
 
-            AiOperation.Result load_AiOperation_Result_6() {
+            AiOperation.Result tickExitTravel() {
                if (this.childOperation == null) {
                   this.childOperation = AiGoto.travelToCompat(this.startPos, 1.2, true, true, false, 60);
                }
@@ -848,7 +848,7 @@ final class AiBurrow {
                   this.childOperation = null;
                   if (r.status() == AiOperation.Status.SUCCEEDED && !autismclient.ai.engine.AiMotionSafety.isPlayerSupported()) {
                      return this.running("Settling on the surface before handing back control");
-                  } else if (r.status() == AiOperation.Status.SUCCEEDED && this.write_Z) {
+                  } else if (r.status() == AiOperation.Status.SUCCEEDED && this.waterEscape) {
                      return this.finish(
                         AiOperation.Status.FAILED, "Water reached the burrow; back on the surface, still night - use game:sleep or shelter elsewhere"
                      );
@@ -874,13 +874,13 @@ final class AiBurrow {
                return true;
             }
 
-            boolean read_Z(BlockPos feet) {
+            boolean isCentredOver(BlockPos feet) {
                return AiBurrow.isCentredInCell(feet, mc.player.getBoundingBox(), mc.player.getY());
             }
 
-            boolean init_Z_6() {
+            boolean isShelterSealed() {
                return this.shelterFeet != null
-                     && this.read_Z(this.shelterFeet)
+                     && this.isCentredOver(this.shelterFeet)
                      && AiBurrow.isSealed(this.shelterFeet, this::isSolidFloor)
                   ? this.isInteriorClear(this.shelterFeet)
                   : false;
@@ -898,7 +898,7 @@ final class AiBurrow {
                return true;
             }
 
-            boolean update_Z(BlockPos feet) {
+            boolean hasHostileInside(BlockPos feet) {
                AABB room = new AABB(feet.getX() + 0.001, feet.getY(), feet.getZ() + 0.001, feet.getX() + 0.999, feet.getY() + 2, feet.getZ() + 0.999);
 
                for (Entity entity : mc.level.entitiesForRendering()) {
@@ -910,7 +910,7 @@ final class AiBurrow {
                return false;
             }
 
-            BlockPos init_BlockPos_2(BlockPos feet) {
+            BlockPos findRelocateStand(BlockPos feet) {
                return AiBurrow.bestNearbyStand(
                   feet,
                   pos -> {
@@ -930,7 +930,7 @@ final class AiBurrow {
                   },
                   pos -> {
                      for (int down = 1; down <= 3; down++) {
-                        if (!this.isSolidFloor(pos.below(down)) || this.init_RingBuffer_StreamU(pos.below(down)) != AiBurrow.Inner_StreamUtil.DIG) {
+                        if (!this.isSolidFloor(pos.below(down)) || this.classifyBelow(pos.below(down)) != AiBurrow.Inner_StreamUtil.DIG) {
                            return false;
                         }
                      }
@@ -941,7 +941,7 @@ final class AiBurrow {
                );
             }
 
-            AiBurrow.Inner_StreamUtil init_RingBuffer_StreamU(BlockPos pos) {
+            AiBurrow.Inner_StreamUtil classifyBelow(BlockPos pos) {
                if (!AiTerrain.isLoaded(mc.level, pos)) {
                   return AiBurrow.Inner_StreamUtil.STOP;
                }
@@ -1007,7 +1007,7 @@ final class AiBurrow {
                return -1;
             }
 
-            int load_I_5() {
+            int spareShellBlocks() {
                Map<Item, Integer> counts = new HashMap<>();
 
                for (int slot = 0; slot < 36; slot++) {
@@ -1065,8 +1065,8 @@ final class AiBurrow {
 
             JsonObject missingBlocksJson(int needed) {
                JsonObject missing = new JsonObject();
-               missing.addProperty("minecraft:dirt", Math.max(1, needed - this.load_I_5()));
-               return AiJson.objectOf("missing", missing, "constructionRequired", needed, "constructionAvailable", this.load_I_5());
+               missing.addProperty("minecraft:dirt", Math.max(1, needed - this.spareShellBlocks()));
+               return AiJson.objectOf("missing", missing, "constructionRequired", needed, "constructionAvailable", this.spareShellBlocks());
             }
 
             JsonObject statusJson() {
@@ -1078,7 +1078,7 @@ final class AiBurrow {
                   "capPlaced",
                   this.capPlaced,
                   "sealed",
-                  mc.player != null && mc.level == this.startLevel && this.init_Z_6(),
+                  mc.player != null && mc.level == this.startLevel && this.isShelterSealed(),
                   "mode",
                   this.feet != null ? "tower" : "shaft",
                   "phase",
@@ -1086,7 +1086,7 @@ final class AiBurrow {
                   "dayTime",
                   AiSleep.dayTime(),
                   "meals",
-                  this.update_I,
+                  this.mealAttempts,
                   "coverBlocksConfirmed",
                   this.shellIndex,
                   "restocks",
@@ -1094,8 +1094,8 @@ final class AiBurrow {
                   "pendingChangesNeedObservation",
                   this.requiresReconciliationAfterEmergency()
                );
-               if (!this.init_JsonObject.isEmpty()) {
-                  data.add("pendingChild", this.init_JsonObject);
+               if (!this.pendingChildEvidence.isEmpty()) {
+                  data.add("pendingChild", this.pendingChildEvidence);
                }
 
                return data;
@@ -1122,11 +1122,11 @@ final class AiBurrow {
             }
 
             AiOperation.Result recordChildFailure(AiOperation.Result result, String action) {
-               this.flush_Z = true;
-               this.init_JsonObject = AiJson.objectOf(
+               this.reconcileRequired = true;
+               this.pendingChildEvidence = AiJson.objectOf(
                   "status", result.status().name(), "message", result.message(), "failureCode", result.failure().name()
                );
-               this.init_JsonObject.add("result", AiRunResources.parseEvidenceJson(result.dataJson()));
+               this.pendingChildEvidence.add("result", AiRunResources.parseEvidenceJson(result.dataJson()));
                JsonObject data = this.statusJson();
                this.cancel();
                return AiGuardLayer.wrapPendingTermination(
@@ -1142,47 +1142,47 @@ final class AiBurrow {
 
             @Override
             public boolean canInterruptNow() {
-               return !this.flush_Z
+               return !this.reconcileRequired
                   && autismclient.ai.engine.AiMotionSafety.isPlayerSupported()
-                  && !this.sync_Z
-                  && !AiBurrow.init_Z_Z_BooleanSupplier(this.init_Z, this.placer::needsReconciliation)
+                  && !this.jumpHeld
+                  && !AiBurrow.isPlacementPending(this.placing, this.placer::needsReconciliation)
                   && !this.restock.needsReconciliation()
                   && (this.childOperation == null || this.childOperation.canInterruptNow())
-                  && (this.load_AiOperation == null || this.load_AiOperation.canInterruptNow());
+                  && (this.mealOperation == null || this.mealOperation.canInterruptNow());
             }
 
             @Override
             public boolean requiresReconciliationAfterEmergency() {
-               return this.flush_Z
-                  || AiBurrow.init_Z_Z_BooleanSupplier(this.init_Z, this.placer::needsReconciliation)
+               return this.reconcileRequired
+                  || AiBurrow.isPlacementPending(this.placing, this.placer::needsReconciliation)
                   || this.restock.needsReconciliation()
                   || this.childOperation != null && this.childOperation.requiresReconciliationAfterEmergency()
-                  || this.load_AiOperation != null && this.load_AiOperation.requiresReconciliationAfterEmergency();
+                  || this.mealOperation != null && this.mealOperation.requiresReconciliationAfterEmergency();
             }
 
             @Override
             public void cancel() {
-               if (!this.read_Z) {
-                  this.flush_Z = this.flush_Z | this.requiresReconciliationAfterEmergency();
-                  this.read_Z = true;
+               if (!this.cancelled) {
+                  this.reconcileRequired = this.reconcileRequired | this.requiresReconciliationAfterEmergency();
+                  this.cancelled = true;
                   if (this.childOperation != null) {
                      this.childOperation.cancel();
                      this.childOperation = null;
                   }
 
-                  if (this.load_AiOperation != null) {
-                     this.load_AiOperation.cancel();
-                     this.load_AiOperation = null;
+                  if (this.mealOperation != null) {
+                     this.mealOperation.cancel();
+                     this.mealOperation = null;
                   }
 
                   this.placer.reset();
                   this.restock.reset();
-                  if (this.sync_Z) {
+                  if (this.jumpHeld) {
                      mc.options.keyJump.setDown(autismclient.util.KeyMappingControl.of(mc.options.keyJump).autism$physicalForBody());
-                     this.sync_Z = false;
+                     this.jumpHeld = false;
                   }
 
-                  if (this.write_I > 0) {
+                  if (this.descentCentringTicks > 0) {
                      this.restoreMovementKeys();
                   }
                }

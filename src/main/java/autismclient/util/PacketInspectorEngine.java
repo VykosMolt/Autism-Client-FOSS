@@ -155,7 +155,7 @@ public final class PacketInspectorEngine {
       "iswritingerrorskippable",
       "writingerrorskippable"
    );
-   private static final Set<String> read_Set = Set.of(
+   private static final Set<String> EXTRA_GETTER_NAMES = Set.of(
       "id",
       "syncId",
       "revision",
@@ -205,7 +205,7 @@ public final class PacketInspectorEngine {
       AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.PayloadAnalysis payloadAnalysis, boolean includePayloadAnalyzer
    ) {
       try {
-         return load_bu_JsonUtil_AutismPacketLogger(entry, payloadAnalysis, includePayloadAnalyzer);
+         return buildInspectionReport(entry, payloadAnalysis, includePayloadAnalyzer);
       } catch (Throwable t) {
          PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder(entry.name + " [" + entry.direction + "]");
          builder.section("Meta", UiColorPalette.warmWhite());
@@ -230,16 +230,16 @@ public final class PacketInspectorEngine {
    }
 
    public static PacketInspectorEngine.InspectionReport load_bu_JsonUtil_AutismPacketLogger(AutismPacketLoggerOverlay.LoggedPacketEntry entry) {
-      return load_bu_JsonUtil_AutismPacketLogger(entry, null, true);
+      return buildInspectionReport(entry, null, true);
    }
 
    public static PacketInspectorEngine.InspectionReport load_bu_JsonUtil_AutismPacketLogger_bu_SyncManager(
       AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.PayloadAnalysis payloadAnalysis
    ) {
-      return load_bu_JsonUtil_AutismPacketLogger(entry, payloadAnalysis, true);
+      return buildInspectionReport(entry, payloadAnalysis, true);
    }
 
-   public static PacketInspectorEngine.InspectionReport load_bu_JsonUtil_AutismPacketLogger(
+   public static PacketInspectorEngine.InspectionReport buildInspectionReport(
       AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.PayloadAnalysis payloadAnalysis, boolean includePayloadAnalyzer
    ) {
       String title = entry.name + " [" + entry.direction + "]";
@@ -257,7 +257,7 @@ public final class PacketInspectorEngine {
             builder.line("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
          }
 
-         String source = read_Str_Str(payloadSnapshot.channel());
+         String source = describeChannelSource(payloadSnapshot.channel());
          if (source != null && !source.isBlank()) {
             builder.line("Likely Source: " + source, UiColorPalette.textBody());
          }
@@ -276,7 +276,7 @@ public final class PacketInspectorEngine {
          builder.blankLine();
          builder.section("Reality", UiColorPalette.cyan());
          if (payloadSnapshot != null) {
-            init_Z_AutismPayloadSuppo_bu_ConfigStore(payloadSnapshot, builder);
+            appendPayloadHeader(payloadSnapshot, builder);
             builder.line("Packet Object: missing; showing preserved payload snapshot.", UiColorPalette.textMuted());
          } else {
             builder.line("Packet instance is missing, so only metadata is available.", UiColorPalette.errorText());
@@ -290,7 +290,7 @@ public final class PacketInspectorEngine {
 
          if (includePayloadAnalyzer && payloadSnapshot != null) {
             PacketInspectorEngine.ReportBuilder analyzerBuilder = new PacketInspectorEngine.ReportBuilder(title);
-            if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
+            if (appendPayloadAnalysis(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.blankLine();
                builder.section("Analyzer", UiColorPalette.mint());
                builder.append(analyzerBuilder);
@@ -313,10 +313,10 @@ public final class PacketInspectorEngine {
          } else if (payloadSnapshot != null) {
             builder.blankLine();
             builder.section("Reality", UiColorPalette.cyan());
-            init_Z_AutismPayloadSuppo_bu_ConfigStore(payloadSnapshot, builder);
+            appendPayloadHeader(payloadSnapshot, builder);
          } else {
             PacketInspectorEngine.ReportBuilder summaryBuilder = new PacketInspectorEngine.ReportBuilder(title);
-            summary = init_bu_FileCache_Packet(entry.packet, entry.name, entry, summaryBuilder);
+            summary = describePacket(entry.packet, entry.name, entry, summaryBuilder);
             if (summary.init_Z()) {
                builder.blankLine();
                builder.section("Reality", UiColorPalette.cyan());
@@ -332,7 +332,7 @@ public final class PacketInspectorEngine {
 
          if (includePayloadAnalyzer && payloadSnapshot != null) {
             PacketInspectorEngine.ReportBuilder analyzerBuilder = new PacketInspectorEngine.ReportBuilder(title);
-            if (init_Z_AutismPayloadSuppo(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
+            if (appendPayloadAnalysis(payloadSnapshot, analyzerBuilder, payloadAnalysis)) {
                builder.blankLine();
                builder.section("Analyzer", UiColorPalette.mint());
                builder.append(analyzerBuilder);
@@ -375,7 +375,7 @@ public final class PacketInspectorEngine {
                "Direction: " + snapshot.direction() + " | Protocol: " + orFallback(snapshot.protocolPhase(), "unknown"), directionColor(snapshot.direction())
             );
             builder.line("Body Size: " + snapshot.rawBytes().length + " bytes", UiColorPalette.textBright());
-            String source = read_Str_Str(snapshot.channel());
+            String source = describeChannelSource(snapshot.channel());
             if (source != null && !source.isBlank()) {
                builder.line("What It Looks Like: " + source, UiColorPalette.textBright());
             }
@@ -384,7 +384,7 @@ public final class PacketInspectorEngine {
             builder.line("Decoder Status: waiting for automatic payload analysis.", UiColorPalette.warningYellow());
             return builder.build();
          } else {
-            init_Z_AutismPayloadSuppo(snapshot, builder, payloadAnalysis);
+            appendPayloadAnalysis(snapshot, builder, payloadAnalysis);
             return builder.build();
          }
       } catch (Throwable t) {
@@ -429,8 +429,8 @@ public final class PacketInspectorEngine {
          PacketInspectorEngine.ReportBuilder builder = new PacketInspectorEngine.ReportBuilder("Payload Analyzer");
 
          try {
-            init_Z_AutismPayloadSuppo_2(snapshot, builder, progressSink);
-            PacketInspectorEngine.PayloadAnalysis done = new PacketInspectorEngine.PayloadAnalysis(true, false, 1.0, init_Str_List(builder.lines), builder.lines);
+            runPayloadAnalysis(snapshot, builder, progressSink);
+            PacketInspectorEngine.PayloadAnalysis done = new PacketInspectorEngine.PayloadAnalysis(true, false, 1.0, analysisVerdict(builder.lines), builder.lines);
             if (progressSink != null) {
                progressSink.accept(done);
             }
@@ -447,7 +447,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static String init_Str_List(List<PacketInspectorEngine.ColoredLine> lines) {
+   private static String analysisVerdict(List<PacketInspectorEngine.ColoredLine> lines) {
       if (lines != null) {
          for (PacketInspectorEngine.ColoredLine line : lines) {
             String text = line == null ? "" : line.text();
@@ -475,14 +475,14 @@ public final class PacketInspectorEngine {
       return "Analysis finished";
    }
 
-   private static PacketInspectorEngine.PacketSummaryFlags init_bu_FileCache_Packet(
+   private static PacketInspectorEngine.PacketSummaryFlags describePacket(
       Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.ReportBuilder builder
    ) {
-      PacketInspectorEngine.PacketSummaryFlags packetSpecific = load_bu_FileCache_Packet(packet, packetNameHint, entry, builder);
-      return packetSpecific.init_Z() ? packetSpecific : load_bu_FileCache_Packet_bu_ConfigStore(packet, builder);
+      PacketInspectorEngine.PacketSummaryFlags packetSpecific = describeKnownPacket(packet, packetNameHint, entry, builder);
+      return packetSpecific.init_Z() ? packetSpecific : describeProperties(packet, builder);
    }
 
-   private static boolean init_Z_AutismPayloadSuppo_bu_ConfigStore(AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.ReportBuilder builder) {
+   private static boolean appendPayloadHeader(AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.ReportBuilder builder) {
       if (snapshot == null) {
          return false;
       }
@@ -495,7 +495,7 @@ public final class PacketInspectorEngine {
          builder.line("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
       }
 
-      String source = read_Str_Str(channel);
+      String source = describeChannelSource(channel);
       if (source != null && !source.isBlank()) {
          builder.line("Likely Source: " + source, UiColorPalette.textBright());
       }
@@ -539,7 +539,7 @@ public final class PacketInspectorEngine {
       }
 
       if (preview.utf8Preview() != null && !preview.utf8Preview().isBlank() && !"<binary>".equals(preview.utf8Preview())) {
-         builder.line("UTF-8 Guess: " + quote(sanitize(init_Str_Str(preview.utf8Preview()))), UiColorPalette.successText());
+         builder.line("UTF-8 Guess: " + quote(sanitize(collapseControlChars(preview.utf8Preview()))), UiColorPalette.successText());
       }
 
       List<String> identifiers = identifierPreview(raw, 6);
@@ -578,7 +578,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PacketSummaryFlags load_bu_FileCache_Packet(
+   private static PacketInspectorEngine.PacketSummaryFlags describeKnownPacket(
       Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.ReportBuilder builder
    ) {
       boolean wrote = false;
@@ -763,7 +763,7 @@ public final class PacketInspectorEngine {
          builder.line("Value: " + gameState.getParam(), UiColorPalette.textBright());
       }
 
-      PacketInspectorEngine.PacketSummaryFlags broadKnown = init_bu_FileCache_Packet_bu_ConfigStore(packet, builder);
+      PacketInspectorEngine.PacketSummaryFlags broadKnown = describeBroadKnownPacket(packet, builder);
       if (!wrote && broadKnown.init_Z()) {
          return broadKnown;
       }
@@ -805,15 +805,15 @@ public final class PacketInspectorEngine {
          complete = false;
       }
 
-      PacketInspectorEngine.PacketSummaryFlags reflective = read_bu_FileCache_Packet(packet, packetNameHint, entry, builder);
+      PacketInspectorEngine.PacketSummaryFlags reflective = describeReflectivePacket(packet, packetNameHint, entry, builder);
       return !wrote && reflective.init_Z() ? reflective : new PacketInspectorEngine.PacketSummaryFlags(wrote, complete);
    }
 
-   private static boolean init_Z_AutismPayloadSuppo(
+   private static boolean appendPayloadAnalysis(
       AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.ReportBuilder builder, PacketInspectorEngine.PayloadAnalysis payloadAnalysis
    ) {
       if (payloadAnalysis == null) {
-         return init_Z_AutismPayloadSuppo_2(snapshot, builder, (Consumer<PacketInspectorEngine.PayloadAnalysis>)null);
+         return runPayloadAnalysis(snapshot, builder, (Consumer<PacketInspectorEngine.PayloadAnalysis>)null);
       }
 
       for (PacketInspectorEngine.ColoredLine line : payloadAnalysis.lines()) {
@@ -823,7 +823,7 @@ public final class PacketInspectorEngine {
       return true;
    }
 
-   private static boolean init_Z_AutismPayloadSuppo_2(
+   private static boolean runPayloadAnalysis(
       AutismPayloadSupport.PayloadEntry snapshot, PacketInspectorEngine.ReportBuilder builder, Consumer<PacketInspectorEngine.PayloadAnalysis> progressSink
    ) {
       if (snapshot == null) {
@@ -845,7 +845,7 @@ public final class PacketInspectorEngine {
          builder.line("Matched Filter: " + filter.load() + " (" + filter.pattern() + ")", UiColorPalette.mint());
       }
 
-      String source = read_Str_Str(snapshot.channel());
+      String source = describeChannelSource(snapshot.channel());
       if (source != null && !source.isBlank()) {
          builder.line("What It Looks Like: " + source, UiColorPalette.textBright());
       }
@@ -857,18 +857,18 @@ public final class PacketInspectorEngine {
 
       appendCompression(raw, builder);
       reportProgress(builder, progressSink, 0.2, "Checking plugin-channel structure", false, false);
-      PacketInspectorEngine.PayloadDecodeResult knownChannel = init_bu_BufferHelper_AutismPayloadSuppo(snapshot, raw, builder);
+      PacketInspectorEngine.PayloadDecodeResult knownChannel = decodeKnownChannel(snapshot, raw, builder);
       decodedAnything |= knownChannel.init_Z();
       decodedStrongly |= knownChannel.load_Z();
       textualPayload |= knownChannel.read();
       completeKnownSchema |= knownChannel.write();
       if (knownChannel.init_Z()) {
-         bestInterpretation = init_Str_Str_Z(snapshot.channel(), completeKnownSchema);
+         bestInterpretation = interpretationFor(snapshot.channel(), completeKnownSchema);
       }
 
       PacketInspectorEngine.PayloadDecodeResult decompressed = PacketInspectorEngine.PayloadDecodeResult.NONE;
       if (!completeKnownSchema) {
-         decompressed = load_bu_BufferHelper_AutismPayloadSuppo(snapshot, raw, builder);
+         decompressed = decodeCompressed(snapshot, raw, builder);
          decodedAnything |= decompressed.init_Z();
          decodedStrongly |= decompressed.load_Z();
          textualPayload |= decompressed.read();
@@ -915,7 +915,7 @@ public final class PacketInspectorEngine {
             }
          }
 
-         List<String> minecraftStrings = load_List_BArr_I(raw, 12);
+         List<String> minecraftStrings = readMcStrings(raw, 12);
          if (minecraftStrings.size() > 1 || minecraftStrings.size() == 1 && !Objects.equals(minecraftStrings.get(0), minecraftString)) {
             builder.line("Minecraft String Sequence: " + minecraftStrings.size() + " value" + pluralSuffix(minecraftStrings.size()), UiColorPalette.successText());
 
@@ -969,7 +969,7 @@ public final class PacketInspectorEngine {
 
          String utf8 = AutismPayloadSupport.decodePrintableUtf8(raw);
          if (utf8 != null && !utf8.isBlank() && !Objects.equals(utf8, minecraftString) && !Objects.equals(utf8, javaUtf)) {
-            builder.line("Readable UTF-8: " + quote(sanitize(init_Str_Str(utf8))), UiColorPalette.successText());
+            builder.line("Readable UTF-8: " + quote(sanitize(collapseControlChars(utf8))), UiColorPalette.successText());
             decodedAnything = true;
             textualPayload = true;
             if (bestInterpretation.isBlank()) {
@@ -980,7 +980,7 @@ public final class PacketInspectorEngine {
 
       reportProgress(builder, progressSink, 0.7, "Extracting identifiers and fragments", false, false);
       if (!completeKnownSchema) {
-         PacketInspectorEngine.PayloadDecodeResult byteBufScan = load_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
+         PacketInspectorEngine.PayloadDecodeResult byteBufScan = scanByteBufStrings(raw, builder);
          decodedAnything |= byteBufScan.init_Z();
          decodedStrongly |= byteBufScan.load_Z();
          textualPayload |= byteBufScan.read();
@@ -1021,7 +1021,7 @@ public final class PacketInspectorEngine {
 
       reportProgress(builder, progressSink, 0.78, "Running deep nested probes", false, false);
       if (!completeKnownSchema) {
-         PacketInspectorEngine.PayloadDecodeResult deep = read_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
+         PacketInspectorEngine.PayloadDecodeResult deep = decodeDeep(raw, builder);
          decodedAnything |= deep.init_Z();
          decodedStrongly |= deep.load_Z();
          textualPayload |= deep.read();
@@ -1033,7 +1033,7 @@ public final class PacketInspectorEngine {
 
       reportProgress(builder, progressSink, 0.84, textualPayload ? "Checking confidence" : "Reading numeric and binary hints", false, false);
       if (!textualPayload) {
-         init_V_BArr_bu_ConfigStore(raw, builder);
+         appendRawHints(raw, builder);
       }
 
       if (!completeKnownSchema) {
@@ -1073,7 +1073,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_AutismPayloadSuppo(
+   private static PacketInspectorEngine.PayloadDecodeResult decodeKnownChannel(
       AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.ReportBuilder builder
    ) {
       if (snapshot == null) {
@@ -1082,8 +1082,8 @@ public final class PacketInspectorEngine {
 
       String channel = normalizeChannel(snapshot.channel());
       if (isRegisterChannel(channel)) {
-         boolean decodedRegister = init_Z_AutismPayloadSuppo_3(snapshot, raw, builder);
-         return decodedRegister ? PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper : PacketInspectorEngine.PayloadDecodeResult.NONE;
+         boolean decodedRegister = decodeRegisterChannels(snapshot, raw, builder);
+         return decodedRegister ? PacketInspectorEngine.PayloadDecodeResult.FULL_DECODE : PacketInspectorEngine.PayloadDecodeResult.NONE;
       }
 
       if ("minecraft:brand".equals(channel)) {
@@ -1096,8 +1096,8 @@ public final class PacketInspectorEngine {
 
          if (brand != null && !brand.isBlank()) {
             builder.line("Decoded As: Brand payload (" + mode + ")", UiColorPalette.successText());
-            builder.line("Brand: " + quote(sanitize(init_Str_Str(brand))), UiColorPalette.textBright());
-            return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
+            builder.line("Brand: " + quote(sanitize(collapseControlChars(brand))), UiColorPalette.textBright());
+            return PacketInspectorEngine.PayloadDecodeResult.FULL_DECODE;
          } else {
             return PacketInspectorEngine.PayloadDecodeResult.NONE;
          }
@@ -1107,13 +1107,13 @@ public final class PacketInspectorEngine {
             if (json != null) {
                builder.line("Decoded As: ViaVersion server details JSON", UiColorPalette.successText());
                describeJson(json, builder);
-               return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
+               return PacketInspectorEngine.PayloadDecodeResult.FULL_DECODE;
             }
          }
 
          if (!"bungeecord".equals(channel) && !"bungeecord:main".equals(channel)) {
             if (channel.startsWith("fabric:")) {
-               List<String> values = load_List_BArr_I(raw, 16);
+               List<String> values = readMcStrings(raw, 16);
                if (values.isEmpty()) {
                   values = readJavaUtfStrings(raw, 16);
                }
@@ -1122,7 +1122,7 @@ public final class PacketInspectorEngine {
                   builder.line("Decoded As: Fabric readable payload fields", UiColorPalette.successText());
 
                   for (String value : values) {
-                     builder.line("  - " + quote(sanitize(init_Str_Str(value))), UiColorPalette.textBright());
+                     builder.line("  - " + quote(sanitize(collapseControlChars(value))), UiColorPalette.textBright());
                   }
 
                   return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
@@ -1131,7 +1131,7 @@ public final class PacketInspectorEngine {
                String utf8 = AutismPayloadSupport.decodePrintableUtf8(raw);
                if (utf8 != null && !utf8.isBlank()) {
                   builder.line("Decoded As: Fabric readable text payload", UiColorPalette.successText());
-                  builder.line("Text: " + quote(sanitize(init_Str_Str(utf8))), UiColorPalette.textBright());
+                  builder.line("Text: " + quote(sanitize(collapseControlChars(utf8))), UiColorPalette.textBright());
                   return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
                }
             }
@@ -1140,19 +1140,19 @@ public final class PacketInspectorEngine {
                String utf8 = AutismPayloadSupport.decodePrintableUtf8(raw);
                if (utf8 != null && !utf8.isBlank()) {
                   builder.line("Decoded As: WorldEdit/CUI text payload", UiColorPalette.successText());
-                  builder.line("Message: " + quote(sanitize(init_Str_Str(utf8))), UiColorPalette.textBright());
+                  builder.line("Message: " + quote(sanitize(collapseControlChars(utf8))), UiColorPalette.textBright());
                   return new PacketInspectorEngine.PayloadDecodeResult(true, true, true, false);
                }
             }
 
             return PacketInspectorEngine.PayloadDecodeResult.NONE;
          } else {
-            return init_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
+            return decodeBungeeCordMessage(raw, builder);
          }
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult decodeBungeeCordMessage(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       PacketInspectorEngine.ByteCursor reader = new PacketInspectorEngine.ByteCursor(raw);
 
       String subchannel;
@@ -1199,7 +1199,7 @@ public final class PacketInspectorEngine {
                   String nestedChannel = reader.readJavaUtf();
                   builder.line("Nested Channel: " + nestedChannel, UiColorPalette.successText());
                   byte[] nested = reader.readShortPrefixedBytes();
-                  init_bu_BufferHelper_Str("Nested Forward Payload", nestedChannel, nested, builder);
+                  decodeNestedBytes("Nested Forward Payload", nestedChannel, nested, builder);
                   break;
                }
                case "forwardtoplayer": {
@@ -1207,7 +1207,7 @@ public final class PacketInspectorEngine {
                   String nestedChannel = reader.readJavaUtf();
                   builder.line("Nested Channel: " + nestedChannel, UiColorPalette.successText());
                   byte[] nested = reader.readShortPrefixedBytes();
-                  init_bu_BufferHelper_Str("Nested Forward Payload", nestedChannel, nested, builder);
+                  decodeNestedBytes("Nested Forward Payload", nestedChannel, nested, builder);
                   break;
                }
                default:
@@ -1254,7 +1254,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult load_bu_BufferHelper_AutismPayloadSuppo(
+   private static PacketInspectorEngine.PayloadDecodeResult decodeCompressed(
       AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.ReportBuilder builder
    ) {
       PacketInspectorEngine.CompressionKind kind = detectCompression(raw);
@@ -1265,7 +1265,7 @@ public final class PacketInspectorEngine {
          if (decoded != null && decoded.length != 0) {
             builder.line("Decoded As: " + kind.label() + " compressed payload", UiColorPalette.successText());
             builder.line("Uncompressed Size: " + decoded.length + " bytes", UiColorPalette.textBright());
-            PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("Uncompressed Payload", snapshot == null ? "" : snapshot.channel(), decoded, builder);
+            PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("Uncompressed Payload", snapshot == null ? "" : snapshot.channel(), decoded, builder);
             return nested.init_Z() ? new PacketInspectorEngine.PayloadDecodeResult(true, true, nested.read(), nested.write()) : new PacketInspectorEngine.PayloadDecodeResult(true, true, false, false);
          } else {
             builder.line("Compression Decode: " + kind.label() + " header found, but decompression failed.", UiColorPalette.warningYellow());
@@ -1274,7 +1274,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_Str(String title, String channel, byte[] bytes, PacketInspectorEngine.ReportBuilder builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult decodeNestedBytes(String title, String channel, byte[] bytes, PacketInspectorEngine.ReportBuilder builder) {
       if (bytes == null) {
          bytes = new byte[0];
       }
@@ -1292,16 +1292,16 @@ public final class PacketInspectorEngine {
       if (json != null) {
          builder.line("  Nested Decoded As: JSON", UiColorPalette.successText());
          describeJson(json, builder);
-         return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.FULL_DECODE;
       }
 
       if (isRegisterChannel(channel)) {
          AutismPayloadSupport.PayloadEntry nestedSnapshot = new AutismPayloadSupport.PayloadEntry(
             "", channel, bytes, bytes.length, null, "", false, false, "", "", -1, ""
          );
-         boolean register = init_Z_AutismPayloadSuppo_3(nestedSnapshot, bytes, builder);
+         boolean register = decodeRegisterChannels(nestedSnapshot, bytes, builder);
          if (register) {
-            return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
+            return PacketInspectorEngine.PayloadDecodeResult.FULL_DECODE;
          }
       }
 
@@ -1343,7 +1343,7 @@ public final class PacketInspectorEngine {
       if (!anything) {
          String utf8 = AutismPayloadSupport.decodePrintableUtf8(bytes);
          if (utf8 != null && !utf8.isBlank()) {
-            builder.line("  Nested UTF-8: " + quote(sanitize(init_Str_Str(utf8))), UiColorPalette.textBright());
+            builder.line("  Nested UTF-8: " + quote(sanitize(collapseControlChars(utf8))), UiColorPalette.textBright());
             anything = true;
             textual = true;
          } else {
@@ -1354,7 +1354,7 @@ public final class PacketInspectorEngine {
       return new PacketInspectorEngine.PayloadDecodeResult(anything, strong, textual, complete);
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult load_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult scanByteBufStrings(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length >= 2) {
          List<PacketInspectorEngine.WireFieldSlice> fields = scanWireFields(raw, 16);
          if (fields.isEmpty()) {
@@ -1373,12 +1373,12 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult read_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult decodeDeep(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length != 0) {
          boolean anything = false;
          boolean strong = false;
          boolean textual = false;
-         PacketInspectorEngine.PayloadDecodeResult nbt = init_bu_BufferHelper_BArr(raw, builder, "Payload NBT");
+         PacketInspectorEngine.PayloadDecodeResult nbt = decodeNbt(raw, builder, "Payload NBT");
          anything |= nbt.init_Z();
          strong |= nbt.load_Z();
          textual |= nbt.read();
@@ -1388,11 +1388,11 @@ public final class PacketInspectorEngine {
             textual = true;
          }
 
-         PacketInspectorEngine.PayloadDecodeResult embedded = init_bu_BufferHelper_Str_bu_ConfigStore(text, builder);
+         PacketInspectorEngine.PayloadDecodeResult embedded = decodeEmbeddedBase64(text, builder);
          anything |= embedded.init_Z();
          strong |= embedded.load_Z();
          textual |= embedded.read();
-         PacketInspectorEngine.PayloadDecodeResult lengthPrefixed = write_bu_BufferHelper_BArr_bu_ConfigStore(raw, builder);
+         PacketInspectorEngine.PayloadDecodeResult lengthPrefixed = scanLengthPrefixed(raw, builder);
          anything |= lengthPrefixed.init_Z();
          strong |= lengthPrefixed.load_Z();
          textual |= lengthPrefixed.read();
@@ -1404,7 +1404,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_BArr(byte[] raw, PacketInspectorEngine.ReportBuilder builder, String label) {
+   private static PacketInspectorEngine.PayloadDecodeResult decodeNbt(byte[] raw, PacketInspectorEngine.ReportBuilder builder, String label) {
       if (raw != null && raw.length >= 3) {
          CompoundTag compressed = readGzipNbt(raw);
          if (compressed != null) {
@@ -1490,7 +1490,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_Str_bu_ConfigStore(String text, PacketInspectorEngine.ReportBuilder builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult decodeEmbeddedBase64(String text, PacketInspectorEngine.ReportBuilder builder) {
       if (text != null && text.length() >= 16) {
          boolean anything = false;
          boolean strong = false;
@@ -1502,10 +1502,10 @@ public final class PacketInspectorEngine {
             String token = base64.group();
             byte[] decoded = decodeBase64(token);
             if (isPlausibleSize(decoded)) {
-               PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(decoded);
+               PacketInspectorEngine.PayloadDecodeResult outcome = classifyBytes(decoded);
                if (outcome.init_Z()) {
                   builder.line("Embedded Base64 Payload @" + base64.start() + ": " + decoded.length + " bytes", UiColorPalette.successText());
-                  PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Base64 decoded", "", decoded, builder);
+                  PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("  Base64 decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
                   textual |= nested.read() || outcome.read();
@@ -1521,10 +1521,10 @@ public final class PacketInspectorEngine {
             String token = hex.group();
             byte[] decoded = decodeHex(token);
             if (isPlausibleSize(decoded)) {
-               PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(decoded);
+               PacketInspectorEngine.PayloadDecodeResult outcome = classifyBytes(decoded);
                if (outcome.init_Z()) {
                   builder.line("Embedded Hex Payload @" + hex.start() + ": " + decoded.length + " bytes", UiColorPalette.successText());
-                  PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Hex decoded", "", decoded, builder);
+                  PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("  Hex decoded", "", decoded, builder);
                   anything = true;
                   strong |= nested.load_Z() || outcome.load_Z();
                   textual |= nested.read() || outcome.read();
@@ -1539,7 +1539,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult write_bu_BufferHelper_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
+   private static PacketInspectorEngine.PayloadDecodeResult scanLengthPrefixed(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length >= 5) {
          boolean anything = false;
          boolean strong = false;
@@ -1556,10 +1556,10 @@ public final class PacketInspectorEngine {
                   String key = start + ":" + length;
                   if (seen.add(key)) {
                      byte[] slice = Arrays.copyOfRange(raw, start, start + length);
-                     PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(slice);
+                     PacketInspectorEngine.PayloadDecodeResult outcome = classifyBytes(slice);
                      if (outcome.init_Z()) {
                         builder.line("Nested Candidate: VarInt length @" + offset + " -> " + length + " bytes", UiColorPalette.textBright());
-                        PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
+                        PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("  Candidate Payload", "", slice, builder);
                         anything = true;
                         strong |= nested.load_Z() || outcome.load_Z();
                         textual |= nested.read() || outcome.read();
@@ -1575,10 +1575,10 @@ public final class PacketInspectorEngine {
                String key = shortStart + ":" + shortLength;
                if (seen.add(key)) {
                   byte[] slice = Arrays.copyOfRange(raw, shortStart, shortStart + shortLength);
-                  PacketInspectorEngine.PayloadDecodeResult outcome = init_bu_BufferHelper_BArr(slice);
+                  PacketInspectorEngine.PayloadDecodeResult outcome = classifyBytes(slice);
                   if (outcome.init_Z()) {
                      builder.line("Nested Candidate: unsigned-short length @" + offset + " -> " + shortLength + " bytes", UiColorPalette.textBright());
-                     PacketInspectorEngine.PayloadDecodeResult nested = init_bu_BufferHelper_Str("  Candidate Payload", "", slice, builder);
+                     PacketInspectorEngine.PayloadDecodeResult nested = decodeNestedBytes("  Candidate Payload", "", slice, builder);
                      anything = true;
                      strong |= nested.load_Z() || outcome.load_Z();
                      textual |= nested.read() || outcome.read();
@@ -1624,15 +1624,15 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PayloadDecodeResult init_bu_BufferHelper_BArr(byte[] bytes) {
+   private static PacketInspectorEngine.PayloadDecodeResult classifyBytes(byte[] bytes) {
       if (bytes == null || bytes.length == 0) {
          return PacketInspectorEngine.PayloadDecodeResult.NONE;
       } else if (parseJsonPayload(bytes) != null) {
-         return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.FULL_DECODE;
       } else if (AutismPayloadSupport.decodeMcString(bytes) != null) {
-         return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.FULL_DECODE;
       } else if (!readJavaUtfStrings(bytes, 4).isEmpty()) {
-         return PacketInspectorEngine.PayloadDecodeResult.load_bu_BufferHelper;
+         return PacketInspectorEngine.PayloadDecodeResult.FULL_DECODE;
       } else if (!identifierPreview(bytes, 4).isEmpty()) {
          return new PacketInspectorEngine.PayloadDecodeResult(true, false, true, false);
       } else {
@@ -1744,7 +1744,7 @@ public final class PacketInspectorEngine {
       return version >= 1 && version <= 7;
    }
 
-   private static boolean init_Z_AutismPayloadSuppo_3(AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
+   private static boolean decodeRegisterChannels(AutismPayloadSupport.PayloadEntry snapshot, byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       List<String> nullSeparated = splitNullSeparated(raw, 48);
       List<String> identifiers = identifierPreview(raw, 48);
       LinkedHashSet<String> channels = new LinkedHashSet<>();
@@ -1845,7 +1845,7 @@ public final class PacketInspectorEngine {
                break;
             }
 
-            String cleaned = init_Str_Str(part);
+            String cleaned = collapseControlChars(part);
             if (isMostlyPrintableText(cleaned)) {
                values.add(cleaned);
             }
@@ -1857,7 +1857,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static List<String> load_List_BArr_I(byte[] raw, int max) {
+   private static List<String> readMcStrings(byte[] raw, int max) {
       if (raw != null && raw.length != 0) {
          int index = 0;
          List<String> values = new ArrayList<>();
@@ -2015,7 +2015,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static void init_V_BArr_bu_ConfigStore(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
+   private static void appendRawHints(byte[] raw, PacketInspectorEngine.ReportBuilder builder) {
       if (raw != null && raw.length != 0) {
          List<String> varInts = varIntPreview(raw, 5);
          if (!varInts.isEmpty()) {
@@ -2294,14 +2294,14 @@ public final class PacketInspectorEngine {
       while (matcher.find() && runs.size() < Math.max(1, max)) {
          String run = matcher.group().strip();
          if (run.length() >= 4) {
-            runs.add(init_Str_Str(run));
+            runs.add(collapseControlChars(run));
          }
       }
 
       return runs;
    }
 
-   private static String init_Str_Str(String text) {
+   private static String collapseControlChars(String text) {
       if (text != null && !text.isBlank()) {
          StringBuilder sb = new StringBuilder(text.length());
          boolean spaced = false;
@@ -2342,7 +2342,7 @@ public final class PacketInspectorEngine {
       return channel == null ? "" : channel.strip().toLowerCase(Locale.ROOT);
    }
 
-   private static String init_Str_Str_Z(String channel, boolean complete) {
+   private static String interpretationFor(String channel, boolean complete) {
       String normalized = normalizeChannel(channel);
       if (normalized.equals("minecraft:register") || normalized.equals("register")) {
          return "Legacy plugin channel registration list";
@@ -2359,7 +2359,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static String read_Str_Str(String channel) {
+   private static String describeChannelSource(String channel) {
       if (channel != null && !channel.isBlank()) {
          String normalized = channel.strip().toLowerCase(Locale.ROOT);
          if (normalized.equals("minecraft:register") || normalized.equals("register")) {
@@ -2401,7 +2401,7 @@ public final class PacketInspectorEngine {
       return value != null && !value.isBlank() ? value : fallback;
    }
 
-   private static PacketInspectorEngine.PacketSummaryFlags init_bu_FileCache_Packet_bu_ConfigStore(Packet<?> packet, PacketInspectorEngine.ReportBuilder builder) {
+   private static PacketInspectorEngine.PacketSummaryFlags describeBroadKnownPacket(Packet<?> packet, PacketInspectorEngine.ReportBuilder builder) {
       if (packet == null) {
          return PacketInspectorEngine.PacketSummaryFlags.NONE;
       }
@@ -2413,71 +2413,71 @@ public final class PacketInspectorEngine {
       switch (simpleName) {
          case "ClientboundBlockUpdatePacket":
             wrote |= appendMeaning(builder, "Server changed one block");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Block Pos", "getPos", "pos");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Block", "getBlockState", "blockState", "state");
+            wrote |= appendField(builder, packet, "Block Pos", "getPos", "pos");
+            wrote |= appendField(builder, packet, "Block", "getBlockState", "blockState", "state");
             break;
          case "ClientboundBlockEntityDataPacket":
             wrote |= appendMeaning(builder, "Server updated block entity data");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Block Pos", "getPos", "pos");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Block Entity Type", "getType", "type");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Nbt", "getTag", "tag");
+            wrote |= appendField(builder, packet, "Block Pos", "getPos", "pos");
+            wrote |= appendField(builder, packet, "Block Entity Type", "getType", "type");
+            wrote |= appendField(builder, packet, "Nbt", "getTag", "tag");
             break;
          case "ClientboundBlockEventPacket":
             wrote |= appendMeaning(builder, "Server fired a block event");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Block Pos", "getPos", "pos");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Block", "getBlock", "block");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Event Type", "getB0", "b0", "eventType");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Event Data", "getB1", "b1", "eventData");
+            wrote |= appendField(builder, packet, "Block Pos", "getPos", "pos");
+            wrote |= appendField(builder, packet, "Block", "getBlock", "block");
+            wrote |= appendField(builder, packet, "Event Type", "getB0", "b0", "eventType");
+            wrote |= appendField(builder, packet, "Event Data", "getB1", "b1", "eventData");
             break;
          case "ClientboundSectionBlocksUpdatePacket":
             wrote |= appendMeaning(builder, "Server changed multiple blocks in a chunk section");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Section", "sectionPos", "getSectionPos");
+            wrote |= appendField(builder, packet, "Section", "sectionPos", "getSectionPos");
             Object positions = firstPresent(firstGetterValue(packet, "positions", "getPositions"), propertyByLabel(packet, "Positions"));
             Object states = firstPresent(firstGetterValue(packet, "states", "getStates"), propertyByLabel(packet, "States"));
             if (positions != null) {
-               wrote |= load_Z_bu_ConfigStore(builder, "Positions", positions);
+               wrote |= appendPlainValue(builder, "Positions", positions);
             }
 
             if (states != null) {
-               wrote |= load_Z_bu_ConfigStore(builder, "States", states);
+               wrote |= appendPlainValue(builder, "States", states);
             }
 
             complete = false;
             break;
          case "ClientboundLevelEventPacket":
             wrote |= appendMeaning(builder, "World event such as particles, sound, or block effect");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Event", "getType", "type");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Block Pos", "getPos", "pos");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Data", "getData", "data");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Global", "isGlobalEvent", "globalEvent");
+            wrote |= appendField(builder, packet, "Event", "getType", "type");
+            wrote |= appendField(builder, packet, "Block Pos", "getPos", "pos");
+            wrote |= appendField(builder, packet, "Data", "getData", "data");
+            wrote |= appendField(builder, packet, "Global", "isGlobalEvent", "globalEvent");
             break;
          case "ClientboundLevelParticlesPacket":
             wrote |= appendMeaning(builder, "Particle spawn");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Particle", "getParticle", "getParticleType", "particle");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Pos", "getX", "x", "getY", "y", "getZ", "z");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Offset", "getXDist", "xDist", "getYDist", "yDist", "getZDist", "zDist");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Speed", "getMaxSpeed", "maxSpeed");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Count", "getCount", "count");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Override Limiter", "isOverrideLimiter", "overrideLimiter");
+            wrote |= appendField(builder, packet, "Particle", "getParticle", "getParticleType", "particle");
+            wrote |= appendVecField(builder, packet, "Pos", "getX", "x", "getY", "y", "getZ", "z");
+            wrote |= appendVecField(builder, packet, "Offset", "getXDist", "xDist", "getYDist", "yDist", "getZDist", "zDist");
+            wrote |= appendField(builder, packet, "Speed", "getMaxSpeed", "maxSpeed");
+            wrote |= appendField(builder, packet, "Count", "getCount", "count");
+            wrote |= appendField(builder, packet, "Override Limiter", "isOverrideLimiter", "overrideLimiter");
             break;
          case "ClientboundForgetLevelChunkPacket":
             wrote |= appendMeaning(builder, "Client should unload a chunk");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Chunk", "pos", "getPos");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Chunk X", "getX", "x");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Chunk Z", "getZ", "z");
+            wrote |= appendField(builder, packet, "Chunk", "pos", "getPos");
+            wrote |= appendField(builder, packet, "Chunk X", "getX", "x");
+            wrote |= appendField(builder, packet, "Chunk Z", "getZ", "z");
             break;
          case "ClientboundSetChunkCacheCenterPacket":
             wrote |= appendMeaning(builder, "Server changed chunk cache center");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Chunk X", "getX", "x");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Chunk Z", "getZ", "z");
+            wrote |= appendField(builder, packet, "Chunk X", "getX", "x");
+            wrote |= appendField(builder, packet, "Chunk Z", "getZ", "z");
             break;
          case "ClientboundSetChunkCacheRadiusPacket":
          case "ClientboundSetSimulationDistancePacket":
             wrote |= appendMeaning(
                builder, simpleName.contains("Simulation") ? "Server changed simulation distance" : "Server changed chunk render distance"
             );
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Radius", "getRadius", "radius");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Distance", "simulationDistance", "distance");
+            wrote |= appendField(builder, packet, "Radius", "getRadius", "radius");
+            wrote |= appendField(builder, packet, "Distance", "simulationDistance", "distance");
             break;
          case "ClientboundMoveEntityPacket.Pos":
          case "ClientboundMoveEntityPacket.Rot":
@@ -2486,26 +2486,26 @@ public final class PacketInspectorEngine {
          case "ClientboundRotateHeadPacket":
          case "ClientboundHurtAnimationPacket":
             wrote |= appendMeaning(builder, "Server moved or rotated an entity");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Entity Id", "getEntityId", "entityId", "id");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Delta X", "getXa", "xa");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Delta Y", "getYa", "ya");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Delta Z", "getZa", "za");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Yaw", "getYRot", "yRot", "yaw");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Pitch", "getXRot", "xRot", "pitch");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Head Yaw", "getYHeadRot", "yHeadRot");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Change", "change");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Relatives", "relatives");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "On Ground", "isOnGround", "onGround");
+            wrote |= appendEntityField(builder, packet, "Entity Id", "getEntityId", "entityId", "id");
+            wrote |= appendField(builder, packet, "Delta X", "getXa", "xa");
+            wrote |= appendField(builder, packet, "Delta Y", "getYa", "ya");
+            wrote |= appendField(builder, packet, "Delta Z", "getZa", "za");
+            wrote |= appendField(builder, packet, "Yaw", "getYRot", "yRot", "yaw");
+            wrote |= appendField(builder, packet, "Pitch", "getXRot", "xRot", "pitch");
+            wrote |= appendField(builder, packet, "Head Yaw", "getYHeadRot", "yHeadRot");
+            wrote |= appendField(builder, packet, "Change", "change");
+            wrote |= appendField(builder, packet, "Relatives", "relatives");
+            wrote |= appendField(builder, packet, "On Ground", "isOnGround", "onGround");
             break;
          case "ClientboundMoveVehiclePacket":
          case "ServerboundMoveVehiclePacket":
             wrote |= appendMeaning(
                builder, simpleName.startsWith("Serverbound") ? "Client moved the ridden vehicle" : "Server moved the ridden vehicle"
             );
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Pos", "getX", "x", "getY", "y", "getZ", "z");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Yaw", "getYRot", "yRot", "yaw");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Pitch", "getXRot", "xRot", "pitch");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "On Ground", "isOnGround", "onGround");
+            wrote |= appendVecField(builder, packet, "Pos", "getX", "x", "getY", "y", "getZ", "z");
+            wrote |= appendField(builder, packet, "Yaw", "getYRot", "yRot", "yaw");
+            wrote |= appendField(builder, packet, "Pitch", "getXRot", "xRot", "pitch");
+            wrote |= appendField(builder, packet, "On Ground", "isOnGround", "onGround");
             break;
          case "ClientboundRemoveEntitiesPacket":
             wrote |= appendMeaning(builder, "Server removed entities");
@@ -2517,13 +2517,13 @@ public final class PacketInspectorEngine {
             break;
          case "ClientboundTakeItemEntityPacket":
             wrote |= appendMeaning(builder, "Item/entity pickup animation");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Item Entity", "getItemId", "itemId");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Collector", "getPlayerId", "playerId");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Amount", "getAmount", "amount");
+            wrote |= appendEntityField(builder, packet, "Item Entity", "getItemId", "itemId");
+            wrote |= appendEntityField(builder, packet, "Collector", "getPlayerId", "playerId");
+            wrote |= appendField(builder, packet, "Amount", "getAmount", "amount");
             break;
          case "ClientboundSetPassengersPacket":
             wrote |= appendMeaning(builder, "Server changed vehicle passengers");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Vehicle", "getVehicle", "vehicle", "vehicleId");
+            wrote |= appendEntityField(builder, packet, "Vehicle", "getVehicle", "vehicle", "vehicleId");
             Object passengers = firstPresent(firstGetterValue(packet, "getPassengers", "passengers"), propertyByLabel(packet, "Passengers"));
             if (passengers != null) {
                builder.line("Passengers: " + entityIdList(passengers), UiColorPalette.cyan());
@@ -2532,20 +2532,20 @@ public final class PacketInspectorEngine {
             break;
          case "ClientboundSetEntityLinkPacket":
             wrote |= appendMeaning(builder, "Server linked one entity to another");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Source", "getSourceId", "sourceId", "source");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Destination", "getDestId", "destId", "destination");
+            wrote |= appendEntityField(builder, packet, "Source", "getSourceId", "sourceId", "source");
+            wrote |= appendEntityField(builder, packet, "Destination", "getDestId", "destId", "destination");
             break;
          case "ClientboundSetHealthPacket":
             wrote |= appendMeaning(builder, "Player health update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Health", "getHealth", "health");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Food", "getFood", "food");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Saturation", "getSaturation", "saturation");
+            wrote |= appendField(builder, packet, "Health", "getHealth", "health");
+            wrote |= appendField(builder, packet, "Food", "getFood", "food");
+            wrote |= appendField(builder, packet, "Saturation", "getSaturation", "saturation");
             break;
          case "ClientboundSetExperiencePacket":
             wrote |= appendMeaning(builder, "Player experience update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Progress", "getExperienceProgress", "experienceProgress", "progress");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Level", "getExperienceLevel", "experienceLevel", "level");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Total", "getTotalExperience", "totalExperience", "total");
+            wrote |= appendField(builder, packet, "Progress", "getExperienceProgress", "experienceProgress", "progress");
+            wrote |= appendField(builder, packet, "Level", "getExperienceLevel", "experienceLevel", "level");
+            wrote |= appendField(builder, packet, "Total", "getTotalExperience", "totalExperience", "total");
             break;
          case "ClientboundSetHeldSlotPacket":
          case "ServerboundSetCarriedItemPacket":
@@ -2564,132 +2564,132 @@ public final class PacketInspectorEngine {
          case "ClientboundSetPlayerInventoryPacket":
          case "ClientboundSetCursorItemPacket":
             wrote |= appendMeaning(builder, simpleName.contains("Cursor") ? "Server updated cursor item" : "Server updated player inventory slot");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Slot", "slot", "getSlot");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Stack", "contents", "getContents", "item", "getItem");
+            wrote |= appendField(builder, packet, "Slot", "slot", "getSlot");
+            wrote |= appendField(builder, packet, "Stack", "contents", "getContents", "item", "getItem");
             break;
          case "ClientboundContainerClosePacket":
             wrote |= appendMeaning(builder, "Server closed a handled screen");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Sync Id", "getContainerId", "containerId");
+            wrote |= appendField(builder, packet, "Sync Id", "getContainerId", "containerId");
             break;
          case "ClientboundCooldownPacket":
             wrote |= appendMeaning(builder, "Item cooldown update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Item", "getItem", "item");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Ticks", "getDuration", "duration", "ticks");
+            wrote |= appendField(builder, packet, "Item", "getItem", "item");
+            wrote |= appendField(builder, packet, "Ticks", "getDuration", "duration", "ticks");
             break;
          case "ClientboundOpenBookPacket":
             wrote |= appendMeaning(builder, "Open book animation/screen");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Hand", "getHand", "hand");
+            wrote |= appendField(builder, packet, "Hand", "getHand", "hand");
             break;
          case "ClientboundOpenSignEditorPacket":
             wrote |= appendMeaning(builder, "Open sign editor");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Block Pos", "getPos", "pos");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Front", "isFrontText", "frontText", "front");
+            wrote |= appendField(builder, packet, "Block Pos", "getPos", "pos");
+            wrote |= appendField(builder, packet, "Front", "isFrontText", "frontText", "front");
             break;
          case "ClientboundSetActionBarTextPacket":
          case "ClientboundSetTitleTextPacket":
          case "ClientboundSetSubtitleTextPacket":
             wrote |= appendMeaning(builder, "Server displayed text on the HUD");
-            wrote |= read_Z_bu_ConfigStore(builder, packet, "Text", "getText", "text");
+            wrote |= appendTextField(builder, packet, "Text", "getText", "text");
             break;
          case "ClientboundSetTitlesAnimationPacket":
             wrote |= appendMeaning(builder, "Title timing update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Fade In", "getFadeIn", "fadeIn");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Stay", "getStay", "stay");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Fade Out", "getFadeOut", "fadeOut");
+            wrote |= appendField(builder, packet, "Fade In", "getFadeIn", "fadeIn");
+            wrote |= appendField(builder, packet, "Stay", "getStay", "stay");
+            wrote |= appendField(builder, packet, "Fade Out", "getFadeOut", "fadeOut");
             break;
          case "ClientboundClearTitlesPacket":
             wrote |= appendMeaning(builder, "Clear title/subtitle text");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Reset Times", "shouldResetTimes", "resetTimes");
+            wrote |= appendField(builder, packet, "Reset Times", "shouldResetTimes", "resetTimes");
             break;
          case "ClientboundTabListPacket":
             wrote |= appendMeaning(builder, "Player list header/footer update");
-            wrote |= read_Z_bu_ConfigStore(builder, packet, "Header", "getHeader", "header");
-            wrote |= read_Z_bu_ConfigStore(builder, packet, "Footer", "getFooter", "footer");
+            wrote |= appendTextField(builder, packet, "Header", "getHeader", "header");
+            wrote |= appendTextField(builder, packet, "Footer", "getFooter", "footer");
             break;
          case "ClientboundSetTimePacket":
             wrote |= appendMeaning(builder, "World time update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Game Time", "getGameTime", "gameTime");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Day Time", "getDayTime", "dayTime");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Tick Day Time", "isTickDayTime", "tickDayTime");
+            wrote |= appendField(builder, packet, "Game Time", "getGameTime", "gameTime");
+            wrote |= appendField(builder, packet, "Day Time", "getDayTime", "dayTime");
+            wrote |= appendField(builder, packet, "Tick Day Time", "isTickDayTime", "tickDayTime");
             break;
          case "ClientboundPlayerAbilitiesPacket":
          case "ServerboundPlayerAbilitiesPacket":
             wrote |= appendMeaning(builder, "Player ability flags");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Invulnerable", "isInvulnerable", "invulnerable");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Flying", "isFlying", "flying");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Can Fly", "canFly", "mayfly", "mayFly");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Instabuild", "canInstabuild", "instabuild");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Fly Speed", "getFlyingSpeed", "flyingSpeed");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Walk Speed", "getWalkingSpeed", "walkingSpeed");
+            wrote |= appendField(builder, packet, "Invulnerable", "isInvulnerable", "invulnerable");
+            wrote |= appendField(builder, packet, "Flying", "isFlying", "flying");
+            wrote |= appendField(builder, packet, "Can Fly", "canFly", "mayfly", "mayFly");
+            wrote |= appendField(builder, packet, "Instabuild", "canInstabuild", "instabuild");
+            wrote |= appendField(builder, packet, "Fly Speed", "getFlyingSpeed", "flyingSpeed");
+            wrote |= appendField(builder, packet, "Walk Speed", "getWalkingSpeed", "walkingSpeed");
             break;
          case "ClientboundChangeDifficultyPacket":
          case "ServerboundChangeDifficultyPacket":
          case "ServerboundLockDifficultyPacket":
             wrote |= appendMeaning(builder, "Difficulty setting update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Difficulty", "getDifficulty", "difficulty");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Locked", "isLocked", "locked");
+            wrote |= appendField(builder, packet, "Difficulty", "getDifficulty", "difficulty");
+            wrote |= appendField(builder, packet, "Locked", "isLocked", "locked");
             break;
          case "ClientboundSoundEntityPacket":
             wrote |= appendMeaning(builder, "Sound played from an entity");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Sound", "getSound", "sound");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Category", "getSource", "source", "category");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Entity", "getId", "id", "entityId");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Volume", "getVolume", "volume");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Pitch", "getPitch", "pitch");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Seed", "getSeed", "seed");
+            wrote |= appendField(builder, packet, "Sound", "getSound", "sound");
+            wrote |= appendField(builder, packet, "Category", "getSource", "source", "category");
+            wrote |= appendEntityField(builder, packet, "Entity", "getId", "id", "entityId");
+            wrote |= appendField(builder, packet, "Volume", "getVolume", "volume");
+            wrote |= appendField(builder, packet, "Pitch", "getPitch", "pitch");
+            wrote |= appendField(builder, packet, "Seed", "getSeed", "seed");
             break;
          case "ClientboundStopSoundPacket":
             wrote |= appendMeaning(builder, "Stop one or more sounds");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Source", "getSource", "source");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Name", "getName", "name");
+            wrote |= appendField(builder, packet, "Source", "getSource", "source");
+            wrote |= appendField(builder, packet, "Name", "getName", "name");
             break;
          case "ClientboundBossEventPacket":
             wrote |= appendMeaning(builder, "Boss bar update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Boss Bar Id", "getId", "id");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Operation", "getOperation", "operation");
+            wrote |= appendField(builder, packet, "Boss Bar Id", "getId", "id");
+            wrote |= appendField(builder, packet, "Operation", "getOperation", "operation");
             complete = false;
             break;
          case "ClientboundPlayerInfoUpdatePacket":
             wrote |= appendMeaning(builder, "Player list entries updated");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Actions", "actions");
-            wrote |= write_Z_bu_ConfigStore(builder, packet, "Entries", "entries");
+            wrote |= appendField(builder, packet, "Actions", "actions");
+            wrote |= appendCollectionField(builder, packet, "Entries", "entries");
             complete = false;
             break;
          case "ClientboundPlayerInfoRemovePacket":
             wrote |= appendMeaning(builder, "Player list entries removed");
-            wrote |= write_Z_bu_ConfigStore(builder, packet, "Profiles", "profileIds", "getProfileIds");
+            wrote |= appendCollectionField(builder, packet, "Profiles", "profileIds", "getProfileIds");
             break;
          case "ClientboundPlayerCombatEndPacket":
          case "ClientboundPlayerCombatEnterPacket":
          case "ClientboundPlayerCombatKillPacket":
             wrote |= appendMeaning(builder, "Player combat state update");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Player", "playerId", "getPlayerId");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Killer", "killerId", "getKillerId");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Duration", "duration", "getDuration");
-            wrote |= read_Z_bu_ConfigStore(builder, packet, "Message", "message", "getMessage");
+            wrote |= appendEntityField(builder, packet, "Player", "playerId", "getPlayerId");
+            wrote |= appendEntityField(builder, packet, "Killer", "killerId", "getKillerId");
+            wrote |= appendField(builder, packet, "Duration", "duration", "getDuration");
+            wrote |= appendTextField(builder, packet, "Message", "message", "getMessage");
             break;
          case "ClientboundSetScorePacket":
          case "ClientboundResetScorePacket":
             wrote |= appendMeaning(builder, "Scoreboard score update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Owner", "owner", "getOwner");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Objective", "objectiveName", "getObjectiveName");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Score", "score", "getScore");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Display", "display", "numberFormat", "getDisplay");
+            wrote |= appendField(builder, packet, "Owner", "owner", "getOwner");
+            wrote |= appendField(builder, packet, "Objective", "objectiveName", "getObjectiveName");
+            wrote |= appendField(builder, packet, "Score", "score", "getScore");
+            wrote |= appendField(builder, packet, "Display", "display", "numberFormat", "getDisplay");
             break;
          case "ClientboundSetObjectivePacket":
          case "ClientboundSetDisplayObjectivePacket":
             wrote |= appendMeaning(builder, "Scoreboard objective update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Objective", "getObjectiveName", "objectiveName");
-            wrote |= read_Z_bu_ConfigStore(builder, packet, "Display Name", "getDisplayName", "displayName");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Render Type", "getRenderType", "renderType");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Slot", "getSlot", "slot");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Method", "getMethod", "method");
+            wrote |= appendField(builder, packet, "Objective", "getObjectiveName", "objectiveName");
+            wrote |= appendTextField(builder, packet, "Display Name", "getDisplayName", "displayName");
+            wrote |= appendField(builder, packet, "Render Type", "getRenderType", "renderType");
+            wrote |= appendField(builder, packet, "Slot", "getSlot", "slot");
+            wrote |= appendField(builder, packet, "Method", "getMethod", "method");
             break;
          case "ClientboundSetPlayerTeamPacket":
             wrote |= appendMeaning(builder, "Scoreboard team update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Team", "getName", "name");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Method", "getMethod", "method");
-            wrote |= write_Z_bu_ConfigStore(builder, packet, "Players", "getPlayers", "players");
+            wrote |= appendField(builder, packet, "Team", "getName", "name");
+            wrote |= appendField(builder, packet, "Method", "getMethod", "method");
+            wrote |= appendCollectionField(builder, packet, "Players", "getPlayers", "players");
             complete = false;
             break;
          case "ClientboundSetBorderCenterPacket":
@@ -2699,94 +2699,94 @@ public final class PacketInspectorEngine {
          case "ClientboundSetBorderWarningDistancePacket":
          case "ClientboundInitializeBorderPacket":
             wrote |= appendMeaning(builder, "World border update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Center X", "getNewCenterX", "newCenterX", "centerX");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Center Z", "getNewCenterZ", "newCenterZ", "centerZ");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Size", "getSize", "size");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Old Size", "getOldSize", "oldSize");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "New Size", "getNewSize", "newSize");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Lerp Time", "getLerpTime", "lerpTime");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Warning Blocks", "getWarningBlocks", "warningBlocks");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Warning Time", "getWarningTime", "warningTime");
+            wrote |= appendField(builder, packet, "Center X", "getNewCenterX", "newCenterX", "centerX");
+            wrote |= appendField(builder, packet, "Center Z", "getNewCenterZ", "newCenterZ", "centerZ");
+            wrote |= appendField(builder, packet, "Size", "getSize", "size");
+            wrote |= appendField(builder, packet, "Old Size", "getOldSize", "oldSize");
+            wrote |= appendField(builder, packet, "New Size", "getNewSize", "newSize");
+            wrote |= appendField(builder, packet, "Lerp Time", "getLerpTime", "lerpTime");
+            wrote |= appendField(builder, packet, "Warning Blocks", "getWarningBlocks", "warningBlocks");
+            wrote |= appendField(builder, packet, "Warning Time", "getWarningTime", "warningTime");
             break;
          case "ClientboundResourcePackPushPacket":
          case "ClientboundResourcePackPopPacket":
             wrote |= appendMeaning(builder, "Resource pack request/update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Id", "id", "getId");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Url", "url", "getUrl");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Hash", "hash", "getHash");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Required", "required", "isRequired");
-            wrote |= read_Z_bu_ConfigStore(builder, packet, "Prompt", "prompt", "getPrompt");
+            wrote |= appendField(builder, packet, "Id", "id", "getId");
+            wrote |= appendField(builder, packet, "Url", "url", "getUrl");
+            wrote |= appendField(builder, packet, "Hash", "hash", "getHash");
+            wrote |= appendField(builder, packet, "Required", "required", "isRequired");
+            wrote |= appendTextField(builder, packet, "Prompt", "prompt", "getPrompt");
             break;
          case "ClientboundUpdateRecipesPacket":
          case "ClientboundRecipeBookAddPacket":
          case "ClientboundRecipeBookRemovePacket":
          case "ClientboundRecipeBookSettingsPacket":
             wrote |= appendMeaning(builder, "Recipe book/recipe registry update");
-            wrote |= write_Z_bu_ConfigStore(builder, packet, "Recipes", "recipes", "getRecipes", "entries");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Settings", "settings", "getSettings");
+            wrote |= appendCollectionField(builder, packet, "Recipes", "recipes", "getRecipes", "entries");
+            wrote |= appendField(builder, packet, "Settings", "settings", "getSettings");
             complete = false;
             break;
          case "ClientboundUpdateTagsPacket":
             wrote |= appendMeaning(builder, "Registry tag update");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Tags", "tags", "getTags");
+            wrote |= appendField(builder, packet, "Tags", "tags", "getTags");
             complete = false;
             break;
          case "ServerboundPlayerCommandPacket":
             wrote |= appendMeaning(builder, "Client sent player/entity command");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Entity", "getId", "id", "entityId");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Action", "getAction", "action");
-            wrote |= init_Z_bu_ConfigStore(builder, "Data", firstPresent(firstGetterValue(packet, "getData", "data"), recordComponentAt(packet, 2)));
+            wrote |= appendEntityField(builder, packet, "Entity", "getId", "id", "entityId");
+            wrote |= appendField(builder, packet, "Action", "getAction", "action");
+            wrote |= appendValue(builder, "Data", firstPresent(firstGetterValue(packet, "getData", "data"), recordComponentAt(packet, 2)));
             break;
          case "ServerboundPlayerInputPacket":
             wrote |= appendMeaning(builder, "Client movement input state");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Input", "input");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Forward", "xxa", "forward");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Sideways", "zza", "sideways");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Jumping", "isJumping", "jumping");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Sneaking", "isShiftKeyDown", "shiftKeyDown", "sneaking");
+            wrote |= appendField(builder, packet, "Input", "input");
+            wrote |= appendField(builder, packet, "Forward", "xxa", "forward");
+            wrote |= appendField(builder, packet, "Sideways", "zza", "sideways");
+            wrote |= appendField(builder, packet, "Jumping", "isJumping", "jumping");
+            wrote |= appendField(builder, packet, "Sneaking", "isShiftKeyDown", "shiftKeyDown", "sneaking");
             break;
          case "ServerboundPaddleBoatPacket":
             wrote |= appendMeaning(builder, "Client boat paddle state");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Left", "getLeft", "left");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Right", "getRight", "right");
+            wrote |= appendField(builder, packet, "Left", "getLeft", "left");
+            wrote |= appendField(builder, packet, "Right", "getRight", "right");
             break;
          case "ServerboundCommandSuggestionPacket":
             wrote |= appendMeaning(builder, "Client requested command completions");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Transaction Id", "getId", "id");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Command", "getCommand", "command");
+            wrote |= appendField(builder, packet, "Transaction Id", "getId", "id");
+            wrote |= appendField(builder, packet, "Command", "getCommand", "command");
             break;
          case "ServerboundChatCommandPacket":
          case "ServerboundChatCommandSignedPacket":
             wrote |= appendMeaning(builder, "Outgoing command");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Command", "command", "getCommand");
+            wrote |= appendField(builder, packet, "Command", "command", "getCommand");
             break;
          case "ServerboundPickItemFromBlockPacket":
             wrote |= appendMeaning(builder, "Client pick-blocked a block");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Block Pos", "pos", "getPos");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Include Data", "includeData", "isIncludeData");
+            wrote |= appendField(builder, packet, "Block Pos", "pos", "getPos");
+            wrote |= appendField(builder, packet, "Include Data", "includeData", "isIncludeData");
             break;
          case "ServerboundPickItemFromEntityPacket":
             wrote |= appendMeaning(builder, "Client pick-blocked an entity");
-            wrote |= load_Z_bu_ConfigStore(builder, packet, "Entity", "id", "getId", "entityId");
-            wrote |= init_Z_bu_ConfigStore(builder, packet, "Include Data", "includeData", "isIncludeData");
+            wrote |= appendEntityField(builder, packet, "Entity", "id", "getId", "entityId");
+            wrote |= appendField(builder, packet, "Include Data", "includeData", "isIncludeData");
             break;
          default:
             if (className.contains("ServerboundMovePlayerPacket")) {
                wrote |= appendMeaning(builder, "Client player movement");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "Pos", "getX", "x", "getY", "y", "getZ", "z");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "Yaw", "getYRot", "yRot", "yaw");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "Pitch", "getXRot", "xRot", "pitch");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "On Ground", "isOnGround", "onGround");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "Horizontal Collision", "horizontalCollision");
+               wrote |= appendVecField(builder, packet, "Pos", "getX", "x", "getY", "y", "getZ", "z");
+               wrote |= appendField(builder, packet, "Yaw", "getYRot", "yRot", "yaw");
+               wrote |= appendField(builder, packet, "Pitch", "getXRot", "xRot", "pitch");
+               wrote |= appendField(builder, packet, "On Ground", "isOnGround", "onGround");
+               wrote |= appendField(builder, packet, "Horizontal Collision", "horizontalCollision");
             } else if (className.contains("ClientboundMoveEntityPacket")) {
                wrote |= appendMeaning(builder, "Server moved or rotated an entity");
-               wrote |= load_Z_bu_ConfigStore(builder, packet, "Entity Id", "getEntityId", "entityId", "id");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "Delta X", "getXa", "xa");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "Delta Y", "getYa", "ya");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "Delta Z", "getZa", "za");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "Yaw", "getYRot", "yRot", "yaw");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "Pitch", "getXRot", "xRot", "pitch");
-               wrote |= init_Z_bu_ConfigStore(builder, packet, "On Ground", "isOnGround", "onGround");
+               wrote |= appendEntityField(builder, packet, "Entity Id", "getEntityId", "entityId", "id");
+               wrote |= appendField(builder, packet, "Delta X", "getXa", "xa");
+               wrote |= appendField(builder, packet, "Delta Y", "getYa", "ya");
+               wrote |= appendField(builder, packet, "Delta Z", "getZa", "za");
+               wrote |= appendField(builder, packet, "Yaw", "getYRot", "yRot", "yaw");
+               wrote |= appendField(builder, packet, "Pitch", "getXRot", "xRot", "pitch");
+               wrote |= appendField(builder, packet, "On Ground", "isOnGround", "onGround");
             }
       }
 
@@ -2802,21 +2802,21 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static boolean init_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
+   private static boolean appendField(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
       Object value = firstPresent(firstGetterValue(packet, accessors), propertyByLabel(packet, label));
-      return init_Z_bu_ConfigStore(builder, label, value);
+      return appendValue(builder, label, value);
    }
 
-   private static boolean init_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, String label, Object value) {
+   private static boolean appendValue(PacketInspectorEngine.ReportBuilder builder, String label, Object value) {
       if (value != null && value != MISSING) {
-         builder.line(label + ": " + load_Str_Str_Obj(label, value), labeledValueColor(label, value));
+         builder.line(label + ": " + describeLabeledValue(label, value), labeledValueColor(label, value));
          return true;
       } else {
          return false;
       }
    }
 
-   private static boolean load_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, String label, Object value) {
+   private static boolean appendPlainValue(PacketInspectorEngine.ReportBuilder builder, String label, Object value) {
       if (value != null && value != MISSING) {
          builder.line(label + ": " + valueText(value), labeledValueColor(label, value));
          return true;
@@ -2825,7 +2825,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static boolean load_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
+   private static boolean appendEntityField(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
       Object value = firstPresent(firstGetterValue(packet, accessors), propertyByLabel(packet, label));
       if (value instanceof Number number) {
          appendEntity(builder, label, number.intValue());
@@ -2834,28 +2834,28 @@ public final class PacketInspectorEngine {
          builder.line(label + ": " + describeEntity(entity), UiColorPalette.cyan());
          return true;
       } else {
-         return init_Z_bu_ConfigStore(builder, label, value);
+         return appendValue(builder, label, value);
       }
    }
 
-   private static boolean read_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
+   private static boolean appendTextField(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
       Object value = firstPresent(firstGetterValue(packet, accessors), propertyByLabel(packet, label));
       if (value != null && value != MISSING) {
          String text = componentText(value);
-         builder.line(label + ": " + (text != null && !text.isBlank() ? quote(sanitize(text)) : load_Str_Str_Obj(label, value)), scalarValueColor(label, value));
+         builder.line(label + ": " + (text != null && !text.isBlank() ? quote(sanitize(text)) : describeLabeledValue(label, value)), scalarValueColor(label, value));
          return true;
       } else {
          return false;
       }
    }
 
-   private static boolean write_Z_bu_ConfigStore(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
+   private static boolean appendCollectionField(PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String... accessors) {
       Object value = firstPresent(firstGetterValue(packet, accessors), propertyByLabel(packet, label));
       if (value != null && value != MISSING) {
          if (value instanceof Collection<?> collection) {
             builder.line(label + ": " + describeCollection(collection), UiColorPalette.textBody());
          } else {
-            builder.line(label + ": " + load_Str_Str_Obj(label, value), labeledValueColor(label, value));
+            builder.line(label + ": " + describeLabeledValue(label, value), labeledValueColor(label, value));
          }
 
          return true;
@@ -2864,7 +2864,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static boolean init_Z_bu_ConfigStore(
+   private static boolean appendVecField(
       PacketInspectorEngine.ReportBuilder builder, Packet<?> packet, String label, String xGetter, String xField, String yGetter, String yField, String zGetter, String zField
    ) {
       Object x = firstPresent(firstGetterValue(packet, xGetter, xField), propertyByLabel(packet, xField));
@@ -2878,10 +2878,10 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PacketSummaryFlags load_bu_FileCache_Packet_bu_ConfigStore(Packet<?> packet, PacketInspectorEngine.ReportBuilder builder) {
+   private static PacketInspectorEngine.PacketSummaryFlags describeProperties(Packet<?> packet, PacketInspectorEngine.ReportBuilder builder) {
       List<PacketInspectorEngine.PropertyEntry> properties = properties(packet);
       if (properties.isEmpty()) {
-         String rawFallback = read_Str_Obj(packet);
+         String rawFallback = rawToString(packet);
          if (rawFallback != null) {
             builder.line("Raw: " + rawFallback, UiColorPalette.textMuted());
             return new PacketInspectorEngine.PacketSummaryFlags(true, false);
@@ -2898,7 +2898,7 @@ public final class PacketInspectorEngine {
 
             Object value = property.value();
             if (value != null && value != MISSING) {
-               String summary = load_Str_Str_Obj(property.label(), value);
+               String summary = describeLabeledValue(property.label(), value);
                if (summary != null && !summary.isBlank()) {
                   builder.line(property.label() + ": " + summary, labeledValueColor(property.label(), value));
                   lines++;
@@ -2910,7 +2910,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static PacketInspectorEngine.PacketSummaryFlags read_bu_FileCache_Packet(
+   private static PacketInspectorEngine.PacketSummaryFlags describeReflectivePacket(
       Packet<?> packet, String packetNameHint, AutismPacketLoggerOverlay.LoggedPacketEntry entry, PacketInspectorEngine.ReportBuilder builder
    ) {
       if (packet instanceof ServerboundPunchPacket) {
@@ -3337,7 +3337,7 @@ public final class PacketInspectorEngine {
          if (content != null || overlay != null) {
             String message = componentText(content);
             builder.line("Kind: " + (Boolean.TRUE.equals(overlay) ? "Overlay / HUD message" : "Game / system message"), UiColorPalette.textBright());
-            PacketInspectorEngine.ParsedMessagePair parsed = init_bu_StateCache_Str(message);
+            PacketInspectorEngine.ParsedMessagePair parsed = parseChatLine(message);
             if (parsed != null) {
                builder.line("Possible Sender: " + parsed.init(), UiColorPalette.textBright());
                builder.line("Message: " + quote(sanitize(parsed.load())), UiColorPalette.successText());
@@ -3358,7 +3358,7 @@ public final class PacketInspectorEngine {
       if (packet instanceof ClientboundDisguisedChatPacket profilelessChatMessagePacket) {
          Object message = firstGetterValue(profilelessChatMessagePacket, "message", "getMessage");
          Object chatType = firstGetterValue(profilelessChatMessagePacket, "chatType", "getChatType");
-         PacketInspectorEngine.DecodeCheckPair chatSummary = init_bu_StreamUtil_Obj(message, chatType, null, null, null, "Incoming Chat Message", builder);
+         PacketInspectorEngine.DecodeCheckPair chatSummary = appendChatSummary(message, chatType, null, null, null, "Incoming Chat Message", builder);
          if (chatSummary.init()) {
             return new PacketInspectorEngine.PacketSummaryFlags(true, chatSummary.load());
          }
@@ -3368,12 +3368,12 @@ public final class PacketInspectorEngine {
          Object body = firstPresent(
             firstGetterValue(chatMessageS2CPacket, "body", "getBody"),
             recordComponentAt(chatMessageS2CPacket, 4),
-            init_Obj_Obj(chatMessageS2CPacket, 2, "content", "timestamp", "salt")
+            recordComponentByNames(chatMessageS2CPacket, 2, "content", "timestamp", "salt")
          );
          Object serializedParameters = firstPresent(
             firstGetterValue(chatMessageS2CPacket, "serializedParameters", "getSerializedParameters"),
             recordComponentAt(chatMessageS2CPacket, 7),
-            init_Obj_Obj(chatMessageS2CPacket, 2, "name", "targetName", "type")
+            recordComponentByNames(chatMessageS2CPacket, 2, "name", "targetName", "type")
          );
          Object sender = firstPresent(
             firstGetterValue(chatMessageS2CPacket, "sender", "getSender"),
@@ -3383,17 +3383,17 @@ public final class PacketInspectorEngine {
          Object filterMask = firstPresent(
             firstGetterValue(chatMessageS2CPacket, "filterMask", "getFilterMask"),
             recordComponentAt(chatMessageS2CPacket, 6),
-            init_Obj_Obj(chatMessageS2CPacket, 1, "isFullyFiltered", "isPassThrough")
+            recordComponentByNames(chatMessageS2CPacket, 1, "isFullyFiltered", "isPassThrough")
          );
          Object unsignedContent = firstPresent(
             firstGetterValue(chatMessageS2CPacket, "unsignedContent", "getUnsignedContent"),
             recordComponentAt(chatMessageS2CPacket, 5),
-            init_Obj_Obj_ObjArr(chatMessageS2CPacket, body, serializedParameters, sender, filterMask)
+            firstOtherRecordComponent(chatMessageS2CPacket, body, serializedParameters, sender, filterMask)
          );
          Object message = unsignedContent;
          Object timestamp = null;
          if (body != null) {
-            Object bodyContent = firstPresent(firstGetterValue(body, "content", "getContent"), recordComponentAt(body, 0), init_Obj_Obj_ObjArr(body));
+            Object bodyContent = firstPresent(firstGetterValue(body, "content", "getContent"), recordComponentAt(body, 0), firstOtherRecordComponent(body));
             if (bodyContent != null && (message == null || componentText(message) == null || componentText(message).isBlank())) {
                message = bodyContent;
             }
@@ -3403,7 +3403,7 @@ public final class PacketInspectorEngine {
             );
          }
 
-         PacketInspectorEngine.DecodeCheckPair chatSummary = init_bu_StreamUtil_Obj(
+         PacketInspectorEngine.DecodeCheckPair chatSummary = appendChatSummary(
             message, serializedParameters, sender instanceof UUID uuid ? uuid : null, timestamp, filterMask, "Incoming Signed Chat Message", builder
          );
          if (chatSummary.init()) {
@@ -3487,7 +3487,7 @@ public final class PacketInspectorEngine {
       }
 
       if (!wroteAny) {
-         String rawFallback = read_Str_Obj(root);
+         String rawFallback = rawToString(root);
          if (rawFallback != null) {
             builder.line("Raw: " + rawFallback, UiColorPalette.textMuted());
          } else {
@@ -3582,7 +3582,7 @@ public final class PacketInspectorEngine {
                }
             } else if (visited.containsKey(value)) {
                builder.line(indent + label + ": <already shown " + classLabel(valueClass) + ">", UiColorPalette.textMuted());
-            } else if (init_Z_Class(valueClass)) {
+            } else if (isOpaqueType(valueClass)) {
                builder.line(indent + label + ": " + describeValue(value), scalarValueColor(label, value));
             } else {
                visited.put(value, Boolean.TRUE);
@@ -3764,12 +3764,12 @@ public final class PacketInspectorEngine {
          return false;
       }
 
-      String mappedLabel = init_Str_Str_Class(InspectorMappingsIndex.methodAlias(method), method.getReturnType());
+      String mappedLabel = propertyLabel(InspectorMappingsIndex.methodAlias(method), method.getReturnType());
       return isIgnoredLabel(mappedLabel)
          ? false
          : isGetterName(method)
-            || read_Set.contains(method.getName())
-            || mappedLabel != null && read_Set.contains(mappedLabel)
+            || EXTRA_GETTER_NAMES.contains(method.getName())
+            || mappedLabel != null && EXTRA_GETTER_NAMES.contains(mappedLabel)
             || mappedLabel != null && !isObfuscatedLabel(mappedLabel);
    }
 
@@ -3781,8 +3781,8 @@ public final class PacketInspectorEngine {
    }
 
    private static String accessorLabel(Method method) {
-      String mappedLabel = init_Str_Str_Class(InspectorMappingsIndex.methodAlias(method), method.getReturnType());
-      return mappedLabel != null && !mappedLabel.isBlank() ? mappedLabel : init_Str_Str_Class(method.getName(), method.getReturnType());
+      String mappedLabel = propertyLabel(InspectorMappingsIndex.methodAlias(method), method.getReturnType());
+      return mappedLabel != null && !mappedLabel.isBlank() ? mappedLabel : propertyLabel(method.getName(), method.getReturnType());
    }
 
    private static Object invokeQuietly(Method method, Object owner) {
@@ -3943,7 +3943,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static Object init_Obj_Obj(Object owner, int requiredMatches, String... methodNames) {
+   private static Object recordComponentByNames(Object owner, int requiredMatches, String... methodNames) {
       if (owner != null && requiredMatches > 0 && methodNames != null && methodNames.length != 0) {
          try {
             Class<?> type = owner.getClass();
@@ -3981,7 +3981,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static Object init_Obj_Obj_ObjArr(Object owner, Object... excludedValues) {
+   private static Object firstOtherRecordComponent(Object owner, Object... excludedValues) {
       if (owner == null) {
          return null;
       }
@@ -4142,7 +4142,7 @@ public final class PacketInspectorEngine {
             || value instanceof Class;
    }
 
-   private static boolean init_Z_Class(Class<?> type) {
+   private static boolean isOpaqueType(Class<?> type) {
       if (type == null) {
          return true;
       }
@@ -4241,7 +4241,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static String read_Str_Obj(Object value) {
+   private static String rawToString(Object value) {
       if (value == null) {
          return null;
       }
@@ -4291,7 +4291,7 @@ public final class PacketInspectorEngine {
             var10000 = "Swap main hand and offhand";
             break;
          default:
-            var10000 = flush_Str(action.name());
+            var10000 = friendlyClassLabel(action.name());
       }
 
       return var10000;
@@ -4389,7 +4389,7 @@ public final class PacketInspectorEngine {
       return parts.isEmpty() ? "<empty sign>" : String.join(" | ", parts);
    }
 
-   private static PacketInspectorEngine.DecodeCheckPair init_bu_StreamUtil_Obj(
+   private static PacketInspectorEngine.DecodeCheckPair appendChatSummary(
       Object messageValue, Object parameters, UUID senderUuid, Object timestampValue, Object filterMask, String kind, PacketInspectorEngine.ReportBuilder builder
    ) {
       boolean wrote = false;
@@ -4406,7 +4406,7 @@ public final class PacketInspectorEngine {
          informative = true;
       }
 
-      String sender = init_Str_Obj_UUID(parameters, senderUuid);
+      String sender = senderName(parameters, senderUuid);
       if (sender != null && !sender.isBlank()) {
          builder.line("Sender: " + sender, scalarValueColor("Sender", sender));
          wrote = true;
@@ -4447,12 +4447,12 @@ public final class PacketInspectorEngine {
       return new PacketInspectorEngine.DecodeCheckPair(wrote, informative);
    }
 
-   private static String init_Str_Obj_UUID(Object parameters, UUID senderUuid) {
+   private static String senderName(Object parameters, UUID senderUuid) {
       String senderName = componentText(
          firstPresent(
             callGetter(parameters, "name"),
             recordComponentAt(parameters, 1),
-            init_Obj_Obj_ObjArr(parameters, recordComponentAt(parameters, 0), recordComponentAt(parameters, 2))
+            firstOtherRecordComponent(parameters, recordComponentAt(parameters, 0), recordComponentAt(parameters, 2))
          )
       );
       if (senderName == null || senderName.isBlank()) {
@@ -4525,7 +4525,7 @@ public final class PacketInspectorEngine {
       return null;
    }
 
-   private static PacketInspectorEngine.ParsedMessagePair init_bu_StateCache_Str(String raw) {
+   private static PacketInspectorEngine.ParsedMessagePair parseChatLine(String raw) {
       if (raw == null) {
          return null;
       }
@@ -4744,16 +4744,16 @@ public final class PacketInspectorEngine {
    }
 
    private static String valueText(Object value) {
-      return load_Str_Str_Obj("", value);
+      return describeLabeledValue("", value);
    }
 
-   private static String load_Str_Str_Obj(String label, Object value) {
+   private static String describeLabeledValue(String label, Object value) {
       if (value == null || value == MISSING) {
          return null;
       } else if (isSimpleValue(value)) {
          return formatLabeledValue(label, value);
       } else if (value instanceof Optional<?> optional) {
-         return optional.<String>map(item -> load_Str_Str_Obj(label, item)).orElse("Optional.empty");
+         return optional.<String>map(item -> describeLabeledValue(label, item)).orElse("Optional.empty");
       } else if (value instanceof Collection<?> collection) {
          return classLabel(value.getClass()) + "[" + collection.size() + "]";
       } else if (value instanceof Map<?, ?> map) {
@@ -4860,7 +4860,7 @@ public final class PacketInspectorEngine {
    }
 
    private static String humanizeLabel(String label) {
-      return flush_Str(label).replace('.', ' ').trim();
+      return friendlyClassLabel(label).replace('.', ' ').trim();
    }
 
    private static String decapitalize(String value) {
@@ -4949,10 +4949,10 @@ public final class PacketInspectorEngine {
       }
 
       String alias = InspectorMappingsIndex.classAlias(type);
-      return alias != null && !alias.isBlank() ? flush_Str(alias) : flush_Str(type.getSimpleName().isEmpty() ? type.getName() : type.getSimpleName());
+      return alias != null && !alias.isBlank() ? friendlyClassLabel(alias) : friendlyClassLabel(type.getSimpleName().isEmpty() ? type.getName() : type.getSimpleName());
    }
 
-   private static String flush_Str(String value) {
+   private static String friendlyClassLabel(String value) {
       if (value != null && !value.isEmpty()) {
          String alias = firstNonBlank(InspectorMappingsIndex.aliasForClass(value.replace('/', '.')), InspectorMappingsIndex.aliasForSimpleName(value.substring(value.lastIndexOf(46) + 1)));
          String source = (alias == null ? value : alias).replace('$', '.');
@@ -4977,7 +4977,7 @@ public final class PacketInspectorEngine {
       }
    }
 
-   private static String init_Str_Str_Class(String label, Class<?> returnType) {
+   private static String propertyLabel(String label, Class<?> returnType) {
       if (label != null && !label.isBlank()) {
          if (label.startsWith("get") && label.length() > 3 && Character.isUpperCase(label.charAt(3))) {
             return label.substring(3);
@@ -5092,7 +5092,7 @@ public final class PacketInspectorEngine {
 
    private record PayloadDecodeResult(boolean init_Z, boolean load_Z, boolean read, boolean write) {
       private static final PacketInspectorEngine.PayloadDecodeResult NONE = new PacketInspectorEngine.PayloadDecodeResult(false, false, false, false);
-      private static final PacketInspectorEngine.PayloadDecodeResult load_bu_BufferHelper = new PacketInspectorEngine.PayloadDecodeResult(true, true, true, true);
+      private static final PacketInspectorEngine.PayloadDecodeResult FULL_DECODE = new PacketInspectorEngine.PayloadDecodeResult(true, true, true, true);
    }
 
    private enum CompressionKind {

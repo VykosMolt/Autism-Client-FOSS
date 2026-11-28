@@ -44,7 +44,7 @@ import net.minecraft.world.phys.HitResult.Type;
 final class AiDragon {
    static final double init_D = 3.0;
    static final double load_D = 7.0;
-   static final int[][] init_IArr2 = new int[][]{{4, 0}, {4, 1}, {4, -1}, {3, 1}, {3, -1}, {3, 2}, {3, -2}, {4, 2}, {4, -2}, {3, 0}};
+   static final int[][] RETREAT_OFFSETS = new int[][]{{4, 0}, {4, 1}, {4, -1}, {3, 1}, {3, -1}, {3, 2}, {3, -2}, {4, 2}, {4, -2}, {3, 0}};
    static final double read_D = 3.0;
    static final double write_D = 11.5;
    static final double update_D = 12.0;
@@ -66,11 +66,11 @@ final class AiDragon {
       return health < 10.0F && !bedPending && !recoveryActive && !childCommitted;
    }
 
-   static boolean init_Z_A_Str(AiFailure failure, String message) {
+   static boolean isCountableClearFailure(AiFailure failure, String message) {
       return failure != AiFailure.MISSING_MATERIALS && (message == null || !message.contains("dragon near the towers"));
    }
 
-   static boolean init_Z_I_I(int failedClears, int usableBeds) {
+   static boolean shouldSwitchToBeds(int failedClears, int usableBeds) {
       return failedClears >= 2 && usableBeds >= 4;
    }
 
@@ -144,7 +144,7 @@ final class AiDragon {
       return headDistanceToBed <= 3.5 ? true : perched && headDistanceToBed <= 5.5;
    }
 
-   static int[] init(int fx, int fz, double px, double pz, double radius) {
+   static int[] radialPoint(int fx, int fz, double px, double pz, double radius) {
       double dx = px - (fx + 0.5);
       double dz = pz - (fz + 0.5);
       double len = Math.hypot(dx, dz);
@@ -153,12 +153,12 @@ final class AiDragon {
       return new int[]{(int)Math.round(fx + ux * radius), (int)Math.round(fz + uz * radius)};
    }
 
-   static int[] init_IArr_I(int fx, int fz, double px, double pz) {
-      return init(fx, fz, px, pz, 3.0);
+   static int[] radialPoint(int fx, int fz, double px, double pz) {
+      return radialPoint(fx, fz, px, pz, 3.0);
    }
 
-   static int[] load(int bx, int bz, double px, double pz, double distance) {
-      return init(bx, bz, px, pz, distance);
+   static int[] standPointToward(int bx, int bz, double px, double pz, double distance) {
+      return radialPoint(bx, bz, px, pz, distance);
    }
 
    static List<double[]> breathClouds(Minecraft mc) {
@@ -269,7 +269,7 @@ final class AiDragon {
       return missing;
    }
 
-   static boolean init_Z_Z_Z(boolean statMet, boolean portalActive) {
+   static boolean isDragonDeadConfirmed(boolean statMet, boolean portalActive) {
       return statMet || portalActive;
    }
 
@@ -295,7 +295,7 @@ final class AiDragon {
             final autismclient.ai.engine.AiAim aim = new autismclient.ai.engine.AiAim();
             final AiDragon.ChildRegistry children = new AiDragon.ChildRegistry();
             final AiGuard.GuardPolicy guardPolicy = AiGuard.GuardPolicy.standard().withoutFlee();
-            boolean init_Z;
+            boolean zeroHealthSeen;
             AiOperation currentLeg;
             AiOperation guardOperation;
             AiOperation dodgeOperation;
@@ -304,51 +304,51 @@ final class AiDragon {
             AiOperation chargeDodgeOperation;
             BlockPos fountain;
             BlockPos standing;
-            BlockPos read_BlockPos;
-            BlockPos write_BlockPos;
+            BlockPos retreatSpot;
+            BlockPos plannedBedCell;
             BlockPos bestFoot;
-            BlockPos sync_BlockPos;
+            BlockPos coverCell;
             EnderDragon dragon;
             AiDragon.DragonState dragonState = AiDragon.DragonState.FLYING;
             AiDragon.DragonState lastPerch = AiDragon.DragonState.FLYING;
             Inner_DataUtil phase = Inner_DataUtil.SELECT;
             String dragonPhase = "";
             String guardReason = "";
-            String read_Str;
+            String lastFailureCode;
             JsonObject missingItems;
-            long read_J;
+            long dragonGoneSinceNanos;
             int bedsUsed;
             int bowShots;
             int meleeSwings;
             int perchCount;
             int dodges;
-            int sync_I;
-            int flush_I;
-            int close_I;
-            int open_I;
-            int poll_I;
-            int push_I;
-            int pop_I;
-            int tick_I;
+            int guardDecisions;
+            int bowFailures;
+            int unusedResetCounter;
+            int meleeApproachTicks;
+            int standoffFailures;
+            int bedFailures;
+            int zoneEscapeRepeats;
+            int lastZoneEscapeTick;
             int bedPlaceRetries;
             BlockPos stand;
-            int get;
-            float init_F = -1.0F;
-            int set;
+            int meleeState;
+            float perchEndHealth = -1.0F;
+            int failedClears;
             int endStoneTrips;
             int endStoneTarget;
             boolean retryableMaterials;
-            boolean read_Z;
+            boolean bedsDisabledUntilPerch;
             boolean crystalsFirst = AiJson.getBoolean(args, "crystalsFirst", this.bedCount() < 4);
-            BlockPos close_BlockPos;
-            BlockPos open_BlockPos;
-            int clear = -1000;
-            boolean update_Z;
-            boolean sync_Z;
+            BlockPos bedStance;
+            BlockPos safeStance;
+            int lastNoPlanLogTick = -1000;
+            boolean walkingToBedStance;
+            boolean fountainLegActive;
             int coverRetries;
             int detonateWaitTicks;
             int lowDamageDetonations;
-            int next;
+            int bedCellBlockedTicks;
             float dragonHealthAtBed;
             boolean bedClicked;
             BlockPos bedHead;
@@ -358,16 +358,16 @@ final class AiDragon {
             double bedSelfDamageEstimate;
             double bedDragonDamage;
             int selfDamageDeferrals;
-            BlockPos pop_BlockPos;
+            BlockPos placedCover;
             BlockPos at;
-            long sync_J;
-            final Set<Long> init_Set = new HashSet<>();
-            boolean close_Z;
-            boolean open_Z;
+            long nextBedPlanNanos;
+            final Set<Long> rejectedBedCells = new HashSet<>();
+            boolean fightStarted;
+            boolean weaponsChecked;
             boolean bedsUsable = true;
-            boolean push_Z = true;
+            boolean bowEnabled = true;
             boolean dragonDead;
-            boolean tick_Z;
+            boolean cancelled;
             String lastAction = "";
 
             {
@@ -378,7 +378,7 @@ final class AiDragon {
             @Override
             public AiOperation.Result tick() {
                AiGuard.suppressBriefly();
-               if (this.tick_Z || mc.player == null || mc.level == null) {
+               if (this.cancelled || mc.player == null || mc.level == null) {
                   return this.finish(AiOperation.Status.CANCELLED, AiFailure.CANCELLED, "Dragon fight cancelled");
                }
 
@@ -402,8 +402,8 @@ final class AiDragon {
                   );
                }
 
-               if (!this.open_Z) {
-                  this.open_Z = true;
+               if (!this.weaponsChecked) {
+                  this.weaponsChecked = true;
                   if (!AiDragon.hasDragonWeapons(this.bedCount(), AiGameState.countInventoryItem("minecraft:bow"), AiGameState.countInventoryItem("minecraft:crossbow"), AiRunResources.totalArrowCount()) && !this.hasWeapon()) {
                      this.missingItems = AiDragon.missingKit();
                      return this.fail(
@@ -420,7 +420,7 @@ final class AiDragon {
                }
 
                if (dragon != null) {
-                  this.close_Z = true;
+                  this.fightStarted = true;
                }
 
                if (this.fountain == null) {
@@ -430,7 +430,7 @@ final class AiDragon {
                if (dragon != null) {
                   this.dragon = dragon;
                   if (dragon.getHealth() <= 0.0F) {
-                     this.init_Z = true;
+                     this.zeroHealthSeen = true;
                      return this.bedClicked ? this.tickDetonate() : this.tickFight();
                   }
 
@@ -482,10 +482,10 @@ final class AiDragon {
                   AiOperation.Result var10000;
                   switch (this.phase) {
                      case SELECT:
-                        var10000 = this.sync_AiOperation_Result_5();
+                        var10000 = this.chooseTactic();
                         break;
                      case CRYSTALS:
-                        var10000 = this.flush_AiOperation_Result_3();
+                        var10000 = this.tickCrystalClear();
                         break;
                      case CRYSTAL_STOCK:
                         var10000 = this.tickCrystalStock();
@@ -519,7 +519,7 @@ final class AiDragon {
                   }
 
                   return var10000;
-               } else if (this.close_Z) {
+               } else if (this.fightStarted) {
                   return this.tickFight();
                } else {
                   return this.isPortalActive()
@@ -531,15 +531,15 @@ final class AiDragon {
             AiOperation.Result tickFight() {
                this.releaseLeg();
                boolean portal = this.isPortalActive();
-               if (AiDragon.init_Z_Z_Z(this.init_Z, portal)) {
-                  return this.dragonDefeated("Ender dragon dead (confirmed by " + (this.init_Z ? "observed zero health" : "the active exit portal") + ")");
+               if (AiDragon.isDragonDeadConfirmed(this.zeroHealthSeen, portal)) {
+                  return this.dragonDefeated("Ender dragon dead (confirmed by " + (this.zeroHealthSeen ? "observed zero health" : "the active exit portal") + ")");
                }
 
-               if (this.read_J == 0L) {
-                  this.read_J = System.nanoTime();
+               if (this.dragonGoneSinceNanos == 0L) {
+                  this.dragonGoneSinceNanos = System.nanoTime();
                }
 
-               return System.nanoTime() - this.read_J > 15000000000L
+               return System.nanoTime() - this.dragonGoneSinceNanos > 15000000000L
                   ? this.finish(AiOperation.Status.UNCERTAIN, null, "Dragon gone without observed zero health or an active central exit; check the fountain")
                   : this.running("Dragon gone; confirming the kill");
             }
@@ -651,8 +651,8 @@ final class AiDragon {
                   }
 
                   BlockPos at = mc.player.blockPosition();
-                  this.pop_I = at.equals(this.at) && mc.player.tickCount - this.tick_I < 60 ? this.pop_I + 1 : 0;
-                  double extra = 1.0 + Math.min(4, this.pop_I) * 1.5;
+                  this.zoneEscapeRepeats = at.equals(this.at) && mc.player.tickCount - this.lastZoneEscapeTick < 60 ? this.zoneEscapeRepeats + 1 : 0;
+                  double extra = 1.0 + Math.min(4, this.zoneEscapeRepeats) * 1.5;
                   AiOperation out = inZone ? AiDragonZones.init(mc, 1.0 + extra) : AiDragon.planBreathEscape(mc, extra);
                   if (out == null && inZone && clouded) {
                      out = AiDragon.planBreathEscape(mc, extra);
@@ -667,13 +667,13 @@ final class AiDragon {
                   }
 
                   this.at = at;
-                  this.tick_I = mc.player.tickCount;
-                  if (this.phase == Inner_DataUtil.PLACE_BED && this.write_BlockPos != null && ++this.bedPlaceRetries >= 2) {
-                     this.init_Set.add(this.write_BlockPos.asLong());
-                     this.write_BlockPos = null;
-                     this.close_BlockPos = null;
+                  this.lastZoneEscapeTick = mc.player.tickCount;
+                  if (this.phase == Inner_DataUtil.PLACE_BED && this.plannedBedCell != null && ++this.bedPlaceRetries >= 2) {
+                     this.rejectedBedCells.add(this.plannedBedCell.asLong());
+                     this.plannedBedCell = null;
+                     this.bedStance = null;
                      this.bestFoot = null;
-                     this.sync_J = System.nanoTime() + 1000000000L;
+                     this.nextBedPlanNanos = System.nanoTime() + 1000000000L;
                   }
 
                   if (this.guardOperation != null) {
@@ -728,7 +728,7 @@ final class AiDragon {
                   }
 
                   this.guardReason = AiGuard.decisionReason(this.guardPolicy, vitals);
-                  this.sync_I++;
+                  this.guardDecisions++;
                   this.releaseLeg();
                   this.guardOperation = action;
                   return this.running("Interrupted: " + this.guardReason);
@@ -818,21 +818,21 @@ final class AiDragon {
                }
             }
 
-            AiOperation.Result sync_AiOperation_Result_5() {
+            AiOperation.Result chooseTactic() {
                if (this.fountain == null) {
                   this.fountain = this.findFountain();
                }
 
                if (!this.bedsUsable && !this.bedClicked) {
                   this.standing = null;
-                  this.pop_BlockPos = null;
+                  this.placedCover = null;
                }
 
                boolean finishable = this.dragon != null && this.dragon.getHealth() <= 90.0F;
                boolean canBed = this.canUseBeds() && (!this.crystalsFirst || !this.crystalsRemain() || finishable);
                boolean meleeOk = melee && this.fountain != null;
-               boolean bowReady = bow && this.push_Z && this.hasRangedWeapon();
-               boolean window = this.standing != null && this.write_Z_9();
+               boolean bowReady = bow && this.bowEnabled && this.hasRangedWeapon();
+               boolean window = this.standing != null && this.headInBedRange();
                String action = AiDragon.pickAttack(this.crystalsRemain(), this.dragonState, this.standing != null, window, canBed, meleeOk, bowReady);
                if (this.crystalsRemain() && this.dragon != null && this.dragon.getHealth() > 90.0F && !"detonate".equals(action)) {
                   action = "crystals";
@@ -876,7 +876,7 @@ final class AiDragon {
                      break;
                   case "melee":
                      this.phase = Inner_DataUtil.MELEE;
-                     this.open_I = 0;
+                     this.meleeApproachTicks = 0;
                      var10000 = this.running("Meleeing the perched dragon");
                      break;
                   case "bow":
@@ -891,7 +891,7 @@ final class AiDragon {
                return var10000;
             }
 
-            AiOperation.Result flush_AiOperation_Result_3() {
+            AiOperation.Result tickCrystalClear() {
                if (!this.crystalsFirst
                   || this.dragonState != AiDragon.DragonState.PERCHED
                   || !this.bedsUsable
@@ -923,7 +923,7 @@ final class AiDragon {
                   }
 
                   if (r.failure() == AiFailure.MISSING_MATERIALS && !AiThreats.isLegacyCombatEnabled()) {
-                     this.init_V(r);
+                     this.absorbChildData(r);
                      int shortage = AiDragon.missingDirt(AiRunResources.parseEvidenceJson(r.dataJson()));
                      if (shortage > 0 && this.endStoneTrips < 3 && this.secondsLeft() >= 45) {
                         this.endStoneTrips++;
@@ -941,8 +941,8 @@ final class AiDragon {
                         return this.fail(AiFailure.LOW_HEALTH, "Health " + String.format("%.1f", mc.player.getHealth()) + ": healing before the caged crystals");
                      }
 
-                     if (AiDragon.init_Z_A_Str(r.failure(), r.message())) {
-                        this.set++;
+                     if (AiDragon.isCountableClearFailure(r.failure(), r.message())) {
+                        this.failedClears++;
                      }
 
                      this.phase = Inner_DataUtil.SELECT;
@@ -951,7 +951,7 @@ final class AiDragon {
                      this.phase = Inner_DataUtil.SELECT;
                      return this.running("Crystals cleared; engaging the dragon");
                   } else {
-                     this.init_V(r);
+                     this.absorbChildData(r);
                      AiSpeedrun.log(
                         "[AI] dragon: crystal outcomes {}",
                         String.valueOf(JsonParser.parseString(r.dataJson() == null ? "{}" : r.dataJson()).getAsJsonObject().get("outcomes"))
@@ -996,7 +996,7 @@ final class AiDragon {
                      return this.finish(r.status(), r.failure(), r.message());
                   } else if (r.status() == AiOperation.Status.SUCCEEDED && AiGameState.countInventoryItem("minecraft:end_stone") >= this.endStoneTarget) {
                      this.missingItems = null;
-                     this.read_Str = null;
+                     this.lastFailureCode = null;
                      this.retryableMaterials = false;
                      this.phase = Inner_DataUtil.CRYSTALS;
                      return this.running("Crystal construction replenished; retrying the remaining towers");
@@ -1019,8 +1019,8 @@ final class AiDragon {
                   : Math.hypot(mc.player.getX() - this.fountain.getX() - 0.5, mc.player.getZ() - this.fountain.getZ() - 0.5);
                boolean seated = sitter != null && sitter.getPhaseManager().getCurrentPhase().isSitting();
                if (this.fountain != null && (fromFountain > 16.0 || fromFountain < 11.0 && !seated)) {
-                  if (this.currentLeg == null || !this.sync_Z) {
-                     BlockPos near = this.sync_BlockPos();
+                  if (this.currentLeg == null || !this.fountainLegActive) {
+                     BlockPos near = this.fountainRingStance();
                      if (near != null) {
                         if (this.currentLeg != null) {
                            this.releaseLeg();
@@ -1029,11 +1029,11 @@ final class AiDragon {
                         this.currentLeg = AiGoto.travelToCompat(
                            near, 1.5, false, true, true, this.clampSeconds(20), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
-                        this.sync_Z = true;
+                        this.fountainLegActive = true;
                      }
                   }
 
-                  if (this.currentLeg != null && this.sync_Z) {
+                  if (this.currentLeg != null && this.fountainLegActive) {
                      AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                      if (r.status() == AiOperation.Status.UNCERTAIN) {
                         return this.finish(AiOperation.Status.UNCERTAIN, null, r.message());
@@ -1045,7 +1045,7 @@ final class AiDragon {
 
                      this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                      this.currentLeg = null;
-                     this.sync_Z = false;
+                     this.fountainLegActive = false;
                   }
                }
 
@@ -1055,27 +1055,27 @@ final class AiDragon {
                      if (standing != null) {
                         this.standing = standing;
                         this.bestFoot = null;
-                        this.write_BlockPos = null;
-                        this.close_BlockPos = null;
+                        this.plannedBedCell = null;
+                        this.bedStance = null;
                         this.phase = Inner_DataUtil.RETREAT;
                         AiSpeedrun.log("[AI] dragon: a bed already stands at {}; arming it", standing.toShortString());
                         return this.running("A bed already stands by the fountain; backing out of the blast");
                      }
                   }
 
-                  if (this.write_BlockPos == null) {
-                     if (System.nanoTime() < this.sync_J) {
+                  if (this.plannedBedCell == null) {
+                     if (System.nanoTime() < this.nextBedPlanNanos) {
                         return this.running("Waiting for the dragon to turn; no bed cell clear of its wings yet");
                      }
 
-                     this.write_BlockPos = AiDragonZones.isDragonPerched(mc) ? this.write_BlockPos_2() : this.read_BlockPos_5();
+                     this.plannedBedCell = AiDragonZones.isDragonPerched(mc) ? this.perchedBedCell() : this.fountainBedCell();
                      this.bedPlaceRetries = 0;
-                     if (this.write_BlockPos == null && AiDragonZones.isDragonPerched(mc)) {
-                        this.sync_J = System.nanoTime() + 500000000L;
+                     if (this.plannedBedCell == null && AiDragonZones.isDragonPerched(mc)) {
+                        this.nextBedPlanNanos = System.nanoTime() + 500000000L;
                         return this.running("Waiting for the dragon to turn; no bed cell clear of its wings yet");
                      }
 
-                     if (this.write_BlockPos == null) {
+                     if (this.plannedBedCell == null) {
                         this.bedsUsable = false;
                         AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "No placeable bed cell by the fountain; falling back to melee and bow");
                         this.phase = Inner_DataUtil.SELECT;
@@ -1086,7 +1086,7 @@ final class AiDragon {
                   if (this.currentLeg == null) {
                      String bedId = this.bedItemId();
                      if (bedId == null || AiItems.equipHotbar(AiItems.resolveItem(bedId)) < 0) {
-                        this.write_BlockPos = null;
+                        this.plannedBedCell = null;
                         this.bestFoot = null;
                         this.bedsUsable = false;
                         AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "No bed can be brought to hand; falling back to melee and bow");
@@ -1095,50 +1095,50 @@ final class AiDragon {
                      }
 
                      if (this.bestFoot != null && this.cellBlockedByEntity(this.bestFoot)) {
-                        if (++this.next > 20) {
-                           this.next = 0;
-                           if (this.write_BlockPos != null) {
-                              this.init_Set.add(this.write_BlockPos.asLong());
+                        if (++this.bedCellBlockedTicks > 20) {
+                           this.bedCellBlockedTicks = 0;
+                           if (this.plannedBedCell != null) {
+                              this.rejectedBedCells.add(this.plannedBedCell.asLong());
                            }
 
-                           this.write_BlockPos = null;
-                           this.close_BlockPos = null;
+                           this.plannedBedCell = null;
+                           this.bedStance = null;
                            this.bestFoot = null;
-                           this.sync_J = 0L;
+                           this.nextBedPlanNanos = 0L;
                            return this.running("Dragon body blocks that bed cell; choosing another");
                         }
 
                         return this.running("Waiting for the dragon's body to clear the bed cell");
                      }
 
-                     this.next = 0;
+                     this.bedCellBlockedTicks = 0;
                      if (this.bestFoot != null && this.isBedAt(this.bestFoot)) {
                         this.standing = this.bestFoot;
-                        this.write_BlockPos = null;
-                        this.close_BlockPos = null;
+                        this.plannedBedCell = null;
+                        this.bedStance = null;
                         this.bestFoot = null;
-                        this.pop_BlockPos = null;
+                        this.placedCover = null;
                         this.phase = Inner_DataUtil.RETREAT;
                         return this.running("A bed already stands in the planned cell; arming it");
                      }
 
-                     if (this.close_BlockPos != null && mc.player.position().distanceToSqr(Vec3.atBottomCenterOf(this.close_BlockPos)) > 0.48999999999999994) {
+                     if (this.bedStance != null && mc.player.position().distanceToSqr(Vec3.atBottomCenterOf(this.bedStance)) > 0.48999999999999994) {
                         this.currentLeg = AiGoto.travelToCompat(
-                           this.close_BlockPos, 0.3, false, true, true, this.clampSeconds(15), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
+                           this.bedStance, 0.3, false, true, true, this.clampSeconds(15), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
-                        this.update_Z = true;
+                        this.walkingToBedStance = true;
                      } else {
                         this.currentLeg = AiGameOperations.blockAction(
                            "place",
-                           AiJson.objectOf("x", this.write_BlockPos.getX(), "y", this.write_BlockPos.getY(), "z", this.write_BlockPos.getZ())
+                           AiJson.objectOf("x", this.plannedBedCell.getX(), "y", this.plannedBedCell.getY(), "z", this.plannedBedCell.getZ())
                         );
-                        this.update_Z = false;
+                        this.walkingToBedStance = false;
                      }
                   }
 
                   AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
                   if (!r.terminal()) {
-                     return this.running(this.update_Z ? "To the bed stance clear of the dragon" : "Placing the bed beside the fountain");
+                     return this.running(this.walkingToBedStance ? "To the bed stance clear of the dragon" : "Placing the bed beside the fountain");
                   }
 
                   this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
@@ -1152,39 +1152,39 @@ final class AiDragon {
                         return this.running("Bed appeared unconfirmed; arming it rather than replacing it");
                      }
 
-                     BlockPos missed = this.write_BlockPos;
+                     BlockPos missed = this.plannedBedCell;
                      if (missed != null) {
-                        this.init_Set.add(missed.asLong());
+                        this.rejectedBedCells.add(missed.asLong());
                      }
 
-                     this.write_BlockPos = null;
-                     this.close_BlockPos = null;
+                     this.plannedBedCell = null;
+                     this.bedStance = null;
                      this.bestFoot = null;
-                     this.sync_J = 0L;
-                     this.push_I++;
+                     this.nextBedPlanNanos = 0L;
+                     this.bedFailures++;
                      this.phase = Inner_DataUtil.SELECT;
-                     if (this.push_I < 3) {
+                     if (this.bedFailures < 3) {
                         return this.running("Bed click unconfirmed; choosing another cell");
                      }
 
                      this.bedsUsable = false;
-                     this.read_Z = true;
+                     this.bedsDisabledUntilPerch = true;
                      AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "three unconfirmed bed clicks (until the next perch)");
                      return this.running("Bed click unconfirmed three times; falling back to melee and bow");
                   } else {
-                     if (this.update_Z) {
-                        this.update_Z = false;
-                        this.close_BlockPos = null;
+                     if (this.walkingToBedStance) {
+                        this.walkingToBedStance = false;
+                        this.bedStance = null;
                         return this.running("At the bed stance");
                      }
 
-                     BlockPos triedSupport = this.write_BlockPos;
-                     this.write_BlockPos = null;
+                     BlockPos triedSupport = this.plannedBedCell;
+                     this.plannedBedCell = null;
                      if (r.status() != AiOperation.Status.SUCCEEDED && (this.bestFoot == null || !this.isBedAt(this.bestFoot))) {
                         this.bestFoot = null;
-                        this.push_I++;
+                        this.bedFailures++;
                         if (triedSupport != null) {
-                           this.init_Set.add(triedSupport.asLong());
+                           this.rejectedBedCells.add(triedSupport.asLong());
                         }
 
                         AiSpeedrun.log(
@@ -1192,20 +1192,20 @@ final class AiDragon {
                            triedSupport == null ? "?" : triedSupport.toShortString(),
                            r.status(),
                            r.message(),
-                           this.push_I
+                           this.bedFailures
                         );
                         this.phase = Inner_DataUtil.SELECT;
-                        if (this.push_I < 3) {
+                        if (this.bedFailures < 3) {
                            return this.running("Bed placement failed (" + r.message() + "); trying another cell");
                         }
 
                         this.bedsUsable = false;
-                        this.read_Z = true;
+                        this.bedsDisabledUntilPerch = true;
                         AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "three bed placements failed (until the next perch)");
                         return this.running("Bed placement failed (" + r.message() + "); falling back to melee and bow");
                      } else {
                         this.standing = this.bestFoot;
-                        this.pop_BlockPos = null;
+                        this.placedCover = null;
                         this.bestFoot = null;
                         this.bedsUsed++;
                         this.phase = Inner_DataUtil.RETREAT;
@@ -1213,19 +1213,19 @@ final class AiDragon {
                      }
                   }
                } else {
-                  if (this.currentLeg != null && !this.sync_Z) {
+                  if (this.currentLeg != null && !this.fountainLegActive) {
                      this.releaseLeg();
                   }
 
-                  this.write_BlockPos = null;
-                  this.close_BlockPos = null;
+                  this.plannedBedCell = null;
+                  this.bedStance = null;
                   return this.running("Waiting for the dragon to sit");
                }
             }
 
             AiOperation.Result tickRetreat() {
-               if (this.read_BlockPos == null) {
-                  this.sync_BlockPos = null;
+               if (this.retreatSpot == null) {
+                  this.coverCell = null;
                   BlockState bedState = mc.level.getBlockState(this.standing);
                   if (bedState.hasProperty(BedBlock.FACING)) {
                      Direction back = bedState.getValue(BedBlock.FACING).getOpposite();
@@ -1233,42 +1233,42 @@ final class AiDragon {
                      AiDragonZones.DangerZones zones = AiDragonZones.zones(mc);
                      double[] breath = AiDragonZones.breath(mc);
                      List<double[]> lying = this.nearbyBreathClouds();
-                     if (this.open_BlockPos != null
-                        && AiDragonZones.isSafeCell(zones, breath, lying, this.open_BlockPos.getX(), this.open_BlockPos.getY(), this.open_BlockPos.getZ())) {
-                        this.read_BlockPos = this.open_BlockPos;
-                        int dx = this.standing.getX() - this.open_BlockPos.getX();
-                        int dz = this.standing.getZ() - this.open_BlockPos.getZ();
-                        this.sync_BlockPos = Math.abs(dx) >= Math.abs(dz)
-                           ? new BlockPos(this.open_BlockPos.getX() + Integer.signum(dx), this.open_BlockPos.getY(), this.open_BlockPos.getZ())
-                           : new BlockPos(this.open_BlockPos.getX(), this.open_BlockPos.getY(), this.open_BlockPos.getZ() + Integer.signum(dz));
+                     if (this.safeStance != null
+                        && AiDragonZones.isSafeCell(zones, breath, lying, this.safeStance.getX(), this.safeStance.getY(), this.safeStance.getZ())) {
+                        this.retreatSpot = this.safeStance;
+                        int dx = this.standing.getX() - this.safeStance.getX();
+                        int dz = this.standing.getZ() - this.safeStance.getZ();
+                        this.coverCell = Math.abs(dx) >= Math.abs(dz)
+                           ? new BlockPos(this.safeStance.getX() + Integer.signum(dx), this.safeStance.getY(), this.safeStance.getZ())
+                           : new BlockPos(this.safeStance.getX(), this.safeStance.getY(), this.safeStance.getZ() + Integer.signum(dz));
                      }
 
-                     for (int[] o : this.read_BlockPos != null ? new int[0][] : AiDragon.init_IArr2) {
+                     for (int[] o : this.retreatSpot != null ? new int[0][] : AiDragon.RETREAT_OFFSETS) {
                         int x = this.standing.getX() + back.getStepX() * o[0] + side.getStepX() * o[1];
                         int z = this.standing.getZ() + back.getStepZ() * o[0] + side.getStepZ() * o[1];
                         BlockPos support = this.groundAt(x, z);
                         if (support != null
                            && Math.abs(support.getY() + 1 - this.standing.getY()) <= 1
                            && AiDragonZones.isSafeCell(zones, breath, lying, x, support.getY() + 1, z)) {
-                           this.read_BlockPos = support.above();
+                           this.retreatSpot = support.above();
                            int dx = this.standing.getX() - x;
                            int dz = this.standing.getZ() - z;
-                           this.sync_BlockPos = Math.abs(dx) >= Math.abs(dz)
-                              ? new BlockPos(x + Integer.signum(dx), this.read_BlockPos.getY(), z)
-                              : new BlockPos(x, this.read_BlockPos.getY(), z + Integer.signum(dz));
+                           this.coverCell = Math.abs(dx) >= Math.abs(dz)
+                              ? new BlockPos(x + Integer.signum(dx), this.retreatSpot.getY(), z)
+                              : new BlockPos(x, this.retreatSpot.getY(), z + Integer.signum(dz));
                            break;
                         }
                      }
                   }
                }
 
-               if (this.read_BlockPos == null && this.open_BlockPos != null) {
-                  this.read_BlockPos = this.open_BlockPos;
-                  this.sync_BlockPos = null;
+               if (this.retreatSpot == null && this.safeStance != null) {
+                  this.retreatSpot = this.safeStance;
+                  this.coverCell = null;
                }
 
-               if (this.read_BlockPos == null) {
-                  int[] xz = AiDragon.load(
+               if (this.retreatSpot == null) {
+                  int[] xz = AiDragon.standPointToward(
                      this.standing.getX(),
                      this.standing.getZ(),
                      mc.player.getX(),
@@ -1282,12 +1282,12 @@ final class AiDragon {
                      return this.running("No stand-off ground; abandoning the armed bed");
                   }
 
-                  this.read_BlockPos = support.above();
+                  this.retreatSpot = support.above();
                }
 
                if (this.currentLeg == null) {
                   this.currentLeg = AiGoto.travelToCompat(
-                     this.read_BlockPos, 0.8, false, true, true, this.clampSeconds(30), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
+                     this.retreatSpot, 0.8, false, true, true, this.clampSeconds(30), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                   );
                }
 
@@ -1302,7 +1302,7 @@ final class AiDragon {
 
                this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                this.currentLeg = null;
-               this.read_BlockPos = null;
+               this.retreatSpot = null;
                if (AiDanger.assess(mc).lethal()) {
                   this.standing = null;
                   this.bedsUsable = false;
@@ -1311,7 +1311,7 @@ final class AiDragon {
                   return this.running("The blast at click range would be lethal; leaving beds out of the plan");
                }
 
-               if (this.sync_BlockPos == null && this.standing != null) {
+               if (this.coverCell == null && this.standing != null) {
                   BlockPos feet = mc.player.blockPosition();
                   int dx = this.standing.getX() - feet.getX();
                   int dz = this.standing.getZ() - feet.getZ();
@@ -1319,11 +1319,11 @@ final class AiDragon {
                   if (!c.equals(this.standing)
                      && mc.level.getBlockState(c).canBeReplaced()
                      && !mc.level.getBlockState(c.below()).getCollisionShape(mc.level, c.below()).isEmpty()) {
-                     this.sync_BlockPos = c;
+                     this.coverCell = c;
                   }
                }
 
-               if (this.sync_BlockPos != null) {
+               if (this.coverCell != null) {
                   this.phase = Inner_DataUtil.COVER;
                   return this.running("At stand-off; setting the cover block");
                } else {
@@ -1334,16 +1334,16 @@ final class AiDragon {
 
             AiOperation.Result tickCover() {
                if (this.currentLeg == null) {
-                  BlockPos support = this.sync_BlockPos.below();
-                  boolean open = mc.level.getBlockState(this.sync_BlockPos).canBeReplaced()
+                  BlockPos support = this.coverCell.below();
+                  boolean open = mc.level.getBlockState(this.coverCell).canBeReplaced()
                      && !mc.level.getBlockState(support).getCollisionShape(mc.level, support).isEmpty();
                   String block = this.bestPillarBlock();
                   if (!open || block == null || AiItems.equipHotbar(AiItems.resolveItem(block)) < 0) {
-                     if (!mc.level.getBlockState(this.sync_BlockPos).getCollisionShape(mc.level, this.sync_BlockPos).isEmpty()) {
-                        this.pop_BlockPos = this.sync_BlockPos.immutable();
+                     if (!mc.level.getBlockState(this.coverCell).getCollisionShape(mc.level, this.coverCell).isEmpty()) {
+                        this.placedCover = this.coverCell.immutable();
                      }
 
-                     this.sync_BlockPos = null;
+                     this.coverCell = null;
                      this.phase = Inner_DataUtil.ARMED;
                      return this.running(open ? "No block to set as cover; waiting for the head" : "Cover cell taken; waiting for the head");
                   }
@@ -1364,17 +1364,17 @@ final class AiDragon {
 
                this.children.cancelChild(AiDragon.ChildRole.LEG, this.currentLeg);
                this.currentLeg = null;
-               AiSpeedrun.log("[AI] dragon: cover block in {}: {} ({})", this.sync_BlockPos.toShortString(), r.status(), AiSpeedrun.clip(r.message()));
-               if (r.status() != AiOperation.Status.SUCCEEDED && ++this.coverRetries < 2 && mc.level.getBlockState(this.sync_BlockPos).canBeReplaced()) {
+               AiSpeedrun.log("[AI] dragon: cover block in {}: {} ({})", this.coverCell.toShortString(), r.status(), AiSpeedrun.clip(r.message()));
+               if (r.status() != AiOperation.Status.SUCCEEDED && ++this.coverRetries < 2 && mc.level.getBlockState(this.coverCell).canBeReplaced()) {
                   return this.running("Cover not confirmed; setting it again");
                }
 
                this.coverRetries = 0;
-               if (!mc.level.getBlockState(this.sync_BlockPos).getCollisionShape(mc.level, this.sync_BlockPos).isEmpty()) {
-                  this.pop_BlockPos = this.sync_BlockPos.immutable();
+               if (!mc.level.getBlockState(this.coverCell).getCollisionShape(mc.level, this.coverCell).isEmpty()) {
+                  this.placedCover = this.coverCell.immutable();
                }
 
-               this.sync_BlockPos = null;
+               this.coverCell = null;
                this.phase = Inner_DataUtil.ARMED;
                return this.running(
                   r.status() == AiOperation.Status.SUCCEEDED ? "Cover set; waiting for the head" : "No cover (" + r.message() + "); waiting for the head"
@@ -1412,7 +1412,7 @@ final class AiDragon {
                   return this.running("The armed bed was destroyed; re-planning");
                }
 
-               if (this.write_Z_9()) {
+               if (this.headInBedRange()) {
                   this.phase = Inner_DataUtil.DETONATE;
                   return this.running("The head is in range of the bed; detonating");
                }
@@ -1432,7 +1432,7 @@ final class AiDragon {
 
                if (this.currentLeg == null) {
                   double[] spot = AiDragon.clearSpotNear(mc.player.getX(), mc.player.getZ(), this.nearbyBreathClouds());
-                  int[] xz = AiDragon.load(this.standing.getX(), this.standing.getZ(), spot[0], spot[1], Math.max(3.5, reach - 0.4));
+                  int[] xz = AiDragon.standPointToward(this.standing.getX(), this.standing.getZ(), spot[0], spot[1], Math.max(3.5, reach - 0.4));
                   BlockPos support = this.groundAt(xz[0], xz[1]);
                   if (support == null) {
                      return this.running("Holding for the head");
@@ -1457,13 +1457,13 @@ final class AiDragon {
                      AiSpeedrun.log("[AI] dragon: beds out of the plan: {}", "Stand-off is no longer survivable; leaving beds out of the plan");
                      this.phase = Inner_DataUtil.SELECT;
                      return this.running("Stand-off is no longer survivable; leaving beds out of the plan");
-                  } else if (r.status() != AiOperation.Status.SUCCEEDED && ++this.poll_I >= 3) {
-                     this.poll_I = 0;
+                  } else if (r.status() != AiOperation.Status.SUCCEEDED && ++this.standoffFailures >= 3) {
+                     this.standoffFailures = 0;
                      this.standing = null;
                      this.phase = Inner_DataUtil.SELECT;
                      return this.running("Cannot hold the stand-off; leaving that bed");
                   } else {
-                     this.poll_I = 0;
+                     this.standoffFailures = 0;
                      return this.running("Repositioned at stand-off");
                   }
                }
@@ -1496,7 +1496,7 @@ final class AiDragon {
 
                      this.standing = null;
                      this.bedClicked = false;
-                     this.close_I = 0;
+                     this.unusedResetCounter = 0;
                      this.phase = Inner_DataUtil.SELECT;
                      return this.running(
                         "Bed removed; observed dragon damage "
@@ -1516,7 +1516,7 @@ final class AiDragon {
                   }
 
                   BlockPos head = this.standingBedHead();
-                  if (head != null && this.write_Z_9() && this.dragon.hurtTime <= 0) {
+                  if (head != null && this.headInBedRange() && this.dragon.hurtTime <= 0) {
                      Vec3 blast = Vec3.atCenterOf(head);
                      BlockState state = mc.level.getBlockState(head);
                      BlockPos foot = head.relative(state.getValue(BedBlock.FACING).getOpposite());
@@ -1525,13 +1525,13 @@ final class AiDragon {
                         .withDamageSource(autismclient.util.ExplosionDamageCalculator.bedAnchorDamageSource(mc.level, blast));
                      this.bedSelfDamageEstimate = autismclient.util.ExplosionDamageCalculator.calculateDamage(mc.player, blast, 5.0F, options);
                      double health = mc.player.getHealth() + mc.player.getAbsorptionAmount();
-                     boolean covered = this.pop_BlockPos != null
+                     boolean covered = this.placedCover != null
                         && mc.level
-                           .getBlockState(this.pop_BlockPos)
-                           .getCollisionShape(mc.level, this.pop_BlockPos)
+                           .getBlockState(this.placedCover)
+                           .getCollisionShape(mc.level, this.placedCover)
                            .toAabbs()
                            .stream()
-                           .anyMatch(box -> box.move(this.pop_BlockPos).clip(blast, mc.player.position().add(0.0, 0.4, 0.0)).isPresent());
+                           .anyMatch(box -> box.move(this.placedCover).clip(blast, mc.player.position().add(0.0, 0.4, 0.0)).isPresent());
                      double expectedSelfDamage = Math.max(this.bedSelfDamageEstimate, 8.0);
                      boolean safeBlast = (covered || this.bedSelfDamageEstimate > 0.0)
                         && health - expectedSelfDamage >= 11.5
@@ -1563,14 +1563,14 @@ final class AiDragon {
                      } else if (!AiDragon.isInBreath(mc) && !AiDanger.assess(mc).lethal()) {
                         if (this.bedSelfDamageEstimate > 0.0 && expectedSelfDamage + 11.5 > mc.player.getMaxHealth() + mc.player.getAbsorptionAmount()) {
                            if (++this.selfDamageDeferrals <= 3) {
-                              this.pop_BlockPos = null;
-                              this.read_BlockPos = null;
+                              this.placedCover = null;
+                              this.retreatSpot = null;
                               this.phase = Inner_DataUtil.ARMED;
                               return this.running("Blast priced too strong from here; re-planning the stand and cover");
                            } else {
                               this.selfDamageDeferrals = 0;
                               this.standing = null;
-                              this.pop_BlockPos = null;
+                              this.placedCover = null;
                               this.phase = Inner_DataUtil.SELECT;
                               return this.running("Blast too strong from every stand tried; dropping this bed plan");
                            }
@@ -1586,14 +1586,14 @@ final class AiDragon {
                            this.bedsUsable = false;
                            this.crystalsFirst = true;
                            this.standing = null;
-                           this.pop_BlockPos = null;
+                           this.placedCover = null;
                            this.phase = Inner_DataUtil.SELECT;
                            return this.running("Beds do not explode in this dimension; use the melee/bow fallback");
                         } else {
                            this.bedsUsable = false;
                            this.crystalsFirst = true;
                            this.standing = null;
-                           this.pop_BlockPos = null;
+                           this.placedCover = null;
                            this.phase = Inner_DataUtil.SELECT;
                            return this.running("Bed survival/cover gate failed; use the crystal and melee fallback");
                         }
@@ -1641,7 +1641,7 @@ final class AiDragon {
                   return this.running("The perch ended; re-planning");
                }
 
-               if (++this.open_I > 300) {
+               if (++this.meleeApproachTicks > 300) {
                   this.releaseLeg();
                   this.stand = null;
                   this.phase = Inner_DataUtil.SELECT;
@@ -1654,7 +1654,7 @@ final class AiDragon {
                boolean window = dragonPhase == EnderDragonPhase.SITTING_SCANNING || dragonPhase == EnderDragonPhase.SITTING_ATTACKING;
                if (!window) {
                   this.stand = null;
-                  if (this.get == 1) {
+                  if (this.meleeState == 1) {
                      this.releaseLeg();
                   }
 
@@ -1665,22 +1665,22 @@ final class AiDragon {
                   }
 
                   if (this.currentLeg == null && !AiDragon.isClearOfClouds(mc.player.getX(), mc.player.getZ(), danger, 1.0)) {
-                     BlockPos out = this.init(danger, zones);
+                     BlockPos out = this.nearestSafeCell(danger, zones);
                      if (out != null) {
                         this.currentLeg = AiGuard.allowDuringLowHealth(
                            AiGoto.travelToCompat(out, 0.35, false, false, false, this.clampSeconds(8), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true)
                         );
-                        this.get = 2;
+                        this.meleeState = 2;
                      }
                   }
 
-                  if (this.currentLeg == null && this.get == 0) {
-                     BlockPos near = this.sync_BlockPos();
+                  if (this.currentLeg == null && this.meleeState == 0) {
+                     BlockPos near = this.fountainRingStance();
                      if (near != null && Math.hypot(mc.player.getX() - (near.getX() + 0.5), mc.player.getZ() - (near.getZ() + 0.5)) > 2.5) {
                         this.currentLeg = AiGoto.travelToCompat(
                            near, 0.8, false, false, false, this.clampSeconds(10), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
-                        this.get = 3;
+                        this.meleeState = 3;
                      }
                   }
 
@@ -1691,25 +1691,25 @@ final class AiDragon {
                      }
 
                      if (!r.terminal()) {
-                        return this.running(this.get == 3 ? "Closing in while it lands" : "Out of the dragon's flame");
+                        return this.running(this.meleeState == 3 ? "Closing in while it lands" : "Out of the dragon's flame");
                      }
 
                      this.releaseLeg();
-                     this.get = 0;
+                     this.meleeState = 0;
                   }
 
                   return this.running("Waiting for the flame to end (" + dragonPhase + ")");
                } else {
-                  if (this.get == 2 || this.get == 3) {
+                  if (this.meleeState == 2 || this.meleeState == 3) {
                      this.releaseLeg();
-                     this.get = 0;
+                     this.meleeState = 0;
                   }
 
-                  if (this.stand == null || this.open_I % 10 == 0) {
-                     BlockPos stand = this.init(zones, clouds);
+                  if (this.stand == null || this.meleeApproachTicks % 10 == 0) {
+                     BlockPos stand = this.bestHeadStand(zones, clouds);
                      if (stand == null || !stand.equals(this.stand)) {
                         this.releaseLeg();
-                        this.get = 0;
+                        this.meleeState = 0;
                      }
 
                      this.stand = stand;
@@ -1731,7 +1731,7 @@ final class AiDragon {
                         this.currentLeg = AiGoto.travelToCompat(
                            this.stand, 0.3, false, false, false, this.clampSeconds(10), autismclient.ai.engine.AiPathfinder.RouteStrategy.FASTEST, true
                         );
-                        this.get = 1;
+                        this.meleeState = 1;
                      }
 
                      AiOperation.Result r = this.children.tickChild(AiDragon.ChildRole.LEG, this.currentLeg);
@@ -1744,11 +1744,11 @@ final class AiDragon {
                      }
 
                      this.releaseLeg();
-                     this.get = 0;
+                     this.meleeState = 0;
                   }
 
                   this.releaseLeg();
-                  this.get = 0;
+                  this.meleeState = 0;
                   this.aim.tick();
                   if (inReach
                      && this.aim.isAimedAtEntity(this.dragon.head)
@@ -1770,7 +1770,7 @@ final class AiDragon {
                }
             }
 
-            BlockPos init(AiDragonZones.DangerZones zones, List<double[]> clouds) {
+            BlockPos bestHeadStand(AiDragonZones.DangerZones zones, List<double[]> clouds) {
                AABB headBox = this.dragon.head.getBoundingBox();
                double reach = Math.max(3.0, mc.player.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE)) - 0.4;
                BlockPos h = this.dragon.head.blockPosition();
@@ -1801,7 +1801,7 @@ final class AiDragon {
                return best;
             }
 
-            BlockPos init(List<double[]> danger, AiDragonZones.DangerZones zones) {
+            BlockPos nearestSafeCell(List<double[]> danger, AiDragonZones.DangerZones zones) {
                BlockPos feet = mc.player.blockPosition();
                BlockPos best = null;
                double bestD = 1.7976931348623157E308;
@@ -1834,7 +1834,7 @@ final class AiDragon {
 
                if (this.currentLeg == null) {
                   if (!this.hasRangedWeapon()) {
-                     this.push_Z = false;
+                     this.bowEnabled = false;
                      this.phase = Inner_DataUtil.SELECT;
                      return this.running("Out of arrows");
                   }
@@ -1862,14 +1862,14 @@ final class AiDragon {
 
                if (r.status() == AiOperation.Status.FAILED) {
                   if (r.dataJson() != null && r.dataJson().contains("\"missing\"")) {
-                     this.init_V(r);
-                     this.push_Z = false;
+                     this.absorbChildData(r);
+                     this.bowEnabled = false;
                      this.phase = Inner_DataUtil.SELECT;
                      return this.running("The bow is out of ammunition");
                   }
 
-                  if (++this.flush_I >= 3) {
-                     this.push_Z = false;
+                  if (++this.bowFailures >= 3) {
+                     this.bowEnabled = false;
                      this.phase = Inner_DataUtil.SELECT;
                      return this.running("The bow cannot connect from here; holding for perches");
                   }
@@ -1884,7 +1884,7 @@ final class AiDragon {
                   if (this.currentLeg == null) {
                      int fx = this.fountain != null ? this.fountain.getX() : 0;
                      int fz = this.fountain != null ? this.fountain.getZ() : 0;
-                     int[] xz = AiDragon.init(fx, fz, mc.player.getX(), mc.player.getZ(), 12.0);
+                     int[] xz = AiDragon.radialPoint(fx, fz, mc.player.getX(), mc.player.getZ(), 12.0);
                      double[] spot = AiDragon.clearSpotNear(xz[0] + 0.5, xz[1] + 0.5, this.nearbyBreathClouds());
                      BlockPos support = this.groundAt((int)Math.floor(spot[0]), (int)Math.floor(spot[1]));
                      if (support == null) {
@@ -1935,7 +1935,7 @@ final class AiDragon {
                   return false;
                }
 
-               if (!AiThreats.isLegacyCombatEnabled() && AiDragon.init_Z_I_I(this.set, this.usableBeds())) {
+               if (!AiThreats.isLegacyCombatEnabled() && AiDragon.shouldSwitchToBeds(this.failedClears, this.usableBeds())) {
                   return this.hasLiveCrystal();
                }
 
@@ -2014,29 +2014,29 @@ final class AiDragon {
             void notePerchState(AiDragon.DragonState perch) {
                if (perch == AiDragon.DragonState.PERCHED && this.lastPerch != AiDragon.DragonState.PERCHED) {
                   this.perchCount++;
-                  if (this.read_Z) {
-                     this.read_Z = false;
+                  if (this.bedsDisabledUntilPerch) {
+                     this.bedsDisabledUntilPerch = false;
                      this.bedsUsable = true;
-                     this.push_I = 0;
-                     this.init_Set.clear();
+                     this.bedFailures = 0;
+                     this.rejectedBedCells.clear();
                   }
 
                   if (this.dragon != null
-                     && this.init_F > 0.0F
-                     && this.dragon.getHealth() > this.init_F + 10.0F
+                     && this.perchEndHealth > 0.0F
+                     && this.dragon.getHealth() > this.perchEndHealth + 10.0F
                      && !this.crystalsFirst
                      && this.crystalsRemain()) {
                      this.crystalsFirst = true;
                      AiSpeedrun.log(
                         "[AI] dragon: healed from {} to {} between perches; crystals first while it flies",
-                        String.format(Locale.ROOT, "%.0f", this.init_F),
+                        String.format(Locale.ROOT, "%.0f", this.perchEndHealth),
                         String.format(Locale.ROOT, "%.0f", this.dragon.getHealth())
                      );
                   }
                }
 
                if (perch != AiDragon.DragonState.PERCHED && this.lastPerch == AiDragon.DragonState.PERCHED && this.dragon != null) {
-                  this.init_F = this.dragon.getHealth();
+                  this.perchEndHealth = this.dragon.getHealth();
                }
 
                this.lastPerch = perch;
@@ -2095,7 +2095,7 @@ final class AiDragon {
                return false;
             }
 
-            BlockPos read_BlockPos_5() {
+            BlockPos fountainBedCell() {
                int fx = this.fountain.getX();
                int fz = this.fountain.getZ();
                double cx = fx + 0.5;
@@ -2119,9 +2119,9 @@ final class AiDragon {
                for (double[] dir : dirs) {
                   for (double radius = 3.0; radius <= 7.0; radius++) {
                      BlockPos support = this.groundAt((int)Math.round(fx + dir[0] * radius), (int)Math.round(fz + dir[1] * radius));
-                     if (support != null && !this.init_Set.contains(support.asLong())) {
-                        this.close_BlockPos = null;
-                        if (zones.isEmpty() || this.init(cx, cz, dir, radius, support.getY() + 1, zones)) {
+                     if (support != null && !this.rejectedBedCells.contains(support.asLong())) {
+                        this.bedStance = null;
+                        if (zones.isEmpty() || this.hasStandAlong(cx, cz, dir, radius, support.getY() + 1, zones)) {
                            if (AiDragon.isClearOfClouds(support.getX() + 0.5, support.getZ() + 0.5, clouds)) {
                               this.bestFoot = support.above();
                               AiSpeedrun.log(
@@ -2150,7 +2150,7 @@ final class AiDragon {
                }
             }
 
-            BlockPos write_BlockPos_2() {
+            BlockPos perchedBedCell() {
                Entity head = AiDragonZones.head(mc);
                if (head == null) {
                   return null;
@@ -2188,7 +2188,7 @@ final class AiDragon {
                                     double r = Math.hypot(bx - sx, bz - sz);
                                     if (!(r < 2.5) && !(r > 5.0)) {
                                        BlockPos support = this.groundAt(bx, bz);
-                                       if (support != null && !this.init_Set.contains(support.asLong())) {
+                                       if (support != null && !this.rejectedBedCells.contains(support.asLong())) {
                                           BlockPos foot = support.above();
                                           if (Math.abs(foot.getY() - stance.getY()) <= 1 && mc.level.getBlockState(foot).canBeReplaced()) {
                                              BlockPos bedHead = foot.relative(Direction.getApproximateNearest(bx - sx, 0.0F, bz - sz));
@@ -2226,8 +2226,8 @@ final class AiDragon {
                }
 
                if (bestFoot == null) {
-                  if (mc.player.tickCount - this.clear > 100) {
-                     this.clear = mc.player.tickCount;
+                  if (mc.player.tickCount - this.lastNoPlanLogTick > 100) {
+                     this.lastNoPlanLogTick = mc.player.tickCount;
                      AiSpeedrun.log(
                         "[AI] dragon: no bed plan: {} safe stances, beds out of reach {}, blasts too close {}, too far from the head {}",
                         safeStances,
@@ -2239,8 +2239,8 @@ final class AiDragon {
 
                   return null;
                } else {
-                  this.close_BlockPos = bestStance;
-                  this.open_BlockPos = bestStance;
+                  this.bedStance = bestStance;
+                  this.safeStance = bestStance;
                   this.bestFoot = bestFoot;
                   AiSpeedrun.log(
                      "[AI] dragon: bed plan: stance {}, bed {}, blast {} from the head",
@@ -2252,7 +2252,7 @@ final class AiDragon {
                }
             }
 
-            boolean init(double cx, double cz, double[] dir, double radius, int feetY, AiDragonZones.DangerZones zones) {
+            boolean hasStandAlong(double cx, double cz, double[] dir, double radius, int feetY, AiDragonZones.DangerZones zones) {
                for (double k = 2.0; k <= 4.0; k += 0.25) {
                   double x = cx + dir[0] * (radius + k);
                   double z = cz + dir[1] * (radius + k);
@@ -2261,7 +2261,7 @@ final class AiDragon {
                      if (ground != null
                         && Math.abs(ground.getY() + 1 - feetY) <= 1
                         && !zones.hits(AiDragonZones.cellBox(ground.getX(), ground.getY() + 1, ground.getZ()), 1.0)) {
-                        this.close_BlockPos = ground.above();
+                        this.bedStance = ground.above();
                         return true;
                      }
                   }
@@ -2285,7 +2285,7 @@ final class AiDragon {
                return null;
             }
 
-            BlockPos sync_BlockPos() {
+            BlockPos fountainRingStance() {
                double cx = this.fountain.getX() + 0.5;
                double cz = this.fountain.getZ() + 0.5;
                double dx = mc.player.getX() - cx;
@@ -2352,7 +2352,7 @@ final class AiDragon {
                return pos != null && AiDragon.isBedPath(BuiltInRegistries.BLOCK.getKey(mc.level.getBlockState(pos).getBlock()).getPath());
             }
 
-            boolean write_Z_9() {
+            boolean headInBedRange() {
                if (this.standing != null && this.dragon != null && this.dragon.isAlive()) {
                   BlockPos head = this.standingBedHead();
                   if (head != null && this.dragonState != AiDragon.DragonState.DYING && this.dragonState != AiDragon.DragonState.FLYING) {
@@ -2438,7 +2438,7 @@ final class AiDragon {
                }
             }
 
-            void init_V(AiOperation.Result r) {
+            void absorbChildData(AiOperation.Result r) {
                try {
                   if (r.dataJson() == null) {
                      return;
@@ -2455,7 +2455,7 @@ final class AiDragon {
                   }
 
                   if (data.has("code")) {
-                     this.read_Str = data.get("code").getAsString();
+                     this.lastFailureCode = data.get("code").getAsString();
                   }
                } catch (RuntimeException var4) {
                }
@@ -2476,7 +2476,7 @@ final class AiDragon {
                }
             }
 
-            void read_V_10() {
+            void registerChildren() {
                this.children.register(AiDragon.ChildRole.LEG, this.currentLeg);
                this.children.register(AiDragon.ChildRole.GUARD, this.guardOperation);
                this.children.register(AiDragon.ChildRole.DODGE, this.dodgeOperation);
@@ -2535,13 +2535,13 @@ final class AiDragon {
                   out.add("armedBed", AiJson.objectOf("x", this.standing.getX(), "y", this.standing.getY(), "z", this.standing.getZ()));
                }
 
-               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.sync_I, this.guardReason));
+               out.add("survival", AiGuard.statusToJson(AiGuard.sampleStatus(), this.guardDecisions, this.guardReason));
                if (this.missingItems != null) {
                   out.add("missing", this.missingItems);
                }
 
-               if (this.read_Str != null) {
-                  out.addProperty("code", this.read_Str);
+               if (this.lastFailureCode != null) {
+                  out.addProperty("code", this.lastFailureCode);
                }
 
                return out;
@@ -2560,7 +2560,7 @@ final class AiDragon {
             }
 
             AiOperation.Result finish(AiOperation.Status status, AiFailure failure, String message) {
-               this.read_V_10();
+               this.registerChildren();
                AiOperation.Result result = this.children.result(status, message, this.statsJson(), this.bedClicked);
                this.cancel();
                return new AiOperation.Result(result.status(), result.message(), result.dataJson(), result.evidence(), failure);
@@ -2596,8 +2596,8 @@ final class AiDragon {
 
             @Override
             public void cancel() {
-               if (!this.tick_Z) {
-                  this.tick_Z = true;
+               if (!this.cancelled) {
+                  this.cancelled = true;
                   this.releaseLeg();
                   if (this.guardOperation != null) {
                      this.children.cancelChild(AiDragon.ChildRole.GUARD, this.guardOperation);

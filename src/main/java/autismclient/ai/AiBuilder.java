@@ -2827,13 +2827,13 @@ final class AiBuilder {
          final JsonArray craftedItems = new JsonArray();
          AiOperation craftOp;
          int craftItemIndex;
-         boolean init_Z;
+         boolean buildStarted;
 
          @Override
          public AiOperation.Result tick() {
             if (this.craftOp != null) {
                AiOperation.Result r = this.craftOp.tick();
-               if (this.init_Z) {
+               if (this.buildStarted) {
                   return r.terminal() ? this.withCraftedFirst(r) : r;
                }
 
@@ -2873,7 +2873,7 @@ final class AiBuilder {
                   return AiOperation.Result.failed(AiFailure.EXECUTION_FAILED, e.getMessage(), "{}");
                }
 
-               this.init_Z = true;
+               this.buildStarted = true;
                return AiGameOperations.result(AiOperation.Status.RUNNING, "Materials crafted; building", new JsonObject());
             }
          }
@@ -3084,13 +3084,13 @@ final class AiBuilder {
             final AiBuilder.ReadyQueue readyQueue = new AiBuilder.ReadyQueue();
             final AiBuilder.PlaceAckTracker placeAckTracker = new AiBuilder.PlaceAckTracker();
             final Map<Long, Integer> placeAttempts = new HashMap<>();
-            final Set<Long> read_Set = new HashSet<>();
+            final Set<Long> abandonedPlacements = new HashSet<>();
             BlockPlacementPlanner.PlacementPlan walkingPlacementPlan;
             Predicate<AABB> walkingClearCheck;
             int walkingPlacementCount;
             int walkingClickCount;
             int walkingRefusalCount;
-            final Set<Long> write_Set = new HashSet<>();
+            final Set<Long> confirmedPlacements = new HashSet<>();
             AiOperation.Result heldSubtaskResult;
             BlockPos batchFocusPos;
             int permanentAccessSteps;
@@ -3105,7 +3105,7 @@ final class AiBuilder {
             Vec3 lastWorkerPosition;
             double planningMillis;
             double estimatedSeconds;
-            boolean init_Z;
+            boolean scaffoldSubtaskActive;
             AiOperation cellConstructionOp;
             long lastFluidPlacementTick = -4611686018427387904L;
             AiOperation shulkerRefillOp;
@@ -3117,38 +3117,38 @@ final class AiBuilder {
             AiBuilder.CellSpec pendingPlaceCell;
             Vec3 pendingAimPoint;
             BlockPlacementPlanner.PlacementPlan currentPlacementPlan;
-            int start_I;
+            int yawWaitTicks;
             final JsonArray unappliedProperties = new JsonArray();
             final Set<String> reportedPropertyKeys = new HashSet<>();
             float pendingYaw = 0.0F / 0.0F;
             double yawTolerance = 40.0;
-            boolean load_Z;
-            int stop_I;
-            boolean read_Z;
-            int next_I;
-            String init_Str;
-            int prev;
+            boolean yawReplanned;
+            int toggleWaitTicks;
+            boolean toggleSent;
+            int cycleTicks;
+            String lastCycledValue;
+            int cycleStallTicks;
             int matchedConfirmations;
             int verifyTicks;
             int cellCursor;
             int currentCellAttempts;
-            int cache;
+            int approachFailures;
             int placedCount;
             int skippedCount;
             int failedTotal;
-            int entry;
-            int node;
-            int task;
-            boolean write_Z;
+            int materialWaitTicks;
+            int selectWaitTicks;
+            int backfillJumps;
+            boolean waterStanceTried;
             int auditPassCount;
             int reachFirstCount;
             int sweepPassCount;
-            final Set<Long> flush_Set = new HashSet<>();
+            final Set<Long> openablesClosed = new HashSet<>();
             AiOperation auditRepairOp;
             boolean sweepActive;
             final List<AiBuilder.CellSpec> repairCells = new ArrayList<>();
             int auditCursor;
-            boolean sync_Z;
+            boolean climbDownTried;
             final Set<Long> close_Set = new HashSet<>(this.orderedCells.stream().map(c -> blueprint.origin().offset(c.dx(), c.dy(), c.dz()).asLong()).toList());
             final Map<Long, AiBuilder.CellSpec> load_Map;
             final Set<Long> existingSupportKeys;
@@ -3157,8 +3157,8 @@ final class AiBuilder {
             final AiGuardLayer guardLayer;
             int survivalInterruptions;
             final Set<Long> scaffoldSupportKeys;
-            final Map<Long, Integer> read_Map;
-            final Set<Long> push_Set;
+            final Map<Long, Integer> columnCeilingY;
+            final Set<Long> breachCells;
             final Set<Long> pop_Set;
             AiOperation accessStairsOp;
             BlockPos pendingFoundation;
@@ -3174,7 +3174,7 @@ final class AiBuilder {
             final AiScaffold.JobScope scaffoldTracker;
             final List<BlockPos> outerScaffoldCells;
             final List<BlockPos> drainSupports;
-            boolean pop_Z;
+            boolean scaffoldRemovalStarted;
             int drainInitialSupports;
             int drainSteps;
             final Map<Long, Integer> drainAttemptCounts;
@@ -3190,23 +3190,23 @@ final class AiBuilder {
             AiOperation enclosureEscapeOp;
             final Set<Long> exitAttemptColumns;
             final Set<Long> stepOffStances;
-            final Set<Long> set_Set;
-            boolean tick_Z;
-            boolean run_Z;
-            boolean get_Z;
-            boolean set_Z;
-            boolean put_Z;
+            final Set<Long> supportCellsTried;
+            boolean alternateSupportTried;
+            boolean stanceSubtaskActive;
+            boolean leanUsed;
+            boolean sneakSubtask;
+            boolean raisedToBuildLevel;
             String lastSubtaskData;
             AiOperation drainFloorBreakOp;
-            final Set<Long> put_Set;
+            final Set<Long> stepOffFloorsChecked;
             AiOperation outerScaffoldBreakOp;
             int outerScaffoldBreaks;
-            final Set<Long> add_Set;
-            boolean add_Z;
-            final Map<Long, Set<Long>> sync_Map;
+            final Set<Long> postPassRetried;
+            boolean exitWalkActive;
+            final Map<Long, Set<Long>> avoidStancesByTarget;
             int breakOutTries;
-            int scan;
-            int parse;
+            int conflictBreakAttempts;
+            int batchFocusRetries;
             final List<AiBuilder.CellSpec> deferredCells;
             final List<String> deferredReasons;
             int deferPassCount;
@@ -3268,8 +3268,8 @@ final class AiBuilder {
                }
 
                this.scaffoldSupportKeys = new HashSet<>();
-               this.read_Map = new HashMap<>();
-               this.push_Set = new HashSet<>();
+               this.columnCeilingY = new HashMap<>();
+               this.breachCells = new HashSet<>();
                this.pop_Set = new HashSet<>();
                this.foundationKeys = new HashSet<>();
                this.stairLayerY = blueprint.cells().stream().mapToInt(AiBuilder.CellSpec::dy).min().orElse(0) - 1;
@@ -3293,10 +3293,10 @@ final class AiBuilder {
                this.activeKeep = Set.of();
                this.exitAttemptColumns = new HashSet<>();
                this.stepOffStances = new HashSet<>();
-               this.set_Set = new HashSet<>();
-               this.put_Set = new HashSet<>();
-               this.add_Set = new HashSet<>();
-               this.sync_Map = new HashMap<>();
+               this.supportCellsTried = new HashSet<>();
+               this.stepOffFloorsChecked = new HashSet<>();
+               this.postPassRetried = new HashSet<>();
+               this.avoidStancesByTarget = new HashMap<>();
                this.deferredCells = new ArrayList<>();
                this.deferredReasons = new ArrayList<>();
                this.phaseTicks = new TreeMap<>();
@@ -3404,7 +3404,7 @@ final class AiBuilder {
 
                AiOperation.Result r = !this.cancelled && this.guardLayer != null && System.nanoTime() <= this.deadlineNanos
                   ? this.guardLayer
-                     .tick(this, this::poll, () -> Math.max(1, (int)((this.deadlineNanos - System.nanoTime()) / 1000000000L)))
+                     .tick(this, this::resetAfterInterruption, () -> Math.max(1, (int)((this.deadlineNanos - System.nanoTime()) / 1000000000L)))
                   : null;
                if (r != null && r.terminal()) {
                   this.cancel();
@@ -3430,7 +3430,7 @@ final class AiBuilder {
                   this.releaseJobReservations();
                }
 
-               if ((holdSneak || this.set_Z) && !r.terminal()) {
+               if ((holdSneak || this.sneakSubtask) && !r.terminal()) {
                   mc.options.keyShift.setDown(true);
                }
 
@@ -3639,10 +3639,10 @@ final class AiBuilder {
                            if (++this.verifyTicks >= 2) {
                               if (!matched) {
                                  this.abandonPendingPlacement("placement did not appear");
-                              } else if (this.init_Z_TableIndex_StreamU_2(this.pendingPlaceCell, this.pendingPlacePos, liveState)
+                              } else if (this.verifyPendingPlacement(this.pendingPlaceCell, this.pendingPlacePos, liveState)
                                  && this.pendingPlacePos != null) {
                                  this.placedCount++;
-                                 this.cache = 0;
+                                 this.approachFailures = 0;
                                  this.advanceCell();
                               }
                            }
@@ -3650,9 +3650,9 @@ final class AiBuilder {
                            this.matchedConfirmations = matched ? this.matchedConfirmations + 1 : 0;
                            boolean answered = AiServerEvidence.blockRevision(this.pendingPlacePos) > this.pendingPlaceRevision;
                            if (this.matchedConfirmations >= (schematic ? 1 : 5) && answered) {
-                              if (this.init_Z_TableIndex_StreamU_2(this.pendingPlaceCell, this.pendingPlacePos, liveState) && this.pendingPlacePos != null) {
+                              if (this.verifyPendingPlacement(this.pendingPlaceCell, this.pendingPlacePos, liveState) && this.pendingPlacePos != null) {
                                  this.placedCount++;
-                                 this.cache = 0;
+                                 this.approachFailures = 0;
                                  this.advanceCell();
                               }
                            } else if (schematic && answered && !matched && ++this.verifyTicks > 4) {
@@ -3763,73 +3763,73 @@ final class AiBuilder {
 
                            return this.running("Required foundation finished; re-evaluating the source cell");
                         } else {
-                           if (this.run_Z) {
-                              this.run_Z = false;
+                           if (this.stanceSubtaskActive) {
+                              this.stanceSubtaskActive = false;
                               if (r.status() == AiOperation.Status.SUCCEEDED) {
                                  return this.running("Construction stance ready; re-evaluating the placement");
                               }
 
-                              this.set_Z = false;
+                              this.sneakSubtask = false;
                            }
 
-                           if (this.init_Z) {
-                              this.init_Z = false;
+                           if (this.scaffoldSubtaskActive) {
+                              this.scaffoldSubtaskActive = false;
                               if (r.status() != AiOperation.Status.SUCCEEDED) {
                                  this.deferCurrentCell(r.message());
                               }
 
                               return this.running("Scaffold construction finished; re-evaluating");
                            } else {
-                              if (this.add_Z) {
-                                 this.add_Z = false;
+                              if (this.exitWalkActive) {
+                                 this.exitWalkActive = false;
                               }
 
-                              this.read_V_2();
+                              this.deferMissedCells();
                               if (r.status() != AiOperation.Status.SUCCEEDED) {
                                  if (schematic
                                     && r.message() != null
                                     && (r.message().startsWith("Batch planning") || r.message().startsWith("Construction planning"))) {
-                                    this.load_V(this.currentCellPos());
+                                    this.tickCellPlacement(this.currentCellPos());
                                     return this.running("Refreshing the bounded batch plan against the changed work site");
                                  }
 
-                                 if (schematic && this.push(this.currentCellPos())) {
+                                 if (schematic && this.switchToReachableCell(this.currentCellPos())) {
                                     return this.running("Building a schematic step before temporary access");
                                  }
 
-                                 if (schematic && r.failure() != AiFailure.PLACEMENT_IMPOSSIBLE && this.load(this.orderedCells.get(this.cellCursor))) {
+                                 if (schematic && r.failure() != AiFailure.PLACEMENT_IMPOSSIBLE && this.advanceStairLayer(this.orderedCells.get(this.cellCursor))) {
                                     return this.running("Preparing access to the unreachable construction layer");
                                  }
 
-                                 if (schematic && this.sync(this.orderedCells.get(this.cellCursor), this.currentCellPos())) {
+                                 if (schematic && this.tryAlternateSupport(this.orderedCells.get(this.cellCursor), this.currentCellPos())) {
                                     return this.running("Constructing a stance aligned with the requested placement");
                                  }
 
-                                 if (schematic && r.failure() == AiFailure.PLACEMENT_IMPOSSIBLE && this.write(this.orderedCells.get(this.cellCursor), this.currentCellPos())) {
+                                 if (schematic && r.failure() == AiFailure.PLACEMENT_IMPOSSIBLE && this.planAccessSupport(this.orderedCells.get(this.cellCursor), this.currentCellPos())) {
                                     return this.running("Building an accessible support instead of repeating the failed approach");
                                  }
 
-                                 if (!this.sync_Z && r.message() != null && r.message().startsWith("No route toward the target")) {
-                                    this.sync_Z = true;
-                                    this.cache = 0;
+                                 if (!this.climbDownTried && r.message() != null && r.message().startsWith("No route toward the target")) {
+                                    this.climbDownTried = true;
+                                    this.approachFailures = 0;
                                     this.activeSubtask = this.climbDownOp();
                                     return this.running("Climbing down after the approach lost its route");
                                  }
 
-                                 if (++this.cache >= 6) {
+                                 if (++this.approachFailures >= 6) {
                                     this.deferCurrentCell("no reachable approach");
                                     return this.running("Approach keeps failing; cell deferred to the post-pass");
                                  }
 
-                                 this.load_V(this.currentCellPos());
+                                 this.tickCellPlacement(this.currentCellPos());
                               }
 
                               return this.running("Approach finished; re-evaluating");
                            }
                         }
                      } else {
-                        if (!schematic && this.orderedCells.size() - this.cellCursor <= 8 && this.load_Z_4()) {
-                           this.add_Z = true;
+                        if (!schematic && this.orderedCells.size() - this.cellCursor <= 8 && this.hasClimbableExit()) {
+                           this.exitWalkActive = true;
                            this.activeSubtask = AiGoto.travelToCompat(blueprint.origin().below().north(3), 1.5, true, false, false, 20);
                            return this.running("Stepping out of the closing structure");
                         }
@@ -3843,11 +3843,11 @@ final class AiBuilder {
                            this.outerScaffoldCleared = true;
                         }
 
-                        if (schematic && this.ownsScaffolding && this.cellCursor < this.orderedCells.size() && !this.put_Z && mc.player.getY() < blueprint.origin().getY()) {
+                        if (schematic && this.ownsScaffolding && this.cellCursor < this.orderedCells.size() && !this.raisedToBuildLevel && mc.player.getY() < blueprint.origin().getY()) {
                            Set<Long> keep = this.keepCells();
                            BlockPos worker = mc.player.blockPosition();
                            BlockPos stance = new BlockPos(worker.getX(), blueprint.origin().getY() + 2, worker.getZ());
-                           this.put_Z = this.run_Z = true;
+                           this.raisedToBuildLevel = this.stanceSubtaskActive = true;
                            this.activeSubtask = AiGoto.travelToCompat(
                               stance,
                               0.25,
@@ -3892,7 +3892,7 @@ final class AiBuilder {
                                  && this.activeSubtask == null
                                  && this.cellConstructionOp == null
                                  && !this.batchPositions.contains(pos)
-                                 && !this.init_Z_TableIndex_StreamU_BlockPos(cell, pos)) {
+                                 && !this.canPlaceDirectly(cell, pos)) {
                                  int swap = -1;
 
                                  for (int j = this.cellCursor + 1; j < Math.min(this.orderedCells.size(), this.cellCursor + 96); j++) {
@@ -3900,7 +3900,7 @@ final class AiBuilder {
                                     if (next.dy() == cell.dy()) {
                                        BlockPos at = blueprint.origin().offset(next.dx(), next.dy(), next.dz());
                                        if (!AiBuilder.isCellSatisfied(next, mc.level.getBlockState(at), power.substitutes(), schematic)
-                                          && this.init_Z_TableIndex_StreamU_BlockPos(next, at)) {
+                                          && this.canPlaceDirectly(next, at)) {
                                           swap = j;
                                           break;
                                        }
@@ -3912,9 +3912,9 @@ final class AiBuilder {
                                     this.orderedCells.add(this.cellCursor, nearby);
                                     this.currentCellAttempts = this.placeAttempts.getOrDefault(this.currentCellPos().asLong(), 0);
                                     this.currentPlacementPlan = null;
-                                    this.start_I = 0;
+                                    this.yawWaitTicks = 0;
                                     this.pendingYaw = 0.0F / 0.0F;
-                                    this.load_Z = false;
+                                    this.yawReplanned = false;
                                     this.reachFirstCount++;
                                     continue;
                                  }
@@ -4042,7 +4042,7 @@ final class AiBuilder {
                                  }
 
                                  if (schematic && AiSchematicActions.needsAction(cell)) {
-                                    if (this.pop(pos)) {
+                                    if (this.tryCeilingStance(pos)) {
                                        return this.running("Opening access to the buried interaction cell");
                                     }
 
@@ -4051,7 +4051,7 @@ final class AiBuilder {
                                  }
 
                                  if (schematic
-                                    && this.task < 20
+                                    && this.backfillJumps < 20
                                     && live.canBeReplaced()
                                     && mc.player.blockPosition().getX() == pos.getX()
                                     && mc.player.blockPosition().getZ() == pos.getZ()
@@ -4064,7 +4064,7 @@ final class AiBuilder {
                                     && mc.level.noCollision(mc.player, mc.player.getBoundingBox().move(0.0, 1.42, 0.0))) {
                                     int itemSlot = AiItems.equipHotbar(AiItems.resolveItem(cell.block()));
                                     if (itemSlot >= 0) {
-                                       this.task++;
+                                       this.backfillJumps++;
                                        autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                                        this.placementAim.aimAt(Vec3.atCenterOf(pos.below()));
                                        this.placementAim.tick();
@@ -4073,7 +4073,7 @@ final class AiBuilder {
                                     }
                                  }
 
-                                 if (this.task > 0) {
+                                 if (this.backfillJumps > 0) {
                                     mc.options.keyJump.setDown(false);
                                  }
 
@@ -4132,7 +4132,7 @@ final class AiBuilder {
                                                 && this.close_Set.contains(pos.relative(direction).asLong());
                                           }
 
-                                          if ((!planned || this.deferPassCount > 0) && this.write(cell, pos)) {
+                                          if ((!planned || this.deferPassCount > 0) && this.planAccessSupport(cell, pos)) {
                                              return this.running("Constructing a temporary support for the floating cell");
                                           }
 
@@ -4146,7 +4146,7 @@ final class AiBuilder {
                                           if (live.hasBlockEntity()) {
                                              this.failCurrentCell("target occupied by a block entity");
                                           } else {
-                                             if (++this.scan <= 3) {
+                                             if (++this.conflictBreakAttempts <= 3) {
                                                 this.activeSubtask = autismclient.ai.engine.AiBreakBlock.breakBlock(pos, 30, true, this.cachedProtectedCells(), true);
                                                 return this.running("Clearing a conflicting block at the schematic cell");
                                              }
@@ -4231,12 +4231,12 @@ final class AiBuilder {
                                              }
 
                                              if (!sourced) {
-                                                if (schematic && ++this.entry <= 20) {
+                                                if (schematic && ++this.materialWaitTicks <= 20) {
                                                    autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                                                    return this.running("Awaiting material: " + BuiltInRegistries.ITEM.getKey(item));
                                                 }
 
-                                                this.entry = 0;
+                                                this.materialWaitTicks = 0;
                                                 if (schematic && power.shulkerStock()) {
                                                    AiOperation refill = this.nextShulkerRefill(cell);
                                                    if (refill != null) {
@@ -4252,19 +4252,19 @@ final class AiBuilder {
                                                 );
                                              }
 
-                                             this.entry = 0;
+                                             this.materialWaitTicks = 0;
                                              if (AiTerrain.isLoaded(mc.level, pos)
                                                 && (
                                                    schematic
                                                       ? !AiBuilder.collidesWithEntityBox(cell, pos, mc.player.getBoundingBox(), mc.level)
                                                       : !mc.player.getBoundingBox().intersects(this.buildBounds)
                                                 )) {
-                                                if (schematic && this.read(cell, pos)) {
+                                                if (schematic && this.placementOverlapsPlayer(cell, pos)) {
                                                    if (this.openExit(mc.player.blockPosition())) {
                                                       return this.running("Opening access out of the closed room");
                                                    }
 
-                                                   this.load_V(pos);
+                                                   this.tickCellPlacement(pos);
                                                    return this.running("Leaving the room " + pos.toShortString() + " closes");
                                                 }
 
@@ -4280,7 +4280,7 @@ final class AiBuilder {
 
                                                 String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
                                                 if (autismclient.util.InventorySlotHelper.ensureItemInHotbar(mc, MacroItemTarget.ofRegistryId(itemId), mc.player.getInventory().getSelectedSlot()) < 0) {
-                                                   if (schematic && ++this.node <= 20) {
+                                                   if (schematic && ++this.selectWaitTicks <= 20) {
                                                       autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
                                                       return this.running("Awaiting material: selecting " + itemId);
                                                    }
@@ -4292,11 +4292,11 @@ final class AiBuilder {
                                                    );
                                                 }
 
-                                                this.node = 0;
+                                                this.selectWaitTicks = 0;
                                                 boolean placementSneak = schematic
                                                    && (
                                                       holdSneak
-                                                         || this.set_Z
+                                                         || this.sneakSubtask
                                                          || autismclient.ai.engine.PlacementGoal.canPlace(
                                                             mc, pos, item, this.constraintFor(cell, target)
                                                          )
@@ -4430,14 +4430,14 @@ final class AiBuilder {
                                                          )
                                                          > this.yawTolerance
                                                    || !Float.isNaN(this.pendingYaw) && !init_Z_Minecraft(mc, this.pendingYaw, this.yawTolerance)) {
-                                                   if (++this.start_I > 30) {
-                                                      this.start_I = 0;
-                                                      if (!Float.isNaN(this.pendingYaw) && !this.load_Z) {
-                                                         this.load_Z = true;
+                                                   if (++this.yawWaitTicks > 30) {
+                                                      this.yawWaitTicks = 0;
+                                                      if (!Float.isNaN(this.pendingYaw) && !this.yawReplanned) {
+                                                         this.yawReplanned = true;
                                                          Direction look = Direction.fromYRot(this.pendingYaw);
                                                          this.currentPlacementPlan = null;
                                                          if (schematic) {
-                                                            this.load_V(pos);
+                                                            this.tickCellPlacement(pos);
                                                          } else {
                                                             this.activeSubtask = AiGoto.travelToCompat(
                                                                AiGoto.findStandableNearCompat(pos.relative(look.getOpposite(), 3), 8), 0.6, true, false, false, 25
@@ -4471,7 +4471,7 @@ final class AiBuilder {
                                                    ? !AiBuilder.collidesWithEntityBox(cell, pos, mc.player.getBoundingBox(), mc.level)
                                                    : !mc.player.getBoundingBox().intersects(new AABB(pos))) {
                                                    this.currentPlacementPlan = null;
-                                                   this.start_I = 0;
+                                                   this.yawWaitTicks = 0;
                                                    if (!init_Z_Minecraft_Item(mc, item)) {
                                                       return this.running("Waiting for the selected construction item to reach the server");
                                                    }
@@ -4574,7 +4574,7 @@ final class AiBuilder {
                                                 return this.running("Stepping out of the placement cell");
                                              }
 
-                                             this.load_V(pos);
+                                             this.tickCellPlacement(pos);
                                              return this.running("Moving into reach of " + pos.toShortString());
                                           }
 
@@ -4585,11 +4585,11 @@ final class AiBuilder {
                                  }
                               }
                            } else {
-                              if (!this.write_Set.remove(pos.asLong())) {
+                              if (!this.confirmedPlacements.remove(pos.asLong())) {
                                  this.skippedCount++;
                               }
 
-                              this.cache = 0;
+                              this.approachFailures = 0;
                               this.advanceCell();
                            }
                         }
@@ -4604,7 +4604,7 @@ final class AiBuilder {
 
                         if (!this.deferredCells.isEmpty() && this.deferPassCount < 2) {
                            this.placeAttempts.clear();
-                           this.read_Set.clear();
+                           this.abandonedPlacements.clear();
                            this.orderedCells.addAll(this.deferredCells);
                            this.deferredCells.clear();
                            this.deferredReasons.clear();
@@ -4666,14 +4666,14 @@ final class AiBuilder {
                            }
 
                            AutismClientAddon.LOG.info("[AI] build audit {}: {} cells to repair {}", this.auditPassCount, this.repairCells.size(), why);
-                           this.read_Map.clear();
-                           this.push_Set.clear();
+                           this.columnCeilingY.clear();
+                           this.breachCells.clear();
                            this.orderedCells.addAll(this.repairCells);
                            this.repairCells.clear();
                            this.auditPassCount++;
                            this.auditCursor = 0;
                            if (schematic) {
-                              this.pop_Z = false;
+                              this.scaffoldRemovalStarted = false;
                               this.drainSteps = 0;
                            }
 
@@ -4681,14 +4681,14 @@ final class AiBuilder {
                         } else {
                            if (this.ownsScaffolding && !this.includeCheckpointSupports) {
                               this.includeCheckpointSupports = true;
-                              this.pop_Z = false;
+                              this.scaffoldRemovalStarted = false;
                               this.drainSteps = 0;
                               this.pop_Set.clear();
-                              this.read_Map.clear();
-                              this.push_Set.clear();
+                              this.columnCeilingY.clear();
+                              this.breachCells.clear();
                               this.auditPassCount = 0;
                               this.stepOffStances.clear();
-                              this.put_Set.clear();
+                              this.stepOffFloorsChecked.clear();
                               this.auditCursor = 0;
                               return this.running("Removing access stairs after the construction audit");
                            }
@@ -4708,10 +4708,10 @@ final class AiBuilder {
 
                               this.sweepActive = false;
                               this.sweepPassCount++;
-                              this.pop_Z = false;
+                              this.scaffoldRemovalStarted = false;
                               this.drainSteps = 0;
                               this.stepOffStances.clear();
-                              this.put_Set.clear();
+                              this.stepOffFloorsChecked.clear();
                               if (this.terrainToClear.size() - this.terrainLeftCount > 0) {
                                  AutismClientAddon.LOG
                                     .info("[AI] schematic sweep {}: {} leftover blocks cleared out of the air", this.sweepPassCount, this.terrainToClear.size() - this.terrainLeftCount);
@@ -4742,7 +4742,7 @@ final class AiBuilder {
                                        if (live.getBlock() == AiBuilder.resolveBlock(cell)
                                           && live.hasProperty(BlockStateProperties.OPEN)
                                           && live.getValue(BlockStateProperties.OPEN)
-                                          && this.flush_Set.add(pos.asLong())) {
+                                          && this.openablesClosed.add(pos.asLong())) {
                                           this.auditRepairOp = AiSchematicActions.init(cell, pos, this.cachedProtectedCells());
                                           return this.running(
                                              "Closing " + BuiltInRegistries.BLOCK.getKey(live.getBlock()).getPath() + " at " + pos.toShortString()
@@ -4810,13 +4810,13 @@ final class AiBuilder {
                this.pendingPlacePos = null;
                this.pendingAimPoint = null;
                this.currentPlacementPlan = null;
-               this.start_I = 0;
+               this.yawWaitTicks = 0;
                this.pendingYaw = 0.0F / 0.0F;
-               this.stop_I = 0;
-               this.read_Z = false;
-               this.next_I = 0;
-               this.init_Str = null;
-               this.prev = 0;
+               this.toggleWaitTicks = 0;
+               this.toggleSent = false;
+               this.cycleTicks = 0;
+               this.lastCycledValue = null;
+               this.cycleStallTicks = 0;
                this.triedShulkerSources.clear();
                if (this.activeSubtask != null) {
                   this.activeSubtask.cancel();
@@ -4838,12 +4838,12 @@ final class AiBuilder {
                   this.activeSubtask = AiGoto.travelToCompat(this.currentCellPos(), 0.6, false, false, false, 15);
                } else if (!schematic
                   || !reason.contains("face") && !reason.contains("placement context")
-                  || !this.close(this.orderedCells.get(this.cellCursor), this.currentCellPos())
-                     && !this.pop(this.currentCellPos())
-                     && !this.sync(this.orderedCells.get(this.cellCursor), this.currentCellPos())) {
-                  if (!this.sync_Z && mc.player.getY() > (schematic ? this.currentCellPos().getY() + 3 : blueprint.origin().getY() + 1.5)) {
-                     this.sync_Z = true;
-                     this.cache = 0;
+                  || !this.startLeanPlacement(this.orderedCells.get(this.cellCursor), this.currentCellPos())
+                     && !this.tryCeilingStance(this.currentCellPos())
+                     && !this.tryAlternateSupport(this.orderedCells.get(this.cellCursor), this.currentCellPos())) {
+                  if (!this.climbDownTried && mc.player.getY() > (schematic ? this.currentCellPos().getY() + 3 : blueprint.origin().getY() + 1.5)) {
+                     this.climbDownTried = true;
+                     this.approachFailures = 0;
                      this.activeSubtask = this.climbDownOp();
                   } else {
                      this.currentCellAttempts = Math.max(this.currentCellAttempts, this.placeAttempts.getOrDefault(this.currentCellPos().asLong(), 0)) + 1;
@@ -4851,7 +4851,7 @@ final class AiBuilder {
                      if (this.currentCellAttempts >= this.placeAttemptLimit) {
                         this.deferCurrentCell(reason);
                      } else {
-                        this.load_V(this.currentCellPos());
+                        this.tickCellPlacement(this.currentCellPos());
                      }
                   }
                }
@@ -4952,7 +4952,7 @@ final class AiBuilder {
 
                   this.enclosureEscapeOp.cancel();
                   this.enclosureEscapeOp = null;
-                  this.pop_Z = false;
+                  this.scaffoldRemovalStarted = false;
                   this.drainSupports.clear();
                   return this.running("Re-evaluating scaffold access after leaving the room");
                } else if (schematic
@@ -4978,7 +4978,7 @@ final class AiBuilder {
                      return this.running("Opening a temporary exit from the enclosed room");
                   }
 
-                  if (schematic && !this.pop_Z) {
+                  if (schematic && !this.scaffoldRemovalStarted) {
                      if (this.drainFloorBreakOp != null) {
                         AiOperation.Result dropped = this.drainFloorBreakOp.tick();
                         if (!dropped.terminal()) {
@@ -5030,8 +5030,8 @@ final class AiBuilder {
 
                      if (standingOnSupport && this.removableScaffoldCells().stream().noneMatch(p -> p.getY() > mc.player.getY() + 3.0)) {
                         for (BlockPos floor : this.removableScaffoldCells()) {
-                           if (this.isStandingOn(floor) && !this.put_Set.contains(floor.asLong()) && this.read(floor)) {
-                              this.put_Set.add(floor.asLong());
+                           if (this.isStandingOn(floor) && !this.stepOffFloorsChecked.contains(floor.asLong()) && this.read(floor)) {
+                              this.stepOffFloorsChecked.add(floor.asLong());
                               this.drainFloorBreakOp = autismclient.ai.engine.AiBreakBlock.breakBlock(floor, 10, true, this.close_Set);
                               return this.running("Dismantling the temporary column toward a safe landing");
                            }
@@ -5039,8 +5039,8 @@ final class AiBuilder {
                      }
                   }
 
-                  if (!this.pop_Z) {
-                     this.pop_Z = true;
+                  if (!this.scaffoldRemovalStarted) {
+                     this.scaffoldRemovalStarted = true;
                      if (this.close_Set.isEmpty()) {
                         for (AiBuilder.CellSpec c : this.orderedCells) {
                            this.close_Set.add(blueprint.origin().offset(c.dx(), c.dy(), c.dz()).asLong());
@@ -5154,10 +5154,10 @@ final class AiBuilder {
                            int left = this.removableScaffoldCells().size();
                            if (left > 0 && left < this.drainInitialSupports) {
                               this.drainSupports.clear();
-                              this.pop_Z = false;
+                              this.scaffoldRemovalStarted = false;
                               this.drainSteps = 0;
                               this.stepOffStances.clear();
-                              this.put_Set.clear();
+                              this.stepOffFloorsChecked.clear();
                               return this.running("Rechecking supports exposed by scaffold removal");
                            }
                         }
@@ -5219,7 +5219,7 @@ final class AiBuilder {
 
                   if (this.retryingDetached) {
                      this.retryingDetached = false;
-                     this.pop_Z = false;
+                     this.scaffoldRemovalStarted = false;
                      this.drainSupports.clear();
                   }
 
@@ -5299,7 +5299,7 @@ final class AiBuilder {
             }
 
             boolean tryDoorExit() {
-               if (!this.removableScaffoldCells().isEmpty() && this.exitAttemptColumns.size() < 2 && this.load_Z_4()) {
+               if (!this.removableScaffoldCells().isEmpty() && this.exitAttemptColumns.size() < 2 && this.hasClimbableExit()) {
                   BlockPos worker = mc.player.blockPosition();
                   long column = BlockPos.asLong(worker.getX(), 0, worker.getZ());
                   if (this.exitAttemptColumns.contains(column)) {
@@ -5349,7 +5349,7 @@ final class AiBuilder {
                         }
 
                         this.exitAttemptColumns.add(column);
-                        this.read_Map.merge(column, ceiling.getY(), Math::min);
+                        this.columnCeilingY.merge(column, ceiling.getY(), Math::min);
                         BlockPos exit = new BlockPos(worker.getX(), roof + 1, worker.getZ());
                         this.enclosureEscapeOp = AiGoto.travelToCompat(
                            exit,
@@ -5379,7 +5379,7 @@ final class AiBuilder {
                         for (BlockPos breach : List.of(p, p.above())) {
                            BlockState live = mc.level.getBlockState(breach);
                            if (this.load_Map.containsKey(breach.asLong()) && !live.hasBlockEntity() && live.getFluidState().isEmpty()) {
-                              this.push_Set.add(breach.asLong());
+                              this.breachCells.add(breach.asLong());
                            }
                         }
                      }
@@ -5611,7 +5611,7 @@ final class AiBuilder {
                return null;
             }
 
-            boolean init_Z_TableIndex_StreamU_BlockPos(AiBuilder.CellSpec cell, BlockPos pos) {
+            boolean canPlaceDirectly(AiBuilder.CellSpec cell, BlockPos pos) {
                if (!AiSchematicActions.needsAction(cell) && !AiBuilder.isDoubleSlabCell(cell)) {
                   Block block = AiBuilder.resolveBlock(cell);
                   Item item = cell.block().equals("minecraft:grass_block") ? Items.DIRT : block.asItem();
@@ -5671,7 +5671,7 @@ final class AiBuilder {
                }
             }
 
-            boolean load_Z_4() {
+            boolean hasClimbableExit() {
                if (!this.buildBounds.intersects(mc.player.getBoundingBox())) {
                   return false;
                }
@@ -5736,7 +5736,7 @@ final class AiBuilder {
                return mc.level.getBlockState(cell).is(BlockTags.CLIMBABLE) && this.isPassableCell(cell.above());
             }
 
-            void read_V_2() {
+            void deferMissedCells() {
                if (!schematic) {
                   for (int i = 0; i < this.cellCursor && i < this.orderedCells.size(); i++) {
                      AiBuilder.CellSpec cell = this.orderedCells.get(i);
@@ -5785,15 +5785,15 @@ final class AiBuilder {
                }
 
                if (this.placeAttempts.containsKey(key)
-                  || this.write_Set.contains(key)
+                  || this.confirmedPlacements.contains(key)
                   || pos.equals(this.placeAckTracker.pendingPos())
                   || pos.equals(this.readyQueue.activePos())) {
-                  this.read_Set.add(key);
+                  this.abandonedPlacements.add(key);
                }
 
                this.deferredCells.add(this.orderedCells.get(this.cellCursor));
                this.deferredReasons.add(reason);
-               this.cache = 0;
+               this.approachFailures = 0;
                this.advanceCell();
             }
 
@@ -5820,29 +5820,29 @@ final class AiBuilder {
             void resetCellState() {
                this.rejectedBatchCells.clear();
                this.currentCellAttempts = this.cellCursor < this.orderedCells.size() ? this.placeAttempts.getOrDefault(this.currentCellPos().asLong(), 0) : 0;
-               this.sync_Z = false;
-               this.cache = 0;
-               this.parse = 0;
-               this.scan = 0;
-               this.entry = this.node = this.task = 0;
+               this.climbDownTried = false;
+               this.approachFailures = 0;
+               this.batchFocusRetries = 0;
+               this.conflictBreakAttempts = 0;
+               this.materialWaitTicks = this.selectWaitTicks = this.backfillJumps = 0;
                this.triedShulkerSources.clear();
-               this.write_Z = false;
+               this.waterStanceTried = false;
                this.pendingPlacePos = null;
                this.pendingPlaceCell = null;
                this.currentPlacementPlan = null;
-               this.start_I = 0;
+               this.yawWaitTicks = 0;
                this.pendingYaw = 0.0F / 0.0F;
-               this.load_Z = false;
-               this.stop_I = 0;
-               this.read_Z = false;
-               this.next_I = 0;
-               this.init_Str = null;
-               this.prev = 0;
+               this.yawReplanned = false;
+               this.toggleWaitTicks = 0;
+               this.toggleSent = false;
+               this.cycleTicks = 0;
+               this.lastCycledValue = null;
+               this.cycleStallTicks = 0;
                this.reportedPropertyKeys.clear();
-               this.set_Set.clear();
-               this.tick_Z = false;
-               this.get_Z = this.set_Z = false;
-               this.put_Z = false;
+               this.supportCellsTried.clear();
+               this.alternateSupportTried = false;
+               this.leanUsed = this.sneakSubtask = false;
+               this.raisedToBuildLevel = false;
             }
 
             Set<Long> cachedProtectedCells() {
@@ -5880,16 +5880,16 @@ final class AiBuilder {
                         && !state.hasBlockEntity()
                         && state.getFluidState().isEmpty()
                         && !state.getCollisionShape(mc.level, ceiling).isEmpty()) {
-                        this.read_Map.merge(BlockPos.asLong(worker.getX(), 0, worker.getZ()), ceiling.getY(), Math::min);
+                        this.columnCeilingY.merge(BlockPos.asLong(worker.getX(), 0, worker.getZ()), ceiling.getY(), Math::min);
                      }
                   }
                }
 
                if (recovery && this.ownsScaffolding && AiGoto.recentNoRouteCountCompat(autismclient.ai.engine.AiStance.standingPos(mc)) >= 3 && this.isStandingHighAboveOrigin(worker) && this.cachedHasApproach(worker)) {
-                  Integer before = this.read_Map.get(BlockPos.asLong(worker.getX(), 0, worker.getZ()));
+                  Integer before = this.columnCeilingY.get(BlockPos.asLong(worker.getX(), 0, worker.getZ()));
                   if (before == null || before > blueprint.origin().getY()) {
                      AutismClientAddon.LOG.info("[AI] build: stranded on the work at {}; its column opens down to the ground", worker.toShortString());
-                     this.read_Map.put(BlockPos.asLong(worker.getX(), 0, worker.getZ()), blueprint.origin().getY());
+                     this.columnCeilingY.put(BlockPos.asLong(worker.getX(), 0, worker.getZ()), blueprint.origin().getY());
                   }
                }
 
@@ -5907,7 +5907,7 @@ final class AiBuilder {
                }
 
                if (recovery && this.ownsScaffolding && this.cellCursor < this.orderedCells.size()) {
-                  this.init_V_2(this.currentCellPos());
+                  this.openCeilingAbove(this.currentCellPos());
                }
 
                for (long key : this.close_Set) {
@@ -5916,8 +5916,8 @@ final class AiBuilder {
                   if (this.pop_Set.contains(key)) {
                      keep.add(key);
                   } else {
-                     Integer opening = this.read_Map.get(BlockPos.asLong(pos.getX(), 0, pos.getZ()));
-                     if (!AiBuilder.canClearDuringRecovery(recovery, this.push_Set.contains(key), opening, pos.getY(), live)) {
+                     Integer opening = this.columnCeilingY.get(BlockPos.asLong(pos.getX(), 0, pos.getZ()));
+                     if (!AiBuilder.canClearDuringRecovery(recovery, this.breachCells.contains(key), opening, pos.getY(), live)) {
                         AiBuilder.CellSpec wantedHere = this.load_Map.get(key);
                         boolean stray = schematic && wantedHere != null && !live.hasBlockEntity() && AiSchematicActions.load(live) && !AiBuilder.matchesIgnoringUnpairedChest(wantedHere, live);
                         if (AiBuilder.isOccupiedOrMatchedScaffold(this.load_Map.get(key), live, stray || AiScaffold.matches(this.scaffoldBlockAt(pos), live.getBlock()))) {
@@ -5938,8 +5938,8 @@ final class AiBuilder {
                return keep;
             }
 
-            void init_V_2(BlockPos target) {
-               this.init_V_BlockPos_Z(target, false);
+            void openCeilingAbove(BlockPos target) {
+               this.openCeilingAbove(target, false);
             }
 
             String holdReason(AiBuilder.CellSpec cell, BlockPos pos) {
@@ -6052,9 +6052,9 @@ final class AiBuilder {
                this.orderedCells.remove(this.cellCursor);
                this.currentCellAttempts = this.placeAttempts.getOrDefault(this.currentCellPos().asLong(), 0);
                this.currentPlacementPlan = null;
-               this.start_I = 0;
+               this.yawWaitTicks = 0;
                this.pendingYaw = 0.0F / 0.0F;
-               this.load_Z = false;
+               this.yawReplanned = false;
                return true;
             }
 
@@ -6089,9 +6089,9 @@ final class AiBuilder {
                this.orderedCells.remove(this.cellCursor);
                this.currentCellAttempts = this.placeAttempts.getOrDefault(this.currentCellPos().asLong(), 0);
                this.currentPlacementPlan = null;
-               this.start_I = 0;
+               this.yawWaitTicks = 0;
                this.pendingYaw = 0.0F / 0.0F;
-               this.load_Z = false;
+               this.yawReplanned = false;
                return true;
             }
 
@@ -6152,7 +6152,7 @@ final class AiBuilder {
 
                   this.breakOutTries++;
                   this.pendingFoundation = null;
-                  this.run_Z = this.init_Z = false;
+                  this.stanceSubtaskActive = this.scaffoldSubtaskActive = false;
                   final AiOperation escape = this.breakOutOp();
                   this.activeSubtask = new AiOperation() {
                      @Override
@@ -6191,7 +6191,7 @@ final class AiBuilder {
             }
 
             void mergeSyncRoom(long key, Set<Long> room) {
-               this.sync_Map.merge(key, room, (existing, added) -> {
+               this.avoidStancesByTarget.merge(key, room, (existing, added) -> {
                   if (existing.containsAll(added)) {
                      return existing;
                   }
@@ -6202,7 +6202,7 @@ final class AiBuilder {
                });
             }
 
-            boolean read(AiBuilder.CellSpec cell, BlockPos target) {
+            boolean placementOverlapsPlayer(AiBuilder.CellSpec cell, BlockPos target) {
                if (!this.buildBounds.inflate(1.0).contains(mc.player.position())) {
                   return false;
                }
@@ -6214,7 +6214,7 @@ final class AiBuilder {
                   && !(placed.getBlock() instanceof FenceGateBlock)) {
                   AABB site = this.buildBounds.inflate(1.0);
                   BlockPos feet = autismclient.ai.engine.AiStance.standingPos(mc);
-                  if (this.sync_Map.getOrDefault(target.asLong(), Set.of()).contains(feet.asLong())) {
+                  if (this.avoidStancesByTarget.getOrDefault(target.asLong(), Set.of()).contains(feet.asLong())) {
                      return true;
                   }
 
@@ -6344,7 +6344,7 @@ final class AiBuilder {
                   || state.getBlock() instanceof FenceGateBlock;
             }
 
-            void init_V_BlockPos_Z(BlockPos target, boolean cleanup) {
+            void openCeilingAbove(BlockPos target, boolean cleanup) {
                AiBuilder.CellSpec wantedTarget = this.load_Map.get(target.asLong());
                if ((cleanup || wantedTarget != null && !AiBuilder.matchesIgnoringUnpairedChest(wantedTarget, mc.level.getBlockState(target)))
                   && this.ceilingAbove(target.above()) != null) {
@@ -6378,7 +6378,7 @@ final class AiBuilder {
                   }
 
                   if (column != null) {
-                     Integer before = this.read_Map.get(BlockPos.asLong(column.getX(), 0, column.getZ()));
+                     Integer before = this.columnCeilingY.get(BlockPos.asLong(column.getX(), 0, column.getZ()));
                      if (before == null || before > target.getY()) {
                         AutismClientAddon.LOG
                            .info(
@@ -6386,7 +6386,7 @@ final class AiBuilder {
                            );
                      }
 
-                     this.read_Map.merge(BlockPos.asLong(column.getX(), 0, column.getZ()), target.getY(), Math::min);
+                     this.columnCeilingY.merge(BlockPos.asLong(column.getX(), 0, column.getZ()), target.getY(), Math::min);
                   }
                }
             }
@@ -6409,7 +6409,7 @@ final class AiBuilder {
                return ceiling;
             }
 
-            boolean write(AiBuilder.CellSpec cell, BlockPos pos) {
+            boolean planAccessSupport(AiBuilder.CellSpec cell, BlockPos pos) {
                Block block = AiBuilder.resolveBlock(cell);
                Set<Long> protectedNow = this.cachedProtectedCells();
                ArrayList<Direction> directions = new ArrayList<>(
@@ -6435,11 +6435,11 @@ final class AiBuilder {
                      BlockPos support = pos.relative(direction);
                      BlockState state = mc.level.getBlockState(support);
                      if (!protectedNow.contains(support.asLong())
-                        && !this.set_Set.contains(support.asLong())
+                        && !this.supportCellsTried.contains(support.asLong())
                         && state.canBeReplaced()
                         && state.getFluidState().isEmpty()) {
-                        this.set_Set.add(support.asLong());
-                        this.init_Z = true;
+                        this.supportCellsTried.add(support.asLong());
+                        this.scaffoldSubtaskActive = true;
                         this.activeSubtask = AiSchematicActions.init_AiOperation_BlockPos(support, pos, protectedNow, blueprint.origin().getY());
                         return true;
                      }
@@ -6475,7 +6475,7 @@ final class AiBuilder {
                   this.ceilingSupportTried.add(pos.asLong());
                   AutismClientAddon.LOG
                      .info("[AI] build: temporary ceiling at {} for the upward-facing {} at {}", ceiling.toShortString(), cell.block(), pos.toShortString());
-                  this.init_Z = true;
+                  this.scaffoldSubtaskActive = true;
                   this.activeSubtask = AiSchematicActions.init_AiOperation_BlockPos(ceiling, pos, protectedNow, blueprint.origin().getY());
                   return true;
                } else {
@@ -6483,16 +6483,16 @@ final class AiBuilder {
                }
             }
 
-            boolean sync(AiBuilder.CellSpec cell, BlockPos pos) {
-               if (this.push(pos)) {
+            boolean tryAlternateSupport(AiBuilder.CellSpec cell, BlockPos pos) {
+               if (this.switchToReachableCell(pos)) {
                   return true;
                }
 
-               if (this.tick_Z) {
+               if (this.alternateSupportTried) {
                   return false;
                }
 
-               this.tick_Z = true;
+               this.alternateSupportTried = true;
                Set<Long> protectedNow = this.cachedProtectedCells();
                autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = this.constraintFor(cell, AiBuilder.resolveBlock(cell));
                Item item = AiBuilder.resolveBlock(cell).asItem();
@@ -6564,7 +6564,7 @@ final class AiBuilder {
                      return false;
                   }
 
-                  this.run_Z = true;
+                  this.stanceSubtaskActive = true;
                   this.activeSubtask = AiGoto.travelToCompat(
                      best,
                      0.35,
@@ -6585,7 +6585,7 @@ final class AiBuilder {
                }
             }
 
-            boolean push(BlockPos target) {
+            boolean switchToReachableCell(BlockPos target) {
                if (schematic && this.ownsScaffolding && this.cellCursor < this.orderedCells.size()) {
                   BlockPos worker = autismclient.ai.engine.AiStance.standingPos(mc);
                   if (target.getY() < worker.getY() + 2) {
@@ -6610,9 +6610,9 @@ final class AiBuilder {
                            && Math.abs(pos.getX() - worker.getX()) <= 2
                            && Math.abs(pos.getZ() - worker.getZ()) <= 2
                            && this.isWalkingPlaceable(candidate, pos)
-                           && this.init_Z_TableIndex_StreamU_BlockPos(candidate, pos)
+                           && this.canPlaceDirectly(candidate, pos)
                            && !AiBuilder.isCellSatisfied(candidate, mc.level.getBlockState(pos), power.substitutes(), true)
-                           && !this.read(candidate, pos)
+                           && !this.placementOverlapsPlayer(candidate, pos)
                            && AiSchematicActions.init(mc.level, pos, this.load_Map) == null) {
                            BlockPos above = pos.above();
                            if (mc.level
@@ -6652,8 +6652,8 @@ final class AiBuilder {
                }
             }
 
-            boolean load(AiBuilder.CellSpec cell) {
-               if (this.cellCursor < this.orderedCells.size() && this.push(this.currentCellPos())) {
+            boolean advanceStairLayer(AiBuilder.CellSpec cell) {
+               if (this.cellCursor < this.orderedCells.size() && this.switchToReachableCell(this.currentCellPos())) {
                   return true;
                }
 
@@ -6855,7 +6855,7 @@ final class AiBuilder {
                return var10000;
             }
 
-            boolean init_Z_TableIndex_StreamU_2(AiBuilder.CellSpec cell, BlockPos pos, BlockState live) {
+            boolean verifyPendingPlacement(AiBuilder.CellSpec cell, BlockPos pos, BlockState live) {
                if (AiBuilder.isDoubleSlabCell(cell) && live.getBlock() instanceof SlabBlock && live.getValue(SlabBlock.TYPE) != SlabType.DOUBLE) {
                   this.pendingPlacePos = null;
                   this.pendingAimPoint = null;
@@ -6904,25 +6904,25 @@ final class AiBuilder {
                               && AiItems.equipHotbar(AiItems.resolveItem(BuiltInRegistries.ITEM.getKey(needed).toString())) < 0) {
                               this.recordUnappliedProperty(cell, pos, entry, "no " + BuiltInRegistries.ITEM.getKey(needed).getPath() + " to set it with");
                            } else if (cycling) {
-                              if (++this.next_I <= (entry.getKey().equals("note") ? 900 : 160)) {
+                              if (++this.cycleTicks <= (entry.getKey().equals("note") ? 900 : 160)) {
                                  String now = String.valueOf(live.getValue(open));
-                                 if (now.equals(this.init_Str) && ++this.prev < 20) {
+                                 if (now.equals(this.lastCycledValue) && ++this.cycleStallTicks < 20) {
                                     return false;
                                  }
 
-                                 this.prev = 0;
+                                 this.cycleStallTicks = 0;
                                  break;
                               }
 
                               this.recordUnappliedProperty(cell, pos, entry, "the interaction cycle did not reach the requested value");
-                           } else if (this.read_Z) {
-                              if (++this.stop_I <= 20) {
+                           } else if (this.toggleSent) {
+                              if (++this.toggleWaitTicks <= 20) {
                                  return false;
                               }
 
                               this.recordUnappliedProperty(cell, pos, entry, "the requested toggle was not accepted");
                            } else {
-                              if (++this.stop_I <= 20) {
+                              if (++this.toggleWaitTicks <= 20) {
                                  break;
                               }
 
@@ -6954,12 +6954,12 @@ final class AiBuilder {
 
                      mc.gameMode.useItemOn(mc.player, InteractionHand.MAIN_HAND, hitResult);
                      if (!cycling) {
-                        this.read_Z = true;
+                        this.toggleSent = true;
                      } else if (!(live.getBlock() instanceof DiodeBlock)) {
-                        this.init_Str = String.valueOf(live.getValue(open));
+                        this.lastCycledValue = String.valueOf(live.getValue(open));
                      }
 
-                     this.stop_I = 0;
+                     this.toggleWaitTicks = 0;
                      this.pendingAimPoint = visible.getLocation();
                   }
                }
@@ -7025,8 +7025,8 @@ final class AiBuilder {
                this.walkingClearCheck = clear;
                this.walkingPlacementPlan = null;
                AiSchematicApproach.Inner_DataUtil job = this.activeApproachJob != null ? this.activeApproachJob : this.lastApproachJob;
-               Set<Long> excluded = new HashSet<>(this.write_Set);
-               excluded.addAll(this.read_Set);
+               Set<Long> excluded = new HashSet<>(this.confirmedPlacements);
+               excluded.addAll(this.abandonedPlacements);
                this.readyQueue
                   .sync(
                      this,
@@ -7044,7 +7044,7 @@ final class AiBuilder {
 
                if (this.placeAckTracker.pendingPos() == null
                   && !holdSneak
-                  && !this.set_Z
+                  && !this.sneakSubtask
                   && !mc.player.isShiftKeyDown()
                   && mc.player.containerMenu == mc.player.inventoryMenu
                   && job != null) {
@@ -7096,7 +7096,7 @@ final class AiBuilder {
                      BlockPlacementPlanner.PlacementPlan candidate = autismclient.ai.engine.PlacementGoal.planPlacement(
                         mc, pos, item, this.constraintFor(cell, AiBuilder.resolveBlock(cell)), 32
                      );
-                     if (candidate == null || this.read(cell, pos)) {
+                     if (candidate == null || this.placementOverlapsPlayer(cell, pos)) {
                         return false;
                      }
 
@@ -7177,7 +7177,7 @@ final class AiBuilder {
                         mc.player.tickCount
                      );
                   if (outcome == AiBuilder.PlaceAckTracker.AckState.CONFIRMED) {
-                     if (this.write_Set.add(pos.asLong())) {
+                     if (this.confirmedPlacements.add(pos.asLong())) {
                         this.placedCount++;
                         this.walkingPlacementCount++;
                      }
@@ -7200,7 +7200,7 @@ final class AiBuilder {
                   this.readyQueue.requeue(pos);
                } else {
                   this.readyQueue.complete(pos);
-                  this.read_Set.add(pos.asLong());
+                  this.abandonedPlacements.add(pos.asLong());
                   int removed = AiBuilder.deferQueuedCell(
                      this.orderedCells, this.deferredCells, this.deferredReasons, this.cellCursor, blueprint.origin(), cell, pos, "the server refused the moving placement"
                   );
@@ -7214,27 +7214,27 @@ final class AiBuilder {
                }
             }
 
-            void load_V(BlockPos pos) {
+            void tickCellPlacement(BlockPos pos) {
                if (!pos.equals(this.batchFocusPos)) {
                   this.batchFocusPos = pos;
-                  this.parse = 0;
+                  this.batchFocusRetries = 0;
                   this.rejectedBatchCells.clear();
                }
 
                if (schematic
                   && this.cellCursor < this.orderedCells.size()
                   && !AiBuilder.collidesWithEntityBox(this.orderedCells.get(this.cellCursor), pos, mc.player.getBoundingBox(), mc.level)
-                  && this.init_Z_TableIndex_StreamU_BlockPos(this.orderedCells.get(this.cellCursor), pos)
+                  && this.canPlaceDirectly(this.orderedCells.get(this.cellCursor), pos)
                   && this.currentCellAttempts < 2) {
                   this.currentPlacementPlan = null;
-               } else if (!schematic || !this.push(pos)) {
-                  if (schematic && ++this.parse > 12) {
+               } else if (!schematic || !this.switchToReachableCell(pos)) {
+                  if (schematic && ++this.batchFocusRetries > 12) {
                      this.deferCurrentCell("approaches end where the cell cannot be placed");
                   } else {
                      for (String id : power.candidates(this.orderedCells.get(this.cellCursor).block())) {
                         Block block = BuiltInRegistries.BLOCK.getOptional(Identifier.parse(id)).orElse(null);
                         if (block != null && block.asItem() != Items.AIR && this.countInInventory(block.asItem()) > 0) {
-                           if (this.deferPassCount > 0 && this.add_Set.add(pos.asLong())) {
+                           if (this.deferPassCount > 0 && this.postPassRetried.add(pos.asLong())) {
                               BlockPos blocking = null;
 
                               for (int dx = -2; dx <= 2 && blocking == null; dx++) {
@@ -7258,13 +7258,13 @@ final class AiBuilder {
 
                            AiBuilder.CellSpec cell = this.orderedCells.get(this.cellCursor);
                            autismclient.ai.engine.PlacementGoal.PlaceConstraint constraint = this.constraintFor(cell, block);
-                           if (this.pop(pos)) {
+                           if (this.tryCeilingStance(pos)) {
                               return;
                            }
 
                            BlockState occupied = mc.level.getBlockState(pos);
                            if (schematic
-                              && !this.write_Z
+                              && !this.waterStanceTried
                               && occupied.canBeReplaced()
                               && occupied.getFluidState().is(FluidTags.WATER)
                               && Block.isShapeFullBlock(AiBuilder.toBlockState(cell).getCollisionShape(mc.level, pos))
@@ -7274,7 +7274,7 @@ final class AiBuilder {
                                     mc.player,
                                     new AABB(pos.getX() + 0.2, pos.getY() + 1, pos.getZ() + 0.2, pos.getX() + 0.8, pos.getY() + 2.8, pos.getZ() + 0.8)
                                  )) {
-                              this.write_Z = true;
+                              this.waterStanceTried = true;
                               this.activeSubtask = AiGoto.travelToCompat(
                                  pos,
                                  0.45,
@@ -7311,7 +7311,7 @@ final class AiBuilder {
                               return;
                            }
 
-                           if (this.close(cell, pos)) {
+                           if (this.startLeanPlacement(cell, pos)) {
                               return;
                            }
 
@@ -7322,7 +7322,7 @@ final class AiBuilder {
                               if (this.lastApproachJob != null && this.lastApproachJob.load(pos)) {
                                  this.activeApproachJob = this.lastApproachJob;
                                  this.continuedStopCount++;
-                              } else if (this.read(cell)) {
+                              } else if (this.prefetchCoversLayer(cell)) {
                                  this.lastApproachJob = null;
                                  this.batchPositions = List.of();
                                  this.activeApproachJob = this.prefetchedApproachJob;
@@ -7338,7 +7338,7 @@ final class AiBuilder {
 
                                  List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets = this.batchRequests(cell, pos, block, constraint);
                                  this.activeApproachJob = new AiSchematicApproach.Inner_DataUtil(
-                                    targets, this.buildBounds, batchKeep, this.batchAvoidCells(cell, pos), this.init(targets)
+                                    targets, this.buildBounds, batchKeep, this.batchAvoidCells(cell, pos), this.nearestPendingRequest(targets)
                                  );
                                  this.activeApproachJob.init_V_Set(this.close_Set);
                                  this.batchPlannedCount++;
@@ -7362,7 +7362,7 @@ final class AiBuilder {
             }
 
             Set<Long> batchAvoidCells(AiBuilder.CellSpec cell, BlockPos pos) {
-               HashSet<Long> avoid = new HashSet<>(this.sync_Map.getOrDefault(pos.asLong(), Set.of()));
+               HashSet<Long> avoid = new HashSet<>(this.avoidStancesByTarget.getOrDefault(pos.asLong(), Set.of()));
                avoid.addAll(this.rejectedBatchCells);
                if (!AiBuilder.toBlockState(cell).getCollisionShape(mc.level, pos).isEmpty()) {
                   avoid.add(pos.asLong());
@@ -7416,7 +7416,7 @@ final class AiBuilder {
                return AiSchematicApproach.Inner_DataUtil.orderByRoute(batch, mc.player.position());
             }
 
-            boolean read(AiBuilder.CellSpec currentCell) {
+            boolean prefetchCoversLayer(AiBuilder.CellSpec currentCell) {
                if (this.prefetchedApproachJob == null) {
                   return false;
                }
@@ -7476,7 +7476,7 @@ final class AiBuilder {
                               this.buildBounds,
                               Collections.unmodifiableSet(this.close_Set),
                               this.batchAvoidCells(wanted, first.pos()),
-                              this.init(targets)
+                              this.nearestPendingRequest(targets)
                            );
                            this.prefetchedApproachJob.init_V_Set(this.close_Set);
                            this.prefetchStartCursor = this.cellCursor;
@@ -7508,7 +7508,7 @@ final class AiBuilder {
                   : (this.lastApproachJob != null ? this.lastApproachJob.endPosition() : mc.player.position());
             }
 
-            BlockPos init(List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets) {
+            BlockPos nearestPendingRequest(List<autismclient.ai.engine.PlacementGoal.PlacementRequest> targets) {
                Set<BlockPos> selected = targets.stream().map(autismclient.ai.engine.PlacementGoal.PlacementRequest::pos).collect(Collectors.toSet());
                BlockPos best = null;
                double distance = 1.0 / 0.0;
@@ -7550,14 +7550,14 @@ final class AiBuilder {
                }
             }
 
-            boolean close(AiBuilder.CellSpec cell, BlockPos pos) {
-               if (schematic && !this.get_Z) {
+            boolean startLeanPlacement(AiBuilder.CellSpec cell, BlockPos pos) {
+               if (schematic && !this.leanUsed) {
                   AiOperation lean = AiSchematicActions.init(cell, pos, this.constraintFor(cell, AiBuilder.resolveBlock(cell)));
                   if (lean == null) {
                      return false;
                   }
 
-                  this.get_Z = this.set_Z = this.run_Z = true;
+                  this.leanUsed = this.sneakSubtask = this.stanceSubtaskActive = true;
                   this.activeSubtask = lean;
                   return true;
                } else {
@@ -7565,15 +7565,15 @@ final class AiBuilder {
                }
             }
 
-            boolean pop(BlockPos pos) {
-               if (schematic && this.ownsScaffolding && !this.put_Z && !(mc.player.getY() < pos.getY() + 2) && this.ceilingAbove(pos.above()) != null) {
-                  this.init_V_2(pos);
+            boolean tryCeilingStance(BlockPos pos) {
+               if (schematic && this.ownsScaffolding && !this.raisedToBuildLevel && !(mc.player.getY() < pos.getY() + 2) && this.ceilingAbove(pos.above()) != null) {
+                  this.openCeilingAbove(pos);
                   BlockPos stance = null;
                   double distance = 1.7976931348623157E308;
 
                   for (Direction direction : List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)) {
                      BlockPos candidate = pos.relative(direction);
-                     Integer bottom = this.read_Map.get(BlockPos.asLong(candidate.getX(), 0, candidate.getZ()));
+                     Integer bottom = this.columnCeilingY.get(BlockPos.asLong(candidate.getX(), 0, candidate.getZ()));
                      BlockState floor = mc.level.getBlockState(candidate.below());
                      if (bottom != null
                         && bottom <= pos.getY()
@@ -7617,7 +7617,7 @@ final class AiBuilder {
                      HashSet<Long> digProtected = new HashSet<>(protectedCells);
                      digProtected.addAll(this.close_Set);
                      final AiOperation descent = AiSchematicActions.init_AiOperation_BlockPos_2(plant, stance, protectedCells, digProtected);
-                     this.put_Z = this.run_Z = true;
+                     this.raisedToBuildLevel = this.stanceSubtaskActive = true;
                      if (hasCanopy) {
                         final AiOperation clear = autismclient.ai.engine.AiBreakBlock.breakBlock(plant, 15, false, digProtected, false);
                         this.activeSubtask = new AiOperation() {
@@ -7909,7 +7909,7 @@ final class AiBuilder {
                   "navigation",
                   Boolean.getBoolean("autism.navigation.debug") && this.lastSubtaskData != null ? JsonParser.parseString(this.lastSubtaskData) : null,
                   "scaffoldingRemaining",
-                  this.ownsScaffolding && this.pop_Z ? this.ownedScaffoldCells().size() : 0,
+                  this.ownsScaffolding && this.scaffoldRemovalStarted ? this.ownedScaffoldCells().size() : 0,
                   "survivalAdjustments",
                   schematic
                      ? "Decorative grass and ferns are omitted; crops are planted without required growth ages or bone meal; grass blocks are placed as dirt and existing grass or natural spread stays valid; seagrass cells are plain water. Item-placed leaves use persistent=true and distance follows adjacent leaves/logs; buried soil becomes dirt; farmland moisture may change naturally"
@@ -8029,27 +8029,27 @@ final class AiBuilder {
                }
             }
 
-            void poll() {
+            void resetAfterInterruption() {
                this.survivalInterruptions++;
                this.cancelApproachJobs();
-               this.push();
-               this.run_Z = this.init_Z = this.add_Z = false;
+               this.cancelActiveWork();
+               this.stanceSubtaskActive = this.scaffoldSubtaskActive = this.exitWalkActive = false;
                this.pendingFoundation = null;
                this.currentPlacementPlan = null;
-               this.start_I = 0;
+               this.yawWaitTicks = 0;
                this.pendingYaw = 0.0F / 0.0F;
-               this.load_Z = this.sync_Z = this.put_Z = this.write_Z = this.get_Z = false;
-               this.pop_Z = false;
+               this.yawReplanned = this.climbDownTried = this.raisedToBuildLevel = this.waterStanceTried = this.leanUsed = false;
+               this.scaffoldRemovalStarted = false;
                this.drainSupports.clear();
                this.drainSteps = 0;
                this.stepOffStances.clear();
-               this.put_Set.clear();
-               this.flush_Set.clear();
+               this.stepOffFloorsChecked.clear();
+               this.openablesClosed.clear();
                this.protectedCellsCache = null;
                autismclient.ai.engine.AiMotionSafety.releaseMovementKeys();
             }
 
-            void push() {
+            void cancelActiveWork() {
                if (this.readyQueue.activePos() != null) {
                   this.readyQueue.complete(this.readyQueue.activePos());
                }
@@ -8160,7 +8160,7 @@ final class AiBuilder {
                      this.guardLayer.cancel();
                   }
 
-                  this.push();
+                  this.cancelActiveWork();
                   if (this.scaffoldTracker != null) {
                      this.scaffoldTracker.close();
                   }

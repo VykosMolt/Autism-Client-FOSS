@@ -484,7 +484,7 @@ public final class PrintCore {
    final PrintFailedWalks failedWalks = new PrintFailedWalks();
    final LongOpenHashSet failedWalkStances = new LongOpenHashSet();
    final LongOpenHashSet refusedPillarCells = new LongOpenHashSet();
-   final LongOpenHashSet flush_LongOpenHashSet = new LongOpenHashSet();
+   final LongOpenHashSet interactWalkStances = new LongOpenHashSet();
    final LongOpenHashSet refusedCellStances = new LongOpenHashSet();
    final LongOpenHashSet open_LongOpenHashSet = new LongOpenHashSet();
    final Int2IntOpenHashMap outOfReachUntil = new Int2IntOpenHashMap();
@@ -512,20 +512,20 @@ public final class PrintCore {
    private PrintCore.PlannerPolicy activePolicy;
    final Long2IntOpenHashMap temporaryOwner = new Long2IntOpenHashMap();
    final PrintCleanupAccess cleanupAccess = new PrintCleanupAccess(this);
-   private final Long2LongOpenHashMap read_Long2LongOpenHashM = new Long2LongOpenHashMap();
+   private final Long2LongOpenHashMap blockedSupportProofs = new Long2LongOpenHashMap();
    private final Int2ObjectOpenHashMap<long[]> supportMisses = new Int2ObjectOpenHashMap<>();
    long supportMissesReused;
    private int pitFillAttempts;
    static final int fill_I = 6;
-   private final Int2IntOpenHashMap update_Int2IntOpenHashMap = new Int2IntOpenHashMap();
+   private final Int2IntOpenHashMap witnessMissCounts = new Int2IntOpenHashMap();
    static final int mark_I = 3;
    static final int scan_I = 3;
    private final Int2BooleanOpenHashMap witnessThisTick = new Int2BooleanOpenHashMap();
    private long witnessThisTickStamp = -9223372036854775808L;
    public final LongOpenHashSet breakoutDigCells = new LongOpenHashSet();
    public int breakoutDigs;
-   private final LongOpenHashSet data_LongOpenHashSet = new LongOpenHashSet();
-   private final Long2ObjectOpenHashMap<PrintCore.TrapdoorProbeKey> pop_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
+   private final LongOpenHashSet trapdoorSupportsTried = new LongOpenHashSet();
+   private final Long2ObjectOpenHashMap<PrintCore.TrapdoorProbeKey> trapdoorProbeKeys = new Long2ObjectOpenHashMap<>();
    final LongOpenHashSet cleanupCandidates = new LongOpenHashSet();
    private final LongOpenHashSet digAttempted = new LongOpenHashSet();
    private final Int2LongOpenHashMap noClickLoggedTick = new Int2LongOpenHashMap();
@@ -560,12 +560,12 @@ public final class PrintCore {
    static final int f_k_I = 2048;
    static final boolean BREAKOUT = Boolean.getBoolean("autism.ai.print.breakout");
    static final int f_l_I = 64;
-   private final Long2LongOpenHashMap write_Long2LongOpenHashM = new Long2LongOpenHashMap();
+   private final Long2LongOpenHashMap witnessStanceTicks = new Long2LongOpenHashMap();
    private int pourLogCounter;
    private long lastProgressTick;
    private final LongOpenHashSet cache_LongOpenHashSet = new LongOpenHashSet();
    private final LongOpenHashSet state_LongOpenHashSet = new LongOpenHashSet();
-   int f_m_I = -1;
+   int firstInteractTarget = -1;
    private final Int2ObjectOpenHashMap<PrintCore.FailedApproach> failedApproaches = new Int2ObjectOpenHashMap<>();
    final LongOpenHashSet predictedFlow = new LongOpenHashSet();
    private boolean strictFlowCheck = true;
@@ -579,7 +579,7 @@ public final class PrintCore {
    private long failedPoursStatuses = -9223372036854775808L;
    private PrintCore.PlannerPolicy noPourPolicy;
    private Fluid noPourFluid;
-   private boolean flags_Z;
+   private boolean lavaHoldUsed;
    private int[] fluidWorkTopDown;
    private int[] fluidOrWaterloggedCells;
    private int[] fluidCellsTopDown;
@@ -606,8 +606,8 @@ public final class PrintCore {
    static final int f_o_I = 200;
    private int flowWaitTicks;
    private PrintCore.RepairProgress repair;
-   private final IntOpenHashSet close_IntOpenHashSet = new IntOpenHashSet();
-   private boolean chunk_Z;
+   private final IntOpenHashSet railShapeMismatches = new IntOpenHashSet();
+   private boolean unusedFlightFlag;
    private boolean flightReturnPending;
    private boolean flightReturnReady;
    private boolean groundAnchor;
@@ -624,7 +624,7 @@ public final class PrintCore {
    private long takeoffSearchStance = -9223372036854775808L;
    private long revision = -9223372036854775808L;
    private final IntArrayList groundWorkCells = new IntArrayList();
-   private final LongOpenHashSet task_LongOpenHashSet = new LongOpenHashSet();
+   private final LongOpenHashSet acceptedGoals = new LongOpenHashSet();
    private final PrintCore.CellCooldownTracker cellCooldowns = new PrintCore.CellCooldownTracker();
    private final LongOpenHashSet pool_LongOpenHashSet = new LongOpenHashSet();
    private final IntOpenHashSet open_IntOpenHashSet = new IntOpenHashSet();
@@ -641,10 +641,10 @@ public final class PrintCore {
    private final Long2IntOpenHashMap landingFailures = new Long2IntOpenHashMap();
    static final int f_p_I = 2;
    private long destinationCounter;
-   public long store_J;
-   public long drain_J;
-   private final Int2LongOpenHashMap load_Int2LongOpenHashMa = new Int2LongOpenHashMap();
-   private List<Integer> update_List = List.of();
+   public long witnessReplayHits;
+   public long missReplayHits;
+   private final Int2LongOpenHashMap missOrigins = new Int2LongOpenHashMap();
+   private List<Integer> lastWorkCandidates = List.of();
    public int headFacingProofReuses;
    private final PrintHeadWindow headWindow = new PrintHeadWindow();
    static final int f_r_I = 5;
@@ -674,12 +674,12 @@ public final class PrintCore {
    static final int f_y_I = 4;
    String lastRouteDetail = "";
    private int maxTargetY = -2147483648;
-   private final Int2IntOpenHashMap sync_Int2IntOpenHashMap = new Int2IntOpenHashMap();
+   private final Int2IntOpenHashMap bulbPulseCounts = new Int2IntOpenHashMap();
    static final int f_z_I = 3;
    private List<PrintCore.SpillShape> spillShapes;
    private Int2ObjectOpenHashMap<PrintCore.SpillShape> spillShapeByCell;
    private final Long2ObjectOpenHashMap<List<PrintCore.SpillShape>> spillShapesByFloor = new Long2ObjectOpenHashMap<>();
-   private final Long2ObjectOpenHashMap<long[]> clear_Long2ObjectOpenHas = new Long2ObjectOpenHashMap<>();
+   private final Long2ObjectOpenHashMap<long[]> exhaustedFloorSearches = new Long2ObjectOpenHashMap<>();
    private List<PrintCore.FallingFlow> fallingFlows;
    private long lastFluidChangeTick = -4611686018427387904L;
    private long lastLavaChangeTick = -4611686018427387904L;
@@ -702,7 +702,7 @@ public final class PrintCore {
    private final PrintCore.PrintStep waitOneTick = new PrintCore.WaitTicksStep(1);
    static final int f_F_I = 100;
    final IntOpenHashSet pendingWaterlogs = new IntOpenHashSet();
-   final Int2ObjectOpenHashMap<long[]> load_Int2ObjectOpenHash = new Int2ObjectOpenHashMap<>();
+   final Int2ObjectOpenHashMap<long[]> sentInteractions = new Int2ObjectOpenHashMap<>();
    static final int f_G_I = 40;
 
    private void setCellState(int i, byte value) {
@@ -1589,7 +1589,7 @@ public final class PrintCore {
          this.abandonedCells.clear();
          this.clutterSkipped.clear();
          this.failedRouteCells.clear();
-         this.flush_LongOpenHashSet.clear();
+         this.interactWalkStances.clear();
          this.state_LongOpenHashSet.clear();
          this.cache_LongOpenHashSet.clear();
          this.heldBackCells.clear();
@@ -3101,8 +3101,8 @@ public final class PrintCore {
          this.allClimbTried.clear();
          this.temporaryBlocksRemoved++;
          this.recoveries.remove(key);
-         this.data_LongOpenHashSet.remove(key);
-         this.pop_Long2ObjectOpenHas.remove(key);
+         this.trapdoorSupportsTried.remove(key);
+         this.trapdoorProbeKeys.remove(key);
          this.cleanupAccess.release(key);
          this.chunkWork.resetAudit();
          this.heldBackCells.clear();
@@ -4496,7 +4496,7 @@ public final class PrintCore {
       if (interact != null) {
          return interact;
       } else {
-         return this.f_m_I >= 0 ? new PrintCore.InteractApproachStep(this.f_m_I, lowest, anyOpen) : this.layerStep(lowest, anyOpen);
+         return this.firstInteractTarget >= 0 ? new PrintCore.InteractApproachStep(this.firstInteractTarget, lowest, anyOpen) : this.layerStep(lowest, anyOpen);
       }
    }
 
@@ -4590,7 +4590,7 @@ public final class PrintCore {
          this.reason = "Pouring fluids";
          return this.decideFluids();
       } else {
-         if (lowest == 2147483647 && this.f_m_I >= 0) {
+         if (lowest == 2147483647 && this.firstInteractTarget >= 0) {
             autismclient.ai.engine.AiPhysics.MotionState bi = this.env.playerMotionState();
             BlockPos from = PrintNav.resolveStandingCell(this.view, new Vec3(bi.x(), bi.y(), bi.z()));
             if (this.search == null || !this.search.stillValid()) {
@@ -5404,15 +5404,15 @@ public final class PrintCore {
       this.abandonedCells.clear();
       this.clutterSkipped.clear();
       this.failedRouteCells.clear();
-      this.flush_LongOpenHashSet.clear();
+      this.interactWalkStances.clear();
       this.state_LongOpenHashSet.clear();
       this.cache_LongOpenHashSet.clear();
       this.load_LongOpenHashSet.clear();
       this.retryRecords.clear();
       this.climbMisses.clear();
-      this.read_Long2LongOpenHashM.clear();
-      this.update_Int2IntOpenHashMap.clear();
-      this.write_Long2LongOpenHashM.clear();
+      this.blockedSupportProofs.clear();
+      this.witnessMissCounts.clear();
+      this.witnessStanceTicks.clear();
       this.failedDigStances.clear();
       this.failedClicks.clear();
       this.next_LongOpenHashSet.clear();
@@ -6765,10 +6765,10 @@ public final class PrintCore {
          if (miss != null
             && miss.revision() == this.view.worldMutationRevision()
             && miss.ready() == this.read_Z_I(r)
-            && this.load_Int2LongOpenHashMa.containsKey(r)
-            && this.load_Int2LongOpenHashMa.get(r) == BlockPos.containing(this.planningOrigin()).asLong()
+            && this.missOrigins.containsKey(r)
+            && this.missOrigins.get(r) == BlockPos.containing(this.planningOrigin()).asLong()
             && this.view.matchesHypothesesNear(miss.assumptions(), this.targets[r].pos(), 8)) {
-            this.drain_J++;
+            this.missReplayHits++;
             return false;
          }
 
@@ -6949,13 +6949,13 @@ public final class PrintCore {
                   )
                );
             if (this.env.canUseFlight()) {
-               this.load_Int2LongOpenHashMa.put(r, BlockPos.containing(this.planningOrigin()).asLong());
+               this.missOrigins.put(r, BlockPos.containing(this.planningOrigin()).asLong());
             } else {
-               this.load_Int2LongOpenHashMa.remove(r);
+               this.missOrigins.remove(r);
             }
          } else {
             this.witnessMisses.forgetMatching(r);
-            this.load_Int2LongOpenHashMa.remove(r);
+            this.missOrigins.remove(r);
          }
 
          if (w == null) {
@@ -6973,7 +6973,7 @@ public final class PrintCore {
          boolean unchanged = !w.touches(b) && w.viable(this);
          this.witnessReplayReads[0] = this.witnessReplayReads[0] + (this.view.workUnits() - checked);
          if (unchanged && witnessClearOf(w, b)) {
-            this.store_J++;
+            this.witnessReplayHits++;
             return false;
          }
 
@@ -8689,7 +8689,7 @@ public final class PrintCore {
          if (t.kind() == autismclient.ai.print.PrintTarget.TargetKind.PLACE
             && this.env.canBlockSurvive(t.wanted(), t.pos())
             && !this.init_Z_I_D(i, -1.0 / 0.0)
-            && (this.block_Z || this.findWitness(i, -9223372036854775808L, true) == null || this.update_Int2IntOpenHashMap.addTo(i, 1) >= 3)) {
+            && (this.block_Z || this.findWitness(i, -9223372036854775808L, true) == null || this.witnessMissCounts.addTo(i, 1) >= 3)) {
             boolean memo = !this.view.hasHypotheses() && tempState != null && !this.block_Z;
             long signature = memo ? this.stanceSignature(reach, i, body.position()) : 0L;
             if (memo) {
@@ -8720,7 +8720,7 @@ public final class PrintCore {
                for (Direction d : Direction.values()) {
                   BlockPos n = t.pos().relative(d);
                   if (this.view.getBlockState(n).isAir() && !this.abandonedCells.contains(n.asLong())) {
-                     if (this.read_Long2LongOpenHashM.getOrDefault(cellStanceKey(i, n.asLong()), -9223372036854775808L) == this.view.worldMutationRevision()) {
+                     if (this.blockedSupportProofs.getOrDefault(cellStanceKey(i, n.asLong()), -9223372036854775808L) == this.view.worldMutationRevision()) {
                         unsafe = true;
                      } else {
                         int ni = this.cellIndexByPos.get(n.asLong());
@@ -9440,7 +9440,7 @@ public final class PrintCore {
       if (!this.env.canUseFlight()
          && door.pos().distManhattan(support) == 1
          && door.pos().getY() == support.getY()
-         && !this.data_LongOpenHashSet.contains(support.asLong())
+         && !this.trapdoorSupportsTried.contains(support.asLong())
          && open.getBlock().getClass() == TrapDoorBlock.class
          && !open.is(Blocks.IRON_TRAPDOOR)
          && open.getValue(BlockStateProperties.OPEN)
@@ -9455,7 +9455,7 @@ public final class PrintCore {
             BlockState state = this.temporaryBlocks.get(support.asLong());
             PrintTarget probe = new PrintTarget(-1, support, state, autismclient.ai.print.PrintTarget.TargetKind.PLACE, Items.AIR, null);
             PrintCore.TrapdoorProbeKey search = new PrintCore.TrapdoorProbeKey(this.view.worldMutationRevision(), reach.startKey);
-            return search.equals(this.pop_Long2ObjectOpenHas.get(support.asLong())) ? null : new PrintCore.TrapdoorAccessStep(reach, owner, closed, probe, search, firstOpen);
+            return search.equals(this.trapdoorProbeKeys.get(support.asLong())) ? null : new PrintCore.TrapdoorAccessStep(reach, owner, closed, probe, search, firstOpen);
          } else {
             return null;
          }
@@ -10059,7 +10059,7 @@ public final class PrintCore {
 
          PrintCore.StanceWitness w = this.findWitness(g, -9223372036854775808L, true);
          if (w != null && w != NO_WITNESS) {
-            long last = this.write_Long2LongOpenHashM.getOrDefault(w.stance(), -4611686018427387904L);
+            long last = this.witnessStanceTicks.getOrDefault(w.stance(), -4611686018427387904L);
             if (this.env.currentTick() - last >= 800L) {
                stances.add(w.stance());
                goalOf.put(w.stance(), g);
@@ -10072,7 +10072,7 @@ public final class PrintCore {
       }
 
       for (long k : stances) {
-         this.write_Long2LongOpenHashM.put(k, this.env.currentTick());
+         this.witnessStanceTicks.put(k, this.env.currentTick());
       }
 
       PrintAccess search = new PrintAccess(this, 80.0);
@@ -10266,7 +10266,7 @@ public final class PrintCore {
    }
 
    private PrintCore.PrintStep planInteraction() {
-      this.f_m_I = -1;
+      this.firstInteractTarget = -1;
       autismclient.ai.engine.AiPhysics.MotionState body = this.env.playerMotionState();
       Vec3 feet = new Vec3(body.x(), body.y(), body.z());
 
@@ -10333,8 +10333,8 @@ public final class PrintCore {
                   );
                }
 
-               if (this.f_m_I < 0) {
-                  this.f_m_I = i;
+               if (this.firstInteractTarget < 0) {
+                  this.firstInteractTarget = i;
                }
             }
          }
@@ -10553,7 +10553,7 @@ public final class PrintCore {
       }
 
       if (holdLava && (goals.isEmpty() || this.cache_LongOpenHashSet.contains(here.asLong()))) {
-         this.flags_Z = true;
+         this.lavaHoldUsed = true;
          return new PrintCore.WaitTicksStep(1);
       }
 
@@ -10982,7 +10982,7 @@ public final class PrintCore {
    }
 
    private boolean shouldHoldLava() {
-      if (this.flags_Z) {
+      if (this.lavaHoldUsed) {
          return false;
       }
 
@@ -11841,7 +11841,7 @@ public final class PrintCore {
          this.outOfReachUntil.remove(i);
          this.setAsideCounts.remove(i);
          this.climbMisses.remove(i);
-         this.update_Int2IntOpenHashMap.remove(i);
+         this.witnessMissCounts.remove(i);
          this.heldBackCells.remove(i);
          return true;
       } else {
@@ -12349,7 +12349,7 @@ public final class PrintCore {
    }
 
    public int railShapeDifferences() {
-      return this.close_IntOpenHashSet.size();
+      return this.railShapeMismatches.size();
    }
 
    private void refreshCellAndRail(int i) {
@@ -12358,9 +12358,9 @@ public final class PrintCore {
       if (this.env.hasChunkAt(target.pos()) && target.wanted().getBlock() instanceof BaseRailBlock rail) {
          BlockState live = this.view.getBlockState(target.pos());
          if (live.is(target.wanted().getBlock()) && live.getValue(rail.getShapeProperty()) != target.wanted().getValue(rail.getShapeProperty())) {
-            this.close_IntOpenHashSet.add(i);
+            this.railShapeMismatches.add(i);
          } else {
-            this.close_IntOpenHashSet.remove(i);
+            this.railShapeMismatches.remove(i);
          }
       }
 
@@ -12406,7 +12406,7 @@ public final class PrintCore {
 
    private void resetCreativeWork() {
       this.refill = null;
-      this.task_LongOpenHashSet.clear();
+      this.acceptedGoals.clear();
       this.cellCooldowns.clearAll();
       this.pool_LongOpenHashSet.clear();
       this.open_IntOpenHashSet.clear();
@@ -12487,7 +12487,7 @@ public final class PrintCore {
             if (PrintFlight.isFlightPointSafe(this.view, this.feetPosition())) {
                if (this.env.unsuppressFlight()) {
                   this.activity = null;
-                  this.chunk_Z = true;
+                  this.unusedFlightFlag = true;
                   this.flightReturnPending = this.flightReturnReady = false;
                   this.groundWorkCells.clear();
                   this.pendingWorkGoal = null;
@@ -12540,7 +12540,7 @@ public final class PrintCore {
       }
 
       if (this.env.canUseFlight()) {
-         this.chunk_Z = true;
+         this.unusedFlightFlag = true;
       }
 
       return null;
@@ -13209,7 +13209,7 @@ public final class PrintCore {
          this.creativePlanMilestone = this.milestone;
          this.creativePlanTick = this.env.currentTick();
          this.landingFailures.clear();
-         this.task_LongOpenHashSet.clear();
+         this.acceptedGoals.clear();
          this.cellCooldowns.clearAll();
          this.open_IntOpenHashSet.clear();
       }
@@ -13304,7 +13304,7 @@ public final class PrintCore {
          candidates.removeIf(i -> i != owner);
       }
 
-      this.update_List = List.copyOf(candidates);
+      this.lastWorkCandidates = List.copyOf(candidates);
       return new PrintCore.WorkCandidatesStep(candidates, pending, unfinished);
    }
 
@@ -14908,7 +14908,7 @@ public final class PrintCore {
             if (!(temp instanceof BlockItem block)) {
                return this.waitOneTick;
             } else {
-               long[] miss = this.clear_Long2ObjectOpenHas.get(missing.asLong());
+               long[] miss = this.exhaustedFloorSearches.get(missing.asLong());
                return miss != null && miss[0] == this.view.worldMutationRevision() && miss[1] == reach.startKey
                   ? this.waitOneTick
                   : new PrintCore.FluidShapingAccessStep(reach, missing, temp, block.getBlock().defaultBlockState());
@@ -15435,7 +15435,7 @@ public final class PrintCore {
    }
 
    boolean interactionPending(int i) {
-      long[] sent = this.load_Int2ObjectOpenHash.get(i);
+      long[] sent = this.sentInteractions.get(i);
       if (sent == null) {
          return false;
       }
@@ -15444,7 +15444,7 @@ public final class PrintCore {
          return true;
       }
 
-      this.load_Int2ObjectOpenHash.remove(i);
+      this.sentInteractions.remove(i);
       return false;
    }
 
@@ -15838,7 +15838,7 @@ public final class PrintCore {
                   )) {
                   this.pendingClick = null;
                   return c;
-               } else if (PrintCore.this.sync_Int2IntOpenHashMap.addTo(this.cell, 1) >= 3) {
+               } else if (PrintCore.this.bulbPulseCounts.addTo(this.cell, 1) >= 3) {
                   PrintCore.this.logTrace("bulb: " + t.pos().toShortString() + " did not light after 3 pulses");
                   PrintCore.this.refusedCellStances.add(PrintCore.cellStanceKey(this.cell, this.stanceKey));
                   this.finished = true;
@@ -15858,7 +15858,7 @@ public final class PrintCore {
                c.clickHit = pick;
                c.trackInteractionReceipt = true;
                PrintCore.this.clicks++;
-               PrintCore.this.load_Int2ObjectOpenHash
+               PrintCore.this.sentInteractions
                   .put(this.cell, new long[]{PrintCore.this.env.currentTick(), Block.getId(PrintCore.this.view.getBlockState(t.pos()))});
                this.finished = true;
                return c;
@@ -16999,7 +16999,7 @@ public final class PrintCore {
          if (PrintCore.this.cellStates[cell] != 2 || !PrintCore.this.isPlaceableWorkCell(cell)) {
             return false;
          } else if (PrintCore.this.interactionPending(cell)) {
-            this.validUntilTick = Math.min(this.validUntilTick, PrintCore.this.load_Int2ObjectOpenHash.get(cell)[0] + 40L + 1L);
+            this.validUntilTick = Math.min(this.validUntilTick, PrintCore.this.sentInteractions.get(cell)[0] + 40L + 1L);
             return false;
          } else {
             return !PrintCore.this.isOutOfReach(cell)
@@ -20840,7 +20840,7 @@ public final class PrintCore {
       }
 
       private void acceptGoal(PrintCore.WorkGoal goal) {
-         PrintCore.this.task_LongOpenHashSet.add(PrintCore.cellStanceKey(this.owner, this.currentCell.pos().asLong()));
+         PrintCore.this.acceptedGoals.add(PrintCore.cellStanceKey(this.owner, this.currentCell.pos().asLong()));
          PrintCore.this.setTemporaryOwner(this.currentCell.pos().asLong(), this.owner);
          PrintCore.this.nextOwner = this.owner;
          this.resultStep = PrintCore.this.new FlightWorkStep(-1, null, goal);
@@ -20906,7 +20906,7 @@ public final class PrintCore {
 
                      BlockPos candidate = this.supportCandidates.get(this.candidateCursor++);
                      boolean borrowedFace = this.borrowsOwnFace(candidate);
-                     if (PrintCore.this.task_LongOpenHashSet.contains(PrintCore.cellStanceKey(this.owner, candidate.asLong()))
+                     if (PrintCore.this.acceptedGoals.contains(PrintCore.cellStanceKey(this.owner, candidate.asLong()))
                         || PrintCore.this.abandonedCells.contains(candidate.asLong())
                         || !PrintCore.this.read_Z_BlockPos(candidate)
                         || !borrowedFace && !PrintCore.this.isFreeTempSlot(candidate)) {
@@ -20929,7 +20929,7 @@ public final class PrintCore {
                      }
 
                      this.currentCell = this.frontier.removeFirst();
-                     if (PrintCore.this.task_LongOpenHashSet.contains(PrintCore.cellStanceKey(this.owner, this.currentCell.pos().asLong()))) {
+                     if (PrintCore.this.acceptedGoals.contains(PrintCore.cellStanceKey(this.owner, this.currentCell.pos().asLong()))) {
                         this.currentCell = null;
                         continue;
                      }
@@ -24716,7 +24716,7 @@ public final class PrintCore {
          PrintCore.this.refusedCellStances.add(PrintCore.cellStanceKey(PrintCore.this.cellIndexOf(this.workTarget), this.goal.route.goal()));
          if (this.cell < 0 && this.dug == null && PrintCore.this.temporaryOwner.containsKey(this.workTarget.pos().asLong())) {
             int owner = PrintCore.this.clearTemporaryOwner(this.workTarget.pos().asLong());
-            PrintCore.this.task_LongOpenHashSet.remove(PrintCore.cellStanceKey(owner, this.workTarget.pos().asLong()));
+            PrintCore.this.acceptedGoals.remove(PrintCore.cellStanceKey(owner, this.workTarget.pos().asLong()));
          }
 
          this.finished = true;
@@ -25254,7 +25254,7 @@ public final class PrintCore {
                                  )) {
                                  this.refuseWorkstation();
                                  return null;
-                              } else if (PrintCore.this.sync_Int2IntOpenHashMap.addTo(this.cell, 1) >= 3) {
+                              } else if (PrintCore.this.bulbPulseCounts.addTo(this.cell, 1) >= 3) {
                                  this.refuseWorkstation();
                                  return null;
                               } else {
@@ -25563,7 +25563,7 @@ public final class PrintCore {
       }
 
       private void chainNextPlacement(PrintControls controls, BlockState placed) {
-         if (!PrintCore.this.update_List.isEmpty() && placed != null) {
+         if (!PrintCore.this.lastWorkCandidates.isEmpty() && placed != null) {
             PrintCore.this.view.pushHypothesis(this.workTarget.pos(), placed);
 
             try {
@@ -25578,7 +25578,7 @@ public final class PrintCore {
                      }
                   }
 
-                  for (int i : PrintCore.this.update_List) {
+                  for (int i : PrintCore.this.lastWorkCandidates) {
                      if (local.size() < 64 && !local.contains(i)) {
                         local.add(i);
                      }
@@ -25671,7 +25671,7 @@ public final class PrintCore {
                   }
                }
 
-               for (int i : PrintCore.this.update_List) {
+               for (int i : PrintCore.this.lastWorkCandidates) {
                   if (nearby.size() < 70 && !nearby.contains(i)) {
                      nearby.add(i);
                   }
@@ -27094,7 +27094,7 @@ public final class PrintCore {
       PrintCore.DependencyBuild dependencyBuild;
       long totalSteps;
       final long[] stageHighWater = new long[12];
-      int tick = -1;
+      int trackedStage = -1;
       long stageOps;
 
       PreparationJob(boolean full) {
@@ -27144,7 +27144,7 @@ public final class PrintCore {
             this.dependencyBuild = null;
             PrintCore.this.predecessors = null;
             this.beforeStage = 8;
-            this.tick = -1;
+            this.trackedStage = -1;
          }
 
          while (
@@ -27156,8 +27156,8 @@ public final class PrintCore {
             used++;
             this.totalSteps++;
             int beforeStage = this.beforeStage;
-            if (this.tick != beforeStage) {
-               this.tick = beforeStage;
+            if (this.trackedStage != beforeStage) {
+               this.trackedStage = beforeStage;
                this.stageOps = 0L;
             }
 
@@ -27780,7 +27780,7 @@ public final class PrintCore {
       final PrintNav.ReachResult reach;
       final PrintCore.PlacementPurpose supportPurpose;
       final PrintCore.PlacementPurpose targetPurpose;
-      PrintCore.PlacementPurpose read;
+      PrintCore.PlacementPurpose activePurpose;
       boolean provingTarget;
       boolean finished;
       PrintCore.PrintStep resultStep;
@@ -27807,7 +27807,7 @@ public final class PrintCore {
          this.reach = reach;
          this.supportPurpose = supportPurpose;
          this.targetPurpose = targetPurpose;
-         this.read = supportPurpose;
+         this.activePurpose = supportPurpose;
          PrintCore.this.logTrace("support proof: " + support.toShortString() + " for " + PrintCore.this.targets[goal].pos().toShortString());
       }
 
@@ -27830,13 +27830,13 @@ public final class PrintCore {
             }
 
             try {
-               if (!this.read.stillValid()) {
+               if (!this.activePurpose.stillValid()) {
                   this.finished = true;
                   return PrintCore.this.idleControls();
                }
 
                if (!PrintCore.this.isBudgetSpent()) {
-                  this.read.advanceProof(PrintCore.this.workBudget());
+                  this.activePurpose.advanceProof(PrintCore.this.workBudget());
                }
             } finally {
                if (this.provingTarget) {
@@ -27844,21 +27844,21 @@ public final class PrintCore {
                }
             }
 
-            if (this.read.invalidated) {
+            if (this.activePurpose.invalidated) {
                this.finished = true;
                return PrintCore.this.idleControls();
             }
 
-            if (!this.read.complete) {
+            if (!this.activePurpose.complete) {
                return PrintCore.this.idleControls();
             }
 
-            if (this.read.blocked) {
+            if (this.activePurpose.blocked) {
                PrintCore.this.logTrace(
-                  "support proof: blocked " + (this.provingTarget ? "target " : "support ") + this.read.click.target().pos().toShortString()
+                  "support proof: blocked " + (this.provingTarget ? "target " : "support ") + this.activePurpose.click.target().pos().toShortString()
                );
-               if (!this.read.write) {
-                  PrintCore.this.read_Long2LongOpenHashM.put(PrintCore.cellStanceKey(this.goal, this.support.asLong()), this.startRevision);
+               if (!this.activePurpose.write) {
+                  PrintCore.this.blockedSupportProofs.put(PrintCore.cellStanceKey(this.goal, this.support.asLong()), this.startRevision);
                }
 
                this.finished = true;
@@ -27866,7 +27866,7 @@ public final class PrintCore {
             } else {
                if (!this.provingTarget) {
                   this.provingTarget = true;
-                  this.read = this.targetPurpose;
+                  this.activePurpose = this.targetPurpose;
                   return PrintCore.this.idleControls();
                }
 
@@ -28028,7 +28028,7 @@ public final class PrintCore {
                                  this.frontierCursor++;
                               } else if (!this.forced
                                  && PrintCore.this.findWitness(this.currentCell, -9223372036854775808L, true) != null
-                                 && PrintCore.this.update_Int2IntOpenHashMap.addTo(this.currentCell, 1) < 3) {
+                                 && PrintCore.this.witnessMissCounts.addTo(this.currentCell, 1) < 3) {
                                  this.frontierCursor++;
                               } else {
                                  this.cacheableMiss = !PrintCore.this.view.hasHypotheses() && this.tempState != null && !this.forced;
@@ -28421,7 +28421,7 @@ public final class PrintCore {
          this.supportPos = target.pos().relative(Direction.values()[this.sideIndex++]);
          if (PrintCore.this.view.getBlockState(this.supportPos).isAir()
             && !PrintCore.this.abandonedCells.contains(this.supportPos.asLong())) {
-            if (PrintCore.this.read_Long2LongOpenHashM.getOrDefault(PrintCore.cellStanceKey(this.currentCell, this.supportPos.asLong()), -9223372036854775808L)
+            if (PrintCore.this.blockedSupportProofs.getOrDefault(PrintCore.cellStanceKey(this.currentCell, this.supportPos.asLong()), -9223372036854775808L)
                == PrintCore.this.view.worldMutationRevision()) {
                this.sawRejection = true;
                return false;
@@ -29350,7 +29350,7 @@ public final class PrintCore {
 
                         if (state == PrintAccess.SearchStatus.FOUND) {
                            PrintCore.this.logTrace("interact: walking to " + BlockPos.of(this.chosenStance).toShortString() + " for " + target.pos().toShortString());
-                           PrintCore.this.flush_LongOpenHashSet.add(PrintCore.cellStanceKey(this.cell, this.chosenStance));
+                           PrintCore.this.interactWalkStances.add(PrintCore.cellStanceKey(this.cell, this.chosenStance));
                            this.resultStep = PrintCore.this.new WalkRouteStep(
                               this.reachSearch.result.reconstructPath(this.chosenStance),
                               this.reachSearch.result,
@@ -29364,7 +29364,7 @@ public final class PrintCore {
                      }
 
                      if (this.scanOrdinal == 294) {
-                        PrintCore.this.f_m_I = this.cell;
+                        PrintCore.this.firstInteractTarget = this.cell;
                         this.resultStep = this.machineJob == null
                            ? PrintCore.this.layerStep(this.lowest, this.anyOpen)
                            : PrintCore.this.load_UiHelper_NetHelper_BlockPos_I(this.standingCell, this.cell);
@@ -29379,7 +29379,7 @@ public final class PrintCore {
                      long key = target.pos().offset(dx, dy, dz).asLong();
                      if (this.reachSearch.result.isReachable(key)
                         && key != this.reachSearch.result.startKey
-                        && !PrintCore.this.flush_LongOpenHashSet.contains(PrintCore.cellStanceKey(this.cell, key))) {
+                        && !PrintCore.this.interactWalkStances.contains(PrintCore.cellStanceKey(this.cell, key))) {
                         Vec3 workFeet = PrintNav.cellCenterAtY(key, this.reachSearch.result.feetYOf(key));
                         if ((
                               this.machineJob == null
@@ -29628,7 +29628,7 @@ public final class PrintCore {
 
             while (PrintCore.this.view.workUnits() - started < allowance) {
                if (this.pointsTried >= 2400 || (this.feetIterator == null || !this.feetIterator.hasNext()) && this.stanceCursor >= this.stances.size()) {
-                  PrintCore.this.pop_Long2ObjectOpenHas.put(this.support.pos().asLong(), this.search);
+                  PrintCore.this.trapdoorProbeKeys.put(this.support.pos().asLong(), this.search);
                   this.finished = true;
                   return null;
                }
@@ -29665,7 +29665,7 @@ public final class PrintCore {
                         point = inset;
                      }
 
-                     PrintCore.this.data_LongOpenHashSet.add(this.support.pos().asLong());
+                     PrintCore.this.trapdoorSupportsTried.add(this.support.pos().asLong());
                      PrintCore.this.logTrace(
                         "support: trapdoor recovery work at " + PrintCore.formatVec(point) + " for " + this.support.pos().toShortString()
                      );
@@ -30582,7 +30582,7 @@ public final class PrintCore {
          if (state == PrintAccess.SearchStatus.INVALIDATED) {
             this.finished = true;
          } else if (state == PrintAccess.SearchStatus.EXHAUSTED) {
-            PrintCore.this.clear_Long2ObjectOpenHas.put(this.floor.asLong(), new long[]{this.startRevision, this.startStance});
+            PrintCore.this.exhaustedFloorSearches.put(this.floor.asLong(), new long[]{this.startRevision, this.startStance});
             this.finished = true;
          } else if (state == PrintAccess.SearchStatus.FOUND) {
             autismclient.ai.print.PrintClicks.Inner_StreamUtil click = this.cellSearch.click;
