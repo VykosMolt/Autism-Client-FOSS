@@ -2121,7 +2121,7 @@ final class AiDragon {
                      BlockPos support = this.groundAt((int)Math.round(fx + dir[0] * radius), (int)Math.round(fz + dir[1] * radius));
                      if (support != null && !this.rejectedBedCells.contains(support.asLong())) {
                         this.bedStance = null;
-                        if (zones.isEmpty() || this.hasStandAlong(cx, cz, dir, radius, support.getY() + 1, zones)) {
+                        if (zones.isEmpty() || this.findStandAlong(cx, cz, dir, radius, support.getY() + 1, zones)) {
                            if (AiDragon.isClearOfClouds(support.getX() + 0.5, support.getZ() + 0.5, clouds)) {
                               this.bestFoot = support.above();
                               AiSpeedrun.log(
@@ -2252,7 +2252,7 @@ final class AiDragon {
                }
             }
 
-            boolean hasStandAlong(double cx, double cz, double[] dir, double radius, int feetY, AiDragonZones.DangerZones zones) {
+            boolean findStandAlong(double cx, double cz, double[] dir, double radius, int feetY, AiDragonZones.DangerZones zones) {
                for (double k = 2.0; k <= 4.0; k += 0.25) {
                   double x = cx + dir[0] * (radius + k);
                   double z = cz + dir[1] * (radius + k);

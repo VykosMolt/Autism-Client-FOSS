@@ -7064,7 +7064,7 @@ final class AiBuilder {
                            this.readyQueue.complete(pos);
                         } else {
                            this.walkingPlacementCell = cell;
-                           if (this.isWalkingCandidate(cell, pos, job, clear)) {
+                           if (this.prepareWalkingPlacement(cell, pos, job, clear)) {
                               return this.walkingPlacementPlan.hit().getLocation();
                            }
 
@@ -7080,7 +7080,7 @@ final class AiBuilder {
                }
             }
 
-            boolean isWalkingCandidate(AiBuilder.CellSpec cell, BlockPos pos, AiSchematicApproach.Inner_DataUtil job, Predicate<AABB> clear) {
+            boolean prepareWalkingPlacement(AiBuilder.CellSpec cell, BlockPos pos, AiSchematicApproach.Inner_DataUtil job, Predicate<AABB> clear) {
                if (job.read(pos)
                   && this.isWalkingPlaceable(cell, pos)
                   && AiTerrain.isLoaded(mc.level, pos)
@@ -7128,7 +7128,7 @@ final class AiBuilder {
                      .offset(this.walkingPlacementCell.dx(), this.walkingPlacementCell.dy(), this.walkingPlacementCell.dz());
                   AiBuilder.CellSpec cell = this.load_Map.get(pos.asLong());
                   AiSchematicApproach.Inner_DataUtil job = this.activeApproachJob != null ? this.activeApproachJob : this.lastApproachJob;
-                  if (cell != null && job != null && pos.equals(this.readyQueue.activePos()) && this.isWalkingCandidate(cell, pos, job, this.walkingClearCheck)) {
+                  if (cell != null && job != null && pos.equals(this.readyQueue.activePos()) && this.prepareWalkingPlacement(cell, pos, job, this.walkingClearCheck)) {
                      BlockHitResult hit = autismclient.ai.engine.AiAim.raycastLookBlock();
                      if (hit != null
                         && AiBuilder.matchesPlacementFace(

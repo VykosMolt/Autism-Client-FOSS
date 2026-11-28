@@ -333,7 +333,7 @@ final class AiPrintOp implements AiOperation {
          }
 
          if (!this.env.isCreativeMode()
-            && !this.core.isMachineJobRunning()
+            && !this.core.hasUncertainMachineJob()
             && !this.core.flush_Z()
             && this.mc.player.getFoodData().getFoodLevel() <= 14
             && !this.core.isRestingOnGround()) {
@@ -841,7 +841,7 @@ final class AiPrintOp implements AiOperation {
 
    private void prepareForGuard() {
       this.env.releaseControls();
-      if (this.core.isMachineJobRunning()) {
+      if (this.core.hasUncertainMachineJob()) {
          this.core.cancelMachineJob();
          this.machineNeedsReconciliation = true;
       }
@@ -1002,7 +1002,7 @@ final class AiPrintOp implements AiOperation {
          && !this.childNeedsReconciliation
          && !this.machineNeedsReconciliation
          && !this.env.hasPendingHandSwap()
-         && !this.core.isMachineJobRunning()
+         && !this.core.hasUncertainMachineJob()
          && this.guard.canInterruptNow()
          && (
             this.child != null
@@ -1019,7 +1019,7 @@ final class AiPrintOp implements AiOperation {
          || this.machineNeedsReconciliation
          || this.env.hasPendingHandSwap()
          || this.child != null && this.child.requiresReconciliationAfterEmergency()
-         || this.core.isMachineJobRunning()
+         || this.core.hasUncertainMachineJob()
          || this.child == null && this.core.isAwaitingInteractionReceipt();
    }
 

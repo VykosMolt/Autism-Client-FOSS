@@ -182,7 +182,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
          this.read();
          return true;
       } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.update.init_Z(mx, my)) {
-         this.isValidForMode();
+         this.validateForMode();
          return true;
       } else if (Compat263.mouseEventGlfwButton(event) == 0 && this.sync.init_Z(mx, my)) {
          this.write();
@@ -247,7 +247,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
                   .keyPressed(this.layoutContext, Compat263.keyEventGlfwKey(input), input.keycode(), Compat263.keyEventGlfwModifiers(input));
          }
       } else {
-         this.isValidForMode();
+         this.validateForMode();
          return true;
       }
    }
@@ -289,7 +289,7 @@ public final class NbtTextEditorScreen extends VirtualScaledScreen {
       this.onClose();
    }
 
-   private boolean isValidForMode() {
+   private boolean validateForMode() {
       if (this.mode != NbtTextEditorScreen.Inner_DataUtil.FULL_NBT) {
          return true;
       }

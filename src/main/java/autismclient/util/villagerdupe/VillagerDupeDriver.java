@@ -277,7 +277,7 @@ public final class VillagerDupeDriver {
 
             for (int i = 0; i < count; i++) {
                AbstractVillager villager = targets.get(i);
-               swing |= hasLineOfSightTo(mc, player, villager);
+               swing |= interactOffHandPredicted(mc, player, villager);
                VillagerDupeDriver.TaskQueue track = this.villagerTracks.get(villager.getId());
                if (track != null) {
                   track.lastHand = villager.getMainHandItem();
@@ -536,7 +536,7 @@ public final class VillagerDupeDriver {
          && player.isWithinEntityInteractionRange(villager, 0.0);
    }
 
-   private static boolean hasLineOfSightTo(Minecraft mc, LocalPlayer player, AbstractVillager villager) {
+   private static boolean interactOffHandPredicted(Minecraft mc, LocalPlayer player, AbstractVillager villager) {
       AABB box = villager.getBoundingBox();
       Vec3 eye = player.getEyePosition();
       Vec3 hit = new Vec3(Math.clamp(eye.x, box.minX, box.maxX), Math.clamp(eye.y, box.minY, box.maxY), Math.clamp(eye.z, box.minZ, box.maxZ));

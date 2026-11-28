@@ -29,7 +29,7 @@ public final class MacroToolBridge {
 
    public static List<String> waypointNames() {
       MacroToolBridge.ToolBackend b = bridge;
-      return b == null ? List.of() : List.copyOf(b.toolIds());
+      return b == null ? List.of() : List.copyOf(b.waypointNames());
    }
 
    public static MacroToolBridge.ToolInfo findTool(String id) {
@@ -152,7 +152,7 @@ public final class MacroToolBridge {
    public interface ToolBackend {
       List<MacroToolBridge.ToolInfo> tools();
 
-      List<String> toolIds();
+      List<String> waypointNames();
 
       MacroToolBridge.ToolJob start(String var1, String var2);
 

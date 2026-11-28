@@ -187,7 +187,7 @@ class AiPrintContainer implements autismclient.ai.print.PrintMachineJob {
    }
 
    @Override
-   public boolean isProvenFull() {
+   public boolean reopenForCapacityRecheck() {
       if (this.status == autismclient.ai.print.PrintMachineJob.JobStatus.SUCCEEDED && this.b_() && this.sameWorld()) {
          this.resetTransfer();
          this.setStatus(

@@ -205,7 +205,7 @@ final class AiBrew {
                            for (int slot = 0; slot <= 2; slot++) {
                               this.bottleKeys[slot] = AiBrew.potionId(menu.getSlot(slot).getItem());
                            }
-                        } else if (!this.hasInputPotion(menu)) {
+                        } else if (!this.quickMoveInputPotion(menu)) {
                            return this.finish(
                               AiOperation.Status.FAILED,
                               "No " + inputSpec + " bottles left to load",
@@ -319,7 +319,7 @@ final class AiBrew {
                return found;
             }
 
-            boolean hasInputPotion(BrewingStandMenu menu) {
+            boolean quickMoveInputPotion(BrewingStandMenu menu) {
                for (int slot = 0; slot < 36; slot++) {
                   ItemStack stack = this.mc.player.getInventory().getItem(slot);
                   if (!stack.isEmpty() && stack.is(Items.POTION) && (inputType.isEmpty() || AiBrew.potionId(stack).equals(inputType))) {

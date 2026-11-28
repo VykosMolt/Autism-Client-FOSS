@@ -243,7 +243,7 @@ public final class ThemeTextureRecolorer {
       }
    }
 
-   public static boolean isEnabled() {
+   public static boolean isPanoramaLoaded() {
       return panoramaLoaded;
    }
 

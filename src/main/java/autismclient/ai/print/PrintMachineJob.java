@@ -102,7 +102,7 @@ public interface PrintMachineJob {
       return false;
    }
 
-   default boolean isProvenFull() {
+   default boolean reopenForCapacityRecheck() {
       return false;
    }
 

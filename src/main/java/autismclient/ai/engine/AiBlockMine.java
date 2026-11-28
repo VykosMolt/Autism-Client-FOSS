@@ -1623,7 +1623,7 @@ public final class AiBlockMine {
                                     && Math.abs(near.y - at.y) < 1.2
                                     && (Math.abs(near.x - at.x) > 1.15 || Math.abs(near.z - at.z) > 1.15)
                                     && near.distanceToSqr(at) < 9.0) {
-                                    if (this.canWalkStraightTo(near)) {
+                                    if (this.tryWalkStraightTo(near)) {
                                        this.steppingToDrop = true;
                                        return this.running("Stepping onto the " + label + " drop");
                                     }
@@ -1847,7 +1847,7 @@ public final class AiBlockMine {
                }
             }
 
-            boolean canWalkStraightTo(Vec3 point) {
+            boolean tryWalkStraightTo(Vec3 point) {
                double dx = point.x - mc.player.getX();
                double dz = point.z - mc.player.getZ();
                double yaw = Math.toRadians(mc.player.getYRot());

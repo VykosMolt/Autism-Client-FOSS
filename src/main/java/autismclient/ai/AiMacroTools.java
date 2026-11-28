@@ -34,7 +34,7 @@ public final class AiMacroTools implements autismclient.util.macro.MacroToolBrid
    }
 
    @Override
-   public List<String> toolIds() {
+   public List<String> waypointNames() {
       return this.waypointNames;
    }
 

@@ -583,7 +583,7 @@ public final class AutoTradeModule extends Module {
                      return;
                   }
 
-                  if (!this.canReach(hit.getLocation())) {
+                  if (!this.stepLookAt(hit.getLocation())) {
                      return;
                   }
 
@@ -711,7 +711,7 @@ public final class AutoTradeModule extends Module {
       if (this.inRange(this.villager)) {
          if (MC.player.containerMenu != MC.player.inventoryMenu || MC.gui.screen() != null) {
             this.status = "Close the current screen";
-         } else if (this.canReach(this.villager.getBoundingBox().getCenter())) {
+         } else if (this.stepLookAt(this.villager.getBoundingBox().getCenter())) {
             MC.gameMode
                .interact(
                   MC.player, this.villager, new EntityHitResult(this.villager, this.villager.getBoundingBox().getCenter()), InteractionHand.MAIN_HAND
@@ -721,7 +721,7 @@ public final class AutoTradeModule extends Module {
       }
    }
 
-   private boolean canReach(Vec3 point) {
+   private boolean stepLookAt(Vec3 point) {
       return autismclient.util.villager.MerchantInteractHelper.lookAt(MC, point);
    }
 
@@ -762,7 +762,7 @@ public final class AutoTradeModule extends Module {
                BlockHitResult ray = MC.level
                   .clip(new ClipContext(MC.player.getEyePosition(), rayEnd, net.minecraft.world.level.ClipContext.Block.OUTLINE, Fluid.NONE, MC.player));
                if (ray.getType() == Type.BLOCK && ray.getBlockPos().equals(support) && ray.getDirection() == face) {
-                  if (!this.canReach(point)) {
+                  if (!this.stepLookAt(point)) {
                      return false;
                   }
 

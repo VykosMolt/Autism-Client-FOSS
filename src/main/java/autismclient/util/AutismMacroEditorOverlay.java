@@ -163,7 +163,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
    private final List<AutismMacroEditorOverlay.ActionRowItem> rowSnapshots = new ArrayList<>();
    private final List<AutismMacroEditorOverlay.RowTransitionAnim> rowAnimations = new ArrayList<>();
    private int nextStableId = 1;
-   private long lastAnimationTick = System.nanoTime();
+   private long lastAnimationNanos = System.nanoTime();
    private static final int drain = -5609729;
    private static final int fill = 88;
 
@@ -1537,7 +1537,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
          this.rowAnimations.clear();
          this.rowSnapshots.clear();
          this.rowSnapshots.addAll(current);
-         this.lastAnimationTick = System.nanoTime();
+         this.lastAnimationNanos = System.nanoTime();
       } else {
          this.rowAnimations.clear();
 
@@ -1585,7 +1585,7 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
       this.rowSnapshots.clear();
       this.rowAnimations.clear();
       this.nextStableId = 1;
-      this.lastAnimationTick = System.nanoTime();
+      this.lastAnimationNanos = System.nanoTime();
       if (this.macro != null) {
          this.rowSnapshots.addAll(this.captureRowSnapshots());
       }
@@ -1593,8 +1593,8 @@ public class AutismMacroEditorOverlay extends DraggableOverlayWindow {
 
    private float advanceAnimations() {
       long now = System.nanoTime();
-      float delta = Math.max(0.0F, Math.min(0.05F, (float)(now - this.lastAnimationTick) / 1.0E9F));
-      this.lastAnimationTick = now;
+      float delta = Math.max(0.0F, Math.min(0.05F, (float)(now - this.lastAnimationNanos) / 1.0E9F));
+      this.lastAnimationNanos = now;
       if (this.rowAnimations.isEmpty()) {
          return delta;
       }

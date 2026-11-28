@@ -16132,7 +16132,7 @@ F	autismclient/util/AutismMacroEditorOverlay	open	J	autismclient/util/AutismMacr
 F	autismclient/util/AutismMacroEditorOverlay	open	Ljava/util/List;	autismclient/util/AutismMacroEditorOverlay	filteredPaletteEntries	Ljava/util/List;
 F	autismclient/util/AutismMacroEditorOverlay	open	Z	autismclient/util/AutismMacroEditorOverlay	pressCanDrag	Z
 F	autismclient/util/AutismMacroEditorOverlay	poll	I	autismclient/util/AutismMacroEditorOverlay	poll_I	I
-F	autismclient/util/AutismMacroEditorOverlay	poll	J	autismclient/util/AutismMacroEditorOverlay	lastAnimationTick	J
+F	autismclient/util/AutismMacroEditorOverlay	poll	J	autismclient/util/AutismMacroEditorOverlay	lastAnimationNanos	J
 F	autismclient/util/AutismMacroEditorOverlay	poll	Ljava/util/List;	autismclient/util/AutismMacroEditorOverlay	rowSnapshots	Ljava/util/List;
 F	autismclient/util/AutismMacroEditorOverlay	poll	Z	autismclient/util/AutismMacroEditorOverlay	headerPressed	Z
 F	autismclient/util/AutismMacroEditorOverlay	pop	I	autismclient/util/AutismMacroEditorOverlay	pop_I	I
@@ -19493,7 +19493,7 @@ F	autismclient/util/f/CachePool	init	J	autismclient/util/autologin/AutoLoginDriv
 F	autismclient/util/f/CachePool	init	Lautismclient/util/f/BufferHelper;	autismclient/util/autologin/AutoLoginDriver	host	Lautismclient/util/autologin/AutoLoginBackend;
 F	autismclient/util/f/CachePool	init	Lautismclient/util/f/CachePool$DataUtil;	autismclient/util/autologin/AutoLoginDriver	state	Lautismclient/util/autologin/AutoLoginDriver$Inner_DataUtil;
 F	autismclient/util/f/CachePool	init	Lautismclient/util/f/DataUtil$DataUtil;	autismclient/util/autologin/AutoLoginDriver	detection	Lautismclient/util/autologin/AuthPromptParser$AuthPrompt;
-F	autismclient/util/f/CachePool	init	Lautismclient/util/f/StreamUtil;	autismclient/util/autologin/AutoLoginDriver	newConfig	Lautismclient/util/autologin/AutoLoginTimings;
+F	autismclient/util/f/CachePool	init	Lautismclient/util/f/StreamUtil;	autismclient/util/autologin/AutoLoginDriver	timings	Lautismclient/util/autologin/AutoLoginTimings;
 F	autismclient/util/f/CachePool	init	Ljava/lang/String;	autismclient/util/autologin/AutoLoginDriver	registerCommand	Ljava/lang/String;
 F	autismclient/util/f/CachePool	init	Z	autismclient/util/autologin/AutoLoginDriver	loginAfterRegister	Z
 F	autismclient/util/f/CachePool	load	J	autismclient/util/autologin/AutoLoginDriver	startedAt	J
@@ -24818,7 +24818,7 @@ M	autismclient/ai/b/BitSetUtil	load	()Z	autismclient/ai/print/PrintMachineJob	is
 M	autismclient/ai/b/BitSetUtil	poll	()Lautismclient/ai/b/BitSetUtil$DataUtil;	autismclient/ai/print/PrintMachineJob	pollStatus	()Lautismclient/ai/print/PrintMachineJob$JobStatus;
 M	autismclient/ai/b/BitSetUtil	read	()I	autismclient/ai/print/PrintMachineJob	verifiedItems	()I
 M	autismclient/ai/b/BitSetUtil	read	()V	autismclient/ai/print/PrintMachineJob	onContentsUnavailable	()V
-M	autismclient/ai/b/BitSetUtil	read	()Z	autismclient/ai/print/PrintMachineJob	isProvenFull	()Z
+M	autismclient/ai/b/BitSetUtil	read	()Z	autismclient/ai/print/PrintMachineJob	reopenForCapacityRecheck	()Z
 M	autismclient/ai/b/BitSetUtil	update	()Z	autismclient/ai/print/PrintMachineJob	needsRevisit	()Z
 M	autismclient/ai/b/BitSetUtil	write	()I	autismclient/ai/print/PrintMachineJob	completedPhases	()I
 M	autismclient/ai/b/BitSetUtil	write	()Z	autismclient/ai/print/PrintMachineJob	write_Z	()Z
@@ -25557,7 +25557,7 @@ M	autismclient/ai/b/UiHelper	read	()Ljava/lang/String;	autismclient/ai/print/Pri
 M	autismclient/ai/b/UiHelper	read	()Ljava/util/List;	autismclient/ai/print/PrintCore	fallingFlowList	()Ljava/util/List;
 M	autismclient/ai/b/UiHelper	read	()Lnet/minecraft/world/item/Item;	autismclient/ai/print/PrintCore	tempItem	()Lnet/minecraft/world/item/Item;
 M	autismclient/ai/b/UiHelper	read	()V	autismclient/ai/print/PrintCore	processChunkChanges	()V
-M	autismclient/ai/b/UiHelper	read	()Z	autismclient/ai/print/PrintCore	isMachineJobRunning	()Z
+M	autismclient/ai/b/UiHelper	read	()Z	autismclient/ai/print/PrintCore	hasUncertainMachineJob	()Z
 M	autismclient/ai/b/UiHelper	read	()[I	autismclient/ai/print/PrintCore	fluidWorkByHeight	()[I
 M	autismclient/ai/b/UiHelper	read	(I)I	autismclient/ai/print/PrintCore	setAsideUnreachable	(I)I
 M	autismclient/ai/b/UiHelper	read	(I)V	autismclient/ai/print/PrintCore	refreshCellAndRail	(I)V
@@ -26079,7 +26079,7 @@ M	autismclient/ai/bd	load	()Z	autismclient/ai/AiPrintContainer	isVerifiedSuccess
 M	autismclient/ai/bd	poll	()Lautismclient/ai/b/BitSetUtil$DataUtil;	autismclient/ai/AiPrintContainer	pollStatus	()Lautismclient/ai/print/PrintMachineJob$JobStatus;
 M	autismclient/ai/bd	poll	()Z	autismclient/ai/AiPrintContainer	passiveCollectorSettled	()Z
 M	autismclient/ai/bd	read	()V	autismclient/ai/AiPrintContainer	onContentsUnavailable	()V
-M	autismclient/ai/bd	read	()Z	autismclient/ai/AiPrintContainer	isProvenFull	()Z
+M	autismclient/ai/bd	read	()Z	autismclient/ai/AiPrintContainer	reopenForCapacityRecheck	()Z
 M	autismclient/ai/bd	update	()V	autismclient/ai/AiPrintContainer	closeOwnMenu	()V
 M	autismclient/ai/bd	update	()Z	autismclient/ai/AiPrintContainer	needsRevisit	()Z
 M	autismclient/ai/bd	write	()V	autismclient/ai/AiPrintContainer	resetTransfer	()V
@@ -28250,7 +28250,7 @@ M	autismclient/gui/d/BitSetUtil$DataUtil	init	()I	autismclient/gui/d/BitSetUtil$
 M	autismclient/gui/d/BitSetUtil$DataUtil	init	()Lautismclient/gui/f/b/ByteReader;	autismclient/gui/d/BitSetUtil$Inner_DataUtil	init_ByteReader	()Lautismclient/gui/ui/widgets/OverlayActionButton;
 M	autismclient/gui/d/BitSetUtil$DataUtil	init	()Lautismclient/util/cY$DataUtil;	autismclient/gui/d/BitSetUtil$Inner_DataUtil	init_cY_DataUtil	()Lautismclient/util/MacroFolderLayout$Inner_DataUtil;
 M	autismclient/gui/d/BitSetUtil$DataUtil	init	()Ljava/lang/String;	autismclient/gui/d/BitSetUtil$Inner_DataUtil	init_Str	()Ljava/lang/String;
-M	autismclient/gui/d/BufferHelper	init	()Z	autismclient/gui/screens/NbtTextEditorScreen	isValidForMode	()Z
+M	autismclient/gui/d/BufferHelper	init	()Z	autismclient/gui/screens/NbtTextEditorScreen	validateForMode	()Z
 M	autismclient/gui/d/BufferHelper	init	(Ljava/lang/String;)Ljava/util/List;	autismclient/gui/screens/NbtTextEditorScreen	init_List_Str	(Ljava/lang/String;)Ljava/util/List;
 M	autismclient/gui/d/BufferHelper	init	(Ljava/lang/String;)Lnet/minecraft/network/chat/Component;	autismclient/gui/screens/NbtTextEditorScreen	highlightSnbt	(Ljava/lang/String;)Lnet/minecraft/network/chat/Component;
 M	autismclient/gui/d/BufferHelper	load	()V	autismclient/gui/screens/NbtTextEditorScreen	load_V_3	()V
@@ -31054,7 +31054,7 @@ M	autismclient/modules/MethodUtil	init	(Lnet/minecraft/world/entity/npc/villager
 M	autismclient/modules/MethodUtil	init	(Lnet/minecraft/world/inventory/MerchantMenu;)I	autismclient/modules/AutoTradeModule	matchingOfferIndex	(Lnet/minecraft/world/inventory/MerchantMenu;)I
 M	autismclient/modules/MethodUtil	init	(Lnet/minecraft/world/level/block/Block;)I	autismclient/modules/AutoTradeModule	hotbarSlotOf	(Lnet/minecraft/world/level/block/Block;)I
 M	autismclient/modules/MethodUtil	init	(Lnet/minecraft/world/level/block/Block;)Z	autismclient/modules/AutoTradeModule	isWorkstation	(Lnet/minecraft/world/level/block/Block;)Z
-M	autismclient/modules/MethodUtil	init	(Lnet/minecraft/world/phys/Vec3;)Z	autismclient/modules/AutoTradeModule	canReach	(Lnet/minecraft/world/phys/Vec3;)Z
+M	autismclient/modules/MethodUtil	init	(Lnet/minecraft/world/phys/Vec3;)Z	autismclient/modules/AutoTradeModule	stepLookAt	(Lnet/minecraft/world/phys/Vec3;)Z
 M	autismclient/modules/MethodUtil	load	()V	autismclient/modules/AutoTradeModule	pickLookedWorkstation	()V
 M	autismclient/modules/MethodUtil	load	()Z	autismclient/modules/AutoTradeModule	matchesBooks	()Z
 M	autismclient/modules/MethodUtil	load	(Lnet/minecraft/world/level/block/Block;)I	autismclient/modules/AutoTradeModule	load_I	(Lnet/minecraft/world/level/block/Block;)I
@@ -32242,7 +32242,7 @@ M	autismclient/modules/aI	init	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core
 M	autismclient/modules/aI	init	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lautismclient/util/ce$DataUtil;Lautismclient/util/ce$DataUtil;DD)Lautismclient/util/ce$DataUtil;	autismclient/modules/ScaffoldModule	init_ce_DataUtil_BlockPos	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lautismclient/util/RotationMath$Rotation;Lautismclient/util/RotationMath$Rotation;DD)Lautismclient/util/RotationMath$Rotation;
 M	autismclient/modules/aI	init	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lautismclient/util/ce$DataUtil;Lautismclient/util/ce$DataUtil;DDZ)Lautismclient/util/ce$DataUtil;	autismclient/modules/ScaffoldModule	init_ce_DataUtil_BlockPos	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lautismclient/util/RotationMath$Rotation;Lautismclient/util/RotationMath$Rotation;DDZ)Lautismclient/util/RotationMath$Rotation;
 M	autismclient/modules/aI	init	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lautismclient/util/ce$DataUtil;Lautismclient/util/ce$DataUtil;FDD)Lautismclient/util/ce$DataUtil;	autismclient/modules/ScaffoldModule	init_ce_DataUtil_BlockPos_2	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lautismclient/util/RotationMath$Rotation;Lautismclient/util/RotationMath$Rotation;FDD)Lautismclient/util/RotationMath$Rotation;
-M	autismclient/modules/aI	init	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;)Z	autismclient/modules/ScaffoldModule	canPlaceInCell	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;)Z
+M	autismclient/modules/aI	init	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;)Z	autismclient/modules/ScaffoldModule	tryPlaceInCell	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;)Z
 M	autismclient/modules/aI	init	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V	autismclient/modules/ScaffoldModule	onBlockUpdate	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
 M	autismclient/modules/aI	init	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/AABB;)Z	autismclient/modules/ScaffoldModule	intersectsCell	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/AABB;)Z
 M	autismclient/modules/aI	init	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/core/Direction;Z)Lnet/minecraft/core/BlockPos;	autismclient/modules/ScaffoldModule	init_BlockPos_BlockPos_2	(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/core/Direction;Z)Lnet/minecraft/core/BlockPos;
@@ -39838,7 +39838,7 @@ M	autismclient/util/ct$StreamUtil	init	(Lautismclient/util/ct$DataUtil;)Z	autism
 M	autismclient/util/ct$StreamUtil	load	(Lautismclient/util/ct$DataUtil;)F	autismclient/util/ThemePaletteManager$CompiledPalette	saturation	(Lautismclient/util/ThemePaletteManager$ColorRole;)F
 M	autismclient/util/ct$StreamUtil	load	(Lautismclient/util/ct$DataUtil;)I	autismclient/util/ThemePaletteManager$CompiledPalette	roleSignature	(Lautismclient/util/ThemePaletteManager$ColorRole;)I
 M	autismclient/util/cu	init	()V	autismclient/util/ThemeTextureRecolorer	recolorPanorama	()V
-M	autismclient/util/cu	init	()Z	autismclient/util/ThemeTextureRecolorer	isEnabled	()Z
+M	autismclient/util/cu	init	()Z	autismclient/util/ThemeTextureRecolorer	isPanoramaLoaded	()Z
 M	autismclient/util/cu	init	(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/resources/Identifier;	autismclient/util/ThemeTextureRecolorer	themed	(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/resources/Identifier;
 M	autismclient/util/cu	init	(Lnet/minecraft/resources/Identifier;)[B	autismclient/util/ThemeTextureRecolorer	readPng	(Lnet/minecraft/resources/Identifier;)[B
 M	autismclient/util/cu	init	(Lnet/minecraft/resources/Identifier;I)Lnet/minecraft/resources/Identifier;	autismclient/util/ThemeTextureRecolorer	recolor	(Lnet/minecraft/resources/Identifier;I)Lnet/minecraft/resources/Identifier;
@@ -41624,7 +41624,7 @@ M	autismclient/util/i/DataUtil	init	(Lnet/minecraft/client/Minecraft;Lnet/minecr
 M	autismclient/util/i/DataUtil	init	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lautismclient/util/i/DataUtil$CachePool;)Ljava/util/List;	autismclient/util/villagerdupe/VillagerDupeDriver	reachableVillagers	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lautismclient/util/villagerdupe/VillagerDupeDriver$CachePool;)Ljava/util/List;
 M	autismclient/util/i/DataUtil	init	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lautismclient/util/i/DataUtil$CachePool;I)Lautismclient/util/i/DataUtil$ConfigStore;	autismclient/util/villagerdupe/VillagerDupeDriver	init_DataUtil_ConfigSto	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lautismclient/util/villagerdupe/VillagerDupeDriver$CachePool;I)Lautismclient/util/villagerdupe/VillagerDupeDriver$ConfigStore;
 M	autismclient/util/i/DataUtil	init	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lautismclient/util/i/DataUtil$CachePool;I)V	autismclient/util/villagerdupe/VillagerDupeDriver	startHotbarFlick	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lautismclient/util/villagerdupe/VillagerDupeDriver$CachePool;I)V
-M	autismclient/util/i/DataUtil	init	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lnet/minecraft/world/entity/npc/villager/AbstractVillager;)Z	autismclient/util/villagerdupe/VillagerDupeDriver	hasLineOfSightTo	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lnet/minecraft/world/entity/npc/villager/AbstractVillager;)Z
+M	autismclient/util/i/DataUtil	init	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lnet/minecraft/world/entity/npc/villager/AbstractVillager;)Z	autismclient/util/villagerdupe/VillagerDupeDriver	interactOffHandPredicted	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/player/LocalPlayer;Lnet/minecraft/world/entity/npc/villager/AbstractVillager;)Z
 M	autismclient/util/i/DataUtil	init	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/world/entity/npc/villager/AbstractVillager;I)Z	autismclient/util/villagerdupe/VillagerDupeDriver	init_Z_Minecraft_3	(Lnet/minecraft/client/Minecraft;Lnet/minecraft/world/entity/npc/villager/AbstractVillager;I)Z
 M	autismclient/util/i/DataUtil	init	(Lnet/minecraft/client/multiplayer/ClientLevel;)V	autismclient/util/villagerdupe/VillagerDupeDriver	onLevelChanged	(Lnet/minecraft/client/multiplayer/ClientLevel;)V
 M	autismclient/util/i/DataUtil	init	(Lnet/minecraft/client/player/LocalPlayer;)V	autismclient/util/villagerdupe/VillagerDupeDriver	reconcileShearDurability	(Lnet/minecraft/client/player/LocalPlayer;)V
@@ -49539,7 +49539,7 @@ M	autismclient/ai/TableIndex$2	close	(Lnet/minecraft/core/BlockPos;)Z	autismclie
 M	autismclient/ai/TableIndex$2	flush	()V	autismclient/ai/AiBuilder$2	tryWalkingClick	()V
 M	autismclient/ai/TableIndex$2	flush	(Lautismclient/ai/TableIndex$StreamUtil;Lnet/minecraft/core/BlockPos;)Z	autismclient/ai/AiBuilder$2	isWalkingPlaceable	(Lautismclient/ai/AiBuilder$CellSpec;Lnet/minecraft/core/BlockPos;)Z
 M	autismclient/ai/TableIndex$2	flush	(Lnet/minecraft/core/BlockPos;)Z	autismclient/ai/AiBuilder$2	isStandingHighAboveOrigin	(Lnet/minecraft/core/BlockPos;)Z
-M	autismclient/ai/TableIndex$2	init	(Lautismclient/ai/TableIndex$StreamUtil;Lnet/minecraft/core/BlockPos;Lautismclient/ai/a/b$DataUtil;Ljava/util/function/Predicate;)Z	autismclient/ai/AiBuilder$2	isWalkingCandidate	(Lautismclient/ai/AiBuilder$CellSpec;Lnet/minecraft/core/BlockPos;Lautismclient/ai/engine/AiSchematicApproach$Inner_DataUtil;Ljava/util/function/Predicate;)Z
+M	autismclient/ai/TableIndex$2	init	(Lautismclient/ai/TableIndex$StreamUtil;Lnet/minecraft/core/BlockPos;Lautismclient/ai/a/b$DataUtil;Ljava/util/function/Predicate;)Z	autismclient/ai/AiBuilder$2	prepareWalkingPlacement	(Lautismclient/ai/AiBuilder$CellSpec;Lnet/minecraft/core/BlockPos;Lautismclient/ai/engine/AiSchematicApproach$Inner_DataUtil;Ljava/util/function/Predicate;)Z
 M	autismclient/ai/TableIndex$2	init	(Lautismclient/ai/TableIndex$StreamUtil;Lnet/minecraft/core/BlockPos;Ljava/util/Map$Entry;Ljava/lang/String;)V	autismclient/ai/AiBuilder$2	recordUnappliedProperty	(Lautismclient/ai/AiBuilder$CellSpec;Lnet/minecraft/core/BlockPos;Ljava/util/Map$Entry;Ljava/lang/String;)V
 M	autismclient/ai/TableIndex$2	init	(Lautismclient/ai/TableIndex$StreamUtil;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lautismclient/ai/a/u$DataUtil;)Ljava/util/List;	autismclient/ai/AiBuilder$2	batchRequests	(Lautismclient/ai/AiBuilder$CellSpec;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lautismclient/ai/engine/PlacementGoal$PlaceConstraint;)Ljava/util/List;
 M	autismclient/ai/TableIndex$2	init	(Lautismclient/ai/TableIndex$StreamUtil;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/phys/BlockHitResult;	autismclient/ai/AiBuilder$2	orientPlacementHit	(Lautismclient/ai/AiBuilder$CellSpec;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/phys/BlockHitResult;
@@ -52717,7 +52717,7 @@ M	autismclient/ai/a/BufferHelper$1	init	(Lnet/minecraft/core/BlockPos;Ljava/util
 M	autismclient/ai/a/BufferHelper$1	init	(Lnet/minecraft/world/entity/item/ItemEntity;)Lnet/minecraft/world/phys/Vec3;	autismclient/ai/engine/AiBlockMine$1	predictedRest	(Lnet/minecraft/world/entity/item/ItemEntity;)Lnet/minecraft/world/phys/Vec3;
 M	autismclient/ai/a/BufferHelper$1	init	(Lnet/minecraft/world/item/Item;)Z	autismclient/ai/engine/AiBlockMine$1	isWantedItem	(Lnet/minecraft/world/item/Item;)Z
 M	autismclient/ai/a/BufferHelper$1	init	(Lnet/minecraft/world/level/block/state/BlockState;)Z	autismclient/ai/engine/AiBlockMine$1	isTargetState	(Lnet/minecraft/world/level/block/state/BlockState;)Z
-M	autismclient/ai/a/BufferHelper$1	init	(Lnet/minecraft/world/phys/Vec3;)Z	autismclient/ai/engine/AiBlockMine$1	canWalkStraightTo	(Lnet/minecraft/world/phys/Vec3;)Z
+M	autismclient/ai/a/BufferHelper$1	init	(Lnet/minecraft/world/phys/Vec3;)Z	autismclient/ai/engine/AiBlockMine$1	tryWalkStraightTo	(Lnet/minecraft/world/phys/Vec3;)Z
 M	autismclient/ai/a/BufferHelper$1	init	(Z)Ljava/util/List;	autismclient/ai/engine/AiBlockMine$1	dropSpots	(Z)Ljava/util/List;
 M	autismclient/ai/a/BufferHelper$1	poll	(Lnet/minecraft/core/BlockPos;)Z	autismclient/ai/engine/AiBlockMine$1	isWet	(Lnet/minecraft/core/BlockPos;)Z
 M	autismclient/ai/a/BufferHelper$1	sync	(Lnet/minecraft/core/BlockPos;)Z	autismclient/ai/engine/AiBlockMine$1	isEligibleTarget	(Lnet/minecraft/core/BlockPos;)Z
@@ -53085,7 +53085,7 @@ M	autismclient/ai/FileCache$1	init	(Lautismclient/api/ai/AiOperation$Status;Ljav
 M	autismclient/ai/FileCache$1	init	(Ljava/lang/String;)Lautismclient/api/ai/AiOperation$Result;	autismclient/ai/AiBrew$1	running	(Ljava/lang/String;)Lautismclient/api/ai/AiOperation$Result;
 M	autismclient/ai/FileCache$1	init	(Ljava/lang/String;ILjava/lang/String;)Lautismclient/api/ai/AiOperation$Result;	autismclient/ai/AiBrew$1	noteMoveAttempt	(Ljava/lang/String;ILjava/lang/String;)Lautismclient/api/ai/AiOperation$Result;
 M	autismclient/ai/FileCache$1	init	(Lnet/minecraft/world/inventory/BrewingStandMenu;Lnet/minecraft/world/item/Item;)Z	autismclient/ai/AiBrew$1	quickMoveItem	(Lnet/minecraft/world/inventory/BrewingStandMenu;Lnet/minecraft/world/item/Item;)Z
-M	autismclient/ai/FileCache$1	load	(Lnet/minecraft/world/inventory/BrewingStandMenu;)Z	autismclient/ai/AiBrew$1	hasInputPotion	(Lnet/minecraft/world/inventory/BrewingStandMenu;)Z
+M	autismclient/ai/FileCache$1	load	(Lnet/minecraft/world/inventory/BrewingStandMenu;)Z	autismclient/ai/AiBrew$1	quickMoveInputPotion	(Lnet/minecraft/world/inventory/BrewingStandMenu;)Z
 M	autismclient/ai/f$1	init	(Lautismclient/api/ai/AiOperation$Result;)Lautismclient/api/ai/AiOperation$Result;	autismclient/ai/AiCraftCapacity$1	finishWithReceipt	(Lautismclient/api/ai/AiOperation$Result;)Lautismclient/api/ai/AiOperation$Result;
 M	autismclient/ai/g	init	(Lautismclient/ai/g$BufferHelper;)Ljava/util/Map;	autismclient/ai/AiCraftPlanner	groupInputs	(Lautismclient/ai/AiCraftPlanner$RecipeSpec;)Ljava/util/Map;
 M	autismclient/ai/g	init	(Lautismclient/ai/g$BufferHelper;Ljava/lang/String;)Z	autismclient/ai/AiCraftPlanner	usesInput	(Lautismclient/ai/AiCraftPlanner$RecipeSpec;Ljava/lang/String;)Z
@@ -55490,7 +55490,7 @@ M	autismclient/ai/al	init	(Ljava/lang/String;Ljava/lang/String;Lcom/google/gson/
 M	autismclient/ai/al	init	(Ljava/util/List;Ljava/lang/Integer;)Lcom/google/gson/JsonObject;	autismclient/ai/AiLocalRequest	mineRequest	(Ljava/util/List;Ljava/lang/Integer;)Lcom/google/gson/JsonObject;
 M	autismclient/ai/am	init	(Lautismclient/util/macro/k$StreamUtil;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;	autismclient/ai/AiMacroTools	control	(Lautismclient/util/macro/MacroToolBridge$ToolJob;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
 M	autismclient/ai/am	init	(Ljava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/k$StreamUtil;	autismclient/ai/AiMacroTools	start	(Ljava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/MacroToolBridge$ToolJob;
-M	autismclient/ai/am	load	()Ljava/util/List;	autismclient/ai/AiMacroTools	toolIds	()Ljava/util/List;
+M	autismclient/ai/am	load	()Ljava/util/List;	autismclient/ai/AiMacroTools	waypointNames	()Ljava/util/List;
 M	autismclient/ai/AiMemoryStore	init	(Lautismclient/ai/AiMemoryStore$DataUtil;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lautismclient/ai/AiMemoryStore$Memory;	autismclient/ai/AiMemoryStore	remember	(Lautismclient/ai/AiMemoryStore$MemoryKind;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lautismclient/ai/AiMemoryStore$Memory;
 M	autismclient/ai/ar$3	init	(Ljava/util/Set;)Ljava/lang/String;	autismclient/ai/AiMiningPreparation$3	familyOf	(Ljava/util/Set;)Ljava/lang/String;
 M	autismclient/ai/aw	init	(Lautismclient/ai/AiSettings$Provider;Ljava/lang/String;Ljava/lang/String;Lautismclient/ai/aw$DataUtil;)Lautismclient/ai/aw$CachePool;	autismclient/ai/AiModels	fetchModelsWith	(Lautismclient/ai/AiSettings$Provider;Ljava/lang/String;Ljava/lang/String;Lautismclient/ai/AiModels$Inner_DataUtil;)Lautismclient/ai/AiModels$Inner_CachePool;
@@ -55576,7 +55576,7 @@ M	autismclient/util/TaskTimer$BufferHelper	init	(I)Lnet/minecraft/world/item/Ite
 M	autismclient/util/TaskTimer$BufferHelper	init	(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;	autismclient/util/ArmorEvaluationHelper$StackSource	equipped	(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;
 M	autismclient/util/macro/k$DataUtil	init	(Lautismclient/util/macro/k$StreamUtil;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;	autismclient/util/macro/MacroToolBridge$ToolBackend	control	(Lautismclient/util/macro/MacroToolBridge$ToolJob;Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;
 M	autismclient/util/macro/k$DataUtil	init	(Ljava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/k$StreamUtil;	autismclient/util/macro/MacroToolBridge$ToolBackend	start	(Ljava/lang/String;Ljava/lang/String;)Lautismclient/util/macro/MacroToolBridge$ToolJob;
-M	autismclient/util/macro/k$DataUtil	load	()Ljava/util/List;	autismclient/util/macro/MacroToolBridge$ToolBackend	toolIds	()Ljava/util/List;
+M	autismclient/util/macro/k$DataUtil	load	()Ljava/util/List;	autismclient/util/macro/MacroToolBridge$ToolBackend	waypointNames	()Ljava/util/List;
 F	autismclient/modules/RefQueue$ConfigStore	write	I	autismclient/modules/BedCoverPathSolver$CellGrid	cellCount	I
 F	autismclient/modules/ap$BufferHelper	read	Ljava/lang/String;	autismclient/modules/StorageEspCatalog$StorageTarget	group	Ljava/lang/String;
 M	autismclient/modules/BufferHelper$1	init	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Z)Z	autismclient/modules/AnchorAuraModule$1	accepts	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Z)Z
@@ -57949,7 +57949,7 @@ M	autismclient/ai/TableIndex$2	sync	(Lautismclient/ai/TableIndex$StreamUtil;Lnet
 M	autismclient/ai/TableIndex$2	write	(Lautismclient/ai/TableIndex$StreamUtil;Lnet/minecraft/core/BlockPos;)Z	autismclient/ai/AiBuilder$2	planAccessSupport	(Lautismclient/ai/AiBuilder$CellSpec;Lnet/minecraft/core/BlockPos;)Z
 M	autismclient/ai/q	init	(IIDDD)[I	autismclient/ai/AiDragon	radialPoint	(IIDDD)[I
 M	autismclient/ai/q	load	(IIDDD)[I	autismclient/ai/AiDragon	standPointToward	(IIDDD)[I
-M	autismclient/ai/q$1	init	(DD[DDILautismclient/ai/r$DataUtil;)Z	autismclient/ai/AiDragon$1	hasStandAlong	(DD[DDILautismclient/ai/AiDragonZones$DangerZones;)Z
+M	autismclient/ai/q$1	init	(DD[DDILautismclient/ai/r$DataUtil;)Z	autismclient/ai/AiDragon$1	findStandAlong	(DD[DDILautismclient/ai/AiDragonZones$DangerZones;)Z
 M	autismclient/ai/q$1	init	(Lautismclient/ai/r$DataUtil;Ljava/util/List;)Lnet/minecraft/core/BlockPos;	autismclient/ai/AiDragon$1	bestHeadStand	(Lautismclient/ai/AiDragonZones$DangerZones;Ljava/util/List;)Lnet/minecraft/core/BlockPos;
 M	autismclient/ai/q$1	init	(Ljava/util/List;Lautismclient/ai/r$DataUtil;)Lnet/minecraft/core/BlockPos;	autismclient/ai/AiDragon$1	nearestSafeCell	(Ljava/util/List;Lautismclient/ai/AiDragonZones$DangerZones;)Lnet/minecraft/core/BlockPos;
 M	autismclient/modules/FieldCache	load	(IZ)Z	autismclient/modules/AutoTotemModule	swapHandsViaHotbar	(IZ)Z

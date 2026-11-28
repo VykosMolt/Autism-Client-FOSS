@@ -1248,7 +1248,7 @@ public final class ScaffoldModule extends Module {
                   int ahead = step == null ? 0 : Math.max(0, Math.min(5, this.integer("rage-blocks")));
                   if (PerTickPlacementLock.init(this.id())) {
                      for (BlockPos cell : cellsAhead(base, step, ahead, this::open)) {
-                        this.canPlaceInCell(cell, hand, stack);
+                        this.tryPlaceInCell(cell, hand, stack);
                      }
                   }
                }
@@ -1338,7 +1338,7 @@ public final class ScaffoldModule extends Module {
       return stepX == 0 && stepZ == 0 ? null : new BlockPos(stepX, 0, stepZ);
    }
 
-   private boolean canPlaceInCell(BlockPos cell, InteractionHand hand, ItemStack stack) {
+   private boolean tryPlaceInCell(BlockPos cell, InteractionHand hand, ItemStack stack) {
       if (cell != null && !MC.level.isOutsideBuildHeight(cell)) {
          BlockState state = MC.level.getBlockState(cell);
          if (state.canBeReplaced() && !this.hasCentreSupport(state, cell)) {

@@ -12,7 +12,7 @@ public final class AutoLoginDriver {
    private final AutoLoginBackend host;
    private volatile AuthPromptParser.AuthPrompt detection;
    private volatile long pendingStartAt;
-   private volatile AutoLoginTimings newConfig;
+   private volatile AutoLoginTimings timings;
    private volatile AutoLoginDriver.Inner_DataUtil state;
    private long startedAt;
    private long read_J;
@@ -30,7 +30,7 @@ public final class AutoLoginDriver {
 
    public AutoLoginDriver(AutoLoginBackend host) {
       this.detection = AuthPromptParser.AuthPrompt.NONE;
-      this.newConfig = AutoLoginTimings.defaults();
+      this.timings = AutoLoginTimings.defaults();
       this.state = AutoLoginDriver.Inner_DataUtil.IDLE;
       this.submittedMenuGeneration = -9223372036854775808L;
       this.registerCommand = "";
@@ -40,7 +40,7 @@ public final class AutoLoginDriver {
 
    public void setTimings(AutoLoginTimings newConfig) {
       if (newConfig != null) {
-         this.newConfig = newConfig;
+         this.timings = newConfig;
       }
    }
 
@@ -72,7 +72,7 @@ public final class AutoLoginDriver {
    public void tick(long now) {
       this.applyPendingStart();
       if (this.state != AutoLoginDriver.Inner_DataUtil.IDLE && !this.isFinished()) {
-         if (now - this.startedAt >= this.newConfig.giveUpMs()) {
+         if (now - this.startedAt >= this.timings.giveUpMs()) {
             this.state = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
          } else if (!this.handleMenu(now)) {
             this.handleChatPrompt(now);
@@ -141,7 +141,7 @@ public final class AutoLoginDriver {
          CustomMenuButton accept = hasText ? null : CustomMenuActionPlanner.acceptButton(snapshot.buttons());
          button = accept != null ? accept : CustomMenuActionPlanner.fallbackButton(snapshot.buttons());
          if (button == null) {
-            this.nextMenuTryAt = now + this.newConfig.write();
+            this.nextMenuTryAt = now + this.timings.write();
             return true;
          }
 
@@ -151,19 +151,19 @@ public final class AutoLoginDriver {
             values.put(input.key(), input.kind() == CustomMenuInput.Kind.TEXT ? password : input.initialValue());
          }
       } catch (RuntimeException error) {
-         this.nextMenuTryAt = now + this.newConfig.write();
+         this.nextMenuTryAt = now + this.timings.write();
          return true;
       }
 
       if (!this.host.submit(snapshot, new CustomMenuSubmission(values, button))) {
-         this.nextMenuTryAt = now + this.newConfig.write();
+         this.nextMenuTryAt = now + this.timings.write();
          return true;
       }
 
       this.submittedMenuGeneration = snapshot.generation();
       if (hasText) {
          this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
-         this.loginSettleAt = now + this.newConfig.read();
+         this.loginSettleAt = now + this.timings.read();
       }
 
       return true;
@@ -177,11 +177,11 @@ public final class AutoLoginDriver {
             this.read_J = now;
          }
 
-         if (now - this.read_J >= this.newConfig.promptDelayMs()) {
+         if (now - this.read_J >= this.timings.promptDelayMs()) {
             AuthPromptParser.AuthPrompt detection = this.detection;
             if (detection.kind() != AuthPromptParser.PromptKind.NONE) {
                if (now >= this.nextCommandAt) {
-                  if (this.attempts >= this.newConfig.maxAttempts()) {
+                  if (this.attempts >= this.timings.maxAttempts()) {
                      this.giveUp();
                   } else {
                      String password = this.host.password();
@@ -194,17 +194,17 @@ public final class AutoLoginDriver {
                            this.nextCommandAt = now + 250L;
                         } else {
                            this.attempts++;
-                           this.nextCommandAt = now + this.newConfig.read();
+                           this.nextCommandAt = now + this.timings.read();
                            if (detection.kind() == AuthPromptParser.PromptKind.REGISTER) {
                               this.registerCommand = detection.command();
                               this.state = AutoLoginDriver.Inner_DataUtil.REGISTERING;
                               this.loginAfterRegister = true;
-                              this.followUpLoginAt = now + this.newConfig.update();
+                              this.followUpLoginAt = now + this.timings.update();
                            } else {
                               this.loginCommand = detection.command();
                               this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
                               this.loginAfterRegister = false;
-                              this.loginSettleAt = now + this.newConfig.read();
+                              this.loginSettleAt = now + this.timings.read();
                            }
                         }
                      }
@@ -221,7 +221,7 @@ public final class AutoLoginDriver {
 
    private void sendLoginAfterRegister(long now) {
       this.loginAfterRegister = false;
-      if (this.attempts >= this.newConfig.maxAttempts()) {
+      if (this.attempts >= this.timings.maxAttempts()) {
          this.giveUp();
       } else {
          String password = this.host.password();
@@ -232,9 +232,9 @@ public final class AutoLoginDriver {
                this.followUpLoginAt = now + 250L;
             } else {
                this.attempts++;
-               this.nextCommandAt = now + this.newConfig.read();
+               this.nextCommandAt = now + this.timings.read();
                this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
-               this.loginSettleAt = now + this.newConfig.read();
+               this.loginSettleAt = now + this.timings.read();
             }
          }
       }
@@ -243,7 +243,7 @@ public final class AutoLoginDriver {
    private void giveUp() {
       if (!this.failureReported) {
          this.failureReported = true;
-         this.host.report("Auto login failed after " + this.newConfig.maxAttempts() + " attempts - check the password.");
+         this.host.report("Auto login failed after " + this.timings.maxAttempts() + " attempts - check the password.");
       }
 
       this.state = AutoLoginDriver.Inner_DataUtil.GAVE_UP;

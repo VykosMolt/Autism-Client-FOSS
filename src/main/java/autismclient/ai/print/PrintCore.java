@@ -1782,12 +1782,12 @@ public final class PrintCore {
       return this.runningMachineJob instanceof PrintClockSequence clock && clock.auditing();
    }
 
-   public boolean isMachineJobRunning() {
+   public boolean hasUncertainMachineJob() {
       return this.runningMachineJob != null && this.runningMachineJob.resultUncertain();
    }
 
    public String machineJobDetail() {
-      return this.isMachineJobRunning() ? this.runningMachineJob.receiptJson() : null;
+      return this.hasUncertainMachineJob() ? this.runningMachineJob.receiptJson() : null;
    }
 
    public int railVehiclesVerified() {
@@ -1852,7 +1852,7 @@ public final class PrintCore {
    }
 
    public void cancelMachineJob() {
-      PrintMachineJob pending = this.pendingMachineJob != null ? this.pendingMachineJob : (this.isMachineJobRunning() ? this.runningMachineJob : null);
+      PrintMachineJob pending = this.pendingMachineJob != null ? this.pendingMachineJob : (this.hasUncertainMachineJob() ? this.runningMachineJob : null);
       if (pending != null) {
          pending.cancel();
          this.uncertainMachineWork = this.uncertainMachineWork | (pending.pollStatus() == autismclient.ai.print.PrintMachineJob.JobStatus.UNCERTAIN || pending.resultUncertain());
@@ -1862,7 +1862,7 @@ public final class PrintCore {
    }
 
    public boolean hasUncertainMachineWork() {
-      return this.uncertainMachineWork || this.pendingMachineJob != null || this.isMachineJobRunning();
+      return this.uncertainMachineWork || this.pendingMachineJob != null || this.hasUncertainMachineJob();
    }
 
    PrintMachineJob machineJobAt(int cell) {
@@ -1936,7 +1936,7 @@ public final class PrintCore {
          long key = job.position().asLong();
          if (!this.machineJobs.containsKey(key)) {
             int verified = job.verifiedSlots();
-            if (job.isProvenFull()) {
+            if (job.reopenForCapacityRecheck()) {
                this.machineJobs.put(key, job);
                this.removedMachineJobs.remove(key);
                this.savedSlotsVerified -= verified;
