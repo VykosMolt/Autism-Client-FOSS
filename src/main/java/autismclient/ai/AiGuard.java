@@ -96,12 +96,12 @@ final class AiGuard {
    static volatile boolean perchCombatActive;
    private static volatile long perchBackoffNanos;
    static final int update_I = 3;
-   static final String load_Str = "under attack with nothing to fight back with";
+   static final String NO_DEFENSE_REASON = "under attack with nothing to fight back with";
    private static long lastEndermanWaterWardNanos;
    private static long lastTidyNanos;
    static final long read_J = 60000000000L;
    static final double flush_D = 24.0;
-   static final String read_Str = "recovery ops allowed at low health: game:fish, game:farm (harvest only), game:collect_drops, game:eat, game:sleep, game:flee, game:obtain <food> with allowCombat:false, and game:goto while no hostile is within 24 blocks";
+   static final String LOW_HEALTH_RECOVERY_HINT = "recovery ops allowed at low health: game:fish, game:farm (harvest only), game:collect_drops, game:eat, game:sleep, game:flee, game:obtain <food> with allowCombat:false, and game:goto while no hostile is within 24 blocks";
 
    private AiGuard() {
    }

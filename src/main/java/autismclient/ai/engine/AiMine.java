@@ -105,8 +105,8 @@ public final class AiMine {
             long sectionCacheRevision = -1L;
             int chunkCursor;
             int scanChunkRadius = radius + 15 >> 4;
-            int sync;
-            int flush;
+            int scanMinY;
+            int scanMaxY;
             boolean scanComplete;
             boolean cancelled;
             boolean rescanned;
@@ -115,23 +115,23 @@ public final class AiMine {
             BlockPos target;
             BlockPos lastBroken;
             List<ItemEntity> drops = new ArrayList<>();
-            int close;
-            int open;
-            int poll;
-            int push = -1;
+            int brokenCount;
+            int dropWaitTicks;
+            int postBreakTicks;
+            int switchedSlot = -1;
 
             @Override
             public AiOperation.Result tick() {
                if (this.cancelled || this.mc.player == null || this.mc.level == null) {
-                  return this.init(AiOperation.Status.CANCELLED, "Mine cancelled");
+                  return this.finish(AiOperation.Status.CANCELLED, "Mine cancelled");
                }
 
                if (this.mc.level != this.startLevel) {
-                  return this.init(AiOperation.Status.FAILED, AiFailure.WORLD_CHANGED, "World changed during mining");
+                  return this.finish(AiOperation.Status.FAILED, AiFailure.WORLD_CHANGED, "World changed during mining");
                }
 
                if (this.mc.player.getHealth() <= 4.0F && !AiLowHealth.isOverrideActive()) {
-                  return this.init(
+                  return this.finish(
                      AiOperation.Status.FAILED,
                      AiFailure.LOW_HEALTH,
                      AiLowHealth.refusalMessage("mining", this.mc.player.getHealth(), this.mc.player.getMaxHealth())
@@ -139,7 +139,7 @@ public final class AiMine {
                }
 
                if (System.nanoTime() > deadline) {
-                  return this.init(AiOperation.Status.TIMED_OUT, "Mine deadline reached");
+                  return this.finish(AiOperation.Status.TIMED_OUT, "Mine deadline reached");
                }
 
                if (!this.scanComplete) {
@@ -147,10 +147,10 @@ public final class AiMine {
                }
 
                this.grid.scanStepCompat();
-               if ((quota == null ? this.close >= count : quota.isMet())
+               if ((quota == null ? this.brokenCount >= count : quota.isMet())
                   && this.travel == null
                   && this.phase != Inner_DataUtil.COLLECT) {
-                  return this.init(AiOperation.Status.SUCCEEDED, "Mine count reached");
+                  return this.finish(AiOperation.Status.SUCCEEDED, "Mine count reached");
                }
 
                if (this.travel != null) {
@@ -162,12 +162,12 @@ public final class AiMine {
                   this.travel.cancel();
                   this.travel = null;
                   if (r.status() == AiOperation.Status.CANCELLED) {
-                     return this.init(AiOperation.Status.CANCELLED, "Mine cancelled");
+                     return this.finish(AiOperation.Status.CANCELLED, "Mine cancelled");
                   }
 
                   if (r.failure() == AiFailure.MISSING_TOOL || r.failure() == AiFailure.TOOL_WORN) {
                      JsonObject data = JsonParser.parseString(r.dataJson()).getAsJsonObject();
-                     data.addProperty("broken", this.close);
+                     data.addProperty("broken", this.brokenCount);
                      if (quota != null) {
                         data.add("brokenByBlock", quota.brokenByBlock());
                         data.add("remainingByBlock", quota.remaining());
@@ -180,7 +180,7 @@ public final class AiMine {
                         this.drops.remove(0);
                      }
 
-                     this.open = 0;
+                     this.dropWaitTicks = 0;
                      return this.running("Drop collection finished; continuing");
                   } else {
                      if (r.status() == AiOperation.Status.SUCCEEDED) {
@@ -192,7 +192,7 @@ public final class AiMine {
                      }
 
                      if (r.message() != null && r.message().contains("Player is wedged in solid blocks")) {
-                        return this.init(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, r.message());
+                        return this.finish(AiOperation.Status.FAILED, AiFailure.UNREACHABLE, r.message());
                      }
 
                      this.failTarget("travel failed: " + r.message());
@@ -212,7 +212,7 @@ public final class AiMine {
                            return this.running("Source changed; re-evaluating");
                         }
 
-                        if (!this.read(this.target) || !this.write(this.target)) {
+                        if (!this.hasReachableHit(this.target) || !this.hasReachableHitAt(this.target)) {
                            this.failTarget("no line of sight after arrival");
                            return this.running("No line of sight; trying another");
                         }
@@ -220,7 +220,7 @@ public final class AiMine {
 
                      BlockHitResult interactionHit = AiBlockInteraction.findReachableHit(this.mc, this.target);
                      if (interactionHit != null) {
-                        this.init(interactionHit.getLocation());
+                        this.lookAt(interactionHit.getLocation());
                      }
 
                      this.aim.tick();
@@ -228,7 +228,7 @@ public final class AiMine {
                         case init:
                            if (this.init_RefQueue_DataUtil.isDiggingTargetCompat(this.target)
                               && !this.mc.level.getBlockState(this.target).isAir()
-                              && (!this.read(this.target) || !this.write(this.target))) {
+                              && (!this.hasReachableHit(this.target) || !this.hasReachableHitAt(this.target))) {
                               this.init_RefQueue_DataUtil.stopCompat();
                               this.failTarget("lost line of sight mid-dig");
                               return this.running("Lost line of sight; trying another");
@@ -242,7 +242,7 @@ public final class AiMine {
                         case load:
                            this.init_RefQueue_DataUtil.stopCompat();
                            if (quota == null || quota.count(this.blockIdByCell.get(this.target.asLong()))) {
-                              this.close++;
+                              this.brokenCount++;
                            }
 
                            if (this.backfiller != null) {
@@ -251,7 +251,7 @@ public final class AiMine {
 
                            this.onBroken(this.target);
                            this.target = null;
-                           return this.running("Mined " + this.close + "/" + count);
+                           return this.running("Mined " + this.brokenCount + "/" + count);
                      }
                   }
 
@@ -260,7 +260,7 @@ public final class AiMine {
                         ItemEntity drop = this.drops.get(0);
                         if (!drop.isAlive()) {
                            this.drops.remove(0);
-                           this.open = 0;
+                           this.dropWaitTicks = 0;
                            this.mc.options.keyUp.setDown(false);
                            return this.running("Collecting drops");
                         }
@@ -271,19 +271,19 @@ public final class AiMine {
                               this.backfiller.tick();
                            }
 
-                           if (++this.open > 10) {
+                           if (++this.dropWaitTicks > 10) {
                               this.drops.remove(0);
-                              this.open = 0;
+                              this.dropWaitTicks = 0;
                            }
 
                            return this.running("Waiting for drop pickup; check inventory space");
                         }
 
-                        this.open = 0;
+                        this.dropWaitTicks = 0;
                         if (this.mc.player.distanceToSqr(drop) <= 9.0
-                           && this.write(BlockPos.containing(drop.position()))
-                           && this.update(drop.blockPosition())) {
-                           this.init(Vec3.atCenterOf(drop.blockPosition()));
+                           && this.hasReachableHitAt(BlockPos.containing(drop.position()))
+                           && this.canWalkStraightTo(drop.blockPosition())) {
+                           this.lookAt(Vec3.atCenterOf(drop.blockPosition()));
                            this.aim.tick();
                            this.mc.options.keyUp.setDown(true);
                            return this.running("Collecting drops");
@@ -294,7 +294,7 @@ public final class AiMine {
                      }
 
                      this.mc.options.keyUp.setDown(false);
-                     if (this.lastBroken != null && ++this.poll <= 8) {
+                     if (this.lastBroken != null && ++this.postBreakTicks <= 8) {
                         this.gatherDropsNear(this.lastBroken);
                         if (this.backfiller != null) {
                            this.backfiller.tick();
@@ -303,14 +303,14 @@ public final class AiMine {
                         return this.running("Waiting for drops");
                      }
 
-                     this.poll = 0;
+                     this.postBreakTicks = 0;
                      this.lastBroken = null;
                      this.phase = Inner_DataUtil.TRAVEL;
                   }
 
                   if (this.target == null) {
-                     if (quota == null ? this.close >= count : quota.isMet()) {
-                        return this.init(AiOperation.Status.SUCCEEDED, "Mine count reached");
+                     if (quota == null ? this.brokenCount >= count : quota.isMet()) {
+                        return this.finish(AiOperation.Status.SUCCEEDED, "Mine count reached");
                      }
 
                      if (!this.scanComplete) {
@@ -335,7 +335,7 @@ public final class AiMine {
 
                      if (this.target == null) {
                         if (this.routeBudgetExhausted) {
-                           return this.init(AiOperation.Status.TIMED_OUT, AiFailure.TIMEOUT, "Source route calculation budget exhausted");
+                           return this.finish(AiOperation.Status.TIMED_OUT, AiFailure.TIMEOUT, "Source route calculation budget exhausted");
                         }
 
                         if (!this.scanComplete) {
@@ -346,14 +346,14 @@ public final class AiMine {
                            return this.running("Scanning for sources");
                         }
 
-                        if (this.close < count && this.scanOrigin != null && this.scanOrigin.distSqr(this.mc.player.blockPosition()) > 576.0) {
+                        if (this.brokenCount < count && this.scanOrigin != null && this.scanOrigin.distSqr(this.mc.player.blockPosition()) > 576.0) {
                            this.scanComplete = false;
                            this.scanOrigin = null;
                            this.chunkCursor = this.columnCursor = 0;
                            return this.running("Sources exhausted; rescanning near the new position");
                         }
 
-                        if (this.close <= 0 && this.blacklistedCells.isEmpty()) {
+                        if (this.brokenCount <= 0 && this.blacklistedCells.isEmpty()) {
                            if (!this.rescanned) {
                               this.rescanned = true;
                               this.scanComplete = false;
@@ -362,10 +362,10 @@ public final class AiMine {
                               return this.running("Re-scanning before declaring no sources");
                            }
 
-                           return this.init(AiOperation.Status.FAILED, AiFailure.TARGET_NOT_FOUND, "No matching sources in known terrain (0 of " + count + ")");
+                           return this.finish(AiOperation.Status.FAILED, AiFailure.TARGET_NOT_FOUND, "No matching sources in known terrain (0 of " + count + ")");
                         }
 
-                        return this.init(AiOperation.Status.FAILED, "No more reachable sources (" + this.close + " of " + count + ")");
+                        return this.finish(AiOperation.Status.FAILED, "No more reachable sources (" + this.brokenCount + " of " + count + ")");
                      }
 
                      this.phase = Inner_DataUtil.TRAVEL;
@@ -380,8 +380,8 @@ public final class AiMine {
                if (this.scanOrigin == null || this.scanOrigin.distSqr(this.mc.player.blockPosition()) > 576.0) {
                   this.scanOrigin = this.mc.player.blockPosition();
                   this.chunkCursor = this.columnCursor = 0;
-                  this.sync = Math.max(this.mc.level.getMinY(), this.scanOrigin.getY() - 24);
-                  this.flush = Math.min(this.mc.level.getMaxY() - 1, this.scanOrigin.getY() + 24);
+                  this.scanMinY = Math.max(this.mc.level.getMinY(), this.scanOrigin.getY() - 24);
+                  this.scanMaxY = Math.min(this.mc.level.getMaxY() - 1, this.scanOrigin.getY() + 24);
                   this.scanChunks.clear();
                   int ox = this.scanOrigin.getX() >> 4;
                   int oz = this.scanOrigin.getZ() >> 4;
@@ -406,7 +406,7 @@ public final class AiMine {
                }
 
                long stop = System.nanoTime() + 750000L;
-               int height = this.flush - this.sync + 1;
+               int height = this.scanMaxY - this.scanMinY + 1;
 
                for (int checked = 0; checked < 4096 && this.chunkCursor < this.scanChunks.size(); checked++) {
                   if ((checked & 63) == 0 && System.nanoTime() >= stop) {
@@ -419,19 +419,19 @@ public final class AiMine {
                   LevelChunk chunk = this.mc.level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false);
                   if (chunk != null && this.columnCursor < 256 * height) {
                      int column = this.columnCursor / height;
-                     int y = this.sync + this.columnCursor % height;
+                     int y = this.scanMinY + this.columnCursor % height;
                      int x = (cx << 4) + column / 16;
                      int z = (cz << 4) + column % 16;
                      if (Math.abs(x - this.scanOrigin.getX()) <= radius && Math.abs(z - this.scanOrigin.getZ()) <= radius) {
                         LevelChunkSection section = chunk.getSections()[this.mc.level.getSectionIndex(y)];
                         boolean contains = this.sectionMatchCache
-                           .computeIfAbsent(section, part -> !part.hasOnlyAir() && part.maybeHas(statex -> this.init(statex.getBlock())));
+                           .computeIfAbsent(section, part -> !part.hasOnlyAir() && part.maybeHas(statex -> this.matchesTargetBlock(statex.getBlock())));
                         if (!contains) {
-                           this.columnCursor = this.columnCursor + (Math.min(this.flush + 1, (y >> 4) + 1 << 4) - y);
+                           this.columnCursor = this.columnCursor + (Math.min(this.scanMaxY + 1, (y >> 4) + 1 << 4) - y);
                         } else {
                            this.columnCursor++;
                            BlockState state = section.getBlockState(x & 15, y & 15, z & 15);
-                           if (this.init(state.getBlock()) && this.candidates.size() < 512) {
+                           if (this.matchesTargetBlock(state.getBlock()) && this.candidates.size() < 512) {
                               long cell = BlockPos.asLong(x, y, z);
                               if (!this.blacklistedCells.contains(cell) && this.candidateCells.add(cell)) {
                                  this.candidates.add(new BlockPos(x, y, z));
@@ -452,7 +452,7 @@ public final class AiMine {
                }
             }
 
-            boolean init(Block block) {
+            boolean matchesTargetBlock(Block block) {
                return this.blockMatchCache.computeIfAbsent(block, b -> AiMine.matchesBlock(blockArg, BuiltInRegistries.BLOCK.getKey(b).toString()))
                   && (quota == null || quota.covers(BuiltInRegistries.BLOCK.getKey(block).toString()));
             }
@@ -630,7 +630,7 @@ public final class AiMine {
 
             void onBroken(BlockPos brokenCell) {
                this.lastBroken = brokenCell.immutable();
-               this.poll = 0;
+               this.postBreakTicks = 0;
                this.gatherDropsNear(brokenCell);
                this.phase = Inner_DataUtil.COLLECT;
             }
@@ -650,7 +650,7 @@ public final class AiMine {
                }
 
                this.drops.sort(Comparator.comparingDouble(this.mc.player::distanceToSqr));
-               this.open = 0;
+               this.dropWaitTicks = 0;
             }
 
             boolean isWanted(BlockPos pos) {
@@ -680,15 +680,15 @@ public final class AiMine {
                return false;
             }
 
-            boolean read(BlockPos pos) {
+            boolean hasReachableHit(BlockPos pos) {
                return AiBlockInteraction.findReachableHit(this.mc, pos) != null;
             }
 
-            boolean write(BlockPos pos) {
+            boolean hasReachableHitAt(BlockPos pos) {
                return AiBlockInteraction.findReachableHit(this.mc, pos) != null;
             }
 
-            boolean update(BlockPos to) {
+            boolean canWalkStraightTo(BlockPos to) {
                BlockPos from = this.mc.player.blockPosition();
                if (to.getY() != from.getY()) {
                   return false;
@@ -721,7 +721,7 @@ public final class AiMine {
                }
             }
 
-            void init(Vec3 point) {
+            void lookAt(Vec3 point) {
                this.aim.aimAt(point);
             }
 
@@ -742,7 +742,7 @@ public final class AiMine {
                   }
                }
 
-               ToolUpkeep.UpkeepDecision decision = ToolUpkeep.decide(this.init(state));
+               ToolUpkeep.UpkeepDecision decision = ToolUpkeep.decide(this.toolOptionsFor(state));
                if (decision instanceof ToolUpkeep.UpkeepDecision.KeepHotbar keep) {
                   this.selectSlot(keep.hotbarSlot());
                   return null;
@@ -768,7 +768,7 @@ public final class AiMine {
                }
             }
 
-            List<ToolUpkeep.ToolSlot> init(BlockState state) {
+            List<ToolUpkeep.ToolSlot> toolOptionsFor(BlockState state) {
                boolean handsOk = !state.requiresCorrectToolForDrops();
                List<ToolUpkeep.ToolSlot> out = new ArrayList<>(36);
 
@@ -790,7 +790,7 @@ public final class AiMine {
             void selectSlot(int slot) {
                if (this.mc.player.getInventory().getSelectedSlot() != slot) {
                   this.mc.player.getInventory().setSelectedSlot(slot);
-                  this.push = slot;
+                  this.switchedSlot = slot;
                }
             }
 
@@ -804,7 +804,7 @@ public final class AiMine {
 
             int heldDrops() {
                int total = 0;
-               String dropArg = AiMine.init(blockArg);
+               String dropArg = AiMine.dropArgFor(blockArg);
                Inventory inventory = this.mc.player.getInventory();
 
                for (int i = 0; i < 36; i++) {
@@ -826,7 +826,7 @@ public final class AiMine {
                   "block",
                   blockArg,
                   "broken",
-                  this.close,
+                  this.brokenCount,
                   "collected",
                   this.collectedCount(),
                   "count",
@@ -850,8 +850,8 @@ public final class AiMine {
                return new AiOperation.Result(AiOperation.Status.RUNNING, message, this.progressJson().toString(), List.of());
             }
 
-            AiOperation.Result init(AiOperation.Status status, String message) {
-               return this.init(
+            AiOperation.Result finish(AiOperation.Status status, String message) {
+               return this.finish(
                   status,
                   status == AiOperation.Status.FAILED
                      ? AiFailure.NO_REACHABLE_TARGET
@@ -860,7 +860,7 @@ public final class AiMine {
                );
             }
 
-            AiOperation.Result init(AiOperation.Status status, AiFailure reason, String message) {
+            AiOperation.Result finish(AiOperation.Status status, AiFailure reason, String message) {
                this.cancel();
                return new AiOperation.Result(status, message, this.progressJson().toString(), List.of(), reason);
             }
@@ -897,7 +897,7 @@ public final class AiMine {
                      }
                   }
 
-                  if (this.mc.player != null && this.push >= 0 && this.mc.player.getInventory().getSelectedSlot() == this.push) {
+                  if (this.mc.player != null && this.switchedSlot >= 0 && this.mc.player.getInventory().getSelectedSlot() == this.switchedSlot) {
                      this.mc.player.getInventory().setSelectedSlot(this.originalSlot);
                   }
                }
@@ -918,9 +918,9 @@ public final class AiMine {
       return AiMiningTargets.matches(arg, blockId);
    }
 
-   static String init(String blockArg) {
+   static String dropArgFor(String blockArg) {
       if (blockArg.indexOf(44) >= 0) {
-         return AiMiningTargets.parse(blockArg).types().stream().map(AiMine::init).distinct().collect(Collectors.joining(","));
+         return AiMiningTargets.parse(blockArg).types().stream().map(AiMine::dropArgFor).distinct().collect(Collectors.joining(","));
       }
 
       if (blockArg.indexOf(58) < 0) {

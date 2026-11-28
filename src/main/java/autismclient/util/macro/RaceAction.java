@@ -19,10 +19,10 @@ public class RaceAction implements MacroAction {
    public ArrayList<String> raceSteps = new ArrayList<>();
    public ArrayList<String> conditionTypes = new ArrayList<>();
    public ArrayList<String> actionTypes = new ArrayList<>();
-   private transient boolean init_Z = false;
-   private transient boolean load = false;
-   private transient ContainerClickSnapshot.Inner_StreamUtil init_bo_StreamUtil = null;
-   private transient int init_I = 1;
+   private transient boolean legacyFormat = false;
+   private transient boolean legacyUseNextAction = false;
+   private transient ContainerClickSnapshot.Inner_StreamUtil legacyClickTarget = null;
+   private transient int legacyTimes = 1;
 
    @Override
    public void execute(Minecraft mc) {
@@ -38,12 +38,12 @@ public class RaceAction implements MacroAction {
       tag.putString("conditionType", this.conditionType == null ? RaceAction.Inner_DataUtil.WAIT_PACKET.name() : this.conditionType);
       tag.putString("actionType", this.actionType == null ? MacroActionType.PACKET_CLICK.name() : this.actionType);
       tag.put("raceSteps", MacroNbtCodecHelper.toStringListTag(this.read()));
-      tag.put("conditionTypes", MacroNbtCodecHelper.toStringListTag(this.init_List_2()));
-      tag.put("actionTypes", MacroNbtCodecHelper.toStringListTag(this.write()));
+      tag.put("conditionTypes", MacroNbtCodecHelper.toStringListTag(this.canonicalConditionTypes()));
+      tag.put("actionTypes", MacroNbtCodecHelper.toStringListTag(this.canonicalActionTypes()));
       MacroAction trigger = this.triggerAction == null ? new DelayAction(0) : this.triggerAction;
-      if (!this.init_List_2().isEmpty()) {
+      if (!this.canonicalConditionTypes().isEmpty()) {
          tag.put("triggerAction", trigger.toTag());
-         init_V_CompoundTag_MacroAction(tag, trigger);
+         writeTrigger(tag, trigger);
       }
 
       return tag;
@@ -54,7 +54,7 @@ public class RaceAction implements MacroAction {
       this.label = tag.getStringOr("label", "Race");
       this.bodyCount = Math.max(0, tag.getIntOr("bodyCount", 0));
       this.timeoutMs = Math.max(0, tag.getIntOr("timeoutMs", 10000));
-      this.conditionType = read_Str(tag.getStringOr("conditionType", tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.WAIT_PACKET.name())));
+      this.conditionType = canonicalConditionType(tag.getStringOr("conditionType", tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.WAIT_PACKET.name())));
       this.actionType = tag.getStringOr("actionType", MacroActionType.PACKET_CLICK.name());
       this.raceSteps = MacroNbtCodecHelper.fromStringListTag(tag.getList("raceSteps").orElse(new ListTag()));
       this.raceSteps.removeIf(s -> s == null || s.isBlank());
@@ -75,14 +75,14 @@ public class RaceAction implements MacroAction {
          this.actionTypes.add(MacroActionType.PACKET_CLICK.name());
       }
 
-      this.conditionTypes.replaceAll(RaceAction::read_Str);
+      this.conditionTypes.replaceAll(RaceAction::canonicalConditionType);
       if (this.raceSteps.isEmpty()) {
          for (String type : this.conditionTypes) {
-            this.raceSteps.add("CONDITION:" + read_Str(type));
+            this.raceSteps.add("CONDITION:" + canonicalConditionType(type));
          }
 
          for (String type : this.actionTypes) {
-            this.raceSteps.add("ACTION:" + write(type));
+            this.raceSteps.add("ACTION:" + normalizeKey(type));
          }
       } else {
          this.raceSteps.replaceAll(RaceAction::canonicalStep);
@@ -101,13 +101,13 @@ public class RaceAction implements MacroAction {
       }
 
       if (tag.contains("triggerType")) {
-         this.triggerAction = init(tag);
+         this.triggerAction = readTrigger(tag);
       } else if (tag.contains("trigger")) {
-         this.triggerAction = load(tag);
-         this.init_Z = true;
-         this.load = tag.getBooleanOr("useNextAction", false);
-         this.init_I = Math.max(1, tag.getIntOr("times", 1));
-         this.init_bo_StreamUtil = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::fromTag).orElse(null);
+         this.triggerAction = readLegacyTrigger(tag);
+         this.legacyFormat = true;
+         this.legacyUseNextAction = tag.getBooleanOr("useNextAction", false);
+         this.legacyTimes = Math.max(1, tag.getIntOr("times", 1));
+         this.legacyClickTarget = tag.getCompound("target").map(ContainerClickSnapshot.Inner_StreamUtil::fromTag).orElse(null);
       }
 
       if (!isRaceCondition(this.triggerAction)) {
@@ -116,27 +116,27 @@ public class RaceAction implements MacroAction {
    }
 
    public boolean needsLegacyMigration() {
-      return this.init_Z;
+      return this.legacyFormat;
    }
 
    public boolean legacyUsesNextAction() {
-      return this.load;
+      return this.legacyUseNextAction;
    }
 
    public PacketClickAction takeLegacyPacketClick() {
-      if (this.init_bo_StreamUtil == null) {
+      if (this.legacyClickTarget == null) {
          return null;
       }
 
-      PacketClickAction action = new PacketClickAction(this.init_bo_StreamUtil, this.init_I, false);
-      this.init_bo_StreamUtil = null;
+      PacketClickAction action = new PacketClickAction(this.legacyClickTarget, this.legacyTimes, false);
+      this.legacyClickTarget = null;
       return action;
    }
 
    public void clearLegacyState() {
-      this.init_Z = false;
-      this.load = false;
-      this.init_bo_StreamUtil = null;
+      this.legacyFormat = false;
+      this.legacyUseNextAction = false;
+      this.legacyClickTarget = null;
    }
 
    public static boolean isRaceCondition(MacroAction action) {
@@ -185,14 +185,14 @@ public class RaceAction implements MacroAction {
    }
 
    public MacroAction createConditionAction() {
-      return init(init_L_DataUtil(this.conditionType));
+      return newConditionOfType(parseConditionType(this.conditionType));
    }
 
-   public List<String> init_List_2() {
+   public List<String> canonicalConditionTypes() {
       ArrayList<String> out = new ArrayList<>();
       if (this.conditionTypes != null) {
          for (String type : this.conditionTypes) {
-            String canonical = read_Str(type);
+            String canonical = canonicalConditionType(type);
             if (canonical != null && !canonical.isBlank()) {
                out.add(canonical);
             }
@@ -202,17 +202,17 @@ public class RaceAction implements MacroAction {
       return out;
    }
 
-   public List<MacroAction> load_List() {
+   public List<MacroAction> createConditions() {
       ArrayList<MacroAction> out = new ArrayList<>();
 
-      for (String typeName : this.init_List_2()) {
+      for (String typeName : this.canonicalConditionTypes()) {
          out.add(createCondition(typeName));
       }
 
       return out;
    }
 
-   public MacroAction load_MacroAction() {
+   public MacroAction createMainAction() {
       return createAction(this.actionType);
    }
 
@@ -228,11 +228,11 @@ public class RaceAction implements MacroAction {
       }
 
       if (out.isEmpty()) {
-         for (String type : this.init_List_2()) {
+         for (String type : this.canonicalConditionTypes()) {
             out.add("CONDITION:" + type);
          }
 
-         for (String type : this.write()) {
+         for (String type : this.canonicalActionTypes()) {
             out.add("ACTION:" + type);
          }
       }
@@ -240,7 +240,7 @@ public class RaceAction implements MacroAction {
       return out;
    }
 
-   public List<String> write() {
+   public List<String> canonicalActionTypes() {
       ArrayList<String> out = new ArrayList<>();
       if (this.actionTypes != null) {
          for (String type : this.actionTypes) {
@@ -257,10 +257,10 @@ public class RaceAction implements MacroAction {
       return out;
    }
 
-   public List<MacroAction> update() {
+   public List<MacroAction> createActions() {
       ArrayList<MacroAction> out = new ArrayList<>();
 
-      for (String typeName : this.write()) {
+      for (String typeName : this.canonicalActionTypes()) {
          out.add(createAction(typeName));
       }
 
@@ -482,10 +482,10 @@ public class RaceAction implements MacroAction {
    }
 
    public static MacroAction createCondition(String typeName) {
-      return init(init_L_DataUtil(typeName));
+      return newConditionOfType(parseConditionType(typeName));
    }
 
-   private static MacroAction init(RaceAction.Inner_DataUtil type) {
+   private static MacroAction newConditionOfType(RaceAction.Inner_DataUtil type) {
       MacroAction var10000;
       switch (type) {
          case DELAY:
@@ -570,9 +570,9 @@ public class RaceAction implements MacroAction {
       return var10000;
    }
 
-   private static MacroAction init(CompoundTag tag) {
-      RaceAction.Inner_DataUtil type = init_L_DataUtil(tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.DELAY.name()));
-      MacroAction action = init(type);
+   private static MacroAction readTrigger(CompoundTag tag) {
+      RaceAction.Inner_DataUtil type = parseConditionType(tag.getStringOr("triggerType", RaceAction.Inner_DataUtil.DELAY.name()));
+      MacroAction action = newConditionOfType(type);
       CompoundTag actionTag = autismclient.util.AutismMacro.serializeAction(action);
       switch (type) {
          case DELAY:
@@ -591,7 +591,7 @@ public class RaceAction implements MacroAction {
             break;
          case WAIT_PACKET:
             actionTag.putString("packetName", tag.getStringOr("packetName", ""));
-            init(tag, actionTag, "packetNames");
+            copyStringList(tag, actionTag, "packetNames");
             break;
          case WAIT_HEALTH:
             actionTag.putFloat("healthThreshold", (float)tag.getDoubleOr("healthThreshold", 20.0));
@@ -614,7 +614,7 @@ public class RaceAction implements MacroAction {
             actionTag.putString("checkMode", tag.getStringOr("checkMode", "AT_POSITION"));
             actionTag.putString("waitBehavior", tag.getStringOr("waitBehavior", "PRESENT"));
             actionTag.putBoolean("anyBlock", tag.getBooleanOr("anyBlock", false));
-            init(tag, actionTag, "blockIds");
+            copyStringList(tag, actionTag, "blockIds");
             actionTag.putInt("x", tag.getIntOr("blockX", tag.getIntOr("x", 0)));
             actionTag.putInt("y", tag.getIntOr("blockY", tag.getIntOr("y", 0)));
             actionTag.putInt("z", tag.getIntOr("blockZ", tag.getIntOr("z", 0)));
@@ -622,7 +622,7 @@ public class RaceAction implements MacroAction {
             break;
          case WAIT_ENTITY:
             actionTag.putString("checkMode", tag.getStringOr("entityCheckMode", "RADIUS"));
-            init(tag, actionTag, "entityIds");
+            copyStringList(tag, actionTag, "entityIds");
             actionTag.putBoolean("centerOnPlayer", tag.getBooleanOr("centerOnPlayer", true));
             actionTag.putDouble("radius", tag.getDoubleOr("radius", 8.0));
             actionTag.putDouble("x", tag.getDoubleOr("entityX", 0.0));
@@ -644,7 +644,7 @@ public class RaceAction implements MacroAction {
             actionTag.putFloat("rotLeeway", (float)tag.getDoubleOr("rotLeeway", 5.0));
             break;
          case WAIT_SOUND:
-            init(tag, actionTag, "soundIds");
+            copyStringList(tag, actionTag, "soundIds");
             actionTag.putBoolean("checkDistance", tag.getBooleanOr("checkDistance", false));
             actionTag.putDouble("maxDistance", tag.getDoubleOr("maxDistance", 16.0));
             break;
@@ -657,7 +657,7 @@ public class RaceAction implements MacroAction {
       return action;
    }
 
-   private static MacroAction load(CompoundTag tag) {
+   private static MacroAction readLegacyTrigger(CompoundTag tag) {
       String legacy = tag.getStringOr("trigger", "MANUAL_MS").toUpperCase(Locale.ROOT);
       CompoundTag flat = new CompoundTag();
       switch (legacy) {
@@ -715,7 +715,7 @@ public class RaceAction implements MacroAction {
             break;
          case "ENTITY_NEAR":
             flat.putString("triggerType", RaceAction.Inner_DataUtil.WAIT_ENTITY.name());
-            init(tag, flat, "entityNearIds", "entityIds");
+            copyStringList(tag, flat, "entityNearIds", "entityIds");
             flat.putDouble("radius", tag.getDoubleOr("entityNearRadius", 8.0));
             break;
          case "COOLDOWN_READY":
@@ -727,10 +727,10 @@ public class RaceAction implements MacroAction {
             flat.putInt("delayMs", tag.getIntOr("manualDelayMs", 0));
       }
 
-      return init(flat);
+      return readTrigger(flat);
    }
 
-   private static void init_V_CompoundTag_MacroAction(CompoundTag tag, MacroAction action) {
+   private static void writeTrigger(CompoundTag tag, MacroAction action) {
       RaceAction.Inner_DataUtil type = conditionTypeOf(action);
       tag.putString("triggerType", type.name());
       CompoundTag src = autismclient.util.AutismMacro.serializeAction(action);
@@ -755,7 +755,7 @@ public class RaceAction implements MacroAction {
       }
    }
 
-   private static RaceAction.Inner_DataUtil init_L_DataUtil(String raw) {
+   private static RaceAction.Inner_DataUtil parseConditionType(String raw) {
       try {
          return RaceAction.Inner_DataUtil.valueOf(raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT));
       } catch (IllegalArgumentException ignored) {
@@ -763,7 +763,7 @@ public class RaceAction implements MacroAction {
       }
    }
 
-   private static String read_Str(String raw) {
+   private static String canonicalConditionType(String raw) {
       String key = raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
       String var10000;
       switch (key) {
@@ -780,7 +780,7 @@ public class RaceAction implements MacroAction {
       return var10000;
    }
 
-   private static String write(String raw) {
+   private static String normalizeKey(String raw) {
       return raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
    }
 
@@ -798,20 +798,20 @@ public class RaceAction implements MacroAction {
       String role = idx >= 0 ? text.substring(0, idx).trim().toUpperCase(Locale.ROOT) : "";
       String type = idx >= 0 ? text.substring(idx + 1).trim() : text;
       if ("CONDITION".equals(role) || "COND".equals(role)) {
-         return "CONDITION:" + read_Str(type);
+         return "CONDITION:" + canonicalConditionType(type);
       }
 
       if (!"ACTION".equals(role) && !"ACT".equals(role)) {
-         String condition = read_Str(type);
+         String condition = canonicalConditionType(type);
 
          try {
             RaceAction.Inner_DataUtil.valueOf(condition);
             return "CONDITION:" + condition;
          } catch (IllegalArgumentException ignored) {
-            return "ACTION:" + write(type);
+            return "ACTION:" + normalizeKey(type);
          }
       } else {
-         return "ACTION:" + write(type);
+         return "ACTION:" + normalizeKey(type);
       }
    }
 
@@ -822,18 +822,18 @@ public class RaceAction implements MacroAction {
       for (String step : this.read()) {
          String type = stepType(step);
          if (isConditionStep(step)) {
-            this.conditionTypes.add(read_Str(type));
+            this.conditionTypes.add(canonicalConditionType(type));
          } else if (isActionStep(step)) {
-            this.actionTypes.add(write(type));
+            this.actionTypes.add(normalizeKey(type));
          }
       }
    }
 
-   private static void init(CompoundTag from, CompoundTag to, String key) {
-      init(from, to, key, key);
+   private static void copyStringList(CompoundTag from, CompoundTag to, String key) {
+      copyStringList(from, to, key, key);
    }
 
-   private static void init(CompoundTag from, CompoundTag to, String fromKey, String toKey) {
+   private static void copyStringList(CompoundTag from, CompoundTag to, String fromKey, String toKey) {
       ListTag out = new ListTag();
       from.getList(fromKey).ifPresent(list -> {
          for (int i = 0; i < list.size(); i++) {
@@ -888,9 +888,9 @@ public class RaceAction implements MacroAction {
    @Override
    public String getDisplayName() {
       String name = this.label != null && !this.label.isBlank() ? this.label.trim() : "Race";
-      List<String> conditions = this.init_List_2();
+      List<String> conditions = this.canonicalConditionTypes();
       String trigger = conditions.isEmpty() ? "instant" : (conditions.size() == 1 ? conditions.get(0) : conditions.size() + " conditions");
-      List<String> actions = this.write();
+      List<String> actions = this.canonicalActionTypes();
       String action = actions.size() == 1 ? actions.get(0) : actions.size() + " actions";
       return name + " [" + trigger + " -> " + action + "]";
    }

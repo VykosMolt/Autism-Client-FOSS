@@ -281,8 +281,8 @@ final class AiBlazeFight {
          int flush_I;
          int close_I;
          int open_I;
-         int poll;
-         int push;
+         int belowTargetTicks;
+         int tickCount;
          boolean init_Z;
          boolean load_Z;
          boolean read_Z;
@@ -291,29 +291,29 @@ final class AiBlazeFight {
          boolean sync_Z;
          boolean flush_Z;
          double lastGap;
-         int pop;
-         int tick;
-         int run;
-         int get;
-         int set;
-         int put;
-         int add;
-         int clear;
-         int reset;
-         int start;
-         int stop;
-         int next;
+         int progressTargetId;
+         int stuckTicks;
+         int approachAttempts;
+         int othersInSight;
+         int sideStepTicks;
+         int chargedOthersInSight;
+         int postHitGrace;
+         int finishTicks;
+         int noStanceHoldUntil;
+         int lastRetryTick;
+         int ticksSinceSprint;
+         int ticksWithoutStance;
          boolean close_Z;
          Vec3 aimPoint;
-         int prev;
-         int valid;
+         int aimPointSteps;
+         int aimPointTick;
          double moveDx;
          double moveDz;
          double approachGap;
          float healthBeforeShot;
          float lastCharge;
          Blaze shotBlaze;
-         int size;
+         int shotConfirmTicks;
          AiOperation child;
          final AiPreparationReceipt preparation;
          AiBlazeArena arena;
@@ -334,11 +334,11 @@ final class AiBlazeFight {
             this.load_Str = "";
             this.strafeDirection = this.random.nextBoolean() ? 1 : -1;
             this.lastGap = 1.7976931348623157E308;
-            this.pop = -1;
-            this.start = -100;
-            this.stop = 99;
+            this.progressTargetId = -1;
+            this.lastRetryTick = -100;
+            this.ticksSinceSprint = 99;
             this.close_Z = true;
-            this.valid = -100;
+            this.aimPointTick = -100;
             this.approachGap = 1.7976931348623157E308;
             this.preparation = new AiPreparationReceipt();
             this.evidence = new JsonObject();
@@ -369,7 +369,7 @@ final class AiBlazeFight {
                AiBlazeFight.resetForWorld(mc);
                AiBlazeFight.init_J = System.nanoTime() + 400000000L;
                AiFallGuard.markDriven();
-               this.push++;
+               this.tickCount++;
                this.deaths.sweep(mc);
                this.kills = this.deaths.killCount();
                if (System.nanoTime() > this.deadline) {
@@ -379,7 +379,7 @@ final class AiBlazeFight {
                   );
                }
 
-               float line = retreat + Math.min(6, 2 * Math.max(0, this.get - 1));
+               float line = retreat + Math.min(6, 2 * Math.max(0, this.othersInSight - 1));
                if (mc.player.getHealth() <= line) {
                   boolean finishing = this.target instanceof LivingEntity living
                      && this.target.isAlive()
@@ -391,7 +391,7 @@ final class AiBlazeFight {
                         Math.sqrt(this.target.getBoundingBox().distanceToSqr(mc.player.getEyePosition())),
                         AiDefense.attackReach(mc) - 0.05,
                         mc.player.hasLineOfSight(this.target),
-                        this.clear
+                        this.finishTicks
                      );
                   if (!finishing) {
                      this.update_Z = true;
@@ -400,19 +400,19 @@ final class AiBlazeFight {
                         "Disengaged at "
                            + (int)mc.player.getHealth()
                            + " health with "
-                           + this.get
+                           + this.othersInSight
                            + " other blazes in sight ("
-                           + this.put
+                           + this.chargedOthersInSight
                            + " charged); "
                            + this.kills
                            + " blazes down"
                      );
                   }
 
-                  this.clear++;
+                  this.finishTicks++;
                }
 
-               this.stop = mc.player.isSprinting() ? 0 : Math.min(99, this.stop + 1);
+               this.ticksSinceSprint = mc.player.isSprinting() ? 0 : Math.min(99, this.ticksSinceSprint + 1);
                if (this.target != null && (!this.target.isAlive() || this.target.isRemoved())) {
                   this.target = null;
                   this.defensive = false;
@@ -433,7 +433,7 @@ final class AiBlazeFight {
                   this.target = null;
                }
 
-               if (this.push % 4 == 0 && !this.defensive) {
+               if (this.tickCount % 4 == 0 && !this.defensive) {
                   Entity striker = this.load_Entity();
                   if (striker != null) {
                      this.switchTarget(striker, true, "melee attacker at the body");
@@ -558,7 +558,7 @@ final class AiBlazeFight {
                         this.stopUsingItem();
                         return this.running(this.fireControl.status());
                      } else {
-                        if (this.size > 0 && --this.size == 0 && this.healthBeforeShot >= 0.0F && this.shotBlaze != null) {
+                        if (this.shotConfirmTicks > 0 && --this.shotConfirmTicks == 0 && this.healthBeforeShot >= 0.0F && this.shotBlaze != null) {
                            float after = this.shotBlaze.getHealth();
                            boolean confirmed = !this.shotBlaze.isRemoved() || after <= 0.0F;
                            JsonObject observation = AiJson.objectOf(
@@ -600,15 +600,15 @@ final class AiBlazeFight {
                         double horizontal = Math.hypot(this.target.getX() - mc.player.getX(), this.target.getZ() - mc.player.getZ());
                         boolean seen = mc.player.hasLineOfSight(this.target);
                         double reach = AiDefense.attackReach(mc) - 0.05;
-                        if (this.add > 0) {
-                           this.add--;
+                        if (this.postHitGrace > 0) {
+                           this.postHitGrace--;
                         }
 
-                        if (this.push % 4 == 0) {
+                        if (this.tickCount % 4 == 0) {
                            this.close_Z = AiBlazeFight.hasStanceWithinReach(mc.level, box, reach + 0.3, p -> AiTerrain.isLoaded(mc.level, p));
                         }
 
-                        this.next = !this.close_Z && this.add <= 0 ? this.next + 1 : 0;
+                        this.ticksWithoutStance = !this.close_Z && this.postHitGrace <= 0 ? this.ticksWithoutStance + 1 : 0;
                         this.selectBestWeapon();
                         double gapNow = Math.sqrt(box.distanceToSqr(eye));
                         Vec3 jumpEye = eye.add(0.0, 1.15, 0.0);
@@ -617,7 +617,7 @@ final class AiBlazeFight {
                         boolean attackStance = AiBlazeFight.canStrikeFrom(box, eye, reach, seen, this.read_Z_2(), false);
                         boolean verticalAccess = seen && horizontal < 3.5 && box.minY > eye.y && !reachableJumping;
                         if (attackStance) {
-                           this.run = 0;
+                           this.approachAttempts = 0;
                            this.read_Z = false;
                         }
 
@@ -625,28 +625,28 @@ final class AiBlazeFight {
                            this.read_Z = false;
                         }
 
-                        if (this.add > 0 || this.aimPoint != null) {
-                           this.tick = 0;
+                        if (this.postHitGrace > 0 || this.aimPoint != null) {
+                           this.stuckTicks = 0;
                            this.lastGap = gapNow;
-                           this.pop = this.target.getId();
+                           this.progressTargetId = this.target.getId();
                         } else if (!attackStance && !verticalAccess && gapNow > this.lastGap - 0.3) {
-                           this.tick++;
+                           this.stuckTicks++;
                         } else {
-                           this.tick = 0;
+                           this.stuckTicks = 0;
                         }
 
-                        if (gapNow < this.lastGap - 0.3 || this.target.getId() != this.pop) {
+                        if (gapNow < this.lastGap - 0.3 || this.target.getId() != this.progressTargetId) {
                            this.lastGap = gapNow;
-                           this.pop = this.target.getId();
+                           this.progressTargetId = this.target.getId();
                         }
 
-                        if (this.next < 20
+                        if (this.ticksWithoutStance < 20
                            || this.defensive
                            || this.child != null && (!this.child.canInterruptNow() || this.preparation.requiresReconciliation(this.child))) {
-                           if (this.tick > 30 && (this.child == null || !this.movementMode.equals("approach"))) {
-                              this.tick = 0;
+                           if (this.stuckTicks > 30 && (this.child == null || !this.movementMode.equals("approach"))) {
+                              this.stuckTicks = 0;
                               this.lastGap = gapNow;
-                              if (++this.run > 3) {
+                              if (++this.approachAttempts > 3) {
                                  this.markUnreachable("no approach progress for three attempts", gapNow, 10);
                                  return this.running("Leaving a blaze no route reaches for now");
                               }
@@ -655,7 +655,7 @@ final class AiBlazeFight {
                            }
 
                            boolean chase = seen && box.maxY >= mc.player.getY() - 1.0 && box.minY <= mc.player.getEyeY() + 3.5;
-                           if ((this.push < this.reset || !(horizontal > (chase ? 12.0 : 7.0)) && (seen || !(horizontal > 2.5)) && !this.read_Z)
+                           if ((this.tickCount < this.noStanceHoldUntil || !(horizontal > (chase ? 12.0 : 7.0)) && (seen || !(horizontal > 2.5)) && !this.read_Z)
                               && (
                                  this.child == null
                                     || !this.movementMode.equals("approach")
@@ -678,9 +678,9 @@ final class AiBlazeFight {
                                  this.cancelChild();
                               }
 
-                              this.poll = !reachableJumping && box.minY > eye.y && horizontal < 3.5 ? this.poll + 1 : 0;
-                              if (this.poll > 30 && this.open_I < 4 && mc.player.onGround() && this.isStandingSafe()) {
-                                 this.poll = 0;
+                              this.belowTargetTicks = !reachableJumping && box.minY > eye.y && horizontal < 3.5 ? this.belowTargetTicks + 1 : 0;
+                              if (this.belowTargetTicks > 30 && this.open_I < 4 && mc.player.onGround() && this.isStandingSafe()) {
+                                 this.belowTargetTicks = 0;
                                  this.open_I++;
                                  this.releaseMovementKeys();
                                  this.stopUsingItem();
@@ -728,9 +728,9 @@ final class AiBlazeFight {
 
                               boolean knockHold = false;
                               boolean finishes = this.target instanceof LivingEntity hurt && hurt.getHealth() <= this.meleeDamage(1.0F) * 0.95;
-                              if (!finishes && !(gap > reach + 1.5) && mc.player.onGround() && this.prev < 40) {
-                                 if (this.push - this.valid >= 4) {
-                                    this.valid = this.push;
+                              if (!finishes && !(gap > reach + 1.5) && mc.player.onGround() && this.aimPointSteps < 40) {
+                                 if (this.tickCount - this.aimPointTick >= 4) {
+                                    this.aimPointTick = this.tickCount;
                                     this.aimPoint = this.standingPointFor(this.target, reach);
                                  }
                               } else {
@@ -743,7 +743,7 @@ final class AiBlazeFight {
                                  if (sx * sx + sz * sz < 0.12249999999999998) {
                                     this.aimPoint = null;
                                  } else {
-                                    this.prev++;
+                                    this.aimPointSteps++;
                                     int[] keys = this.movementKeysFor(sx, sz);
                                     if (this.init_Z_I_I(keys[0], keys[1])) {
                                        forward = keys[0];
@@ -755,19 +755,19 @@ final class AiBlazeFight {
                                  }
                               }
 
-                              if (this.push % 4 == 0) {
+                              if (this.tickCount % 4 == 0) {
                                  this.init_V_Vec3_Z(eye, !swingDue && !knockHold);
                               }
 
-                              if (this.set > 0 && !swingDue && !knockHold && mc.player.onGround()) {
-                                 this.set--;
+                              if (this.sideStepTicks > 0 && !swingDue && !knockHold && mc.player.onGround()) {
+                                 this.sideStepTicks--;
                                  int[] keys = this.movementKeysFor(this.moveDx, this.moveDz);
                                  if (this.init_Z_I_I(keys[0], keys[1])) {
                                     forward = keys[0];
                                     this.strafeDirection = keys[1];
                                     this.flush_I = 0;
                                  } else {
-                                    this.set = 0;
+                                    this.sideStepTicks = 0;
                                  }
                               }
 
@@ -794,7 +794,7 @@ final class AiBlazeFight {
                                     dodge != null && AiCombat.ticksToClosest(dodge) <= 20
                                        || this.target.distanceToSqr(mc.player) < 6.760000000000001
                                        || this.isBlazeTooClose()
-                                       || this.put > 0
+                                       || this.chargedOthersInSight > 0
                                        || this.target.isOnFire() && seen
                                  )) {
                                  double[] away = this.init_DArr();
@@ -838,7 +838,7 @@ final class AiBlazeFight {
                                  && !blockNow
                                  && !knockHold
                                  && !sprint
-                                 && this.stop >= 2
+                                 && this.ticksSinceSprint >= 2
                                  && charge >= 0.72F
                                  && horizontal <= 3.15
                                  && (inReach || reachableJumping);
@@ -853,7 +853,7 @@ final class AiBlazeFight {
                               if (swingDue
                                  && AiDefense.canSwingAt(mc, this.target, this.aim)
                                  && swingFirst
-                                 && (this.stop >= 2 || killsNow)
+                                 && (this.ticksSinceSprint >= 2 || killsNow)
                                  && !knockHold
                                  && (falling && charge >= 0.98F || killsNow || mc.player.onGround() && (canFinish || !canJump))) {
                                  if (falling) {
@@ -862,7 +862,7 @@ final class AiBlazeFight {
 
                                  this.healthBeforeShot = this.target instanceof Blaze b ? b.getHealth() : -1.0F;
                                  this.shotBlaze = this.target instanceof Blaze b ? b : null;
-                                 this.size = 3;
+                                 this.shotConfirmTicks = 3;
                                  this.load_Z = falling;
                                  this.lastCharge = charge;
                                  this.stopUsingItem();
@@ -872,9 +872,9 @@ final class AiBlazeFight {
                                  Compat263.swing(mc.player, InteractionHand.MAIN_HAND);
                                  mc.player.resetAttackStrengthTicker();
                                  this.read_I++;
-                                 this.add = 25;
+                                 this.postHitGrace = 25;
                                  this.aimPoint = null;
-                                 this.prev = 0;
+                                 this.aimPointSteps = 0;
                               }
 
                               if (blockNow && !this.init_Z) {
@@ -892,7 +892,7 @@ final class AiBlazeFight {
                                     String.format(
                                        Locale.ROOT,
                                        "blaze ring t=%d target %d hp %.1f gap %.2f hz %.2f dy %.2f seen %b ground %b charge %.2f keys %d/%d sprint %b jump %b due %b first %b sprintTicks %d knock %b grace %d stuck %d",
-                                       this.push,
+                                       this.tickCount,
                                        this.target.getId(),
                                        this.target instanceof Blaze b ? b.getHealth() : -1.0F,
                                        gap,
@@ -907,10 +907,10 @@ final class AiBlazeFight {
                                        jump,
                                        swingDue,
                                        swingFirst,
-                                       this.stop,
+                                       this.ticksSinceSprint,
                                        knockHold,
-                                       this.add,
-                                       this.tick
+                                       this.postHitGrace,
+                                       this.stuckTicks
                                     )
                                  );
                               }
@@ -928,10 +928,10 @@ final class AiBlazeFight {
                                     + "m)"
                               );
                            } else {
-                              if (autismclient.ai.engine.AiNavDebug.isEnabled() && (this.child == null || this.push % 10 == 0)) {
+                              if (autismclient.ai.engine.AiNavDebug.isEnabled() && (this.child == null || this.tickCount % 10 == 0)) {
                                  autismclient.ai.engine.AiNavDebug.log(
                                     "blaze travel branch t="
-                                       + this.push
+                                       + this.tickCount
                                        + " target "
                                        + this.target.getId()
                                        + " hz "
@@ -945,7 +945,7 @@ final class AiBlazeFight {
                                        + " leg "
                                        + this.movementMode
                                        + " tries "
-                                       + this.run
+                                       + this.approachAttempts
                                  );
                               }
 
@@ -964,14 +964,14 @@ final class AiBlazeFight {
                                     && !this.preparation.requiresReconciliation(this.child)) {
                                     if (gapApproach > this.approachGap - 1.5) {
                                        this.cancelChild();
-                                       this.run++;
+                                       this.approachAttempts++;
                                     } else {
                                        this.approachGap = gapApproach;
                                        this.read_J = System.nanoTime();
                                     }
                                  }
 
-                                 if (this.run >= 2) {
+                                 if (this.approachAttempts >= 2) {
                                     this.markUnreachable("two failed or unproductive approach legs", gapNow, 15);
                                     return this.running("Leaving a blaze no route reaches for now");
                                  }
@@ -996,13 +996,13 @@ final class AiBlazeFight {
                                        AiGoto::isStandableCompat
                                     );
                                     if (goal.init_List().isEmpty()) {
-                                       if (this.push - this.start >= 20) {
-                                          this.run++;
-                                          this.start = this.push;
+                                       if (this.tickCount - this.lastRetryTick >= 20) {
+                                          this.approachAttempts++;
+                                          this.lastRetryTick = this.tickCount;
                                        }
 
                                        this.read_Z = false;
-                                       this.reset = this.push + 20;
+                                       this.noStanceHoldUntil = this.tickCount + 20;
                                        return this.running("No observed safe attack stance for this blaze");
                                     }
 
@@ -1027,7 +1027,7 @@ final class AiBlazeFight {
                                  }
 
                                  AiOperation.Result r = this.preparation.tickChild(this.child);
-                                 if (autismclient.ai.engine.AiNavDebug.isEnabled() && this.push % 20 == 0) {
+                                 if (autismclient.ai.engine.AiNavDebug.isEnabled() && this.tickCount % 20 == 0) {
                                     autismclient.ai.engine.AiNavDebug.log(
                                        "blaze approach target "
                                           + this.target.getId()
@@ -1038,7 +1038,7 @@ final class AiBlazeFight {
                                           + " gap "
                                           + String.format("%.1f", gapApproach)
                                           + " tries "
-                                          + this.run
+                                          + this.approachAttempts
                                           + " status "
                                           + r.message()
                                     );
@@ -1049,8 +1049,8 @@ final class AiBlazeFight {
                                  }
 
                                  if (r.terminal()) {
-                                    this.run = AiBlazeFight.init_I_I(
-                                       this.run, r.status(), this.approachGap, Math.sqrt(box.distanceToSqr(mc.player.getEyePosition())), this.update_Z()
+                                    this.approachAttempts = AiBlazeFight.init_I_I(
+                                       this.approachAttempts, r.status(), this.approachGap, Math.sqrt(box.distanceToSqr(mc.player.getEyePosition())), this.update_Z()
                                     );
                                     AiRunTrace.emitServiceEvent(
                                        "blaze_approach_result",
@@ -1066,7 +1066,7 @@ final class AiBlazeFight {
                                           "gapAfter",
                                           Math.sqrt(box.distanceToSqr(mc.player.getEyePosition())),
                                           "attempts",
-                                          this.run
+                                          this.approachAttempts
                                        )
                                     );
                                     AutismClientAddon.LOG
@@ -1076,7 +1076,7 @@ final class AiBlazeFight {
                                           r.status(),
                                           String.format("%.1f", this.approachGap),
                                           String.format("%.1f", Math.sqrt(box.distanceToSqr(mc.player.getEyePosition()))),
-                                          this.run,
+                                          this.approachAttempts,
                                           r.message()
                                        );
                                     this.cancelChild();
@@ -1091,7 +1091,7 @@ final class AiBlazeFight {
 
                                  return this.running("Closing on the blaze (" + (int)horizontal + "m)");
                               } else {
-                                 if (autismclient.ai.engine.AiNavDebug.isEnabled() && this.push % 20 == 0) {
+                                 if (autismclient.ai.engine.AiNavDebug.isEnabled() && this.tickCount % 20 == 0) {
                                     autismclient.ai.engine.AiNavDebug.log(
                                        "blaze approach shield target "
                                           + this.target.getId()
@@ -1136,13 +1136,13 @@ final class AiBlazeFight {
 
             this.cancelChild();
             this.releaseMovementKeys();
-            this.run = this.tick = this.poll = this.set = 0;
-            this.next = this.add = this.clear = this.reset = this.prev = 0;
+            this.approachAttempts = this.stuckTicks = this.belowTargetTicks = this.sideStepTicks = 0;
+            this.ticksWithoutStance = this.postHitGrace = this.finishTicks = this.noStanceHoldUntil = this.aimPointSteps = 0;
             this.close_Z = true;
             this.aimPoint = null;
             this.read_Z = false;
             this.lastGap = 1.7976931348623157E308;
-            this.pop = -1;
+            this.progressTargetId = -1;
             this.retargetCount++;
             this.lastRetargetReason = reason;
             AiRunTrace.emitServiceEvent(
@@ -1181,7 +1181,7 @@ final class AiBlazeFight {
                double reachSq = (AiDefense.attackReach(mc) - 0.05) * (AiDefense.attackReach(mc) - 0.05);
                Vec3 eye = mc.player.getEyePosition();
                double farGap = AiDefense.attackReach(mc) + 2.5;
-               if (keep && this.add == 0 && this.target.getBoundingBox().distanceToSqr(eye) > farGap * farGap) {
+               if (keep && this.postHitGrace == 0 && this.target.getBoundingBox().distanceToSqr(eye) > farGap * farGap) {
                   Entity close = null;
 
                   for (Entity e : mc.level.entitiesForRendering()) {
@@ -1203,7 +1203,7 @@ final class AiBlazeFight {
                   }
                }
 
-               if (keep && (this.next < 8 || this.push % 4 != 0)) {
+               if (keep && (this.ticksWithoutStance < 8 || this.tickCount % 4 != 0)) {
                   return this.target;
                }
             }
@@ -1425,7 +1425,7 @@ final class AiBlazeFight {
                   hold
                );
             AiBlazeFight.deferredUntil.put(this.target.getUUID(), System.nanoTime() + hold * 1000000000L);
-            this.run = 0;
+            this.approachAttempts = 0;
             this.read_Z = false;
             this.cancelChild();
             this.target = null;
@@ -1445,7 +1445,7 @@ final class AiBlazeFight {
                }
             }
 
-            this.get = this.countSeenBy(eye, others);
+            this.othersInSight = this.countSeenBy(eye, others);
             int charged = 0;
 
             for (Entity o : others) {
@@ -1454,9 +1454,9 @@ final class AiBlazeFight {
                }
             }
 
-            this.put = charged;
-            if (this.get != 0 && mayMove && mc.player.onGround()) {
-               int best = this.get;
+            this.chargedOthersInSight = charged;
+            if (this.othersInSight != 0 && mayMove && mc.player.onGround()) {
+               int best = this.othersInSight;
                Vec3 targetPoint = this.target.getBoundingBox().getCenter();
 
                for (int k = 0; k < 8; k++) {
@@ -1473,13 +1473,13 @@ final class AiBlazeFight {
                            best = e;
                            this.moveDx = dx;
                            this.moveDz = dz;
-                           this.set = 6;
+                           this.sideStepTicks = 6;
                         }
                      }
                   }
                }
             } else {
-               this.set = 0;
+               this.sideStepTicks = 0;
             }
          }
 
@@ -1633,7 +1633,7 @@ final class AiBlazeFight {
          }
 
          void selectBestWeapon() {
-            if (this.push % 10 == 1) {
+            if (this.tickCount % 10 == 1) {
                int slot = AiItems.bestWeaponSlot(36);
                if (slot >= 0 && mc.player.getInventory().getSelectedSlot() != slot) {
                   AiItems.selectOrMoveToHotbar(slot);
@@ -1692,7 +1692,7 @@ final class AiBlazeFight {
                "shielding",
                this.init_Z,
                "otherBlazesInSight",
-               this.get,
+               this.othersInSight,
                "targetSwitches",
                this.retargetCount,
                "selectionReason",
@@ -1712,7 +1712,7 @@ final class AiBlazeFight {
                "knockStance",
                this.aimPoint != null,
                "knockGrace",
-               this.add,
+               this.postHitGrace,
                "targetGround",
                this.close_Z,
                "positioning",

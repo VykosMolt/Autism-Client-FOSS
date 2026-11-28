@@ -12,17 +12,17 @@ import java.util.Set;
 import net.minecraft.resources.Identifier;
 
 public final class PayloadRegistrationManager {
-   public static final String init_Str = "custom";
-   public static final String load = "preset";
-   public static final String read = "learned";
-   private final List<AutismConfig.PayloadChannelRegistrationRule> init_List = new ArrayList<>();
+   public static final String SOURCE_CUSTOM = "custom";
+   public static final String SOURCE_PRESET = "preset";
+   public static final String SOURCE_LEARNED = "learned";
+   private final List<AutismConfig.PayloadChannelRegistrationRule> rules = new ArrayList<>();
 
    public PayloadRegistrationManager() {
       this.reloadFromConfig();
    }
 
    public void reloadFromConfig() {
-      this.init_List.clear();
+      this.rules.clear();
       AutismConfig config = AutismConfig.getGlobal();
       if (config.packetLoggerPayloadRegistrations == null) {
          config.packetLoggerPayloadRegistrations = new ArrayList<>();
@@ -31,31 +31,31 @@ public final class PayloadRegistrationManager {
       Map<String, AutismConfig.PayloadChannelRegistrationRule> merged = new LinkedHashMap<>();
 
       for (AutismConfig.PayloadChannelRegistrationRule rule : config.packetLoggerPayloadRegistrations) {
-         AutismConfig.PayloadChannelRegistrationRule clean = init_AutismConfig_Paylo_AutismConfig_Paylo(rule);
+         AutismConfig.PayloadChannelRegistrationRule clean = cleanRule(rule);
          if (clean != null) {
-            init_V_Map_AutismConfig_Paylo(merged, clean);
+            mergeRule(merged, clean);
          }
       }
 
       if (merged.isEmpty() && config.packetLoggerPayloadFilters != null) {
-         this.init_V_Map_List(merged, config.packetLoggerPayloadFilters);
+         this.mergeFilterRules(merged, config.packetLoggerPayloadFilters);
       }
 
-      this.init_List.addAll(merged.values());
+      this.rules.addAll(merged.values());
    }
 
    public List<AutismConfig.PayloadChannelRegistrationRule> rules() {
-      return Collections.unmodifiableList(this.init_List);
+      return Collections.unmodifiableList(this.rules);
    }
 
    List<AutismConfig.PayloadChannelRegistrationRule> mutableRules() {
-      return this.init_List;
+      return this.rules;
    }
 
    public List<String> enabledChannels() {
       List<String> channels = new ArrayList<>();
 
-      for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
+      for (AutismConfig.PayloadChannelRegistrationRule rule : this.rules) {
          if (rule != null && rule.enabled && isExactChannel(rule.channel)) {
             channels.add(normalize(rule.channel));
          }
@@ -70,7 +70,7 @@ public final class PayloadRegistrationManager {
          return false;
       }
 
-      for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
+      for (AutismConfig.PayloadChannelRegistrationRule rule : this.rules) {
          if (rule != null && rule.enabled && normalized.equals(normalize(rule.channel))) {
             return true;
          }
@@ -82,8 +82,8 @@ public final class PayloadRegistrationManager {
    public int indexOf(String channel) {
       String normalized = normalize(channel);
 
-      for (int i = 0; i < this.init_List.size(); i++) {
-         AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(i);
+      for (int i = 0; i < this.rules.size(); i++) {
+         AutismConfig.PayloadChannelRegistrationRule rule = this.rules.get(i);
          if (rule != null && normalized.equals(normalize(rule.channel))) {
             return i;
          }
@@ -92,10 +92,10 @@ public final class PayloadRegistrationManager {
       return -1;
    }
 
-   public boolean init(String label, String channel, String source) {
+   public boolean registerAndSave(String label, String channel, String source) {
       boolean changed = this.register(label, channel, source);
       if (changed) {
-         this.sync();
+         this.saveConfig();
       }
 
       return changed;
@@ -109,21 +109,21 @@ public final class PayloadRegistrationManager {
 
       int index = this.indexOf(normalized);
       if (index >= 0) {
-         AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(index);
+         AutismConfig.PayloadChannelRegistrationRule rule = this.rules.get(index);
          boolean changed = false;
          if (!rule.enabled) {
             rule.enabled = true;
             changed = true;
          }
 
-         String cleanLabel = init_Str_Str_Str(label, normalized);
+         String cleanLabel = labelOrFallback(label, normalized);
          if ((rule.label == null || rule.label.isBlank() || rule.label.equals(rule.channel)) && !cleanLabel.equals(normalized)) {
             rule.label = cleanLabel;
             changed = true;
          }
 
          if (rule.source == null || rule.source.isBlank() || "learned".equals(rule.source)) {
-            rule.source = read_Str_Str(source);
+            rule.source = normalizeSource(source);
             changed = true;
          }
 
@@ -131,15 +131,15 @@ public final class PayloadRegistrationManager {
       } else {
          AutismConfig.PayloadChannelRegistrationRule rule = new AutismConfig.PayloadChannelRegistrationRule();
          rule.channel = normalized;
-         rule.label = init_Str_Str_Str(label, normalized);
+         rule.label = labelOrFallback(label, normalized);
          rule.enabled = true;
-         rule.source = read_Str_Str(source);
-         this.init_List.add(rule);
+         rule.source = normalizeSource(source);
+         this.rules.add(rule);
          return true;
       }
    }
 
-   public boolean init_Z_Str_Str(String label, String channel) {
+   public boolean learnChannel(String label, String channel) {
       String normalized = normalize(channel);
       if (!isExactChannel(normalized)) {
          return false;
@@ -151,50 +151,50 @@ public final class PayloadRegistrationManager {
 
       AutismConfig.PayloadChannelRegistrationRule rule = new AutismConfig.PayloadChannelRegistrationRule();
       rule.channel = normalized;
-      rule.label = init_Str_Str_Str(label, normalized);
+      rule.label = labelOrFallback(label, normalized);
       rule.enabled = false;
       rule.source = "learned";
-      this.init_List.add(rule);
-      this.sync();
+      this.rules.add(rule);
+      this.saveConfig();
       return true;
    }
 
-   public void init_V_I(int index) {
-      if (index >= 0 && index < this.init_List.size()) {
-         AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(index);
+   public void toggleAndSave(int index) {
+      if (index >= 0 && index < this.rules.size()) {
+         AutismConfig.PayloadChannelRegistrationRule rule = this.rules.get(index);
          if (rule != null) {
             rule.enabled = !rule.enabled;
-            this.sync();
+            this.saveConfig();
          }
       }
    }
 
    public void toggle(int index) {
-      if (index >= 0 && index < this.init_List.size()) {
-         AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(index);
+      if (index >= 0 && index < this.rules.size()) {
+         AutismConfig.PayloadChannelRegistrationRule rule = this.rules.get(index);
          if (rule != null) {
             rule.enabled = !rule.enabled;
          }
       }
    }
 
-   public void read_V_I(int index) {
-      if (index >= 0 && index < this.init_List.size()) {
-         this.init_List.remove(index);
-         this.sync();
+   public void removeAndSave(int index) {
+      if (index >= 0 && index < this.rules.size()) {
+         this.rules.remove(index);
+         this.saveConfig();
       }
    }
 
    public void write(int index) {
-      if (index >= 0 && index < this.init_List.size()) {
-         this.init_List.remove(index);
+      if (index >= 0 && index < this.rules.size()) {
+         this.rules.remove(index);
       }
    }
 
-   public void load_V() {
+   public void disableAllAndSave() {
       boolean changed = false;
 
-      for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
+      for (AutismConfig.PayloadChannelRegistrationRule rule : this.rules) {
          if (rule != null && rule.enabled) {
             rule.enabled = false;
             changed = true;
@@ -202,12 +202,12 @@ public final class PayloadRegistrationManager {
       }
 
       if (changed) {
-         this.sync();
+         this.saveConfig();
       }
    }
 
    public void disableAll() {
-      for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
+      for (AutismConfig.PayloadChannelRegistrationRule rule : this.rules) {
          if (rule != null) {
             rule.enabled = false;
          }
@@ -230,7 +230,7 @@ public final class PayloadRegistrationManager {
       for (String channel : applied) {
          int index = this.indexOf(channel);
          if (index >= 0) {
-            AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(index);
+            AutismConfig.PayloadChannelRegistrationRule rule = this.rules.get(index);
             if (!rule.enabled) {
                rule.enabled = true;
                changed = true;
@@ -241,12 +241,12 @@ public final class PayloadRegistrationManager {
             rule.label = channel;
             rule.enabled = true;
             rule.source = "custom";
-            this.init_List.add(rule);
+            this.rules.add(rule);
             changed = true;
          }
       }
 
-      for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
+      for (AutismConfig.PayloadChannelRegistrationRule rule : this.rules) {
          if (rule != null) {
             boolean shouldEnable = applied.contains(normalize(rule.channel));
             if (rule.enabled != shouldEnable) {
@@ -257,11 +257,11 @@ public final class PayloadRegistrationManager {
       }
 
       if (changed) {
-         this.sync();
+         this.saveConfig();
       }
    }
 
-   public void write() {
+   public void applyDefaults() {
       boolean changed = false;
       Set<String> defaults = new LinkedHashSet<>();
 
@@ -274,7 +274,7 @@ public final class PayloadRegistrationManager {
          }
       }
 
-      for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
+      for (AutismConfig.PayloadChannelRegistrationRule rule : this.rules) {
          if (rule != null) {
             boolean shouldEnable = defaults.contains(normalize(rule.channel));
             if (rule.enabled != shouldEnable) {
@@ -287,14 +287,14 @@ public final class PayloadRegistrationManager {
       for (PayloadChannelFilterManager.ChannelPreset preset : PayloadChannelFilterManager.presets()) {
          if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
             String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
-            if (PayloadChannelFilterManager.isRegisterableExactPreset(preset) && this.read(preset.load(), pattern, "preset")) {
+            if (PayloadChannelFilterManager.isRegisterableExactPreset(preset) && this.enableForPreset(preset.load(), pattern, "preset")) {
                changed = true;
             }
          }
       }
 
       if (changed) {
-         this.sync();
+         this.saveConfig();
       }
    }
 
@@ -310,7 +310,7 @@ public final class PayloadRegistrationManager {
          }
       }
 
-      for (AutismConfig.PayloadChannelRegistrationRule rule : this.init_List) {
+      for (AutismConfig.PayloadChannelRegistrationRule rule : this.rules) {
          if (rule != null) {
             rule.enabled = defaults.contains(normalize(rule.channel));
          }
@@ -320,7 +320,7 @@ public final class PayloadRegistrationManager {
          if (PayloadChannelFilterManager.isDefaultCorePreset(preset)) {
             String pattern = PayloadChannelFilterManager.normalizePattern(preset.read());
             if (PayloadChannelFilterManager.isRegisterableExactPreset(preset)) {
-               this.read(preset.load(), pattern, "preset");
+               this.enableForPreset(preset.load(), pattern, "preset");
             }
          }
       }
@@ -343,7 +343,7 @@ public final class PayloadRegistrationManager {
 
    public static String sourceLabel(String source) {
       String var10000;
-      switch (read_Str_Str(source)) {
+      switch (normalizeSource(source)) {
          case "preset":
             var10000 = "Preset";
             break;
@@ -357,23 +357,23 @@ public final class PayloadRegistrationManager {
       return var10000;
    }
 
-   private void init_V_Map_List(Map<String, AutismConfig.PayloadChannelRegistrationRule> merged, List<AutismConfig.PayloadChannelFilterRule> filterRules) {
+   private void mergeFilterRules(Map<String, AutismConfig.PayloadChannelRegistrationRule> merged, List<AutismConfig.PayloadChannelFilterRule> filterRules) {
       for (AutismConfig.PayloadChannelFilterRule filter : filterRules) {
          if (filter != null && filter.enabled) {
             String pattern = PayloadChannelFilterManager.normalizePattern(filter.pattern);
             if (isExactChannel(pattern)) {
                AutismConfig.PayloadChannelRegistrationRule rule = new AutismConfig.PayloadChannelRegistrationRule();
                rule.channel = pattern;
-               rule.label = init_Str_Str_Str(filter.label, pattern);
+               rule.label = labelOrFallback(filter.label, pattern);
                rule.enabled = true;
                rule.source = filter.preset ? "preset" : "custom";
-               init_V_Map_AutismConfig_Paylo(merged, rule);
+               mergeRule(merged, rule);
             }
          }
       }
    }
 
-   private boolean read(String label, String channel, String source) {
+   private boolean enableForPreset(String label, String channel, String source) {
       String normalized = normalize(channel);
       if (!isExactChannel(normalized)) {
          return false;
@@ -381,7 +381,7 @@ public final class PayloadRegistrationManager {
 
       int index = this.indexOf(normalized);
       if (index >= 0) {
-         AutismConfig.PayloadChannelRegistrationRule rule = this.init_List.get(index);
+         AutismConfig.PayloadChannelRegistrationRule rule = this.rules.get(index);
          boolean changed = false;
          if (!rule.enabled) {
             rule.enabled = true;
@@ -389,7 +389,7 @@ public final class PayloadRegistrationManager {
          }
 
          if ("learned".equals(rule.source)) {
-            rule.source = read_Str_Str(source);
+            rule.source = normalizeSource(source);
             changed = true;
          }
 
@@ -397,15 +397,15 @@ public final class PayloadRegistrationManager {
       } else {
          AutismConfig.PayloadChannelRegistrationRule rule = new AutismConfig.PayloadChannelRegistrationRule();
          rule.channel = normalized;
-         rule.label = init_Str_Str_Str(label, normalized);
+         rule.label = labelOrFallback(label, normalized);
          rule.enabled = true;
-         rule.source = read_Str_Str(source);
-         this.init_List.add(rule);
+         rule.source = normalizeSource(source);
+         this.rules.add(rule);
          return true;
       }
    }
 
-   private static void init_V_Map_AutismConfig_Paylo(
+   private static void mergeRule(
       Map<String, AutismConfig.PayloadChannelRegistrationRule> merged, AutismConfig.PayloadChannelRegistrationRule clean
    ) {
       String key = normalize(clean.channel);
@@ -424,7 +424,7 @@ public final class PayloadRegistrationManager {
       }
    }
 
-   private static AutismConfig.PayloadChannelRegistrationRule init_AutismConfig_Paylo_AutismConfig_Paylo(AutismConfig.PayloadChannelRegistrationRule rule) {
+   private static AutismConfig.PayloadChannelRegistrationRule cleanRule(AutismConfig.PayloadChannelRegistrationRule rule) {
       if (rule == null) {
          return null;
       } else {
@@ -433,12 +433,12 @@ public final class PayloadRegistrationManager {
             return null;
          } else {
             String label = rule.label == null ? "" : rule.label.trim();
-            if (!read_Z_Str(channel) && !read_Z_Str(label)) {
+            if (!isTestChannel(channel) && !isTestChannel(label)) {
                AutismConfig.PayloadChannelRegistrationRule clean = new AutismConfig.PayloadChannelRegistrationRule();
                clean.channel = channel;
-               clean.label = init_Str_Str_Str(label, channel);
+               clean.label = labelOrFallback(label, channel);
                clean.enabled = rule.enabled;
-               clean.source = read_Str_Str(rule.source);
+               clean.source = normalizeSource(rule.source);
                return clean;
             } else {
                return null;
@@ -447,12 +447,12 @@ public final class PayloadRegistrationManager {
       }
    }
 
-   private static String init_Str_Str_Str(String label, String fallback) {
+   private static String labelOrFallback(String label, String fallback) {
       String value = label == null ? "" : label.trim();
       return value.isBlank() ? fallback : value;
    }
 
-   private static String read_Str_Str(String source) {
+   private static String normalizeSource(String source) {
       String value = source == null ? "" : source.trim().toLowerCase(Locale.ROOT);
       String var10000;
       switch (value) {
@@ -467,7 +467,7 @@ public final class PayloadRegistrationManager {
       return var10000;
    }
 
-   private static boolean read_Z_Str(String value) {
+   private static boolean isTestChannel(String value) {
       String normalized = normalize(value);
       return normalized.isBlank()
          ? false
@@ -479,13 +479,13 @@ public final class PayloadRegistrationManager {
             || normalized.contains("java_utf");
    }
 
-   private void sync() {
+   private void saveConfig() {
       this.save(true);
    }
 
    public void save(boolean writeFile) {
       AutismConfig config = AutismConfig.getGlobal();
-      config.packetLoggerPayloadRegistrations = new ArrayList<>(this.init_List);
+      config.packetLoggerPayloadRegistrations = new ArrayList<>(this.rules);
       if (writeFile) {
          config.save();
       }

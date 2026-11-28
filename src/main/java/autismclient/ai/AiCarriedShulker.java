@@ -78,11 +78,11 @@ final class AiCarriedShulker implements AiOperation {
    private AiOperation.Result finalResult;
    private AiOperation.Result transferResult;
    private int countBefore;
-   private int update;
-   private int sync;
-   private int flush;
-   private int close = -1;
-   private int open;
+   private int gainedCount;
+   private int remainingBoxCountBefore;
+   private int boxCountBeforePlace;
+   private int boxSlot = -1;
+   private int closeWaitTicks;
    private int poll;
    private long inventoryRevision;
    private long blockRevision;
@@ -92,7 +92,7 @@ final class AiCarriedShulker implements AiOperation {
    private boolean recovered;
    private boolean cancelled;
    private boolean placementStarted;
-   private int push = -1;
+   private int droppedEntityId = -1;
 
    static boolean isShulkerBox(ItemStack stack) {
       return !stack.isEmpty() && stack.getCount() == 1 && stack.getItem() instanceof BlockItem block && block.getBlock() instanceof ShulkerBoxBlock;
@@ -136,7 +136,7 @@ final class AiCarriedShulker implements AiOperation {
       }
    }
 
-   static ItemStack init(Container inventory, Item item, List<ItemStack> tried) {
+   static ItemStack bestBoxFor(Container inventory, Item item, List<ItemStack> tried) {
       return bestBoxFor(inventory, item, tried, false);
    }
 
@@ -152,7 +152,7 @@ final class AiCarriedShulker implements AiOperation {
                if (supplied != null) {
                   int count = countInBox(stack, supplied);
                   if (requireCapacity && count > 0) {
-                     count = init(inventory, stack, supplied, count, true);
+                     count = acceptableCountOfItem(inventory, stack, supplied, count, true);
                   }
 
                   if (count > bestCount) {
@@ -172,7 +172,7 @@ final class AiCarriedShulker implements AiOperation {
          return null;
       }
 
-      if (countInBox(box, wanted) > 0 && init(inventory, box, wanted, 1, true) > 0) {
+      if (countInBox(box, wanted) > 0 && acceptableCountOfItem(inventory, box, wanted, 1, true) > 0) {
          return wanted;
       }
 
@@ -181,7 +181,7 @@ final class AiCarriedShulker implements AiOperation {
       }
 
       for (ItemStack stored : contents(box)) {
-         if (autismclient.ai.print.PrintCore.matchesItem(stored, wanted) && init(inventory, box, stored.getItem(), 1, true) > 0) {
+         if (autismclient.ai.print.PrintCore.matchesItem(stored, wanted) && acceptableCountOfItem(inventory, box, stored.getItem(), 1, true) > 0) {
             return stored.getItem();
          }
       }
@@ -231,15 +231,15 @@ final class AiCarriedShulker implements AiOperation {
       return best.copy();
    }
 
-   static int init(Container inventory, ItemStack box, Item item, int wanted, boolean beforePlacement) {
-      return init(inventory, box, stack -> stack.is(item), wanted, beforePlacement);
+   static int acceptableCountOfItem(Container inventory, ItemStack box, Item item, int wanted, boolean beforePlacement) {
+      return acceptableCountMatching(inventory, box, stack -> stack.is(item), wanted, beforePlacement);
    }
 
-   static int init(Container inventory, ItemStack box, ItemStack item, int wanted, boolean beforePlacement) {
-      return init(inventory, box, stack -> ItemStack.isSameItemSameComponents(stack, item), wanted, beforePlacement);
+   static int acceptableCountOfStack(Container inventory, ItemStack box, ItemStack item, int wanted, boolean beforePlacement) {
+      return acceptableCountMatching(inventory, box, stack -> ItemStack.isSameItemSameComponents(stack, item), wanted, beforePlacement);
    }
 
-   private static int init(Container inventory, ItemStack box, Predicate<ItemStack> matches, int wanted, boolean beforePlacement) {
+   private static int acceptableCountMatching(Container inventory, ItemStack box, Predicate<ItemStack> matches, int wanted, boolean beforePlacement) {
       if (wanted > 0 && isShulkerBox(box) && inventory.getContainerSize() >= 36) {
          ArrayList<ItemStack> slots = new ArrayList<>(36);
 
@@ -340,15 +340,15 @@ final class AiCarriedShulker implements AiOperation {
       return result;
    }
 
-   static boolean init(List<ItemStack> before, List<ItemStack> after, Item item, int taken) {
-      return init(before, after, stack -> stack.is(item), taken);
+   static boolean menuLostExactlyItem(List<ItemStack> before, List<ItemStack> after, Item item, int taken) {
+      return menuLostExactlyMatching(before, after, stack -> stack.is(item), taken);
    }
 
-   static boolean init(List<ItemStack> before, List<ItemStack> after, ItemStack item, int taken) {
-      return init(before, after, stack -> ItemStack.isSameItemSameComponents(stack, item), taken);
+   static boolean menuLostExactlyStack(List<ItemStack> before, List<ItemStack> after, ItemStack item, int taken) {
+      return menuLostExactlyMatching(before, after, stack -> ItemStack.isSameItemSameComponents(stack, item), taken);
    }
 
-   private static boolean init(List<ItemStack> before, List<ItemStack> after, Predicate<ItemStack> matches, int taken) {
+   private static boolean menuLostExactlyMatching(List<ItemStack> before, List<ItemStack> after, Predicate<ItemStack> matches, int taken) {
       if (before.size() == 27 && after.size() == 27 && taken >= 0) {
          int delta = 0;
 
@@ -384,20 +384,20 @@ final class AiCarriedShulker implements AiOperation {
       return contents;
    }
 
-   static boolean init(List<ItemStack> before, List<ItemStack> after, List<ItemStack> inventoryBefore, List<ItemStack> inventoryAfter, Item item, int taken) {
-      return init(before, after, inventoryBefore, inventoryAfter, stack -> stack.is(item), taken);
+   static boolean isExactTransferOfItem(List<ItemStack> before, List<ItemStack> after, List<ItemStack> inventoryBefore, List<ItemStack> inventoryAfter, Item item, int taken) {
+      return isExactTransferMatching(before, after, inventoryBefore, inventoryAfter, stack -> stack.is(item), taken);
    }
 
-   static boolean init(
+   static boolean isExactTransferOfStack(
       List<ItemStack> before, List<ItemStack> after, List<ItemStack> inventoryBefore, List<ItemStack> inventoryAfter, ItemStack item, int taken
    ) {
-      return init(before, after, inventoryBefore, inventoryAfter, stack -> ItemStack.isSameItemSameComponents(stack, item), taken);
+      return isExactTransferMatching(before, after, inventoryBefore, inventoryAfter, stack -> ItemStack.isSameItemSameComponents(stack, item), taken);
    }
 
-   private static boolean init(
+   private static boolean isExactTransferMatching(
       List<ItemStack> before, List<ItemStack> after, List<ItemStack> inventoryBefore, List<ItemStack> inventoryAfter, Predicate<ItemStack> matches, int taken
    ) {
-      if (init(before, after, matches, taken) && inventoryBefore.size() >= 36 && inventoryBefore.size() == inventoryAfter.size()) {
+      if (menuLostExactlyMatching(before, after, matches, taken) && inventoryBefore.size() >= 36 && inventoryBefore.size() == inventoryAfter.size()) {
          ArrayList<ItemStack> gains = new ArrayList<>();
 
          for (int i = 0; i < inventoryBefore.size(); i++) {
@@ -439,7 +439,7 @@ final class AiCarriedShulker implements AiOperation {
       }
    }
 
-   static boolean init(List<ItemStack> before, List<ItemStack> after, ItemStack returning) {
+   static boolean boxReturnedToInventory(List<ItemStack> before, List<ItemStack> after, ItemStack returning) {
       if (isShulkerBox(returning) && before.size() == after.size()) {
          ArrayList<ItemStack> expected = new ArrayList<>();
 
@@ -477,11 +477,11 @@ final class AiCarriedShulker implements AiOperation {
       }
    }
 
-   static boolean init(BlockGetter level, Predicate<BlockPos> loaded, BlockPos at, AABB body, Set<Long> protectedCells) {
-      return body.intersects(new AABB(at).expandTowards(0.0, 0.5, 0.0)) ? false : init(level, loaded, at, body, protectedCells, false);
+   static boolean isSafePlacementSpot(BlockGetter level, Predicate<BlockPos> loaded, BlockPos at, AABB body, Set<Long> protectedCells) {
+      return body.intersects(new AABB(at).expandTowards(0.0, 0.5, 0.0)) ? false : isSafePlacementArea(level, loaded, at, body, protectedCells, false);
    }
 
-   static boolean init(BlockGetter level, Predicate<BlockPos> loaded, BlockPos at, AABB body, Set<Long> protectedCells, boolean ownedBoxPresent) {
+   static boolean isSafePlacementArea(BlockGetter level, Predicate<BlockPos> loaded, BlockPos at, AABB body, Set<Long> protectedCells, boolean ownedBoxPresent) {
       if (!(Math.abs(body.minY - at.getY()) > 0.05)
          && !(body.minX < at.getX() - 2)
          && !(body.maxX > at.getX() + 2 + 1)
@@ -512,13 +512,13 @@ final class AiCarriedShulker implements AiOperation {
             }
          }
 
-         return init(level, loaded, at, protectedCells);
+         return hasSafeFloorAround(level, loaded, at, protectedCells);
       } else {
          return false;
       }
    }
 
-   static boolean init(BlockGetter level, Predicate<BlockPos> loaded, BlockPos at, Set<Long> protectedCells) {
+   static boolean hasSafeFloorAround(BlockGetter level, Predicate<BlockPos> loaded, BlockPos at, Set<Long> protectedCells) {
       for (int dx = -2; dx <= 2; dx++) {
          int dz = -2;
 
@@ -587,7 +587,7 @@ final class AiCarriedShulker implements AiOperation {
       };
    }
 
-   static boolean init(Container inventory, int slot, ItemStack box) {
+   static boolean slotHoldsBox(Container inventory, int slot, ItemStack box) {
       return slot >= 0
          && slot < Math.min(36, inventory.getContainerSize())
          && !box.isEmpty()
@@ -620,8 +620,8 @@ final class AiCarriedShulker implements AiOperation {
 
    private int init_I_Z(boolean beforePlacement) {
       return this.exactMaterial.isEmpty()
-         ? init(this.mc.player.getInventory(), this.box, this.item, this.wanted, beforePlacement)
-         : init(this.mc.player.getInventory(), this.box, this.exactMaterial, this.wanted, beforePlacement);
+         ? acceptableCountOfItem(this.mc.player.getInventory(), this.box, this.item, this.wanted, beforePlacement)
+         : acceptableCountOfStack(this.mc.player.getInventory(), this.box, this.exactMaterial, this.wanted, beforePlacement);
    }
 
    private int carriedCount() {
@@ -696,7 +696,7 @@ final class AiCarriedShulker implements AiOperation {
                   return this.finish(AiOperation.Status.UNCERTAIN, "Another menu opened during shulker recovery");
                }
 
-               if (++this.open < 10 || this.boxEntity instanceof ShulkerBoxBlockEntity shulker && !shulker.isClosed()) {
+               if (++this.closeWaitTicks < 10 || this.boxEntity instanceof ShulkerBoxBlockEntity shulker && !shulker.isClosed()) {
                   return this.running("Waiting for the shulker lid to close");
                }
 
@@ -706,7 +706,7 @@ final class AiCarriedShulker implements AiOperation {
                   );
                }
 
-               this.sync = countExactInInventory(this.mc.player.getInventory(), this.remainingBox);
+               this.remainingBoxCountBefore = countExactInInventory(this.mc.player.getInventory(), this.remainingBox);
                this.read_List = snapshot(this.mc.player.getInventory());
                this.inventoryRevision = AiServerEvidence.inventoryRevision();
                this.blockRevision = AiServerEvidence.blockRevision(this.boxPos);
@@ -738,7 +738,7 @@ final class AiCarriedShulker implements AiOperation {
                return this.running("Waiting for the server to confirm the stock shulker removal");
             } else if (this.stage == AiCarriedShulker.Inner_StreamUtil.CONFIRM_REMOVAL) {
                AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 observed = this.init_BitSetUtil_DataUti
-                  .init(AiTerrain.isLoaded(this.mc.level, this.boxPos), AiServerEvidence.lastBlockUpdate(this.boxPos), System.nanoTime());
+                  .evaluate(AiTerrain.isLoaded(this.mc.level, this.boxPos), AiServerEvidence.lastBlockUpdate(this.boxPos), System.nanoTime());
                if (observed == AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.WAITING) {
                   return this.running("Waiting for the server to confirm the stock shulker removal");
                }
@@ -755,7 +755,7 @@ final class AiCarriedShulker implements AiOperation {
                this.stage = AiCarriedShulker.Inner_StreamUtil.PICKUP;
                return this.running("Locating the observed stock shulker drop");
             } else {
-               if (!init(
+               if (!isSafePlacementArea(
                   this.mc.level,
                   p -> AiTerrain.isLoaded(this.mc.level, p),
                   this.boxPos,
@@ -782,10 +782,10 @@ final class AiCarriedShulker implements AiOperation {
                }
 
                if (AiServerEvidence.inventoryRevision() > this.inventoryRevision
-                  && countExactInInventory(this.mc.player.getInventory(), this.remainingBox) == this.sync + 1
+                  && countExactInInventory(this.mc.player.getInventory(), this.remainingBox) == this.remainingBoxCountBefore + 1
                   && this.mc.player.onGround()
                   && this.mc.player.getDeltaMovement().horizontalDistanceSqr() <= 4.0E-4) {
-                  if (!init(this.read_List, snapshot(this.mc.player.getInventory()), this.remainingBox)) {
+                  if (!boxReturnedToInventory(this.read_List, snapshot(this.mc.player.getInventory()), this.remainingBox)) {
                      return this.finish(
                         AiOperation.Status.UNCERTAIN, "The recovered box or the other carried shulkers changed during pickup"
                      );
@@ -793,8 +793,8 @@ final class AiCarriedShulker implements AiOperation {
 
                   this.recovered = true;
                   return this.finish(
-                     this.update > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
-                     this.update > 0 ? "Material withdrawn and stock shulker recovered" : "Stock shulker recovered without a material transfer"
+                     this.gainedCount > 0 ? AiOperation.Status.SUCCEEDED : AiOperation.Status.FAILED,
+                     this.gainedCount > 0 ? "Material withdrawn and stock shulker recovered" : "Stock shulker recovered without a material transfer"
                   );
                } else {
                   ItemEntity dropped = null;
@@ -802,7 +802,7 @@ final class AiCarriedShulker implements AiOperation {
                   for (ItemEntity candidate : this.mc.level.getEntitiesOfClass(ItemEntity.class, pickupArea(this.boxPos))) {
                      if (ItemStack.matches(candidate.getItem(), this.remainingBox)
                         && !candidate.isRemoved()
-                        && (this.push < 0 || candidate.getId() == this.push)) {
+                        && (this.droppedEntityId < 0 || candidate.getId() == this.droppedEntityId)) {
                         if (dropped != null) {
                            return this.finish(
                               AiOperation.Status.UNCERTAIN, "More than one indistinguishable stock drop appeared; inspect recovery"
@@ -817,7 +817,7 @@ final class AiCarriedShulker implements AiOperation {
                      return this.running("Waiting for the stock shulker entity or its inventory receipt");
                   }
 
-                  this.push = dropped.getId();
+                  this.droppedEntityId = dropped.getId();
                   AABB dropBounds = dropped.getBoundingBox();
                   if (dropBounds.minX < this.boxPos.getX() - 2
                      || dropBounds.maxX > this.boxPos.getX() + 2 + 1
@@ -880,7 +880,7 @@ final class AiCarriedShulker implements AiOperation {
                   BlockPos candidate = feet.relative(side, radius);
                   BlockPos stance = candidate.relative(side.getOpposite());
                   AABB body = this.mc.player.getBoundingBox().move(Vec3.atBottomCenterOf(stance).subtract(this.mc.player.position()));
-                  if (init(this.mc.level, p -> AiTerrain.isLoaded(this.mc.level, p), candidate, body, this.protectedCells)
+                  if (isSafePlacementSpot(this.mc.level, p -> AiTerrain.isLoaded(this.mc.level, p), candidate, body, this.protectedCells)
                      && this.noItemsNear(candidate)) {
                      this.boxPos = candidate.immutable();
                      this.child = AiGoto.travelToCompat(
@@ -909,7 +909,7 @@ final class AiCarriedShulker implements AiOperation {
             );
          }
 
-         if (!init(
+         if (!isSafePlacementSpot(
                this.mc.level,
                p -> AiTerrain.isLoaded(this.mc.level, p),
                this.boxPos,
@@ -921,13 +921,13 @@ final class AiCarriedShulker implements AiOperation {
          }
 
          this.supportState = this.mc.level.getBlockState(this.boxPos.below());
-         this.flush = countExactInInventory(this.mc.player.getInventory(), this.box);
+         this.boxCountBeforePlace = countExactInInventory(this.mc.player.getInventory(), this.box);
          this.placer.startWithExactStack(this.boxPos, this.box);
          this.placementStarted = true;
       }
 
       if (this.placer.hasClicked()
-         || init(
+         || isSafePlacementSpot(
                this.mc.level,
                p -> AiTerrain.isLoaded(this.mc.level, p),
                this.boxPos,
@@ -989,7 +989,7 @@ final class AiCarriedShulker implements AiOperation {
                for (int dz = -radius; dz <= radius; dz++) {
                   if (Math.max(Math.abs(dx), Math.abs(dz)) == radius) {
                      BlockPos at = feet.offset(dx, 0, dz);
-                     if (init(mc.level, p -> AiTerrain.isLoaded(mc.level, p), at, body, protectedCells)
+                     if (isSafePlacementSpot(mc.level, p -> AiTerrain.isLoaded(mc.level, p), at, body, protectedCells)
                         && mc.level.getEntitiesOfClass(ItemEntity.class, pickupArea(at).inflate(1.0)).isEmpty()) {
                         return at;
                      }
@@ -1048,15 +1048,15 @@ final class AiCarriedShulker implements AiOperation {
       if (this.init_CompletableFuture == null
          || !this.init_CompletableFuture.isCompletedExceptionally() && Boolean.TRUE.equals(this.init_CompletableFuture.getNow(false))) {
          this.menuSnapshot = this.menuContents();
-         if (init(contents(this.box), this.menuSnapshot, this.item, 0)
+         if (menuLostExactlyItem(contents(this.box), this.menuSnapshot, this.item, 0)
             && this.menu.getCarried().isEmpty()
-            && countExactInInventory(this.mc.player.getInventory(), this.box) == this.flush - 1) {
+            && countExactInInventory(this.mc.player.getInventory(), this.box) == this.boxCountBeforePlace - 1) {
             Set<Integer> destinations = new HashSet<>();
 
             for (Slot slot : this.menu.slots) {
                if (slot.container == this.mc.player.getInventory() && slot.getContainerSlot() < 36) {
-                  if (this.close < 0 && slot.getItem().isEmpty()) {
-                     this.close = slot.getContainerSlot();
+                  if (this.boxSlot < 0 && slot.getItem().isEmpty()) {
+                     this.boxSlot = slot.getContainerSlot();
                   } else {
                      destinations.add(slot.index);
                   }
@@ -1064,7 +1064,7 @@ final class AiCarriedShulker implements AiOperation {
             }
 
             int amount = this.init_I_Z(false);
-            if (this.close >= 0 && amount != 0) {
+            if (this.boxSlot >= 0 && amount != 0) {
                this.inventoryBefore = snapshot(this.mc.player.getInventory());
                this.countBefore = this.carriedCount();
                HashSet<Integer> sources = new HashSet<>();
@@ -1097,7 +1097,7 @@ final class AiCarriedShulker implements AiOperation {
                this.stage = AiCarriedShulker.Inner_StreamUtil.WITHDRAW;
                return this.running("Withdrawing building material from the carried shulker");
             } else {
-               return this.write();
+               return this.closeMenuForRecovery();
             }
          } else {
             return this.finish(
@@ -1119,18 +1119,18 @@ final class AiCarriedShulker implements AiOperation {
             this.receipt.cancelChild(this.child);
             this.child = null;
             if (!this.receipt.requiresReconciliation(null) && result.status() != AiOperation.Status.UNCERTAIN && this.menu.getCarried().isEmpty()) {
-               this.update = this.carriedCount() - this.countBefore;
+               this.gainedCount = this.carriedCount() - this.countBefore;
                List<ItemStack> remainingStock = this.menuContents();
                List<ItemStack> inventoryAfter = snapshot(this.mc.player.getInventory());
                return (
                      this.exactMaterial.isEmpty()
-                        ? !init(this.menuSnapshot, remainingStock, this.inventoryBefore, inventoryAfter, this.item, this.update)
-                        : !init(this.menuSnapshot, remainingStock, this.inventoryBefore, inventoryAfter, this.exactMaterial, this.update)
+                        ? !isExactTransferOfItem(this.menuSnapshot, remainingStock, this.inventoryBefore, inventoryAfter, this.item, this.gainedCount)
+                        : !isExactTransferOfStack(this.menuSnapshot, remainingStock, this.inventoryBefore, inventoryAfter, this.exactMaterial, this.gainedCount)
                   )
                   ? this.finish(
                      AiOperation.Status.UNCERTAIN, "The shulker and inventory do not reconcile to the confirmed withdrawal"
                   )
-                  : this.write();
+                  : this.closeMenuForRecovery();
             } else {
                return this.finish(
                   AiOperation.Status.UNCERTAIN, "The shulker transfer needs reconciliation before recovery"
@@ -1142,7 +1142,7 @@ final class AiCarriedShulker implements AiOperation {
       }
    }
 
-   private AiOperation.Result write() {
+   private AiOperation.Result closeMenuForRecovery() {
       this.remainingBox = withContents(this.box, this.menuContents());
       if (!AiMenuClose.closeMenu()) {
          return this.finish(
@@ -1162,7 +1162,7 @@ final class AiCarriedShulker implements AiOperation {
    }
 
    private boolean load_Z() {
-      return init(this.mc.player.getInventory(), this.close, this.remainingBox.isEmpty() ? this.box : this.remainingBox);
+      return slotHoldsBox(this.mc.player.getInventory(), this.boxSlot, this.remainingBox.isEmpty() ? this.box : this.remainingBox);
    }
 
    private static AABB pickupArea(BlockPos at) {
@@ -1180,7 +1180,7 @@ final class AiCarriedShulker implements AiOperation {
          && this.mc.player.containerMenu == this.mc.player.inventoryMenu
          && this.mc.player.inventoryMenu.getCarried().isEmpty()
          && this.mc.level.getBlockState(this.boxPos.below()).equals(this.supportState)
-         && init(
+         && isSafePlacementArea(
             this.mc.level,
             p -> AiTerrain.isLoaded(this.mc.level, p),
             this.boxPos,
@@ -1221,7 +1221,7 @@ final class AiCarriedShulker implements AiOperation {
          "recovered",
          this.recovered,
          "withdrawn",
-         this.update,
+         this.gainedCount,
          "recoveryRequired",
          this.placed && !this.recovered,
          "stage",
@@ -1237,8 +1237,8 @@ final class AiCarriedShulker implements AiOperation {
          data.add("transfer", AiJson.parseObject(this.transferResult.dataJson()));
       }
 
-      if (this.push >= 0) {
-         data.addProperty("stockDropEntity", this.push);
+      if (this.droppedEntityId >= 0) {
+         data.addProperty("stockDropEntity", this.droppedEntityId);
       }
 
       return data;
@@ -1281,19 +1281,19 @@ final class AiCarriedShulker implements AiOperation {
    }
 
    static final class Inner_DataUtil {
-      private final long init;
-      private final long load;
+      private final long revisionBefore;
+      private final long deadline;
 
       Inner_DataUtil(long before, long now) {
-         this.init = before;
-         this.load = now + 10000000000L;
+         this.revisionBefore = before;
+         this.deadline = now + 10000000000L;
       }
 
-      AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 init(boolean loaded, AiServerEvidence.BlockUpdate update, long now) {
-         if (loaded && update != null && update.revision() > this.init) {
+      AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2 evaluate(boolean loaded, AiServerEvidence.BlockUpdate update, long now) {
+         if (loaded && update != null && update.revision() > this.revisionBefore) {
             return update.state().isAir() ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.CONFIRMED : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.REJECTED;
          } else {
-            return now >= this.load ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.TIMED_OUT : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.WAITING;
+            return now >= this.deadline ? AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.TIMED_OUT : AiCarriedShulker.Inner_DataUtil.Inner_DataUtil_2.WAITING;
          }
       }
 

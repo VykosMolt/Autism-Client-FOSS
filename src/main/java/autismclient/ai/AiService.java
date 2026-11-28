@@ -204,8 +204,8 @@ public final class AiService {
    private volatile AiService.UserPromptQuestion pendingQuestion;
    private String questionAnswer;
    static final String DRAGON_KILL_STAT = "minecraft.killed:minecraft.ender_dragon";
-   private static final String put = "hostPlanningPhase";
-   private static final String add = "hostPlanAwaitingApproval";
+   private static final String PLANNING_PHASE_KEY = "hostPlanningPhase";
+   private static final String PLAN_AWAITING_APPROVAL_KEY = "hostPlanAwaitingApproval";
 
    static boolean isSessionEmpty(AiService.SessionState s) {
       return s.objective.isBlank() && s.queue.isEmpty() && s.messages.stream().noneMatch(m -> "user".equals(m.role()));
@@ -1162,7 +1162,7 @@ public final class AiService {
                    {
                      s.taskMinutes = AiTaskDuration.estimateMinutes(prompt, s.taskMinutes);
                      s.amendments.add(prompt);
-                     s.init(prompt);
+                     s.addUpdate(prompt);
                      this.appendTranscript("user", prompt);
                      this.stateReason = "Objective amended; releasing the previous operation before replanning";
                      Minecraft.getInstance().execute(this::cancelActiveOperation);
@@ -1175,7 +1175,7 @@ public final class AiService {
                      this.tryStartChatMode(prompt);
                      s.taskMinutes = AiTaskDuration.estimateMinutes(prompt, s.taskMinutes);
                      s.amendments.add(prompt);
-                     s.init(prompt);
+                     s.addUpdate(prompt);
                      this.stateReason = "Chat mode updated; the work request will be planned at the next action boundary";
                   } else {
                      this.appendTranscript("user", prompt);
@@ -1227,7 +1227,7 @@ public final class AiService {
 
                   s.scope = "";
                   s.updates.clear();
-                  s.init(this.settings.planMode && !this.settings.builtIn);
+                  s.resetPlanning(this.settings.planMode && !this.settings.builtIn);
                   AiRunTrace.startSession(this.memoryStore.directory(), s.id).recordTaskStart(prompt, s.taskMinutes);
                   if (s.title.isBlank() || s.title.equals("New session")) {
                      s.title = AiSessions.titleFor(prompt);
@@ -1473,7 +1473,7 @@ public final class AiService {
       this.enterChattingState();
    }
 
-   private synchronized void get(String reason) {
+   private synchronized void leaveChattingState(String reason) {
       String line = reason != null && !reason.isBlank() ? reason : "Chat mode stopped";
       this.saveChatModeStatus(null);
       if (this.runState == AiService.RunState.CHATTING) {
@@ -1533,7 +1533,7 @@ public final class AiService {
    public synchronized boolean approvePlan() {
       AiService.SessionState s = this.currentSession();
       if (s != null && s.planAwaitingApproval) {
-         s.init();
+         s.markPlanApproved();
          this.appendTranscript("system", "Plan approved; execution started");
          this.persistCurrentSession();
          this.startAgentRunWithNote(true, "The user approved the plan above. Execute it faithfully and report any deviation.");
@@ -1548,7 +1548,7 @@ public final class AiService {
       if (s == null || !s.planAwaitingApproval) {
          return false;
       } else if (feedback != null && !feedback.isBlank()) {
-         s.read(feedback.trim());
+         s.amendPlan(feedback.trim());
          this.appendTranscript("user", feedback.trim());
          this.persistCurrentSession();
          this.startAgentRun(true);
@@ -3121,7 +3121,7 @@ public final class AiService {
       this.settingDeltas.add(new AiService.SettingDelta(m.id(), key, before, after, m.controlRevision(key)));
    }
 
-   private void set(String text) {
+   private void recordUserObservation(String text) {
       this.lastUserObservation = new AiObservation(
          UUID.randomUUID().toString(), this.observationSession, "user", System.currentTimeMillis(), "user", AiJson.objectOf("request", text).toString()
       );
@@ -3290,7 +3290,7 @@ public final class AiService {
          try {
             this.activeProvider = transport;
             pinned.validate();
-            this.set(s.objective);
+            this.recordUserObservation(s.objective);
             s.taskState = USER_EVIDENCE_LINE_PATTERN.matcher(s.taskState).replaceAll("");
             int promptBudget = Math.max(12000, pinned.contextTokens - pinned.outputTokens);
             AiSessions storeRef = this.sessionStore;
@@ -3313,7 +3313,7 @@ public final class AiService {
             }
 
             s.wire = pinned.provider.name();
-            transcript.init();
+            transcript.requestRewrite();
             if (!history.isEmpty()) {
                if (!resume) {
                   transport.appendUserText(history, "New objective: " + s.objective + (hostNote == null ? "" : "\n\n" + hostNote));
@@ -3331,7 +3331,7 @@ public final class AiService {
                );
             }
 
-            s.pop = estimatePromptTokens(epoch, history);
+            s.lastPromptTokens = estimatePromptTokens(epoch, history);
             int outputLimitRecoveries = 0;
             int contextRecoveries = 0;
             int streamRecoveries = 0;
@@ -3346,15 +3346,15 @@ public final class AiService {
                String amendment;
                while ((amendment = s.amendments.poll()) != null) {
                   transport.appendUserText(history, "User update to active objective: " + amendment);
-                  this.set(amendment);
+                  this.recordUserObservation(amendment);
                }
 
                long budget = Math.max(1, this.settings.contextTokens - this.settings.outputTokens);
-               if (forceCompact || s.pop > 0.7 * budget) {
+               if (forceCompact || s.lastPromptTokens > 0.7 * budget) {
                   if (this.compactHistoryIfNeeded(s, sid, history, transport, budget, forceCompact)) {
                      epoch = this.buildPromptContext(s, this.runState == AiService.RunState.PLANNING, promptBudget);
-                     transcript.init();
-                     s.pop = estimatePromptTokens(epoch, history);
+                     transcript.requestRewrite();
+                     s.lastPromptTokens = estimatePromptTokens(epoch, history);
                   }
 
                   forceCompact = false;
@@ -3379,11 +3379,11 @@ public final class AiService {
                      current
                   )
                );
-               transcript.init(history);
+               transcript.persist(history);
                transport.applySettings(this.settings);
                this.stateReason = "Thinking";
                s.requests++;
-               s.push++;
+               s.totalRequests++;
                StringBuilder live = new StringBuilder();
                AiService.ToolCallGate gate = new AiService.ToolCallGate();
                boolean[] finishedByTool = new boolean[]{false};
@@ -3447,8 +3447,8 @@ public final class AiService {
                s.inputTokens = s.inputTokens + usage.inputTokens();
                s.cachedInputTokens = s.cachedInputTokens + usage.cachedInputTokens();
                s.cacheWriteTokens = s.cacheWriteTokens + usage.cacheWriteTokens();
-               s.poll = s.poll + usage.outputTokens();
-               s.pop = usage.promptTokens() > 0L ? usage.promptTokens() : AiContext.estimateTokens(sent);
+               s.outputTokens = s.outputTokens + usage.outputTokens();
+               s.lastPromptTokens = usage.promptTokens() > 0L ? usage.promptTokens() : AiContext.estimateTokens(sent);
                AiRunTrace trace = AiRunTrace.current();
                if (trace != null) {
                   trace.recordProviderRequest((System.nanoTime() - providerStarted) / 1000000L, estTokens);
@@ -3459,7 +3459,7 @@ public final class AiService {
                }
 
                history.add(reply.wireMessage());
-               transcript.init(history);
+               transcript.persist(history);
                String shown = stripSpecialTokens(reply.text());
                if (!shown.isBlank()) {
                   this.appendToSession(s, "assistant", shown);
@@ -3555,7 +3555,7 @@ public final class AiService {
             }
 
             if (!history.isEmpty()) {
-               transcript.init(history);
+               transcript.persist(history);
             }
 
             transport.close();
@@ -3846,7 +3846,7 @@ public final class AiService {
          }
 
          if (plan.handledAll()) {
-            this.set(s.objective);
+            this.recordUserObservation(s.objective);
             this.runState = AiService.RunState.COMPLETED;
             this.stateReason = "Done without an AI turn";
             List<String> what = new ArrayList<>();
@@ -4346,7 +4346,7 @@ public final class AiService {
                throw new IllegalArgumentException("Provide the full plan as the finish message");
             }
 
-            s.load(text);
+            s.awaitPlanApproval(text);
             this.runState = AiService.RunState.PAUSED;
             this.stateReason = "Plan awaiting user approval";
             this.appendTranscript("assistant", text);
@@ -4663,7 +4663,7 @@ public final class AiService {
          }
 
          s.requests++;
-         s.push++;
+         s.totalRequests++;
          JsonObject result = AiNativeSearch.search(this.settings, query, () -> this.checkGeneration(g));
          s.tokens = s.tokens + result.get("tokens").getAsLong();
          this.checkGeneration(g);
@@ -4801,9 +4801,9 @@ public final class AiService {
       d.inputTokens = s.inputTokens;
       d.cachedInputTokens = s.cachedInputTokens;
       d.cacheWriteTokens = s.cacheWriteTokens;
-      d.outputTokens = s.poll;
-      d.poll = s.push;
-      d.push = s.pop;
+      d.outputTokens = s.outputTokens;
+      d.poll = s.totalRequests;
+      d.push = s.lastPromptTokens;
       d.wire = s.wire;
       return d;
    }
@@ -4829,15 +4829,15 @@ public final class AiService {
       s.messages.addAll(d.messages);
 
       for (String u : d.updates) {
-         s.init(u);
+         s.addUpdate(u);
       }
 
       s.inputTokens = d.inputTokens;
       s.cachedInputTokens = d.cachedInputTokens;
       s.cacheWriteTokens = d.cacheWriteTokens;
-      s.poll = d.outputTokens;
-      s.push = d.poll;
-      s.pop = d.push;
+      s.outputTokens = d.outputTokens;
+      s.totalRequests = d.poll;
+      s.lastPromptTokens = d.push;
       s.wire = d.wire;
       return s;
    }
@@ -5138,7 +5138,7 @@ public final class AiService {
       AiService.SessionState s = this.currentSession();
       return s == null
          ? new AiService.TokenUsage(0L, 0L, 0L, 0L, 0L, this.settings.contextTokens, 0L)
-         : new AiService.TokenUsage(s.inputTokens, s.cachedInputTokens, s.cacheWriteTokens, s.poll, s.pop, this.settings.contextTokens, s.push);
+         : new AiService.TokenUsage(s.inputTokens, s.cachedInputTokens, s.cacheWriteTokens, s.outputTokens, s.lastPromptTokens, this.settings.contextTokens, s.totalRequests);
    }
 
    public List<String> getSteeringNotes() {
@@ -5589,7 +5589,7 @@ public final class AiService {
       @Override
       public void stopChat(String reason) {
          if (AiService.this.chatMode == this.boundChatMode && AiService.this.currentSession() == this.session) {
-            AiService.this.get(reason);
+            AiService.this.leaveChattingState(reason);
          }
       }
 
@@ -5599,8 +5599,8 @@ public final class AiService {
          if (s != null) {
             synchronized (s) {
                s.inputTokens = s.inputTokens + Math.max(0L, inputTokens);
-               s.poll = s.poll + Math.max(0L, outputTokens);
-               s.push = s.push + Math.max(0L, requests);
+               s.outputTokens = s.outputTokens + Math.max(0L, outputTokens);
+               s.totalRequests = s.totalRequests + Math.max(0L, requests);
             }
          }
       }
@@ -5615,18 +5615,18 @@ public final class AiService {
    static final class ToolCallGate {
       private final List<Integer> issuedIndices = new ArrayList<>();
       private final TreeMap<Integer, JsonObject> resultsByIndex = new TreeMap<>();
-      private List<Integer> load;
+      private List<Integer> sortedIssuedCache;
 
       void markIssued(int index) {
          this.issuedIndices.add(index);
-         this.load = null;
+         this.sortedIssuedCache = null;
       }
 
       void recordResult(int index, JsonObject result) {
          this.resultsByIndex.put(index, result);
       }
 
-      void init(JsonObject result) {
+      void fillMissingResults(JsonObject result) {
          for (int index : this.issuedIndices) {
             this.resultsByIndex.putIfAbsent(index, result);
          }
@@ -5636,16 +5636,16 @@ public final class AiService {
          return this.resultsByIndex.get(index);
       }
 
-      private List<Integer> init() {
-         if (this.load == null) {
-            this.load = this.issuedIndices.stream().sorted().toList();
+      private List<Integer> sortedIssuedIndices() {
+         if (this.sortedIssuedCache == null) {
+            this.sortedIssuedCache = this.issuedIndices.stream().sorted().toList();
          }
 
-         return this.load;
+         return this.sortedIssuedCache;
       }
 
       int indexAtPosition(int position) {
-         return position < this.init().size() ? this.init().get(position) : -1;
+         return position < this.sortedIssuedIndices().size() ? this.sortedIssuedIndices().get(position) : -1;
       }
 
       List<JsonObject> resultsOrFiller(int callCount, JsonObject filler) {
@@ -5668,7 +5668,7 @@ public final class AiService {
          List<JsonObject> aligned = new ArrayList<>(callCount);
 
          for (int k = 0; k < callCount; k++) {
-            JsonObject result = this.resultsByIndex.get(this.init().get(k));
+            JsonObject result = this.resultsByIndex.get(this.sortedIssuedIndices().get(k));
             if (result == null) {
                return null;
             }
@@ -5719,9 +5719,9 @@ public final class AiService {
       volatile long inputTokens;
       volatile long cachedInputTokens;
       volatile long cacheWriteTokens;
-      volatile long poll;
-      volatile long push;
-      volatile long pop;
+      volatile long outputTokens;
+      volatile long totalRequests;
+      volatile long lastPromptTokens;
       volatile String wire;
       volatile boolean attemptedAction;
       volatile boolean planningPhase;
@@ -5737,7 +5737,7 @@ public final class AiService {
          this.lastActiveAt = createdAt;
       }
 
-      void init(String text) {
+      void addUpdate(String text) {
          String t = text.trim();
          if (!t.isEmpty()) {
             this.updates.add(t.length() > 2000 ? t.substring(0, 2000) : t);
@@ -5748,28 +5748,28 @@ public final class AiService {
          }
       }
 
-      void init(boolean planModeEnabled) {
+      void resetPlanning(boolean planModeEnabled) {
          this.planningPhase = planModeEnabled;
          this.planAwaitingApproval = false;
       }
 
-      void load(String planText) {
+      void awaitPlanApproval(String planText) {
          this.planAwaitingApproval = true;
          String note = this.taskState + "\nPLAN AWAITING APPROVAL:\n" + planText;
          this.taskState = note.length() > 11900 ? note.substring(note.length() - 11900) : note;
       }
 
-      void init() {
+      void markPlanApproved() {
          this.planAwaitingApproval = false;
          this.planningPhase = false;
          String note = this.taskState + "\nPlan approved by the user; execute it faithfully and report deviations.";
          this.taskState = note.length() > 11900 ? note.substring(note.length() - 11900) : note;
       }
 
-      void read(String feedback) {
+      void amendPlan(String feedback) {
          this.planAwaitingApproval = false;
          this.amendments.add(feedback);
-         this.init(feedback);
+         this.addUpdate(feedback);
       }
    }
 
@@ -5797,21 +5797,21 @@ public final class AiService {
    private final class SessionTurnTracker {
       private final String sessionId;
       private int persistedCount;
-      private String load;
+      private String lastPersistedLine;
       private boolean rewriteWhole;
 
       SessionTurnTracker(String sid) {
          this.sessionId = sid;
       }
 
-      void init() {
+      void requestRewrite() {
          this.rewriteWhole = true;
       }
 
-      void init(List<JsonObject> history) {
+      void persist(List<JsonObject> history) {
          AiSessions storeRef = AiService.this.sessionStore;
          if (storeRef != null) {
-            if (!this.rewriteWhole && (this.persistedCount > history.size() || this.persistedCount > 0 && !history.get(this.persistedCount - 1).toString().equals(this.load))) {
+            if (!this.rewriteWhole && (this.persistedCount > history.size() || this.persistedCount > 0 && !history.get(this.persistedCount - 1).toString().equals(this.lastPersistedLine))) {
                this.rewriteWhole = true;
             }
 
@@ -5823,7 +5823,7 @@ public final class AiService {
             }
 
             this.persistedCount = history.size();
-            this.load = this.persistedCount == 0 ? null : history.get(this.persistedCount - 1).toString();
+            this.lastPersistedLine = this.persistedCount == 0 ? null : history.get(this.persistedCount - 1).toString();
             this.rewriteWhole = false;
             if (whole || !lines.isEmpty()) {
                AiService.this.storageExecutor.execute(() -> {

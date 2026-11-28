@@ -11,30 +11,30 @@ import java.util.Map;
 public final class AutoLoginDriver {
    private final AutoLoginBackend host;
    private volatile AuthPromptParser.AuthPrompt detection;
-   private volatile long init_J;
+   private volatile long pendingStartAt;
    private volatile AutoLoginTimings newConfig;
-   private volatile AutoLoginDriver.Inner_DataUtil init_CachePool_DataUtil;
-   private long load_J;
+   private volatile AutoLoginDriver.Inner_DataUtil state;
+   private long startedAt;
    private long read_J;
-   private long write;
-   private long update;
-   private long sync;
-   private long flush;
-   private boolean init_Z;
-   private int init_I;
-   private boolean load_Z;
-   private boolean read_Z;
-   private long close;
-   private String init_Str;
-   private String load_Str;
+   private long nextCommandAt;
+   private long nextMenuTryAt;
+   private long loginSettleAt;
+   private long followUpLoginAt;
+   private boolean loginAfterRegister;
+   private int attempts;
+   private boolean failureReported;
+   private boolean missingPasswordReported;
+   private long submittedMenuGeneration;
+   private String registerCommand;
+   private String loginCommand;
 
    public AutoLoginDriver(AutoLoginBackend host) {
       this.detection = AuthPromptParser.AuthPrompt.NONE;
       this.newConfig = AutoLoginTimings.defaults();
-      this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.IDLE;
-      this.close = -9223372036854775808L;
-      this.init_Str = "";
-      this.load_Str = "";
+      this.state = AutoLoginDriver.Inner_DataUtil.IDLE;
+      this.submittedMenuGeneration = -9223372036854775808L;
+      this.registerCommand = "";
+      this.loginCommand = "";
       this.host = host;
    }
 
@@ -46,7 +46,7 @@ public final class AutoLoginDriver {
 
    public void reset(long now) {
       this.detection = AuthPromptParser.AuthPrompt.NONE;
-      this.init_J = now == 0L ? 1L : now;
+      this.pendingStartAt = now == 0L ? 1L : now;
    }
 
    public void onChat(String line) {
@@ -57,54 +57,54 @@ public final class AutoLoginDriver {
    }
 
    public AutoLoginDriver.Inner_DataUtil init_CachePool_DataUtil() {
-      return this.init_CachePool_DataUtil;
+      return this.state;
    }
 
-   public boolean init_Z() {
-      AutoLoginDriver.Inner_DataUtil current = this.init_CachePool_DataUtil;
+   public boolean isFinished() {
+      AutoLoginDriver.Inner_DataUtil current = this.state;
       return current == AutoLoginDriver.Inner_DataUtil.DONE || current == AutoLoginDriver.Inner_DataUtil.GAVE_UP;
    }
 
    public int init_I() {
-      return this.init_I;
+      return this.attempts;
    }
 
    public void tick(long now) {
-      this.init_V();
-      if (this.init_CachePool_DataUtil != AutoLoginDriver.Inner_DataUtil.IDLE && !this.init_Z()) {
-         if (now - this.load_J >= this.newConfig.giveUpMs()) {
-            this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
-         } else if (!this.init_Z(now)) {
-            this.read(now);
+      this.applyPendingStart();
+      if (this.state != AutoLoginDriver.Inner_DataUtil.IDLE && !this.isFinished()) {
+         if (now - this.startedAt >= this.newConfig.giveUpMs()) {
+            this.state = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
+         } else if (!this.handleMenu(now)) {
+            this.handleChatPrompt(now);
          }
       }
    }
 
-   private void init_V() {
-      long requested = this.init_J;
+   private void applyPendingStart() {
+      long requested = this.pendingStartAt;
       if (requested != 0L) {
-         this.init_J = 0L;
-         this.load_J = requested;
+         this.pendingStartAt = 0L;
+         this.startedAt = requested;
          this.read_J = 0L;
-         this.write = 0L;
-         this.update = 0L;
-         this.sync = 0L;
-         this.flush = 0L;
-         this.init_Z = false;
-         this.init_I = 0;
-         this.load_Z = false;
-         this.read_Z = false;
-         this.close = -9223372036854775808L;
-         this.init_Str = "";
-         this.load_Str = "";
-         this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.WATCHING;
+         this.nextCommandAt = 0L;
+         this.nextMenuTryAt = 0L;
+         this.loginSettleAt = 0L;
+         this.followUpLoginAt = 0L;
+         this.loginAfterRegister = false;
+         this.attempts = 0;
+         this.failureReported = false;
+         this.missingPasswordReported = false;
+         this.submittedMenuGeneration = -9223372036854775808L;
+         this.registerCommand = "";
+         this.loginCommand = "";
+         this.state = AutoLoginDriver.Inner_DataUtil.WATCHING;
       }
    }
 
-   private boolean init_Z(long now) {
+   private boolean handleMenu(long now) {
       CustomMenuSnapshot snapshot = this.host.currentMenu();
       if (snapshot == null) {
-         this.close = -9223372036854775808L;
+         this.submittedMenuGeneration = -9223372036854775808L;
          return false;
       }
 
@@ -112,11 +112,11 @@ public final class AutoLoginDriver {
          return true;
       }
 
-      if (snapshot.generation() == this.close) {
+      if (snapshot.generation() == this.submittedMenuGeneration) {
          return true;
       }
 
-      if (now < this.update) {
+      if (now < this.nextMenuTryAt) {
          return true;
       }
 
@@ -131,7 +131,7 @@ public final class AutoLoginDriver {
 
       String password = this.host.password();
       if (hasText && password.isEmpty()) {
-         this.load(snapshot.title());
+         this.reportMissingPassword(snapshot.title());
          return true;
       }
 
@@ -141,7 +141,7 @@ public final class AutoLoginDriver {
          CustomMenuButton accept = hasText ? null : CustomMenuActionPlanner.acceptButton(snapshot.buttons());
          button = accept != null ? accept : CustomMenuActionPlanner.fallbackButton(snapshot.buttons());
          if (button == null) {
-            this.update = now + this.newConfig.write();
+            this.nextMenuTryAt = now + this.newConfig.write();
             return true;
          }
 
@@ -151,25 +151,25 @@ public final class AutoLoginDriver {
             values.put(input.key(), input.kind() == CustomMenuInput.Kind.TEXT ? password : input.initialValue());
          }
       } catch (RuntimeException error) {
-         this.update = now + this.newConfig.write();
+         this.nextMenuTryAt = now + this.newConfig.write();
          return true;
       }
 
       if (!this.host.submit(snapshot, new CustomMenuSubmission(values, button))) {
-         this.update = now + this.newConfig.write();
+         this.nextMenuTryAt = now + this.newConfig.write();
          return true;
       }
 
-      this.close = snapshot.generation();
+      this.submittedMenuGeneration = snapshot.generation();
       if (hasText) {
-         this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
-         this.sync = now + this.newConfig.read();
+         this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
+         this.loginSettleAt = now + this.newConfig.read();
       }
 
       return true;
    }
 
-   private void read(long now) {
+   private void handleChatPrompt(long now) {
       if (!this.host.isConnected()) {
          this.read_J = 0L;
       } else {
@@ -180,78 +180,78 @@ public final class AutoLoginDriver {
          if (now - this.read_J >= this.newConfig.promptDelayMs()) {
             AuthPromptParser.AuthPrompt detection = this.detection;
             if (detection.kind() != AuthPromptParser.PromptKind.NONE) {
-               if (now >= this.write) {
-                  if (this.init_I >= this.newConfig.maxAttempts()) {
-                     this.load();
+               if (now >= this.nextCommandAt) {
+                  if (this.attempts >= this.newConfig.maxAttempts()) {
+                     this.giveUp();
                   } else {
                      String password = this.host.password();
                      if (password.isEmpty()) {
-                        this.load("AuthMe login");
+                        this.reportMissingPassword("AuthMe login");
                      } else if (this.host.hasConnection()) {
                         this.detection = AuthPromptParser.AuthPrompt.NONE;
                         if (!this.host.sendCommand(detection.loginCommand(password))) {
                            this.detection = detection;
-                           this.write = now + 250L;
+                           this.nextCommandAt = now + 250L;
                         } else {
-                           this.init_I++;
-                           this.write = now + this.newConfig.read();
+                           this.attempts++;
+                           this.nextCommandAt = now + this.newConfig.read();
                            if (detection.kind() == AuthPromptParser.PromptKind.REGISTER) {
-                              this.init_Str = detection.command();
-                              this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.REGISTERING;
-                              this.init_Z = true;
-                              this.flush = now + this.newConfig.update();
+                              this.registerCommand = detection.command();
+                              this.state = AutoLoginDriver.Inner_DataUtil.REGISTERING;
+                              this.loginAfterRegister = true;
+                              this.followUpLoginAt = now + this.newConfig.update();
                            } else {
-                              this.load_Str = detection.command();
-                              this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
-                              this.init_Z = false;
-                              this.sync = now + this.newConfig.read();
+                              this.loginCommand = detection.command();
+                              this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
+                              this.loginAfterRegister = false;
+                              this.loginSettleAt = now + this.newConfig.read();
                            }
                         }
                      }
                   }
                }
-            } else if (this.init_Z && now >= this.flush) {
-               this.write(now);
-            } else if (this.init_CachePool_DataUtil == AutoLoginDriver.Inner_DataUtil.LOGGING_IN && this.sync != 0L && now >= this.sync) {
-               this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.DONE;
+            } else if (this.loginAfterRegister && now >= this.followUpLoginAt) {
+               this.sendLoginAfterRegister(now);
+            } else if (this.state == AutoLoginDriver.Inner_DataUtil.LOGGING_IN && this.loginSettleAt != 0L && now >= this.loginSettleAt) {
+               this.state = AutoLoginDriver.Inner_DataUtil.DONE;
             }
          }
       }
    }
 
-   private void write(long now) {
-      this.init_Z = false;
-      if (this.init_I >= this.newConfig.maxAttempts()) {
-         this.load();
+   private void sendLoginAfterRegister(long now) {
+      this.loginAfterRegister = false;
+      if (this.attempts >= this.newConfig.maxAttempts()) {
+         this.giveUp();
       } else {
          String password = this.host.password();
          if (!password.isEmpty() && this.host.hasConnection()) {
-            String token = AuthPromptParser.init(this.init_Str, this.load_Str);
+            String token = AuthPromptParser.init(this.registerCommand, this.loginCommand);
             if (!this.host.sendCommand(token + " " + password)) {
-               this.init_Z = true;
-               this.flush = now + 250L;
+               this.loginAfterRegister = true;
+               this.followUpLoginAt = now + 250L;
             } else {
-               this.init_I++;
-               this.write = now + this.newConfig.read();
-               this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
-               this.sync = now + this.newConfig.read();
+               this.attempts++;
+               this.nextCommandAt = now + this.newConfig.read();
+               this.state = AutoLoginDriver.Inner_DataUtil.LOGGING_IN;
+               this.loginSettleAt = now + this.newConfig.read();
             }
          }
       }
    }
 
-   private void load() {
-      if (!this.load_Z) {
-         this.load_Z = true;
+   private void giveUp() {
+      if (!this.failureReported) {
+         this.failureReported = true;
          this.host.report("Auto login failed after " + this.newConfig.maxAttempts() + " attempts - check the password.");
       }
 
-      this.init_CachePool_DataUtil = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
+      this.state = AutoLoginDriver.Inner_DataUtil.GAVE_UP;
    }
 
-   private void load(String context) {
-      if (!this.read_Z) {
-         this.read_Z = true;
+   private void reportMissingPassword(String context) {
+      if (!this.missingPasswordReported) {
+         this.missingPasswordReported = true;
          this.host.onMissingPassword(context == null ? "" : context);
       }
    }
