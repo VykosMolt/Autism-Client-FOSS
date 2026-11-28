@@ -1,7 +1,7 @@
 # Rewrite plan: the worst monoliths first (draft, 2026-11-28)
 
-Status: proposal. Nothing here has started. Numbers are measured on `dev` after Phase 11D unless marked
-*inferred*. Tools: `wc -l` on `src/main/java` (excluded paths pruned) and an ASM pass over
+Status: proposal. Nothing here has started. Numbers are measured on `dev` after Phase 11D, except where a section names `deecfd9`,
+unless marked *inferred*. Tools: `wc -l` on `src/main/java` (excluded paths pruned) and an ASM pass over
 `build/classes/java/main` (`autism-deobf-plans` scratch tool `Mono.java`) that folds nested classes into their
 top-level class and counts bytecode instructions in methods that touch Minecraft, Mojang, Fabric, LWJGL, Mixin,
 Sodium, Iris or Via types directly ("game %").
@@ -60,6 +60,28 @@ Fan-in counts the other top-level classes that reference this one. Smells that w
   (`LivePrintEnv`). That is a ready-made seam for a fake world.
 - `AiPathfinder` already searches through a grid abstraction (`AiPathfinder$GridView`, used by `isInGoalWithGrid`).
 
+### Where the size comes from (measured at `deecfd9`)
+An ASM pass over all 4,024 non-excluded classes (`autism-deobf-plans` scratch tool `Bloat.java`):
+- **Not copy-paste:** exact duplicate method bodies (8+ instructions) account for 434 lines. Structural clones
+  (40+ instructions, same shape with names and constants ignored) add 864 more.
+- **Not dead private code:** 208 private methods that nothing references, 1,603 lines in all.
+- **Size:** 341,924 of the 625,298 source lines carry bytecode. The rest is declarations, braces and decompiler
+  formatting.
+- **Breadth and concentration:** `ai` is 255k lines (41%), `util` 175k (28%), `modules` 94k, `gui` 60k. The 46 files
+  over 2,000 lines hold 236,614 lines (38%); the 100 largest hold 51%.
+- **God methods:** 233 methods over 100 lines and 48 over 200. The largest are `ActionFieldRegistry.<clinit>` (1,465
+  lines of registry table), `AiBuilder$2.tickBuild` (821), `MacroExecutor.executeRun` (721),
+  `AiPathfinder$MoveGenerator.generateMovesCached` (553), `AiTools.capabilities` (551) and `AiSchematic.legacyBlock`
+  (551).
+
+So deduplication and dead-code removal buy little. The levers, largest first:
+1. **Feature scope.** The AI automation stack alone is bigger than most whole clients. Cutting features the owner does
+   not want removes more code than any refactor, and it is cheaper before a rewrite than after one. This needs a
+   feature inventory (lines, fan-in, entry points per feature) and the owner's keep/cut list.
+2. **God-class splits** (R1–R6 below).
+3. **Tables as data.** Registries written as code (`ActionFieldRegistry`, `AiTools.capabilities`,
+  `AiSchematic.legacyBlock`) become resource files read at startup.
+
 ## 3. Order and approach
 
 ### R1. Macro system: `MacroExecutor`, `ActionEditorOverlay`, `AutismMacroEditorOverlay` (~34.6k lines)
@@ -98,8 +120,18 @@ First, because the fix is clear and testable, and fan-in 65 means everything els
 ### R5. Overlays: `AutismServerInfoOverlay`, `AutismPacketLoggerOverlay`, `AutismHudManager`, `ModulesMenuController`
 - Move the hand-rolled layout onto the existing `gui.ui` toolkit (97 classes). Java.
 
-Not planned: `modules/f` and the other frozen classes (blocked by ABI pinning), and `PacketInspectorEngine`
-(fan-in 3, low payoff).
+### R6. AI task monoliths: `AiBuilder` (8,777 lines), `AiService` (5,851 lines)
+- `AiBuilder` (fan-in 26, 88% game) runs a build in one 821-line `tickBuild` inside the anonymous `AiBuilder$2`.
+  Split the build planner from the per-tick executor, the same way as R2. Its planner shares the schematic work
+  with R2, so do it after R2.
+- `AiService` (fan-in 40) is the agent loop: `tickClientState` (436 lines) and `runAgentLoop` (212). Split the
+  provider and transport from the tool dispatch and from client-state polling.
+- Language: Java.
+- Both are readable now: 14 and 17 obfuscated members remain.
+
+Not planned yet: `modules/f` (8,595 lines). The ABI pin fixes its name and the symbols that untouched frozen
+files use, not its method bodies. So its internals can be rewritten behind the same signatures once the
+rewritten-class gate policy (section 1) exists. Also not planned: `PacketInspectorEngine` (fan-in 3, low payoff).
 
 ## 4. Rust: where it makes sense
 
@@ -129,8 +161,10 @@ Integration, if adopted:
 ## 5. Before R1 starts (owner decisions)
 
 1. The gate policy for rewritten classes (section 1, item 1).
-2. Deobfuscation of rewrite targets: stop at "readable enough to characterize" or finish it. Fully naming the
-   private internals of a class that is about to be replaced is partly wasted work. As of 11D, `PrintCore` still
-   has 1,286 obfuscated members (910 with a mapping row, 376 without).
+2. ~~Deobfuscation of rewrite targets~~ Decided (owner, 2026-11-28): rewrite targets that are readable are not
+   deobfuscated further; their remaining names get settled during the rewrite. At `deecfd9` most targets have 2-9
+   obfuscated members per 1,000 lines (`PrintCore` 177 of 3,212 members). The exceptions are `ScaffoldModule` (531
+   non-constant of 1,973, 27%) and `AiGoto` (120 of 461, 26%).
 3. The target platforms for native libraries, and whether the native-access warning is acceptable.
 4. Whether rewrites wait for bright's integrity removal. Only the frozen classes strictly have to.
+5. Feature scope: which features to keep (section 2, "Where the size comes from"). This is the largest lever on size.
